@@ -57,7 +57,6 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/tools/gen_data/ta_daily_ref_0.c \
           ../../../../../src/tools/gen_data/ta_intra_ref_0.c \
           ../../../../../src/tools/gen_data/ta_mrg_0.c \
-          ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c \
           ../../../../../src/ta_common/bzip2/blocksort.c \
           ../../../../../src/ta_common/bzip2/bzlib.c \
           ../../../../../src/ta_common/bzip2/compress.c \
@@ -193,6 +192,9 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_pm/ta_pmstring.c \
           ../../../../../src/ta_pm/ta_datalog.c \
           ../../../../../src/ta_pm/ta_instrument.c
+
+# Platform specific files
+win32:SOURCES *= ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c
 
 # Compiler Options
 INCLUDEPATH *= ../../../../../src/ta_common
