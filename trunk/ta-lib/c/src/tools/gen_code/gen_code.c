@@ -43,6 +43,7 @@ FileHandle *gOutFunc_C;        /* For "ta_x.c" where 'x' is TA function name. */
 FileHandle *gOutRetCode_C;     /* For "ta_retcode.c" */
 FileHandle *gOutRetCode_CSV;   /* For "ta_retcode.csv" */
 FileHandle *gOutFuncList_TXT;  /* For "func_list.txt" */
+FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
 
 typedef void (*TA_ForEachGroup)( const char *groupName,
                                  unsigned int index,
@@ -72,6 +73,7 @@ static void printFunc( FILE *out,
                        unsigned int lookbackPrototype /* Boolean */
                       );
 
+static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
 static void printCallFrame  ( FILE *out, const TA_FuncInfo *funcInfo );
 static void printFrameHeader( FILE *out, const TA_FuncInfo *funcInfo );
 
@@ -162,11 +164,12 @@ int main(int argc, char* argv[])
          printf( "  produced:\n" );
          printf( "     1) ta-lib/c/include/ta_func.h\n" );
          printf( "     2) ta-lib/c/include/func_list.txt\n" );
-         printf( "     3) ta-lib/c/ta_common/ta_retcode.*\n" );
+         printf( "     3) ta-lib/c/src/ta_common/ta_retcode.*\n" );
          printf( "     4) ta-lib/c/src/ta_abstract/ta_group_idx.c\n");     
-         printf( "     5) ta-lib/c/ta_abstract/frames/*.*\n");
+         printf( "     5) ta-lib/c/src/ta_abstract/frames/*.*\n");
+         printf( "     6) ta-lib/c/src/ta_abstract/excel_glue.c\n" );
          printf( "\n" );
-         printf( "  Also, regenerate the function header, parameter and\n" );
+         printf( "  Also, it regenerates the function header, parameters and\n" );
          printf( "  validation code of all TA Func in c/src/ta_func.\n" );
          printf( "\n" );
          printf( "** Must be directly run from the 'bin' directory.\n" );
@@ -380,6 +383,17 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
+   /* Create "excel_glue.c" */
+   gOutExcelGlue_C = fileOpen( "..\\src\\ta_abstract\\excel_glue.c",
+                           "..\\src\\ta_abstract\\templates\\excel_glue.c.template",
+                           FILE_WRITE );
+
+   if( gOutExcelGlue_C == NULL )
+   {
+      printf( "\nCannot access [%s]\n", gToOpen );
+      return -1;
+   }
+
    /* Process each function. */
    retCode = TA_ForEachFunc( doForEachFunction, NULL );
 
@@ -394,6 +408,7 @@ static int genCode(int argc, char* argv[])
    fileClose( gOutFuncList_TXT );
    fileClose( gOutFunc_H );
    fileClose( gOutFrame_H );
+   fileClose( gOutExcelGlue_C );
 
    if( retCode != TA_SUCCESS )
    {
@@ -496,15 +511,18 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    printFuncHeaderDoc( gOutFunc_H->file, funcInfo, " * " );
    fprintf( gOutFunc_H->file, " */\n" );
 
-   /* Print the defines corresponding to this function. */
+   /* Generate the defines corresponding to this function. */
    printDefines( gOutFunc_H->file, funcInfo );
 
-   /* Print the function prototype. */
+   /* Generate the function prototype. */
    printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0 );
    fprintf( gOutFunc_H->file, "\n" );
 
-   /* Print the corresponding lookback function prototype. */
+   /* Generate the corresponding lookback function prototype. */
    printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1 );
+
+   /* Generate the excel glue code */
+   printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
 
    /* Create the frame for TA_CallFunc. */
    sprintf( gTempBuf, "..\\src\\ta_abstract\\frames\\ta_%s_frame.c", funcInfo->name );
@@ -811,7 +829,7 @@ static void printFunc( FILE *out,
                {
                   printIndent( out, indent );
                   if( frame )
-                     fprintf( out, "in[%d].p.in.data.inPrice.timestamp, /*", paramNb );
+                     fprintf( out, "params->in[%d].data.inPrice.timestamp, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
                            prototype? "const TA_Timestamp" : "",                           
@@ -825,7 +843,7 @@ static void printFunc( FILE *out,
                {
                   printIndent( out, indent );
                   if( frame )
-                     fprintf( out, "in[%d].p.in.data.inPrice.open, /*", paramNb );
+                     fprintf( out, "params->in[%d].data.inPrice.open, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
                            prototype? "const TA_Real" : "",                           
@@ -839,7 +857,7 @@ static void printFunc( FILE *out,
                {
                   printIndent( out, indent );
                   if( frame )
-                     fprintf( out, "in[%d].p.in.data.inPrice.high, /*", paramNb );
+                     fprintf( out, "params->in[%d].data.inPrice.high, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
                            prototype? "const TA_Real" : "",                           
@@ -853,7 +871,7 @@ static void printFunc( FILE *out,
                {
                   printIndent( out, indent );
                   if( frame )
-                     fprintf( out, "in[%d].p.in.data.inPrice.low, /*", paramNb );
+                     fprintf( out, "params->in[%d].data.inPrice.low, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
                            prototype? "const TA_Real" : "",
@@ -867,7 +885,7 @@ static void printFunc( FILE *out,
                {
                   printIndent( out, indent );
                   if( frame )
-                     fprintf( out, "in[%d].p.in.data.inPrice.close, /*", paramNb );
+                     fprintf( out, "params->in[%d].data.inPrice.close, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
                            prototype? "const TA_Real" : "",                           
@@ -881,7 +899,7 @@ static void printFunc( FILE *out,
                {
                   printIndent( out, indent );
                   if( frame )
-                     fprintf( out, "in[%d].p.in.data.inPrice.volume, /*", paramNb );
+                     fprintf( out, "params->in[%d].data.inPrice.volume, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
                            prototype? "const TA_Integer" : "",
@@ -895,7 +913,7 @@ static void printFunc( FILE *out,
                {
                   printIndent( out, indent );
                   if( frame )
-                     fprintf( out, "in[%d].p.in.data.inPrice.openInterest, /*", paramNb );
+                     fprintf( out, "params->in[%d].data.inPrice.openInterest, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
                            prototype? "const TA_Integer" : "",
@@ -935,7 +953,7 @@ static void printFunc( FILE *out,
             else
             {
                if( frame )
-                  fprintf( out, "in[%d].p.in.data.%s, /*", paramNb, defaultParamName );
+                  fprintf( out, "params->in[%d].data.%s, /*", paramNb, defaultParamName );
                fprintf( out, "%-*s %s_%d%s",
                         prototype? 12 : 0,
                         prototype? typeString : "",                        
@@ -999,7 +1017,7 @@ static void printFunc( FILE *out,
             printIndent( out, indent );
 
          if( frame )
-            fprintf( out, "optIn[%d].p.optIn.data.%s, /*", paramNb, defaultParamName );
+            fprintf( out, "params->optIn[%d].data.%s, /*", paramNb, defaultParamName );
          fprintf( out, "%-*s %s_%d",
                   prototype? 13 : 0,
                   prototype? typeString : "",
@@ -1073,42 +1091,6 @@ static void printFunc( FILE *out,
    }
 
    /* Go through all the output */
-
-#if 0
-/* !!! This code was when I was considering to have a lookback output
- * !!! for each output. Sicne I decide that all outputs were
- * !!! using the "worst case" of lookback among all th output,
- * !!! All this code is not needed. I leave the code here for a couple
- * !!! of version just in case I change my mind....
- */
-   if( lookbackPrototype )
-   {       
-      paramNb = 0;
-      lastParam = 0;
-      for( i=0; i < funcInfo->nbOutput; i++ )
-      {
-         if( i == (funcInfo->nbOutput-1) )
-            lastParam = 1;
-
-         retCode = TA_SetOutputParameterInfoPtr( funcInfo->handle,
-                                                 i, &outputParamInfo );
-         if( retCode != TA_SUCCESS )
-         {
-            printf( "[%s] invalid 'output' information\n", funcInfo->name );
-            return;
-         }
-
-         if( funcInfo->nbOptInput != 0 )
-            printIndent( out, indent );
-
-         fprintf( out, "TA_Integer   *lookback_%d", paramNb++ );
-         if( !lastParam )
-            fprintf( out, ",\n" );
-         else
-            fprintf( out, " )%s\n", semiColonNeeded? ";":"" );
-      }
-#endif
-
    if( lookbackPrototype )
    {
       fprintf( out, "\n" );
@@ -1168,10 +1150,6 @@ static void printFunc( FILE *out,
             typeString = "TA_Integer";
             defaultParamName = "outInteger";
             break;
-         case TA_Output_Draw:
-            typeString = "TA_Draw";
-            defaultParamName = "outDraw";
-            break;
          default:
             if( !paramName )
                paramName = "outParam";
@@ -1193,7 +1171,7 @@ static void printFunc( FILE *out,
          {
             printIndent( out, indent );
             if( frame )
-               fprintf( out, "out[%d].p.out.data.%s%s /*",
+               fprintf( out, "params->out[%d].data.%s%s /*",
                         paramNb, defaultParamName,
                         lastParam? "":"," );
 
@@ -1222,10 +1200,6 @@ static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
 {
    printFrameHeader( out, funcInfo );
    fprintf( out, "\n{\n" );
-
-   if( funcInfo->nbOptInput == 0 )
-       fprintf( out, "   (void)optIn; /* Get rid of compiler warning. */\n" );
-
    printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0 );
    fprintf( out, "}\n" );
 }
@@ -1233,14 +1207,11 @@ static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
 
 static void printFrameHeader( FILE *out, const TA_FuncInfo *funcInfo )
 {
-   fprintf( out, "TA_RetCode TA_%s_FramePP(\n", funcInfo->name );
-   fprintf( out, "                          TA_Integer          startIdx,\n" );
-   fprintf( out, "                          TA_Integer          endIdx,\n" );
-   fprintf( out, "                          TA_Integer         *outBegIdx,\n" );
-   fprintf( out, "                          TA_Integer         *outNbElement,\n" );
-   fprintf( out, "                          TA_ParamHolderPriv  in[],\n" );
-   fprintf( out, "                          TA_ParamHolderPriv  optIn[],\n" );
-   fprintf( out, "                          TA_ParamHolderPriv  out[] )" );
+   fprintf( out, "TA_RetCode TA_%s_FramePP( const TA_ParamHolderPriv *params,\n", funcInfo->name );
+   fprintf( out, "                          TA_Integer            startIdx,\n" );
+   fprintf( out, "                          TA_Integer            endIdx,\n" );
+   fprintf( out, "                          TA_Integer           *outBegIdx,\n" );
+   fprintf( out, "                          TA_Integer           *outNbElement )\n" );
 }
 
 static void printExternReferenceForEachFunction( const TA_FuncInfo *info,
@@ -1669,9 +1640,6 @@ static void printFuncHeaderDoc( FILE *out,
       case TA_Output_Integer:
          fprintf( out, "TA_Integer" );
          break;
-      case TA_Output_Draw:
-         fprintf( out, "TA_Draw" );
-         break;
       }
       if( paramNb+1 == funcInfo->nbOutput )
          fprintf( out, "\n" );
@@ -1974,3 +1942,50 @@ const char *doubleToStr( TA_Real value )
    return gTempDoubleToStr;
 }
 
+static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo )
+{
+   /*fprintf( out, "#include \"ta_%s.c\"\n", funcInfo->name );
+   fprintf( out, "#include \"ta_%s_frame.c\"\n", funcInfo->name );   */
+   int nbParam;
+   unsigned int i;
+   TA_RetCode retCode;
+   const TA_InputParameterInfo *inputParamInfo;
+
+   nbParam = funcInfo->nbOptInput;
+
+   for( i=0; i < funcInfo->nbInput; i++ )
+   {
+      retCode = TA_SetInputParameterInfoPtr( funcInfo->handle,
+                                               i, &inputParamInfo );
+
+      if( retCode != TA_SUCCESS )
+      {
+         printf( "[%s] invalid 'input' information (%d,%d)\n", funcInfo->name, i, nbParam );
+         return;
+      }
+
+      if( inputParamInfo->type != TA_Input_Price )
+         nbParam++;
+      else
+      {
+         if( inputParamInfo->flags & TA_IN_PRICE_TIMESTAMP )
+            nbParam++;
+         if( inputParamInfo->flags & TA_IN_PRICE_OPEN )
+            nbParam++;
+         if( inputParamInfo->flags & TA_IN_PRICE_HIGH )
+            nbParam++;
+         if( inputParamInfo->flags & TA_IN_PRICE_LOW )
+            nbParam++;
+         if( inputParamInfo->flags & TA_IN_PRICE_CLOSE )
+            nbParam++;
+         if( inputParamInfo->flags & TA_IN_PRICE_VOLUME )
+            nbParam++;
+         if( inputParamInfo->flags & TA_IN_PRICE_OPENINTEREST )         
+            nbParam++;
+      }
+   }
+
+   fprintf( out, "EXCEL_GLUE_CODE_WITH_%d_PARAM(%s)\n", 
+           nbParam,
+           funcInfo->name );
+}
