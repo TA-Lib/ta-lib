@@ -163,6 +163,21 @@
 
    /* Insert TA function code here. */
 
+   /* Original implementation from Wilder's book was doing some integer
+    * rounding in its calculations.
+	*
+    * This was understandable in the context that at the time the book
+	* was written, most user were doing the calculation by hand.
+	* 
+    * For a computer, rounding is un-necessary (and even problematic when inputs
+	* are close to 1).
+	*
+	* TA-Lib does not do the rounding. Still, if you want to repdroduce Wilder's examples,
+	* you need to comment out the following #undef/#define and rebuild the library.
+	*/
+   #undef  round_pos
+   #define round_pos(x) (x)
+
    /* Move up the start index if there is not
     * enough initial data.
     * Always one price bar gets consumed.
@@ -257,6 +272,8 @@
 /* Generated */     if( outReal_0 == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
+/* Generated */    #undef  round_pos
+/* Generated */    #define round_pos(x) (x)
 /* Generated */    adxrLookback = TA_ADXR_Lookback( optInTimePeriod_0 );
 /* Generated */    if( startIdx < adxrLookback )
 /* Generated */       startIdx = adxrLookback;
