@@ -64,24 +64,25 @@
    #include "ta_utility.h"
 #endif
 
-int TA_STOCH_Lookback( TA_Integer    optInKPeriod_0, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInKSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInDSlowPeriod_2, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInMethod_3 ) 
+int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
+                       TA_Integer    optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+                       TA_Integer    optInSlowK_MAType_2,
+                       TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                       TA_Integer    optInSlowD_MAType_4 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
 
    int retValue;
    
-   /* Account for the initial data needed for K. */
-   retValue = (optInKPeriod_0 - 1);
+   /* Account for the initial data needed for Fast-K. */
+   retValue = (optInFastK_Period_0 - 1);
          
-   /* Add the smoothing beign done for %K slow */
-   retValue += TA_MA_Lookback( optInKSlowPeriod_1, optInMethod_3, TA_MA_CLASSIC );  
+   /* Add the smoothing being done for %K slow */
+   retValue += TA_MA_Lookback( optInSlowK_Period_1, optInSlowK_MAType_2, TA_MA_CLASSIC );  
 
    /* Add the smoothing being done for %D slow. */
-   retValue += TA_MA_Lookback( optInDSlowPeriod_2, optInMethod_3, TA_MA_CLASSIC );
+   retValue += TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4, TA_MA_CLASSIC );
 
    return retValue;
 }
@@ -95,17 +96,20 @@ int TA_STOCH_Lookback( TA_Integer    optInKPeriod_0, /* From 1 to TA_INTEGER_MAX
  * 
  * Optional Parameters
  * -------------------
- * optInKPeriod_0:(From 1 to TA_INTEGER_MAX)
- *    Time periods for the stochastic %K line
+ * optInFastK_Period_0:(From 1 to TA_INTEGER_MAX)
+ *    Time period for building the Fast-K line
  * 
- * optInKSlowPeriod_1:(From 1 to TA_INTEGER_MAX)
- *    Internal smoothing for the %K line. Usually between 1 to 3
+ * optInSlowK_Period_1:(From 1 to TA_INTEGER_MAX)
+ *    Smoothing for making the Slow-K line. Usually set to 3
  * 
- * optInDSlowPeriod_2:(From 1 to TA_INTEGER_MAX)
- *    Time periods for the moving average of the %K line. That average is the %D line
+ * optInSlowK_MAType_2:
+ *    Type of Moving Average for Slow-K
  * 
- * optInMethod_3:
- *    Type of Moving Average
+ * optInSlowD_Period_3:(From 1 to TA_INTEGER_MAX)
+ *    Smoothing for making the Slow-D line
+ * 
+ * optInSlowD_MAType_4:
+ *    Type of Moving Average for Slow-D
  * 
  * 
  */
@@ -116,20 +120,22 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
                      const TA_Real inHigh_0[],
                      const TA_Real inLow_0[],
                      const TA_Real inClose_0[],
-                     TA_Integer    optInKPeriod_0, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInKSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInDSlowPeriod_2, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInMethod_3,
+                     TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer    optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer    optInSlowK_MAType_2,
+                     TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer    optInSlowD_MAType_4,
                      TA_Integer   *outBegIdx,
                      TA_Integer   *outNbElement,
-                     TA_Real       outRealK_0[],
-                     TA_Real       outRealD_1[] )
+                     TA_Real       outSlowK_0[],
+                     TA_Real       outSlowD_1[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
    TA_RetCode retCode;
-   TA_Real Lt, Ht, tmp, *tempBuffer;
-   TA_Integer outIdx;
+   TA_Real lowest, highest, tmp, diff;
+   TA_Real *tempBuffer;
+   TA_Integer outIdx, lowestIdx, highestIdx;
    TA_Integer lookbackTotal, lookbackK, lookbackKSlow, lookbackDSlow;
    TA_Integer trailingIdx, today, i, bufferIsAllocated;
 
@@ -150,33 +156,38 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
    if(!inHigh_0||!inLow_0||!inClose_0)
       return TA_BAD_PARAM;
 
-   /* min/max are checked for optInKPeriod_0. */
-   if( optInKPeriod_0 == TA_INTEGER_DEFAULT )
-      optInKPeriod_0 = 5;
-   else if( (optInKPeriod_0 < 1) || (optInKPeriod_0 > 2147483647) )
+   /* min/max are checked for optInFastK_Period_0. */
+   if( optInFastK_Period_0 == TA_INTEGER_DEFAULT )
+      optInFastK_Period_0 = 5;
+   else if( (optInFastK_Period_0 < 1) || (optInFastK_Period_0 > 2147483647) )
       return TA_BAD_PARAM;
 
-   /* min/max are checked for optInKSlowPeriod_1. */
-   if( optInKSlowPeriod_1 == TA_INTEGER_DEFAULT )
-      optInKSlowPeriod_1 = 3;
-   else if( (optInKSlowPeriod_1 < 1) || (optInKSlowPeriod_1 > 2147483647) )
+   /* min/max are checked for optInSlowK_Period_1. */
+   if( optInSlowK_Period_1 == TA_INTEGER_DEFAULT )
+      optInSlowK_Period_1 = 3;
+   else if( (optInSlowK_Period_1 < 1) || (optInSlowK_Period_1 > 2147483647) )
       return TA_BAD_PARAM;
 
-   /* min/max are checked for optInDSlowPeriod_2. */
-   if( optInDSlowPeriod_2 == TA_INTEGER_DEFAULT )
-      optInDSlowPeriod_2 = 3;
-   else if( (optInDSlowPeriod_2 < 1) || (optInDSlowPeriod_2 > 2147483647) )
+   if( optInSlowK_MAType_2 == TA_INTEGER_DEFAULT )
+      optInSlowK_MAType_2 = 0;
+   else if( (optInSlowK_MAType_2 < 0) || (optInSlowK_MAType_2 > 4) )
       return TA_BAD_PARAM;
 
-   if( optInMethod_3 == TA_INTEGER_DEFAULT )
-      optInMethod_3 = 0;
-   else if( (optInMethod_3 < 0) || (optInMethod_3 > 4) )
+   /* min/max are checked for optInSlowD_Period_3. */
+   if( optInSlowD_Period_3 == TA_INTEGER_DEFAULT )
+      optInSlowD_Period_3 = 3;
+   else if( (optInSlowD_Period_3 < 1) || (optInSlowD_Period_3 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( outRealK_0 == NULL )
+   if( optInSlowD_MAType_4 == TA_INTEGER_DEFAULT )
+      optInSlowD_MAType_4 = 0;
+   else if( (optInSlowD_MAType_4 < 0) || (optInSlowD_MAType_4 > 4) )
       return TA_BAD_PARAM;
 
-   if( outRealD_1 == NULL )
+   if( outSlowK_0 == NULL )
+      return TA_BAD_PARAM;
+
+   if( outSlowD_1 == NULL )
       return TA_BAD_PARAM;
 
 #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -185,10 +196,41 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
 
    /* Insert TA function code here. */
 
+   /* With stochastic, there is a total of 4 different lines that
+    * are defined: FASTK, FASTD, SLOWK and SLOWD.
+    *
+    * The D is the signal line usually drawn over its
+    * corresponding K function.
+    *
+    *                    (Today's Close - LowestLow)
+    *  FASTK(Kperiod) =  --------------------------- * 100
+    *                     (HighestHigh - LowestLow)
+    *   
+    *  FASTD(FastDperiod, MA type) = MA Smoothed FASTK over FastDperiod
+    * 
+    *  SLOWK(SlowKperiod, MA type) = MA Smoothed FASTK over SlowKperiod
+    *
+    *  SLOWD(SlowDperiod, MA Type) = MA Smoothed SLOWK over SlowDperiod
+    *
+    * The HighestHigh and LowestLow are the extreme values among the
+    * last 'Kperiod'.
+    *  
+    * SLOWK and FASTD are equivalent when using the same period.
+    *
+    * The following shows how these four lines are made available in TA-LIB:
+    *
+    *  TA_STOCH  : Returns the SLOWK and SLOWD
+    *  TA_STOCHF : Returns the FASTK and FASTD
+    *
+    * The TA_STOCH function correspond to the more widely implemented version
+    * found in many software/charting package. The TA_STOCHF is more rarely
+    * used because its higher volatility cause often whipsaws.
+    */
+
    /* Identify the lookback needed. */
-   lookbackK      = optInKPeriod_0-1;
-   lookbackKSlow  = TA_MA_Lookback( optInKSlowPeriod_1, optInMethod_3, TA_MA_CLASSIC );
-   lookbackDSlow  = TA_MA_Lookback( optInDSlowPeriod_2, optInMethod_3, TA_MA_CLASSIC );
+   lookbackK      = optInFastK_Period_0-1;
+   lookbackKSlow  = TA_MA_Lookback( optInSlowK_Period_1, optInSlowK_MAType_2, TA_MA_CLASSIC );
+   lookbackDSlow  = TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4, TA_MA_CLASSIC );
    lookbackTotal  = lookbackK + lookbackDSlow + lookbackKSlow;
 
    /* Move up the start index if there is not
@@ -228,6 +270,7 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
     */
    trailingIdx = startIdx-lookbackTotal;
    today       = trailingIdx+lookbackK;
+   lowestIdx   = highestIdx = -1;
 
    /* Allocate a temporary buffer large enough to
     * store the K.
@@ -236,17 +279,17 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
     * we just save ourself one memory allocation.
     */
    bufferIsAllocated = 0;
-   if( (outRealK_0 == inHigh_0) || 
-       (outRealK_0 == inLow_0)  || 
-       (outRealK_0 == inClose_0) )
+   if( (outSlowK_0 == inHigh_0) || 
+       (outSlowK_0 == inLow_0)  || 
+       (outSlowK_0 == inClose_0) )
    {
-      tempBuffer = outRealK_0;
+      tempBuffer = outSlowK_0;
    }
-   else if( (outRealD_1 == inHigh_0) ||
-            (outRealD_1 == inLow_0)  ||
-            (outRealD_1 == inClose_0) )
+   else if( (outSlowD_1 == inHigh_0) ||
+            (outSlowD_1 == inLow_0)  ||
+            (outSlowD_1 == inClose_0) )
    {
-      tempBuffer = outRealD_1;
+      tempBuffer = outSlowD_1;
    }
    else
    {
@@ -254,27 +297,67 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
       tempBuffer = TA_Malloc( libHandle, (endIdx-today+1)*sizeof(TA_Real) );
    }
 
-   /* Do the K calculation (could be speed optimized) */
+   /* Do the K calculation */
    while( today <= endIdx )
    {
-      /* Find Lt and Ht for the requested K period. */
-      Lt = inLow_0 [trailingIdx];
-      Ht = inHigh_0[trailingIdx];
-      trailingIdx++;
-      for( i=trailingIdx; i <= today; i++ )
+      /* Set the lowest low */
+      tmp = inLow_0[today];
+      if( lowestIdx < trailingIdx )
       {
-         tmp = inLow_0[i];
-         if( tmp < Lt ) Lt = tmp;
-         tmp = inHigh_0[i];
-         if( tmp > Ht ) Ht = tmp;
+         lowestIdx = trailingIdx;
+         lowest = inLow_0[lowestIdx];
+         i = lowestIdx;
+         while( ++i<=today )
+         {
+            tmp = inLow_0[i];
+            if( tmp < lowest )
+            {
+               lowestIdx = i;
+               lowest = tmp;
+            }
+         }
+         diff = (highest - lowest)/100.0;
+      }
+      else if( tmp <= lowest )
+      {
+         lowestIdx = today;
+         lowest = tmp;
+         diff = (highest - lowest)/100.0;
+      }
+
+      /* Set the highest high */
+      tmp = inHigh_0[today];
+      if( highestIdx < trailingIdx )
+      {
+         highestIdx = trailingIdx;
+         highest = inHigh_0[highestIdx];
+         i = highestIdx;
+         while( ++i<=today )
+         {
+            tmp = inHigh_0[i];
+            if( tmp > highest )
+            {
+               highestIdx = i;
+               highest = tmp;
+            }
+         }
+         diff = (highest - lowest)/100.0;
+      }
+      else if( tmp >= highest )
+      {
+         highestIdx = today;
+         highest = tmp;
+         diff = (highest - lowest)/100.0;
       }
 
       /* Calculate stochastic. */
-      tmp = Ht-Lt;
-      if( tmp > 0.0 )
-        tempBuffer[outIdx++] = 100.0*((inClose_0[today++]-Lt)/tmp);
+      if( diff != 0.0 )
+        tempBuffer[outIdx++] = (inClose_0[today]-lowest)/diff;
       else
-        tempBuffer[outIdx++] = 100.0;
+        tempBuffer[outIdx++] = 0.0;
+
+      trailingIdx++;
+      today++; 
    }
 
    /* Un-smoothed K calculation completed. This K calculation is not returned
@@ -283,8 +366,8 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
     * "K-Slow", but often this end up to be shorten to "K".
     */
    retCode = TA_MA( libHandle, 0, outIdx-1,
-                    tempBuffer, optInKSlowPeriod_1,
-                    optInMethod_3, TA_MA_CLASSIC, 
+                    tempBuffer, optInSlowK_Period_1,
+                    optInSlowK_MAType_2, TA_MA_CLASSIC, 
                     outBegIdx, outNbElement, tempBuffer );
 
 
@@ -302,16 +385,16 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
     * the already smoothed %K.
     */
    retCode = TA_MA( libHandle, 0, (*outNbElement)-1,
-                    tempBuffer, optInDSlowPeriod_2,
-                    optInMethod_3, TA_MA_CLASSIC, 
-                    outBegIdx, outNbElement, outRealD_1 );
+                    tempBuffer, optInSlowD_Period_3,
+                    optInSlowD_MAType_4, TA_MA_CLASSIC, 
+                    outBegIdx, outNbElement, outSlowD_1 );
 
    /* Copy tempBuffer into the caller buffer. 
     * (Calculation could not be done directly in the
     *  caller buffer because more input data then the
     *  requested range was needed for doing %D).
     */
-   memmove( outRealK_0, &tempBuffer[lookbackDSlow], (*outNbElement) * sizeof(TA_Real) );
+   memmove( outSlowK_0, &tempBuffer[lookbackDSlow], (*outNbElement) * sizeof(TA_Real) );
 
    /* Don't need K anymore, free it if it was allocated here. */
    if( bufferIsAllocated )

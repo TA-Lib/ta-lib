@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  101902 JV   Speed optimization of the algorithm
+ *  102202 MF   Speed optimize a bit further
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -97,7 +98,7 @@ TA_RetCode TA_MIN( TA_Libc      *libHandle,
    /* Insert local variables here. */
    TA_Real lowest, tmp;
    TA_Integer outIdx, nbInitialElementNeeded;
-   TA_Integer trailingIdx, today, i;
+   TA_Integer trailingIdx, lowestIdx, today, i;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -155,24 +156,32 @@ TA_RetCode TA_MIN( TA_Libc      *libHandle,
    outIdx = 0;
    today       = startIdx;
    trailingIdx = startIdx-nbInitialElementNeeded;
-   lowest      = inReal_0[today];
+   lowestIdx   = -1;
    
    while( today <= endIdx )
    {
       tmp = inReal_0[today];
 
-      if( lowest <= tmp )
+      if( lowestIdx < trailingIdx )
       {
-        lowest = inReal_0[trailingIdx];
-        i = trailingIdx+1;
-        while( i<=today )
+        lowestIdx = trailingIdx;
+        lowest = inReal_0[lowestIdx];
+        i = lowestIdx;
+        while( ++i<=today )
         {
-           tmp = inReal_0[i++];
-           if( tmp < lowest ) lowest = tmp;
+           tmp = inReal_0[i];
+           if( tmp < lowest )
+           {
+              lowestIdx = i;
+              lowest = tmp;
+           }
         }
       }
-      else
+      else if( tmp <= lowest )
+      {
+        lowestIdx = today;
         lowest = tmp;
+      }
 
       outReal_0[outIdx++] = lowest;
       trailingIdx++;
