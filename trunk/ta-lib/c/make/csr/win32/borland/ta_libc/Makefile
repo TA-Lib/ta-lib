@@ -173,6 +173,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c \
 		..\..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c \
 		..\..\..\..\..\src\ta_func\ta_STDDEV.c \
+		..\..\..\..\..\src\ta_func\ta_TSF.c \
 		..\..\..\..\..\src\ta_func\ta_VAR.c \
 		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_MEDPRICE.c \
@@ -331,6 +332,7 @@ OBJECTS =	..\..\..\..\..\temp\csr\ta_ascii.obj \
 		..\..\..\..\..\temp\csr\ta_LINEARREG_ANGLE.obj \
 		..\..\..\..\..\temp\csr\ta_LINEARREG_INTERCEPT.obj \
 		..\..\..\..\..\temp\csr\ta_STDDEV.obj \
+		..\..\..\..\..\temp\csr\ta_TSF.obj \
 		..\..\..\..\..\temp\csr\ta_VAR.obj \
 		..\..\..\..\..\temp\csr\ta_AVGPRICE.obj \
 		..\..\..\..\..\temp\csr\ta_MEDPRICE.obj \
@@ -521,6 +523,7 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csr\ta_LINEARREG_ANGLE.obj \
 +..\..\..\..\..\temp\csr\ta_LINEARREG_INTERCEPT.obj \
 +..\..\..\..\..\temp\csr\ta_STDDEV.obj \
++..\..\..\..\..\temp\csr\ta_TSF.obj \
 +..\..\..\..\..\temp\csr\ta_VAR.obj \
 +..\..\..\..\..\temp\csr\ta_AVGPRICE.obj \
 +..\..\..\..\..\temp\csr\ta_MEDPRICE.obj \
@@ -693,6 +696,7 @@ clean:
 	-del ..\..\..\..\..\temp\csr\ta_LINEARREG_ANGLE.obj
 	-del ..\..\..\..\..\temp\csr\ta_LINEARREG_INTERCEPT.obj
 	-del ..\..\..\..\..\temp\csr\ta_STDDEV.obj
+	-del ..\..\..\..\..\temp\csr\ta_TSF.obj
 	-del ..\..\..\..\..\temp\csr\ta_VAR.obj
 	-del ..\..\..\..\..\temp\csr\ta_AVGPRICE.obj
 	-del ..\..\..\..\..\temp\csr\ta_MEDPRICE.obj
@@ -1154,6 +1158,9 @@ clean:
 
 ..\..\..\..\..\temp\csr\ta_STDDEV.obj: ..\..\..\..\..\src\ta_func\ta_STDDEV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_STDDEV.obj ..\..\..\..\..\src\ta_func\ta_STDDEV.c
+
+..\..\..\..\..\temp\csr\ta_TSF.obj: ..\..\..\..\..\src\ta_func\ta_TSF.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_TSF.obj ..\..\..\..\..\src\ta_func\ta_TSF.c
 
 ..\..\..\..\..\temp\csr\ta_VAR.obj: ..\..\..\..\..\src\ta_func\ta_VAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_VAR.obj ..\..\..\..\..\src\ta_func\ta_VAR.c

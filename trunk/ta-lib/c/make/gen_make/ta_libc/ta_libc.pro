@@ -167,6 +167,7 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_LINEARREG_ANGLE.c \
           ../../../../../src/ta_func/ta_LINEARREG_INTERCEPT.c \
           ../../../../../src/ta_func/ta_STDDEV.c \
+          ../../../../../src/ta_func/ta_TSF.c \
           ../../../../../src/ta_func/ta_VAR.c \
           ../../../../../src/ta_func/ta_AVGPRICE.c \
           ../../../../../src/ta_func/ta_MEDPRICE.c \

@@ -2126,6 +2126,38 @@ int TA_STDDEV_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
 
 
 /*
+ * TA_TSF - Time Series Forecast
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_TSF( int    startIdx,
+                   int    endIdx,
+                   const double inReal_0[],
+                   int           optInTimePeriod_0, /* From 2 to 100000 */
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   double        outReal_0[] );
+
+TA_RetCode TA_S_TSF( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     int           optInTimePeriod_0, /* From 2 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
+
+int TA_TSF_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
+
+
+/*
  * TA_VAR - Variance
  * 
  * Input  = double

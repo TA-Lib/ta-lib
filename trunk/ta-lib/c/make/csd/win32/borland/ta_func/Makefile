@@ -86,6 +86,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c \
 		..\..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c \
 		..\..\..\..\..\src\ta_func\ta_STDDEV.c \
+		..\..\..\..\..\src\ta_func\ta_TSF.c \
 		..\..\..\..\..\src\ta_func\ta_VAR.c \
 		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_MEDPRICE.c \
@@ -150,6 +151,7 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_utility.obj \
 		..\..\..\..\..\temp\csd\ta_LINEARREG_ANGLE.obj \
 		..\..\..\..\..\temp\csd\ta_LINEARREG_INTERCEPT.obj \
 		..\..\..\..\..\temp\csd\ta_STDDEV.obj \
+		..\..\..\..\..\temp\csd\ta_TSF.obj \
 		..\..\..\..\..\temp\csd\ta_VAR.obj \
 		..\..\..\..\..\temp\csd\ta_AVGPRICE.obj \
 		..\..\..\..\..\temp\csd\ta_MEDPRICE.obj \
@@ -246,6 +248,7 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_LINEARREG_ANGLE.obj \
 +..\..\..\..\..\temp\csd\ta_LINEARREG_INTERCEPT.obj \
 +..\..\..\..\..\temp\csd\ta_STDDEV.obj \
++..\..\..\..\..\temp\csd\ta_TSF.obj \
 +..\..\..\..\..\temp\csd\ta_VAR.obj \
 +..\..\..\..\..\temp\csd\ta_AVGPRICE.obj \
 +..\..\..\..\..\temp\csd\ta_MEDPRICE.obj \
@@ -324,6 +327,7 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_LINEARREG_ANGLE.obj
 	-del ..\..\..\..\..\temp\csd\ta_LINEARREG_INTERCEPT.obj
 	-del ..\..\..\..\..\temp\csd\ta_STDDEV.obj
+	-del ..\..\..\..\..\temp\csd\ta_TSF.obj
 	-del ..\..\..\..\..\temp\csd\ta_VAR.obj
 	-del ..\..\..\..\..\temp\csd\ta_AVGPRICE.obj
 	-del ..\..\..\..\..\temp\csd\ta_MEDPRICE.obj
@@ -522,6 +526,9 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_STDDEV.obj: ..\..\..\..\..\src\ta_func\ta_STDDEV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_STDDEV.obj ..\..\..\..\..\src\ta_func\ta_STDDEV.c
+
+..\..\..\..\..\temp\csd\ta_TSF.obj: ..\..\..\..\..\src\ta_func\ta_TSF.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_TSF.obj ..\..\..\..\..\src\ta_func\ta_TSF.c
 
 ..\..\..\..\..\temp\csd\ta_VAR.obj: ..\..\..\..\..\src\ta_func\ta_VAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_VAR.obj ..\..\..\..\..\src\ta_func\ta_VAR.c

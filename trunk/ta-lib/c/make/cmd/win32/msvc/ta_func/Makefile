@@ -80,6 +80,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c \
 		..\..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c \
 		..\..\..\..\..\src\ta_func\ta_STDDEV.c \
+		..\..\..\..\..\src\ta_func\ta_TSF.c \
 		..\..\..\..\..\src\ta_func\ta_VAR.c \
 		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_MEDPRICE.c \
@@ -144,6 +145,7 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_utility.obj \
 		..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj \
 		..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj \
 		..\..\..\..\..\temp\cmd\ta_STDDEV.obj \
+		..\..\..\..\..\temp\cmd\ta_TSF.obj \
 		..\..\..\..\..\temp\cmd\ta_VAR.obj \
 		..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj \
 		..\..\..\..\..\temp\cmd\ta_MEDPRICE.obj \
@@ -253,6 +255,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj
 	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj
 	-del ..\..\..\..\..\temp\cmd\ta_STDDEV.obj
+	-del ..\..\..\..\..\temp\cmd\ta_TSF.obj
 	-del ..\..\..\..\..\temp\cmd\ta_VAR.obj
 	-del ..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MEDPRICE.obj
@@ -453,6 +456,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_STDDEV.obj: ..\..\..\..\..\src\ta_func\ta_STDDEV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_STDDEV.obj ..\..\..\..\..\src\ta_func\ta_STDDEV.c
+
+..\..\..\..\..\temp\cmd\ta_TSF.obj: ..\..\..\..\..\src\ta_func\ta_TSF.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_TSF.obj ..\..\..\..\..\src\ta_func\ta_TSF.c
 
 ..\..\..\..\..\temp\cmd\ta_VAR.obj: ..\..\..\..\..\src\ta_func\ta_VAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_VAR.obj ..\..\..\..\..\src\ta_func\ta_VAR.c

@@ -82,6 +82,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_LINEARREG_ANGLE.c \
 		../../../../../src/ta_func/ta_LINEARREG_INTERCEPT.c \
 		../../../../../src/ta_func/ta_STDDEV.c \
+		../../../../../src/ta_func/ta_TSF.c \
 		../../../../../src/ta_func/ta_VAR.c \
 		../../../../../src/ta_func/ta_AVGPRICE.c \
 		../../../../../src/ta_func/ta_MEDPRICE.c \
@@ -146,6 +147,7 @@ OBJECTS =	../../../../../temp/cmr/ta_utility.o \
 		../../../../../temp/cmr/ta_LINEARREG_ANGLE.o \
 		../../../../../temp/cmr/ta_LINEARREG_INTERCEPT.o \
 		../../../../../temp/cmr/ta_STDDEV.o \
+		../../../../../temp/cmr/ta_TSF.o \
 		../../../../../temp/cmr/ta_VAR.o \
 		../../../../../temp/cmr/ta_AVGPRICE.o \
 		../../../../../temp/cmr/ta_MEDPRICE.o \
@@ -380,6 +382,9 @@ clean:
 
 ../../../../../temp/cmr/ta_STDDEV.o: ../../../../../src/ta_func/ta_STDDEV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_STDDEV.o ../../../../../src/ta_func/ta_STDDEV.c
+
+../../../../../temp/cmr/ta_TSF.o: ../../../../../src/ta_func/ta_TSF.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_TSF.o ../../../../../src/ta_func/ta_TSF.c
 
 ../../../../../temp/cmr/ta_VAR.o: ../../../../../src/ta_func/ta_VAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_VAR.o ../../../../../src/ta_func/ta_VAR.c
