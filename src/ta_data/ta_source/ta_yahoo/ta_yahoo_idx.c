@@ -155,6 +155,8 @@ typedef struct
 {
    TA_YahooIdx *idx;
    TA_CountryId countryId;
+   const char *serverName;
+   const char *topIndex;
 } TA_TableParseOpaqueData;
 
 /**** Local functions declarations.    ****/
@@ -226,6 +228,7 @@ static TA_RetCode addTheSymbolFromWebPage( TA_Libc *libHandle,
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
 
+/* American and Canadian decoding info. */
 static TA_DecodingParam defaultHistoricalDecoding =
 {
    "chart.yahoo.com",
@@ -250,6 +253,34 @@ static TA_DecodingParam defaultInfoDecoding =
    0x00000000,0x00,0x00,0x00,0x00,0x0000,0x0000
 };
 
+/* European Web Site decoding info.
+ *
+ * Just use the UK site for all european
+ * data.
+ */
+static TA_DecodingParam euHistoricalDecoding =
+{
+   "uk.table.finance.yahoo.com",
+   "/table.csv?s=",
+   "&a=1&b=1&c=1950&d=1&e=1&f=3000&g=d&q=q&y=0&z=file&x=.csv",
+   0x00000000,0x00,0x00,0x00,0x00,0x0000,0x0000
+};
+
+static TA_DecodingParam euMarketDecoding =
+{
+   "finance.yahoo.com",
+   "/q?s=",
+   "&d=t",
+   0x00000000,0x00,0x00,0x00,0x00,0x0000,0x0000
+};
+
+static TA_DecodingParam euInfoDecoding =
+{
+   "finance.yahoo.com",
+   "/d/quotes.csv?s=",
+   "&f=sl1d1t1c1ohgv&e=.csv",
+   0x00000000,0x00,0x00,0x00,0x00,0x0000,0x0000
+};
 
 
 /**** Global functions definitions.   ****/
@@ -1162,6 +1193,30 @@ static TA_RetCode buildIdxStream( const TA_YahooIdx *idx, TA_Stream *stream )
           retCode = writeDecodingParam( libHandle, stream,
                                         &defaultInfoDecoding );
        break;
+
+   case TA_Country_ID_UK: /* United Kingdom */
+   case TA_Country_ID_DE: /* Germany */
+   case TA_Country_ID_DK: /* Denmark */
+   case TA_Country_ID_ES: /* Spain */
+   case TA_Country_ID_FR: /* France */
+   case TA_Country_ID_IT: /* Italy */
+   case TA_Country_ID_SE: /* Sweden */
+   case TA_Country_ID_NO: /* Norway */
+       /* Write historical decoding data. */
+       retCode = writeDecodingParam( libHandle, stream,
+                                     &euHistoricalDecoding );
+
+       /* Write market decoding data. */
+       if( retCode == TA_SUCCESS )
+          retCode = writeDecodingParam( libHandle, stream,
+                                        &euMarketDecoding );
+
+       /* Write info decoding data. */
+       if( retCode == TA_SUCCESS )
+          retCode = writeDecodingParam( libHandle, stream,
+                                        &euInfoDecoding );       
+       break;
+
    default:
       return TA_UNSUPPORTED_COUNTRY;
    }
@@ -1523,7 +1578,7 @@ static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_Libc *libHandle, TA
    TA_RetCode retCode;
    TA_WebPage *webPage;
    TA_StreamAccess *access;
-   unsigned int i;
+   unsigned int i, nbTableToSkip;
 
    TA_String *catString;
    TA_String *symString;
@@ -1538,8 +1593,61 @@ static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_Libc *libHandle, TA
    opaqueData.countryId = countryId;
    opaqueData.idx = idx;
       
-   retCode = TA_WebPageAlloc( libHandle, "biz.yahoo.com",
-                              "/i/",
+   /* Identify the server. */
+   switch( countryId )
+   {
+   case TA_Country_ID_US:
+   case TA_Country_ID_CA:
+      opaqueData.serverName = "biz.yahoo.com";
+      nbTableToSkip = 2;
+      break;
+   default:
+      /* All european index are integrated together, so just
+       * use the UK server.
+       */
+      opaqueData.serverName = "uk.biz.yahoo.com";
+      nbTableToSkip = 4;
+      break;
+   }
+
+   /* Identify the top page. */
+   switch( countryId )
+   {
+   case TA_Country_ID_US:
+   case TA_Country_ID_CA:
+      opaqueData.topIndex = "/i/";
+      break;
+   case TA_Country_ID_UK:
+      opaqueData.topIndex = "/p/uk/cpi/index.html";
+      break;
+   case TA_Country_ID_DE: /* Germany */
+      opaqueData.topIndex = "/p/de/cpi/index.html";
+      break;
+   case TA_Country_ID_DK: /* Denmark */
+      opaqueData.topIndex = "/p/dk/cpi/index.html";
+      break;
+   case TA_Country_ID_ES: /* Spain */
+      opaqueData.topIndex = "/p/es/cpi/index.html";
+      break;
+   case TA_Country_ID_FR: /* France */
+      opaqueData.topIndex = "/p/fr/cpi/index.html";
+      break;
+   case TA_Country_ID_IT: /* Italy */
+      opaqueData.topIndex = "/p/it/cpi/index.html";
+      break;
+   case TA_Country_ID_SE: /* Sweden */
+      opaqueData.topIndex = "/p/se/cpi/index.html";
+      break;
+   case TA_Country_ID_NO: /* Norway */
+      opaqueData.topIndex = "/p/no/cpi/index.html";
+      break;
+   default:
+      opaqueData.topIndex = "/i/";
+      break;
+   }
+
+   retCode = TA_WebPageAlloc( libHandle, opaqueData.serverName,
+                              opaqueData.topIndex,
                               NULL, NULL,
                               &webPage, 2 );
 
@@ -1556,7 +1664,7 @@ static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_Libc *libHandle, TA
    access = TA_StreamAccessAlloc( webPage->content );
 
    /* Skip first the non-meaningful tables. */
-   for( i=0; i < 2; i++ )
+   for( i=0; i < nbTableToSkip; i++ )
    {
       retCode = TA_StreamAccessSkipHTMLTable( access );
       if( retCode != TA_SUCCESS )
@@ -1629,12 +1737,12 @@ static TA_RetCode processTopIndex( TA_Libc *libHandle,
                                    const char *href,
                                    void *opaqueData)
 {
+   TA_TableParseOpaqueData *tableParseInfo;
    TA_RetCode retCode;
    TA_WebPage *webPage;
    TA_StreamAccess *access;
-   unsigned int i;
+   unsigned int i, nbTableToSkip;
 
-   (void)opaqueData; /* Get ride of compiler warning. */
    (void)data; /* Get ride of compiler warning. */
    (void)column; /* Get ride of compiler warning. */
    (void)line; /* Get ride of compiler warning. */
@@ -1646,8 +1754,10 @@ static TA_RetCode processTopIndex( TA_Libc *libHandle,
 
    if( *href != '\0' )
    {
+      tableParseInfo = (TA_TableParseOpaqueData *)opaqueData;
+
       printf( "************* Processing Top Index [%s]\n", href );
-      retCode = TA_WebPageAlloc( libHandle, "biz.yahoo.com",
+      retCode = TA_WebPageAlloc( libHandle, tableParseInfo->serverName,
                                  href,
                                  NULL, NULL,
                                  &webPage, 2 );
@@ -1661,13 +1771,25 @@ static TA_RetCode processTopIndex( TA_Libc *libHandle,
 
       if( retCode != TA_SUCCESS )
          goto Exit_processTopIndex;
-      
+
+      /* Now process all the "sub index" pages */
       access = TA_StreamAccessAlloc( webPage->content );
       if( retCode != TA_SUCCESS )
          goto Exit_processTopIndex;
 
       /* Skip first the non-meaningful tables. */
-      for( i=0; i < 3; i++ )
+      switch( tableParseInfo->countryId )
+      {
+      case TA_Country_ID_US:
+      case TA_Country_ID_CA:
+         nbTableToSkip = 3;
+         break;
+      default:
+         nbTableToSkip = 8;
+         break;
+      }
+
+      for( i=0; i < nbTableToSkip; i++ )
       {
          retCode = TA_StreamAccessSkipHTMLTable( access );
          if( retCode != TA_SUCCESS )
@@ -1705,10 +1827,10 @@ static TA_RetCode processIndex( TA_Libc *libHandle,
                                 const char *href,
                                 void *opaqueData)
 {
+   TA_TableParseOpaqueData *tableParseInfo;
    TA_RetCode retCode;
    TA_WebPage *webPage;
 
-   (void)opaqueData; /* Get ride of compiler warning. */
    (void)data; /* Get ride of compiler warning. */
    (void)column; /* Get ride of compiler warning. */
    (void)line; /* Get ride of compiler warning. */
@@ -1719,19 +1841,35 @@ static TA_RetCode processIndex( TA_Libc *libHandle,
 
    if( *href != '\0' )
    {
+      tableParseInfo = (TA_TableParseOpaqueData *)opaqueData;
+
       /* Trap the case where the table does not appear to be right.
        * This may happen if there is no additional index
        * index on this page (Typically the page Y,Z)
        */
-      if( strncmp( "/i/", href, 3 ) != 0 )
+      switch( tableParseInfo->countryId )
       {
-         retCode = TA_FINISH_TABLE;
-         goto Exit_processIndex;
+      case TA_Country_ID_US:
+      case TA_Country_ID_CA:
+         if( strncmp( "/i/", href, 3 ) != 0 )
+         {
+            retCode = TA_FINISH_TABLE;
+            goto Exit_processIndex;
+         }
+         break;
+      default:         
+         if( (strncmp( "/p/", href, 3 ) != 0) || (strncmp( "uk/cpi/cpi", &href[3], 10) != 0) )
+         {
+            retCode = TA_FINISH_TABLE;
+            goto Exit_processIndex;
+         }
+         break;
       }
+
 
       printf( "Processing web page [%s]                                 \n", &href[3] );
 
-      retCode = TA_WebPageAlloc( libHandle, "biz.yahoo.com",
+      retCode = TA_WebPageAlloc( libHandle, tableParseInfo->serverName,
                                  href,
                                  NULL, NULL,
                                  &webPage, 2 );
@@ -1754,7 +1892,9 @@ Exit_processIndex:
 static TA_RetCode addSymbolsFromWebPage( TA_Libc *libHandle, TA_WebPage *webPage, void *opaqueData )
 {
    TA_RetCode retCode;
+   unsigned int i;
 
+   TA_TableParseOpaqueData *tableParseInfo;
    TA_StreamAccess *access;
 
    (void)libHandle;
@@ -1766,11 +1906,41 @@ static TA_RetCode addSymbolsFromWebPage( TA_Libc *libHandle, TA_WebPage *webPage
    if( !access )
       return TA_ALLOC_ERR;
 
-   retCode = TA_StreamAccessSearch( access, "value=search" );
-   if( retCode != TA_SUCCESS )
+   /* Position on the table containing all the symbols. */
+   tableParseInfo = (TA_TableParseOpaqueData *)opaqueData;
+   switch( tableParseInfo->countryId )
    {
-      TA_StreamAccessFree( access );
-      return retCode;
+   case TA_Country_ID_US:
+   case TA_Country_ID_CA:
+      retCode = TA_StreamAccessSearch( access, "value=search" );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_StreamAccessFree( access );
+         return retCode;
+      }
+      break;
+
+   default:
+      for( i=0; i < 8; i++ )
+      {
+         retCode = TA_StreamAccessSkipHTMLTable( access );
+         if( retCode != TA_SUCCESS )
+         {
+            TA_StreamAccessFree( access );
+            return retCode;
+         }
+      }
+
+      for( i=0; i < 2; i++ )
+      {
+         retCode = TA_StreamAccessSearch( access, "<p>" );
+         if( retCode != TA_SUCCESS )
+         {
+            TA_StreamAccessFree( access );
+            return retCode;
+         }
+      }
+      break;
    }
 
    /* Now parse the symbol table. */
@@ -1793,6 +1963,7 @@ static TA_RetCode addTheSymbolFromWebPage( TA_Libc *libHandle,
    TA_String *symbol;
    TA_StringCache *stringCache;
    const char *abbrev;
+   int allowOnlineProcessing;
 
    (void)line; /* Get ride of compiler warning. */
    (void)libHandle;
@@ -1805,9 +1976,21 @@ static TA_RetCode addTheSymbolFromWebPage( TA_Libc *libHandle,
          tableParseInfo = (TA_TableParseOpaqueData *)opaqueData;
 
          /* Convert from Yahoo! classification to the TA-LIB classification. */
+
+         /* Go online only when processing US stocks. All other
+          * country have extension allowing to identify the
+          * exchange so there is no need to do additional online
+          * processign to identify the exchange.
+          */          
+         if( tableParseInfo->countryId == TA_Country_ID_US )
+            allowOnlineProcessing = 1;
+         else
+            allowOnlineProcessing = 0;
+
          retCode = TA_AllocStringFromYahooName( libHandle,
                                                 &defaultMarketDecoding,
-                                                data, &category, &symbol );
+                                                data, &category, &symbol,
+                                                allowOnlineProcessing );
 
          if( retCode != TA_SUCCESS && retCode != TA_INVALID_SECURITY_EXCHANGE )
             return retCode;
