@@ -231,9 +231,25 @@ TA_RetCode TA_WebPageAlloc( TA_Libc       *libHandle,
 
    for( i=0; i < nbAttempt; i++ )
    {
+      if( i > 0 )
+      {
+         /* Some delay before a new attempt. 
+          * We do not want to irritate the server.
+          * Wait up to 20 seconds.
+          */
+         j = i*2;
+         if( j > 20 ) j = 20;
+         TA_Sleep( j ); 
+      }
+
       /* On data retreival problems, keep retrying
-       * many times. All other failure will be
-       * retry only "nbAttempt" times.
+       * many times. TA_INTERNET_READ_DATA_FAILED means
+       * that the server can be reached, but somehow the 
+       * transmission of the data was interupted. So it is
+       * worth to give multiple re-try immediatly.
+       *
+       * All other type of failure will retry
+       * only "nbAttempt" times.
        */
       retCode = TA_INTERNET_READ_DATA_FAILED;
       for( j=0; (retCode == TA_INTERNET_READ_DATA_FAILED) && (j < 100); j++ )
@@ -244,6 +260,8 @@ TA_RetCode TA_WebPageAlloc( TA_Libc       *libHandle,
                                          proxyName,
                                          proxyPort,
                                          webPageAllocated );
+         if( retCode == TA_INTERNET_READ_DATA_FAILED )
+            TA_Sleep( 1 ); /* 1 second */
       }
 
       if( retCode == TA_SUCCESS )
@@ -638,6 +656,17 @@ static TA_RetCode fetchUsingWinInet( TA_Libc *libHandle,
 
    if( !hSession )
    {
+      /* Did not work.... mmmm.... always try a second time. */
+      hSession = InternetConnect( global->hInternet,
+                                  webPageHidden->webSiteAddr,
+                                  INTERNET_DEFAULT_HTTP_PORT,
+                                  NULL, NULL,
+                                  (unsigned long)INTERNET_SERVICE_HTTP,
+                                  0, 0 );
+   }
+
+   if( !hSession )
+   {
       TA_TRACE_RETURN( TA_INTERNET_SERVER_CONNECT_FAILED );
    }
    else
@@ -647,9 +676,11 @@ static TA_RetCode fetchUsingWinInet( TA_Libc *libHandle,
                                  NULL,
                                  NULL,
                                  NULL,
-                                 INTERNET_FLAG_NO_CACHE_WRITE|
+                                 INTERNET_FLAG_NEED_FILE|
+                                 INTERNET_FLAG_CACHE_IF_NET_FAIL|                                 
+                                 INTERNET_FLAG_NO_UI|
                                  INTERNET_FLAG_NO_COOKIES|
-                                 INTERNET_FLAG_RELOAD,
+                                 INTERNET_FLAG_RESYNCHRONIZE,
                                  0 );
       if( !hWebPage )
          retCode = TA_INTERNET_OPEN_REQUEST_FAILED;
