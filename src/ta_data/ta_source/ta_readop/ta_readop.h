@@ -110,6 +110,9 @@ typedef struct
    const char *sourceInfo;
    TA_Period period;
 
+   /* Parameter that was used at creation */
+   unsigned int readOpFlags;   
+
    /* The following array describes the series of operations that needs
     * to be performed for reading one line of the ASCII files.
     */
@@ -146,6 +149,9 @@ TA_RetCode TA_ReadOp_Do( TA_FileHandle       *fileHandle,
                          unsigned int        *nbBarAdded );
 
 unsigned int TA_ReadOpToField( TA_ReadOp readOp );
+
+/* Allocate a new readOpInfo from an existing one. */
+TA_RetCode TA_ReadOpInfoClone( TA_ReadOpInfo **allocatedInfo, TA_ReadOpInfo *src );
 
  /* See ta_readop_estalloc.c */
 typedef struct
