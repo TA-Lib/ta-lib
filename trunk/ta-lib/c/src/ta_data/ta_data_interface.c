@@ -43,6 +43,8 @@
  *  MMDDYY BY      Description
  *  -------------------------------------------------------------------
  *  110199 MF      First version.
+ *  011204 MF      Now use addDataSourceParamPriv and check for
+ *                 new SPLIT/VALUE adjust flags.
  */
 
 /* Decription:
@@ -92,7 +94,7 @@ typedef struct
    /* Keep a copy of the parameters who were used
     * to initialize this data source.
     */
-   TA_AddDataSourceParamPriv *param;
+   TA_AddDataSourceParamPriv *addDataSourceParamPriv;
 
    /* Initialize by the data source driver. */
    TA_DataSourceHandle *sourceHandle;
@@ -132,7 +134,7 @@ typedef struct
 
 /**** Local functions declarations.    ****/
 static TA_DataSource *allocDataSourceForGlobal( TA_UDBasePriv *privUDB,
-                                                TA_AddDataSourceParamPriv *param,
+                                                TA_AddDataSourceParamPriv *addDataSourceParamPriv,
                                                 TA_DataSourceHandle *sourceHandle,
                                                 TA_List *listCategoryHandle );
 
@@ -155,7 +157,7 @@ static void freeCategoryData( void *toBeFreed );
 
 static TA_RetCode processCategoryAndSymbols( TA_UDBasePriv *privUDB,
                                              const TA_DataSourceDriver *driver,
-                                             TA_SourceId format,
+                                             const TA_AddDataSourceParamPriv *addDataSourceParamPriv,
                                              TA_DataSourceHandle *sourceHandle,
                                              TA_CategoryHandle   *categoryHandle );
 
@@ -407,7 +409,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
 
    TA_DataGlobal *global;
 
-   TA_AddDataSourceParamPriv *paramPriv;
+   TA_AddDataSourceParamPriv *addDataSourceParamPriv;
 
    unsigned int again; /* Boolean */
 
@@ -492,29 +494,41 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
       TA_TRACE_RETURN( TA_UNSUPPORTED_REPLACE_ZERO_PRICE_BAR );
    }
 
+   if( (param->flags           & TA_DO_NOT_SPLIT_ADJUST) && 
+      !(dataSourceParams.flags & TA_DO_NOT_SPLIT_ADJUST) )
+   {
+      TA_TRACE_RETURN( TA_UNSUPPORTED_DO_NOT_SPLIT_ADJUST );
+   }
+
+   if( (param->flags           & TA_DO_NOT_VALUE_ADJUST) && 
+      !(dataSourceParams.flags & TA_DO_NOT_VALUE_ADJUST) )
+   {
+      TA_TRACE_RETURN( TA_UNSUPPORTED_DO_NOT_VALUE_ADJUST );
+   }
+
    /* Open the source. */
    
    /* Allocate a private copy of the parameters. This function
     * will also set the default values if not provided by the
     * caller. (particularly the category string).
     */
-   paramPriv = TA_AddDataSourceParamPrivAlloc( param );
-   if( !paramPriv )
+   addDataSourceParamPriv = TA_AddDataSourceParamPrivAlloc( param );
+   if( !addDataSourceParamPriv )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
-   retCode = driver->openSource( paramPriv, &sourceHandle );
+   retCode = driver->openSource( addDataSourceParamPriv, &sourceHandle );
    if( retCode != TA_SUCCESS )
    {
-      TA_AddDataSourceParamPrivFree( paramPriv );
+      TA_AddDataSourceParamPrivFree( addDataSourceParamPriv );
       TA_TRACE_RETURN( retCode );
    }
 
    /* Just check the handle to make sure. */
    if( sourceHandle == NULL )
    {
-      TA_AddDataSourceParamPrivFree( paramPriv );
+      TA_AddDataSourceParamPrivFree( addDataSourceParamPriv );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
@@ -528,7 +542,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
       {
          if( driver->closeSource )
             driver->closeSource( sourceHandle );
-         TA_AddDataSourceParamPrivFree( paramPriv );
+         TA_AddDataSourceParamPrivFree( addDataSourceParamPriv );
          TA_TRACE_RETURN( TA_INTERNAL_ERROR(24) );
       }
 
@@ -536,7 +550,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
       {
          if( driver->closeSource )
             driver->closeSource( sourceHandle );
-         TA_AddDataSourceParamPrivFree( paramPriv );
+         TA_AddDataSourceParamPrivFree( addDataSourceParamPriv );
          TA_TRACE_RETURN( TA_INTERNAL_ERROR(25) );
       }
 
@@ -545,7 +559,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
       {
          if( driver->closeSource )
             driver->closeSource( sourceHandle );
-         TA_AddDataSourceParamPrivFree( paramPriv );
+         TA_AddDataSourceParamPrivFree( addDataSourceParamPriv );
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
 
@@ -560,7 +574,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
             freeListAndElement( tmpListCategory, freeCategoryHandle );
             if( driver->closeSource )
                driver->closeSource( sourceHandle );
-            TA_AddDataSourceParamPrivFree( paramPriv );
+            TA_AddDataSourceParamPrivFree( addDataSourceParamPriv );
             TA_TRACE_RETURN( TA_ALLOC_ERR );
          }
 
@@ -588,13 +602,13 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
             TA_Free(  categoryHandle );
             if( driver->closeSource )
                driver->closeSource( sourceHandle );
-            TA_AddDataSourceParamPrivFree( paramPriv );
+            TA_AddDataSourceParamPrivFree( addDataSourceParamPriv );
             TA_TRACE_RETURN( retCode );
          }
          else
          {
             retCode = processCategoryAndSymbols( privUDB,
-                                                 driver, paramPriv->id,
+                                                 driver, addDataSourceParamPriv,
                                                  sourceHandle,
                                                  categoryHandle );
 
@@ -604,7 +618,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
                TA_Free(  categoryHandle );
                if( driver->closeSource )
                   driver->closeSource( sourceHandle );
-               TA_AddDataSourceParamPrivFree( paramPriv );
+               TA_AddDataSourceParamPrivFree( addDataSourceParamPriv );
                TA_TRACE_RETURN( retCode );
             }
 
@@ -618,7 +632,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
                TA_Free(  categoryHandle );
                if( driver->closeSource )
                   driver->closeSource( sourceHandle );
-               TA_AddDataSourceParamPrivFree( paramPriv );
+               TA_AddDataSourceParamPrivFree( addDataSourceParamPriv );
                TA_TRACE_RETURN( retCode );
             }
          }
@@ -627,7 +641,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
 
    /* Keep track of that source in the listDataSource. */
    dataSource = allocDataSourceForGlobal( privUDB,
-                                          paramPriv,
+                                          addDataSourceParamPriv,
                                           sourceHandle,
                                           tmpListCategory );
    if( !dataSource )
@@ -635,7 +649,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
       freeListAndElement( tmpListCategory, freeCategoryHandle );
       if( driver->closeSource )
          driver->closeSource( sourceHandle );
-      TA_AddDataSourceParamPrivFree( paramPriv );
+      TA_AddDataSourceParamPrivFree( addDataSourceParamPriv );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
@@ -1031,7 +1045,7 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
 
    privUDB = (TA_UDBasePriv *)unifiedDatabase;
 
-   TA_TRACE_BEGIN(  TA_HistoryAlloc );
+   TA_TRACE_BEGIN( TA_HistoryAlloc );
 
    if( (history == NULL) || (symbol == NULL) )
    {
@@ -1103,6 +1117,8 @@ TA_RetCode TA_HistoryFree( TA_History *history )
    TA_UDBasePriv *privUDB;
    TA_HistoryHiddenData *hiddenData;
 
+   TA_TRACE_BEGIN( TA_HistoryFree );
+
    if( !history || !history->hiddenData )       
       return TA_BAD_PARAM;
 
@@ -1111,30 +1127,14 @@ TA_RetCode TA_HistoryFree( TA_History *history )
    if( !privUDB )
       return TA_INTERNAL_ERROR(29);
    
-   TA_TRACE_BEGIN( TA_HistoryFree );
-
    /* Free all ressources. */
-   if( history->timestamp )
-      TA_Free(  (void *)history->timestamp );
-
-   if( history->open )
-      TA_Free(  (void *)history->open );
-
-   if( history->high )
-      TA_Free(  (void *)history->high );
-
-   if( history->low )
-      TA_Free(  (void *)history->low );
-
-   if( history->close )
-      TA_Free(  (void *)history->close );
-
-   if( history->volume )
-      TA_Free(  (void *)history->volume );
-
-   if( history->openInterest )
-      TA_Free(  (void *)history->openInterest );
-
+   FREE_IF_NOT_NULL( hiddenData->timestamp );
+   FREE_IF_NOT_NULL( hiddenData->close );
+   FREE_IF_NOT_NULL( hiddenData->open );
+   FREE_IF_NOT_NULL( hiddenData->high );
+   FREE_IF_NOT_NULL( hiddenData->low );
+   FREE_IF_NOT_NULL( hiddenData->volume );
+   FREE_IF_NOT_NULL( hiddenData->openInterest );
    TA_Free( (void *)hiddenData );
    TA_Free( (void *)history );
 
@@ -1333,9 +1333,9 @@ static TA_RetCode closeAllDataSource( TA_UDBasePriv *privUDB )
    dataSource = (TA_DataSource *)TA_ListRemoveTail( listDataSource );
    while( dataSource )
    {
-      TA_ASSERT( dataSource->param->id < TA_NUM_OF_SOURCE_ID );
+      TA_ASSERT( dataSource->addDataSourceParamPriv->id < TA_NUM_OF_SOURCE_ID );
 
-      driver = &TA_gDataSourceTable[dataSource->param->id];
+      driver = &TA_gDataSourceTable[dataSource->addDataSourceParamPriv->id];
 
       if( driver->closeSource )
       {
@@ -1343,8 +1343,8 @@ static TA_RetCode closeAllDataSource( TA_UDBasePriv *privUDB )
             driver->closeSource( dataSource->sourceHandle );
       }
 
-      if( dataSource->param )
-         TA_AddDataSourceParamPrivFree( dataSource->param );
+      if( dataSource->addDataSourceParamPriv )
+         TA_AddDataSourceParamPrivFree( dataSource->addDataSourceParamPriv );
 
       if( dataSource->listCategoryHandle )
          freeListAndElement( dataSource->listCategoryHandle, freeCategoryHandle );
@@ -1600,7 +1600,7 @@ static void freeSymbolData( void *toBeFreed )
 
 static TA_RetCode processCategoryAndSymbols( TA_UDBasePriv *privUDB,
                                              const TA_DataSourceDriver *driver,
-                                             TA_SourceId format,
+                                             const TA_AddDataSourceParamPriv *addDataSourceParamPriv,
                                              TA_DataSourceHandle *sourceHandle,
                                              TA_CategoryHandle   *categoryHandle )
 {
@@ -1658,9 +1658,10 @@ static TA_RetCode processCategoryAndSymbols( TA_UDBasePriv *privUDB,
       {
          /* Initialize the TA_UDB_Driver for this symbol. */
          currentUDBDriver = &theUDBDriverArray[symbolIndex];
-         currentUDBDriver->index = format;
          currentUDBDriver->sourceHandle  = sourceHandle;
          currentUDBDriver->categoryHandle = categoryHandle;
+         currentUDBDriver->addDataSourceParamPriv = addDataSourceParamPriv;
+
          /* Ask the driver to fill the symbolHandle information. */
          symbolHandle = &(currentUDBDriver->symbolHandle);
          if( symbolIndex == 0 )
@@ -1746,7 +1747,7 @@ static TA_RetCode freeCategoryHandle( void *toBeFreed )
 }
 
 static TA_DataSource *allocDataSourceForGlobal( TA_UDBasePriv *privUDB,
-                                                TA_AddDataSourceParamPriv *param,
+                                                TA_AddDataSourceParamPriv *addDataSourceParamPriv,
                                                 TA_DataSourceHandle *sourceHandle,
                                                 TA_List *listCategoryHandle )
 {
@@ -1763,7 +1764,7 @@ static TA_DataSource *allocDataSourceForGlobal( TA_UDBasePriv *privUDB,
 
    memset( dataSource, 0, sizeof( TA_DataSource ) );
 
-   dataSource->param = param;
+   dataSource->addDataSourceParamPriv = addDataSourceParamPriv;
    dataSource->sourceHandle = sourceHandle;
    dataSource->listCategoryHandle = listCategoryHandle;
 
