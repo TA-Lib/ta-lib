@@ -116,6 +116,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_EMA.c \
 		..\..\..\..\..\src\ta_func\ta_KAMA.c \
 		..\..\..\..\..\src\ta_func\ta_MA.c \
+		..\..\..\..\..\src\ta_func\ta_MAMA.c \
 		..\..\..\..\..\src\ta_func\ta_MIDPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_MIDPOINT.c \
 		..\..\..\..\..\src\ta_func\ta_SAR.c \
@@ -151,6 +152,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_STOCHF.c \
 		..\..\..\..\..\src\ta_func\ta_TRIX.c \
 		..\..\..\..\..\src\ta_func\ta_WILLR.c \
+		..\..\..\..\..\src\ta_func\ta_AD.c \
+		..\..\..\..\..\src\ta_func\ta_ADOSC.c \
 		..\..\..\..\..\src\ta_func\ta_OBV.c \
 		..\..\..\..\..\src\ta_func\ta_STDDEV.c \
 		..\..\..\..\..\src\ta_func\ta_VAR.c \
@@ -260,6 +263,7 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\ta_EMA.obj \
 		..\..\..\..\..\temp\cmd\ta_KAMA.obj \
 		..\..\..\..\..\temp\cmd\ta_MA.obj \
+		..\..\..\..\..\temp\cmd\ta_MAMA.obj \
 		..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj \
 		..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj \
 		..\..\..\..\..\temp\cmd\ta_SAR.obj \
@@ -295,6 +299,8 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\ta_STOCHF.obj \
 		..\..\..\..\..\temp\cmd\ta_TRIX.obj \
 		..\..\..\..\..\temp\cmd\ta_WILLR.obj \
+		..\..\..\..\..\temp\cmd\ta_AD.obj \
+		..\..\..\..\..\temp\cmd\ta_ADOSC.obj \
 		..\..\..\..\..\temp\cmd\ta_OBV.obj \
 		..\..\..\..\..\temp\cmd\ta_STDDEV.obj \
 		..\..\..\..\..\temp\cmd\ta_VAR.obj \
@@ -449,6 +455,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_EMA.obj
 	-del ..\..\..\..\..\temp\cmd\ta_KAMA.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MA.obj
+	-del ..\..\..\..\..\temp\cmd\ta_MAMA.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj
 	-del ..\..\..\..\..\temp\cmd\ta_SAR.obj
@@ -484,6 +491,8 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_STOCHF.obj
 	-del ..\..\..\..\..\temp\cmd\ta_TRIX.obj
 	-del ..\..\..\..\..\temp\cmd\ta_WILLR.obj
+	-del ..\..\..\..\..\temp\cmd\ta_AD.obj
+	-del ..\..\..\..\..\temp\cmd\ta_ADOSC.obj
 	-del ..\..\..\..\..\temp\cmd\ta_OBV.obj
 	-del ..\..\..\..\..\temp\cmd\ta_STDDEV.obj
 	-del ..\..\..\..\..\temp\cmd\ta_VAR.obj
@@ -797,6 +806,9 @@ clean:
 ..\..\..\..\..\temp\cmd\ta_MA.obj: ..\..\..\..\..\src\ta_func\ta_MA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_MA.obj ..\..\..\..\..\src\ta_func\ta_MA.c
 
+..\..\..\..\..\temp\cmd\ta_MAMA.obj: ..\..\..\..\..\src\ta_func\ta_MAMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_MAMA.obj ..\..\..\..\..\src\ta_func\ta_MAMA.c
+
 ..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj: ..\..\..\..\..\src\ta_func\ta_MIDPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj ..\..\..\..\..\src\ta_func\ta_MIDPRICE.c
 
@@ -901,6 +913,12 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_WILLR.obj: ..\..\..\..\..\src\ta_func\ta_WILLR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_WILLR.obj ..\..\..\..\..\src\ta_func\ta_WILLR.c
+
+..\..\..\..\..\temp\cmd\ta_AD.obj: ..\..\..\..\..\src\ta_func\ta_AD.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_AD.obj ..\..\..\..\..\src\ta_func\ta_AD.c
+
+..\..\..\..\..\temp\cmd\ta_ADOSC.obj: ..\..\..\..\..\src\ta_func\ta_ADOSC.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_ADOSC.obj ..\..\..\..\..\src\ta_func\ta_ADOSC.c
 
 ..\..\..\..\..\temp\cmd\ta_OBV.obj: ..\..\..\..\..\src\ta_func\ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_OBV.obj ..\..\..\..\..\src\ta_func\ta_OBV.c

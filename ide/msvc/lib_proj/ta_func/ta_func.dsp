@@ -224,6 +224,14 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_AD.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_ADOSC.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_ADX.c
 # End Source File
 # Begin Source File
@@ -289,6 +297,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_MACDEXT.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_MACDFIX.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MAMA.c
 # End Source File
 # Begin Source File
 

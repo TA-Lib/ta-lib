@@ -67,6 +67,13 @@ TA_RetCode TA_MA_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer           *outNbElement )
 ;
 
+TA_RetCode TA_MAMA_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
 TA_RetCode TA_MIDPRICE_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
                           TA_Integer            endIdx,
@@ -306,6 +313,20 @@ TA_RetCode TA_TRIX_FramePP( const TA_ParamHolderPriv *params,
 ;
 
 TA_RetCode TA_WILLR_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
+TA_RetCode TA_AD_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
+TA_RetCode TA_ADOSC_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
                           TA_Integer            endIdx,
                           TA_Integer           *outBegIdx,

@@ -30,6 +30,7 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_EMA.c \ 
           ../../../../../src/ta_func/ta_KAMA.c \ 
           ../../../../../src/ta_func/ta_MA.c \ 
+          ../../../../../src/ta_func/ta_MAMA.c \ 
           ../../../../../src/ta_func/ta_MIDPRICE.c \ 
           ../../../../../src/ta_func/ta_MIDPOINT.c \ 
           ../../../../../src/ta_func/ta_SAR.c \ 
@@ -65,6 +66,8 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_STOCHF.c \ 
           ../../../../../src/ta_func/ta_TRIX.c \ 
           ../../../../../src/ta_func/ta_WILLR.c \ 
+          ../../../../../src/ta_func/ta_AD.c \ 
+          ../../../../../src/ta_func/ta_ADOSC.c \ 
           ../../../../../src/ta_func/ta_OBV.c \ 
           ../../../../../src/ta_func/ta_STDDEV.c \ 
           ../../../../../src/ta_func/ta_VAR.c \ 
