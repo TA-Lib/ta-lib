@@ -270,6 +270,7 @@ static int testTAFunction_ALL( TA_History *history )
          return retValue; \
       printf( "done.\n" ); \
       }
+   DO_TEST( test_func_stoch,    "STOCH,STOCHF,STOCHRSI" );
    DO_TEST( test_func_per_hl,   "AROON,CORREL" );
    DO_TEST( test_func_rsi,      "RSI" );
    DO_TEST( test_func_per_hlc,  "CCI,WILLR" );
@@ -278,7 +279,6 @@ static int testTAFunction_ALL( TA_History *history )
    DO_TEST( test_func_ma,       "All Moving Averages" );
    DO_TEST( test_func_1in_2out, "Function Group 1-2" );
    DO_TEST( test_func_per_ema,  "TRIX" );
-   DO_TEST( test_func_stoch,    "STOCH,STOCHF" );
    DO_TEST( test_func_minmax,   "MIN,MAX" );
    DO_TEST( test_func_macd,     "MACD,MACDFIX,MACDEXT" );
    DO_TEST( test_func_mom_roc,  "MOM,ROC,ROCP,ROCR,ROCR100" );

@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  122101 MF   First version.
- *
+ *  111603 MF   Add test of TA_STOCHRSI
  */
 
 /* Description:
@@ -69,8 +69,17 @@
 /* None */
 
 /**** Local declarations.              ****/
+typedef enum
+{
+  TEST_STOCH,
+  TEST_STOCHF,
+  TEST_STOCHRSI
+} TestId;
+
 typedef struct
 {
+   TestId testId;
+
    TA_Integer doRangeTestFlag; /* One will do a call to doRangeTest */
 
    TA_Integer unstablePeriod;
@@ -78,11 +87,11 @@ typedef struct
    TA_Integer startIdx;
    TA_Integer endIdx;
 
-   TA_Integer    optInFastK_Period_0;
-   TA_Integer    optInSlowK_Period;
-   TA_Integer    optInSlowK_MAType_2;
-   TA_Integer    optInSlowD_Period_3;
-   TA_Integer    optInSlowD_MAType_4;
+   TA_Integer    optInPeriod_0;
+   TA_Integer    optInPeriod_1;
+   TA_Integer    optInMAType_1;
+   TA_Integer    optInPeriod_2;
+   TA_Integer    optInMAType_2;
 
    TA_RetCode expectedRetCode;
 
@@ -113,11 +122,11 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
                                   const TA_Real inHigh[],
                                   const TA_Real inLow[],
                                   const TA_Real inClose[],
-                                  TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                                  TA_Integer    optInSlowK_Period, /* From 1 to TA_INTEGER_MAX */
-                                  TA_Integer    optInSlowK_MAType_2,
-                                  TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
-                                  TA_Integer    optInSlowD_MAType_4,
+                                  TA_Integer    optInPeriod_0, /* From 1 to TA_INTEGER_MAX */
+                                  TA_Integer    optInPeriod_1, /* From 1 to TA_INTEGER_MAX */
+                                  TA_Integer    optInMAType_1,
+                                  TA_Integer    optInPeriod_2, /* From 1 to TA_INTEGER_MAX */
+                                  TA_Integer    optInMAType_2,
                                   TA_Integer   *outBegIdx,
                                   TA_Integer   *outNbElement,
                                   TA_Real       outSlowK_0[],
@@ -127,25 +136,57 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
 
 static TA_Test tableTest[] =
 {
-   /**********************/
-   /*      STOCH TEST    */
-   /**********************/
-   { 1, 0, 9, 9, 5, 3, TA_MAType_SMA, 4, TA_MAType_SMA, TA_SUCCESS,  9,  1,
+   /**************/
+   /* STOCH TEST */
+   /**************/
+   { TEST_STOCH, 1, 0, 9, 9, 5, 3, TA_MAType_SMA, 4, TA_MAType_SMA, TA_SUCCESS,  9,  1,
                                                         0, 38.139,  
-                                                        0, 36.725  }, /* First Value */
+                                                        0, 36.725  }, /* Test one value */
 
 
-   { 0, 0, 0, 251, 5, 3, TA_MAType_SMA, 4, TA_MAType_SMA, TA_SUCCESS,  9,  252-9,
-                                                          252-10, 30.194, 
-                                                          252-10, 46.641,   }, /* Last Value */
-
-   { 1, 0, 0, 251, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, TA_SUCCESS,  8,  252-8,
+   { TEST_STOCH, 0, 0, 0, 251, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, TA_SUCCESS,  8,  252-8,
                                                           0, 24.0128,  
                                                           0, 36.254,   }, /* First Value */
 
-   { 0, 0, 0, 251, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, TA_SUCCESS,  8,  252-8,
+   { TEST_STOCH, 0, 0, 0, 251, 5, 3, TA_MAType_SMA, 4, TA_MAType_SMA, TA_SUCCESS,  9,  252-9,
+                                                          252-10, 30.194, 
+                                                          252-10, 46.641,   }, /* Last Value */
+
+   { TEST_STOCH, 0, 0, 0, 251, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, TA_SUCCESS,  8,  252-8,
                                                           252-9, 30.194, 
-                                                          252-9, 43.69,   } /* Last Value */
+                                                          252-9, 43.69,   }, /* Last Value */
+
+   /*****************/
+   /* STOCHRSI TEST */
+   /*****************/
+   { TEST_STOCHRSI, 0, 0, 27, 27, 14, 14, -1, 1, TA_MAType_SMA, TA_SUCCESS,  27,  1,
+                                                 0, 94.156709,  
+                                                 0, 94.156709 }, /* Test one Value */
+
+   { TEST_STOCHRSI, 1, 0, 0, 251, 14, 14, -1, 1, TA_MAType_SMA, TA_SUCCESS,  27,  252-27,
+                                                 0, 94.156709,  
+                                                 0, 94.156709 }, /* First Value */
+
+   { TEST_STOCHRSI, 0, 0, 0, 251, 14, 14, -1, 1, TA_MAType_SMA, TA_SUCCESS,  27,  252-27,
+                                                 251-27, 0.0,  
+                                                 251-27, 0.0 }, /* Last Value */
+
+   { TEST_STOCHRSI, 0, 0, 0, 251, 14, 45, -1, 1, TA_MAType_SMA, TA_SUCCESS,  58,  252-58,
+                                                 0, 79.729186,  
+                                                 0, 79.729186 }, /* First Value */
+
+   { TEST_STOCHRSI, 0, 0, 0, 251, 14, 45, -1, 1, TA_MAType_SMA, TA_SUCCESS,  58,  252-58,
+                                                 251-58, 48.1550743, 
+                                                 251-58, 48.1550743 }, /* Last Value */
+
+
+   { TEST_STOCHRSI, 1, 0, 0, 251, 11, 13, -1, 16, TA_MAType_SMA, TA_SUCCESS,  38,  252-38,
+                                                 0, 5.25947,  
+                                                 0, 57.1711}, /* First Value */
+
+   { TEST_STOCHRSI, 0, 0, 0, 251, 11, 13, -1, 16, TA_MAType_SMA, TA_SUCCESS,  38,  252-38,
+                                                 251-38, 0.0, 
+                                                 251-38, 15.7303 }, /* Last Value */
 
     /* More test needed!!! */
 };
@@ -205,50 +246,87 @@ static TA_RetCode rangeTestFunction(
 
 
   dummyOutput = TA_Malloc( (endIdx-startIdx+1) * sizeof(TA_Real) );
-                     
-  if( outputNb == 0 )
-  {
-     retCode = TA_STOCH(
-                         startIdx,
-                         endIdx,
-                         testParam->high,
-                         testParam->low,
-                         testParam->close,
-                         testParam->test->optInFastK_Period_0,
-                         testParam->test->optInSlowK_Period,
-                         testParam->test->optInSlowK_MAType_2,
-                         testParam->test->optInSlowD_Period_3,
-                         testParam->test->optInSlowD_MAType_4,
-                         outBegIdx, outNbElement,
-                         outputBuffer,
-                         dummyOutput );
+              
+  switch( testParam->test->testId )
+  {       
+  case TEST_STOCH:
+     if( outputNb == 0 )
+     {
+        retCode = TA_STOCH( startIdx,
+                            endIdx,
+                            testParam->high,
+                            testParam->low,
+                            testParam->close,
+                            testParam->test->optInPeriod_0,
+                            testParam->test->optInPeriod_1,
+                            testParam->test->optInMAType_1,
+                            testParam->test->optInPeriod_2,
+                            testParam->test->optInMAType_2,
+                            outBegIdx, outNbElement,
+                            outputBuffer,
+                            dummyOutput );
 
+      }
+      else
+      {
+        retCode = TA_STOCH( startIdx,
+                            endIdx,
+                            testParam->high,
+                            testParam->low,
+                            testParam->close,
+                            testParam->test->optInPeriod_0,
+                            testParam->test->optInPeriod_1,
+                            testParam->test->optInMAType_1,
+                            testParam->test->optInPeriod_2,
+                            testParam->test->optInMAType_2,
+                            outBegIdx, outNbElement,
+                            dummyOutput, 
+                            outputBuffer );
+      }
+
+      *lookback = TA_STOCH_Lookback( testParam->test->optInPeriod_0,
+                            testParam->test->optInPeriod_1,
+                            testParam->test->optInMAType_1,
+                            testParam->test->optInPeriod_2,
+                            testParam->test->optInMAType_2 );
+      break;
+   case TEST_STOCHRSI:
+     if( outputNb == 0 )
+     {
+        retCode = TA_STOCHRSI( startIdx,
+                            endIdx,
+                            testParam->close,
+                            testParam->test->optInPeriod_0,
+                            testParam->test->optInPeriod_1,
+                            testParam->test->optInPeriod_2,
+                            testParam->test->optInMAType_2,
+                            outBegIdx, outNbElement,
+                            outputBuffer,
+                            dummyOutput );
+
+      }
+      else
+      {
+        retCode = TA_STOCHRSI( startIdx,
+                            endIdx,
+                            testParam->close,
+                            testParam->test->optInPeriod_0,
+                            testParam->test->optInPeriod_1,
+                            testParam->test->optInPeriod_2,
+                            testParam->test->optInMAType_2,
+                            outBegIdx, outNbElement,
+                            dummyOutput, 
+                            outputBuffer );
+      }
+
+      *lookback = TA_STOCHRSI_Lookback( testParam->test->optInPeriod_0,
+                            testParam->test->optInPeriod_1,
+                            testParam->test->optInPeriod_2,
+                            testParam->test->optInMAType_2 );
+      break;
    }
-   else
-   {
-     retCode = TA_STOCH(
-                         startIdx,
-                         endIdx,
-                         testParam->high,
-                         testParam->low,
-                         testParam->close,
-                         testParam->test->optInFastK_Period_0,
-                         testParam->test->optInSlowK_Period,
-                         testParam->test->optInSlowK_MAType_2,
-                         testParam->test->optInSlowD_Period_3,
-                         testParam->test->optInSlowD_MAType_4,
-                         outBegIdx, outNbElement,
-                         dummyOutput, 
-                         outputBuffer );
-   }
 
-   TA_Free(  dummyOutput );
-
-   *lookback = TA_STOCH_Lookback( testParam->test->optInFastK_Period_0,
-                         testParam->test->optInSlowK_Period,
-                         testParam->test->optInSlowK_MAType_2,
-                         testParam->test->optInSlowD_Period_3,
-                         testParam->test->optInSlowD_MAType_4 );
+   TA_Free( dummyOutput );
 
    return retCode;
 }
@@ -270,8 +348,11 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 1, history->low,   history->nbBars );
    setInputBuffer( 2, history->close, history->nbBars );
    
+   /* Re-initialize all the unstable period to zero. */
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+
    /* Set the unstable period requested for that test. */
-   switch( test->optInSlowK_MAType_2 )
+   switch( test->optInMAType_1 )
    {
    case TA_MAType_EMA:
       retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, test->unstablePeriod );
@@ -284,20 +365,37 @@ static ErrorNumber do_test( const TA_History *history,
    }
 
    /* Make a simple first call. */
-   retCode = TA_STOCH( test->startIdx,
-                       test->endIdx,
-                       gBuffer[0].in,
-                       gBuffer[1].in,
-                       gBuffer[2].in,
-                       test->optInFastK_Period_0,
-                       test->optInSlowK_Period,
-                       test->optInSlowK_MAType_2,
-                       test->optInSlowD_Period_3,
-                       test->optInSlowD_MAType_4,
-                       &outBegIdx, &outNbElement,
-                       gBuffer[0].out0, 
-                       gBuffer[0].out1 );
-                       
+   switch( test->testId )
+   {
+   case TEST_STOCH:
+      retCode = TA_STOCH( test->startIdx,
+                          test->endIdx,
+                          gBuffer[0].in,
+                          gBuffer[1].in,
+                          gBuffer[2].in,
+                          test->optInPeriod_0,
+                          test->optInPeriod_1,
+                          test->optInMAType_1,
+                          test->optInPeriod_2,
+                          test->optInMAType_2,
+                          &outBegIdx, &outNbElement,
+                          gBuffer[0].out0, 
+                          gBuffer[0].out1 );
+      break;
+   case TEST_STOCHRSI:
+      retCode = TA_STOCHRSI( test->startIdx,
+                             test->endIdx,
+                             gBuffer[2].in,
+                             test->optInPeriod_0,
+                             test->optInPeriod_1,
+                             test->optInPeriod_2,
+                             test->optInMAType_2,
+                             &outBegIdx, &outNbElement,
+                             gBuffer[0].out0, 
+                             gBuffer[0].out1 );
+      break;
+   }                       
+
    errNb = checkDataSame( gBuffer[0].in, history->high,history->nbBars );
    if( errNb != TA_TEST_PASS )
       return errNb;
@@ -313,66 +411,88 @@ static ErrorNumber do_test( const TA_History *history,
 
    outBegIdx = outNbElement = 0;
 
-   /* Compare to the non-optimized version */
-   retCode = referenceStoch(
-                       test->startIdx,
-                       test->endIdx,
-                       gBuffer[0].in,
-                       gBuffer[1].in,
-                       gBuffer[2].in,
-                       test->optInFastK_Period_0,
-                       test->optInSlowK_Period,
-                       test->optInSlowK_MAType_2,
-                       test->optInSlowD_Period_3,
-                       test->optInSlowD_MAType_4,
-                       &outBegIdx, &outNbElement,
-                       gBuffer[1].out0, 
-                       gBuffer[1].out1 );
+   if( test->testId == TEST_STOCH )
+   {
+      /* Call a local non-optimized version of the function.
+       * This way, we make sure that the currently speed optimized
+       * version in TA-Lib is not broken.
+       */
+      retCode = referenceStoch(
+                          test->startIdx,
+                          test->endIdx,
+                          gBuffer[0].in,
+                          gBuffer[1].in,
+                          gBuffer[2].in,
+                          test->optInPeriod_0,
+                          test->optInPeriod_1,
+                          test->optInMAType_1,
+                             test->optInPeriod_2,
+                          test->optInMAType_2,
+                          &outBegIdx, &outNbElement,
+                          gBuffer[1].out0, 
+                          gBuffer[1].out1 );
 
-   errNb = checkDataSame( gBuffer[0].in, history->high,history->nbBars );
-   if( errNb != TA_TEST_PASS )
-      return errNb;
-   errNb = checkDataSame( gBuffer[1].in, history->low, history->nbBars );
-   if( errNb != TA_TEST_PASS )
-      return errNb;
-   errNb = checkDataSame( gBuffer[2].in, history->close,history->nbBars );
-   if( errNb != TA_TEST_PASS )
-      return errNb;
+      errNb = checkDataSame( gBuffer[0].in, history->high,history->nbBars );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+      errNb = checkDataSame( gBuffer[1].in, history->low, history->nbBars );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+      errNb = checkDataSame( gBuffer[2].in, history->close,history->nbBars );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
 
-   CHECK_EXPECTED_VALUE( gBuffer[1].out0, 0 );
-   CHECK_EXPECTED_VALUE( gBuffer[1].out1, 1 );
+      CHECK_EXPECTED_VALUE( gBuffer[1].out0, 0 );
+      CHECK_EXPECTED_VALUE( gBuffer[1].out1, 1 );
 
-   /* The non-optimized reference shall be identical to the optimzied TA-Lib
-    * implementation.
-    *
-    * checkSameContent verify that all value different than NAN in
-    * the first parameter is identical in the second parameter.
-    */
-   errNb = checkSameContent( gBuffer[1].out0, gBuffer[0].out0 );
-   if( errNb != TA_TEST_PASS )
-      return errNb;
+      /* The non-optimized reference shall be identical to the optimized 
+       * TA-Lib implementation.
+       *
+       * checkSameContent verify that all value different than NAN in
+       * the first parameter is identical in the second parameter.
+       */
+      errNb = checkSameContent( gBuffer[1].out0, gBuffer[0].out0 );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
 
-   errNb = checkSameContent( gBuffer[1].out1, gBuffer[0].out1 );
-   if( errNb != TA_TEST_PASS )
-      return errNb;
+      errNb = checkSameContent( gBuffer[1].out1, gBuffer[0].out1 );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+   }
 
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   retCode = TA_STOCH(
-                       test->startIdx,
-                       test->endIdx,
-                       gBuffer[0].in,
-                       gBuffer[1].in,
-                       gBuffer[2].in,
-                       test->optInFastK_Period_0,
-                       test->optInSlowK_Period,
-                       test->optInSlowK_MAType_2,
-                       test->optInSlowD_Period_3,
-                       test->optInSlowD_MAType_4,
-                       &outBegIdx, &outNbElement,
-                       gBuffer[0].in, 
-                       gBuffer[1].in );
+   switch( test->testId )
+   {
+   case TEST_STOCH:
+      retCode = TA_STOCH( test->startIdx,
+                          test->endIdx,
+                          gBuffer[0].in,
+                          gBuffer[1].in,
+                          gBuffer[2].in,
+                          test->optInPeriod_0,
+                          test->optInPeriod_1,
+                          test->optInMAType_1,
+                          test->optInPeriod_2,
+                          test->optInMAType_2,
+                          &outBegIdx, &outNbElement,
+                          gBuffer[0].in, 
+                          gBuffer[1].in );
+      break;
+   case TEST_STOCHRSI:
+      retCode = TA_STOCHRSI( test->startIdx,
+                             test->endIdx,
+                             gBuffer[2].in,
+                             test->optInPeriod_0,
+                             test->optInPeriod_1,
+                             test->optInPeriod_2,
+                             test->optInMAType_2,
+                             &outBegIdx, &outNbElement,
+                             gBuffer[0].in, 
+                             gBuffer[1].in );
+      break;
+   }
 
    /* The previous call should have the same output as this call.
     *
@@ -404,18 +524,23 @@ static ErrorNumber do_test( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest(
-                           rangeTestFunction, 
-                           TA_FUNC_UNST_EMA,
-                           (void *)&testParam, 2, 0 );
+      switch( test->testId )
+      {
+      case TEST_STOCH:
+         errNb = doRangeTest( rangeTestFunction, 
+                              0,
+                              (void *)&testParam, 2, 0 );
+         break;
+      case TEST_STOCHRSI:
+         errNb = doRangeTest( rangeTestFunction, 
+                              TA_FUNC_UNST_RSI,
+                              (void *)&testParam, 2, 0 );
+         break;
+      }
+
       if( errNb != TA_TEST_PASS )
          return errNb;
    }
-
-   /* Call a local non-optimized version of the function.
-    * This way, we make sure that the currently speed optimized
-    * version in TA-Lib is not broken.
-    */
 
    return TA_TEST_PASS;
 }
@@ -427,11 +552,11 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
                      const TA_Real inHigh[],
                      const TA_Real inLow[],
                      const TA_Real inClose[],
-                     TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInSlowK_Period, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInSlowK_MAType_2,
-                     TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInSlowD_MAType_4,
+                     TA_Integer    optInPeriod_0, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer    optInPeriod_1, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer    optInMAType_1,
+                     TA_Integer    optInPeriod_2, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer    optInMAType_2,
                      TA_Integer   *outBegIdx,
                      TA_Integer   *outNbElement,
                      TA_Real       outSlowK_0[],
@@ -444,9 +569,9 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
    TA_Integer trailingIdx, today, i, bufferIsAllocated;
 
    /* Identify the lookback needed. */
-   lookbackK      = optInFastK_Period_0-1;
-   lookbackKSlow  = TA_MA_Lookback( optInSlowK_Period, optInSlowK_MAType_2 );
-   lookbackDSlow  = TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4 );
+   lookbackK      = optInPeriod_0-1;
+   lookbackKSlow  = TA_MA_Lookback( optInPeriod_1, optInMAType_1 );
+   lookbackDSlow  = TA_MA_Lookback( optInPeriod_2, optInMAType_2 );
    lookbackTotal  = lookbackK + lookbackDSlow + lookbackKSlow;
 
    /* Move up the start index if there is not
@@ -543,8 +668,8 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
     * "K-Slow", but often this end up to be shorten to "K".
     */
    retCode = TA_MA( 0, outIdx-1,
-                    tempBuffer, optInSlowK_Period,
-                    optInSlowK_MAType_2,
+                    tempBuffer, optInPeriod_1,
+                    optInMAType_1,
                     outBegIdx, outNbElement, tempBuffer );
 
 
@@ -562,8 +687,8 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
     * the already smoothed %K.
     */
    retCode = TA_MA( 0, (*outNbElement)-1,
-                    tempBuffer, optInSlowD_Period_3,
-                    optInSlowD_MAType_4,
+                    tempBuffer, optInPeriod_2,
+                    optInMAType_2,
                     outBegIdx, outNbElement, outSlowD_1 );
 
    /* Copy tempBuffer into the caller buffer. 
