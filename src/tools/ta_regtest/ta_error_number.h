@@ -78,6 +78,8 @@ typedef enum
   TA_TESTUTIL_DRT_REF_OUTPUT_INCORRECT  = 160,
   TA_TESTUTIL_DRT_DATA_DIFF             = 161,
   TA_TESTUTIL_DRT_DATA_DIFF_INT         = 162,
+  TA_TESTUTIL_DRT_OUT_OF_BOUND_OUT      = 163,
+  TA_TESTUTIL_DRT_OUT_OF_BOUND_OUT_INT  = 164,
 
   /* Error code for test in test_period.c */
   TA_PERIOD_HISTORYALLOC_FAILED       = 200,
