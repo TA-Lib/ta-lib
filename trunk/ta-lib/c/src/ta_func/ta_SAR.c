@@ -43,10 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  010802 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include <math.h>
 
 /* SAR_ROUNDING is just for test purpose when cross-referencing that
  * function with example from Wilder's book. Wilder is using two
@@ -61,7 +60,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -69,9 +74,19 @@
    #include "ta_utility.h"
 #endif
 
-int TA_SAR_Lookback( double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-                     double        optInMaximum_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
 
+#if defined( _MANAGED )
+int Core::SAR_Lookback( double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInMaximum_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+
+#else
+int TA_SAR_Lookback( double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
+                   double        optInMaximum_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -102,6 +117,18 @@ int TA_SAR_Lookback( double        optInAcceleration_0, /* From TA_REAL_MIN to T
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::SAR( int    startIdx,
+                           int    endIdx,
+                           double       inHigh_0 __gc [],
+                           double       inLow_0 __gc [],
+                           double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
+                           double        optInMaximum_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                           [OutAttribute]Int32 *outBegIdx,
+                           [OutAttribute]Int32 *outNbElement,
+                           double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_SAR( int    startIdx,
                    int    endIdx,
                    const double inHigh_0[],
@@ -111,18 +138,24 @@ TA_RetCode TA_SAR( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
    TA_RetCode retCode;
 
    int isLong; /* > 0 indicates long. == 0 indicates short */
-   TA_Integer todayIdx, outIdx;
+   int todayIdx, outIdx;
 
-   TA_Integer tempInt;
+   int tempInt;
 
    double newHigh, newLow, prevHigh, prevLow;
    double af, ep, sar;
+   #if defined( _MANAGED )
+      double ep_temp __gc [] = new double __gc [1];
+   #else
+      double ep_temp[1];
+   #endif
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -228,8 +261,8 @@ TA_RetCode TA_SAR( int    startIdx,
     *  of the parameter is not significant).
     */
    retCode = TA_MINUS_DM( startIdx-1, startIdx, inHigh_0, inLow_0,
-                          1, &tempInt, &tempInt, &ep );
-   if( ep > 0 )
+                          1, &tempInt, &tempInt, ep_temp );
+   if( ep_temp[0] > 0 )
       isLong = 0;
    else
       isLong = 1;
@@ -419,4 +452,10 @@ TA_RetCode TA_SAR( int    startIdx,
 
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

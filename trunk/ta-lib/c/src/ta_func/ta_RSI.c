@@ -43,10 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include <string.h>
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -54,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -62,15 +67,24 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::RSI_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+
+#else
 int TA_RSI_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
    int retValue;
 
-   retValue = optInTimePeriod_0 + TA_Globals.unstablePeriod[TA_FUNC_UNST_RSI];
-   if( TA_Globals.compatibility == TA_COMPATIBILITY_METASTOCK )
+   retValue = optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_RSI];
+   if( TA_Globals->compatibility == TA_COMPATIBILITY_METASTOCK )
       retValue--;
 
    return retValue;
@@ -91,6 +105,16 @@ int TA_RSI_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::RSI( int    startIdx,
+                           int    endIdx,
+                           double       inReal_0 __gc [],
+                           int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                           [OutAttribute]Int32 *outBegIdx,
+                           [OutAttribute]Int32 *outNbElement,
+                           double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_RSI( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
@@ -98,12 +122,13 @@ TA_RetCode TA_RSI( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   TA_Integer outIdx;
+   int outIdx;
 
-   TA_Integer today, lookbackTotal, unstablePeriod, i;
+   int today, lookbackTotal, unstablePeriod, i;
    double prevGain, prevLoss, prevValue, savePrevValue;
    double tempValue1, tempValue2;
 
@@ -168,7 +193,7 @@ TA_RetCode TA_RSI( int    startIdx,
       *outBegIdx = startIdx;
       i = (endIdx-startIdx)+1;
       *outNbElement = i;
-      memcpy( outReal_0, &inReal_0[startIdx], i*sizeof(double) );
+      ARRAY_MEMMOVE( outReal_0, 0, inReal_0, startIdx, i );
       return TA_SUCCESS;
    }
 
@@ -178,7 +203,7 @@ TA_RetCode TA_RSI( int    startIdx,
    today = startIdx-lookbackTotal;
    prevValue = inReal_0[today];
 
-   unstablePeriod = TA_Globals.unstablePeriod[TA_FUNC_UNST_RSI];
+   unstablePeriod = TA_Globals->unstablePeriod[TA_FUNC_UNST_RSI];
 
    /* If there is no unstable period,
     * calculate the 'additional' initial
@@ -189,7 +214,7 @@ TA_RetCode TA_RSI( int    startIdx,
     * first value will be surely skip.
     */
    if( (unstablePeriod == 0) && 
-       (TA_Globals.compatibility == TA_COMPATIBILITY_METASTOCK))
+       (TA_Globals->compatibility == TA_COMPATIBILITY_METASTOCK))
    {
       /* Preserve prevValue because it may get 
        * overwritten by the output.
@@ -327,4 +352,10 @@ TA_RetCode TA_RSI( int    startIdx,
    return TA_SUCCESS;
 }
 
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

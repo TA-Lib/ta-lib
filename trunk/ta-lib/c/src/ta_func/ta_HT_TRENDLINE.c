@@ -43,9 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-#include <math.h>
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -53,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -61,8 +67,17 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::HT_TRENDLINE_Lookback( void )
+
+#else
 int TA_HT_TRENDLINE_Lookback( void )
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -75,7 +90,7 @@ int TA_HT_TRENDLINE_Lookback( void )
     * 31 is for being compatible with Tradestation.
     * See TA_MAMA_Lookback for an explanation of the "32".
     */
-   return 63 + TA_Globals.unstablePeriod[TA_FUNC_UNST_HT_TRENDLINE];
+   return 63 + TA_Globals->unstablePeriod[TA_FUNC_UNST_HT_TRENDLINE];
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -87,12 +102,22 @@ int TA_HT_TRENDLINE_Lookback( void )
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::HT_TRENDLINE( int    startIdx,
+                                    int    endIdx,
+                                    double       inReal_0 __gc [],
+                                    [OutAttribute]Int32 *outBegIdx,
+                                    [OutAttribute]Int32 *outNbElement,
+                                    double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_HT_TRENDLINE( int    startIdx,
                             int    endIdx,
                             const double inReal_0[],
                             int          *outBegIdx,
                             int          *outNbElement,
                             double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
@@ -141,7 +166,7 @@ TA_RetCode TA_HT_TRENDLINE( int    startIdx,
    int idx;
 
    /* Variable used to calculate the dominant cycle phase */
-   TA_Integer DCPeriodInt;
+   int DCPeriodInt;
    double DCPhase, DCPeriod;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -177,7 +202,7 @@ TA_RetCode TA_HT_TRENDLINE( int    startIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 63 + TA_Globals.unstablePeriod[TA_FUNC_UNST_HT_TRENDLINE];
+   lookbackTotal = 63 + TA_Globals->unstablePeriod[TA_FUNC_UNST_HT_TRENDLINE];
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -279,7 +304,7 @@ TA_RetCode TA_HT_TRENDLINE( int    startIdx,
       todayValue = inReal_0[today];
       DO_PRICE_WMA(todayValue,smoothedValue);
 
-      /* Remember the smoothedValue into the smothPrice
+      /* Remember the smoothedValue into the smoothPrice
        * circular buffer.
        */
       smoothPrice[smoothPrice_Idx] = smoothedValue;
@@ -321,7 +346,7 @@ TA_RetCode TA_HT_TRENDLINE( int    startIdx,
           * 3 price bars. 
           *
           * Save the current detrender value for being
-          * used by the "odd" logic later.
+          * used by the "even" logic later.
           */
          I1ForEvenPrev3 = I1ForEvenPrev2;
          I1ForEvenPrev2 = detrender;
@@ -384,4 +409,10 @@ TA_RetCode TA_HT_TRENDLINE( int    startIdx,
  
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

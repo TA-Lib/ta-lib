@@ -43,6 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
 
@@ -52,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -60,8 +67,17 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::TYPPRICE_Lookback( void )
+
+#else
 int TA_TYPPRICE_Lookback( void )
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -80,6 +96,17 @@ int TA_TYPPRICE_Lookback( void )
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::TYPPRICE( int    startIdx,
+                                int    endIdx,
+                                double       inHigh_0 __gc [],
+                                double       inLow_0 __gc [],
+                                double       inClose_0 __gc [],
+                                [OutAttribute]Int32 *outBegIdx,
+                                [OutAttribute]Int32 *outNbElement,
+                                double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_TYPPRICE( int    startIdx,
                         int    endIdx,
                         const double inHigh_0[],
@@ -88,6 +115,7 @@ TA_RetCode TA_TYPPRICE( int    startIdx,
                         int          *outBegIdx,
                         int          *outNbElement,
                         double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
@@ -133,4 +161,10 @@ TA_RetCode TA_TYPPRICE( int    startIdx,
    return TA_SUCCESS;
 }
 
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

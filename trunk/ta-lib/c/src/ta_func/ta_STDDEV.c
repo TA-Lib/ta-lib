@@ -44,9 +44,9 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  100502 JV   Speed optimization of the algorithm
+ *  052603 MF   Adapt code to compile with .NET Managed C++
+ *
  */
-
-#include <math.h>
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -54,7 +54,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -62,9 +68,19 @@
    #include "ta_utility.h"
 #endif
 
-int TA_STDDEV_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                        double        optInNbDev_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
 
+#if defined( _MANAGED )
+int Core::STDDEV_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                         double        optInNbDev_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+
+#else
+int TA_STDDEV_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                      double        optInNbDev_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -91,6 +107,17 @@ int TA_STDDEV_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::STDDEV( int    startIdx,
+                              int    endIdx,
+                              double       inReal_0 __gc [],
+                              int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                              double        optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                              [OutAttribute]Int32 *outBegIdx,
+                              [OutAttribute]Int32 *outNbElement,
+                              double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_STDDEV( int    startIdx,
                       int    endIdx,
                       const double inReal_0[],
@@ -99,10 +126,11 @@ TA_RetCode TA_STDDEV( int    startIdx,
                       int          *outBegIdx,
                       int          *outNbElement,
                       double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   TA_Integer i;
+   int i;
    TA_RetCode retCode;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -180,12 +208,21 @@ TA_RetCode TA_STDDEV( int    startIdx,
  *       average. Still the function is put here because it is 
  *       closely related.
  */
+#if defined( _MANAGED )
+void Core::TA_INT_stddev_using_precalc_ma( double inReal __gc[],
+                                     double inMovAvg __gc [],
+                                     int inMovAvgBegIdx,                                    
+                                     int inMovAvgNbElement,
+                                     int timePeriod,
+                                     double output __gc [])
+#else
 void TA_INT_stddev_using_precalc_ma( const double *inReal,
                                      const double *inMovAvg,
-                                     TA_Integer inMovAvgBegIdx,                                    
-                                     TA_Integer inMovAvgNbElement,
-                                     TA_Integer timePeriod,
+                                     int inMovAvgBegIdx,                                    
+                                     int inMovAvgNbElement,
+                                     int timePeriod,
                                      double *output )
+#endif
 {
    double tempReal, periodTotal2, meanValue2;
    int outIdx;
@@ -221,4 +258,10 @@ void TA_INT_stddev_using_precalc_ma( const double *inReal,
       output[outIdx] = sqrt( meanValue2-tempReal );
    }
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

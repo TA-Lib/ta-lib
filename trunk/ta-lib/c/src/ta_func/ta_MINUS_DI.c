@@ -43,9 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  010802 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-#include "math.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -53,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -61,14 +67,23 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::MINUS_DI_Lookback( int           optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+
+#else
 int TA_MINUS_DI_Lookback( int           optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
 
    if( optInTimePeriod_0 > 1 )
-      return optInTimePeriod_0 + TA_Globals.unstablePeriod[TA_FUNC_UNST_MINUS_DI];
+      return optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_MINUS_DI];
    else
       return 2;
 }
@@ -88,6 +103,18 @@ int TA_MINUS_DI_Lookback( int           optInTimePeriod_0 )  /* From 1 to TA_INT
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::MINUS_DI( int    startIdx,
+                                int    endIdx,
+                                double       inHigh_0 __gc [],
+                                double       inLow_0 __gc [],
+                                double       inClose_0 __gc [],
+                                int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                                [OutAttribute]Int32 *outBegIdx,
+                                [OutAttribute]Int32 *outNbElement,
+                                double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_MINUS_DI( int    startIdx,
                         int    endIdx,
                         const double inHigh_0[],
@@ -97,11 +124,12 @@ TA_RetCode TA_MINUS_DI( int    startIdx,
                         int          *outBegIdx,
                         int          *outNbElement,
                         double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
 
-   TA_Integer today, lookbackTotal, outIdx;
+   int today, lookbackTotal, outIdx;
    double prevHigh, prevLow, prevClose;
    double prevMinusDM, prevTR;
    double tempReal, tempReal2, diffP, diffM;
@@ -230,7 +258,7 @@ TA_RetCode TA_MINUS_DI( int    startIdx,
     */
 
    if( optInTimePeriod_0 > 1 )
-      lookbackTotal = optInTimePeriod_0 + TA_Globals.unstablePeriod[TA_FUNC_UNST_MINUS_DI];
+      lookbackTotal = optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_MINUS_DI];
    else
       lookbackTotal = 2;
 
@@ -287,7 +315,7 @@ TA_RetCode TA_MINUS_DI( int    startIdx,
    /* Skip the unstable period. Note that this loop must be executed
     * at least ONCE to calculate the first DI.
     */
-   i = TA_Globals.unstablePeriod[TA_FUNC_UNST_MINUS_DI] + 1;
+   i = TA_Globals->unstablePeriod[TA_FUNC_UNST_MINUS_DI] + 1;
    while( i-- != 0 )
    {
       /* Calculate the prevMinusDM */
@@ -355,4 +383,10 @@ TA_RetCode TA_MINUS_DI( int    startIdx,
 
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

@@ -48,9 +48,8 @@
  *              for TradeStation and Metastock.
  *              See "Smoothing Techniques For More Accurate Signals" 
  *              from Tim Tillson in Stock&Commodities V16:1 Page 33-37
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  */
-
-#include "ta_memory.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -58,7 +57,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -66,14 +71,24 @@
    #include "ta_utility.h"
 #endif
 
-int TA_T3_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    double        optInVFactor_1 )  /* From 0 to 1 */
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
 
+#if defined( _MANAGED )
+int Core::T3_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     double        optInVFactor_1 )  /* From 0 to 1 */
+
+#else
+int TA_T3_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                  double        optInVFactor_1 )  /* From 0 to 1 */
+
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
    (void)optInVFactor_1;
-   return 6 * (optInTimePeriod_0-1) + TA_Globals.unstablePeriod[TA_FUNC_UNST_T3];
+   return 6 * (optInTimePeriod_0-1) + TA_Globals->unstablePeriod[TA_FUNC_UNST_T3];
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -94,6 +109,17 @@ int TA_T3_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::T3( int    startIdx,
+                          int    endIdx,
+                          double       inReal_0 __gc [],
+                          int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                          double        optInVFactor_1, /* From 0 to 1 */
+                          [OutAttribute]Int32 *outBegIdx,
+                          [OutAttribute]Int32 *outNbElement,
+                          double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_T3( int    startIdx,
                   int    endIdx,
                   const double inReal_0[],
@@ -102,11 +128,12 @@ TA_RetCode TA_T3( int    startIdx,
                   int          *outBegIdx,
                   int          *outNbElement,
                   double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
 
-   TA_Integer outIdx, lookbackTotal;
+   int outIdx, lookbackTotal;
    int today, i;
    double k, one_minus_k;
    double e1, e2, e3, e4, e5, e6;
@@ -162,7 +189,7 @@ TA_RetCode TA_T3( int    startIdx,
     * in the litterature.
     *
     */
-   lookbackTotal = 6 * (optInTimePeriod_0 - 1) + TA_Globals.unstablePeriod[TA_FUNC_UNST_T3];
+   lookbackTotal = 6 * (optInTimePeriod_0 - 1) + TA_Globals->unstablePeriod[TA_FUNC_UNST_T3];
    if( startIdx <= lookbackTotal )
       startIdx = lookbackTotal;
 
@@ -283,4 +310,10 @@ TA_RetCode TA_T3( int    startIdx,
 
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
