@@ -162,13 +162,16 @@ typedef struct
    const TA_Real *high;
    const TA_Real *low;
    const TA_Real *close;
+
+   TA_ParamHolder *paramHolder;
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
 static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 
-static ErrorNumber callCandlestick( const char   *name,
+static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
+                                    const char   *name,
                                     int           startIdx,
                                     int           endIdx,
                                     const double *inOpen,
@@ -270,7 +273,8 @@ ErrorNumber test_candlestick( TA_History *history )
  * taFuncRetCode is the return code from the call of the TA function.
  *
  */
-static ErrorNumber callCandlestick( const char   *name,
+static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
+                                    const char   *name,
                                     int           startIdx,
                                     int           endIdx,
                                     const double *inOpen,
@@ -295,72 +299,79 @@ static ErrorNumber callCandlestick( const char   *name,
    TA_RetCode retCode;
 
    (void)optInArray;
-
-   retCode = TA_GetFuncHandle( name, &handle );
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "Can't get the function handle [%d]\n", retCode );
-      return TA_TSTCDL_GETFUNCHANDLE_FAIL;   
-   }
-                             
-   retCode = TA_ParamHolderAlloc( handle, &paramHolder );
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "Can't allocate the param holder [%d]\n", retCode );
-      return TA_TSTCDL_PARAMHOLDERALLOC_FAIL;
-   }
-
-   TA_GetFuncInfo( handle, &funcInfo );
-
-   /* Verify that the input are only OHLC. */
-   if( funcInfo->nbInput != 1 )
-   {
-      printf( "Candlestick are expected to use only OHLC as input.\n" );
-      return TA_TSTCDL_NBINPUT_WRONG;
-   }
-
-   TA_GetInputParameterInfo( handle, 0, &inputInfo );
-
-   if( inputInfo->type != TA_Input_Price )
-   {
-      printf( "Candlestick are expected to use only OHLC as input.\n" );
-      return TA_TSTCDL_INPUT_TYPE_WRONG;
-   }
    
-   if( inputInfo->flags != (TA_IN_PRICE_OPEN |
-                            TA_IN_PRICE_HIGH |
-                            TA_IN_PRICE_LOW  |
-                            TA_IN_PRICE_CLOSE) )
+   /* Speed optimization if paramHolder is already initialized. */   
+   paramHolder = *paramHolderPtr;
+   if( !paramHolder )
    {
-      printf( "Candlestick are expected to use only OHLC as input.\n" );
-      return TA_TSTCDL_INPUT_FLAG_WRONG;
+      retCode = TA_GetFuncHandle( name, &handle );
+      if( retCode != TA_SUCCESS )
+      {
+         printf( "Can't get the function handle [%d]\n", retCode );
+         return TA_TSTCDL_GETFUNCHANDLE_FAIL;   
+      }
+                             
+      retCode = TA_ParamHolderAlloc( handle, &paramHolder );
+      if( retCode != TA_SUCCESS )
+      {
+         printf( "Can't allocate the param holder [%d]\n", retCode );
+         return TA_TSTCDL_PARAMHOLDERALLOC_FAIL;
+      }
+
+      *paramHolderPtr = paramHolder;
+      TA_GetFuncInfo( handle, &funcInfo );
+
+      /* Verify that the input are only OHLC. */
+      if( funcInfo->nbInput != 1 )
+      {
+         printf( "Candlestick are expected to use only OHLC as input.\n" );
+         return TA_TSTCDL_NBINPUT_WRONG;
+      }
+
+      TA_GetInputParameterInfo( handle, 0, &inputInfo );
+
+      if( inputInfo->type != TA_Input_Price )
+      {
+         printf( "Candlestick are expected to use only OHLC as input.\n" );
+         return TA_TSTCDL_INPUT_TYPE_WRONG;
+      }
+   
+      if( inputInfo->flags != (TA_IN_PRICE_OPEN |
+                               TA_IN_PRICE_HIGH |
+                               TA_IN_PRICE_LOW  |
+                               TA_IN_PRICE_CLOSE) )
+      {
+         printf( "Candlestick are expected to use only OHLC as input.\n" );
+         return TA_TSTCDL_INPUT_FLAG_WRONG;
+      }
+    
+      /* Set the optional inputs. */
+   
+      /* Verify that there is only one output. */
+      if( funcInfo->nbOutput != 1 )
+      {
+         printf( "Candlestick are expected to have only one output array.\n" );
+         return TA_TSTCDL_NBOUTPUT_WRONG;
+      }
+
+      TA_GetOutputParameterInfo( handle, 0, &outputInfo );
+      if( outputInfo->type != TA_Output_Integer )
+      {
+         printf( "Candlestick are expected to have only one output array of type integer.\n" );
+         return TA_TSTCDL_OUTPUT_TYPE_WRONG;
+      }
+
+      /* !!!!!!!!!!!!! TO BE DONE !!!!!!!!!!!!!!!!!! 
+       * For now all candlestick functions will be called with default optional parameter.
+       */
    }
 
    /* Set the input buffers. */
    TA_SetInputParamPricePtr( paramHolder, 0, NULL, 
                              inOpen, inHigh, inLow, inClose, NULL, NULL );
-	 
 
-   /* Verify that there is only one output. */
-   if( funcInfo->nbOutput != 1 )
-   {
-      printf( "Candlestick are expected to have only one output array.\n" );
-      return TA_TSTCDL_NBOUTPUT_WRONG;
-   }
-
-   TA_GetOutputParameterInfo( handle, 0, &outputInfo );
-   if( outputInfo->type != TA_Output_Integer )
-   {
-      printf( "Candlestick are expected to have only one output array of type integer.\n" );
-      return TA_TSTCDL_OUTPUT_TYPE_WRONG;
-   }
    TA_SetOutputParamIntegerPtr(paramHolder,0,outInteger);
 
-   /* Set the optional inputs. */
-   
-   /* !!!!!!!!!!!!! TO BE DONE !!!!!!!!!!!!!!!!!! 
-    * For now all candlestick functions will be called with default optional parameter.
-    */
 
    /* Do the function call. */
    *taFuncRetCode = TA_CallFunc(paramHolder,startIdx,endIdx,outBegIdx,outNbElement);
@@ -379,13 +390,6 @@ static ErrorNumber callCandlestick( const char   *name,
       printf( "TA_GetLookback() failed [%d]\n", retCode );
       TA_ParamHolderFree( paramHolder );
       return TA_TSTCDL_GETLOOKBACK_FAIL;
-   }
-
-   retCode = TA_ParamHolderFree( paramHolder );
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "TA_ParamHolderFree failed [%d]\n", retCode );
-      return TA_TSTCDL_PARAMHOLDERFREE_FAIL;
    }
 
    return TA_TEST_PASS;   
@@ -418,7 +422,7 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
                                      unsigned int outputNb,
                                      unsigned int *isOutputInteger )
 {
-   const TA_RangeTestParam *testParam1;
+   TA_RangeTestParam *testParam1;
    const TA_Test *testParam2;
    ErrorNumber errNb;
 
@@ -427,7 +431,7 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
    (void)outputBuffer;
    (void)outputNb;
 
-   testParam1 = (const TA_RangeTestParam *)opaqueData;
+   testParam1 = (TA_RangeTestParam *)opaqueData;
    testParam2 = (const TA_Test *)testParam1->test;
 
    *isOutputInteger = 1; /* Must be != 0 */
@@ -435,7 +439,8 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
    retCode = TA_INTERNAL_ERROR(166);
 
    /* Call the TA function by name */
-   errNb = callCandlestick( testParam2->name,
+   errNb = callCandlestick( &testParam1->paramHolder,
+                            testParam2->name,
                             startIdx, endIdx,
                             testParam1->open,
                             testParam1->high,
@@ -459,6 +464,7 @@ static ErrorNumber do_test( const TA_History *history,
 {
    TA_RangeTestParam testParam;
    ErrorNumber errNb;
+   TA_RetCode retCode;
 
    (void)test;
 
@@ -685,13 +691,26 @@ static ErrorNumber do_test( const TA_History *history,
    testParam.open  = history->open;
    testParam.high  = history->high;
    testParam.low   = history->low;
-   testParam.close = history->close;
+   testParam.close  = history->close;
+   testParam.paramHolder = NULL;
 
    if( test->doRangeTestFlag )
    {
+      
       errNb = doRangeTest( rangeTestFunction, 
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
+
+      if( testParam.paramHolder )
+      {
+         retCode = TA_ParamHolderFree( testParam.paramHolder );
+         if( retCode != TA_SUCCESS )
+         {
+            printf( "TA_ParamHolderFree failed [%d]\n", retCode );
+            return TA_TSTCDL_PARAMHOLDERFREE_FAIL;
+         }
+      }
+       
       if( errNb != TA_TEST_PASS )
          return errNb;
    }
