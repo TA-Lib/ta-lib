@@ -46,6 +46,7 @@
  *  062803 MF   Make parsing to find exchange/type more adaptive to 
  *              potential changes from Yahoo! market page format.
  *  102103 MF   Now recognize American Mutual Fund ticker.
+ *  020104 MF   Fix mem leaks related to TA_TRACE_BEGIN/TA_TRACE_RETURN.
  */
 
 /* Description:
@@ -293,7 +294,9 @@ TA_RetCode TA_AllocStringFromYahooName( TA_DecodingParam *marketDecodingParam,
        * Yahoo! web sites.
        */
       if( !allowOnlineProcessing )
-         return TA_INVALID_SECURITY_EXCHANGE;
+      {
+         TA_TRACE_RETURN(TA_INVALID_SECURITY_EXCHANGE);
+      }
 
       /* OK, we need to proceed by extracting the info
        * from Yahoo! web sites.
@@ -303,10 +306,12 @@ TA_RetCode TA_AllocStringFromYahooName( TA_DecodingParam *marketDecodingParam,
                                          &allocatedMarketPage );
 
       if( retCode != TA_SUCCESS )
-         return retCode;
+      {
+         TA_TRACE_RETURN(retCode);
+      }
 
-      TA_DEBUG_ASSERT( allocatedMarketPage->exchange != NULL );
-      TA_DEBUG_ASSERT( allocatedMarketPage->type != NULL );
+      TA_ASSERT_DEBUG( allocatedMarketPage->exchange != NULL );
+      TA_ASSERT_DEBUG( allocatedMarketPage->type != NULL );
 
       /* All these string pointer are globals. So the allocatedMarketPage
        * can be freed and the member-poitners are still valid.
@@ -318,9 +323,9 @@ TA_RetCode TA_AllocStringFromYahooName( TA_DecodingParam *marketDecodingParam,
       internalMarketPageFree( allocatedMarketPage );
    }   
    
-   TA_DEBUG_ASSERT( typeString     != NULL );
-   TA_DEBUG_ASSERT( exchangeString != NULL );
-   TA_DEBUG_ASSERT( countryAbbrev  != NULL );
+   TA_ASSERT_DEBUG( typeString     != NULL );
+   TA_ASSERT_DEBUG( exchangeString != NULL );
+   TA_ASSERT_DEBUG( countryAbbrev  != NULL );
 
    /* Build the Category string into a buffer. */
    tempBuffer = TA_Malloc( strlen( countryAbbrev  )  +
@@ -332,7 +337,7 @@ TA_RetCode TA_AllocStringFromYahooName( TA_DecodingParam *marketDecodingParam,
    /* Allocate the Category string. */
    allocCategory = TA_StringAlloc_UC( stringCache, tempBuffer );
 
-   TA_Free(  tempBuffer );
+   TA_Free( tempBuffer );
 
    if( !allocCategory )
    {
