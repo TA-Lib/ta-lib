@@ -52,13 +52,14 @@
  * final library.
  *
  * Upon failure, these macro will "return" from the function. There is no 
- * "exit" done to prevent to shutdown unpropriatly the application.
+ * "exit" done to prevent to shutdown unappropriatly the application.
  *
- * On a fatal/assertion failure, the software will record information. The
- * function will return the failed function.
+ * On a fatal/assertion failure, TA-Lib will record information. The user of
+ * the library can retreive these recorded information by using TA_FatalReport
+ * or TA_FatalReportToBuffer.
  *
- * The user of the library can retreive the recorded information on the failure
- * by using TA_FatalReport.
+ * An application can also monitor for fatal error by providing a callback
+ * using TA_SetFatalErrorHandler.
  */
 #define TA_ASSERT(b) {if(!(b)) {TA_PrivError(1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); TA_TRACE_RETURN(TA_FATAL_ERR);}}
 /* Same as TA_ASSERT, but return the specified value on failure. */
@@ -67,7 +68,7 @@
 #define TA_ASSERT_NO_RET(b) {if(!(b)) {TA_PrivError(1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); return;}}
 
 #define TA_FATAL(str,param1,param2) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); TA_TRACE_RETURN( TA_FATAL_ERR );}
-/* Same as TA_ASSERT, but return the specified value on failure. */
+/* Same as TA_FATAL, but return the specified value on failure. */
 #define TA_FATAL_RET(str,param1,param2,ret) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); return ret;}
 /* Same as TA_FATAL, but for function returning void. */
 #define TA_FATAL_NO_RET(str,param1,param2) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); return;}
@@ -89,9 +90,12 @@
  *     - Allows to do an estimation of the code coverage
  *       while regression testing is performed.
  *
- * To make this efficient, all internal functions having access to
- * the TA_Libc handle and returning TA_RetCode shall use the
- * tracing MACRO:
+ * Tracing is for functions returning an integer (or TA_RetCode).
+ *
+ * This tracing has impact only when TA_DEBUG is defined.
+ *
+ * Tracing should be put in at least all path that reveals
+ * the user actions, and at best in all functions.
  * 
  *   TA_PROLOG:
  *        Must be specified at the very top of all functions
@@ -139,9 +143,9 @@
    #define TA_PROLOG    const char *theTraceFuncName;
    #define TA_TRACE_BEGIN(name) { TA_PrivTraceBegin( #name, theFileNamePtr, __LINE__ ); \
                                   theTraceFuncName = #name; \
-								        }
+								}
 
-   #define TA_TRACE_CHECKPOINT { TA_PrivTraceCheckpoint( theTraceFuncName, theFileNamePtr, __LINE__ ); }
+   #define TA_TRACE_CHECKPOINT { TA_PrivTraceCheckpoint( theTraceFuncName, theFileNamePtr, __LINE__, 0 ); }
 
    #define TA_TRACE_RETURN(x) { return TA_PrivTraceReturn( theTraceFuncName, theFileNamePtr, __LINE__, x ); }
 #else
@@ -154,17 +158,18 @@
 
 /* Never call directly the following functions. Always use the macro define above. */
 void TA_PrivTraceCheckpoint( const char *funcname,
-							        const char *filename,
-						           unsigned int lineNb );
+							 const char *filename,
+						     unsigned int lineNb,
+                             int value );
    
-TA_RetCode TA_PrivTraceReturn( const char *funcname,
-							          const char *filename,
-						             unsigned int lineNb,
-						             TA_RetCode retCode );
+int TA_PrivTraceReturn( const char *funcname,
+						const char *filename,
+						unsigned int lineNb,
+						int retCode );
 
 void TA_PrivTraceBegin( const char *funcname,
-						      const char *filename, 
-						      unsigned int lineNb );
+						const char *filename, 
+						unsigned int lineNb );
 
 void TA_PrivError( unsigned int type, const char *str,
                    const char *filename, const char *date,

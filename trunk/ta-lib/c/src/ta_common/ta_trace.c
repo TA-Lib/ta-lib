@@ -43,7 +43,10 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
- *  110803 MF   Implementation of TA_FatalReportToBuffer.
+ *  110803 MF   Implementation of TA_FatalReportToBuffer
+ *  110903 MF   Add logging of return code, make sure logging
+ *              occurs only when TA_DEBUG is defined, display
+ *              compiler defines on fatal error.
  */
 
 /* Description:
@@ -76,27 +79,25 @@
 #if defined(TA_DEBUG)
    /* Size of circular buffer for code trace. */
    #define TA_CODE_TRACE_SIZE   15
-#else
-   /* Size of circular buffer for code trace. */
-   #define TA_CODE_TRACE_SIZE   10
 #endif
 
 typedef struct
 {
-	const char *funcname;
-	const char *filename;
-	unsigned int lineNb;
-	unsigned int repetition; /* Keep count of consecutive passage at this position. */
+    const char *funcname;
+    const char *filename;
+    unsigned int lineNb;
+    unsigned int repetition; /* Keep count of consecutive passage at this position. */
+    int value; /* Keep track of return code (when applicable) */
 } TA_TracePosition;
 
 typedef struct
 {
    TA_TracePosition position;
-	char *str;
-	const char *date;
-	const char *time;
-	unsigned int param1;
-	unsigned int param2;
+   char *str;
+   const char *date;
+   const char *time;
+   unsigned int param1;
+   unsigned int param2;
    unsigned int type;
 } TA_FatalErrorLog;
 
@@ -105,47 +106,46 @@ typedef struct
    #if !defined( TA_SINGLE_THREAD )
       /* If multithread, access to variables related to the
        * call stack and code trace are protected by callSema.
- 	    */
+        */
       TA_Sema callSema;
 
       /* If multithread, access to variables related to the
        * logging of the fatal error is protected by fatalSema.
- 	    */
+        */
       TA_Sema fatalSema;
    #endif
 
    #ifdef TA_DEBUG
-      #if defined( TA_SINGLE_THREAD )	  
-	      /* Maintain a call stack using TA_TRACE_BEGIN and TA_TRACE_RETURN.
-	       * This functionality makes no sense if multithread.
-	       */
-	      TA_List *callStack;
+      #if defined( TA_SINGLE_THREAD )     
+          /* Maintain a call stack using TA_TRACE_BEGIN and TA_TRACE_RETURN.
+           * This functionality makes no sense if multithread.
+           */
+          TA_List *callStack;
       #endif
 
-	   /* Maintain a complete dictionary of the function being called.
-	    * Used to evaluate the code coverage and do some profiling.
-	    * The element of the dictionary are TA_TracePosition.
-       * The key of each entry are the merge of the line number merge with
-       * the filename.
-       */
-	   TA_Dict *functionCalled; 
+       /* Maintain a complete dictionary of the function being called.
+        * Used to evaluate the code coverage and do some profiling.
+        * The element of the dictionary are TA_TracePosition.
+        * The key of each entry are the merge of the line number merge with
+        * the filename.
+        */
+       TA_Dict *functionCalled; 
+
+       /* Maintain a code trace by using the TA_TRACE_BEGIN,
+        * TA_TRACE_RETURN and TA_TRACE_CHECKPOINT.
+        * Tracing is put in a circular buffer.
+        */
+       TA_TracePosition codeTrace[TA_CODE_TRACE_SIZE];
+       unsigned int posForNextTrace;
    #endif
 
-   /* Maintain a code trace by using the TA_TRACE_BEGIN.
-	 * Tracing is put in a circular buffer.
-	 * When TA_DEBUG is defined, trace is also done for the
-	 * TA_TRACE_RETURN and TA_TRACE_CHECKPOINT.
-	 */
-	TA_TracePosition codeTrace[TA_CODE_TRACE_SIZE];
-	unsigned int posForNextTrace;
-
    /* Log the first occurence of a fatal error. */
-	TA_FatalErrorLog fatalError;
+   TA_FatalErrorLog fatalError;
    unsigned int fatalErrorRecorded;
 
-	/* User of the library can install its own exception handler
-	 * to intercept the fatal error.
-	 * Will be NULL if no handler installed.
+    /* User of the library can install its own exception handler
+     * to intercept the fatal error.
+     * Will be NULL if no handler installed.
     */
    TA_FatalHandler userHandler;
 } TA_TraceGlobal;
@@ -159,16 +159,18 @@ static void internalCheckpoint( TA_TraceGlobal *global,
                                 TA_String *key,
                                 const char *funcname,
                                 const char *filename,
-                                unsigned int lineNb );
+                                unsigned int lineNb,
+                                int value );
 
 #ifdef TA_DEBUG
 static void freeTracePosition( void *dataToBeFreed );
 static TA_TracePosition *newTracePosition( const char *funcname, 
                                            const char *filename,
-                                           unsigned int lineNb );
-#endif
+                                           unsigned int lineNb,
+                                           int value );
 
 static void printTracePosition( TA_TracePosition *tracePosition, TA_PrintfVar *outp );
+#endif
 
 static TA_RetCode TA_TraceGlobalShutdown( void *globalAllocated );
 static TA_RetCode TA_TraceGlobalInit( void **globalToAlloc );
@@ -189,9 +191,9 @@ TA_RetCode TA_TraceInit( void )
 
    /* "Getting" the global will allocate/initialize the global for
     * this module. 
-	 * Note: All this will guarantee that TA_TraceGlobalShutdown
-	 *       will get called when TA_Shutdown is called by the
-	 *       library user.
+    * Note: All this will guarantee that TA_TraceGlobalShutdown
+    *       will get called when TA_Shutdown is called by the
+    *       library user.
     */
    retCode = TA_GetGlobal(  &TA_TraceGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
@@ -200,9 +202,11 @@ TA_RetCode TA_TraceInit( void )
    return TA_SUCCESS;
 }
 
+#ifdef TA_DEBUG
 void TA_PrivTraceCheckpoint( const char *funcname,
                              const char *filename,
-                             unsigned int lineNb )
+                             unsigned int lineNb,
+                             int value )
 {
    TA_TraceGlobal *global;
    TA_RetCode retCode;
@@ -217,26 +221,23 @@ void TA_PrivTraceCheckpoint( const char *funcname,
    if( retCode != TA_SUCCESS )
       return;
 
-   #if !defined( TA_DEBUG )
-      internalCheckpoint( global, NULL, funcname, filename, lineNb );
-   #else
-      /* Build a unique string representing the position. */
-      stringCache = TA_GetGlobalStringCache();
-      key = TA_StringValueAlloc( stringCache, filename, lineNb );
-      if( !key )
-         return;
+   /* Build a unique string representing the position. */
+   stringCache = TA_GetGlobalStringCache();
+   key = TA_StringValueAlloc( stringCache, filename, lineNb );
+   if( !key )
+      return;
 
-      internalCheckpoint( global, key, funcname, filename, lineNb );
+   internalCheckpoint( global, key, funcname, filename, lineNb, value );
 
-      TA_StringFree( stringCache, key );
-   #endif
+   TA_StringFree( stringCache, key );
 }
+#endif
 
 #ifdef TA_DEBUG
-TA_RetCode TA_PrivTraceReturn( const char *funcname,
-                               const char *filename,
-                               unsigned int lineNb,
-                               TA_RetCode retCode )
+int TA_PrivTraceReturn( const char *funcname,
+                        const char *filename,
+                        unsigned int lineNb,
+                        int retCode )
 {
    #if defined( TA_SINGLE_THREAD )
    TA_TracePosition *tracePosition;
@@ -244,7 +245,7 @@ TA_RetCode TA_PrivTraceReturn( const char *funcname,
    TA_RetCode localRetCode;
    #endif
 
-   TA_PrivTraceCheckpoint( funcname, filename, lineNb );
+   TA_PrivTraceCheckpoint( funcname, filename, lineNb, retCode );
 
    /* If debugging a single threaded, maintain a calling stack. */
    #if defined( TA_DEBUG ) && defined( TA_SINGLE_THREAD )
@@ -273,10 +274,11 @@ TA_RetCode TA_PrivTraceReturn( const char *funcname,
       }
    #endif
 
-	return retCode;
+   return retCode;
 }
 #endif
 
+#ifdef TA_DEBUG
 void TA_PrivTraceBegin( const char *funcname,
                         const char *filename, 
                         unsigned int lineNb )
@@ -291,7 +293,7 @@ void TA_PrivTraceBegin( const char *funcname,
    /* Entry point of a function are "checkpoint" for code
     * coverage.
     */
-   TA_PrivTraceCheckpoint( funcname, filename, lineNb );
+   TA_PrivTraceCheckpoint( funcname, filename, lineNb, 0 );
 
    /* If debugging a single thread, maintain a call stack. */
    #if defined( TA_DEBUG ) && defined( TA_SINGLE_THREAD )
@@ -313,7 +315,7 @@ void TA_PrivTraceBegin( const char *funcname,
              if( (tracePosition->filename == filename) &&
                  (tracePosition->funcname == funcname) )
             {
-               /* Same fucntion, so just increment the repetition. */
+               /* Same function, so just increment the repetition. */
                tracePosition->repetition++;
                newTracePositionNeeded = 0;
             }
@@ -324,7 +326,7 @@ void TA_PrivTraceBegin( const char *funcname,
          /* New function, so add the trace to the stack. */
          if( newTracePositionNeeded )
          {
-            tracePosition = newTracePosition( funcname, filename, lineNb );
+            tracePosition = newTracePosition( funcname, filename, lineNb, 0 );
             if( tracePosition )      
                TA_ListAddTail( global->callStack, (void *)tracePosition );
          }
@@ -334,6 +336,7 @@ void TA_PrivTraceBegin( const char *funcname,
       }
    #endif
 }
+#endif
 
 void TA_PrivError( unsigned int type, const char *str,
                    const char *filename, const char *date,
@@ -376,6 +379,7 @@ void TA_PrivError( unsigned int type, const char *str,
    global->fatalError.position.funcname = NULL;
    global->fatalError.position.lineNb = line;
    global->fatalError.position.repetition = 1;
+   global->fatalError.position.value = 0;
 
    global->fatalError.str = NULL;
    if( str ) 
@@ -468,8 +472,22 @@ static void printFatalError( TA_FatalErrorLog *log, TA_PrintfVar *outp )
    TA_Printf( outp, "*** Internal %s Error ***\n", errorType[type]);
    version = TA_GetVersionString();
    if( version )
-      TA_Printf( outp, "Version:[%s]\n", version );
+      TA_Printf( outp, "Version:[%s]  ", version );
 
+   /* Display compilation options */
+   TA_Printf( outp, "[" );
+   #ifdef TA_DEBUG
+      TA_Printf( outp, " TA_DEBUG" );
+   #endif
+   #ifdef TA_SINGLE_THREAD
+      TA_Printf( outp, " TA_SINGLE_THREAD" );
+   #endif
+   #ifdef WIN32
+      TA_Printf( outp, " WIN32" );
+   #endif
+   TA_Printf( outp, " ]\n" );
+
+   /* Display File desription, error position and compilation date.  */
    if( log->position.filename )
    {
        TA_Printf( outp, "File:[%s]\n", log->position.filename );
@@ -481,10 +499,11 @@ static void printFatalError( TA_FatalErrorLog *log, TA_PrintfVar *outp )
 
    if( log->position.funcname )
        TA_Printf( outp, "Func:[%s]\n", log->position.funcname );
-	
+    
    if( log->str )
        TA_Printf( outp, "Desc:[%s]\n", log->str );
 
+   /* Display information that was provided with this fatal error */
    TA_Printf( outp, "Info:[0x%08X,0x%08X]\n", log->param1, log->param2 );
 }
 
@@ -589,19 +608,19 @@ static TA_RetCode TA_TraceGlobalShutdown( void *globalAllocated )
    return retCode;
 }
 
+#ifdef TA_DEBUG
 static void internalCheckpoint( TA_TraceGlobal *global,
                                 TA_String  *key,
                                 const char *funcname,
                                 const char *filename,
-                                unsigned int lineNb )
+                                unsigned int lineNb,
+                                int value )
 {
    #if !defined( TA_SINGLE_THREAD )      
    TA_RetCode retCode;
    #endif
 
-   #ifdef TA_DEBUG
    TA_TracePosition *tracePosition;
-   #endif
 
    /* Make sure there is no tracing while tracing!
     * In rare occasion, this may prevent to record
@@ -617,7 +636,6 @@ static void internalCheckpoint( TA_TraceGlobal *global,
          return;   
    #endif
 
-   #ifdef TA_DEBUG
    /* If this position is already in the dictionary, just
     * increment the 'repetition' counter, else create
     * a new entry in the dictionary.
@@ -626,11 +644,11 @@ static void internalCheckpoint( TA_TraceGlobal *global,
    tracePosition = TA_DictGetValue_S( global->functionCalled, TA_StringToChar(key) );
    TA_TraceEnable();
 
-   if( tracePosition )
+   if( tracePosition && (tracePosition->value == value) )
       tracePosition->repetition++;
    else
    {
-      tracePosition = newTracePosition( funcname, filename, lineNb );
+      tracePosition = newTracePosition( funcname, filename, lineNb, value );
 
       if( !tracePosition )
       {
@@ -647,13 +665,6 @@ static void internalCheckpoint( TA_TraceGlobal *global,
     * Make a copy of it in the circular buffer.
     */
    global->codeTrace[global->posForNextTrace] = *tracePosition;
-   #else
-      (void)key; /* Used only when doing debug. */
-      global->codeTrace[global->posForNextTrace].filename   = filename;
-      global->codeTrace[global->posForNextTrace].funcname   = funcname;
-      global->codeTrace[global->posForNextTrace].lineNb     = lineNb;
-      global->codeTrace[global->posForNextTrace].repetition = 1;
-   #endif
 
    /* Move to the next entry in the circular buffer. */
    global->posForNextTrace++;
@@ -664,11 +675,13 @@ static void internalCheckpoint( TA_TraceGlobal *global,
    TA_SemaPost( &global->callSema );
    #endif
 }
+#endif
 
 #ifdef TA_DEBUG
 static TA_TracePosition *newTracePosition( const char *funcname, 
                                            const char *filename,
-                                           unsigned int lineNb )
+                                           unsigned int lineNb,
+                                           int value )
 {
    TA_TracePosition *tracePosition;
 
@@ -680,6 +693,7 @@ static TA_TracePosition *newTracePosition( const char *funcname,
    tracePosition->funcname = funcname;
    tracePosition->lineNb = lineNb;
    tracePosition->repetition = 1;
+   tracePosition->value = value;
 
    return tracePosition;
 }
@@ -688,7 +702,6 @@ static void freeTracePosition( void *dataToBeFreed )
 {
    TA_Free(  dataToBeFreed );
 }
-#endif
 
 static void printTracePosition( TA_TracePosition *tracePosition, TA_PrintfVar *outp )
 {
@@ -712,19 +725,27 @@ static void printTracePosition( TA_TracePosition *tracePosition, TA_PrintfVar *o
          filename++;
    }
 
-   TA_Printf( outp, "(%03d)Line:[%04d][%s,%s]\n",
+   TA_Printf( outp, "(%03d)Line:[%04d][%s,%s]",
               tracePosition->repetition,
               tracePosition->lineNb,
               tracePosition->funcname?tracePosition->funcname:"(null)",
               filename?filename:"(null)" );
+
+   if( tracePosition->value != 0 )
+      TA_Printf( outp, " [0x%08X]\n", tracePosition->value );
+   else
+      TA_Printf( outp, "\n" );
 }
+#endif
 
 static void doFatalReport( TA_PrintfVar *outp )
 {
    TA_TraceGlobal *global;
    TA_RetCode retCode;
-   unsigned int i, pos, outputTrace;
+   #ifdef TA_DEBUG
    TA_TracePosition *tracePosition;
+   unsigned int i, pos, outputTrace;
+   #endif
 
    retCode = TA_GetGlobal(  &TA_TraceGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
@@ -736,26 +757,30 @@ static void doFatalReport( TA_PrintfVar *outp )
       TA_Printf( outp, "No fatal error" ); 
 
    /* Output the calling sequence. */
-   pos = global->posForNextTrace;
-   outputTrace = 0;
+   #ifdef TA_DEBUG
+      pos = global->posForNextTrace;
+      outputTrace = 0;
 
-   for( i=0; i < TA_CODE_TRACE_SIZE; i++ )
-   {    
-      tracePosition = &global->codeTrace[pos];
-      if( tracePosition && tracePosition->repetition )
-      {
-         if( outputTrace++ == 0 )
-            TA_Printf( outp, "Execution Sequence:\n" );
+      for( i=0; i < TA_CODE_TRACE_SIZE; i++ )
+      {    
+         tracePosition = &global->codeTrace[pos];
+         if( tracePosition && tracePosition->repetition )
+         {
+            if( outputTrace++ == 0 )
+               TA_Printf( outp, "Execution Sequence:\n" );
 
-         printTracePosition( tracePosition, outp );
+            printTracePosition( tracePosition, outp );
+         }
+         pos++;
+         if( pos >= TA_CODE_TRACE_SIZE )
+            pos = 0;
       }
-      pos++;
-      if( pos >= TA_CODE_TRACE_SIZE )
-         pos = 0;
-   }
 
-   if( outputTrace != 0 )
-      TA_Printf( outp, "End of Execution Sequence.\n" );
-   else
-      TA_Printf( outp, "No Execution Sequence Recorded\n" );
+      if( outputTrace != 0 )
+         TA_Printf( outp, "End of Execution Sequence.\n" );
+      else
+         TA_Printf( outp, "Execution Sequence Empty.\n" );
+   #else
+      TA_Printf( outp, "Sequence Not Recorded in release build.\n" );
+   #endif
 }
