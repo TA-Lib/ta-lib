@@ -9,8 +9,8 @@
 
 CC	=	cl
 CXX	=	cl
-CFLAGS	=	-nologo -W3 -MD -O1 -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT -DNO_DEBUG
-CXXFLAGS=	-nologo -W3 -MD -O1 -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT -DNO_DEBUG
+CFLAGS	=	-nologo -W3 -MT -O1 -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT -DNO_DEBUG
+CXXFLAGS=	-nologo -W3 -MT -O1 -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT -DNO_DEBUG
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data\ta_source\ta_fileindex" -I"..\..\..\..\..\src\ta_data\ta_source\ta_ascii" -I"..\..\..\..\..\src\ta_data\ta_source\ta_readop" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\src\ta_data\ta_source\ta_sql" -I"..\..\..\..\..\src\ta_data\ta_source\ta_csi" -I"..\..\..\..\..\src\ta_data\ta_history" -I"..\..\..\..\..\src\ta_data\ta_source\ta_simulator" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_abstract" -I"..\..\..\..\..\src\ta_abstract\tables" -I"..\..\..\..\..\src\ta_abstract\frames" -I"..\..\..\..\..\src\ta_pm" -I"$(QTDIR)\include"
 LIB	=	lib /NOLOGO
 MOC	=	moc

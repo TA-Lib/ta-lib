@@ -215,6 +215,10 @@ foreach $z (@platformCompilerPath) {
 
       if( $makeDebug == 1 ) {
          $toRun = $toRun." "."\"CONFIG+=debug\"";
+         if( $makeDLL == 1 ) {
+            $toRun = $toRun." "."\"TMAKE_CFLAGS_MT_DBG=-MDd\"";
+            $toRun = $toRun." "."\"TMAKE_CXXFLAGS_MT_DBG=-MDd\"";
+         }
       }
       #Set the profiler options here --AK--
       elsif ( $makeDebug == 2 ) {
@@ -227,6 +231,10 @@ foreach $z (@platformCompilerPath) {
       }
       else {
          $toRun = $toRun." "."\"CONFIG+=release\"";
+         if( $makeDLL == 1 ) {
+            $toRun = $toRun." "."\"TMAKE_CFLAGS_MT=-MD\"";
+            $toRun = $toRun." "."\"TMAKE_CXXFLAGS_MT=-MD\"";
+         }
       }
 
       if( $makeConsole == 1 ) {
@@ -237,10 +245,6 @@ foreach $z (@platformCompilerPath) {
       }
 
       if( $makeThread == 1 ) {
-         $toRun = $toRun." "."\"CONFIG+=thread\"";
-      }
-
-      if( $makeDLL == 1 ) {
          $toRun = $toRun." "."\"CONFIG+=thread\"";
       }
 
