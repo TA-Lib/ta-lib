@@ -86,6 +86,8 @@
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
+
+   /* This function have no lookback needed. */
    return 0;
 }
 
