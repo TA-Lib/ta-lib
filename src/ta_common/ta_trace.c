@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
- *
+ *  110803 MF   Implementation of TA_FatalReportToBuffer.
  */
 
 /* Description:
@@ -152,7 +152,9 @@ typedef struct
 
 
 /**** Local functions declarations.    ****/
-static void printFatalError( TA_FatalErrorLog *log, FILE *out );
+static void printFatalError( TA_FatalErrorLog *log, TA_PrintfVar *outp );
+static void doFatalReport( TA_PrintfVar *outp );
+
 static void internalCheckpoint( TA_TraceGlobal *global,
                                 TA_String *key,
                                 const char *funcname,
@@ -161,13 +163,12 @@ static void internalCheckpoint( TA_TraceGlobal *global,
 
 #ifdef TA_DEBUG
 static void freeTracePosition( void *dataToBeFreed );
-static TA_TracePosition *newTracePosition( 
-                                           const char *funcname, 
+static TA_TracePosition *newTracePosition( const char *funcname, 
                                            const char *filename,
                                            unsigned int lineNb );
 #endif
 
-static void printTracePosition( TA_TracePosition *tracePosition, FILE *out );
+static void printTracePosition( TA_TracePosition *tracePosition, TA_PrintfVar *outp );
 
 static TA_RetCode TA_TraceGlobalShutdown( void *globalAllocated );
 static TA_RetCode TA_TraceGlobalInit( void **globalToAlloc );
@@ -404,35 +405,29 @@ void TA_PrivError( unsigned int type, const char *str,
 
 void TA_FatalReport( FILE *out )
 {
-   TA_TraceGlobal *global;
-   TA_RetCode retCode;
-   unsigned int i, pos;
-   TA_TracePosition *tracePosition;
+   TA_PrintfVar outp;
 
-   retCode = TA_GetGlobal(  &TA_TraceGlobalControl, (void **)&global );
-   if( retCode != TA_SUCCESS )
-       return;
-
-   if( global->fatalErrorRecorded )
-      printFatalError( &global->fatalError, out );
-   else
-      fprintf( out, "No fatal error" ); 
-
-   /* Output the calling sequence. */
-   fprintf( out, "Execution Sequence:\n" );
-   pos = global->posForNextTrace;
-
-   for( i=0; i < TA_CODE_TRACE_SIZE; i++ )
-   {    
-      tracePosition = &global->codeTrace[pos];
-      if( tracePosition && tracePosition->repetition )
-         printTracePosition( tracePosition, out );
-      pos++;
-      if( pos >= TA_CODE_TRACE_SIZE )
-         pos = 0;
-   }
+   memset( &outp, 0, sizeof(outp) );
+   outp.file = out;
+   doFatalReport( &outp );
 }
 
+
+void TA_FatalReportToBuffer( char *buffer, unsigned int bufferSize )
+{
+   TA_PrintfVar outp;
+
+   if( !buffer || bufferSize <= 0 )
+      return;
+
+   *buffer = '\0';
+
+   memset( &outp, 0, sizeof(TA_PrintfVar) );
+   outp.buffer = buffer;
+   outp.size   = bufferSize;
+   memset( outp.buffer, 0, outp.size );
+   doFatalReport( &outp );
+}
 
 TA_RetCode TA_SetFatalErrorHandler( TA_FatalHandler handler )
 {
@@ -459,33 +454,38 @@ TA_RetCode TA_SetFatalErrorHandler( TA_FatalHandler handler )
 }
 
 /**** Local functions definitions.     ****/
-static void printFatalError( TA_FatalErrorLog *log, FILE *out )
+static void printFatalError( TA_FatalErrorLog *log, TA_PrintfVar *outp )
 {
    unsigned int type;
    static char *errorType[] = { "Fatal", "Assert", "Debug Assert", "Warning", "Unknown" };
+   const char *version;
 
    type = log->type;
 
    if( type >= (sizeof(errorType)/sizeof(char *)) )
       type = (sizeof(errorType)/sizeof(char *)) - 1;
 
-   fprintf( out, "*** Internal %s Error ***\n", errorType[type]);
-	if( log->position.filename )
-	{
-       fprintf( out, "File:[%s]\n", log->position.filename );
-       fprintf( out, "Line:[%d]    ", log->position.lineNb );
+   TA_Printf( outp, "*** Internal %s Error ***\n", errorType[type]);
+   version = TA_GetVersionString();
+   if( version )
+      TA_Printf( outp, "Version:[%s]\n", version );
+
+   if( log->position.filename )
+   {
+       TA_Printf( outp, "File:[%s]\n", log->position.filename );
+       TA_Printf( outp, "Line:[%d]    ", log->position.lineNb );
    }
 
-	if( log->date && log->time )
-       fprintf( out, "Comp:[%s %s]\n", log->date, log->time );
+   if( log->date && log->time )
+       TA_Printf( outp, "Comp:[%s %s]\n", log->date, log->time );
 
    if( log->position.funcname )
-       fprintf( out, "Func:[%s]\n", log->position.funcname );
+       TA_Printf( outp, "Func:[%s]\n", log->position.funcname );
 	
-	if( log->str )
-       fprintf( out, "Desc:[%s]\n", log->str );
+   if( log->str )
+       TA_Printf( outp, "Desc:[%s]\n", log->str );
 
-   fprintf( out, "Info:[0x%08X,0x%08X]\n", log->param1, log->param2 );
+   TA_Printf( outp, "Info:[0x%08X,0x%08X]\n", log->param1, log->param2 );
 }
 
 static TA_RetCode TA_TraceGlobalInit( void **globalToAlloc )
@@ -690,7 +690,7 @@ static void freeTracePosition( void *dataToBeFreed )
 }
 #endif
 
-static void printTracePosition( TA_TracePosition *tracePosition, FILE *out )
+static void printTracePosition( TA_TracePosition *tracePosition, TA_PrintfVar *outp )
 {
    const char *filename;
    int seperatorChar;
@@ -712,10 +712,50 @@ static void printTracePosition( TA_TracePosition *tracePosition, FILE *out )
          filename++;
    }
 
-   fprintf( out, "(%03d)Line:[%04d][%s,%s]\n",
+   TA_Printf( outp, "(%03d)Line:[%04d][%s,%s]\n",
               tracePosition->repetition,
               tracePosition->lineNb,
               tracePosition->funcname?tracePosition->funcname:"(null)",
               filename?filename:"(null)" );
 }
 
+static void doFatalReport( TA_PrintfVar *outp )
+{
+   TA_TraceGlobal *global;
+   TA_RetCode retCode;
+   unsigned int i, pos, outputTrace;
+   TA_TracePosition *tracePosition;
+
+   retCode = TA_GetGlobal(  &TA_TraceGlobalControl, (void **)&global );
+   if( retCode != TA_SUCCESS )
+       return;
+
+   if( global->fatalErrorRecorded )
+      printFatalError( &global->fatalError, outp );
+   else
+      TA_Printf( outp, "No fatal error" ); 
+
+   /* Output the calling sequence. */
+   pos = global->posForNextTrace;
+   outputTrace = 0;
+
+   for( i=0; i < TA_CODE_TRACE_SIZE; i++ )
+   {    
+      tracePosition = &global->codeTrace[pos];
+      if( tracePosition && tracePosition->repetition )
+      {
+         if( outputTrace++ == 0 )
+            TA_Printf( outp, "Execution Sequence:\n" );
+
+         printTracePosition( tracePosition, outp );
+      }
+      pos++;
+      if( pos >= TA_CODE_TRACE_SIZE )
+         pos = 0;
+   }
+
+   if( outputTrace != 0 )
+      TA_Printf( outp, "End of Execution Sequence.\n" );
+   else
+      TA_Printf( outp, "No Execution Sequence Recorded\n" );
+}
