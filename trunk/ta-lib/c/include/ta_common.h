@@ -248,6 +248,12 @@ TA_RetCode TA_SetTimeNow( TA_Timestamp *timestamp );
  */
 TA_RetCode TA_TimestampValidate( const TA_Timestamp *timestamp );
 
+/* Align the timestamp according to bars period. --AK--
+ * Limitations: period<= TA_12HOURS
+ */
+TA_RetCode TA_TimestampAlign( TA_Timestamp *dest, const TA_Timestamp *src, TA_Period period );
+
+
 /* Validate only the year/month/day */
 TA_RetCode TA_TimestampValidateYMD( const TA_Timestamp *timestamp );
 
@@ -361,6 +367,14 @@ TA_RetCode TA_BackToDayOfWeek( TA_Timestamp *timestamp,
 /* Make a copy of the value of a timestamp. */
 TA_RetCode TA_TimestampCopy( TA_Timestamp *dest, const TA_Timestamp *src );
 
+/* Move the timestamp forward/backward by some time "delta"
+ * which is specified in seconds                     --AK--
+ * Approximate limitations: -30 years < delta < 30 years
+ */
+TA_RetCode TA_AddTimeToTimestamp( TA_Timestamp *dest, 
+                                  const TA_Timestamp *src,
+                                  const int delta);
+
 /* Evaluate how many complete period can fit between
  * two timestamps (timestamp days are inclusive).
  *
@@ -400,6 +414,12 @@ TA_RetCode TA_TimestampDeltaWeekday( const TA_Timestamp *t1,
 TA_RetCode TA_TimestampDeltaQuarter( const TA_Timestamp *t1,
                                      const TA_Timestamp *t2,
                                      unsigned int *delta );
+
+TA_RetCode TA_TimestampDeltaIntraday( const TA_Timestamp *t1,
+                                      const TA_Timestamp *t2,
+                                      unsigned int *delta,
+                                      TA_Period old_period,
+                                      TA_Period new_period);
 
 /* TA_Initialize() initialize the ressources used by TA-Lib. This
  * function must be called once prior to any other functions declared in
