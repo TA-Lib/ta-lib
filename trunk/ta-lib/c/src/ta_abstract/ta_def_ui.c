@@ -202,6 +202,16 @@ const TA_RealRange TA_DEF_NbDeviation =
    0.2             /* suggested increment */
 };
 
+const TA_RealRange TA_DEF_ZeroToOne =
+{
+   0.00,  /* min */
+   1.00,  /* max */
+   2,     /* precision */
+   0.01,  /* suggested start */
+   1.00,  /* suggested end   */
+   0.05   /* suggested increment */
+};
+
 /*****************************************************
  * Define from here the TA_OptInputParameterInfo.
  ****************************************************/
@@ -406,7 +416,8 @@ static const TA_IntegerDataPair TA_MA_TypeDataPair[] =
    {4,"TEMA" },
    {5,"TRIMA"},
    {6,"KAMA" },
-   {7,"MAMA" }
+   {7,"MAMA" },
+   {8,"T3"}
    /*{...,"Linear Regression"}*/
 };
 
