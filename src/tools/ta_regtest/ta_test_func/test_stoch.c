@@ -436,69 +436,12 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
                      TA_Integer   *outNbElement,
                      TA_Real       outSlowK_0[],
                      TA_Real       outSlowD_1[] )
-/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
-   /* Insert local variables here. */
    TA_RetCode retCode;
    TA_Real Lt, Ht, tmp, *tempBuffer;
    TA_Integer outIdx;
    TA_Integer lookbackTotal, lookbackK, lookbackKSlow, lookbackDSlow;
    TA_Integer trailingIdx, today, i, bufferIsAllocated;
-
-/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-#ifndef TA_FUNC_NO_RANGE_CHECK
-
-   /* Validate the requested output range. */
-   if( startIdx < 0 )
-      return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx < startIdx))
-      return TA_OUT_OF_RANGE_END_INDEX;
-
-   /* Validate the parameters. */
-   /* Verify required price component. */
-   if(!inHigh_0||!inLow_0||!inClose_0)
-      return TA_BAD_PARAM;
-
-   /* min/max are checked for optInFastK_Period_0. */
-   if( optInFastK_Period_0 == TA_INTEGER_DEFAULT )
-      optInFastK_Period_0 = 5;
-   else if( (optInFastK_Period_0 < 1) || (optInFastK_Period_0 > 2147483647) )
-      return TA_BAD_PARAM;
-
-   /* min/max are checked for optInSlowK_Period_1. */
-   if( optInSlowK_Period_1 == TA_INTEGER_DEFAULT )
-      optInSlowK_Period_1 = 3;
-   else if( (optInSlowK_Period_1 < 1) || (optInSlowK_Period_1 > 2147483647) )
-      return TA_BAD_PARAM;
-
-   if( optInSlowK_MAType_2 == TA_INTEGER_DEFAULT )
-      optInSlowK_MAType_2 = 0;
-   else if( (optInSlowK_MAType_2 < 0) || (optInSlowK_MAType_2 > 4) )
-      return TA_BAD_PARAM;
-
-   /* min/max are checked for optInSlowD_Period_3. */
-   if( optInSlowD_Period_3 == TA_INTEGER_DEFAULT )
-      optInSlowD_Period_3 = 3;
-   else if( (optInSlowD_Period_3 < 1) || (optInSlowD_Period_3 > 2147483647) )
-      return TA_BAD_PARAM;
-
-   if( optInSlowD_MAType_4 == TA_INTEGER_DEFAULT )
-      optInSlowD_MAType_4 = 0;
-   else if( (optInSlowD_MAType_4 < 0) || (optInSlowD_MAType_4 > 4) )
-      return TA_BAD_PARAM;
-
-   if( outSlowK_0 == NULL )
-      return TA_BAD_PARAM;
-
-   if( outSlowD_1 == NULL )
-      return TA_BAD_PARAM;
-
-#endif /* TA_FUNC_NO_RANGE_CHECK */
-
-/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   /* Insert TA function code here. */
 
    /* Identify the lookback needed. */
    lookbackK      = optInFastK_Period_0-1;

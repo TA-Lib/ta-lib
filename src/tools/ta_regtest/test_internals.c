@@ -229,7 +229,7 @@ static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer )
    int i, value;
    int outIdx;
 
-   CIRCBUF_CONSTRUCT(MyBuf,int,size);
+   CIRCBUF_INIT(MyBuf,int,size);
 
    outIdx = 0;
 

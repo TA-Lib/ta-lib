@@ -342,20 +342,31 @@ ErrorNumber test_pm( void )
    TA_PrevDay( &timestampNowPlusOneYear );
 
    /* Using a user defined kkey */
-   TA_InstrumentInitWithUserKey( &id1_1, 12 );
-   TA_InstrumentInitWithUserKey( &id1_2,  9 );
+   memset( &id1_1, 0, sizeof(TA_Instrument) );
+   memset( &id1_2, 0, sizeof(TA_Instrument) );
+   id1_1.userKey = 12;
+   id1_2.userKey =  9;
 
    /* Using a category / symbol strings. */
-   TA_InstrumentInit( &id2_1, "AB", "CD" );
-   TA_InstrumentInit( &id2_1, "AB", "CE" );
+   memset( &id2_1, 0, sizeof(TA_Instrument) );
+   id2_1.catString = "AB";
+   id2_1.symString = "CE";
 
    /* Using a category only. */
-   TA_InstrumentInit( &id3_1, "ABCD", NULL );
-   TA_InstrumentInit( &id3_2, "EFGH", NULL );
+   memset( &id3_1, 0, sizeof(TA_Instrument) );
+   memset( &id3_2, 0, sizeof(TA_Instrument) );
+   id3_1.catString = "ABCD";
+   id3_1.symString = NULL;
+   id3_2.catString = "EFGH";
+   id3_2.symString = NULL;
 
    /* Using only a symbol string */
-   TA_InstrumentInit( &id4_1, NULL, "A" );
-   TA_InstrumentInit( &id4_2, NULL, "B" );
+   memset( &id4_1, 0, sizeof(TA_Instrument) );
+   memset( &id4_2, 0, sizeof(TA_Instrument) );
+   id4_1.catString = NULL;
+   id4_1.symString = "A";
+   id4_2.catString = NULL;
+   id4_2.symString = "B";
 
    /* Test limit cases with empty TA_TradeLog */
    errorNumber = allocLib( &udb );
@@ -537,16 +548,24 @@ static ErrorNumber test_onetransaction_only( TA_KEY_TYPE keyTypeTest )
    switch( keyTypeTest )
    {
    case TA_KEY_TYPE_INTEGER:
-      TA_InstrumentInitWithUserKey( &instrument, 0x12345432 );
+      instrument.catString = NULL;
+      instrument.symString = NULL;
+      instrument.userKey = 0x12345432;
       break;
    case TA_KEY_TYPE_CAT:
-      TA_InstrumentInit( &instrument, "CATONLY", NULL );
+      instrument.catString = "CATONLY";
+      instrument.symString = NULL;
+      instrument.userKey = 0;
       break;
    case TA_KEY_TYPE_SYM:
-      TA_InstrumentInit( &instrument, NULL, "S" );
+      instrument.catString = NULL;
+      instrument.symString = "S";
+      instrument.userKey = 0;
       break;
    case TA_KEY_TYPE_CATSYM:
-      TA_InstrumentInit( &instrument, "CATABCDEFGHIJKLMNOPQRSTUVWXYZ", "SYM012345678901234567890" );
+      instrument.catString = "CATABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      instrument.symString = "SYM012345678901234567890";
+      instrument.userKey = 0;      
       break;
    default:
       return TA_PM_ERR_INVALID_KEY_TYPE;
@@ -650,16 +669,24 @@ static ErrorNumber test_onetrade_only( TA_KEY_TYPE keyTypeTest,
    switch( keyTypeTest )
    {
    case TA_KEY_TYPE_INTEGER:
-      TA_InstrumentInitWithUserKey( &instrument, 0 );
+      instrument.catString = NULL;
+      instrument.symString = NULL;
+      instrument.userKey = 0;
       break;
    case TA_KEY_TYPE_CAT:
-      TA_InstrumentInit( &instrument, "CATONLY", "" );
+      instrument.catString = "CATONLY";
+      instrument.symString = NULL;
+      instrument.userKey = 0;
       break;
    case TA_KEY_TYPE_SYM:
-      TA_InstrumentInit( &instrument, "", "SYMONLY" );
+      instrument.catString = "SYMONLY";
+      instrument.symString = "";
+      instrument.userKey = 0;
       break;
    case TA_KEY_TYPE_CATSYM:
-      TA_InstrumentInit( &instrument, "C", "S" );
+      instrument.catString = "C";
+      instrument.symString = "S";
+      instrument.userKey = 0;
       break;
    default:
       return TA_PM_ERR_INVALID_KEY_TYPE;
@@ -1217,19 +1244,19 @@ static ErrorNumber test_valueId( TA_PMValueIdTest *test )
    if( errorNumber != TA_TEST_PASS )
       return errorNumber;
 
+   retCode = TA_PMFree( pm );
+   if( retCode != TA_SUCCESS )
+   {
+      printRetCode( retCode );
+      return TA_PM_TEST_VALUE_ID_FAILED_9;
+   }
+
    /* Free up everything */
    retCode = TA_TradeLogFree( tradeLog );
    if( retCode != TA_SUCCESS )
    {
       printRetCode( retCode );
       return TA_PM_TEST_VALUE_ID_FAILED_8;
-   }
-
-   retCode = TA_PMFree( pm );
-   if( retCode != TA_SUCCESS )
-   {
-      printRetCode( retCode );
-      return TA_PM_TEST_VALUE_ID_FAILED_9;
    }
 
    return TA_TEST_PASS;
@@ -1374,18 +1401,18 @@ static ErrorNumber test_arrayId( TA_PMArrayIdTest *test )
    #undef TA_SAFETY_NET_LIMIT
 
    /* Free up everything */
-   retCode = TA_TradeLogFree( tradeLog );
-   if( retCode != TA_SUCCESS )
-   {
-      printRetCode( retCode );
-      return TA_PM_TEST_ARRAY_ID_FAILED_8;
-   }
-
    retCode = TA_PMFree( pm );
    if( retCode != TA_SUCCESS )
    {
       printRetCode( retCode );
       return TA_PM_TEST_ARRAY_ID_FAILED_9;
+   }
+
+   retCode = TA_TradeLogFree( tradeLog );
+   if( retCode != TA_SUCCESS )
+   {
+      printRetCode( retCode );
+      return TA_PM_TEST_ARRAY_ID_FAILED_8;
    }
 
    return TA_TEST_PASS;

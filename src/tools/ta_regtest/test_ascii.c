@@ -603,6 +603,8 @@ static int test_parsing_equivalence( void )
    TA_History *refHistory;
    char buffer1024[1024];
    char buffer200[200];
+   TA_Timestamp ts1, ts2;
+
 
    retValue = allocLib( &udb );
    if( retValue != TA_TEST_PASS )
@@ -790,6 +792,56 @@ static int test_parsing_equivalence( void )
                      TA_UDBaseFree( udbEqv );
                   freeLib( udb );
                   return retValue;                  
+               }
+
+               retCode = TA_HistoryFree( history );
+               if( retCode != TA_SUCCESS )
+               {
+                  if( refHistory )
+                     TA_HistoryFree( refHistory );
+                  TA_SymbolTableFree( symTable );
+                  TA_CategoryTableFree( catTable );
+                  if( udbEqv )
+                     TA_UDBaseFree( udbEqv );
+                  freeLib( udb );
+                  return TA_TESTASCII_HISTORYFREE_FAILED;
+               }
+
+               /* Test start-end */
+               TA_SetDefault(&ts1);
+               TA_SetDefault(&ts2);
+               TA_SetDate( 4567,1,23,&ts1);
+               TA_SetDate( 4568,12,31,&ts2);
+               TA_SetTime( 0, 0, 0, &ts2 );
+               retCode = TA_HistoryAlloc( udbEqv, catTable->string[i],
+                                          &buffer200[0],
+                                          TA_DAILY, &ts1, &ts2, TA_ALL,
+                                          &history );
+
+               if( retCode != TA_SUCCESS )
+               {
+                  printf( "TA_HistoryAlloc failed with %d (%s)\n", retCode, symTable->string[j] );
+                  if( refHistory )
+                     TA_HistoryFree( refHistory );
+                  TA_SymbolTableFree( symTable );
+                  TA_CategoryTableFree( catTable );
+                  if( udbEqv )
+                     TA_UDBaseFree( udbEqv );
+                  freeLib( udb );
+                  return TA_TESTASCII_EQV_HISTORYALLOC;
+               }
+
+               if( history->nbBars != 3 )
+               {
+                  printf( "Less than 3 price bar read (%d)\n", history->nbBars );
+                  if( refHistory )
+                     TA_HistoryFree( refHistory );
+                  TA_SymbolTableFree( symTable );
+                  TA_CategoryTableFree( catTable );
+                  if( udbEqv )
+                     TA_UDBaseFree( udbEqv );
+                  freeLib( udb );
+                  return TA_TESTASCII_EQV_HISTORYALLOC;
                }
 
                retCode = TA_HistoryFree( history );
