@@ -63,7 +63,7 @@ typedef struct
     *       TA_SQL_TIME_COLUMN
     * Last parameter is output, string valid as long as no next row accessed 
     * or query_result is not released
-    * Rows have to be accessed sequentially
+    * Rows have to be accessed sequentially; return TA_END_OF_INDEX at the end
     */
    TA_RetCode (*getRowString)(void *query_reslut, int row, int column, const char **value);
 
@@ -74,7 +74,7 @@ typedef struct
     *       TA_SQL_LOW_COLUMN
     *       TA_SQL_CLOSE_COLUMN
     * Last parameter is output
-    * Rows have to be accessed sequentially
+    * Rows have to be accessed sequentially; return TA_END_OF_INDEX at the end
     */
    TA_RetCode (*getRowReal)(void *query_reslut, int row, int column, TA_Real *value);
 
@@ -83,7 +83,7 @@ typedef struct
     *       TA_SQL_VOLUME_COLUMN
     *       TA_SQL_OI_COLUMN
     * Last parameter is output
-    * Rows have to be accessed sequentially
+    * Rows have to be accessed sequentially; return TA_END_OF_INDEX at the end
     */
    TA_RetCode (*getRowInteger)(void *query_reslut, int row, int column, TA_Integer *value);
    

@@ -298,6 +298,7 @@ TA_RetCode TA_SQL_MySQL_GetColumnName(void *query_result, int column, const char
    try
    {
       *name = privResult->res->names(column).c_str();
+      
    }
    catch (...)
    {
@@ -319,9 +320,15 @@ TA_RetCode TA_SQL_MySQL_GetRowString(void *query_result, int row, int column, co
 
    TA_ASSERT( query_result != NULL );
    TA_ASSERT( value != NULL );
+   TA_ASSERT_RET( row >= 0, TA_BAD_PARAM );
 
    try
    {
+      if( (unsigned)row >= privResult->res->rows() )
+      {
+         TA_TRACE_RETURN( TA_END_OF_INDEX );
+      }
+
       if( row != privResult->rownum )
       {
          privResult->row = (*privResult->res)[row];
@@ -350,9 +357,15 @@ TA_RetCode TA_SQL_MySQL_GetRowReal(void *query_result, int row, int column, TA_R
 
    TA_ASSERT( query_result!= NULL );
    TA_ASSERT( value != NULL );
+   TA_ASSERT_RET( row >= 0, TA_BAD_PARAM );
 
    try
    {
+      if( (unsigned)row >= privResult->res->rows() )
+      {
+         TA_TRACE_RETURN( TA_END_OF_INDEX );
+      }
+
       if( row != privResult->rownum )
       {
          privResult->row = (*privResult->res)[row];
@@ -381,9 +394,15 @@ TA_RetCode TA_SQL_MySQL_GetRowInteger(void *query_result, int row, int column, T
 
    TA_ASSERT( query_result != NULL );
    TA_ASSERT( value != NULL );
+   TA_ASSERT_RET( row >= 0, TA_BAD_PARAM );
 
    try
    {
+      if( (unsigned)row >= privResult->res->rows() )
+      {
+         TA_TRACE_RETURN( TA_END_OF_INDEX );
+      }
+
       if( row != privResult->rownum )
       {
          privResult->row = (*privResult->res)[row];
