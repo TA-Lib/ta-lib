@@ -27,8 +27,6 @@ typedef enum
   TA_GroupId_MathOperators,
   TA_GroupId_MathTransform,
   TA_GroupId_OverlapStudies,
-  TA_GroupId_TrendIndicators,
-  TA_GroupId_MarketStrength,
   TA_GroupId_VolatilityIndicators,
   TA_GroupId_MomentumIndicators,
   TA_GroupId_CycleIndicators,
@@ -42,8 +40,6 @@ typedef enum
 extern const char TA_GroupId_MathOperatorsString[];
 extern const char TA_GroupId_MathTransformString[];
 extern const char TA_GroupId_OverlapStudiesString[];
-extern const char TA_GroupId_TrendIndicatorsString[];
-extern const char TA_GroupId_MarketStrengthString[];
 extern const char TA_GroupId_VolatilityIndicatorsString[];
 extern const char TA_GroupId_MomentumIndicatorsString[];
 extern const char TA_GroupId_CycleIndicatorsString[];
@@ -95,6 +91,11 @@ extern const TA_IntegerRange TA_DEF_TimePeriod_Positive;
 extern const TA_RealRange    TA_DEF_VerticalShiftPercent;
 extern const TA_IntegerRange TA_DEF_HorizontalShiftPeriod;
 extern const TA_RealRange    TA_DEF_NbDeviation;
+
+/* Useful to build your own TA_DEF_UI with the list of
+ * implemented Moving Average type.
+ */
+extern const TA_IntegerList TA_MA_TypeList;
 
 /* An internal structure for coordinating all these const info.
  * One TA_FuncDef instance will exist for each TA function.
