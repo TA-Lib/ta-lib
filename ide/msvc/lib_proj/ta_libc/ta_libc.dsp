@@ -69,8 +69,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "..\..\..\..\temp\cmd\ta_libc"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /Zi /Od /D "_LIB" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_DEBUG" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /WX /Gm /Zi /Od /D "_LIB" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_FUNC_NO_RANGE_CHECK" /YX /FD /GZ /c
-# SUBTRACT CPP /Fr
+# ADD CPP /nologo /MTd /W3 /WX /Gm /Zi /Od /D "_LIB" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_FUNC_NO_RANGE_CHECK" /Fr /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -93,7 +92,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "..\..\..\..\temp\csd\ta_libc"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_DEBUG" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /WX /Gm /GX /Zi /Od /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_DEBUG" /YX /FD /GZ /c
+# ADD CPP /nologo /W3 /WX /Gm /GX- /Zi /Od /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_DEBUG" /FR /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -186,7 +185,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "..\..\..\..\temp\cdd\ta_libc"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /WX /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MDd /W3 /WX /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /MDd /W3 /WX /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /FR /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
