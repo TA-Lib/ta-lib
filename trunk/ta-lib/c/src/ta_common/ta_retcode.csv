@@ -130,5 +130,5 @@
 809,TA_HTTP_SC_501,Not Implemented
 810,TA_HTTP_SC_502,Bad Gateway
 811,TA_HTTP_SC_503,Service Unavailable
-821,TA_HTTP_SC_UNKNOWN,Unknown error code.
+812,TA_HTTP_SC_UNKNOWN,Unknown error code.
 5000,TA_INTERNAL_ERROR,Internal Error - Contact TA-Lib.org
