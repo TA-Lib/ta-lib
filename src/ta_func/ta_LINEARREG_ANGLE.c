@@ -55,6 +55,7 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #using <mscorlib.dll>
 /* Generated */    #include "Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -68,10 +69,6 @@
 /* Generated */ 
 /* Generated */ #ifndef TA_MEMORY_H
 /* Generated */    #include "ta_memory.h"
-/* Generated */ #endif
-/* Generated */ 
-/* Generated */ #ifndef TA_TRACE_H
-/* Generated */    #include "ta_trace.h"
 /* Generated */ #endif
 /* Generated */ 
 /* Generated */ #define TA_PREFIX(x) TA_##x
