@@ -192,5 +192,9 @@ ErrorNumber doRangeTest( RangeTestFunction testFunction,
 /* Print out info about a retCode */
 void printRetCode( TA_RetCode retCode );
 
+/* Function to print character to show that the software is still alive. */
+void showFeedback(void);
+void hideFeedback(void);
+
 #endif
 

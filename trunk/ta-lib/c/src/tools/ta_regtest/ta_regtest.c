@@ -280,11 +280,13 @@ static int testTAFunction_ALL( TA_History *history )
    /* Make tests for each TA functions. */
    #define DO_TEST(func,str) \
       { \
-      printf( "%30s: Testing...", str ); \
+      printf( "%30s: Testing....", str ); \
+      showFeedback(); \
       TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT ); \
       retValue = func( history ); \
       if( retValue != TA_TEST_PASS ) \
          return retValue; \
+      hideFeedback(); \
       printf( "done.\n" ); \
       }
    DO_TEST( test_func_adx,      "ADX,ADXR,DI,DM,DX" );
