@@ -87,8 +87,12 @@ extern const TA_OptInputParameterInfo TA_DEF_UI_Slow_Period;
 
 extern const TA_OptInputParameterInfo TA_DEF_UI_NbDeviation;
 
+
 /* Re-usable ranges. */
 extern const TA_IntegerRange TA_DEF_TimePeriod_Positive;
+extern const TA_IntegerRange TA_DEF_TimePeriod_Positive_Minimum2;
+extern const TA_IntegerRange TA_DEF_TimePeriod_Positive_Minimum5;
+
 extern const TA_RealRange    TA_DEF_VerticalShiftPercent;
 extern const TA_IntegerRange TA_DEF_HorizontalShiftPeriod;
 extern const TA_RealRange    TA_DEF_NbDeviation;
