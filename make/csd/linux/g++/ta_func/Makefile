@@ -77,6 +77,10 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_AD.c \
 		../../../../../src/ta_func/ta_ADOSC.c \
 		../../../../../src/ta_func/ta_OBV.c \
+		../../../../../src/ta_func/ta_LINEARREG.c \
+		../../../../../src/ta_func/ta_LINEARREG_SLOPE.c \
+		../../../../../src/ta_func/ta_LINEARREG_ANGLE.c \
+		../../../../../src/ta_func/ta_LINEARREG_INTERCEPT.c \
 		../../../../../src/ta_func/ta_STDDEV.c \
 		../../../../../src/ta_func/ta_VAR.c \
 		../../../../../src/ta_func/ta_AVGPRICE.c \
@@ -137,6 +141,10 @@ OBJECTS =	../../../../../temp/csd/ta_utility.o \
 		../../../../../temp/csd/ta_AD.o \
 		../../../../../temp/csd/ta_ADOSC.o \
 		../../../../../temp/csd/ta_OBV.o \
+		../../../../../temp/csd/ta_LINEARREG.o \
+		../../../../../temp/csd/ta_LINEARREG_SLOPE.o \
+		../../../../../temp/csd/ta_LINEARREG_ANGLE.o \
+		../../../../../temp/csd/ta_LINEARREG_INTERCEPT.o \
 		../../../../../temp/csd/ta_STDDEV.o \
 		../../../../../temp/csd/ta_VAR.o \
 		../../../../../temp/csd/ta_AVGPRICE.o \
@@ -357,6 +365,18 @@ clean:
 
 ../../../../../temp/csd/ta_OBV.o: ../../../../../src/ta_func/ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_OBV.o ../../../../../src/ta_func/ta_OBV.c
+
+../../../../../temp/csd/ta_LINEARREG.o: ../../../../../src/ta_func/ta_LINEARREG.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_LINEARREG.o ../../../../../src/ta_func/ta_LINEARREG.c
+
+../../../../../temp/csd/ta_LINEARREG_SLOPE.o: ../../../../../src/ta_func/ta_LINEARREG_SLOPE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_LINEARREG_SLOPE.o ../../../../../src/ta_func/ta_LINEARREG_SLOPE.c
+
+../../../../../temp/csd/ta_LINEARREG_ANGLE.o: ../../../../../src/ta_func/ta_LINEARREG_ANGLE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_LINEARREG_ANGLE.o ../../../../../src/ta_func/ta_LINEARREG_ANGLE.c
+
+../../../../../temp/csd/ta_LINEARREG_INTERCEPT.o: ../../../../../src/ta_func/ta_LINEARREG_INTERCEPT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_LINEARREG_INTERCEPT.o ../../../../../src/ta_func/ta_LINEARREG_INTERCEPT.c
 
 ../../../../../temp/csd/ta_STDDEV.o: ../../../../../src/ta_func/ta_STDDEV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_STDDEV.o ../../../../../src/ta_func/ta_STDDEV.c

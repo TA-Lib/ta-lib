@@ -162,6 +162,10 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_AD.c \
           ../../../../../src/ta_func/ta_ADOSC.c \
           ../../../../../src/ta_func/ta_OBV.c \
+          ../../../../../src/ta_func/ta_LINEARREG.c \
+          ../../../../../src/ta_func/ta_LINEARREG_SLOPE.c \
+          ../../../../../src/ta_func/ta_LINEARREG_ANGLE.c \
+          ../../../../../src/ta_func/ta_LINEARREG_INTERCEPT.c \
           ../../../../../src/ta_func/ta_STDDEV.c \
           ../../../../../src/ta_func/ta_VAR.c \
           ../../../../../src/ta_func/ta_AVGPRICE.c \

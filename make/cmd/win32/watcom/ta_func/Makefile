@@ -74,6 +74,10 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c &
 		..\..\..\..\..\src\ta_func\ta_AD.c &
 		..\..\..\..\..\src\ta_func\ta_ADOSC.c &
 		..\..\..\..\..\src\ta_func\ta_OBV.c &
+		..\..\..\..\..\src\ta_func\ta_LINEARREG.c &
+		..\..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c &
+		..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c &
+		..\..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c &
 		..\..\..\..\..\src\ta_func\ta_STDDEV.c &
 		..\..\..\..\..\src\ta_func\ta_VAR.c &
 		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c &
@@ -134,6 +138,10 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_utility.obj &
 		..\..\..\..\..\temp\cmd\ta_AD.obj &
 		..\..\..\..\..\temp\cmd\ta_ADOSC.obj &
 		..\..\..\..\..\temp\cmd\ta_OBV.obj &
+		..\..\..\..\..\temp\cmd\ta_LINEARREG.obj &
+		..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj &
+		..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj &
+		..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj &
 		..\..\..\..\..\temp\cmd\ta_STDDEV.obj &
 		..\..\..\..\..\temp\cmd\ta_VAR.obj &
 		..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj &
@@ -221,6 +229,10 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_AD.obj
 	-del ..\..\..\..\..\temp\cmd\ta_ADOSC.obj
 	-del ..\..\..\..\..\temp\cmd\ta_OBV.obj
+	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG.obj
+	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj
 	-del ..\..\..\..\..\temp\cmd\ta_STDDEV.obj
 	-del ..\..\..\..\..\temp\cmd\ta_VAR.obj
 	-del ..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj
@@ -404,6 +416,18 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_OBV.obj: ..\..\..\..\..\src\ta_func\ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\ta_OBV.obj ..\..\..\..\..\src\ta_func\ta_OBV.c
+
+..\..\..\..\..\temp\cmd\ta_LINEARREG.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\ta_LINEARREG.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG.c
+
+..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c
+
+..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c
+
+..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c
 
 ..\..\..\..\..\temp\cmd\ta_STDDEV.obj: ..\..\..\..\..\src\ta_func\ta_STDDEV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\ta_STDDEV.obj ..\..\..\..\..\src\ta_func\ta_STDDEV.c
