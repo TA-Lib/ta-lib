@@ -100,12 +100,10 @@ ErrorNumber test_yahoo( void )
 
    retValue = test_index( udb );
    if( retValue != TA_TEST_PASS )
-   {
-      printf( "Note: Yahoo! data source tests requires \n" );
-      printf( "      an internet connection.\n" );
-       
-      printf( "\nTest failed with value %d\n", retValue );
-      return retValue;
+   {       
+      printf( "Error #%d\n", retValue );
+      printf( "Note: If you do not care about Yahoo! data source\n" );
+      printf( "      you can ignore the previous error messages.\n" );
    }
 
    retValue = freeLib( udb );
