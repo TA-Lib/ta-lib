@@ -326,6 +326,7 @@ TA_RetCode TA_YAHOO_GetHistoryData( TA_Libc *libHandle,
    TA_PROLOG;
    TA_RetCode retCode;
    TA_PrivateYahooHandle *yahooHandle;
+   int again;
 
    TA_TRACE_BEGIN( libHandle, TA_YAHOO_GetHistoryData );
 
@@ -348,13 +349,44 @@ TA_RetCode TA_YAHOO_GetHistoryData( TA_Libc *libHandle,
       TA_TRACE_RETURN( TA_SUCCESS );
    }
 
-   retCode = TA_GetHistoryDataFromWeb( libHandle, handle,                                       
-                                       categoryHandle, symbolHandle,
-                                       TA_DAILY, start, end,                                       
-                                       fieldToAlloc, paramForAddData );
-                                       
+   /* Get the data from the WEB.
+    *
+    * Yahoo! sometimes have "gaps" in its data (like one
+    * week missing), when this is being detected, we throw
+    * away all the data up to now and start over (up to
+    * 5 times before giving up).
+    */
+   again = 5;
+   do
+   {
+      retCode = TA_GetHistoryDataFromWeb( libHandle, handle,                                       
+                                          categoryHandle, symbolHandle,
+                                          TA_DAILY, start, end,                                            
+                                          fieldToAlloc, paramForAddData );
+      if( retCode == TA_DATA_GAP )
+      {
+         retCode = TA_HistoryAddDataReset( paramForAddData );
+         if( retCode != TA_SUCCESS )
+            again = 0; /* Give up */
+         else
+         {
+            --again; /* Try again */
 
-   TA_TRACE_RETURN( retCode );
+            /* Sometimes giving Yahoo! a break helps. */
+            if( again < 2 )
+               TA_Sleep( 10 ); /* Seconds */ 
+            else
+               TA_Sleep( 4 ); /* Seconds */ 
+         }
+      }
+      else
+      {
+         again = 0; /* Exit the loop */
+      }
+   } while( again > 0 );
+
+
+   TA_TRACE_RETURN( retCode );   
 }
 
 /**** Local functions definitions.     ****/
@@ -379,14 +411,14 @@ static TA_RetCode initCategoryHandle( TA_Libc *libHandle,
 
    if( !privData )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(99) );
    }
 
    yahooIndex = privData->index;
 
    if( !yahooIndex )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(100) );
    }
 
    if( index >= yahooIndex->nbCategory )
@@ -396,7 +428,7 @@ static TA_RetCode initCategoryHandle( TA_Libc *libHandle,
 
    if( !string )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR ); /* At least one category must exist. */
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(101) ); /* At least one category must exist. */
    }
 
    /* Set the categoryHandle. */
