@@ -83,12 +83,12 @@
  *
  * This assert mechanism will NOT be enabled in the final library.
  *
- * TA_DEBUG_ASSERT : Must be in a function AFTER a TA_TRACE_BEGIN.
+ * TA_ASSERT_DEBUG : Must be in a function AFTER a TA_TRACE_BEGIN.
  */
 #ifdef TA_DEBUG
-   #define TA_DEBUG_ASSERT(b){if(!(b)){TA_PrivError(2,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,1,1); TA_TRACE_RETURN(TA_FATAL_ERR);}}
+   #define TA_ASSERT_DEBUG(b){if(!(b)){TA_PrivError(2,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,1,1); TA_TRACE_RETURN(TA_FATAL_ERR);}}
 #else
-   #define TA_DEBUG_ASSERT(b)
+   #define TA_ASSERT_DEBUG(b)
 #endif
 
 /* Tracing allows to fulfill the following needs:
