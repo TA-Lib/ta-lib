@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  082301 MF   First version.
- *
+ *  061304 MF   Add TA_YAHOO_ONE_SYMBOL tests.
  */
 
 /* Description:
@@ -77,7 +77,8 @@
 /* None */
 
 /**** Local variables definitions.     ****/
-static ErrorNumber test_index( TA_UDBase *udb );
+static ErrorNumber test_web( TA_UDBase *udb );
+static ErrorNumber test_one_symbol( TA_UDBase *udb );
 
 static ErrorNumber checkRangeSame( TA_UDBase          *udb,
                                    const TA_History    *historyRef,
@@ -95,18 +96,32 @@ ErrorNumber test_yahoo( void )
 
    printf( "Testing Yahoo! data source\n" );
 
+   /* Test the TA_YAHOO_ONE_SYMBOL data source. */
    retValue = allocLib( &udb );
    if( retValue != TA_TEST_PASS )
       return retValue;    
-
-   retValue = test_index( udb );
+   retValue = test_one_symbol( udb );
    if( retValue != TA_TEST_PASS )
    {       
-      printf( "Error #%d\n", retValue );
+      printf( "Error #%d TA_YAHOO_ONE_SYMBOL:\n", retValue );
       printf( "Note: If you do not care about Yahoo! data source\n" );
       printf( "      you can ignore the previous error messages.\n" );
    }
-
+   retValue = freeLib( udb );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+   
+   /* Test the TA_YAHOO_WEB data source. */
+   retValue = allocLib( &udb );
+   if( retValue != TA_TEST_PASS )
+      return retValue;    
+   retValue = test_web( udb );
+   if( retValue != TA_TEST_PASS )
+   {       
+      printf( "Error #%d TA_YAHOO_WEB:\n", retValue );
+      printf( "Note: If you do not care about Yahoo! data source\n" );
+      printf( "      you can ignore the previous error messages.\n" );
+   }
    retValue = freeLib( udb );
    if( retValue != TA_TEST_PASS )
       return retValue;
@@ -116,7 +131,7 @@ ErrorNumber test_yahoo( void )
 
 
 /**** Local functions definitions.     ****/
-static ErrorNumber test_index( TA_UDBase *udb )
+static ErrorNumber test_web( TA_UDBase *udb )
 {
    TA_RetCode retCode;
    TA_AddDataSourceParam param;
@@ -304,6 +319,8 @@ static ErrorNumber test_index( TA_UDBase *udb )
       reportError( "TA_HistoryAlloc for Monthly data", retCode );
       return TA_YAHOO_HISTORYALLOC_3_FAILED;
    }
+
+   /* printf( "Nb Bars= %d\n", history->nbBars ); */
    
    errNumber = checkRangeSame( udb, history, &history->timestamp[0], &history->timestamp[0], TA_MONTHLY, 0, 1 );
    if( errNumber != TA_TEST_PASS )
@@ -333,6 +350,134 @@ static ErrorNumber test_index( TA_UDBase *udb )
       return errNumber;
    }
 
+   retCode = TA_HistoryFree( history );
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_HistoryFree", retCode );
+      return TA_YAHOO_HISTORYFREE_FAILED;
+   }
+
+   return TA_TEST_PASS;
+}
+
+static ErrorNumber test_one_symbol( TA_UDBase *udb )
+{
+   TA_RetCode retCode;
+   TA_AddDataSourceParam param;
+   TA_History *history;
+   ErrorNumber errNumber;
+   TA_HistoryAllocParam histParam;
+
+   /* Add the Yaho! data source. */
+   memset( &param, 0, sizeof( param ) );
+   param.id = TA_YAHOO_ONE_SYMBOL;
+   param.info = "MSFT";
+   param.category = "Whatever.US.NASDAQ.STOCK";
+   param.symbol = "Whatever.MSFT";
+
+   retCode = TA_AddDataSource( udb, &param );
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_AddDataSource", retCode );
+
+      return TA_YAHOO_ADDDATASOURCE_USA_FAILED;
+   }
+
+   /* Get something from NASDAQ. */
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = "Whatever.US.NASDAQ.STOCK";
+   histParam.symbol   = "Whatever.MSFT";
+   histParam.field    = TA_CLOSE|TA_TIMESTAMP|TA_VOLUME;
+   histParam.period   = TA_DAILY;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
+
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_HistoryAlloc", retCode );
+      return TA_YAHOO_HISTORYALLOC_1_FAILED;
+   }
+
+   if( history->nbBars < 3000 )
+   {
+      printf( "Insufficient nbBars returned for MSFT ticker test (%d < 3000)\n", history->nbBars );
+      return TA_YAHOO_VALUE_1_FAILED;
+   }
+
+   if( !history->close || !history->timestamp || !history->volume )
+   {
+      return TA_YAHOO_FIELD_MISSING_1;
+   }
+
+   retCode = TA_HistoryFree( history );
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_HistoryFree", retCode );
+      return TA_YAHOO_HISTORYFREE_FAILED;
+   }
+
+   /* Add complete canadian index. */
+   memset( &param, 0, sizeof( param ) );
+   param.id = TA_YAHOO_WEB;
+   param.location = "ca";
+   retCode = TA_AddDataSource( udb, &param );
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_AddDataSource", retCode );
+
+      return TA_YAHOO_ADDDATASOURCE_CAN_FAILED;
+   }
+
+   /* Add NT. */
+   memset( &param, 0, sizeof( param ) );
+   param.id = TA_YAHOO_ONE_SYMBOL;
+   param.info = "NT.TO";
+
+   retCode = TA_AddDataSource( udb, &param );
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_AddDataSource", retCode );
+
+      return TA_YAHOO_ADDDATASOURCE_CAN_FAILED;
+   }
+
+   /* Get NT from TA_YAHOO_ONE_STMBOL data source. */
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.symbol   = "NT.TO";   
+   histParam.field    = TA_ALL,
+   histParam.period   = TA_DAILY;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_HistoryAlloc", retCode );
+      return TA_YAHOO_HISTORYALLOC_3_FAILED;
+   }
+
+   if( history->nbBars < 700 )
+   {
+      return TA_YAHOO_VALUE_3_FAILED;
+   }
+
+   if( !history->open   ||
+       !history->high   ||
+       !history->low    ||
+       !history->close  ||
+       !history->volume ||
+       !history->timestamp )
+   {
+      return TA_YAHOO_FIELD_MISSING_3;
+   }
+
+   /* Get NT from the TA_YAHOO_WEB and make sure they return the same data. */
+   errNumber = checkRangeSame( udb, history,
+                               &history->timestamp[history->nbBars-200],
+                               &history->timestamp[history->nbBars-1],
+                               TA_DAILY, history->nbBars-200, 200 );
+   if( errNumber != TA_TEST_PASS )
+   {
+      printf( "Failed: Test getting last 200 price bars only.\n" );
+      return errNumber;
+   }
+   
    retCode = TA_HistoryFree( history );
    if( retCode != TA_SUCCESS )
    {
@@ -401,6 +546,8 @@ static ErrorNumber checkRangeSame( TA_UDBase          *udb,
       TA_HistoryFree( history );
       return TA_YAHOO_CRS_NBBARSBAD;
    }
+
+   /* printf( "startIdx=%d\n", startIdx ); */
 
    /* Check that the data is the same for the range. */
    for( i=0; i < nbPriceBar; i++ )
