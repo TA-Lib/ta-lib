@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  130101 MF   First version.
- *
+ *  111503 MF   Add TA_DEF_UI_Input_Price_CV
  */
 
 /* Description:
@@ -116,6 +116,11 @@ const TA_InputParameterInfo TA_DEF_UI_Input_Price_HL =
                                   { TA_Input_Price, "inPriceHL",
                                     TA_IN_PRICE_HIGH   |
                                     TA_IN_PRICE_LOW    };
+
+const TA_InputParameterInfo TA_DEF_UI_Input_Price_CV =
+                                  { TA_Input_Price, "inPriceCV",
+                                    TA_IN_PRICE_CLOSE  |
+                                    TA_IN_PRICE_VOLUME };
 
 const TA_InputParameterInfo TA_DEF_UI_Input_Price_V =
                                   { TA_Input_Price, "inPriceV",
