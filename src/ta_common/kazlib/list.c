@@ -81,10 +81,10 @@ static const char rcsid[] = "$Id$";
  * is not permitted.
  */
 
-list_t *list_init( TA_Libc *libHandle, list_t *list, listcount_t maxcount)
+list_t *list_init( list_t *list, listcount_t maxcount)
 {
-    TA_ASSERT_RET( libHandle, list != NULL, (list_t *)NULL );
-    TA_ASSERT_RET( libHandle, maxcount != 0, (list_t *)NULL );
+    TA_ASSERT_RET( list != NULL, (list_t *)NULL );
+    TA_ASSERT_RET( maxcount != 0, (list_t *)NULL );
     list->nilnode.next = &list->nilnode;
     list->nilnode.prev = &list->nilnode;
     list->nodecount = 0;
@@ -98,11 +98,11 @@ list_t *list_init( TA_Libc *libHandle, list_t *list, listcount_t maxcount)
  * should be specified as LISTCOUNT_T_MAX, or, alternately, as -1.
  */
 
-list_t *list_create(TA_Libc *libHandle, listcount_t maxcount)
+list_t *list_create(listcount_t maxcount)
 {
-    list_t *new = TA_Malloc( libHandle, sizeof *new);
+    list_t *new = TA_Malloc( sizeof *new);
     if (new) {
-	TA_ASSERT_RET( libHandle,maxcount != 0, (list_t *)NULL );
+	TA_ASSERT_RET( maxcount != 0, (list_t *)NULL );
 	new->nilnode.next = &new->nilnode;
 	new->nilnode.prev = &new->nilnode;
 	new->nodecount = 0;
@@ -116,12 +116,12 @@ list_t *list_create(TA_Libc *libHandle, listcount_t maxcount)
  * The client must remove the nodes first.
  */
 
-void list_destroy(TA_Libc *libHandle, list_t *list)
+void list_destroy(list_t *list)
 {
-    TA_ASSERT_NO_RET( libHandle, list != NULL );
-    TA_ASSERT_NO_RET( libHandle, list_isempty(list));
+    TA_ASSERT_NO_RET(  list != NULL );
+    TA_ASSERT_NO_RET(  list_isempty(list));
 
-    TA_Free( libHandle, list);
+    TA_Free( list);
 }
 
 /*
@@ -130,11 +130,11 @@ void list_destroy(TA_Libc *libHandle, list_t *list)
  * is empty.
  */
 
-void list_destroy_nodes(TA_Libc *libHandle, list_t *list)
+void list_destroy_nodes(list_t *list)
 {
     lnode_t *lnode, *nil, *tmp;
     
-    TA_ASSERT_NO_RET( libHandle, list != NULL );
+    TA_ASSERT_NO_RET(  list != NULL );
     lnode = list_first_priv(list);
     nil = list_nil(list);
 
@@ -142,11 +142,11 @@ void list_destroy_nodes(TA_Libc *libHandle, list_t *list)
 	tmp = lnode->next;
 	lnode->next = NULL;
 	lnode->prev = NULL;
-	lnode_destroy(libHandle,lnode);
+	lnode_destroy(lnode);
 	lnode = tmp;
     }
 
-    list_init(libHandle,list, list->maxcount);
+    list_init(list, list->maxcount);
 }
 
 /*
@@ -154,12 +154,12 @@ void list_destroy_nodes(TA_Libc *libHandle, list_t *list)
  * the list must all have come from the same pool.
  */
 
-void list_return_nodes(TA_Libc *libHandle, list_t *list, lnodepool_t *pool)
+void list_return_nodes(list_t *list, lnodepool_t *pool)
 {
     lnode_t *lnode, *tmp, *nil;
 
-    TA_ASSERT_NO_RET( libHandle, list != NULL );
-    TA_ASSERT_NO_RET( libHandle, pool != NULL );
+    TA_ASSERT_NO_RET(  list != NULL );
+    TA_ASSERT_NO_RET(  pool != NULL );
 
     lnode = list_first_priv(list);
     nil = list_nil(list);
@@ -168,30 +168,30 @@ void list_return_nodes(TA_Libc *libHandle, list_t *list, lnodepool_t *pool)
 	tmp = lnode->next;
 	lnode->next = NULL;
 	lnode->prev = NULL;
-	lnode_return(libHandle,pool, lnode);
+	lnode_return(pool, lnode);
 	lnode = tmp;
     }
 
-    list_init(libHandle,list, list->maxcount);
+    list_init(list, list->maxcount);
 }
 
 /*
  * Insert the node ``new'' into the list immediately after ``this'' node.
  */
 
-void list_ins_after(TA_Libc *libHandle, list_t *list, lnode_t *new, lnode_t *this)
+void list_ins_after(list_t *list, lnode_t *new, lnode_t *this)
 {
     lnode_t *that;
     
-    TA_ASSERT_NO_RET( libHandle, list != NULL);
-    TA_ASSERT_NO_RET( libHandle, new != NULL);
-    TA_ASSERT_NO_RET( libHandle, this != NULL);
+    TA_ASSERT_NO_RET(  list != NULL);
+    TA_ASSERT_NO_RET(  new != NULL);
+    TA_ASSERT_NO_RET(  this != NULL);
     that = this->next;
 
-    TA_ASSERT_NO_RET( libHandle,!list_contains(libHandle,list, new));
-    TA_ASSERT_NO_RET( libHandle,!lnode_is_in_a_list(libHandle,new));
-    TA_ASSERT_NO_RET( libHandle,this == list_nil(list) || list_contains(libHandle,list, this));
-    TA_ASSERT_NO_RET( libHandle,list->nodecount + 1 > list->nodecount);
+    TA_ASSERT_NO_RET( !list_contains(list, new));
+    TA_ASSERT_NO_RET( !lnode_is_in_a_list(new));
+    TA_ASSERT_NO_RET( this == list_nil(list) || list_contains(list, this));
+    TA_ASSERT_NO_RET( list->nodecount + 1 > list->nodecount);
 
     new->prev = this;
     new->next = that;
@@ -199,26 +199,26 @@ void list_ins_after(TA_Libc *libHandle, list_t *list, lnode_t *new, lnode_t *thi
     this->next = new;
     list->nodecount++;
 
-    TA_ASSERT_NO_RET( libHandle,list->nodecount <= list->maxcount);
+    TA_ASSERT_NO_RET( list->nodecount <= list->maxcount);
 }
 
 /*
  * Insert the node ``new'' into the list immediately before ``this'' node.
  */
 
-void list_ins_before(TA_Libc *libHandle, list_t *list, lnode_t *new, lnode_t *this)
+void list_ins_before(list_t *list, lnode_t *new, lnode_t *this)
 {
     lnode_t *that;
 
-    TA_ASSERT_NO_RET( libHandle, list != NULL);
-    TA_ASSERT_NO_RET( libHandle, new != NULL);
-    TA_ASSERT_NO_RET( libHandle, this != NULL);
+    TA_ASSERT_NO_RET(  list != NULL);
+    TA_ASSERT_NO_RET(  new != NULL);
+    TA_ASSERT_NO_RET(  this != NULL);
     that = this->prev;
 
-    TA_ASSERT_NO_RET( libHandle,!list_contains(libHandle,list, new));
-    TA_ASSERT_NO_RET( libHandle,!lnode_is_in_a_list(libHandle,new));
-    TA_ASSERT_NO_RET( libHandle,this == list_nil(list) || list_contains(libHandle,list, this));
-    TA_ASSERT_NO_RET( libHandle,list->nodecount + 1 > list->nodecount);
+    TA_ASSERT_NO_RET( !list_contains(list, new));
+    TA_ASSERT_NO_RET( !lnode_is_in_a_list(new));
+    TA_ASSERT_NO_RET( this == list_nil(list) || list_contains(list, this));
+    TA_ASSERT_NO_RET( list->nodecount + 1 > list->nodecount);
 
     new->next = this;
     new->prev = that;
@@ -226,25 +226,25 @@ void list_ins_before(TA_Libc *libHandle, list_t *list, lnode_t *new, lnode_t *th
     this->prev = new;
     list->nodecount++;
 
-    TA_ASSERT_NO_RET( libHandle,list->nodecount <= list->maxcount);
+    TA_ASSERT_NO_RET( list->nodecount <= list->maxcount);
 }
 
 /*
  * Delete the given node from the list.
  */
 
-lnode_t *list_delete(TA_Libc *libHandle, list_t *list, lnode_t *del)
+lnode_t *list_delete(list_t *list, lnode_t *del)
 {
     lnode_t *next;
     lnode_t *prev;
 
-    TA_ASSERT_RET( libHandle, list != NULL, (lnode_t *)NULL );
-    TA_ASSERT_RET( libHandle, del != NULL, (lnode_t *)NULL );
+    TA_ASSERT_RET( list != NULL, (lnode_t *)NULL );
+    TA_ASSERT_RET( del != NULL, (lnode_t *)NULL );
 
     next = del->next;
     prev = del->prev;
 
-    TA_ASSERT_RET( libHandle,list_contains(libHandle,list, del), (lnode_t *)NULL );
+    TA_ASSERT_RET( list_contains(list, del), (lnode_t *)NULL );
 
     prev->next = next;
     next->prev = prev;
@@ -261,13 +261,13 @@ lnode_t *list_delete(TA_Libc *libHandle, list_t *list, lnode_t *del)
  * call to the function.
  */
 
-void list_process(TA_Libc *libHandle, list_t *list, void *context,
-	void (* function)(TA_Libc *libHandle, list_t *list, lnode_t *lnode, void *context))
+void list_process(list_t *list, void *context,
+	void (* function)(list_t *list, lnode_t *lnode, void *context))
 {
     lnode_t *node, *next, *nil;
     
-    TA_ASSERT_NO_RET( libHandle, function != NULL );
-    TA_ASSERT_NO_RET( libHandle, list != NULL );
+    TA_ASSERT_NO_RET(  function != NULL );
+    TA_ASSERT_NO_RET(  list != NULL );
 
     node = list_first_priv(list);
     nil = list_nil(list);
@@ -275,9 +275,9 @@ void list_process(TA_Libc *libHandle, list_t *list, void *context,
     while (node != nil) {
 	/* check for callback function deleting	*/
 	/* the next node from under us		*/
-	TA_ASSERT_NO_RET( libHandle,list_contains(libHandle,list, node));
+	TA_ASSERT_NO_RET( list_contains(list, node));
 	next = node->next;
-	function(libHandle, list, node, context);
+	function( list, node, context);
 	node = next;
     }
 }
@@ -286,13 +286,13 @@ void list_process(TA_Libc *libHandle, list_t *list, void *context,
  * Dynamically allocate a list node and assign it the given piece of data.
  */
 
-lnode_t *lnode_create(TA_Libc *libHandle, void *data)
+lnode_t *lnode_create(void *data)
 {
     lnode_t *new ;
     
-    TA_ASSERT_RET( libHandle, data != NULL, (lnode_t *)NULL );
+    TA_ASSERT_RET( data != NULL, (lnode_t *)NULL );
 
-    new = TA_Malloc( libHandle, sizeof *new);
+    new = TA_Malloc( sizeof *new);
     if (new) {
 	new->data = data;
 	new->next = NULL;
@@ -304,9 +304,9 @@ lnode_t *lnode_create(TA_Libc *libHandle, void *data)
 /*
  * Initialize a user-supplied lnode.
  */
-lnode_t *lnode_init(TA_Libc *libHandle, lnode_t *lnode, void *data)
+lnode_t *lnode_init(lnode_t *lnode, void *data)
 {
-    TA_ASSERT_RET( libHandle, lnode != NULL, (lnode_t *)NULL );
+    TA_ASSERT_RET( lnode != NULL, (lnode_t *)NULL );
 
     lnode->data = data;
     lnode->next = NULL;
@@ -318,11 +318,11 @@ lnode_t *lnode_init(TA_Libc *libHandle, lnode_t *lnode, void *data)
  * Destroy a dynamically allocated node.
  */
 
-void lnode_destroy(TA_Libc *libHandle, lnode_t *lnode)
+void lnode_destroy(lnode_t *lnode)
 {
-    TA_ASSERT_NO_RET( libHandle, lnode != NULL );
-    TA_ASSERT_NO_RET( libHandle,!lnode_is_in_a_list(libHandle,lnode));
-    TA_Free( libHandle, lnode);
+    TA_ASSERT_NO_RET(  lnode != NULL );
+    TA_ASSERT_NO_RET( !lnode_is_in_a_list(lnode));
+    TA_Free(  lnode);
 }
 
 /*
@@ -331,13 +331,13 @@ void lnode_destroy(TA_Libc *libHandle, lnode_t *lnode)
  * ``n'' elements.
  */
 
-lnodepool_t *lnode_pool_init(TA_Libc *libHandle, lnodepool_t *pool, lnode_t *nodes, listcount_t n)
+lnodepool_t *lnode_pool_init(lnodepool_t *pool, lnode_t *nodes, listcount_t n)
 {
     listcount_t i;
 
-    TA_ASSERT_RET( libHandle,pool != NULL, (lnodepool_t *)NULL );
-    TA_ASSERT_RET( libHandle,nodes != NULL, (lnodepool_t *)NULL );
-    TA_ASSERT_RET( libHandle,n != 0, (lnodepool_t *)NULL );
+    TA_ASSERT_RET( pool != NULL, (lnodepool_t *)NULL );
+    TA_ASSERT_RET( nodes != NULL, (lnodepool_t *)NULL );
+    TA_ASSERT_RET( n != 0, (lnodepool_t *)NULL );
 
     pool->pool = nodes;
     pool->fre = nodes;
@@ -354,22 +354,22 @@ lnodepool_t *lnode_pool_init(TA_Libc *libHandle, lnodepool_t *pool, lnode_t *nod
  * Create a dynamically allocated pool of n nodes.
  */
 
-lnodepool_t *lnode_pool_create(TA_Libc *libHandle, listcount_t n)
+lnodepool_t *lnode_pool_create(listcount_t n)
 {
     lnodepool_t *pool;
     lnode_t *nodes;
 
-    TA_ASSERT_RET( libHandle,n != 0,(lnodepool_t *)NULL);
+    TA_ASSERT_RET( n != 0,(lnodepool_t *)NULL);
 
-    pool = TA_Malloc( libHandle, sizeof *pool);
+    pool = TA_Malloc( sizeof *pool);
     if (!pool)
 	return NULL;
-    nodes = TA_Malloc( libHandle, n * sizeof *nodes);
+    nodes = TA_Malloc( n * sizeof *nodes);
     if (!nodes) {
-	TA_Free( libHandle, pool);
+	TA_Free(  pool);
 	return NULL;
     }
-    lnode_pool_init(libHandle, pool, nodes, n);
+    lnode_pool_init( pool, nodes, n);
     return pool;
 }
 
@@ -377,12 +377,12 @@ lnodepool_t *lnode_pool_create(TA_Libc *libHandle, listcount_t n)
  * Determine whether the given pool is from this pool.
  */
 
-int lnode_pool_isfrom(TA_Libc *libHandle, lnodepool_t *pool, lnode_t *node)
+int lnode_pool_isfrom(lnodepool_t *pool, lnode_t *node)
 {
     listcount_t i;
 
-    TA_ASSERT_RET( libHandle, pool != NULL, 0 );
-    TA_ASSERT_RET( libHandle, node != NULL, 0 );
+    TA_ASSERT_RET( pool != NULL, 0 );
+    TA_ASSERT_RET( node != NULL, 0 );
 
     /* this is carefully coded this way because ANSI C forbids pointers
        to different objects from being subtracted or compared other
@@ -399,12 +399,12 @@ int lnode_pool_isfrom(TA_Libc *libHandle, lnodepool_t *pool, lnode_t *node)
  * Destroy a dynamically allocated pool of nodes.
  */
 
-void lnode_pool_destroy(TA_Libc *libHandle, lnodepool_t *p)
+void lnode_pool_destroy(lnodepool_t *p)
 {
-   TA_ASSERT_NO_RET( libHandle, p != NULL );
+   TA_ASSERT_NO_RET(  p != NULL );
 
-   TA_Free( libHandle, p->pool);
-   TA_Free( libHandle, p);
+   TA_Free(  p->pool);
+   TA_Free(  p);
 }
 
 /*
@@ -412,12 +412,12 @@ void lnode_pool_destroy(TA_Libc *libHandle, lnodepool_t *p)
  * is exhausted.
  */
 
-lnode_t *lnode_borrow(TA_Libc *libHandle, lnodepool_t *pool, void *data)
+lnode_t *lnode_borrow(lnodepool_t *pool, void *data)
 {
     lnode_t *new;
 
-    TA_ASSERT_RET( libHandle, pool != NULL, (lnode_t *)NULL );
-    TA_ASSERT_RET( libHandle, data != NULL, (lnode_t *)NULL );
+    TA_ASSERT_RET( pool != NULL, (lnode_t *)NULL );
+    TA_ASSERT_RET( data != NULL, (lnode_t *)NULL );
 
     new = pool->fre;
     if (new) {
@@ -434,12 +434,12 @@ lnode_t *lnode_borrow(TA_Libc *libHandle, lnodepool_t *pool, void *data)
  * from which it came.
  */
 
-void lnode_return(TA_Libc *libHandle, lnodepool_t *pool, lnode_t *node)
+void lnode_return(lnodepool_t *pool, lnode_t *node)
 {
-   TA_ASSERT_NO_RET( libHandle, pool != NULL );
-   TA_ASSERT_NO_RET( libHandle, node != NULL );
-   TA_ASSERT_NO_RET( libHandle,lnode_pool_isfrom(libHandle, pool, node));
-   TA_ASSERT_NO_RET( libHandle,!lnode_is_in_a_list(libHandle, node));
+   TA_ASSERT_NO_RET(  pool != NULL );
+   TA_ASSERT_NO_RET(  node != NULL );
+   TA_ASSERT_NO_RET( lnode_pool_isfrom( pool, node));
+   TA_ASSERT_NO_RET( !lnode_is_in_a_list( node));
 
    node->next = pool->fre;
    node->prev = node;
@@ -451,12 +451,12 @@ void lnode_return(TA_Libc *libHandle, lnodepool_t *pool, lnode_t *node)
  * According to this function, a list does not contain its nilnode.
  */
 
-int list_contains(TA_Libc *libHandle, list_t *list, lnode_t *node)
+int list_contains(list_t *list, lnode_t *node)
 {
     lnode_t *n, *nil;
     
-    TA_ASSERT_RET( libHandle, list != NULL, 0 );
-    TA_ASSERT_RET( libHandle, node != NULL, 0 );
+    TA_ASSERT_RET( list != NULL, 0 );
+    TA_ASSERT_RET( node != NULL, 0 );
 
     nil = list_nil(list);
 
@@ -475,12 +475,12 @@ int list_contains(TA_Libc *libHandle, list_t *list, lnode_t *node)
  */
 #if 0
 !!! Currently unused in TA_LIB
-void list_extract(TA_Libc *libHandle, list_t *dest, list_t *source, lnode_t *first, lnode_t *last)
+void list_extract(list_t *dest, list_t *source, lnode_t *first, lnode_t *last)
 {
     listcount_t moved;
    
-    TA_ASSERT_NO_RET( libHandle,first == NULL || list_contains(libHandle, source, first));
-    TA_ASSERT_NO_RET( libHandle,last == NULL || list_contains(libHandle, source, last));
+    TA_ASSERT_NO_RET( first == NULL || list_contains( source, first));
+    TA_ASSERT_NO_RET( last == NULL || list_contains( source, last));
 
     moved = 1;
 
@@ -501,23 +501,23 @@ void list_extract(TA_Libc *libHandle, list_t *dest, list_t *source, lnode_t *fir
 
     while (first != last) {
 	first = first->next;
-	TA_ASSERT_NO_RET( libHandle,first != list_nil(source));	/* oops, last before first! */
+	TA_ASSERT_NO_RET( first != list_nil(source));	/* oops, last before first! */
 	moved++;
     }
 
     /* assert no overflows */
-    TA_ASSERT_NO_RET( libHandle,source->nodecount - moved <= source->nodecount);
-    TA_ASSERT_NO_RET( libHandle,dest->nodecount + moved >= dest->nodecount);
+    TA_ASSERT_NO_RET( source->nodecount - moved <= source->nodecount);
+    TA_ASSERT_NO_RET( dest->nodecount + moved >= dest->nodecount);
 
     /* assert no weirdness */
-    TA_ASSERT_NO_RET( libHandle,moved <= source->nodecount);
+    TA_ASSERT_NO_RET( moved <= source->nodecount);
 
     source->nodecount -= moved;
     dest->nodecount += moved;
 
     /* assert list sanity */
-    TA_ASSERT_NO_RET( libHandle,list_verify(libHandle,source));
-    TA_ASSERT_NO_RET( libHandle,list_verify(libHandle,dest));
+    TA_ASSERT_NO_RET( list_verify(source));
+    TA_ASSERT_NO_RET( list_verify(dest));
 }
 #endif
 
@@ -529,12 +529,12 @@ void list_extract(TA_Libc *libHandle, list_t *dest, list_t *source, lnode_t *fir
  * list. The nodes are added to the end of the new list in their original
  * order.
  */
-void list_transfer(TA_Libc *libHandle, list_t *dest, list_t *source, lnode_t *first)
+void list_transfer(list_t *dest, list_t *source, lnode_t *first)
 {
     listcount_t moved = 1;
     lnode_t *last;
 
-    TA_ASSERT_NO_RET( libHandle,first == NULL || list_contains(libHandle, source, first));
+    TA_ASSERT_NO_RET( first == NULL || list_contains( source, first));
 
     if (first == NULL)
 	return;
@@ -555,21 +555,21 @@ void list_transfer(TA_Libc *libHandle, list_t *dest, list_t *source, lnode_t *fi
     }
 
     /* assert no overflows */
-    TA_ASSERT_NO_RET( libHandle,source->nodecount - moved <= source->nodecount);
-    TA_ASSERT_NO_RET( libHandle,dest->nodecount + moved >= dest->nodecount);
+    TA_ASSERT_NO_RET( source->nodecount - moved <= source->nodecount);
+    TA_ASSERT_NO_RET( dest->nodecount + moved >= dest->nodecount);
 
     /* assert no weirdness */
-    TA_ASSERT_NO_RET( libHandle,moved <= source->nodecount);
+    TA_ASSERT_NO_RET( moved <= source->nodecount);
 
     source->nodecount -= moved;
     dest->nodecount += moved;
 
     /* assert list sanity */
-    TA_ASSERT_NO_RET( libHandle,list_verify(libHandle,source));
-    TA_ASSERT_NO_RET( libHandle,list_verify(libHandle,dest));
+    TA_ASSERT_NO_RET( list_verify(source));
+    TA_ASSERT_NO_RET( list_verify(dest));
 }
 
-void list_merge(TA_Libc *libHandle, list_t *dest, list_t *sour,
+void list_merge(list_t *dest, list_t *sour,
 	int compare (const void *, const void *))
 {
     lnode_t *dn, *sn, *tn;
@@ -579,14 +579,14 @@ void list_merge(TA_Libc *libHandle, list_t *dest, list_t *sour,
     if (dest == sour)
 	return;
 
-    TA_ASSERT_NO_RET( libHandle, compare != NULL );
+    TA_ASSERT_NO_RET(  compare != NULL );
 
     /* overflow check */
-    TA_ASSERT_NO_RET( libHandle,list_count(sour) + list_count(dest) >= list_count(sour));
+    TA_ASSERT_NO_RET( list_count(sour) + list_count(dest) >= list_count(sour));
 
     /* lists must be sorted */
-    TA_ASSERT_NO_RET( libHandle,list_is_sorted(libHandle,sour, compare));
-    TA_ASSERT_NO_RET( libHandle,list_is_sorted(libHandle,dest, compare));
+    TA_ASSERT_NO_RET( list_is_sorted(sour, compare));
+    TA_ASSERT_NO_RET( list_is_sorted(dest, compare));
 
     dn = list_first_priv(dest);
     sn = list_first_priv(sour);
@@ -594,8 +594,8 @@ void list_merge(TA_Libc *libHandle, list_t *dest, list_t *sour,
     while (dn != d_nil && sn != s_nil) {
 	if (compare(lnode_get(dn), lnode_get(sn)) >= 0) {
 	    tn = lnode_next(sn);
-	    list_delete(libHandle,sour, sn);
-	    list_ins_before(libHandle,dest, sn, dn);
+	    list_delete(sour, sn);
+	    list_ins_before(dest, sn, dn);
 	    sn = tn;
 	} else {
 	    dn = lnode_next(dn);
@@ -606,42 +606,42 @@ void list_merge(TA_Libc *libHandle, list_t *dest, list_t *sour,
 	return;
 
     if (sn != s_nil)
-	list_transfer(libHandle,dest, sour, sn);
+	list_transfer(dest, sour, sn);
 }
 
-void kazlist_sort(TA_Libc *libHandle, list_t *list, int compare(const void *, const void *))
+void kazlist_sort(list_t *list, int compare(const void *, const void *))
 {
     list_t extra;
     listcount_t middle;
     lnode_t *node;
 
-    TA_ASSERT_NO_RET( libHandle, compare != NULL );
-    TA_ASSERT_NO_RET( libHandle, list != NULL );
+    TA_ASSERT_NO_RET(  compare != NULL );
+    TA_ASSERT_NO_RET(  list != NULL );
 
     if (list_count(list) > 1) {
 	middle = list_count(list) / 2;
 	node = list_first_priv(list);
 
-	list_init(libHandle,&extra, list_count(list) - middle);
+	list_init(&extra, list_count(list) - middle);
 
 	while (middle--)
 	    node = lnode_next(node);
 
-	list_transfer(libHandle,&extra, list, node);
-	kazlist_sort(libHandle,list, compare);
-	kazlist_sort(libHandle,&extra, compare);
-	list_merge(libHandle,list, &extra, compare);
+	list_transfer(&extra, list, node);
+	kazlist_sort(list, compare);
+	kazlist_sort(&extra, compare);
+	list_merge(list, &extra, compare);
     }
-    TA_ASSERT_NO_RET( libHandle,list_is_sorted(libHandle,list, compare));
+    TA_ASSERT_NO_RET( list_is_sorted(list, compare));
 }
 
-lnode_t *list_find(TA_Libc *libHandle, list_t *list, const void *key, int compare(const void *, const void *))
+lnode_t *list_find(list_t *list, const void *key, int compare(const void *, const void *))
 {
     lnode_t *node;
     lnode_t *tmpNode;
 
-    TA_ASSERT_RET( libHandle, list != NULL, (lnode_t *)NULL );
-    TA_ASSERT_RET( libHandle, key != NULL, (lnode_t *)NULL );
+    TA_ASSERT_RET( list != NULL, (lnode_t *)NULL );
+    TA_ASSERT_RET( key != NULL, (lnode_t *)NULL );
 
     for (node = list_first_priv(list); node != list_nil(list); node = node->next) {
     tmpNode = lnode_get(node);
@@ -656,12 +656,12 @@ lnode_t *list_find(TA_Libc *libHandle, list_t *list, const void *key, int compar
 /*
  * Return 1 if the list is in sorted order, 0 otherwise
  */
-int list_is_sorted(TA_Libc *libHandle, list_t *list, int compare(const void *, const void *))
+int list_is_sorted(list_t *list, int compare(const void *, const void *))
 {
     lnode_t *node, *next, *nil;
 
-    TA_ASSERT_RET( libHandle, compare != NULL, 0 );
-    TA_ASSERT_RET( libHandle, list != NULL, 0 );
+    TA_ASSERT_RET( compare != NULL, 0 );
+    TA_ASSERT_RET( list != NULL, 0 );
 
     next = nil = list_nil(list);
     node = list_first_priv(list);
@@ -701,9 +701,9 @@ int list_is_sorted(TA_Libc *libHandle, list_t *list, int compare(const void *, c
  * Return 1 if the list is empty, 0 otherwise
  */
 
-int list_isempty(TA_Libc *libHandle, list_t *list)
+int list_isempty(list_t *list)
 {
-   TA_ASSERT_RET( libHandle, list != NULL, 0 );
+   TA_ASSERT_RET( list != NULL, 0 );
     
    return list->nodecount == 0;
 }
@@ -713,9 +713,9 @@ int list_isempty(TA_Libc *libHandle, list_t *list)
  * Permitted only on bounded lists.
  */
 
-int list_isfull(TA_Libc *libHandle, list_t *list)
+int list_isfull(list_t *list)
 {
-   TA_ASSERT_RET( libHandle, list != NULL, 0 );
+   TA_ASSERT_RET( list != NULL, 0 );
 
    return list->nodecount == list->maxcount;
 }
@@ -724,9 +724,9 @@ int list_isfull(TA_Libc *libHandle, list_t *list)
  * Check if the node pool is empty.
  */
 
-int lnode_pool_isempty(TA_Libc *libHandle, lnodepool_t *pool)
+int lnode_pool_isempty(lnodepool_t *pool)
 {
-   TA_ASSERT_RET( libHandle, pool != NULL, 0 );
+   TA_ASSERT_RET( pool != NULL, 0 );
 
    return (pool->fre == NULL);
 }
@@ -735,33 +735,33 @@ int lnode_pool_isempty(TA_Libc *libHandle, lnodepool_t *pool)
  * Add the given node at the end of the list
  */
 
-void list_append(TA_Libc *libHandle, list_t *list, lnode_t *node)
+void list_append(list_t *list, lnode_t *node)
 {
-   TA_ASSERT_NO_RET( libHandle, list != NULL );
-   TA_ASSERT_NO_RET( libHandle, node != NULL );
+   TA_ASSERT_NO_RET(  list != NULL );
+   TA_ASSERT_NO_RET(  node != NULL );
 
-   list_ins_before(libHandle,list, node, &list->nilnode);
+   list_ins_before(list, node, &list->nilnode);
 }
 
 /*
  * Add the given node at the beginning of the list.
  */
 
-void list_prepend(TA_Libc *libHandle, list_t *list, lnode_t *node)
+void list_prepend(list_t *list, lnode_t *node)
 {
-   TA_ASSERT_NO_RET( libHandle, list != NULL );
-   TA_ASSERT_NO_RET( libHandle, node != NULL );
+   TA_ASSERT_NO_RET(  list != NULL );
+   TA_ASSERT_NO_RET(  node != NULL );
 
-   list_ins_after(libHandle,list, node, &list->nilnode);
+   list_ins_after(list, node, &list->nilnode);
 }
 
 /*
  * Retrieve the first node of the list
  */
 
-lnode_t *list_first(TA_Libc *libHandle, list_t *list)
+lnode_t *list_first(list_t *list)
 {
-   TA_ASSERT_RET( libHandle, list != NULL, (lnode_t *)NULL );
+   TA_ASSERT_RET( list != NULL, (lnode_t *)NULL );
 
    if (list->nilnode.next == &list->nilnode)
 	  return NULL;
@@ -773,9 +773,9 @@ lnode_t *list_first(TA_Libc *libHandle, list_t *list)
  * Retrieve the last node of the list
  */
 
-lnode_t *list_last(TA_Libc *libHandle, list_t *list)
+lnode_t *list_last(list_t *list)
 {
-   TA_ASSERT_RET( libHandle, list != NULL, (lnode_t *)NULL );
+   TA_ASSERT_RET( list != NULL, (lnode_t *)NULL );
 
    if (list->nilnode.prev == &list->nilnode)
 	   return (lnode_t *)NULL;
@@ -787,9 +787,9 @@ lnode_t *list_last(TA_Libc *libHandle, list_t *list)
  * Retrieve the count of nodes in the list
  */
 
-listcount_t list_count(TA_Libc *libHandle, list_t *list)
+listcount_t list_count(list_t *list)
 {
-   TA_ASSERT_RET( libHandle, list != NULL, 0 );
+   TA_ASSERT_RET( list != NULL, 0 );
 
    return list->nodecount;
 }
@@ -798,22 +798,22 @@ listcount_t list_count(TA_Libc *libHandle, list_t *list)
  * Remove the first node from the list and return it.
  */
 
-lnode_t *list_del_first(TA_Libc *libHandle, list_t *list)
+lnode_t *list_del_first(list_t *list)
 {
-   TA_ASSERT_RET( libHandle, list != NULL, (lnode_t *)NULL );
+   TA_ASSERT_RET( list != NULL, (lnode_t *)NULL );
 
-   return list_delete(libHandle,list, list->nilnode.next);
+   return list_delete(list, list->nilnode.next);
 }
 
 /*
  * Remove the last node from the list and return it.
  */
 
-lnode_t *list_del_last(TA_Libc *libHandle, list_t *list)
+lnode_t *list_del_last(list_t *list)
 {
-   TA_ASSERT_RET( libHandle, list != NULL, (lnode_t *)NULL );
+   TA_ASSERT_RET( list != NULL, (lnode_t *)NULL );
 
-   return list_delete(libHandle,list, list->nilnode.prev);
+   return list_delete(list, list->nilnode.prev);
 }
 
 
@@ -821,10 +821,10 @@ lnode_t *list_del_last(TA_Libc *libHandle, list_t *list)
  * Associate a data item with the given node.
  */
 
-void lnode_put(TA_Libc *libHandle, lnode_t *lnode, void *data)
+void lnode_put(lnode_t *lnode, void *data)
 {
-   TA_ASSERT_NO_RET( libHandle, data != NULL );
-   TA_ASSERT_NO_RET( libHandle, lnode != NULL );
+   TA_ASSERT_NO_RET(  data != NULL );
+   TA_ASSERT_NO_RET(  lnode != NULL );
 
    lnode->data = data;
 }
@@ -833,9 +833,9 @@ void lnode_put(TA_Libc *libHandle, lnode_t *lnode, void *data)
  * Retrieve the data item associated with the node.
  */
 
-void *lnode_get(TA_Libc *libHandle, lnode_t *lnode)
+void *lnode_get(lnode_t *lnode)
 {
-   TA_ASSERT_RET( libHandle, lnode != NULL, NULL );
+   TA_ASSERT_RET( lnode != NULL, NULL );
 
    return lnode->data;
 }
@@ -845,11 +845,11 @@ void *lnode_get(TA_Libc *libHandle, lnode_t *lnode)
  * NULL is returned.
  */
 
-lnode_t *list_next(TA_Libc *libHandle, list_t *list, lnode_t *lnode)
+lnode_t *list_next(list_t *list, lnode_t *lnode)
 {
-   TA_ASSERT_RET( libHandle, lnode != NULL, (lnode_t *)NULL );
-   TA_ASSERT_RET( libHandle, list != NULL, (lnode_t *)NULL );
-   TA_ASSERT_RET( libHandle, list_contains(libHandle,list, lnode), (lnode_t *)NULL );
+   TA_ASSERT_RET( lnode != NULL, (lnode_t *)NULL );
+   TA_ASSERT_RET( list != NULL, (lnode_t *)NULL );
+   TA_ASSERT_RET( list_contains(list, lnode), (lnode_t *)NULL );
 
    if (lnode->next == list_nil(list))
 	   return (lnode_t *)NULL;
@@ -860,11 +860,11 @@ lnode_t *list_next(TA_Libc *libHandle, list_t *list, lnode_t *lnode)
  * Retrieve the node's predecessor. See comment for lnode_next().
  */
 
-lnode_t *list_prev(TA_Libc *libHandle, list_t *list, lnode_t *lnode)
+lnode_t *list_prev(list_t *list, lnode_t *lnode)
 {
-   TA_ASSERT_RET( libHandle, lnode != NULL, (lnode_t *)NULL );
-   TA_ASSERT_RET( libHandle, list != NULL, (lnode_t *)NULL );
-   TA_ASSERT_RET( libHandle,list_contains(libHandle, list, lnode), (lnode_t *)NULL );
+   TA_ASSERT_RET( lnode != NULL, (lnode_t *)NULL );
+   TA_ASSERT_RET( list != NULL, (lnode_t *)NULL );
+   TA_ASSERT_RET( list_contains( list, lnode), (lnode_t *)NULL );
 
    if (lnode->prev == list_nil(list))
 	   return (lnode_t *)NULL;
@@ -875,23 +875,23 @@ lnode_t *list_prev(TA_Libc *libHandle, list_t *list, lnode_t *lnode)
  * Return 1 if the lnode is in some list, otherwise return 0.
  */
 
-int lnode_is_in_a_list(TA_Libc *libHandle, lnode_t *lnode)
+int lnode_is_in_a_list(lnode_t *lnode)
 {
-   TA_ASSERT_RET( libHandle, lnode != NULL, 0 );
+   TA_ASSERT_RET( lnode != NULL, 0 );
 
    return (lnode->next != NULL || lnode->prev != NULL);
 }
 
 
-int list_verify(TA_Libc *libHandle, list_t *list)
+int list_verify(list_t *list)
 {
    lnode_t *node, *nil;
    listcount_t count;
 
-   TA_ASSERT_RET( libHandle, list != NULL, 0 );
+   TA_ASSERT_RET( list != NULL, 0 );
    node = list_first_priv(list);
    nil = list_nil(list);
-   count = list_count(libHandle, list);
+   count = list_count( list);
 
    if (node->prev != nil)
       return 0;
@@ -949,8 +949,8 @@ static int tokenize(char *string, ...)
 
 static int comparef(const void *key1, const void *key2)
 {
-   TA_ASSERT_RET( libHandle, key1 != NULL, 0 );
-   TA_ASSERT_RET( libHandle, key2 != NULL, 0 );
+   TA_ASSERT_RET( key1 != NULL, 0 );
+   TA_ASSERT_RET( key2 != NULL, 0 );
 
    return strcmp(key1, key2);
 }
@@ -958,7 +958,7 @@ static int comparef(const void *key1, const void *key2)
 static char *dupstring(char *str)
 {
     int sz = strlen(str) + 1;
-    char *new = TA_Malloc( libHandle, sz);
+    char *new = TA_Malloc( sz);
     if (new)
 	memcpy(new, str, sz);
     return new;
@@ -1009,7 +1009,7 @@ int main(void)
 		    puts("allocation failure");
 		    if (ln)
 			lnode_destroy(ln);
-		    TA_Free( libHandle, val);
+		    TA_Free(  val);
 		    break;
 		}
 
@@ -1028,7 +1028,7 @@ int main(void)
 		list_delete(l, ln);
 		val = lnode_get(ln);
 		lnode_destroy(ln);
-		TA_Free( libHandle, val);
+		TA_Free(  val);
 		break;
 	    case 'l':
 		if (tokenize(in+1, &tok1, (char **) 0) != 1) {

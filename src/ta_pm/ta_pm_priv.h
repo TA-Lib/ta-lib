@@ -107,13 +107,10 @@ typedef struct
    unsigned int nbFree;
 
    TA_List listOfDataLogBlock;
-   
-   TA_Libc *libHandle;   
 } TA_AllocatorForDataLog;
 
 /* Must be called to initialize a TA_AllocatorForDataLog */
-TA_RetCode TA_AllocatorForDataLog_Init( TA_Libc *libHandle,
-                                        TA_AllocatorForDataLog *allocator );
+TA_RetCode TA_AllocatorForDataLog_Init( TA_AllocatorForDataLog *allocator );
 
 /* Alllocate a TA_DataLog. Will return NULL if fail. */
 TA_DataLog *TA_AllocatorForDataLog_Alloc( TA_AllocatorForDataLog *allocator );
@@ -193,7 +190,6 @@ typedef struct
 typedef struct
 {
    unsigned int magicNb;
-   TA_Libc *libHandle;
 
    /* List of TA_TradeLogPriv */
    TA_List tradeLogList;
@@ -223,7 +219,6 @@ typedef struct
 typedef struct 
 {
    unsigned int magicNb;
-   TA_Libc *libHandle;
 
    /* Dictionaries of TA_TradeDictEntry.
     * Different dictionary are used depending

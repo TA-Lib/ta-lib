@@ -76,27 +76,20 @@ TA_FILE_INFO;
 /**** Local functions declarations.    ****/
 void getDataThread( void *args );
 
-static TA_BuilderSupport *allocBuilderSupport( TA_Libc *libHandle,
-                                               unsigned int nbDataSource );
-static void freeBuilderSupport( TA_Libc *libHandle,
-                                TA_BuilderSupport *builderSupport );
+static TA_BuilderSupport *allocBuilderSupport( unsigned int nbDataSource );
+static void freeBuilderSupport( TA_BuilderSupport *builderSupport );
 
-static TA_RetCode freeSupportForDataSource( TA_Libc *libHandle,
-                                            void *toBeFreed );
-static TA_RetCode freeDataBlock( TA_Libc *libHandle,
-                                 void *toBeFreed );
-static TA_RetCode freeMergeOp( TA_Libc *libHandle,
-                               void *toBeFreed );
+static TA_RetCode freeSupportForDataSource( void *toBeFreed );
+static TA_RetCode freeDataBlock( void *toBeFreed );
+static TA_RetCode freeMergeOp( void *toBeFreed );
 
-static TA_RetCode allocHistory( TA_Libc *libHandle,
-                                TA_UDBasePriv *privUDB,
+static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
                                 TA_History **history,
                                 TA_Period period,
                                 TA_Field fieldToAlloc,
                                 TA_BuilderSupport *builderSupport );
 
-static TA_RetCode allocHistoryFromOneDataSource( TA_Libc *libHandle,
-                                                 TA_UDBasePriv *privUDB,
+static TA_RetCode allocHistoryFromOneDataSource( TA_UDBasePriv *privUDB,
                                                  TA_History **history,
                                                  TA_Period period,
                                                  TA_Field fieldToAlloc,
@@ -108,11 +101,9 @@ static TA_RetCode verifyDataBlockValid( TA_DataBlock *dataBlock,
 
 static void stopAllGetDataThread( TA_BuilderSupport *builderSupport );
 
-static TA_RetCode buildListMergeOp( TA_Libc *libHandle,
-                                    TA_BuilderSupport *builderSupport );
+static TA_RetCode buildListMergeOp( TA_BuilderSupport *builderSupport );
 
-static TA_RetCode buildHistoryFromMergeOp( TA_Libc *libHandle,
-                                           TA_History *newHistory,
+static TA_RetCode buildHistoryFromMergeOp( TA_History *newHistory,
                                            TA_BuilderSupport *builderSupport );
 
 
@@ -122,8 +113,7 @@ static const TA_Timestamp *adjLowerPrecedenceSupport( TA_ListIter *curSupport,
 static const TA_Timestamp *nextPriceBar( TA_SupportForDataSource *supportForDataSource,
                                          const TA_Timestamp *minTimestamp );
 
-static TA_History *allocEmptyHistory( TA_Libc *libHandle,
-                                      TA_UDBasePriv *privUDB, 
+static TA_History *allocEmptyHistory( TA_UDBasePriv *privUDB, 
                                       TA_Period period );
 
 static void reverseRealElement( unsigned int nbElement,  TA_Real *table );
@@ -134,8 +124,7 @@ static void reverseTimestampElement( unsigned int nbElement, TA_Timestamp *table
 /* None */
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
-                              TA_UDBasePriv       *privUDB,
+TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
                               TA_UDB_Symbol       *symbolData,
                               TA_Period            period,
                               const TA_Timestamp  *start,
@@ -143,7 +132,7 @@ TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
                               TA_Field             fieldToAlloc,
                               TA_History         **history )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_List *listDriverHandle;
    TA_List *listOfSupportForDataSource;
@@ -156,10 +145,10 @@ TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
 
    TA_PAR_VARS;
 
-   TA_TRACE_BEGIN( libHandle, TA_HistoryBuilder );
+   TA_TRACE_BEGIN( TA_HistoryBuilder );
 
-   TA_ASSERT( libHandle, symbolData != NULL );
-   TA_ASSERT( libHandle, history != NULL );
+   TA_ASSERT( symbolData != NULL );
+   TA_ASSERT( history != NULL );
 
    *history = NULL;
 
@@ -179,8 +168,8 @@ TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
     * be freed.
     */
    nbDataSource = TA_ListSize(listDriverHandle);
-   TA_ASSERT( libHandle, nbDataSource != 0 );
-   builderSupport = allocBuilderSupport( libHandle, nbDataSource );
+   TA_ASSERT( nbDataSource != 0 );
+   builderSupport = allocBuilderSupport( nbDataSource );
 
    if( !builderSupport )
    {
@@ -192,28 +181,27 @@ TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
 
    if( !driverHandles )
    {
-      freeBuilderSupport( libHandle, builderSupport );
+      freeBuilderSupport( builderSupport );
       TA_TRACE_RETURN( TA_INTERNAL_ERROR(34)  );
    }
 
    listOfSupportForDataSource = builderSupport->listOfSupportForDataSource;
-   TA_ASSERT( libHandle, listOfSupportForDataSource != NULL );
+   TA_ASSERT( listOfSupportForDataSource != NULL );
    supportForDataSource = (TA_SupportForDataSource *)TA_ListAccessHead( listOfSupportForDataSource );
 
    /* Parano test: The following code assume that the listDriverHandle and
     * listOfSupportForDataSource have the same number of elements.
     */
-   TA_ASSERT( libHandle, TA_ListSize(listOfSupportForDataSource) == nbDataSource );
+   TA_ASSERT( TA_ListSize(listOfSupportForDataSource) == nbDataSource );
 
    /* Initialize variable used for parallel processing. */
-   TA_PAR_INIT(libHandle);
+   TA_PAR_INIT();
 
    while( driverHandles && (builderSupport->retCode == TA_SUCCESS) )
    {
-      TA_ASSERT( libHandle, supportForDataSource != NULL );
+      TA_ASSERT( supportForDataSource != NULL );
 
       /* Set-up the parameters. */
-      supportForDataSource->libHandle      = libHandle;
       supportForDataSource->index          = driverHandles->index;
       supportForDataSource->sourceHandle   = driverHandles->sourceHandle;
       supportForDataSource->categoryHandle = driverHandles->categoryHandle;
@@ -224,21 +212,21 @@ TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
       supportForDataSource->fieldToAlloc   = fieldToAlloc;
 
       driverIndex = supportForDataSource->index;
-      TA_ASSERT( libHandle, driverIndex < TA_gDataSourceTableSize );
+      TA_ASSERT( driverIndex < TA_gDataSourceTableSize );
 
       driver = &TA_gDataSourceTable[ driverIndex ];
-      TA_ASSERT( libHandle, driver != NULL );
+      TA_ASSERT( driver != NULL );
 
       if( driver->getParameters == NULL )
       {
-         TA_FATAL( libHandle, "Get parameters must be implemented", 0, 0 );
+         TA_FATAL(  "Get parameters must be implemented", 0, 0 );
          stopAllGetDataThread( builderSupport );
          builderSupport->retCode = TA_INTERNAL_ERROR(35);
          break; /* Exit the loop righ away! */
       }
       else
       {
-         retCode = (*(driver->getParameters))( libHandle, &supportForDataSource->param );
+         retCode = (*(driver->getParameters))( &supportForDataSource->param );
          if( retCode != TA_SUCCESS )
          {
             stopAllGetDataThread( builderSupport );
@@ -283,13 +271,13 @@ TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
    if( builderSupport->retCode != TA_SUCCESS )
    {
       retCode = builderSupport->retCode;
-      freeBuilderSupport( libHandle, builderSupport );
+      freeBuilderSupport( builderSupport );
       TA_TRACE_RETURN( retCode );
    }
 
    /* Finally, allocate and build the TA_History. */
-   retCode = allocHistory( libHandle, privUDB, history, period, fieldToAlloc, builderSupport );
-   freeBuilderSupport( libHandle, builderSupport );
+   retCode = allocHistory( privUDB, history, period, fieldToAlloc, builderSupport );
+   freeBuilderSupport( builderSupport );
 
    if( retCode != TA_SUCCESS )
    {
@@ -300,7 +288,7 @@ TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
    /* Until the library is very stable, we will make a double check
     * of the integrity of the "almost final" TA_History.
     */
-   retCode = TA_HistoryCheckInternal( libHandle, period, start, end,
+   retCode = TA_HistoryCheckInternal( period, start, end,
                                       fieldToAlloc, *history,
                                       NULL, NULL );
    if( retCode != TA_SUCCESS )
@@ -313,7 +301,7 @@ TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
    /* Free the timestamps if it is not requested by the caller. */
    if( (fieldToAlloc != TA_ALL) && !(fieldToAlloc & TA_TIMESTAMP) )
    {
-      FREE_IF_NOT_NULL( libHandle, (*history)->timestamp );
+      FREE_IF_NOT_NULL( (*history)->timestamp );
       (*history)->timestamp = NULL;
    }
 
@@ -383,7 +371,7 @@ TA_RetCode TA_HistoryAddDataReset( TA_ParamForAddData *paramForAddData )
       }
 
       /* Re-alloc the list used to accumulate the series of data. */
-      supportForDataSource->listOfDataBlock = TA_ListAlloc( supportForDataSource->libHandle );
+      supportForDataSource->listOfDataBlock = TA_ListAlloc();
 
       if( !supportForDataSource->listOfDataBlock )
          return TA_ALLOC_ERR;
@@ -414,7 +402,7 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
                               TA_Integer *volume,
                               TA_Integer *openInterest )
 { 
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_SupportForDataSource *supportForDataSource;
    TA_BuilderSupport   *builderSupport;
@@ -423,7 +411,6 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
    const TA_Timestamp *lowTimestamp;
    const TA_Timestamp *highTimestamp;
    unsigned int thisBlockGoesAfterTheExistingOnes;
-   TA_Libc *libHandle;
 
    newBlock = NULL;
 
@@ -433,14 +420,10 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
 
    supportForDataSource = (TA_SupportForDataSource *)paramForAddData;
 
-   libHandle = supportForDataSource->libHandle;
-   if( !libHandle )
-      return TA_INTERNAL_ERROR(36);
-
-   TA_TRACE_BEGIN( libHandle, TA_HistoryAddData );
+   TA_TRACE_BEGIN(  TA_HistoryAddData );
 
    builderSupport = supportForDataSource->parent;
-   TA_ASSERT( libHandle, builderSupport != NULL );
+   TA_ASSERT( builderSupport != NULL );
 
    if( (period == 0) || !timestamp )
    {
@@ -494,7 +477,7 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
       { \
          if( lowerc && !(fieldProvided&TA_##upperc) ) \
          { \
-            TA_Free( libHandle, lowerc ); \
+            TA_Free(  lowerc ); \
             lowerc = NULL; \
             fieldProvided &= ~TA_##upperc; \
          } \
@@ -572,7 +555,7 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
    }
    else
    {
-      TA_ASSERT( libHandle, supportForDataSource->lowestTimestamp != NULL );
+      TA_ASSERT( supportForDataSource->lowestTimestamp != NULL );
 
       /* Trap obvious abnormality (same data shall never be added twice!). */
       if( TA_TimestampEqual( supportForDataSource->lowestTimestamp, lowTimestamp ) ||
@@ -609,7 +592,7 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
    /* Everything looks fine, go forward to keep reference on this new data
     * in the 'listOfDataSource'.
     */
-   newBlock = (TA_DataBlock *)TA_Malloc( libHandle, sizeof( TA_DataBlock ) );
+   newBlock = (TA_DataBlock *)TA_Malloc( sizeof( TA_DataBlock ) );
 
    if( !newBlock )
    {
@@ -685,16 +668,16 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
 TA_HistoryAddData_EXIT:  /* The only point of this function. */
 
    /* Free locally allocated resource (if still owner). */
-   FREE_IF_NOT_NULL( libHandle, newBlock );
+   FREE_IF_NOT_NULL( newBlock );
 
    /* ALWAYS make sure all the provided data is freed. ALWAYS. */
-   FREE_IF_NOT_NULL( libHandle, open );
-   FREE_IF_NOT_NULL( libHandle, high );
-   FREE_IF_NOT_NULL( libHandle, low );
-   FREE_IF_NOT_NULL( libHandle, close );
-   FREE_IF_NOT_NULL( libHandle, volume );
-   FREE_IF_NOT_NULL( libHandle, openInterest );
-   FREE_IF_NOT_NULL( libHandle, timestamp );
+   FREE_IF_NOT_NULL( open );
+   FREE_IF_NOT_NULL( high );
+   FREE_IF_NOT_NULL( low );
+   FREE_IF_NOT_NULL( close );
+   FREE_IF_NOT_NULL( volume );
+   FREE_IF_NOT_NULL( openInterest );
+   FREE_IF_NOT_NULL( timestamp );
 
    /* Any major error will fail the entire read operation
     * (including all other data source, even if they did succeed).
@@ -709,7 +692,6 @@ TA_HistoryAddData_EXIT:  /* The only point of this function. */
 void getDataThread( void *args  )
 {
    TA_RetCode retCode;
-   TA_Libc *libHandle;
 
    const TA_DataSourceDriver *driver;
    unsigned int driverIndex;
@@ -719,12 +701,11 @@ void getDataThread( void *args  )
    if( !args )
       return;
 
-   libHandle = supportForDataSource->libHandle;
    driverIndex = supportForDataSource->index;
-   TA_ASSERT_NO_RET( libHandle, driverIndex < TA_gDataSourceTableSize );
+   TA_ASSERT_NO_RET( driverIndex < TA_gDataSourceTableSize );
 
    driver = &TA_gDataSourceTable[ driverIndex ];
-   TA_ASSERT_NO_RET( libHandle, driver != NULL );
+   TA_ASSERT_NO_RET( driver != NULL );
 
    retCode = TA_SUCCESS;
 
@@ -732,8 +713,7 @@ void getDataThread( void *args  )
    {
       if( !supportForDataSource->enoughValidDataProvided )
       {
-         retCode = (*(driver->getHistoryData))( supportForDataSource->libHandle,
-                                                supportForDataSource->sourceHandle,
+         retCode = (*(driver->getHistoryData))( supportForDataSource->sourceHandle,
                                                 supportForDataSource->categoryHandle,
                                                 supportForDataSource->symbolHandle,
                                                 supportForDataSource->period,
@@ -754,8 +734,7 @@ void getDataThread( void *args  )
    }
 }
 
-static TA_BuilderSupport *allocBuilderSupport( TA_Libc *libHandle,
-                                               unsigned int nbDataSource )
+static TA_BuilderSupport *allocBuilderSupport( unsigned int nbDataSource )
 {
   TA_RetCode retCode;
   unsigned int i;
@@ -763,10 +742,9 @@ static TA_BuilderSupport *allocBuilderSupport( TA_Libc *libHandle,
   TA_List *listOfSupportForDataSource; /* List of TA_SupportForDataSource. */
   TA_SupportForDataSource *supportForDataSource;
 
-  TA_ASSERT_RET( libHandle, nbDataSource > 0, (TA_BuilderSupport *)NULL );
+  TA_ASSERT_RET( nbDataSource > 0, (TA_BuilderSupport *)NULL );
 
-  builderSupport = (TA_BuilderSupport *)TA_Malloc( libHandle,
-                                                   sizeof( TA_BuilderSupport ) );
+  builderSupport = (TA_BuilderSupport *)TA_Malloc( sizeof( TA_BuilderSupport ) );
 
   if( !builderSupport )
      return (TA_BuilderSupport *)NULL;
@@ -776,28 +754,25 @@ static TA_BuilderSupport *allocBuilderSupport( TA_Libc *libHandle,
   builderSupport->listOfMergeOp = NULL;
   builderSupport->commonFieldProvided = TA_ALL;
 
-  builderSupport->listOfSupportForDataSource = TA_ListAlloc( libHandle );
+  builderSupport->listOfSupportForDataSource = TA_ListAlloc();
   if( !builderSupport->listOfSupportForDataSource )
   {
-     freeBuilderSupport( libHandle, builderSupport );
+     freeBuilderSupport( builderSupport );
      return (TA_BuilderSupport *)NULL;
   }
   listOfSupportForDataSource = builderSupport->listOfSupportForDataSource;
 
   for( i=nbDataSource; i > 0; i-- )
   {
-     supportForDataSource = (TA_SupportForDataSource *)TA_Malloc( libHandle,
-                                                                  sizeof(TA_SupportForDataSource));
+     supportForDataSource = (TA_SupportForDataSource *)TA_Malloc(sizeof(TA_SupportForDataSource));
      if( !supportForDataSource )
      {
-        freeBuilderSupport( libHandle, builderSupport );
+        freeBuilderSupport( builderSupport );
         return (TA_BuilderSupport *)NULL;
      }
      
      /* Initialize all fields to NULL. */
      memset( supportForDataSource, 0, sizeof( TA_SupportForDataSource ) );
-
-     supportForDataSource->libHandle = libHandle;
 
      /* Make parent the 'builderSupport' */
      supportForDataSource->parent = builderSupport;
@@ -806,26 +781,26 @@ static TA_BuilderSupport *allocBuilderSupport( TA_Libc *libHandle,
      retCode = TA_ListAddTail( listOfSupportForDataSource, supportForDataSource );
      if( retCode != TA_SUCCESS )
      {
-        freeBuilderSupport( libHandle, builderSupport );
+        freeBuilderSupport( builderSupport );
         return (TA_BuilderSupport *)NULL;
      }
 
      /* Initialize an empty 'listOfDataBlock'. */
-     supportForDataSource->listOfDataBlock = TA_ListAlloc( libHandle );
+     supportForDataSource->listOfDataBlock = TA_ListAlloc();
 
      if( !supportForDataSource->listOfDataBlock )
      {
-        freeBuilderSupport( libHandle, builderSupport );
+        freeBuilderSupport( builderSupport );
         return (TA_BuilderSupport *)NULL;
      }
   }
 
   /* Initialize an empty 'listOfMergeOp'. */
-  builderSupport->listOfMergeOp = TA_ListAlloc( libHandle );
+  builderSupport->listOfMergeOp = TA_ListAlloc();
 
   if( !builderSupport->listOfMergeOp )
   {
-     freeBuilderSupport( libHandle, builderSupport );
+     freeBuilderSupport( builderSupport );
      return (TA_BuilderSupport *)NULL;
   }
 
@@ -854,12 +829,12 @@ static void stopAllGetDataThread( TA_BuilderSupport *builderSupport )
    }
 }
 
-static TA_RetCode freeSupportForDataSource( TA_Libc *libHandle, void *toBeFreed )
+static TA_RetCode freeSupportForDataSource( void *toBeFreed )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_SupportForDataSource *supportForDataSource;
 
-   TA_TRACE_BEGIN( libHandle, freeSupportForDataSource );
+   TA_TRACE_BEGIN(  freeSupportForDataSource );
 
    supportForDataSource = (TA_SupportForDataSource *)toBeFreed;
 
@@ -870,49 +845,49 @@ static TA_RetCode freeSupportForDataSource( TA_Libc *libHandle, void *toBeFreed 
 
       supportForDataSource->listOfDataBlock = NULL;
 
-      TA_Free( libHandle, supportForDataSource );
+      TA_Free( supportForDataSource );
    }
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-static TA_RetCode freeDataBlock( TA_Libc *libHandle, void *toBeFreed )
+static TA_RetCode freeDataBlock( void *toBeFreed )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_DataBlock *dataBlock;
 
-   TA_TRACE_BEGIN( libHandle, freeDataBlock );
+   TA_TRACE_BEGIN( freeDataBlock );
 
    dataBlock = (TA_DataBlock *)toBeFreed;
 
    if( dataBlock )
    {
-      FREE_IF_NOT_NULL( libHandle, dataBlock->open );
-      FREE_IF_NOT_NULL( libHandle, dataBlock->high );
-      FREE_IF_NOT_NULL( libHandle, dataBlock->low );
-      FREE_IF_NOT_NULL( libHandle, dataBlock->close );
-      FREE_IF_NOT_NULL( libHandle, dataBlock->volume );
-      FREE_IF_NOT_NULL( libHandle, dataBlock->openInterest );
-      FREE_IF_NOT_NULL( libHandle, dataBlock->timestamp );
+      FREE_IF_NOT_NULL( dataBlock->open );
+      FREE_IF_NOT_NULL( dataBlock->high );
+      FREE_IF_NOT_NULL( dataBlock->low );
+      FREE_IF_NOT_NULL( dataBlock->close );
+      FREE_IF_NOT_NULL( dataBlock->volume );
+      FREE_IF_NOT_NULL( dataBlock->openInterest );
+      FREE_IF_NOT_NULL( dataBlock->timestamp );
 
-      TA_Free( libHandle, dataBlock );
+      TA_Free(  dataBlock );
    }
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-static TA_RetCode freeMergeOp( TA_Libc *libHandle, void *toBeFreed )
+static TA_RetCode freeMergeOp( void *toBeFreed )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
-   TA_TRACE_BEGIN( libHandle, freeMergeOp );
+   TA_TRACE_BEGIN(  freeMergeOp );
     
-   FREE_IF_NOT_NULL( libHandle, toBeFreed );
+   FREE_IF_NOT_NULL( toBeFreed );
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-static void freeBuilderSupport( TA_Libc *libHandle, TA_BuilderSupport *builderSupport )
+static void freeBuilderSupport( TA_BuilderSupport *builderSupport )
 {
    if( builderSupport != NULL )
    {
@@ -925,19 +900,18 @@ static void freeBuilderSupport( TA_Libc *libHandle, TA_BuilderSupport *builderSu
 
       builderSupport->listOfMergeOp = NULL;
 
-      TA_Free( libHandle, builderSupport );
+      TA_Free(  builderSupport );
    }
 }
 
-static TA_RetCode allocHistory( TA_Libc *libHandle,
-                                TA_UDBasePriv *privUDB,
+static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
                                 TA_History **history,
                                 TA_Period period,
                                 TA_Field fieldToAlloc,
                                 TA_BuilderSupport *builderSupport
                                )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
    TA_RetCode retCode;
    unsigned int nbDataSource;
@@ -949,27 +923,27 @@ static TA_RetCode allocHistory( TA_Libc *libHandle,
    TA_Integer *volume, *openInterest, nbBars;
    TA_Timestamp *timestamp;
 
-   TA_TRACE_BEGIN( libHandle, allocHistory );
+   TA_TRACE_BEGIN(  allocHistory );
 
-   TA_ASSERT( libHandle, builderSupport != NULL );
-   TA_ASSERT( libHandle, history != NULL );
+   TA_ASSERT( builderSupport != NULL );
+   TA_ASSERT( history != NULL );
 
    *history = NULL;
    listOfSupportForDataSource = builderSupport->listOfSupportForDataSource;
-   TA_ASSERT( libHandle, listOfSupportForDataSource != NULL );
+   TA_ASSERT( listOfSupportForDataSource != NULL );
 
    nbDataSource = TA_ListSize( listOfSupportForDataSource );
-   TA_ASSERT( libHandle, nbDataSource != 0 );
+   TA_ASSERT( nbDataSource != 0 );
 
    curSupportForDataSource = (TA_SupportForDataSource *)TA_ListAccessHead( listOfSupportForDataSource );
-   TA_ASSERT( libHandle, curSupportForDataSource != NULL );
+   TA_ASSERT( curSupportForDataSource != NULL );
 
    if( nbDataSource == 1 )
    {
       /* Handle seperatly the simplified case where there is only one data source.
        * In that case, all the logic for merging operations can be bypass.
        */
-      retCode = allocHistoryFromOneDataSource( libHandle, privUDB, history, period,
+      retCode = allocHistoryFromOneDataSource( privUDB, history, period,
                                                fieldToAlloc,
                                                curSupportForDataSource,
                                                builderSupport );
@@ -980,13 +954,13 @@ static TA_RetCode allocHistory( TA_Libc *libHandle,
    }
    else
    {
-       *history = allocEmptyHistory( libHandle, privUDB, period );
+       *history = allocEmptyHistory( privUDB, period );
        if( *history == NULL )
        {
           TA_TRACE_RETURN( TA_ALLOC_ERR );
        }
 
-       retCode = buildListMergeOp( libHandle, builderSupport );
+       retCode = buildListMergeOp( builderSupport );
        if( retCode != TA_SUCCESS )
        {
           TA_HistoryFree( *history );
@@ -994,7 +968,7 @@ static TA_RetCode allocHistory( TA_Libc *libHandle,
           TA_TRACE_RETURN( retCode );
        }
 
-       retCode = buildHistoryFromMergeOp( libHandle, *history, builderSupport );
+       retCode = buildHistoryFromMergeOp( *history, builderSupport );
        if( retCode != TA_SUCCESS )
        {
           TA_HistoryFree( *history );
@@ -1007,12 +981,11 @@ static TA_RetCode allocHistory( TA_Libc *libHandle,
     * not necesseraly at the requested period. Adjust the
     * timeframe as needed.
     */
-   TA_ASSERT( libHandle, *history != NULL );
+   TA_ASSERT( *history != NULL );
 
    if( (*history)->period != period )
    {
-      retCode = TA_PeriodTransform( libHandle,
-                                    *history,
+      retCode = TA_PeriodTransform( *history,
                                     period,
                                     &nbBars, &timestamp,
                                     &open, &high, &low, &close,
@@ -1026,13 +999,13 @@ static TA_RetCode allocHistory( TA_Libc *libHandle,
       }
 
       /* Success. Free the original data. */
-      FREE_IF_NOT_NULL( libHandle, (*history)->open );
-      FREE_IF_NOT_NULL( libHandle, (*history)->high );
-      FREE_IF_NOT_NULL( libHandle, (*history)->low );
-      FREE_IF_NOT_NULL( libHandle, (*history)->close );
-      FREE_IF_NOT_NULL( libHandle, (*history)->volume );
-      FREE_IF_NOT_NULL( libHandle, (*history)->openInterest );
-      FREE_IF_NOT_NULL( libHandle, (*history)->timestamp );
+      FREE_IF_NOT_NULL( (*history)->open );
+      FREE_IF_NOT_NULL( (*history)->high );
+      FREE_IF_NOT_NULL( (*history)->low );
+      FREE_IF_NOT_NULL( (*history)->close );
+      FREE_IF_NOT_NULL( (*history)->volume );
+      FREE_IF_NOT_NULL( (*history)->openInterest );
+      FREE_IF_NOT_NULL( (*history)->timestamp );
 
       /* Replace what was the original data with the new one. */
       (*history)->open         = open;
@@ -1051,32 +1024,31 @@ static TA_RetCode allocHistory( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-static TA_RetCode allocHistoryFromOneDataSource( TA_Libc *libHandle,
-                                                 TA_UDBasePriv *privUDB,
+static TA_RetCode allocHistoryFromOneDataSource( TA_UDBasePriv *privUDB,
                                                  TA_History **history,
                                                  TA_Period period,
                                                  TA_Field fieldToAlloc,
                                                  TA_SupportForDataSource *supportForDataSource,
                                                  TA_BuilderSupport *builderSupport )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_History *newHistory;
    TA_DataBlock *curDataBlock;
    TA_MergeOp *mergeOp;
    unsigned int nbPriceBar;
 
-   TA_TRACE_BEGIN( libHandle, allocHistoryFromOneDataSource );
+   TA_TRACE_BEGIN( allocHistoryFromOneDataSource );
 
-   TA_ASSERT( libHandle, history != NULL );
-   TA_ASSERT( libHandle, supportForDataSource != NULL );
-   TA_ASSERT( libHandle, builderSupport != NULL );
+   TA_ASSERT( history != NULL );
+   TA_ASSERT( supportForDataSource != NULL );
+   TA_ASSERT( builderSupport != NULL );
 
    *history = NULL;
    retCode = TA_SUCCESS;
 
    /* Initialize the default history. */
-   newHistory = allocEmptyHistory( libHandle, privUDB, period );
+   newHistory = allocEmptyHistory( privUDB, period );
    if( !newHistory )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -1125,7 +1097,7 @@ static TA_RetCode allocHistoryFromOneDataSource( TA_Libc *libHandle,
                newHistory->lowerc = curDataBlock->lowerc; \
             else \
             { \
-               FREE_IF_NOT_NULL( libHandle, curDataBlock->lowerc ); \
+               FREE_IF_NOT_NULL( curDataBlock->lowerc ); \
             } \
          }
          PASS_OWNERSHIP_OR_FREE(OPEN,open);
@@ -1154,7 +1126,7 @@ static TA_RetCode allocHistoryFromOneDataSource( TA_Libc *libHandle,
 
    while( curDataBlock )
    {
-      mergeOp = (TA_MergeOp *)TA_Malloc( libHandle, sizeof( TA_MergeOp ) );
+      mergeOp = (TA_MergeOp *)TA_Malloc( sizeof( TA_MergeOp ) );
       if( !mergeOp )
       {
          TA_HistoryFree( newHistory );
@@ -1162,19 +1134,19 @@ static TA_RetCode allocHistoryFromOneDataSource( TA_Libc *libHandle,
       }
 
       /* Parano test: All datablock shall have the same period. */
-      TA_ASSERT( libHandle, newHistory->period == curDataBlock->period );
+      TA_ASSERT( newHistory->period == curDataBlock->period );
 
       /* Parano test: All datablock shall provide the same fields. */
-      TA_ASSERT( libHandle, builderSupport->commonFieldProvided == curDataBlock->fieldProvided );
+      TA_ASSERT( builderSupport->commonFieldProvided == curDataBlock->fieldProvided );
 
       /* Add this TA_MergeOp to the list. */
       builderSupport = supportForDataSource->parent;
-      TA_ASSERT( libHandle, builderSupport != NULL );
+      TA_ASSERT( builderSupport != NULL );
 
       retCode = TA_ListAddTail( builderSupport->listOfMergeOp, mergeOp );
       if( retCode != TA_SUCCESS )
       {
-         TA_Free( libHandle, mergeOp );
+         TA_Free( mergeOp );
          TA_HistoryFree( newHistory );
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
@@ -1190,7 +1162,7 @@ static TA_RetCode allocHistoryFromOneDataSource( TA_Libc *libHandle,
 
    /* Do the merge operations. */
    builderSupport->nbPriceBar = nbPriceBar;
-   retCode = buildHistoryFromMergeOp( libHandle, newHistory, builderSupport );
+   retCode = buildHistoryFromMergeOp( newHistory, builderSupport );
 
    if( retCode != TA_SUCCESS )
    {
@@ -1258,11 +1230,10 @@ static TA_RetCode verifyDataBlockValid( TA_DataBlock *dataBlock,
    return TA_SUCCESS;
 }
 
-static TA_RetCode buildHistoryFromMergeOp( TA_Libc *libHandle,
-                                           TA_History *newHistory,
+static TA_RetCode buildHistoryFromMergeOp( TA_History *newHistory,
                                            TA_BuilderSupport *builderSupport )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_Real *open, *high, *low, *close;
    TA_Integer *openInterest, *volume;
    TA_Timestamp *timestamp;
@@ -1279,9 +1250,9 @@ static TA_RetCode buildHistoryFromMergeOp( TA_Libc *libHandle,
 
    TA_Field fieldToAlloc;
 
-   TA_TRACE_BEGIN( libHandle, buildHistoryFromMergeOp );
+   TA_TRACE_BEGIN(  buildHistoryFromMergeOp );
 
-   TA_ASSERT( libHandle, builderSupport != NULL );
+   TA_ASSERT( builderSupport != NULL );
 
    /* We will merge only the set of fields common to all data source.
     * Particularly useful when the user specify TA_ALL. In other cases,
@@ -1295,7 +1266,7 @@ static TA_RetCode buildHistoryFromMergeOp( TA_Libc *libHandle,
     * transposing the TA_History into a different timeframe before returning it
     * to the user.
     */
-   TA_ASSERT( libHandle, fieldToAlloc & TA_TIMESTAMP );
+   TA_ASSERT( fieldToAlloc & TA_TIMESTAMP );
 
    nbPriceBar = builderSupport->nbPriceBar;
    open = high = low = close = NULL;
@@ -1310,7 +1281,7 @@ static TA_RetCode buildHistoryFromMergeOp( TA_Libc *libHandle,
    { \
       if(fieldToAlloc&msk) \
       { \
-         var = (typ *)TA_Malloc( libHandle, nbPriceBar * sizeof( typ ) ); \
+         var = (typ *)TA_Malloc( nbPriceBar * sizeof( typ ) ); \
          if( !var ) {\
             TA_TRACE_RETURN( TA_ALLOC_ERR ); } \
          newHistory->var = var; \
@@ -1326,7 +1297,7 @@ static TA_RetCode buildHistoryFromMergeOp( TA_Libc *libHandle,
    #undef FIELD_ALLOC
 
    listOfMergeOp = builderSupport->listOfMergeOp;
-   TA_ASSERT( libHandle, listOfMergeOp != NULL );
+   TA_ASSERT( listOfMergeOp != NULL );
 
    curMergeOp = (TA_MergeOp *)TA_ListAccessHead( listOfMergeOp );
 
@@ -1334,21 +1305,21 @@ static TA_RetCode buildHistoryFromMergeOp( TA_Libc *libHandle,
 
    if( curMergeOp )
    {
-      TA_ASSERT( libHandle, curMergeOp->srcDataBlock != NULL );
+      TA_ASSERT( curMergeOp->srcDataBlock != NULL );
       newHistory->period = curMergeOp->srcDataBlock->period;
    }
 
    while( curMergeOp )
    {
       srcDataBlock    = curMergeOp->srcDataBlock;
-      TA_ASSERT( libHandle, srcDataBlock != NULL );
+      TA_ASSERT( srcDataBlock != NULL );
       nbElementToCopy = curMergeOp->nbElementToCopy;
       srcIndexForCopy = curMergeOp->srcIndexForCopy;
 
       /* Parano test: All datablock shall be normalize at the same period at
        *              this point.
        */
-      TA_ASSERT( libHandle, newHistory->period == srcDataBlock->period );
+      TA_ASSERT( newHistory->period == srcDataBlock->period );
 
       nbPriceBarCopied += nbElementToCopy;
 
@@ -1357,7 +1328,7 @@ static TA_RetCode buildHistoryFromMergeOp( TA_Libc *libHandle,
        */
       if( nbPriceBarCopied > nbPriceBar )
       {
-         TA_FATAL( libHandle, NULL, nbPriceBarCopied, nbPriceBar );
+         TA_FATAL(  NULL, nbPriceBarCopied, nbPriceBar );
       }
 
       /* Parano test: we want to make sure we will not copy out of bound
@@ -1365,14 +1336,14 @@ static TA_RetCode buildHistoryFromMergeOp( TA_Libc *libHandle,
        */
       if( (nbElementToCopy+srcIndexForCopy) > srcDataBlock->nbBars )
       {
-         TA_FATAL( libHandle, NULL, nbElementToCopy, srcIndexForCopy );
+         TA_FATAL(  NULL, nbElementToCopy, srcIndexForCopy );
       }
 
       #define COPY_PRICE_DATA(var,typ) \
       { \
          if (var) \
          { \
-           TA_ASSERT(libHandle,srcDataBlock->var); \
+           TA_ASSERT(srcDataBlock->var); \
            memcpy(var,&srcDataBlock->var[srcIndexForCopy],nbElementToCopy*sizeof(typ)); \
            var+=nbElementToCopy; \
          } \
@@ -1392,7 +1363,7 @@ static TA_RetCode buildHistoryFromMergeOp( TA_Libc *libHandle,
 
    if( nbPriceBarCopied != nbPriceBar )
    {
-      TA_FATAL( libHandle, NULL, nbPriceBarCopied, nbPriceBar );
+      TA_FATAL(  NULL, nbPriceBarCopied, nbPriceBar );
    }
 
    newHistory->nbBars = nbPriceBarCopied;
@@ -1400,10 +1371,9 @@ static TA_RetCode buildHistoryFromMergeOp( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-static TA_RetCode buildListMergeOp( TA_Libc *libHandle,
-                                    TA_BuilderSupport *builderSupport )
+static TA_RetCode buildListMergeOp( TA_BuilderSupport *builderSupport )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
 
    unsigned int again, moveForwardCurPos;
@@ -1425,14 +1395,14 @@ static TA_RetCode buildListMergeOp( TA_Libc *libHandle,
    TA_ListIterPos curSupportPos;
    TA_SupportForDataSource *curSupport;
 
-   TA_TRACE_BEGIN( libHandle, buildListMergeOp );
+   TA_TRACE_BEGIN(  buildListMergeOp );
 
-   TA_ASSERT( libHandle, builderSupport != NULL );
+   TA_ASSERT( builderSupport != NULL );
 
    listOfSupportForDataSource = builderSupport->listOfSupportForDataSource;
-   TA_ASSERT( libHandle, listOfSupportForDataSource != NULL );
+   TA_ASSERT( listOfSupportForDataSource != NULL );
 
-   retCode = TA_PeriodNormalize( libHandle, builderSupport );
+   retCode = TA_PeriodNormalize( builderSupport );
    if( retCode != TA_SUCCESS )
    {
       TA_TRACE_RETURN( retCode );
@@ -1447,11 +1417,11 @@ static TA_RetCode buildListMergeOp( TA_Libc *libHandle,
     */
    nbSupportHavingData = TA_ListSize( listOfSupportForDataSource );
    curSupport = (TA_SupportForDataSource *)TA_ListAccessHead( listOfSupportForDataSource );
-   TA_ASSERT( libHandle, curSupport != NULL );
+   TA_ASSERT( curSupport != NULL );
 
    while( curSupport )
    {
-      TA_ASSERT( libHandle, curSupport->listOfDataBlock != NULL );
+      TA_ASSERT( curSupport->listOfDataBlock != NULL );
 
       tmpDataBlock = (TA_DataBlock *)TA_ListAccessHead( curSupport->listOfDataBlock );
       curSupport->curDataBlock = tmpDataBlock;
@@ -1464,7 +1434,7 @@ static TA_RetCode buildListMergeOp( TA_Libc *libHandle,
       }
       else
       {
-         TA_ASSERT( libHandle, tmpDataBlock->timestamp != NULL );
+         TA_ASSERT( tmpDataBlock->timestamp != NULL );
          curSupport->curTimestamp = &tmpDataBlock->timestamp[0];
          curSupport->allDataConsumed = 0;
          curSupport->curIndex = 0;
@@ -1525,7 +1495,7 @@ static TA_RetCode buildListMergeOp( TA_Libc *libHandle,
       curLowerPrecedenceTS = NULL;
 
       curSupport = (TA_SupportForDataSource *)TA_ListIterHead( &iterSupport );
-      TA_ASSERT( libHandle, curSupport != NULL );
+      TA_ASSERT( curSupport != NULL );
 
       /* Immediatly bypass data sources with no data left. */
       while( curSupport && (curSupport->allDataConsumed == 1) )
@@ -1534,7 +1504,7 @@ static TA_RetCode buildListMergeOp( TA_Libc *libHandle,
       /* Parano test: because nbSupportHavingData > 0, we should have at least
        *              one curSupport with some data!
        */
-      TA_ASSERT( libHandle, curSupport != NULL );
+      TA_ASSERT( curSupport != NULL );
 
       oldestTimestamp = curSupport->curTimestamp;
       TA_ListIterSavePos( &iterSupport, &curSupportPos );
@@ -1584,11 +1554,11 @@ static TA_RetCode buildListMergeOp( TA_Libc *libHandle,
        *     While iterating, we check that the timestamp are really ascending
        *     (quick data integrity check).
        */
-      TA_ASSERT( libHandle, curSupport != NULL );
-      TA_ASSERT( libHandle, oldestTimestamp != NULL );
+      TA_ASSERT( curSupport != NULL );
+      TA_ASSERT( oldestTimestamp != NULL );
 
       /* Create the TA_MergeOp. */
-      mergeOp = (TA_MergeOp *)TA_Malloc( libHandle, sizeof( TA_MergeOp ) );
+      mergeOp = (TA_MergeOp *)TA_Malloc( sizeof( TA_MergeOp ) );
       if( !mergeOp )
       {
          TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -1673,18 +1643,18 @@ static TA_RetCode buildListMergeOp( TA_Libc *libHandle,
          if( moveForwardCurPos )
          {
             oldestTimestamp = nextPriceBar( curSupport, oldestTimestamp );
-            TA_ASSERT( libHandle, !((oldestTimestamp == NULL) && (again == 1)) );
+            TA_ASSERT( !((oldestTimestamp == NULL) && (again == 1)) );
          }
       }
 
-      TA_ASSERT( libHandle, nbDataToBeCopied > 0 );
+      TA_ASSERT( nbDataToBeCopied > 0 );
 
       /* -3- Add the TA_MergeOp to the list. */
-      TA_ASSERT( libHandle, builderSupport->listOfMergeOp != NULL );
+      TA_ASSERT( builderSupport->listOfMergeOp != NULL );
       retCode = TA_ListAddTail( builderSupport->listOfMergeOp, mergeOp );
       if( retCode != TA_SUCCESS )
       {
-         TA_Free( libHandle, mergeOp );
+         TA_Free(  mergeOp );
          TA_TRACE_RETURN( retCode );
       }
 
@@ -1786,13 +1756,13 @@ static const TA_Timestamp *nextPriceBar( TA_SupportForDataSource *supportForData
    return supportForDataSource->curTimestamp;
 }
 
-static TA_History *allocEmptyHistory( TA_Libc *libHandle, TA_UDBasePriv *privUDB, TA_Period period )
+static TA_History *allocEmptyHistory( TA_UDBasePriv *privUDB, TA_Period period )
 {
    TA_History *newHistory;
    TA_HistoryHiddenData *hiddenData;
 
    /* Alloc the TA_History for the user. */
-   newHistory = (TA_History *)TA_Malloc( libHandle, sizeof( TA_History ) );
+   newHistory = (TA_History *)TA_Malloc( sizeof( TA_History ) );
 
    if( !newHistory )
       return NULL;
@@ -1801,10 +1771,10 @@ static TA_History *allocEmptyHistory( TA_Libc *libHandle, TA_UDBasePriv *privUDB
    newHistory->period = period;
 
    /* Alloc and initialize the hidden data. */
-   hiddenData = (TA_HistoryHiddenData *)TA_Malloc( libHandle, sizeof( TA_HistoryHiddenData ) );
+   hiddenData = (TA_HistoryHiddenData *)TA_Malloc( sizeof( TA_HistoryHiddenData ) );
    if( !hiddenData )
    {
-      TA_Free( libHandle, newHistory );
+      TA_Free(  newHistory );
       return NULL;
    }
 

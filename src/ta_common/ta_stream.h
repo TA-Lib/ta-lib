@@ -31,7 +31,7 @@ typedef unsigned int TA_Stream;
 typedef unsigned int TA_StreamAccess;
 
 /* Use to alloc/dealloc a stream. */
-TA_Stream *TA_StreamAlloc( TA_Libc *libHandle );
+TA_Stream *TA_StreamAlloc( void );
 TA_RetCode TA_StreamFree( TA_Stream *stream );
 
 /* Alloc a TA_Stream from an existing buffer. 
@@ -39,8 +39,7 @@ TA_RetCode TA_StreamFree( TA_Stream *stream );
  * will be freed by the calller provided freeFunc when
  * the TA_StreamFree gets called.
  */
-TA_Stream *TA_StreamAllocFromBuffer( TA_Libc *libHandle,
-                                     unsigned char *data,
+TA_Stream *TA_StreamAllocFromBuffer( unsigned char *data,
                                      unsigned int dataSize,
                                      TA_FreeFuncPtr funcPtr,
                                      void *opaqueData );
@@ -151,8 +150,7 @@ TA_RetCode TA_StreamAccessSearch( TA_StreamAccess *source, const char *stringToF
  * If a table is embedded within a table, the whole elements are
  * returned as if they were belonging to the same global table.
  */
-typedef TA_RetCode (*TA_HTMLTableFuncPtr)( TA_Libc *libHandle, 
-                                           unsigned int line,
+typedef TA_RetCode (*TA_HTMLTableFuncPtr)( unsigned int line,
                                            unsigned int column,
                                            const char *data,
                                            const char *href,

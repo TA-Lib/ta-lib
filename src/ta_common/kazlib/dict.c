@@ -97,8 +97,8 @@ static const char rcsid[] = "$Id$";
 #define dict_nil(D) (&(D)->nilnode)
 #define DICT_DEPTH_MAX 64
 
-static dnode_t *dnode_alloc( TA_Libc *libHandle, void *context);
-static void dnode_free( TA_Libc *libHandle, dnode_t *node, void *context);
+static dnode_t *dnode_alloc( void *context);
+static void dnode_free( dnode_t *node, void *context);
 
 /*
  * Perform a ``left rotation'' adjustment on the tree.  The given node P and
@@ -107,7 +107,7 @@ static void dnode_free( TA_Libc *libHandle, dnode_t *node, void *context);
  * for P.  The ordering of the keys within the tree is thus preserved.
  */
 
-static void rotate_left( TA_Libc *libHandle, dnode_t *upper)
+static void rotate_left( dnode_t *upper)
 {
     dnode_t *lower, *lowleft, *upparent;
 
@@ -123,7 +123,7 @@ static void rotate_left( TA_Libc *libHandle, dnode_t *upper)
     if (upper == upparent->left) {
 	upparent->left = lower;
     } else {
-	TA_ASSERT_NO_RET(  libHandle, upper == upparent->right);
+	TA_ASSERT_NO_RET( upper == upparent->right);
 	upparent->right = lower;
     }
 
@@ -136,7 +136,7 @@ static void rotate_left( TA_Libc *libHandle, dnode_t *upper)
  * the same procedure, but with left and right interchanged.
  */
 
-static void rotate_right( TA_Libc *libHandle, dnode_t *upper)
+static void rotate_right( dnode_t *upper)
 {
     dnode_t *lower, *lowright, *upparent;
 
@@ -149,7 +149,7 @@ static void rotate_right( TA_Libc *libHandle, dnode_t *upper)
     if (upper == upparent->right) {
 	upparent->right = lower;
     } else {
-	TA_ASSERT_NO_RET(  libHandle, upper == upparent->left);
+	TA_ASSERT_NO_RET(  upper == upparent->left);
 	upparent->left = lower;
     }
 
@@ -162,13 +162,13 @@ static void rotate_right( TA_Libc *libHandle, dnode_t *upper)
  * node and free everything under it.  Used by dict_free().
  */
 
-static void free_nodes( TA_Libc *libHandle, dict_t *dict, dnode_t *node, dnode_t *nil)
+static void free_nodes( dict_t *dict, dnode_t *node, dnode_t *nil)
 {
     if (node == nil)
 	return;
-    free_nodes( libHandle, dict, node->left, nil);
-    free_nodes( libHandle, dict, node->right, nil);
-    dict->freenode( libHandle, node, dict->context);
+    free_nodes( dict, node->left, nil);
+    free_nodes( dict, node->right, nil);
+    dict->freenode( node, dict->context);
 }
 
 /*
@@ -180,33 +180,33 @@ static void free_nodes( TA_Libc *libHandle, dict_t *dict, dnode_t *node, dnode_t
  * debugging purposes.
  */
 
-static int verify_bintree( TA_Libc *libHandle, dict_t *dict)
+static int verify_bintree( dict_t *dict)
 {
     dnode_t *first, *next;
 
-    first = dict_first( libHandle, dict);
+    first = dict_first( dict);
 
     if (dict->dupes) {
         if( first ) {
-           next = dict_next( libHandle, dict, first);
+           next = dict_next( dict, first);
 	   while (first && next ) {
-	       if (dict->compare(libHandle, first->key, next->key) > 0)
+	       if (dict->compare(first->key, next->key) > 0)
                   return 0;
 	       first = next;
                if( first )
-                  next = dict_next( libHandle, dict, first);
+                  next = dict_next( dict, first);
            }
 	}
     } else {
         if( first )
         {
-           next = dict_next(libHandle, dict, first);
+           next = dict_next(dict, first);
 	   while (first && next) {
-	       if (dict->compare(libHandle, first->key, next->key) >= 0)
+	       if (dict->compare(first->key, next->key) >= 0)
                   return 0;
 	       first = next;
                if( first )
-                  next = dict_next(libHandle, dict, first);
+                  next = dict_next(dict, first);
            }
 	}
     }
@@ -289,9 +289,9 @@ static int verify_dict_has_node(dnode_t *nil, dnode_t *root, dnode_t *node)
  * Dynamically allocate and initialize a dictionary object.
  */
 
-dict_t *dict_create( TA_Libc *libHandle, dictcount_t maxcount, dict_comp_t comp)
+dict_t *dict_create( dictcount_t maxcount, dict_comp_t comp)
 {
-    dict_t *new = TA_Malloc( libHandle, sizeof *new);
+    dict_t *new = TA_Malloc( sizeof(dict_t) );
 
     if (new) {
 	new->compare = comp;
@@ -313,11 +313,11 @@ dict_t *dict_create( TA_Libc *libHandle, dictcount_t maxcount, dict_comp_t comp)
  * Select a different set of node allocator routines.
  */
 
-void dict_set_allocator( TA_Libc *libHandle, dict_t *dict, dnode_alloc_t al,
+void dict_set_allocator( dict_t *dict, dnode_alloc_t al,
 	dnode_free_t fr, void *context)
 {
-    TA_ASSERT_NO_RET(  libHandle, dict_count(dict) == 0);
-    TA_ASSERT_NO_RET(  libHandle, (al == NULL && fr == NULL) || (al != NULL && fr != NULL));
+    TA_ASSERT_NO_RET(  dict_count(dict) == 0);
+    TA_ASSERT_NO_RET(  (al == NULL && fr == NULL) || (al != NULL && fr != NULL));
 
     dict->allocnode = al ? al : dnode_alloc;
     dict->freenode = fr ? fr : dnode_free;
@@ -329,10 +329,10 @@ void dict_set_allocator( TA_Libc *libHandle, dict_t *dict, dnode_alloc_t al,
  * from the tree before deleting it is required.
  */
 
-void dict_destroy( TA_Libc *libHandle, dict_t *dict)
+void dict_destroy( dict_t *dict)
 {
-    TA_ASSERT_NO_RET(  libHandle, dict_isempty(dict));
-    TA_Free( libHandle, dict );
+    TA_ASSERT_NO_RET(  dict_isempty(dict));
+    TA_Free( dict );
 }
 
 /*
@@ -340,10 +340,10 @@ void dict_destroy( TA_Libc *libHandle, dict_t *dict)
  * installed free routine. The dictionary is emptied.
  */
 
-void dict_free_nodes( TA_Libc *libHandle, dict_t *dict)
+void dict_free_nodes( dict_t *dict)
 {
     dnode_t *nil = dict_nil(dict), *root = dict_root(dict);
-    free_nodes( libHandle, dict, root, nil);
+    free_nodes( dict, root, nil);
     dict->nodecount = 0;
     dict->nilnode.left = &dict->nilnode;
     dict->nilnode.right = &dict->nilnode;
@@ -353,22 +353,20 @@ void dict_free_nodes( TA_Libc *libHandle, dict_t *dict)
  * Obsolescent function, equivalent to dict_free_nodes
  */
 
-void dict_free( TA_Libc *libHandle, dict_t *dict)
+void dict_free( dict_t *dict)
 {
 #ifdef KAZLIB_OBSOLESCENT_DEBUG
-    TA_ASSERT(  libHandle, "call to obsolescent function dict_free()" && 0);
+    TA_ASSERT(  "call to obsolescent function dict_free()" && 0);
 #endif
-    dict_free_nodes( libHandle, dict);
+    dict_free_nodes( dict);
 }
 
 /*
  * Initialize a user-supplied dictionary object.
  */
 
-dict_t *dict_init(TA_Libc *libHandle, dict_t *dict, dictcount_t maxcount, dict_comp_t comp)
+dict_t *dict_init( dict_t *dict, dictcount_t maxcount, dict_comp_t comp)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     dict->compare = comp;
     dict->allocnode = dnode_alloc;
     dict->freenode = dnode_free;
@@ -387,7 +385,7 @@ dict_t *dict_init(TA_Libc *libHandle, dict_t *dict, dictcount_t maxcount, dict_c
  * Initialize a dictionary in the likeness of another dictionary
  */
 
-void dict_init_like(TA_Libc *libHandle, dict_t *dict, const dict_t *template)
+void dict_init_like(dict_t *dict, const dict_t *template)
 {
     dict->compare = template->compare;
     dict->allocnode = template->allocnode;
@@ -401,20 +399,20 @@ void dict_init_like(TA_Libc *libHandle, dict_t *dict, const dict_t *template)
     dict->nilnode.color = dnode_black;
     dict->dupes = template->dupes;
 
-    TA_ASSERT_NO_RET(  libHandle, dict_similar(libHandle,dict, template));
+    TA_ASSERT_NO_RET( dict_similar(dict, template));
 }
 
 /*
  * Remove all nodes from the dictionary (without freeing them in any way).
  */
 
-static void dict_clear(TA_Libc *libHandle, dict_t *dict)
+static void dict_clear(dict_t *dict)
 {
     dict->nodecount = 0;
     dict->nilnode.left = &dict->nilnode;
     dict->nilnode.right = &dict->nilnode;
     dict->nilnode.parent = &dict->nilnode;
-    TA_ASSERT_NO_RET(  libHandle, dict->nilnode.color == dnode_black);
+    TA_ASSERT_NO_RET(  dict->nilnode.color == dnode_black);
 }
 
 
@@ -425,7 +423,7 @@ static void dict_clear(TA_Libc *libHandle, dict_t *dict)
  * corruptions in the tree may simply cause undefined behavior.
  */ 
 
-int dict_verify( TA_Libc *libHandle, dict_t *dict)
+int dict_verify( dict_t *dict)
 {
     dnode_t *nil = dict_nil(dict), *root = dict_root(dict);
 
@@ -440,7 +438,7 @@ int dict_verify( TA_Libc *libHandle, dict_t *dict)
     if (nil->left->parent != nil)
 	return 0;
     /* perform a weak test that the tree is a binary search tree */
-    if (!verify_bintree(libHandle,dict))
+    if (!verify_bintree(dict))
 	return 0;
     /* verify that the tree is a red-black tree */
     if (!verify_redblack(nil, root))
@@ -455,10 +453,8 @@ int dict_verify( TA_Libc *libHandle, dict_t *dict)
  * allocator functions, and same status as to whether duplicates are allowed.
  */
 
-int dict_similar( TA_Libc *libHandle, const dict_t *left, const dict_t *right)
+int dict_similar( const dict_t *left, const dict_t *right)
 {
-   (void)libHandle; /* Get ride of compiler warnings. */
-
     if (left->compare != right->compare)
 	return 0;
 
@@ -484,7 +480,7 @@ int dict_similar( TA_Libc *libHandle, const dict_t *left, const dict_t *right)
  * located node is returned.
  */
 
-dnode_t *dict_lookup(TA_Libc *libHandle, dict_t *dict, const void *key)
+dnode_t *dict_lookup(dict_t *dict, const void *key)
 {
     dnode_t *root = dict_root(dict);
     dnode_t *nil = dict_nil(dict);
@@ -494,7 +490,7 @@ dnode_t *dict_lookup(TA_Libc *libHandle, dict_t *dict, const void *key)
     /* simple binary search adapted for trees that contain duplicate keys */
 
     while (root != nil) {
-	result = dict->compare(libHandle,key, root->key);
+	result = dict->compare(key, root->key);
 	if (result < 0)
 	    root = root->left;
 	else if (result > 0)
@@ -506,7 +502,7 @@ dnode_t *dict_lookup(TA_Libc *libHandle, dict_t *dict, const void *key)
 		do {
 		    saved = root;
 		    root = root->left;
-		    while (root != nil && dict->compare(libHandle,key, root->key))
+		    while (root != nil && dict->compare(key, root->key))
 			root = root->right;
 		} while (root != nil);
 		return saved;
@@ -522,14 +518,14 @@ dnode_t *dict_lookup(TA_Libc *libHandle, dict_t *dict, const void *key)
  * greater than the given key.  If there is no such node, return null.
  */
 
-dnode_t *dict_lower_bound(TA_Libc *libHandle, dict_t *dict, const void *key)
+dnode_t *dict_lower_bound(dict_t *dict, const void *key)
 {
     dnode_t *root = dict_root(dict);
     dnode_t *nil = dict_nil(dict);
     dnode_t *tentative = 0;
 
     while (root != nil) {
-	int result = dict->compare(libHandle,key, root->key);
+	int result = dict->compare(key, root->key);
 
 	if (result > 0) {
 	    root = root->right;
@@ -554,14 +550,14 @@ dnode_t *dict_lower_bound(TA_Libc *libHandle, dict_t *dict, const void *key)
  * lower than the given key.  If there is no such node, return null.
  */
 
-dnode_t *dict_upper_bound(TA_Libc *libHandle, dict_t *dict, const void *key)
+dnode_t *dict_upper_bound(dict_t *dict, const void *key)
 {
     dnode_t *root = dict_root(dict);
     dnode_t *nil = dict_nil(dict);
     dnode_t *tentative = 0;
 
     while (root != nil) {
-	int result = dict->compare( libHandle, key, root->key);
+	int result = dict->compare( key, root->key);
 
 	if (result < 0) {
 	    root = root->left;
@@ -589,7 +585,7 @@ dnode_t *dict_upper_bound(TA_Libc *libHandle, dict_t *dict, const void *key)
  * function returns true).
  */
 
-void dict_insert(TA_Libc *libHandle, dict_t *dict, dnode_t *node, const void *key)
+void dict_insert(dict_t *dict, dnode_t *node, const void *key)
 {
     dnode_t *where = dict_root(dict), *nil = dict_nil(dict);
     dnode_t *parent = nil, *uncle, *grandpa;
@@ -597,26 +593,26 @@ void dict_insert(TA_Libc *libHandle, dict_t *dict, dnode_t *node, const void *ke
 
     node->key = key;
 
-    TA_ASSERT_NO_RET(  libHandle, !dict_isfull(dict));
+    TA_ASSERT_NO_RET(  !dict_isfull(dict));
     #ifdef DEBUG_DICT
-    TA_ASSERT_NO_RET(  libHandle, !dict_contains(libHandle,dict, node));
+    TA_ASSERT_NO_RET(  !dict_contains(dict, node));
     #endif
-    TA_ASSERT_NO_RET(  libHandle, !dnode_is_in_a_dict(libHandle,node));
+    TA_ASSERT_NO_RET(  !dnode_is_in_a_dict(node));
 
     /* basic binary tree insert */
 
     while (where != nil) {
 	parent = where;
-	result = dict->compare(libHandle, key, where->key);
+	result = dict->compare(key, where->key);
 	/* trap attempts at duplicate key insertion unless it's explicitly allowed */
-	TA_ASSERT_NO_RET(  libHandle, dict->dupes || result != 0);
+	TA_ASSERT_NO_RET(  dict->dupes || result != 0);
 	if (result < 0)
 	    where = where->left;
 	else
 	    where = where->right;
     }
 
-    TA_ASSERT_NO_RET(  libHandle, where == nil);
+    TA_ASSERT_NO_RET(  where == nil);
 
     if (result < 0)
 	parent->left = node;
@@ -645,14 +641,14 @@ void dict_insert(TA_Libc *libHandle, dict_t *dict, dnode_t *node, const void *ke
 		parent = grandpa->parent;
 	    } else {				/* red parent, black uncle */
 	    	if (node == parent->right) {
-		    rotate_left(libHandle,parent);
+		    rotate_left(parent);
 		    parent = node;
-		    TA_ASSERT_NO_RET(  libHandle, grandpa == parent->parent);
+		    TA_ASSERT_NO_RET(  grandpa == parent->parent);
 		    /* rotation between parent and child preserves grandpa */
 		}
 		parent->color = dnode_black;
 		grandpa->color = dnode_red;
-		rotate_right(libHandle,grandpa);
+		rotate_right(grandpa);
 		break;
 	    }
 	} else { 	/* symmetric cases: parent == parent->parent->right */
@@ -665,13 +661,13 @@ void dict_insert(TA_Libc *libHandle, dict_t *dict, dnode_t *node, const void *ke
 		parent = grandpa->parent;
 	    } else {
 	    	if (node == parent->left) {
-		    rotate_right(libHandle,parent);
+		    rotate_right(parent);
 		    parent = node;
-		    TA_ASSERT_NO_RET(  libHandle, grandpa == parent->parent);
+		    TA_ASSERT_NO_RET(  grandpa == parent->parent);
 		}
 		parent->color = dnode_black;
 		grandpa->color = dnode_red;
-		rotate_left(libHandle,grandpa);
+		rotate_left(grandpa);
 		break;
 	    }
 	}
@@ -680,7 +676,7 @@ void dict_insert(TA_Libc *libHandle, dict_t *dict, dnode_t *node, const void *ke
     dict_root(dict)->color = dnode_black;
 
     #ifdef DEBUG_DICT
-    TA_ASSERT_NO_RET(  libHandle, dict_verify(libHandle,dict));
+    TA_ASSERT_NO_RET(  dict_verify(dict));
     #endif
 }
 
@@ -690,15 +686,15 @@ void dict_insert(TA_Libc *libHandle, dict_t *dict, dnode_t *node, const void *ke
  * deleted node is returned.
  */
 
-dnode_t *dict_delete(TA_Libc *libHandle, dict_t *dict, dnode_t *delete)
+dnode_t *dict_delete(dict_t *dict, dnode_t *delete)
 {
     dnode_t *nil = dict_nil(dict), *child, *delparent = delete->parent;
 
     /* basic deletion */
 
-    TA_ASSERT_RET(  libHandle, !dict_isempty(dict), (dnode_t *)NULL );
+    TA_ASSERT_RET(  !dict_isempty(dict), (dnode_t *)NULL );
     #ifdef DEBUG_DICT
-    TA_ASSERT_RET(  libHandle, dict_contains(libHandle, dict, delete),(dnode_t *)NULL);
+    TA_ASSERT_RET(  dict_contains(dict, delete),(dnode_t *)NULL);
     #endif
 
     /*
@@ -714,13 +710,13 @@ dnode_t *dict_delete(TA_Libc *libHandle, dict_t *dict, dnode_t *delete)
      */
 
     if (delete->left != nil && delete->right != nil) {
-	dnode_t *next = dict_next(libHandle,dict, delete);
+	dnode_t *next = dict_next(dict, delete);
 	dnode_t *nextparent = next->parent;
 	dnode_color_t nextcolor = next->color;
 
-	TA_ASSERT_RET(  libHandle, next != nil, (dnode_t *)NULL );
-	TA_ASSERT_RET(  libHandle, next->parent != nil, (dnode_t *)NULL );
-	TA_ASSERT_RET(  libHandle, next->left == nil, (dnode_t *)NULL );
+	TA_ASSERT_RET(  next != nil, (dnode_t *)NULL );
+	TA_ASSERT_RET(  next->parent != nil, (dnode_t *)NULL );
+	TA_ASSERT_RET(  next->left == nil, (dnode_t *)NULL );
 
 	/*
 	 * First, splice out the successor from the tree completely, by
@@ -733,7 +729,7 @@ dnode_t *dict_delete(TA_Libc *libHandle, dict_t *dict, dnode_t *delete)
 	if (nextparent->left == next) {
 	    nextparent->left = child;
 	} else {
-	    TA_ASSERT_RET(  libHandle, nextparent->right == next, (dnode_t *)NULL );
+	    TA_ASSERT_RET(  nextparent->right == next, (dnode_t *)NULL );
 	    nextparent->right = child;
 	}
 
@@ -753,13 +749,13 @@ dnode_t *dict_delete(TA_Libc *libHandle, dict_t *dict, dnode_t *delete)
 	if (delparent->left == delete) {
 	    delparent->left = next;
 	} else {
-	    TA_ASSERT_RET(  libHandle, delparent->right == delete, (dnode_t *)NULL );
+	    TA_ASSERT_RET(  delparent->right == delete, (dnode_t *)NULL );
 	    delparent->right = next;
 	}
 
     } else {
-	TA_ASSERT_RET(  libHandle, delete != nil, (dnode_t *)NULL );
-	TA_ASSERT_RET(  libHandle, delete->left == nil || delete->right == nil, (dnode_t *)NULL );
+	TA_ASSERT_RET(  delete != nil, (dnode_t *)NULL );
+	TA_ASSERT_RET(  delete->left == nil || delete->right == nil, (dnode_t *)NULL );
 
 	child = (delete->left != nil) ? delete->left : delete->right;
 
@@ -768,7 +764,7 @@ dnode_t *dict_delete(TA_Libc *libHandle, dict_t *dict, dnode_t *delete)
 	if (delete == delparent->left) {
 	    delparent->left = child;    
 	} else {
-	    TA_ASSERT_RET(  libHandle, delete == delparent->right, (dnode_t *)NULL );
+	    TA_ASSERT_RET(  delete == delparent->right, (dnode_t *)NULL );
 	    delparent->right = child;
 	}
     }
@@ -780,7 +776,7 @@ dnode_t *dict_delete(TA_Libc *libHandle, dict_t *dict, dnode_t *delete)
     dict->nodecount--;
 
     #ifdef DEBUG_DICT
-    TA_ASSERT_RET(  libHandle, verify_bintree(libHandle,dict), (dnode_t *)NULL );
+    TA_ASSERT_RET(  verify_bintree(dict), (dnode_t *)NULL );
     #endif
 
     /* red-black adjustments */
@@ -794,13 +790,13 @@ dnode_t *dict_delete(TA_Libc *libHandle, dict_t *dict, dnode_t *delete)
 	    parent = child->parent;
 	    if (child == parent->left) {
 		sister = parent->right;
-		TA_ASSERT_RET(  libHandle, sister != nil, (dnode_t *)NULL );
+		TA_ASSERT_RET(  sister != nil, (dnode_t *)NULL );
 		if (sister->color == dnode_red) {
 		    sister->color = dnode_black;
 		    parent->color = dnode_red;
-		    rotate_left(libHandle,parent);
+		    rotate_left(parent);
 		    sister = parent->right;
-		    TA_ASSERT_RET(  libHandle, sister != nil, (dnode_t *)NULL );
+		    TA_ASSERT_RET(  sister != nil, (dnode_t *)NULL );
 		}
 		if (sister->left->color == dnode_black
 			&& sister->right->color == dnode_black) {
@@ -808,29 +804,29 @@ dnode_t *dict_delete(TA_Libc *libHandle, dict_t *dict, dnode_t *delete)
 		    child = parent;
 		} else {
 		    if (sister->right->color == dnode_black) {
-			TA_ASSERT_RET(  libHandle, sister->left->color == dnode_red, (dnode_t *)NULL);
+			TA_ASSERT_RET(  sister->left->color == dnode_red, (dnode_t *)NULL);
 			sister->left->color = dnode_black;
 			sister->color = dnode_red;
-			rotate_right(libHandle,sister);
+			rotate_right(sister);
 			sister = parent->right;
-			TA_ASSERT_RET(  libHandle, sister != nil, (dnode_t *)NULL );
+			TA_ASSERT_RET(  sister != nil, (dnode_t *)NULL );
 		    }
 		    sister->color = parent->color;
 		    sister->right->color = dnode_black;
 		    parent->color = dnode_black;
-		    rotate_left(libHandle,parent);
+		    rotate_left(parent);
 		    break;
 		}
 	    } else {	/* symmetric case: child == child->parent->right */
-		TA_ASSERT_RET(  libHandle, child == parent->right, (dnode_t *)NULL);
+		TA_ASSERT_RET(  child == parent->right, (dnode_t *)NULL);
 		sister = parent->left;
-		TA_ASSERT_RET(  libHandle, sister != nil, (dnode_t *)NULL );
+		TA_ASSERT_RET(  sister != nil, (dnode_t *)NULL );
 		if (sister->color == dnode_red) {
 		    sister->color = dnode_black;
 		    parent->color = dnode_red;
-		    rotate_right(libHandle,parent);
+		    rotate_right(parent);
 		    sister = parent->left;
-		    TA_ASSERT_RET( libHandle, sister != nil, (dnode_t *)NULL );
+		    TA_ASSERT_RET( sister != nil, (dnode_t *)NULL );
 		}
 		if (sister->right->color == dnode_black
 			&& sister->left->color == dnode_black) {
@@ -838,17 +834,17 @@ dnode_t *dict_delete(TA_Libc *libHandle, dict_t *dict, dnode_t *delete)
 		    child = parent;
 		} else {
 		    if (sister->left->color == dnode_black) {
-			TA_ASSERT_RET(  libHandle, sister->right->color == dnode_red, (dnode_t *)NULL );
+			TA_ASSERT_RET(  sister->right->color == dnode_red, (dnode_t *)NULL );
 			sister->right->color = dnode_black;
 			sister->color = dnode_red;
-			rotate_left(libHandle,sister);
+			rotate_left(sister);
 			sister = parent->left;
-			TA_ASSERT_RET(  libHandle, sister != nil, (dnode_t *)NULL );
+			TA_ASSERT_RET(  sister != nil, (dnode_t *)NULL );
 		    }
 		    sister->color = parent->color;
 		    sister->left->color = dnode_black;
 		    parent->color = dnode_black;
-		    rotate_right(libHandle,parent);
+		    rotate_right(parent);
 		    break;
 		}
 	    }
@@ -859,7 +855,7 @@ dnode_t *dict_delete(TA_Libc *libHandle, dict_t *dict, dnode_t *delete)
     }
 
     #ifdef DEBUG_DICT
-    TA_ASSERT_RET( libHandle, dict_verify(libHandle,dict), (dnode_t *)NULL );
+    TA_ASSERT_RET( dict_verify(dict), (dnode_t *)NULL );
     #endif
 
     return delete;
@@ -870,22 +866,22 @@ dnode_t *dict_delete(TA_Libc *libHandle, dict_t *dict, dnode_t *delete)
  * the data item.
  */
 
-int dict_alloc_insert( TA_Libc *libHandle, dict_t *dict, const void *key, void *data)
+int dict_alloc_insert( dict_t *dict, const void *key, void *data)
 {
-    dnode_t *node = dict->allocnode( libHandle, dict->context);
+    dnode_t *node = dict->allocnode( dict->context);
 
     if (node) {
-	dnode_init( libHandle, node, data);
-	dict_insert( libHandle, dict, node, key);
+	dnode_init( node, data);
+	dict_insert( dict, node, key);
 	return 1;
     }
     return 0;
 }
 
-void dict_delete_free( TA_Libc *libHandle, dict_t *dict, dnode_t *node)
+void dict_delete_free( dict_t *dict, dnode_t *node)
 {
-    dict_delete( libHandle, dict, node);
-    dict->freenode( libHandle, node, dict->context);
+    dict_delete( dict, node);
+    dict->freenode( node, dict->context);
 }
 
 /*
@@ -893,11 +889,9 @@ void dict_delete_free( TA_Libc *libHandle, dict_t *dict, dnode_t *node)
  * (that is, dict_isempty(dict) returns 1) a null pointer is returned.
  */
 
-dnode_t *dict_first( TA_Libc *libHandle, dict_t *dict)
+dnode_t *dict_first( dict_t *dict)
 {
     dnode_t *nil = dict_nil(dict), *root = dict_root(dict), *left;
-
-    (void)libHandle; /* Get ride of compiler warnings. */
 
     if (root != nil)
 	while ((left = root->left) != nil)
@@ -911,11 +905,9 @@ dnode_t *dict_first( TA_Libc *libHandle, dict_t *dict)
  * (that is, dict_isempty(dict) returns 1) a null pointer is returned.
  */
 
-dnode_t *dict_last( TA_Libc *libHandle, dict_t *dict)
+dnode_t *dict_last( dict_t *dict)
 {
     dnode_t *nil = dict_nil(dict), *root = dict_root(dict), *right;
-
-    (void)libHandle; /* Get ride of compiler warnings. */
 
     if (root != nil)
 	while ((right = root->right) != nil)
@@ -931,11 +923,9 @@ dnode_t *dict_last( TA_Libc *libHandle, dict_t *dict)
  * the nil node.
  */
 
-dnode_t *dict_next( TA_Libc *libHandle, dict_t *dict, dnode_t *curr)
+dnode_t *dict_next( dict_t *dict, dnode_t *curr)
 {
     dnode_t *nil = dict_nil(dict), *parent, *left;
-
-    (void)libHandle; /* Get ride of compiler warnings. */
 
     /* TA_ - Add safety net. */
     if( curr == NULL ) return NULL;
@@ -962,11 +952,9 @@ dnode_t *dict_next( TA_Libc *libHandle, dict_t *dict, dnode_t *curr)
  * The nil sentinel node is returned if there is no predecessor.
  */
 
-dnode_t *dict_prev( TA_Libc *libHandle, dict_t *dict, dnode_t *curr)
+dnode_t *dict_prev( dict_t *dict, dnode_t *curr)
 {
     dnode_t *nil = dict_nil(dict), *parent, *right;
-
-    (void)libHandle; /* Get ride of compiler warnings. */
 
     if (curr->left != nil) {
 	curr = curr->left;
@@ -985,10 +973,8 @@ dnode_t *dict_prev( TA_Libc *libHandle, dict_t *dict, dnode_t *curr)
     return (parent == nil) ? NULL : parent;
 }
 
-void dict_allow_dupes( TA_Libc *libHandle, dict_t *dict)
+void dict_allow_dupes( dict_t *dict)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     dict->dupes = 1;
 }
 
@@ -999,50 +985,42 @@ void dict_allow_dupes( TA_Libc *libHandle, dict_t *dict)
 #undef dnode_put
 #undef dnode_getkey
 
-dictcount_t dict_count(TA_Libc *libHandle, dict_t *dict)
+dictcount_t dict_count(dict_t *dict)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     return dict->nodecount;
 }
 
-int dict_isempty( TA_Libc *libHandle, dict_t *dict)
+int dict_isempty( dict_t *dict)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     return dict->nodecount == 0;
 }
 
-int dict_isfull( TA_Libc *libHandle, dict_t *dict)
+int dict_isfull( dict_t *dict)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     return dict->nodecount == dict->maxcount;
 }
 
-int dict_contains(TA_Libc *libHandle, dict_t *dict, dnode_t *node)
+int dict_contains(dict_t *dict, dnode_t *node)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     return verify_dict_has_node(dict_nil(dict), dict_root(dict), node);
 }
 
-static dnode_t *dnode_alloc(TA_Libc *libHandle, void *context)
+static dnode_t *dnode_alloc(void *context)
 {
     (void)context; /* Get ride of compiler warnings. */
 
-    return TA_Malloc( libHandle, sizeof *dnode_alloc(libHandle,NULL));
+    return TA_Malloc( sizeof(dnode_t) );
 }
 
-static void dnode_free(TA_Libc *libHandle, dnode_t *node, void *context)
+static void dnode_free(dnode_t *node, void *context)
 {
     (void)context; /* Get ride of compiler warnings. */
-    TA_Free( libHandle, node );
+    TA_Free( node );
 }
 
-dnode_t *dnode_create(TA_Libc *libHandle, void *data)
+dnode_t *dnode_create(void *data)
 {
-    dnode_t *new = TA_Malloc( libHandle, sizeof *new);
+    dnode_t *new = TA_Malloc( sizeof(dnode_t) );
     if (new) {
 	new->data = data;
 	new->parent = NULL;
@@ -1052,10 +1030,8 @@ dnode_t *dnode_create(TA_Libc *libHandle, void *data)
     return new;
 }
 
-dnode_t *dnode_init(TA_Libc *libHandle, dnode_t *dnode, void *data)
+dnode_t *dnode_init(dnode_t *dnode, void *data)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     dnode->data = data;
     dnode->parent = NULL;
     dnode->left = NULL;
@@ -1063,88 +1039,78 @@ dnode_t *dnode_init(TA_Libc *libHandle, dnode_t *dnode, void *data)
     return dnode;
 }
 
-void dnode_destroy(TA_Libc *libHandle, dnode_t *dnode)
+void dnode_destroy(dnode_t *dnode)
 {
-    TA_ASSERT_NO_RET(  libHandle, !dnode_is_in_a_dict(libHandle,dnode));
-    TA_Free( libHandle, dnode );
+    TA_ASSERT_NO_RET(  !dnode_is_in_a_dict(dnode));
+    TA_Free( dnode );
 }
 
-void *dnode_get(TA_Libc *libHandle, dnode_t *dnode)
+void *dnode_get(dnode_t *dnode)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     return dnode->data;
 }
 
-const void *dnode_getkey(TA_Libc *libHandle, dnode_t *dnode)
+const void *dnode_getkey(dnode_t *dnode)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     return dnode->key;
 }
 
-void dnode_put(TA_Libc *libHandle, dnode_t *dnode, void *data)
+void dnode_put(dnode_t *dnode, void *data)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     dnode->data = data;
 }
 
-int dnode_is_in_a_dict(TA_Libc *libHandle, dnode_t *dnode)
+int dnode_is_in_a_dict(dnode_t *dnode)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     return (dnode->parent && dnode->left && dnode->right);
 }
 
-void dict_process(TA_Libc *libHandle, dict_t *dict, void *context, dnode_process_t function)
+void dict_process(dict_t *dict, void *context, dnode_process_t function)
 {
-    dnode_t *node = dict_first(libHandle,dict), *next;
+    dnode_t *node = dict_first(dict), *next;
 
     while (node != NULL) {
 	/* check for callback function deleting	*/
 	/* the next node from under us		*/
    #ifdef DEBUG_DICT
-	TA_ASSERT_NO_RET(  libHandle, dict_contains(libHandle, dict, node));
+	TA_ASSERT_NO_RET(  dict_contains(dict, node));
    #endif
-	next = dict_next(libHandle,dict, node);
-	function(libHandle, dict, node, context);
+	next = dict_next(dict, node);
+	function(dict, node, context);
 	node = next;
     }
 }
 
-static void load_begin_internal(TA_Libc *libHandle, dict_load_t *load, dict_t *dict)
+static void load_begin_internal(dict_load_t *load, dict_t *dict)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     load->dictptr = dict;
     load->nilnode.left = &load->nilnode;
     load->nilnode.right = &load->nilnode;
 }
 
-void dict_load_begin(TA_Libc *libHandle, dict_load_t *load, dict_t *dict)
+void dict_load_begin(dict_load_t *load, dict_t *dict)
 {
-    TA_ASSERT_NO_RET(  libHandle, dict_isempty(libHandle,dict));
-    load_begin_internal(libHandle,load, dict);
+    TA_ASSERT_NO_RET(  dict_isempty(dict));
+    load_begin_internal(load, dict);
 }
 
-void dict_load_next(TA_Libc *libHandle, dict_load_t *load, dnode_t *newnode, const void *key)
+void dict_load_next(dict_load_t *load, dnode_t *newnode, const void *key)
 {
     dict_t *dict = load->dictptr;
     dnode_t *nil = &load->nilnode;
 
-    TA_ASSERT_NO_RET(  libHandle, !dnode_is_in_a_dict(libHandle,newnode));
-    TA_ASSERT_NO_RET(  libHandle, dict->nodecount < dict->maxcount);
+    TA_ASSERT_NO_RET(  !dnode_is_in_a_dict(newnode));
+    TA_ASSERT_NO_RET(  dict->nodecount < dict->maxcount);
 
     #ifndef NDEBUG
     if (dict->nodecount > 0) {
 	if (dict->dupes)
         {
-	    TA_ASSERT_NO_RET(  libHandle, dict->compare(libHandle, nil->left->key, key) <= 0);
+	    TA_ASSERT_NO_RET(  dict->compare(nil->left->key, key) <= 0);
         }
 	else
         {
-	    TA_ASSERT_NO_RET(  libHandle, dict->compare(libHandle, nil->left->key, key) < 0);
+	    TA_ASSERT_NO_RET(  dict->compare(nil->left->key, key) < 0);
         }
     }
     #endif
@@ -1156,7 +1122,7 @@ void dict_load_next(TA_Libc *libHandle, dict_load_t *load, dnode_t *newnode, con
     dict->nodecount++;
 }
 
-void dict_load_end( TA_Libc *libHandle, dict_load_t *load)
+void dict_load_end( dict_load_t *load)
 {
     dict_t *dict = load->dictptr;
     dnode_t *tree[DICT_DEPTH_MAX] = { 0 };
@@ -1167,7 +1133,7 @@ void dict_load_end( TA_Libc *libHandle, dict_load_t *load)
     unsigned baselevel = 0, level = 0, i;
 
     /* TA_ Code Removed = Condition is always false.
-    TA_ASSERT(  libHandle, dnode_red == 0 && dnode_black == 1);
+    TA_ASSERT(  dnode_red == 0 && dnode_black == 1);
     */
     
     while (fullcount >= nodecount && fullcount)
@@ -1179,8 +1145,8 @@ void dict_load_end( TA_Libc *libHandle, dict_load_t *load)
 	next = curr->left;
 
 	if (complete == NULL && botrowcount-- == 0) {
-	    TA_ASSERT_NO_RET(  libHandle, baselevel == 0);
-	    TA_ASSERT_NO_RET(  libHandle, level == 0);
+	    TA_ASSERT_NO_RET(  baselevel == 0);
+	    TA_ASSERT_NO_RET(  level == 0);
 	    baselevel = level = 1;
 	    complete = tree[0];
 
@@ -1202,7 +1168,7 @@ void dict_load_end( TA_Libc *libHandle, dict_load_t *load)
 	    curr->color = level % 2;
 	    complete = curr;
 
-	    TA_ASSERT_NO_RET(  libHandle, level == baselevel);
+	    TA_ASSERT_NO_RET(  level == baselevel);
 	    while (tree[level] != 0) {
 		tree[level]->right = complete;
 		complete->parent = tree[level];
@@ -1237,26 +1203,26 @@ void dict_load_end( TA_Libc *libHandle, dict_load_t *load)
     dict_root(dict) = complete;
 
     #ifdef DEBUG_DICT
-    TA_ASSERT_NO_RET(  libHandle, dict_verify(libHandle,dict));
+    TA_ASSERT_NO_RET(  dict_verify(dict));
     #endif
 }
 
-void dict_merge( TA_Libc *libHandle, dict_t *dest, dict_t *source)
+void dict_merge( dict_t *dest, dict_t *source)
 {
     dict_load_t load;
-    dnode_t *leftnode = dict_first(libHandle,dest), *rightnode = dict_first(libHandle,source);
+    dnode_t *leftnode = dict_first(dest), *rightnode = dict_first(source);
 
-    TA_ASSERT_NO_RET( libHandle, dict_similar(libHandle, dest, source));
+    TA_ASSERT_NO_RET( dict_similar(dest, source));
 
     if (source == dest)
 	return;
 
     dest->nodecount = 0;
-    load_begin_internal( libHandle, &load, dest);
+    load_begin_internal( &load, dest);
 
     for (;;) {
 	if (leftnode != NULL && rightnode != NULL) {
-	    if (dest->compare(libHandle, leftnode->key, rightnode->key) < 0)
+	    if (dest->compare(leftnode->key, rightnode->key) < 0)
 		goto copyleft;
 	    else
 		goto copyright;
@@ -1265,35 +1231,35 @@ void dict_merge( TA_Libc *libHandle, dict_t *dest, dict_t *source)
 	} else if (rightnode != NULL) {
 	    goto copyright;
 	} else {
-	    TA_ASSERT_NO_RET(  libHandle, leftnode == NULL && rightnode == NULL);
+	    TA_ASSERT_NO_RET(  leftnode == NULL && rightnode == NULL);
 	    break;
 	}
 
     copyleft:
 	{
-	    dnode_t *next = dict_next(libHandle,dest, leftnode);
+	    dnode_t *next = dict_next(dest, leftnode);
 	    #ifndef NDEBUG
 	    leftnode->left = NULL;	/* suppress assertion in dict_load_next */
 	    #endif
-	    dict_load_next( libHandle, &load, leftnode, leftnode->key);
+	    dict_load_next( &load, leftnode, leftnode->key);
 	    leftnode = next;
 	    continue;
 	}
 
     copyright:
 	{
-	    dnode_t *next = dict_next(libHandle, source, rightnode);
+	    dnode_t *next = dict_next(source, rightnode);
 	    #ifndef NDEBUG
 	    rightnode->left = NULL;
 	    #endif
-	    dict_load_next( libHandle, &load, rightnode, rightnode->key);
+	    dict_load_next( &load, rightnode, rightnode->key);
 	    rightnode = next;
 	    continue;
 	}
     }
 
-    dict_clear(libHandle,source);
-    dict_load_end( libHandle, &load);
+    dict_clear(source);
+    dict_load_end( &load);
 }
 
 #ifdef KAZLIB_TEST_MAIN
@@ -1340,7 +1306,7 @@ static int comparef(const void *key1, const void *key2)
 static char *dupstring(char *str)
 {
     int sz = strlen(str) + 1;
-    char *new = TA_Malloc( libHandle, sz);
+    char *new = TA_Malloc(sz);
     if (new)
 	memcpy(new, str, sz);
     return new;
@@ -1410,8 +1376,8 @@ static void construct(dict_t *d)
 
 		if (!key || !val || !dn) {
 		    puts("out of memory");
-		    TA_Free( libHandle, (void *) key);
-		    TA_Free( libHandle, val);
+		    TA_Free( (void *) key);
+		    TA_Free( val);
 		    if (dn)
 			dnode_destroy(dn);
 		}
@@ -1480,14 +1446,14 @@ int main(void)
 
 		if (!key || !val) {
 		    puts("out of memory");
-		    TA_Free( libHandle, (void *) key);
-		    TA_Free( libHandle, val);
+		    TA_Free( (void *) key);
+		    TA_Free( val);
 		}
 
 		if (!dict_alloc_insert(d, key, val)) {
 		    puts("dict_alloc_insert failed");
-		    TA_Free( libHandle, (void *) key );
-		    TA_Free( libHandle, val );
+		    TA_Free( (void *) key );
+		    TA_Free( val );
 		    break;
 		}
 		break;
@@ -1505,8 +1471,8 @@ int main(void)
 		key = dnode_getkey(dn);
 		dict_delete_free(d, dn);
 
-		TA_Free( libHandle, val);
-		TA_Free( libHandle, (void *) key );
+		TA_Free( val);
+		TA_Free( (void *) key );
 		break;
 	    case 'f':
 		dict_free(d);

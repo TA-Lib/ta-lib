@@ -95,9 +95,8 @@ TestBuffer gBuffer[5]; /* See initGlobalBuffer. */
 /* None */
 
 /**** Local functions declarations.    ****/
-static void myFatalHandler( TA_Libc *libHandle );
-static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
-                                       RangeTestFunction testFunction,
+static void myFatalHandler( void );
+static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                                        void *opaqueData,
                                        TA_Integer refOutBeg,
                                        TA_Integer refOutNbElement,
@@ -108,14 +107,12 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
                                        unsigned int outputNb,
                                        unsigned int integerTolerance );
 
-static int dataWithinReasonableRange( TA_Libc *libHandle,
-                                      TA_Real val1, TA_Real val2,
+static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
                                       unsigned int outputPosition,
                                       TA_FuncUnstId unstId,
                                       unsigned int integerTolerance );
 
-static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
-                                            RangeTestFunction testFunction,
+static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
                                             TA_FuncUnstId unstId,
                                             void *opaqueData,
                                             unsigned int outputNb,
@@ -125,19 +122,17 @@ static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
 /* None */
 
 /**** Global functions definitions.   ****/
-ErrorNumber allocLib( TA_Libc **libHandlePtr, TA_UDBase **uDBasePtr )
+ErrorNumber allocLib( TA_UDBase **uDBasePtr )
 {
    TA_InitializeParam initializeParam;
    TA_RetCode retCode;
-   TA_Libc   *libHandle;
    TA_UDBase *uDBase;
-
 
    /* Initialize the library. */
    memset( &initializeParam, 0, sizeof( TA_InitializeParam ) );
    initializeParam.logOutput = stdout;
 
-   retCode = TA_Initialize( &libHandle, &initializeParam );
+   retCode = TA_Initialize( &initializeParam );
    if( retCode != TA_SUCCESS )
    {
       printf( "TA_Initialize failed [%d]\n", retCode );
@@ -145,30 +140,29 @@ ErrorNumber allocLib( TA_Libc **libHandlePtr, TA_UDBase **uDBasePtr )
    }
    
    /* Install a fatal error handler. */
-   retCode = TA_SetFatalErrorHandler( libHandle, myFatalHandler );
+   retCode = TA_SetFatalErrorHandler( myFatalHandler );
    if( retCode != TA_SUCCESS )
    {
       printf( "TA_SetFatalErrorHandler failed [%d]\n", retCode );
-      TA_Shutdown( libHandle );
+      TA_Shutdown();
       return TA_TESTUTIL_SET_FATAL_ERROR_FAILED;
    }
    
    /* Create an unified database. */
-   retCode = TA_UDBaseAlloc( libHandle, &uDBase );
+   retCode = TA_UDBaseAlloc( &uDBase );
    if( retCode != TA_SUCCESS )
    {
       printf( "TA_UDBaseAlloc failed [%d]\n", retCode );
-      TA_Shutdown( libHandle );
+      TA_Shutdown();
       return TA_TESTUTIL_UDBASE_ALLOC_FAILED;
    }
 
-   *libHandlePtr = libHandle;
    *uDBasePtr = uDBase;
 
    return TA_TEST_PASS;
 }
 
-ErrorNumber freeLib( TA_Libc *libHandle, TA_UDBase  *uDBase )
+ErrorNumber freeLib( TA_UDBase  *uDBase )
 {
    TA_RetCode retCode;
 
@@ -179,7 +173,7 @@ ErrorNumber freeLib( TA_Libc *libHandle, TA_UDBase  *uDBase )
       return TA_TESTUTIL_UDBASE_FREE_FAILED;
    }
 
-   retCode = TA_Shutdown( libHandle );
+   retCode = TA_Shutdown();
    if( retCode != TA_SUCCESS )
    {
       printf( "TA_Shutdown failed [%d]\n", retCode );
@@ -483,7 +477,7 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
 }
 
 
-ErrorNumber doRangeTest( TA_Libc *libHandle,
+ErrorNumber doRangeTest( 
                          RangeTestFunction testFunction,
                          TA_FuncUnstId unstId,
                          void *opaqueData,
@@ -496,7 +490,7 @@ ErrorNumber doRangeTest( TA_Libc *libHandle,
    /* Test all the outputs individually. */
    for( outputNb=0; outputNb < nbOutput; outputNb++ )
    {
-      errNb = doRangeTestForOneOutput( libHandle,
+      errNb = doRangeTestForOneOutput(
                                        testFunction,
                                        unstId,
                                        opaqueData,
@@ -525,13 +519,12 @@ void printRetCode( TA_RetCode retCode )
 
 
 /**** Local functions definitions.     ****/
-static void myFatalHandler( TA_Libc *libHandle )
+static void myFatalHandler( void )
 {
-   TA_FatalReport( libHandle, stdout );
+   TA_FatalReport( stdout );
 }
 
-static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
-                                            RangeTestFunction testFunction,
+static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
                                             TA_FuncUnstId unstId,
                                             void *opaqueData,
                                             unsigned int outputNb,
@@ -547,7 +540,7 @@ static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
    /* Caculate the whole range. This is going
     * to be the reference for all subsequent test.
     */
-   refBuffer = TA_Malloc( libHandle, MAX_RANGE_SIZE * sizeof( TA_Real ) );
+   refBuffer = TA_Malloc( MAX_RANGE_SIZE * sizeof( TA_Real ) );
 
    if( !refBuffer )
       return TA_TESTUTIL_DRT_ALLOC_ERR;
@@ -559,16 +552,16 @@ static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
        * on the whole range by keeping that unstable period
        * to zero.
        */
-      TA_SetUnstablePeriod( libHandle, unstId, 0 );
+      TA_SetUnstablePeriod( unstId, 0 );
    }
 
-   retCode = testFunction( libHandle, 0, MAX_RANGE_END, refBuffer,                           
+   retCode = testFunction( 0, MAX_RANGE_END, refBuffer,                           
                            &refOutBeg, &refOutNbElement, &refLookback,
                            opaqueData, outputNb );
    if( retCode != TA_SUCCESS )
    {
       printf( "Fail: doRangeTest whole range failed (%d)\n", retCode );
-      TA_Free( libHandle, refBuffer );
+      TA_Free(  refBuffer );
       return TA_TESTUTIL_DRT_REF_FAILED;
    }
 
@@ -578,7 +571,7 @@ static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
    if( refLookback != refOutBeg )
    {
       printf( "Fail: doRangeTest refLookback != refOutBeg (%d != %d)\n", refLookback, refOutBeg );
-      TA_Free( libHandle, refBuffer );
+      TA_Free(  refBuffer );
       return TA_TESTUTIL_DRT_LOOKBACK_INCORRECT;
    }
    
@@ -586,7 +579,7 @@ static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
    if( temp != refOutNbElement )
    {
       printf( "Fail: doRangeTest either refOutNbElement or refLookback bad (%d,%d)\n", temp, refOutNbElement );
-      TA_Free( libHandle, refBuffer );
+      TA_Free(  refBuffer );
       return TA_TESTUTIL_DRT_REF_OUTPUT_INCORRECT;
    }
 
@@ -602,14 +595,14 @@ static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
        */
       if( unstId == TA_FUNC_UNST_NONE )
       {
-         errNb = doRangeTestFixSize( libHandle,
+         errNb = doRangeTestFixSize(
                                      testFunction, opaqueData,
                                      refOutBeg, refOutNbElement, refLookback,
                                      refBuffer,
                                      unstId, fixSize, outputNb, integerTolerance );
          if( errNb != TA_TEST_PASS)
          {
-            TA_Free( libHandle, refBuffer );
+            TA_Free(  refBuffer );
             return errNb;
          }
       }
@@ -617,9 +610,9 @@ static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
       {         
          for( unstablePeriod=0; unstablePeriod <= MAX_RANGE_SIZE; unstablePeriod++ )
          {
-            TA_SetUnstablePeriod( libHandle, unstId, unstablePeriod );
+            TA_SetUnstablePeriod( unstId, unstablePeriod );
 
-            errNb = doRangeTestFixSize( libHandle,
+            errNb = doRangeTestFixSize(
                                         testFunction, opaqueData,
                                         refOutBeg, refOutNbElement, refLookback,
                                         refBuffer,
@@ -627,7 +620,7 @@ static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
             if( errNb != TA_TEST_PASS)
             {
                printf( "Fail: Using unstable period %d\n", unstablePeriod );
-               TA_Free( libHandle, refBuffer );
+               TA_Free(  refBuffer );
                return errNb;
             }
 
@@ -663,13 +656,12 @@ static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
       }
    }
 
-   TA_Free( libHandle, refBuffer );
+   TA_Free(  refBuffer );
 
    return TA_TEST_PASS;
 }
 
-static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
-                                       RangeTestFunction testFunction,
+static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                                        void *opaqueData,
                                        TA_Integer refOutBeg,
                                        TA_Integer refOutNbElement,
@@ -690,7 +682,7 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
    (void)refLookback;
 
    /* Allocate the output buffer (+prefix and suffix memory guard). */
-   outputBuffer = (TA_Real *)TA_Malloc( libHandle, (fixSize+2) * sizeof( TA_Real ) );
+   outputBuffer = (TA_Real *)TA_Malloc( (fixSize+2) * sizeof( TA_Real ) );
 
    if( !outputBuffer )
       return TA_TESTUTIL_DRT_ALLOC_ERR;
@@ -707,7 +699,7 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
    {
       /* Call the TA function. */
       endIdx = startIdx+fixSize-1;
-      retCode = testFunction( libHandle, startIdx, endIdx,
+      retCode = testFunction( startIdx, endIdx,
                               &outputBuffer[1], 
                               &outputBegIdx, &outputNbElement, &lookback,
                               opaqueData, outputNb );
@@ -719,7 +711,7 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
            * TA_SUCCESS with the outNbElement equal to zero.
            */
          printf( "Fail: doRangeTestFixSize return error code=(%d) (%d,%d)\n", retCode, fixSize, startIdx );
-         TA_Free( libHandle, outputBuffer );
+         TA_Free(  outputBuffer );
          return TA_TESTUTIL_DRT_RETCODE_ERR;
       }
       else
@@ -748,7 +740,7 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
                 */
                printf( "Fail: doRangeTestFixSize data missing (%d,%d,%d)\n", startIdx, endIdx, lookback );
                                                                                 
-               TA_Free( libHandle, outputBuffer );
+               TA_Free(  outputBuffer );
                return TA_TESTUTIL_DRT_MISSING_DATA;
             }
          }
@@ -760,7 +752,7 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
                printf( "Fail: doRangeTestFixSize bad outBegIdx\n" );
                printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
                printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-               TA_Free( libHandle, outputBuffer );
+               TA_Free(  outputBuffer );
                return TA_TESTUTIL_DRT_BAD_OUTBEGIDX;
             }
 
@@ -769,7 +761,7 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
                printf( "Fail: doRangeTestFixSize Incorrect outputNbElement\n" );
                printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
                printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-               TA_Free( libHandle, outputBuffer );
+               TA_Free(  outputBuffer );
                return TA_TESTUTIL_DRT_BAD_OUTNBLEMENT;
             }
 
@@ -779,7 +771,7 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
                printf( "Fail: doRangeTestFixSize Lookback calculation too high? (%d)\n", lookback );
                printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
                printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-               TA_Free( libHandle, outputBuffer );
+               TA_Free(  outputBuffer );
                return TA_TESTUTIL_DRT_LOOKBACK_TOO_HIGH;
             }
 
@@ -789,14 +781,14 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
             {
                val1 = outputBuffer[1+i];
                val2 = refBuffer[relativeIdx+i];
-               if( !dataWithinReasonableRange( libHandle, val1, val2, i, unstId, integerTolerance ) )
+               if( !dataWithinReasonableRange( val1, val2, i, unstId, integerTolerance ) )
                {
                   printf( "Fail: doRangeTestFixSize diff data for idx=%d (%e,%e)\n", i, val1, val2 );
                   printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
                   printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
                   if( val1 != 0.0 )
                      printf( "Fail: Diff %g %%\n", ((val2-val1)/val1)*100.0 );
-                  TA_Free( libHandle, outputBuffer );
+                  TA_Free(  outputBuffer );
                   return TA_TESTUTIL_DRT_BAD_OUTNBLEMENT;
                }
 
@@ -840,7 +832,7 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
          printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_PREFIX (%e)\n", outputBuffer[0] );
          printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
          printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-         TA_Free( libHandle, outputBuffer );
+         TA_Free(  outputBuffer );
          return TA_TESTUTIL_DRT_BAD_PREFIX;
       }
 
@@ -849,14 +841,14 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
          printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_SUFFIX (%e)\n", outputBuffer[fixSize+1] );
          printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
          printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-         TA_Free( libHandle, outputBuffer );
+         TA_Free(  outputBuffer );
          return TA_TESTUTIL_DRT_BAD_SUFFIX;
       }
 
       /* Loop and move forward for the next startIdx to test. */
    }
 
-   TA_Free( libHandle, outputBuffer );
+   TA_Free(  outputBuffer );
    return TA_TEST_PASS;
 }
 
@@ -864,8 +856,7 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
  * The value is determined to be equal
  * if it is within a certain error range.
  */
-static int dataWithinReasonableRange( TA_Libc *libHandle,
-                                      TA_Real val1, TA_Real val2,
+static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
                                       unsigned int outputPosition,
                                       TA_FuncUnstId unstId,
                                       unsigned int integerTolerance )
@@ -942,7 +933,7 @@ static int dataWithinReasonableRange( TA_Libc *libHandle,
       else
          tempInt = val2_int - val1_int;
 
-      temp = outputPosition+TA_GetUnstablePeriod(libHandle,unstId)+1;
+      temp = outputPosition+TA_GetUnstablePeriod(unstId)+1;
       if( temp <= PERIOD_TO_IGNORE )
       {
          /* Pretend it is fine. */
@@ -985,7 +976,7 @@ static int dataWithinReasonableRange( TA_Libc *libHandle,
       else
          difference = (val2-val1)/val2;
      
-      temp = outputPosition+TA_GetUnstablePeriod(libHandle,unstId)+1;
+      temp = outputPosition+TA_GetUnstablePeriod(unstId)+1;
       if( temp <= PERIOD_TO_IGNORE )
       {
          /* Pretend it is fine. */

@@ -117,8 +117,7 @@ typedef struct
 } TA_ForEachCatSymData;
 
 
-static void TA_VerifyEachSymbolInCatSymTable( TA_Libc *libHandle,
-                                              TA_UDBase *unifiedDatabase,
+static void TA_VerifyEachSymbolInCatSymTable( TA_UDBase *unifiedDatabase,
                                               const char *category,
                                               const char *symbol,
                                               void *opaqueData );
@@ -129,14 +128,13 @@ typedef struct
    unsigned int found; /* boolean */
 } TA_IndexSearchData;
 
-static void TA_SearchInIndexForCatSym( TA_Libc *libHandle,
-                                       TA_UDBase *unifiedDatabase,
+static void TA_SearchInIndexForCatSym( TA_UDBase *unifiedDatabase,
                                        const char *category,
                                        const char *symbol,
                                        void *opaqueData );
 
 /**** Local functions declarations.    ****/
-static int test_file_globing( TA_Libc *libHandle, const TA_FileGlobingTest *tstData );
+static int test_file_globing( TA_UDBase *uDBase, const TA_FileGlobingTest *tstData );
 static int test_parsing_equivalence( void );
 
 /**** Local variables definitions.     ****/
@@ -364,24 +362,23 @@ ErrorNumber test_ascii( void )
    ErrorNumber retValue;
    int testRetValue;
    TA_UDBase *udb;
-   TA_Libc   *libHandle;
 
    printf( "Testing ASCII data source\n" );
 
    /* A "dummy" test just to verify that these two
     * utility function do not cause memory leak.
     */
-   retValue = allocLib( &libHandle, &udb );
+   retValue = allocLib( &udb );
    if( retValue != TA_TEST_PASS )
       return retValue;    
-   retValue = freeLib( libHandle, udb );
+   retValue = freeLib( udb );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
    /* Test directory/category/file globing. */
    for( i=0; i < nbFileGlobingTest; i++ )
    {
-      retValue = allocLib( &libHandle, &udb );
+      retValue = allocLib( &udb );
       if( retValue != TA_TEST_PASS )
          return retValue;
 
@@ -408,11 +405,11 @@ ErrorNumber test_ascii( void )
       {
          printf( "File globing test #%d failed with value %d.\n",
                  fileGlobingTestTable[i].testId, testRetValue );
-         freeLib( libHandle, udb );
+         freeLib( udb );
          return testRetValue;
       }
 
-      retValue = freeLib( libHandle, udb );
+      retValue = freeLib( udb );
       if( retValue != TA_TEST_PASS )
          return retValue;
    }
@@ -540,8 +537,7 @@ static int test_file_globing( TA_UDBase *uDBase, const TA_FileGlobingTest *tstDa
    return TA_TEST_PASS; /* Success. */
 }
 
-static void TA_VerifyEachSymbolInCatSymTable( TA_Libc *libHandle,
-                                              TA_UDBase *unifiedDatabase,
+static void TA_VerifyEachSymbolInCatSymTable( TA_UDBase *unifiedDatabase,
                                               const char *category,
                                               const char *symbol,
                                               void *opaqueData )
@@ -551,7 +547,6 @@ static void TA_VerifyEachSymbolInCatSymTable( TA_Libc *libHandle,
    unsigned int i;
 
    (void) unifiedDatabase;
-   (void) libHandle;
 
    /* Ignore CVS related directories */
    if( (lexcmp( symbol, "Entries" ) == 0) ||
@@ -580,8 +575,7 @@ static void TA_VerifyEachSymbolInCatSymTable( TA_Libc *libHandle,
    catSymData->nbSymbolNotFound++;
 }
 
-static void TA_SearchInIndexForCatSym( TA_Libc *libHandle,
-                                       TA_UDBase *unifiedDatabase,
+static void TA_SearchInIndexForCatSym( TA_UDBase *unifiedDatabase,
                                        const char *category,
                                        const char *symbol,
                                        void *opaqueData )
@@ -589,7 +583,6 @@ static void TA_SearchInIndexForCatSym( TA_Libc *libHandle,
    TA_IndexSearchData *searchData;
 
    (void) unifiedDatabase;
-   (void) libHandle;
 
    searchData = (TA_IndexSearchData *)opaqueData;
 
@@ -602,7 +595,6 @@ static int test_parsing_equivalence( void )
 {
    int retValue, fieldNb;
    TA_AddDataSourceParam param;
-   TA_Libc *libHandle;
    TA_UDBase *udb, *udbEqv;
    TA_RetCode retCode;
    TA_StringTable *catTable, *symTable;
@@ -612,7 +604,7 @@ static int test_parsing_equivalence( void )
    char buffer1024[1024];
    char buffer200[200];
 
-   retValue = allocLib( &libHandle, &udb );
+   retValue = allocLib( &udb );
    if( retValue != TA_TEST_PASS )
       return retValue;    
 
@@ -634,7 +626,7 @@ static int test_parsing_equivalence( void )
    retCode = TA_CategoryTableAlloc( udb, &catTable );
    if( retCode != TA_SUCCESS )
    {      
-      freeLib( libHandle, udb );
+      freeLib( udb );
       return TA_TESTASCII_CATTABLE_ALLOC_ERROR;
    }
    else
@@ -645,7 +637,7 @@ static int test_parsing_equivalence( void )
          if( retCode != TA_SUCCESS )
          {
             TA_CategoryTableFree( catTable );
-            freeLib( libHandle, udb );
+            freeLib( udb );
             return TA_TESTASCII_SYMTABLE_ALLOC_ERROR;
          }
 
@@ -654,7 +646,7 @@ static int test_parsing_equivalence( void )
 
          for( j=0; j < symTable->size; j++ )
          {
-            retCode = TA_UDBaseAlloc( libHandle, &udbEqv );
+            retCode = TA_UDBaseAlloc( &udbEqv );
          
             sprintf( buffer1024, 
                      "..\\src\\tools\\ta_regtest\\sampling\\TST%s\\Z%s.TXT",
@@ -681,7 +673,7 @@ static int test_parsing_equivalence( void )
                TA_CategoryTableFree( catTable );
                if( udbEqv )
                   TA_UDBaseFree( udbEqv );
-               freeLib( libHandle, udb );
+               freeLib( udb );
                return TA_TESTASCII_EQV_BAD_FILENAME;
             }
 
@@ -696,7 +688,7 @@ static int test_parsing_equivalence( void )
                TA_CategoryTableFree( catTable );
                if( udbEqv )
                   TA_UDBaseFree( udbEqv );
-               freeLib( libHandle, udb );
+               freeLib( udb );
                return TA_TESTASCII_EQV_BAD_FIELD_ID;
             }
 
@@ -716,7 +708,7 @@ static int test_parsing_equivalence( void )
                TA_CategoryTableFree( catTable );
                if( udbEqv )
                   TA_UDBaseFree( udbEqv );
-               freeLib( libHandle, udb );
+               freeLib( udb );
                return TA_TESTASCII_EQV_ADDDATASOURCE;
             }
 
@@ -734,7 +726,7 @@ static int test_parsing_equivalence( void )
                TA_CategoryTableFree( catTable );
                if( udbEqv )
                   TA_UDBaseFree( udbEqv );
-               freeLib( libHandle, udb );
+               freeLib( udb );
                return TA_TESTASCII_EQV_HISTORYALLOC;
             }
 
@@ -796,7 +788,7 @@ static int test_parsing_equivalence( void )
                   TA_CategoryTableFree( catTable );
                   if( udbEqv )
                      TA_UDBaseFree( udbEqv );
-                  freeLib( libHandle, udb );
+                  freeLib( udb );
                   return retValue;                  
                }
 
@@ -809,7 +801,7 @@ static int test_parsing_equivalence( void )
                   TA_CategoryTableFree( catTable );
                   if( udbEqv )
                      TA_UDBaseFree( udbEqv );
-                  freeLib( libHandle, udb );
+                  freeLib( udb );
                   return TA_TESTASCII_HISTORYFREE_FAILED;
                }
             }
@@ -824,7 +816,7 @@ static int test_parsing_equivalence( void )
                TA_CategoryTableFree( catTable );
                if( udbEqv )
                   TA_UDBaseFree( udbEqv );
-               freeLib( libHandle, udb );
+               freeLib( udb );
                return TA_TESTASCII_REFHISTORYFREE_FAILED;
             }
          }
@@ -835,7 +827,7 @@ static int test_parsing_equivalence( void )
             TA_CategoryTableFree( catTable );
             if( udbEqv )
                TA_UDBaseFree( udbEqv );
-            freeLib( libHandle, udb );
+            freeLib( udb );
             return TA_TESTASCII_SYMTABLE_FREE_ERROR;
          }
 
@@ -846,7 +838,7 @@ static int test_parsing_equivalence( void )
             {
                printf( "TA_UDBaseFree failed with %d\n", retCode );
                TA_CategoryTableFree( catTable );
-               freeLib( libHandle, udb );
+               freeLib( udb );
                return TA_TESTASCII_UDBASEFREE_FAILED;
             }
          }
@@ -856,12 +848,12 @@ static int test_parsing_equivalence( void )
       if( retCode != TA_SUCCESS )
       {
          printf( "TA_CategoryTableFree failed with %d\n", retCode );
-         freeLib( libHandle, udb );
+         freeLib( udb );
          return TA_TESTASCII_CATTABLE_FREE_ERROR;         
       }
    }
 
-   retValue = freeLib( libHandle, udb );
+   retValue = freeLib( udb );
    if( retValue != TA_TEST_PASS )
       return retValue;
 

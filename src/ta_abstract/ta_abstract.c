@@ -116,13 +116,11 @@ extern const unsigned int TA_DEF_TableASize, TA_DEF_TableBSize,
 typedef struct 
 {
    unsigned int magicNb;
-   TA_Libc *libHandle;
 } TA_StringTableGroupHidden;
 
 typedef struct 
 {
    unsigned int magicNb;
-   TA_Libc *libHandle;
 } TA_StringTableFuncHidden;
 
 
@@ -130,10 +128,9 @@ typedef struct
 
 
 #ifdef TA_GEN_CODE
-   static TA_RetCode getGroupId( TA_Libc *libHandle, const char *groupString, unsigned int *groupId );
-   static TA_RetCode getGroupSize( TA_Libc *libHandle, TA_GroupId groupId, unsigned int *groupSize );
-   static TA_RetCode getFuncNameByIdx( TA_Libc *libHandle,
-                                       TA_GroupId groupId,
+   static TA_RetCode getGroupId( const char *groupString, unsigned int *groupId );
+   static TA_RetCode getGroupSize( TA_GroupId groupId, unsigned int *groupSize );
+   static TA_RetCode getFuncNameByIdx( TA_GroupId groupId,
                                        unsigned int idx,
                                        const char **stringPtr );
 #else
@@ -171,13 +168,13 @@ static const unsigned int *TA_DEF_TablesSize[26] =
 };
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_GroupTableAlloc( TA_Libc *libHandle, TA_StringTable **table )
+TA_RetCode TA_GroupTableAlloc( TA_StringTable **table )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_StringTable *stringTable;
    TA_StringTableGroupHidden *stringTableHidden;
 
-   TA_TRACE_BEGIN( libHandle, TA_GroupTableAlloc );
+   TA_TRACE_BEGIN( TA_GroupTableAlloc );
 
    if( table == NULL )
    {
@@ -186,21 +183,20 @@ TA_RetCode TA_GroupTableAlloc( TA_Libc *libHandle, TA_StringTable **table )
 
    *table = NULL;
 
-   stringTable = (TA_StringTable *)TA_Malloc( libHandle, sizeof(TA_StringTable) );
+   stringTable = (TA_StringTable *)TA_Malloc( sizeof(TA_StringTable) );
 
    if( !stringTable )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
-   stringTableHidden = (TA_StringTableGroupHidden *)TA_Malloc( libHandle, sizeof(TA_StringTableGroupHidden) );
+   stringTableHidden = (TA_StringTableGroupHidden *)TA_Malloc( sizeof(TA_StringTableGroupHidden) );
    if( !stringTableHidden )
    {
-      TA_Free( libHandle, stringTable );
+      TA_Free( stringTable );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
-   stringTableHidden->libHandle = libHandle;
    stringTableHidden->magicNb = TA_STRING_TABLE_GROUP_MAGIC_NB;
    stringTable->size = TA_NB_GROUP_ID;
    stringTable->string = &TA_GroupString[0];
@@ -217,7 +213,6 @@ TA_RetCode TA_GroupTableAlloc( TA_Libc *libHandle, TA_StringTable **table )
 TA_RetCode TA_GroupTableFree( TA_StringTable *table )
 {
    TA_StringTableGroupHidden *stringTableHidden;
-   TA_Libc *libHandle;
 
    if( table )
    {
@@ -228,18 +223,16 @@ TA_RetCode TA_GroupTableFree( TA_StringTable *table )
       if( stringTableHidden->magicNb != TA_STRING_TABLE_GROUP_MAGIC_NB )
          return TA_BAD_OBJECT;
 
-      libHandle = stringTableHidden->libHandle;
-
-      TA_Free( libHandle, stringTableHidden );
-      TA_Free( libHandle, table );
+      TA_Free( stringTableHidden );
+      TA_Free( table );
    }
 
    return TA_SUCCESS;
 }
 
-TA_RetCode TA_ForEachFunc( TA_Libc *libHandle, TA_CallForEachFunc functionToCall, void *opaqueData )
+TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_StringTable   *tableGroup;
    TA_StringTable   *tableFunc;
    const TA_FuncDef *funcDef;
@@ -249,7 +242,7 @@ TA_RetCode TA_ForEachFunc( TA_Libc *libHandle, TA_CallForEachFunc functionToCall
 
    const TA_FuncInfo *funcInfo;
 
-   TA_TRACE_BEGIN( libHandle, TA_ForEachFunc );
+   TA_TRACE_BEGIN( TA_ForEachFunc );
 
    if( functionToCall == NULL )
    {
@@ -257,48 +250,48 @@ TA_RetCode TA_ForEachFunc( TA_Libc *libHandle, TA_CallForEachFunc functionToCall
    }
    
    /* Get all the group to iterate. */
-   retCode = TA_GroupTableAlloc( libHandle, &tableGroup );
+   retCode = TA_GroupTableAlloc( &tableGroup );
 
    if( retCode == TA_SUCCESS )
    {
-      TA_ASSERT( libHandle, tableGroup != NULL );
+      TA_ASSERT( tableGroup != NULL );
 
       for( i=0; i < tableGroup->size; i++ )
       {
-         TA_DEBUG_ASSERT( libHandle, tableGroup->string[i] != NULL );
+         TA_DEBUG_ASSERT( tableGroup->string[i] != NULL );
 
          /* Get all the symbols to iterate for this category. */
-         retCode = TA_FuncTableAlloc( libHandle, tableGroup->string[i], &tableFunc );
+         retCode = TA_FuncTableAlloc( tableGroup->string[i], &tableFunc );
 
 
          if( retCode == TA_SUCCESS )
          {
-            TA_DEBUG_ASSERT( libHandle, tableFunc != NULL );
+            TA_DEBUG_ASSERT( tableFunc != NULL );
 
             for( j=0; j < tableFunc->size; j++ )
             {
-               TA_DEBUG_ASSERT( libHandle, tableFunc->string[j] != NULL );
+               TA_DEBUG_ASSERT( tableFunc->string[j] != NULL );
 
                /* Get the function handle, and then the TA_FuncDef,
                 * and then the TA_FuncInfo...
                 */
-               retCode = TA_GetFuncHandle( libHandle, tableFunc->string[j], &funcHandle );
+               retCode = TA_GetFuncHandle( tableFunc->string[j], &funcHandle );
 
                if( retCode != TA_SUCCESS )
                   continue;
 
-               TA_DEBUG_ASSERT( libHandle, funcHandle != NULL );
+               TA_DEBUG_ASSERT( funcHandle != NULL );
 
                funcDef  = (const TA_FuncDef *)funcHandle;
 
-               TA_DEBUG_ASSERT( libHandle, funcDef != NULL );
+               TA_DEBUG_ASSERT( funcDef != NULL );
 
                funcInfo = funcDef->funcInfo;
 
-               TA_DEBUG_ASSERT( libHandle, funcInfo != NULL );
+               TA_DEBUG_ASSERT( funcInfo != NULL );
 
                /* Call user provided function. */
-               (*functionToCall)( libHandle, funcInfo, opaqueData );
+               (*functionToCall)( funcInfo, opaqueData );
             }
          }
 
@@ -315,9 +308,9 @@ TA_RetCode TA_ForEachFunc( TA_Libc *libHandle, TA_CallForEachFunc functionToCall
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_FuncTableAlloc( TA_Libc *libHandle, const char *group, TA_StringTable **table )
+TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    unsigned int i;
    TA_StringTable *stringTable;
@@ -325,7 +318,7 @@ TA_RetCode TA_FuncTableAlloc( TA_Libc *libHandle, const char *group, TA_StringTa
    unsigned int groupSize;
    const char *stringPtr;
    TA_StringTableFuncHidden *stringTableHidden;
-   TA_TRACE_BEGIN( libHandle, TA_FuncTableAlloc );
+   TA_TRACE_BEGIN( TA_FuncTableAlloc );
 
    if( (group == NULL) || (table == NULL ) )
    {
@@ -335,42 +328,33 @@ TA_RetCode TA_FuncTableAlloc( TA_Libc *libHandle, const char *group, TA_StringTa
    *table = NULL;
 
    /* Get information on the group. */
-   #ifdef TA_GEN_CODE
-      retCode = getGroupId( libHandle, group, &groupId );
-   #else
-      retCode = getGroupId( group, &groupId );
-   #endif
+   retCode = getGroupId( group, &groupId );
    if( retCode != TA_SUCCESS )
    {
       TA_TRACE_RETURN( retCode );
    }
 
-   #ifdef TA_GEN_CODE
-      retCode = getGroupSize( libHandle, (TA_GroupId)groupId, &groupSize );
-   #else
-      retCode = getGroupSize( (TA_GroupId)groupId, &groupSize );
-   #endif
+   retCode = getGroupSize( (TA_GroupId)groupId, &groupSize );
    if( retCode != TA_SUCCESS )
    {
       TA_TRACE_RETURN( retCode );
    }
 
    /* Allocate the table. */
-   stringTable = (TA_StringTable *)TA_Malloc( libHandle, sizeof(TA_StringTable) );
+   stringTable = (TA_StringTable *)TA_Malloc( sizeof(TA_StringTable) );
    if( !stringTable )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
-   stringTableHidden = (TA_StringTableFuncHidden *)TA_Malloc( libHandle, sizeof(TA_StringTableFuncHidden) );
+   stringTableHidden = (TA_StringTableFuncHidden *)TA_Malloc( sizeof(TA_StringTableFuncHidden) );
    if( !stringTable )
    {
-      TA_Free( libHandle, stringTable );
+      TA_Free( stringTable );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
    stringTable->hiddenData = stringTableHidden;
-   stringTableHidden->libHandle = libHandle;
    stringTableHidden->magicNb = TA_STRING_TABLE_FUNC_MAGIC_NB;
 
    /* From this point, TA_FuncTableFree can be safely called. */
@@ -379,7 +363,7 @@ TA_RetCode TA_FuncTableAlloc( TA_Libc *libHandle, const char *group, TA_StringTa
       stringTable->string = NULL;
    else
    {
-      stringTable->string = (const char **)TA_Malloc( libHandle, (stringTable->size) *
+      stringTable->string = (const char **)TA_Malloc( (stringTable->size) *
                                                       sizeof(const char *) );
 
       if( stringTable->string == NULL )
@@ -393,11 +377,7 @@ TA_RetCode TA_FuncTableAlloc( TA_Libc *libHandle, const char *group, TA_StringTa
 
       for( i=0; i < stringTable->size; i++ )
       {
-         #ifdef TA_GEN_CODE
-            retCode = getFuncNameByIdx( libHandle, (TA_GroupId)groupId, i, &stringPtr );
-         #else
-            retCode = getFuncNameByIdx( (TA_GroupId)groupId, i, &stringPtr );
-         #endif
+         retCode = getFuncNameByIdx( (TA_GroupId)groupId, i, &stringPtr );
 
          if( retCode != TA_SUCCESS )
          {
@@ -418,7 +398,6 @@ TA_RetCode TA_FuncTableAlloc( TA_Libc *libHandle, const char *group, TA_StringTa
 TA_RetCode TA_FuncTableFree( TA_StringTable *table )
 {
    TA_StringTableFuncHidden *stringTableHidden;
-   TA_Libc *libHandle;
 
    if( table )
    {
@@ -429,29 +408,27 @@ TA_RetCode TA_FuncTableFree( TA_StringTable *table )
       if( stringTableHidden->magicNb != TA_STRING_TABLE_FUNC_MAGIC_NB )
          return TA_BAD_OBJECT;
 
-      libHandle = stringTableHidden->libHandle;
-
-      TA_Free( libHandle, stringTableHidden );
+      TA_Free( stringTableHidden );
 
       if( table->string )
-         TA_Free( libHandle, (void *)table->string );
+         TA_Free( (void *)table->string );
 
-      TA_Free( libHandle, table );
+      TA_Free( table );
    }
 
    return TA_SUCCESS;
 }
 
-TA_RetCode TA_GetFuncHandle( TA_Libc *libHandle, const char *name, const TA_FuncHandle **handle )
+TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    char firstChar, tmp;
    const TA_FuncDef **funcDefTable;
    const TA_FuncDef *funcDef;
    const TA_FuncInfo *funcInfo;
    unsigned int i, funcDefTableSize;
 
-   TA_TRACE_BEGIN( libHandle, TA_GetFuncHandle );
+   TA_TRACE_BEGIN( TA_GetFuncHandle );
 
    /* A TA_FuncHandle is internally a TA_FuncDef. Let's find it
     * by using the alphabetical tables.
@@ -492,11 +469,11 @@ TA_RetCode TA_GetFuncHandle( TA_Libc *libHandle, const char *name, const TA_Func
    for( i=0; i < funcDefTableSize; i++ )
    {
       funcDef = funcDefTable[i];
-      TA_DEBUG_ASSERT( libHandle, funcDef != NULL );
-      TA_DEBUG_ASSERT( libHandle, funcDef->funcInfo != NULL );
+      TA_DEBUG_ASSERT( funcDef != NULL );
+      TA_DEBUG_ASSERT( funcDef->funcInfo != NULL );
 
       funcInfo = funcDef->funcInfo;      
-      TA_DEBUG_ASSERT( libHandle, funcInfo != NULL );
+      TA_DEBUG_ASSERT( funcInfo != NULL );
       
       if( strcmp( funcInfo->name, name ) == 0 )
       {
@@ -620,13 +597,12 @@ TA_RetCode TA_SetOutputParameterInfoPtr( const TA_FuncHandle *handle,
    return TA_SUCCESS;
 }
 
-TA_RetCode TA_ParamHoldersAlloc( TA_Libc *libHandle,
-                                 const TA_FuncHandle *handle,
+TA_RetCode TA_ParamHoldersAlloc( const TA_FuncHandle *handle,
                                  TA_ParamHolder **newInputParams,
                                  TA_ParamHolder **newOptInputParams,
                                  TA_ParamHolder **newOutputParams )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_FuncDef *funcDef;
    unsigned int allocSize, i;
    TA_ParamHolderPriv *input;
@@ -639,7 +615,7 @@ TA_RetCode TA_ParamHoldersAlloc( TA_Libc *libHandle,
 
    const TA_FuncInfo *funcInfo;
 
-   TA_TRACE_BEGIN( libHandle, TA_ParamHoldersAlloc );
+   TA_TRACE_BEGIN( TA_ParamHoldersAlloc );
 
    /* Validate the parameters. */
    if( !handle || !newInputParams || !newOptInputParams || !newOutputParams)
@@ -660,11 +636,11 @@ TA_RetCode TA_ParamHoldersAlloc( TA_Libc *libHandle,
 
    /* Get the TA_FuncInfo. */
    funcInfo = funcDef->funcInfo;
-   TA_DEBUG_ASSERT( libHandle, funcInfo != NULL );
+   TA_DEBUG_ASSERT( funcInfo != NULL );
 
    /* Allocate all the TA_ParamHolderPriv. */
    allocSize = (funcInfo->nbInput) * sizeof(TA_ParamHolderPriv);
-   input = (TA_ParamHolderPriv *)TA_Malloc( libHandle, allocSize );
+   input = (TA_ParamHolderPriv *)TA_Malloc( allocSize );
 
    if( input == NULL )
    {
@@ -676,22 +652,22 @@ TA_RetCode TA_ParamHoldersAlloc( TA_Libc *libHandle,
    else
    {
       allocSize = (funcInfo->nbOptInput) * sizeof(TA_ParamHolderPriv);
-      optInput = (TA_ParamHolderPriv *)TA_Malloc( libHandle, allocSize );
+      optInput = (TA_ParamHolderPriv *)TA_Malloc( allocSize );
 
       if( optInput == NULL )
       {
-         TA_Free( libHandle, optInput );
+         TA_Free( optInput );
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
    }
 
    allocSize = (funcInfo->nbOutput) * sizeof(TA_ParamHolderPriv);
-   output = (TA_ParamHolderPriv *)TA_Malloc( libHandle, allocSize );
+   output = (TA_ParamHolderPriv *)TA_Malloc( allocSize );
 
    if( output == NULL )
    {
-      TA_Free( libHandle, input );
-      TA_Free( libHandle, optInput );
+      TA_Free( input );
+      TA_Free( optInput );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
@@ -702,7 +678,6 @@ TA_RetCode TA_ParamHoldersAlloc( TA_Libc *libHandle,
 
    for( i=0; i < funcInfo->nbInput; i++ )
    {
-      input[i].libHandle = libHandle;
       input[i].valueInitialize = 0;
       input[i].type = TA_PARAM_HOLDER_INPUT;
 
@@ -714,7 +689,6 @@ TA_RetCode TA_ParamHoldersAlloc( TA_Libc *libHandle,
 
    for( i=0; i < funcInfo->nbOptInput; i++ )
    {
-      optInput[i].libHandle = libHandle;
       optInput[i].valueInitialize = 0;
       optInput[i].type = TA_PARAM_HOLDER_OPTINPUT;
 
@@ -725,7 +699,6 @@ TA_RetCode TA_ParamHoldersAlloc( TA_Libc *libHandle,
 
    for( i=0; i < funcInfo->nbOutput; i++ )
    {
-      output[i].libHandle = libHandle;
       output[i].valueInitialize = 0;
       output[i].type = TA_PARAM_HOLDER_OUTPUT;
 
@@ -753,8 +726,7 @@ TA_RetCode TA_ParamHoldersFree( TA_ParamHolder *inputParamsToFree,
                                 TA_ParamHolder *optInputParamsToFree,
                                 TA_ParamHolder *outputParamsToFree )
 {
-   TA_PROLOG;
-   TA_Libc *libHandle;
+   TA_PROLOG
    TA_ParamHolderPriv *input;
    TA_ParamHolderPriv *optInput;
    TA_ParamHolderPriv *output;
@@ -770,8 +742,7 @@ TA_RetCode TA_ParamHoldersFree( TA_ParamHolder *inputParamsToFree,
        (output->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )
       return TA_INVALID_PARAM_HOLDER;
 
-   libHandle = input->libHandle;
-   TA_TRACE_BEGIN( libHandle, TA_ParamHoldersFree );
+   TA_TRACE_BEGIN( TA_ParamHoldersFree );
 
    if( optInput )
    {
@@ -781,10 +752,10 @@ TA_RetCode TA_ParamHoldersFree( TA_ParamHolder *inputParamsToFree,
       }
    }
 
-   TA_Free( libHandle, input );
+   TA_Free( input );
    if( optInput )
-      TA_Free( libHandle, optInput );
-   TA_Free( libHandle, output );
+      TA_Free( optInput );
+   TA_Free( output );
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -993,7 +964,7 @@ TA_RetCode TA_CallFunc( const TA_FuncHandle *handle,
                         const TA_ParamHolder *optInputParams,
                         const TA_ParamHolder *outputParams )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_ParamHolderPriv *inParamHolderPriv;
    TA_ParamHolderPriv *optInParamHolderPriv;
@@ -1002,7 +973,6 @@ TA_RetCode TA_CallFunc( const TA_FuncHandle *handle,
    const TA_FuncInfo *funcInfo;
    TA_FrameFunction function;
    unsigned int i;
-   TA_Libc *libHandle;
 
    if( (handle == NULL) ||
        (inputParams == NULL)   ||
@@ -1021,8 +991,7 @@ TA_RetCode TA_CallFunc( const TA_FuncHandle *handle,
    optInParamHolderPriv = (TA_ParamHolderPriv *)optInputParams;
    outParamHolderPriv = (TA_ParamHolderPriv *)outputParams;
 
-   libHandle = inParamHolderPriv->libHandle;
-   TA_TRACE_BEGIN( libHandle, TA_CallFunc );
+   TA_TRACE_BEGIN( TA_CallFunc );
 
    /* Validate the TA_ParamHolderPriv (only the first of each type will
     * be sufficient).
@@ -1049,7 +1018,7 @@ TA_RetCode TA_CallFunc( const TA_FuncHandle *handle,
       TA_TRACE_RETURN( TA_INVALID_PARAM_FUNCTION );
    }
 
-   TA_DEBUG_ASSERT( libHandle, function != NULL );
+   TA_DEBUG_ASSERT( function != NULL );
    
    /* Check that all parameters are initialize (except the optInput). */
    funcInfo = funcDef->funcInfo;
@@ -1070,8 +1039,7 @@ TA_RetCode TA_CallFunc( const TA_FuncHandle *handle,
    }
 
    /* Perform the function call. */
-   retCode = (*function)( libHandle,
-                          startIdx, endIdx,
+   retCode = (*function)( startIdx, endIdx,
                           outBegIdx, outNbElement,
                           inParamHolderPriv,
                           optInParamHolderPriv,
@@ -1095,23 +1063,19 @@ TA_RetCode TA_AnalysisGetBitmap( const TA_FuncHandle *handle,
 #endif
 
 /**** Local functions definitions.     ****/
-#ifdef TA_GEN_CODE
-   static TA_RetCode getGroupId( TA_Libc *libHandle,const char *groupString, unsigned int *groupId )
-#else
-   static TA_RetCode getGroupId( const char *groupString, unsigned int *groupId )
-#endif
+static TA_RetCode getGroupId( const char *groupString, unsigned int *groupId )
 {
    #ifdef TA_GEN_CODE
-   TA_PROLOG;
+   TA_PROLOG
    #endif
 
    unsigned int i;
 
    #ifdef TA_GEN_CODE
-      TA_TRACE_BEGIN( libHandle, getgroupId );
+      TA_TRACE_BEGIN( getgroupId );
 
-      TA_ASSERT( libHandle, groupString != NULL );
-      TA_ASSERT( libHandle, groupId != NULL );
+      TA_ASSERT( groupString != NULL );
+      TA_ASSERT( groupId != NULL );
    #endif
 
    for( i=0; i < TA_NB_GROUP_ID; i++ )
@@ -1134,27 +1098,23 @@ TA_RetCode TA_AnalysisGetBitmap( const TA_FuncHandle *handle,
    #endif
 }
 
-#ifdef TA_GEN_CODE
-   static TA_RetCode getGroupSize( TA_Libc *libHandle, TA_GroupId groupId, unsigned int *groupSize )
-#else
-   static TA_RetCode getGroupSize( TA_GroupId groupId, unsigned int *groupSize )
-#endif
+static TA_RetCode getGroupSize( TA_GroupId groupId, unsigned int *groupSize )
 {
    #ifdef TA_GEN_CODE
       /* Code used only when compiled with gen_code. */
-      TA_PROLOG;
+      TA_PROLOG
       unsigned int i, j;
       const TA_FuncDef **funcDefTable;
       const TA_FuncDef *funcDef;
       unsigned int tableSize;
       unsigned int nbFuncFound;
 
-      TA_TRACE_BEGIN( libHandle, getGroupSize );
+      TA_TRACE_BEGIN( getGroupSize );
 
-      TA_ASSERT( libHandle, groupId < TA_NB_GROUP_ID );
+      TA_ASSERT( groupId < TA_NB_GROUP_ID );
 
-      TA_ASSERT( libHandle, groupId < TA_NB_GROUP_ID );
-      TA_ASSERT( libHandle, groupSize != NULL );
+      TA_ASSERT( groupId < TA_NB_GROUP_ID );
+      TA_ASSERT( groupSize != NULL );
 
       nbFuncFound = 0;
       for( i=0; i < 26; i++ )
@@ -1182,8 +1142,7 @@ TA_RetCode TA_AnalysisGetBitmap( const TA_FuncHandle *handle,
 }
 
 #ifdef TA_GEN_CODE
-   static TA_RetCode getFuncNameByIdx( TA_Libc *libHandle,
-                                       TA_GroupId groupId,
+   static TA_RetCode getFuncNameByIdx( TA_GroupId groupId,
                                        unsigned int idx,
                                        const char **stringPtr )
 #else
@@ -1194,16 +1153,16 @@ TA_RetCode TA_AnalysisGetBitmap( const TA_FuncHandle *handle,
 {
    #ifdef TA_GEN_CODE
       /* Code used only when compiled with gen_code. */
-      TA_PROLOG;
+      TA_PROLOG
       unsigned int curIdx;
       unsigned int i, j, found;
       const TA_FuncDef **funcDefTable;
       unsigned int tableSize;
       const TA_FuncInfo *funcInfo;
 
-      TA_TRACE_BEGIN( libHandle, getFuncNameByIdx );
+      TA_TRACE_BEGIN( getFuncNameByIdx );
 
-      TA_ASSERT( libHandle, stringPtr != NULL );
+      TA_ASSERT( stringPtr != NULL );
 
       curIdx = 0;
       found = 0;
@@ -1219,7 +1178,7 @@ TA_RetCode TA_AnalysisGetBitmap( const TA_FuncHandle *handle,
                if( idx == curIdx )
                {
                   funcInfo = funcDefTable[j]->funcInfo;
-                  TA_ASSERT( libHandle, funcInfo != NULL );
+                  TA_ASSERT( funcInfo != NULL );
                   *stringPtr = funcInfo->name;
                   found = 1;
                }
@@ -1228,8 +1187,8 @@ TA_RetCode TA_AnalysisGetBitmap( const TA_FuncHandle *handle,
          }
       }
 
-      TA_ASSERT( libHandle, found == 1 );
-      TA_ASSERT( libHandle, *stringPtr != NULL );
+      TA_ASSERT( found == 1 );
+      TA_ASSERT( *stringPtr != NULL );
 
       TA_TRACE_RETURN( TA_SUCCESS );
    #else

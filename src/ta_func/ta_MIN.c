@@ -85,8 +85,7 @@ int TA_MIN_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_
  * 
  */
 
-TA_RetCode TA_MIN( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_MIN( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -101,8 +100,6 @@ TA_RetCode TA_MIN( TA_Libc      *libHandle,
    TA_Integer trailingIdx, lowestIdx, today, i;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 

@@ -76,10 +76,6 @@ extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_5;
 extern const TA_OptInputParameterInfo TA_DEF_UI_VerticalShift;
 extern const TA_OptInputParameterInfo TA_DEF_UI_HorizontalShift;
 
-extern const TA_OptInputParameterInfo TA_DEF_UI_Compatibility_CL_MS;
-extern const TA_OptInputParameterInfo TA_DEF_UI_Compatibility_CL_TS;
-extern const TA_OptInputParameterInfo TA_DEF_UI_Compatibility_CL_MS_TS;
-
 extern const TA_OptInputParameterInfo TA_DEF_UI_MA_Method;
 extern const TA_OptInputParameterInfo TA_DEF_UI_Fast_Period;
 extern const TA_OptInputParameterInfo TA_DEF_UI_Slow_Period;

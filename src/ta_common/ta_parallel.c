@@ -77,7 +77,6 @@ typedef struct
    void *newThreadArgs;
    TA_BarrierSync *bs;
    TA_Sema threadGotParameters;
-   TA_Libc *libHandle;
 } TA_ThreadFrameParam;
 
 /**** Local functions declarations.    ****/
@@ -87,23 +86,19 @@ void threadFrame( void *args );
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_BarrierSyncInit( TA_Libc *libHandle, TA_BarrierSync *bs )
+TA_RetCode TA_BarrierSyncInit( TA_BarrierSync *bs )
 {
    TA_RetCode retCode;
 
-   if( libHandle == NULL )
-      return TA_BAD_PARAM;
+   TA_ASSERT( bs != NULL );
 
-   TA_ASSERT( libHandle, bs != NULL );
-
-   bs->libHandle = libHandle;
    bs->nbThread = 0;
 
    /* Initialize the barrier to an unblock state. */
    retCode = TA_SemaInit( &(bs->barrierSema), 1 );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL( libHandle, NULL, retCode, bs );
+      TA_FATAL(  NULL, retCode, bs );
       return retCode;
    }
 
@@ -111,7 +106,7 @@ TA_RetCode TA_BarrierSyncInit( TA_Libc *libHandle, TA_BarrierSync *bs )
    retCode = TA_SemaInit( &(bs->mutexSema), 1 );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL( libHandle, NULL, retCode, bs );
+      TA_FATAL(  NULL, retCode, bs );
       return retCode;
    }
 
@@ -121,12 +116,9 @@ TA_RetCode TA_BarrierSyncInit( TA_Libc *libHandle, TA_BarrierSync *bs )
 TA_RetCode TA_BarrierSyncDestroy( TA_BarrierSync *bs )
 {
    TA_RetCode retCode;
-   TA_Libc *libHandle;
 
    if( bs != NULL )
       return TA_BAD_PARAM;
-
-   libHandle = bs->libHandle;
 
    /* Just to be on the safe side, make sure there is no
     * thread left to be joined.
@@ -136,7 +128,7 @@ TA_RetCode TA_BarrierSyncDestroy( TA_BarrierSync *bs )
       retCode = TA_BarrierSyncWaitAllDone( bs );
       if( retCode != TA_SUCCESS )
       {
-         TA_FATAL( libHandle, NULL, retCode, TA_GetLastError(libHandle) );
+         TA_FATAL(  NULL, retCode, TA_GetLastError() );
          return retCode;
       }
    }
@@ -145,13 +137,13 @@ TA_RetCode TA_BarrierSyncDestroy( TA_BarrierSync *bs )
    retCode = TA_SemaWait( &(bs->mutexSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL( libHandle, NULL, retCode, TA_GetLastError(libHandle) );
+      TA_FATAL(  NULL, retCode, TA_GetLastError() );
       return retCode;
    }
    retCode = TA_SemaPost( &(bs->mutexSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL( libHandle, NULL, retCode, TA_GetLastError(libHandle) );
+      TA_FATAL(  NULL, retCode, TA_GetLastError() );
       return retCode;
    }
 
@@ -159,14 +151,14 @@ TA_RetCode TA_BarrierSyncDestroy( TA_BarrierSync *bs )
    retCode = TA_SemaDestroy( &(bs->mutexSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL( libHandle, NULL, retCode, TA_GetLastError(libHandle) );
+      TA_FATAL(  NULL, retCode, TA_GetLastError() );
       return retCode;
    }
 
    retCode = TA_SemaDestroy( &(bs->barrierSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL( libHandle, NULL, retCode, TA_GetLastError(libHandle) );
+      TA_FATAL(  NULL, retCode, TA_GetLastError() );
       return retCode;
    }
 
@@ -177,17 +169,14 @@ TA_RetCode TA_BarrierSyncThreadAdd( TA_BarrierSync *bs )
 {
    TA_RetCode retCode;
    unsigned int temp;
-   TA_Libc *libHandle;
 
    if( bs != NULL )
       return TA_BAD_PARAM;
 
-   libHandle = bs->libHandle;
-
    retCode = TA_SemaWait( &(bs->mutexSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL( libHandle, NULL, retCode, TA_GetLastError(libHandle) );
+      TA_FATAL(  NULL, retCode, TA_GetLastError() );
       return retCode;
    }
 
@@ -200,7 +189,7 @@ TA_RetCode TA_BarrierSyncThreadAdd( TA_BarrierSync *bs )
       if( retCode != TA_SUCCESS )
       {
          TA_SemaPost( &(bs->mutexSema) );
-         TA_FATAL( libHandle, NULL, retCode, TA_GetLastError(libHandle) );
+         TA_FATAL(  NULL, retCode, TA_GetLastError() );
          return retCode;
       }
    }
@@ -209,7 +198,7 @@ TA_RetCode TA_BarrierSyncThreadAdd( TA_BarrierSync *bs )
    retCode = TA_SemaPost( &(bs->mutexSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL( libHandle, NULL, retCode, TA_GetLastError(libHandle) );
+      TA_FATAL(  NULL, retCode, TA_GetLastError() );
       return retCode;
    }
 
@@ -220,22 +209,19 @@ TA_RetCode TA_BarrierSyncThreadDone( TA_BarrierSync *bs )
 {
    TA_RetCode retCode;
    unsigned int temp;
-   TA_Libc *libHandle;
 
    if( bs != NULL )
       return TA_BAD_PARAM;
 
-   libHandle = bs->libHandle;
-
    retCode = TA_SemaWait( &(bs->mutexSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL( libHandle, NULL, retCode, TA_GetLastError(libHandle) );
+      TA_FATAL(  NULL, retCode, TA_GetLastError() );
       return retCode;
    }
 
    /*** Begin critical section. ***/
-   TA_ASSERT( libHandle, bs->nbThread >= 1 );
+   TA_ASSERT( bs->nbThread >= 1 );
    temp = --(bs->nbThread);
    if( temp == 0 )
    {
@@ -243,7 +229,7 @@ TA_RetCode TA_BarrierSyncThreadDone( TA_BarrierSync *bs )
       retCode = TA_SemaInc( &(bs->barrierSema), NULL );
       if( retCode != TA_SUCCESS )
       {
-         TA_FATAL( libHandle, NULL, retCode, TA_GetLastError(libHandle) );
+         TA_FATAL(  NULL, retCode, TA_GetLastError() );
          return retCode;
       }
    }
@@ -253,7 +239,7 @@ TA_RetCode TA_BarrierSyncThreadDone( TA_BarrierSync *bs )
    retCode = TA_SemaPost( &(bs->mutexSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL( libHandle, NULL, retCode, TA_GetLastError(libHandle) );
+      TA_FATAL(  NULL, retCode, TA_GetLastError() );
       return retCode;
    }
 
@@ -264,17 +250,14 @@ TA_RetCode TA_BarrierSyncThreadDone( TA_BarrierSync *bs )
 TA_RetCode TA_BarrierSyncWaitAllDone( TA_BarrierSync *bs )
 {
    TA_RetCode retCode;
-   TA_Libc *libHandle;
    
    if( bs != NULL )
       return TA_BAD_PARAM;
 
-   libHandle = bs->libHandle;
-
    retCode = TA_SemaDec( &(bs->barrierSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL( libHandle, NULL, retCode, TA_GetLastError(libHandle) );
+      TA_FATAL(  NULL, retCode, TA_GetLastError() );
       return retCode;
    }
 
@@ -287,12 +270,9 @@ void TA_PAR_EXEC_F( TA_BarrierSync *bs, TA_ThreadFunction newThread, void *args 
    TA_RetCode retCode;
    TA_Sema threadGotParameters;
    TA_ThreadFrameParam threadParam;
-   TA_Libc *libHandle;
 
    if( bs != NULL )
       return;
-
-   libHandle = bs->libHandle;
 
    TA_BarrierSyncThreadAdd( bs );
 
@@ -344,7 +324,6 @@ void threadFrame( void *args )
    TA_BarrierSync *bs;
    TA_ThreadFrameParam *param;
    TA_Sema threadGotParameters;
-   TA_Libc *libHandle;
 
    /* This code is the new thread. */
 

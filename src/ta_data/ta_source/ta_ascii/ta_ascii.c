@@ -89,29 +89,29 @@
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_ASCII_InitializeSourceDriver( TA_Libc *libHandle )
+TA_RetCode TA_ASCII_InitializeSourceDriver( void )
 {
-   TA_PROLOG;
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_InitializeSourceDriver );
+   TA_PROLOG
+   TA_TRACE_BEGIN(  TA_ASCII_InitializeSourceDriver );
 
     /* Nothing to do for the time being. */
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_ASCII_ShutdownSourceDriver( TA_Libc *libHandle )
+TA_RetCode TA_ASCII_ShutdownSourceDriver( void )
 {
-   TA_PROLOG;
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_ShutdownSourceDriver );
+   TA_PROLOG
+   TA_TRACE_BEGIN(  TA_ASCII_ShutdownSourceDriver );
 
     /* Nothing to do for the time being. */
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_ASCII_GetParameters( TA_Libc *libHandle, TA_DataSourceParameters *param )
+TA_RetCode TA_ASCII_GetParameters( TA_DataSourceParameters *param )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_GetParameters );
+   TA_TRACE_BEGIN( TA_ASCII_GetParameters );
 
    memset( param, 0, sizeof( TA_DataSourceParameters ) );
 
@@ -129,11 +129,10 @@ TA_RetCode TA_ASCII_GetParameters( TA_Libc *libHandle, TA_DataSourceParameters *
 }
 
 
-TA_RetCode TA_ASCII_OpenSource( TA_Libc *libHandle,
-                                const TA_AddDataSourceParamPriv *param,
+TA_RetCode TA_ASCII_OpenSource( const TA_AddDataSourceParamPriv *param,
                                 TA_DataSourceHandle **handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_DataSourceHandle *tmpHandle;
    TA_PrivateAsciiHandle *privData;
    TA_RetCode retCode;
@@ -141,9 +140,9 @@ TA_RetCode TA_ASCII_OpenSource( TA_Libc *libHandle,
 
    *handle = NULL;
 
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_OpenSource );
+   TA_TRACE_BEGIN(  TA_ASCII_OpenSource );
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    /* Verify that the requested functionality is supported or not. */
    if( (param->flags & TA_ENABLE_UPDATE_INDEX) ||
@@ -161,7 +160,7 @@ TA_RetCode TA_ASCII_OpenSource( TA_Libc *libHandle,
    /* Allocate and initialize the handle. This function will also allocate the
     * private handle (opaque data).
     */
-   tmpHandle = TA_ASCII_DataSourceHandleAlloc(libHandle,param);
+   tmpHandle = TA_ASCII_DataSourceHandleAlloc(param);
 
    if( tmpHandle == NULL )
    {
@@ -203,12 +202,11 @@ TA_RetCode TA_ASCII_OpenSource( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_ASCII_CloseSource( TA_Libc *libHandle,
-                                 TA_DataSourceHandle *handle )
+TA_RetCode TA_ASCII_CloseSource( TA_DataSourceHandle *handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_CloseSource );
+   TA_TRACE_BEGIN(  TA_ASCII_CloseSource );
 
    /* Free all ressource used by this handle. */
    if( handle )
@@ -217,16 +215,15 @@ TA_RetCode TA_ASCII_CloseSource( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_ASCII_GetFirstCategoryHandle( TA_Libc *libHandle,
-                                            TA_DataSourceHandle *handle,
+TA_RetCode TA_ASCII_GetFirstCategoryHandle( TA_DataSourceHandle *handle,
                                             TA_CategoryHandle   *categoryHandle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_PrivateAsciiHandle *privData;
    TA_FileIndex     *fileIndex;
    TA_String        *string;
 
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_GetFirstCategoryHandle );
+   TA_TRACE_BEGIN(  TA_ASCII_GetFirstCategoryHandle );
 
    if( (handle == NULL) || (categoryHandle == NULL) )
    {
@@ -262,18 +259,17 @@ TA_RetCode TA_ASCII_GetFirstCategoryHandle( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_ASCII_GetNextCategoryHandle( TA_Libc *libHandle,
-                                           TA_DataSourceHandle *handle,
+TA_RetCode TA_ASCII_GetNextCategoryHandle( TA_DataSourceHandle *handle,
                                            TA_CategoryHandle   *categoryHandle,
                                            unsigned int index )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
    TA_PrivateAsciiHandle *privData;
    TA_FileIndex     *fileIndex;
    TA_String        *string;
 
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_GetNextCategoryHandle );
+   TA_TRACE_BEGIN(  TA_ASCII_GetNextCategoryHandle );
 
    (void)index; /* Get ride of compiler warnings. */
 
@@ -312,18 +308,17 @@ TA_RetCode TA_ASCII_GetNextCategoryHandle( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_ASCII_GetFirstSymbolHandle( TA_Libc *libHandle,
-                                          TA_DataSourceHandle *handle,
+TA_RetCode TA_ASCII_GetFirstSymbolHandle( TA_DataSourceHandle *handle,
                                           TA_CategoryHandle   *categoryHandle,
                                           TA_SymbolHandle     *symbolHandle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_PrivateAsciiHandle *privData;
    TA_FileIndex *fileIndex;
    TA_FileInfo *sourceInfo;
 
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_GetFirstSymbolHandle );
+   TA_TRACE_BEGIN(  TA_ASCII_GetFirstSymbolHandle );
 
    if( (handle == NULL) || (categoryHandle == NULL) || (symbolHandle == NULL) )
    {
@@ -362,32 +357,31 @@ TA_RetCode TA_ASCII_GetFirstSymbolHandle( TA_Libc *libHandle,
    /* Parano sanity check: the string of the requested categoryHandle should
     * correspond to the string of this sourceInfo.
     */
-   if( strcmp( TA_StringToChar( TA_FileInfoCategory( libHandle, sourceInfo ) ),
+   if( strcmp( TA_StringToChar( TA_FileInfoCategory( sourceInfo ) ),
                TA_StringToChar( categoryHandle->string ) ) != 0 )
    {
-      TA_FATAL( libHandle, NULL, 0, 0 );
+      TA_FATAL(  NULL, 0, 0 );
    }
 
    /* Set the symbolHandle. */
-   symbolHandle->string = TA_FileInfoSymbol( libHandle, sourceInfo );
+   symbolHandle->string = TA_FileInfoSymbol( sourceInfo );
    symbolHandle->opaqueData = sourceInfo;
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_ASCII_GetNextSymbolHandle( TA_Libc *libHandle,
-                                         TA_DataSourceHandle *handle,
+TA_RetCode TA_ASCII_GetNextSymbolHandle( TA_DataSourceHandle *handle,
                                          TA_CategoryHandle   *categoryHandle,
                                          TA_SymbolHandle     *symbolHandle,
                                          unsigned int index )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_PrivateAsciiHandle *privData;
    TA_FileIndex *fileIndex;
    TA_FileInfo *sourceInfo;
 
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_GetNextSymbolHandle );
+   TA_TRACE_BEGIN(  TA_ASCII_GetNextSymbolHandle );
 
    (void)index; /* Get ride of compiler warnings. */
 
@@ -428,21 +422,20 @@ TA_RetCode TA_ASCII_GetNextSymbolHandle( TA_Libc *libHandle,
    /* Parano sanity check: the string of the requested categoryHandle should
     * correspond to the string of this sourceInfo.
     */
-   if( strcmp( TA_StringToChar( TA_FileInfoCategory( libHandle, sourceInfo ) ),
+   if( strcmp( TA_StringToChar( TA_FileInfoCategory( sourceInfo ) ),
                TA_StringToChar( categoryHandle->string ) ) != 0 )
    {
-      TA_FATAL( libHandle, NULL, 0, 0 );
+      TA_FATAL(  NULL, 0, 0 );
    }
 
    /* Set the symbolHandle. */
-   symbolHandle->string = TA_FileInfoSymbol( libHandle, sourceInfo );
+   symbolHandle->string = TA_FileInfoSymbol( sourceInfo );
    symbolHandle->opaqueData = sourceInfo;
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_ASCII_GetHistoryData( TA_Libc *libHandle,
-                                    TA_DataSourceHandle *handle,
+TA_RetCode TA_ASCII_GetHistoryData( TA_DataSourceHandle *handle,
                                     TA_CategoryHandle   *categoryHandle,
                                     TA_SymbolHandle     *symbolHandle,
                                     TA_Period            period,
@@ -451,27 +444,27 @@ TA_RetCode TA_ASCII_GetHistoryData( TA_Libc *libHandle,
                                     TA_Field             fieldToAlloc,
                                     TA_ParamForAddData  *paramForAddData )
 {
-   TA_PROLOG;
+   TA_PROLOG
    const char *path;
    TA_FileInfo *sourceInfo;
    TA_FileHandle *fileHandle;
    TA_RetCode retCode;
    TA_PrivateAsciiHandle *privateHandle;
 
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_GetHistoryData );
+   TA_TRACE_BEGIN(  TA_ASCII_GetHistoryData );
 
-   TA_ASSERT( libHandle, handle != NULL );
+   TA_ASSERT( handle != NULL );
 
    privateHandle = (TA_PrivateAsciiHandle *)handle->opaqueData;
-   TA_ASSERT( libHandle, privateHandle != NULL );
+   TA_ASSERT( privateHandle != NULL );
 
-   TA_ASSERT( libHandle, paramForAddData != NULL );
-   TA_ASSERT( libHandle, categoryHandle != NULL );
-   TA_ASSERT( libHandle, symbolHandle != NULL );
+   TA_ASSERT( paramForAddData != NULL );
+   TA_ASSERT( categoryHandle != NULL );
+   TA_ASSERT( symbolHandle != NULL );
 
    sourceInfo = (TA_FileInfo *)symbolHandle->opaqueData;
 
-   TA_ASSERT( libHandle, sourceInfo != NULL );
+   TA_ASSERT( sourceInfo != NULL );
 
    /* If the requested period is too precise for the
     * period that can be provided by this data source,
@@ -491,22 +484,22 @@ TA_RetCode TA_ASCII_GetHistoryData( TA_Libc *libHandle,
       fieldToAlloc = privateHandle->readOpInfo->fieldProvided;
 
    /* Get the path of the file. */
-   path = TA_FileInfoPath( libHandle, sourceInfo );
+   path = TA_FileInfoPath( sourceInfo );
 
    if( !path )
    {
-      TA_FATAL( libHandle, "Building path failed", 0, 0 );
+      TA_FATAL(  "Building path failed", 0, 0 );
    }
 
    /* Open the file for sequential read only (optimized read) */
-   retCode = TA_FileSeqOpen( libHandle, path, &fileHandle );
+   retCode = TA_FileSeqOpen( path, &fileHandle );
    if( retCode != TA_SUCCESS )
    {
       TA_TRACE_RETURN( retCode );
    }
 
    /* Optimize the readOp according to the requested field. */
-   retCode = TA_ReadOp_Optimize( libHandle,
+   retCode = TA_ReadOp_Optimize(
                                  privateHandle->readOpInfo,
                                  privateHandle->readOpInfo->period, fieldToAlloc );
    if( retCode != TA_SUCCESS )
@@ -515,7 +508,7 @@ TA_RetCode TA_ASCII_GetHistoryData( TA_Libc *libHandle,
    }
 
    /* Read all the price bar. */
-   retCode = TA_ReadOp_Do( libHandle, fileHandle,                           
+   retCode = TA_ReadOp_Do( fileHandle,                           
                            privateHandle->readOpInfo,
                            privateHandle->readOpInfo->period,
                            start, end, 200,
@@ -523,12 +516,12 @@ TA_RetCode TA_ASCII_GetHistoryData( TA_Libc *libHandle,
 
    if( retCode != TA_SUCCESS )
    {
-      TA_FileSeqClose( libHandle, fileHandle );
+      TA_FileSeqClose( fileHandle );
       TA_TRACE_RETURN( retCode );
    }
 
    /* Read completed... clean-up and return. */
-   retCode = TA_FileSeqClose( libHandle, fileHandle );
+   retCode = TA_FileSeqClose( fileHandle );
    if( retCode != TA_SUCCESS )
    {
       TA_TRACE_RETURN( retCode );

@@ -117,40 +117,39 @@ typedef struct
 } TA_PrivateHandle;
 
 /**** Local functions declarations.    ****/
-static void freePrivateHandle( TA_Libc *libHandle, TA_PrivateHandle *privData );
-static TA_RetCode addSimMrgData( TA_Libc *libHandle,
-                                 TA_PrivateHandle *privData,
+static void freePrivateHandle( TA_PrivateHandle *privData );
+static TA_RetCode addSimMrgData( TA_PrivateHandle *privData,
                                  TA_ParamForAddData  *paramForAddData );
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_SIMULATOR_InitializeSourceDriver( TA_Libc *libHandle )
+TA_RetCode TA_SIMULATOR_InitializeSourceDriver( void )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
-   TA_TRACE_BEGIN( libHandle, TA_SIMULATOR_InitializeSourceDriver );
+   TA_TRACE_BEGIN(  TA_SIMULATOR_InitializeSourceDriver );
 
    /* Nothing to do for the time being. */
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_SIMULATOR_ShutdownSourceDriver( TA_Libc *libHandle )
+TA_RetCode TA_SIMULATOR_ShutdownSourceDriver( void )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
-   TA_TRACE_BEGIN( libHandle, TA_SIMULATOR_ShutdownSourceDriver );
+   TA_TRACE_BEGIN(  TA_SIMULATOR_ShutdownSourceDriver );
 
    /* Nothing to do for the time being. */
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_SIMULATOR_GetParameters( TA_Libc *libHandle, TA_DataSourceParameters *param )
+TA_RetCode TA_SIMULATOR_GetParameters( TA_DataSourceParameters *param )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
-   TA_TRACE_BEGIN( libHandle, TA_SIMULATOR_GetParameters );
+   TA_TRACE_BEGIN(  TA_SIMULATOR_GetParameters );
    memset( param, 0, sizeof( TA_DataSourceParameters ) );
 
    /* For the time being, the ASCII driver is a read-only source. */
@@ -167,20 +166,19 @@ TA_RetCode TA_SIMULATOR_GetParameters( TA_Libc *libHandle, TA_DataSourceParamete
 }
 
 
-TA_RetCode TA_SIMULATOR_OpenSource( TA_Libc *libHandle,
-                                    const TA_AddDataSourceParamPriv *param,
+TA_RetCode TA_SIMULATOR_OpenSource( const TA_AddDataSourceParamPriv *param,
                                     TA_DataSourceHandle **handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_DataSourceHandle *tmpHandle;
    TA_PrivateHandle *privData;
    TA_StringCache *stringCache;
 
    *handle = NULL;
 
-   TA_TRACE_BEGIN( libHandle, TA_SIMULATOR_OpenSource );
+   TA_TRACE_BEGIN(  TA_SIMULATOR_OpenSource );
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    if( !stringCache )
    {
@@ -197,7 +195,7 @@ TA_RetCode TA_SIMULATOR_OpenSource( TA_Libc *libHandle,
    /* Allocate and initialize the handle. This function will also allocate the
     * private handle (opaque data).
     */
-   tmpHandle = (TA_DataSourceHandle *)TA_Malloc( libHandle, sizeof( TA_DataSourceHandle ) );
+   tmpHandle = (TA_DataSourceHandle *)TA_Malloc( sizeof( TA_DataSourceHandle ) );
 
    if( tmpHandle == NULL )
    {
@@ -205,10 +203,10 @@ TA_RetCode TA_SIMULATOR_OpenSource( TA_Libc *libHandle,
    }
    memset( tmpHandle, 0, sizeof( TA_DataSourceHandle ) );
 
-   privData = (TA_PrivateHandle *)TA_Malloc( libHandle, sizeof( TA_PrivateHandle ) );
+   privData = (TA_PrivateHandle *)TA_Malloc( sizeof( TA_PrivateHandle ) );
    if( !privData )
    {
-      TA_Free( libHandle, tmpHandle );
+      TA_Free(  tmpHandle );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
    memset( privData, 0, sizeof( TA_PrivateHandle ) );
@@ -231,8 +229,8 @@ TA_RetCode TA_SIMULATOR_OpenSource( TA_Libc *libHandle,
 
       if( (privData->mrgInstance < 1) || (privData->mrgInstance > 4) )
       {
-         TA_Free( libHandle, tmpHandle );
-         TA_Free( libHandle, privData );
+         TA_Free(  tmpHandle );
+         TA_Free(  privData );
          TA_TRACE_RETURN( TA_BAD_PARAM );
       }
 
@@ -255,7 +253,7 @@ TA_RetCode TA_SIMULATOR_OpenSource( TA_Libc *libHandle,
        !privData->intra_ref_0 ||
        !privData->mrg_0 )
    {
-      freePrivateHandle( libHandle, privData );
+      freePrivateHandle( privData );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
@@ -265,14 +263,13 @@ TA_RetCode TA_SIMULATOR_OpenSource( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_SIMULATOR_CloseSource( TA_Libc *libHandle,
-                                     TA_DataSourceHandle *handle )
+TA_RetCode TA_SIMULATOR_CloseSource( TA_DataSourceHandle *handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
    TA_PrivateHandle *privData;
 
-   TA_TRACE_BEGIN( libHandle, TA_SIMULATOR_CloseSource );
+   TA_TRACE_BEGIN(  TA_SIMULATOR_CloseSource );
 
    /* Free all ressource used by this handle. */
    if( handle )
@@ -280,23 +277,22 @@ TA_RetCode TA_SIMULATOR_CloseSource( TA_Libc *libHandle,
       privData = (TA_PrivateHandle *)handle->opaqueData;
 
       if( privData )
-         freePrivateHandle( libHandle, privData );
+         freePrivateHandle( privData );
 
-      TA_Free( libHandle, handle );
+      TA_Free(  handle );
    }
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_SIMULATOR_GetFirstCategoryHandle( TA_Libc *libHandle,
-                                                TA_DataSourceHandle *handle,
+TA_RetCode TA_SIMULATOR_GetFirstCategoryHandle( TA_DataSourceHandle *handle,
                                                 TA_CategoryHandle   *categoryHandle )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
    TA_PrivateHandle *privData;
 
-   TA_TRACE_BEGIN( libHandle, TA_SIMULATOR_GetFirstCategoryHandle );
+   TA_TRACE_BEGIN(  TA_SIMULATOR_GetFirstCategoryHandle );
 
    if( (handle == NULL) || (categoryHandle == NULL) )
    {
@@ -319,15 +315,14 @@ TA_RetCode TA_SIMULATOR_GetFirstCategoryHandle( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_SIMULATOR_GetNextCategoryHandle( TA_Libc *libHandle,
-                                               TA_DataSourceHandle *handle,
+TA_RetCode TA_SIMULATOR_GetNextCategoryHandle( TA_DataSourceHandle *handle,
                                                TA_CategoryHandle   *categoryHandle,
                                                unsigned int index )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_PrivateHandle *privData;
 
-   TA_TRACE_BEGIN( libHandle, TA_SIMULATOR_GetNextCategoryHandle );
+   TA_TRACE_BEGIN(  TA_SIMULATOR_GetNextCategoryHandle );
 
    (void)index; /* Get ride of compiler warnings. */
 
@@ -359,15 +354,14 @@ TA_RetCode TA_SIMULATOR_GetNextCategoryHandle( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_SIMULATOR_GetFirstSymbolHandle( TA_Libc *libHandle,
-                                              TA_DataSourceHandle *handle,
+TA_RetCode TA_SIMULATOR_GetFirstSymbolHandle( TA_DataSourceHandle *handle,
                                               TA_CategoryHandle   *categoryHandle,
                                               TA_SymbolHandle     *symbolHandle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_PrivateHandle *privData;
 
-   TA_TRACE_BEGIN( libHandle, TA_SIMULATOR_GetFirstSymbolHandle );
+   TA_TRACE_BEGIN(  TA_SIMULATOR_GetFirstSymbolHandle );
 
    if( (handle == NULL) || (categoryHandle == NULL) || (symbolHandle == NULL) )
    {
@@ -401,16 +395,15 @@ TA_RetCode TA_SIMULATOR_GetFirstSymbolHandle( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_SIMULATOR_GetNextSymbolHandle( TA_Libc *libHandle,
-                                             TA_DataSourceHandle *handle,
+TA_RetCode TA_SIMULATOR_GetNextSymbolHandle( TA_DataSourceHandle *handle,
                                              TA_CategoryHandle   *categoryHandle,
                                              TA_SymbolHandle     *symbolHandle,
                                              unsigned int index )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_PrivateHandle *privData;
 
-   TA_TRACE_BEGIN( libHandle, TA_SIMULATOR_GetNextSymbolHandle );
+   TA_TRACE_BEGIN(  TA_SIMULATOR_GetNextSymbolHandle );
 
    (void)index; /* Get ride of compiler warnings. */
 
@@ -449,8 +442,7 @@ TA_RetCode TA_SIMULATOR_GetNextSymbolHandle( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_SIMULATOR_GetHistoryData( TA_Libc *libHandle,
-                                        TA_DataSourceHandle *handle,
+TA_RetCode TA_SIMULATOR_GetHistoryData( TA_DataSourceHandle *handle,
                                         TA_CategoryHandle   *categoryHandle,
                                         TA_SymbolHandle     *symbolHandle,
                                         TA_Period            period,
@@ -459,7 +451,7 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_Libc *libHandle,
                                         TA_Field             fieldToAlloc,
                                         TA_ParamForAddData  *paramForAddData )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_PrivateHandle *privateHandle;
    TA_RetCode retCode;
    TA_Timestamp *timestamp;
@@ -472,15 +464,15 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_Libc *libHandle,
    (void)start;
    (void)period;
 
-   TA_TRACE_BEGIN( libHandle, TA_SIMULATOR_GetHistoryData );
+   TA_TRACE_BEGIN(  TA_SIMULATOR_GetHistoryData );
 
-   TA_ASSERT( libHandle, handle != NULL );
+   TA_ASSERT( handle != NULL );
 
    privateHandle = (TA_PrivateHandle *)handle->opaqueData;
-   TA_ASSERT( libHandle, privateHandle != NULL );
-   TA_ASSERT( libHandle, paramForAddData != NULL );
-   TA_ASSERT( libHandle, categoryHandle != NULL );
-   TA_ASSERT( libHandle, symbolHandle != NULL );
+   TA_ASSERT( privateHandle != NULL );
+   TA_ASSERT( paramForAddData != NULL );
+   TA_ASSERT( categoryHandle != NULL );
+   TA_ASSERT( symbolHandle != NULL );
 
    retCode = TA_INTERNAL_ERROR(98);
 
@@ -500,14 +492,14 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_Libc *libHandle,
           volume = (TA_Integer *)NULL;
 
           #define TA_ALLOC_COPY( varName, varType, varSize) { \
-             varName = TA_Malloc( libHandle, sizeof( varType ) * varSize ); \
+             varName = TA_Malloc( sizeof( varType ) * varSize ); \
              if( !varName ) \
              { \
-                FREE_IF_NOT_NULL( libHandle, open         ); \
-                FREE_IF_NOT_NULL( libHandle, high         ); \
-                FREE_IF_NOT_NULL( libHandle, low          ); \
-                FREE_IF_NOT_NULL( libHandle, close        ); \
-                FREE_IF_NOT_NULL( libHandle, volume       ); \
+                FREE_IF_NOT_NULL( open         ); \
+                FREE_IF_NOT_NULL( high         ); \
+                FREE_IF_NOT_NULL( low          ); \
+                FREE_IF_NOT_NULL( close        ); \
+                FREE_IF_NOT_NULL( volume       ); \
                 TA_TRACE_RETURN( TA_ALLOC_ERR ); \
              } \
              memcpy( varName, TA_SREF_##varName##_daily_ref_0_PRIV, sizeof( varType )*varSize ); }
@@ -520,14 +512,14 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_Libc *libHandle,
          #undef TA_ALLOC_COPY
 
          /* Set the timestamp. */
-         timestamp = TA_Malloc( libHandle, sizeof( TA_Timestamp ) * TA_REF_DAILY_NB_BARS );
+         timestamp = TA_Malloc( sizeof( TA_Timestamp ) * TA_REF_DAILY_NB_BARS );
          if( !timestamp )
          {
-            TA_Free( libHandle, open   );
-            TA_Free( libHandle, high   );
-            TA_Free( libHandle, low    );
-            TA_Free( libHandle, close  );
-            TA_Free( libHandle, volume );
+            TA_Free(  open   );
+            TA_Free(  high   );
+            TA_Free(  low    );
+            TA_Free(  close  );
+            TA_Free(  volume );
             TA_TRACE_RETURN( TA_ALLOC_ERR );
          }
 
@@ -548,14 +540,14 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_Libc *libHandle,
           open = high = low = close = (TA_Real *)NULL;
 
           #define TA_ALLOC_COPY( varName, varType, varSize) { \
-                  varName = TA_Malloc( libHandle, sizeof( varType ) * varSize ); \
+                  varName = TA_Malloc( sizeof( varType ) * varSize ); \
                   if( !varName ) \
                   { \
-                     TA_Free( libHandle, timestamp ); \
-                     FREE_IF_NOT_NULL( libHandle, open      ); \
-                     FREE_IF_NOT_NULL( libHandle, high      ); \
-                     FREE_IF_NOT_NULL( libHandle, low       ); \
-                     FREE_IF_NOT_NULL( libHandle, close     ); \
+                     TA_Free(  timestamp ); \
+                     FREE_IF_NOT_NULL( open      ); \
+                     FREE_IF_NOT_NULL( high      ); \
+                     FREE_IF_NOT_NULL( low       ); \
+                     FREE_IF_NOT_NULL( close     ); \
                      TA_TRACE_RETURN( TA_ALLOC_ERR ); \
                   } \
                   memcpy( varName, TA_SREF_##varName##_daily_ref_0_PRIV, sizeof( varType )*varSize ); }
@@ -567,13 +559,13 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_Libc *libHandle,
          #undef TA_ALLOC_COPY
 
          /* Set the timestamp. */
-         timestamp = (TA_Timestamp *)TA_Malloc( libHandle, sizeof( TA_Timestamp ) * 33 );
+         timestamp = (TA_Timestamp *)TA_Malloc( sizeof( TA_Timestamp ) * 33 );
          if( !timestamp )
          {
-            FREE_IF_NOT_NULL( libHandle, open  );
-            FREE_IF_NOT_NULL( libHandle, high  );
-            FREE_IF_NOT_NULL( libHandle, low   );
-            FREE_IF_NOT_NULL( libHandle, close );
+            FREE_IF_NOT_NULL( open  );
+            FREE_IF_NOT_NULL( high  );
+            FREE_IF_NOT_NULL( low   );
+            FREE_IF_NOT_NULL( close );
             TA_TRACE_RETURN( TA_ALLOC_ERR );
          }
 
@@ -592,7 +584,7 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_Libc *libHandle,
       break;
 
    case 1: /* This is TA_SIM_MRG */
-      retCode = addSimMrgData( libHandle, privateHandle, 
+      retCode = addSimMrgData( privateHandle, 
                                paramForAddData );
       break;
    }
@@ -601,11 +593,11 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_Libc *libHandle,
 }
 
 /**** Local functions definitions.     ****/
-static void freePrivateHandle( TA_Libc *libHandle, TA_PrivateHandle *privData )
+static void freePrivateHandle( TA_PrivateHandle *privData )
 {
    TA_StringCache *stringCache;
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    if( stringCache )
    {
@@ -625,23 +617,21 @@ static void freePrivateHandle( TA_Libc *libHandle, TA_PrivateHandle *privData )
          TA_StringFree( stringCache, privData->mrg_0 );
    }
 
-   FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.open );
-   FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.high );
-   FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.low );
-   FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.close );
-   FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.volume );
-   FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.openInterest );
-   FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.timestamp );
+   FREE_IF_NOT_NULL( privData->mrgHistory.open );
+   FREE_IF_NOT_NULL( privData->mrgHistory.high );
+   FREE_IF_NOT_NULL( privData->mrgHistory.low );
+   FREE_IF_NOT_NULL( privData->mrgHistory.close );
+   FREE_IF_NOT_NULL( privData->mrgHistory.volume );
+   FREE_IF_NOT_NULL( privData->mrgHistory.openInterest );
+   FREE_IF_NOT_NULL( privData->mrgHistory.timestamp );
 
-   TA_Free( libHandle, privData );    
+   TA_Free(  privData );    
 }
 
 
-static TA_RetCode addSimMrgData( TA_Libc *libHandle,
-                                 TA_PrivateHandle *privData,
+static TA_RetCode addSimMrgData( TA_PrivateHandle *privData,
                                  TA_ParamForAddData  *paramForAddData )
 {
-   (void)libHandle;
    (void)paramForAddData;
    (void)privData;
 #if 0
@@ -649,13 +639,13 @@ static TA_RetCode addSimMrgData( TA_Libc *libHandle,
    if( !privData->mrgAllocated )
    {
       memset( privData->mrgHistory, 0, sizeof( TA_History ) );
-      privData->mrgHistory.open         = TA_Malloc( libHandle, sizeof( TA_Real ) * 1000 ) );
-      privData->mrgHistory.high         = TA_Malloc( libHandle, sizeof( TA_Real ) * 1000 ) );
-      privData->mrgHistory.low          = TA_Malloc( libHandle, sizeof( TA_Real ) * 1000 ) );
-      privData->mrgHistory.close        = TA_Malloc( libHandle, sizeof( TA_Real ) * 1000 ) );
-      privData->mrgHistory.volume       = TA_Malloc( libHandle, sizeof( TA_Integer ) * 1000 ) );
-      privData->mrgHistory.openInterest = TA_Malloc( libHandle, sizeof( TA_Integer ) * 1000 ) );
-      privData->mrgHistory.timestamp    = TA_Malloc( libHandle, sizeof( TA_Timestamp ) * 1000 ) );
+      privData->mrgHistory.open         = TA_Malloc( sizeof( TA_Real ) * 1000 ) );
+      privData->mrgHistory.high         = TA_Malloc( sizeof( TA_Real ) * 1000 ) );
+      privData->mrgHistory.low          = TA_Malloc( sizeof( TA_Real ) * 1000 ) );
+      privData->mrgHistory.close        = TA_Malloc( sizeof( TA_Real ) * 1000 ) );
+      privData->mrgHistory.volume       = TA_Malloc( sizeof( TA_Integer ) * 1000 ) );
+      privData->mrgHistory.openInterest = TA_Malloc( sizeof( TA_Integer ) * 1000 ) );
+      privData->mrgHistory.timestamp    = TA_Malloc( sizeof( TA_Timestamp ) * 1000 ) );
 
       if( !privData->mrgHistory.open         ||
           !privData->mrgHistory.high         ||
@@ -665,13 +655,13 @@ static TA_RetCode addSimMrgData( TA_Libc *libHandle,
           !privData->mrgHistory.openInterest ||
           !privData->mrgHistory.timestamp )
       {
-         FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.open );
-         FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.high );
-         FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.low );
-         FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.close );
-         FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.volume );
-         FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.openInterest );
-         FREE_IF_NOT_NULL( libHandle, privData->mrgHistory.timestamp );
+         FREE_IF_NOT_NULL( privData->mrgHistory.open );
+         FREE_IF_NOT_NULL( privData->mrgHistory.high );
+         FREE_IF_NOT_NULL( privData->mrgHistory.low );
+         FREE_IF_NOT_NULL( privData->mrgHistory.close );
+         FREE_IF_NOT_NULL( privData->mrgHistory.volume );
+         FREE_IF_NOT_NULL( privData->mrgHistory.openInterest );
+         FREE_IF_NOT_NULL( privData->mrgHistory.timestamp );
          return TA_ALLOC_ERR;
       }
    }

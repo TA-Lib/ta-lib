@@ -14,7 +14,7 @@
 
 /* NEVER CALL directly this function! Use TA_CallFunc. */
  
-TA_RetCode TA_CCI_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_CCI_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -23,7 +23,7 @@ TA_RetCode TA_CCI_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] )
 {
-   return TA_CCI( libHandle,
+   return TA_CCI(
             startIdx,
             endIdx,
             in[0].p.in.data.inPrice.high, /* inHigh_0 */

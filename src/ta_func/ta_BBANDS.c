@@ -65,8 +65,7 @@
 int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
                         TA_Real       optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                         TA_Real       optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        TA_Integer    optInMethod_3,
-                        TA_Integer    optInCompatibility_4 ) 
+                        TA_Integer    optInMethod_3 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -74,9 +73,7 @@ int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER
    (void)optInNbDevDn_2;
 
    /* The lookback is driven by the middle band moving average. */
-   return TA_MA_Lookback( optInTimePeriod_0,
-                          optInMethod_3,
-                          optInCompatibility_4 );
+   return TA_MA_Lookback( optInTimePeriod_0, optInMethod_3 );                          
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -100,21 +97,16 @@ int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER
  * optInMethod_3:
  *    Type of Moving Average
  * 
- * optInCompatibility_4:
- *    Make function compatible to some software
- * 
  * 
  */
 
-TA_RetCode TA_BBANDS( TA_Libc      *libHandle,
-                      TA_Integer    startIdx,
+TA_RetCode TA_BBANDS( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real inReal_0[],
                       TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
                       TA_Real       optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                       TA_Real       optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
                       TA_Integer    optInMethod_3,
-                      TA_Integer    optInCompatibility_4,
                       TA_Integer   *outBegIdx,
                       TA_Integer   *outNbElement,
                       TA_Real       outRealUpperBand_0[],
@@ -130,8 +122,6 @@ TA_RetCode TA_BBANDS( TA_Libc      *libHandle,
    register TA_Real tempReal2;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -162,11 +152,6 @@ TA_RetCode TA_BBANDS( TA_Libc      *libHandle,
    if( optInMethod_3 == TA_INTEGER_DEFAULT )
       optInMethod_3 = 0;
    else if( (optInMethod_3 < 0) || (optInMethod_3 > 4) )
-      return TA_BAD_PARAM;
-
-   if( optInCompatibility_4 == TA_INTEGER_DEFAULT )
-      optInCompatibility_4 = 0;
-   else if( (optInCompatibility_4 < 0) || (optInCompatibility_4 > 1) )
       return TA_BAD_PARAM;
 
    if( outRealUpperBand_0 == NULL )
@@ -223,12 +208,11 @@ TA_RetCode TA_BBANDS( TA_Libc      *libHandle,
     * The other two bands will simply add/substract the
     * standard deviation from this middle band.
     */
-   retCode = TA_MA( libHandle,
+   retCode = TA_MA(
                     startIdx, endIdx,
                     inReal_0,
                     optInTimePeriod_0,
                     optInMethod_3,
-                    optInCompatibility_4,
                     outBegIdx, outNbElement, tempBuffer1 );
 
    if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
@@ -240,7 +224,7 @@ TA_RetCode TA_BBANDS( TA_Libc      *libHandle,
    /* Calculate the standard deviation into the temporary buffer
     * The result is put in tempBuffer2.
     */
-   if( optInCompatibility_4 == TA_BBANDS_CLASSIC )
+   if( TA_Globals.compatibility == TA_COMPATIBILITY_DEFAULT )
    {
       /* The classic approach is not always using the true standard
        * variation.
@@ -260,7 +244,7 @@ TA_RetCode TA_BBANDS( TA_Libc      *libHandle,
        * in the variance calculation regardless the MA method
        * choosen for the middle band.
        */
-      retCode = TA_STDDEV( libHandle,
+      retCode = TA_STDDEV(
                            *outBegIdx, endIdx, inReal_0,
                            optInTimePeriod_0, 1.0,
                            outBegIdx, outNbElement, tempBuffer2 );

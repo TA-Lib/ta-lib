@@ -14,7 +14,7 @@
 
 /* NEVER CALL directly this function! Use TA_CallFunc. */
  
-TA_RetCode TA_BBANDS_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_BBANDS_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -23,7 +23,7 @@ TA_RetCode TA_BBANDS_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] )
 {
-   return TA_BBANDS( libHandle,
+   return TA_BBANDS(
                startIdx,
                endIdx,
                in[0].p.in.data.inReal, /* inReal_0 */
@@ -31,7 +31,6 @@ TA_RetCode TA_BBANDS_FramePP( TA_Libc            *libHandle,
                optIn[1].p.optIn.data.optInReal, /* optInNbDevUp_1 */
                optIn[2].p.optIn.data.optInReal, /* optInNbDevDn_2 */
                optIn[3].p.optIn.data.optInInteger, /* optInMethod_3 */
-               optIn[4].p.optIn.data.optInInteger, /* optInCompatibility_4 */
                outBegIdx, 
                outNbElement, 
                out[0].p.out.data.outReal, /*  outRealUpperBand_0 */

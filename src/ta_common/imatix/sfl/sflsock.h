@@ -308,56 +308,56 @@ extern int
 extern "C" {
 #endif
 
-int    sock_init            (TA_Libc *libHandle);
-int    sock_term            (TA_Libc *libHandle);
-sock_t passive_TCP          (TA_Libc *libHandle, const char *service, int queue);
-sock_t passive_UDP          (TA_Libc *libHandle, const char *service);
-sock_t passive_socket       (TA_Libc *libHandle, const char *service, const char *protocol,
+int    sock_init            (void);
+int    sock_term            (void);
+sock_t passive_TCP          (const char *service, int queue);
+sock_t passive_UDP          (const char *service);
+sock_t passive_socket       (const char *service, const char *protocol,
                              int queue);
-sock_t connect_TCP          (TA_Libc *libHandle, const char *host, const char *service);
-sock_t connect_UDP          (TA_Libc *libHandle, const char *host, const char *service);
-sock_t connect_TCP_fast     (TA_Libc *libHandle, const struct sockaddr_in *sin);
-sock_t connect_UDP_fast     (TA_Libc *libHandle, const struct sockaddr_in *sin);
-sock_t connect_socket       (TA_Libc *libHandle, const char *host, const char *service, const char
+sock_t connect_TCP          (const char *host, const char *service);
+sock_t connect_UDP          (const char *host, const char *service);
+sock_t connect_TCP_fast     (const struct sockaddr_in *sin);
+sock_t connect_UDP_fast     (const struct sockaddr_in *sin);
+sock_t connect_socket       (const char *host, const char *service, const char
                              *protocol, const struct sockaddr_in *sin,
                              int retry_max, int retry_delay);
-int    connect_to_peer      (TA_Libc *libHandle, sock_t handle,
+int    connect_to_peer      (sock_t handle,
                              const struct sockaddr_in *sin);
-int    connect_error        (TA_Libc *libHandle);
-sock_t accept_socket        (TA_Libc *libHandle, sock_t master);
-sock_t create_socket        (TA_Libc *libHandle, const char *protocol);
-int    address_end_point    (TA_Libc *libHandle, const char *host, const char *service, const
+int    connect_error        (void);
+sock_t accept_socket        (sock_t master);
+sock_t create_socket        (const char *protocol);
+int    address_end_point    (const char *host, const char *service, const
                              char *protocol, struct sockaddr_in *sin);
-int    get_sock_addr        (TA_Libc *libHandle, sock_t handle, struct sockaddr_in *sin,
+int    get_sock_addr        (sock_t handle, struct sockaddr_in *sin,
                              char *name, int namesize);
-int    get_peer_addr        (TA_Libc *libHandle, sock_t handle, struct sockaddr_in *sin,
+int    get_peer_addr        (sock_t handle, struct sockaddr_in *sin,
                              char *name, int namesize);
-void   build_sockaddr       (TA_Libc *libHandle, struct sockaddr_in *sin, qbyte host, dbyte port);
-char  *socket_localaddr     (TA_Libc *libHandle, sock_t handle);
-char  *socket_peeraddr      (TA_Libc *libHandle, sock_t handle);
-Bool   socket_is_alive      (TA_Libc *libHandle, sock_t handle);
-int    socket_error         (TA_Libc *libHandle, sock_t handle);
-int    socket_nodelay       (TA_Libc *libHandle, sock_t handle);
-int    read_TCP             (TA_Libc *libHandle, sock_t handle, void *buffer, size_t length);
-int    write_TCP            (TA_Libc *libHandle, sock_t handle, const void *buffer, size_t length);
-int    read_UDP             (TA_Libc *libHandle, sock_t handle, void *buffer, size_t length,
+void   build_sockaddr       (struct sockaddr_in *sin, qbyte host, dbyte port);
+char  *socket_localaddr     (sock_t handle);
+char  *socket_peeraddr      (sock_t handle);
+Bool   socket_is_alive      (sock_t handle);
+int    socket_error         (sock_t handle);
+int    socket_nodelay       (sock_t handle);
+int    read_TCP             (sock_t handle, void *buffer, size_t length);
+int    write_TCP            (sock_t handle, const void *buffer, size_t length);
+int    read_UDP             (sock_t handle, void *buffer, size_t length,
                              const struct sockaddr_in *sin);
-int    write_UDP            (TA_Libc *libHandle, sock_t handle, const void *buffer, size_t length,
+int    write_UDP            (sock_t handle, const void *buffer, size_t length,
                              const struct sockaddr_in *sin);
-int    close_socket         (TA_Libc *libHandle, sock_t handle);
-int    sock_select          (TA_Libc *libHandle, int nfds, fd_set *readfds, fd_set *writefds,
+int    close_socket         (sock_t handle);
+int    sock_select          (int nfds, fd_set *readfds, fd_set *writefds,
                              fd_set *errorfds, struct timeval *timeout);
-char  *get_hostname         (TA_Libc *libHandle);
-qbyte  get_hostaddr         (TA_Libc *libHandle);
-qbyte *get_hostaddrs        (TA_Libc *libHandle);
-const  char *sockmsg        (TA_Libc *libHandle);
-Bool   socket_is_permitted  (TA_Libc *libHandle, const char *address, const char *mask);
-char  *sock_ntoa            (TA_Libc *libHandle, qbyte address);
-char  *get_host_file        (TA_Libc *libHandle);
-int    get_name_server      (TA_Libc *libHandle, struct sockaddr_in *ns_address, int ns_max);
+char  *get_hostname         (void);
+qbyte  get_hostaddr         (void);
+qbyte *get_hostaddrs        (void);
+const  char *sockmsg        (void);
+Bool   socket_is_permitted  (const char *address, const char *mask);
+char  *sock_ntoa            (qbyte address);
+char  *get_host_file        (void);
+int    get_name_server      (struct sockaddr_in *ns_address, int ns_max);
 
 #if (defined (__WINDOWS__))
-int    winsock_last_error   (TA_Libc *libHandle);
+int    winsock_last_error   (void);
 #endif
 
 #ifdef __cplusplus
@@ -365,7 +365,7 @@ int    winsock_last_error   (TA_Libc *libHandle);
 #endif
 
 /*  Macros for compatibility with previous versions                          */
-#define socket_hostaddr(libHandle,handle) socket_peeraddr (libHandle,handle)
+#define socket_hostaddr(handle) socket_peeraddr (handle)
 
 
 #endif                                  /*  Include sflsock.h                */

@@ -73,7 +73,7 @@
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_HistoryCheckInternal( TA_Libc            *libHandle,
+TA_RetCode TA_HistoryCheckInternal(
                                     TA_Period           expectedPeriod,
                                     const TA_Timestamp *expectedStart,
                                     const TA_Timestamp *expectedEnd,
@@ -82,7 +82,7 @@ TA_RetCode TA_HistoryCheckInternal( TA_Libc            *libHandle,
                                     unsigned int       *faultyIndex,
                                     unsigned int       *faultyField )
 {
-   TA_PROLOG;
+   TA_PROLOG
    unsigned int allFieldNull;
 
    (void)faultyField;
@@ -91,9 +91,9 @@ TA_RetCode TA_HistoryCheckInternal( TA_Libc            *libHandle,
    (void)expectedEnd;
    (void)expectedStart;
 
-   TA_TRACE_BEGIN( libHandle, TA_HistoryCheckInternal );
+   TA_TRACE_BEGIN(  TA_HistoryCheckInternal );
 
-   TA_ASSERT( libHandle, history != NULL );
+   TA_ASSERT( history != NULL );
 
    /* Period shall be always set in the history. */
    if( history->period != expectedPeriod )

@@ -41,7 +41,7 @@
 
 char **
 tok_split (
-    TA_Libc *libHandle, 
+    
     const char *string)
 {
     char
@@ -57,7 +57,7 @@ tok_split (
     if (string == NULL)
         string = "";
 
-    buffer = TA_Malloc( libHandle,  (strlen (string) + 1));
+    buffer = TA_Malloc( strlen(string)+1 );
     if (buffer == NULL)
         return (NULL);
 
@@ -87,7 +87,7 @@ tok_split (
     /*  We return the address of the first string pointer, i.e. the caller   */
     /*  does not see the pointer to the buffer.  We can thus get away with   */
     /*  just two allocs; one for the buffer and one for the token list.      */
-    token_list = TA_Malloc( libHandle,  (sizeof (char *) * (word_count + 2)));
+    token_list = TA_Malloc( sizeof (char *) * (word_count + 2));
     if (token_list == NULL)
         return (NULL);
 
@@ -118,7 +118,7 @@ tok_split (
 
 char **
 tok_split_rich (
-    TA_Libc *libHandle, 
+    
     const char *string,
     const char *delims)
 {
@@ -133,7 +133,7 @@ tok_split_rich (
         word_nbr;
 
     /*  Allocate space for work string, up to the size of the input string   */
-    buffer = TA_Malloc( libHandle,  (strlen (string) + 1));
+    buffer = TA_Malloc( strlen (string) + 1 );
     if (buffer == NULL)
         return (NULL);
 
@@ -182,7 +182,7 @@ tok_split_rich (
     /*  We return the address of the first string pointer, i.e. the caller   */
     /*  does not see the pointer to the buffer.  We can thus get away with   */
     /*  just two allocs; one for the buffer and one for the token list.     */
-    token_list = TA_Malloc( libHandle,  (sizeof (char *) * (word_count + 2)));
+    token_list = TA_Malloc( sizeof(char *) * (word_count + 2));
     if (token_list == NULL)
         return (NULL);
 
@@ -211,14 +211,14 @@ tok_split_rich (
 
 void
 tok_free (
-    TA_Libc *libHandle, 
+    
     char **token_list)
 {
     if (token_list)
       {
         token_list--;                   /*  Back-up to get right address     */
-        TA_Free( libHandle,  (token_list [0]));      /*  Free buffer                      */
-        TA_Free( libHandle,  (token_list));          /*    and free token list            */
+        TA_Free( token_list [0] );      /*  Free buffer                      */
+        TA_Free( token_list );          /*    and free token list            */
       }
 }
 
@@ -234,7 +234,7 @@ tok_free (
 
 char **
 tok_push (
-    TA_Libc *libHandle, 
+    
     char **token_list,
     const char *string)
 {
@@ -250,8 +250,8 @@ tok_push (
         string_size,
         new_buffer_size;
 
-    buffer_size = tok_text_size (libHandle,token_list);
-    word_count  = tok_size      (libHandle,token_list);
+    buffer_size = tok_text_size (token_list);
+    word_count  = tok_size      (token_list);
 
     string_size = strlen (string);
     new_buffer_size = buffer_size + string_size + 1;
@@ -259,12 +259,12 @@ tok_push (
     /*  New list has one entry for each in old list, plus header, plus null
      *  entry at end, plus one for the new string -- makes 3 more.
      */
-    new_list   = TA_Malloc( libHandle,  (sizeof (char *) * (word_count + 3)));
-    new_buffer = TA_Malloc( libHandle,  (new_buffer_size));
+    new_list   = TA_Malloc( (sizeof (char *) * (word_count + 3)));
+    new_buffer = TA_Malloc( (new_buffer_size));
     if (new_list == NULL || new_buffer == NULL) 
       {
-        TA_Free( libHandle,  (new_list));
-        TA_Free( libHandle,  (new_buffer));
+        TA_Free( new_list );
+        TA_Free( new_buffer );
         return (NULL);
       }
 
@@ -281,7 +281,7 @@ tok_push (
         new_bufptr += strlen (new_bufptr) + 1;
       }
     new_list [word_count] = NULL;       /*  Store final null pointer         */
-    tok_free (libHandle,token_list);              /*  Free old list                    */
+    tok_free (token_list);              /*  Free old list                    */
     return (new_list);
 }
 
@@ -296,13 +296,11 @@ tok_push (
 
 int
 tok_size (
-    TA_Libc *libHandle, 
+    
     char **token_list)
 {
     int
         word_nbr;
-
-    (void)libHandle;
 
     for (word_nbr = 0; token_list [word_nbr]; word_nbr++);
     return (word_nbr);
@@ -319,7 +317,7 @@ tok_size (
 
 size_t
 tok_text_size (
-    TA_Libc *libHandle, 
+    
     char **token_list)
 {
     size_t
@@ -327,7 +325,6 @@ tok_text_size (
     int
         word_nbr;
 
-    (void)libHandle;
     text_size = 0;
     for (word_nbr = 0; token_list [word_nbr]; word_nbr++)
         text_size += strlen (token_list [word_nbr]) + 1;
@@ -349,7 +346,7 @@ tok_text_size (
 #if 0
 !!! Unused
 char *
-tok_subst ( TA_Libc *libHandle, 
+tok_subst ( 
             const char *string,
             SYMTAB *symbols)
 {
@@ -365,8 +362,8 @@ tok_subst ( TA_Libc *libHandle,
     SYMBOL
         *symbol;                        /*  Symbol in symbol table           */
 
-    TA_ASSERT_RET (libHandle, string, NULL );
-    TA_ASSERT_RET (libHandle, symbols, NULL );
+    TA_ASSERT_RET ( string, NULL );
+    TA_ASSERT_RET ( symbols, NULL );
 
     /*  Parse from left to right, looking for $(...) patterns                */
     cur_result = mem_strdup ("");       /*  Result buffer is empty           */
@@ -381,39 +378,39 @@ tok_subst ( TA_Libc *libHandle,
           {
             /*  First, copy string up to sym_start                           */
             size_t cur_len = strlen (cur_result);
-            TA_ASSERT_RET ( libHandle, (sym_start - copied_to) >= 0);
+            TA_ASSERT_RET ( (sym_start - copied_to) >= 0);
 
-            new_result = TA_Malloc( libHandle,  (cur_len + (sym_start - copied_to)));
+            new_result = TA_Malloc(  (cur_len + (sym_start - copied_to)));
             if (new_result == NULL)
               {
-                TA_Free( libHandle,  (cur_result));
+                TA_Free(   (cur_result));
                 return (NULL);
               }
 
             strncpy (new_result, cur_result, (cur_len + 1));
             strncat (new_result, copied_to, sym_start - 1 - copied_to);
-            TA_Free( libHandle,  (cur_result));
+            TA_Free(   (cur_result));
             cur_result = new_result;
             copied_to  = sym_end + 1;
 
             /*  Now translate and insert symbol                              */
             sym_length = sym_end - sym_start - 1;
-            sym_name   = TA_Malloc( libHandle,  (sym_length + 1) );
+            sym_name   = TA_Malloc(  (sym_length + 1) );
             if (sym_name == NULL)
               {
-                TA_Free( libHandle,  (cur_result));
+                TA_Free(   (cur_result));
                 return (NULL);
               }
 
             memcpy (sym_name, sym_start + 1, sym_length);
             sym_name [sym_length] = 0;
             symbol = sym_lookup_symbol (symbols, sym_name);
-            TA_Free( libHandle,  (sym_name));
+            TA_Free(   (sym_name));
             if (symbol)
               {
                 xstrcpy_debug ();
                 new_result = xstrcpy (NULL, cur_result, symbol-> value, NULL);
-                TA_Free( libHandle,  (cur_result));
+                TA_Free(   (cur_result));
                 cur_result = new_result;
               }
           }
@@ -425,7 +422,7 @@ tok_subst ( TA_Libc *libHandle,
     /*  Copy anything remaining in the string                                */
     xstrcpy_debug ();
     new_result = xstrcpy (NULL, cur_result, copied_to, NULL);
-    TA_Free( libHandle,  (cur_result));
+    TA_Free(   (cur_result));
     return (new_result);
 }
 

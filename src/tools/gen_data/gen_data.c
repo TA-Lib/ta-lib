@@ -8,8 +8,7 @@ char buffer[1024];
 int gen_ta_mrg_0( void );
 int gen_ta_sim_ref_0( void );
 
-static void TA_WriteRefCFile( TA_Libc *libHandle,
-                              TA_UDBase *unifiedDatabase,
+static void TA_WriteRefCFile( TA_UDBase *unifiedDatabase,
                               const char *category,
                               const char *symbol,
                               void *opaqueData );
@@ -59,15 +58,14 @@ int main( int argc, char *argv[] )
    return 0;
 }
 
-void myFatalHandler( TA_Libc *libHandle )
+void myFatalHandler( void )
 {
    printf( "\nFatal Error Handler Called\n " );
-   TA_FatalReport( libHandle, stdout );
+   TA_FatalReport( stdout );
 }
 
 int gen_ta_sim_ref_0( void )
 {
-   TA_Libc *libHandle;
    TA_UDBase *unifiedDatabase;
    TA_InitializeParam initializeParam;
    TA_AddDataSourceParam param;
@@ -76,17 +74,17 @@ int gen_ta_sim_ref_0( void )
    /* Initialize the TA-LIB. */
    memset( &initializeParam, 0, sizeof( TA_InitializeParam ) );
    initializeParam.logOutput = stdout;
-   retCode = TA_Initialize( &libHandle, &initializeParam );
+   retCode = TA_Initialize( &initializeParam );
    if( retCode != TA_SUCCESS )
       return -10;
 
    /* Install the TA_Fatal handler, just for better debugging.  */
-   retCode = TA_SetFatalErrorHandler( libHandle, myFatalHandler );
+   retCode = TA_SetFatalErrorHandler( myFatalHandler );
    if( retCode != TA_SUCCESS )
       return retCode;
  
    /* Create the unified database. */
-   retCode = TA_UDBaseAlloc( libHandle, &unifiedDatabase );
+   retCode = TA_UDBaseAlloc( &unifiedDatabase );
    if( retCode == TA_SUCCESS )
    {
       /* Add the reference data in the unified database. */
@@ -125,7 +123,7 @@ int gen_ta_sim_ref_0( void )
          return retCode;
    }
 
-   retCode = TA_Shutdown( libHandle );
+   retCode = TA_Shutdown();
    if( retCode != TA_SUCCESS )
       return -20;
 
@@ -205,8 +203,7 @@ int gen_ta_mrg_0( void )
    return 0;
 }
 
-static void TA_WriteRefCFile( TA_Libc *libHandle,
-                              TA_UDBase *unifiedDatabase,
+static void TA_WriteRefCFile( TA_UDBase *unifiedDatabase,
                               const char *category,
                               const char *symbol,
                               void *opaqueData )
@@ -219,7 +216,6 @@ static void TA_WriteRefCFile( TA_Libc *libHandle,
    const char *tmpStr;
 
    (void)opaqueData; /* Get ride of compiler warning. */
-   (void)libHandle;  /* Get ride of compiler warning. */
 
    /* Identify the period for this symbol. */
    if( strcmp( symbol, "intra_ref_0" ) == 0 )

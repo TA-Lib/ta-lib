@@ -82,7 +82,6 @@ typedef struct
 typedef struct
 {
    unsigned int magicNb;
-   TA_Libc *libHandle;
 
    TA_Real lastTrade;
    TA_Real bid;
@@ -102,8 +101,7 @@ typedef struct
    const char *type;
 } TA_YahooMarketPage;
 
-TA_RetCode TA_YahooMarketPageAlloc( TA_Libc *libHandle,
-                                    const TA_DecodingParam *marketDecodingParam,
+TA_RetCode TA_YahooMarketPageAlloc( const TA_DecodingParam *marketDecodingParam,
                                     const TA_String *categoryName,
                                     const TA_String *symbolName,
                                     TA_YahooMarketPage **allocatedMarketPage );
@@ -148,8 +146,7 @@ TA_RetCode TA_YahooMarketPageFree( TA_YahooMarketPage *quotePage );
  *
  * See "ta_yahoo_market.c"
  */
-TA_RetCode TA_AllocStringFromYahooName( TA_Libc *libHandle,
-                                        TA_DecodingParam *info,
+TA_RetCode TA_AllocStringFromYahooName( TA_DecodingParam *info,
                                         const char *yahooSymbol,
                                         TA_String **allocatedCategoryName,
                                         TA_String **allocatedSymbolName,
@@ -163,8 +160,7 @@ TA_RetCode TA_AllocStringFromYahooName( TA_Libc *libHandle,
  *
  * See "ta_yahoo_market.c"
  */
-TA_RetCode TA_AllocStringFromLibName( TA_Libc *libHandle,
-                                      const TA_String *category,
+TA_RetCode TA_AllocStringFromLibName( const TA_String *category,
                                       const TA_String *symbol,
                                       TA_String **allocatedYahooName );
 
@@ -172,8 +168,7 @@ TA_RetCode TA_AllocStringFromLibName( TA_Libc *libHandle,
  *
  * See "ta_yahoo_market.c"
  */
-TA_RetCode TA_WebPageAllocFromYahooName( TA_Libc *libHandle,
-                                         const TA_DecodingParam *info,
+TA_RetCode TA_WebPageAllocFromYahooName( const TA_DecodingParam *info,
                                          const char *yahooName,
                                          TA_WebPage **allocatedWebPage );
 
@@ -185,8 +180,7 @@ TA_RetCode TA_WebPageAllocFromYahooName( TA_Libc *libHandle,
  *
  * See "ta_yahoo_historical.c"
  */
-TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
-                                     TA_DataSourceHandle *handle,
+TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
                                      TA_CategoryHandle   *categoryHandle,
                                      TA_SymbolHandle     *symbolHandle,
                                      TA_Period            period,

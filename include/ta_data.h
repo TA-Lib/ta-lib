@@ -46,8 +46,7 @@ extern "C" {
 typedef unsigned int TA_UDBase;
 
 /* Function to create a new unified database. */
-TA_RetCode TA_UDBaseAlloc( TA_Libc *libHandle,
-                           TA_UDBase **newUDBase );
+TA_RetCode TA_UDBaseAlloc( TA_UDBase **newUDBase );
 
 /* Function to free all ressource of an unified database. */
 TA_RetCode TA_UDBaseFree( TA_UDBase *toBefreed );
@@ -138,7 +137,7 @@ typedef struct
     *    TA_AddDataSourceParam param;
     *    memset( &param, 0, sizeof( TA_AddDataSourceParam ) );
     *    ... set only the parameter you need...
-    *    retCode = TA_AddDataSource( libHandle, &param ); 
+    *    retCode = TA_AddDataSource( &param ); 
     *
     * Initializing the whole structure to zero assure
     * that the actual (or future) unused parameters
@@ -279,8 +278,7 @@ TA_RetCode TA_SymbolTableFree ( TA_StringTable *table );
  *  This code will print the name and category of all symbols
  *  actually in the unified database.
  *
- *  void printSymbolInfo( TA_Libc *libHandle,
- *                        TA_UDBase *udBase,
+ *  void printSymbolInfo( TA_UDBase *udBase,
  *                        const char *category,
  *                        const char *symbol,
  *                        void *opaqueData )
@@ -293,8 +291,7 @@ TA_RetCode TA_SymbolTableFree ( TA_StringTable *table );
  *     TA_ForEachSymbol( udBase, printSymbolInfo, NULL );
  *  }
  */
-typedef void (*TA_ForEachSymbolFunc)( TA_Libc *libHandle,
-                                      TA_UDBase *unifiedDatabase,
+typedef void (*TA_ForEachSymbolFunc)( TA_UDBase *unifiedDatabase,
                                       const char *category,
                                       const char *symbol,
                                       void *opaqueData );
@@ -390,11 +387,11 @@ TA_RetCode TA_Report( TA_UDBase *unifiedDatabase,
  * display on the console.
  *
  * Example:
- *        TA_WebFetch( libHandle, "www.yahoo.com", stdout );
+ *        TA_WebFetch( "www.yahoo.com", stdout );
  *           or
- *        TA_WebFetch( libHandle, "http://www.yahoo.com//mt", myFile );
+ *        TA_WebFetch( "http://www.yahoo.com//mt", myFile );
  */
-TA_RetCode TA_WebFetch( TA_Libc *libHandle, const char *url, FILE *out );
+TA_RetCode TA_WebFetch( const char *url, FILE *out );
 
 /* Some data source provides information on the current
  * market.

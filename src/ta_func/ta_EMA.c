@@ -60,14 +60,12 @@
    #include "ta_utility.h"
 #endif
 
-int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInCompatibility_1 ) 
+int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   (void)optInCompatibility_1;
-
-   return optInTimePeriod_0 - 1 + TA_UnstablePeriodTable[TA_FUNC_UNST_EMA];
+   return optInTimePeriod_0 - 1 + TA_Globals.unstablePeriod[TA_FUNC_UNST_EMA];
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -82,18 +80,13 @@ int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MA
  * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
  *    Number of period
  * 
- * optInCompatibility_1:
- *    Make function compatible to some software
- * 
  * 
  */
 
-TA_RetCode TA_EMA( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_EMA( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                   TA_Integer    optInCompatibility_1,
                    TA_Integer   *outBegIdx,
                    TA_Integer   *outNbElement,
                    TA_Real       outReal_0[] )
@@ -102,8 +95,6 @@ TA_RetCode TA_EMA( TA_Libc      *libHandle,
    /* Insert local variables here. */
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -121,11 +112,6 @@ TA_RetCode TA_EMA( TA_Libc      *libHandle,
    else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( optInCompatibility_1 == TA_INTEGER_DEFAULT )
-      optInCompatibility_1 = 0;
-   else if( (optInCompatibility_1 < 0) || (optInCompatibility_1 > 1) )
-      return TA_BAD_PARAM;
-
    if( outReal_0 == NULL )
       return TA_BAD_PARAM;
 
@@ -141,7 +127,6 @@ TA_RetCode TA_EMA( TA_Libc      *libHandle,
                       inReal_0,
                       optInTimePeriod_0, /* From 1 to 200 */
                       PER_TO_K( optInTimePeriod_0 ),
-                      optInCompatibility_1,                      
                       outBegIdx,
                       outNbElement,
                       outReal_0 );
@@ -166,7 +151,6 @@ TA_RetCode TA_INT_EMA( TA_Integer    startIdx,
                        const TA_Real *inReal_0,
                        TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
                        TA_Real       optInK_1,          /* Ratio for calculation of EMA. */
-                       TA_Integer    optInCompatibility_1,                       
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
                        TA_Real      *outReal_0 )
@@ -182,7 +166,7 @@ TA_RetCode TA_INT_EMA( TA_Integer    startIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = TA_EMA_Lookback( optInTimePeriod_0, optInCompatibility_1 );
+   lookbackTotal = TA_EMA_Lookback( optInTimePeriod_0 );
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -221,10 +205,8 @@ TA_RetCode TA_INT_EMA( TA_Integer    startIdx,
     *    period is 1 who use 2th price bar or something
     *    like that... (not an obvious one...).
     */
-   switch( optInCompatibility_1 )
+   if( TA_Globals.compatibility == TA_COMPATIBILITY_DEFAULT )
    {
-   case TA_MA_CLASSIC:
-
       today = startIdx-lookbackTotal;
       i = optInTimePeriod_0;
       tempReal = 0.0;
@@ -232,21 +214,20 @@ TA_RetCode TA_INT_EMA( TA_Integer    startIdx,
          tempReal += inReal_0[today++];
 
       prevMA = tempReal / optInTimePeriod_0;
-      break;
-   case TA_MA_METASTOCK:
+   }
+   else
+   {
       prevMA = inReal_0[0];
       today = 1;
-      break;
+
       /* !!! Tradestation not supported yet.
       case TA_MA_TRADESTATION:
          prevMA = inReal_0[startIdx-1];
          if( optInTimePeriod_0 == 1 )
             *outBegIdx_0 = 1;
          else
-            *outBegIdx_0 = 3; */
-
-   default:
-      return TA_INTERNAL_ERROR(118);
+            *outBegIdx_0 = 3;
+       */
    }
 
    /* At this point, prevMA is the first EMA (the seed for

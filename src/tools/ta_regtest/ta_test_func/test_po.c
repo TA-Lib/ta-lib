@@ -83,7 +83,7 @@ typedef struct
    TA_Integer optInFastPeriod_0; /* From 1 to 200 */
    TA_Integer optInSlowPeriod_1; /* From 1 to 200 */
    TA_Integer optInMethod_2;
-   TA_Integer optInCompatibility_3;
+   TA_Integer compatibility;
 
    TA_RetCode expectedRetCode;
 
@@ -102,8 +102,7 @@ typedef struct
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 
 /**** Local variables definitions.     ****/
@@ -112,26 +111,26 @@ static TA_Test tableTest[] =
    /**********************************/
    /*    APO TEST - SIMPLE - CLASSIC */
    /**********************************/
-   { 1, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
-   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS,      1, -3.5876, 25,  252-25 },
-   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS, 252-26, -0.1667, 25,  252-25 }, /* Last Value */
+   { 1, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
+   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      1, -3.5876, 25,  252-25 },
+   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-26, -0.1667, 25,  252-25 }, /* Last Value */
 
-   { 0, 0, 0,   1, 12, 26, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 1,   1, 12, 26, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 25,  25, 12, 26, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS,   0,  -3.3124,   25,  1 }, /* First/Last Value */
-   { 0, 0, 250, 251, 12, 26, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS,   1,  -0.1667,  250,  2 }, /* Last  Value */
+   { 0, 0, 0,   1, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 1,   1, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 25,  25, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  -3.3124,   25,  1 }, /* First/Last Value */
+   { 0, 0, 250, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,  -0.1667,  250,  2 }, /* Last  Value */
 
    /************************************/
    /*    APO TEST - SIMPLE - METASTOCK */
    /************************************/
-   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
-   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,      1, -3.5876, 25,  252-25 },
-   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS, 252-26, -0.1667, 25,  252-25 }, /* Last Value */
+   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
+   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -3.5876, 25,  252-25 },
+   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, -0.1667, 25,  252-25 }, /* Last Value */
 
-   { 0, 0, 0,   1, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 1,   1, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 25,  25, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   0,  -3.3124,   25,  1 }, /* First/Last Value */
-   { 0, 0, 250, 251, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   1,  -0.1667,  250,  2 }, /* Last  Value */
+   { 0, 0, 0,   1, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 1,   1, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 25,  25, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -3.3124,   25,  1 }, /* First/Last Value */
+   { 0, 0, 250, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  -0.1667,  250,  2 }, /* Last  Value */
 
 
    /***************************************/
@@ -142,51 +141,51 @@ static TA_Test tableTest[] =
    /*****************************************/
    /*    APO TEST - EXPONENTIAL - METASTOCK */
    /*****************************************/
-   { 1, 0, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,      0, -2.4193, 25,  252-25 }, /* First Value */
-   { 0, 0, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,      1, -2.4367, 25,  252-25 },
-   { 0, 0, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS, 252-26, 0.90401, 25,  252-25 }, /* Last Value */
+   { 1, 0, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -2.4193, 25,  252-25 }, /* First Value */
+   { 0, 0, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -2.4367, 25,  252-25 },
+   { 0, 0, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, 0.90401, 25,  252-25 }, /* Last Value */
 
-   { 0, 0, 0,   1, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 1,   1, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 25,  25, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,  -2.4193,   25,  1 },
-   { 0, 0, 250, 251, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   1,  0.90401,  250,  2 }, /* Last  Value */
+   { 0, 0, 0,   1, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 1,   1, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 25,  25, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.4193,   25,  1 },
+   { 0, 0, 250, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  0.90401,  250,  2 }, /* Last  Value */
 
-   { 0, 0, 251, 251, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,  0.90401,  251,  1 },  /* Last  Value */
-   { 0, 0, 25,  25, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,  -2.4193,   25,  1 },  /* Just enough to calculate first. */
-   { 0, 0, 26,  26, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,  -2.4367,   26,  1 },  /* Just enough to calculate second. */
+   { 0, 0, 251, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  0.90401,  251,  1 },  /* Last  Value */
+   { 0, 0, 25,  25, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.4193,   25,  1 },  /* Just enough to calculate first. */
+   { 0, 0, 26,  26, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.4367,   26,  1 },  /* Just enough to calculate second. */
 
    /**********************************/
    /*    PPO TEST - SIMPLE - CLASSIC */
    /**********************************/
-   { 1, 1, 0, 251, 2, 3, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS,   0,  1.10264, 2,  252-2 }, /* First Value */
-   { 0, 1, 0, 251, 2, 3, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS,   1, -0.02813, 2,  252-2 },
-   { 0, 1, 0, 251, 2, 3, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
+   { 1, 1, 0, 251, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  1.10264, 2,  252-2 }, /* First Value */
+   { 0, 1, 0, 251, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1, -0.02813, 2,  252-2 },
+   { 0, 1, 0, 251, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
 
-   { 0, 1, 0,   1, 2, 3, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 1,   1, 2, 3, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 2,   2, 2, 3, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
-   { 0, 1, 250, 251, 2, 3, TA_MA_SIMPLE, TA_MA_CLASSIC, TA_SUCCESS,   1, -0.21191, 250,  2 }, /* Last  Value */
+   { 0, 1, 0,   1, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 1,   1, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 2,   2, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
+   { 0, 1, 250, 251, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1, -0.21191, 250,  2 }, /* Last  Value */
 
    /************************************/
    /*    PPO TEST - SIMPLE - METASTOCK */
    /************************************/
-   { 0, 1, 0, 251, 3, 2, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   0,  1.10264, 2,  252-2 }, /* First Value */
-   { 0, 1, 0, 251, 2, 3, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   1, -0.02813, 2,  252-2 },
-   { 0, 1, 0, 251, 3, 2, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
+   { 0, 1, 0, 251, 3, 2, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  1.10264, 2,  252-2 }, /* First Value */
+   { 0, 1, 0, 251, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.02813, 2,  252-2 },
+   { 0, 1, 0, 251, 3, 2, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
 
-   { 0, 1, 0,   1, 2, 3, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 1,   1, 3, 2, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 2,   2, 2, 3, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
-   { 0, 1, 250, 251, 3, 2, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   1, -0.21191, 250,  2 }, /* Last  Value */
+   { 0, 1, 0,   1, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 1,   1, 3, 2, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 2,   2, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
+   { 0, 1, 250, 251, 3, 2, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.21191, 250,  2 }, /* Last  Value */
 
-   { 1, 1, 0, 251, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,      0, -3.6393, 25,  252-25 }, /* First Value */
-   { 0, 1, 0, 251, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,      1, -3.9534, 25,  252-25 },
-   { 0, 1, 0, 251, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS, 252-26, -0.15281, 25,  252-25 }, /* Last Value */
+   { 1, 1, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -3.6393, 25,  252-25 }, /* First Value */
+   { 0, 1, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -3.9534, 25,  252-25 },
+   { 0, 1, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, -0.15281, 25,  252-25 }, /* Last Value */
 
-   { 0, 1, 0,   1, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 1,   1, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 25,  25, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   0, -3.6393,   25,  1 }, /* First/Last Value */
-   { 0, 1, 250, 251, 12, 26, TA_MA_SIMPLE, TA_MA_METASTOCK, TA_SUCCESS,   1, -0.15281, 250,  2 }, /* Last  Value */
+   { 0, 1, 0,   1, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 1,   1, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 25,  25, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0, -3.6393,   25,  1 }, /* First/Last Value */
+   { 0, 1, 250, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.15281, 250,  2 }, /* Last  Value */
 
    /***************************************/
    /*    PPO TEST - EXPONENTIAL - CLASSIC */
@@ -196,24 +195,24 @@ static TA_Test tableTest[] =
    /*****************************************/
    /*    PPO TEST - EXPONENTIAL - METASTOCK */
    /*****************************************/
-   { 1, 1, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,      0, -2.7083, 25,  252-25 }, /* First Value */
-   { 0, 1, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,      1, -2.7390, 25,  252-25 },
-   { 0, 1, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS, 252-26, 0.83644, 25,  252-25 }, /* Last Value */
+   { 1, 1, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -2.7083, 25,  252-25 }, /* First Value */
+   { 0, 1, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -2.7390, 25,  252-25 },
+   { 0, 1, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, 0.83644, 25,  252-25 }, /* Last Value */
 
-   { 0, 1, 0,   1, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 1, 1,   1, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 1, 25,  25, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,   -2.7083,   25,  1 },
-   { 0, 1, 250, 251, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   1,   0.83644,  250,  2 }, /* Last  Value */
+   { 0, 1, 0,   1, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 1, 1,   1, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 1, 25,  25, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,   -2.7083,   25,  1 },
+   { 0, 1, 250, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,   0.83644,  250,  2 }, /* Last  Value */
 
-   { 0, 1, 251, 251, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,  0.83644,  251,  1 },  /* Last  Value */
-   { 0, 1, 25,  25, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,  -2.7083,   25,  1 },  /* Just enough to calculate first. */
-   { 0, 1, 26,  26, 12, 26, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,  -2.7390,   26,  1 },  /* Just enough to calculate second. */
+   { 0, 1, 251, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  0.83644,  251,  1 },  /* Last  Value */
+   { 0, 1, 25,  25, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.7083,   25,  1 },  /* Just enough to calculate first. */
+   { 0, 1, 26,  26, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.7390,   26,  1 },  /* Just enough to calculate second. */
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
-ErrorNumber test_func_po( TA_Libc *libHandle, TA_History *history )
+ErrorNumber test_func_po( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
@@ -228,7 +227,7 @@ ErrorNumber test_func_po( TA_Libc *libHandle, TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
 
-      retValue = do_test( libHandle, history, &tableTest[i] );
+      retValue = do_test( history, &tableTest[i] );
       if( retValue != 0 )
       {
          printf( "TA_APO/TA_PPO Failed Test #%d (Code=%d)\n", i, retValue );
@@ -241,7 +240,7 @@ ErrorNumber test_func_po( TA_Libc *libHandle, TA_History *history )
 }
 
 /**** Local functions definitions.     ****/
-static TA_RetCode rangeTestFunction( TA_Libc *libHandle, 
+static TA_RetCode rangeTestFunction( 
                               TA_Integer startIdx,
                               TA_Integer endIdx,
                               TA_Real *outputBuffer,
@@ -260,33 +259,28 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
 
    if( testParam->test->doPercentage )
    {
-      retCode = TA_PPO( libHandle,
-                        startIdx,
+      retCode = TA_PPO( startIdx,
                         endIdx,
                         testParam->close,
                         testParam->test->optInFastPeriod_0,
                         testParam->test->optInSlowPeriod_1,
                         testParam->test->optInMethod_2,
-                        testParam->test->optInCompatibility_3,                        
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
 
      *lookback = TA_PPO_Lookback( testParam->test->optInFastPeriod_0,
                       testParam->test->optInSlowPeriod_1,
-                      testParam->test->optInMethod_2,
-                      testParam->test->optInCompatibility_3 );                      
+                      testParam->test->optInMethod_2 );                      
    }
    else
    {
-      retCode = TA_APO( libHandle,
-                        startIdx,
+      retCode = TA_APO( startIdx,
                         endIdx,
                         testParam->close,
                         testParam->test->optInFastPeriod_0,
                         testParam->test->optInSlowPeriod_1,
                         testParam->test->optInMethod_2,
-                        testParam->test->optInCompatibility_3,                        
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
@@ -294,16 +288,14 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
 
      *lookback = TA_APO_Lookback( testParam->test->optInFastPeriod_0,
                       testParam->test->optInSlowPeriod_1,
-                      testParam->test->optInMethod_2,
-                      testParam->test->optInCompatibility_3 );                      
+                      testParam->test->optInMethod_2 );
    }
 
   return retCode;
 }
 
 
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test )
 {
    TA_RetCode retCode;
@@ -316,37 +308,35 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    /* Set to NAN all the elements of the gBuffers.  */
    clearAllBuffers();
 
+   TA_SetCompatibility( test->compatibility );
+
    /* Build the input. */
    setInputBuffer( 0, history->close, history->nbBars );
    setInputBuffer( 1, history->close, history->nbBars );
    
-   TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_EMA, 0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
 
    /* Make a simple first call. */
    if( test->doPercentage )
    {
-      retCode = TA_PPO( libHandle,
-                        test->startIdx,
+      retCode = TA_PPO( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
                         test->optInFastPeriod_0,
                         test->optInSlowPeriod_1,
                         test->optInMethod_2,
-                        test->optInCompatibility_3,                        
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
    }
    else
    {
-      retCode = TA_APO( libHandle,
-                        test->startIdx,
+      retCode = TA_APO( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
                         test->optInFastPeriod_0,
                         test->optInSlowPeriod_1,
                         test->optInMethod_2,
-                        test->optInCompatibility_3,                        
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -372,28 +362,24 @@ static ErrorNumber do_test( TA_Libc *libHandle,
     */
    if( test->doPercentage )
    {
-      retCode = TA_PPO( libHandle,
-                        test->startIdx,
+      retCode = TA_PPO( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
                         test->optInFastPeriod_0,
                         test->optInSlowPeriod_1,
                         test->optInMethod_2,
-                        test->optInCompatibility_3,                        
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
    }
    else
    {
-      retCode = TA_APO( libHandle,
-                        test->startIdx,
+      retCode = TA_APO( test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
                         test->optInFastPeriod_0,
                         test->optInSlowPeriod_1,
                         test->optInMethod_2,
-                        test->optInCompatibility_3,                        
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -429,8 +415,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
       if( test->optInMethod_2 == TA_MA_EXPONENTIAL )
       {
-         errNb = doRangeTest( libHandle,
-                              rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_EMA,
                               (void *)&testParam, 1, 0 );
          if( errNb != TA_TEST_PASS )
@@ -438,8 +423,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       }
       else
       {
-         errNb = doRangeTest( libHandle,
-                              rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_NONE,
                               (void *)&testParam, 1, 0 );
          if( errNb != TA_TEST_PASS )

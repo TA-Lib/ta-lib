@@ -114,7 +114,6 @@
 typedef struct
 {
    unsigned int magicNb;
-   TA_Libc *libHandle;
 
    /* Variables describing where and how to fetch the data. */
    const char *webSiteAddr;
@@ -169,33 +168,28 @@ typedef struct
 } TA_NetworkGlobal;
 
 /**** Local functions declarations.    ****/
-TA_RetCode internalWebPageAlloc( TA_Libc       *libHandle,
-                                 const char    *webSiteAddr,
+TA_RetCode internalWebPageAlloc( const char    *webSiteAddr,
                                  const char    *webSitePage,
                                  const char    *proxyName,
                                  const char    *proxyPort,
                                  TA_WebPage   **webPageAllocated );
 
-static TA_RetCode TA_NetworkGlobalInit    ( TA_Libc *libHandle, void **globalToAlloc );
-static TA_RetCode TA_NetworkGlobalShutdown( TA_Libc *libHandle, void *globalAllocated );
+static TA_RetCode TA_NetworkGlobalInit    ( void **globalToAlloc );
+static TA_RetCode TA_NetworkGlobalShutdown( void *globalAllocated );
 
 #if defined( USE_WININET )
-static TA_RetCode fetchUsingWinInet( TA_Libc *libHandle,
-                                     TA_NetworkGlobal *global,
+static TA_RetCode fetchUsingWinInet( TA_NetworkGlobal *global,
                                      TA_WebPage       *webPage );
 
-static TA_RetCode buildListDataWinInet( TA_Libc *libHandle,
-                                        TA_WebPage *webPage,
+static TA_RetCode buildListDataWinInet( TA_WebPage *webPage,
                                         HINTERNET hRessource );
 
-static TA_RetCode TA_SetReceiveTimeout( TA_Libc *libHandle,
-                                        unsigned long receiveTimeout,
+static TA_RetCode TA_SetReceiveTimeout( unsigned long receiveTimeout,
                                         HINTERNET hWebPage );
 #endif
 
 #if defined( USE_LIBCURL )
-static TA_RetCode fetchUsingLibCurl( TA_Libc *libHandle,
-                                     TA_NetworkGlobal *global,
+static TA_RetCode fetchUsingLibCurl( TA_NetworkGlobal *global,
                                      TA_WebPage       *webPage );
 static TA_RetCode rfc1945StatusToRetCode( unsigned int httpErrorCode );
 
@@ -214,8 +208,7 @@ const TA_GlobalControl TA_NetworkGlobalControl =
 };
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_WebPageAlloc( TA_Libc       *libHandle,
-                            const char    *webSiteAddr,
+TA_RetCode TA_WebPageAlloc( const char    *webSiteAddr,
                             const char    *webSitePage,
                             const char    *proxyName,
                             const char    *proxyPort,
@@ -256,8 +249,7 @@ TA_RetCode TA_WebPageAlloc( TA_Libc       *libHandle,
       retCode = TA_INTERNET_READ_DATA_FAILED;
       for( j=0; (retCode == TA_INTERNET_READ_DATA_FAILED) && (j < 100); j++ )
       {
-         retCode = internalWebPageAlloc( libHandle,
-                                         webSiteAddr,
+         retCode = internalWebPageAlloc( webSiteAddr,
                                          webSitePage,
                                          proxyName,
                                          proxyPort,
@@ -276,7 +268,6 @@ TA_RetCode TA_WebPageAlloc( TA_Libc       *libHandle,
 
 TA_RetCode TA_WebPageFree( TA_WebPage *webPage )
 {
-   TA_Libc *libHandle;
    TA_WebPageHiddenData *hiddenData;
 
    if( webPage ) 
@@ -288,29 +279,25 @@ TA_RetCode TA_WebPageFree( TA_WebPage *webPage )
       if( hiddenData->magicNb != TA_WEBPAGE_MAGIC_NB )
          return TA_BAD_OBJECT;
 
-      libHandle = hiddenData->libHandle;
-      if( !libHandle )
-         return TA_INTERNAL_ERROR(33);
-
       /* The object is validated, can start to free ressources
        * from this point.
        */
 
       /* Free private data */
-      TA_Free( libHandle, hiddenData );
+      TA_Free(  hiddenData );
 
       /* Free public data. */
       if( webPage->content )
          TA_StreamFree( webPage->content );
 
-      TA_Free( libHandle, webPage );
+      TA_Free(  webPage );
    }
 
    return TA_SUCCESS;
 }
 
 /**** Local functions definitions.     ****/
-static TA_RetCode TA_NetworkGlobalInit( TA_Libc *libHandle, void **globalToAlloc )
+static TA_RetCode TA_NetworkGlobalInit( void **globalToAlloc )
 {
    #if !defined( TA_SINGLE_THREAD )
    TA_RetCode retCode;
@@ -332,7 +319,7 @@ static TA_RetCode TA_NetworkGlobalInit( TA_Libc *libHandle, void **globalToAlloc
       #endif
    #endif
 
-   global = (TA_NetworkGlobal *)TA_Malloc( libHandle, sizeof( TA_NetworkGlobal ) );
+   global = (TA_NetworkGlobal *)TA_Malloc( sizeof( TA_NetworkGlobal ) );
    if( !global )
       return TA_ALLOC_ERR;
 
@@ -342,7 +329,7 @@ static TA_RetCode TA_NetworkGlobalInit( TA_Libc *libHandle, void **globalToAlloc
       global->curlHandle = curl_easy_init();
       if( global->curlHandle == NULL )
       {
-         TA_Free( libHandle, global );
+         TA_Free(  global );
          return TA_LIBCURL_INIT_FAILED;
       }
    #endif
@@ -352,7 +339,7 @@ static TA_RetCode TA_NetworkGlobalInit( TA_Libc *libHandle, void **globalToAlloc
       retCode = TA_SemaInit( &global->mutexSema, 1 );
       if( retCode != TA_SUCCESS )
       {
-         TA_Free( libHandle, global );
+         TA_Free(  global );
          return retCode;
       }
    #endif
@@ -364,7 +351,7 @@ static TA_RetCode TA_NetworkGlobalInit( TA_Libc *libHandle, void **globalToAlloc
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_NetworkGlobalShutdown( TA_Libc *libHandle, void *globalAllocated )
+static TA_RetCode TA_NetworkGlobalShutdown( void *globalAllocated )
 {
    TA_NetworkGlobal *global;
    TA_RetCode retCode = TA_SUCCESS;
@@ -392,17 +379,16 @@ static TA_RetCode TA_NetworkGlobalShutdown( TA_Libc *libHandle, void *globalAllo
       retCode = TA_SemaDestroy( &global->mutexSema );
    #endif
 
-   TA_Free( libHandle, global );
+   TA_Free(  global );
 
    return retCode;
 }
 
 #if defined( USE_LIBCURL )
-static TA_RetCode fetchUsingLibCurl( TA_Libc *libHandle,
-                                     TA_NetworkGlobal *global,
+static TA_RetCode fetchUsingLibCurl( TA_NetworkGlobal *global,
                                      TA_WebPage       *webPage )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
    TA_RetCode retCode;
    TA_WebPageHiddenData *webPageHidden;
@@ -412,9 +398,9 @@ static TA_RetCode fetchUsingLibCurl( TA_Libc *libHandle,
    CURLcode retValue;
    long curlInfo;
 
-   TA_TRACE_BEGIN( libHandle, fetchUsingLibCurl );
+   TA_TRACE_BEGIN( fetchUsingLibCurl );
 
-   TA_ASSERT( libHandle, webPage != NULL );
+   TA_ASSERT( webPage != NULL );
 
    webPageHidden = (TA_WebPageHiddenData *)webPage->hiddenData;   
   
@@ -439,7 +425,7 @@ static TA_RetCode fetchUsingLibCurl( TA_Libc *libHandle,
    else
       string3 = NULL;
 
-   urlString = TA_Malloc( libHandle, urlLength );
+   urlString = TA_Malloc( urlLength );
    if( !urlString )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -456,7 +442,7 @@ static TA_RetCode fetchUsingLibCurl( TA_Libc *libHandle,
       retCode = TA_SemaWait( &global->mutexSema );
       if( retCode != TA_SUCCESS )
       {
-         TA_Free( libHandle, urlString );
+         TA_Free(  urlString );
          TA_TRACE_RETURN( retCode );
       }
    #endif
@@ -490,7 +476,7 @@ static TA_RetCode fetchUsingLibCurl( TA_Libc *libHandle,
    #endif
 
    /* Free the url. */
-   TA_Free( libHandle, urlString );
+   TA_Free(  urlString );
 
    TA_TRACE_RETURN( retCode );
 }
@@ -500,18 +486,16 @@ size_t libcurlWriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *da
    register int bufferSize;
    TA_WebPage *webPage;
    TA_WebPageHiddenData *webPageHidden;
-   TA_Libc *libHandle;
    TA_RetCode retCode;
    char *buffer;
 
    webPage = (TA_WebPage *)data;
    webPageHidden = (TA_WebPageHiddenData *)webPage->hiddenData;   
-   libHandle = webPageHidden->libHandle;
 
    bufferSize = size * nmemb;
    
    /* Make a copy of the provided data. */
-   buffer = TA_Malloc( libHandle, bufferSize );
+   buffer = TA_Malloc( bufferSize );
    if( !buffer )
       return 0; /* Error. */
 
@@ -523,13 +507,12 @@ size_t libcurlWriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *da
       /* The first buffer will initiate the creation of
        * the stream.
        */
-      webPage->content = TA_StreamAllocFromBuffer( libHandle,
-                                                   buffer, bufferSize,
+      webPage->content = TA_StreamAllocFromBuffer( buffer, bufferSize,
                                                    NULL, NULL );
 
       if( !webPage->content )
       {
-         TA_Free( libHandle, buffer );
+         TA_Free(  buffer );
          return 0; /* Error. */
       }
    }
@@ -541,7 +524,7 @@ size_t libcurlWriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *da
                                     NULL, NULL );
       if( retCode != TA_SUCCESS )
       {
-         TA_Free( libHandle, buffer );
+         TA_Free(  buffer );
          return 0; /* Error */
       }
    }
@@ -551,11 +534,10 @@ size_t libcurlWriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *da
 #endif
 
 #if defined( USE_WININET )
-static TA_RetCode fetchUsingWinInet( TA_Libc *libHandle,
-                                     TA_NetworkGlobal *global,
+static TA_RetCode fetchUsingWinInet( TA_NetworkGlobal *global,
                                      TA_WebPage       *webPage )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
    TA_RetCode retCode;
    DWORD retDWORD;
@@ -563,7 +545,7 @@ static TA_RetCode fetchUsingWinInet( TA_Libc *libHandle,
    TA_WebPageHiddenData *webPageHidden;
    HINTERNET hSession, hWebPage;
 
-   TA_TRACE_BEGIN( libHandle, fetchUsingWinInet );
+   TA_TRACE_BEGIN( fetchUsingWinInet );
 
    webPageHidden = (TA_WebPageHiddenData *)webPage->hiddenData;   
 
@@ -595,7 +577,7 @@ static TA_RetCode fetchUsingWinInet( TA_Libc *libHandle,
                 */
                if( webPageHidden->proxyName )
                {           
-                  lpszProxyName = TA_Malloc( libHandle, 100 + strlen( webPageHidden->proxyName ) );
+                  lpszProxyName = TA_Malloc( 100 + strlen( webPageHidden->proxyName ) );
                   if( !lpszProxyName )
                      retCode = TA_ALLOC_ERR;
                   else
@@ -614,7 +596,7 @@ static TA_RetCode fetchUsingWinInet( TA_Libc *libHandle,
                }
 
                if( lpszProxyName )
-                  TA_Free( libHandle, (void *)lpszProxyName );
+                  TA_Free(  (void *)lpszProxyName );
 
             }
 
@@ -674,29 +656,28 @@ static TA_RetCode fetchUsingWinInet( TA_Libc *libHandle,
    else
    {
       hWebPage = HttpOpenRequest( hSession, "GET",
-                                 webPageHidden->webSitePage,
-                                 NULL,
-                                 NULL,
-                                 NULL,
-                                 INTERNET_FLAG_NEED_FILE|
-                                 INTERNET_FLAG_CACHE_IF_NET_FAIL|                                 
-                                 INTERNET_FLAG_NO_UI|
-                                 INTERNET_FLAG_NO_COOKIES|
-                                 INTERNET_FLAG_RESYNCHRONIZE,
-                                 0 );
+                                  webPageHidden->webSitePage,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  INTERNET_FLAG_NEED_FILE|
+                                  INTERNET_FLAG_CACHE_IF_NET_FAIL|                                 
+                                  INTERNET_FLAG_NO_UI|
+                                  INTERNET_FLAG_NO_COOKIES|
+                                  INTERNET_FLAG_RESYNCHRONIZE,
+                                  0 );
       if( !hWebPage )
          retCode = TA_INTERNET_OPEN_REQUEST_FAILED;
       else
       {         
-         retCode = TA_SetReceiveTimeout( libHandle,
-                                         10000 /* 10 seconds */,
+         retCode = TA_SetReceiveTimeout( 10000 /* 10 seconds */,
                                          hWebPage );
          if( retCode == TA_SUCCESS )
          {
             if( !HttpSendRequest( hWebPage, 0, 0, 0, 0 ) )
                retCode = TA_INTERNET_SEND_REQUEST_FAILED;
             else
-               retCode = buildListDataWinInet( libHandle, webPage, hWebPage );
+               retCode = buildListDataWinInet( webPage, hWebPage );
          }
 
          InternetCloseHandle( hWebPage );
@@ -710,8 +691,7 @@ static TA_RetCode fetchUsingWinInet( TA_Libc *libHandle,
 #endif
 
 #if defined( USE_WININET )
-static TA_RetCode TA_SetReceiveTimeout( TA_Libc  *libHandle,
-                                        DWORD     newTimeout, /* milliseconds */
+static TA_RetCode TA_SetReceiveTimeout( DWORD     newTimeout, /* milliseconds */
                                         HINTERNET hWebPage )
 {
    BOOL status;
@@ -729,12 +709,12 @@ static TA_RetCode TA_SetReceiveTimeout( TA_Libc  *libHandle,
 	status = InternetQueryOption( hWebPage, 
                                  INTERNET_OPTION_RECEIVE_TIMEOUT,
 			                        NULL, &optionStringLength );
-	optionString = TA_Malloc( libHandle, optionStringLength + 1);
+	optionString = TA_Malloc( optionStringLength + 1);
 	optionString[optionStringLength] = 0;
 	InternetQueryOption( hWebPage, INTERNET_OPTION_RECEIVE_TIMEOUT,
 			               &receiveTimeout, &optionStringLength );
    /*printf("GET INTERNET_OPTION_RECEIVE_TIMEOUT = %u\n", receiveTimeout );*/
-	TA_Free( libHandle, (void *) optionString );
+	TA_Free(  (void *) optionString );
    #endif
 
    status = InternetSetOption( hWebPage,
@@ -750,11 +730,10 @@ static TA_RetCode TA_SetReceiveTimeout( TA_Libc  *libHandle,
 #endif
 
 #if defined( USE_WININET )
-static TA_RetCode buildListDataWinInet( TA_Libc *libHandle, 
-                                        TA_WebPage *webPage,
+static TA_RetCode buildListDataWinInet( TA_WebPage *webPage,
                                         HINTERNET hRessource )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
    LPSTR    lpszData;      /* buffer for the data */
    DWORD    dwSize;        /* size of the data available */
@@ -764,7 +743,7 @@ static TA_RetCode buildListDataWinInet( TA_Libc *libHandle,
    int i;
    BOOL status;
 
-   TA_TRACE_BEGIN( libHandle, buildListDataWinInet );
+   TA_TRACE_BEGIN( buildListDataWinInet );
 
    /* This loop handles reading the data.   */
    again = 1;
@@ -791,7 +770,7 @@ static TA_RetCode buildListDataWinInet( TA_Libc *libHandle,
          /* Allocate a buffer of the size returned by
           * InternetQueryDataAvailable.
           */
-         lpszData = TA_Malloc( libHandle, dwSize );
+         lpszData = TA_Malloc( dwSize );
 
          if( !lpszData )
          {
@@ -813,13 +792,12 @@ static TA_RetCode buildListDataWinInet( TA_Libc *libHandle,
                 * filled stream will be free when TA_WebPageFree
                 * will do the clean-up in internalWebPageAlloc.
                 */
-               webPage->content = TA_StreamAllocFromBuffer( libHandle,
-                                                           (unsigned char *)lpszData, dwSize,
-                                                           NULL, NULL );
+               webPage->content = TA_StreamAllocFromBuffer( (unsigned char *)lpszData, dwSize,
+                                                            NULL, NULL );
 
                if( !webPage->content )
                {
-                  TA_Free( libHandle, lpszData );
+                  TA_Free(  lpszData );
                   TA_TRACE_RETURN( TA_ALLOC_ERR );
                } 
             }
@@ -829,7 +807,7 @@ static TA_RetCode buildListDataWinInet( TA_Libc *libHandle,
                retCode = TA_StreamAddBuffer( webPage->content, (unsigned char *)lpszData, dwSize, NULL, NULL );
                if( retCode != TA_SUCCESS )
                {
-                  TA_Free( libHandle, lpszData );
+                  TA_Free(  lpszData );
                   TA_TRACE_RETURN( TA_ALLOC_ERR );
                }
             }
@@ -848,14 +826,13 @@ static TA_RetCode buildListDataWinInet( TA_Libc *libHandle,
 }
 #endif
 
-TA_RetCode internalWebPageAlloc( TA_Libc       *libHandle,
-                                 const char    *webSiteAddr,
+TA_RetCode internalWebPageAlloc( const char    *webSiteAddr,
                                  const char    *webSitePage,
                                  const char    *proxyName,
                                  const char    *proxyPort,
                                  TA_WebPage   **webPageAllocated )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_NetworkGlobal *global;
    TA_WebPage *tmpWebPage;
@@ -864,12 +841,12 @@ TA_RetCode internalWebPageAlloc( TA_Libc       *libHandle,
    if( !webSiteAddr || !webPageAllocated )
       return TA_BAD_PARAM;
 
-   TA_TRACE_BEGIN( libHandle, TA_WebPageAlloc );
+   TA_TRACE_BEGIN(  TA_WebPageAlloc );
 
    *webPageAllocated = NULL;
 
    /* Get the pointer on the global variables. */
-   retCode = TA_GetGlobal( libHandle, &TA_NetworkGlobalControl, (void *)&global );
+   retCode = TA_GetGlobal(  &TA_NetworkGlobalControl, (void *)&global );
    if( retCode != TA_SUCCESS )
    {
       TA_TRACE_RETURN( retCode );
@@ -882,7 +859,7 @@ TA_RetCode internalWebPageAlloc( TA_Libc       *libHandle,
    }
 
    /* Alloc the TA_WebPage. */
-   tmpWebPage = (TA_WebPage *) TA_Malloc(libHandle, sizeof(TA_WebPage) );
+   tmpWebPage = (TA_WebPage *) TA_Malloc( sizeof(TA_WebPage) );
    if( !tmpWebPage )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -890,17 +867,16 @@ TA_RetCode internalWebPageAlloc( TA_Libc       *libHandle,
    memset( tmpWebPage, 0, sizeof( TA_WebPage ) );
 
    /* Alloc the hidden implementation of a TA_WebPage. */
-   webPageHiddenData = (TA_WebPageHiddenData *) TA_Malloc(libHandle, sizeof(TA_WebPageHiddenData));
+   webPageHiddenData = (TA_WebPageHiddenData *) TA_Malloc( sizeof(TA_WebPageHiddenData));
 
    if( !webPageHiddenData )
    {
-      TA_Free( libHandle, tmpWebPage );
+      TA_Free(  tmpWebPage );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
    memset( webPageHiddenData, 0, sizeof( TA_WebPageHiddenData ) );
    webPageHiddenData->magicNb     = TA_WEBPAGE_MAGIC_NB;
-   webPageHiddenData->libHandle   = libHandle;
    webPageHiddenData->webSiteAddr = webSiteAddr;
    webPageHiddenData->webSitePage = webSitePage;
    webPageHiddenData->proxyName   = proxyName;
@@ -915,11 +891,11 @@ TA_RetCode internalWebPageAlloc( TA_Libc       *libHandle,
    #endif
 
    #if defined( USE_WININET )
-      retCode = fetchUsingWinInet( libHandle, global, tmpWebPage );
+      retCode = fetchUsingWinInet( global, tmpWebPage );
    #endif
 
    #if defined( USE_LIBCURL )
-      retCode = fetchUsingLibCurl( libHandle, global, tmpWebPage );
+      retCode = fetchUsingLibCurl( global, tmpWebPage );
    #endif
 
    if( retCode != TA_SUCCESS )

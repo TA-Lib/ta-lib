@@ -49,8 +49,8 @@ extern "C" {
 #endif
 
 #if 0
-char   *strdupl            (TA_Libc *libHandle, const char *string);
-char  **strfree            (TA_Libc *libHandle, char **string);
+char   *strdupl            (const char *string);
+char  **strfree            (char **string);
 #endif
 
 char   *strskp             (const char *string);
@@ -65,11 +65,11 @@ char   *strunique          (char *string, char unique);
 int     strmatch           (const char *string1, const char *string2);
 qbyte   strhash            (const char *string);
 Bool    strprefixed        (const char *string, const char *prefix);
-char   *strprefix          (TA_Libc *libHandle, const char *string, const char *delims);
+char   *strprefix          (const char *string, const char *delims);
 char   *strdefix           (const char *string, const char *prefix);
 char   *strconvch          (char *string, char from, char to);
 char   *xstrcat            (char *dest, const char *src, ...);
-char   *xstrcpy            (TA_Libc *libHandle, char *dest, const char *src, ...);
+char   *xstrcpy            (char *dest, const char *src, ...);
 int     lexcmp             (const char *string1, const char *string2);
 int     lexncmp            (const char *string1, const char *string2,
                             const int count);
@@ -80,12 +80,12 @@ char   *soundex            (const char *string);
 char   *soundexn           (const char *string, int size, Bool fold);
 #endif
 
-DESCR  *strt2descr         (TA_Libc *libHandle, char **strings);
-char  **descr2strt         (TA_Libc *libHandle, const DESCR *descr);
-void    strtfree           (TA_Libc *libHandle, char **strings);
+DESCR  *strt2descr         (char **strings);
+char  **descr2strt         (const DESCR *descr);
+void    strtfree           (char **strings);
 int     strcntch           (const char *string, char value);
 int     strlookup          (const LOOKUP *lookup, const char *key);
-char   *strreformat        (TA_Libc *libHandle, const char *source, size_t width, const char *prefix);
+char   *strreformat        (const char *source, size_t width, const char *prefix);
 
 char   *removechars        (char *str, char *chrs);
 char   *replacechrswith    (char *str, char *chrs, char ctorlcwth);
@@ -104,16 +104,15 @@ char   *setstrfld          (char *str, int fln, int ofset,
 int     getstrfldlen       (const char *str, int fln, int ofset, char *sep);
 char   *findstrinfile      (FILE *fp, char *find, char *retstr, int *iLnNo);
 char   *getequval          (char *strline, char *strretstr);
-int     matchtable         (TA_Libc *libHandle,
-                            char *str, char *strmatch,
+int     matchtable         (char *str, char *strmatch,
                             char *strsept, int ncse);
-char   *stringreplace      (TA_Libc *libHandle, char *strbuf, char *strpattern);
+char   *stringreplace      (char *strbuf, char *strpattern);
 char   *wordwrapstr        (char *strbuff, int iwid);
 char   *stricstr           (const char *str1, const char *str2);
 int     strtempcmp         (const char *str1, const char *strPat);
 int     istoken            (char **strLine, const char *strtoken,
                             int *iWasToken);
-int     isoneoftokens      (TA_Libc *libHandle, char **str, char *strmat,
+int     isoneoftokens      (char **str, char *strmat,
                             char *strsep, int *iWasTk);
 char   *eatstr             (char **strBuff, char *strToEat);
 char   *eatstrpast         (char **strBuff, char *strCharsToEatPast);

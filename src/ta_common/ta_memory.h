@@ -12,51 +12,47 @@
 #ifdef TA_DEBUG
    #define TA_MEM_LIST    /* Build internal list */
    #define TA_MEM_WHERE   /* Keep track of memory block source */
+#else
+   /* Some includes to get malloc,free,realloc */
+   #include <stdlib.h> 
+   #include <malloc.h>
 #endif
 
 /* Interface functions */
-TA_RetCode      TA_MemInit   ( TA_Libc *libHandle,
-                               unsigned int memoryAlreadyInUse );
-unsigned long   TA_MemUsed   ( TA_Libc *libHandle );
-void            TA_MemDisplay( TA_Libc *libHandle, FILE *fp );
+TA_RetCode      TA_MemInit   ( unsigned int memoryAlreadyInUse );
+unsigned long   TA_MemUsed   ();
+void            TA_MemDisplay( FILE *fp );
 
 /* Interface functions to be accessed only through macros */
 #if defined(TA_MEM_WHERE)
-void      *TA_PrivAlloc(TA_Libc *,size_t, char *, int);
-void      *TA_PrivAllocCopy(TA_Libc *,const char *, size_t, char *, int);
-void      *TA_PrivRealloc(TA_Libc *,void *, size_t, char *, int);
-void       TA_PrivFree(TA_Libc *,void *, char *, int);
-char      *TA_PrivStrdup(TA_Libc *,char *, char *, int);
+void      *TA_PrivAlloc(size_t, char *, int);
+void      *TA_PrivRealloc(void *, size_t, char *, int);
+void       TA_PrivFree(void *, char *, int);
+char      *TA_PrivStrdup(char *, char *, int);
 #else
-void      *TA_PrivAlloc(TA_Libc *,size_t);
-void      *TA_PrivAllocCopy(TA_Libc *,const char *, size_t);
-void      *TA_PrivRealloc(TA_Libc *,void *, size_t);
-void       TA_PrivFree(TA_Libc *,void *);
-char      *TA_PrivStrdup(TA_Libc *,char *);
+void      *TA_PrivAlloc(size_t);
+void      *TA_PrivRealloc(void *, size_t);
+void       TA_PrivFree(void *);
+char      *TA_PrivStrdup(char *);
 #endif
 
 /* Interface macros */
 #if defined(TA_MEM_WHERE)
-#define TA_Malloc(lib,a)       TA_PrivAlloc((lib),(a),__FILE__,__LINE__)
-#define TA_MallocCopy(lib,a,b) TA_PrivAllocCopy((lib),(a),(b),__FILE__,__LINE__)
-#define TA_Realloc(lib,a,b)    TA_PrivRealloc((lib),(a),(b),__FILE__,__LINE__)
-#define TA_Free(lib,a)         TA_PrivFree((lib),(a),__FILE__,__LINE__)
-#define TA_Strdup(lib,a)       TA_PrivStrdup((lib),(a),__FILE__,__LINE__)
+#define TA_Malloc(a)       TA_PrivAlloc((a),__FILE__,__LINE__)
+#define TA_Realloc(a,b)    TA_PrivRealloc((a),(b),__FILE__,__LINE__)
+#define TA_Free(a)         TA_PrivFree((a),__FILE__,__LINE__)
+#define TA_Strdup(a)       TA_PrivStrdup((a),__FILE__,__LINE__)
 #else
-#define TA_Malloc(lib,a)       TA_PrivAlloc((lib),(a))
-#define TA_MallocCopy(lib,a,b) TA_PrivAllocCopy((lib),(a),(b))
-#define TA_Realloc(lib,a,b)    TA_PrivRealloc((lib),(a),(b))
-#define TA_Free(lib,a)         TA_PrivFree((lib),(a))
-#define TA_Strdup(lib,a)       TA_PrivStrdup((lib),(a))
+#define TA_Malloc(a)       malloc(a)
+#define TA_Realloc(a,b)    realloc((a),(b))
+#define TA_Free(a)         free(a)
+#define TA_Strdup(a)       TA_PrivStrdup((a))
 #endif
 
-#define FREE_IF_NOT_NULL(lib,x) { if((x)!=NULL) {TA_Free((lib),(void *)(x)); (x)=NULL;} }
+#define FREE_IF_NOT_NULL(x) { if((x)!=NULL) {TA_Free((void *)(x)); (x)=NULL;} }
 
 /* A Typical function pointer for freeing memory. */
-typedef TA_RetCode (*TA_FreeFuncPtr)( TA_Libc *libHandle, 
-                                      void *toBeFreed,
-                                      void *opaqueData);
-
+typedef TA_RetCode (*TA_FreeFuncPtr)( void *toBeFreed, void *opaqueData);
 
 #endif
 

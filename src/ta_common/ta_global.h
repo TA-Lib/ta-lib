@@ -9,6 +9,14 @@
    #include "ta_string.h"
 #endif
 
+#ifndef TA_FUNC_H
+   #include "ta_func.h"
+#endif
+
+#ifndef TA_SYSTEM_H
+   #include "ta_system.h"
+#endif
+
 /* This interface is used exclusively INTERNALY to the TA-LIB.
  * There is nothing for the end-user here ;->
  */
@@ -16,19 +24,15 @@
 /* Provides functionality for managing global ressource
  * throughout the TA-LIB.
  *
- * All global variable are in fact allocated memory. This
- * allow to make the library truly re-entrant.
- *
  * Since not all module are used/link in the application,
  * the ta_common simply provides the mechanism for the module
  * to optionnaly "register" its initialization/shutdown
  * function.
  *
- * A function shall always access its global variable by
- * calling TA_GetGlobal. This function will appropriatly
- * call the initialization function if its global are not
- * yet initialized.
- *
+ * A function shall access its global variable by calling 
+ * TA_GetGlobal. This function will appropriatly call the 
+ * initialization function if its global are not yet initialized.
+ * 
  * The call of the init and shutdown function are guaranteed
  * to be multithread protected. It is also guarantee that
  * these function will always get called in alternance (in
@@ -53,8 +57,8 @@ typedef enum
    TA_NB_GLOBAL_ID
 } TA_GlobalModuleId;
 
-typedef TA_RetCode (*TA_GlobalInitFunc)    ( TA_Libc *libHandle, void **globalToAlloc );
-typedef TA_RetCode (*TA_GlobalShutdownFunc)( TA_Libc *libHandle, void *globalAllocated );
+typedef TA_RetCode (*TA_GlobalInitFunc)    ( void **globalToAlloc );
+typedef TA_RetCode (*TA_GlobalShutdownFunc)( void *globalAllocated );
 
 typedef struct
 {
@@ -63,11 +67,10 @@ typedef struct
    const TA_GlobalShutdownFunc shutdown;
 } TA_GlobalControl;
 
-TA_RetCode TA_GetGlobal( TA_Libc *libHandle,
-                         const TA_GlobalControl * const control,
+TA_RetCode TA_GetGlobal( const TA_GlobalControl * const control,
                          void **global );
 
-TA_StringCache *TA_GetGlobalStringCache( TA_Libc *libHandle );
+TA_StringCache *TA_GetGlobalStringCache( void );
 
 /* Occasionaly, code tracing must be disable.
  * Example:
@@ -76,21 +79,57 @@ TA_StringCache *TA_GetGlobalStringCache( TA_Libc *libHandle );
  *  - We do not want to recursively trace while the tracing
  *    function themselves gets called ;->
  */
-int  TA_IsTraceEnabled( TA_Libc *libHandle );
-void TA_TraceEnable   ( TA_Libc *libHandle );
-void TA_TraceDisable  ( TA_Libc *libHandle );
+int  TA_IsTraceEnabled( void );
+void TA_TraceEnable   ( void );
+void TA_TraceDisable  ( void );
 
 /* If enabled by the user, use stdio for debugging.
  * Will return NULL if not enabled.
  */
-FILE *TA_GetStdioFilePtr( TA_Libc *libHandle );
+FILE *TA_GetStdioFilePtr( void );
 
 /* If enabled by the user, use a local drive
  * for configuration and/or temporary file.
  * TA-LIB must NEVER assume such local drive 
  * is available.
  */
-const char *TA_GetLocalCachePath( TA_Libc *libHandle );
+const char *TA_GetLocalCachePath( void );
+
+typedef struct
+{
+  #if !defined( TA_SINGLE_THREAD )
+  TA_Sema sema;
+  #endif
+  unsigned int initialize;
+  const TA_GlobalControl * control;
+  void *global;
+} TA_ModuleControl;
+
+/* This is the hidden implementation of TA_Libc. */
+typedef struct
+{
+   unsigned int magicNb; /* Unique identifier of this object. */
+   TA_StringCache *dfltCache;
+   TA_ModuleControl moduleControl[TA_NB_GLOBAL_ID];
+
+   unsigned int traceEnabled;
+   unsigned int stdioEnabled;
+   FILE *stdioFile;
+
+   const char *localCachePath;
+
+   /* For handling the compatibility with other software */
+   TA_Compatibility compatibility;
+
+   /* For handling the unstable period of some TA function. */
+   unsigned int unstablePeriod[TA_FUNC_UNST_ALL];
+
+} TA_LibcPriv;
+
+/* The following global is used all over the place and is the entry
+ * point for all other globals.
+ */
+extern TA_LibcPriv TA_Globals;
 
 #endif
 

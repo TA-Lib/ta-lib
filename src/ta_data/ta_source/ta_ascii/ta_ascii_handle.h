@@ -30,9 +30,7 @@
 #endif
 
 typedef struct
-{
-   TA_Libc *libHandle;
-   
+{  
    /* Keep a ptr on the user TA_AddDataSource parameters. */
    const TA_AddDataSourceParamPriv *param;
 
@@ -51,8 +49,7 @@ typedef struct
  * Takes care also to alloc/initialize/free the TA_PrivateAsciiHandle
  * which is the 'opaque' part of the TA_DataSourceHandle.
  */
-TA_DataSourceHandle *TA_ASCII_DataSourceHandleAlloc( TA_Libc *libHandle,
-                                                     const TA_AddDataSourceParamPriv *param );
+TA_DataSourceHandle *TA_ASCII_DataSourceHandleAlloc( const TA_AddDataSourceParamPriv *param );
 
 TA_RetCode TA_ASCII_DataSourceHandleFree( TA_DataSourceHandle *handle );
 

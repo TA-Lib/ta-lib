@@ -12,6 +12,10 @@
    #include "ta_func.h"
 #endif
 
+#ifndef TA_GLOBAL_H
+   #include "ta_global.h"
+#endif
+
 /* Calculate a Simple Moving Average.
  * This is an internal version, parameter are assumed validated.
  * (startIdx and endIdx cannot be -1).
@@ -45,7 +49,6 @@ TA_RetCode TA_INT_EMA( TA_Integer    startIdx,
                        const TA_Real *inReal_0,
                        TA_Integer    optInTimePeriod_0, /* From 1 to 200 */
                        TA_Real       optInK_1,
-                       TA_Integer    optInCompatibility_1,
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
                        TA_Real      *outReal_0 );
@@ -54,14 +57,12 @@ TA_RetCode TA_INT_EMA( TA_Integer    startIdx,
  * This is an internal version, parameter are assumed validated.
  * (startIdx and endIdx cannot be -1).
  */
-TA_RetCode TA_INT_MACD( TA_Libc      *libHandle,
-                        TA_Integer    startIdx,
+TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
                         TA_Integer    endIdx,
                         const TA_Real inReal_0[],
                         TA_Integer    optInFastPeriod_0, /* From 1 to 200, 0 is fix 12 */
                         TA_Integer    optInSlowPeriod_1, /* From 1 to 200, 0 is fix 26 */
                         TA_Integer    optInSignalPeriod_2, /* From 1 to 200 */
-                        TA_Integer    optInCompatibility_3,
                         TA_Integer   *outBegIdx,
                         TA_Integer   *outNbElement,
                         TA_Real       outRealMACD_0[],
@@ -81,14 +82,12 @@ TA_RetCode TA_INT_MACD( TA_Libc      *libHandle,
  * A buffer must be provided for intermediate processing
  * 'tempBuffer' must be of at least (endIdx-startIdx+1)
  */
-TA_RetCode TA_INT_PO( TA_Libc      *libHandle,
-                      TA_Integer    startIdx,
+TA_RetCode TA_INT_PO( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real *inReal_0,
                       TA_Integer    optInFastPeriod_0, /* From 1 to 200 */
                       TA_Integer    optInSlowPeriod_1, /* From 1 to 200 */
                       TA_Integer    optInMethod_2,
-                      TA_Integer    optInCompatibility_3,
                       TA_Integer   *outBegIdx,
                       TA_Integer   *outNbElement,
                       TA_Real      *outReal_0,
@@ -117,7 +116,6 @@ void TA_INT_stddev_using_precalc_ma( const TA_Real *inReal,
                                      TA_Integer timePeriod,
                                      TA_Real *output );
 
-extern unsigned int TA_UnstablePeriodTable[TA_FUNC_UNST_ALL];
 
 /* Rounding macro for doubles. Works only with positive numbers. */
 #define round_pos(x) (floor((x)+0.5))

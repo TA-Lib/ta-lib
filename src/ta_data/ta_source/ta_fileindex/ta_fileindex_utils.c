@@ -89,15 +89,12 @@ TA_RetCode TA_FileIndexMoveToDepth( TA_FileIndexPriv *data, unsigned int depth )
 
 TA_RetCode TA_FileIndexMoveToNextToken( TA_FileIndexPriv *data )
 {
-   TA_PROLOG;
-   TA_Libc *libHandle;
+   TA_PROLOG
 
    if( !data )
       return TA_INTERNAL_ERROR(86);
 
-
-   libHandle = data->libHandle;
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexMoveToNextToken );
+   TA_TRACE_BEGIN( TA_FileIndexMoveToNextToken );
 
    if( data->curToken == NULL )
    {
@@ -110,7 +107,7 @@ TA_RetCode TA_FileIndexMoveToNextToken( TA_FileIndexPriv *data )
 
       if( !data->curToken || !data->nextToken )
       {
-         TA_FATAL( data->libHandle, NULL, data->curToken, data->nextToken );
+         TA_FATAL( NULL, data->curToken, data->nextToken );
       }
    }
    else if( data->nextToken == NULL )
@@ -140,7 +137,7 @@ TA_RetCode TA_FileIndexMoveToNextToken( TA_FileIndexPriv *data )
        */
       if( !data->curToken )
       {
-         TA_FATAL( data->libHandle, NULL, data->curToken->id, data->curTokenDepth );
+         TA_FATAL( NULL, data->curToken->id, data->curTokenDepth );
       }
    }
 
@@ -151,15 +148,13 @@ TA_RetCode TA_FileIndexMoveToNextToken( TA_FileIndexPriv *data )
 
 TA_RetCode TA_FileIndexMoveToPrevToken( TA_FileIndexPriv *data )
 {
-   TA_PROLOG;
-   TA_Libc *libHandle;
+   TA_PROLOG
    TA_RetCode retCode;
 
    if( !data )
       return TA_INTERNAL_ERROR(87);
 
-   libHandle = data->libHandle;
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexMoveToPrevToken );
+   TA_TRACE_BEGIN( TA_FileIndexMoveToPrevToken );
 
    if( data->curToken == NULL )
    {
@@ -196,7 +191,7 @@ TA_RetCode TA_FileIndexMoveToPrevToken( TA_FileIndexPriv *data )
        */
       if( !data->curToken )
       {
-         TA_FATAL( data->libHandle, NULL, data->curToken->id, data->curTokenDepth );
+         TA_FATAL( NULL, data->curToken->id, data->curTokenDepth );
       }
    }
    data->curTokenDepth--;
@@ -234,7 +229,7 @@ unsigned int TA_FileIndexIdentifyFileDepth( TA_FileIndexPriv *data )
    }
 
    /* Should never get here. */
-   TA_FATAL_RET( data->libHandle, NULL, currentDepth, latestPathPortionDepth, 0 );
+   TA_FATAL_RET( NULL, currentDepth, latestPathPortionDepth, 0 );
 }
 
 /**** Local functions definitions.     ****/

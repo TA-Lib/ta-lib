@@ -15,8 +15,8 @@ ErrorNumber test_yahoo ( void );
 ErrorNumber test_pm    ( void );
 ErrorNumber test_datasource_merge( void );
 
-ErrorNumber freeLib( TA_Libc *libHandle, TA_UDBase  *uDBase );
-ErrorNumber allocLib( TA_Libc **libHandlePtr, TA_UDBase **uDBasePtr );
+ErrorNumber freeLib( TA_UDBase  *uDBase );
+ErrorNumber allocLib( TA_UDBase **uDBasePtr );
 
 void reportError( const char *str, TA_RetCode retCode );
 
@@ -137,7 +137,7 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
 #define MAX_RANGE_SIZE 252
 #define MAX_RANGE_END  (MAX_RANGE_SIZE-1)
 
-typedef TA_RetCode (*RangeTestFunction)( TA_Libc *libHandle, 
+typedef TA_RetCode (*RangeTestFunction)( 
                                          TA_Integer startIdx,
                                          TA_Integer endIdx,
                                          TA_Real *outputBuffer,
@@ -160,8 +160,7 @@ typedef TA_RetCode (*RangeTestFunction)( TA_Libc *libHandle,
  * a "reasonable" logic (see the function for
  * more info).
  */
-ErrorNumber doRangeTest( TA_Libc *libHandle,
-                         RangeTestFunction testFunction,
+ErrorNumber doRangeTest( RangeTestFunction testFunction,
                          TA_FuncUnstId unstId,
                          void *opaqueData,
                          unsigned int nbOutput,

@@ -99,8 +99,6 @@ typedef unsigned int TA_ReadOp;
 
 typedef struct
 {
-   TA_Libc *libHandle;
-
    /* The parameter defining the fields. 
     * Example: "[YYYY][MM][DD][O][C][V]"
     */
@@ -122,19 +120,16 @@ typedef struct
    TA_Field fieldProvided;
 } TA_ReadOpInfo;
 
-TA_RetCode TA_ReadOpInfoAlloc( TA_Libc *libHandle,
-                               const char *sourceInfo,
+TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
                                TA_ReadOpInfo **allocatedInfo );
 
 TA_RetCode TA_ReadOpInfoFree( TA_ReadOpInfo *readOpInfoToBeFreed );
 
-TA_RetCode TA_ReadOp_Optimize( TA_Libc       *libHandle,
-                               TA_ReadOpInfo *readOpInfo,
+TA_RetCode TA_ReadOp_Optimize( TA_ReadOpInfo *readOpInfo,
                                TA_Period      period,
                                TA_Field       fieldToAlloc );
 
-TA_RetCode TA_ReadOp_Do( TA_Libc             *libHandle,
-                         TA_FileHandle       *fileHandle,
+TA_RetCode TA_ReadOp_Do( TA_FileHandle       *fileHandle,
                          const TA_ReadOpInfo *readOpInfo,
                          TA_Period            period,
                          const TA_Timestamp  *start,
@@ -144,7 +139,7 @@ TA_RetCode TA_ReadOp_Do( TA_Libc             *libHandle,
                          TA_ParamForAddData  *paramForAddData,
                          unsigned int        *nbBarAdded );
 
-unsigned int TA_ReadOpToField( TA_Libc *libHandle, TA_ReadOp readOp );
+unsigned int TA_ReadOpToField( TA_ReadOp readOp );
 
  /* See ta_readop_estalloc.c */
 typedef struct

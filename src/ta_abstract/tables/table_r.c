@@ -146,7 +146,6 @@ static const TA_OutputParameterInfo   *TA_RSI_Outputs[]   =
 static const TA_OptInputParameterInfo *TA_RSI_OptInputs[] =
 {
   &TA_DEF_UI_TimePeriod_14,
-  &TA_DEF_UI_Compatibility_CL_MS,
   NULL
 };
 

@@ -81,8 +81,7 @@ static TA_RetCode flushFixPart( TA_FileIndexPriv *fileIndexPriv,
 static TA_RetCode addToken( TA_FileIndexPriv *fileIndexPriv,
                             TA_TokenId id, const char *value );
 
-static TA_RetCode findTokenId( TA_Libc *libHandle,
-                               const char *str,
+static TA_RetCode findTokenId( const char *str,
                                TA_TokenId *id );
 
 static TA_RetCode checkForRedundantToken( TA_FileIndexPriv *fileIndexPriv );
@@ -114,7 +113,7 @@ TA_RetCode TA_FileIndexParsePath( TA_FileIndexPriv *fileIndexPriv, TA_String *pa
                   WILD_PROCESSING,
                   SEP_PROCESSING } State;
 
-   TA_PROLOG;
+   TA_PROLOG
    State currentState;
    const char *currentTokenStart;
    unsigned int length;
@@ -125,13 +124,10 @@ TA_RetCode TA_FileIndexParsePath( TA_FileIndexPriv *fileIndexPriv, TA_String *pa
    unsigned int tokenSize;
    TA_TokenId tokenId;
    const char *sourcePattern;
-   TA_Libc *libHandle;
 
-   libHandle = fileIndexPriv->libHandle;
+   TA_TRACE_BEGIN(  TA_FileIndexParsePath );
 
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexParsePath );
-
-   TA_ASSERT( libHandle, path != NULL );
+   TA_ASSERT( path != NULL );
 
    sepTmp[1] = '\0';
    sourcePattern = TA_StringToChar( path );
@@ -139,7 +135,7 @@ TA_RetCode TA_FileIndexParsePath( TA_FileIndexPriv *fileIndexPriv, TA_String *pa
    /* The following macro should help for the readability of the parsing logic.
     * These macro are used only inside this function.
     */
-   #define RETURN(y) {TA_Free(libHandle,str); TA_TRACE_RETURN( y );}
+   #define RETURN(y) {TA_Free(str); TA_TRACE_RETURN( y );}
    #define REJECT_STATE(x,y) { if(currentState==x)RETURN(y);  }
    #define CHANGE_STATE(x) {currentState=x; currentTokenStart=pos+1;}
 
@@ -187,7 +183,7 @@ TA_RetCode TA_FileIndexParsePath( TA_FileIndexPriv *fileIndexPriv, TA_String *pa
    if( (length <= 1) || (length > 2048) )
       return TA_INVALID_PATH;
 
-   str = (char *)TA_Malloc( libHandle, length );
+   str = (char *)TA_Malloc( length );
    strcpy( str, sourcePattern );
 
    pos = str;
@@ -261,13 +257,13 @@ TA_RetCode TA_FileIndexParsePath( TA_FileIndexPriv *fileIndexPriv, TA_String *pa
           * Will return an error if this is a non-valid field.
           */
          *pos = '\0';
-         if( findTokenId( libHandle, currentTokenStart, &tokenId ) != TA_SUCCESS )
+         if( findTokenId( currentTokenStart, &tokenId ) != TA_SUCCESS )
             RETURN( TA_INVALID_FIELD );
 
          /* At this point the field has been identified and validated. */
          ADD_TOKEN( tokenId, NULL );
 
-         tokenSize = TA_TokenMaxSize( libHandle, tokenId );
+         tokenSize = TA_TokenMaxSize( tokenId );
 
          if( tokenSize == 0 )
          {
@@ -322,7 +318,7 @@ TA_RetCode TA_FileIndexParsePath( TA_FileIndexPriv *fileIndexPriv, TA_String *pa
     */
    if( currentState == INIT_PROCESSING )
    {
-      TA_FATAL( libHandle, NULL, pos, currentTokenStart );
+      TA_FATAL(  NULL, pos, currentTokenStart );
       RETURN( TA_INVALID_PATH );
    }
 
@@ -430,11 +426,9 @@ static TA_RetCode addToken( TA_FileIndexPriv *fileIndexPriv,
 {
    TA_String *str = NULL;
    TA_RetCode retCode;
-   TA_Libc *libHandle;
    TA_StringCache *stringCache;
 
-   libHandle = fileIndexPriv->libHandle;
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    if( value )
    {
@@ -484,7 +478,7 @@ static TA_RetCode addToken( TA_FileIndexPriv *fileIndexPriv,
    return retCode;
 }
 
-static TA_RetCode findTokenId( TA_Libc *libHandle, const char *str, TA_TokenId *id )
+static TA_RetCode findTokenId( const char *str, TA_TokenId *id )
 {
    unsigned int i;
    const char *cmp_str;
@@ -493,7 +487,7 @@ static TA_RetCode findTokenId( TA_Libc *libHandle, const char *str, TA_TokenId *
 
    for( i=0; i < TA_NB_TOKEN_ID; i++ )
    {
-      cmp_str = TA_TokenString( libHandle, (TA_TokenId)i );
+      cmp_str = TA_TokenString( (TA_TokenId)i );
 
       if( cmp_str )
       {
@@ -690,23 +684,17 @@ static const char *findDot( const char *str, unsigned int *returnFoundOffset )
 
 static TA_RetCode processSymbolFieldSubstitution( TA_FileIndexPriv *fileIndexPriv )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_String *tmpPtr;
    TA_TokenInfo *token;
    char *str;
    TA_RetCode retCode;
-   TA_Libc *libHandle;
    TA_StringCache *stringCache;
    unsigned int dotPos;
 
-   libHandle = fileIndexPriv->libHandle;
+   TA_TRACE_BEGIN(  processSymbolFieldSubstitution );
 
-   if( !libHandle )
-      return TA_INTERNAL_ERROR(88);
-
-   TA_TRACE_BEGIN( libHandle, processSymbolFieldSubstitution );
-
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    /* For the time being, when there is no symbol defined,
     * it is not allowed to use the '?' wildcard in the last
@@ -732,8 +720,8 @@ static TA_RetCode processSymbolFieldSubstitution( TA_FileIndexPriv *fileIndexPri
    token = searchIdInLastLeg( SEARCH_FORWARD, fileIndexPriv, TA_TOK_WILD );
    if( token )
    {
-      TA_ASSERT( libHandle, token->id == TA_TOK_WILD );
-      TA_ASSERT( libHandle, token->value != NULL );
+      TA_ASSERT( token->id == TA_TOK_WILD );
+      TA_ASSERT( token->value != NULL );
 
       /* Substitute the TA_TOK_WILD with TA_TOK_SYM. */
       token->id = TA_TOK_SYM;
@@ -746,8 +734,8 @@ static TA_RetCode processSymbolFieldSubstitution( TA_FileIndexPriv *fileIndexPri
 
       if( token )
       {
-         TA_ASSERT( libHandle, token->id == TA_TOK_FIX );
-         TA_ASSERT( libHandle, token->value != NULL );
+         TA_ASSERT( token->id == TA_TOK_FIX );
+         TA_ASSERT( token->value != NULL );
 
          /* str will point on the leftmost dot if one is found.
           * 'dotPos' will indicate offset of the dot in the string (zero base).
@@ -757,7 +745,7 @@ static TA_RetCode processSymbolFieldSubstitution( TA_FileIndexPriv *fileIndexPri
          if( str )
          {
             /* !!! needed?
-            TA_ASSERT( libHandle, dotPos != 0 ); */
+            TA_ASSERT( dotPos != 0 ); */
              
             /* Some validity check (parano).
              * Check that there is something before and after the dot...
@@ -819,7 +807,7 @@ static void displayTokens( TA_FileIndexPriv *fileIndexPriv )
    {
       do
       {
-         str = TA_TokenDebugString( fileIndexPriv->libHandle, token->id );
+         str = TA_TokenDebugString( token->id );
 
          if( !str )
             printf( "[(null)] " );

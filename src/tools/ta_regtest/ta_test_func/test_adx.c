@@ -110,8 +110,7 @@ typedef struct
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 
 /**** Local variables definitions.     ****/
@@ -155,13 +154,13 @@ static TA_Test tableTest[] =
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
-ErrorNumber test_func_adx( TA_Libc *libHandle, TA_History *history )
+ErrorNumber test_func_adx( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
 
    /* Re-initialize all the unstable period to zero. */
-   TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ALL, 0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    for( i=0; i < NB_TEST; i++ )
    {
@@ -172,7 +171,7 @@ ErrorNumber test_func_adx( TA_Libc *libHandle, TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
 
-      retValue = do_test( libHandle, history, &tableTest[i] );
+      retValue = do_test( history, &tableTest[i] );
       if( retValue != 0 )
       {
          printf( "%s Failed Test #%d (Code=%d)\n", __FILE__,
@@ -182,14 +181,14 @@ ErrorNumber test_func_adx( TA_Libc *libHandle, TA_History *history )
    }
 
    /* Re-initialize all the unstable period to zero. */
-   TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ALL, 0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
    return TA_TEST_PASS; 
 }
 
 /**** Local functions definitions.     ****/
-static TA_RetCode rangeTestFunction( TA_Libc *libHandle, 
+static TA_RetCode rangeTestFunction( 
                               TA_Integer startIdx,
                               TA_Integer endIdx,
                               TA_Real *outputBuffer,
@@ -209,8 +208,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    switch( testParam->test->id )
    {
    case TST_MINUS_DM:
-      retCode = TA_MINUS_DM( libHandle,
-                             startIdx,
+      retCode = TA_MINUS_DM( startIdx,
                              endIdx,
                              testParam->high,
                              testParam->low,
@@ -223,8 +221,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
       break;
 
    case TST_MINUS_DI:
-      retCode = TA_MINUS_DI( libHandle,
-                             startIdx,
+      retCode = TA_MINUS_DI( startIdx,
                              endIdx,
                              testParam->high,
                              testParam->low,
@@ -238,8 +235,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
       break;
 
    case TST_DX:
-      retCode = TA_DX( libHandle,
-                       startIdx,
+      retCode = TA_DX( startIdx,
                        endIdx,
                        testParam->high,
                        testParam->low,
@@ -253,8 +249,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
       break;
 
    case TST_ADX:
-      retCode = TA_ADX( libHandle,
-                        startIdx,
+      retCode = TA_ADX( startIdx,
                         endIdx,
                         testParam->high,
                         testParam->low,
@@ -268,8 +263,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
       break;
 
    case TST_PLUS_DM:
-      retCode = TA_PLUS_DM( libHandle,
-                            startIdx,
+      retCode = TA_PLUS_DM( startIdx,
                             endIdx,
                             testParam->high,
                             testParam->low,
@@ -282,23 +276,21 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
       break;
 
    case TST_PLUS_DI:
-      retCode = TA_PLUS_DI( libHandle,
-                             startIdx,
-                             endIdx,
-                             testParam->high,
-                             testParam->low,
-                             testParam->close,
-                             testParam->test->optInTimePeriod_0,
-                             outBegIdx,
-                             outNbElement,
-                             outputBuffer );
+      retCode = TA_PLUS_DI( startIdx,
+                            endIdx,
+                            testParam->high,
+                            testParam->low,
+                            testParam->close,
+                            testParam->test->optInTimePeriod_0,
+                            outBegIdx,
+                            outNbElement,
+                            outputBuffer );
 
       *lookback = TA_PLUS_DI_Lookback( testParam->test->optInTimePeriod_0 );
       break;
 
    case TST_ADXR:
-      retCode = TA_ADXR( libHandle,
-                         startIdx,
+      retCode = TA_ADXR( startIdx,
                          endIdx,
                          testParam->high,
                          testParam->low,
@@ -317,8 +309,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    return retCode;
 }
 
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test )
 {
    TA_RetCode retCode;
@@ -340,14 +331,13 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    switch( test->id )
    {
    case TST_MINUS_DM:
-      retCode = TA_SetUnstablePeriod( libHandle,
+      retCode = TA_SetUnstablePeriod(
                                       TA_FUNC_UNST_MINUS_DM,
                                       test->unstablePeriod );
       if( retCode != TA_SUCCESS )
          return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
 
-      retCode = TA_MINUS_DM( libHandle,
-                             test->startIdx,
+      retCode = TA_MINUS_DM( test->startIdx,
                              test->endIdx,
                              gBuffer[0].in,
                              gBuffer[1].in,
@@ -358,14 +348,12 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_MINUS_DI:
-      retCode = TA_SetUnstablePeriod( libHandle,
-                                      TA_FUNC_UNST_MINUS_DI,
+      retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_MINUS_DI,
                                       test->unstablePeriod );
       if( retCode != TA_SUCCESS )
          return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
 
-      retCode = TA_MINUS_DI( libHandle,
-                             test->startIdx,
+      retCode = TA_MINUS_DI( test->startIdx,
                              test->endIdx,
                              gBuffer[0].in,
                              gBuffer[1].in,
@@ -377,14 +365,12 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_DX:
-      retCode = TA_SetUnstablePeriod( libHandle,
-                                      TA_FUNC_UNST_DX,
+      retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_DX,
                                       test->unstablePeriod );
       if( retCode != TA_SUCCESS )
          return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
 
-      retCode = TA_DX( libHandle,
-                       test->startIdx,
+      retCode = TA_DX( test->startIdx,
                        test->endIdx,
                        gBuffer[0].in,
                        gBuffer[1].in,
@@ -396,14 +382,12 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_ADX:
-      retCode = TA_SetUnstablePeriod( libHandle,
-                                      TA_FUNC_UNST_ADX,
+      retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_ADX,
                                       test->unstablePeriod );
       if( retCode != TA_SUCCESS )
          return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
 
-      retCode = TA_ADX( libHandle,
-                        test->startIdx,
+      retCode = TA_ADX( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
                         gBuffer[1].in,
@@ -415,14 +399,12 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_PLUS_DM:
-      retCode = TA_SetUnstablePeriod( libHandle,
-                                      TA_FUNC_UNST_PLUS_DM,
+      retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_PLUS_DM,
                                       test->unstablePeriod );
       if( retCode != TA_SUCCESS )
          return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
 
-      retCode = TA_PLUS_DM( libHandle,
-                            test->startIdx,
+      retCode = TA_PLUS_DM( test->startIdx,
                             test->endIdx,
                             gBuffer[0].in,
                             gBuffer[1].in,
@@ -433,14 +415,12 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_PLUS_DI:
-      retCode = TA_SetUnstablePeriod( libHandle,
-                                      TA_FUNC_UNST_PLUS_DI,
+      retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_PLUS_DI,
                                       test->unstablePeriod );
       if( retCode != TA_SUCCESS )
          return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
 
-      retCode = TA_PLUS_DI( libHandle,
-                            test->startIdx,
+      retCode = TA_PLUS_DI( test->startIdx,
                             test->endIdx,
                             gBuffer[0].in,
                             gBuffer[1].in,
@@ -452,14 +432,12 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_ADXR:
-      retCode = TA_SetUnstablePeriod( libHandle,
-                                      TA_FUNC_UNST_ADX,
+      retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_ADX,
                                       test->unstablePeriod );
       if( retCode != TA_SUCCESS )
          return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
 
-      retCode = TA_ADXR( libHandle,
-                         test->startIdx,
+      retCode = TA_ADXR( test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
                          gBuffer[1].in,
@@ -494,8 +472,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    switch( test->id )
    {
    case TST_MINUS_DM:
-      retCode = TA_MINUS_DM( libHandle,
-                             test->startIdx,
+      retCode = TA_MINUS_DM( test->startIdx,
                              test->endIdx,
                              gBuffer[3].in,
                              gBuffer[1].in,
@@ -506,8 +483,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_MINUS_DI:
-      retCode = TA_MINUS_DI( libHandle,
-                             test->startIdx,
+      retCode = TA_MINUS_DI( test->startIdx,
                              test->endIdx,
                              gBuffer[3].in,
                              gBuffer[1].in,
@@ -519,8 +495,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_DX:
-      retCode = TA_DX( libHandle,
-                       test->startIdx,
+      retCode = TA_DX( test->startIdx,
                        test->endIdx,
                        gBuffer[3].in,
                        gBuffer[1].in,
@@ -532,8 +507,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_ADX:
-      retCode = TA_ADX( libHandle,
-                        test->startIdx,
+      retCode = TA_ADX( test->startIdx,
                         test->endIdx,
                         gBuffer[3].in,
                         gBuffer[1].in,
@@ -545,8 +519,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_PLUS_DM:
-      retCode = TA_PLUS_DM( libHandle,
-                            test->startIdx,
+      retCode = TA_PLUS_DM( test->startIdx,
                             test->endIdx,
                             gBuffer[3].in,
                             gBuffer[1].in,
@@ -557,8 +530,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_PLUS_DI:
-      retCode = TA_PLUS_DI( libHandle,
-                            test->startIdx,
+      retCode = TA_PLUS_DI( test->startIdx,
                             test->endIdx,
                             gBuffer[3].in,
                             gBuffer[1].in,
@@ -570,8 +542,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_ADXR:
-      retCode = TA_ADXR( libHandle,
-                         test->startIdx,
+      retCode = TA_ADXR( test->startIdx,
                          test->endIdx,
                          gBuffer[3].in,
                          gBuffer[1].in,
@@ -620,50 +591,43 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       switch( test->id )
       {
       case TST_MINUS_DM:
-         errNb = doRangeTest( libHandle,
-                              rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_MINUS_DM,
                               (void *)&testParam, 1, 0 );
          break;
 
       case TST_MINUS_DI:
-         errNb = doRangeTest( libHandle,
-                              rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_MINUS_DI,
                               (void *)&testParam, 1, 2 );
          break;
 
       case TST_DX:
-         errNb = doRangeTest( libHandle,
-                              rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_DX,
                               (void *)&testParam, 1, 2 );
          break;
 
       case TST_ADX:
-         errNb = doRangeTest( libHandle,
-                              rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_ADX,
                               (void *)&testParam, 1, 2 );
          break;
 
       case TST_PLUS_DM:
-         errNb = doRangeTest( libHandle,
-                              rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_PLUS_DM,
                               (void *)&testParam, 1, 0 );
          break;
 
       case TST_PLUS_DI:
-         errNb = doRangeTest( libHandle,
-                              rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_PLUS_DI,
                               (void *)&testParam, 1, 2 );
          break;
 
       case TST_ADXR:
-         errNb = doRangeTest( libHandle,
-                              rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_ADX,
                               (void *)&testParam, 1, 2 );
          break;

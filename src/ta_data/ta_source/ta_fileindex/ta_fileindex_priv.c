@@ -75,23 +75,21 @@
 
 
 /* functions for freeing lists of elements. */
-static TA_RetCode freeListAndElement( TA_Libc *libHandle,
-                                      TA_List *list,
-                                      TA_RetCode (*freeFunc)( TA_Libc *libHandle, void *toBeFreed ));
+static TA_RetCode freeListAndElement( TA_List *list,
+                                      TA_RetCode (*freeFunc)( void *toBeFreed ));
 static TA_RetCode freeFileIndexPriv( void *toBeFreed );
-static TA_RetCode freeCategoryData( TA_Libc *libHandle, void *toBeFreed );
-static TA_RetCode freeSymbolData( TA_Libc *libHandle, void *toBeFreed );
-static TA_RetCode freeTokenInfo( TA_Libc *libHandle, void *toBeFreed );
+static TA_RetCode freeCategoryData( void *toBeFreed );
+static TA_RetCode freeSymbolData( void *toBeFreed );
+static TA_RetCode freeTokenInfo( void *toBeFreed );
 
-static TA_ValueTreeNode *allocTreeNode( TA_Libc *libHandle, TA_ValueTreeNode *parent, TA_String *string );
-static TA_RetCode freeTreeNode( TA_Libc *libHandle, void *toBeFreed );
+static TA_ValueTreeNode *allocTreeNode( TA_ValueTreeNode *parent, TA_String *string );
+static TA_RetCode freeTreeNode( void *toBeFreed );
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
-TA_FileIndexPriv *TA_FileIndexPrivAlloc( TA_Libc *libHandle,
-                                         TA_String *initialCategory,
+TA_FileIndexPriv *TA_FileIndexPrivAlloc( TA_String *initialCategory,
                                          TA_String *initialCategoryCountry,
                                          TA_String *initialCategoryExchange,
                                          TA_String *initialCategoryType )
@@ -99,10 +97,10 @@ TA_FileIndexPriv *TA_FileIndexPrivAlloc( TA_Libc *libHandle,
    TA_FileIndexPriv *fileIndexPrivData;
    TA_StringCache *stringCache;
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    /* Initialize the TA_FileIndexPriv element. */
-   fileIndexPrivData = (TA_FileIndexPriv *)TA_Malloc( libHandle, sizeof( TA_FileIndexPriv ) );
+   fileIndexPrivData = (TA_FileIndexPriv *)TA_Malloc( sizeof( TA_FileIndexPriv ) );
 
    if( !fileIndexPrivData )
       return NULL;
@@ -111,9 +109,7 @@ TA_FileIndexPriv *TA_FileIndexPrivAlloc( TA_Libc *libHandle,
    memset( fileIndexPrivData, 0, sizeof( TA_FileIndexPriv ) );
 
    /* Now attempt to allocate all sub-elements. */
-   fileIndexPrivData->libHandle = libHandle;
-
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
    fileIndexPrivData->initialCategoryString         = TA_StringDup( stringCache, initialCategory );
    fileIndexPrivData->initialCategoryCountryString  = TA_StringDup( stringCache, initialCategoryCountry);
    fileIndexPrivData->initialCategoryExchangeString = TA_StringDup( stringCache, initialCategoryExchange );
@@ -128,28 +124,28 @@ TA_FileIndexPriv *TA_FileIndexPrivAlloc( TA_Libc *libHandle,
       return NULL;
    }
 
-   fileIndexPrivData->scratchPad = (char *)TA_Malloc( libHandle, TA_SOURCELOCATION_MAX_LENGTH+2 );
+   fileIndexPrivData->scratchPad = (char *)TA_Malloc( TA_SOURCELOCATION_MAX_LENGTH+2 );
    if( !fileIndexPrivData->scratchPad )
    {
       freeFileIndexPriv( (void *)fileIndexPrivData );
       return NULL;
    }
 
-   fileIndexPrivData->listLocationToken = TA_ListAlloc( libHandle );
+   fileIndexPrivData->listLocationToken = TA_ListAlloc();
    if( !fileIndexPrivData->listLocationToken )
    {
       freeFileIndexPriv( (void *)fileIndexPrivData );
       return NULL;
    }
 
-   fileIndexPrivData->listCategory = TA_ListAlloc( libHandle );
+   fileIndexPrivData->listCategory = TA_ListAlloc();
    if( !fileIndexPrivData->listCategory )
    {
       freeFileIndexPriv( (void *)fileIndexPrivData );
       return NULL;
    }
 
-   fileIndexPrivData->root = allocTreeNode( libHandle, NULL, NULL );
+   fileIndexPrivData->root = allocTreeNode( NULL, NULL );
    if( !fileIndexPrivData->root )
    {
       freeFileIndexPriv( (void *)fileIndexPrivData );
@@ -182,21 +178,19 @@ TA_RetCode TA_FileIndexAddCategoryData( TA_FileIndexPriv *data,
                                         TA_String *stringCategory,
                                         TA_FileIndexCategoryData **added )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_FileIndexCategoryData *categoryData;
    unsigned int tmpInt;
    unsigned int categoryFound; /* Boolean */
-   TA_Libc *libHandle;
    TA_StringCache *stringCache;
 
-   libHandle   = data->libHandle;
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexAddCategoryData );
+   TA_TRACE_BEGIN(  TA_FileIndexAddCategoryData );
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
-   TA_ASSERT( libHandle, data != NULL );
-   TA_ASSERT( libHandle, stringCategory != NULL );
+   TA_ASSERT( data != NULL );
+   TA_ASSERT( stringCategory != NULL );
 
    /* Trap the case where the category is already added. */
    categoryData = (TA_FileIndexCategoryData *)TA_ListAccessTail( data->listCategory );
@@ -204,7 +198,7 @@ TA_RetCode TA_FileIndexAddCategoryData( TA_FileIndexPriv *data,
    categoryFound = 0;
    while( categoryData && !categoryFound )
    {
-      TA_ASSERT( libHandle, categoryData->string != NULL );
+      TA_ASSERT( categoryData->string != NULL );
 
       tmpInt = strcmp( TA_StringToChar( stringCategory ),
                        TA_StringToChar( categoryData->string ) );
@@ -217,7 +211,7 @@ TA_RetCode TA_FileIndexAddCategoryData( TA_FileIndexPriv *data,
    if( !categoryFound )
    {
       /* This is a new category, so allocate the TA_FileIndexCategoryData */
-      categoryData = (TA_FileIndexCategoryData *)TA_Malloc( libHandle, sizeof(TA_FileIndexCategoryData) );
+      categoryData = (TA_FileIndexCategoryData *)TA_Malloc( sizeof(TA_FileIndexCategoryData) );
 
       if( !categoryData )
          TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -229,20 +223,20 @@ TA_RetCode TA_FileIndexAddCategoryData( TA_FileIndexPriv *data,
          categoryData->string = TA_StringDup( stringCache, stringCategory);    /* String for this category. Can be NULL. */
          if( !categoryData->string )
          {
-            TA_Free( libHandle, categoryData );
+            TA_Free(  categoryData );
             TA_TRACE_RETURN( TA_ALLOC_ERR );
          }
       }
       else
          categoryData->string = NULL;
 
-      categoryData->listSymbol = TA_ListAlloc( libHandle );
+      categoryData->listSymbol = TA_ListAlloc();
 
       if( !categoryData->listSymbol )
       {
          if( categoryData->string )
             TA_StringFree( stringCache, categoryData->string );
-         TA_Free( libHandle, categoryData );
+         TA_Free(  categoryData );
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
 
@@ -253,7 +247,7 @@ TA_RetCode TA_FileIndexAddCategoryData( TA_FileIndexPriv *data,
          TA_ListFree( categoryData->listSymbol );
          if( categoryData->string )
             TA_StringFree( stringCache, categoryData->string );
-         TA_Free( libHandle, categoryData );
+         TA_Free(  categoryData );
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
 
@@ -275,18 +269,16 @@ TA_RetCode TA_FileIndexAddTokenInfo( TA_FileIndexPriv *data,
                                      TA_String *value,
                                      TA_TokenInfo *optBefore )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_TokenInfo *info;
-   TA_Libc *libHandle;
    TA_StringCache *stringCache;
 
-   libHandle   = data->libHandle;
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexAddTokenInfo );
+   TA_TRACE_BEGIN(  TA_FileIndexAddTokenInfo );
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
-   info = TA_Malloc( libHandle, sizeof( TA_TokenInfo ) );
+   info = TA_Malloc( sizeof( TA_TokenInfo ) );
 
    if( !info )
    {
@@ -302,7 +294,7 @@ TA_RetCode TA_FileIndexAddTokenInfo( TA_FileIndexPriv *data,
 
       if( !info->value )
       {
-         TA_Free( libHandle, info );
+         TA_Free(  info );
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
    }
@@ -316,7 +308,7 @@ TA_RetCode TA_FileIndexAddTokenInfo( TA_FileIndexPriv *data,
     {
       if( info->value )
          TA_StringFree( stringCache, info->value );
-      TA_Free( libHandle, info );
+      TA_Free( info );
       TA_TRACE_RETURN( retCode );
    }
 
@@ -324,27 +316,26 @@ TA_RetCode TA_FileIndexAddTokenInfo( TA_FileIndexPriv *data,
 }
 
 
-TA_RetCode TA_FileIndexAddSymbolData( TA_Libc *libHandle,
-                                      TA_FileIndexCategoryData *categoryData,
+TA_RetCode TA_FileIndexAddSymbolData( TA_FileIndexCategoryData *categoryData,
                                       TA_String *stringSymbol,
                                       TA_ValueTreeNode *treeNodeValue,
                                       TA_FileIndexSymbolData **added )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_FileIndexSymbolData *symbolData;
    unsigned int tmpInt;
    unsigned int symbolFound; /* Boolean */
    TA_StringCache *stringCache;
 
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexAddSymbolData );
+   TA_TRACE_BEGIN(  TA_FileIndexAddSymbolData );
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
-   TA_ASSERT( libHandle, categoryData != NULL );
-   TA_ASSERT( libHandle, categoryData->listSymbol != NULL );
-   TA_ASSERT( libHandle, stringSymbol != NULL );
-   TA_ASSERT( libHandle, treeNodeValue != NULL );
+   TA_ASSERT( categoryData != NULL );
+   TA_ASSERT( categoryData->listSymbol != NULL );
+   TA_ASSERT( stringSymbol != NULL );
+   TA_ASSERT( treeNodeValue != NULL );
 
    if( added )
       *added = NULL;
@@ -359,7 +350,7 @@ TA_RetCode TA_FileIndexAddSymbolData( TA_Libc *libHandle,
    symbolFound = 0;
    while( symbolData && !symbolFound )
    {
-      TA_ASSERT( libHandle, symbolData->string != NULL );
+      TA_ASSERT( symbolData->string != NULL );
 
       tmpInt = strcmp( TA_StringToChar( stringSymbol ),
                        TA_StringToChar( symbolData->string ) );
@@ -372,7 +363,7 @@ TA_RetCode TA_FileIndexAddSymbolData( TA_Libc *libHandle,
    if( !symbolFound )
    {
       /* This is a new symbol, so allocate the TA_FileIndexSymbolData */
-      symbolData = (TA_FileIndexSymbolData *)TA_Malloc( libHandle, sizeof(TA_FileIndexSymbolData) );
+      symbolData = (TA_FileIndexSymbolData *)TA_Malloc( sizeof(TA_FileIndexSymbolData) );
 
       if( !symbolData )
       {
@@ -385,7 +376,7 @@ TA_RetCode TA_FileIndexAddSymbolData( TA_Libc *libHandle,
       symbolData->string = TA_StringDup( stringCache, stringSymbol );
       if( !symbolData->string )
       {
-         TA_Free( libHandle, symbolData );
+         TA_Free(  symbolData );
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
 
@@ -394,7 +385,7 @@ TA_RetCode TA_FileIndexAddSymbolData( TA_Libc *libHandle,
       if( retCode != TA_SUCCESS )
       {
          TA_StringFree( stringCache, symbolData->string );
-         TA_Free( libHandle, symbolData );
+         TA_Free( symbolData );
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
    }
@@ -418,19 +409,18 @@ TA_ValueTreeNode *TA_FileIndexGetCurrentTreeValueNode( TA_FileIndexPriv *data )
    return data->currentNode;
 }
 
-TA_RetCode TA_FileIndexFreeValueTree( TA_Libc *libHandle,
-                                      TA_ValueTreeNode *fromNode )
+TA_RetCode TA_FileIndexFreeValueTree( TA_ValueTreeNode *fromNode )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_ValueTreeNode *tmp;
    TA_StringCache *stringCache;
 
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexFreeValueTree );
+   TA_TRACE_BEGIN( TA_FileIndexFreeValueTree );
 
-   TA_ASSERT( libHandle, fromNode != NULL );
+   TA_ASSERT( fromNode != NULL );
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    /* Remove itself from parent->child list if parent still around. */
    if( fromNode->parent )
@@ -446,12 +436,12 @@ TA_RetCode TA_FileIndexFreeValueTree( TA_Libc *libHandle,
    /* Deletes all childs. */
    if( fromNode->child )
    {
-      retCode = freeListAndElement( libHandle, fromNode->child, freeTreeNode );
+      retCode = freeListAndElement( fromNode->child, freeTreeNode );
       if( retCode != TA_SUCCESS )
          TA_TRACE_RETURN( retCode );
    }
 
-   TA_Free( libHandle, fromNode );
+   TA_Free( fromNode );
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -460,19 +450,17 @@ TA_RetCode TA_FileIndexAddTreeValue( TA_FileIndexPriv *data,
                                      TA_String *string,
                                      TA_ValueTreeNode **added )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_ValueTreeNode *node;
    unsigned int allocateEmptyString;
-   TA_Libc *libHandle;
    TA_StringCache *stringCache;
 
-   libHandle = data->libHandle;
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexAddTreeValue );
+   TA_TRACE_BEGIN( TA_FileIndexAddTreeValue );
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    allocateEmptyString = 0;
-   TA_ASSERT( libHandle, data != NULL );
+   TA_ASSERT( data != NULL );
 
    if( added )
       *added = NULL;
@@ -488,7 +476,7 @@ TA_RetCode TA_FileIndexAddTreeValue( TA_FileIndexPriv *data,
    }
 
    /* Alloc the TA_ValueTreeNode */
-   node = allocTreeNode( libHandle, data->currentNode, string );
+   node = allocTreeNode( data->currentNode, string );
 
    if( allocateEmptyString )
       TA_StringFree( stringCache, string );
@@ -507,17 +495,16 @@ TA_RetCode TA_FileIndexAddTreeValue( TA_FileIndexPriv *data,
 }
 
 /* Allows to change the value associated to a TA_ValueTreeNode. */
-TA_RetCode TA_FileIndexChangeValueTreeNodeValue( TA_Libc *libHandle,
-                                                 TA_ValueTreeNode *nodeToChange,
+TA_RetCode TA_FileIndexChangeValueTreeNodeValue( TA_ValueTreeNode *nodeToChange,
                                                  TA_String *newValue )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_String *dup;
    TA_StringCache *stringCache;
 
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexChangeValueTreeNodeValue );
+   TA_TRACE_BEGIN(  TA_FileIndexChangeValueTreeNodeValue );
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    if( !nodeToChange )
    {
@@ -551,11 +538,8 @@ TA_RetCode TA_FileIndexChangeValueTreeNodeValue( TA_Libc *libHandle,
 TA_ValueTreeNode *TA_FileIndexGoDownTreeValue( TA_FileIndexPriv *data )
 {
    TA_ValueTreeNode *retValue;
-   TA_Libc *libHandle;
 
-   libHandle = data->libHandle;
-
-   TA_ASSERT_RET( libHandle, data != NULL, (TA_ValueTreeNode *)NULL );
+   TA_ASSERT_RET( data != NULL, (TA_ValueTreeNode *)NULL );
 
    /* Go down using the first child only. */
    if( (!data->currentNode) || (!data->currentNode->child) )
@@ -573,11 +557,8 @@ TA_ValueTreeNode *TA_FileIndexGoDownTreeValue( TA_FileIndexPriv *data )
 TA_ValueTreeNode *TA_FileIndexGoUpTreeValue( TA_FileIndexPriv *data )
 {
    TA_ValueTreeNode *retValue;
-   TA_Libc *libHandle;
 
-   libHandle = data->libHandle;
-
-   TA_ASSERT_RET( libHandle, data != NULL, (TA_ValueTreeNode *)NULL );
+   TA_ASSERT_RET( data != NULL, (TA_ValueTreeNode *)NULL );
 
    if( !data->currentNode )
       return (TA_ValueTreeNode *)NULL;
@@ -592,17 +573,16 @@ TA_ValueTreeNode *TA_FileIndexGoUpTreeValue( TA_FileIndexPriv *data )
 }
 
 /**** Local functions definitions.     ****/
-static TA_ValueTreeNode *allocTreeNode( TA_Libc *libHandle,
-                                        TA_ValueTreeNode *parent,
+static TA_ValueTreeNode *allocTreeNode( TA_ValueTreeNode *parent,
                                         TA_String *string )
 {
    TA_ValueTreeNode *node;
    TA_RetCode retCode;
    TA_StringCache *stringCache;
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
-   node = (TA_ValueTreeNode *)TA_Malloc( libHandle, sizeof( TA_ValueTreeNode ) );
+   node = (TA_ValueTreeNode *)TA_Malloc( sizeof( TA_ValueTreeNode ) );
 
    if( !node )
       return (TA_ValueTreeNode *)NULL;
@@ -610,10 +590,10 @@ static TA_ValueTreeNode *allocTreeNode( TA_Libc *libHandle,
    node->string = NULL;
    node->parent = NULL;
 
-   node->child = TA_ListAlloc( libHandle );
+   node->child = TA_ListAlloc();
    if( !node->child )
    {
-      freeTreeNode( libHandle, node );
+      freeTreeNode( node );
       return NULL;
    }
 
@@ -622,7 +602,7 @@ static TA_ValueTreeNode *allocTreeNode( TA_Libc *libHandle,
       node->string = TA_StringDup( stringCache, string );
       if( !node->string )
       {
-         freeTreeNode( libHandle, node );
+         freeTreeNode( node );
          return NULL;
       }
    }
@@ -632,7 +612,7 @@ static TA_ValueTreeNode *allocTreeNode( TA_Libc *libHandle,
       retCode = TA_ListAddTail( parent->child, node );
       if( retCode != TA_SUCCESS )
       {
-         freeTreeNode( libHandle, node );
+         freeTreeNode( node );
          return NULL;
       }
       node->parent = parent;
@@ -643,38 +623,36 @@ static TA_ValueTreeNode *allocTreeNode( TA_Libc *libHandle,
 
 static TA_RetCode freeFileIndexPriv( void *toBeFreed )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_FileIndexPriv *asciiFileData;
-   TA_Libc          *libHandle;
    TA_StringCache   *stringCache;
 
    asciiFileData = (TA_FileIndexPriv *)toBeFreed;
 
-   libHandle   = asciiFileData->libHandle;
-   TA_TRACE_BEGIN( libHandle, freeFileIndexPriv );
+   TA_TRACE_BEGIN(  freeFileIndexPriv );
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    if( !asciiFileData )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
-   if( freeListAndElement( libHandle, asciiFileData->listLocationToken, freeTokenInfo ) != TA_SUCCESS )
+   if( freeListAndElement( asciiFileData->listLocationToken, freeTokenInfo ) != TA_SUCCESS )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
-   if( freeListAndElement( libHandle, asciiFileData->listCategory, freeCategoryData ) != TA_SUCCESS )
+   if( freeListAndElement( asciiFileData->listCategory, freeCategoryData ) != TA_SUCCESS )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
    if( asciiFileData->root )
-      TA_FileIndexFreeValueTree( libHandle, asciiFileData->root );
+      TA_FileIndexFreeValueTree( asciiFileData->root );
 
    if( asciiFileData->scratchPad )
-      TA_Free( libHandle, asciiFileData->scratchPad );
+      TA_Free(  asciiFileData->scratchPad );
 
    if( asciiFileData->wildOneChar )
       TA_StringFree( stringCache, asciiFileData->wildOneChar );
@@ -697,12 +675,12 @@ static TA_RetCode freeFileIndexPriv( void *toBeFreed )
    if( asciiFileData->initialCategoryTypeString )
       TA_StringFree( stringCache, asciiFileData->initialCategoryTypeString );
 
-   TA_Free( libHandle, asciiFileData );
+   TA_Free( asciiFileData );
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-static TA_RetCode freeTreeNode( TA_Libc *libHandle, void *toBeFreed )
+static TA_RetCode freeTreeNode( void *toBeFreed )
 {
    /* Free this node and all descendant.
     * Force to ignore the remove of itself in the parent->child list
@@ -712,15 +690,15 @@ static TA_RetCode freeTreeNode( TA_Libc *libHandle, void *toBeFreed )
      */
    TA_ValueTreeNode *node = (TA_ValueTreeNode *)toBeFreed;
    node->parent = NULL;
-   return TA_FileIndexFreeValueTree( libHandle, node );
+   return TA_FileIndexFreeValueTree( node );
 }
 
-static TA_RetCode freeTokenInfo( TA_Libc *libHandle, void *toBeFreed )
+static TA_RetCode freeTokenInfo( void *toBeFreed )
 {
    TA_TokenInfo *info;
    TA_StringCache *stringCache;
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    info = (TA_TokenInfo *)toBeFreed;
 
@@ -730,17 +708,17 @@ static TA_RetCode freeTokenInfo( TA_Libc *libHandle, void *toBeFreed )
    if( info->value )
       TA_StringFree( stringCache, info->value );
 
-   TA_Free( libHandle, info );
+   TA_Free(  info );
 
    return TA_SUCCESS;
 }
 
-static TA_RetCode freeCategoryData( TA_Libc *libHandle, void *toBeFreed )
+static TA_RetCode freeCategoryData( void *toBeFreed )
 {
    TA_FileIndexCategoryData *categoryData;
    TA_StringCache *stringCache;
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    categoryData = (TA_FileIndexCategoryData *)toBeFreed;
 
@@ -750,20 +728,20 @@ static TA_RetCode freeCategoryData( TA_Libc *libHandle, void *toBeFreed )
    if( categoryData->string )
       TA_StringFree( stringCache, categoryData->string );
 
-   if( freeListAndElement( libHandle, categoryData->listSymbol, freeSymbolData ) != TA_SUCCESS )
+   if( freeListAndElement( categoryData->listSymbol, freeSymbolData ) != TA_SUCCESS )
       return TA_ALLOC_ERR;
 
-   TA_Free( libHandle, categoryData );
+   TA_Free( categoryData );
 
    return TA_SUCCESS;
 }
 
-static TA_RetCode freeSymbolData( TA_Libc *libHandle, void *toBeFreed )
+static TA_RetCode freeSymbolData( void *toBeFreed )
 {
    TA_FileIndexSymbolData *symbolData;
    TA_StringCache *stringCache;
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    symbolData = (TA_FileIndexSymbolData *)toBeFreed;
 
@@ -781,27 +759,27 @@ static TA_RetCode freeSymbolData( TA_Libc *libHandle, void *toBeFreed )
    if( symbolData->string )
       TA_StringFree( stringCache, symbolData->string );
 
-   TA_Free( libHandle, symbolData );
+   TA_Free( symbolData );
 
    return TA_SUCCESS;
 }
 
-static TA_RetCode freeListAndElement( TA_Libc *libHandle, TA_List *list, TA_RetCode (*freeFunc)( TA_Libc *libHandle, void *toBeFreed ) )
+static TA_RetCode freeListAndElement( TA_List *list, TA_RetCode (*freeFunc)( void *toBeFreed ) )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    void *node;
 
-   TA_TRACE_BEGIN( libHandle, freeListAndElement );
+   TA_TRACE_BEGIN( freeListAndElement );
 
    if( list != NULL )
    {
       while( (node = TA_ListRemoveTail( list )) != NULL )
       {
-         retCode = freeFunc( libHandle, node );
+         retCode = freeFunc(  node );
          if( retCode != TA_SUCCESS )
          {
-            TA_FATAL( libHandle, NULL, node, retCode );
+            TA_FATAL(  NULL, node, retCode );
             TA_TRACE_RETURN( TA_ALLOC_ERR );
          }
       }
@@ -809,7 +787,7 @@ static TA_RetCode freeListAndElement( TA_Libc *libHandle, TA_List *list, TA_RetC
       retCode = TA_ListFree( list );
       if( retCode != TA_SUCCESS )
       {
-         TA_FATAL( libHandle, NULL, list, retCode );
+         TA_FATAL(  NULL, list, retCode );
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
    }

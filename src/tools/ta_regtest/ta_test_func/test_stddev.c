@@ -94,8 +94,7 @@ typedef struct
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 
 /**** Local variables definitions.     ****/
@@ -117,7 +116,7 @@ static TA_Test tableTest[] =
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
-ErrorNumber test_func_stddev( TA_Libc *libHandle, TA_History *history )
+ErrorNumber test_func_stddev( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
@@ -131,7 +130,7 @@ ErrorNumber test_func_stddev( TA_Libc *libHandle, TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
 
-      retValue = do_test( libHandle, history, &tableTest[i] );
+      retValue = do_test( history, &tableTest[i] );
       if( retValue != 0 )
       {
          printf( "%s Failed Test #%d (Code=%d)\n", __FILE__,
@@ -145,7 +144,7 @@ ErrorNumber test_func_stddev( TA_Libc *libHandle, TA_History *history )
 }
 
 /**** Local functions definitions.     ****/
-static TA_RetCode rangeTestFunction( TA_Libc *libHandle, 
+static TA_RetCode rangeTestFunction( 
                               TA_Integer startIdx,
                               TA_Integer endIdx,
                               TA_Real *outputBuffer,
@@ -162,7 +161,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
   
    testParam = (TA_RangeTestParam *)opaqueData;   
 
-   retCode = TA_STDDEV( libHandle,
+   retCode = TA_STDDEV(
                         startIdx,
                         endIdx,
                         testParam->close,
@@ -179,8 +178,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    return retCode;
 }
 
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test )
 {
    TA_RetCode retCode;
@@ -197,7 +195,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    setInputBuffer( 1, history->close, history->nbBars );
    
    /* Make a simple first call. */
-   retCode = TA_STDDEV( libHandle,
+   retCode = TA_STDDEV(
                         test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
@@ -218,7 +216,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   retCode = TA_STDDEV( libHandle,
+   retCode = TA_STDDEV(
                         test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
@@ -250,7 +248,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( libHandle,
+      errNb = doRangeTest(
                            rangeTestFunction, 
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );

@@ -79,10 +79,10 @@ int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGE
    retValue = (optInFastK_Period_0 - 1);
          
    /* Add the smoothing being done for %K slow */
-   retValue += TA_MA_Lookback( optInSlowK_Period_1, optInSlowK_MAType_2, TA_MA_CLASSIC );  
+   retValue += TA_MA_Lookback( optInSlowK_Period_1, optInSlowK_MAType_2 );  
 
    /* Add the smoothing being done for %D slow. */
-   retValue += TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4, TA_MA_CLASSIC );
+   retValue += TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4 );
 
    return retValue;
 }
@@ -114,8 +114,7 @@ int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGE
  * 
  */
 
-TA_RetCode TA_STOCH( TA_Libc      *libHandle,
-                     TA_Integer    startIdx,
+TA_RetCode TA_STOCH( TA_Integer    startIdx,
                      TA_Integer    endIdx,
                      const TA_Real inHigh_0[],
                      const TA_Real inLow_0[],
@@ -140,8 +139,6 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
    TA_Integer trailingIdx, today, i, bufferIsAllocated;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -229,8 +226,8 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
 
    /* Identify the lookback needed. */
    lookbackK      = optInFastK_Period_0-1;
-   lookbackKSlow  = TA_MA_Lookback( optInSlowK_Period_1, optInSlowK_MAType_2, TA_MA_CLASSIC );
-   lookbackDSlow  = TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4, TA_MA_CLASSIC );
+   lookbackKSlow  = TA_MA_Lookback( optInSlowK_Period_1, optInSlowK_MAType_2 );
+   lookbackDSlow  = TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4 );
    lookbackTotal  = lookbackK + lookbackDSlow + lookbackKSlow;
 
    /* Move up the start index if there is not
@@ -271,6 +268,7 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
    trailingIdx = startIdx-lookbackTotal;
    today       = trailingIdx+lookbackK;
    lowestIdx   = highestIdx = -1;
+   diff = highest = lowest  = 0.0;
 
    /* Allocate a temporary buffer large enough to
     * store the K.
@@ -294,7 +292,7 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
    else
    {
       bufferIsAllocated = 1;
-      tempBuffer = TA_Malloc( libHandle, (endIdx-today+1)*sizeof(TA_Real) );
+      tempBuffer = TA_Malloc( (endIdx-today+1)*sizeof(TA_Real) );
    }
 
    /* Do the K calculation */
@@ -365,16 +363,16 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
     * Some documentation will refer to the smoothed version as being 
     * "K-Slow", but often this end up to be shorten to "K".
     */
-   retCode = TA_MA( libHandle, 0, outIdx-1,
+   retCode = TA_MA( 0, outIdx-1,
                     tempBuffer, optInSlowK_Period_1,
-                    optInSlowK_MAType_2, TA_MA_CLASSIC, 
+                    optInSlowK_MAType_2, 
                     outBegIdx, outNbElement, tempBuffer );
 
 
    if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
    {
       if( bufferIsAllocated )
-        TA_Free( libHandle, tempBuffer ); 
+        TA_Free(  tempBuffer ); 
       /* Something wrong happen? No further data? */
       *outBegIdx    = 0;
       *outNbElement = 0;
@@ -384,9 +382,9 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
    /* Calculate the %D which is simply a moving average of
     * the already smoothed %K.
     */
-   retCode = TA_MA( libHandle, 0, (*outNbElement)-1,
+   retCode = TA_MA( 0, (*outNbElement)-1,
                     tempBuffer, optInSlowD_Period_3,
-                    optInSlowD_MAType_4, TA_MA_CLASSIC, 
+                    optInSlowD_MAType_4,
                     outBegIdx, outNbElement, outSlowD_1 );
 
    /* Copy tempBuffer into the caller buffer. 
@@ -398,7 +396,7 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
 
    /* Don't need K anymore, free it if it was allocated here. */
    if( bufferIsAllocated )
-      TA_Free( libHandle, tempBuffer ); 
+      TA_Free(  tempBuffer ); 
 
    if( retCode != TA_SUCCESS )
    {

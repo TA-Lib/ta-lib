@@ -63,17 +63,14 @@
 
 int TA_PPO_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
                      TA_Integer    optInSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInMethod_2,
-                     TA_Integer    optInCompatibility_3 ) 
+                     TA_Integer    optInMethod_2 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
    (void)optInFastPeriod_0;
 
    /* Lookback is driven by the slow MA. */
-   return TA_MA_Lookback( optInSlowPeriod_1,
-                          optInMethod_2,
-                          optInCompatibility_3 );
+   return TA_MA_Lookback( optInSlowPeriod_1, optInMethod_2 );
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -94,20 +91,15 @@ int TA_PPO_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MA
  * optInMethod_2:
  *    Type of Moving Average
  * 
- * optInCompatibility_3:
- *    Make function compatible to some software
- * 
  * 
  */
 
-TA_RetCode TA_PPO( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_PPO( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
                    TA_Integer    optInSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
                    TA_Integer    optInMethod_2,
-                   TA_Integer    optInCompatibility_3,
                    TA_Integer   *outBegIdx,
                    TA_Integer   *outNbElement,
                    TA_Real       outReal_0[] )
@@ -118,8 +110,6 @@ TA_RetCode TA_PPO( TA_Libc      *libHandle,
    TA_RetCode retCode;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -148,11 +138,6 @@ TA_RetCode TA_PPO( TA_Libc      *libHandle,
    else if( (optInMethod_2 < 0) || (optInMethod_2 > 4) )
       return TA_BAD_PARAM;
 
-   if( optInCompatibility_3 == TA_INTEGER_DEFAULT )
-      optInCompatibility_3 = 0;
-   else if( (optInCompatibility_3 < 0) || (optInCompatibility_3 > 1) )
-      return TA_BAD_PARAM;
-
    if( outReal_0 == NULL )
       return TA_BAD_PARAM;
 
@@ -163,24 +148,22 @@ TA_RetCode TA_PPO( TA_Libc      *libHandle,
    /* Insert TA function code here. */
 
    /* Allocate an intermediate buffer. */
-   tempBuffer = TA_Malloc( libHandle, (endIdx-startIdx+1) * sizeof(TA_Real) );
+   tempBuffer = TA_Malloc( (endIdx-startIdx+1) * sizeof(TA_Real) );
    if( !tempBuffer )
       return TA_ALLOC_ERR;
 
-   retCode = TA_INT_PO( libHandle,
-                        startIdx, endIdx,                        
+   retCode = TA_INT_PO( startIdx, endIdx,                        
                         inReal_0,
                         optInFastPeriod_0, /* From 1 to 200 */
                         optInSlowPeriod_1, /* From 1 to 200 */
                         optInMethod_2,
-                        optInCompatibility_3,
                         outBegIdx,
                         outNbElement,
                         outReal_0,
                         tempBuffer,
                         1 /* Do percentage processing. */ );
 
-   TA_Free( libHandle, tempBuffer );
+   TA_Free(  tempBuffer );
    
    return TA_SUCCESS;
 }

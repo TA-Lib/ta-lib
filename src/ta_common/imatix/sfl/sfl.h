@@ -1688,75 +1688,75 @@ enum {
 extern "C" {
 #endif
 
-FILE  *file_open           (TA_Libc *libHandle, const char *filename, char mode);
+FILE  *file_open           (const char *filename, char mode);
 
 #if 0
 !!! Not needed within Ta-Lib
-FILE  *file_locate         (TA_Libc *libHandle, const char *path, const char *name,
+FILE  *file_locate         (const char *path, const char *name,
                             const char *ext);
 #endif
 
-int    file_close          (TA_Libc *libHandle, FILE *stream);
-Bool   file_read           (TA_Libc *libHandle, FILE *stream, char *string);
-Bool   file_readn          (TA_Libc *libHandle, FILE *stream, char *string, int line_max);
-char  *file_write          (TA_Libc *libHandle, FILE *stream, const char *string);
-int    file_copy           (TA_Libc *libHandle, const char *dest, const char *src, char mode);
-int    file_concat         (TA_Libc *libHandle, const char *dest, const char *src);
-int    file_rename         (TA_Libc *libHandle, const char *oldname, const char *newname);
-int    file_delete         (TA_Libc *libHandle, const char *filename);
-char  *file_where          (TA_Libc *libHandle, char mode, const char *path, const char *name,
+int    file_close          (FILE *stream);
+Bool   file_read           (FILE *stream, char *string);
+Bool   file_readn          (FILE *stream, char *string, int line_max);
+char  *file_write          (FILE *stream, const char *string);
+int    file_copy           (const char *dest, const char *src, char mode);
+int    file_concat         (const char *dest, const char *src);
+int    file_rename         (const char *oldname, const char *newname);
+int    file_delete         (const char *filename);
+char  *file_where          (char mode, const char *path, const char *name,
                             const char *ext);
-char  *file_where_ext      (TA_Libc *libHandle, char mode, const char *path, const char *name,
+char  *file_where_ext      (char mode, const char *path, const char *name,
                             const char **ext);
-Bool   file_exists         (TA_Libc *libHandle, const char *filename);
-Bool   file_cycle          (TA_Libc *libHandle, const char *filename, int how);
-Bool   file_cycle_needed   (TA_Libc *libHandle, const char *filename, int how);
-Bool   file_has_changed    (TA_Libc *libHandle, const char *filename, long old_date, long old_time);
-Bool   safe_to_extend      (TA_Libc *libHandle, const char *filename);
-char  *default_extension   (TA_Libc *libHandle, char *dest, const char *src, const char *ext);
-char  *fixed_extension     (TA_Libc *libHandle, char *dest, const char *src, const char *ext);
-char  *strip_extension     (TA_Libc *libHandle, char *filename);
-char  *add_extension       (TA_Libc *libHandle, char *dest, const char *src, const char *ext);
-char  *strip_file_path     (TA_Libc *libHandle, char *filename);
-char  *strip_file_name     (TA_Libc *libHandle, char *filename);
+Bool   file_exists         (const char *filename);
+Bool   file_cycle          (const char *filename, int how);
+Bool   file_cycle_needed   (const char *filename, int how);
+Bool   file_has_changed    (const char *filename, long old_date, long old_time);
+Bool   safe_to_extend      (const char *filename);
+char  *default_extension   (char *dest, const char *src, const char *ext);
+char  *fixed_extension     (char *dest, const char *src, const char *ext);
+char  *strip_extension     (char *filename);
+char  *add_extension       (char *dest, const char *src, const char *ext);
+char  *strip_file_path     (char *filename);
+char  *strip_file_name     (char *filename);
 
 /* Will put a NULL between the path and the file adn return
  * a ptr on the file.
  * If there is no split occuring, NULL is returned.
  */
-char  *split_path_and_file (TA_Libc *libHandle, char *name );
+char  *split_path_and_file (char *name );
 
 #if 0
 !!! Not needed within TA-Lib
-char  *get_new_filename    (TA_Libc *libHandle, const char *filename);
+char  *get_new_filename    (const char *filename);
 #endif
 
-Bool   file_is_readable    (TA_Libc *libHandle, const char *filename);
-Bool   file_is_writeable   (TA_Libc *libHandle, const char *filename);
-Bool   file_is_executable  (TA_Libc *libHandle, const char *filename);
-Bool   file_is_directory   (TA_Libc *libHandle, const char *filename);
-Bool   file_is_program     (TA_Libc *libHandle, const char *filename);
-Bool   file_is_legal       (TA_Libc *libHandle, const char *filename);
-char  *file_exec_name      (TA_Libc *libHandle, const char *filename);
-long   get_file_size       (TA_Libc *libHandle, const char *filename);
-time_t get_file_time       (TA_Libc *libHandle, const char *filename);
-long   get_file_lines      (TA_Libc *libHandle, const char *filename);
+Bool   file_is_readable    (const char *filename);
+Bool   file_is_writeable   (const char *filename);
+Bool   file_is_executable  (const char *filename);
+Bool   file_is_directory   (const char *filename);
+Bool   file_is_program     (const char *filename);
+Bool   file_is_legal       (const char *filename);
+char  *file_exec_name      (const char *filename);
+long   get_file_size       (const char *filename);
+time_t get_file_time       (const char *filename);
+long   get_file_lines      (const char *filename);
 
 #if 0
 !!! Not needed within TA-Lib
-DESCR *file_slurp          (TA_Libc *libHandle, const char *filename);
-DESCR *file_slurpl         (TA_Libc *libHandle, const char *filename);
+DESCR *file_slurp          (const char *filename);
+DESCR *file_slurpl         (const char *filename);
 #endif
 
-dbyte  file_set_eoln       (TA_Libc *libHandle, char *dest, const char *src, dbyte src_size,
+dbyte  file_set_eoln       (char *dest, const char *src, dbyte src_size,
                             Bool add_cr);
 #if 0
 !!! Not needed within TA-Lib
-char  *get_tmp_file_name   (TA_Libc *libHandle, const char *path, qbyte *index, const char *ext);
-int    file_fhredirect     (TA_Libc *libHandle, int source, int dest);
-void   file_fhrestore      (TA_Libc *libHandle, int source, int dest);
-FILE  *ftmp_open           (TA_Libc *libHandle, char **pathname);
-void   ftmp_close          (TA_Libc *libHandle, FILE *tempstream);
+char  *get_tmp_file_name   (const char *path, qbyte *index, const char *ext);
+int    file_fhredirect     (int source, int dest);
+void   file_fhrestore      (int source, int dest);
+FILE  *ftmp_open           (char **pathname);
+void   ftmp_close          (FILE *tempstream);
 #endif
 
 #ifdef __cplusplus
@@ -2748,35 +2748,35 @@ typedef struct _FILEINFO
 extern "C" {
 #endif
 
-Bool      open_dir      (TA_Libc *libHandle,DIRST *dir, const char *dir_name);
-Bool      read_dir      (TA_Libc *libHandle,DIRST *dir);
-Bool      close_dir     (TA_Libc *libHandle,DIRST *dir);
+Bool      open_dir      (DIRST *dir, const char *dir_name);
+Bool      read_dir      (DIRST *dir);
+Bool      close_dir     (DIRST *dir);
 
 #if 0
 !!! Not needed within TA-Lib
-char     *format_dir    (TA_Libc *libHandle,DIRST *dir, Bool full);
-int       fix_dir       (TA_Libc *libHandle,DIRST *dir);
+char     *format_dir    (DIRST *dir, Bool full);
+int       fix_dir       (DIRST *dir);
 #endif
 
-int       free_dir      (TA_Libc *libHandle,DIRST *dir);
+int       free_dir      (DIRST *dir);
 
-char     *resolve_path  (TA_Libc *libHandle,const char *path);
-char     *locate_path   (TA_Libc *libHandle,const char *root, const char *path);
-char     *clean_path    (TA_Libc *libHandle,const char *path);
+char     *resolve_path  (const char *path);
+char     *locate_path   (const char *root, const char *path);
+char     *clean_path    (const char *path);
 
 #if 0
 !!! Not needed within TA-Lib
 NODE     *load_dir_list (const char *dir_name, const char *sort);
 void      sort_dir_list (NODE *filelist, const char *sort);
 FILEINFO *add_dir_list  (NODE *filelist, const DIRST *dir);
-void      free_dir_list (TA_Libc *libHandle,NODE *filelist);
+void      free_dir_list (NODE *filelist);
 #endif
 
-char     *get_curdir    (TA_Libc *libHandle);
-int       set_curdir    (TA_Libc *libHandle,const char *path);
-Bool      file_matches  (TA_Libc *libHandle,const char *filename, const char *pattern);
-int       make_dir      (TA_Libc *libHandle,const char *path);
-int       remove_dir    (TA_Libc *libHandle,const char *path);
+char     *get_curdir    (void);
+int       set_curdir    (const char *path);
+Bool      file_matches  (const char *filename, const char *pattern);
+int       make_dir      (const char *path);
+int       remove_dir    (const char *path);
 
 #if 0
 !!! Not needed within TA-Lib
@@ -2896,8 +2896,8 @@ extern "C" {
 #endif
 
 #if 0
-char   *strdupl            (TA_Libc *libHandle, const char *string);
-char  **strfree            (TA_Libc *libHandle, char **string);
+char   *strdupl            (const char *string);
+char  **strfree            (char **string);
 #endif
 
 char   *strskp             (const char *string);
@@ -2912,11 +2912,11 @@ char   *strunique          (char *string, char unique);
 int     strmatch           (const char *string1, const char *string2);
 qbyte   strhash            (const char *string);
 Bool    strprefixed        (const char *string, const char *prefix);
-char   *strprefix          (TA_Libc *libHandle, const char *string, const char *delims);
+char   *strprefix          (const char *string, const char *delims);
 char   *strdefix           (const char *string, const char *prefix);
 char   *strconvch          (char *string, char from, char to);
 char   *xstrcat            (char *dest, const char *src, ...);
-char   *xstrcpy            (TA_Libc *libHandle, char *dest, const char *src, ...);
+char   *xstrcpy            (char *dest, const char *src, ...);
 int     lexcmp             (const char *string1, const char *string2);
 int     lexncmp            (const char *string1, const char *string2,
                             const int count);
@@ -2927,12 +2927,12 @@ char   *soundex            (const char *string);
 char   *soundexn           (const char *string, int size, Bool fold);
 #endif
 
-DESCR  *strt2descr         (TA_Libc *libHandle, char **strings);
-char  **descr2strt         (TA_Libc *libHandle, const DESCR *descr);
-void    strtfree           (TA_Libc *libHandle, char **strings);
+DESCR  *strt2descr         (char **strings);
+char  **descr2strt         (const DESCR *descr);
+void    strtfree           (char **strings);
 int     strcntch           (const char *string, char value);
 int     strlookup          (const LOOKUP *lookup, const char *key);
-char   *strreformat        (TA_Libc *libHandle, const char *source, size_t width, const char *prefix);
+char   *strreformat        (const char *source, size_t width, const char *prefix);
 
 char   *removechars        (char *str, char *chrs);
 char   *replacechrswith    (char *str, char *chrs, char ctorlcwth);
@@ -2951,16 +2951,16 @@ char   *setstrfld          (char *str, int fln, int ofset,
 int     getstrfldlen       (const char *str, int fln, int ofset, char *sep);
 char   *findstrinfile      (FILE *fp, char *find, char *retstr, int *iLnNo);
 char   *getequval          (char *strline, char *strretstr);
-int     matchtable         (TA_Libc *libHandle,
+int     matchtable         (
                             char *str, char *strmatch,
                             char *strsept, int ncse);
-char   *stringreplace      (TA_Libc *libHandle, char *strbuf, char *strpattern);
+char   *stringreplace      (char *strbuf, char *strpattern);
 char   *wordwrapstr        (char *strbuff, int iwid);
 char   *stricstr           (const char *str1, const char *str2);
 int     strtempcmp         (const char *str1, const char *strPat);
 int     istoken            (char **strLine, const char *strtoken,
                             int *iWasToken);
-int     isoneoftokens      (TA_Libc *libHandle, char **str, char *strmat,
+int     isoneoftokens      (char **str, char *strmat,
                             char *strsep, int *iWasTk);
 char   *eatstr             (char **strBuff, char *strToEat);
 char   *eatstrpast         (char **strBuff, char *strCharsToEatPast);
@@ -3294,56 +3294,56 @@ extern int
 extern "C" {
 #endif
 
-int    sock_init            (TA_Libc *libHandle);
-int    sock_term            (TA_Libc *libHandle);
-sock_t passive_TCP          (TA_Libc *libHandle, const char *service, int queue);
-sock_t passive_UDP          (TA_Libc *libHandle, const char *service);
-sock_t passive_socket       (TA_Libc *libHandle, const char *service, const char *protocol,
+int    sock_init            (void);
+int    sock_term            (void);
+sock_t passive_TCP          (const char *service, int queue);
+sock_t passive_UDP          (const char *service);
+sock_t passive_socket       (const char *service, const char *protocol,
                              int queue);
-sock_t connect_TCP          (TA_Libc *libHandle, const char *host, const char *service);
-sock_t connect_UDP          (TA_Libc *libHandle, const char *host, const char *service);
-sock_t connect_TCP_fast     (TA_Libc *libHandle, const struct sockaddr_in *sin);
-sock_t connect_UDP_fast     (TA_Libc *libHandle, const struct sockaddr_in *sin);
-sock_t connect_socket       (TA_Libc *libHandle, const char *host, const char *service, const char
+sock_t connect_TCP          (const char *host, const char *service);
+sock_t connect_UDP          (const char *host, const char *service);
+sock_t connect_TCP_fast     (const struct sockaddr_in *sin);
+sock_t connect_UDP_fast     (const struct sockaddr_in *sin);
+sock_t connect_socket       (const char *host, const char *service, const char
                              *protocol, const struct sockaddr_in *sin,
                              int retry_max, int retry_delay);
-int    connect_to_peer      (TA_Libc *libHandle, sock_t handle,
+int    connect_to_peer      (sock_t handle,
                              const struct sockaddr_in *sin);
-int    connect_error        (TA_Libc *libHandle);
-sock_t accept_socket        (TA_Libc *libHandle, sock_t master);
-sock_t create_socket        (TA_Libc *libHandle, const char *protocol);
-int    address_end_point    (TA_Libc *libHandle, const char *host, const char *service, const
+int    connect_error        (void);
+sock_t accept_socket        (sock_t master);
+sock_t create_socket        (const char *protocol);
+int    address_end_point    (const char *host, const char *service, const
                              char *protocol, struct sockaddr_in *sin);
-int    get_sock_addr        (TA_Libc *libHandle, sock_t handle, struct sockaddr_in *sin,
+int    get_sock_addr        (sock_t handle, struct sockaddr_in *sin,
                              char *name, int namesize);
-int    get_peer_addr        (TA_Libc *libHandle, sock_t handle, struct sockaddr_in *sin,
+int    get_peer_addr        (sock_t handle, struct sockaddr_in *sin,
                              char *name, int namesize);
-void   build_sockaddr       (TA_Libc *libHandle, struct sockaddr_in *sin, qbyte host, dbyte port);
-char  *socket_localaddr     (TA_Libc *libHandle, sock_t handle);
-char  *socket_peeraddr      (TA_Libc *libHandle, sock_t handle);
-Bool   socket_is_alive      (TA_Libc *libHandle, sock_t handle);
-int    socket_error         (TA_Libc *libHandle, sock_t handle);
-int    socket_nodelay       (TA_Libc *libHandle, sock_t handle);
-int    read_TCP             (TA_Libc *libHandle, sock_t handle, void *buffer, size_t length);
-int    write_TCP            (TA_Libc *libHandle, sock_t handle, const void *buffer, size_t length);
-int    read_UDP             (TA_Libc *libHandle, sock_t handle, void *buffer, size_t length,
+void   build_sockaddr       (struct sockaddr_in *sin, qbyte host, dbyte port);
+char  *socket_localaddr     (sock_t handle);
+char  *socket_peeraddr      (sock_t handle);
+Bool   socket_is_alive      (sock_t handle);
+int    socket_error         (sock_t handle);
+int    socket_nodelay       (sock_t handle);
+int    read_TCP             (sock_t handle, void *buffer, size_t length);
+int    write_TCP            (sock_t handle, const void *buffer, size_t length);
+int    read_UDP             (sock_t handle, void *buffer, size_t length,
                              const struct sockaddr_in *sin);
-int    write_UDP            (TA_Libc *libHandle, sock_t handle, const void *buffer, size_t length,
+int    write_UDP            (sock_t handle, const void *buffer, size_t length,
                              const struct sockaddr_in *sin);
-int    close_socket         (TA_Libc *libHandle, sock_t handle);
-int    sock_select          (TA_Libc *libHandle, int nfds, fd_set *readfds, fd_set *writefds,
+int    close_socket         (sock_t handle);
+int    sock_select          (int nfds, fd_set *readfds, fd_set *writefds,
                              fd_set *errorfds, struct timeval *timeout);
-char  *get_hostname         (TA_Libc *libHandle);
-qbyte  get_hostaddr         (TA_Libc *libHandle);
-qbyte *get_hostaddrs        (TA_Libc *libHandle);
-const  char *sockmsg        (TA_Libc *libHandle);
-Bool   socket_is_permitted  (TA_Libc *libHandle, const char *address, const char *mask);
-char  *sock_ntoa            (TA_Libc *libHandle, qbyte address);
-char  *get_host_file        (TA_Libc *libHandle);
-int    get_name_server      (TA_Libc *libHandle, struct sockaddr_in *ns_address, int ns_max);
+char  *get_hostname         (void);
+qbyte  get_hostaddr         (void);
+qbyte *get_hostaddrs        (void);
+const  char *sockmsg        (void);
+Bool   socket_is_permitted  (const char *address, const char *mask);
+char  *sock_ntoa            (qbyte address);
+char  *get_host_file        (void);
+int    get_name_server      (struct sockaddr_in *ns_address, int ns_max);
 
 #if (defined (__WINDOWS__))
-int    winsock_last_error   (TA_Libc *libHandle);
+int    winsock_last_error   (void);
 #endif
 
 #ifdef __cplusplus
@@ -3351,7 +3351,7 @@ int    winsock_last_error   (TA_Libc *libHandle);
 #endif
 
 /*  Macros for compatibility with previous versions                          */
-#define socket_hostaddr(libHandle,handle) socket_peeraddr (libHandle,handle)
+#define socket_hostaddr(handle) socket_peeraddr (handle)
 
 
 #endif                                  /*  Include sflsock.h                */
@@ -3980,14 +3980,14 @@ char   **env_copy         (char **environment);
 extern "C" {
 #endif
 
-char **tok_split      (TA_Libc *libHandle, const char *string);
-char **tok_split_rich (TA_Libc *libHandle, const char *string, const char *delims);
-void   tok_free       (TA_Libc *libHandle, char **token_list);
-char **tok_push       (TA_Libc *libHandle, char **token_list, const char *string);
-int    tok_size       (TA_Libc *libHandle, char **token_list);
-size_t tok_text_size  (TA_Libc *libHandle, char **token_list);
+char **tok_split      (const char *string);
+char **tok_split_rich (const char *string, const char *delims);
+void   tok_free       (char **token_list);
+char **tok_push       (char **token_list, const char *string);
+int    tok_size       (char **token_list);
+size_t tok_text_size  (char **token_list);
 
-char  *tok_subst      (TA_Libc *libHandle, const char *string, SYMTAB *symbols);
+char  *tok_subst      (const char *string, SYMTAB *symbols);
 
 #ifdef __cplusplus
 }

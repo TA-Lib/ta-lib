@@ -76,24 +76,22 @@
 /* None */
 
 /**** Local functions.    ****/
-static TA_PrivateAsciiHandle *allocPrivateHandle( TA_Libc *libHandle );
-static TA_RetCode freePrivateHandle( TA_Libc *libHandle, TA_PrivateAsciiHandle *privateHandle );
+static TA_PrivateAsciiHandle *allocPrivateHandle( void );
+static TA_RetCode freePrivateHandle( TA_PrivateAsciiHandle *privateHandle );
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
 
-TA_DataSourceHandle *TA_ASCII_DataSourceHandleAlloc( TA_Libc *libHandle,
-                                                     const TA_AddDataSourceParamPriv *param )
+TA_DataSourceHandle *TA_ASCII_DataSourceHandleAlloc( const TA_AddDataSourceParamPriv *param )
 {
    TA_DataSourceHandle *handle;
    TA_PrivateAsciiHandle *privateHandle;
 
-   TA_ASSERT_RET( libHandle, libHandle != NULL, (TA_DataSourceHandle *)NULL );
-   TA_ASSERT_RET( libHandle, param != NULL, (TA_DataSourceHandle *)NULL );
+   TA_ASSERT_RET( param != NULL, (TA_DataSourceHandle *)NULL );
       
-   handle = (TA_DataSourceHandle *)TA_Malloc(libHandle,sizeof( TA_DataSourceHandle ));
+   handle = (TA_DataSourceHandle *)TA_Malloc(sizeof( TA_DataSourceHandle ));
    if( !handle )
       return (TA_DataSourceHandle *)NULL;
 
@@ -101,7 +99,7 @@ TA_DataSourceHandle *TA_ASCII_DataSourceHandleAlloc( TA_Libc *libHandle,
    handle->nbCategory = 0;
 
    /* Allocate the opaque data. */
-   handle->opaqueData = allocPrivateHandle(libHandle);
+   handle->opaqueData = allocPrivateHandle();
    if( !handle->opaqueData )
    {
       TA_ASCII_DataSourceHandleFree( handle );
@@ -116,26 +114,24 @@ TA_DataSourceHandle *TA_ASCII_DataSourceHandleAlloc( TA_Libc *libHandle,
 
 TA_RetCode TA_ASCII_DataSourceHandleFree( TA_DataSourceHandle *handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_PrivateAsciiHandle *privateHandle;
-   TA_Libc *libHandle;
 
    if( !handle )
       return TA_INTERNAL_ERROR(60);
 
    privateHandle = (TA_PrivateAsciiHandle *)handle->opaqueData;
-   libHandle = privateHandle->libHandle;
 
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_DataSourceHandleFree );
+   TA_TRACE_BEGIN(  TA_ASCII_DataSourceHandleFree );
 
    if( handle )
    {
-      if( freePrivateHandle( libHandle, (TA_PrivateAsciiHandle *)handle->opaqueData ) != TA_SUCCESS )
+      if( freePrivateHandle( (TA_PrivateAsciiHandle *)handle->opaqueData ) != TA_SUCCESS )
       {
-         TA_FATAL( libHandle, NULL, handle, 0 );
+         TA_FATAL(  NULL, handle, 0 );
       }
 
-      TA_Free( libHandle, handle );
+      TA_Free( handle );
    }
 
    TA_TRACE_RETURN( TA_SUCCESS );
@@ -143,24 +139,22 @@ TA_RetCode TA_ASCII_DataSourceHandleFree( TA_DataSourceHandle *handle )
 
 TA_RetCode TA_ASCII_BuildFileIndex( TA_DataSourceHandle *handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_FileIndex *newIndex;
    TA_PrivateAsciiHandle *privateHandle;
-   TA_Libc *libHandle;
 
    if( !handle )
       return TA_INTERNAL_ERROR(61);
 
    privateHandle = (TA_PrivateAsciiHandle *)handle->opaqueData;
-   libHandle = privateHandle->libHandle;
 
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_BuildFileIndex );
+   TA_TRACE_BEGIN(  TA_ASCII_BuildFileIndex );
 
-   TA_ASSERT( libHandle, privateHandle != NULL );
-   TA_ASSERT( libHandle, privateHandle->param != NULL );
-   TA_ASSERT( libHandle, privateHandle->param->category != NULL );
-   TA_ASSERT( libHandle, privateHandle->param->location != NULL );
+   TA_ASSERT( privateHandle != NULL );
+   TA_ASSERT( privateHandle->param != NULL );
+   TA_ASSERT( privateHandle->param->category != NULL );
+   TA_ASSERT( privateHandle->param->location != NULL );
 
    /* De-allocate potentialy already existing file index. */
    if( privateHandle->theFileIndex != NULL )
@@ -174,8 +168,7 @@ TA_RetCode TA_ASCII_BuildFileIndex( TA_DataSourceHandle *handle )
    }
 
    /* Allocate new file index. */
-   retCode = TA_FileIndexAlloc( libHandle,
-                                privateHandle->param->location,
+   retCode = TA_FileIndexAlloc( privateHandle->param->location,
                                 privateHandle->param->category,
                                 privateHandle->param->country,
                                 privateHandle->param->exchange,
@@ -187,7 +180,7 @@ TA_RetCode TA_ASCII_BuildFileIndex( TA_DataSourceHandle *handle )
       TA_TRACE_RETURN( retCode );
    }
 
-   TA_ASSERT( libHandle, newIndex != NULL );
+   TA_ASSERT( newIndex != NULL );
 
    privateHandle->theFileIndex = newIndex;
 
@@ -196,27 +189,23 @@ TA_RetCode TA_ASCII_BuildFileIndex( TA_DataSourceHandle *handle )
 
 TA_RetCode TA_ASCII_BuildReadOpInfo( TA_DataSourceHandle *handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_PrivateAsciiHandle *privateHandle;
-   TA_Libc *libHandle;
 
    if( !handle )
       return TA_INTERNAL_ERROR(62);
 
    privateHandle = (TA_PrivateAsciiHandle *)handle->opaqueData;
-   libHandle = privateHandle->libHandle;
 
-   TA_TRACE_BEGIN( libHandle, TA_ASCII_BuildFileIndex );
+   TA_TRACE_BEGIN(  TA_ASCII_BuildFileIndex );
 
-   TA_ASSERT( libHandle, privateHandle != NULL );
-   TA_ASSERT( libHandle, privateHandle->param != NULL );
-   TA_ASSERT( libHandle, privateHandle->param->category != NULL );
-   TA_ASSERT( libHandle, privateHandle->param->location != NULL );
-
+   TA_ASSERT( privateHandle != NULL );
+   TA_ASSERT( privateHandle->param != NULL );
+   TA_ASSERT( privateHandle->param->category != NULL );
+   TA_ASSERT( privateHandle->param->location != NULL );
    
-   retCode = TA_ReadOpInfoAlloc( libHandle,
-                                 TA_StringToChar(privateHandle->param->info),
+   retCode = TA_ReadOpInfoAlloc( TA_StringToChar(privateHandle->param->info),
                                  &privateHandle->readOpInfo );
 
    TA_TRACE_RETURN( retCode );
@@ -224,22 +213,20 @@ TA_RetCode TA_ASCII_BuildReadOpInfo( TA_DataSourceHandle *handle )
 
 /**** Local functions definitions.     ****/
 
-static TA_PrivateAsciiHandle *allocPrivateHandle( TA_Libc *libHandle )
+static TA_PrivateAsciiHandle *allocPrivateHandle( void  )
 {
    TA_PrivateAsciiHandle *privateHandle;
 
-   privateHandle = (TA_PrivateAsciiHandle *)TA_Malloc( libHandle, sizeof( TA_PrivateAsciiHandle ) );
+   privateHandle = (TA_PrivateAsciiHandle *)TA_Malloc( sizeof( TA_PrivateAsciiHandle ) );
    if( !privateHandle )
       return NULL;
 
    memset( privateHandle, 0, sizeof( TA_PrivateAsciiHandle ) );
 
-   privateHandle->libHandle = libHandle;
-
    return privateHandle;
 }
 
-static TA_RetCode freePrivateHandle( TA_Libc *libHandle, TA_PrivateAsciiHandle *privateHandle )
+static TA_RetCode freePrivateHandle( TA_PrivateAsciiHandle *privateHandle )
 {
    if( privateHandle )
    {
@@ -249,7 +236,7 @@ static TA_RetCode freePrivateHandle( TA_Libc *libHandle, TA_PrivateAsciiHandle *
       if( privateHandle->readOpInfo )
          TA_ReadOpInfoFree( privateHandle->readOpInfo );
 
-      TA_Free( libHandle, privateHandle );
+      TA_Free(  privateHandle );
    }
 
    return TA_SUCCESS;

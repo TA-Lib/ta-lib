@@ -80,20 +80,17 @@
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
-TA_List *TA_ListAlloc( TA_Libc *libHandle )
+TA_List *TA_ListAlloc( void )
 {
    TA_List *theList;
 
-   if( !libHandle )
-      return NULL;
-
    /* Allocate the TA_List. */
-   theList = (TA_List *)TA_Malloc( libHandle, sizeof( TA_List ) );      
+   theList = (TA_List *)TA_Malloc( sizeof( TA_List ) );      
    if( !theList )
       return NULL;
 
    /* Initialize the content of the TA_List */
-   TA_ListInit( libHandle, theList );
+   TA_ListInit( theList );
    theList->flags = TA_LIST_FLAGS_DYNAMIC;
 
    return theList;
@@ -101,22 +98,18 @@ TA_List *TA_ListAlloc( TA_Libc *libHandle )
 
 TA_RetCode TA_ListFree( TA_List *list )
 {
-   TA_Libc *libHandle;
-
    if( !list )
       return TA_SUCCESS; /* Assume already freed. */
-
-   libHandle = list->libHandle;
 
    /* Destroy all the nodes if they were
     * dynamically allocated.
     */
    if( list->flags & TA_LIST_FLAGS_DYNAMIC_NODE )
-      list_destroy_nodes( libHandle, &list->d );
+      list_destroy_nodes( &list->d );
 
    /* Destroy the list if it was dynamically allocated. */
    if( list->flags & TA_LIST_FLAGS_DYNAMIC )
-      TA_Free( libHandle, list );
+      TA_Free( list );
 
    return TA_SUCCESS;
 }
@@ -127,45 +120,41 @@ TA_RetCode TA_ListFree( TA_List *list )
  *
  * Example:
  *      TA_List myList;
- *      TA_ListInit( libHandle, &myList );
+ *      TA_ListInit(  &myList );
  *      'myList' can be used from this point.
  */
-void TA_ListInit( TA_Libc *libHandle, TA_List *list )
+void TA_ListInit( TA_List *list )
 {
    list->node = NULL;
-   list->libHandle = libHandle;
    list->flags = 0;
 
-   list_init( libHandle, &list->d, LISTCOUNT_T_MAX );
+   list_init( &list->d, LISTCOUNT_T_MAX );
 }
 
 TA_RetCode TA_ListFreeAll( TA_List *list,
-                           TA_RetCode (*freeFunc)( TA_Libc *libHandle, void *toBeFreed ))
+                           TA_RetCode (*freeFunc)( void *toBeFreed ))
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    void *node;
-   TA_Libc *libHandle;
 
-   libHandle = list->libHandle;
-
-   TA_TRACE_BEGIN( libHandle, TA_ListFreeAll );
+   TA_TRACE_BEGIN( TA_ListFreeAll );
 
    if( list != NULL )
    {
       while( (node = TA_ListRemoveTail( list )) != NULL )
       {
-         retCode = freeFunc( libHandle, node );
+         retCode = freeFunc( node );
          if( retCode != TA_SUCCESS )
          {
-            TA_FATAL( libHandle, NULL, node, retCode );
+            TA_FATAL( NULL, node, retCode );
          }
       }
 
       retCode = TA_ListFree( list );
       if( retCode != TA_SUCCESS )
       {
-         TA_FATAL( libHandle, NULL, list, retCode );
+         TA_FATAL( NULL, list, retCode );
       }
    }
 
@@ -187,12 +176,12 @@ TA_RetCode TA_ListAddTail( TA_List *list, void *newElement )
       list->flags |= TA_LIST_FLAGS_DYNAMIC_NODE;
 
    /* Allocate node. */
-   node = lnode_create( list->libHandle, newElement );
+   node = lnode_create( newElement );
 
    if( !node )
       return TA_ALLOC_ERR;
 
-   list_append( list->libHandle, &list->d, node );
+   list_append( &list->d, node );
 
    return TA_SUCCESS;
 }
@@ -211,12 +200,12 @@ TA_RetCode TA_ListAddHead( TA_List *list, void *newElement )
       list->flags |= TA_LIST_FLAGS_DYNAMIC_NODE;
 
    /* Allocate node. */
-   node = lnode_create( list->libHandle, newElement );
+   node = lnode_create( newElement );
 
    if( !node )
       return TA_ALLOC_ERR;
 
-   list_prepend( list->libHandle, &list->d, node );
+   list_prepend( &list->d, node );
 
    return TA_SUCCESS;
 }
@@ -236,18 +225,18 @@ TA_RetCode TA_ListAddBefore( TA_List *list, void *element, void *newElement )
       list->flags |= TA_LIST_FLAGS_DYNAMIC_NODE;
 
    /* Find 'element' node. */
-   thisNode = list_find( list->libHandle, &list->d, element, NULL );
+   thisNode = list_find( &list->d, element, NULL );
 
    if( !thisNode )
       return TA_BAD_PARAM;
 
    /* Allocate node. */
-   newNode = lnode_create( list->libHandle, newElement );
+   newNode = lnode_create( newElement );
 
    if( !newNode )
       return TA_ALLOC_ERR;
 
-   list_ins_before( list->libHandle, &list->d, newNode, thisNode );
+   list_ins_before( &list->d, newNode, thisNode );
 
    return TA_SUCCESS;
 }
@@ -267,18 +256,18 @@ TA_RetCode TA_ListAddAfter( TA_List *list, void *element, void *newElement )
       list->flags |= TA_LIST_FLAGS_DYNAMIC_NODE;
 
    /* Find 'element' node. */
-   thisNode = list_find( list->libHandle, &list->d, element, NULL );
+   thisNode = list_find( &list->d, element, NULL );
 
    if( !thisNode )
       return TA_BAD_PARAM;
 
    /* Allocate node. */
-   newNode = lnode_create( list->libHandle, newElement );
+   newNode = lnode_create( newElement );
 
    if( !newNode )
       return TA_ALLOC_ERR;
 
-   list_ins_after( list->libHandle, &list->d, newNode, thisNode );
+   list_ins_after( &list->d, newNode, thisNode );
 
    return TA_SUCCESS;
 }
@@ -294,9 +283,9 @@ TA_RetCode TA_ListNodeAddTail( TA_List *list, TA_ListNode *node, void *newElemen
    if( !(list->flags & TA_LIST_FLAGS_PREALLOC_NODE) )
       list->flags |= TA_LIST_FLAGS_PREALLOC_NODE;
 
-   lnode_init( list->libHandle, &node->node, newElement );
+   lnode_init( &node->node, newElement );
 
-   list_append( list->libHandle, &list->d, &node->node );
+   list_append( &list->d, &node->node );
 
    return TA_SUCCESS;
 }
@@ -312,9 +301,9 @@ TA_RetCode TA_ListNodeAddHead( TA_List *list, TA_ListNode *node, void *newElemen
    if( !(list->flags & TA_LIST_FLAGS_PREALLOC_NODE) )
       list->flags |= TA_LIST_FLAGS_PREALLOC_NODE;
 
-   lnode_init( list->libHandle, &node->node, newElement );
+   lnode_init( &node->node, newElement );
 
-   list_prepend( list->libHandle, &list->d, &node->node );
+   list_prepend( &list->d, &node->node );
 
    return TA_SUCCESS;
 }
@@ -334,16 +323,16 @@ TA_RetCode TA_ListNodeAddBefore( TA_List *list, TA_ListNode *node, void *element
       list->flags |= TA_LIST_FLAGS_PREALLOC_NODE;
 
    /* Find 'element' node. */
-   thisNode = list_find( list->libHandle, &list->d, element, NULL );
+   thisNode = list_find( &list->d, element, NULL );
 
    if( !thisNode )
       return TA_BAD_PARAM;
 
    /* Initialize new node. */
    newNode = &node->node;
-   lnode_init( list->libHandle, newNode, newElement );
+   lnode_init( newNode, newElement );
 
-   list_ins_before( list->libHandle, &list->d, newNode, thisNode );
+   list_ins_before( &list->d, newNode, thisNode );
 
    return TA_SUCCESS;
 }
@@ -363,16 +352,16 @@ TA_RetCode TA_ListNodeAddAfter( TA_List *list, TA_ListNode *node, void *element,
       list->flags |= TA_LIST_FLAGS_PREALLOC_NODE;
 
    /* Find 'element' node. */
-   thisNode = list_find( list->libHandle, &list->d, element, NULL );
+   thisNode = list_find( &list->d, element, NULL );
 
    if( !thisNode )
       return TA_BAD_PARAM;
 
    /* Initialize new node. */
    newNode = &node->node;
-   lnode_init( list->libHandle, newNode, newElement );
+   lnode_init( newNode, newElement );
 
-   list_ins_after( list->libHandle, &list->d, newNode, thisNode );
+   list_ins_after( &list->d, newNode, thisNode );
 
    return TA_SUCCESS;
 }
@@ -386,12 +375,12 @@ void *TA_ListRemoveTail( TA_List *list )
        list_isempty(&list->d) )
       return (void *)NULL;
 
-   node = list_del_last( list->libHandle, &list->d );
+   node = list_del_last( &list->d );
 
    returnValue = lnode_get( node );
 
    if( list->flags & TA_LIST_FLAGS_DYNAMIC_NODE )
-      lnode_destroy( list->libHandle, node );
+      lnode_destroy( node );
 
    return returnValue;
 }
@@ -405,12 +394,12 @@ void *TA_ListRemoveHead( TA_List *list )
        list_isempty(&list->d) )
       return (void *)NULL;
 
-   node = list_del_first( list->libHandle, &list->d );
+   node = list_del_first( &list->d );
 
    returnValue = lnode_get( node );
 
    if( list->flags & TA_LIST_FLAGS_DYNAMIC_NODE )
-      lnode_destroy( list->libHandle, node );
+      lnode_destroy( node );
 
    return returnValue;
 }
@@ -429,9 +418,9 @@ TA_RetCode TA_ListRemoveEntry( TA_List *list, void *elementToRemove )
    {
       if( lnode_get( node ) == elementToRemove )
       {
-         list_delete( list->libHandle, &list->d, node );
+         list_delete( &list->d, node );
          if( list->flags & TA_LIST_FLAGS_DYNAMIC_NODE )
-            lnode_destroy( list->libHandle, node );
+            lnode_destroy( node );
          return TA_SUCCESS;
       }
 
@@ -653,7 +642,7 @@ TA_RetCode TA_ListSort( TA_List *list, int compare(const void *, const void *) )
    if( list == NULL )
       return TA_BAD_PARAM;
 
-   kazlist_sort( list->libHandle, &list->d, compare );
+   kazlist_sort( &list->d, compare );
    return TA_SUCCESS;
 }
 

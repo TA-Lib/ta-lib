@@ -57,7 +57,6 @@ word  xstrcpy_line = 0;                 /*  Source line for call             */
 
 char *
 strdupl (
-    TA_Libc *libHandle,
     const char *string)
 {
     char *copy;
@@ -66,7 +65,7 @@ strdupl (
     if (string)
       {
         length = strlen (string) + 1;
-        copy = TA_Malloc (libHandle, length);
+        copy = TA_Malloc ( length);
         if (copy)
             strncpy (copy, string, length);
       }
@@ -90,14 +89,12 @@ strdupl (
     ---------------------------------------------------------------------[>]-*/
 
 char **
-strfree (
-    TA_Libc *libHandle,
-    char **string)
+strfree (char **string)
 {
-    TA_ASSERT_RET ( libHandle, string, NULL );
+    TA_ASSERT_RET ( string, NULL );
     if (string && *string)
       {
-        TA_Free (libHandle, *string);
+        TA_Free ( *string);
         *string = NULL;
       }
     return (string);
@@ -499,12 +496,11 @@ strprefixed (
     found, returns a string that contains the text up to that delimiter.
     If not found, returns NULL.  The returned string can be zero or more
     characters long followed by a null byte.  It is allocated using the
-    mem_alloc() function; you should free it using TA_Free ( libHandle, () when finished.
+    mem_alloc() function; you should free it using TA_Free ( () when finished.
     ---------------------------------------------------------------------[>]-*/
 
 char *
 strprefix (
-    TA_Libc *libHandle,
     const char *string,
     const char *delims)
 {
@@ -523,7 +519,7 @@ strprefix (
         if (strchr (delims, *string))   /*  Is next character a delimiter    */
           {
             token_size = (int) (nextch - string);
-            token = TA_Malloc ( libHandle, token_size + 1);
+            token = TA_Malloc( token_size + 1);
             if (token == NULL)
                 return (NULL);          /*  Not enough memory - fail         */
             memcpy (token, string, token_size);
@@ -669,7 +665,7 @@ xstrcat (
     Any existing contents of dest are cleared.  If the dest buffer is NULL,
     allocates a new buffer with the required length and returns that.  The
     buffer is allocated using mem_alloc(), and should eventually be freed
-    using TA_Free ( libHandle, () or mem_strfree().  Returns NULL if there was too little
+    using TA_Free ( () or mem_strfree().  Returns NULL if there was too little
     memory to allocate the new string.  We can't define macros with variable
     argument lists, so we pass the file and line number through two globals,
     xstrcpy_file and xstrcpy_line, which are reset to empty values after
@@ -678,7 +674,6 @@ xstrcat (
 
 char *
 xstrcpy (
-    TA_Libc *libHandle,
     char *dest,
     const char *src, ...)
 {
@@ -703,7 +698,7 @@ xstrcpy (
         va_end (va);                    /*  End variable args processing     */
 
         /*  Allocate by going directly to mem_alloc_ function                */
-        dest = TA_Malloc(libHandle, dest_size );
+        dest = TA_Malloc( dest_size );
         xstrcpy_file = "";
         xstrcpy_line = 0;
         if (dest == NULL)
@@ -846,12 +841,10 @@ lexwcmp (
     ---------------------------------------------------------------------[>]-*/
 
 char *
-soundex (
-    TA_Libc *libHandle,
-    const char *string)
+soundex (const char *string)
 {
-    TA_ASSERT_RET ( libHandle, string, NULL );
-    return (soundexn (libHandle,string, 4, FALSE));
+    TA_ASSERT_RET ( string, NULL );
+    return (soundexn (string, 4, FALSE));
 }
 #endif
 
@@ -878,7 +871,6 @@ soundex (
 
 char *
 soundexn (
-    TA_Libc *libHandle,
     const char *string, int size, Bool fold)
 {
 #   define SOUNDEX_MAX  100
@@ -901,8 +893,8 @@ soundexn (
         last_value = 0,
         this_value;
 
-    TA_ASSERT_RET ( libHandle, string, NULL );
-    TA_ASSERT_RET ( libHandle, size > 0 && size <= SOUNDEX_MAX, NULL );
+    TA_ASSERT_RET ( string, NULL );
+    TA_ASSERT_RET ( size > 0 && size <= SOUNDEX_MAX, NULL );
 
     /*  Initialise the soundex code to a string of zeroes                    */
     memset (soundex_code, '0', size);
@@ -939,7 +931,7 @@ soundexn (
     terminated in a null pointer.  Returns the address of a DESCR block
     defined as: "typedef struct {size_t size; byte *data} DESCR;".
     Allocates the descriptor block using the mem_alloc() function; you must
-    free it using TA_Free ( libHandle, () when you are finished with it. The strings are
+    free it using TA_Free ( () when you are finished with it. The strings are
     packed into the descriptor data field, each terminated by a null byte.
     The final string is terminated by two nulls.  The total size of the
     descriptor is descr-> size + sizeof (DESCR).  Note that if you omit the
@@ -949,9 +941,7 @@ soundexn (
     ---------------------------------------------------------------------[>]-*/
 
 DESCR *
-strt2descr (
-    TA_Libc *libHandle,
-    char **table)
+strt2descr (char **table)
 {
     DESCR
         *descr;                         /*  Allocated descriptor             */
@@ -962,7 +952,7 @@ strt2descr (
     int
         string_nbr;                     /*  Index into string table          */
 
-    TA_ASSERT_RET ( libHandle, table, NULL);
+    TA_ASSERT_RET ( table, NULL);
 
     /*  Calculate the size of the descriptor                                 */
     descr_size = 1;                     /*  Allow for final null byte        */
@@ -970,7 +960,7 @@ strt2descr (
         descr_size += strlen (table [string_nbr]) + 1;
 
     /*  Allocate a descriptor and fill it with the strings                   */
-    descr = TA_Malloc ( libHandle, descr_size + sizeof (DESCR));
+    descr = TA_Malloc ( descr_size + sizeof (DESCR));
     if (descr)
       {
         descr-> size = descr_size;
@@ -995,7 +985,7 @@ strt2descr (
     Synopsis: Takes a descriptor prepared by strt2descr() and returns an
     array of strings pointers, terminated in a null pointer.  The array is
     allocated using the mem_alloc() function.  Each string is individually
-    allocated.  Thus, to free the string table you must call TA_Free ( libHandle, () for
+    allocated.  Thus, to free the string table you must call TA_Free ( () for
     each entry in the table, except the last one, and then for the table.
     You can also call strtfree() to destroy the table in a single operation.
     Returns NULL if there was insufficient memory to allocate the table of
@@ -1003,9 +993,7 @@ strt2descr (
     ---------------------------------------------------------------------[>]-*/
 
 char **
-descr2strt (
-    TA_Libc *libHandle,
-    const DESCR *descr)
+descr2strt ( const DESCR *descr)
 {
     char
         **table;
@@ -1015,7 +1003,7 @@ descr2strt (
     char
         *descr_ptr;                     /*  Pointer into block               */
 
-    TA_ASSERT_RET ( libHandle, descr, NULL);
+    TA_ASSERT_RET ( descr, NULL);
 
     /*  Count the number of strings in the table                             */
     descr_ptr = (char *) descr-> data;
@@ -1027,7 +1015,7 @@ descr2strt (
       }
 
     /*  Allocate a table and fill it with the strings                        */
-    table = TA_Malloc ( libHandle, (string_count + 1) * sizeof (char *));
+    table = TA_Malloc ( (string_count + 1) * sizeof (char *));
     if (table)
       {
         descr_ptr = (char *) descr-> data;
@@ -1050,9 +1038,7 @@ descr2strt (
     ---------------------------------------------------------------------[>]-*/
 
 void
-strtfree (
-    TA_Libc *libHandle,
-    char **table)
+strtfree (char **table)
 {
     int
         string_nbr;                     /*  Index into string array          */
@@ -1060,8 +1046,8 @@ strtfree (
     if (table)
       {
         for (string_nbr = 0; table [string_nbr]; string_nbr++)
-            TA_Free ( libHandle,  table [string_nbr]);
-        TA_Free ( libHandle,  table);
+            TA_Free (  table [string_nbr]);
+        TA_Free (  table);
       }
 }
 #endif
@@ -1126,9 +1112,7 @@ strlookup (
     ---------------------------------------------------------------------[>]-*/
 
 char *
-strreformat ( 
-   TA_Libc *libHandle,
-   const char *source, size_t width, const char *prefix)
+strreformat ( const char *source, size_t width, const char *prefix)
 {
     size_t
         total_size,                     /*  Total size of buffer             */
@@ -1143,7 +1127,7 @@ strreformat (
         cur_width,                      /*  Current line width incl. prefix  */
         token_nbr;                      /*  Token number, 0..n               */
 
-    TA_ASSERT_RET ( libHandle, source, NULL );
+    TA_ASSERT_RET ( source, NULL );
     if (source == NULL)
         return NULL;
     
@@ -1158,11 +1142,11 @@ strreformat (
     prefix_len = strlen (prefix);
     total_size = strlen (source) / (width - prefix_len) + 1;
     total_size = total_size * (width + 9);
-    buffer = TA_Malloc ( libHandle, total_size);
-    tokens = tok_split (libHandle,source);
+    buffer = TA_Malloc (total_size);
+    tokens = tok_split (source);
 
-    TA_ASSERT_RET ( libHandle, strlen (prefix) < width, NULL);
-    TA_ASSERT_RET ( libHandle, total_size > tok_text_size (libHandle, tokens), NULL);
+    TA_ASSERT_RET ( strlen (prefix) < width, NULL);
+    TA_ASSERT_RET ( total_size > tok_text_size ( tokens), NULL);
 
     cur_width = 0;
     bufptr = buffer;
@@ -1198,7 +1182,7 @@ strreformat (
         *bufptr++ = ' ';
       }
     *bufptr = '\0';                     /*  Terminate the last line          */
-    tok_free (libHandle,tokens);
+    tok_free (tokens);
     return (buffer);
 }
 
@@ -1773,7 +1757,6 @@ getequval (
 
 int
 matchtable (
-    TA_Libc *libHandle,
     char *strbuf,
     char *strmatch,
     char *strsept,
@@ -1789,8 +1772,8 @@ matchtable (
    while (1)
      {
        ilen = getstrfldlen (strmatch, cnt, 0, strsept);
-       strtemp = (char *) TA_Malloc (libHandle, sizeof (char) * ilen + 1);
-       TA_ASSERT_RET ( libHandle, strtemp, 0 );
+       strtemp = (char *) TA_Malloc (sizeof (char) * ilen + 1);
+       TA_ASSERT_RET ( strtemp, 0 );
        getstrfld (strmatch, cnt, 0, strsept, strtemp);
        if (*strtemp)
          {
@@ -1824,7 +1807,7 @@ matchtable (
            break;
          }
        cnt++;
-       TA_Free (libHandle, strtemp);
+       TA_Free (strtemp);
      }
 
    return nstate;
@@ -1847,15 +1830,14 @@ matchtable (
 
 char *
 stringreplace (
-    TA_Libc *libHandle,
     char *strbuf,
     char *strpattern)
 {
    int ilen, ifld = 0;
    char *strsrch, *strrpl, *strpat;
 
-   TA_ASSERT_RET ( libHandle, strbuf, NULL);
-   TA_ASSERT_RET ( libHandle, strpattern, NULL);
+   TA_ASSERT_RET ( strbuf, NULL);
+   TA_ASSERT_RET ( strpattern, NULL);
 
    if (!strpattern)
        return strbuf;
@@ -1865,23 +1847,23 @@ stringreplace (
        ilen = getstrfldlen (strpattern, ifld, 0, ",");
        if (!ilen)
            break;
-       strpat = (char *)TA_Malloc (libHandle, ilen + 1);
+       strpat = (char *)TA_Malloc ( ilen + 1);
        getstrfld (strpattern, ifld, 0, ",", strpat);
        ifld++;
 
        ilen = getstrfldlen (strpat, 0, 0, "|");
-       strsrch = (char *)TA_Malloc(libHandle, ilen + 1);
+       strsrch = (char *)TA_Malloc( ilen + 1);
        getstrfld (strpat, 0, 0, "|", strsrch);
 
        ilen = getstrfldlen (strpat, 1, 0, "|");
-       strrpl = (char *)TA_Malloc (libHandle, ilen + 1);
+       strrpl = (char *)TA_Malloc ( ilen + 1);
        getstrfld (strpat, 1, 0, "|", strrpl);
 
        searchreplace (strbuf, strsrch, strrpl);
 
-       TA_Free (libHandle, strsrch);
-       TA_Free (libHandle, strrpl);
-       TA_Free (libHandle, strpat);
+       TA_Free ( strsrch);
+       TA_Free ( strrpl);
+       TA_Free ( strpat);
      }
 
    return strbuf;
@@ -2260,7 +2242,6 @@ eatchar (
 
 int
 isoneoftokens (
-    TA_Libc *libHandle,
     char **strbuf,
     char *strmat,
     char *strsep,
@@ -2270,15 +2251,15 @@ isoneoftokens (
    int iLen;
    char *strtemp, cChar;
 
-   TA_ASSERT_RET ( libHandle, strbuf, 0);
-   TA_ASSERT_RET ( libHandle, strmat, 0 );
-   TA_ASSERT_RET ( libHandle, strsep, 0 );
-   TA_ASSERT_RET ( libHandle, iWasToken, 0 );
+   TA_ASSERT_RET ( strbuf, 0);
+   TA_ASSERT_RET ( strmat, 0 );
+   TA_ASSERT_RET ( strsep, 0 );
+   TA_ASSERT_RET ( iWasToken, 0 );
 
    while (1)
      {
        iLen = getstrfldlen (strmat, cnt, 0, strsep);
-       strtemp = (char *) TA_Malloc (libHandle, iLen + 1);
+       strtemp = (char *) TA_Malloc ( iLen + 1);
        getstrfld (strmat, cnt, 0, strsep, strtemp);
        if (*strtemp)
          {
@@ -2323,7 +2304,7 @@ isoneoftokens (
          }
 
        cnt++;
-       TA_Free (libHandle, strtemp);
+       TA_Free ( strtemp);
      }
 
    return nstate;

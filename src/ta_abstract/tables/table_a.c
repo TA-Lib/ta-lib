@@ -120,7 +120,6 @@ static const TA_OptInputParameterInfo *TA_APO_OptInputs[] =
 { &TA_DEF_UI_Fast_Period,
   &TA_DEF_UI_Slow_Period,
   &TA_DEF_UI_MA_Method,
-  &TA_DEF_UI_Compatibility_CL_MS,
   NULL
 };
 

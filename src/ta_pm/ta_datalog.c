@@ -78,12 +78,10 @@
 
 /**** Global functions definitions.   ****/
 
-TA_RetCode TA_AllocatorForDataLog_Init( TA_Libc *libHandle,
-                                        TA_AllocatorForDataLog *allocator )
+TA_RetCode TA_AllocatorForDataLog_Init( TA_AllocatorForDataLog *allocator )
 {
    memset( allocator, 0, sizeof(TA_AllocatorForDataLog) );
-   TA_ListInit( libHandle, &allocator->listOfDataLogBlock );
-   allocator->libHandle = libHandle;
+   TA_ListInit(  &allocator->listOfDataLogBlock );
    return TA_SUCCESS;
 }
 
@@ -96,14 +94,14 @@ TA_DataLog *TA_AllocatorForDataLog_Alloc( TA_AllocatorForDataLog *allocator )
 
    if( allocator->nbFree == 0 )
    {
-      block = TA_Malloc( allocator->libHandle, sizeof(TA_DataLogBlock) );
+      block = TA_Malloc( sizeof(TA_DataLogBlock) );
       if( !block )
          return (TA_DataLog *)NULL;
       retCode = TA_ListNodeAddTail( &allocator->listOfDataLogBlock,
                                     &block->node, block );                                    
       if( retCode != TA_SUCCESS )
       {
-         TA_Free( allocator->libHandle, block );
+         TA_Free( block );
          return (TA_DataLog *)NULL;
       }
 
@@ -125,20 +123,15 @@ TA_RetCode TA_AllocatorForDataLog_FreeAll( TA_AllocatorForDataLog *allocator )
 {
    TA_DataLogBlock *block;
    TA_List *list;
-   TA_Libc *libHandle;
 
    if( allocator )
    {
-      libHandle = allocator->libHandle;
-      if( libHandle )
+      list = &allocator->listOfDataLogBlock;
+      block = TA_ListRemoveTail( list );
+      while( block )
       {
-         list = &allocator->listOfDataLogBlock;
+         TA_Free(  block );
          block = TA_ListRemoveTail( list );
-         while( block )
-         {
-            TA_Free( libHandle, block );
-            block = TA_ListRemoveTail( list );
-         }
       }
    }
    

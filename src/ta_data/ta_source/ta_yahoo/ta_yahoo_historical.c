@@ -122,8 +122,7 @@ static unsigned int TA_DateWithinRange( unsigned int year,
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
-                                     TA_DataSourceHandle *handle,
+TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
                                      TA_CategoryHandle   *categoryHandle,
                                      TA_SymbolHandle     *symbolHandle,
                                      TA_Period            period,
@@ -132,7 +131,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
                                      TA_Field             fieldToAlloc,
                                      TA_ParamForAddData  *paramForAddData )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
    TA_RetCode retCode;
    TA_StringCache *stringCache;
@@ -154,18 +153,18 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
    int again, firstTime, nbBatch;
    int zeroBarAddedAttempt;
 
-   TA_TRACE_BEGIN( libHandle, TA_GetHistoryDataFromWeb );
+   TA_TRACE_BEGIN(  TA_GetHistoryDataFromWeb );
 
    /* Initialize some local variables. */
-   stringCache   = TA_GetGlobalStringCache( libHandle );
+   stringCache   = TA_GetGlobalStringCache();
    yahooHandle   = (TA_PrivateYahooHandle *)handle->opaqueData;
    readOpInfo    = NULL;
    nbEstimateBar = 0;
 
-   TA_ASSERT( libHandle, categoryHandle != NULL );
-   TA_ASSERT( libHandle, symbolHandle != NULL );
-   TA_ASSERT( libHandle, categoryHandle->string != NULL );
-   TA_ASSERT( libHandle, symbolHandle->string != NULL );
+   TA_ASSERT( categoryHandle != NULL );
+   TA_ASSERT( symbolHandle != NULL );
+   TA_ASSERT( categoryHandle->string != NULL );
+   TA_ASSERT( symbolHandle->string != NULL );
 
    /* Set the initial first/last timestamp */
    if( start )
@@ -190,7 +189,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
       TA_PrevWeekday( &lastBarTimestamp );
 
    /* Map the TA-Lib name into the Yahoo! name. */
-   retCode = TA_AllocStringFromLibName( libHandle,
+   retCode = TA_AllocStringFromLibName(
                                         categoryHandle->string,
                                         symbolHandle->string,
                                         &yahooName );  
@@ -199,8 +198,8 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
       TA_TRACE_RETURN( retCode );
    }
 
-   TA_ASSERT( libHandle, yahooName != NULL );
-   TA_ASSERT( libHandle, yahooHandle != NULL );
+   TA_ASSERT( yahooName != NULL );
+   TA_ASSERT( yahooHandle != NULL );
 
    /* Get the decoding parameter for the CSV web page. */
    decodingParam = TA_YahooIdxDecodingParam( yahooHandle->index, TA_YAHOOIDX_CVS_PAGE );
@@ -229,7 +228,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
    }
 
    /* Replace the uirSuffix with a large local buffer. */
-   localDecodingParam.uirSuffix = TA_Malloc( libHandle, suffixParsing.maxTotalLength );
+   localDecodingParam.uirSuffix = TA_Malloc( suffixParsing.maxTotalLength );
    if( !localDecodingParam.uirSuffix )
    {
       /* Clean-up and exit */
@@ -268,7 +267,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
          break;
       }   
 
-      retCode = TA_WebPageAllocFromYahooName( libHandle,
+      retCode = TA_WebPageAllocFromYahooName(
                                               &localDecodingParam,
                                               TA_StringToChar(yahooName),
                                               &webPage );
@@ -276,20 +275,20 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
       if( retCode != TA_SUCCESS )
       {
          TA_StringFree( stringCache, yahooName );
-         TA_Free( libHandle, (char *)localDecodingParam.uirSuffix );
+         TA_Free(  (char *)localDecodingParam.uirSuffix );
          TA_TRACE_RETURN( retCode );
       }
 
       /* Disguise the webPage stream into a "file". That way the speed
        * optimized ASCII decoder can be re-used (TA_ReadOp stuff).
        */
-      retCode = TA_FileSeqOpenFromStream( libHandle, webPage->content, &fileHandle );
+      retCode = TA_FileSeqOpenFromStream( webPage->content, &fileHandle );
       if( retCode != TA_SUCCESS )
       {
          /* Clean-up and exit */
          TA_StringFree( stringCache, yahooName );
          TA_WebPageFree( webPage );
-         TA_Free( libHandle, (char *)localDecodingParam.uirSuffix );
+         TA_Free(  (char *)localDecodingParam.uirSuffix );
          TA_TRACE_RETURN( retCode );
       }
 
@@ -328,7 +327,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
          }
 
          /* Optimize the read op for the requested data. */
-         retCode = TA_ReadOp_Optimize( libHandle,
+         retCode = TA_ReadOp_Optimize(
                                        readOpInfo,
                                        period,
                                        fieldToAlloc );
@@ -337,7 +336,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
             /* Clean-up and exit */
             TA_StringFree( stringCache, yahooName );
             TA_WebPageFree( webPage );
-            TA_Free( libHandle, (char *)localDecodingParam.uirSuffix );
+            TA_Free(  (char *)localDecodingParam.uirSuffix );
             TA_TRACE_RETURN( retCode );
          }
 
@@ -348,14 +347,14 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
       }
 
       /* Interpret the CSV data. */
-      retCode = TA_ReadOp_Do( libHandle, fileHandle,                           
+      retCode = TA_ReadOp_Do( fileHandle,                           
                               readOpInfo,
                               period, &firstBarTimestamp, &lastBarTimestamp,
                               nbEstimateBar, fieldToAlloc,
                               paramForAddData,
                               &nbBarAdded );
 
-      TA_FileSeqClose( libHandle, fileHandle );
+      TA_FileSeqClose( fileHandle );
       TA_WebPageFree( webPage );
 
       nbTotalBarAdded += nbBarAdded;
@@ -364,7 +363,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
       {
          /* Clean-up and exit */
          TA_StringFree( stringCache, yahooName );
-         TA_Free( libHandle, (char *)localDecodingParam.uirSuffix );
+         TA_Free(  (char *)localDecodingParam.uirSuffix );
          TA_TRACE_RETURN( retCode );
       }
 
@@ -380,7 +379,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
          {
             /* Clean-up and exit */
             TA_StringFree( stringCache, yahooName );
-            TA_Free( libHandle, (char *)localDecodingParam.uirSuffix );
+            TA_Free(  (char *)localDecodingParam.uirSuffix );
             TA_TRACE_RETURN( TA_DATA_GAP );
          }
          
@@ -436,7 +435,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
              * to return always the same batch of data.
              * Just ignore the repetitive data and exit.
              */
-            TA_Free( libHandle, (char *)localDecodingParam.uirSuffix );
+            TA_Free(  (char *)localDecodingParam.uirSuffix );
             TA_StringFree( stringCache, yahooName );
             TA_TRACE_RETURN( TA_SUCCESS );
          }
@@ -467,7 +466,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
    }
 
    /* Clean-up and exit */
-   TA_Free( libHandle, (char *)localDecodingParam.uirSuffix );
+   TA_Free(  (char *)localDecodingParam.uirSuffix );
    TA_StringFree( stringCache, yahooName );
    TA_TRACE_RETURN( retCode );
 }

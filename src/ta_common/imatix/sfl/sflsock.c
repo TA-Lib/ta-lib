@@ -86,9 +86,9 @@ char
 /*  Internal functions used to create passive and active connections         */
 
 #if (defined (DOES_SOCKETS))
-static void   prepare_socket (TA_Libc *libHandle, sock_t handle);
+static void   prepare_socket (sock_t handle);
 #   if (defined (__WINDOWS__))
-static int    win_error      (TA_Libc *libHandle, int rc);
+static int    win_error      (int rc);
 #   endif
 #endif
 
@@ -103,7 +103,7 @@ static int    win_error      (TA_Libc *libHandle, int rc);
     ---------------------------------------------------------------------[>]-*/
 
 int
-sock_init (TA_Libc *libHandle)
+sock_init (void)
 {
 
 #if (defined (__WINDOWS__))
@@ -111,8 +111,6 @@ sock_init (TA_Libc *libHandle)
         wVersionRequested;              /*  We really want Winsock 1.1       */
     WSADATA
         wsaData;
-
-   (void )libHandle; /* Get ride of compiler warnings. */
 
     wVersionRequested = 0x0101;         /*  ... but we'll take 1.1           */
     if (WSAStartup (wVersionRequested, &wsaData) == 0)
@@ -151,10 +149,8 @@ sock_init (TA_Libc *libHandle)
     ---------------------------------------------------------------------[>]-*/
 
 int
-sock_term (TA_Libc *libHandle)
+sock_term (void)
 {
-   (void )libHandle; /* Get ride of compiler warnings. */
-
 #if (defined (__WINDOWS__))
     WSACleanup ();
 #endif
@@ -181,14 +177,13 @@ sock_term (TA_Libc *libHandle)
 
 sock_t
 passive_TCP (
-    TA_Libc *libHandle,
     const char *service,                /*  Service name or port as string   */
     int queue_length                    /*  Queue length for listen()        */
 )
 {    
-    TA_ASSERT_RET(libHandle, service && *service, INVALID_SOCKET );
-    TA_ASSERT_RET(libHandle, queue_length > 0, INVALID_SOCKET );
-    return (passive_socket (libHandle,service, "tcp", queue_length));
+    TA_ASSERT_RET( service && *service, INVALID_SOCKET );
+    TA_ASSERT_RET( queue_length > 0, INVALID_SOCKET );
+    return (passive_socket (service, "tcp", queue_length));
 }
 
 
@@ -210,12 +205,11 @@ passive_TCP (
 
 sock_t
 passive_UDP (
-    TA_Libc *libHandle,
     const char *service                 /*  Service name or port as string   */
 )
 {
-    TA_ASSERT_RET(libHandle, service && *service, INVALID_SOCKET);
-    return (passive_socket (libHandle,service, "udp", 0));
+    TA_ASSERT_RET( service && *service, INVALID_SOCKET);
+    return (passive_socket (service, "udp", 0));
 }
 
 
@@ -245,7 +239,6 @@ passive_UDP (
 
 sock_t
 passive_socket (
-    TA_Libc *libHandle,
     const char *service,                /*  Service name or port as string   */
     const char *protocol,               /*  Protocol "tcp" or "udp"          */
     int queue_length                    /*  Queue length for TCP sockets     */
@@ -259,8 +252,8 @@ passive_socket (
     sock_t
         handle;                         /*  Socket from socket() call        */
 
-    TA_ASSERT_RET(libHandle, service && *service, INVALID_SOCKET );
-    TA_ASSERT_RET(libHandle, protocol && *protocol, INVALID_SOCKET );
+    TA_ASSERT_RET( service && *service, INVALID_SOCKET );
+    TA_ASSERT_RET( protocol && *protocol, INVALID_SOCKET );
 
     connect_error_value = IP_NOERROR;   /*  Assume no errors                 */
 
@@ -288,7 +281,7 @@ passive_socket (
             return (INVALID_SOCKET);
           }
       }
-    handle = create_socket (libHandle,protocol);
+    handle = create_socket (protocol);
     if (handle == INVALID_SOCKET)       /*  Cannot create the socket         */
       {
         set_uid_user ();
@@ -342,7 +335,6 @@ passive_socket (
 
 sock_t
 create_socket (
-    TA_Libc *libHandle,
     const char *protocol                /*  Protocol "tcp" or "udp"          */
 )
 {
@@ -357,7 +349,7 @@ create_socket (
     sock_t
         handle;                         /*  Socket from socket() call        */
 
-    TA_ASSERT_RET (libHandle,protocol && *protocol, INVALID_SOCKET );
+    TA_ASSERT_RET (protocol && *protocol, INVALID_SOCKET );
     connect_error_value = IP_NOERROR;   /*  Assume no errors                 */
 
     /*  Map protocol name to protocol number                                 */
@@ -389,7 +381,7 @@ create_socket (
     setsockopt ((SOCKET) handle, SOL_SOCKET, SO_REUSEADDR,
                 (char *) &true_value, sizeof (true_value));
 #   endif
-    prepare_socket (libHandle, handle);            /*  Ready socket for use             */
+    prepare_socket ( handle);            /*  Ready socket for use             */
     ip_sockets++;
     return (handle);
 
@@ -413,13 +405,11 @@ create_socket (
  */
 
 static void
-prepare_socket (TA_Libc *libHandle, sock_t handle)
+prepare_socket (sock_t handle)
 {
 #if (defined (__WINDOWS__))
     u_long
         command = ip_nonblock? 1: 0;
-
-   (void )libHandle; /* Get ride of compiler warnings. */
 
     /*  Redirect events and set non-blocking mode                            */
     if (handle != INVALID_SOCKET)
@@ -477,13 +467,12 @@ prepare_socket (TA_Libc *libHandle, sock_t handle)
 
 sock_t
 connect_TCP (
-    TA_Libc *libHandle,
     const char *host,                   /*  Host name                        */
     const char *service                 /*  Service name                     */
 )
 {
-    TA_ASSERT_RET (libHandle,service && *service, INVALID_SOCKET );
-    return (connect_socket (libHandle,
+    TA_ASSERT_RET (service && *service, INVALID_SOCKET );
+    return (connect_socket (
                             host,       /*  We have a host name              */
                             service,    /*  We have a service name           */
                             "tcp",      /*  Protocol is TCP                  */
@@ -531,13 +520,12 @@ connect_TCP (
 
 sock_t
 connect_UDP (
-    TA_Libc *libHandle,
     const char *host,                   /*  Host name                        */
     const char *service                 /*  Service name                     */
 )
 {
-    TA_ASSERT_RET (libHandle,service && *service, INVALID_SOCKET );
-    return (connect_socket (libHandle,
+    TA_ASSERT_RET (service && *service, INVALID_SOCKET );
+    return (connect_socket (
                             host,       /*  We have a host name              */
                             service,    /*  We have a service name           */
                             "udp",      /*  Protocol is UDP                  */
@@ -568,12 +556,11 @@ connect_UDP (
 
 sock_t
 connect_TCP_fast (
-    TA_Libc *libHandle,
     const struct sockaddr_in *sin       /*  Socket address structure         */
 )
 {
-    TA_ASSERT_RET (libHandle,sin,INVALID_SOCKET);
-    return (connect_socket (libHandle,
+    TA_ASSERT_RET (sin,INVALID_SOCKET);
+    return (connect_socket (
                             NULL,       /*  No host name                     */
                             NULL,       /*  No service name                  */
                             "tcp",      /*  Protocol is TCP                  */
@@ -604,12 +591,11 @@ connect_TCP_fast (
 
 sock_t
 connect_UDP_fast (
-    TA_Libc *libHandle,
     const struct sockaddr_in *sin       /*  Socket address structure         */
 )
 {
-    TA_ASSERT_RET (libHandle,sin,INVALID_SOCKET);
-    return (connect_socket (libHandle,
+    TA_ASSERT_RET (sin,INVALID_SOCKET);
+    return (connect_socket (
                             NULL,       /*  No host name                     */
                             NULL,       /*  No service name                  */
                             "udp",      /*  Protocol is UDP                  */
@@ -666,7 +652,6 @@ connect_UDP_fast (
 
 sock_t
 connect_socket (
-    TA_Libc *libHandle,
     const char *host,                   /*  Name of host, "" = localhost     */
     const char *service,                /*  Service name or port as string   */
     const char *protocol,               /*  Protocol "tcp" or "udp"          */
@@ -690,13 +675,13 @@ connect_socket (
     /*  Format sockaddr_in port and hostname, and quit if that failed        */
     if (service && strused (service))
       {
-        TA_ASSERT_RET (libHandle,protocol && *protocol, INVALID_SOCKET);
-        if (address_end_point (libHandle, host, service, protocol, &sin))
+        TA_ASSERT_RET (protocol && *protocol, INVALID_SOCKET);
+        if (address_end_point ( host, service, protocol, &sin))
             return (INVALID_SOCKET);
       }
     else
       {
-        TA_ASSERT_RET (libHandle,host_addr,INVALID_SOCKET);
+        TA_ASSERT_RET (host_addr,INVALID_SOCKET);
         sin = *host_addr;               /*  Fast connect requested           */
       }
     /*  Connect socket and maybe retry a few times...                        */
@@ -707,7 +692,7 @@ connect_socket (
 
     while (retries_left)
       {
-        handle = create_socket (libHandle, protocol);
+        handle = create_socket ( protocol);
         if (handle == INVALID_SOCKET)   /*  Unable to open a socket          */
           {
             ip_nonblock = old_nonblock;
@@ -726,7 +711,7 @@ connect_socket (
                 break;                  /*  Still connecting, but okay       */
           }
         /*  Retry if we have any attempts left                               */
-        close_socket (libHandle, handle);
+        close_socket ( handle);
         if (--retries_left == 0)      /*  Connection failed                */
           {
             connect_error_value = IP_CONNECTERROR;
@@ -736,7 +721,7 @@ connect_socket (
         sleep (retry_delay);
       }
     ip_nonblock = old_nonblock;
-    prepare_socket (libHandle, handle);            /*  Set final blocking mode          */
+    prepare_socket ( handle);            /*  Set final blocking mode          */
     return (handle);
 
 #elif (defined (FAKE_SOCKETS))
@@ -761,7 +746,6 @@ connect_socket (
 
 int
 connect_to_peer (
-    TA_Libc *libHandle,
     sock_t handle,                      /*  Socket to connect                */
     const struct sockaddr_in *sin       /*  Socket address structure         */
 )
@@ -772,7 +756,7 @@ connect_to_peer (
     Bool
         old_nonblock;                   /*  Create non-blocking sockets      */
 
-    TA_ASSERT_RET (libHandle,sin,SOCKET_ERROR);
+    TA_ASSERT_RET (sin,SOCKET_ERROR);
     old_nonblock = ip_nonblock;
 #   if (defined (BLOCKING_CONNECT))
     ip_nonblock = FALSE;                /*  Block on this socket             */
@@ -781,10 +765,10 @@ connect_to_peer (
     rc = connect ((SOCKET) handle, (struct sockaddr *) sin, sizeof (*sin));
 
     ip_nonblock = old_nonblock;
-    prepare_socket (libHandle, handle);            /*  Set final blocking mode          */
+    prepare_socket ( handle);            /*  Set final blocking mode          */
 
 #   if (defined (__WINDOWS__))
-    return (win_error (libHandle, rc));
+    return (win_error ( rc));
 #   else
     return (rc);
 #   endif
@@ -812,7 +796,6 @@ connect_to_peer (
 
 int
 address_end_point (
-    TA_Libc *libHandle,
     const char *host,                   /*  Name of host, "" = localhost     */
     const char *service,                /*  Service name or port as string   */
     const char *protocol,               /*  Protocol "tcp" or "udp"          */
@@ -829,9 +812,9 @@ address_end_point (
     int
         feedback = 0;                   /*  Assume everything works          */
 
-    TA_ASSERT_RET (libHandle,service && *service,SOCKET_ERROR);
-    TA_ASSERT_RET (libHandle,protocol && *protocol,SOCKET_ERROR);
-    TA_ASSERT_RET (libHandle,sin,SOCKET_ERROR);
+    TA_ASSERT_RET (service && *service,SOCKET_ERROR);
+    TA_ASSERT_RET (protocol && *protocol,SOCKET_ERROR);
+    TA_ASSERT_RET (sin,SOCKET_ERROR);
 
     connect_error_value = IP_NOERROR;   /*  Assume no errors                 */
     memset ((void *) sin, 0, sizeof (*sin));
@@ -883,13 +866,12 @@ address_end_point (
 
 void
 build_sockaddr (
-    TA_Libc *libHandle,
     struct sockaddr_in *sin,            /*  Socket address structure         */
     qbyte host,                         /*  32-bit host address              */
     dbyte port                          /*  16-bit port number               */
 )
 {
-    TA_ASSERT_NO_RET (libHandle,sin);
+    TA_ASSERT_NO_RET (sin);
 
     sin-> sin_family      = AF_INET;
     sin-> sin_addr.s_addr = htonl (host);
@@ -909,7 +891,6 @@ build_sockaddr (
 
 char *
 socket_localaddr (
-    TA_Libc *libHandle,
     sock_t handle)
 {
 #define NTOA_MAX    16
@@ -919,7 +900,7 @@ socket_localaddr (
     struct sockaddr_in
         sin;                            /*  Address of local system          */
 
-    if (get_sock_addr (libHandle, handle, &sin, NULL, 0))
+    if (get_sock_addr ( handle, &sin, NULL, 0))
         return ("127.0.0.1");
     else
       {
@@ -944,7 +925,6 @@ socket_localaddr (
 
 char *
 socket_peeraddr (
-    TA_Libc *libHandle,
     sock_t handle)
 {
 #if (defined (DOES_SOCKETS))
@@ -953,7 +933,7 @@ socket_peeraddr (
     struct sockaddr_in
         sin;                            /*  Address of peer system           */
 
-    if (get_peer_addr (libHandle, handle, &sin, NULL, 0))
+    if (get_peer_addr ( handle, &sin, NULL, 0))
         return ("127.0.0.1");
     else
       {
@@ -978,12 +958,10 @@ socket_peeraddr (
 
 int
 socket_nodelay (
-    TA_Libc *libHandle,
     sock_t handle)
 {
    int true_value = 1;
 
-   (void)libHandle; /* Get ride of compiler watnings. */
 #if (defined (__WINDOWS__))
     return (setsockopt ((SOCKET) handle, IPPROTO_TCP, TCP_NODELAY,
                         (char *) &true_value, sizeof (true_value)));
@@ -1008,15 +986,12 @@ socket_nodelay (
 
 Bool
 socket_is_alive (
-    TA_Libc *libHandle,
     sock_t handle)
 {   
 #if (defined (__UTYPE_BEOS))
     /*  BeOS 4.5 does not support the getsockopt() function                  */
     int
         rc;
-
-   (void)libHandle; /* Get ride of compiler warnings. */
 
     rc = setsockopt ((SOCKET) handle, SOL_SOCKET, SO_NONBLOCK,
                      (void *) &ip_nonblock, sizeof (ip_nonblock));
@@ -1029,14 +1004,11 @@ socket_is_alive (
     argsize_t
         socket_type_size = sizeof (SOCKET);
 
-   (void)libHandle; /* Get ride of compiler warnings. */
-
     rc = getsockopt ((SOCKET) handle, SOL_SOCKET, SO_TYPE,
                     (char *) &socket_type, &socket_type_size);
     return (unsigned short)(rc == 0);
 
 #else
-    (void)libHandle; /* Get ride of compiler warnings. */
     (void)handle;    /* Get ride of compiler warnings. */
     return (FALSE);
 #endif
@@ -1055,11 +1027,8 @@ socket_is_alive (
     ---------------------------------------------------------------------[>]-*/
 
 int
-socket_error (
-    TA_Libc *libHandle,
-    sock_t handle)
+socket_error (sock_t handle)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
     (void)handle;
 
     return (errno);
@@ -1092,7 +1061,6 @@ socket_error (
 
 sock_t
 accept_socket (
-    TA_Libc *libHandle,
     sock_t master_socket)
 {
 #if (defined (DOES_SOCKETS))
@@ -1121,7 +1089,7 @@ accept_socket (
 #   endif
     if (slave_socket != INVALID_SOCKET)
       {
-        prepare_socket (libHandle, slave_socket);
+        prepare_socket ( slave_socket);
         ip_sockets++;
       }
     return (slave_socket);
@@ -1142,10 +1110,8 @@ accept_socket (
     ---------------------------------------------------------------------[>]-*/
 
 int
-connect_error (TA_Libc *libHandle)
+connect_error (void)
 {
-    (void)libHandle; /* Get ride of compiler warnings. */
-
     return (connect_error_value);
 }
 
@@ -1162,7 +1128,6 @@ connect_error (TA_Libc *libHandle)
 
 int
 get_sock_addr (
-    TA_Libc *libHandle,
     sock_t handle,                      /*  Socket to get address for        */
     struct sockaddr_in *sin,            /*  Block for formatted address      */
     char *name,                         /*  Buffer for host name, or NULL    */
@@ -1177,7 +1142,7 @@ get_sock_addr (
     argsize_t
         sin_length;                     /*  Length of address                */
 
-    TA_ASSERT_RET (libHandle,sin,SOCKET_ERROR);
+    TA_ASSERT_RET (sin,SOCKET_ERROR);
 
     /*  Get address for local connected socket                               */
     sin_length = sizeof (struct sockaddr_in);
@@ -1196,7 +1161,7 @@ get_sock_addr (
           }
       }
 #   if (defined (__WINDOWS__))
-    return (win_error (libHandle,rc));
+    return (win_error (rc));
 #   else
     return (rc);
 #   endif
@@ -1218,7 +1183,6 @@ get_sock_addr (
 
 int
 get_peer_addr (
-    TA_Libc *libHandle,
     sock_t handle,                      /*  Socket to get address for        */
     struct sockaddr_in *sin,            /*  Block for formatted address      */
     char *name,                         /*  Buffer for host name, or NULL    */
@@ -1233,7 +1197,7 @@ get_peer_addr (
     argsize_t
         sin_length;                     /*  Length of address                */
 
-    TA_ASSERT_RET (libHandle,sin,SOCKET_ERROR);
+    TA_ASSERT_RET (sin,SOCKET_ERROR);
 
     /*  Get address for connected socket peer                                */
     sin_length = sizeof (struct sockaddr_in);
@@ -1251,7 +1215,7 @@ get_peer_addr (
           }
       }
 #   if (defined (__WINDOWS__))
-    return (win_error (libHandle,rc));
+    return (win_error (rc));
 #   else
     return (rc);
 #   endif
@@ -1276,7 +1240,6 @@ get_peer_addr (
 
 int
 read_TCP (
-    TA_Libc *libHandle,
     sock_t handle,                      /*  Socket handle                    */
     void *buffer,                       /*  Buffer to receive data           */
     size_t length                       /*  Maximum amount of data to read   */
@@ -1293,9 +1256,9 @@ read_TCP (
     int
         rc;                             /*  Return code from call            */
 
-    TA_ASSERT_RET (libHandle,buffer,SOCKET_ERROR);
+    TA_ASSERT_RET (buffer,SOCKET_ERROR);
     rc = recv ((SOCKET) handle, buffer, length, 0);
-    return (win_error (libHandle,rc));
+    return (win_error (rc));
 #   else
 #       error "No code for function body."
 #   endif
@@ -1314,10 +1277,10 @@ read_TCP (
  */
 
 static int
-win_error (TA_Libc *libHandle, int rc)
+win_error (int rc)
 {
     if (rc == (int) SOCKET_ERROR)
-        errno = winsock_last_error (libHandle);        
+        errno = winsock_last_error ();        
 
     return (rc);
 }
@@ -1339,7 +1302,6 @@ win_error (TA_Libc *libHandle, int rc)
 
 int
 write_TCP (
-    TA_Libc *libHandle,
     sock_t handle,                      /*  Socket handle                    */
     const void *buffer,                 /*  Buffer containing data           */
     size_t length                       /*  Amount of data to write          */
@@ -1347,20 +1309,18 @@ write_TCP (
 {
 #if (defined (DOES_SOCKETS))
 #   if (defined (__UTYPE_BEOS))
-    (void)libHandle;
     return (send ((SOCKET) handle, buffer, length, 0));
 
 #   elif (defined (__UNIX__) || defined (__VMS__) || defined (__OS2__))
-    (void)libHandle;
     return (write ((SOCKET) handle, buffer, length));
 
 #   elif (defined (__WINDOWS__))
     int
         rc;                             /*  Return code from call            */
 
-    TA_ASSERT_RET (libHandle,buffer,SOCKET_ERROR);
+    TA_ASSERT_RET (buffer,SOCKET_ERROR);
     rc = send ((SOCKET) handle, buffer, length, 0);
-    return (win_error (libHandle,rc));
+    return (win_error (rc));
 #   else
 #       error "No code for function body."
 #   endif
@@ -1398,7 +1358,6 @@ write_TCP (
 
 int
 read_UDP (
-    TA_Libc *libHandle,
     sock_t handle,                      /*  Socket handle                    */
     void *buffer,                       /*  Buffer to receive data           */
     size_t length,                      /*  Maximum amount of data to read   */
@@ -1412,8 +1371,8 @@ read_UDP (
         flags = 0,                      /*  Flags for call                   */
         rc;                             /*  Return code from call            */
 
-    TA_ASSERT_RET (libHandle,buffer,SOCKET_ERROR);
-    TA_ASSERT_RET (libHandle,sin,SOCKET_ERROR);
+    TA_ASSERT_RET (buffer,SOCKET_ERROR);
+    TA_ASSERT_RET (sin,SOCKET_ERROR);
     sin_length = (int) sizeof (*sin);
     if (sin)
         /*  Read from unconnected UDP socket; we accept the address of the   */
@@ -1426,7 +1385,7 @@ read_UDP (
         rc = recv     ((SOCKET) handle, buffer, length, flags);
 
 #   if (defined (__WINDOWS__))
-    return (win_error (libHandle,rc));
+    return (win_error (rc));
 #   else
     return (rc);
 #   endif
@@ -1460,7 +1419,6 @@ read_UDP (
 
 int
 write_UDP (
-    TA_Libc *libHandle,
     sock_t handle,                      /*  Socket handle                    */
     const void *buffer,                 /*  Buffer containing data           */
     size_t length,                      /*  Amount of data to write          */
@@ -1473,8 +1431,8 @@ write_UDP (
         flags = 0,                      /*  Flags for call                   */
         rc;                             /*  Return code from call            */
 
-    TA_ASSERT_RET (libHandle,buffer,SOCKET_ERROR);
-    TA_ASSERT_RET (libHandle,sin,SOCKET_ERROR);
+    TA_ASSERT_RET (buffer,SOCKET_ERROR);
+    TA_ASSERT_RET (sin,SOCKET_ERROR);
     sin_length = (int) sizeof (*sin);
     if (sin)
         /*  Write to unconnected UDP socket; we provide the address of       */
@@ -1487,7 +1445,7 @@ write_UDP (
         rc = send   ((SOCKET) handle, buffer, length, flags);
 
 #   if (defined (__WINDOWS__))
-    return (win_error (libHandle,rc));
+    return (win_error (rc));
 #   else
     return (rc);
 #   endif
@@ -1511,13 +1469,12 @@ write_UDP (
 
 int
 close_socket (
-    TA_Libc *libHandle,
     sock_t handle                       /*  Socket handle                    */
 )
 {
 #if (defined (DOES_SOCKETS))
 #   if (defined (__UNIX__) || defined (__VMS__) || defined (__OS2__))
-    if (!socket_is_alive (libHandle,handle))
+    if (!socket_is_alive (handle))
         return (0);
     ip_sockets--;
         shutdown (handle, 2); 
@@ -1527,12 +1484,12 @@ close_socket (
     int
         rc;
 
-    if (!socket_is_alive (libHandle,handle))
+    if (!socket_is_alive (handle))
         return (0);
     ip_sockets--;
         shutdown ((SOCKET) handle, 2); 
     rc = closesocket ((SOCKET) handle);
-    return (win_error (libHandle,rc));
+    return (win_error (rc));
 
 #   else
 #       error "No code for function body."
@@ -1556,13 +1513,13 @@ close_socket (
     ---------------------------------------------------------------------[>]-*/
 
 int
-sock_select (TA_Libc *libHandle, int nfds, fd_set *readfds, fd_set *writefds,
+sock_select (int nfds, fd_set *readfds, fd_set *writefds,
              fd_set *errorfds, struct timeval *timeout)
 {
 #if (defined (DOES_SOCKETS))
     int
         rc = 0;                         /*  Return code from select()        */
-    TA_ASSERT_RET (libHandle,timeout,0);
+    TA_ASSERT_RET (timeout,0);
 
 #   if (defined (__UTYPE_BEOS))
     /*  BeOS only supports the readfds argument                              */
@@ -1605,13 +1562,11 @@ sock_select (TA_Libc *libHandle, int nfds, fd_set *readfds, fd_set *writefds,
     ---------------------------------------------------------------------[>]-*/
 
 char *
-get_hostname (TA_Libc *libHandle)
+get_hostname (void)
 {
 #if (defined (DOES_SOCKETS))
     static char
         host_name [LINE_MAX + 1] = "";
-
-    (void)libHandle; /* Get ride of compiler warnings. */
 
     if (strnull (host_name))
         if (gethostname (host_name, LINE_MAX))
@@ -1634,13 +1589,13 @@ get_hostname (TA_Libc *libHandle)
     ---------------------------------------------------------------------[>]-*/
 
 qbyte
-get_hostaddr (TA_Libc *libHandle)
+get_hostaddr (void)
 {
 #if (defined (DOES_SOCKETS))
     struct hostent
         *phe;                           /*  Host information entry           */
 
-    phe = gethostbyname (get_hostname (libHandle));
+    phe = gethostbyname (get_hostname ());
     if (phe)
         return (*(qbyte *) (phe-> h_addr_list [0]));
     else
@@ -1658,11 +1613,11 @@ get_hostaddr (TA_Libc *libHandle)
     a zero address.  Each address is a 4-byte value in host format.  Returns
     NULL if there was an error.  If sockets are not supported, returns a
     table with the loopback address (127.0.0.1) and a null address.  The
-    caller must free the table using TA_Free( libHandle, () when finished using it.
+    caller must free the table using TA_Free(  () when finished using it.
     ---------------------------------------------------------------------[>]-*/
 
 qbyte *
-get_hostaddrs (TA_Libc *libHandle)
+get_hostaddrs (void)
 {
 #if (defined (DOES_SOCKETS))
     int
@@ -1672,14 +1627,14 @@ get_hostaddrs (TA_Libc *libHandle)
     struct hostent
         *phe;                           /*  Host information entry           */
 
-    if ((phe = gethostbyname (get_hostname (libHandle))) == NULL)
+    if ((phe = gethostbyname (get_hostname ())) == NULL)
         return (NULL);
 
     /*  Count the addresses                                                  */
     for (addr_count = 0; phe-> h_addr_list [addr_count]; addr_count++);
 
     /*  Allocate a table; socket addresses are 4 bytes                       */
-    addr_table = TA_Malloc( libHandle,  (4 * (addr_count + 1)));
+    addr_table = TA_Malloc(  (4 * (addr_count + 1)));
 
     /*  Store the addresses                                                  */
     for (addr_count = 0; phe-> h_addr_list [addr_count]; addr_count++)
@@ -1693,7 +1648,7 @@ get_hostaddrs (TA_Libc *libHandle)
     qbyte
         *addr_table;                    /*  Where we store the addresses     */
 
-    addr_table = TA_Malloc( libHandle,  (8);         /*  Addresses are 4 bytes            */
+    addr_table = TA_Malloc(8);         /*  Addresses are 4 bytes            */
     addr_table [0] = htonl (SOCKET_LOOPBACK);
     addr_table [1] = 0;
     return (addr_table);
@@ -1710,14 +1665,12 @@ get_hostaddrs (TA_Libc *libHandle)
     ---------------------------------------------------------------------[>]-*/
 
 char *
-sock_ntoa (TA_Libc *libHandle,qbyte address)
+sock_ntoa (qbyte address)
 {
     static char
         string [16];                    /*  xxx.xxx.xxx.xxx                  */
     byte
         *part;
-
-    (void)libHandle; /* Get ride of compiler warnings. */
 
     /*  Network order is high-low so we can address the bytes in order       */
     part = (byte *) &address;
@@ -1738,13 +1691,11 @@ sock_ntoa (TA_Libc *libHandle,qbyte address)
     ---------------------------------------------------------------------[>]-*/
 
 const char *
-sockmsg (TA_Libc *libHandle)
+sockmsg (void)
 {
 #if (defined (__WINDOWS__))
     char
         *message;
-
-    (void)libHandle; /* Get ride of compiler warnings. */
 
     switch (WSAGetLastError ())
       {
@@ -1812,13 +1763,11 @@ sockmsg (TA_Libc *libHandle)
     ---------------------------------------------------------------------[>]-*/
 
 int
-winsock_last_error (TA_Libc *libHandle)
+winsock_last_error (void)
 {
     int
         error = 0;
     int temp;
-
-    (void)libHandle; /* Get ride of compiler warnings. */
 
     temp = WSAGetLastError ();
     switch (temp)
@@ -1858,7 +1807,7 @@ winsock_last_error (TA_Libc *libHandle)
     ---------------------------------------------------------------------[>]-*/
 
 Bool
-socket_is_permitted (TA_Libc *libHandle,const char *address, const char *mask)
+socket_is_permitted (const char *address, const char *mask)
 {
     char
         *addrptr,                       /*  Pointer into address             */
@@ -1867,8 +1816,8 @@ socket_is_permitted (TA_Libc *libHandle,const char *address, const char *mask)
         negate,                         /*  If !pattern                      */
         feedback = FALSE;               /*  False unless matched             */
 
-    TA_ASSERT_RET (libHandle,address,FALSE);
-    TA_ASSERT_RET (libHandle,mask,FALSE);
+    TA_ASSERT_RET (address,FALSE);
+    TA_ASSERT_RET (mask,FALSE);
 
     maskptr = (char *) mask;
     while (*maskptr)
@@ -1919,15 +1868,13 @@ socket_is_permitted (TA_Libc *libHandle,const char *address, const char *mask)
     ---------------------------------------------------------------------[>]-*/
 
 char *
-get_host_file (TA_Libc *libHandle)
+get_host_file (void)
 {
 #if (defined (WIN32))
     static OSVERSIONINFO
         version_info;
     static char
         name [LINE_MAX + 1];
-
-    (void)libHandle;
 
     strclr (name);
     GetWindowsDirectory (name, LINE_MAX);
@@ -1991,7 +1938,7 @@ get_host_file (TA_Libc *libHandle)
     ---------------------------------------------------------------------[>]-*/
 
 int
-get_name_server (TA_Libc *libHandle,struct sockaddr_in *ns_address, int ns_max)
+get_name_server (struct sockaddr_in *ns_address, int ns_max)
 {
     int
         ns_count = 0;                /*  Number of servers that we found  */
@@ -2026,7 +1973,7 @@ get_name_server (TA_Libc *libHandle,struct sockaddr_in *ns_address, int ns_max)
     &&  RegQueryValueEx (hkey, "NameServer", NULL, (LPDWORD) &type,
         (LPBYTE) registry_value, (LPDWORD) &size) == ERROR_SUCCESS)
       {
-        address_list = tok_split (libHandle,registry_value);
+        address_list = tok_split (registry_value);
         for (address_nbr = 0; address_list [address_nbr]; address_nbr++)
           {
             if (ns_count >= ns_max)
@@ -2038,7 +1985,7 @@ get_name_server (TA_Libc *libHandle,struct sockaddr_in *ns_address, int ns_max)
                 inet_addr (address_list [address_nbr]);
             ns_count++;
           }
-        tok_free (libHandle,address_list);
+        tok_free (address_list);
         RegCloseKey (hkey);
       }
 
@@ -2051,10 +1998,10 @@ get_name_server (TA_Libc *libHandle,struct sockaddr_in *ns_address, int ns_max)
     int
         rc;
 
-    resolver = file_open (libHandle,"/etc/resolv.conf", 'r');
+    resolver = file_open ("/etc/resolv.conf", 'r');
     if (resolver)
       {
-        while (file_read (libHandle,resolver, buffer))
+        while (file_read (resolver, buffer))
           {
             rc = sscanf (buffer, "nameserver %s", address);
             if (rc > 0 && rc != EOF)
@@ -2068,7 +2015,7 @@ get_name_server (TA_Libc *libHandle,struct sockaddr_in *ns_address, int ns_max)
                 ns_count++;
               }
           }
-        file_close (libHandle,resolver);
+        file_close (resolver);
       }
 
 #elif (defined (__OS2__))
@@ -2094,7 +2041,7 @@ get_name_server (TA_Libc *libHandle,struct sockaddr_in *ns_address, int ns_max)
     etcenv = getenv ("ETC");
     if (etcenv)
       {
-        filename = TA_Malloc( libHandle,  (strlen(etcenv) + 10);
+        filename = TA_Malloc(  (strlen(etcenv) + 10);
         if (!filename)
           return 0;                  /*  Cannot allocate memory for filename */
 
@@ -2110,7 +2057,7 @@ get_name_server (TA_Libc *libHandle,struct sockaddr_in *ns_address, int ns_max)
 
             resolver = file_open (filename, 'r');
           }
-        TA_Free( libHandle,  (filename);
+        TA_Free(   (filename);
       }
     else
       { /*  No environment variable around, try using the defaults           */
@@ -2144,7 +2091,7 @@ get_name_server (TA_Libc *libHandle,struct sockaddr_in *ns_address, int ns_max)
 
 /*  We fake some BSD functions that are missing on some systems              */
 #if (defined (__VMS__) || defined (__UTYPE_BEOS))
-struct protoent *getprotobyname (TA_Libc *libHandle,const char *protocol)
+struct protoent *getprotobyname (const char *protocol)
 {
     static struct protoent
         proto = { NULL, NULL, 0 };
@@ -2161,7 +2108,7 @@ struct protoent *getprotobyname (TA_Libc *libHandle,const char *protocol)
     return (&proto);
 }
 
-struct protoent *getprotobynumber (TA_Libc *libHandle,int protocol)
+struct protoent *getprotobynumber (int protocol)
 {
     static struct protoent
         proto = { NULL, NULL, 0 };
@@ -2178,7 +2125,7 @@ struct protoent *getprotobynumber (TA_Libc *libHandle,int protocol)
     return (&proto);
 }
 
-struct servent  *getservbyport (TA_Libc *libHandle,int port, const char *protocol)
+struct servent  *getservbyport (int port, const char *protocol)
 {
     static char
         fmtnumber [9];

@@ -107,12 +107,10 @@ typedef struct
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 
-static TA_RetCode referenceMin( TA_Libc      *libHandle,
-                                TA_Integer    startIdx,
+static TA_RetCode referenceMin( TA_Integer    startIdx,
                                 TA_Integer    endIdx,
                                 const TA_Real inReal_0[],
                                 TA_Integer    optInTimePeriod_0,
@@ -120,8 +118,7 @@ static TA_RetCode referenceMin( TA_Libc      *libHandle,
                                 TA_Integer   *outNbElement,
                                 TA_Real       outReal_0[] );
 
-static TA_RetCode referenceMax( TA_Libc      *libHandle,
-                                TA_Integer    startIdx,
+static TA_RetCode referenceMax( TA_Integer    startIdx,
                                 TA_Integer    endIdx,
                                 const TA_Real inReal_0[],
                                 TA_Integer    optInTimePeriod_0,
@@ -129,7 +126,7 @@ static TA_RetCode referenceMax( TA_Libc      *libHandle,
                                 TA_Integer   *outNbElement,
                                 TA_Real       outReal_0[] );
 
-static ErrorNumber testCompareToReference( TA_Libc *libHandle, const TA_Real *input, int nbElement );
+static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement );
 
 /**** Local variables definitions.     ****/
 
@@ -262,7 +259,7 @@ static TA_RefTest tableRefTest[] =
 #define NB_TEST_REF (sizeof(tableRefTest)/sizeof(TA_RefTest))
 
 /**** Global functions definitions.   ****/
-ErrorNumber test_func_minmax( TA_Libc *libHandle, TA_History *history )
+ErrorNumber test_func_minmax( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
@@ -276,7 +273,7 @@ ErrorNumber test_func_minmax( TA_Libc *libHandle, TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
 
-      retValue = do_test( libHandle, history, &tableTest[i] );
+      retValue = do_test( history, &tableTest[i] );
       if( retValue != 0 )
       {
          printf( "%s Failed Test #%d (Code=%d)\n", __FILE__,
@@ -288,7 +285,7 @@ ErrorNumber test_func_minmax( TA_Libc *libHandle, TA_History *history )
    /* Do tests against a local reference which is the non-optimized implementation */
    for( i=0; i < NB_TEST_REF; i++ )
    {
-      retValue = testCompareToReference( libHandle,
+      retValue = testCompareToReference(
                                          tableRefTest[i].input,
                                          tableRefTest[i].nbElement );
       if( retValue != 0 )
@@ -304,7 +301,7 @@ ErrorNumber test_func_minmax( TA_Libc *libHandle, TA_History *history )
 }
 
 /**** Local functions definitions.     ****/
-static TA_RetCode rangeTestFunction( TA_Libc *libHandle, 
+static TA_RetCode rangeTestFunction( 
                               TA_Integer startIdx,
                               TA_Integer endIdx,
                               TA_Real *outputBuffer,
@@ -323,7 +320,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
 
    if( testParam->test->theFunction == TA_MIN_TEST )
    {
-      retCode = TA_MIN( libHandle,
+      retCode = TA_MIN(
                         startIdx,
                         endIdx,
                         testParam->close,
@@ -335,7 +332,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    }
    else if( testParam->test->theFunction == TA_MAX_TEST )
    {
-      retCode = TA_MAX( libHandle,
+      retCode = TA_MAX(
                         startIdx,
                         endIdx,
                         testParam->close,
@@ -351,8 +348,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    return retCode;
 }
 
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test )
 {
    TA_RetCode retCode;
@@ -373,7 +369,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    /* Make a simple first call. */
    if( test->theFunction == TA_MIN_TEST )
    {
-      retCode = TA_MIN( libHandle,
+      retCode = TA_MIN(
                         test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
@@ -384,7 +380,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    }
    else if( test->theFunction == TA_MAX_TEST )
    {
-      retCode = TA_MAX( libHandle,
+      retCode = TA_MAX(
                         test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
@@ -408,7 +404,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    CLEAR_EXPECTED_VALUE(0);
    if( test->theFunction == TA_MIN_TEST )
    {
-      retCode = TA_MIN( libHandle,
+      retCode = TA_MIN(
                         test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
@@ -419,7 +415,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    }
    else if( test->theFunction == TA_MAX_TEST )
    {
-      retCode = TA_MAX( libHandle,
+      retCode = TA_MAX(
                         test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
@@ -451,7 +447,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( libHandle,
+      errNb = doRangeTest(
                            rangeTestFunction, 
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
@@ -470,8 +466,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
  * of complexity. Consequently, it is important to verify the
  * equivalence between the optimize and non-optimized version.
  */
-static TA_RetCode referenceMin( TA_Libc      *libHandle,
-                                TA_Integer    startIdx,
+static TA_RetCode referenceMin( TA_Integer    startIdx,
                                 TA_Integer    endIdx,
                                 const TA_Real inReal_0[],
                                 TA_Integer    optInTimePeriod_0,
@@ -483,8 +478,6 @@ static TA_RetCode referenceMin( TA_Libc      *libHandle,
    TA_Real lowest, tmp;
    TA_Integer outIdx, nbInitialElementNeeded;
    TA_Integer trailingIdx, today, i;
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -559,8 +552,7 @@ static TA_RetCode referenceMin( TA_Libc      *libHandle,
    return TA_SUCCESS;
 }
 
-static TA_RetCode referenceMax( TA_Libc      *libHandle,
-                                TA_Integer    startIdx,
+static TA_RetCode referenceMax( TA_Integer    startIdx,
                                 TA_Integer    endIdx,
                                 const TA_Real inReal_0[],
                                 TA_Integer    optInTimePeriod_0,
@@ -573,7 +565,6 @@ static TA_RetCode referenceMax( TA_Libc      *libHandle,
    TA_Integer outIdx, nbInitialElementNeeded;
    TA_Integer trailingIdx, today, i;
 
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -648,7 +639,7 @@ static TA_RetCode referenceMax( TA_Libc      *libHandle,
    return TA_SUCCESS;
 }
 
-static ErrorNumber testCompareToReference( TA_Libc *libHandle, const TA_Real *input, int nbElement )
+static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement )
 {
    TA_Integer outBegIdx, outNbElement;
    TA_RetCode retCode;
@@ -680,10 +671,10 @@ static ErrorNumber testCompareToReference( TA_Libc *libHandle, const TA_Real *in
 
                /* Get the reference output. */
                if( testNb == 0 )
-                  retCodeRef = referenceMin( libHandle, startIdx, endIdx, input, period, 
+                  retCodeRef = referenceMin( startIdx, endIdx, input, period, 
                                              &outBegIdxRef, &outNbElementRef, gBuffer[0].out0 );
                else
-                  retCodeRef = referenceMax( libHandle, startIdx, endIdx, input, period, 
+                  retCodeRef = referenceMax( startIdx, endIdx, input, period, 
                                              &outBegIdxRef, &outNbElementRef, gBuffer[0].out0 );
 
                /* Verify that the input was preserved */
@@ -693,10 +684,10 @@ static ErrorNumber testCompareToReference( TA_Libc *libHandle, const TA_Real *in
 
                /* Get the TA-Lib implementation output. */
                if( testNb == 0 )
-                  retCode = TA_MIN( libHandle, startIdx, endIdx, input, period, 
+                  retCode = TA_MIN( startIdx, endIdx, input, period, 
                                     &outBegIdx, &outNbElement, gBuffer[1].out0 );
                else
-                  retCode = TA_MAX( libHandle, startIdx, endIdx, input, period, 
+                  retCode = TA_MAX( startIdx, endIdx, input, period, 
                                     &outBegIdx, &outNbElement, gBuffer[1].out0 );
 
                /* Verify that the input was preserved */
@@ -736,10 +727,10 @@ static ErrorNumber testCompareToReference( TA_Libc *libHandle, const TA_Real *in
                    * The output should still be the same.
                    */
                   if( testNb == 0 )
-                     retCode = TA_MIN( libHandle, startIdx, endIdx, gBuffer[0].in, period, 
+                     retCode = TA_MIN( startIdx, endIdx, gBuffer[0].in, period, 
                                        &outBegIdx, &outNbElement, gBuffer[0].in );
                   else
-                     retCode = TA_MAX( libHandle, startIdx, endIdx, gBuffer[0].in, period, 
+                     retCode = TA_MAX( startIdx, endIdx, gBuffer[0].in, period, 
                                        &outBegIdx, &outNbElement, gBuffer[0].in );
 
                   /* The reference and TA-LIB should have the same output. */

@@ -84,7 +84,7 @@ TA_FILE_INFO;
 /**** Global functions definitions.   ****/
 
 
-TA_RetCode TA_PeriodNormalize( TA_Libc *libHandle, TA_BuilderSupport *builderSupport )
+TA_RetCode TA_PeriodNormalize( TA_BuilderSupport *builderSupport )
 {
    /* This function will bring all the data to the same timeframe
     * prior to the merge procedure.
@@ -93,7 +93,6 @@ TA_RetCode TA_PeriodNormalize( TA_Libc *libHandle, TA_BuilderSupport *builderSup
    /* !!! Not implemented. For the time being all the data source are assumed
     * !!! to provide the data in the requested 'period' timeframe.
     */
-   (void)libHandle;
    (void)builderSupport;
 
    return TA_SUCCESS;
@@ -107,8 +106,7 @@ TA_RetCode TA_PeriodNormalize( TA_Libc *libHandle, TA_BuilderSupport *builderSup
  * this pointer to free this data when not needed
  * anymore.
  */
-TA_RetCode TA_PeriodTransform( TA_Libc *libHandle,
-                               const TA_History *history, /* The original history. */
+TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original history. */
                                TA_Period newPeriod,       /* The new desired period. */
                                TA_Integer *nbBars,        /* Return the number of price bar */
                                TA_Timestamp **timestamp,  /* Allocate new timestamp. */
@@ -119,7 +117,7 @@ TA_RetCode TA_PeriodTransform( TA_Libc *libHandle,
                                TA_Integer **volume,       /* Allocate new volume. */
                                TA_Integer **openInterest  /* Allocate new openInterest. */ )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
    TA_RetCode retCode;
 
@@ -164,22 +162,22 @@ TA_RetCode TA_PeriodTransform( TA_Libc *libHandle,
    unsigned int again, periodCompleted, errorOccured; /* Boolean */
    int periodBarAccumulated, firstIteration;
 
-   TA_TRACE_BEGIN( libHandle, TA_PeriodTransform );
+   TA_TRACE_BEGIN(  TA_PeriodTransform );
 
    /* Validate some mandatory parameter. */
-   TA_ASSERT( libHandle, history != NULL );
+   TA_ASSERT( history != NULL );
 
-   TA_ASSERT( libHandle, newPeriod != 0 );
-   TA_ASSERT( libHandle, nbBars  != NULL );
+   TA_ASSERT( newPeriod != 0 );
+   TA_ASSERT( nbBars  != NULL );
 
    /* It is assume that the caller call this function
     * when there is really a transform to do.
     */
-   TA_ASSERT( libHandle, history->period != newPeriod );
-   TA_ASSERT( libHandle, history->nbBars > 0 );
+   TA_ASSERT( history->period != newPeriod );
+   TA_ASSERT( history->nbBars > 0 );
 
    /* Of course, timestamps from the source are needed. */
-   TA_ASSERT( libHandle, history->timestamp != NULL );
+   TA_ASSERT( history->timestamp != NULL );
 
    /* Initialize all callers pointers to NULL.
     * These will be initialize only on success.
@@ -308,7 +306,7 @@ TA_RetCode TA_PeriodTransform( TA_Libc *libHandle,
       { \
          if( !errorOccured && varName && old_##varName ) \
          { \
-            new_##varName = TA_Malloc( libHandle, new_nbBars * sizeof( TA_##varType ) ); \
+            new_##varName = TA_Malloc( new_nbBars * sizeof( TA_##varType ) ); \
             if( !new_##varName ) \
                errorOccured = 1; \
          } \
@@ -444,7 +442,7 @@ TA_RetCode TA_PeriodTransform( TA_Libc *libHandle,
          /* We got all the info needed in the cur_XXXXX variables for
           * proceeding with the initialization of the new period price bar.
           */
-         TA_DEBUG_ASSERT( libHandle, newPriceBar < new_nbBars );
+         TA_DEBUG_ASSERT( newPriceBar < new_nbBars );
 
          /* Volume and Open interest are changed to daily average. */
          if( old_volume )

@@ -59,21 +59,21 @@ Bool file_crlf = FALSE;                 /*  Initial default                  */
 /*  Function prototypes                                                      */
 
 #if (defined (MSDOS_FILESYSTEM))
-static Bool   system_devicename   (TA_Libc *libHandle, const char *filename);
+static Bool   system_devicename   (const char *filename);
 #endif
 
-static dbyte  file_mode           (TA_Libc *libHandle, const char *filename);
+static dbyte  file_mode           (const char *filename);
 #if (defined (__WINDOWS__))
-static Bool   is_exe_file         (TA_Libc *libHandle, const char *filename);
+static Bool   is_exe_file         (const char *filename);
 #endif
 
 #if 0
 !!! Not needed within TA-Lib
 
-static char  *build_next_path     (TA_Libc *libHandle, 
+static char  *build_next_path     (
                                    char *dest, const char *path,
                                    const char *name);
-static char  *build_next_path_ext (TA_Libc *libHandle, 
+static char  *build_next_path_ext (
                                    char *dest, const char *path,
                                    const char *name,
                                    const char *ext);
@@ -110,12 +110,11 @@ static Bool   fully_specified     (const char *filename);
 
 FILE *
 file_open (
-    TA_Libc *libHandle,
     const char *filename,               /*  Name of file to open             */
     char mode)                          /*  'r', 'w', or 'a'                 */
 {
 #if (defined (MSDOS_FILESYSTEM))
-    if (system_devicename (libHandle,filename))
+    if (system_devicename (filename))
         return (NULL);                  /*  Not allowed on device names      */
 
     file_crlf = TRUE;
@@ -124,7 +123,7 @@ file_open (
 #   endif
 #   else
 
-    TA_ASSERT_RET(libHandle,filename,NULL);
+    TA_ASSERT_RET(filename,NULL);
 
     file_crlf = FALSE;
 #endif
@@ -136,7 +135,7 @@ file_open (
         return (fopen (filename, FOPEN_WRITE_BINARY));
     else
     if (mode == 'a'
-    &&  safe_to_extend (libHandle,filename))
+    &&  safe_to_extend (filename))
         return (fopen (filename, FOPEN_APPEND_BINARY));
     else
         return (NULL);                  /*  Invalid mode                     */
@@ -150,7 +149,7 @@ file_open (
  *  use of these names for directories or filenames.
  */
 static Bool
-system_devicename (TA_Libc *libHandle, const char *supplied_filename)
+system_devicename (const char *supplied_filename)
 {
     char
         *filename,    
@@ -168,7 +167,7 @@ system_devicename (TA_Libc *libHandle, const char *supplied_filename)
      *   filename = mem_strdup (supplied_filename);
      */
     filenameLength = strlen(supplied_filename);
-    filename = TA_Malloc( libHandle, filenameLength+1 );
+    filename = TA_Malloc( filenameLength+1 );
     strcpy( filename, supplied_filename );
 
     strconvch (filename, ' ', '_');     /*  Don't break on real spaces       */
@@ -189,7 +188,7 @@ system_devicename (TA_Libc *libHandle, const char *supplied_filename)
             if (*char_ptr == '\0')
                 break;
       }
-    tokens = tok_split (libHandle,filename);
+    tokens = tok_split (filename);
     feedback = FALSE;
     for (token_nbr = 0; tokens [token_nbr]; token_nbr++)
       {
@@ -210,8 +209,8 @@ system_devicename (TA_Libc *libHandle, const char *supplied_filename)
             break;
           }
       }
-    tok_free (libHandle, tokens);
-    TA_Free( libHandle, filename);
+    tok_free (tokens);
+    TA_Free( filename);
     return (feedback);
 }
 #endif
@@ -229,7 +228,7 @@ system_devicename (TA_Libc *libHandle, const char *supplied_filename)
 
 FILE *
 file_locate (
-    TA_Libc *libHandle, 
+    
     const char *path,
     const char *name,
     const char *ext)
@@ -237,10 +236,10 @@ file_locate (
     char
         *filename;
 
-    TA_ASSERT_RET(libHandle,name,NULL);
-    filename = file_where (libHandle,'r', path, name, ext);
+    TA_ASSERT_RET(name,NULL);
+    filename = file_where ('r', path, name, ext);
     if (filename)
-        return (file_open (libHandle,filename, 'r'));
+        return (file_open (filename, 'r'));
     else
         return (NULL);
 }
@@ -257,11 +256,9 @@ file_locate (
 
 int
 file_close (
-    TA_Libc *libHandle, 
+    
     FILE *stream)
 {
-   (void)libHandle;
-
     if (stream)
         return (fclose (stream));
     else
@@ -284,7 +281,7 @@ file_close (
 
 Bool
 file_read (
-    TA_Libc *libHandle, 
+    
     FILE *stream,
     char *string)
 {
@@ -292,8 +289,8 @@ file_read (
         ch,                             /*  Character read from file         */
         cnbr;                           /*  Index into returned string       */
 
-    TA_ASSERT_RET (libHandle,stream,FALSE);
-    TA_ASSERT_RET (libHandle,string,FALSE);
+    TA_ASSERT_RET (stream,FALSE);
+    TA_ASSERT_RET (string,FALSE);
 
     cnbr = 0;                           /*  Start at the beginning...        */
     memset (string, ' ', LINE_MAX);     /*    and prepare entire line        */
@@ -336,7 +333,7 @@ file_read (
 
 Bool
 file_readn (
-    TA_Libc *libHandle, 
+    
     FILE *stream,
     char *string,
     int   line_max)
@@ -345,8 +342,8 @@ file_readn (
         ch,                             /*  Character read from file         */
         cnbr;                           /*  Index into returned string       */
 
-    TA_ASSERT_RET (libHandle,stream,FALSE);
-    TA_ASSERT_RET (libHandle,string,FALSE);
+    TA_ASSERT_RET (stream,FALSE);
+    TA_ASSERT_RET (string,FALSE);
 
     cnbr = 0;                           /*  Start at the beginning...        */
     memset (string, ' ', line_max);     /*    and prepare entire line        */
@@ -392,12 +389,12 @@ file_readn (
 
 char *
 file_write (
-    TA_Libc *libHandle, 
+    
     FILE *stream,
     const char *string)
 {
-    TA_ASSERT_RET (libHandle,stream,NULL);
-    TA_ASSERT_RET (libHandle,string,NULL);
+    TA_ASSERT_RET (stream,NULL);
+    TA_ASSERT_RET (string,NULL);
 
     fputs (string, stream);
     if (file_crlf)
@@ -423,7 +420,7 @@ file_write (
 
 int
 file_copy (
-    TA_Libc *libHandle, 
+    
     const char *dest,
     const char *src,
     char mode)
@@ -434,13 +431,13 @@ file_copy (
     size_t chars_read;                  /*  Amount read from stream          */
     int  feedback = 0;
 
-    TA_ASSERT_RET (libHandle,dest,-1);
-    TA_ASSERT_RET (libHandle,src,-1);
-    if (file_exists ( libHandle,dest))
+    TA_ASSERT_RET (dest,-1);
+    TA_ASSERT_RET (src,-1);
+    if (file_exists (dest))
         return (1);                     /*  Cancel: dest already exists      */
 
 #   if (defined (MSDOS_FILESYSTEM))
-    if (system_devicename (libHandle,dest) || system_devicename (libHandle,src))
+    if (system_devicename (dest) || system_devicename (src))
         return (-1);                    /*  Not allowed on device names      */
 #   endif
 #   if (defined (MSDOS_FILESYSTEM))
@@ -453,14 +450,14 @@ file_copy (
     if ((inf = fopen (src, openmode)) == NULL)
         return (-1);                    /*  Input file not found             */
 
-    if ((buffer = TA_Malloc(libHandle, SHRT_MAX)) == NULL)
+    if ((buffer = TA_Malloc(SHRT_MAX)) == NULL)
         feedback = -1;                  /*  Insufficient memory for buffer   */
     else
       {
         openmode [0] = 'w';
         if ((outf = fopen (dest, openmode)) == NULL)
           {
-            TA_Free(libHandle, buffer);
+            TA_Free(buffer);
             return (-1);                /*  Could not create output file     */
           }
         while ((chars_read = fread (buffer, 1, SHRT_MAX, inf)) != 0)
@@ -470,7 +467,7 @@ file_copy (
                 break;
               }
         fclose (outf);
-        TA_Free(libHandle, buffer);
+        TA_Free(buffer);
       }
     fclose (inf);
     return (feedback);
@@ -487,7 +484,7 @@ file_copy (
 
 int
 file_concat (
-    TA_Libc *libHandle, 
+    
     const char *src,
     const char *dest)
 {
@@ -496,23 +493,23 @@ file_concat (
     size_t chars_read;                  /*  Amount read from stream          */
     int  feedback = 0;
 
-    TA_ASSERT_RET (libHandle,src,-1);
-    TA_ASSERT_RET (libHandle,dest,-1);
+    TA_ASSERT_RET (src,-1);
+    TA_ASSERT_RET (dest,-1);
 
 #   if (defined (MSDOS_FILESYSTEM))
-    if (system_devicename (libHandle,dest) || system_devicename (libHandle,src))
+    if (system_devicename (dest) || system_devicename (src))
         return (-1);                    /*  Not allowed on device names      */
 #   endif
     if ((inf = fopen (src, FOPEN_READ_BINARY)) == NULL)
         return (-1);                    /*  Input file not found             */
 
-    if ((buffer = TA_Malloc(libHandle, SHRT_MAX)) == NULL)
+    if ((buffer = TA_Malloc(SHRT_MAX)) == NULL)
         feedback = -1;                  /*  Insufficient memory for buffer   */
     else
       {
         if ((outf = fopen (dest, FOPEN_APPEND_BINARY)) == NULL)
           {
-            TA_Free(libHandle, buffer);
+            TA_Free(buffer);
             return (-1);                /*  Could not create output file     */
           }
         while ((chars_read = fread (buffer, 1, SHRT_MAX, inf)) != 0)
@@ -522,7 +519,7 @@ file_concat (
                 break;
               }
         fclose (outf);
-        TA_Free(libHandle, buffer);
+        TA_Free(buffer);
       }
     fclose (inf);
     return (feedback);
@@ -538,29 +535,34 @@ file_concat (
 
 int
 file_rename (
-    TA_Libc *libHandle, 
+    
     const char *oldname,
     const char *newname)
 {
 #   if (defined (MSDOS_FILESYSTEM))
     char *dos_newname;
     int   feedback;
+    int size;
 
-    TA_ASSERT_RET (libHandle,oldname,-1);
-    TA_ASSERT_RET (libHandle,newname,-1);
+    TA_ASSERT_RET (oldname,-1);
+    TA_ASSERT_RET (newname,-1);
 
-    if (system_devicename (libHandle,oldname) || system_devicename (libHandle,newname))
+    if (system_devicename (oldname) || system_devicename (newname))
         return (-1);                    /*  Not allowed on device names      */
 
-    dos_newname = TA_MallocCopy( libHandle, newname, strlen(newname)+1 );
+    size = strlen(newname)+1;
+    dos_newname = TA_Malloc( size );
+    if( !dos_newname )
+       return 0;
+    memcpy( dos_newname, newname, size );
     strconvch (dos_newname, '/', '\\');
     feedback = rename (oldname, dos_newname);
-    TA_Free(libHandle, dos_newname);
+    TA_Free(dos_newname);
     return (feedback);
 
 #   else
-    TA_ASSERT_RET (libHandle,oldname,-1);
-    TA_ASSERT_RET (libHandle,newname,-1);
+    TA_ASSERT_RET (oldname,-1);
+    TA_ASSERT_RET (newname,-1);
 
     return (rename (oldname, newname));
 #   endif
@@ -576,19 +578,19 @@ file_rename (
 
 int
 file_delete (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
 #if (defined (__VMS__))
-    TA_ASSERT_RET (libHandle,filename,-1);
+    TA_ASSERT_RET (filename,-1);
     return (remove (filename));
 
 #elif (defined (WIN32))
     int
         rc;
 
-    TA_ASSERT_RET (libHandle,filename,-1);
-    if (system_devicename (libHandle,filename))
+    TA_ASSERT_RET (filename,-1);
+    if (system_devicename (filename))
         return (-1);                    /*  Not allowed on device names      */
 
     rc = !DeleteFile (filename);
@@ -604,7 +606,7 @@ file_delete (
     return (rc);
 #else
 
-    TA_ASSERT_RET (libHandle,filename,-1);
+    TA_ASSERT_RET (filename,-1);
     return (unlink (filename));
 #endif
 }
@@ -618,11 +620,11 @@ file_delete (
 
 Bool
 file_exists ( 
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
-    TA_ASSERT_RET (libHandle,filename,FALSE);
-    return (file_mode (libHandle,filename) > 0);
+    TA_ASSERT_RET (filename,FALSE);
+    return (file_mode (filename) > 0);
 }
 
 
@@ -635,16 +637,16 @@ file_exists (
 
 static dbyte
 file_mode (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
 #if (defined (WIN32))
     DWORD   dwfa;
     dbyte   mode;
 
-    TA_ASSERT_RET (libHandle,filename,0);
+    TA_ASSERT_RET (filename,0);
 
-    if (system_devicename (libHandle,filename))
+    if (system_devicename (filename))
         return (0);                     /*  Not allowed on device names      */
         
     dwfa = GetFileAttributes (filename);
@@ -663,7 +665,7 @@ file_mode (
     if (!(dwfa & FILE_ATTRIBUTE_READONLY))
         mode |= S_IWRITE;
 
-    if (is_exe_file (libHandle, filename))
+    if (is_exe_file (filename))
         mode |= S_IEXEC;
 
     return (mode);
@@ -672,7 +674,7 @@ file_mode (
     static struct stat
         stat_buf;
 
-    TA_ASSERT_RET (libHandle,filename,0);
+    TA_ASSERT_RET (filename,0);
 
 #   if (defined (MSDOS_FILESYSTEM))
     /*  Handle simple disk specifiers ourselves, since some compilers cannot
@@ -752,7 +754,7 @@ file_mode (
 
 char *
 file_where (
-    TA_Libc *libHandle, 
+    
     char mode,
     const char *path,
     const char *name,
@@ -765,14 +767,14 @@ file_where (
     Bool
         search_curdir = TRUE;           /*  Look in current directory?       */
 
-    TA_ASSERT_RET (libHandle,name,NULL);
+    TA_ASSERT_RET (name,NULL);
 
     if (ext != NULL && *ext)            /*  Append extension if not null     */
       {                                 /*    to get name + ext into         */
         if (ext [0] == '.')             /*    work_name.                     */
-            fixed_extension (libHandle,work_name, name, ext);
+            fixed_extension (work_name, name, ext);
         else
-            default_extension (libHandle,work_name, name, ext);
+            default_extension (work_name, name, ext);
       }
     else
         strcpy (work_name, name);
@@ -791,7 +793,7 @@ file_where (
 #if (PATHFOLD == TRUE)                  /*  Fold to uppercase if necessary   */
         if (pathptr)
           {
-            TA_ASSERT_RET(libHandle,strlen (pathptr) < PATH_MAX,NULL);
+            TA_ASSERT_RET(strlen (pathptr) < PATH_MAX,NULL);
             strcpy (path_name, pathptr);
             strupc (path_name);
             pathptr = path_name;        /*  Redirect to uppercase version    */
@@ -823,20 +825,20 @@ file_where (
         if (fully_specified (work_name))
             strncpy (full_name, work_name, sizeof (full_name));
         else
-        if (pathptr && file_is_directory (libHandle,pathptr))
-            build_next_path (libHandle,full_name, pathptr, work_name);
+        if (pathptr && file_is_directory (pathptr))
+            build_next_path (full_name, pathptr, work_name);
         else
 #if (defined (MSDOS_FILESYSTEM))
-            build_next_path (libHandle,full_name, ".\\", work_name);
+            build_next_path (full_name, ".\\", work_name);
 #else
-            build_next_path (libHandle,full_name, "./", work_name);
+            build_next_path (full_name, "./", work_name);
 #endif
         return (full_name);
       }
 
     /*  If file exists as defined, prefix with current directory if not an   */
     /*  absolute filename, then return the resulting filename                */
-    if (search_curdir && file_exists ( libHandle, libHandle,work_name))
+    if (search_curdir && file_exists (work_name))
       {
         if (fully_specified (work_name))
             strncpy (full_name, work_name, sizeof (full_name));
@@ -844,7 +846,7 @@ file_where (
           {
             curdir = get_curdir ();
             snprintf (full_name, sizeof (full_name), "%s%s", curdir, work_name);
-            TA_Free(libHandle, curdir);
+            TA_Free(curdir);
           }
 #if (defined (MSDOS_FILESYSTEM))
         strconvch (full_name, '/', '\\');
@@ -856,8 +858,8 @@ file_where (
 
     for (;;)                            /*  Try each path component          */
       {
-        pathptr = build_next_path (libHandle,full_name, pathptr, work_name);
-        if (file_exists ( libHandle, libHandle,full_name))
+        pathptr = build_next_path (full_name, pathptr, work_name);
+        if (file_exists (full_name))
             return (full_name);         /*  Until we find one,               */
 
         if (*pathptr == '\0')           /*    or we come to the end of       */
@@ -934,7 +936,7 @@ file_where (
 
 char *
 file_where_ext (
-    TA_Libc *libHandle, 
+    
     char mode,
     const char *path,
     const char *name,
@@ -949,7 +951,7 @@ file_where_ext (
     Bool
         search_curdir = TRUE;           /*  Look in current directory?       */
 
-    TA_ASSERT_RET(libHandle,name,NULL);
+    TA_ASSERT_RET(name,NULL);
     if (!name)
         return NULL;
 
@@ -964,7 +966,7 @@ file_where_ext (
 #if (PATHFOLD == TRUE)                  /*  Fold to uppercase if necessary   */
         if (pathptr)
           {
-            TA_ASSERT_RET (libHandle,strlen (pathptr) < PATH_MAX,NULL);
+            TA_ASSERT_RET (strlen (pathptr) < PATH_MAX,NULL);
             strcpy (path_name, pathptr);
             strupc (path_name);
             pathptr = path_name;        /*  Redirect to uppercase version    */
@@ -991,7 +993,7 @@ file_where_ext (
     if (mode == 'w')                    /*  Create output file locally       */
       {
         if (ext != NULL && ext [0] != NULL)
-            add_extension (libHandle,work_name, name, ext [0]);
+            add_extension (work_name, name, ext [0]);
         else
             strcpy (work_name, name);
 #if (NAMEFOLD == TRUE)
@@ -1004,7 +1006,7 @@ file_where_ext (
     if (mode == 's')                    /*  Get specific directory name      */
       {
         if (ext != NULL && ext [0] != NULL)
-            add_extension (libHandle,work_name, name, ext [0]);
+            add_extension (work_name, name, ext [0]);
         else
             strcpy (work_name, name);
 #if (NAMEFOLD == TRUE)
@@ -1014,13 +1016,13 @@ file_where_ext (
         if (fully_specified (work_name))
             strcpy (full_name, work_name);
         else
-        if (pathptr && file_is_directory (libHandle,pathptr))
-            build_next_path (libHandle,full_name, pathptr, work_name);
+        if (pathptr && file_is_directory (pathptr))
+            build_next_path (full_name, pathptr, work_name);
         else
 #if (defined (MSDOS_FILESYSTEM))
-            build_next_path (libHandle,full_name, ".\\", work_name);
+            build_next_path (full_name, ".\\", work_name);
 #else
-            build_next_path (libHandle,full_name, "./", work_name);
+            build_next_path (full_name, "./", work_name);
 #endif
         return (full_name);
       }
@@ -1034,14 +1036,14 @@ file_where_ext (
         do
           {
             if (extptr != NULL && *extptr != NULL)
-                add_extension (libHandle,work_name, name, *extptr);
+                add_extension (work_name, name, *extptr);
             else
                 strcpy (work_name, name);
 #if (NAMEFOLD == TRUE)
             strupc (work_name);         /*  Fold to uppercase if needed      */
 #endif
 
-            if (file_exists ( libHandle, libHandle,work_name))
+            if (file_exists (work_name))
               {
                 if (fully_specified (work_name))
                     strcpy (full_name, work_name);
@@ -1050,7 +1052,7 @@ file_where_ext (
                     curdir = get_curdir ();
                     snprintf (full_name, sizeof (full_name), 
 			                 "%s%s", curdir, work_name);
-                    TA_Free(libHandle, curdir);
+                    TA_Free(curdir);
                   }
 #if (defined (MSDOS_FILESYSTEM))
                 strconvch (full_name, '/', '\\');
@@ -1079,11 +1081,11 @@ file_where_ext (
             if (extptr != NULL && *extptr != NULL)
                 extension = *extptr;
 
-            pathptr = build_next_path_ext (libHandle,
+            pathptr = build_next_path_ext (
                                            full_name, savedptr,
                                            name,      extension);
 
-            if (file_exists ( libHandle, libHandle,full_name))
+            if (file_exists (full_name))
                 return (full_name);     /*  Until we find one that matches   */
 
             if (extptr)
@@ -1143,16 +1145,12 @@ fully_specified (
  */
 
 static char *
-build_next_path (
-   TA_Libc *libHandle,
-   char *dest, const char *path, const char *name)
+build_next_path ( char *dest, const char *path, const char *name)
 {
     int
         length;                         /*  length of directory name         */
     char
         *pathptr = (char *) path;
-
-   (void)libHandle;
 
     if (path)
       {
@@ -1184,8 +1182,7 @@ build_next_path (
  */
 
 static char *
-build_next_path_ext ( TA_Libc *libHandle,
-                      char *dest, const char *path,
+build_next_path_ext ( char *dest, const char *path,
                       const char *name, const char *ext)
 {
     int
@@ -1207,12 +1204,12 @@ build_next_path_ext ( TA_Libc *libHandle,
 
         dest [length] = '\0';
         strcat (dest, name);
-        add_extension (libHandle,dest, dest, ext);
+        add_extension (dest, dest, ext);
       }
     else
       {
         if (ext)
-            add_extension (libHandle,dest, name, ext);
+            add_extension (dest, name, ext);
         else
             strcpy (dest, name);
       }
@@ -1242,7 +1239,7 @@ build_next_path_ext ( TA_Libc *libHandle,
 
 Bool
 file_cycle (
-    TA_Libc *libHandle, 
+    
     const char *filename,
     int how)
 {
@@ -1254,13 +1251,13 @@ file_cycle (
     int
         unique_nbr;                     /*  To generate a unique name        */
 
-    TA_ASSERT_RET(libHandle,filename,FALSE);
+    TA_ASSERT_RET(filename,FALSE);
 
     /*  If no cycling needed, do nothing                                     */
-    if (!file_cycle_needed (libHandle,filename, how))
+    if (!file_cycle_needed (filename, how))
         return (TRUE);                  /*  No errors, nothing in fact       */
 
-    file_date = timer_to_date (get_file_time (libHandle,filename));
+    file_date = timer_to_date (get_file_time (filename));
     strcpy (full_name, filename);
     point = strrchr (full_name, '.');
     if (point)
@@ -1291,20 +1288,20 @@ file_cycle (
     /*  Format new name for file and make sure it does not already exist     */
     sprintf (insert_at, "%06d", (int) (file_date % 1000000L));
     strcat  (insert_at, work_name);
-    if (file_exists ( libHandle,full_name))
+    if (file_exists (full_name))
       {
         point = strrchr (full_name, '.') + 1;
         for (unique_nbr = 0; unique_nbr < 1000; unique_nbr++)
           {
             sprintf (point, "%03d", unique_nbr);
-            if (!file_exists ( libHandle,full_name))
+            if (!file_exists (full_name))
                 break;
           }
       }
-    if (file_exists ( libHandle,full_name))
+    if (file_exists (full_name))
         return (FALSE);                 /*  We give up!                      */
 
-    if (file_rename (libHandle,filename, full_name))
+    if (file_rename (filename, full_name))
         return (FALSE);                 /*  No permission                    */
     else
         return (TRUE);                  /*  Okay, it worked                  */
@@ -1331,7 +1328,7 @@ file_cycle (
 
 Bool
 file_cycle_needed (
-    TA_Libc *libHandle, 
+    
     const char *filename,
     int how)
 {
@@ -1343,12 +1340,12 @@ file_cycle_needed (
     Bool
         cycle;                          /*  Do we want to cycle the file?    */
 
-    TA_ASSERT_RET(libHandle,filename,FALSE);
-    if (!file_exists ( libHandle,filename))        /*  Not found - nothing more to do   */
+    TA_ASSERT_RET(filename,FALSE);
+    if (!file_exists (filename))        /*  Not found - nothing more to do   */
         return (FALSE);
 
-    file_time = timer_to_time (get_file_time (libHandle,filename));
-    file_date = timer_to_date (get_file_time (libHandle,filename));
+    file_time = timer_to_time (get_file_time (filename));
+    file_date = timer_to_date (get_file_time (filename));
     curr_time = time_now ();
     curr_date = date_now ();
 
@@ -1389,7 +1386,7 @@ file_cycle_needed (
 
 Bool
 file_has_changed (
-    TA_Libc *libHandle, 
+    
     const char *filename,
     long old_date,
     long old_time)
@@ -1398,12 +1395,12 @@ file_has_changed (
         file_date,                      /*  Timestamp of file                */
         file_time;                      /*  Datestamp of file                */
 
-    TA_ASSERT_RET(libHandle,filename,FALSE);
-    if (!file_exists ( libHandle,filename))        /*  Not found - nothing more to do   */
+    TA_ASSERT_RET(filename,FALSE);
+    if (!file_exists (filename))        /*  Not found - nothing more to do   */
         return (FALSE);
 
-    file_time = timer_to_time (get_file_time (libHandle,filename));
-    file_date = timer_to_date (get_file_time (libHandle,filename));
+    file_time = timer_to_time (get_file_time (filename));
+    file_date = timer_to_date (get_file_time (filename));
     if (file_date  > old_date
     || (file_date == old_date && file_time > old_time))
         return (TRUE);
@@ -1425,16 +1422,16 @@ file_has_changed (
 
 Bool
 safe_to_extend (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
 #if (defined (MSDOS_FILESYSTEM))
     int  handle;                        /*  Opened file handle               */
     char endoffile;                     /*  Last character in file           */
 
-    TA_ASSERT_RET(libHandle,filename,FALSE);
+    TA_ASSERT_RET(filename,FALSE);
 
-    if (system_devicename (libHandle,filename))
+    if (system_devicename (filename))
         return (FALSE);                 /*  Not allowed on device names      */
 
     handle = open (filename, O_RDWR + O_BINARY, S_IREAD | S_IWRITE);
@@ -1449,7 +1446,6 @@ safe_to_extend (
       }
 #else
     /* Do nothing. */
-    (void)libHandle;
     (void)filename;
 #endif
     return (TRUE);
@@ -1467,7 +1463,7 @@ safe_to_extend (
 
 char *
 default_extension (
-    TA_Libc *libHandle, 
+    
     char *dest,
     const char *src,
     const char *ext)
@@ -1475,8 +1471,8 @@ default_extension (
     int len, i;
     char *ptr;
 
-    TA_ASSERT_RET(libHandle,dest,NULL);
-    TA_ASSERT_RET(libHandle,src,NULL);
+    TA_ASSERT_RET(dest,NULL);
+    TA_ASSERT_RET(src,NULL);
 
     if (dest != src)                    /*  Copy src to dest if not same     */
         strcpy (dest, src);
@@ -1513,19 +1509,19 @@ default_extension (
 
 char *
 fixed_extension (
-    TA_Libc *libHandle, 
+    
     char *dest,
     const char *src,
     const char *ext)
 {
-    TA_ASSERT_RET(libHandle,dest,NULL);
-    TA_ASSERT_RET(libHandle,src,NULL);
+    TA_ASSERT_RET(dest,NULL);
+    TA_ASSERT_RET(src,NULL);
 
     if (dest != src)                    /*  Copy src to dest if not same     */
         strcpy (dest, src);
 
-    strip_extension (libHandle,dest);
-    return (default_extension (libHandle,dest, dest, ext));
+    strip_extension (dest);
+    return (default_extension (dest, dest, ext));
 }
 
 
@@ -1539,12 +1535,12 @@ fixed_extension (
 
 char *
 strip_extension (
-    TA_Libc *libHandle, 
+    
     char *name)
 {
     char *dot, *slash;
 
-    TA_ASSERT_RET(libHandle,name,NULL);
+    TA_ASSERT_RET(name,NULL);
 
     dot   = strrchr (name, '.');        /*  Find dot in name, if any         */
     slash = strrchr (name, '\\');       /*  Find last slash (DOS or Unix)    */
@@ -1571,7 +1567,7 @@ strip_extension (
 
 char *
 add_extension (
-    TA_Libc *libHandle, 
+    
     char *dest,
     const char *src,
     const char *ext)
@@ -1579,8 +1575,8 @@ add_extension (
     char
         *result;
 
-    TA_ASSERT_RET(libHandle,dest,NULL);
-    TA_ASSERT_RET(libHandle,src,NULL);
+    TA_ASSERT_RET(dest,NULL);
+    TA_ASSERT_RET(src,NULL);
     if (!src || !dest)
         return (NULL);
 
@@ -1593,9 +1589,9 @@ add_extension (
       }
     else
         if (*ext == '.')
-            result = fixed_extension (libHandle,dest, src, ext);
+            result = fixed_extension (dest, src, ext);
         else
-            result = default_extension (libHandle,dest, src, ext);
+            result = default_extension (dest, src, ext);
 
     return (result);
 }
@@ -1611,12 +1607,12 @@ add_extension (
 
 char
 *strip_file_path (
-    TA_Libc *libHandle, 
+    
     char *name)
 {
     char *path_end;
 
-    TA_ASSERT_RET(libHandle,name,NULL);
+    TA_ASSERT_RET(name,NULL);
 
     path_end = strrchr (name, PATHEND); /*  Find end of path, if any         */
 #if (defined (MSDOS_FILESYSTEM))
@@ -1629,11 +1625,11 @@ char
 }
 
 
-char  *split_path_and_file (TA_Libc *libHandle, char *name )
+char  *split_path_and_file (char *name )
 {
     char *path_end;
 
-    TA_ASSERT_RET(libHandle,name,NULL);
+    TA_ASSERT_RET(name,NULL);
 
     path_end = strrchr (name, PATHEND); /*  Find end of path, if any         */
 #if (defined (MSDOS_FILESYSTEM))
@@ -1661,13 +1657,13 @@ char  *split_path_and_file (TA_Libc *libHandle, char *name )
 
 char
 *strip_file_name (
-    TA_Libc *libHandle, 
+    
     char *name)
 {
     char *path_end;
 
-    TA_ASSERT_RET(libHandle,name,NULL);
-    TA_ASSERT_RET(libHandle,strlen (name) <= LINE_MAX,NULL);
+    TA_ASSERT_RET(name,NULL);
+    TA_ASSERT_RET(strlen (name) <= LINE_MAX,NULL);
 
     strcpy (work_name, name);
     path_end = strrchr (work_name, PATHEND);
@@ -1680,7 +1676,7 @@ char
     else
       {
         path_end [1] = '\0';
-        return (clean_path (libHandle,work_name));
+        return (clean_path (work_name));
       }
 }
 
@@ -1697,7 +1693,7 @@ char
 
 char *
 get_new_filename (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
     char
@@ -1710,10 +1706,10 @@ get_new_filename (
       {
         sprintf (suffix, "_%03d", counter);
         new_name = xstrcpy (NULL, filename, suffix, NULL);
-        if (!file_exists ( libHandle, libHandle,new_name))
+        if (!file_exists (new_name))
             return (new_name);
         else
-            TA_Free(libHandle, new_name);
+            TA_Free(new_name);
       }
     return (NULL);
 }
@@ -1729,17 +1725,17 @@ get_new_filename (
 
 Bool
 file_is_readable (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
-    TA_ASSERT_RET (libHandle,filename,FALSE);
-    if (file_is_directory (libHandle,filename))
-        return ((file_mode (libHandle,clean_path (libHandle,filename)) & S_IREAD) != 0);
+    TA_ASSERT_RET (filename,FALSE);
+    if (file_is_directory (filename))
+        return ((file_mode (clean_path (filename)) & S_IREAD) != 0);
     else
     if (strlast (filename) == '/')
         return (FALSE);
     else
-        return ((file_mode (libHandle,filename) & S_IREAD) != 0);
+        return ((file_mode (filename) & S_IREAD) != 0);
 }
 
 
@@ -1753,18 +1749,18 @@ file_is_readable (
 
 Bool
 file_is_writeable (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
-    TA_ASSERT_RET (libHandle,filename,FALSE);
+    TA_ASSERT_RET (filename,FALSE);
 
-    if (file_is_directory (libHandle,filename))
-        return ((file_mode (libHandle,clean_path (libHandle,filename)) & S_IWRITE) != 0);
+    if (file_is_directory (filename))
+        return ((file_mode (clean_path (filename)) & S_IWRITE) != 0);
     else
     if (strlast (filename) == '/')
         return (FALSE);
     else
-        return ((file_mode (libHandle,filename) & S_IREAD) != 0);
+        return ((file_mode (filename) & S_IREAD) != 0);
 }
 
 
@@ -1800,14 +1796,14 @@ file_is_writeable (
 
 Bool
 file_is_executable (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
 #if (defined (__UNIX__))
-    TA_ASSERT_RET (libHandle,filename,FALSE);
+    TA_ASSERT_RET (filename,FALSE);
 
-    return ((file_mode (libHandle,filename) & S_IEXEC) != 0
-         && (file_mode (libHandle,filename) & S_IFDIR) == 0);
+    return ((file_mode (filename) & S_IEXEC) != 0
+         && (file_mode (filename) & S_IFDIR) == 0);
 
 #elif (defined (MSDOS_FILESYSTEM))
     Bool
@@ -1818,7 +1814,7 @@ file_is_executable (
         input_char = 0,                 /*  First and second bytes of file   */
         *extension;                     /*  File extension, if any           */
 
-    TA_ASSERT_RET (libHandle,filename,FALSE);
+    TA_ASSERT_RET (filename,FALSE);
 
     /*  Find file extension; if not found, set extension to empty string     */
     extension = strrchr (filename, '.');
@@ -1837,24 +1833,24 @@ file_is_executable (
     ||  lexcmp (extension, ".exe") == 0
     ||  lexcmp (extension, ".bat") == 0)
 #endif
-        executable = file_exists ( libHandle,filename);
+        executable = file_exists (filename);
     else
     /*  Windows: If the extension is empty, try .com, .exe, .bat             */
     /*  OS/2:    If the extension is empty, try .exe, .cmd                   */
     if (strnull (extension)
 #if (defined( __OS2__))
-    && (file_exists ( libHandle, default_extension (libHandle,work_name, filename, "exe"))
-    ||  file_exists ( libHandle, default_extension (libHandle,work_name, filename, "cmd"))))
+    && (file_exists ( default_extension (work_name, filename, "exe"))
+    ||  file_exists ( default_extension (work_name, filename, "cmd"))))
 #else /* DOS, WINDOWS */
-    && (file_exists ( libHandle, default_extension (libHandle,work_name, filename, "com"))
-    ||  file_exists ( libHandle, default_extension (libHandle,work_name, filename, "exe"))
-    ||  file_exists ( libHandle, default_extension (libHandle,work_name, filename, "bat"))))
+    && (file_exists ( default_extension (work_name, filename, "com"))
+    ||  file_exists ( default_extension (work_name, filename, "exe"))
+    ||  file_exists ( default_extension (work_name, filename, "bat"))))
 #endif
         executable = TRUE;              /*  Executable file found            */
     else
       {
         /*  Look for magic header at start of file                           */
-        stream = file_open (libHandle,filename, 'r');
+        stream = file_open (filename, 'r');
         if (stream)
           {
             input_char = fgetc (stream);
@@ -1865,7 +1861,7 @@ file_is_executable (
                        || (input_char == 'M' && fgetc (stream) == 'Z')
 #   endif
                        );
-            file_close (libHandle,stream);
+            file_close (stream);
           }
         else
             executable = FALSE;
@@ -1878,23 +1874,23 @@ file_is_executable (
     char
         *extension;                     /*  File extension, if any           */
 
-    TA_ASSERT_RET (libHandle,filename,FALSE);
+    TA_ASSERT_RET (filename,FALSE);
 
     /*  Find file extension, if any                                          */
     extension = strrchr (filename, '.');
-    if ((file_mode (libHandle,filename) & S_IEXEC) != 0)
+    if ((file_mode (filename) & S_IEXEC) != 0)
         executable = TRUE;
     else
     /*  If the extension is empty, try .exe and .com                         */
     if (!extension)
       {
         default_extension (work_name, filename, "exe");
-        if ((file_mode (libHandle,work_name) & S_IEXEC) != 0)
+        if ((file_mode (work_name) & S_IEXEC) != 0)
             executable = TRUE;
         else
           {
             default_extension (work_name, filename, "com");
-            if ((file_mode (libhandle,work_name) & S_IEXEC) != 0)
+            if ((file_mode (work_name) & S_IEXEC) != 0)
                 executable = TRUE;
             else
                 executable = FALSE;
@@ -1929,7 +1925,7 @@ file_is_executable (
 
 Bool
 file_is_program (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
     Bool
@@ -1939,17 +1935,17 @@ file_is_program (
     char
         *found_file;
 
-    TA_ASSERT_RET (libHandle,filename,FALSE);
+    TA_ASSERT_RET (filename,FALSE);
 
     found_file = file_where ('r', "PATH", filename, "");
-    if (found_file && (file_mode (libHandle,found_file) & S_IEXEC))
+    if (found_file && (file_mode (found_file) & S_IEXEC))
         executable = TRUE;              /*  Executable file found            */
 
 #elif (defined (__VMS__))
     char
         *found_file;
 
-    TA_ASSERT_RET (libHandle,filename,FALSE);
+    TA_ASSERT_RET (filename,FALSE);
 
     found_file = file_where ('r', "PATH", filename, "");
     if (!found_file)
@@ -1957,14 +1953,14 @@ file_is_program (
     if (!found_file)
         found_file = file_where ('r', "PATH", filename, ".com");
 
-    if (found_file && (file_mode (libHandle,found_file) & S_IEXEC))
+    if (found_file && (file_mode (found_file) & S_IEXEC))
         executable = TRUE;              /*  Executable file found            */
 
 #elif (defined (MSDOS_FILESYSTEM))
     char
         *path;                          /*  What path do we search?          */
 
-    TA_ASSERT_RET (libHandle,filename,FALSE);
+    TA_ASSERT_RET (filename,FALSE);
     /*  If the filename already contains a path, don't look at PATH          */
     if (strchr (filename, '/') || strchr (filename, '\\'))
         path = NULL;
@@ -1972,9 +1968,9 @@ file_is_program (
         path = "PATH";
 
 #   if (defined (__WINDOWS__))
-    if (file_where (libHandle,'r', path, filename, ".exe")
-    ||  file_where (libHandle,'r', path, filename, ".com")
-    ||  file_where (libHandle,'r', path, filename, ".bat"))
+    if (file_where ('r', path, filename, ".exe")
+    ||  file_where ('r', path, filename, ".com")
+    ||  file_where ('r', path, filename, ".bat"))
         executable = TRUE;              /*  Executable file found            */
 
 #   else /* OS/2 */
@@ -1998,7 +1994,7 @@ file_is_program (
 
 Bool
 file_is_directory (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
     char
@@ -2006,17 +2002,24 @@ file_is_directory (
     Bool
         rc;
     char *cleanPath;
+    int size;
 
-    TA_ASSERT_RET (libHandle,filename,FALSE);
+    TA_ASSERT_RET (filename,FALSE);
 
-    cleanPath = clean_path (libHandle,filename);
-    dir_name = TA_MallocCopy (libHandle, cleanPath, strlen(cleanPath)+1 );
+    cleanPath = clean_path (filename);
+    size = strlen(cleanPath)+1;
+    dir_name = TA_Malloc(size);
+    if( !dir_name )
+       return 0;
+
+    memcpy( dir_name, cleanPath, size );
+
 #if (defined (__VMS__))
-    if (!file_exists ( libHandle, dir_name))
+    if (!file_exists ( dir_name))
         default_extension (dir_name, dir_name, "dir");
 #endif
-    rc = (file_mode (libHandle,dir_name) & S_IFDIR) != 0;
-    TA_Free(libHandle, dir_name);
+    rc = (file_mode (dir_name) & S_IFDIR) != 0;
+    TA_Free(dir_name);
     return (rc);
 }
 
@@ -2034,7 +2037,7 @@ file_is_directory (
 
 Bool
 file_is_legal (
-    TA_Libc *libHandle, 
+    
     const char *arg_filename)
 {
 #if (defined (WIN32))
@@ -2048,6 +2051,7 @@ file_is_legal (
         *component;                     /*  Component to compare             */
     Bool
         feedback;                       /*  Function feedback                */
+    int size;
 
     /*  For each path component of the filename, check that the long form
      *  of the name is the same as the short form.  We scan backwards
@@ -2060,10 +2064,16 @@ file_is_legal (
      *      aaa                     aaa
      */
 
-    if (system_devicename (libHandle,arg_filename))
+    if (system_devicename (arg_filename))
         return (FALSE);                 /*  Not allowed on device names      */
 
-    filename = TA_MallocCopy(libHandle,arg_filename,strlen(arg_filename));
+    size = strlen(arg_filename);
+    filename = TA_Malloc(size);
+    if( !filename )
+       return (FALSE);
+
+    memcpy( filename, arg_filename, size );
+
     feedback = TRUE;                    /*  Assume we match everything       */
     strconvch (filename, '/', '\\');
     if (strlast (filename) == '\\')
@@ -2091,11 +2101,10 @@ file_is_legal (
           }
       }
     while (slash && *filename);
-    TA_Free(libHandle, filename);
+    TA_Free(filename);
     return (feedback);
 
 #else
-    (void)libHandle;
     (void)arg_filename;
     return (TRUE);               /*  On other OSes, all filenames are legal  */
 #endif
@@ -2119,15 +2128,15 @@ file_is_legal (
 
 char *
 file_exec_name (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
 #if (defined (__UNIX__) || defined (__VMS__))
-    TA_ASSERT_RET (libHandle,filename,NULL);
+    TA_ASSERT_RET (filename,NULL);
 
     strcpy (exec_name, filename);
 
-    if (file_mode (libHandle,exec_name) & S_IEXEC)
+    if (file_mode (exec_name) & S_IEXEC)
         return (exec_name);
     else
         return (NULL);
@@ -2136,7 +2145,7 @@ file_exec_name (
     char
         *extension;                     /*  File extension, if any           */
 
-    TA_ASSERT_RET (libHandle,filename,NULL);
+    TA_ASSERT_RET (filename,NULL);
 
     /*  Find file extension; if not found, set extension to empty string     */
     extension = strrchr (filename, '.');
@@ -2155,7 +2164,7 @@ file_exec_name (
     ||  lexcmp (extension, ".exe") == 0
     ||  lexcmp (extension, ".bat") == 0
 #     if (defined (__WINDOWS__))
-    ||  is_exe_file (libHandle, filename)
+    ||  is_exe_file (filename)
 #     endif
 #   endif
     )
@@ -2168,12 +2177,12 @@ file_exec_name (
     /*  OS/2:    If the extension is empty, try .exe, .cmd                   */
     if (strnull (extension)
 #   if (defined (__OS2__))
-    && (file_exists ( libHandle, default_extension (libHandle,exec_name, filename, "exe"))
-    ||  file_exists ( libHandle, default_extension (libHandle,exec_name, filename, "cmd"))))
+    && (file_exists ( default_extension (exec_name, filename, "exe"))
+    ||  file_exists ( default_extension (exec_name, filename, "cmd"))))
 #   else /* DOS, WINDOWS */
-    && (file_exists ( libHandle, default_extension (libHandle,exec_name, filename, "com"))
-    ||  file_exists ( libHandle, default_extension (libHandle,exec_name, filename, "exe"))
-    ||  file_exists ( libHandle, default_extension (libHandle,exec_name, filename, "bat"))))
+    && (file_exists ( default_extension (exec_name, filename, "com"))
+    ||  file_exists ( default_extension (exec_name, filename, "exe"))
+    ||  file_exists ( default_extension (exec_name, filename, "bat"))))
 #   endif
         return (exec_name);             /*  Executable file found            */
     else
@@ -2192,18 +2201,18 @@ file_exec_name (
  */
 
 static Bool
-is_exe_file (TA_Libc *libHandle, const char *filename)
+is_exe_file (const char *filename)
 {
     Bool
         executable;                     /*  Return code                      */
     FILE
         *stream;                        /*  Opened file stream               */
 
-    stream = file_open (libHandle,filename, 'r');
+    stream = file_open (filename, 'r');
     if (stream)
       {
         executable = (fgetc (stream) == 'M' && fgetc (stream) == 'Z');
-        file_close (libHandle,stream);
+        file_close (stream);
       }
     else
         executable = FALSE;             /*  File not found                  */
@@ -2224,16 +2233,16 @@ is_exe_file (TA_Libc *libHandle, const char *filename)
 
 long
 get_file_size (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
     struct stat
         stat_buf;
 
-    TA_ASSERT_RET (libHandle,filename,0);
+    TA_ASSERT_RET (filename,0);
 
 #   if (defined (MSDOS_FILESYSTEM))
-    if (system_devicename (libHandle,filename))
+    if (system_devicename (filename))
         return (-1);                    /*  Not allowed on device names      */
 #   endif
     if (stat ((char *) filename, &stat_buf) == 0)
@@ -2252,7 +2261,7 @@ get_file_size (
 
 time_t
 get_file_time (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
 #if (defined (WIN32_NOT_IMPLEMENTED))
@@ -2285,10 +2294,10 @@ get_file_time (
     struct stat
         stat_buf;
 
-    TA_ASSERT_RET (libHandle,filename,0);
+    TA_ASSERT_RET (filename,0);
 
 #   if (defined (MSDOS_FILESYSTEM))
-    if (system_devicename (libHandle,filename))
+    if (system_devicename (filename))
         return (0);                     /*  Not allowed on device names      */
 #   endif
     if (stat ((char *) filename, &stat_buf) == 0)
@@ -2309,7 +2318,7 @@ get_file_time (
 
 long
 get_file_lines (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
     long
@@ -2319,9 +2328,9 @@ get_file_lines (
     int
         ch;
 
-    TA_ASSERT_RET (libHandle,filename,0);
+    TA_ASSERT_RET (filename,0);
 
-    file_stream = file_open (libHandle,filename, 'r');
+    file_stream = file_open (filename, 'r');
     if (file_stream == NULL)
         return (0);
 
@@ -2350,17 +2359,17 @@ get_file_lines (
 
 DESCR *
 file_slurp (
-    TA_Libc *libHandle, 
+    
     const char *filename)
 {
-    return (file_load_data (libHandle,filename, 65535UL));
+    return (file_load_data (filename, 65535UL));
 }
 #endif
 
 #if 0
 !!! Not needed within TA-Lib
 static DESCR *
-file_load_data (TA_Libc *libHandle, const char *filename, size_t limit)
+file_load_data (const char *filename, size_t limit)
 {
     DESCR
         *buffer;
@@ -2371,9 +2380,9 @@ file_load_data (TA_Libc *libHandle, const char *filename, size_t limit)
     FILE
         *file_stream;
 
-    TA_ASSERT_RET (libHandle,filename,NULL);
+    TA_ASSERT_RET (filename,NULL);
 
-    file_size = get_file_size (libHandle,filename);
+    file_size = get_file_size (filename);
     if (file_size == -1)
         return (NULL);
     else
@@ -2387,14 +2396,14 @@ file_load_data (TA_Libc *libHandle, const char *filename, size_t limit)
     file_stream = fopen (filename, FOPEN_READ_BINARY);
     if (file_stream == NULL)
       {
-        TA_Free(libHandle, buffer);
+        TA_Free(buffer);
         return (NULL);
       }
     rc = fread (buffer-> data, (size_t) file_size, 1, file_stream);
     fclose (file_stream);
     if (rc != 1)
       {
-        TA_Free(libHandle, buffer);
+        TA_Free(buffer);
         return (NULL);
       }
     buffer-> data [(size_t) file_size] = '\0';
@@ -2418,7 +2427,7 @@ DESCR *
 file_slurpl (        
     const char *filename)
 {
-    return (file_load_data (libHandle,filename, 0));
+    return (file_load_data (filename, 0));
 }
 #endif
 
@@ -2438,7 +2447,7 @@ file_slurpl (
 
 dbyte
 file_set_eoln (
-    TA_Libc *libHandle, 
+    
     char *dst, const char *src, dbyte src_size, Bool add_cr)
 {
     char
@@ -2446,8 +2455,8 @@ file_set_eoln (
         *dstptr,                        /*  Current character in dst         */
         *last;                          /*  Last character in src            */
 
-    TA_ASSERT_RET(libHandle,dst,0);
-    TA_ASSERT_RET(libHandle,src,0);
+    TA_ASSERT_RET(dst,0);
+    TA_ASSERT_RET(src,0);
 
     srcptr = (char *) src;
     dstptr = dst;
@@ -2496,7 +2505,7 @@ get_tmp_file_name (const char *path, qbyte *index, const char *ext)
             filename = xstrcpy (NULL, index_str, ".", ext, NULL);
         (*index)++;
       }
-    while (file_exists ( libHandle, filename));
+    while (file_exists ( filename));
     return (filename);
 }
 #endif
@@ -2618,7 +2627,7 @@ ftmp_open (char **pathname)
         randomize ();
         file_number = random (32767);
       }
-    tempfile = get_tmp_file_name (libHandle,tempdir, &file_number, "tmp");
+    tempfile = get_tmp_file_name (tempdir, &file_number, "tmp");
     if (pathname)
         *pathname = mem_strdup (tempfile);
 
@@ -2631,7 +2640,7 @@ ftmp_open (char **pathname)
         tempitem-> filename = tempfile;
       }
     else
-        TA_Free(libHandle, tempfile);
+        TA_Free(tempfile);
         
     return (tempstream);
 }
@@ -2648,12 +2657,12 @@ ftmp_open (char **pathname)
     ---------------------------------------------------------------------[>]-*/
 
 void
-ftmp_close (TA_Libc *libHandle,FILE *tempstream)
+ftmp_close (FILE *tempstream)
 {
     FTMPITEM
         *tempitem;
 
-    TA_ASSERT_NO_RET(libHandle,tempstream);
+    TA_ASSERT_NO_RET(tempstream);
 
     fclose (tempstream);
 
@@ -2663,9 +2672,9 @@ ftmp_close (TA_Libc *libHandle,FILE *tempstream)
         if (tempitem-> stream == tempstream)
           {
             file_delete (tempitem-> filename);
-            TA_Free(libHandle, tempitem-> filename);
+            TA_Free(tempitem-> filename);
             list_unlink (tempitem);
-            TA_Free(libHandle, tempitem);
+            TA_Free(tempitem);
             break;
           }
       }

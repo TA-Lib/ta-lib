@@ -86,8 +86,7 @@ int TA_CCI_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 5 to TA_INTEGER_
  * 
  */
 
-TA_RetCode TA_CCI( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_CCI( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inHigh_0[],
                    const TA_Real inLow_0[],
@@ -116,8 +115,6 @@ TA_RetCode TA_CCI( TA_Libc      *libHandle,
    TA_Real localBuffer[LOCAL_BUFFER_SIZE];
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -171,7 +168,7 @@ TA_RetCode TA_CCI( TA_Libc      *libHandle,
     */
    if( optInTimePeriod_0 > LOCAL_BUFFER_SIZE )
    {
-      circBuffer = TA_Malloc( libHandle, optInTimePeriod_0*sizeof(TA_Real) );
+      circBuffer = TA_Malloc( optInTimePeriod_0*sizeof(TA_Real) );
       if( !circBuffer )
          return TA_ALLOC_ERR;
    }
@@ -250,7 +247,7 @@ TA_RetCode TA_CCI( TA_Libc      *libHandle,
 
    /* Free the circular buffer if it was dynamically allocated. */
    if( circBuffer != localBuffer )
-      TA_Free( libHandle, circBuffer );
+      TA_Free(  circBuffer );
 
    return TA_SUCCESS;
 }

@@ -41,7 +41,7 @@ TA_FILE_INFO;
 
 /*  Function prototypes                                                      */
 
-static Bool   populate_entry     (TA_Libc *libHandle,DIRST *dir);
+static Bool   populate_entry     (DIRST *dir);
 static Bool  path_delimiter      (char delim);
 
 
@@ -80,20 +80,17 @@ static Bool  compare_dir         (LIST *p1, LIST *p2);
     ---------------------------------------------------------------------[>]-*/
 
 Bool
-open_dir (
-    TA_Libc *libHandle,
-    DIRST *dir,
-    const char *dir_name)
+open_dir ( DIRST *dir, const char *dir_name)
 {
     char
         *dir_spec,                      /*  Directory to search through      */
         *dir_spec_end;                  /*  Points to NULL in dir_spec       */
     
-    TA_ASSERT_RET (libHandle,dir != NULL,FALSE);
+    TA_ASSERT_RET (dir != NULL,FALSE);
     memset (dir, 0, sizeof (DIRST));
 
     /*  Copy and prepare the directory specification                         */
-    dir_spec = TA_Malloc( libHandle, NAME_MAX );
+    dir_spec = TA_Malloc( NAME_MAX );
     if (dir_name == NULL || *dir_name == 0)
         strcpy (dir_spec, DEFAULT_DIR);
     else
@@ -136,7 +133,7 @@ open_dir (
     if (findfirst (dir_spec, &dir-> _dir_entry, 255 - FA_LABEL) == -1)
 #endif
       {
-        TA_Free (libHandle, dir_spec);
+        TA_Free ( dir_spec);
         return (FALSE);                 /*  Could not open directory         */
       }
 
@@ -148,19 +145,19 @@ open_dir (
 
 #if (defined (__UNIX__) || defined (__VMS_XOPEN) || defined (__OS2__))
     /*  Under UNIX & VMS we still need to fetch the first file entry         */
-    return (read_dir (libHandle,dir));
+    return (read_dir (dir));
 
 #elif (defined (WIN32))
     /*  Under Win32 we have read an entry, so return those values            */
-    return (populate_entry (libHandle,dir));
+    return (populate_entry (dir));
 
 #elif (defined (_MSC_VER))
     /*  Under MSC we have read an entry, so return those values              */
-    return (populate_entry (libHandle,dir));
+    return (populate_entry (dir));
 
 #elif (defined (__TURBOC__) || defined (__DJGPP__))
     /*  Under Borland C we have read an entry, so return those values        */
-    return (populate_entry (libHandle,dir));
+    return (populate_entry (dir));
 #else
 
     return (FALSE);                     /*  Directory access not supported   */
@@ -177,7 +174,7 @@ open_dir (
  */
 
 static Bool
-populate_entry (TA_Libc *libHandle,DIRST *dir)
+populate_entry (DIRST *dir)
 {
 
 #if (defined (WIN32))
@@ -192,9 +189,9 @@ populate_entry (TA_Libc *libHandle,DIRST *dir)
         rc;
 #endif
 
-    TA_ASSERT_RET (libHandle,dir != NULL,FALSE);
+    TA_ASSERT_RET (dir != NULL,FALSE);
     if (dir-> _fixed)
-        free_dir (libHandle,dir);                /*  De-allocate old strings if reqd   */
+        free_dir (dir);                /*  De-allocate old strings if reqd   */
 
     /*  Get name of file from directory structure                            */
 #if (defined (__UNIX__) || defined (__VMS_XOPEN) || defined (__OS2__))
@@ -217,7 +214,7 @@ populate_entry (TA_Libc *libHandle,DIRST *dir)
     if (dir-> file_name [0] == '.' && (dir-> file_name [1] == '\0'
     || (dir-> file_name [1] == '.' &&  dir-> file_name [2] == '\0')))
     {
-        return (read_dir (libHandle,dir));
+        return (read_dir (dir));
     }
 #endif
 
@@ -260,9 +257,9 @@ populate_entry (TA_Libc *libHandle,DIRST *dir)
     }
 
 #else
-    full_path = xstrcpy (libHandle, NULL, dir-> dir_name, "/", dir-> file_name, NULL);
+    full_path = xstrcpy ( NULL, dir-> dir_name, "/", dir-> file_name, NULL);
     rc = stat (full_path , &stat_buf);
-    TA_Free (libHandle, full_path);
+    TA_Free ( full_path);
     if (rc == -1)
     {
         return (FALSE);
@@ -329,30 +326,28 @@ populate_entry (TA_Libc *libHandle,DIRST *dir)
     ---------------------------------------------------------------------[>]-*/
 
 Bool
-read_dir (
-    TA_Libc *libHandle,
-    DIRST *dir)
+read_dir (DIRST *dir)
 {
-    TA_ASSERT_RET (libHandle,dir != NULL,FALSE);
+    TA_ASSERT_RET (dir != NULL,FALSE);
 #if (defined (__UNIX__) || defined (__VMS_XOPEN) || defined (__OS2__))
     if ((dir-> _dir_entry =
         (struct Dirent *) readdir (dir-> _dir_handle)) != NULL)
-        return (populate_entry (libHandle,dir));
+        return (populate_entry (dir));
     else
 
 #elif (defined (WIN32))
     if (FindNextFile (dir-> _dir_handle, &dir-> _dir_entry))
-        return (populate_entry (libHandle,dir));
+        return (populate_entry (dir));
     else
 
 #elif (defined (_MSC_VER))
     if (_dos_findnext (&dir-> _dir_entry) == 0)
-        return (populate_entry (libHandle,dir));
+        return (populate_entry (dir));
     else
 
 #elif (defined (__TURBOC__) || defined (__DJGPP__))
     if (findnext (&dir-> _dir_entry) == 0)
-        return (populate_entry (libHandle,dir));
+        return (populate_entry (dir));
     else
 #endif
     {
@@ -371,18 +366,16 @@ read_dir (
     ---------------------------------------------------------------------[>]-*/
 
 Bool
-close_dir (
-    TA_Libc *libHandle,
-    DIRST *dir)
+close_dir ( DIRST *dir)
 {
     Bool
         rc;
 
-    TA_ASSERT_RET (libHandle,dir != NULL,FALSE);
+    TA_ASSERT_RET (dir != NULL,FALSE);
 
-    TA_Free (libHandle, dir-> dir_name);          /*  Free dynamically-allocated name  */
+    TA_Free ( dir-> dir_name);          /*  Free dynamically-allocated name  */
 #if (defined (__UNIX__) || defined (__VMS_XOPEN) || defined (__OS2__))
-    TA_ASSERT_RET (libHandle,dir-> _dir_handle,FALSE);
+    TA_ASSERT_RET (dir-> _dir_handle,FALSE);
     rc = (closedir (dir-> _dir_handle) == 0);
 
 #elif (defined (WIN32))
@@ -423,7 +416,7 @@ format_dir (
     static char
         buffer [LINE_MAX];              /*  Formatted directory entry        */
 
-    TA_ASSERT_RET (libHandle,dir != NULL,FALSE);
+    TA_ASSERT_RET (dir != NULL,FALSE);
     snprintf (buffer, sizeof (buffer), 
                       "%s %3d %-8.8s %-8.8s %8ld %s %s",
                       format_mode (dir),
@@ -698,19 +691,19 @@ fix_dir (DIRST *dir)
     ---------------------------------------------------------------------[>]-*/
 
 int
-free_dir (TA_Libc *libHandle, DIRST *dir)
+free_dir (DIRST *dir)
 {
     static char
         *empty = "";
 
-    TA_ASSERT_RET (libHandle,dir-> _fixed,FALSE);
+    TA_ASSERT_RET (dir-> _fixed,FALSE);
 
     if (dir-> _fixed)
       {
         /*  Free allocated strings                                           */
-        TA_Free (libHandle,dir-> owner);
-        TA_Free (libHandle,dir-> group);
-        TA_Free (libHandle,dir-> file_name);
+        TA_Free (dir-> owner);
+        TA_Free (dir-> group);
+        TA_Free (dir-> file_name);
 
         /*  Now point the strings to an empty string                         */
         dir-> owner     = empty;
@@ -799,7 +792,7 @@ load_dir_list (
 void
 free_dir_list (NODE *file_list)
 {
-    TA_ASSERT_NO_RET (libHandle,file_list);
+    TA_ASSERT_NO_RET (file_list);
 
     while (file_list-> next != file_list)
       {
@@ -834,7 +827,7 @@ free_dir_list (NODE *file_list)
 void
 sort_dir_list (NODE *file_list, const char *sort)
 {
-    TA_ASSERT_NO_RET (libHandle,file_list);
+    TA_ASSERT_NO_RET (file_list);
     sort_key = (char *) sort;
     list_sort (file_list, compare_dir);
 }
@@ -892,8 +885,8 @@ compare_dir (LIST *p1, LIST *p2)
         time1,
         time2;
 
-    TA_ASSERT_RET (libHandle,p1,FALSE);
-    TA_ASSERT_RET (libHandle,p2,FALSE);
+    TA_ASSERT_RET (p1,FALSE);
+    TA_ASSERT_RET (p2,FALSE);
 
     if (((FILEINFO *) p1)-> directory != ((FILEINFO *) p2)-> directory)
         return (((FILEINFO *) p2)-> directory);
@@ -994,9 +987,7 @@ compare_dir (LIST *p1, LIST *p2)
     ---------------------------------------------------------------------[>]-*/
 
 char *
-resolve_path (
-    TA_Libc *libHandle,
-    const char *old_path)
+resolve_path ( const char *old_path)
 {
 #if (defined (__UNIX__) || defined (MSDOS_FILESYSTEM) || defined (__VMS__))
     char
@@ -1005,10 +996,16 @@ resolve_path (
         last_char = '/';                /*  Start of path counts as delim    */
     int
         nbr_dots;                       /*  Size of '..', '...' specifier    */
+    int size;
 
-    TA_ASSERT_RET (libHandle,old_path,NULL);
+    TA_ASSERT_RET (old_path,NULL);
+    
+    size = strlen(old_path)+1;
+    new_path = TA_Malloc( size );
+    if( !new_path )
+       return (0);
+    memcpy( new_path, old_path, size );
 
-    new_path = TA_MallocCopy( libHandle,old_path,strlen(old_path)+1);
     new_ptr  = new_path;
     while (*old_path)
       {
@@ -1055,8 +1052,17 @@ resolve_path (
     *new_ptr = '\0';                    /*  Terminate string nicely          */
     return (new_path);
 #else
+    int size;
+    char *newPath;
 
-    return (TA_MallocCopy(libHandle,old_path,strlen(old_path)+1));     /*  Path resolution not supported    */
+    size = strlen(old_path)+1;
+    newPath = TA_Malloc(size);
+    if( !newPath )
+       retun (0);
+
+    memcpy( newPath, old_path, size );
+
+    return newPath;
 #endif
 }
 
@@ -1092,18 +1098,15 @@ path_delimiter (char delim)
     ---------------------------------------------------------------------[>]-*/
 
 char *
-locate_path (
-    TA_Libc *libHandle,
-    const char *root,
-    const char *path)
+locate_path ( const char *root, const char *path)
 {
 #if (defined (__UNIX__) || defined (MSDOS_FILESYSTEM) || defined (__VMS__))
     char
         *new_path,                      /*  Returned path value              */
         *resolved;                      /*  and after .. resolution          */
 
-    TA_ASSERT_RET (libHandle,root,NULL);
-    TA_ASSERT_RET (libHandle,path,NULL);
+    TA_ASSERT_RET (root,NULL);
+    TA_ASSERT_RET (path,NULL);
 
 #if (defined (MSDOS_FILESYSTEM))
     /*  Under MSDOS, OS/2, or Windows we have a full path if we have any of:
@@ -1130,7 +1133,7 @@ locate_path (
         else
             new_path = xstrcpy (NULL, root, "/", path, NULL);
       }
-    resolved = resolve_path (libHandle,new_path);
+    resolved = resolve_path (new_path);
     mem_free (new_path);
     /*  Append slash if necessary                                            */
     if (!path_delimiter (strlast (resolved)))
@@ -1159,9 +1162,7 @@ locate_path (
     ---------------------------------------------------------------------[>]-*/
 
 char *
-clean_path (
-    TA_Libc *libHandle,
-    const char *path)
+clean_path ( const char *path)
 {
 
 #if (defined (__UNIX__) || defined (MSDOS_FILESYSTEM) || defined (__VMS__))
@@ -1169,8 +1170,6 @@ clean_path (
         new_path [PATH_MAX + 1];        /*  Returned path value              */
     char
         *slash;
-
-   (void)libHandle;
 
     strncpy (new_path, path, PATH_MAX);
     new_path [PATH_MAX] = '\0';
@@ -1201,7 +1200,6 @@ clean_path (
 #   endif
     return (new_path);
 #else
-   (void)libHandle;
     return ((char *) path);
 #endif
 }
@@ -1221,12 +1219,12 @@ clean_path (
     ---------------------------------------------------------------------[>]-*/
 
 char *
-get_curdir (TA_Libc *libHandle)
+get_curdir (void)
 {
     char
         *curdir;                        /*  String we get from the OS        */
 
-    curdir = TA_Malloc(libHandle,PATH_MAX + 1);
+    curdir = TA_Malloc(PATH_MAX + 1);
 
 #if (defined (__UNIX__) || defined (__OS2__))
     getcwd (curdir, PATH_MAX);
@@ -1265,21 +1263,25 @@ get_curdir (TA_Libc *libHandle)
     ---------------------------------------------------------------------[>]-*/
 
 int
-set_curdir (
-    TA_Libc *libHandle,
-    const char *path)
+set_curdir ( const char *path)
 {
     int
         feedback = 0;
 
 #if (defined (__UNIX__) || defined (__VMS_XOPEN) || defined (__OS2__))
-    (void)libHandle;
     if (path && *path)
         feedback = chdir (path);
 
 #elif (defined (MSDOS_FILESYSTEM))
-    char
-        *copy_path = TA_MallocCopy(libHandle,path,strlen(path)+1);
+    int size;
+    char *copy_path;
+    
+    size = strlen(path)+1;
+    copy_path = TA_Malloc( size );
+    if( !copy_path )
+       return (0);
+
+    memcpy( copy_path, path, size ); 
 
     if (path == NULL || *path == '\0')
         return (0);                     /*  Do nothing if path is empty      */
@@ -1307,7 +1309,7 @@ set_curdir (
         _chdrive (toupper (path [0]) - 'A' + 1);
 
 #   endif
-    TA_Free (libHandle,copy_path);
+    TA_Free (copy_path);
 #else
     feedback = -1;
 #endif
@@ -1328,16 +1330,11 @@ set_curdir (
     ---------------------------------------------------------------------[>]-*/
 
 Bool
-file_matches (
-    TA_Libc *libHandle,
-    const char *filename,
-    const char *pattern)
+file_matches ( const char *filename, const char *pattern)
 {   
     char
         *pattern_ptr,                   /*  Points to pattern                */
         *filename_ptr;                  /*  Points to filename               */
-
-   (void)libHandle;
 
     filename_ptr = (char *) filename;   /*  Start comparing file name        */
     pattern_ptr  = (char *) pattern;    /*  Start comparing file name        */
@@ -1388,17 +1385,22 @@ file_matches (
     ---------------------------------------------------------------------[>]-*/
 
 int
-make_dir (
-    TA_Libc *libHandle,
-    const char *path_to_create)
+make_dir ( const char *path_to_create)
 {
     char
         *path,
         *slash;
     int
         rc = 0;
+    int size;
 
-    path = TA_MallocCopy( libHandle, path_to_create, strlen(path_to_create)+1 ); /*  Working copy                     */
+    size = strlen(path_to_create)+1;
+    path = TA_Malloc( size ); /*  Working copy                     */
+    if( !path )
+       return 0;
+
+    memcpy( path, path_to_create, size );
+
 #if (defined (MSDOS_FILESYSTEM))
     strconvch (path, '/', '\\');
 
@@ -1419,7 +1421,7 @@ make_dir (
         if (slash)
             *slash = '\0';              /*  Cut at slash                     */
 
-        if (!file_is_directory (libHandle,path))
+        if (!file_is_directory (path))
           {
 #if (defined (__UNIX__) || defined (__VMS_XOPEN) || defined (__OS2__))
             rc = mkdir (path, 0775);    /*  User RWE Group RWE World RE      */
@@ -1447,7 +1449,7 @@ make_dir (
        *slash = PATHEND;                /*  Restore path name                */
         slash = strchr (slash + 1, PATHEND);
       }
-    TA_Free(libHandle,path);
+    TA_Free(path);
     return (rc);
 }
 
@@ -1462,13 +1464,11 @@ make_dir (
     ---------------------------------------------------------------------[>]-*/
 
 int
-remove_dir (
-    TA_Libc *libHandle,
-    const char *path)
+remove_dir ( const char *path )
 {
 #if (defined (__UNIX__) || defined (__VMS_XOPEN) || defined (__OS2__))
     /*  Check that directory exists                                          */
-    if (!file_is_directory (libHandle,path))
+    if (!file_is_directory (path))
         return (-1);
 
     return (rmdir (path));
@@ -1478,14 +1478,18 @@ remove_dir (
         rc = 0;
     char
         *copy_path;
+    int size;
 
     /*  Check that directory exists                                          */
-    if (!file_is_directory (libHandle,path))
+    if (!file_is_directory (path))
         return (-1);
 
-    copy_path = TA_MallocCopy(libHandle,path,strlen(path)+1);
+    size = strlen(path)+1;
+    copy_path = TA_Malloc(size);
+
     if (copy_path)
       {
+        memcpy( copy_path, path, size );
         strconvch (copy_path, '/', '\\');
 #   if (defined (WIN32))
         if (RemoveDirectory (copy_path))
@@ -1512,7 +1516,7 @@ coprintf (lpMsgBuf);
 #   else
         rc = rmdir (copy_path);
 #   endif
-        TA_Free( libHandle, copy_path);
+        TA_Free(copy_path);
       }
     return (rc);
 #else
@@ -1551,7 +1555,7 @@ dir_usage (const char *path, Bool recurse)
           {
             full_dir = locate_path (path, dir.file_name);
             usage += dir_usage (full_dir, TRUE);
-            TA_Free(libHandle,full_dir);
+            TA_Free(full_dir);
           }
         else
             usage += dir.file_size;
@@ -1594,7 +1598,7 @@ dir_files (const char *path, Bool recurse)
           {
             full_dir = locate_path (path, dir.file_name);
             files += dir_files (full_dir, TRUE);
-            TA_Free(libHandle,full_dir);
+            TA_Free(full_dir);
           }
         else
             files++;

@@ -139,11 +139,11 @@ static ErrorNumber checkPMvalues( TA_PM *pm,
                                   TA_Real longProfit,
                                   TA_Real shortProfit );
 
-static ErrorNumber test_onetransaction_only( TA_Libc *libHandle, TA_KEY_TYPE keyTypeTest );
+static ErrorNumber test_onetransaction_only( TA_KEY_TYPE keyTypeTest );
 
-static ErrorNumber test_emptytradelog( TA_Libc *libHandle );
+static ErrorNumber test_emptytradelog( void );
 
-static ErrorNumber test_onetrade_only( TA_Libc *libHandle, 
+static ErrorNumber test_onetrade_only( 
                                        TA_KEY_TYPE keyTypeTest,
                                        TA_TransactionType transactionType, 
                                        unsigned int winningTrade );
@@ -151,8 +151,8 @@ static ErrorNumber test_onetrade_only( TA_Libc *libHandle,
 static ErrorNumber checkNoHang( TA_PM *pm );
 
 static ErrorNumber test_report ( TA_PM *pm, unsigned int doDisplay );
-static ErrorNumber test_valueId( TA_Libc *libHandle, TA_PMValueIdTest *test );
-static ErrorNumber test_arrayId( TA_Libc *libHandle, TA_PMArrayIdTest *test );
+static ErrorNumber test_valueId( TA_PMValueIdTest *test );
+static ErrorNumber test_arrayId( TA_PMArrayIdTest *test );
 
 /**** Local variables definitions.     ****/
 static TA_Timestamp timestampNow;
@@ -327,7 +327,6 @@ ErrorNumber test_pm( void )
 {
    ErrorNumber errorNumber;
    TA_UDBase *udb;
-   TA_Libc   *libHandle;
    unsigned int i, j;
 
    printf( "Testing Performance Measurement\n" );
@@ -364,16 +363,16 @@ ErrorNumber test_pm( void )
    TA_InstrumentInit( &id4_2, NULL, "B" );
 
    /* Test limit cases with empty TA_TradeLog */
-   errorNumber = allocLib( &libHandle, &udb );
+   errorNumber = allocLib( &udb );
    if( errorNumber != TA_TEST_PASS )
       return errorNumber;    
-   errorNumber = test_emptytradelog( libHandle );
+   errorNumber = test_emptytradelog();
    if( errorNumber != TA_TEST_PASS )
    {
       printf( "Failed: Empty trade log cases\n" );   
       return errorNumber;
    }
-   errorNumber = freeLib( libHandle, udb );
+   errorNumber = freeLib( udb );
    if( errorNumber != TA_TEST_PASS )
       return errorNumber;
 
@@ -383,16 +382,16 @@ ErrorNumber test_pm( void )
     */
    for( i=0; i < NB_TA_KEY_TYPE; i++ )
    {
-      errorNumber = allocLib( &libHandle, &udb );
+      errorNumber = allocLib( &udb );
       if( errorNumber != TA_TEST_PASS )
          return errorNumber;    
-      errorNumber = test_onetransaction_only( libHandle, (TA_KEY_TYPE)i );
+      errorNumber = test_onetransaction_only( (TA_KEY_TYPE)i );
       if( errorNumber != TA_TEST_PASS )
       {
          printf( "Failed: one transaction cases (key=%d,errorNumber=%d)\n", (TA_KEY_TYPE)i, errorNumber );
          return errorNumber;
       }
-      errorNumber = freeLib( libHandle, udb );
+      errorNumber = freeLib( udb );
       if( errorNumber != TA_TEST_PASS )
          return errorNumber;
    }
@@ -414,30 +413,30 @@ ErrorNumber test_pm( void )
       for( j=0; j < NB_TA_KEY_TYPE; j++ )
       {
          /* Test Long */
-         errorNumber = allocLib( &libHandle, &udb );
+         errorNumber = allocLib( &udb );
          if( errorNumber != TA_TEST_PASS )
             return errorNumber;    
-         errorNumber = test_onetrade_only( libHandle, (TA_KEY_TYPE)j, TA_LONG_ENTRY, i );
+         errorNumber = test_onetrade_only( (TA_KEY_TYPE)j, TA_LONG_ENTRY, i );
          if( errorNumber != TA_TEST_PASS )
          {
             printf( "Failed: one trade only (key=%d,type=%d,winning=%d)\n", (TA_KEY_TYPE)j, TA_LONG_ENTRY, i );
             return errorNumber;
          }
-         errorNumber = freeLib( libHandle, udb );
+         errorNumber = freeLib( udb );
          if( errorNumber != TA_TEST_PASS )
             return errorNumber;
 
          /* Test Short */
-         errorNumber = allocLib( &libHandle, &udb );
+         errorNumber = allocLib( &udb );
          if( errorNumber != TA_TEST_PASS )
             return errorNumber;    
-         errorNumber = test_onetrade_only( libHandle, (TA_KEY_TYPE)j, TA_SHORT_ENTRY, i );
+         errorNumber = test_onetrade_only( (TA_KEY_TYPE)j, TA_SHORT_ENTRY, i );
          if( errorNumber != TA_TEST_PASS )
          {
             printf( "Failed: one trade only (key=%d,type=%d,winning=%d)\n", (TA_KEY_TYPE)j, TA_SHORT_ENTRY, i );
             return errorNumber;
          }
-         errorNumber = freeLib( libHandle, udb );
+         errorNumber = freeLib( udb );
          if( errorNumber != TA_TEST_PASS )
             return errorNumber;
       }
@@ -448,16 +447,16 @@ ErrorNumber test_pm( void )
     */
    for( i=0; i < NB_PMVALUEID_TEST; i++ )
    {
-      errorNumber = allocLib( &libHandle, &udb );
+      errorNumber = allocLib( &udb );
       if( errorNumber != TA_TEST_PASS )
          return errorNumber;
-      errorNumber = test_valueId( libHandle, &pmValueIdTests[i] );
+      errorNumber = test_valueId( &pmValueIdTests[i] );
       if( errorNumber != TA_TEST_PASS )
       {
          printf( "Failed: test_valueId #%d\n", i);
          return errorNumber;
       }
-      errorNumber = freeLib( libHandle, udb );
+      errorNumber = freeLib( udb );
       if( errorNumber != TA_TEST_PASS )
          return errorNumber;
    }
@@ -467,16 +466,16 @@ ErrorNumber test_pm( void )
     */
    for( i=0; i < NB_PMARRAYID_TEST; i++ )
    {
-      errorNumber = allocLib( &libHandle, &udb );
+      errorNumber = allocLib( &udb );
       if( errorNumber != TA_TEST_PASS )
          return errorNumber;
-      errorNumber = test_arrayId( libHandle, &pmArrayIdTests[i] );
+      errorNumber = test_arrayId( &pmArrayIdTests[i] );
       if( errorNumber != TA_TEST_PASS )
       {
          printf( "Failed: test_arrayId #%d\n", i);
          return errorNumber;
       }
-      errorNumber = freeLib( libHandle, udb );
+      errorNumber = freeLib( udb );
       if( errorNumber != TA_TEST_PASS )
          return errorNumber;
    }
@@ -486,14 +485,13 @@ ErrorNumber test_pm( void )
 
 
 /**** Local functions definitions.     ****/
-static ErrorNumber test_emptytradelog( TA_Libc *libHandle )
+static ErrorNumber test_emptytradelog( void )
 {
    TA_TradeLog *tradeLog;
-   TA_TradeLog *dummyTradeLog;
    TA_RetCode retCode;
 
    /* Allocate an empty TA_TradeLog. */
-   retCode = TA_TradeLogAlloc( libHandle, &tradeLog );
+   retCode = TA_TradeLogAlloc( &tradeLog );
    if( (retCode != TA_SUCCESS) || (tradeLog == NULL) )
    {
       printRetCode( retCode );
@@ -502,35 +500,12 @@ static ErrorNumber test_emptytradelog( TA_Libc *libHandle )
    }
 
    /* Verify invalid parameters. */
-   retCode = TA_TradeLogAlloc( NULL, &dummyTradeLog );
-   if( (retCode != TA_BAD_PARAM) || (dummyTradeLog != NULL) )
-   {
-      printRetCode( retCode );
-      printf( "Failed: TA_TradeLogAlloc bad retCode! [%d]\n", retCode );
-      return TA_PM_EMPTY_TA_TRADE_LOG_TESTS_1;
-   }
-   retCode = TA_TradeLogAlloc( libHandle, NULL );
-   if( (retCode != TA_BAD_PARAM) || (dummyTradeLog != NULL) )
+   retCode = TA_TradeLogAlloc( NULL );
+   if( retCode != TA_BAD_PARAM )
    {
       printRetCode( retCode );
       printf( "Failed: TA_TradeLogAlloc bad retCode! [%d]\n", retCode );
       return TA_PM_EMPTY_TA_TRADE_LOG_TESTS_2;
-   }
-
-   retCode = TA_TradeLogAlloc( (TA_Libc *)dummyTradeLog, &dummyTradeLog );
-   if( (retCode == TA_SUCCESS) || (dummyTradeLog != NULL) )
-   {
-      printRetCode( retCode );
-      printf( "Failed: TA_TradeLogAlloc bad retCode! [%d]\n", retCode );
-      return TA_PM_EMPTY_TA_TRADE_LOG_TESTS_3;
-   }
-
-   retCode = TA_TradeLogAlloc( NULL, NULL );
-   if( (retCode != TA_BAD_PARAM) || (dummyTradeLog != NULL) )
-   {
-      printRetCode( retCode );
-      printf( "Failed: TA_TradeLogAlloc bad retCode! [%d]\n", retCode );
-      return TA_PM_EMPTY_TA_TRADE_LOG_TESTS_4;
    }
 
    /* Free the empty TA_TradeLog */
@@ -545,7 +520,7 @@ static ErrorNumber test_emptytradelog( TA_Libc *libHandle )
    return TA_TEST_PASS;
 }
 
-static ErrorNumber test_onetransaction_only( TA_Libc *libHandle, TA_KEY_TYPE keyTypeTest )
+static ErrorNumber test_onetransaction_only( TA_KEY_TYPE keyTypeTest )
 {
    TA_RetCode retCode;
    TA_Instrument  instrument;
@@ -555,7 +530,7 @@ static ErrorNumber test_onetransaction_only( TA_Libc *libHandle, TA_KEY_TYPE key
    TA_PM *allocatedPM;
 
    /* Allocate an empty TA_TradeLog. */
-   retCode = TA_TradeLogAlloc( libHandle, &tradeLog );
+   retCode = TA_TradeLogAlloc( &tradeLog );
    if( (retCode != TA_SUCCESS) || (tradeLog == NULL) )
    {
       printRetCode( retCode );
@@ -597,7 +572,7 @@ static ErrorNumber test_onetransaction_only( TA_Libc *libHandle, TA_KEY_TYPE key
    }
 
    /* Create a TA_PM */
-   retCode = TA_PMAlloc( libHandle,
+   retCode = TA_PMAlloc(
                          &timestampNow,
                          &timestampNow, 
                          1000, &allocatedPM );
@@ -656,7 +631,7 @@ static ErrorNumber test_onetransaction_only( TA_Libc *libHandle, TA_KEY_TYPE key
    return TA_TEST_PASS;
 }
 
-static ErrorNumber test_onetrade_only( TA_Libc *libHandle, 
+static ErrorNumber test_onetrade_only( 
                                      TA_KEY_TYPE keyTypeTest,
 									          TA_TransactionType transactionType, 
                                      unsigned int winningTrade )
@@ -669,7 +644,7 @@ static ErrorNumber test_onetrade_only( TA_Libc *libHandle,
    ErrorNumber errorNumber;
 
    /* Allocate a TA_TradeLog. */
-   retCode = TA_TradeLogAlloc( libHandle, &tradeLog );
+   retCode = TA_TradeLogAlloc( &tradeLog );
    if( (retCode != TA_SUCCESS) || (tradeLog == NULL) )
    {
       printRetCode( retCode );
@@ -743,7 +718,7 @@ static ErrorNumber test_onetrade_only( TA_Libc *libHandle,
    }
 
    /* Create a TA_PM */
-   retCode = TA_PMAlloc( libHandle,
+   retCode = TA_PMAlloc(
                          &timestampNow, &timestampNowPlusOneYear,
                          1000, &allocatedPM );
    if( retCode != TA_SUCCESS )
@@ -1123,7 +1098,7 @@ static ErrorNumber test_report( TA_PM *pm, unsigned int doDisplay )
    return TA_TEST_PASS;
 }
 
-static ErrorNumber test_valueId( TA_Libc *libHandle, TA_PMValueIdTest *test )
+static ErrorNumber test_valueId( TA_PMValueIdTest *test )
 {
    unsigned int  i;
    TA_TradeLog  *tradeLog;
@@ -1134,7 +1109,7 @@ static ErrorNumber test_valueId( TA_Libc *libHandle, TA_PMValueIdTest *test )
    const char   *tempStr;
 
    /* Allocate and build the TA_TradeLog */
-   retCode = TA_TradeLogAlloc( libHandle, &tradeLog );
+   retCode = TA_TradeLogAlloc( &tradeLog );
    if( retCode != TA_SUCCESS )
       return TA_PM_TEST_VALUE_ID_FAILED_0;
 
@@ -1162,7 +1137,7 @@ static ErrorNumber test_valueId( TA_Libc *libHandle, TA_PMValueIdTest *test )
    #undef TA_SAFETY_NET_LIMIT
 
    /* Build the TA_PM */
-   retCode = TA_PMAlloc( libHandle, &test->startDate, &test->endDate, 
+   retCode = TA_PMAlloc( &test->startDate, &test->endDate, 
                          test->initialCapital, &pm );
 
    if( retCode != TA_SUCCESS )   
@@ -1267,7 +1242,7 @@ static ErrorNumber test_valueId( TA_Libc *libHandle, TA_PMValueIdTest *test )
    return TA_TEST_PASS;
 }
 
-static ErrorNumber test_arrayId( TA_Libc *libHandle, TA_PMArrayIdTest *test )
+static ErrorNumber test_arrayId( TA_PMArrayIdTest *test )
 {
    int  i, j;
    TA_TradeLog  *tradeLog;
@@ -1278,7 +1253,7 @@ static ErrorNumber test_arrayId( TA_Libc *libHandle, TA_PMArrayIdTest *test )
    const char   *tempStr;
 
    /* Allocate and build the TA_TradeLog */
-   retCode = TA_TradeLogAlloc( libHandle, &tradeLog );
+   retCode = TA_TradeLogAlloc( &tradeLog );
    if( retCode != TA_SUCCESS )
       return TA_PM_TEST_ARRAY_ID_FAILED_0;
 
@@ -1306,7 +1281,7 @@ static ErrorNumber test_arrayId( TA_Libc *libHandle, TA_PMArrayIdTest *test )
    #undef TA_SAFETY_NET_LIMIT
 
    /* Build the TA_PM */
-   retCode = TA_PMAlloc( libHandle, &test->startDate, &test->endDate, 
+   retCode = TA_PMAlloc( &test->startDate, &test->endDate, 
                          test->initialCapital, &pm );
 
    if( retCode != TA_SUCCESS )   

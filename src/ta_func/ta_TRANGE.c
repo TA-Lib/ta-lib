@@ -80,8 +80,7 @@ int TA_TRANGE_Lookback( void )
  * 
  */
 
-TA_RetCode TA_TRANGE( TA_Libc      *libHandle,
-                      TA_Integer    startIdx,
+TA_RetCode TA_TRANGE( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real inHigh_0[],
                       const TA_Real inLow_0[],
@@ -97,8 +96,6 @@ TA_RetCode TA_TRANGE( TA_Libc      *libHandle,
    TA_Real tempCY, tempLT, tempHT;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 

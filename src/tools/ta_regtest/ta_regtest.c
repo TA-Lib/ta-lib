@@ -73,7 +73,7 @@
 /* None */
 
 /**** Local functions declarations.    ****/
-static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history );
+static int testTAFunction_ALL( TA_History *history );
 static ErrorNumber test_with_simulator( void );
 static ErrorNumber testHistoryAlloc( void );
 
@@ -159,7 +159,6 @@ int main( int argc, char **argv )
 /**** Local functions definitions.     ****/
 static ErrorNumber test_with_simulator( void )
 {
-   TA_Libc    *libHandle;
    TA_UDBase  *uDBase;
    TA_History *history;
    TA_AddDataSourceParam param;
@@ -167,7 +166,7 @@ static ErrorNumber test_with_simulator( void )
    ErrorNumber retValue;
 
    /* Initialize the library. */
-   retValue = allocLib( &libHandle, &uDBase );
+   retValue = allocLib( &uDBase );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -184,7 +183,7 @@ static ErrorNumber test_with_simulator( void )
    if( retCode != TA_SUCCESS )
    {
       printf( "TA_AddDataSource failed [%d]\n", retCode );
-      freeLib( libHandle, uDBase );
+      freeLib( uDBase );
       return TA_REGTEST_ADDDATASOURCE_FAILED;
    }
 
@@ -194,7 +193,7 @@ static ErrorNumber test_with_simulator( void )
    retValue = test_period( uDBase );
    if( retValue != TA_TEST_PASS )
    {
-      freeLib( libHandle, uDBase );
+      freeLib( uDBase );
       return retValue;
    }
 
@@ -207,16 +206,16 @@ static ErrorNumber test_with_simulator( void )
    if( retCode != TA_SUCCESS )
    {
       printf( "TA_HistoryAlloc failed [%d]\n", retCode );
-      freeLib( libHandle, uDBase );
+      freeLib( uDBase );
       return TA_REGTEST_HISTORYALLOC_FAILED;
    }
 
    /* Perform testing of each of the TA Functions. */
-   retValue = testTAFunction_ALL( libHandle, history );
+   retValue = testTAFunction_ALL( history );
    if( retValue != TA_TEST_PASS )
    {
       TA_HistoryFree( history );
-      freeLib( libHandle, uDBase );
+      freeLib( uDBase );
       return retValue;
    }
 
@@ -226,19 +225,19 @@ static ErrorNumber test_with_simulator( void )
    if( retCode != TA_SUCCESS )
    {
       printf( "TA_HistoryFree failed [%d]\n", retCode );
-      freeLib( libHandle, uDBase );
+      freeLib( uDBase );
       return TA_REGTEST_HISTORYFREE_FAILED;
    }
 
 
-   retValue = freeLib( libHandle, uDBase );
+   retValue = freeLib( uDBase );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
    return TA_TEST_PASS; /* All test succeed. */
 }
 
-static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
+static int testTAFunction_ALL( TA_History *history )
 {
    ErrorNumber retValue;
 
@@ -257,129 +256,36 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    }
 
    /* Make tests for each TA functions. */
-   #define PRINTF_TEST_HDR      printf( "%25s: Testing...", TEST_ID );
-   #define PRINTF_TEST_SUCCESS  printf( "done.\n" );
+   #define DO_TEST(func,str) \
+      { \
+      printf( "%25s: Testing...", str ); \
+      TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT ); \
+      retValue = func( history ); \
+      if( retValue != TA_TEST_PASS ) \
+         return retValue; \
+      printf( "done.\n" ); \
+      }
 
-   #define TEST_ID "STOCH,STOCHF"
-   PRINTF_TEST_HDR;
-   retValue = test_func_stoch( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
+   DO_TEST( test_func_per_ema, "TRIX" );
+   DO_TEST( test_func_stoch,   "STOCH,STOCHF" );
+   DO_TEST( test_func_minmax,  "MIN,MAX" );
+   DO_TEST( test_func_per_hlc, "CCI,WILLR" );
+   DO_TEST( test_func_macd,    "MACD,MACDFIX,MACDEXT" );
+   DO_TEST( test_func_mom_roc, "MOM,ROC,ROCP,ROCR,ROCR100" );
+   DO_TEST( test_func_sar,     "Parabolic SAR" );
+   DO_TEST( test_func_adx,     "ADX,ADXR,DI,DM,DX" );
+   DO_TEST( test_func_rsi,     "RSI" );
+   DO_TEST( test_func_ma,      "All Moving Averages" );
+   DO_TEST( test_func_trange,  "TRANGE,ATR" );
+   DO_TEST( test_func_po,      "PO,APO" );
+   DO_TEST( test_func_stddev,  "STDDEV,VAR" );
+   DO_TEST( test_func_bbands,  "BBANDS" );
 
-   #define TEST_ID "MIN,MAX"
-   PRINTF_TEST_HDR;
-   retValue = test_func_minmax( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   #define TEST_ID "CCI,WILLR"
-   PRINTF_TEST_HDR;
-   retValue = test_func_per_hlc( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   #define TEST_ID "MACD,MACDFIX,MACDEXT"
-   PRINTF_TEST_HDR;
-   retValue = test_func_macd( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   #define TEST_ID "MOM,ROC,ROCP,ROCR,ROCR100"
-   PRINTF_TEST_HDR;
-   retValue = test_func_mom_roc( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   #define TEST_ID "Parabolic SAR"
-   PRINTF_TEST_HDR;
-   retValue = test_func_sar( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   #define TEST_ID "ADX,ADXR,DI,DM,DX"
-   PRINTF_TEST_HDR;
-   retValue = test_func_adx( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   #define TEST_ID "RSI"
-   PRINTF_TEST_HDR;
-   retValue = test_func_rsi( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   #define TEST_ID "All Moving Averages"
-   PRINTF_TEST_HDR;
-   retValue = test_func_ma( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   #define TEST_ID "TRANGE,ATR"
-   PRINTF_TEST_HDR;   
-   retValue = test_func_trange( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   #define TEST_ID "PO,APO"
-   PRINTF_TEST_HDR;
-   retValue = test_func_po( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-
-   #define TEST_ID "STDDEV,VAR"
-   PRINTF_TEST_HDR;
-   retValue = test_func_stddev( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   #define TEST_ID "BBANDS"
-   PRINTF_TEST_HDR;
-   retValue = test_func_bbands( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-
-   #define TEST_ID "TRIX"
-   PRINTF_TEST_HDR;
-   retValue = test_func_per_ema( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-      
    return TA_TEST_PASS; /* All test succeed. */
 }
 
 static ErrorNumber testHistoryAlloc( void )
 {
-   TA_Libc *libHandle;
    TA_UDBase *unifiedDatabase;
    TA_History *data;
    TA_RetCode retCode;
@@ -388,7 +294,7 @@ static ErrorNumber testHistoryAlloc( void )
 
    memset( &param, 0, sizeof( TA_InitializeParam ) );
    param.logOutput = stdout;
-   retCode = TA_Initialize( &libHandle, &param );
+   retCode = TA_Initialize( &param );
 
    if( retCode != TA_SUCCESS )
    {
@@ -397,9 +303,9 @@ static ErrorNumber testHistoryAlloc( void )
    }
 
    /* Create an unified database. */
-   if( TA_UDBaseAlloc( libHandle, &unifiedDatabase ) != TA_SUCCESS )
+   if( TA_UDBaseAlloc( &unifiedDatabase ) != TA_SUCCESS )
    {
-      TA_Shutdown( libHandle );
+      TA_Shutdown();
       return TA_REGTEST_HISTORYALLOC_1;
    }
 
@@ -595,6 +501,6 @@ static ErrorNumber testHistoryAlloc( void )
 
    /* Clean-up and exit. */
    TA_UDBaseFree( unifiedDatabase );
-   TA_Shutdown( libHandle );
+   TA_Shutdown();
    return TA_SUCCESS;
 }

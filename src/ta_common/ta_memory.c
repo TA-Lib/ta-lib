@@ -150,19 +150,18 @@ typedef struct
 } TA_MemoryGlobal;
 
 /**** Local functions declarations.    ****/
-static TA_RetCode mem_tag_err( TA_Libc *libHandle, TA_MEMHDR *p, char *fil, int lin);
+static TA_RetCode mem_tag_err( TA_MEMHDR *p, char *fil, int lin);
 #if defined(TA_MEM_LIST)
 static void mem_list_add( TA_MemoryGlobal *global, TA_MEMHDR *p ); /* Add block to list */
 static void mem_list_delete( TA_MemoryGlobal *global, TA_MEMHDR *p );
-#define Mem_Tag_Err(lib,a) mem_tag_err((lib),(a),fil,lin)
+#define Mem_Tag_Err(a) mem_tag_err((a),fil,lin)
 void internalMemDisplay( TA_MemoryGlobal *global, FILE *fp );
 #else
-#define Mem_Tag_Err(lib,a) mem_tag_err((lib),(a),__FILE__,__LINE__)
+#define Mem_Tag_Err(a) mem_tag_err((a),__FILE__,__LINE__)
 #endif
 
-
-static TA_RetCode TA_MemoryGlobalInit    ( TA_Libc *libHandle, void **globalToAlloc );
-static TA_RetCode TA_MemoryGlobalShutdown( TA_Libc *libHandle, void *globalAllocated );
+static TA_RetCode TA_MemoryGlobalInit    ( void **globalToAlloc );
+static TA_RetCode TA_MemoryGlobalShutdown( void *globalAllocated );
 
 /**** Local variables definitions.     ****/
 const TA_GlobalControl TA_MemoryGlobalControl =
@@ -173,7 +172,7 @@ const TA_GlobalControl TA_MemoryGlobalControl =
 };
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_MemInit( TA_Libc *libHandle, unsigned int memoryAlreadyInUse )
+TA_RetCode TA_MemInit( unsigned int memoryAlreadyInUse )
 {
    TA_RetCode retCode;
    TA_MemoryGlobal *global;
@@ -181,7 +180,7 @@ TA_RetCode TA_MemInit( TA_Libc *libHandle, unsigned int memoryAlreadyInUse )
    /* "Getting" the global will allocate/initialize the global for
     * this module.
     */
-   retCode = TA_GetGlobal( libHandle, &TA_MemoryGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_MemoryGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return retCode;
 
@@ -235,7 +234,6 @@ TA_RetCode TA_MemInit( TA_Libc *libHandle, unsigned int memoryAlreadyInUse )
 
 void *
 TA_PrivAlloc(
-TA_Libc *libHandle,
 #if defined(TA_MEM_WHERE)
 size_t      size,
 char      *fil,
@@ -252,7 +250,7 @@ size_t      size
    TA_MEMHDR      *p ;
    TA_MemoryGlobal *global;
 
-   retCode = TA_GetGlobal( libHandle, &TA_MemoryGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_MemoryGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return NULL;
 
@@ -299,36 +297,6 @@ size_t      size
    return TA_HDR_2_CLIENT(p) ;
 }
 
-void *
-TA_PrivAllocCopy(
-TA_Libc *libHandle,
-#if defined(TA_MEM_WHERE)
-const char   *src,
-size_t  size,
-char   *fil,
-int     lin
-#else
-const char   *src,
-size_t  size
-#endif
-)
-{
-   void *retValue;
-
-   #if defined(TA_MEM_WHERE)
-      retValue = TA_PrivAlloc( libHandle, size, fil, lin );
-   #else
-      retValue = TA_PrivAlloc( libHandle, size );
-   #endif
-
-   if( !retValue )
-      return retValue;
-
-   memcpy( retValue, src, size );
-
-   return retValue;
-}
-
 /*----------------------------------------------------------------------
  *+
  *  TA_PrivRealloc
@@ -365,7 +333,6 @@ size_t  size
 
 void *
 TA_PrivRealloc(
-TA_Libc *libHandle,
 #if defined(TA_MEM_WHERE)
 void      *ptr,
 size_t      size,
@@ -385,7 +352,7 @@ size_t      size
    TA_MEMHDR      *p ;
    TA_MemoryGlobal *global;
 
-   retCode = TA_GetGlobal( libHandle, &TA_MemoryGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_MemoryGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return NULL;
 
@@ -397,7 +364,7 @@ size_t      size
    /* --------------------- */
    if (p->mh_tag != TA_MEMTAG)
    {
-      Mem_Tag_Err(libHandle,p) ;
+      Mem_Tag_Err(p) ;
       return NULL ;
    }
 
@@ -488,7 +455,6 @@ size_t      size
 
 char *
 TA_PrivStrdup(
-TA_Libc *libHandle,
 #if defined(TA_MEM_WHERE)
 char      *str,
 char      *fil,
@@ -505,9 +471,9 @@ char      *str
 char * s ;
 
    #if defined(TA_MEM_WHERE)
-      s = TA_PrivAlloc(libHandle, strlen(str)+1, fil, lin) ;
+      s = TA_PrivAlloc( strlen(str)+1, fil, lin) ;
    #else
-      s = TA_PrivAlloc(libHandle, strlen(str)+1) ;
+      s = TA_PrivAlloc( strlen(str)+1) ;
    #endif
 
    if (s != NULL)
@@ -551,7 +517,6 @@ char * s ;
 
 void
 TA_PrivFree(
-TA_Libc *libHandle,
 #if defined(TA_MEM_WHERE)
 void      *ptr,
 char      *fil,
@@ -572,16 +537,16 @@ void      *ptr
       unsigned int size;
    #endif
 
-   retCode = TA_GetGlobal( libHandle, &TA_MemoryGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_MemoryGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return;
 
 #if defined(TA_MEM_WHERE)
    if( (ptr == (TA_MEMHDR *)0x0) || (ptr == (TA_MEMHDR *)0xFFFFFFFF) )
    {
-      if( TA_IsTraceEnabled( libHandle ) )
+      if( TA_IsTraceEnabled() )
       {
-         TA_FATAL_NO_RET( libHandle, "Invalid Memory Block", (unsigned int)ptr, (unsigned int)lin );
+         TA_FATAL_NO_RET(  "Invalid Memory Block", (unsigned int)ptr, (unsigned int)lin );
       }
 	   return;
    }
@@ -597,7 +562,7 @@ void      *ptr
         (*TA_MEMTAG_H_PTR(p) != TA_MEMTAG_H) ||
         (*TA_MEMTAG_T_PTR(p) != TA_MEMTAG_T))
    {
-      Mem_Tag_Err(libHandle,p) ;
+      Mem_Tag_Err(p) ;
       return ;
    }
 
@@ -667,12 +632,12 @@ void      *ptr
  *
  *-
  */
-unsigned long TA_MemUsed( TA_Libc *libHandle )
+unsigned long TA_MemUsed( void )
 {
    TA_RetCode retCode;
    TA_MemoryGlobal *global;
 
-   retCode = TA_GetGlobal( libHandle, &TA_MemoryGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_MemoryGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return 0;
 
@@ -709,7 +674,7 @@ unsigned long TA_MemUsed( TA_Libc *libHandle )
  *-
  */
 
-void TA_MemDisplay( TA_Libc *libHandle, FILE *fp )
+void TA_MemDisplay( FILE *fp )
 {
    /* Note: This function must NOT use the tracing functionality from ta_trace.h
 	*       unless authorize by TA_IsTraceEnabled.
@@ -718,7 +683,7 @@ void TA_MemDisplay( TA_Libc *libHandle, FILE *fp )
    TA_RetCode retCode;
    TA_MemoryGlobal *global;
 
-   retCode = TA_GetGlobal( libHandle, &TA_MemoryGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_MemoryGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return;
 
@@ -732,7 +697,6 @@ void TA_MemDisplay( TA_Libc *libHandle, FILE *fp )
       TA_SemaPost( &global->mutexMemSema );
    #endif
 #else
-   (void)libHandle;
    fprintf(fp, "Memory list not compiled (TA_MEM_LIST not defined)\n") ;
 #endif
 }
@@ -828,14 +792,13 @@ static void mem_list_delete( TA_MemoryGlobal *global, TA_MEMHDR *p )
  */
 
 static TA_RetCode mem_tag_err(
-TA_Libc *libHandle,
 TA_MEMHDR *p,
 char      *fil,
 int        lin
 )
 
 {
-   /* TA_PROLOG;*/
+   /* TA_PROLOG*/
 
    (void)fil;
 
@@ -844,34 +807,32 @@ int        lin
 	*/
 
    #if defined(TA_MEM_LIST)
-      TA_MemDisplay(libHandle,stderr);
+      TA_MemDisplay(stderr);
    #endif
 
    if( *TA_MEMTAG_H_PTR(p) != TA_MEMTAG_H )
    {
-       TA_FATAL_RET( libHandle, "Header Out-of-bound memory access", (unsigned int)p, (unsigned int)lin, TA_ALLOC_ERR );
+       TA_FATAL_RET( "Header Out-of-bound memory access", (unsigned int)p, (unsigned int)lin, TA_ALLOC_ERR );
    }
    else if( *TA_MEMTAG_T_PTR(p) != TA_MEMTAG_T)
    {
-       TA_FATAL_RET( libHandle, "Trailer Out-of-bound memory access", (unsigned int)p, (unsigned int)lin, TA_ALLOC_ERR );
+       TA_FATAL_RET( "Trailer Out-of-bound memory access", (unsigned int)p, (unsigned int)lin, TA_ALLOC_ERR );
    }
    else
    {
-       TA_FATAL_RET( libHandle, "Bad memory allocation memtag", (unsigned int)p, (unsigned int)lin, TA_ALLOC_ERR );
+       TA_FATAL_RET( "Bad memory allocation memtag", (unsigned int)p, (unsigned int)lin, TA_ALLOC_ERR );
    }
 
    return TA_SUCCESS;
 }
 
 
-static TA_RetCode TA_MemoryGlobalInit( TA_Libc *libHandle, void **globalToAlloc )
+static TA_RetCode TA_MemoryGlobalInit( void **globalToAlloc )
 {   
    #if !defined( TA_SINGLE_THREAD )
    TA_RetCode retCode;
    #endif
    TA_MemoryGlobal *global;
-
-   (void )libHandle; /* Get ride of compiler warnings. */
 
    if( !globalToAlloc )
       return TA_BAD_PARAM;
@@ -901,14 +862,12 @@ static TA_RetCode TA_MemoryGlobalInit( TA_Libc *libHandle, void **globalToAlloc 
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_MemoryGlobalShutdown( TA_Libc *libHandle, void *globalAllocated )
+static TA_RetCode TA_MemoryGlobalShutdown( void *globalAllocated )
 {
    TA_MemoryGlobal *global;
    TA_RetCode retCode = TA_SUCCESS;
    #if defined(TA_DEBUG) && defined(TA_MEM_LIST)
    FILE *fp;
-   #else
-   (void)libHandle; /* Get rid of compilation warning. */
    #endif
    global = (TA_MemoryGlobal *)globalAllocated;
 
@@ -925,7 +884,7 @@ static TA_RetCode TA_MemoryGlobalShutdown( TA_Libc *libHandle, void *globalAlloc
       retCode = TA_MEM_LEAK;
    
       #if defined(TA_DEBUG) && defined(TA_MEM_LIST)        
-        fp = TA_GetStdioFilePtr( libHandle );
+        fp = TA_GetStdioFilePtr();
         if( fp )
         {
           fprintf( fp, "\n*** Memory Leak detected!\n" );

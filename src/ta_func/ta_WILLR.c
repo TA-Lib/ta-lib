@@ -84,8 +84,7 @@ int TA_WILLR_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGE
  * 
  */
 
-TA_RetCode TA_WILLR( TA_Libc      *libHandle,
-                     TA_Integer    startIdx,
+TA_RetCode TA_WILLR( TA_Integer    startIdx,
                      TA_Integer    endIdx,
                      const TA_Real inHigh_0[],
                      const TA_Real inLow_0[],
@@ -103,8 +102,6 @@ TA_RetCode TA_WILLR( TA_Libc      *libHandle,
    TA_Integer today, i;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -165,6 +162,7 @@ TA_RetCode TA_WILLR( TA_Libc      *libHandle,
    today       = startIdx;
    trailingIdx = startIdx-nbInitialElementNeeded;
    lowestIdx   = highestIdx = -1;
+   diff = highest = lowest  = 0.0;
      
    while( today <= endIdx )
    {

@@ -6,16 +6,10 @@
 #include "ta_utility.h"
 #include "ta_func.h"
 
-/* For handling the unstable period of some TA function. */
-unsigned int TA_UnstablePeriodTable[TA_FUNC_UNST_ALL];
-
-TA_RetCode TA_SetUnstablePeriod( TA_Libc      *libHandle,
-                                 TA_FuncUnstId id,
+TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
                                  unsigned int  unstablePeriod )
 {
    unsigned int i;
-
-   (void)libHandle;
 
    if( id > TA_FUNC_UNST_ALL )
       return TA_BAD_PARAM;
@@ -23,24 +17,33 @@ TA_RetCode TA_SetUnstablePeriod( TA_Libc      *libHandle,
    if( id == TA_FUNC_UNST_ALL )
    {
       for( i=0; i < TA_FUNC_UNST_ALL; i++ )
-         TA_UnstablePeriodTable[i] = unstablePeriod;
+         TA_Globals.unstablePeriod[i] = unstablePeriod;
    }
    else
    {
-      TA_UnstablePeriodTable[id] = unstablePeriod;
+      TA_Globals.unstablePeriod[id] = unstablePeriod;
    }
 
    return TA_SUCCESS;
 }
 
-unsigned int TA_GetUnstablePeriod( TA_Libc      *libHandle,
-                                   TA_FuncUnstId id)
+unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id )
 {
-   (void)libHandle;
-
    if( id >= TA_FUNC_UNST_ALL )
       return TA_BAD_PARAM;
 
-   return TA_UnstablePeriodTable[id];
+   return TA_Globals.unstablePeriod[id];
 }
 
+
+TA_RetCode TA_SetCompatibility( TA_Compatibility value )
+
+{
+   TA_Globals.compatibility = value;
+   return TA_SUCCESS;
+}
+
+TA_Compatibility TA_GetCompatibility( void )
+{
+   return TA_Globals.compatibility;
+}

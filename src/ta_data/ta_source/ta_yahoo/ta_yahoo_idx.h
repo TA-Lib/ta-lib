@@ -86,8 +86,7 @@ typedef enum
    TA_USE_YAHOO_SITE       = 0x10
 } TA_YahooIdxStrategy;
 
-TA_RetCode TA_YahooIdxAlloc( TA_Libc               *libHandle,
-                             TA_CountryId           countryId,
+TA_RetCode TA_YahooIdxAlloc( TA_CountryId           countryId,
                              TA_YahooIdx          **yahooIdxAllocated,
                              TA_YahooIdxStrategy    strategy,
                              TA_Stream             *stream,

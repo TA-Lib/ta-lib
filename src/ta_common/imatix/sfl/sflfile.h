@@ -73,75 +73,75 @@ enum {
 extern "C" {
 #endif
 
-FILE  *file_open           (TA_Libc *libHandle, const char *filename, char mode);
+FILE  *file_open           (const char *filename, char mode);
 
 #if 0
 !!! Not needed within Ta-Lib
-FILE  *file_locate         (TA_Libc *libHandle, const char *path, const char *name,
+FILE  *file_locate         (const char *path, const char *name,
                             const char *ext);
 #endif
 
-int    file_close          (TA_Libc *libHandle, FILE *stream);
-Bool   file_read           (TA_Libc *libHandle, FILE *stream, char *string);
-Bool   file_readn          (TA_Libc *libHandle, FILE *stream, char *string, int line_max);
-char  *file_write          (TA_Libc *libHandle, FILE *stream, const char *string);
-int    file_copy           (TA_Libc *libHandle, const char *dest, const char *src, char mode);
-int    file_concat         (TA_Libc *libHandle, const char *dest, const char *src);
-int    file_rename         (TA_Libc *libHandle, const char *oldname, const char *newname);
-int    file_delete         (TA_Libc *libHandle, const char *filename);
-char  *file_where          (TA_Libc *libHandle, char mode, const char *path, const char *name,
+int    file_close          (FILE *stream);
+Bool   file_read           (FILE *stream, char *string);
+Bool   file_readn          (FILE *stream, char *string, int line_max);
+char  *file_write          (FILE *stream, const char *string);
+int    file_copy           (const char *dest, const char *src, char mode);
+int    file_concat         (const char *dest, const char *src);
+int    file_rename         (const char *oldname, const char *newname);
+int    file_delete         (const char *filename);
+char  *file_where          (char mode, const char *path, const char *name,
                             const char *ext);
-char  *file_where_ext      (TA_Libc *libHandle, char mode, const char *path, const char *name,
+char  *file_where_ext      (char mode, const char *path, const char *name,
                             const char **ext);
-Bool   file_exists         (TA_Libc *libHandle, const char *filename);
-Bool   file_cycle          (TA_Libc *libHandle, const char *filename, int how);
-Bool   file_cycle_needed   (TA_Libc *libHandle, const char *filename, int how);
-Bool   file_has_changed    (TA_Libc *libHandle, const char *filename, long old_date, long old_time);
-Bool   safe_to_extend      (TA_Libc *libHandle, const char *filename);
-char  *default_extension   (TA_Libc *libHandle, char *dest, const char *src, const char *ext);
-char  *fixed_extension     (TA_Libc *libHandle, char *dest, const char *src, const char *ext);
-char  *strip_extension     (TA_Libc *libHandle, char *filename);
-char  *add_extension       (TA_Libc *libHandle, char *dest, const char *src, const char *ext);
-char  *strip_file_path     (TA_Libc *libHandle, char *filename);
-char  *strip_file_name     (TA_Libc *libHandle, char *filename);
+Bool   file_exists         (const char *filename);
+Bool   file_cycle          (const char *filename, int how);
+Bool   file_cycle_needed   (const char *filename, int how);
+Bool   file_has_changed    (const char *filename, long old_date, long old_time);
+Bool   safe_to_extend      (const char *filename);
+char  *default_extension   (char *dest, const char *src, const char *ext);
+char  *fixed_extension     (char *dest, const char *src, const char *ext);
+char  *strip_extension     (char *filename);
+char  *add_extension       (char *dest, const char *src, const char *ext);
+char  *strip_file_path     (char *filename);
+char  *strip_file_name     (char *filename);
 
 /* Will put a NULL between the path and the file adn return
  * a ptr on the file.
  * If there is no split occuring, NULL is returned.
  */
-char  *split_path_and_file (TA_Libc *libHandle, char *name );
+char  *split_path_and_file (char *name );
 
 #if 0
 !!! Not needed within TA-Lib
-char  *get_new_filename    (TA_Libc *libHandle, const char *filename);
+char  *get_new_filename    (const char *filename);
 #endif
 
-Bool   file_is_readable    (TA_Libc *libHandle, const char *filename);
-Bool   file_is_writeable   (TA_Libc *libHandle, const char *filename);
-Bool   file_is_executable  (TA_Libc *libHandle, const char *filename);
-Bool   file_is_directory   (TA_Libc *libHandle, const char *filename);
-Bool   file_is_program     (TA_Libc *libHandle, const char *filename);
-Bool   file_is_legal       (TA_Libc *libHandle, const char *filename);
-char  *file_exec_name      (TA_Libc *libHandle, const char *filename);
-long   get_file_size       (TA_Libc *libHandle, const char *filename);
-time_t get_file_time       (TA_Libc *libHandle, const char *filename);
-long   get_file_lines      (TA_Libc *libHandle, const char *filename);
+Bool   file_is_readable    (const char *filename);
+Bool   file_is_writeable   (const char *filename);
+Bool   file_is_executable  (const char *filename);
+Bool   file_is_directory   (const char *filename);
+Bool   file_is_program     (const char *filename);
+Bool   file_is_legal       (const char *filename);
+char  *file_exec_name      (const char *filename);
+long   get_file_size       (const char *filename);
+time_t get_file_time       (const char *filename);
+long   get_file_lines      (const char *filename);
 
 #if 0
 !!! Not needed within TA-Lib
-DESCR *file_slurp          (TA_Libc *libHandle, const char *filename);
-DESCR *file_slurpl         (TA_Libc *libHandle, const char *filename);
+DESCR *file_slurp          (const char *filename);
+DESCR *file_slurpl         (const char *filename);
 #endif
 
-dbyte  file_set_eoln       (TA_Libc *libHandle, char *dest, const char *src, dbyte src_size,
+dbyte  file_set_eoln       (char *dest, const char *src, dbyte src_size,
                             Bool add_cr);
 #if 0
 !!! Not needed within TA-Lib
-char  *get_tmp_file_name   (TA_Libc *libHandle, const char *path, qbyte *index, const char *ext);
-int    file_fhredirect     (TA_Libc *libHandle, int source, int dest);
-void   file_fhrestore      (TA_Libc *libHandle, int source, int dest);
-FILE  *ftmp_open           (TA_Libc *libHandle, char **pathname);
-void   ftmp_close          (TA_Libc *libHandle, FILE *tempstream);
+char  *get_tmp_file_name   (const char *path, qbyte *index, const char *ext);
+int    file_fhredirect     (int source, int dest);
+void   file_fhrestore      (int source, int dest);
+FILE  *ftmp_open           (char **pathname);
+void   ftmp_close          (FILE *tempstream);
 #endif
 
 #ifdef __cplusplus

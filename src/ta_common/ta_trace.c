@@ -146,9 +146,6 @@ typedef struct
 	/* User of the library can install its own exception handler
 	 * to intercept the fatal error.
 	 * Will be NULL if no handler installed.
-    * Since only one fatal error may get log, this 
-    * handler is guaranteed to be called only once for the
-    * lifetime of this libHandle.
     */
    TA_FatalHandler userHandler;
 } TA_TraceGlobal;
@@ -156,16 +153,15 @@ typedef struct
 
 /**** Local functions declarations.    ****/
 static void printFatalError( TA_FatalErrorLog *log, FILE *out );
-static void internalCheckpoint( TA_Libc *libHandle,
-                                TA_TraceGlobal *global,
+static void internalCheckpoint( TA_TraceGlobal *global,
                                 TA_String *key,
                                 const char *funcname,
                                 const char *filename,
                                 unsigned int lineNb );
 
 #ifdef TA_DEBUG
-static void freeTracePosition( TA_Libc *libHandle, void *dataToBeFreed );
-static TA_TracePosition *newTracePosition( TA_Libc *libHandle, 
+static void freeTracePosition( void *dataToBeFreed );
+static TA_TracePosition *newTracePosition( 
                                            const char *funcname, 
                                            const char *filename,
                                            unsigned int lineNb );
@@ -173,8 +169,8 @@ static TA_TracePosition *newTracePosition( TA_Libc *libHandle,
 
 static void printTracePosition( TA_TracePosition *tracePosition, FILE *out );
 
-static TA_RetCode TA_TraceGlobalShutdown( TA_Libc *libHandle, void *globalAllocated );
-static TA_RetCode TA_TraceGlobalInit( TA_Libc *libHandle, void **globalToAlloc );
+static TA_RetCode TA_TraceGlobalShutdown( void *globalAllocated );
+static TA_RetCode TA_TraceGlobalInit( void **globalToAlloc );
 
 /**** Local variables definitions.     ****/
 const TA_GlobalControl TA_TraceGlobalControl =
@@ -185,7 +181,7 @@ const TA_GlobalControl TA_TraceGlobalControl =
 };
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_TraceInit( TA_Libc *libHandle )
+TA_RetCode TA_TraceInit( void )
 {
    TA_RetCode retCode;
    TA_TraceGlobal *global;
@@ -196,15 +192,14 @@ TA_RetCode TA_TraceInit( TA_Libc *libHandle )
 	 *       will get called when TA_Shutdown is called by the
 	 *       library user.
     */
-   retCode = TA_GetGlobal( libHandle, &TA_TraceGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_TraceGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return retCode;
 
    return TA_SUCCESS;
 }
 
-void TA_PrivTraceCheckpoint( TA_Libc *libHandle,
-                             const char *funcname,
+void TA_PrivTraceCheckpoint( const char *funcname,
                              const char *filename,
                              unsigned int lineNb )
 {
@@ -216,32 +211,28 @@ void TA_PrivTraceCheckpoint( TA_Libc *libHandle,
       TA_StringCache *stringCache;
    #endif
 
-   if( !libHandle )
-      return;
-
    /* Get access to the global. */
-   retCode = TA_GetGlobal( libHandle, &TA_TraceGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal( &TA_TraceGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return;
 
    #if !defined( TA_DEBUG )
-      internalCheckpoint( libHandle, global, NULL, funcname, filename, lineNb );
+      internalCheckpoint( global, NULL, funcname, filename, lineNb );
    #else
       /* Build a unique string representing the position. */
-      stringCache = TA_GetGlobalStringCache( libHandle );
+      stringCache = TA_GetGlobalStringCache();
       key = TA_StringValueAlloc( stringCache, filename, lineNb );
       if( !key )
          return;
 
-      internalCheckpoint( libHandle, global, key, funcname, filename, lineNb );
+      internalCheckpoint( global, key, funcname, filename, lineNb );
 
       TA_StringFree( stringCache, key );
    #endif
 }
 
 #ifdef TA_DEBUG
-TA_RetCode TA_PrivTraceReturn( TA_Libc *libHandle,
-                               const char *funcname,
+TA_RetCode TA_PrivTraceReturn( const char *funcname,
                                const char *filename,
                                unsigned int lineNb,
                                TA_RetCode retCode )
@@ -252,20 +243,17 @@ TA_RetCode TA_PrivTraceReturn( TA_Libc *libHandle,
    TA_RetCode localRetCode;
    #endif
 
-   if( !libHandle )
-      return retCode;
-
-   TA_PrivTraceCheckpoint( libHandle, funcname, filename, lineNb );
+   TA_PrivTraceCheckpoint( funcname, filename, lineNb );
 
    /* If debugging a single threaded, maintain a calling stack. */
    #if defined( TA_DEBUG ) && defined( TA_SINGLE_THREAD )
-      if( !TA_IsTraceEnabled(libHandle) )
+      if( !TA_IsTraceEnabled() )
       {
          /* Disable tracing within tracing! */
-         TA_TraceDisable( libHandle );
+         TA_TraceDisable();
 
          /* Get access to the global. */
-         localRetCode = TA_GetGlobal( libHandle, &TA_TraceGlobalControl, (void **)&global );
+         localRetCode = TA_GetGlobal(  &TA_TraceGlobalControl, (void **)&global );
          if( localRetCode != TA_SUCCESS )
             return retCode;
 
@@ -275,12 +263,12 @@ TA_RetCode TA_PrivTraceReturn( TA_Libc *libHandle,
          {
             --tracePosition->repetition;
             if( tracePosition->repetition == 0 )
-               TA_Free( libHandle, tracePosition );
+               TA_Free(  tracePosition );
             else
                TA_ListAddTail( global->callStack, tracePosition );
          }
 
-         TA_TraceEnable( libHandle );
+         TA_TraceEnable();
       }
    #endif
 
@@ -288,8 +276,7 @@ TA_RetCode TA_PrivTraceReturn( TA_Libc *libHandle,
 }
 #endif
 
-void TA_PrivTraceBegin( TA_Libc *libHandle,
-                        const char *funcname,
+void TA_PrivTraceBegin( const char *funcname,
                         const char *filename, 
                         unsigned int lineNb )
 {
@@ -300,23 +287,20 @@ void TA_PrivTraceBegin( TA_Libc *libHandle,
    TA_RetCode retCode;
    #endif
 
-   if( !libHandle )
-      return;
-
    /* Entry point of a function are "checkpoint" for code
     * coverage.
     */
-   TA_PrivTraceCheckpoint( libHandle, funcname, filename, lineNb );
+   TA_PrivTraceCheckpoint( funcname, filename, lineNb );
 
    /* If debugging a single thread, maintain a call stack. */
    #if defined( TA_DEBUG ) && defined( TA_SINGLE_THREAD )
-      if( TA_IsTraceEnabled( libHandle ) )
+      if( TA_IsTraceEnabled() )
       {
          /* Disable tracing within tracing! */
-         TA_TraceDisable( libHandle );
+         TA_TraceDisable();
 
          /* Get access to the global. */
-         retCode = TA_GetGlobal( libHandle, &TA_TraceGlobalControl, (void **)&global );
+         retCode = TA_GetGlobal( &TA_TraceGlobalControl, (void **)&global );
          if( retCode != TA_SUCCESS )
             return;
 
@@ -339,19 +323,18 @@ void TA_PrivTraceBegin( TA_Libc *libHandle,
          /* New function, so add the trace to the stack. */
          if( newTracePositionNeeded )
          {
-            tracePosition = newTracePosition( libHandle, funcname, filename, lineNb );
+            tracePosition = newTracePosition( funcname, filename, lineNb );
             if( tracePosition )      
                TA_ListAddTail( global->callStack, (void *)tracePosition );
          }
 
          /* Re-enable tracing. */
-         TA_TraceDisable( libHandle );
+         TA_TraceDisable();
       }
    #endif
 }
 
-void TA_PrivError( TA_Libc *libHandle,
-                   unsigned int type, const char *str,
+void TA_PrivError( unsigned int type, const char *str,
                    const char *filename, const char *date,
                    const char *time, int line,
                    unsigned int j, unsigned int k )
@@ -360,8 +343,7 @@ void TA_PrivError( TA_Libc *libHandle,
    TA_TraceGlobal *global;
    unsigned int length;
 
-
-   retCode = TA_GetGlobal( libHandle, &TA_TraceGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal( &TA_TraceGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return;
 
@@ -400,7 +382,7 @@ void TA_PrivError( TA_Libc *libHandle,
       length = strlen( str ) + 1;
       if( length != 0 )
       {
-         global->fatalError.str = (char *)TA_Malloc( libHandle, length );
+         global->fatalError.str = (char *)TA_Malloc( length );
          memcpy( global->fatalError.str, str, length );
       }
    }
@@ -413,24 +395,21 @@ void TA_PrivError( TA_Libc *libHandle,
 
    /* Call the user handler. */
    if( global->userHandler )
-      global->userHandler( libHandle );
+      global->userHandler();
 
    #if !defined( TA_SINGLE_THREAD )
    TA_SemaPost( &global->callSema );
    #endif
 }
 
-void TA_FatalReport( TA_Libc *libHandle, FILE *out )
+void TA_FatalReport( FILE *out )
 {
    TA_TraceGlobal *global;
    TA_RetCode retCode;
    unsigned int i, pos;
    TA_TracePosition *tracePosition;
 
-   if( !libHandle )
-      return;
-
-   retCode = TA_GetGlobal( libHandle, &TA_TraceGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_TraceGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
        return;
 
@@ -455,12 +434,12 @@ void TA_FatalReport( TA_Libc *libHandle, FILE *out )
 }
 
 
-TA_RetCode TA_SetFatalErrorHandler( TA_Libc *libHandle, TA_FatalHandler handler )
+TA_RetCode TA_SetFatalErrorHandler( TA_FatalHandler handler )
 {
    TA_TraceGlobal *global;
    TA_RetCode retCode;
 
-   retCode = TA_GetGlobal( libHandle, &TA_TraceGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_TraceGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
        return retCode;
 
@@ -509,7 +488,7 @@ static void printFatalError( TA_FatalErrorLog *log, FILE *out )
    fprintf( out, "Info:[0x%08X,0x%08X]\n", log->param1, log->param2 );
 }
 
-static TA_RetCode TA_TraceGlobalInit( TA_Libc *libHandle, void **globalToAlloc )
+static TA_RetCode TA_TraceGlobalInit( void **globalToAlloc )
 {
    TA_TraceGlobal *global;
    #if !defined( TA_SINGLE_THREAD )
@@ -521,7 +500,7 @@ static TA_RetCode TA_TraceGlobalInit( TA_Libc *libHandle, void **globalToAlloc )
 
    *globalToAlloc = NULL;
 
-   global = TA_Malloc( libHandle, sizeof( TA_TraceGlobal ) );
+   global = TA_Malloc( sizeof( TA_TraceGlobal ) );
    if( !global )
       return TA_ALLOC_ERR;
 
@@ -532,14 +511,14 @@ static TA_RetCode TA_TraceGlobalInit( TA_Libc *libHandle, void **globalToAlloc )
       retCode = TA_SemaInit( &global->callSema, 1 );
       if( retCode != TA_SUCCESS )
       {
-         TA_Free( libHandle, global );
+         TA_Free(  global );
          return retCode;
       }
       retCode = TA_SemaInit( &global->fatalSema, 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_SemaDestroy( &global->callSema );
-         TA_Free( libHandle, global );
+         TA_Free(  global );
          return retCode;
       }
    #endif
@@ -548,16 +527,16 @@ static TA_RetCode TA_TraceGlobalInit( TA_Libc *libHandle, void **globalToAlloc )
       #if defined( TA_SINGLE_THREAD )
          /* When single threaded, maintain a calling stack. */      
 
-         global->callStack = TA_ListAlloc( libHandle );
+         global->callStack = TA_ListAlloc();
          if( !global->callStack )
          {
-            TA_Free( libHandle, global );
+            TA_Free(  global );
             return TA_ALLOC_ERR;
          }
       #endif
 
       /* All function call and checkpoint are maintained in a dictionary. */
-      global->functionCalled = TA_DictAlloc( libHandle, TA_DICT_KEY_ONE_STRING, freeTracePosition );
+      global->functionCalled = TA_DictAlloc( TA_DICT_KEY_ONE_STRING, freeTracePosition );
       if( !global->functionCalled )
       {
          #if !defined( TA_SINGLE_THREAD )
@@ -566,7 +545,7 @@ static TA_RetCode TA_TraceGlobalInit( TA_Libc *libHandle, void **globalToAlloc )
          #else
             TA_ListFree( global->callStack );
          #endif      
-         TA_Free( libHandle, global );
+         TA_Free(  global );
          return TA_ALLOC_ERR;
       }
    #endif
@@ -577,7 +556,7 @@ static TA_RetCode TA_TraceGlobalInit( TA_Libc *libHandle, void **globalToAlloc )
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_TraceGlobalShutdown( TA_Libc *libHandle, void *globalAllocated )
+static TA_RetCode TA_TraceGlobalShutdown( void *globalAllocated )
 {
    TA_TraceGlobal *global;
    TA_RetCode retCode = TA_SUCCESS;
@@ -588,7 +567,7 @@ static TA_RetCode TA_TraceGlobalShutdown( TA_Libc *libHandle, void *globalAlloca
       return retCode;
 
    if( global->fatalError.str )
-      TA_Free( libHandle, global->fatalError.str );
+      TA_Free(  global->fatalError.str );
 
    #if !defined( TA_SINGLE_THREAD )      
       retCode = TA_SemaDestroy( &global->fatalSema );
@@ -605,13 +584,12 @@ static TA_RetCode TA_TraceGlobalShutdown( TA_Libc *libHandle, void *globalAlloca
          TA_DictFree( global->functionCalled );
    #endif
 
-   TA_Free( libHandle, global );
+   TA_Free(  global );
 
    return retCode;
 }
 
-static void internalCheckpoint( TA_Libc *libHandle,
-                                TA_TraceGlobal *global,
+static void internalCheckpoint( TA_TraceGlobal *global,
                                 TA_String  *key,
                                 const char *funcname,
                                 const char *filename,
@@ -630,7 +608,7 @@ static void internalCheckpoint( TA_Libc *libHandle,
     * some tracing in a multithread environment.
     * We can live with that compromise.
     */   
-   if( !TA_IsTraceEnabled(libHandle) )
+   if( !TA_IsTraceEnabled() )
       return;
 
    #if !defined( TA_SINGLE_THREAD )                   
@@ -644,15 +622,15 @@ static void internalCheckpoint( TA_Libc *libHandle,
     * increment the 'repetition' counter, else create
     * a new entry in the dictionary.
     */
-   TA_TraceDisable( libHandle );
+   TA_TraceDisable();
    tracePosition = TA_DictGetValue_S( global->functionCalled, TA_StringToChar(key) );
-   TA_TraceEnable( libHandle );
+   TA_TraceEnable();
 
    if( tracePosition )
       tracePosition->repetition++;
    else
    {
-      tracePosition = newTracePosition( libHandle, funcname, filename, lineNb );
+      tracePosition = newTracePosition( funcname, filename, lineNb );
 
       if( !tracePosition )
       {
@@ -661,9 +639,9 @@ static void internalCheckpoint( TA_Libc *libHandle,
          #endif
          return;
       }
-      TA_TraceDisable( libHandle );
+      TA_TraceDisable();
       TA_DictAddPair_S( global->functionCalled, key, (void *)tracePosition );
-      TA_TraceEnable( libHandle );
+      TA_TraceEnable();
    }
    /* Trace position are never deleted, until the library is shutdown.
     * Make a copy of it in the circular buffer.
@@ -688,14 +666,13 @@ static void internalCheckpoint( TA_Libc *libHandle,
 }
 
 #ifdef TA_DEBUG
-static TA_TracePosition *newTracePosition( TA_Libc *libHandle, 
-                                           const char *funcname, 
+static TA_TracePosition *newTracePosition( const char *funcname, 
                                            const char *filename,
                                            unsigned int lineNb )
 {
    TA_TracePosition *tracePosition;
 
-   tracePosition = (TA_TracePosition *)TA_Malloc( libHandle, sizeof(TA_TracePosition) );
+   tracePosition = (TA_TracePosition *)TA_Malloc( sizeof(TA_TracePosition) );
    if( !tracePosition )
        return NULL;
 
@@ -707,9 +684,9 @@ static TA_TracePosition *newTracePosition( TA_Libc *libHandle,
    return tracePosition;
 }
 
-static void freeTracePosition( TA_Libc *libHandle, void *dataToBeFreed )
+static void freeTracePosition( void *dataToBeFreed )
 {
-   TA_Free( libHandle, dataToBeFreed );
+   TA_Free(  dataToBeFreed );
 }
 #endif
 

@@ -78,24 +78,23 @@
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_FileIndexAlloc( TA_Libc *libHandle,
-                              TA_String *path,
+TA_RetCode TA_FileIndexAlloc( TA_String *path,
                               TA_String *initialCategory,
                               TA_String *initialCategoryCountry,
                               TA_String *initialCategoryExchange,
                               TA_String *initialCategoryType,
                               TA_FileIndex **newIndex )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_FileIndexPriv *fileIndexPriv;
    /*!!! TA_String *categoryToUse;*/
    /*!!! TA_StringCache *stringCache;*/
 
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexAlloc );
+   TA_TRACE_BEGIN(  TA_FileIndexAlloc );
     
-   TA_ASSERT( libHandle, newIndex != NULL );
-   TA_ASSERT( libHandle, path != NULL );
+   TA_ASSERT( newIndex != NULL );
+   TA_ASSERT( path != NULL );
 
    *newIndex = NULL;
 
@@ -112,7 +111,7 @@ TA_RetCode TA_FileIndexAlloc( TA_Libc *libHandle,
    }
 
    /* Allocate the "TA_FileIndex" alias "TA_FileIndexPriv". */
-   fileIndexPriv = TA_FileIndexPrivAlloc( libHandle, 
+   fileIndexPriv = TA_FileIndexPrivAlloc( 
                                           initialCategory,
                                           initialCategoryCountry,
                                           initialCategoryExchange,
@@ -125,8 +124,8 @@ TA_RetCode TA_FileIndexAlloc( TA_Libc *libHandle,
 
    #if 0
    !!! Not needed!?
-   stringCache = TA_GetGlobalStringCache( libHandle ); 
-   TA_ASSERT( libHandle, stringCache != NULL );
+   stringCache = TA_GetGlobalStringCache(); 
+   TA_ASSERT( stringCache != NULL );
 
    /* Add the default category. */
    retCode = TA_FileIndexAddCategoryData( fileIndexPriv,
@@ -181,18 +180,16 @@ TA_RetCode TA_FileIndexAlloc( TA_Libc *libHandle,
 
 TA_RetCode TA_FileIndexFree( TA_FileIndex *toBeFreed )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_FileIndexPriv *fileIndexPriv;
    TA_RetCode retCode;
-   TA_Libc *libHandle;
 
    if( !toBeFreed )
       return TA_SUCCESS;
 
    fileIndexPriv = (TA_FileIndexPriv *)toBeFreed;
-   libHandle = fileIndexPriv ->libHandle;
 
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexFree );
+   TA_TRACE_BEGIN(  TA_FileIndexFree );
 
    retCode = TA_FileIndexPrivFree( fileIndexPriv );
 
@@ -211,13 +208,13 @@ TA_String *TA_FileIndexFirstCategory( TA_FileIndex *fileIndex )
    fileIndexPriv = (TA_FileIndexPriv *)fileIndex;
    listCategory = fileIndexPriv->listCategory;
 
-   TA_ASSERT_RET( fileIndexPriv->libHandle, listCategory != NULL, (TA_String *)NULL );
+   TA_ASSERT_RET( listCategory != NULL, (TA_String *)NULL );
    categoryData  = (TA_FileIndexCategoryData *)TA_ListAccessHead( listCategory );
 
    if( !categoryData )
       return NULL;
 
-   TA_ASSERT_RET( fileIndexPriv->libHandle, categoryData->string != NULL, (TA_String *)NULL );
+   TA_ASSERT_RET( categoryData->string != NULL, (TA_String *)NULL );
 
    return categoryData->string;
 }
@@ -234,13 +231,13 @@ TA_String *TA_FileIndexNextCategory ( TA_FileIndex *fileIndex )
    fileIndexPriv = (TA_FileIndexPriv *)fileIndex;
    listCategory = fileIndexPriv->listCategory;
 
-   TA_ASSERT_RET( fileIndexPriv->libHandle, listCategory != NULL, (TA_String *)NULL );
+   TA_ASSERT_RET( listCategory != NULL, (TA_String *)NULL );
    categoryData  = (TA_FileIndexCategoryData *)TA_ListAccessNext( listCategory );
 
    if( !categoryData )
       return NULL;
 
-   TA_ASSERT_RET( fileIndexPriv->libHandle, categoryData->string != NULL, (TA_String *)NULL );
+   TA_ASSERT_RET( categoryData->string != NULL, (TA_String *)NULL );
 
    return categoryData->string;
 }
@@ -248,24 +245,22 @@ TA_String *TA_FileIndexNextCategory ( TA_FileIndex *fileIndex )
 TA_RetCode TA_FileIndexSelectCategory( TA_FileIndex *fileIndex,
                                        TA_String *category )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_FileIndexPriv *fileIndexPriv;
    TA_String        *currentCategoryString;
    TA_List          *listCategory;
    TA_FileIndexCategoryData *categoryData;
-   TA_Libc *libHandle;
 
    if( !fileIndex )
       return TA_INTERNAL_ERROR(85);
         
    fileIndexPriv = (TA_FileIndexPriv *)fileIndex;
-   libHandle = fileIndexPriv->libHandle; 
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexSelectCategory );
+   TA_TRACE_BEGIN(  TA_FileIndexSelectCategory );
 
-   TA_ASSERT( libHandle, category != NULL );
+   TA_ASSERT( category != NULL );
 
    listCategory = fileIndexPriv->listCategory;
-   TA_ASSERT( libHandle, listCategory != NULL );
+   TA_ASSERT( listCategory != NULL );
 
    categoryData = (TA_FileIndexCategoryData *)TA_ListAccessCurrent( listCategory );
 
@@ -281,7 +276,7 @@ TA_RetCode TA_FileIndexSelectCategory( TA_FileIndex *fileIndex,
       currentCategoryString = categoryData->string;
 
    /* Sanity check. */
-   TA_ASSERT( libHandle, currentCategoryString != NULL );
+   TA_ASSERT( currentCategoryString != NULL );
 
    /* Need to search for the category. */
    while( currentCategoryString )
@@ -315,7 +310,7 @@ TA_FileInfo *TA_FileIndexFirstSymbol( TA_FileIndex *fileIndex )
    listCategory = fileIndexPriv->listCategory;
 
    /* Make sure we are positioned on a valid category. */
-   TA_ASSERT_RET( fileIndexPriv->libHandle, listCategory != NULL, (TA_FileInfo *)NULL );
+   TA_ASSERT_RET( listCategory != NULL, (TA_FileInfo *)NULL );
    categoryData = (TA_FileIndexCategoryData *)TA_ListAccessCurrent( listCategory );
 
    if( !categoryData )
@@ -323,7 +318,7 @@ TA_FileInfo *TA_FileIndexFirstSymbol( TA_FileIndex *fileIndex )
 
    listSymbol = categoryData->listSymbol;
 
-   TA_ASSERT_RET( fileIndexPriv->libHandle, listSymbol != NULL, (TA_FileInfo *)NULL );
+   TA_ASSERT_RET( listSymbol != NULL, (TA_FileInfo *)NULL );
    symbolData = (TA_FileIndexSymbolData *)TA_ListAccessHead( listSymbol );
 
    if( !symbolData )
@@ -333,8 +328,8 @@ TA_FileInfo *TA_FileIndexFirstSymbol( TA_FileIndex *fileIndex )
     * This is a good place to verify sanity, since this is the last "exit point"
     * of the symbolData toward the user of the TA_FileIndex...
     */
-   TA_ASSERT_RET( fileIndexPriv->libHandle, symbolData->parent == categoryData, (TA_FileInfo *)NULL );
-   TA_ASSERT_RET( fileIndexPriv->libHandle, symbolData->string != NULL, (TA_FileInfo *)NULL );
+   TA_ASSERT_RET( symbolData->parent == categoryData, (TA_FileInfo *)NULL );
+   TA_ASSERT_RET( symbolData->string != NULL, (TA_FileInfo *)NULL );
 
    return (TA_FileInfo *)symbolData;
 }
@@ -354,7 +349,7 @@ TA_FileInfo *TA_FileIndexNextSymbol( TA_FileIndex *fileIndex )
    listCategory = fileIndexPriv->listCategory;
 
    /* Make sure we are positioned on a valid category. */
-   TA_ASSERT_RET( fileIndexPriv->libHandle, listCategory != NULL, (TA_FileInfo *)NULL );
+   TA_ASSERT_RET( listCategory != NULL, (TA_FileInfo *)NULL );
    categoryData = (TA_FileIndexCategoryData *)TA_ListAccessCurrent( listCategory );
 
    if( !categoryData )
@@ -362,7 +357,7 @@ TA_FileInfo *TA_FileIndexNextSymbol( TA_FileIndex *fileIndex )
 
    listSymbol = categoryData->listSymbol;
 
-   TA_ASSERT_RET( fileIndexPriv->libHandle, listSymbol != NULL, (TA_FileInfo *)NULL );
+   TA_ASSERT_RET( listSymbol != NULL, (TA_FileInfo *)NULL );
    symbolData = (TA_FileIndexSymbolData *)TA_ListAccessNext( listSymbol );
 
    if( !symbolData )
@@ -372,8 +367,8 @@ TA_FileInfo *TA_FileIndexNextSymbol( TA_FileIndex *fileIndex )
     * This is a good place to verify sanity, since this is the last "exit point"
     * of the symbolData toward the user of the TA_FileIndex...
     */
-   TA_ASSERT_RET( fileIndexPriv->libHandle, symbolData->parent == categoryData, (TA_FileInfo *)NULL );
-   TA_ASSERT_RET( fileIndexPriv->libHandle, symbolData->string != NULL, (TA_FileInfo *)NULL );
+   TA_ASSERT_RET( symbolData->parent == categoryData, (TA_FileInfo *)NULL );
+   TA_ASSERT_RET( symbolData->string != NULL, (TA_FileInfo *)NULL );
 
    return (TA_FileInfo *)symbolData;
 }
@@ -389,7 +384,7 @@ unsigned int TA_FileIndexNbCategory( TA_FileIndex *fileIndex )
 
    fileIndexPriv = (TA_FileIndexPriv *)fileIndex;
    listCategory = fileIndexPriv->listCategory;
-   TA_ASSERT_RET( fileIndexPriv->libHandle, listCategory != NULL, 0 );
+   TA_ASSERT_RET( listCategory != NULL, 0 );
 
    return TA_ListSize( listCategory );
 }
@@ -408,7 +403,7 @@ unsigned int TA_FileIndexNbSymbol( TA_FileIndex *fileIndex )
    listCategory = fileIndexPriv->listCategory;
 
    /* Make sure we are positioned on a valid category. */
-   TA_ASSERT_RET( fileIndexPriv->libHandle, listCategory != NULL, 0 );
+   TA_ASSERT_RET( listCategory != NULL, 0 );
    categoryData = (TA_FileIndexCategoryData *)TA_ListAccessCurrent( listCategory );
 
    if( !categoryData )
@@ -416,41 +411,41 @@ unsigned int TA_FileIndexNbSymbol( TA_FileIndex *fileIndex )
 
    listSymbol = categoryData->listSymbol;
 
-   TA_ASSERT_RET( fileIndexPriv->libHandle, listSymbol != NULL, 0 );
+   TA_ASSERT_RET( listSymbol != NULL, 0 );
 
    return TA_ListSize( listSymbol );
 }
 
 /* Function to extract information from a TA_FileInfo. */
-TA_String *TA_FileInfoSymbol( TA_Libc *libHandle, TA_FileInfo *fileInfo )
+TA_String *TA_FileInfoSymbol( TA_FileInfo *fileInfo )
 {
    TA_FileIndexSymbolData *symbolData;
 
-   TA_ASSERT_RET( libHandle, fileInfo != NULL, (TA_String *)NULL );
+   TA_ASSERT_RET( fileInfo != NULL, (TA_String *)NULL );
    symbolData = (TA_FileIndexSymbolData *)fileInfo;
 
-   TA_ASSERT_RET( libHandle, symbolData->string != NULL, (TA_String *)NULL );
+   TA_ASSERT_RET( symbolData->string != NULL, (TA_String *)NULL );
 
    return symbolData->string;
 }
 
-TA_String *TA_FileInfoCategory( TA_Libc *libHandle, TA_FileInfo *fileInfo )
+TA_String *TA_FileInfoCategory( TA_FileInfo *fileInfo )
 {
    TA_FileIndexSymbolData *symbolData;
    TA_FileIndexCategoryData *categoryData;
 
-   TA_ASSERT_RET( libHandle, fileInfo != NULL, (TA_String *)NULL );
+   TA_ASSERT_RET( fileInfo != NULL, (TA_String *)NULL );
    symbolData = (TA_FileIndexSymbolData *)fileInfo;
 
    categoryData = symbolData->parent;
 
-   TA_ASSERT_RET( libHandle, categoryData != NULL, (TA_String *)NULL );
-   TA_ASSERT_RET( libHandle, categoryData->string != NULL, (TA_String *)NULL );
+   TA_ASSERT_RET( categoryData != NULL, (TA_String *)NULL );
+   TA_ASSERT_RET( categoryData->string != NULL, (TA_String *)NULL );
 
    return categoryData->string;
 }
 
-const char *TA_FileInfoPath( TA_Libc *libHandle, TA_FileInfo *fileInfo )
+const char *TA_FileInfoPath( TA_FileInfo *fileInfo )
 {
    TA_RetCode retCode;
    TA_FileIndexSymbolData *symbolData;
@@ -459,19 +454,19 @@ const char *TA_FileInfoPath( TA_Libc *libHandle, TA_FileInfo *fileInfo )
    char *scratchPad;
 
    /* Get the corresponding scratch pad. */
-   TA_ASSERT_RET( libHandle, fileInfo != NULL, (char *)NULL );
+   TA_ASSERT_RET( fileInfo != NULL, (char *)NULL );
    symbolData = (TA_FileIndexSymbolData *)fileInfo;
    categoryData = symbolData->parent;
 
-   TA_ASSERT_RET( libHandle, categoryData != NULL, (char *)NULL );
+   TA_ASSERT_RET( categoryData != NULL, (char *)NULL );
    fileIndex = categoryData->parent;
 
-   TA_ASSERT_RET( libHandle, fileIndex != NULL, (char *)NULL );
+   TA_ASSERT_RET( fileIndex != NULL, (char *)NULL );
    scratchPad = fileIndex->scratchPad;
 
    /* Build the path in the scratchPad. */
-   TA_ASSERT_RET( libHandle, scratchPad != NULL, (char *)NULL );
-   TA_ASSERT_RET( libHandle, symbolData->node != NULL, (char *)NULL );
+   TA_ASSERT_RET( scratchPad != NULL, (char *)NULL );
+   TA_ASSERT_RET( symbolData->node != NULL, (char *)NULL );
    retCode = TA_FileIndexMakePathPattern( fileIndex,
                                           symbolData->node,
                                           scratchPad,

@@ -35,7 +35,6 @@ typedef struct
 
 typedef struct
 {
-   TA_Libc *libHandle;
    TA_List *listCategory;     /* List of TA_FileIndexCategoryData */
 
    TA_List *listLocationToken;    /* TA_TokenInfo parsed from path. */
@@ -127,8 +126,7 @@ typedef struct
 
 
 /* Allocate/de-allocate TA_FileIndexPriv. */
-TA_FileIndexPriv *TA_FileIndexPrivAlloc( TA_Libc *libHandle,
-                                         TA_String *initialCategory,
+TA_FileIndexPriv *TA_FileIndexPrivAlloc( TA_String *initialCategory,
                                          TA_String *initialCategoryCountry,
                                          TA_String *initialCategoryExchange,
                                          TA_String *initialCategoryType );
@@ -155,8 +153,7 @@ TA_RetCode TA_FileIndexAddTokenInfo(  TA_FileIndexPriv *data,
                                       TA_String *value,
                                       TA_TokenInfo *optBefore );
 
-TA_RetCode TA_FileIndexAddSymbolData( TA_Libc *libHandle,
-                                      TA_FileIndexCategoryData *categoryData,
+TA_RetCode TA_FileIndexAddSymbolData( TA_FileIndexCategoryData *categoryData,
                                       TA_String *stringSymbol,
                                       TA_ValueTreeNode *treeNodeValue,
                                       TA_FileIndexSymbolData **added );
@@ -172,8 +169,7 @@ TA_RetCode TA_FileIndexAddTreeValue( TA_FileIndexPriv *data,
                                      TA_String *string,
                                      TA_ValueTreeNode **added );
 
-TA_RetCode TA_FileIndexFreeValueTree( TA_Libc *libHandle,
-                                      TA_ValueTreeNode *fromNode );
+TA_RetCode TA_FileIndexFreeValueTree( TA_ValueTreeNode *fromNode );
 
 /* All the time that the "Value tree" exist in the TA_FileIndexPriv, there
  * is one node designated as the currentNode.
@@ -184,7 +180,7 @@ TA_RetCode TA_FileIndexFreeValueTree( TA_Libc *libHandle,
  * node. By default, the current node start as the root of the "value tree".
  */
 TA_RetCode TA_FileIndexSetCurrentTreeValueNode( TA_FileIndexPriv *data,
-                                                 TA_ValueTreeNode *node );
+                                                TA_ValueTreeNode *node );
 
 TA_ValueTreeNode *TA_FileIndexGetCurrentTreeValueNode( TA_FileIndexPriv *data );
 
@@ -196,8 +192,7 @@ TA_ValueTreeNode *TA_FileIndexGoDownTreeValue( TA_FileIndexPriv *data );
 TA_ValueTreeNode *TA_FileIndexGoUpTreeValue( TA_FileIndexPriv *data );
 
 /* Change the value of a particular TA_ValueTreeNode */
-TA_RetCode TA_FileIndexChangeValueTreeNodeValue( TA_Libc *libHandle,
-                                                 TA_ValueTreeNode *nodeToChange,
+TA_RetCode TA_FileIndexChangeValueTreeNodeValue( TA_ValueTreeNode *nodeToChange,
                                                  TA_String *newValue );
 
 /* Note: When TA_FileIndexAddSymbolData or TA_FileIndexAddCategoryData are

@@ -5,7 +5,6 @@
    #include "ta_common.h"
 #endif
 
-
 /* This is a very simple reference counting for small CONSTANT string.
  * This allows to manage efficiently "copies" of a large number of strings.
  * The string will be freed when the last reference to it is deleted.
@@ -14,7 +13,7 @@
  *  TA_String *s1, *s2;
  *  TA_StringCache *cache;
  *
- *  TA_StringCacheAlloc( libHandle, &cache );
+ *  TA_StringCacheAlloc( &cache );
  *
  *  s1 = TA_StringAlloc( cache, "ABC" ); <- Copy of "ABC" is alloc here.
  *  s2 = TA_StringDup( cache, s1 );    <- Ref counter is incremented here.
@@ -39,9 +38,7 @@
 typedef const char *TA_String;
 typedef unsigned int TA_StringCache; /* hidden implementation. */
 
-TA_RetCode TA_StringCacheAlloc( TA_Libc *libHandle,
-                                TA_StringCache **newStringCache );
-
+TA_RetCode TA_StringCacheAlloc( TA_StringCache **newStringCache );
 TA_RetCode TA_StringCacheFree( TA_StringCache *stringCacheToFree );
 
 /* Create a TA_String from a normal C 'string'. */

@@ -14,7 +14,7 @@
 
 /* NEVER CALL directly this function! Use TA_CallFunc. */
  
-TA_RetCode TA_STDDEV_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_STDDEV_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -23,7 +23,7 @@ TA_RetCode TA_STDDEV_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] )
 {
-   return TA_STDDEV( libHandle,
+   return TA_STDDEV(
                startIdx,
                endIdx,
                in[0].p.in.data.inReal, /* inReal_0 */

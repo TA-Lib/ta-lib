@@ -77,9 +77,7 @@ typedef struct
  * Return: An handle used to manipulate the dictionary or NULL if
  *         there is an allocation error.
  */
-TA_Dict *TA_DictAlloc( TA_Libc *libHandle, 
-                       unsigned int flags,
-                       void (*freeValueFunc)(TA_Libc *libHandle, void *) );
+TA_Dict *TA_DictAlloc( unsigned int flags, void (*freeValueFunc)(void *) );
 
 /* Free all ressource related to a dictionary.
  *
