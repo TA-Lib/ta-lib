@@ -883,9 +883,12 @@ int BZ_API(BZ2_bzDecompress) ( bz_stream *strm )
       }
    }
 
+#if 0
+   ReUnreachable code - Mario Fortier
    AssertAlways( 6001 );
 
    return 0; 
+#endif
 }
 
 
