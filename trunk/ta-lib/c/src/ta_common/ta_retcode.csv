@@ -93,7 +93,20 @@
 92,TA_UNSUPPORTED_REPLACE_ZERO_PRICE_BAR,TA_REPLACE_ZERO_PRICE_BAR flag is not supported for this data source.
 93,TA_MISSING_INPUT_DIGITS,A digit was missing in one of the price bar field
 94,TA_DICT_TYPE_MISMATCH,Error with handling of dictionary
-95,TA_BAD_QUERY,Query could not be executed or syntax error in the query
+95,TA_YAHOO_IDX_UNAVAILABLE_4,Failed to find a Yahoo! index
+96,TA_OBSOLETED_SYMBOL,This symbol is no longuer valid
+97,TA_BAD_QUERY,Query could not be executed or syntax error in query
+98,TA_UNSUPPORTED_DO_NOT_SPLIT_ADJUST,TA_DO_NOT_SPLIT_ADJUST flag is not supported by this data source
+99,TA_UNSUPPORTED_DO_NOT_VALUE_ADJUST,TA_DO_NOT_VALUE_ADJUST flag is not supported by this data source
+100,TA_MISSING_PRICE_FOR_ADJUSTMENT,At least one price field must be requested when doing price adjustment.
+101,TA_INVALID_DATABASE_TYPE,location parameter does not refer to a supported database type.
+102,TA_UNEXPECTED_SQL_TYPE,One of the field is not of the expected SQL type.
+103,TA_UNEXPECTED_SQL_TYPE_FOR_OPEN,Open price field is not of the expected SQL type.
+104,TA_UNEXPECTED_SQL_TYPE_FOR_HIGH,High price field is not of the expected SQL type.
+105,TA_UNEXPECTED_SQL_TYPE_FOR_LOW,Low price field is not of the expected SQL type.
+106,TA_UNEXPECTED_SQL_TYPE_FOR_CLOSE,Close price field is not of the expected SQL type.
+107,TA_UNEXPECTED_SQL_TYPE_FOR_VOLUME,Volume field is not of the expected SQL type.
+108,TA_UNEXPECTED_SQL_TYPE_FOR_OI,Open interest field is not of the expected SQL type.
 700,TA_IP_NOSOCKETS,Sockets not supported
 701,TA_IP_BADHOST,Host not known
 702,TA_IP_BADSERVICE,Service or port not known
