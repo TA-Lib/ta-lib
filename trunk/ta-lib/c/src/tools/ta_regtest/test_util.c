@@ -860,6 +860,9 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
    TA_Real difference, tolerance, temp;
    unsigned int val1_int, val2_int, tempInt, periodToIgnore;
 
+   if( integerTolerance == TA_DO_NOT_COMPARE )
+      return 1; /* Don't compare, says that everything is fine */
+
    /* If the function does not have an unstable period,
     * the compared value shall be identical.
     *
@@ -871,13 +874,13 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
       return TA_REAL_EQ( val1, val2, 0.000000001 );
 
    /* In the context of the TA functions, all value
-    * below 0.000001 are considered equal to zero and
+    * below 0.00001 are considered equal to zero and
     * are considered to be equal within a reasonable range.
     * (the percentage difference might be large, but
     *  unsignificant at that level, so no tolerance
     *  check is being done).
     */
-    if( (val1 < 0.000001) && (val2 < 0.000001) )
+    if( (val1 < 0.00001) && (val2 < 0.00001) )
       return 1;
 
    /* When the function is unstable, the comparison
@@ -915,18 +918,26 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
     * The following describe the special meaning of
     * the integerTolerance:
     *
-    * Value 10   -> A tolerance of 1/10  is used.
+    * Value 10      -> A tolerance of 1/10  is used.
     *
-    * Value 100  -> A tolerance of 1/100 is used.
+    * Value 100     -> A tolerance of 1/100 is used.
     *
-    * Value 1000 -> A tolerance of 1/1000 is used.
+    * Value 1000    -> A tolerance of 1/1000 is used.
     * 
-    * Value 360  -> Useful when the output are
-    *               degrees. In that case, a fix
-    *               tolerance of 1 degree is used.
+    * Value 360     -> Useful when the output are
+    *                  degrees. In that case, a fix
+    *                  tolerance of 1 degree is used.
+    *
+    * Value TA_DO_NOT_COMPARE -> 
+    *                  Indicate that NO COMPARISON take
+    *                  place. This is useful for functions
+    *                  that cannot be compare when changing
+    *                  the range (like the accumulative
+    *                  algorithm used for TA_AD and TA_ADOSC).
     */
 
-   /* Some functions requires a longuer unstable period.
+
+   /* Some functions requires a longer unstable period.
     * These are trap here.
     */
    switch( unstId )
