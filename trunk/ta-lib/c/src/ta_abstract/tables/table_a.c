@@ -133,6 +133,30 @@ DEF_FUNCTION( APO,                         /* name */
              );
 /* APO END */
 
+/* AVGPRICE BEGIN */
+static const TA_InputParameterInfo    *TA_AVGPRICE_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_AVGPRICE_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_AVGPRICE_OptInputs[] = { NULL };
+
+DEF_FUNCTION( AVGPRICE,                   /* name */
+              TA_GroupId_PriceTransform,  /* groupId */
+              "Average Price",            /* hint */
+              NULL,                       /* helpFile */
+              TA_FUNC_FLG_OVERLAP,        /* flags */
+              NULL                        /* analysis function */
+             );
+/* AVGPRICE END */
+
 /****************************************************************************
  * Step 3 - Add your TA function to the table.
  *          Order is not important. Must be NULL terminated.
@@ -143,6 +167,7 @@ const TA_FuncDef *TA_DEF_TableA[] =
    ADD_TO_TABLE(ADXR),
    ADD_TO_TABLE(APO),
    ADD_TO_TABLE(ATR),
+   ADD_TO_TABLE(AVGPRICE),
    NULL
 };
 

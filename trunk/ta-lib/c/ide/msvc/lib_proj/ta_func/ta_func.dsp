@@ -213,6 +213,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_ATR.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_AVGPRICE.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_BBANDS.c
 # End Source File
 # Begin Source File
@@ -250,6 +254,14 @@ SOURCE=..\..\..\..\src\ta_func\ta_MAX.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_MEDPRICE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MIDPOINT.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MIDPRICE.c
 # End Source File
 # Begin Source File
 

@@ -29,6 +29,8 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_DEMA.c \ 
           ../../../../../src/ta_func/ta_EMA.c \ 
           ../../../../../src/ta_func/ta_MA.c \ 
+          ../../../../../src/ta_func/ta_MIDPRICE.c \ 
+          ../../../../../src/ta_func/ta_MIDPOINT.c \ 
           ../../../../../src/ta_func/ta_SAR.c \ 
           ../../../../../src/ta_func/ta_SMA.c \ 
           ../../../../../src/ta_func/ta_TEMA.c \ 
@@ -56,6 +58,7 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_OBV.c \ 
           ../../../../../src/ta_func/ta_STDDEV.c \ 
           ../../../../../src/ta_func/ta_VAR.c \ 
+          ../../../../../src/ta_func/ta_AVGPRICE.c \ 
           ../../../../../src/ta_func/ta_MEDPRICE.c \ 
           ../../../../../src/ta_func/ta_TYPPRICE.c \ 
           ../../../../../src/ta_func/ta_WCLPRICE.c 

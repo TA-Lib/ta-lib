@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
+ *  010802 MF   Template creation.
  *
  */
 
@@ -60,18 +60,17 @@
    #include "ta_utility.h"
 #endif
 
-int TA_MIN_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+int TA_MIDPOINT_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-
    return (optInTimePeriod_0-1);
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 /*
- * TA_MIN - Lowest value over a specified period
+ * TA_MIDPOINT - MidPoint over period
  * 
  * Input  = TA_Real
  * Output = TA_Real
@@ -84,18 +83,19 @@ int TA_MIN_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_
  * 
  */
 
-TA_RetCode TA_MIN( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
-                   TA_Integer    endIdx,
-                   const TA_Real inReal_0[],
-                   TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                   TA_Integer   *outBegIdx,
-                   TA_Integer   *outNbElement,
-                   TA_Real       outReal_0[] )
+TA_RetCode TA_MIDPOINT( TA_Libc      *libHandle,
+                        TA_Integer    startIdx,
+                        TA_Integer    endIdx,
+                        const TA_Real inReal_0[],
+                        TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                        TA_Integer   *outBegIdx,
+                        TA_Integer   *outNbElement,
+                        TA_Real       outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
-   /* Insert local variables here. */
-   TA_Real lowest, tmp;
+	/* insert local variable here */
+
+   TA_Real lowest, highest, tmp;
    TA_Integer outIdx, nbInitialElementNeeded;
    TA_Integer trailingIdx, today, i;
 
@@ -115,7 +115,7 @@ TA_RetCode TA_MIN( TA_Libc      *libHandle,
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
    if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-      optInTimePeriod_0 = 30;
+      optInTimePeriod_0 = 14;
    else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
@@ -127,6 +127,14 @@ TA_RetCode TA_MIN( TA_Libc      *libHandle,
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
+
+   /* Find the highest and lowest value of a timeserie
+    * over the period.
+    *      MIDPOINT = (Highest Value + Lowest Value)/2
+    *
+    * See MIDPRICE if the input is a price bar with a
+    * high and low timeserie.
+    */
 
    /* Identify the minimum number of price bar needed
     * to identify at least one output over the specified
@@ -158,14 +166,16 @@ TA_RetCode TA_MIN( TA_Libc      *libHandle,
    
    while( today <= endIdx )
    {
-      lowest = inReal_0[trailingIdx++];
+      lowest  = inReal_0[trailingIdx++];
+      highest = lowest;
       for( i=trailingIdx; i <= today; i++ )
       {
          tmp = inReal_0[i];
-         if( tmp < lowest) lowest= tmp;
+         if( tmp < lowest ) lowest= tmp;
+         else if( tmp > highest) highest = tmp;
       }
 
-      outReal_0[outIdx++] = lowest;
+      outReal_0[outIdx++] = (highest+lowest)/2;
       today++;
    }
 

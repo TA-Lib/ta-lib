@@ -72,6 +72,24 @@ TA_RetCode TA_MA_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
+TA_RetCode TA_MIDPRICE_FramePP( TA_Libc            *libHandle,
+                          TA_Integer          startIdx,
+                          TA_Integer          endIdx,
+                          TA_Integer         *outBegIdx,
+                          TA_Integer         *outNbElement,
+                          TA_ParamHolderPriv  in[],
+                          TA_ParamHolderPriv  optIn[],
+                          TA_ParamHolderPriv  out[] );
+
+TA_RetCode TA_MIDPOINT_FramePP( TA_Libc            *libHandle,
+                          TA_Integer          startIdx,
+                          TA_Integer          endIdx,
+                          TA_Integer         *outBegIdx,
+                          TA_Integer         *outNbElement,
+                          TA_ParamHolderPriv  in[],
+                          TA_ParamHolderPriv  optIn[],
+                          TA_ParamHolderPriv  out[] );
+
 TA_RetCode TA_SAR_FramePP( TA_Libc            *libHandle,
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
@@ -307,6 +325,15 @@ TA_RetCode TA_STDDEV_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  out[] );
 
 TA_RetCode TA_VAR_FramePP( TA_Libc            *libHandle,
+                          TA_Integer          startIdx,
+                          TA_Integer          endIdx,
+                          TA_Integer         *outBegIdx,
+                          TA_Integer         *outNbElement,
+                          TA_ParamHolderPriv  in[],
+                          TA_ParamHolderPriv  optIn[],
+                          TA_ParamHolderPriv  out[] );
+
+TA_RetCode TA_AVGPRICE_FramePP( TA_Libc            *libHandle,
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,

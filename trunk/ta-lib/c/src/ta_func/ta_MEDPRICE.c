@@ -118,7 +118,12 @@ TA_RetCode TA_MEDPRICE( TA_Libc      *libHandle,
 
    /* Insert TA function code here. */
 
-   /* Typical price = (High + Low ) / 2 */
+   /* MEDPRICE = (High + Low ) / 2 
+    * This is the high and low of the same price bar.
+    *
+    * See MIDPRICE to use instead the highest high and lowest
+    * low over multiple price bar.
+    */
 
    outIdx = 0;
 

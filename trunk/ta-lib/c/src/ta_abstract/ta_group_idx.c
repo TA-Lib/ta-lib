@@ -20,6 +20,8 @@ extern const TA_FuncDef TA_DEF_BBANDS;
 extern const TA_FuncDef TA_DEF_DEMA;
 extern const TA_FuncDef TA_DEF_EMA;
 extern const TA_FuncDef TA_DEF_MA;
+extern const TA_FuncDef TA_DEF_MIDPRICE;
+extern const TA_FuncDef TA_DEF_MIDPOINT;
 extern const TA_FuncDef TA_DEF_SAR;
 extern const TA_FuncDef TA_DEF_SMA;
 extern const TA_FuncDef TA_DEF_TEMA;
@@ -47,6 +49,7 @@ extern const TA_FuncDef TA_DEF_TRIX;
 extern const TA_FuncDef TA_DEF_OBV;
 extern const TA_FuncDef TA_DEF_STDDEV;
 extern const TA_FuncDef TA_DEF_VAR;
+extern const TA_FuncDef TA_DEF_AVGPRICE;
 extern const TA_FuncDef TA_DEF_MEDPRICE;
 extern const TA_FuncDef TA_DEF_TYPPRICE;
 extern const TA_FuncDef TA_DEF_WCLPRICE;
@@ -66,6 +69,8 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_DEMA,
 &TA_DEF_EMA,
 &TA_DEF_MA,
+&TA_DEF_MIDPRICE,
+&TA_DEF_MIDPOINT,
 &TA_DEF_SAR,
 &TA_DEF_SMA,
 &TA_DEF_TEMA,
@@ -129,6 +134,7 @@ NULL };
 #define SIZE_GROUP_10 ((sizeof(TA_PerGroupFunc_10)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_11[] = {
+&TA_DEF_AVGPRICE,
 &TA_DEF_MEDPRICE,
 &TA_DEF_TYPPRICE,
 &TA_DEF_WCLPRICE,

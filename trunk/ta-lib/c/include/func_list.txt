@@ -4,6 +4,8 @@ BBANDS      Bollinger Bands
 DEMA        Double Exponential Moving Average
 EMA         Exponential Moving Average
 MA          All Moving Average
+MIDPRICE    Midpoint Price over period
+MIDPOINT    MidPoint over period
 SAR         Parabolic SAR
 SMA         Simple Moving Average
 TEMA        Triple Exponential Moving Average
@@ -31,6 +33,7 @@ TRIX        1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 OBV         On Balance Volume
 STDDEV      Standard Deviation
 VAR         Variance
+AVGPRICE    Average Price
 MEDPRICE    Median Price
 TYPPRICE    Typical Price
 WCLPRICE    Weighted Close Price
