@@ -64,6 +64,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c &
 		..\..\..\..\..\src\ta_common\imatix\sfl\sflstr.c &
 		..\..\..\..\..\src\ta_common\imatix\sfl\sfltok.c &
 		..\..\..\..\..\src\ta_common\imatix\sfl\sfldir.c &
+		..\..\..\..\..\src\ta_common\imatix\sfl\sflfile.c &
 		..\..\..\..\..\src\ta_common\trio\trionan.c &
 		..\..\..\..\..\src\ta_common\ta_country_info.c &
 		..\..\..\..\..\src\ta_common\ta_dict.c &
@@ -217,6 +218,7 @@ OBJECTS =	..\..\..\..\..\temp\csr\ta_ascii.obj &
 		..\..\..\..\..\temp\csr\sflstr.obj &
 		..\..\..\..\..\temp\csr\sfltok.obj &
 		..\..\..\..\..\temp\csr\sfldir.obj &
+		..\..\..\..\..\temp\csr\sflfile.obj &
 		..\..\..\..\..\temp\csr\trionan.obj &
 		..\..\..\..\..\temp\csr\ta_country_info.obj &
 		..\..\..\..\..\temp\csr\ta_dict.obj &
@@ -397,6 +399,7 @@ clean:
 	-del ..\..\..\..\..\temp\csr\sflstr.obj
 	-del ..\..\..\..\..\temp\csr\sfltok.obj
 	-del ..\..\..\..\..\temp\csr\sfldir.obj
+	-del ..\..\..\..\..\temp\csr\sflfile.obj
 	-del ..\..\..\..\..\temp\csr\trionan.obj
 	-del ..\..\..\..\..\temp\csr\ta_country_info.obj
 	-del ..\..\..\..\..\temp\csr\ta_dict.obj
@@ -646,6 +649,9 @@ clean:
 
 ..\..\..\..\..\temp\csr\sfldir.obj: ..\..\..\..\..\src\ta_common\imatix\sfl\sfldir.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csr\sfldir.obj ..\..\..\..\..\src\ta_common\imatix\sfl\sfldir.c
+
+..\..\..\..\..\temp\csr\sflfile.obj: ..\..\..\..\..\src\ta_common\imatix\sfl\sflfile.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csr\sflfile.obj ..\..\..\..\..\src\ta_common\imatix\sfl\sflfile.c
 
 ..\..\..\..\..\temp\csr\trionan.obj: ..\..\..\..\..\src\ta_common\trio\trionan.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csr\trionan.obj ..\..\..\..\..\src\ta_common\trio\trionan.c
