@@ -21,6 +21,7 @@ CFG=ta_sql - Win32 Debug No Thread
 !MESSAGE "ta_sql - Win32 Debug" (based on "Win32 (x86) Console Application")
 !MESSAGE "ta_sql - Win32 Release No Thread" (based on "Win32 (x86) Console Application")
 !MESSAGE "ta_sql - Win32 Debug No Thread" (based on "Win32 (x86) Console Application")
+!MESSAGE "ta_sql - Win32 DLL Release" (based on "Win32 (x86) Console Application")
 !MESSAGE 
 
 # Begin Project
@@ -40,7 +41,7 @@ RSC=rc.exe
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "..\..\..\..\bin"
-# PROP Intermediate_Dir "..\..\..\..\temp\cmr\ta_regtest"
+# PROP Intermediate_Dir "..\..\..\..\temp\cmr\ta_sql"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
@@ -115,7 +116,7 @@ LINK32=link.exe
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "..\..\..\..\bin"
-# PROP Intermediate_Dir "..\..\..\..\temp\csd\ta_regtest"
+# PROP Intermediate_Dir "..\..\..\..\temp\csd\ta_sql"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /ZI /Od /D "_CONSOLE" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /YX /FD /GZ /c
@@ -129,6 +130,31 @@ LINK32=link.exe
 # ADD BASE LINK32 ta_libc_cmd.lib wininet.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /profile /debug /debugtype:both /machine:I386 /libpath:"..\..\..\..\lib"
 # ADD LINK32 ta_libc_csd.lib wininet.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /profile /debug /debugtype:both /machine:I386 /libpath:"..\..\..\..\lib"
 
+!ELSEIF  "$(CFG)" == "ta_sql - Win32 DLL Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "ta_sql___Win32_DLL_Release"
+# PROP BASE Intermediate_Dir "ta_sql___Win32_DLL_Release"
+# PROP BASE Ignore_Export_Lib 0
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "..\..\..\..\bin"
+# PROP Intermediate_Dir "..\..\..\..\temp\cdr\ta_sql"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /MT /W3 /O2 /I "../../../../include" /D "_CONSOLE" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /O2 /I "../../../../include" /D "_CONSOLE" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 ta_libc_cmr.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wininet.lib /nologo /subsystem:console /profile /machine:I386 /libpath:"..\..\..\..\lib"
+# ADD LINK32 ta_libc_cdr.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wininet.lib /nologo /subsystem:console /profile /machine:I386 /libpath:"..\..\..\..\lib"
+
 !ENDIF 
 
 # Begin Target
@@ -137,6 +163,7 @@ LINK32=link.exe
 # Name "ta_sql - Win32 Debug"
 # Name "ta_sql - Win32 Release No Thread"
 # Name "ta_sql - Win32 Debug No Thread"
+# Name "ta_sql - Win32 DLL Release"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -174,6 +201,11 @@ SOURCE=..\..\..\..\lib\ta_libc_csd.lib
 
 !ELSEIF  "$(CFG)" == "ta_sql - Win32 Debug No Thread"
 
+!ELSEIF  "$(CFG)" == "ta_sql - Win32 DLL Release"
+
+# PROP BASE Exclude_From_Build 1
+# PROP Exclude_From_Build 1
+
 !ENDIF 
 
 # End Source File
@@ -192,6 +224,10 @@ SOURCE=..\..\..\..\lib\ta_libc_cmr.lib
 # PROP Exclude_From_Build 1
 
 !ELSEIF  "$(CFG)" == "ta_sql - Win32 Debug No Thread"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "ta_sql - Win32 DLL Release"
 
 # PROP Exclude_From_Build 1
 
@@ -216,6 +252,11 @@ SOURCE=..\..\..\..\lib\ta_libc_csr.lib
 
 # PROP Exclude_From_Build 1
 
+!ELSEIF  "$(CFG)" == "ta_sql - Win32 DLL Release"
+
+# PROP BASE Exclude_From_Build 1
+# PROP Exclude_From_Build 1
+
 !ENDIF 
 
 # End Source File
@@ -236,6 +277,36 @@ SOURCE=..\..\..\..\lib\ta_libc_cmd.lib
 !ELSEIF  "$(CFG)" == "ta_sql - Win32 Debug No Thread"
 
 # PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "ta_sql - Win32 DLL Release"
+
+# PROP BASE Exclude_From_Build 1
+# PROP Exclude_From_Build 1
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\lib\ta_libc_cdr.lib
+
+!IF  "$(CFG)" == "ta_sql - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "ta_sql - Win32 Debug"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "ta_sql - Win32 Release No Thread"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "ta_sql - Win32 Debug No Thread"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "ta_sql - Win32 DLL Release"
 
 !ENDIF 
 
