@@ -782,7 +782,8 @@ TA_RetCode TA_TradeReportAlloc( TA_PM *pm, TA_TradeReport **tradeReportAllocated
       startDate = &pmPriv->startDate;
       endDate   = &pmPriv->endDate;
 
-      tradeReport->trades = tradePtr = (TA_Trade **)TA_Malloc( nbTrade*sizeof(const TA_Trade *));
+      tradePtr = (TA_Trade **)TA_Malloc( nbTrade*sizeof(const TA_Trade *));
+      tradeReport->trades = (const TA_Trade **)tradePtr;
 
       if( !tradePtr )
       {

@@ -178,27 +178,27 @@ static TA_Instrument id4_2;
 
 /* 5 transactions, same intsrument, same year. */
 static TA_Transaction table1_1[] = {
-   {TA_LONG_ENTRY, &id2_1, {20020101,0},  150, 10.00},
-   {TA_LONG_ENTRY, &id2_1, {20020102,0},   50, 10.00},
-   {TA_LONG_EXIT,  &id2_1, {20020103,0},  100, 12.00},
-   {TA_LONG_ENTRY, &id2_1, {20020104,0},  200, 15.00},
-   {TA_LONG_EXIT,  &id2_1, {20020108,0},  200, 14.00},
-   {TA_LONG_EXIT,  &id2_1, {20020109,0},  100, 13.00},
-   {-1,(TA_Instrument *)NULL, {0,0}, 0, 0.00}
+   {TA_LONG_ENTRY, &id2_1, {20020101,0},  150, 10.00, 0, 0, 0 },
+   {TA_LONG_ENTRY, &id2_1, {20020102,0},   50, 10.00, 0, 0, 0 },
+   {TA_LONG_EXIT,  &id2_1, {20020103,0},  100, 12.00, 0, 0, 0 },
+   {TA_LONG_ENTRY, &id2_1, {20020104,0},  200, 15.00, 0, 0, 0 },
+   {TA_LONG_EXIT,  &id2_1, {20020108,0},  200, 14.00, 0, 0, 0 },
+   {TA_LONG_EXIT,  &id2_1, {20020109,0},  100, 13.00, 0, 0, 0 },
+   {-1,(TA_Instrument *)NULL, {0,0}, 0, 0.00, 0, 0, 0}
 };
 
 /* 9 transactions, 3 instruments, all on the same day.  */
 static TA_Transaction table2_1[] = {
-   {TA_LONG_ENTRY, &id1_1, {20020101,0},  101, 11.00},
-   {TA_LONG_ENTRY, &id1_2, {20020101,0},  102, 12.00},
-   {TA_LONG_EXIT,  &id1_1, {20020101,0},  100, 14.00},
-   {TA_LONG_ENTRY, &id2_1, {20020101,0},  103, 13.00},
-   {TA_LONG_EXIT,  &id1_2, {20020101,0},   49, 11.00},
-   {TA_LONG_EXIT,  &id2_1, {20020101,0},  103, 16.00},
-   {TA_LONG_EXIT,  &id1_2, {20020101,0},   51, 11.50},
-   {TA_LONG_EXIT,  &id1_1, {20020101,0},    1, 17.00},
-   {TA_LONG_EXIT,  &id1_2, {20020101,0},    2, 12.00},
-   {-1,(TA_Instrument *)NULL, {0,0}, 0, 0.00}
+   {TA_LONG_ENTRY, &id1_1, {20020101,0},  101, 11.00, 0, 0, 0 },
+   {TA_LONG_ENTRY, &id1_2, {20020101,0},  102, 12.00, 0, 0, 0 },
+   {TA_LONG_EXIT,  &id1_1, {20020101,0},  100, 14.00, 0, 0, 0 },
+   {TA_LONG_ENTRY, &id2_1, {20020101,0},  103, 13.00, 0, 0, 0 },
+   {TA_LONG_EXIT,  &id1_2, {20020101,0},   49, 11.00, 0, 0, 0 },
+   {TA_LONG_EXIT,  &id2_1, {20020101,0},  103, 16.00, 0, 0, 0 },
+   {TA_LONG_EXIT,  &id1_2, {20020101,0},   51, 11.50, 0, 0, 0 },
+   {TA_LONG_EXIT,  &id1_1, {20020101,0},    1, 17.00, 0, 0, 0 },
+   {TA_LONG_EXIT,  &id1_2, {20020101,0},    2, 12.00, 0, 0, 0 },
+   {-1,(TA_Instrument *)NULL, {0,0}, 0, 0.00, 0, 0, 0}
 };
 
 /* 9 transactions, 3 instruments, on 2 days. 
@@ -206,45 +206,45 @@ static TA_Transaction table2_1[] = {
  */
 
 static TA_Transaction table2_2[] = {
-   {TA_LONG_ENTRY,  &id3_1, {20020101,0},  101, 11.00},
-   {TA_LONG_ENTRY,  &id3_2, {20020101,0},  102, 12.00},
-   {TA_LONG_EXIT,   &id3_1, {20021231,0},  100, 14.00},
-   {TA_LONG_ENTRY,  &id4_1, {20020101,0},  103, 13.00},
-   {TA_LONG_EXIT,   &id3_2, {20021231,0},   49, 11.00},
-   {TA_LONG_EXIT,   &id4_1, {20021231,0},  103, 16.00},
-   {TA_LONG_EXIT,   &id3_2, {20021231,0},   51, 11.50},
-   {TA_LONG_EXIT,   &id3_1, {20021231,0},    1, 17.00},
-   {TA_LONG_EXIT,   &id3_2, {20021231,0},    2, 12.00},
-   {-1,(TA_Instrument *)NULL, {0,0}, 0, 0.00}
+   {TA_LONG_ENTRY,  &id3_1, {20020101,0},  101, 11.00, 0, 0, 0 },
+   {TA_LONG_ENTRY,  &id3_2, {20020101,0},  102, 12.00, 0, 0, 0 },
+   {TA_LONG_EXIT,   &id3_1, {20021231,0},  100, 14.00, 0, 0, 0 },
+   {TA_LONG_ENTRY,  &id4_1, {20020101,0},  103, 13.00, 0, 0, 0 },
+   {TA_LONG_EXIT,   &id3_2, {20021231,0},   49, 11.00, 0, 0, 0 },
+   {TA_LONG_EXIT,   &id4_1, {20021231,0},  103, 16.00, 0, 0, 0 },
+   {TA_LONG_EXIT,   &id3_2, {20021231,0},   51, 11.50, 0, 0, 0 },
+   {TA_LONG_EXIT,   &id3_1, {20021231,0},    1, 17.00, 0, 0, 0 },
+   {TA_LONG_EXIT,   &id3_2, {20021231,0},    2, 12.00, 0, 0, 0 },
+   {-1,(TA_Instrument *)NULL, {0,0}, 0, 0.00, 0, 0, 0}
 };
 
 static TA_Transaction table2_3[] = {
-   {TA_LONG_ENTRY,  &id3_1, {20020101,0},  100, 11.00},
-   {TA_LONG_ENTRY,  &id3_1, {20020101,0},    1, 11.00},
-   {TA_LONG_ENTRY,  &id3_2, {20020101,0},   49, 12.00},
-   {TA_LONG_ENTRY,  &id3_2, {20020101,0},   51, 12.00},
-   {TA_LONG_ENTRY,  &id3_2, {20020101,0},    2, 12.00},
-   {TA_LONG_EXIT,   &id3_1, {20021231,0},  100, 14.00},
-   {TA_LONG_ENTRY,  &id4_1, {20020101,0},  103, 13.00},
-   {TA_LONG_EXIT,   &id3_2, {20021231,0},   49, 11.00},
-   {TA_LONG_EXIT,   &id4_1, {20021231,0},  103, 16.00},
-   {TA_LONG_EXIT,   &id3_2, {20021231,0},   51, 11.50},
-   {TA_LONG_EXIT,   &id3_1, {20021231,0},    1, 17.00},
-   {TA_LONG_EXIT,   &id3_2, {20021231,0},    2, 12.00},
-   {-1,(TA_Instrument *)NULL, {0,0}, 0, 0.00}
+   {TA_LONG_ENTRY,  &id3_1, {20020101,0},  100, 11.00, 0, 0, 0 },
+   {TA_LONG_ENTRY,  &id3_1, {20020101,0},    1, 11.00, 0, 0, 0 },
+   {TA_LONG_ENTRY,  &id3_2, {20020101,0},   49, 12.00, 0, 0, 0 },
+   {TA_LONG_ENTRY,  &id3_2, {20020101,0},   51, 12.00, 0, 0, 0 },
+   {TA_LONG_ENTRY,  &id3_2, {20020101,0},    2, 12.00, 0, 0, 0 },
+   {TA_LONG_EXIT,   &id3_1, {20021231,0},  100, 14.00, 0, 0, 0 },
+   {TA_LONG_ENTRY,  &id4_1, {20020101,0},  103, 13.00, 0, 0, 0 },
+   {TA_LONG_EXIT,   &id3_2, {20021231,0},   49, 11.00, 0, 0, 0 },
+   {TA_LONG_EXIT,   &id4_1, {20021231,0},  103, 16.00, 0, 0, 0 },
+   {TA_LONG_EXIT,   &id3_2, {20021231,0},   51, 11.50, 0, 0, 0 },
+   {TA_LONG_EXIT,   &id3_1, {20021231,0},    1, 17.00, 0, 0, 0 },
+   {TA_LONG_EXIT,   &id3_2, {20021231,0},    2, 12.00, 0, 0, 0 },
+   {-1,(TA_Instrument *)NULL, {0,0}, 0, 0.00, 0, 0, 0}
 };
 
 /* 5 transactions, short trades. */
 static TA_Transaction table3_1[] = {
-   {TA_SHORT_ENTRY, &id1_1, {20021231,0},  3, 10.00},
-   {TA_SHORT_EXIT,  &id1_1, {20021231,0},  1,  9.00},
-   {TA_SHORT_EXIT,  &id1_1, {20021231,0},  2,  9.00},
-   {TA_SHORT_ENTRY, &id1_1, {20021231,0},  3, 10.00},
-   {TA_SHORT_EXIT,  &id1_1, {20021231,0},  2,  9.00},
-   {TA_SHORT_EXIT,  &id1_1, {20021231,0},  1,  9.00},
-   {TA_SHORT_ENTRY, &id1_1, {20020101,0},  3, 10.00},
-   {TA_SHORT_EXIT,  &id1_1, {20021231,0},  3,  9.00},
-   {-1,(TA_Instrument *)NULL, {0,0}, 0, 0.00}
+   {TA_SHORT_ENTRY, &id1_1, {20021231,0},  3, 10.00, 0, 0, 0 },
+   {TA_SHORT_EXIT,  &id1_1, {20021231,0},  1,  9.00, 0, 0, 0 },
+   {TA_SHORT_EXIT,  &id1_1, {20021231,0},  2,  9.00, 0, 0, 0 },
+   {TA_SHORT_ENTRY, &id1_1, {20021231,0},  3, 10.00, 0, 0, 0 },
+   {TA_SHORT_EXIT,  &id1_1, {20021231,0},  2,  9.00, 0, 0, 0 },
+   {TA_SHORT_EXIT,  &id1_1, {20021231,0},  1,  9.00, 0, 0, 0 },
+   {TA_SHORT_ENTRY, &id1_1, {20020101,0},  3, 10.00, 0, 0, 0 },
+   {TA_SHORT_EXIT,  &id1_1, {20021231,0},  3,  9.00, 0, 0, 0 },
+   {-1,(TA_Instrument *)NULL, {0,0}, 0, 0.00, 0, 0, 0}
 };
 
 /* List of TA_PMValueId to check */
