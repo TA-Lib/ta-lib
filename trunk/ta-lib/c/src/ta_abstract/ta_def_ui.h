@@ -90,6 +90,8 @@ extern const TA_OptInputParameterInfo TA_DEF_UI_Slow_Period;
 
 extern const TA_OptInputParameterInfo TA_DEF_UI_NbDeviation;
 
+extern const TA_OptInputParameterInfo TA_DEF_UI_Penetration_30;
+
 /* Re-usable ranges. */
 extern const TA_IntegerRange TA_DEF_TimePeriod_Positive;
 extern const TA_IntegerRange TA_DEF_TimePeriod_Positive_Minimum2;
