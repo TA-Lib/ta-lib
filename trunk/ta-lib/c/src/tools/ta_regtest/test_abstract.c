@@ -280,6 +280,9 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
    unsigned int i;
    int j;
    int outBegIdx, outNbElement;
+   double nanValue;
+
+   nanValue = trio_nan();
 
    retCode = TA_GetFuncHandle( funcName, &handle );
    if( retCode != TA_SUCCESS )
@@ -325,7 +328,9 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 	  switch(outputInfo->type)
 	  {
 	  case TA_Output_Real:
-	     TA_SetOutputParamRealPtr(paramHolder,i,&output[i][0]);
+	     TA_SetOutputParamRealPtr(paramHolder,i,&output[i][0]);         
+         for( j=0; j < 2000; j++ )
+            output[i][j] = nanValue;
 		 break;
 	  case TA_Output_Integer:
 	     TA_SetOutputParamIntegerPtr(paramHolder,i,&output_int[i][0]);
@@ -333,7 +338,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 	  }
    }
 
-   retCode = TA_CallFunc(paramHolder,0,size,&outBegIdx,&outNbElement);
+   retCode = TA_CallFunc(paramHolder,0,size-1,&outBegIdx,&outNbElement);
    if( retCode != TA_SUCCESS )
    {
       printf( "TA_CallFunc() failed zero data test [%d]\n", retCode );
