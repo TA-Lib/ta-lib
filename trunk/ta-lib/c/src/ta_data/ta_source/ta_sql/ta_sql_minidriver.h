@@ -56,23 +56,25 @@ typedef struct
    TA_RetCode (*getColumnName)(void *query_result, int column, const char **name);
 
    /* Get string value of the field in the given column at the given row
-    * The caller assumes that the following columns are char columns:
+    * The caller assumes that the following columns are char/varchar columns:
     *       TA_SQL_CATEGORY_COLUMN
     *       TA_SQL_SYMBOL_COLUMN
     *       TA_SQL_DATE_COLUMN
     *       TA_SQL_TIME_COLUMN
-    * Last parameter is output, string allocated by TA_Malloc
-    * It is the caller's responsibility to release it
+    * Last parameter is output, string valid as long as no nex row accessed 
+    * or query_result is not released
+    * Rows have to be accessed sequentially
     */
-   TA_RetCode (*getRowString)(void *query_reslut, int row, int column, char **value);
+   TA_RetCode (*getRowString)(void *query_reslut, int row, int column, const char **value);
 
    /* Get floating point value of the field in the given column at the given row
-    * The caller assumes that the following columns are decimal columns:
+    * The caller assumes that the following columns are decimal/numeric columns:
     *       TA_SQL_OPEN_COLUMN
     *       TA_SQL_HIGH_COLUMN
     *       TA_SQL_LOW_COLUMN
     *       TA_SQL_CLOSE_COLUMN
     * Last parameter is output
+    * Rows have to be accessed sequentially
     */
    TA_RetCode (*getRowReal)(void *query_reslut, int row, int column, TA_Real *value);
 
@@ -81,6 +83,7 @@ typedef struct
     *       TA_SQL_VOLUME_COLUMN
     *       TA_SQL_OI_COLUMN
     * Last parameter is output
+    * Rows have to be accessed sequentially
     */
    TA_RetCode (*getRowInteger)(void *query_reslut, int row, int column, TA_Integer *value);
    
