@@ -1181,7 +1181,6 @@ TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *param,
 TA_RetCode TA_GetLookback( const TA_ParamHolder *param, TA_Integer *lookback )
 {
    TA_PROLOG
-   TA_RetCode retCode;
    const TA_ParamHolderPriv *paramHolderPriv;
 
    const TA_FuncDef *funcDef;

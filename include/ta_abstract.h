@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -523,6 +523,14 @@ TA_RetCode TA_SetOutputParamIntegerPtr( TA_ParamHolder *params,
 TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *params,
                                      unsigned int paramIndex,
                                      TA_Real        *out );
+
+/* Once the optional parameter are set, it is possible to 
+ * get the lookback for this call. This information can be
+ * used to calculate the optimal size for the output buffers.
+ * (See the documentation for method to calculate the output size).
+ */
+TA_RetCode TA_GetLookback( const TA_ParamHolder *params,
+                           TA_Integer *lookback );
 
 /* Finally, call the TA function with the parameters. 
  *
