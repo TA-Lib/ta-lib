@@ -24,15 +24,17 @@
  *
  * (function can be found in "ta_history_builder.c")
  */
-TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
-                              TA_UDB_Symbol       *symbolData,
+TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
+                              TA_UDB_Symbol *symbolData,
                               TA_Period            period,
                               const TA_Timestamp  *start,
                               const TA_Timestamp  *end,
                               TA_Field             fieldToAlloc,
+                              TA_HistoryFlag       flags,      
                               TA_History         **history ); 
 
 /* Validate the integrity of a TA_History.
+ *
  * This function attempts to be self-content as much as possible to avoid
  * dependency on the "rest of the code" that we wish to monitor.
  *
@@ -45,13 +47,13 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
  *
  * (function can be found in "ta_historycheck.c")
  */
-TA_RetCode TA_HistoryCheckInternal( TA_Period           expectedPeriod,
-                                    const TA_Timestamp *expectedStart,
-                                    const TA_Timestamp *expectedEnd,
-                                    TA_Field            fieldToCheck,
-                                    const TA_History   *history,
-                                    unsigned int       *faultyIndex,
-                                    unsigned int       *faultyField );
+TA_RetCode TA_HistoryCheck( TA_Period           expectedPeriod,
+                            const TA_Timestamp *expectedStart,
+                            const TA_Timestamp *expectedEnd,
+                            TA_Field            fieldToCheck,
+                            const TA_History   *history,
+                            unsigned int       *faultyIndex,
+                            unsigned int       *faultyField );
 
 /* Allows to allocate an history with a different (longer) timeframe.
  * On success a new allocated history is returned through 'newHistory'.
