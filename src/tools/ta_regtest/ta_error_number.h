@@ -214,6 +214,19 @@ typedef enum
   TA_CIRC_BUFF_FAIL_5 = 705,
   TA_CIRC_BUFF_FAIL_6 = 706,
 
+
+  /* Error code related to CSI data source tests. */
+  TA_CSI_ADDDATASOURCE_FAILED    = 800,
+  TA_CSI_HISTORYALLOC_1_FAILED   = 801,
+  TA_CSI_VALUE_1_FAILED          = 802,
+  TA_CSI_FIELD_MISSING_1         = 803,
+  TA_CSI_HISTORYFREE_FAILED      = 804,
+  TA_CSI_HISTORYALLOC_3_FAILED   = 805,
+  TA_CSI_CRS_HISTORYALLOC_FAILED = 806,
+  TA_CSI_CRS_NBBARSBAD           = 807,
+  TA_CSI_CRS_PRICEBARBAD         = 808,
+ 
+
   TA_LAST_VALID_ERROR = 0xFFFF
 } ErrorNumber;
 #endif
