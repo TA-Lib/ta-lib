@@ -20,15 +20,15 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-/* This files defined the interface to functions that must be adapted
+/* This file defines the interface to functions that must be adapted
  * to the particular OS on which the library is running.
  *
- * This allows TA-LIB to make abstraction of the Operating System when
- * using files, directory, thread, semaphore etc...
+ * This allows TA-LIB to abstract the Operating System when using
+ * files, directory, thread, semaphore etc...
  *
- * (There is no intent to make that abstraction looks like a "Swiss knife".
- *  Only the functionality needed in the context of the TA-LIB is going to
- *  be implemented).
+ * There is no intent to make that abstraction do a complete and perfect
+ * abstracation. Only the functionality needed in the context of TA-LIB
+ * is going to be implemented.
  */
 
 /* Get the list of files/directories in a certain directory.
@@ -62,7 +62,7 @@ int TA_WildASCII( void );
 /* Return separator used to build path. */
 int TA_SeparatorASCII( void );
 
-/* REplace the separator depending of the platform. */
+/* Replace the separator depending of the platform. */
 void TA_AdjustPath( char *path );
 
 /* Return some information system specific. */
@@ -217,7 +217,7 @@ TA_RetCode TA_FileSeqOpenFromStream( TA_Stream *stream, TA_FileHandle **handle )
  * Example 3:  output to a file only
  *     TA_PrintfVar outp;
  *     memset( outp, 0, sizeof(outp) );
- *     outp = fopen( ... );
+ *     outp.file = fopen( ... );
  *     TA_Printf( outp, ... );
  *
  */
