@@ -125,24 +125,27 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_SMA_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_TEMA_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_WMA_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_ATR_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_TRANGE_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_ADX_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_ADXR_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_APO_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_CCI_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_DX_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_MACD_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_MACDEXT_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_MACDFIX_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_MINUS_DI_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_MINUS_DM_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_MOM_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_PPO_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_PLUS_DI_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_PLUS_DM_frame.c \
-		..\..\..\..\..\src\ta_abstract\frames\ta_RSI_frame.c \
-		..\..\..\..\..\src\ta_abstract\frames\ta_ATR_frame.c \
-		..\..\..\..\..\src\ta_abstract\frames\ta_TRANGE_frame.c \
-		..\..\..\..\..\src\ta_abstract\frames\ta_CCI_frame.c \
-		..\..\..\..\..\src\ta_abstract\frames\ta_MOM_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_ROC_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_ROCP_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_ROCR_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_ROCR100_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_RSI_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_STOCH_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_TRIX_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_OBV_frame.c \
@@ -165,24 +168,27 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_SMA.c \
 		..\..\..\..\..\src\ta_func\ta_TEMA.c \
 		..\..\..\..\..\src\ta_func\ta_WMA.c \
+		..\..\..\..\..\src\ta_func\ta_ATR.c \
+		..\..\..\..\..\src\ta_func\ta_TRANGE.c \
 		..\..\..\..\..\src\ta_func\ta_ADX.c \
 		..\..\..\..\..\src\ta_func\ta_ADXR.c \
 		..\..\..\..\..\src\ta_func\ta_APO.c \
+		..\..\..\..\..\src\ta_func\ta_CCI.c \
 		..\..\..\..\..\src\ta_func\ta_DX.c \
 		..\..\..\..\..\src\ta_func\ta_MACD.c \
+		..\..\..\..\..\src\ta_func\ta_MACDEXT.c \
 		..\..\..\..\..\src\ta_func\ta_MACDFIX.c \
 		..\..\..\..\..\src\ta_func\ta_MINUS_DI.c \
 		..\..\..\..\..\src\ta_func\ta_MINUS_DM.c \
+		..\..\..\..\..\src\ta_func\ta_MOM.c \
 		..\..\..\..\..\src\ta_func\ta_PPO.c \
 		..\..\..\..\..\src\ta_func\ta_PLUS_DI.c \
 		..\..\..\..\..\src\ta_func\ta_PLUS_DM.c \
-		..\..\..\..\..\src\ta_func\ta_RSI.c \
-		..\..\..\..\..\src\ta_func\ta_ATR.c \
-		..\..\..\..\..\src\ta_func\ta_TRANGE.c \
-		..\..\..\..\..\src\ta_func\ta_CCI.c \
-		..\..\..\..\..\src\ta_func\ta_MOM.c \
 		..\..\..\..\..\src\ta_func\ta_ROC.c \
+		..\..\..\..\..\src\ta_func\ta_ROCP.c \
 		..\..\..\..\..\src\ta_func\ta_ROCR.c \
+		..\..\..\..\..\src\ta_func\ta_ROCR100.c \
+		..\..\..\..\..\src\ta_func\ta_RSI.c \
 		..\..\..\..\..\src\ta_func\ta_STOCH.c \
 		..\..\..\..\..\src\ta_func\ta_TRIX.c \
 		..\..\..\..\..\src\ta_func\ta_OBV.c \
@@ -297,24 +303,27 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_SMA_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_TEMA_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_WMA_frame.obj \
+		..\..\..\..\..\temp\cmr\ta_ATR_frame.obj \
+		..\..\..\..\..\temp\cmr\ta_TRANGE_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_ADX_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_ADXR_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_APO_frame.obj \
+		..\..\..\..\..\temp\cmr\ta_CCI_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_DX_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_MACD_frame.obj \
+		..\..\..\..\..\temp\cmr\ta_MACDEXT_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_MACDFIX_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_MINUS_DI_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_MINUS_DM_frame.obj \
+		..\..\..\..\..\temp\cmr\ta_MOM_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_PPO_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_PLUS_DI_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_PLUS_DM_frame.obj \
-		..\..\..\..\..\temp\cmr\ta_RSI_frame.obj \
-		..\..\..\..\..\temp\cmr\ta_ATR_frame.obj \
-		..\..\..\..\..\temp\cmr\ta_TRANGE_frame.obj \
-		..\..\..\..\..\temp\cmr\ta_CCI_frame.obj \
-		..\..\..\..\..\temp\cmr\ta_MOM_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_ROC_frame.obj \
+		..\..\..\..\..\temp\cmr\ta_ROCP_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_ROCR_frame.obj \
+		..\..\..\..\..\temp\cmr\ta_ROCR100_frame.obj \
+		..\..\..\..\..\temp\cmr\ta_RSI_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_STOCH_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_TRIX_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_OBV_frame.obj \
@@ -337,24 +346,27 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_SMA.obj \
 		..\..\..\..\..\temp\cmr\ta_TEMA.obj \
 		..\..\..\..\..\temp\cmr\ta_WMA.obj \
+		..\..\..\..\..\temp\cmr\ta_ATR.obj \
+		..\..\..\..\..\temp\cmr\ta_TRANGE.obj \
 		..\..\..\..\..\temp\cmr\ta_ADX.obj \
 		..\..\..\..\..\temp\cmr\ta_ADXR.obj \
 		..\..\..\..\..\temp\cmr\ta_APO.obj \
+		..\..\..\..\..\temp\cmr\ta_CCI.obj \
 		..\..\..\..\..\temp\cmr\ta_DX.obj \
 		..\..\..\..\..\temp\cmr\ta_MACD.obj \
+		..\..\..\..\..\temp\cmr\ta_MACDEXT.obj \
 		..\..\..\..\..\temp\cmr\ta_MACDFIX.obj \
 		..\..\..\..\..\temp\cmr\ta_MINUS_DI.obj \
 		..\..\..\..\..\temp\cmr\ta_MINUS_DM.obj \
+		..\..\..\..\..\temp\cmr\ta_MOM.obj \
 		..\..\..\..\..\temp\cmr\ta_PPO.obj \
 		..\..\..\..\..\temp\cmr\ta_PLUS_DI.obj \
 		..\..\..\..\..\temp\cmr\ta_PLUS_DM.obj \
-		..\..\..\..\..\temp\cmr\ta_RSI.obj \
-		..\..\..\..\..\temp\cmr\ta_ATR.obj \
-		..\..\..\..\..\temp\cmr\ta_TRANGE.obj \
-		..\..\..\..\..\temp\cmr\ta_CCI.obj \
-		..\..\..\..\..\temp\cmr\ta_MOM.obj \
 		..\..\..\..\..\temp\cmr\ta_ROC.obj \
+		..\..\..\..\..\temp\cmr\ta_ROCP.obj \
 		..\..\..\..\..\temp\cmr\ta_ROCR.obj \
+		..\..\..\..\..\temp\cmr\ta_ROCR100.obj \
+		..\..\..\..\..\temp\cmr\ta_RSI.obj \
 		..\..\..\..\..\temp\cmr\ta_STOCH.obj \
 		..\..\..\..\..\temp\cmr\ta_TRIX.obj \
 		..\..\..\..\..\temp\cmr\ta_OBV.obj \
@@ -501,24 +513,27 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_SMA_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_TEMA_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_WMA_frame.obj \
++..\..\..\..\..\temp\cmr\ta_ATR_frame.obj \
++..\..\..\..\..\temp\cmr\ta_TRANGE_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_ADX_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_ADXR_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_APO_frame.obj \
++..\..\..\..\..\temp\cmr\ta_CCI_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_DX_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_MACD_frame.obj \
++..\..\..\..\..\temp\cmr\ta_MACDEXT_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_MACDFIX_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_MINUS_DI_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_MINUS_DM_frame.obj \
++..\..\..\..\..\temp\cmr\ta_MOM_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_PPO_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_PLUS_DI_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_PLUS_DM_frame.obj \
-+..\..\..\..\..\temp\cmr\ta_RSI_frame.obj \
-+..\..\..\..\..\temp\cmr\ta_ATR_frame.obj \
-+..\..\..\..\..\temp\cmr\ta_TRANGE_frame.obj \
-+..\..\..\..\..\temp\cmr\ta_CCI_frame.obj \
-+..\..\..\..\..\temp\cmr\ta_MOM_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_ROC_frame.obj \
++..\..\..\..\..\temp\cmr\ta_ROCP_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_ROCR_frame.obj \
++..\..\..\..\..\temp\cmr\ta_ROCR100_frame.obj \
++..\..\..\..\..\temp\cmr\ta_RSI_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_STOCH_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_TRIX_frame.obj \
 +..\..\..\..\..\temp\cmr\ta_OBV_frame.obj \
@@ -541,24 +556,27 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_SMA.obj \
 +..\..\..\..\..\temp\cmr\ta_TEMA.obj \
 +..\..\..\..\..\temp\cmr\ta_WMA.obj \
++..\..\..\..\..\temp\cmr\ta_ATR.obj \
++..\..\..\..\..\temp\cmr\ta_TRANGE.obj \
 +..\..\..\..\..\temp\cmr\ta_ADX.obj \
 +..\..\..\..\..\temp\cmr\ta_ADXR.obj \
 +..\..\..\..\..\temp\cmr\ta_APO.obj \
++..\..\..\..\..\temp\cmr\ta_CCI.obj \
 +..\..\..\..\..\temp\cmr\ta_DX.obj \
 +..\..\..\..\..\temp\cmr\ta_MACD.obj \
++..\..\..\..\..\temp\cmr\ta_MACDEXT.obj \
 +..\..\..\..\..\temp\cmr\ta_MACDFIX.obj \
 +..\..\..\..\..\temp\cmr\ta_MINUS_DI.obj \
 +..\..\..\..\..\temp\cmr\ta_MINUS_DM.obj \
++..\..\..\..\..\temp\cmr\ta_MOM.obj \
 +..\..\..\..\..\temp\cmr\ta_PPO.obj \
 +..\..\..\..\..\temp\cmr\ta_PLUS_DI.obj \
 +..\..\..\..\..\temp\cmr\ta_PLUS_DM.obj \
-+..\..\..\..\..\temp\cmr\ta_RSI.obj \
-+..\..\..\..\..\temp\cmr\ta_ATR.obj \
-+..\..\..\..\..\temp\cmr\ta_TRANGE.obj \
-+..\..\..\..\..\temp\cmr\ta_CCI.obj \
-+..\..\..\..\..\temp\cmr\ta_MOM.obj \
 +..\..\..\..\..\temp\cmr\ta_ROC.obj \
++..\..\..\..\..\temp\cmr\ta_ROCP.obj \
 +..\..\..\..\..\temp\cmr\ta_ROCR.obj \
++..\..\..\..\..\temp\cmr\ta_ROCR100.obj \
++..\..\..\..\..\temp\cmr\ta_RSI.obj \
 +..\..\..\..\..\temp\cmr\ta_STOCH.obj \
 +..\..\..\..\..\temp\cmr\ta_TRIX.obj \
 +..\..\..\..\..\temp\cmr\ta_OBV.obj \
@@ -687,24 +705,27 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_SMA_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_TEMA_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_WMA_frame.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ATR_frame.obj
+	-del ..\..\..\..\..\temp\cmr\ta_TRANGE_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ADX_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ADXR_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_APO_frame.obj
+	-del ..\..\..\..\..\temp\cmr\ta_CCI_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_DX_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MACD_frame.obj
+	-del ..\..\..\..\..\temp\cmr\ta_MACDEXT_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MACDFIX_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MINUS_DI_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MINUS_DM_frame.obj
+	-del ..\..\..\..\..\temp\cmr\ta_MOM_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_PPO_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_PLUS_DI_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_PLUS_DM_frame.obj
-	-del ..\..\..\..\..\temp\cmr\ta_RSI_frame.obj
-	-del ..\..\..\..\..\temp\cmr\ta_ATR_frame.obj
-	-del ..\..\..\..\..\temp\cmr\ta_TRANGE_frame.obj
-	-del ..\..\..\..\..\temp\cmr\ta_CCI_frame.obj
-	-del ..\..\..\..\..\temp\cmr\ta_MOM_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ROC_frame.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ROCP_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ROCR_frame.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ROCR100_frame.obj
+	-del ..\..\..\..\..\temp\cmr\ta_RSI_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_STOCH_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_TRIX_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_OBV_frame.obj
@@ -727,24 +748,27 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_SMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_TEMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_WMA.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ATR.obj
+	-del ..\..\..\..\..\temp\cmr\ta_TRANGE.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ADX.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ADXR.obj
 	-del ..\..\..\..\..\temp\cmr\ta_APO.obj
+	-del ..\..\..\..\..\temp\cmr\ta_CCI.obj
 	-del ..\..\..\..\..\temp\cmr\ta_DX.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MACD.obj
+	-del ..\..\..\..\..\temp\cmr\ta_MACDEXT.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MACDFIX.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MINUS_DI.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MINUS_DM.obj
+	-del ..\..\..\..\..\temp\cmr\ta_MOM.obj
 	-del ..\..\..\..\..\temp\cmr\ta_PPO.obj
 	-del ..\..\..\..\..\temp\cmr\ta_PLUS_DI.obj
 	-del ..\..\..\..\..\temp\cmr\ta_PLUS_DM.obj
-	-del ..\..\..\..\..\temp\cmr\ta_RSI.obj
-	-del ..\..\..\..\..\temp\cmr\ta_ATR.obj
-	-del ..\..\..\..\..\temp\cmr\ta_TRANGE.obj
-	-del ..\..\..\..\..\temp\cmr\ta_CCI.obj
-	-del ..\..\..\..\..\temp\cmr\ta_MOM.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ROC.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ROCP.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ROCR.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ROCR100.obj
+	-del ..\..\..\..\..\temp\cmr\ta_RSI.obj
 	-del ..\..\..\..\..\temp\cmr\ta_STOCH.obj
 	-del ..\..\..\..\..\temp\cmr\ta_TRIX.obj
 	-del ..\..\..\..\..\temp\cmr\ta_OBV.obj
@@ -1067,6 +1091,12 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_WMA_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_WMA_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_WMA_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_WMA_frame.c
 
+..\..\..\..\..\temp\cmr\ta_ATR_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_ATR_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ATR_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_ATR_frame.c
+
+..\..\..\..\..\temp\cmr\ta_TRANGE_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_TRANGE_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_TRANGE_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_TRANGE_frame.c
+
 ..\..\..\..\..\temp\cmr\ta_ADX_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_ADX_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ADX_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_ADX_frame.c
 
@@ -1076,11 +1106,17 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_APO_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_APO_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_APO_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_APO_frame.c
 
+..\..\..\..\..\temp\cmr\ta_CCI_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_CCI_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CCI_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_CCI_frame.c
+
 ..\..\..\..\..\temp\cmr\ta_DX_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_DX_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_DX_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_DX_frame.c
 
 ..\..\..\..\..\temp\cmr\ta_MACD_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_MACD_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MACD_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_MACD_frame.c
+
+..\..\..\..\..\temp\cmr\ta_MACDEXT_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_MACDEXT_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MACDEXT_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_MACDEXT_frame.c
 
 ..\..\..\..\..\temp\cmr\ta_MACDFIX_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_MACDFIX_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MACDFIX_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_MACDFIX_frame.c
@@ -1091,6 +1127,9 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_MINUS_DM_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_MINUS_DM_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MINUS_DM_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_MINUS_DM_frame.c
 
+..\..\..\..\..\temp\cmr\ta_MOM_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_MOM_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MOM_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_MOM_frame.c
+
 ..\..\..\..\..\temp\cmr\ta_PPO_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_PPO_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_PPO_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_PPO_frame.c
 
@@ -1100,26 +1139,20 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_PLUS_DM_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_PLUS_DM_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_PLUS_DM_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_PLUS_DM_frame.c
 
-..\..\..\..\..\temp\cmr\ta_RSI_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_RSI_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_RSI_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_RSI_frame.c
-
-..\..\..\..\..\temp\cmr\ta_ATR_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_ATR_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ATR_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_ATR_frame.c
-
-..\..\..\..\..\temp\cmr\ta_TRANGE_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_TRANGE_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_TRANGE_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_TRANGE_frame.c
-
-..\..\..\..\..\temp\cmr\ta_CCI_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_CCI_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CCI_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_CCI_frame.c
-
-..\..\..\..\..\temp\cmr\ta_MOM_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_MOM_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MOM_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_MOM_frame.c
-
 ..\..\..\..\..\temp\cmr\ta_ROC_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_ROC_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ROC_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_ROC_frame.c
 
+..\..\..\..\..\temp\cmr\ta_ROCP_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_ROCP_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ROCP_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_ROCP_frame.c
+
 ..\..\..\..\..\temp\cmr\ta_ROCR_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_ROCR_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ROCR_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_ROCR_frame.c
+
+..\..\..\..\..\temp\cmr\ta_ROCR100_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_ROCR100_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ROCR100_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_ROCR100_frame.c
+
+..\..\..\..\..\temp\cmr\ta_RSI_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_RSI_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_RSI_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_RSI_frame.c
 
 ..\..\..\..\..\temp\cmr\ta_STOCH_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_STOCH_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_STOCH_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_STOCH_frame.c
@@ -1187,6 +1220,12 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_WMA.obj: ..\..\..\..\..\src\ta_func\ta_WMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_WMA.obj ..\..\..\..\..\src\ta_func\ta_WMA.c
 
+..\..\..\..\..\temp\cmr\ta_ATR.obj: ..\..\..\..\..\src\ta_func\ta_ATR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ATR.obj ..\..\..\..\..\src\ta_func\ta_ATR.c
+
+..\..\..\..\..\temp\cmr\ta_TRANGE.obj: ..\..\..\..\..\src\ta_func\ta_TRANGE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_TRANGE.obj ..\..\..\..\..\src\ta_func\ta_TRANGE.c
+
 ..\..\..\..\..\temp\cmr\ta_ADX.obj: ..\..\..\..\..\src\ta_func\ta_ADX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ADX.obj ..\..\..\..\..\src\ta_func\ta_ADX.c
 
@@ -1196,11 +1235,17 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_APO.obj: ..\..\..\..\..\src\ta_func\ta_APO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_APO.obj ..\..\..\..\..\src\ta_func\ta_APO.c
 
+..\..\..\..\..\temp\cmr\ta_CCI.obj: ..\..\..\..\..\src\ta_func\ta_CCI.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CCI.obj ..\..\..\..\..\src\ta_func\ta_CCI.c
+
 ..\..\..\..\..\temp\cmr\ta_DX.obj: ..\..\..\..\..\src\ta_func\ta_DX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_DX.obj ..\..\..\..\..\src\ta_func\ta_DX.c
 
 ..\..\..\..\..\temp\cmr\ta_MACD.obj: ..\..\..\..\..\src\ta_func\ta_MACD.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MACD.obj ..\..\..\..\..\src\ta_func\ta_MACD.c
+
+..\..\..\..\..\temp\cmr\ta_MACDEXT.obj: ..\..\..\..\..\src\ta_func\ta_MACDEXT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MACDEXT.obj ..\..\..\..\..\src\ta_func\ta_MACDEXT.c
 
 ..\..\..\..\..\temp\cmr\ta_MACDFIX.obj: ..\..\..\..\..\src\ta_func\ta_MACDFIX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MACDFIX.obj ..\..\..\..\..\src\ta_func\ta_MACDFIX.c
@@ -1211,6 +1256,9 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_MINUS_DM.obj: ..\..\..\..\..\src\ta_func\ta_MINUS_DM.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MINUS_DM.obj ..\..\..\..\..\src\ta_func\ta_MINUS_DM.c
 
+..\..\..\..\..\temp\cmr\ta_MOM.obj: ..\..\..\..\..\src\ta_func\ta_MOM.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MOM.obj ..\..\..\..\..\src\ta_func\ta_MOM.c
+
 ..\..\..\..\..\temp\cmr\ta_PPO.obj: ..\..\..\..\..\src\ta_func\ta_PPO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_PPO.obj ..\..\..\..\..\src\ta_func\ta_PPO.c
 
@@ -1220,26 +1268,20 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_PLUS_DM.obj: ..\..\..\..\..\src\ta_func\ta_PLUS_DM.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_PLUS_DM.obj ..\..\..\..\..\src\ta_func\ta_PLUS_DM.c
 
-..\..\..\..\..\temp\cmr\ta_RSI.obj: ..\..\..\..\..\src\ta_func\ta_RSI.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_RSI.obj ..\..\..\..\..\src\ta_func\ta_RSI.c
-
-..\..\..\..\..\temp\cmr\ta_ATR.obj: ..\..\..\..\..\src\ta_func\ta_ATR.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ATR.obj ..\..\..\..\..\src\ta_func\ta_ATR.c
-
-..\..\..\..\..\temp\cmr\ta_TRANGE.obj: ..\..\..\..\..\src\ta_func\ta_TRANGE.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_TRANGE.obj ..\..\..\..\..\src\ta_func\ta_TRANGE.c
-
-..\..\..\..\..\temp\cmr\ta_CCI.obj: ..\..\..\..\..\src\ta_func\ta_CCI.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CCI.obj ..\..\..\..\..\src\ta_func\ta_CCI.c
-
-..\..\..\..\..\temp\cmr\ta_MOM.obj: ..\..\..\..\..\src\ta_func\ta_MOM.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MOM.obj ..\..\..\..\..\src\ta_func\ta_MOM.c
-
 ..\..\..\..\..\temp\cmr\ta_ROC.obj: ..\..\..\..\..\src\ta_func\ta_ROC.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ROC.obj ..\..\..\..\..\src\ta_func\ta_ROC.c
 
+..\..\..\..\..\temp\cmr\ta_ROCP.obj: ..\..\..\..\..\src\ta_func\ta_ROCP.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ROCP.obj ..\..\..\..\..\src\ta_func\ta_ROCP.c
+
 ..\..\..\..\..\temp\cmr\ta_ROCR.obj: ..\..\..\..\..\src\ta_func\ta_ROCR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ROCR.obj ..\..\..\..\..\src\ta_func\ta_ROCR.c
+
+..\..\..\..\..\temp\cmr\ta_ROCR100.obj: ..\..\..\..\..\src\ta_func\ta_ROCR100.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ROCR100.obj ..\..\..\..\..\src\ta_func\ta_ROCR100.c
+
+..\..\..\..\..\temp\cmr\ta_RSI.obj: ..\..\..\..\..\src\ta_func\ta_RSI.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_RSI.obj ..\..\..\..\..\src\ta_func\ta_RSI.c
 
 ..\..\..\..\..\temp\cmr\ta_STOCH.obj: ..\..\..\..\..\src\ta_func\ta_STOCH.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_STOCH.obj ..\..\..\..\..\src\ta_func\ta_STOCH.c

@@ -33,24 +33,27 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c &
 		..\..\..\..\..\src\ta_func\ta_SMA.c &
 		..\..\..\..\..\src\ta_func\ta_TEMA.c &
 		..\..\..\..\..\src\ta_func\ta_WMA.c &
+		..\..\..\..\..\src\ta_func\ta_ATR.c &
+		..\..\..\..\..\src\ta_func\ta_TRANGE.c &
 		..\..\..\..\..\src\ta_func\ta_ADX.c &
 		..\..\..\..\..\src\ta_func\ta_ADXR.c &
 		..\..\..\..\..\src\ta_func\ta_APO.c &
+		..\..\..\..\..\src\ta_func\ta_CCI.c &
 		..\..\..\..\..\src\ta_func\ta_DX.c &
 		..\..\..\..\..\src\ta_func\ta_MACD.c &
+		..\..\..\..\..\src\ta_func\ta_MACDEXT.c &
 		..\..\..\..\..\src\ta_func\ta_MACDFIX.c &
 		..\..\..\..\..\src\ta_func\ta_MINUS_DI.c &
 		..\..\..\..\..\src\ta_func\ta_MINUS_DM.c &
+		..\..\..\..\..\src\ta_func\ta_MOM.c &
 		..\..\..\..\..\src\ta_func\ta_PPO.c &
 		..\..\..\..\..\src\ta_func\ta_PLUS_DI.c &
 		..\..\..\..\..\src\ta_func\ta_PLUS_DM.c &
-		..\..\..\..\..\src\ta_func\ta_RSI.c &
-		..\..\..\..\..\src\ta_func\ta_ATR.c &
-		..\..\..\..\..\src\ta_func\ta_TRANGE.c &
-		..\..\..\..\..\src\ta_func\ta_CCI.c &
-		..\..\..\..\..\src\ta_func\ta_MOM.c &
 		..\..\..\..\..\src\ta_func\ta_ROC.c &
+		..\..\..\..\..\src\ta_func\ta_ROCP.c &
 		..\..\..\..\..\src\ta_func\ta_ROCR.c &
+		..\..\..\..\..\src\ta_func\ta_ROCR100.c &
+		..\..\..\..\..\src\ta_func\ta_RSI.c &
 		..\..\..\..\..\src\ta_func\ta_STOCH.c &
 		..\..\..\..\..\src\ta_func\ta_TRIX.c &
 		..\..\..\..\..\src\ta_func\ta_OBV.c &
@@ -73,24 +76,27 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_utility.obj &
 		..\..\..\..\..\temp\csd\ta_SMA.obj &
 		..\..\..\..\..\temp\csd\ta_TEMA.obj &
 		..\..\..\..\..\temp\csd\ta_WMA.obj &
+		..\..\..\..\..\temp\csd\ta_ATR.obj &
+		..\..\..\..\..\temp\csd\ta_TRANGE.obj &
 		..\..\..\..\..\temp\csd\ta_ADX.obj &
 		..\..\..\..\..\temp\csd\ta_ADXR.obj &
 		..\..\..\..\..\temp\csd\ta_APO.obj &
+		..\..\..\..\..\temp\csd\ta_CCI.obj &
 		..\..\..\..\..\temp\csd\ta_DX.obj &
 		..\..\..\..\..\temp\csd\ta_MACD.obj &
+		..\..\..\..\..\temp\csd\ta_MACDEXT.obj &
 		..\..\..\..\..\temp\csd\ta_MACDFIX.obj &
 		..\..\..\..\..\temp\csd\ta_MINUS_DI.obj &
 		..\..\..\..\..\temp\csd\ta_MINUS_DM.obj &
+		..\..\..\..\..\temp\csd\ta_MOM.obj &
 		..\..\..\..\..\temp\csd\ta_PPO.obj &
 		..\..\..\..\..\temp\csd\ta_PLUS_DI.obj &
 		..\..\..\..\..\temp\csd\ta_PLUS_DM.obj &
-		..\..\..\..\..\temp\csd\ta_RSI.obj &
-		..\..\..\..\..\temp\csd\ta_ATR.obj &
-		..\..\..\..\..\temp\csd\ta_TRANGE.obj &
-		..\..\..\..\..\temp\csd\ta_CCI.obj &
-		..\..\..\..\..\temp\csd\ta_MOM.obj &
 		..\..\..\..\..\temp\csd\ta_ROC.obj &
+		..\..\..\..\..\temp\csd\ta_ROCP.obj &
 		..\..\..\..\..\temp\csd\ta_ROCR.obj &
+		..\..\..\..\..\temp\csd\ta_ROCR100.obj &
+		..\..\..\..\..\temp\csd\ta_RSI.obj &
 		..\..\..\..\..\temp\csd\ta_STOCH.obj &
 		..\..\..\..\..\temp\csd\ta_TRIX.obj &
 		..\..\..\..\..\temp\csd\ta_OBV.obj &
@@ -140,24 +146,27 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_SMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_TEMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_WMA.obj
+	-del ..\..\..\..\..\temp\csd\ta_ATR.obj
+	-del ..\..\..\..\..\temp\csd\ta_TRANGE.obj
 	-del ..\..\..\..\..\temp\csd\ta_ADX.obj
 	-del ..\..\..\..\..\temp\csd\ta_ADXR.obj
 	-del ..\..\..\..\..\temp\csd\ta_APO.obj
+	-del ..\..\..\..\..\temp\csd\ta_CCI.obj
 	-del ..\..\..\..\..\temp\csd\ta_DX.obj
 	-del ..\..\..\..\..\temp\csd\ta_MACD.obj
+	-del ..\..\..\..\..\temp\csd\ta_MACDEXT.obj
 	-del ..\..\..\..\..\temp\csd\ta_MACDFIX.obj
 	-del ..\..\..\..\..\temp\csd\ta_MINUS_DI.obj
 	-del ..\..\..\..\..\temp\csd\ta_MINUS_DM.obj
+	-del ..\..\..\..\..\temp\csd\ta_MOM.obj
 	-del ..\..\..\..\..\temp\csd\ta_PPO.obj
 	-del ..\..\..\..\..\temp\csd\ta_PLUS_DI.obj
 	-del ..\..\..\..\..\temp\csd\ta_PLUS_DM.obj
-	-del ..\..\..\..\..\temp\csd\ta_RSI.obj
-	-del ..\..\..\..\..\temp\csd\ta_ATR.obj
-	-del ..\..\..\..\..\temp\csd\ta_TRANGE.obj
-	-del ..\..\..\..\..\temp\csd\ta_CCI.obj
-	-del ..\..\..\..\..\temp\csd\ta_MOM.obj
 	-del ..\..\..\..\..\temp\csd\ta_ROC.obj
+	-del ..\..\..\..\..\temp\csd\ta_ROCP.obj
 	-del ..\..\..\..\..\temp\csd\ta_ROCR.obj
+	-del ..\..\..\..\..\temp\csd\ta_ROCR100.obj
+	-del ..\..\..\..\..\temp\csd\ta_RSI.obj
 	-del ..\..\..\..\..\temp\csd\ta_STOCH.obj
 	-del ..\..\..\..\..\temp\csd\ta_TRIX.obj
 	-del ..\..\..\..\..\temp\csd\ta_OBV.obj
@@ -222,6 +231,12 @@ clean:
 ..\..\..\..\..\temp\csd\ta_WMA.obj: ..\..\..\..\..\src\ta_func\ta_WMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_WMA.obj ..\..\..\..\..\src\ta_func\ta_WMA.c
 
+..\..\..\..\..\temp\csd\ta_ATR.obj: ..\..\..\..\..\src\ta_func\ta_ATR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_ATR.obj ..\..\..\..\..\src\ta_func\ta_ATR.c
+
+..\..\..\..\..\temp\csd\ta_TRANGE.obj: ..\..\..\..\..\src\ta_func\ta_TRANGE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_TRANGE.obj ..\..\..\..\..\src\ta_func\ta_TRANGE.c
+
 ..\..\..\..\..\temp\csd\ta_ADX.obj: ..\..\..\..\..\src\ta_func\ta_ADX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_ADX.obj ..\..\..\..\..\src\ta_func\ta_ADX.c
 
@@ -231,11 +246,17 @@ clean:
 ..\..\..\..\..\temp\csd\ta_APO.obj: ..\..\..\..\..\src\ta_func\ta_APO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_APO.obj ..\..\..\..\..\src\ta_func\ta_APO.c
 
+..\..\..\..\..\temp\csd\ta_CCI.obj: ..\..\..\..\..\src\ta_func\ta_CCI.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_CCI.obj ..\..\..\..\..\src\ta_func\ta_CCI.c
+
 ..\..\..\..\..\temp\csd\ta_DX.obj: ..\..\..\..\..\src\ta_func\ta_DX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_DX.obj ..\..\..\..\..\src\ta_func\ta_DX.c
 
 ..\..\..\..\..\temp\csd\ta_MACD.obj: ..\..\..\..\..\src\ta_func\ta_MACD.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MACD.obj ..\..\..\..\..\src\ta_func\ta_MACD.c
+
+..\..\..\..\..\temp\csd\ta_MACDEXT.obj: ..\..\..\..\..\src\ta_func\ta_MACDEXT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MACDEXT.obj ..\..\..\..\..\src\ta_func\ta_MACDEXT.c
 
 ..\..\..\..\..\temp\csd\ta_MACDFIX.obj: ..\..\..\..\..\src\ta_func\ta_MACDFIX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MACDFIX.obj ..\..\..\..\..\src\ta_func\ta_MACDFIX.c
@@ -246,6 +267,9 @@ clean:
 ..\..\..\..\..\temp\csd\ta_MINUS_DM.obj: ..\..\..\..\..\src\ta_func\ta_MINUS_DM.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MINUS_DM.obj ..\..\..\..\..\src\ta_func\ta_MINUS_DM.c
 
+..\..\..\..\..\temp\csd\ta_MOM.obj: ..\..\..\..\..\src\ta_func\ta_MOM.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MOM.obj ..\..\..\..\..\src\ta_func\ta_MOM.c
+
 ..\..\..\..\..\temp\csd\ta_PPO.obj: ..\..\..\..\..\src\ta_func\ta_PPO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_PPO.obj ..\..\..\..\..\src\ta_func\ta_PPO.c
 
@@ -255,26 +279,20 @@ clean:
 ..\..\..\..\..\temp\csd\ta_PLUS_DM.obj: ..\..\..\..\..\src\ta_func\ta_PLUS_DM.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_PLUS_DM.obj ..\..\..\..\..\src\ta_func\ta_PLUS_DM.c
 
-..\..\..\..\..\temp\csd\ta_RSI.obj: ..\..\..\..\..\src\ta_func\ta_RSI.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_RSI.obj ..\..\..\..\..\src\ta_func\ta_RSI.c
-
-..\..\..\..\..\temp\csd\ta_ATR.obj: ..\..\..\..\..\src\ta_func\ta_ATR.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_ATR.obj ..\..\..\..\..\src\ta_func\ta_ATR.c
-
-..\..\..\..\..\temp\csd\ta_TRANGE.obj: ..\..\..\..\..\src\ta_func\ta_TRANGE.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_TRANGE.obj ..\..\..\..\..\src\ta_func\ta_TRANGE.c
-
-..\..\..\..\..\temp\csd\ta_CCI.obj: ..\..\..\..\..\src\ta_func\ta_CCI.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_CCI.obj ..\..\..\..\..\src\ta_func\ta_CCI.c
-
-..\..\..\..\..\temp\csd\ta_MOM.obj: ..\..\..\..\..\src\ta_func\ta_MOM.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MOM.obj ..\..\..\..\..\src\ta_func\ta_MOM.c
-
 ..\..\..\..\..\temp\csd\ta_ROC.obj: ..\..\..\..\..\src\ta_func\ta_ROC.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_ROC.obj ..\..\..\..\..\src\ta_func\ta_ROC.c
 
+..\..\..\..\..\temp\csd\ta_ROCP.obj: ..\..\..\..\..\src\ta_func\ta_ROCP.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_ROCP.obj ..\..\..\..\..\src\ta_func\ta_ROCP.c
+
 ..\..\..\..\..\temp\csd\ta_ROCR.obj: ..\..\..\..\..\src\ta_func\ta_ROCR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_ROCR.obj ..\..\..\..\..\src\ta_func\ta_ROCR.c
+
+..\..\..\..\..\temp\csd\ta_ROCR100.obj: ..\..\..\..\..\src\ta_func\ta_ROCR100.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_ROCR100.obj ..\..\..\..\..\src\ta_func\ta_ROCR100.c
+
+..\..\..\..\..\temp\csd\ta_RSI.obj: ..\..\..\..\..\src\ta_func\ta_RSI.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_RSI.obj ..\..\..\..\..\src\ta_func\ta_RSI.c
 
 ..\..\..\..\..\temp\csd\ta_STOCH.obj: ..\..\..\..\..\src\ta_func\ta_STOCH.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_STOCH.obj ..\..\..\..\..\src\ta_func\ta_STOCH.c

@@ -35,24 +35,27 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_SMA.c \ 
           ../../../../../src/ta_func/ta_TEMA.c \ 
           ../../../../../src/ta_func/ta_WMA.c \ 
+          ../../../../../src/ta_func/ta_ATR.c \ 
+          ../../../../../src/ta_func/ta_TRANGE.c \ 
           ../../../../../src/ta_func/ta_ADX.c \ 
           ../../../../../src/ta_func/ta_ADXR.c \ 
           ../../../../../src/ta_func/ta_APO.c \ 
+          ../../../../../src/ta_func/ta_CCI.c \ 
           ../../../../../src/ta_func/ta_DX.c \ 
           ../../../../../src/ta_func/ta_MACD.c \ 
+          ../../../../../src/ta_func/ta_MACDEXT.c \ 
           ../../../../../src/ta_func/ta_MACDFIX.c \ 
           ../../../../../src/ta_func/ta_MINUS_DI.c \ 
           ../../../../../src/ta_func/ta_MINUS_DM.c \ 
+          ../../../../../src/ta_func/ta_MOM.c \ 
           ../../../../../src/ta_func/ta_PPO.c \ 
           ../../../../../src/ta_func/ta_PLUS_DI.c \ 
           ../../../../../src/ta_func/ta_PLUS_DM.c \ 
-          ../../../../../src/ta_func/ta_RSI.c \ 
-          ../../../../../src/ta_func/ta_ATR.c \ 
-          ../../../../../src/ta_func/ta_TRANGE.c \ 
-          ../../../../../src/ta_func/ta_CCI.c \ 
-          ../../../../../src/ta_func/ta_MOM.c \ 
           ../../../../../src/ta_func/ta_ROC.c \ 
+          ../../../../../src/ta_func/ta_ROCP.c \ 
           ../../../../../src/ta_func/ta_ROCR.c \ 
+          ../../../../../src/ta_func/ta_ROCR100.c \ 
+          ../../../../../src/ta_func/ta_RSI.c \ 
           ../../../../../src/ta_func/ta_STOCH.c \ 
           ../../../../../src/ta_func/ta_TRIX.c \ 
           ../../../../../src/ta_func/ta_OBV.c \ 
