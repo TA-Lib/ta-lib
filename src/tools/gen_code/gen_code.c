@@ -69,8 +69,13 @@
 #include "ta_system.h"
 #include "sfl.h"
 
+#define BUFFER_SIZE 8192
+
 #define FILE_READ  1
 #define FILE_WRITE 0
+
+#define WRITE_ALWAYS          1
+#define WRITE_ON_CHANGE_ONLY  0
 
 #ifndef min
    #define min(a, b)  (((a) < (b)) ? (a) : (b))
@@ -83,7 +88,12 @@
 typedef struct
 {
    FILE *file;
+   FILE *fileTarget;
    FILE *templateFile;
+   char f1_name[BUFFER_SIZE];
+   char f2_name[BUFFER_SIZE];
+   int readOnly;
+   int forceDirectWrite;
 } FileHandle;
 
 FileHandle *gOutFunc_H;        /* For "ta_func.h"  */
@@ -191,10 +201,13 @@ static void extractTALogic( FILE *inFile, FILE *outFile );
 /* Return 1 on success */
 static int copyFile( const char *src, const char *dest );
 
-char gToOpen[1024];
-char gTempBuf[2048];
-char gTempBuf2[2048];
-char gTempBuf3[2048];
+/* Return 1 when identical */
+static int areFileSame( const char *file1, const char *file2 );
+
+char gToOpen[BUFFER_SIZE];
+char gTempBuf[BUFFER_SIZE];
+char gTempBuf2[BUFFER_SIZE];
+char gTempBuf3[BUFFER_SIZE];
 char gTempDoubleToStr[50];
 
 /* Because Microsoft and Borland does not display
@@ -327,9 +340,14 @@ int main(int argc, char* argv[])
  *
  * 'templateFile' is ignored when FILE_READ is specified.
  *
+ * Another advantage to use fileOpen and fileClose is that
+ * the writing to the file is done "silently" in a temporary
+ * file and the target file is touch only if there was actually
+ * a modification to it.
+ *
  * On failure, simply exit the software.
  */
-static void init_gToOpen( const char *filePath )
+static void init_gToOpen( const char *filePath, const char *suffix )
 {
    int sepChar;
    char *ptr;
@@ -337,6 +355,8 @@ static void init_gToOpen( const char *filePath )
    sepChar = TA_SeparatorASCII();
 
    strcpy( gToOpen, filePath );
+   if( suffix )
+      strcat( gToOpen, suffix );
 
    /* Replace all directory separator with the
     * one applicable for this OS.
@@ -353,7 +373,8 @@ static void init_gToOpen( const char *filePath )
 
 static  FileHandle *fileOpen( const char *fileToOpen,
                               const char *templateFile,
-                              const int readOnly )
+                              int readOnly,
+                              int forceDirectWrite )
 {
    FileHandle *retValue;
 
@@ -364,36 +385,102 @@ static  FileHandle *fileOpen( const char *fileToOpen,
       return (FileHandle *)NULL;
    }
 
-   retValue = malloc( sizeof( FileHandle ) );
+   retValue = malloc( sizeof(FileHandle) );
+   memset( retValue, 0, sizeof(FileHandle) );
 
-   retValue->file = NULL;
-   retValue->templateFile = NULL;
+   retValue->forceDirectWrite = forceDirectWrite;
+   retValue->readOnly = readOnly;
 
-   init_gToOpen( fileToOpen );
+   init_gToOpen( fileToOpen, NULL );
+   strcpy( retValue->f1_name, gToOpen );
+   
+   /* First let's try to open the file. Might fail when
+    * for writing but that is ok. (the file might not exist).
+    */
 
-   /* Ok.. let's try to open the file now. */
-   retValue->file = fopen( gToOpen, readOnly ? "r":"w" );
-   if( retValue->file == NULL )
-   {
-      return (FileHandle *)NULL;
-   }
-
-   /* Handle the template. */
-   if( templateFile )
-   {
-      init_gToOpen( templateFile );
-      retValue->templateFile = fopen( gToOpen, "r" );
-      if( retValue->templateFile == NULL )
-      {
-         printf( "\nCannot open template [%s]\n", gToOpen );
-         return (FileHandle *)NULL;
-      }
-
-      /* Copy the header part of the template. */
-      if( skipToGenCode( fileToOpen, retValue->file, retValue->templateFile ) != 0 )
+   if( readOnly )
+   {      
+      retValue->file = fopen( gToOpen, "r" );
+      if( retValue->file == NULL )
       {
          free( retValue );
-         retValue = NULL;
+         return (FileHandle *)NULL;
+      }
+   }
+   else if( forceDirectWrite )
+   {
+      retValue->file = fopen( gToOpen, "w" );
+      if( retValue->file == NULL )
+      {
+         free( retValue );
+         return (FileHandle *)NULL;
+      }
+   }
+   else
+   {
+      retValue->file = fopen( gToOpen, "r" );
+
+      if( retValue->file )
+      {
+         /* Move pointer to fileTarget.  The file
+          * ptr will become the temporary file who
+          * is going to be truly write enabled.
+          */
+         retValue->fileTarget = retValue->file;
+         retValue->file = NULL;
+
+         init_gToOpen( fileToOpen, ".tmp" );
+         strcpy( retValue->f2_name, gToOpen );
+         retValue->file = fopen( gToOpen, "w" );
+         if( !retValue->file )
+         {
+            fclose( retValue->fileTarget );
+            free( retValue );
+            return (FileHandle *)NULL;
+         }
+       }
+       else
+       {
+         /* File does not exist, directly open for write
+          * no temporary will be used.
+          */
+         retValue->file = fopen( gToOpen, "w" );
+
+         if( retValue->file == NULL )
+         {
+            if(retValue->fileTarget)   fclose( retValue->fileTarget );
+            free( retValue );
+            return (FileHandle *)NULL;
+         }
+      }
+   }
+
+   if( !readOnly )
+   {
+      /* Handle the template. */
+      if( templateFile )
+      {
+         init_gToOpen( templateFile, NULL );
+         retValue->templateFile = fopen( gToOpen, "r" );
+         if( retValue->templateFile == NULL )
+         {
+            if(retValue->fileTarget)   fclose( retValue->fileTarget );
+            if(retValue->file)         fclose( retValue->file );
+            if(retValue->templateFile) fclose( retValue->templateFile );
+            free( retValue );
+            printf( "\nCannot open template [%s]\n", gToOpen );
+            return (FileHandle *)NULL;
+         }
+
+         /* Copy the header part of the template. */
+         if( skipToGenCode( fileToOpen, retValue->file, retValue->templateFile ) != 0 )
+         {
+            if(retValue->fileTarget)   fclose( retValue->fileTarget );
+            if(retValue->file)         fclose( retValue->file );
+            if(retValue->templateFile) fclose( retValue->templateFile );
+            free( retValue );
+            retValue = NULL;
+         }
       }
    }
 
@@ -405,7 +492,7 @@ static void fileClose( FileHandle *handle )
    /* Write remaining template info. */
    if( handle->templateFile )
    {
-      while( fgets( gTempBuf, 2048, handle->templateFile ) != NULL )
+      while( fgets( gTempBuf, BUFFER_SIZE, handle->templateFile ) != NULL )
       {
          if( fputs( gTempBuf, handle->file ) == EOF )
          {
@@ -424,8 +511,24 @@ static void fileClose( FileHandle *handle )
       fclose( handle->templateFile );
    }
 
-   fclose( handle->file );
+   if(handle->fileTarget)   fclose( handle->fileTarget );
+   if(handle->templateFile) fclose( handle->templateFile );
+   if(handle->file)         fclose( handle->file );
+
+   if( !handle->readOnly && !handle->forceDirectWrite )
+   {
+      if( !areFileSame( handle->f1_name, handle->f2_name ) )
+         copyFile( handle->f2_name, handle->f1_name );
+      file_delete( handle->f2_name );      
+   }
+   
    free( handle );
+}
+
+static void fileDelete( const char *fileToDelete )
+{
+   init_gToOpen( fileToDelete, NULL );
+   file_delete( gToOpen );
 }
 
 static int genCode(int argc, char* argv[])
@@ -440,13 +543,13 @@ static int genCode(int argc, char* argv[])
    /* Create .NET project files template */
    #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.vcproj"
    #define FILE_NET_PROJ_TMP "..\\temp\\dotnetproj.tmp"
-   gOutProjFile = fileOpen( FILE_NET_PROJ, NULL, FILE_READ );
+   gOutProjFile = fileOpen( FILE_NET_PROJ, NULL, FILE_READ, WRITE_ON_CHANGE_ONLY );
    if( gOutProjFile == NULL )   
    {
       printf( "\nCannot access [%s]\n", gToOpen );
       return -1;
    }
-   tempFile = fileOpen( FILE_NET_PROJ_TMP, NULL, FILE_WRITE );
+   tempFile = fileOpen( FILE_NET_PROJ_TMP, NULL, FILE_WRITE, WRITE_ALWAYS );
    if( tempFile == NULL )
    {
       printf( "Cannot create temporary .NET project file!\n" );
@@ -463,13 +566,13 @@ static int genCode(int argc, char* argv[])
    /* Create the .NET interface file template */
    #define FILE_NET_HEADER     "..\\..\\dotnet\\src\\Core\\Core.h"
    #define FILE_NET_HEADER_TMP "..\\temp\\dotneth.tmp"
-   gOutDotNet_H = fileOpen( FILE_NET_HEADER, NULL, FILE_READ );
+   gOutDotNet_H = fileOpen( FILE_NET_HEADER, NULL, FILE_READ, WRITE_ON_CHANGE_ONLY );
    if( gOutDotNet_H == NULL )   
    {
       printf( "\nCannot access [%s]\n", gToOpen );
       return -1;
    }
-   tempFile = fileOpen( FILE_NET_HEADER_TMP, NULL, FILE_WRITE );
+   tempFile = fileOpen( FILE_NET_HEADER_TMP, NULL, FILE_WRITE, WRITE_ALWAYS );
    if( tempFile == NULL )
    {
       printf( "Cannot create temporary .NET header file!\n" );
@@ -493,7 +596,7 @@ static int genCode(int argc, char* argv[])
    /* Create "ta_func.h" */
    gOutFunc_H = fileOpen( "..\\include\\ta_func.h",
                           "..\\src\\ta_abstract\\templates\\ta_func.h.template",
-                          FILE_WRITE );
+                          FILE_WRITE, WRITE_ON_CHANGE_ONLY );
 
    if( gOutFunc_H == NULL )
    {
@@ -504,7 +607,7 @@ static int genCode(int argc, char* argv[])
    /* Create the "func_list.txt" */
    gOutFuncList_TXT = fileOpen( "..\\include\\func_list.txt",
                                 NULL,
-                                FILE_WRITE );
+                                FILE_WRITE, WRITE_ON_CHANGE_ONLY );
 
    if( gOutFuncList_TXT == NULL )
    {
@@ -516,7 +619,7 @@ static int genCode(int argc, char* argv[])
    /* Create the "ta_frame.h" */
    gOutFrame_H = fileOpen( "..\\src\\ta_abstract\\frames\\ta_frame.h",
                            "..\\src\\ta_abstract\\templates\\ta_frame.h.template",
-                           FILE_WRITE );
+                           FILE_WRITE, WRITE_ON_CHANGE_ONLY );
 
    if( gOutFrame_H == NULL )
    {
@@ -527,7 +630,7 @@ static int genCode(int argc, char* argv[])
    /* Create the "ta_frame.c" */
    gOutFrame_C = fileOpen( "..\\src\\ta_abstract\\frames\\ta_frame.c",
                            "..\\src\\ta_abstract\\templates\\ta_frame.c.template",
-                           FILE_WRITE );
+                           FILE_WRITE, WRITE_ON_CHANGE_ONLY );
 
    if( gOutFrame_C == NULL )
    {
@@ -538,7 +641,7 @@ static int genCode(int argc, char* argv[])
    /* Create "excel_glue.c" */
    gOutExcelGlue_C = fileOpen( "..\\src\\ta_abstract\\excel_glue.c",
                            "..\\src\\ta_abstract\\templates\\excel_glue.c.template",
-                           FILE_WRITE );
+                           FILE_WRITE, WRITE_ON_CHANGE_ONLY );
 
    if( gOutExcelGlue_C == NULL )
    {
@@ -547,7 +650,7 @@ static int genCode(int argc, char* argv[])
    }
 
    /* Re-open the .NET project template. */
-   gOutProjFile = fileOpen( FILE_NET_PROJ, FILE_NET_PROJ_TMP, FILE_WRITE );                                                    
+   gOutProjFile = fileOpen( FILE_NET_PROJ, FILE_NET_PROJ_TMP, FILE_WRITE, WRITE_ON_CHANGE_ONLY );
    if( gOutProjFile == NULL )
    {
       printf( "Cannot update [%s]\n", FILE_NET_PROJ );
@@ -555,7 +658,7 @@ static int genCode(int argc, char* argv[])
    }
 
    /* Re-open the .NET interface template. */
-   gOutDotNet_H = fileOpen( FILE_NET_HEADER, FILE_NET_HEADER_TMP, FILE_WRITE );                                                    
+   gOutDotNet_H = fileOpen( FILE_NET_HEADER, FILE_NET_HEADER_TMP, FILE_WRITE, WRITE_ON_CHANGE_ONLY );
    if( gOutDotNet_H == NULL )
    {
       printf( "Cannot update [%s]\n", FILE_NET_HEADER );
@@ -584,7 +687,7 @@ static int genCode(int argc, char* argv[])
    genPrefix = 1;
    gOutGroupIdx_C = fileOpen( "..\\src\\ta_abstract\\ta_group_idx.c",
                               "..\\src\\ta_abstract\\templates\\ta_group_idx.c.template",
-                              FILE_WRITE );
+                              FILE_WRITE, WRITE_ON_CHANGE_ONLY );
 
    if( gOutGroupIdx_C == NULL )
    {
@@ -617,6 +720,10 @@ static int genCode(int argc, char* argv[])
 
    /* Update "ta_defs.h" */
    doDefsFile();
+
+   /* Remove some temporary files */
+   fileDelete( FILE_NET_PROJ_TMP   );
+   fileDelete( FILE_NET_HEADER_TMP );
 
    printf( "\n** Update completed with success **\n");
 
@@ -1596,7 +1703,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    /* Check if the file already exist. */
    sprintf( localBuf1, "..\\src\\ta_func\\ta_%s.c", funcInfo->name );
 
-   gOutFunc_C = fileOpen( localBuf1, NULL, FILE_READ );
+   gOutFunc_C = fileOpen( localBuf1, NULL, FILE_READ, 0 );
    if( gOutFunc_C == NULL )
       useTempFile = 0;
    else
@@ -1605,7 +1712,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
       /* Create a temporary template using it. */
       sprintf( localBuf1, "..\\temp\\ta_%s.tmp", funcInfo->name );
 
-      tempFile = fileOpen( localBuf1, NULL, FILE_WRITE );
+      tempFile = fileOpen( localBuf1, NULL, FILE_WRITE, WRITE_ALWAYS );
       if( tempFile == NULL )
       {
          printf( "Cannot create temporary file!\n" );
@@ -1626,7 +1733,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
 
    sprintf( localBuf1, "..\\src\\ta_func\\ta_%s.c", funcInfo->name );
 
-   gOutFunc_C = fileOpen( localBuf1, localBuf2, FILE_WRITE );
+   gOutFunc_C = fileOpen( localBuf1, localBuf2, FILE_WRITE, WRITE_ON_CHANGE_ONLY );
 
    if( gOutFunc_C == NULL )
    {
@@ -1669,7 +1776,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    /* Insert the TA function code in the single-precision frame 
     * using the template generated from the first pass.
     */
-   gOutFunc_C = fileOpen( localBuf1, localBuf2, FILE_WRITE );
+   gOutFunc_C = fileOpen( localBuf1, localBuf2, FILE_WRITE, WRITE_ON_CHANGE_ONLY );
    if( gOutFunc_C == NULL )
    {
       printf( "Cannot complete 2nd pass with [%s]\n", localBuf1 );
@@ -1699,7 +1806,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
       printf( "Cannot read open logic.tmp\n" );
       return;
    }
-   while( fgets(gTempBuf,2048,logicTmp) )
+   while( fgets(gTempBuf,BUFFER_SIZE,logicTmp) )
       fputs( gTempBuf, gOutFunc_C->file );
    fclose(logicTmp);
    print( gOutFunc_C->file, "\n" );
@@ -1710,6 +1817,8 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    print( gOutFunc_C->file, "#endif\n" );
 
    fileClose( gOutFunc_C );
+   fileDelete( "..\\temp\\logic.tmp" );
+   fileDelete( localBuf2 );
 }
 
 static void doDefsFile( void )
@@ -1722,7 +1831,7 @@ static void doDefsFile( void )
    #define FILE_TA_DEFS_TMP  "..\\temp\\ta_defs.tmp"
 
    /* Check if the file already exist. If not, this is an error. */
-   gOutDefs_H = fileOpen( FILE_TA_DEFS_H, NULL, FILE_READ );
+   gOutDefs_H = fileOpen( FILE_TA_DEFS_H, NULL, FILE_READ, WRITE_ALWAYS );
    if( gOutDefs_H == NULL )
    {
       printf( "ta_defs.h must exist for being updated!\n" );
@@ -1732,7 +1841,7 @@ static void doDefsFile( void )
    /* Create the template. The template is just the original file content
     * with the GENCODE SECTION emptied (so they can be re-generated)
     */
-   tempFile = fileOpen( FILE_TA_DEFS_TMP, NULL, FILE_WRITE );
+   tempFile = fileOpen( FILE_TA_DEFS_TMP, NULL, FILE_WRITE, WRITE_ALWAYS );
    if( tempFile == NULL )
    {
       printf( "Cannot create temporary file!\n" );
@@ -1745,7 +1854,7 @@ static void doDefsFile( void )
    fileClose( gOutDefs_H );
 
    /* Re-open the file using the template. */
-   gOutDefs_H = fileOpen( FILE_TA_DEFS_H, FILE_TA_DEFS_TMP, FILE_WRITE );
+   gOutDefs_H = fileOpen( FILE_TA_DEFS_H, FILE_TA_DEFS_TMP, FILE_WRITE, WRITE_ALWAYS );
                                                     
    if( gOutDefs_H == NULL )
    {
@@ -1760,6 +1869,7 @@ static void doDefsFile( void )
    addUnstablePeriodEnum( out );
 
    fileClose( gOutDefs_H );
+   fileDelete( FILE_TA_DEFS_TMP );
    #undef FILE_TA_DEFS_H
    #undef FILE_TA_DEFS_TMP
 }
@@ -1779,7 +1889,7 @@ static int createProjTemplate( FileHandle *in, FileHandle *out )
    sectionDone = 0;
    step        = 0;
 
-   while( fgets( gTempBuf, 2048, inFile ) )
+   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
    {
       if( !skipSection )
       {
@@ -1787,7 +1897,7 @@ static int createProjTemplate( FileHandle *in, FileHandle *out )
          if( !strstr( gTempBuf, "<Filter" ) )
             continue;
 
-         if( !fgets( gTempBuf2, 2048, inFile ) )
+         if( !fgets( gTempBuf2, BUFFER_SIZE, inFile ) )
          {
             printf( "Unexpected end-of-file\n" );
             return -1;
@@ -1797,7 +1907,7 @@ static int createProjTemplate( FileHandle *in, FileHandle *out )
          if( !strstr( gTempBuf2, "Name=\"ta_func\"" ) )
             continue;            
 
-         if( !fgets( gTempBuf3, 2048, inFile ) )
+         if( !fgets( gTempBuf3, BUFFER_SIZE, inFile ) )
          {
             printf( "Unexpected end-of-file\n" );
             return -1;
@@ -1834,7 +1944,7 @@ static int createTemplate( FileHandle *in, FileHandle *out )
 
    skipSection = 0;
    sectionDone = 0;
-   while( fgets( gTempBuf, 2048, inFile ) )
+   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
    {
       if( strncmp( gTempBuf, "/**** START GENCODE SECTION", 27 ) == 0 )
       {
@@ -2030,7 +2140,7 @@ static int skipToGenCode( const char *dstName, FILE *out, FILE *templateFile )
 {
    unsigned int headerWritten = 0;
 
-   while( fgets( gTempBuf, 2048, templateFile ) )
+   while( fgets( gTempBuf, BUFFER_SIZE, templateFile ) )
    {
       if( strncmp( gTempBuf, "%%%GENCODE%%%", 13 ) == 0 )
       {
@@ -2289,7 +2399,7 @@ static int gen_retcode( void )
    /* Create "ta_retcode.c" */
    gOutRetCode_C = fileOpen( "..\\src\\ta_common\\ta_retcode.c",
                              "..\\src\\ta_abstract\\templates\\ta_retcode.c.template",
-                             FILE_WRITE );
+                             FILE_WRITE, WRITE_ON_CHANGE_ONLY );
 
    if( gOutRetCode_C == NULL )
    {
@@ -2298,7 +2408,9 @@ static int gen_retcode( void )
    }
 
    /* Create "ta_retcode.csv" */
-   gOutRetCode_CSV = fileOpen( "..\\src\\ta_common\\ta_retcode.csv", NULL, FILE_WRITE );
+   gOutRetCode_CSV = fileOpen( "..\\src\\ta_common\\ta_retcode.csv",
+                               NULL,
+                               FILE_WRITE, WRITE_ALWAYS );
 
    if( gOutRetCode_CSV == NULL )
    {
@@ -2307,7 +2419,9 @@ static int gen_retcode( void )
       return -1;
    }
 
-   inHdr = fileOpen( "..\\include\\ta_defs.h", NULL, FILE_READ );
+   inHdr = fileOpen( "..\\include\\ta_defs.h",
+                     NULL,
+                     FILE_READ, WRITE_ALWAYS );
    if( inHdr == NULL )
    {
       fileClose( gOutRetCode_C );
@@ -2520,10 +2634,10 @@ static void extractTALogic( FILE *inFile, FILE *outFile )
    #define STOP_DELIMITATOR  "/**** START GENCODE SECTION 4"
 
    /* Find the begining of the function */
-   while( fgets( gTempBuf, 2048, inFile ) )
+   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
    {
       length = strlen(gTempBuf);
-      if( length > 2048 )
+      if( length > BUFFER_SIZE )
          return;
 
       if( strncmp( gTempBuf, START_DELIMITATOR, strlen(START_DELIMITATOR) ) == 0)
@@ -2536,10 +2650,10 @@ static void extractTALogic( FILE *inFile, FILE *outFile )
     */
    commentBlock = 0;
    commentFirstCharFound = 0;
-   while( fgets( gTempBuf, 2048, inFile ) )
+   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
    {
       length = strlen(gTempBuf);
-      if( length > 2048 )
+      if( length > BUFFER_SIZE )
          return;
 
       if( strncmp( gTempBuf, STOP_DELIMITATOR, strlen(STOP_DELIMITATOR) ) == 0)
@@ -2626,12 +2740,64 @@ static int copyFile( const char *src, const char *dest )
       return 0;
    }
 
-   while( fgets( gTempBuf, 2048, in ) )
+   while( fgets( gTempBuf, BUFFER_SIZE, in ) )
    {
       fputs(gTempBuf,out);
    }
 
    fclose(in);
    fclose(out);
+   return 1;
+}
+
+static int areFileSame( const char *file1, const char *file2 )
+{
+   /* Text comparison of both files */
+   int i;
+
+   FILE *f1;
+   FILE *f2;
+
+   f1 = fopen( file1, "r" );
+   if( !f1 )
+      return 0;
+
+   f2 = fopen( file2, "r" );
+   if( !f2 )
+   {
+      fclose( f1 );
+      return 0;
+   }
+   
+   memset( gTempBuf,  0, sizeof(gTempBuf ) );
+   memset( gTempBuf2, 0, sizeof(gTempBuf2) );
+
+   while( fgets( gTempBuf, BUFFER_SIZE, f1 ) )
+   {
+      if( !fgets( gTempBuf2, BUFFER_SIZE, f2 ) )
+      {
+         fclose(f1);
+         fclose(f2);
+         return 0;
+      } 
+      
+      for( i=0; i < sizeof(gTempBuf); i++ )
+      {
+         if( gTempBuf[i] != gTempBuf2[i] )
+         {
+            fclose(f1);
+            fclose(f2);
+            return 0;
+         }          
+         if( gTempBuf[i] == 0 )
+            i = sizeof(gTempBuf);
+      }
+
+      memset( gTempBuf,  0, sizeof(gTempBuf ) );
+      memset( gTempBuf2, 0, sizeof(gTempBuf2) );
+   }
+
+   fclose(f1);
+   fclose(f2);
    return 1;
 }
