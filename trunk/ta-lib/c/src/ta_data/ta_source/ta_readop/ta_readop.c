@@ -150,6 +150,7 @@ TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
 
    /* Keep track of some user provided parameter. */
    newReadOpInfo->sourceInfo = sourceInfo;
+   newReadOpInfo->readOpFlags = readOpFlags;
 
    /* Initialize some defaults. */
    newReadOpInfo->openInterestMult = 100;
@@ -521,6 +522,14 @@ TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
+TA_RetCode TA_ReadOpInfoClone( TA_ReadOpInfo **allocatedInfo, TA_ReadOpInfo *src )
+{
+   /* Could be speed optimized, keep it simple for now. */
+   return TA_ReadOpInfoAlloc( src->sourceInfo,
+                              allocatedInfo,
+                              src->readOpFlags );
+   
+}
 
 unsigned int TA_ReadOpToField( TA_ReadOp readOp )
 {
