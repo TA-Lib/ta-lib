@@ -660,12 +660,19 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
     * later, also allocated vectors have to be released
     */
    #define RETURN_ON_ERROR( rc )                            \
+   {                                                        \
          if( rc != TA_SUCCESS )                             \
          {                                                  \
             retCode = rc;                                   \
             goto executeDataQuery_cleanup;                  \
-         }
+         }                                                  \
+   }
 
+   #define RETURN_FUNC( rc )                                \
+   {                                                        \
+      retCode = rc;                                         \
+      goto executeDataQuery_cleanup;                        \
+   }
 
    /* find recognized columns */
    dateCol = timeCol = openCol = highCol = lowCol = closeCol = volumeCol = oiCol = -1;
@@ -771,18 +778,24 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
       if( timestampVec == NULL )
       {
          /* Preallocate vectors memory */
-         if ( !(timestampVec = (TA_Timestamp*)TA_Malloc( resRows * sizeof(TA_Timestamp))))
-            RETURN_ON_ERROR( TA_ALLOC_ERR );
+         timestampVec = (TA_Timestamp*)TA_Malloc( resRows * sizeof(TA_Timestamp));
+         if ( !timestampVec )
+            RETURN_FUNC( TA_ALLOC_ERR );
          memset(timestampVec, 0, resRows * sizeof(TA_Timestamp));
          
          #define TA_SQL_ALLOC_VEC( col_num, field_flag, type, vec )           \
+         {                                                                    \
                if( col_num >= 0                                               \
-                  && (fieldToAlloc & field_flag || fieldToAlloc == TA_ALL)    \
-                  && !(vec = (type*)TA_Malloc( resRows * sizeof(type) )))     \
+                  && (fieldToAlloc & field_flag || fieldToAlloc == TA_ALL))   \
                {                                                              \
-                  RETURN_ON_ERROR( TA_ALLOC_ERR);                             \
-               }
-         
+                  vec = (type*)TA_Malloc( resRows * sizeof(type) );           \
+                  if( !vec )                                                  \
+                  {                                                           \
+                     RETURN_FUNC( TA_ALLOC_ERR );                             \
+                  }                                                           \
+              }                                                               \
+         }
+
          TA_SQL_ALLOC_VEC( openCol,   TA_OPEN,         TA_Real,    openVec   )
          TA_SQL_ALLOC_VEC( highCol,   TA_HIGH,         TA_Real,    highVec   )
          TA_SQL_ALLOC_VEC( lowCol,    TA_LOW,          TA_Real,    lowVec    )
@@ -797,7 +810,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
       /* date must be always present */
       if ( sscanf(strval, "%4u-%2u-%2u", &u1, &u2, &u3) != 3 )
       {
-         RETURN_ON_ERROR( TA_BAD_QUERY );  /* other error code? */
+         RETURN_FUNC( TA_BAD_QUERY );  /* other error code? */
       }
 
       retCode = TA_SetDate(u1, u2, u3, &timestampVec[barNum]);
@@ -817,7 +830,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
          {  
             if (sscanf(strval, "%2u:%2u:%2u", &u1, &u2, &u3) != 3 )
             {
-               RETURN_ON_ERROR( TA_BAD_QUERY );
+               RETURN_FUNC( TA_BAD_QUERY );
             }
 
             retCode = TA_SetTime(u1, u2, u3, &timestampVec[barNum]);
@@ -909,6 +922,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    
    /* cleanup */
    #undef RETURN_ON_ERROR
+   #undef RETURN_FUNC
 
 executeDataQuery_cleanup:
 
