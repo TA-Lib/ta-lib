@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  AC       Angelo Ciceri
  *
  *
  * Change history:
@@ -43,6 +44,8 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
+ *  082004 AC   Add TA_SetCandleSettings, TA_RestoreCandleDefaultSettings
+ *              and call to TA_RestoreCandleDefaultSettings in TA_Initialize
  *
  */
 
@@ -226,6 +229,9 @@ TA_RetCode TA_Initialize( const TA_InitializeParam *param )
       TA_Shutdown();
       return retCode;
    }
+
+   /* Set the default value to global variables */
+   TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
 
    /* Seeds random generator */
    srand( (unsigned)time( NULL ) );
@@ -417,6 +423,55 @@ const char *TA_GetLocalCachePath( void )
       return TA_Globals->localCachePath;
 
    return NULL;
+}
+
+TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType, 
+                                 TA_RangeType rangeType, 
+                                 int avgPeriod, 
+                                 double factor )
+{
+    printf("setcdlset:%d  ",settingType);
+    if( settingType >= TA_AllCandleSettings )
+        return TA_BAD_PARAM;
+    TA_Globals->candleSettings[settingType].settingType = settingType;
+    TA_Globals->candleSettings[settingType].rangeType = rangeType;
+    TA_Globals->candleSettings[settingType].avgPeriod = avgPeriod;
+    TA_Globals->candleSettings[settingType].factor = factor;
+    printf("cdlset: %d %d %d %f\n",TA_Globals->candleSettings[settingType].settingType,TA_Globals->candleSettings[settingType].rangeType,
+        TA_Globals->candleSettings[settingType].avgPeriod,TA_Globals->candleSettings[settingType].factor);
+    return TA_SUCCESS;
+}
+
+TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType )
+{
+    const TA_CandleSetting TA_CandleDefaultSettings[] = {
+        /* real body is long when it's longer than the average of the 10 previous candles' real body */
+        { TA_BodyLong, TA_RangeType_RealBody, 10, 1.0 },
+        /* real body is very long when it's longer than 3 times the average of the 10 previous candles' real body */
+        { TA_BodyVeryLong, TA_RangeType_RealBody, 10, 3.0 },
+        /* real body is short when it's shorter than the average of the 10 previous candles' real bodies */
+        { TA_BodyShort, TA_RangeType_RealBody, 10, 1.0 },
+        /* real body is like doji's body when it's shorter than 10% the average of the 10 previous candles' high-low range */
+        { TA_BodyDoji, TA_RangeType_HighLow, 10, 0.1 },
+        /* shadow is long when it's longer than the real body */
+        { TA_ShadowLong, TA_RangeType_RealBody, 0, 1.0 },
+        /* shadow is very long when it's longer than 2 times the real body */
+        { TA_ShadowVeryLong, TA_RangeType_RealBody, 0, 2.0 },
+        /* shadow is short when it's shorter than half the average of the 10 previous candles' sum of shadows */
+        { TA_ShadowShort, TA_RangeType_Shadows, 10, 1.0 },
+        /* shadow is very short when it's shorter than 10% the average of the 10 previous candles' high-low range */
+        { TA_ShadowVeryShort, TA_RangeType_HighLow, 10, 0.1 }
+    };
+
+    int i;
+    if( settingType > TA_AllCandleSettings )
+        return TA_BAD_PARAM;
+    if( settingType == TA_AllCandleSettings )
+        for( i = 0; i < TA_AllCandleSettings; ++i )
+            TA_Globals->candleSettings[i] = TA_CandleDefaultSettings[i];
+    else
+        TA_Globals->candleSettings[settingType] = TA_CandleDefaultSettings[settingType];
+    return TA_SUCCESS;
 }
 
 /**** Local functions definitions.     ****/
