@@ -57,10 +57,10 @@
 /* NEVER CALL directly these functions! Use TA_CallFunc. */
 
 TA_RetCode TA_MAX_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MAX(
@@ -73,10 +73,10 @@ TA_RetCode TA_MAX_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_MIN_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MIN(
@@ -89,10 +89,10 @@ TA_RetCode TA_MIN_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_BBANDS_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_BBANDS(
@@ -110,10 +110,10 @@ TA_RetCode TA_BBANDS_FramePP( const TA_ParamHolderPriv *params,
                params->out[2].data.outReal /*  outRealLowerBand_2 */ );
 }
 TA_RetCode TA_DEMA_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_DEMA(
@@ -126,10 +126,10 @@ TA_RetCode TA_DEMA_FramePP( const TA_ParamHolderPriv *params,
              params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_EMA_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_EMA(
@@ -142,10 +142,10 @@ TA_RetCode TA_EMA_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_HT_TRENDLINE_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_HT_TRENDLINE(
@@ -157,10 +157,10 @@ TA_RetCode TA_HT_TRENDLINE_FramePP( const TA_ParamHolderPriv *params,
                      params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_KAMA_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_KAMA(
@@ -173,10 +173,10 @@ TA_RetCode TA_KAMA_FramePP( const TA_ParamHolderPriv *params,
              params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_MA_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MA(
@@ -190,10 +190,10 @@ TA_RetCode TA_MA_FramePP( const TA_ParamHolderPriv *params,
            params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_MAMA_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MAMA(
@@ -208,10 +208,10 @@ TA_RetCode TA_MAMA_FramePP( const TA_ParamHolderPriv *params,
              params->out[1].data.outReal /*  outFAMA_1 */ );
 }
 TA_RetCode TA_MIDPRICE_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MIDPRICE(
@@ -225,10 +225,10 @@ TA_RetCode TA_MIDPRICE_FramePP( const TA_ParamHolderPriv *params,
                  params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_MIDPOINT_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MIDPOINT(
@@ -241,10 +241,10 @@ TA_RetCode TA_MIDPOINT_FramePP( const TA_ParamHolderPriv *params,
                  params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_SAR_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_SAR(
@@ -259,10 +259,10 @@ TA_RetCode TA_SAR_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_SMA_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_SMA(
@@ -275,10 +275,10 @@ TA_RetCode TA_SMA_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_T3_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_T3(
@@ -292,10 +292,10 @@ TA_RetCode TA_T3_FramePP( const TA_ParamHolderPriv *params,
            params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_TEMA_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_TEMA(
@@ -308,10 +308,10 @@ TA_RetCode TA_TEMA_FramePP( const TA_ParamHolderPriv *params,
              params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_TRIMA_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_TRIMA(
@@ -324,10 +324,10 @@ TA_RetCode TA_TRIMA_FramePP( const TA_ParamHolderPriv *params,
               params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_WMA_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_WMA(
@@ -340,10 +340,10 @@ TA_RetCode TA_WMA_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_ATR_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_ATR(
@@ -358,10 +358,10 @@ TA_RetCode TA_ATR_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_TRANGE_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_TRANGE(
@@ -375,10 +375,10 @@ TA_RetCode TA_TRANGE_FramePP( const TA_ParamHolderPriv *params,
                params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_ADX_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_ADX(
@@ -393,10 +393,10 @@ TA_RetCode TA_ADX_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_ADXR_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_ADXR(
@@ -411,10 +411,10 @@ TA_RetCode TA_ADXR_FramePP( const TA_ParamHolderPriv *params,
              params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_APO_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_APO(
@@ -429,10 +429,10 @@ TA_RetCode TA_APO_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_AROON_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_AROON(
@@ -447,10 +447,10 @@ TA_RetCode TA_AROON_FramePP( const TA_ParamHolderPriv *params,
               params->out[1].data.outReal /*  outAroonUp_1 */ );
 }
 TA_RetCode TA_AROONOSC_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_AROONOSC(
@@ -464,10 +464,10 @@ TA_RetCode TA_AROONOSC_FramePP( const TA_ParamHolderPriv *params,
                  params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_CCI_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_CCI(
@@ -482,10 +482,10 @@ TA_RetCode TA_CCI_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_DX_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_DX(
@@ -500,10 +500,10 @@ TA_RetCode TA_DX_FramePP( const TA_ParamHolderPriv *params,
            params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_MACD_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MACD(
@@ -520,10 +520,10 @@ TA_RetCode TA_MACD_FramePP( const TA_ParamHolderPriv *params,
              params->out[2].data.outReal /*  outMACDHist_2 */ );
 }
 TA_RetCode TA_MACDEXT_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MACDEXT(
@@ -543,10 +543,10 @@ TA_RetCode TA_MACDEXT_FramePP( const TA_ParamHolderPriv *params,
                 params->out[2].data.outReal /*  outMACDHist_2 */ );
 }
 TA_RetCode TA_MACDFIX_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MACDFIX(
@@ -561,10 +561,10 @@ TA_RetCode TA_MACDFIX_FramePP( const TA_ParamHolderPriv *params,
                 params->out[2].data.outReal /*  outMACDHist_2 */ );
 }
 TA_RetCode TA_MFI_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MFI(
@@ -580,10 +580,10 @@ TA_RetCode TA_MFI_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_MINUS_DI_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MINUS_DI(
@@ -598,10 +598,10 @@ TA_RetCode TA_MINUS_DI_FramePP( const TA_ParamHolderPriv *params,
                  params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_MINUS_DM_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MINUS_DM(
@@ -615,10 +615,10 @@ TA_RetCode TA_MINUS_DM_FramePP( const TA_ParamHolderPriv *params,
                  params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_MOM_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MOM(
@@ -631,10 +631,10 @@ TA_RetCode TA_MOM_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_PPO_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_PPO(
@@ -649,10 +649,10 @@ TA_RetCode TA_PPO_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_PLUS_DI_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_PLUS_DI(
@@ -667,10 +667,10 @@ TA_RetCode TA_PLUS_DI_FramePP( const TA_ParamHolderPriv *params,
                 params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_PLUS_DM_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_PLUS_DM(
@@ -684,10 +684,10 @@ TA_RetCode TA_PLUS_DM_FramePP( const TA_ParamHolderPriv *params,
                 params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_ROC_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_ROC(
@@ -700,10 +700,10 @@ TA_RetCode TA_ROC_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_ROCP_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_ROCP(
@@ -716,10 +716,10 @@ TA_RetCode TA_ROCP_FramePP( const TA_ParamHolderPriv *params,
              params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_ROCR_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_ROCR(
@@ -732,10 +732,10 @@ TA_RetCode TA_ROCR_FramePP( const TA_ParamHolderPriv *params,
              params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_ROCR100_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_ROCR100(
@@ -748,10 +748,10 @@ TA_RetCode TA_ROCR100_FramePP( const TA_ParamHolderPriv *params,
                 params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_RSI_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_RSI(
@@ -764,10 +764,10 @@ TA_RetCode TA_RSI_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_STOCH_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_STOCH(
@@ -787,10 +787,10 @@ TA_RetCode TA_STOCH_FramePP( const TA_ParamHolderPriv *params,
               params->out[1].data.outReal /*  outSlowD_1 */ );
 }
 TA_RetCode TA_STOCHF_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_STOCHF(
@@ -808,10 +808,10 @@ TA_RetCode TA_STOCHF_FramePP( const TA_ParamHolderPriv *params,
                params->out[1].data.outReal /*  outFastD_1 */ );
 }
 TA_RetCode TA_TRIX_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_TRIX(
@@ -824,10 +824,10 @@ TA_RetCode TA_TRIX_FramePP( const TA_ParamHolderPriv *params,
              params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_WILLR_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_WILLR(
@@ -842,10 +842,10 @@ TA_RetCode TA_WILLR_FramePP( const TA_ParamHolderPriv *params,
               params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_HT_DCPERIOD_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_HT_DCPERIOD(
@@ -857,10 +857,10 @@ TA_RetCode TA_HT_DCPERIOD_FramePP( const TA_ParamHolderPriv *params,
                     params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_HT_DCPHASE_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_HT_DCPHASE(
@@ -872,10 +872,10 @@ TA_RetCode TA_HT_DCPHASE_FramePP( const TA_ParamHolderPriv *params,
                    params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_HT_PHASOR_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_HT_PHASOR(
@@ -888,10 +888,10 @@ TA_RetCode TA_HT_PHASOR_FramePP( const TA_ParamHolderPriv *params,
                   params->out[1].data.outReal /*  outQuadrature_1 */ );
 }
 TA_RetCode TA_HT_SINE_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_HT_SINE(
@@ -904,10 +904,10 @@ TA_RetCode TA_HT_SINE_FramePP( const TA_ParamHolderPriv *params,
                 params->out[1].data.outReal /*  outLeadSine_1 */ );
 }
 TA_RetCode TA_HT_TRENDMODE_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_HT_TRENDMODE(
@@ -919,10 +919,10 @@ TA_RetCode TA_HT_TRENDMODE_FramePP( const TA_ParamHolderPriv *params,
                      params->out[0].data.outInteger /*  outInteger_0 */ );
 }
 TA_RetCode TA_AD_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_AD(
@@ -937,10 +937,10 @@ TA_RetCode TA_AD_FramePP( const TA_ParamHolderPriv *params,
            params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_ADOSC_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_ADOSC(
@@ -957,10 +957,10 @@ TA_RetCode TA_ADOSC_FramePP( const TA_ParamHolderPriv *params,
               params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_OBV_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_OBV(
@@ -973,10 +973,10 @@ TA_RetCode TA_OBV_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outInteger /*  outInteger_0 */ );
 }
 TA_RetCode TA_STDDEV_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_STDDEV(
@@ -990,10 +990,10 @@ TA_RetCode TA_STDDEV_FramePP( const TA_ParamHolderPriv *params,
                params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_VAR_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_VAR(
@@ -1007,10 +1007,10 @@ TA_RetCode TA_VAR_FramePP( const TA_ParamHolderPriv *params,
             params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_AVGPRICE_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_AVGPRICE(
@@ -1025,10 +1025,10 @@ TA_RetCode TA_AVGPRICE_FramePP( const TA_ParamHolderPriv *params,
                  params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_MEDPRICE_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_MEDPRICE(
@@ -1041,10 +1041,10 @@ TA_RetCode TA_MEDPRICE_FramePP( const TA_ParamHolderPriv *params,
                  params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_TYPPRICE_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_TYPPRICE(
@@ -1058,10 +1058,10 @@ TA_RetCode TA_TYPPRICE_FramePP( const TA_ParamHolderPriv *params,
                  params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_WCLPRICE_FramePP( const TA_ParamHolderPriv *params,
-                          TA_Integer            startIdx,
-                          TA_Integer            endIdx,
-                          TA_Integer           *outBegIdx,
-                          TA_Integer           *outNbElement )
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
 
 {
    return TA_WCLPRICE(
