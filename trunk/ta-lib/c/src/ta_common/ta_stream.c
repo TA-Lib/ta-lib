@@ -2626,6 +2626,8 @@ static TA_RetCode streamGetHREF( TA_StreamAccess *access,
 
    /* Extract a "href=x>" where 'x' is returned in
     * buffer as a NULL terminated string.
+    * Remove potentialy double quotes surrounding
+    * the x like this: "x"
     */
    retCode = TA_StreamAccessSearch( access, "href=" );
    if( retCode != TA_SUCCESS )
@@ -2642,10 +2644,13 @@ static TA_RetCode streamGetHREF( TA_StreamAccess *access,
          return retCode;
       }
 
-      if( data == '>' )
-         again = 0;
-      else if( i < (bufferSize-1) )
-         buffer[i++] = data;
+      if( data != '"' )
+      {   
+         if( data == '>' )
+            again = 0;
+         else if( i < (bufferSize-1) )
+            buffer[i++] = data;
+      }
    } while( again );
 
    buffer[i] = '\0';
