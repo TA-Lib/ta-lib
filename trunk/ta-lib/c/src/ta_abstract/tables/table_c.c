@@ -866,6 +866,34 @@ DEF_FUNCTION( CDLHIGHWAVE,                    /* name */
 
 /* CDLHIGHWAVE END */
 
+/* CDLHOMINGPIGEON BEGIN */
+static const TA_InputParameterInfo    *TA_CDLHOMINGPIGEON_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLHOMINGPIGEON_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLHOMINGPIGEON_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLHOMINGPIGEON,                /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Homing Pigeon",                /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLHOMINGPIGEON END */
+
 /* CDLIDENTICAL3CROWS BEGIN */
 static const TA_InputParameterInfo    *TA_CDLIDENTICAL3CROWS_Inputs[]    =
 {
@@ -1006,6 +1034,34 @@ DEF_FUNCTION( CDLKICKINGBYLENGTH,             /* name */
 
 /* CDLKICKINGBYLENGTH END */
 
+/* CDLLADDERBOTTOM BEGIN */
+static const TA_InputParameterInfo    *TA_CDLLADDERBOTTOM_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLLADDERBOTTOM_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLLADDERBOTTOM_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLLADDERBOTTOM,                /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Ladder Bottom",                /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLLADDERBOTTOM END */
+
 /* CDLLONGLEGGEDDOJI BEGIN */
 static const TA_InputParameterInfo    *TA_CDLLONGLEGGEDDOJI_Inputs[]    =
 {
@@ -1089,6 +1145,34 @@ DEF_FUNCTION( CDLMARUBOZU,                    /* name */
              );
 
 /* CDLMARUBOZU END */
+
+/* CDLMATCHINGLOW BEGIN */
+static const TA_InputParameterInfo    *TA_CDLMATCHINGLOW_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLMATCHINGLOW_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLMATCHINGLOW_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLMATCHINGLOW,                 /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Matching Low",                 /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLMATCHINGLOW END */
 
 /* CDLMATHOLD BEGIN */
 static const TA_InputParameterInfo    *TA_CDLMATHOLD_Inputs[]    =
@@ -1429,6 +1513,34 @@ DEF_FUNCTION( CDLSTALLEDPATTERN,              /* name */
 
 /* CDLSTALLEDPATTERN END */
 
+/* CDLSTICKSANDWICH BEGIN */
+static const TA_InputParameterInfo    *TA_CDLSTICKSANDWICH_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLSTICKSANDWICH_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLSTICKSANDWICH_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLSTICKSANDWICH,               /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Stick Sandwich",               /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLSTICKSANDWICH END */
+
 /* CDLTAKURI BEGIN */
 static const TA_InputParameterInfo    *TA_CDLTAKURI_Inputs[]    =
 {
@@ -1688,15 +1800,18 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLHARAMI),
    ADD_TO_TABLE(CDLHARAMICROSS),
    ADD_TO_TABLE(CDLHIGHWAVE),
+   ADD_TO_TABLE(CDLHOMINGPIGEON),
    ADD_TO_TABLE(CDLIDENTICAL3CROWS),
    ADD_TO_TABLE(CDLINNECK),
    ADD_TO_TABLE(CDLINVERTEDHAMMER),
    ADD_TO_TABLE(CDLKICKING),
    ADD_TO_TABLE(CDLKICKINGBYLENGTH),
+   ADD_TO_TABLE(CDLLADDERBOTTOM),
    ADD_TO_TABLE(CDLLONGLEGGEDDOJI),
    ADD_TO_TABLE(CDLLONGLINE),
    ADD_TO_TABLE(CDLMARUBOZU),
    ADD_TO_TABLE(CDLMATHOLD),
+   ADD_TO_TABLE(CDLMATCHINGLOW),
    ADD_TO_TABLE(CDLMORNINGDOJISTAR),
    ADD_TO_TABLE(CDLMORNINGSTAR),
    ADD_TO_TABLE(CDLONNECK),
@@ -1708,6 +1823,7 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLSHORTLINE),
    ADD_TO_TABLE(CDLSPINNINGTOP),  
    ADD_TO_TABLE(CDLSTALLEDPATTERN),  
+   ADD_TO_TABLE(CDLSTICKSANDWICH),  
    ADD_TO_TABLE(CDLTAKURI),
    ADD_TO_TABLE(CDLTASUKIGAP),
    ADD_TO_TABLE(CDLTHRUSTING),
