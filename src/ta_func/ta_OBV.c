@@ -71,6 +71,10 @@
 /* Generated */    #include "ta_memory.h"
 /* Generated */ #endif
 /* Generated */ 
+/* Generated */ #ifndef TA_TRACE_H
+/* Generated */    #include "ta_trace.h"
+/* Generated */ #endif
+/* Generated */ 
 /* Generated */ #define TA_PREFIX(x) TA_##x
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 

@@ -83,6 +83,8 @@
 #include <ctype.h>
 #include "ta_test_priv.h"
 #include "sfl.h"
+#include "ta_trace.h"
+
 
 /**** External functions declarations. ****/
 /* None */
