@@ -166,6 +166,7 @@ typedef enum
     /*  97 */  TA_BAD_QUERY,   /* Query could not be executed or syntax error in query */
     /*  98 */  TA_UNSUPPORTED_DO_NOT_SPLIT_ADJUST, /* TA_DO_NOT_SPLIT_ADJUST flag is not supported by this data source */
     /*  99 */  TA_UNSUPPORTED_DO_NOT_VALUE_ADJUST, /* TA_DO_NOT_VALUE_ADJUST flag is not supported by this data source */
+    /* 100 */  TA_MISSING_PRICE_FOR_ADJUSTMENT, /* At least one price must be requeste when doing price adjustment. */
 
     /****** IP Error Code *****/
     /* 700 */  TA_IP_NOSOCKETS = 700,  /* Sockets not supported      */
