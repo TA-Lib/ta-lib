@@ -797,10 +797,13 @@
 /* Generated */                  startIdx,
 /* Generated */                  endIdx,
 /* Generated */                  params->in[0].data.inReal, /* inReal_0 */
-/* Generated */                  params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
+/* Generated */                  params->optIn[0].data.optInInteger, /* optInFastK_Period_0 */
+/* Generated */                  params->optIn[1].data.optInInteger, /* optInFastD_Period_1 */
+/* Generated */                  params->optIn[2].data.optInInteger, /* optInFastD_MAType_2 */
 /* Generated */                  outBegIdx, 
 /* Generated */                  outNbElement, 
-/* Generated */                  params->out[0].data.outReal /*  outReal_0 */ );
+/* Generated */                  params->out[0].data.outReal, /*  outFastK_0 */
+/* Generated */                  params->out[1].data.outReal /*  outFastD_1 */ );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_TRIX_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
