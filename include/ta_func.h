@@ -992,7 +992,7 @@ int TA_AROONOSC_Lookback( int           optInTimePeriod );  /* From 2 to 100000 
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod:(From 5 to 100000)
+ * optInTimePeriod:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -1002,7 +1002,7 @@ TA_RetCode TA_CCI( int    startIdx,
                    const double inHigh[],
                    const double inLow[],
                    const double inClose[],
-                   int           optInTimePeriod, /* From 5 to 100000 */
+                   int           optInTimePeriod, /* From 2 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal[] );
@@ -1012,12 +1012,12 @@ TA_RetCode TA_S_CCI( int    startIdx,
                      const float  inHigh[],
                      const float  inLow[],
                      const float  inClose[],
-                     int           optInTimePeriod, /* From 5 to 100000 */
+                     int           optInTimePeriod, /* From 2 to 100000 */
                      int          *outBegIdx,
                      int          *outNbElement,
                      double        outReal[] );
 
-int TA_CCI_Lookback( int           optInTimePeriod );  /* From 5 to 100000 */
+int TA_CCI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
