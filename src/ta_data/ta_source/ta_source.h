@@ -17,18 +17,18 @@
    #include "ta_adddatasourceparam_priv.h"
 #endif
 
-/* Variable to indicate which functionality is supported by this data
+/* Flags to indicate which functionality is supported by this data
  * source driver.
  *
- * TA_REPLACE_ZERO_PRICE_BAR
- *   Flags to indicate that close price bar CAN be replaced by the last
- *   known close price. Some datasource does not support such functionality.
- *   
  * TA_SLOW_ACCESS
  *   Indicates that the retreival of the data cannot be done as fast as a
  *   locally accessible database. This may result into multithreading when
  *   retreiving data. Any data source relying solely on internet should be
  *   characterize as slow access.
+ *
+ * 
+ * The list of flags here are not accessible to the TA-Lib user.
+ * See ta_defs.h for the flags accessible to the TA-Lib user.
  */
 
 /* Note: for the first 16 bits, see ta_defs.h */
@@ -95,6 +95,18 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
                               TA_Real *close,
                               TA_Integer *volume,
                               TA_Integer *openInterest );
+
+/* The following functions can be called by the driver from the
+ * GetHistoryData() function only! (see below)
+ *
+ * It allows to add split/value adjustment for building
+ * the TA_History.
+ *
+ * In other word, the driver adds the raw data and the adjustment
+ * are done by TA-Lib (as needed).
+ */
+TA_RetCode TA_HistoryAddSplitAdjust( TA_ParamForAddData *paramForAddData, TA_Timestamp *when, double factor );
+TA_RetCode TA_HistoryAddValueAdjust( TA_ParamForAddData *paramForAddData, TA_Timestamp *when, double amount );
 
 /* Allows the data source driver to cancel all the data
  * who was added up to now. This might be useful if
