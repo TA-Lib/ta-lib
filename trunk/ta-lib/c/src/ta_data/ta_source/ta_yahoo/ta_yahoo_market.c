@@ -111,24 +111,41 @@ static TA_YahooExtension TA_YahooExtensionTable[] =
    { "TO", TA_Country_ID_CA, "TSE",   "STOCK"  },  /* Toronto Stock Exchange */
    { "V",  TA_Country_ID_CA, "CDNX",  "STOCK"  },  /* Canadian Venture Exchange (Vancouver) */
    { "M",  TA_Country_ID_CA, "MSE",   "STOCK"  },  /* Montreal Stock Exchange */
+
    { "OB", TA_Country_ID_US, "OTCBB", "STOCK"  },  /* Over-the-counter, Bulletin Board */
    { "PK", TA_Country_ID_US, "OTC",   "STOCK"  },  /* Over-the-counter, Pink Sheet */
+
    { "L",  TA_Country_ID_UK, "LSE",   "STOCK"  },  /* London Stock Exchange */
+
+   { "VI", TA_Country_ID_AT, "WBAG",  "STOCK"  },  /* Austria - Vienna Stock Exchange */
+
    { "CO", TA_Country_ID_DK, "XCSE",  "STOCK"  },  /* Copenhagen Stock Exchange */
+
    { "PA", TA_Country_ID_FR, "SBF",   "STOCK"  },  /* Bourse De Paris */
+   { "P",  TA_Country_ID_FR, "SBF",   "STOCK"  },  /* Bourse De Paris */
+
    { "BE", TA_Country_ID_DE, "BSE",   "STOCK"  },  /* Berlin Stock Exchange */
    { "BM", TA_Country_ID_DE, "BWB",   "STOCK"  },  /* Bremen Stock Exchange */
    { "D",  TA_Country_ID_DE, "RWB",   "STOCK"  },  /* Dusseldorf Stock Exchange */
+   { "F",  TA_Country_ID_DE, "FRA",   "STOCK"  },  /* Frankfurt Stock Exchange */
    { "DE", TA_Country_ID_DE, "XETRA", "STOCK"  },  /* XETRA Stock Exchange */
+   { "H",  TA_Country_ID_DE, "HAM",   "STOCK"  },  /* Hamberg Stock Exchange */
+   { "HA", TA_Country_ID_DE, "HAN",   "STOCK"  },  /* Hannover Stock Exchange */
+   { "MU", TA_Country_ID_DE, "BBAG",  "STOCK"  },  /* Bavarian Stock Exchange (Munich) */
+   { "SG", TA_Country_ID_DE, "BSAG",  "STOCK"  },  /* Stuttgart Stock Exchange */
+
    { "MI", TA_Country_ID_IT, "BI",    "STOCK"  },  /* Borsa Italia - Milan Stock Exchange */
-   { "VI", TA_Country_ID_AT, "WBAG",  "STOCK"  },  /* Austria - Vienna Stock Exchange */
+
    { "NL", TA_Country_ID_AT, "AEX",   "STOCK"  },  /* Amsterdam Stock Exchange */
+
    { "OL", TA_Country_ID_NO, "OSE",   "STOCK"  },  /* Oslo Stock Exchange */
+
    { "BC", TA_Country_ID_ES, "BSE",   "STOCK"  },  /* Barcelona Stock Exchange */
    { "BI", TA_Country_ID_ES, "BIL",   "STOCK"  },  /* Bilbao Stock Exchange */
    { "MF", TA_Country_ID_ES, "MEFF",  "FUTURE" },  /* Madrid Fixed Income and Derivative Market */
    { "MC", TA_Country_ID_ES, "MEFF",  "STOCK"  },  /* Madrid Fixed Income and Derivative Market */
    { "MA", TA_Country_ID_ES, "BDM",   "STOCK"  },  /* Madrid Stock Exchange */
+
    { "ST", TA_Country_ID_SE, "OMX",   "STOCK"  }   /* Stockholm Stock Exchange */
 };
 
@@ -660,6 +677,35 @@ static TA_RetCode parseMarketPage( TA_StreamAccess *streamAccess,
       /* Default unknown exchange */
       marketPage->exchange  = "OTHER";
       marketPage->type      = "OTHER";
+
+      /* Detect case where the symbol is no longer valid. */
+      searchStartPoint = TA_StreamAccessAllocCopy( streamAccess );
+      retCode = TA_StreamAccessSearch( searchStartPoint, "is no longer valid" );
+      TA_StreamAccessFree(searchStartPoint);
+      if( retCode == TA_SUCCESS )
+         return TA_OBSOLETED_SYMBOL;
+
+      /* Detect case where the symbol is no longer valid. */
+      searchStartPoint = TA_StreamAccessAllocCopy( streamAccess );
+      retCode = TA_StreamAccessSearch( searchStartPoint, "Changed Ticker Symbol" );
+      TA_StreamAccessFree(searchStartPoint);
+      if( retCode == TA_SUCCESS )
+         return TA_OBSOLETED_SYMBOL;
+
+      /* Detect case where the symbol is no longer valid. */
+      searchStartPoint = TA_StreamAccessAllocCopy( streamAccess );
+      retCode = TA_StreamAccessSearch( searchStartPoint, "is not a valid ticker symbol" );
+      TA_StreamAccessFree(searchStartPoint);
+      if( retCode == TA_SUCCESS )
+         return TA_OBSOLETED_SYMBOL;
+
+      /* Detect case where the symbol is no longer valid. */
+      searchStartPoint = TA_StreamAccessAllocCopy( streamAccess );
+      retCode = TA_StreamAccessSearch( searchStartPoint, "Invalid Ticker Symbol" );
+      TA_StreamAccessFree(searchStartPoint);
+      if( retCode == TA_SUCCESS )
+         return TA_OBSOLETED_SYMBOL;
+
       return TA_INVALID_SECURITY_EXCHANGE;
    }
    
