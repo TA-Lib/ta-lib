@@ -60,6 +60,7 @@
 #include "ta_trace.h"
 #include "ta_sql_minidriver.h"
 #include "ta_sql_mysql.h"
+#include "ta_sql_odbc.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -72,6 +73,18 @@ const TA_SQL_Minidriver TA_gSQLMinidriverTable[] =
 {
    {
       "odbc",
+#ifdef TA_SUPPORT_ODBC
+      TA_SQL_ODBC_OpenConnection,
+      TA_SQL_ODBC_ExecuteQuery,
+      TA_SQL_ODBC_GetNumColumns,
+      TA_SQL_ODBC_GetNumRows,
+      TA_SQL_ODBC_GetColumnName,
+      TA_SQL_ODBC_GetRowString,
+      TA_SQL_ODBC_GetRowReal,
+      TA_SQL_ODBC_GetRowInteger,
+      TA_SQL_ODBC_ReleaseQuery,
+      TA_SQL_ODBC_CloseConnection
+#else
       NULL,
       NULL,
       NULL,
@@ -82,6 +95,7 @@ const TA_SQL_Minidriver TA_gSQLMinidriverTable[] =
       NULL,
       NULL,
       NULL
+#endif
    },
    {
       "mysql",
