@@ -2068,6 +2068,40 @@ int TA_OBV_Lookback( void );
  ******************************************/
 
 /*
+ * TA_CORREL - Pearson's Correlation Coefficient (r)
+ * 
+ * Input  = double, double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 1 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_CORREL( int    startIdx,
+                      int    endIdx,
+                      const double inReal_0[],
+                      const double inReal_1[],
+                      int           optInTimePeriod_0, /* From 1 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal_0[] );
+
+TA_RetCode TA_S_CORREL( int    startIdx,
+                        int    endIdx,
+                        const float  inReal_0[],
+                        const float  inReal_1[],
+                        int           optInTimePeriod_0, /* From 1 to 100000 */
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double        outReal_0[] );
+
+int TA_CORREL_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
+
+
+/*
  * TA_LINEARREG - Linear Regression
  * 
  * Input  = double

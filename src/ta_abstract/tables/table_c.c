@@ -76,6 +76,33 @@ DEF_FUNCTION( CCI,                           /* name */
 
 /* CCI END */
 
+/* CORREL BEGIN */
+static const TA_InputParameterInfo    *TA_CORREL_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CORREL_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CORREL_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_30,
+  NULL
+};
+
+DEF_FUNCTION( CORREL,                      /* name */
+              TA_GroupId_Statistic,     /* groupId */
+              "Pearson's Correlation Coefficient (r)", /* hint */
+              NULL,                     /* helpFile */
+              0,                        /* flags */
+              NULL                      /* analysis function */
+             );
+/* CORREL END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
@@ -84,6 +111,7 @@ DEF_FUNCTION( CCI,                           /* name */
 const TA_FuncDef *TA_DEF_TableC[] =
 {
    ADD_TO_TABLE(CCI),
+   ADD_TO_TABLE(CORREL),
    NULL
 };
 

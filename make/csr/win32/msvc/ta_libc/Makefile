@@ -164,6 +164,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_AD.c \
 		..\..\..\..\..\src\ta_func\ta_ADOSC.c \
 		..\..\..\..\..\src\ta_func\ta_OBV.c \
+		..\..\..\..\..\src\ta_func\ta_CORREL.c \
 		..\..\..\..\..\src\ta_func\ta_LINEARREG.c \
 		..\..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c \
 		..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c \
@@ -325,6 +326,7 @@ OBJECTS =	..\..\..\..\..\temp\csr\ta_ascii.obj \
 		..\..\..\..\..\temp\csr\ta_AD.obj \
 		..\..\..\..\..\temp\csr\ta_ADOSC.obj \
 		..\..\..\..\..\temp\csr\ta_OBV.obj \
+		..\..\..\..\..\temp\csr\ta_CORREL.obj \
 		..\..\..\..\..\temp\csr\ta_LINEARREG.obj \
 		..\..\..\..\..\temp\csr\ta_LINEARREG_SLOPE.obj \
 		..\..\..\..\..\temp\csr\ta_LINEARREG_ANGLE.obj \
@@ -531,6 +533,7 @@ clean:
 	-del ..\..\..\..\..\temp\csr\ta_AD.obj
 	-del ..\..\..\..\..\temp\csr\ta_ADOSC.obj
 	-del ..\..\..\..\..\temp\csr\ta_OBV.obj
+	-del ..\..\..\..\..\temp\csr\ta_CORREL.obj
 	-del ..\..\..\..\..\temp\csr\ta_LINEARREG.obj
 	-del ..\..\..\..\..\temp\csr\ta_LINEARREG_SLOPE.obj
 	-del ..\..\..\..\..\temp\csr\ta_LINEARREG_ANGLE.obj
@@ -988,6 +991,9 @@ clean:
 
 ..\..\..\..\..\temp\csr\ta_OBV.obj: ..\..\..\..\..\src\ta_func\ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\ta_OBV.obj ..\..\..\..\..\src\ta_func\ta_OBV.c
+
+..\..\..\..\..\temp\csr\ta_CORREL.obj: ..\..\..\..\..\src\ta_func\ta_CORREL.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\ta_CORREL.obj ..\..\..\..\..\src\ta_func\ta_CORREL.c
 
 ..\..\..\..\..\temp\csr\ta_LINEARREG.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\ta_LINEARREG.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG.c

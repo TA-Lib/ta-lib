@@ -436,6 +436,13 @@
 /* Generated */                           int           *outNbElement )
 ;
 
+/* Generated */ TA_RetCode TA_CORREL_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+;
+
 /* Generated */ TA_RetCode TA_LINEARREG_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
