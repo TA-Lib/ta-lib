@@ -129,6 +129,23 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
 /* None */
 
 /**** Global functions definitions.   ****/
+static int ta_g_val = 0;
+static const char *ta_g_wheel = "-\\|/";
+void showFeedback()
+{
+   if( ta_g_wheel[ta_g_val] == '\0' )
+      ta_g_val = 0; 
+   putchar('\b');
+   putchar(ta_g_wheel[ta_g_val]);
+   ta_g_val++;
+}
+
+void hideFeedback()
+{
+   putchar('\b');
+   ta_g_val = 0;
+}
+
 ErrorNumber allocLib( TA_UDBase **uDBasePtr )
 {
    TA_InitializeParam initializeParam;
@@ -556,6 +573,8 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
    ErrorNumber errNb;
    TA_Integer unstablePeriod, temp;
    unsigned int outputIsInteger;
+
+   showFeedback();
 
    /* Caculate the whole range. This is going
     * to be the reference for all subsequent test.
