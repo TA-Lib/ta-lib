@@ -126,6 +126,10 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_BBANDS.c \
 		..\..\..\..\..\src\ta_func\ta_CCI.c \
+		..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c \
+		..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c \
+		..\..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c \
+		..\..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c \
 		..\..\..\..\..\src\ta_func\ta_CORREL.c \
 		..\..\..\..\..\src\ta_func\ta_DEMA.c \
 		..\..\..\..\..\src\ta_func\ta_DX.c \
@@ -296,6 +300,10 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj \
 		..\..\..\..\..\temp\csd\ta_AVGPRICE.obj \
 		..\..\..\..\..\temp\csd\ta_BBANDS.obj \
 		..\..\..\..\..\temp\csd\ta_CCI.obj \
+		..\..\..\..\..\temp\csd\ta_CDLHIGHWAVE.obj \
+		..\..\..\..\..\temp\csd\ta_CDLLONGLINE.obj \
+		..\..\..\..\..\temp\csd\ta_CDLSHORTLINE.obj \
+		..\..\..\..\..\temp\csd\ta_CDLSPINNINGTOP.obj \
 		..\..\..\..\..\temp\csd\ta_CORREL.obj \
 		..\..\..\..\..\temp\csd\ta_DEMA.obj \
 		..\..\..\..\..\temp\csd\ta_DX.obj \
@@ -493,6 +501,10 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_AVGPRICE.obj \
 +..\..\..\..\..\temp\csd\ta_BBANDS.obj \
 +..\..\..\..\..\temp\csd\ta_CCI.obj \
++..\..\..\..\..\temp\csd\ta_CDLHIGHWAVE.obj \
++..\..\..\..\..\temp\csd\ta_CDLLONGLINE.obj \
++..\..\..\..\..\temp\csd\ta_CDLSHORTLINE.obj \
++..\..\..\..\..\temp\csd\ta_CDLSPINNINGTOP.obj \
 +..\..\..\..\..\temp\csd\ta_CORREL.obj \
 +..\..\..\..\..\temp\csd\ta_DEMA.obj \
 +..\..\..\..\..\temp\csd\ta_DX.obj \
@@ -676,6 +688,10 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_AVGPRICE.obj
 	-del ..\..\..\..\..\temp\csd\ta_BBANDS.obj
 	-del ..\..\..\..\..\temp\csd\ta_CCI.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLHIGHWAVE.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLLONGLINE.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLSHORTLINE.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLSPINNINGTOP.obj
 	-del ..\..\..\..\..\temp\csd\ta_CORREL.obj
 	-del ..\..\..\..\..\temp\csd\ta_DEMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_DX.obj
@@ -1068,6 +1084,18 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_CCI.obj: ..\..\..\..\..\src\ta_func\ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CCI.obj ..\..\..\..\..\src\ta_func\ta_CCI.c
+
+..\..\..\..\..\temp\csd\ta_CDLHIGHWAVE.obj: ..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLHIGHWAVE.obj ..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
+
+..\..\..\..\..\temp\csd\ta_CDLLONGLINE.obj: ..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLLONGLINE.obj ..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c
+
+..\..\..\..\..\temp\csd\ta_CDLSHORTLINE.obj: ..\..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLSHORTLINE.obj ..\..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c
+
+..\..\..\..\..\temp\csd\ta_CDLSPINNINGTOP.obj: ..\..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLSPINNINGTOP.obj ..\..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c
 
 ..\..\..\..\..\temp\csd\ta_CORREL.obj: ..\..\..\..\..\src\ta_func\ta_CORREL.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CORREL.obj ..\..\..\..\..\src\ta_func\ta_CORREL.c
