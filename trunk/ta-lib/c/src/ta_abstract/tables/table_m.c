@@ -490,7 +490,7 @@ static const TA_OutputParameterInfo   *TA_MINUS_DI_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_MINUS_DI_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+{ &TA_DEF_UI_TimePeriod_14,
   NULL
 };
 
