@@ -1335,6 +1335,28 @@
 /* Generated */    (void)params;
 /* Generated */    return TA_CDL3OUTSIDE_Lookback( );
 /* Generated */ }
+/* Generated */ TA_RetCode TA_CDL3STARSINSOUTH_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_CDL3STARSINSOUTH(
+/* Generated */                          startIdx,
+/* Generated */                          endIdx,
+/* Generated */                          params->in[0].data.inPrice.open, /* inOpen */
+/* Generated */                          params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                          params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                          params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                          outBegIdx, 
+/* Generated */                          outNbElement, 
+/* Generated */                          params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_CDL3STARSINSOUTH_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    (void)params;
+/* Generated */    return TA_CDL3STARSINSOUTH_Lookback( );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_CDL3WHITESOLDIERS_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
@@ -1444,6 +1466,50 @@
 /* Generated */ {
 /* Generated */    (void)params;
 /* Generated */    return TA_CDLBREAKAWAY_Lookback( );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_CDLCLOSINGMARUBOZU_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_CDLCLOSINGMARUBOZU(
+/* Generated */                            startIdx,
+/* Generated */                            endIdx,
+/* Generated */                            params->in[0].data.inPrice.open, /* inOpen */
+/* Generated */                            params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                            params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                            params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                            outBegIdx, 
+/* Generated */                            outNbElement, 
+/* Generated */                            params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_CDLCLOSINGMARUBOZU_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    (void)params;
+/* Generated */    return TA_CDLCLOSINGMARUBOZU_Lookback( );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_CDLCONCEALBABYSWALL_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_CDLCONCEALBABYSWALL(
+/* Generated */                             startIdx,
+/* Generated */                             endIdx,
+/* Generated */                             params->in[0].data.inPrice.open, /* inOpen */
+/* Generated */                             params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                             params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                             params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                             outBegIdx, 
+/* Generated */                             outNbElement, 
+/* Generated */                             params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_CDLCONCEALBABYSWALL_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    (void)params;
+/* Generated */    return TA_CDLCONCEALBABYSWALL_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_CDLCOUNTERATTACK_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1620,6 +1686,28 @@
 /* Generated */ unsigned int TA_CDLEVENINGSTAR_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
 /* Generated */    return TA_CDLEVENINGSTAR_Lookback(params->optIn[0].data.optInReal /* optInPenetration*/ );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_CDLGAPSIDESIDEWHITE_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_CDLGAPSIDESIDEWHITE(
+/* Generated */                             startIdx,
+/* Generated */                             endIdx,
+/* Generated */                             params->in[0].data.inPrice.open, /* inOpen */
+/* Generated */                             params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                             params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                             params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                             outBegIdx, 
+/* Generated */                             outNbElement, 
+/* Generated */                             params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_CDLGAPSIDESIDEWHITE_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    (void)params;
+/* Generated */    return TA_CDLGAPSIDESIDEWHITE_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_CDLGRAVESTONEDOJI_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1929,6 +2017,28 @@
 /* Generated */    (void)params;
 /* Generated */    return TA_CDLMARUBOZU_Lookback( );
 /* Generated */ }
+/* Generated */ TA_RetCode TA_CDLMATHOLD_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_CDLMATHOLD(
+/* Generated */                    startIdx,
+/* Generated */                    endIdx,
+/* Generated */                    params->in[0].data.inPrice.open, /* inOpen */
+/* Generated */                    params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                    params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                    params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                    params->optIn[0].data.optInReal, /* optInPenetration*/
+/* Generated */                    outBegIdx, 
+/* Generated */                    outNbElement, 
+/* Generated */                    params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_CDLMATHOLD_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    return TA_CDLMATHOLD_Lookback(params->optIn[0].data.optInReal /* optInPenetration*/ );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_CDLMORNINGDOJISTAR_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
@@ -2038,6 +2148,28 @@
 /* Generated */ {
 /* Generated */    (void)params;
 /* Generated */    return TA_CDLRICKSHAWMAN_Lookback( );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_CDLRISEFALL3METHODS_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_CDLRISEFALL3METHODS(
+/* Generated */                             startIdx,
+/* Generated */                             endIdx,
+/* Generated */                             params->in[0].data.inPrice.open, /* inOpen */
+/* Generated */                             params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                             params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                             params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                             outBegIdx, 
+/* Generated */                             outNbElement, 
+/* Generated */                             params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_CDLRISEFALL3METHODS_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    (void)params;
+/* Generated */    return TA_CDLRISEFALL3METHODS_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_CDLSEPARATINGLINES_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -2236,6 +2368,28 @@
 /* Generated */ {
 /* Generated */    (void)params;
 /* Generated */    return TA_CDLTRISTAR_Lookback( );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_CDLUNIQUE3RIVER_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_CDLUNIQUE3RIVER(
+/* Generated */                         startIdx,
+/* Generated */                         endIdx,
+/* Generated */                         params->in[0].data.inPrice.open, /* inOpen */
+/* Generated */                         params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                         params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                         params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                         outBegIdx, 
+/* Generated */                         outNbElement, 
+/* Generated */                         params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_CDLUNIQUE3RIVER_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    (void)params;
+/* Generated */    return TA_CDLUNIQUE3RIVER_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_CDLUPSIDEGAP2CROWS_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
