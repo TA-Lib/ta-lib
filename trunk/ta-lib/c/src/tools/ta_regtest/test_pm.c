@@ -279,7 +279,7 @@ static TA_PMValueIdCheck toCheck2[] = {
 };
 
 static TA_PMValueIdCheck toCheck3[] = {
-   {TA_PM_TOTAL_NB_OF_TRADE, TA_PM_ALL_TRADES, TA_SUCCESS, 5},
+   {TA_PM_TOTAL_NB_OF_TRADE, TA_PM_ALL_TRADES, TA_SUCCESS, 4},
    {-1,0,0,0.0}
 };
 
@@ -535,6 +535,8 @@ static ErrorNumber test_onetransaction_only( TA_KEY_TYPE keyTypeTest )
    ErrorNumber errorNumber;
    TA_PM *allocatedPM;
 
+   memset( &transaction, 0, sizeof(TA_Transaction) );
+
    /* Allocate an empty TA_TradeLog. */
    retCode = TA_TradeLogAlloc( &tradeLog );
    if( (retCode != TA_SUCCESS) || (tradeLog == NULL) )
@@ -655,6 +657,8 @@ static ErrorNumber test_onetrade_only( TA_KEY_TYPE keyTypeTest,
    TA_TradeLog   *tradeLog;
    TA_PM         *allocatedPM;
    ErrorNumber errorNumber;
+
+   memset( &transaction, 0 ,sizeof(TA_Transaction) );
 
    /* Allocate a TA_TradeLog. */
    retCode = TA_TradeLogAlloc( &tradeLog );
