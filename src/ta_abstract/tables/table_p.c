@@ -25,7 +25,7 @@
 /* PLUS_DI BEGIN */
 static const TA_InputParameterInfo    *TA_PLUS_DI_Inputs[]    =
 {
-  &TA_DEF_UI_Input_Price_HL,
+  &TA_DEF_UI_Input_Price_HLC,
   NULL
 };
 
