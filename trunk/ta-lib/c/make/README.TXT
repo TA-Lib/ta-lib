@@ -10,6 +10,8 @@ Example:
   CMR - For application multi  thread
   CSD - For application single thread wiht debug options
   CMD - For application multi  thread with debug options
+  CSD - For application single thread wiht profiling options
+  CMD - For application multi  thread with profiling options
 
 Choose the most appropriate directory depending of
 your platform/compiler and run "make" or "nmake"
