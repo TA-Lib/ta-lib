@@ -36,14 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *  JV       Viver Jesus <324122@cienz.unizar.es>
+ *  JV       Jesus Viver <324122@cienz.unizar.es>
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
- *  100502 VJ   Speed optimization of the algorithm
+ *  100502 JV   Speed optimization of the algorithm
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
