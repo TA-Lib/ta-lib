@@ -1,0 +1,401 @@
+!
+!   Testfile.txt    Input driver for testconv.c
+!
+!   Written:        95/12/18  Pieter Hintjens
+!   Revised:        96/12/31  Pieter Hintjens
+!
+!   ! = comment line
+!   > = echo text
+!   @ = execute test
+!
+
+> Booleans using format
+!       Bool      Format                    __________
+@ btos  1         YESNO                     Yes
+@ btos  0         YESNO                     No
+@ btos  1         YN                        Y
+@ btos  0         YN                        N
+@ btos  1         TRUEFALSE                 True
+@ btos  0         TRUEFALSE                 False
+@ btos  1         TF                        T
+@ btos  0         TF                        F
+@ btos  1         10                        1
+@ btos  0         10                        0
+
+> Accept input Booleans
+!       Date                                ____________
+@ stob  true                                1
+@ stob  t                                   1
+@ stob  y                                   1
+@ stob  1                                   1
+@ stob  f                                   0
+@ stob  n                                   0
+@ stob  neen                                0
+
+> Incorrect Booleans
+@ stob  q                                   -1
+
+> Dates using pictures
+@ dtop 19951202 yy/mm/dd                    95/12/02
+@ dtop 19951202 mm/dd/yy                    12/02/95
+@ dtop 19951202 dd/mm/yy                    02/12/95
+@ dtop 19951202 d/m/yy                      _2/12/95
+@ dtop 19951202 ccyy/mm/dd                  1995/12/02
+@ dtop 19951202 yyyy/mm/dd                  1995/12/02
+@ dtop 19951202 mm/dd/ccyy                  12/02/1995
+@ dtop 19951202 dd/mm/ccyy                  02/12/1995
+@ dtop 19951202 dd-mm-yy                    02-12-95
+@ dtop 19951202 dd-mm-ccyy                  02-12-1995
+@ dtop 19951202 dd-mm-yyyy                  02-12-1995
+@ dtop 19951202 dd-mmm-yy                   02-Dec-95
+@ dtop 19951202 d_mmm_yy                    _2_Dec_95
+@ dtop 19951202 mmm_d_yy                    Dec_2_95
+@ dtop 19951202 d-mmm-yyyy                  _2-Dec-1995
+@ dtop 19951202 d-mmmm-yy                   _2-December-95
+@ dtop 19951202 d-mmmm-yyyy                 _2-December-1995
+@ dtop 19951202 d-MMM-yyyy                  _2-DEC-1995
+@ dtop 19951202 d-MMMM-yy                   _2-DECEMBER-95
+@ dtop 19951202 d-MMMM-yyyy                 _2-DECEMBER-1995
+@ dtop 19951202 ddd_d-mmm-yyyy              Sat_2-Dec-1995
+@ dtop 19951202 dddd_d-mmm-yyyy             Saturday_2-Dec-1995
+@ dtop 19951202 DDD_d-mmm-yyyy              SAT_2-Dec-1995
+@ dtop 19951202 DDDD_d-mmm-yyyy             SATURDAY_2-Dec-1995
+@ dtop 19951202 ccyy/q                      1995/4
+@ dtop 19951202 \week:ww                    week:48
+@ dtop 19951202 yyyy:y                      1995:336
+@ dtop 19951202 \week:ww_\da\y:w            week:48_day:7
+
+> Dates using format & flags
+!                                D = dd_as_d
+!                                M = mm_as_m
+!                                a = month_abc
+!                                c = century
+!                                u = upper
+!                                y = order ymd
+!                                d = order dmy
+!                                m = order mdy
+!                                ? = no-op
+!       Date      Order  Format Flags Width ____________
+@ dtos  19951202   YMD   YMD     ?     8    951202
+@ dtos  19951202   YMD   YMD/    ?     8    95-12-02
+@ dtos  19951202   YMD   YMDb    ?     8    95_12_02
+@ dtos  19951202   YMD   YMD,    ?     9    95,_12_02
+@ dtos  19951202   YMD   YM      ?     8    9512
+@ dtos  19951202   YMD   YM/     ?     8    95-12
+@ dtos  19951202   YMD   YMb     ?     8    95_12
+@ dtos  19951202   YMD   MD      ?     8    1202
+@ dtos  19951202   YMD   MD/     ?     8    12-02
+@ dtos  19951202   YMD   MDb     ?     8    12_02
+@ dtos  19951202   YMD   YMD     MD    8    9512_2
+@ dtos  19951202   YMD   YMD/    MD    8    95-12-2
+@ dtos  19951202   YMD   YMDb    MD    8    95_12_2
+@ dtos  19951202   YMD   YMD,    MD    8    95,_12_2
+@ dtos  19951202   YMD   YM      MD    8    9512
+@ dtos  19951202   YMD   YM/     MD    8    95-12
+@ dtos  19951202   YMD   YMb     MD    8    95_12
+@ dtos  19951202   YMD   MD      MD    8    12_2
+@ dtos  19951202   YMD   MD/     MD    8    12-2
+@ dtos  19951202   YMD   MDb     MD    8    12_2
+@ dtos  19951202   YMD   YMD     MDac  12   1995Dec2
+@ dtos  19951202   YMD   YMD/    MDac  12   1995-Dec-2
+@ dtos  19951202   YMD   YMDb    MDac  12   1995_Dec_2
+@ dtos  19951202   YMD   YMD,    MDac  12   1995,_Dec_2
+@ dtos  19951202   YMD   YM      MDac  8    1995Dec
+@ dtos  19951202   YMD   YM/     MDac  8    1995-Dec
+@ dtos  19951202   YMD   YMb     MDac  8    1995_Dec
+@ dtos  19951202   YMD   MD      MDac  8    Dec2
+@ dtos  19951202   YMD   MD/     MDac  8    Dec-2
+@ dtos  19951202   YMD   MDb     MDac  8    Dec_2
+@ dtos  19951202   YMD   YMD/    MDacd 12   _2-Dec-1995
+@ dtos  19951202   YMD   YMD,    MDacd 12   _2_Dec,_1995
+@ dtos  19951202   YMD   YMD/    MDacm 12   Dec-2-1995
+@ dtos  19951202   YMD   YMD,    MDacm 12   Dec_2,_1995
+@ dtos  19951202   YMD   YMD/    MDacd 18   _2-December-1995
+@ dtos  19951202   YMD   YMD,    MDacd 18   _2_December,_1995
+@ dtos  19951202   YMD   YMD/    MDacm 18   December-2-1995
+@ dtos  19951202   YMD   YMD,    MDacm 18   December_2,_1995
+
+> Incorrect dates (width too small)
+@ dtos  19951202   YMD   YMD,    ?     8    <Error>
+
+> Accept input dates
+!       Date      Order  Format  Flags      ____________
+@ stod 95-12-12    YMD   YMD     ?          19951212
+@ stod  2-12-95    YMD   YMD     d          19951202
+@ stod  2-12-95    YMD   YMD     m          19950212
+@ stod 1995-12-12  YMD   YMD     ?          19951212
+@ stod 12-12-1995  DMY   YMD     ?          19951212
+@ stod 12-12-1995  MDY   YMD     ?          19951212
+@ stod 95jan1      YMD   YMD     ?          19950101
+@ stod 95feb01     YMD   YMD     ?          19950201
+@ stod 95mar1      YMD   YMD     ?          19950301
+@ stod 95apr01     YMD   YMD     ?          19950401
+@ stod 95may1      YMD   YMD     ?          19950501
+@ stod 95jun01     YMD   YMD     ?          19950601
+@ stod 95jul1      YMD   YMD     ?          19950701
+@ stod 95aug01     YMD   YMD     ?          19950801
+@ stod 95sep1      YMD   YMD     ?          19950901
+@ stod 95oct01     YMD   YMD     ?          19951001
+@ stod 95nov1      YMD   YMD     ?          19951101
+@ stod 95dec01     YMD   YMD     ?          19951201
+@ stod 95decemb01  YMD   YMD     ?          19951201
+@ stod 92.02.29    YMD   YMD     ?          19920229
+@ stod 92/02/29    YMD   YMD     ?          19920229
+@ stod 92:02:29    YMD   YMD     ?          19920229
+@ stod 92-02-29    YMD   YMD     ?          19920229
+@ stod 92___2__29  YMD   YMD     ?          19920229
+@ stod 29_feb_96   DMY   YMD     ?          19960229
+@ stod 29_feb_1996 DMY   YMD     ?          19960229
+@ stod 29_2_96     DMY   YMD     ?          19960229
+@ stod 290296      DMY   YMD     ?          19960229
+@ stod sep95       YMD   YM      d          19950900
+@ stod sep13       YMD   MD      m          913
+
+> Incorrect dates
+@ stod 95-02-29    YMD   YMD     ?          -1
+@ stod 1900-02-29  YMD   YMD     ?          -1
+@ stod 95ja1       YMD   YMD     ?          -1
+@ stod 95jam1      YMD   YMD     ?          -1
+@ stod 95jan001    YMD   YMD     ?          -1
+@ stod garbage     YMD   YMD     ?          -1
+
+> Times using pictures
+@ ttop  12242990 hhmmss                     122429
+@ ttop  03040506 hms                        _3_4_5
+@ ttop  03040506 hmsc                       _3_4_5_6
+@ ttop  12242990 hh:mma                     12:24p
+@ ttop  12242990 hh:mmA                     12:24P
+@ ttop  12242990 hh:mmaa                    12:24pm
+@ ttop  12000000 hh:mm:ssAA                 12:00:00PM
+@ ttop  11595999 hh:mm:ssa                  11:59:59a
+@ ttop  11595999 hh\hmm                     11h59
+
+> Times using flags
+!                 h = hh_as_h
+!                 m = mm_as_m
+!                 s = ss_as_s
+!                 c = cc_as_c
+!                 / = compact
+!                 p = 12-hour
+!                 ? = no-op
+!       Time      Flags         Width       ____________
+@ ttos  12242990  ?             5           12:24
+@ ttos  12242990  ?             6           12:24
+@ ttos  12242990  ?             7           12:24
+@ ttos  12242990  ?             8           12:24:29
+@ ttos  12242990  ?             9           12:24:29
+@ ttos  12242990  ?             10          12:24:29
+@ ttos  12242990  ?             11          12:24:29:90
+@ ttos  12242990  ?             12          12:24:29:90
+@ ttos  12242990  /             4           1224
+@ ttos  12242990  /             6           122429
+@ ttos  12242990  /             7           122429
+@ ttos  12242990  /             8           12242990
+@ ttos  12242990  /             9           12242990
+@ ttos  12242990  hmsc          11          12:24:29:90
+@ ttos  01020304  hmsc          11          _1:2:3:4
+@ ttos  01020304  /hmsc         11          _1_2_3_4
+@ ttos  12242990  p             6           12:24p
+@ ttos  12242990  p             7           12:24pm
+@ ttos  12242990  p             8           12:24pm
+@ ttos  12242990  p             9           12:24:29p
+
+> Incorrect times (width too small)
+@ ttos  12242990  ?             4           <Error>
+@ ttos  12242990  /             3           <Error>
+@ ttos  12242990  p             5           <Error>
+
+> Accept input times
+@ stot 1224                                 12240000
+@ stot 12_24                                12240000
+@ stot 12:24:30                             12243000
+@ stot 12_24_30                             12243000
+@ stot 12__2__3                             12020300
+@ stot 1pm                                  13000000
+@ stot 15:30am                              15300000
+@ stot 12:35_am                             350000
+@ stot 12:00a                               0
+@ stot 11:59p                               23590000
+@ stot 12:00p                               12000000
+
+> Incorrect times
+@ stot 24:00                                -1
+@ stot 24:10                                -1
+@ stot 24:61                                -1
+@ stot 25:01                                -1
+@ stot 12:30:60                             -1
+
+> Format numbers for display
+> Various zero values
+!*  +00012345 {-.<0B,} decs ./, 1.10|1.1|1 n-|n+|-n|+n|(n) width
+!                    - = signed
+!                    . = decimals
+!                    < = left-justify
+!                    0 = leading zeroes
+!                    B = blank when zero
+!                    , = thousand separators
+!                    ? = no-op
+!       Number      Flags  Decimals  Neg  Width  ________
+@ ntos  0           ?      0 . 1.10   -n    0    0
+@ ntos  -0          -      0 . 1.10   -n    0    _0
+@ ntos  +0          -      0 . 1.10   +n    0    _0
+@ ntos  +0000000    -      0 . 1.10   +n    0    _0
+@ ntos  0           ?      0 . 1.10   -n    8    _______0
+@ ntos  +0000000    -      0 . 1.10   +n    8    _______0
+@ ntos  0           B      0 . 1.10   -n    8    ________
+@ ntos  +0000000    -B     0 . 1.10   +n    8    ________
+@ ntos  0           B      0 . 1.10   -n    0
+@ ntos  +0000000    -B     0 . 1.10   +n    0
+@ ntos  0           <      0 . 1.10   -n    8    0_______
+@ ntos  +0000000    -<     0 . 1.10   +n    8    _0______
+@ ntos  0           0      0 . 1.10   -n    8    00000000
+@ ntos  +0000000    -0     0 . 1.10   +n    8    _0000000
+@ ntos  000         0.     2 . 1.10   -n    8    00000.00
+@ ntos  0000        0.     2 . 1.10   -n    8    00000.00
+@ ntos  +000000     -0.    2 . 1.10   +n    8    _0000.00
+@ ntos  000         .      2 . 1.10   -n    8    ____0.00
+@ ntos  +000000     -.     2 . 1.10   +n    8    ____0.00
+@ ntos  000         .      2 . 1      -n    8    _______0
+@ ntos  +000000     -.     2 . 1      +n    8    _______0
+@ ntos  000         .      2 . 1.1    -n    8    _______0
+@ ntos  +000000     -.     2 . 1.1    +n    8    _______0
+
+> Various non-zero values
+@ ntos  12345       ?      0 . 1.10   -n    0    12345
+@ ntos  12345       ?      0 . 1.10   -n    8    ___12345
+@ ntos  12345       <      0 . 1.10   -n    8    12345___
+@ ntos  12345       0      0 . 1.10   -n    0    12345
+@ ntos  12345       0      0 . 1.10   -n    8    00012345
+@ ntos  12345       0<     0 . 1.10   -n    8    00012345
+@ ntos  12345       ,      0 . 1.10   -n    0    12,345
+@ ntos  12345       ,      0 . 1.10   -n    8    __12,345
+@ ntos  12345       ,<     0 . 1.10   -n    8    12,345__
+@ ntos  12345       ,0     0 . 1.10   -n    8    00012345
+@ ntos  123456      .      2 . 1.10   -n    0    1234.56
+@ ntos  123456      .      2 . 1      -n    0    1234
+@ ntos  123456      .      2 . 1.10   -n    10   ___1234.56
+@ ntos  123456      .<     2 . 1.10   -n    10   1234.56___
+@ ntos  123456      .      2 . 1      -n    10   ______1234
+@ ntos  123456      .<     2 . 1      -n    10   1234______
+@ ntos  123456      .0     2 . 1.10   -n    10   0001234.56
+@ ntos  123456      .0     2 . 1      -n    10   0000001234
+@ ntos  123456      .,     2 . 1.10   -n    0    1,234.56
+@ ntos  123456      .,     2 . 1.10   -n    10   __1,234.56
+@ ntos  123456      .,     2 . 1      -n    0    1,234
+@ ntos  123456      .,     2 . 1      -n    10   _____1,234
+@ ntos  123456      .,<    2 . 1      -n    10   1,234_____
+@ ntos  00012345    ?      0 . 1.10   -n    0    12345
+@ ntos  00012345    ?      0 . 1.10   -n    8    ___12345
+@ ntos  00012345    <      0 . 1.10   -n    8    12345___
+@ ntos  00012345    0      0 . 1.10   -n    0    00012345
+@ ntos  00012345    0      0 . 1.10   -n    8    00012345
+@ ntos  00012345    0<     0 . 1.10   -n    8    00012345
+@ ntos  00012345    ,      0 . 1.10   -n    0    12,345
+@ ntos  0012345     ,      0 . 1.10   -n    8    __12,345
+@ ntos  0012345     ,<     0 . 1.10   -n    8    12,345__
+@ ntos  012345      ,0     0 . 1.10   -n    8    00012345
+@ ntos  000123456   .      2 . 1.10   -n    0    1234.56
+@ ntos  000123456   .      2 . 1.10   -n    10   ___1234.56
+@ ntos  000123456   .<     2 . 1.10   -n    10   1234.56___
+@ ntos  000123456   .0     2 . 1.10   -n    10   0001234.56
+@ ntos  00123456    .,     2 . 1.10   -n    0    1,234.56
+@ ntos  00123456    .,     2 . 1.10   -n    10   __1,234.56
+@ ntos  00123456    .,<    2 . 1.10   -n    10   1,234.56__
+@ ntos  000123456   .      2 . 1.1    -n    0    1234.56
+@ ntos  000123450   .      2 . 1.1    -n    0    1234.5
+@ ntos  000123400   .      2 . 1.1    -n    0    1234
+@ ntos  000123000   .      2 . 1.1    -n    0    1230
+@ ntos  000123400   .      2 . 1.1    -n    10   ______1234
+@ ntos  000123400   .<     2 . 1.1    -n    10   1234______
+@ ntos  000123400   .0     2 . 1.1    -n    10   0000001234
+@ ntos  00123400    .,     2 . 1.1    -n    0    1,234
+@ ntos  00123400    .,     2 . 1.1    -n    10   _____1,234
+@ ntos  00123400    .,<    2 . 1.1    -n    10   1,234_____
+@ ntos  000123456   .      2 . 1      -n    10   ______1234
+@ ntos  000123450   .      2 . 1      -n    10   ______1234
+@ ntos  000123400   .      2 . 1      -n    10   ______1234
+@ ntos  000123000   .      2 . 1      -n    10   ______1230
+@ ntos  000123456   .      2 . 1      -n    10   ______1234
+@ ntos  000123456   .<     2 . 1      -n    10   1234______
+@ ntos  000123456   .0     2 . 1      -n    10   0000001234
+@ ntos  00123456    .,     2 . 1      -n    0    1,234
+@ ntos  00123456    .,     2 . 1      -n    10   _____1,234
+@ ntos  00123456    .,<    2 . 1      -n    10   1,234_____
+
+> Various signed values
+@ ntos  123456      -      0 . 1.10   -n    0    _123456
+@ ntos  -123456     -      0 . 1.10   +n    0    -123456
+@ ntos  +123456     -      0 . 1.10   +n    0    +123456
+@ ntos  -000000     -      0 . 1.10   +n    0    _0
+@ ntos  123456      -      0 . 1.10   n-    0    123456_
+@ ntos  -123456     -      0 . 1.10   n+    0    123456-
+@ ntos  +123456     -      0 . 1.10   n+    0    123456+
+@ ntos  -000000     -      0 . 1.10   n+    0    0_
+@ ntos  123456      -      0 . 1.10   (n)   0    _123456_
+@ ntos  -123456     -      0 . 1.10   (n)   0    (123456)
+@ ntos  +123456     -      0 . 1.10   (n)   0    _123456_
+@ ntos  -000000     -      0 . 1.10   (n)   0    _0_
+@ ntos  -12345      -,     0 . 1.10   -n    0    -12,345
+@ ntos  -12345      -,     0 . 1.10   -n    8    _-12,345
+@ ntos  -12345      -,<    0 . 1.10   -n    8    -12,345_
+@ ntos  -12345      -,0    0 . 1.10   -n    8    -0012345
+@ ntos  -123456     -.     2 . 1.10   -n    0    -1234.56
+@ ntos  -123456     -.     2 . 1      -n    0    -1234
+@ ntos  -123456     -.     2 . 1.10   -n    10   __-1234.56
+@ ntos  -123456     -.<    2 . 1.10   -n    10   -1234.56__
+@ ntos  -123456     -.     2 . 1      -n    10   _____-1234
+@ ntos  -123456     -.<    2 . 1      -n    10   -1234_____
+@ ntos  -123456     -.0    2 . 1.10   -n    10   -001234.56
+@ ntos  -123456     -.0    2 . 1      -n    10   -000001234
+@ ntos  -123456     -.,    2 . 1.10   -n    0    -1,234.56
+@ ntos  -123456     -.,    2 . 1.10   -n    10   _-1,234.56
+@ ntos  -123456     -.,    2 . 1      -n    0    -1,234
+@ ntos  -123456     -.,    2 . 1      -n    10   ____-1,234
+@ ntos  -123456     -.,<   2 . 1      -n    10   -1,234____
+
+> These are not correct
+@ ntos  0           .      2 . 1.10   -n    0    (null)
+@ ntos  00          .      2 . 1.10   -n    0    (null)
+@ ntos  +00000000   -      2 . 1.10   -n    8    (null)
+@ ntos  +0000000    -.     2 . 1.10   -n    8    (null)
+@ ntos  00123456    .,     2 . 1.10   -n    8    (null)
+
+> Accept input numbers
+!*  +00012345 {-.<0B,} decs ./, 1.10|1.1|1 width
+!                    - = signed
+!                    . = decimals
+!                    < = left-justify
+!                    0 = leading zeroes
+!                    B = blank when zero
+!                    , = thousand separators
+!                    ? = no-op
+!       Number      Flags  Decimals  Width       ________
+@ ston  _           ?      0 . 1.10  8           00000000
+@ ston  0           ?      0 . 1.10  8           00000000
+@ ston  +0          -      0 . 1.10  8           _0000000
+@ ston  -0          -      0 . 1.10  8           _0000000
+@ ston  +0          -      0 . 1.10  8           _0000000
+@ ston  0           .      2 . 1.10  8           00000000
+@ ston  0           .      2 . 1.10  8           00000000
+@ ston  1           .      2 . 1.10  8           00000100
+@ ston  1.2         .      2 . 1.10  8           00000120
+@ ston  1.23        .      2 . 1.10  8           00000123
+@ ston  1           .      2 . 1     8           00000100
+@ ston  1.10        .      2 . 1.1   8           00000110
+@ ston  1,234.00    .,     2 . 1.10  8           00123400
+@ ston  1,234.00    .-,    2 . 1.10  8           +0123400
+@ ston  1_234.00    .-     2 . 1.10  8           +0000100
+@ ston  ()123       .-     2 . 1.10  8           -0012300
+@ ston  (123)       .-     2 . 1.10  8           -0012300
+
+> These are not correct
+@ ston  1234567     .      2 . 1.10  8           (null)
+@ ston  123456      .-     2 . 1.10  8           (null)
+@ ston  +123456     ?      0 . 1.10  8           (null)
+@ ston  1234.56     ?      0 . 1.10  8           (null)
+@ ston  1.10        .      2 . 1     8           (null)
+@ ston  (1.10       -      2 . 1     8           (null)
+@ ston  1.10)       -      2 . 1     8           (null)
+@ ston  (1.10)      -      2 . 1     8           (null)
+@ ston  +1.10       -      2 . 1     8           (null)
+@ ston  -1.10       -      2 . 1     8           (null)

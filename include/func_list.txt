@@ -1,0 +1,29 @@
+MAX         Highest value over a specified period
+MIN         Lowest value over a specified period
+BBANDS      Bollinger Bands
+DEMA        Double Exponential Moving Average
+EMA         Exponential Moving Average
+MA          All Moving Average
+SAR         Parabolic SAR
+SMA         Simple Moving Average
+TEMA        Triple Exponential Moving Average
+WMA         Weighted Moving Average
+APO         Absolute Price Oscillator
+MACD        Moving Average Convergence/Divergence
+MACDFIX     Moving Average Convergence/Divergence Fix 12/26
+PPO         Percentage Price Oscillator
+RSI         Relative Strength Index
+ATR         Average True Range
+TRANGE      True Range
+CCI         Commodity Channel Index
+MOM         Momentum
+ROC         Rate of change : ((price/prevPrice)-1)*100
+ROCR        Rate of change ratio: (price/prevPrice)*100
+STOCH       Stochastic
+TRIX        1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
+OBV         On Balance Volume
+STDDEV      Standard Deviation
+VAR         Variance
+MEDPRICE    Median Price
+TYPPRICE    Typical Price
+WCLPRICE    Weighted Close Price

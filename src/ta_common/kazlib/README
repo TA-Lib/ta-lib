@@ -1,0 +1,87 @@
+ **************** Important Notice ***************************************
+ *
+ *       This directory is NOT the original kazlib source.
+ *
+ *       The original work have been slim down and 
+ *        modified for integration within TA-LIB.
+ *
+ *       If you wish to use the kazlib in your application, you MUST
+ *       contact the original author or go get the latest and original
+ *       work on the 'kazlib' web site.
+ *
+ *       This Notice should NEVER be removed from this derivative work for
+ *       the respect of the "Free Software License" find at the top of the
+ *       source code.
+ *
+ *       mail to: support@ta-lib.org
+ **************************************************************************
+
+This collection of data structures is maintained by
+Kaz Kylheku <kaz@ashi.footprints.net>
+
+INSTRUCTIONS
+
+Simply add the necessary .c and .h files to your project.  Include the
+appropriate .h file in any translation unit that interfaces with one or more of
+the kazlib modules. Then compile and link the modules together with your program.
+
+To use kazlib in a C++ project, don't compile them with a C++ compiler.
+Compile with a C compiler, and include the header files in
+your C++ translation units. Then link together the translated C and C++.
+As of release 1.2, the header files should work with C++.
+
+IMPORTANT NOTES
+
+1. Self checks
+
+The modules in this collection perform extensive self-checks, some of
+which make the performance really poor (by actually raising the overall
+asymptotic complexity of an operation, for example from O(log N) to O(N).  The
+instrumentation assertions can be disabled by compiling with the NDEBUG macro
+defined.
+
+You can check that your project does not violate the principles of
+implementation hiding in connection with its use of the kazlib modules. This
+is accomplished by defining the macro KAZLIB_OPAQUE_DEBUG at the beginning of
+any translation unit which includes the kazlib header files. Note that
+whereas this will detect violations, it will not result in a translation
+that can be linked against the kazlib. When you are done checking, turn
+off KAZLIB_OPAQUE_DEBUG and recompile. If your compiler has a special ``check only''
+mode which enables it to perform syntax and type checking without doing
+an actual translation (similar to lint), it may be a time-saving idea to
+use it in conjunction with KAZLIB_OPAQUE_DEBUG.
+
+2. Macros with side effects
+
+Some of the kazlib header files define macros that evaluate their arguments
+more than once. This means that if expressions with side effects are passed
+to these macros, undesirable and undefined behavior will happen. There is
+support in Kazlib for catching these kinds of bugs: compile with
+KAZLIB_SIDEEFFECT_DEBUG, and add the except.c and sfx.c modules to your
+object. The macros will now parse their expressions at run time to diagnose
+the presence of side effects and function calls. It's easy to add this support
+to your own code!
+
+3. Thread support
+
+POSIX thread support is enabled by predefining KAZLIB_POSIX_THREADS. Currently
+only the exception-handling module has any need for this. When compiled that
+way, it provides thread-safe exception handling. Threads can independently
+throw exceptions and each thread can install its own specific catcher
+for unhandled exceptions. Moreover, each thread can register its own
+memory allocator functions.
+
+Note: this variant of the code also depends on the ability to cast between void
+* and function pointers, which is a common language extension.
+
+4. CVS identification
+
+The source files contain declarations of a static char array variable called
+rcsid. This contains an expansion of the CVS identification of each module,
+making it possible to determine the ``bill of materials'' that went into an
+executable build. I have now wrapped the declarations of these rcsid[] arrays
+so they are conditional on KAZLIB_RCSID being defined. For many users, these
+are just a waste of space.
+
+$Id$
+$Name$

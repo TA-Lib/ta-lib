@@ -1,0 +1,2 @@
+/*  VMS Implementation of the SFL process_create_full() function             */
+    return ((PROCESS) 0);         /*  Not supported on this system           */

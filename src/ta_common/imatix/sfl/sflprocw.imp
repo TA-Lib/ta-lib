@@ -1,0 +1,196 @@
+/*  ----------------------------------------------------------------<Prolog>-
+    Name:       sflprocw.imp
+    Title:      process_create_full -- Win32 implementation
+    Package:    Standard Function Library (SFL)
+
+    Written:    1998/10/15  iMatix SFL project team <sfl@imatix.com>
+    Revised:    1999/06/27
+
+    Copyright:  Copyright (c) 1996-2000 iMatix Corporation
+    License:    This is free software; you can redistribute it and/or modify
+                it under the terms of the SFL License Agreement as provided
+                in the file LICENSE.TXT.  This software is distributed in
+                the hope that it will be useful, but without any warranty.
+ ------------------------------------------------------------------</Prolog>-*/
+ 
+/*  Windows (32-bit) implementation of the SFL process_create_full()       
+ *  This function receives input in the form of a pointer to a PROCESS_DATA
+ *  structure called procinfo.  See sflproc.c for details.
+ */
+
+    PROCESS
+        process;                        /*  Our created process handle       */
+    ARGLIST
+        *arglist;                       /*  Argument list                    */
+    int
+        old_stdin  = NULL_HANDLE,       /*  Dup'd handle for old stdin       */
+        old_stdout = NULL_HANDLE,       /*  Dup'd handle for old stdout      */
+        old_stderr = NULL_HANDLE;       /*  Dup'd handle for old stderr      */
+    Bool
+        free_envv = FALSE;              /*  True if we should free envv      */
+    const char
+        *path,                          /*  Path to search                   */
+        *shell,                         /*  Shell to use                     */
+        **searchext,                    /*  Extensions to search             */
+        *interpreter;                   /*  Name of script interpreter       */
+    char
+        *olddir,                        /*  Caller's working directory       */
+        *fulldir,                       /*  Process' working directory       */
+        *full_filename,                 /*  Full filename of program to run  */
+        *full_command,                  /*  Full command string              */
+        **envv;                         /*  Environment for program          */
+    STARTUPINFO
+        newinfo = {0},                  /*  Specification for new process    */
+        curinfo;                        /*  Specification of cur process     */
+    PROCESS_INFORMATION
+        created;                        /*  Information about created proc   */
+    HANDLE
+        logon_token = 0;                /*  Logged-on user                   */
+    DWORD
+        dwCreateFlags;
+
+    /*  First, check that minimum arguments needed to do something are set   */
+    ASSERT (procinfo);
+    if (!procinfo)
+        return (NULL_PROCESS);
+
+    ASSERT (procinfo-> filename);
+    if (!procinfo-> filename)
+      {
+        procinfo-> error = EINVAL;
+        return (NULL_PROCESS);
+      }
+    /*  Initialise return information                                        */
+    procinfo-> pid        = NULL_PROCESS;
+    procinfo-> error      = 0;
+    procinfo-> returncode = -1;
+
+#   include "sflprocx.imp"              /*  Get implementation core          */
+
+    /*  Logon as specified user if any                                       */
+    if (procinfo-> error == 0
+    &&  procinfo-> username && *procinfo-> username)
+      {
+        if (LogonUser (procinfo-> username,
+                       procinfo-> groupname,
+                       procinfo-> password,
+                       LOGON32_LOGON_INTERACTIVE,
+                       LOGON32_PROVIDER_DEFAULT,
+                       &logon_token) == FALSE)
+            procinfo-> error = EPERM;
+      }
+
+    if (procinfo-> error)               /*  And handle errors if any         */
+      {
+        if (free_envv)
+            strtfree (envv);
+        arglist_free (arglist);
+        return (NULL_PROCESS);
+      }
+    else
+      {
+        mem_strfree (&arglist-> next-> value);
+        arglist-> next-> value = mem_strdup (full_filename);
+      }
+
+    /*  Format full working directory, if specified                          */
+    if (procinfo-> workdir)
+      {
+        olddir = get_curdir ();          /*  Just a lazy way to let the OS   */
+        set_curdir (procinfo-> workdir); /*  figure-out if the workdir is a  */
+        fulldir = get_curdir ();         /*  relative or absolute directory. */
+        set_curdir (olddir);
+        mem_free (olddir);
+      }
+    else
+        fulldir = NULL;
+
+    /*  Build full command from arglist                                      */
+    full_command = arglist_value (arglist);
+    GetShortPathName (full_command, full_command, strlen (full_command) + 1);
+    
+    process = mem_alloc (sizeof (PROC_HANDLE));
+    process-> process = NULL;
+
+    /*  Convert environment to a Windows-type packed block of strings        */
+    process-> envd = strt2descr (envv);
+
+    GetStartupInfo (&curinfo);
+    newinfo.cb          = sizeof (newinfo);
+    newinfo.dwFlags     = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+    newinfo.wShowWindow = SW_HIDE;
+    newinfo.hStdInput   = (HANDLE) _get_osfhandle (procinfo-> in);
+    newinfo.hStdOutput  = (HANDLE) _get_osfhandle (procinfo-> out);
+    newinfo.hStdError   = (HANDLE) _get_osfhandle (procinfo-> err);
+    newinfo.lpTitle     = NULL;
+
+    if (procinfo-> createdaemon)
+        dwCreateFlags = DETACHED_PROCESS;
+    else
+        dwCreateFlags = CREATE_NEW_CONSOLE;
+
+    /*  If necessary, run in separate VM, for 16-bit programs                */
+    if (process_compatible)
+        dwCreateFlags |= CREATE_SEPARATE_WOW_VDM;
+
+    /*  CreateProcess returns errors sometimes, even when the process was    */
+    /*  started correctly.  The cause is not evident.  For now: we detect    */
+    /*  an error by checking the value of created.hProcess after the call.   */
+    created.hProcess = NULL;
+
+    if (logon_token)
+      {
+        CreateProcessAsUser (
+            logon_token,                /*  Token for user logon             */
+            NULL,                       /*  Name of executable module        */
+            full_command,               /*  Command line string              */
+            NULL,                       /*  Process security attributes      */
+            NULL,                       /*  Thread security attributes       */
+            TRUE,                       /*  Handle inheritance flag          */
+            dwCreateFlags,              /*  Creation flags                   */
+            process-> envd-> data,      /*  New environment block            */
+            fulldir,                    /*  Current directory name           */
+            &newinfo,                   /*  STARTUPINFO                      */
+            &created);                  /*  PROCESS_INFORMATION              */
+        CloseHandle (logon_token);
+      }
+    else
+        CreateProcess (
+            NULL,                       /*  Name of executable module        */
+            full_command,               /*  Command line string              */
+            NULL,                       /*  Process security attributes      */
+            NULL,                       /*  Thread security attributes       */
+            TRUE,                       /*  Handle inheritance flag          */
+            dwCreateFlags,              /*  Creation flags                   */
+            process-> envd-> data,      /*  New environment block            */
+            fulldir,                    /*  Current directory name           */
+            &newinfo,                   /*  STARTUPINFO                      */
+            &created);                  /*  PROCESS_INFORMATION              */
+
+    /*  Deallocate any memory we might have used in the meantime             */
+    mem_strfree (&fulldir);
+    mem_strfree (&full_command);
+    if (free_envv)
+        strtfree (envv);
+    arglist_free (arglist);
+
+    if (created.hProcess == NULL)       /*  Error, we presume                */
+      {
+        process_close (process);
+        return (NULL);
+      }
+
+    /*  Release our hold on the thread                                       */
+    CloseHandle (created.hThread);
+    process-> process = created.hProcess;
+    procinfo-> pid    = process;
+    restore_redirection (old_stdin, old_stdout, old_stderr);
+
+    /*  Wait for the process to finish or be cancelled                       */
+    if (procinfo-> wait)
+      {
+        WaitForSingleObject (created.hProcess, INFINITE);
+        process_close (process);
+      }
+    return (process);
+

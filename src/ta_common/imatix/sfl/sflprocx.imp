@@ -1,0 +1,143 @@
+/*  ----------------------------------------------------------------<Prolog>-
+    Name:       sflprocx.imp
+    Title:      process_create_full -- common implementation core
+    Package:    Standard Function Library (SFL)
+
+    Written:    1999/02/14  iMatix SFL project team <sfl@imatix.com>
+    Revised:    1999/02/17
+
+    Copyright:  Copyright (c) 1996-2000 iMatix Corporation
+    License:    This is free software; you can redistribute it and/or modify
+                it under the terms of the SFL License Agreement as provided
+                in the file LICENSE.TXT.  This software is distributed in
+                the hope that it will be useful, but without any warranty.
+  
+    Implementation core of the SFL process_create_full() function, used by
+    all system-dependent implementations.
+  
+    We need to construct the name of the program to run, and an argv array
+    containing all arguments, where argv[0] is the name of the program.  The
+    actual program is calculated in various ways, using this precedence:
+  
+    1.  If the useshell flag is TRUE, the program is the specified shell or
+        the default shell is none is specified.  The shell name may itself
+        contain arguments that come before the program to run.
+    2.  If the program is directly executable, we use it as supplied.
+    3.  We look in the first line of the program file for a shell redirector,
+        e.g. '#!'. 
+    4.  If the program is defined as one handled by a standard shell, we will
+        use that standard shell, with any arguments as needed.  This is done
+        internally in the redirect_via_interpreter() function.
+  
+    We then prepare the environment in envv (and set free_envv if envv was
+    reallocated) and save/duplicate the stdio handles.  The implementation
+    must do a chroot and exec as necessary to run the command.
+
+    This code may end with an error in procinfo-> error, which the envelope
+    code must handle.
+   ------------------------------------------------------------------------- */
+
+    /*  Substitute in the defaults for values not supplied                   */
+    envv      = procinfo-> envv?      procinfo-> envv:      environ;
+    searchext = procinfo-> searchext? procinfo-> searchext: default_ext;
+    path      = procinfo-> path?      procinfo-> path:      "PATH";
+    shell     = procinfo-> shell?     procinfo-> shell:
+                env_get_string (default_shell, "");
+
+    /*  We start with the filename and the argv array                        */
+    /*  If we are to run using a shell, then we don't split the filename     */
+    /*  string up (we leave that for the shell to do; important in unix)     */
+    list_create (arglist, sizeof (ARGLIST));
+    if (procinfo-> useshell)
+        arglist_add (arglist, LIST_AFTER, procinfo-> filename);
+    else
+        arglist_add_string (arglist, LIST_AFTER, procinfo-> filename);
+
+    arglist_add_table  (arglist, LIST_AFTER, procinfo-> argv);
+
+    /*  Now prefix the shell if necessary                                    */
+    if (procinfo-> useshell)
+      {
+        arglist_add (arglist, LIST_BEFORE, shell_run);
+        arglist_add (arglist, LIST_BEFORE, shell);
+        interpreter = shell;
+      }
+    else
+    if (file_is_program (arglist-> next-> value))
+        /*  We're hunky-dory                                                 */
+        interpreter = NULL;
+    else
+      {
+        /*  Look for interpreter name as first line of file                  */
+        interpreter = redirect_via_interpreter (arglist-> next-> value,
+                                                procinfo-> searchpath,
+                                                path, searchext, shell);
+        if (interpreter)
+          {
+            /*  The interpreter string contains: 
+             *      interpreter args...args script
+             *  which _replaces_ the first argument in our list, so we need
+             *  to remove that from out list.  (This is important because
+             *  our existing first argument may have a relative path or
+             *  something like that, which will not work once we change
+             *  directories.)
+             */
+            arglist_remove_first (arglist);
+            arglist_add_string (arglist, LIST_BEFORE, interpreter);
+          }
+        else
+            /*  Redirection failed.  This means that it isn't executable,
+             *  because we should either have got a full name back, or a
+             *  command string to run.
+             */
+            procinfo-> error = ENOENT;  /*  No such file                     */
+      }
+    /*  Find the actual file we have to run.  If we're allowed to search
+     *  the path, then we do that, otherwise we just look where we are. 
+     *  This is a good moment to unescape any spaces in the filename... 
+     */
+    if (procinfo-> error == 0)
+      {
+        process_unesc (arglist-> next-> value, arglist-> next-> value);
+        if (!interpreter && !procinfo-> searchpath)
+            path = NULL;                /*  Don't search path                */
+        full_filename = file_where_ext ('r', path,
+                                        arglist-> next-> value, runnable_ext);
+        if (full_filename == NULL)
+            procinfo-> error = ENOENT;  /*  No such file                     */
+        else
+        if (!file_is_executable (full_filename))
+            procinfo-> error = EACCES;  /*  No permission to access file     */
+      }
+
+    /*  Create new environment as required.  We
+     *  are merged into it, otherwise they are merged into environ          */
+    if (procinfo-> error == 0
+    && (procinfo-> envadd != NULL
+    ||  procinfo-> envrm  != NULL))
+      {
+        envv = merge_environment (envv, procinfo-> envadd, procinfo-> envrm);
+        if (envv)
+            free_envv = TRUE;
+        else
+            procinfo-> error = errno? errno: ENOMEM; 
+      }
+
+    if (procinfo-> error == 0
+    &&  STDIN_FILENO >= 0)
+      {
+        /*  Redirect the IO file handles for stdin, stdout, stderr,          */
+        if (procinfo-> in != NULL_HANDLE)
+            old_stdin  = file_fhredirect (procinfo-> in,  STDIN_FILENO);
+        if (procinfo-> out != NULL_HANDLE)
+            old_stdout = file_fhredirect (procinfo-> out, STDOUT_FILENO);
+        if (procinfo-> err != NULL_HANDLE)
+            old_stderr = file_fhredirect (procinfo-> err, STDERR_FILENO);
+
+        if (old_stdin  == -1 || old_stdout == -1 || old_stderr == -1)
+          {
+            procinfo-> error = errno? errno: EACCES;
+            restore_redirection (old_stdin, old_stdout, old_stderr);
+          }
+      }
+

@@ -1,0 +1,205 @@
+#   Name:       buildsfl.txt
+#   Title:      Procedure to compile iMatix Standard Function Library
+#   Package:    Standard Function Library (SFL)
+#
+#   Written:    1996/09/24  Pieter Hintjens <ph@imatix.com>
+#   Revised:    1999/09/29  Pieter Hintjens <ph@imatix.com>
+#
+#   Usage:      Use otto script to produce build scripts.  Generates a
+#               script 'build' to compile the SFL, and one 'buildh' to
+#               build the SFL header file sfl.h.
+#
+#   Copyright:  Copyright (c) 1996-2000 iMatix Corporation
+#   This program is free software; you can redistribute it and/or modify it
+#   under the terms of the GNU General Public License as published by the Free
+#   Software Foundation; either version 2 of the License, or (at your option)
+#   any later version. This program is distributed in the hope that it will be
+#   useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+#   Public License for more details.  You should have received a copy of the
+#   GNU General Public License along with this program; if not, write to the
+#   Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+title iMatix SFL Package
+output $default
+
+echo Building the iMatix Standard Function Library
+echo Press [Enter] to continue, or Ctrl-C to abort.
+pause
+
+echo Checking for required files...
+require prelude.h
+require sflbits.h  sflbits.c
+require sflhttp.h  sflhttp.c
+require sflcomp.h  sflcomp.c
+require sflcons.h  sflcons.c
+require sflconv.h  sflcvbs.c  sflcvdp.c  sflcvds.c  sflcvns.c
+require            sflcvsb.c  sflcvsd.c  sflcvsn.c
+require            sflcvtp.c  sflcvts.c  sflconv.c
+require sflcvst.c  sflcvst.d  sflcvst.i
+require sflcryp.h  sflcryp.c
+require sfldate.h  sfldate.c
+require sfldbio.h  sfldbio.c
+require sfldir.h   sfldir.c
+require sflenv.h   sflenv.c
+require sflexdr.h  sflexdr.c
+require sflfile.h  sflfile.c
+require sflfind.h  sflfind.c
+require sflfort.h  sflfort.c
+require sflini.h   sflini.c
+require sfllang.h  sfllang.c
+require sfllbuf.h  sfllbuf.c
+require sfllist.h  sfllist.c
+require sflmail.h  sflmail.c
+require sflmath.h  sflmath.c
+require sflmem.h   sflmem.c
+require sflmesg.h  sflmesg.c
+require sflmysql.h sflmysql.c
+require sflmime.h  sflmime.c
+require sflnode.h  sflnode.c
+require sflproc.h  sflproc.c
+require sflprint.h sflprint.c
+require sflslot.h  sflslot.c
+require sflsock.h  sflsock.c
+require sflstr.h   sflstr.c
+require sflsymb.h  sflsymb.c
+require sflsyst.h  sflsyst.c
+require sfltok.h   sfltok.c
+require sfltree.h  sfltree.c
+require sfltron.h  sfltron.c
+require sfluid.h   sfluid.c
+require sflxml.h   sflxml.c
+require sflxmll.c  sflxmll.d  sflxmll.i
+require testall.c
+require testbits.c
+require testcomp.c
+require testconv.c
+require testcryp.c
+require testdate.c
+require testdes.c
+require testdir.c
+require testexdr.c
+require testfind.c
+require testfort.c
+require testmem.c
+require testmime.c
+require teststr.c
+require testsym.c
+require testtree.c
+require testtron.c
+require testuid.c
+require testxml.c
+require testcgi.c
+
+#  These programs go into the SFL library
+delete $lib libsfl
+library libsfl
+compile sflbits
+compile sflhttp
+compile sflcomp
+compile sflcons
+compile sflcryp
+compile sflcvbs sflcvdp sflcvds sflcvns
+compile sflcvsb sflcvsd sflcvsn sflcvst
+compile sflcvtp sflcvts sflconv
+compile sfldate
+compile sfldbio
+compile sfldir
+compile sflenv
+compile sflexdr
+compile sflfile
+compile sflfind
+compile sflfort
+compile sflini
+compile sfllang
+compile sfllbuf
+compile sfllist
+compile sflmail
+compile sflmath
+compile sflmem
+compile sflmesg
+compile sflmime
+compile sflmysql
+compile sflnode
+compile sflproc
+compile sflprint
+compile sflslot
+compile sflsock
+compile sflstr
+compile sflsymb
+compile sflsyst
+compile sfltok
+compile sfltree
+compile sfltron
+compile sfluid
+compile sflxml
+compile sflxmll
+
+call buildh
+
+library
+compile testall  testbits testcomp testconv testcryp testdate testdes
+compile testexdr testfind testmem  testmime testsym  testtree testuid
+link    testall  testbits testcomp testconv testcryp testdate testdes
+link    testexdr testfind testmem  testmime testsym  testtree testuid
+compile testcgi  testdir  teststr  testxml  testtron testfort
+link    testcgi  testdir  teststr  testxml  testtron testfort
+
+echo SFL built successfully.
+
+#   Build SFL header file.  In general, specified include files are in
+#   alhpabetical order.  The Exception is when one header file refers to
+#   another.  Then, we put the 'calling' header file after the one it
+#   refers to.  This ensures that the generated sfl.h file has all
+#   references correctly defined.
+
+close
+output unix  buildh
+output msdos buildh.bat
+output vms   buildh.txt
+output os2   buildh.cmd
+
+echo Building sfl.h header file...
+delete sfl.h
+msdos  rem>sfl.h
+vms    create sfl.h
+append sflhead.h  sfl.h
+append prelude.h  sfl.h
+append sflvers.h  sfl.h
+append sflbits.h  sfl.h
+append sflcomp.h  sfl.h
+append sflcons.h  sfl.h
+append sflconv.h  sfl.h
+append sflcryp.h  sfl.h
+append sfldate.h  sfl.h
+append sfldbio.h  sfl.h
+append sflexdr.h  sfl.h
+append sflfind.h  sfl.h
+append sflfile.h  sfl.h
+append sflfort.h  sfl.h
+append sfllang.h  sfl.h
+append sfllbuf.h  sfl.h
+append sfllist.h  sfl.h
+append sflmath.h  sfl.h
+append sflmail.h  sfl.h
+append sflmesg.h  sfl.h
+append sflmem.h   sfl.h
+append sflmime.h  sfl.h
+append sflnode.h  sfl.h
+append sfldir.h   sfl.h
+append sflslot.h  sfl.h
+append sflstr.h   sfl.h
+append sflsock.h  sfl.h
+append sflsymb.h  sfl.h
+append sflproc.h  sfl.h
+append sflprint.h sfl.h
+append sflsyst.h  sfl.h
+append sflhttp.h  sfl.h
+append sflini.h   sfl.h
+append sflenv.h   sfl.h
+append sfltok.h   sfl.h
+append sfltree.h  sfl.h
+append sfltron.h  sfl.h
+append sfluid.h   sfl.h
+append sflxml.h   sfl.h
+append sflxmll.h  sfl.h
