@@ -9,8 +9,8 @@
 
 CC	=	gcc
 CXX	=	g++
-CFLAGS	=	-pipe -Wall -W -O2 -DTA_SINGLE_THREAD
-CXXFLAGS=	-pipe -Wall -W -O2 -DTA_SINGLE_THREAD
+CFLAGS	=	-pipe -Wall -W -O2 -fno-strict-aliasing -DTA_SINGLE_THREAD
+CXXFLAGS=	-pipe -Wall -W -O2 -fno-strict-aliasing -DTA_SINGLE_THREAD
 INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_abstract -I../../../../../src/ta_abstract/tables -I../../../../../src/ta_abstract/frames -I../../../../../include
 AR	=	ar cqs
 RANLIB	=	
