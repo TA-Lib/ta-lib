@@ -23,7 +23,7 @@ The scheme is fixed to "mysql". The server name is just a name
 (like "localhost") or FQDN or IP address.  No username/password supported here. 
 The port is optional and defaults to 3306 (MySQL default port).
 The path has one segment only and is interpretted as the database name
-(and a default stock symbols in case other fields do not specify how to obtain
+(and a default stock symbol in case other fields do not specify how to obtain
 stock symbols).
 
 TA_AddDataSourceParam.info identifies the SQL query to execute to get
@@ -32,17 +32,18 @@ to be able to interpret the results.
 Recognized columns are: date, time, open, high, low, close, volume, oi 
 Example: 
 "SELECT date, time, quote AS close FROM quotes_intraday_AEX WHERE date = 20031014" 
-Fields dateand time (if present) will be interpreted as ISO formats (SQL default).
+Fields date and time (if present) will be interpreted as ISO formats (SQL default).
 
 TA_AddDataSourceParam.username and
 TA_AddDataSourceParam.password are used to log in to the server. 
-May be NULL if not needed.
+May be NULL if not needed. In that case, username defaults to user login name,
+password defaults to an empty password.
 
-TA_AddDataSourceParam.category contains the default category string or an SQL query
-returning all categories within the database.  This can be done either by
-returning a recordset with column "category" or with columns "country",
-"exchange", and "type". Optionally, the query may return column "symbol"
-identifying all symbols within a given category.
+TA_AddDataSourceParam.category contains the default category string or 
+an SQL query returning all categories within the database.  This can 
+be done either by returning a recordset with column "category" or 
+with columns "country", "exchange", and "type". Optionally, the query 
+may return column "symbol" identifying all symbols within a given category.
 
 TA_AddDataSourceParam.country
 TA_AddDataSourceParam.exchange
@@ -77,11 +78,20 @@ TA_AddDataSourceParam.symbol:       $c $z $x $t expanded
 TA_AddDataSourceParam.info:         $c $z $x $t $s expanded
 
 Example:
-TA_AddDataSourceParam.exchange = "SELECT exchange FROM exchange_data WHERE category = '$z'";
+TA_AddDataSourceParam.exchange = "SELECT exchange FROM exchange_data WHERE country = '$z'";
 
 ========================================================================
 To Do:
 
 Replace MySQL++ by libMYSQL and switch to plain C.
 
+To do for Mario:
+Implement TA_FatalReportToBuffer().
+Implement automatic conversion from PERIOD_1SEC to PERIOD_1MIN and higher.
+Complete strings for error codes.
+Allow for null-drivers (drivers with function pointers set to null), to simplify development.
+
+Questions for Mario:
+Are driver functions protected for multithread access, or do they have to build a protection on their own?
+What error codes to use for specific cases in my driver.
 
