@@ -285,6 +285,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDL3OUTSIDE.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDL3STARSINSOUTH.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDL3WHITESOLDIERS.c
 # End Source File
 # Begin Source File
@@ -302,6 +306,14 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLBELTHOLD.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_CDLBREAKAWAY.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLCLOSINGMARUBOZU.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLCONCEALBABYSWALL.c
 # End Source File
 # Begin Source File
 
@@ -334,6 +346,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLEVENINGDOJISTAR.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLGAPSIDESIDEWHITE.c
 # End Source File
 # Begin Source File
 
@@ -393,6 +409,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLMATHOLD.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLMORNINGDOJISTAR.c
 # End Source File
 # Begin Source File
@@ -410,6 +430,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLPIERCING.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_CDLRICKSHAWMAN.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLRISEFALL3METHODS.c
 # End Source File
 # Begin Source File
 
@@ -446,6 +470,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLTHRUSTING.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_CDLTRISTAR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLUNIQUE3RIVER.c
 # End Source File
 # Begin Source File
 
