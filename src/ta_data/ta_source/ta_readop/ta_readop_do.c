@@ -126,13 +126,14 @@ static unsigned isTimeNeeded( const TA_ReadOp *readOp );
    } \
 }
 
+#define CNVT_ARRAY_SIZE 40
 #define READ_IN_CNVT_ARRAY \
 { \
    do \
    { \
       cnvtArray[cnvtArrayIdx++] = *car; \
       GET_CHAR; \
-   }while( (car != NULL) && isdigit(*car) ); \
+   }while( (car != NULL) && isdigit(*car) && (cnvtArrayIdx < CNVT_ARRAY_SIZE) ); \
 }
 
 #define READ_N_CHAR_IN_CNVT_ARRAY(n) \
@@ -184,8 +185,7 @@ TA_RetCode TA_ReadOp_Do( TA_Libc             *libHandle,
                          unsigned int         minimumNbBar,
                          TA_Field             fieldToAlloc,
                          TA_ParamForAddData  *paramForAddData,
-                         unsigned int        *nbTotalBarAdded,
-                         TA_Timestamp        *lastBarTimestamp )
+                         unsigned int        *nbBarAdded )
 {
    TA_PROLOG;
    TA_RetCode retCode;
@@ -211,10 +211,10 @@ TA_RetCode TA_ReadOp_Do( TA_Libc             *libHandle,
    TA_Integer curOp;
 
    unsigned int nbTotalByteDone, nbTotalBarDone;
-   unsigned int nbBarAdded;
+   unsigned int nbBarAddedInTheBlock;
 
    char monthChar[4];
-   char cnvtArray[40];
+   char cnvtArray[CNVT_ARRAY_SIZE];
    unsigned int  cnvtArrayIdx;
 
    unsigned int nbByteToAllocReal;
@@ -296,7 +296,7 @@ TA_RetCode TA_ReadOp_Do( TA_Libc             *libHandle,
 
    nbTotalByteDone = 0;
    nbTotalBarDone  = 0;
-   nbBarAdded      = 0;
+   nbBarAddedInTheBlock = 0;
    memoryNeeded    = 1;
    curOp           = 0;
    skipField       = 0;
@@ -543,22 +543,18 @@ op_loop: /* Jump here when ready to proceed with the next command. */
             /* At this point, the price bar is completely written in memory. */
             timestamp++;
             curOp = 0;
-            nbBarAdded++;
-            if( nbBarAdded < nbElementToAllocate )
+            nbBarAddedInTheBlock++;
+            if( nbBarAddedInTheBlock < nbElementToAllocate )
             {
               /* Go to next line. */
               SKIP_LINE;
             }
             else
             {
-               /* Keep track of the last timestamp. */
-               if( lastBarTimestamp )
-                  *lastBarTimestamp = tmpTimestamp;
-
                /* There is not enough memory for another bar, so re-allocate
                 * some more.
                 */
-               retCode = TA_HistoryAddData( paramForAddData, nbBarAdded,
+               retCode = TA_HistoryAddData( paramForAddData, nbBarAddedInTheBlock,
                                             period, timestampBeg,
                                             openBeg, highBeg, lowBeg, closeBeg,
                                             volumeBeg, openInterestBeg );
@@ -570,8 +566,8 @@ op_loop: /* Jump here when ready to proceed with the next command. */
                openBeg = highBeg = lowBeg = closeBeg = NULL;
                timestampBeg = NULL;
                volumeBeg = openInterestBeg = NULL;
-               nbTotalBarDone += nbBarAdded;
-               nbBarAdded = 0;
+               nbTotalBarDone += nbBarAddedInTheBlock;
+               nbBarAddedInTheBlock = 0;
 
                if( retCode != TA_SUCCESS )
                   goto exit_loops;
@@ -598,13 +594,9 @@ op_loop: /* Jump here when ready to proceed with the next command. */
 exit_loops: /* Jump here when the end-of-file is hit (or an error occured) */
 
    /* On succesful exit, process possibly remaining data. */
-   if( (retCode == TA_SUCCESS) && (nbBarAdded != 0) )
+   if( (retCode == TA_SUCCESS) && (nbBarAddedInTheBlock != 0) )
    {
-      /* Keep track of the last timestamp. */
-      if( lastBarTimestamp )
-         *lastBarTimestamp = tmpTimestamp;
-
-      retCode = TA_HistoryAddData( paramForAddData, nbBarAdded,
+      retCode = TA_HistoryAddData( paramForAddData, nbBarAddedInTheBlock,
                                    period, timestampBeg,
                                    openBeg, highBeg, lowBeg, closeBeg,
                                    volumeBeg, openInterestBeg );
@@ -612,9 +604,9 @@ exit_loops: /* Jump here when the end-of-file is hit (or an error occured) */
       openBeg = highBeg = lowBeg = closeBeg = NULL;
       timestampBeg = NULL;
       volumeBeg = openInterestBeg = NULL;
-      nbTotalBarDone += nbBarAdded;
+      nbTotalBarDone += nbBarAddedInTheBlock;
    }
-
+   
    /* ALWAYS verify if locally allocated memory needs to be freed. ALWAYS. */
    FREE_IF_NOT_NULL( libHandle, openBeg );
    FREE_IF_NOT_NULL( libHandle, highBeg );
@@ -629,8 +621,8 @@ exit_loops: /* Jump here when the end-of-file is hit (or an error occured) */
       retCode = TA_SUCCESS;
 
    /* Return the number of added price bar to the caller. */
-   if( nbTotalBarAdded )
-      *nbTotalBarAdded = nbTotalBarDone;
+   if( nbBarAdded )
+      *nbBarAdded = nbTotalBarDone;
 
    TA_TRACE_RETURN( retCode );
 }
