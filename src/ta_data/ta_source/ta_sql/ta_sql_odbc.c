@@ -67,6 +67,7 @@
 
 #include "ta_system.h"
 #include "ta_trace.h"
+#include "ta_sql_handle.h"
 #include "ta_sql_minidriver.h"
 #include "ta_sql_odbc.h"
 
@@ -82,16 +83,44 @@
 
 /**** Local declarations.              ****/
 
+typedef struct 
+{
+   SQLCHAR name[TA_SQL_MAX_COLUMN_NAME_SIZE];
+   SQLSMALLINT datatype;
+   SQLSMALLINT ctype;
+   SQLUINTEGER size;
+
+} TA_SQL_ODBC_ColumnDef;
+
+
+
+typedef struct
+{
+   SQLHSTMT hstmt;  /* statement handle */
+
+   SQLINTEGER  numRows;
+   SQLSMALLINT numCols;
+
+   TA_SQL_ODBC_ColumnDef *columns;
+
+   int curRow;
+   char **rowData;  /* fields to be bound to columns */
+
+} TA_SQL_ODBC_Statement;
+
+
 typedef struct
 {
    SQLHENV henv;  /* environment handle */
    SQLHDBC hdbc;  /* connection handle */
-
+   
 } TA_SQL_ODBC_Connection;
 
 
+
 /**** Local functions declarations.    ****/
-/* None */
+TA_RetCode allocRowData( TA_SQL_ODBC_Statement *statement );
+TA_RetCode freeRowData( TA_SQL_ODBC_Statement *statement );
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
@@ -109,10 +138,11 @@ TA_RetCode TA_SQL_ODBC_OpenConnection(const char database[],
 {
    TA_PROLOG
    TA_SQL_ODBC_Connection *privConnection;
-   TA_RetCode retCode = TA_SUCCESS;
    SQLRETURN sqlRetCode;
 
    TA_TRACE_BEGIN( TA_SQL_ODBC_OpenConnection );
+
+   TA_ASSERT( connection != NULL );
 
    privConnection = (TA_SQL_ODBC_Connection*)TA_Malloc( sizeof(TA_SQL_ODBC_Connection) );
    if( privConnection == NULL )
@@ -126,21 +156,45 @@ TA_RetCode TA_SQL_ODBC_OpenConnection(const char database[],
    sqlRetCode = SQLAllocHandle( SQL_HANDLE_ENV, 
                                 SQL_NULL_HANDLE, 
                                 &privConnection->henv);
+   if( ! SQL_SUCCEEDED(sqlRetCode) )
+   {
+      TA_Free( privConnection );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
 
    /* register the version of ODBC to which the driver conforms */
    sqlRetCode = SQLSetEnvAttr( privConnection->henv, 
                                SQL_ATTR_ODBC_VERSION, 
                                (SQLPOINTER)SQL_OV_ODBC3, 0);
+   if( ! SQL_SUCCEEDED(sqlRetCode) )
+   {
+      SQLFreeHandle( SQL_HANDLE_ENV, privConnection->henv );
+      TA_Free( privConnection );
+      TA_TRACE_RETURN( TA_INTERNAL_ERR );
+   }
 
    /* allocate a connection handle */
    sqlRetCode = SQLAllocHandle( SQL_HANDLE_DBC, 
                                 privConnection->henv, 
                                 &privConnection->hdbc);
+   if( ! SQL_SUCCEEDED(sqlRetCode) )
+   {
+      SQLFreeHandle( SQL_HANDLE_ENV, privConnection->henv );
+      TA_Free( privConnection );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
 
    /* set any connection attributes */
    sqlRetCode = SQLSetConnectAttr( privConnection->hdbc, 
                                    SQL_ATTR_ACCESS_MODE, 
                                    (SQLPOINTER)SQL_MODE_READ_ONLY, 0);
+   if( ! SQL_SUCCEEDED(sqlRetCode) )
+   {
+      SQLFreeHandle( SQL_HANDLE_DBC, privConnection->hdbc );
+      SQLFreeHandle( SQL_HANDLE_ENV, privConnection->henv );
+      TA_Free( privConnection );
+      TA_TRACE_RETURN( TA_INTERNAL_ERR );
+   }
    
    /* connects to the data source */
    sqlRetCode = SQLConnect( privConnection->hdbc, 
@@ -150,13 +204,15 @@ TA_RetCode TA_SQL_ODBC_OpenConnection(const char database[],
    
    if( ! SQL_SUCCEEDED(sqlRetCode) )
    {
+      SQLFreeHandle( SQL_HANDLE_DBC, privConnection->hdbc );
+      SQLFreeHandle( SQL_HANDLE_ENV, privConnection->henv );
       TA_Free( privConnection );
       TA_TRACE_RETURN( TA_ACCESS_FAILED );
    }
 
    *connection = privConnection;
 
-   TA_TRACE_RETURN( retCode );
+   TA_TRACE_RETURN( TA_SUCCESS );
 }
 
 
@@ -166,53 +222,112 @@ TA_RetCode TA_SQL_ODBC_ExecuteQuery(void *connection,
                            void **query_result)
 {
    TA_PROLOG
-   //TA_SQL_ODBC_Connection *privConnection;
-   TA_RetCode retCode = TA_SUCCESS;
+   TA_SQL_ODBC_Connection *privConnection;
+   TA_SQL_ODBC_Statement *privStatement;
+   int col;
+   SQLRETURN sqlRetCode;
 
    TA_TRACE_BEGIN( TA_SQL_ODBC_ExecuteQuery );
-/*
+
    
    TA_ASSERT( connection != NULL );
+   TA_ASSERT( query_result != NULL );
 
    privConnection = (TA_SQL_ODBC_Connection*)connection;
-   *query_result = NULL;
 
-#if !defined( TA_SINGLE_THREAD )
-   retCode = TA_SemaWait( &privConnection->sema );
-   if( retCode != TA_SUCCESS )
+   privStatement = TA_Malloc( sizeof(TA_SQL_ODBC_Statement) );
+   if( privStatement == NULL )
    {
-      TA_TRACE_RETURN( retCode );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
-#endif
+   memset(privStatement, 0, sizeof(TA_SQL_ODBC_Statement) );
 
-   try 
+   sqlRetCode = SQLAllocHandle( SQL_HANDLE_STMT, 
+                                privConnection->hdbc, 
+                                &privStatement->hstmt );
+   if( ! SQL_SUCCEEDED(sqlRetCode) )
    {
-      // This creates a query object that is bound to con.
-      Query query = privConnection->con->query();
-
-      // You can write to the query object like you would any other ostrem
-      query << sql_query;
-
-      // Query::store() executes the query and returns the results
-      *query_result = new Result(query.store());
+      TA_Free(privStatement);
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
-   catch (...)
-   {                    
-      // handle any connection or query errors that may come up
-      if( *query_result )
+
+#define RETURN_ON_ERROR( errcode )                              \
+   if( ! SQL_SUCCEEDED( sqlRetCode ) )                          \
+   {                                                            \
+      SQLFreeHandle( SQL_HANDLE_STMT, privStatement->hstmt );   \
+      freeRowData( privStatement );                             \
+      if( privStatement->columns )                              \
+         TA_Free( privStatement->columns );                     \
+      TA_Free(privStatement);                                   \
+      TA_TRACE_RETURN( errcode );                               \
+   }
+
+   sqlRetCode = SQLSetStmtAttr( privStatement->hstmt, 
+                                SQL_ATTR_CONCURRENCY, 
+                                (SQLPOINTER)SQL_CONCUR_READ_ONLY, 0 );
+   RETURN_ON_ERROR( TA_INTERNAL_ERR );
+   
+   sqlRetCode = SQLExecDirect( privStatement->hstmt, (SQLCHAR*)sql_query, SQL_NTS );
+   RETURN_ON_ERROR( TA_BAD_QUERY );
+
+   sqlRetCode = SQLNumResultCols( privStatement->hstmt, &privStatement->numCols );
+   RETURN_ON_ERROR( TA_BAD_QUERY );
+
+   /* Officially, SQLRowCount may not be supported for SELECT queries,
+    * but many ODBC drivers support it anyway, and it is very handy here to get it
+    * to allocate proper size arrays in the upper part of the ta_sql driver 
+    */
+   sqlRetCode = SQLRowCount( privStatement->hstmt, &privStatement->numRows );
+   RETURN_ON_ERROR( TA_NOT_SUPPORTED );
+
+   /* collect information about the columns */
+   privStatement->columns = TA_Malloc( privStatement->numCols * sizeof(TA_SQL_ODBC_ColumnDef) );
+   if ( privStatement->columns == NULL ) {
+      sqlRetCode = SQL_ERROR; /* to force RETURN_ON_ERROR to return */
+      RETURN_ON_ERROR( TA_ALLOC_ERR );
+   }
+   memset( privStatement->columns, 0, privStatement->numCols * sizeof(TA_SQL_ODBC_ColumnDef) );
+
+   for( col = 0;  col < privStatement->numCols;  col++)
+   {
+      sqlRetCode = SQLDescribeCol( privStatement->hstmt,
+                                   (SQLSMALLINT)(col + 1),  /* ODBC counts columns starting at 1 */
+                                   privStatement->columns[col].name,
+                                   TA_SQL_MAX_COLUMN_NAME_SIZE,
+                                   NULL,  /* actual name length is not interesting */
+                                   &privStatement->columns[col].datatype,
+                                   &privStatement->columns[col].size,
+                                   /* other fields are not interesting */
+                                   NULL, NULL );
+      RETURN_ON_ERROR( TA_INTERNAL_ERR );
+   }
+
+   /* prepare buffers for row data */
+   allocRowData( privStatement );
+   if ( privStatement->rowData == NULL ) {
+      sqlRetCode = SQL_ERROR; /* to force RETURN_ON_ERROR to return */
+      RETURN_ON_ERROR( TA_ALLOC_ERR );
+   }
+
+   for( col = 0;  col < privStatement->numCols;  col++)
+   {
+      if( privStatement->rowData[col] )
       {
-         delete *query_result;
-         *query_result = NULL;
+         sqlRetCode = SQLBindCol( privStatement->hstmt,
+            (SQLSMALLINT)(col + 1),  /* ODBC counts columns starting at 1 */
+            privStatement->columns[col].ctype,
+            privStatement->rowData[col],
+            privStatement->columns[col].size + 1,  /* relevant only for SQL_C_CHAR columns */
+            NULL);
+         RETURN_ON_ERROR( TA_INTERNAL_ERR );
       }
-      retCode = TA_BAD_PARAM;  // should be TA_BAD_QUERY
-   } 
+   }
+   privStatement->curRow = -1;  /* no rows fetched yet */
 
-#if !defined( TA_SINGLE_THREAD )
-   TA_SemaPost( &privConnection->sema );
-#endif
-*/
+#undef RETURN_ON_ERROR
 
-   TA_TRACE_RETURN( retCode );
+   *query_result = privStatement;
+   TA_TRACE_RETURN( TA_SUCCESS );
 }
 
 
@@ -220,23 +335,16 @@ TA_RetCode TA_SQL_ODBC_ExecuteQuery(void *connection,
 TA_RetCode TA_SQL_ODBC_GetNumColumns(void *query_result, int *num)
 {
    TA_PROLOG
- 
+   TA_SQL_ODBC_Statement *privStatement;
+    
    TA_TRACE_BEGIN( TA_SQL_ODBC_GetNumColumns );
 
-/*
-   TA_ASSERT( res != NULL );
+   TA_ASSERT( query_result != NULL );
    TA_ASSERT( num != NULL );
 
-   try
-   {
-      *num = res->columns();
-   }
-   catch (...)
-   {
-      TA_TRACE_RETURN( TA_INTERNAL_ERR );  
-   }
-*/
-
+   privStatement = (TA_SQL_ODBC_Statement*)query_result;
+   
+   *num = privStatement->numCols;
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -245,23 +353,16 @@ TA_RetCode TA_SQL_ODBC_GetNumColumns(void *query_result, int *num)
 TA_RetCode TA_SQL_ODBC_GetNumRows(void *query_result, int *num)
 {
    TA_PROLOG
+   TA_SQL_ODBC_Statement *privStatement;
 
    TA_TRACE_BEGIN( TA_SQL_ODBC_GetNumRows );
 
-/*
-   TA_ASSERT( res != NULL );
+   TA_ASSERT( query_result != NULL );
    TA_ASSERT( num != NULL );
-
-   try
-   {
-      *num = res->rows();
-   }
-   catch (...)
-   {
-      TA_TRACE_RETURN( TA_INTERNAL_ERR );  
-   }
-*/
-
+   
+   privStatement = (TA_SQL_ODBC_Statement*)query_result;
+   
+   *num = privStatement->numRows;
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -270,23 +371,17 @@ TA_RetCode TA_SQL_ODBC_GetNumRows(void *query_result, int *num)
 TA_RetCode TA_SQL_ODBC_GetColumnName(void *query_result, int column, const char **name)
 {
    TA_PROLOG
+   TA_SQL_ODBC_Statement *privStatement;
 
    TA_TRACE_BEGIN( TA_SQL_ODBC_GetColumnName );
 
-/*
-   TA_ASSERT( res != NULL );
+   TA_ASSERT( query_result != NULL );
    TA_ASSERT( name != NULL );
 
-   try
-   {
-      *name = res->names(column).c_str();
-   }
-   catch (...)
-   {
-      TA_TRACE_RETURN( TA_INTERNAL_ERR );  
-   }
-*/
+   privStatement = (TA_SQL_ODBC_Statement*)query_result;
+   TA_ASSERT( column < privStatement->numCols );
 
+   *name = privStatement->columns[column].name;
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -295,37 +390,34 @@ TA_RetCode TA_SQL_ODBC_GetColumnName(void *query_result, int column, const char 
 TA_RetCode TA_SQL_ODBC_GetRowString(void *query_result, int row, int column, char **value)
 {
    TA_PROLOG
+   TA_SQL_ODBC_Statement *privStatement;
+   SQLRETURN sqlRetCode;
 
    TA_TRACE_BEGIN( TA_SQL_ODBC_GetRowString );
 
-/*
-   TA_ASSERT( res != NULL );
+   TA_ASSERT( query_result != NULL );
    TA_ASSERT( value != NULL );
 
-   *value = NULL;
-   try
-   {
-      Row res_row = (*res)[row];
+   privStatement = (TA_SQL_ODBC_Statement*)query_result;
+   TA_ASSERT( row >= privStatement->curRow );
+   TA_ASSERT( row <= privStatement->curRow + 1 );
 
-      size_t len = strlen(res_row[column]);
-      *value = (char*)TA_Malloc(len+1);
-      if( *value == NULL )
-      {
-         TA_TRACE_RETURN( TA_ALLOC_ERR );  
-      }
-      strcpy(*value, res_row[column]);
-   }
-   catch (...)
+   if( row > privStatement->curRow )
    {
-      if( *value )
+      sqlRetCode = SQLFetch( privStatement->hstmt );
+      if( ! SQL_SUCCEEDED(sqlRetCode) )
       {
-         TA_Free( *value );
-         *value = NULL;
+         TA_TRACE_RETURN( TA_BAD_QUERY );
       }
-      TA_TRACE_RETURN( TA_INTERNAL_ERR );  
+      privStatement->curRow++;
    }
-*/
 
+   if( privStatement->columns[column].ctype != SQL_C_CHAR )
+   {
+      TA_TRACE_RETURN( TA_NOT_SUPPORTED );
+   }
+
+   *value = privStatement->rowData[column];
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -334,24 +426,34 @@ TA_RetCode TA_SQL_ODBC_GetRowString(void *query_result, int row, int column, cha
 TA_RetCode TA_SQL_ODBC_GetRowReal(void *query_result, int row, int column, TA_Real *value)
 {
    TA_PROLOG
+   TA_SQL_ODBC_Statement *privStatement;
+   SQLRETURN sqlRetCode;
 
    TA_TRACE_BEGIN( TA_SQL_ODBC_GetRowReal );
 
-/*
-   TA_ASSERT( res != NULL );
+   TA_ASSERT( query_result != NULL );
    TA_ASSERT( value != NULL );
-
-   try
+   
+   privStatement = (TA_SQL_ODBC_Statement*)query_result;
+   TA_ASSERT( row >= privStatement->curRow );
+   TA_ASSERT( row <= privStatement->curRow + 1 );
+   
+   if( row > privStatement->curRow )
    {
-      Row res_row = (*res)[row];
-      *value = res_row[column];
+      sqlRetCode = SQLFetch( privStatement->hstmt );
+      if( ! SQL_SUCCEEDED(sqlRetCode) )
+      {
+         TA_TRACE_RETURN( TA_BAD_QUERY );
+      }
+      privStatement->curRow++;
    }
-   catch (...)
+   
+   if( privStatement->columns[column].ctype != SQL_C_DOUBLE )
    {
-      TA_TRACE_RETURN( TA_INTERNAL_ERR );  
+      TA_TRACE_RETURN( TA_NOT_SUPPORTED );
    }
-*/
-
+   
+   *value = *(double*)privStatement->rowData[column];
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -360,24 +462,34 @@ TA_RetCode TA_SQL_ODBC_GetRowReal(void *query_result, int row, int column, TA_Re
 TA_RetCode TA_SQL_ODBC_GetRowInteger(void *query_result, int row, int column, TA_Integer *value)
 {
    TA_PROLOG
+   TA_SQL_ODBC_Statement *privStatement;
+   SQLRETURN sqlRetCode;
 
    TA_TRACE_BEGIN( TA_SQL_ODBC_GetRowInteger );
 
-/*
-   TA_ASSERT( res != NULL );
+   TA_ASSERT( query_result != NULL );
    TA_ASSERT( value != NULL );
-
-   try
+   
+   privStatement = (TA_SQL_ODBC_Statement*)query_result;
+   TA_ASSERT( row >= privStatement->curRow );
+   TA_ASSERT( row <= privStatement->curRow + 1 );
+   
+   if( row > privStatement->curRow )
    {
-      Row res_row = (*res)[row];
-      *value = res_row[column];
+      sqlRetCode = SQLFetch( privStatement->hstmt );
+      if( ! SQL_SUCCEEDED(sqlRetCode) )
+      {
+         TA_TRACE_RETURN( TA_BAD_QUERY );
+      }
+      privStatement->curRow++;
    }
-   catch (...)
+   
+   if( privStatement->columns[column].ctype != SQL_C_SLONG )
    {
-      TA_TRACE_RETURN( TA_INTERNAL_ERR );  
+      TA_TRACE_RETURN( TA_NOT_SUPPORTED );
    }
-*/
-
+   
+   *value = *(long*)privStatement->rowData[column];
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -386,22 +498,27 @@ TA_RetCode TA_SQL_ODBC_GetRowInteger(void *query_result, int row, int column, TA
 TA_RetCode TA_SQL_ODBC_ReleaseQuery(void *query_result)
 {
    TA_PROLOG
+   TA_SQL_ODBC_Statement *privStatement;
+   SQLRETURN sqlRetCode;
 
    TA_TRACE_BEGIN( TA_SQL_ODBC_ReleaseQuery );
-   
-/*
-   if( res )
+
+   TA_ASSERT( query_result != NULL );
+
+   privStatement = (TA_SQL_ODBC_Statement*)query_result;
+
+   sqlRetCode = SQLFreeHandle( SQL_HANDLE_STMT, privStatement->hstmt );
+   freeRowData( privStatement );
+   if( privStatement->columns )
    {
-      try
-      {
-         delete res;
-      }
-      catch (...)
-      {
-         TA_TRACE_RETURN( TA_INTERNAL_ERR );  
-      }
+      TA_Free( privStatement->columns );
    }
-*/
+   TA_Free(privStatement);
+
+   if( ! SQL_SUCCEEDED(sqlRetCode) )
+   {
+      TA_TRACE_RETURN( TA_INVALID_HANDLE );
+   }
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -415,6 +532,8 @@ TA_RetCode TA_SQL_ODBC_CloseConnection(void *connection)
    SQLRETURN sqlRetCode;
 
    TA_TRACE_BEGIN( TA_SQL_ODBC_CloseConnection );
+
+   TA_ASSERT( connection != NULL );
 
    privConnection = (TA_SQL_ODBC_Connection*)connection;
    if ( privConnection )
@@ -446,7 +565,85 @@ TA_RetCode TA_SQL_ODBC_CloseConnection(void *connection)
 
 
 /**** Local functions definitions.     ****/
-/* None */
+
+
+TA_RetCode allocRowData( TA_SQL_ODBC_Statement *statement )
+{
+   int col;
+
+   statement->rowData = TA_Malloc( statement->numCols * sizeof(char*) );
+   if( statement->rowData == NULL )
+   {
+      return TA_ALLOC_ERR;
+   }
+   memset( statement->rowData, 0, statement->numCols * sizeof(char*) );
+
+   for( col = 0;  col < statement->numCols;  col++)
+   {
+      int size = 0;
+      SQLSMALLINT ctype;
+
+      switch( statement->columns[col].datatype ) 
+      {
+         case SQL_CHAR:
+         case SQL_VARCHAR:
+         case SQL_TYPE_TIME:
+         case SQL_TYPE_DATE:
+            size = statement->columns[col].size + 1;  /* add 1 for terminating '\0' */
+            ctype = SQL_C_CHAR;
+         	break;
+
+         case SQL_DECIMAL:
+         case SQL_NUMERIC:
+            size = sizeof( double );
+            ctype = SQL_C_DOUBLE;
+            break;
+
+         case SQL_SMALLINT:
+         case SQL_INTEGER:
+            size = sizeof( long );
+            ctype = SQL_C_SLONG;
+            break;
+
+         default:
+            ; /* ignore other column types */
+      }
+      if( size > 0 )
+      {
+         statement->rowData[col] = TA_Malloc(size);
+         if( statement->rowData[col] == NULL )
+         {
+            freeRowData( statement );
+            return TA_ALLOC_ERR;
+         }
+         statement->columns[col].ctype = ctype;
+      }
+   }
+   
+   return TA_SUCCESS;
+}
+
+
+
+TA_RetCode freeRowData( TA_SQL_ODBC_Statement *statement )
+{
+   int col;
+
+   if( statement->rowData != NULL )
+   {
+      for( col = 0;  col < statement->numCols;  col++)
+      {
+         if( statement->rowData[col] != NULL )
+         {
+            TA_Free( statement->rowData[col] );
+         }
+      }
+      TA_Free( statement->rowData );
+      statement->rowData = NULL;
+   }
+
+   return TA_SUCCESS;
+}
 
 
 #endif
