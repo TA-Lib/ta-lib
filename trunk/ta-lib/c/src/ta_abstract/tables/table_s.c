@@ -543,6 +543,7 @@ static const TA_OutputParameterInfo   *TA_STOCHRSI_Outputs[]   =
 
 static const TA_OptInputParameterInfo *TA_STOCHRSI_OptInputs[] =
 {
+  &TA_DEF_UI_TimePeriod_14_MINIMUM2,
   &TA_DEF_UI_FastK_Period,
   &TA_DEF_UI_FastD_Period,
   &TA_DEF_UI_FastD_MAType,
