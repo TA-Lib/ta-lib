@@ -115,6 +115,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_EMA.c \
 		..\..\..\..\..\src\ta_func\ta_KAMA.c \
 		..\..\..\..\..\src\ta_func\ta_MA.c \
+		..\..\..\..\..\src\ta_func\ta_MAMA.c \
 		..\..\..\..\..\src\ta_func\ta_MIDPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_MIDPOINT.c \
 		..\..\..\..\..\src\ta_func\ta_SAR.c \
@@ -150,6 +151,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_STOCHF.c \
 		..\..\..\..\..\src\ta_func\ta_TRIX.c \
 		..\..\..\..\..\src\ta_func\ta_WILLR.c \
+		..\..\..\..\..\src\ta_func\ta_AD.c \
+		..\..\..\..\..\src\ta_func\ta_ADOSC.c \
 		..\..\..\..\..\src\ta_func\ta_OBV.c \
 		..\..\..\..\..\src\ta_func\ta_STDDEV.c \
 		..\..\..\..\..\src\ta_func\ta_VAR.c \
@@ -259,6 +262,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_EMA.obj \
 		..\..\..\..\..\temp\cmr\ta_KAMA.obj \
 		..\..\..\..\..\temp\cmr\ta_MA.obj \
+		..\..\..\..\..\temp\cmr\ta_MAMA.obj \
 		..\..\..\..\..\temp\cmr\ta_MIDPRICE.obj \
 		..\..\..\..\..\temp\cmr\ta_MIDPOINT.obj \
 		..\..\..\..\..\temp\cmr\ta_SAR.obj \
@@ -294,6 +298,8 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_STOCHF.obj \
 		..\..\..\..\..\temp\cmr\ta_TRIX.obj \
 		..\..\..\..\..\temp\cmr\ta_WILLR.obj \
+		..\..\..\..\..\temp\cmr\ta_AD.obj \
+		..\..\..\..\..\temp\cmr\ta_ADOSC.obj \
 		..\..\..\..\..\temp\cmr\ta_OBV.obj \
 		..\..\..\..\..\temp\cmr\ta_STDDEV.obj \
 		..\..\..\..\..\temp\cmr\ta_VAR.obj \
@@ -430,6 +436,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_EMA.obj \
 +..\..\..\..\..\temp\cmr\ta_KAMA.obj \
 +..\..\..\..\..\temp\cmr\ta_MA.obj \
++..\..\..\..\..\temp\cmr\ta_MAMA.obj \
 +..\..\..\..\..\temp\cmr\ta_MIDPRICE.obj \
 +..\..\..\..\..\temp\cmr\ta_MIDPOINT.obj \
 +..\..\..\..\..\temp\cmr\ta_SAR.obj \
@@ -465,6 +472,8 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_STOCHF.obj \
 +..\..\..\..\..\temp\cmr\ta_TRIX.obj \
 +..\..\..\..\..\temp\cmr\ta_WILLR.obj \
++..\..\..\..\..\temp\cmr\ta_AD.obj \
++..\..\..\..\..\temp\cmr\ta_ADOSC.obj \
 +..\..\..\..\..\temp\cmr\ta_OBV.obj \
 +..\..\..\..\..\temp\cmr\ta_STDDEV.obj \
 +..\..\..\..\..\temp\cmr\ta_VAR.obj \
@@ -587,6 +596,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_EMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_KAMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MA.obj
+	-del ..\..\..\..\..\temp\cmr\ta_MAMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MIDPRICE.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MIDPOINT.obj
 	-del ..\..\..\..\..\temp\cmr\ta_SAR.obj
@@ -622,6 +632,8 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_STOCHF.obj
 	-del ..\..\..\..\..\temp\cmr\ta_TRIX.obj
 	-del ..\..\..\..\..\temp\cmr\ta_WILLR.obj
+	-del ..\..\..\..\..\temp\cmr\ta_AD.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ADOSC.obj
 	-del ..\..\..\..\..\temp\cmr\ta_OBV.obj
 	-del ..\..\..\..\..\temp\cmr\ta_STDDEV.obj
 	-del ..\..\..\..\..\temp\cmr\ta_VAR.obj
@@ -932,6 +944,9 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_MA.obj: ..\..\..\..\..\src\ta_func\ta_MA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MA.obj ..\..\..\..\..\src\ta_func\ta_MA.c
 
+..\..\..\..\..\temp\cmr\ta_MAMA.obj: ..\..\..\..\..\src\ta_func\ta_MAMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MAMA.obj ..\..\..\..\..\src\ta_func\ta_MAMA.c
+
 ..\..\..\..\..\temp\cmr\ta_MIDPRICE.obj: ..\..\..\..\..\src\ta_func\ta_MIDPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_MIDPRICE.obj ..\..\..\..\..\src\ta_func\ta_MIDPRICE.c
 
@@ -1036,6 +1051,12 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_WILLR.obj: ..\..\..\..\..\src\ta_func\ta_WILLR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_WILLR.obj ..\..\..\..\..\src\ta_func\ta_WILLR.c
+
+..\..\..\..\..\temp\cmr\ta_AD.obj: ..\..\..\..\..\src\ta_func\ta_AD.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_AD.obj ..\..\..\..\..\src\ta_func\ta_AD.c
+
+..\..\..\..\..\temp\cmr\ta_ADOSC.obj: ..\..\..\..\..\src\ta_func\ta_ADOSC.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ADOSC.obj ..\..\..\..\..\src\ta_func\ta_ADOSC.c
 
 ..\..\..\..\..\temp\cmr\ta_OBV.obj: ..\..\..\..\..\src\ta_func\ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_OBV.obj ..\..\..\..\..\src\ta_func\ta_OBV.c
