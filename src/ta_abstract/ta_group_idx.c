@@ -26,24 +26,27 @@ extern const TA_FuncDef TA_DEF_SAR;
 extern const TA_FuncDef TA_DEF_SMA;
 extern const TA_FuncDef TA_DEF_TEMA;
 extern const TA_FuncDef TA_DEF_WMA;
+extern const TA_FuncDef TA_DEF_ATR;
+extern const TA_FuncDef TA_DEF_TRANGE;
 extern const TA_FuncDef TA_DEF_ADX;
 extern const TA_FuncDef TA_DEF_ADXR;
 extern const TA_FuncDef TA_DEF_APO;
+extern const TA_FuncDef TA_DEF_CCI;
 extern const TA_FuncDef TA_DEF_DX;
 extern const TA_FuncDef TA_DEF_MACD;
+extern const TA_FuncDef TA_DEF_MACDEXT;
 extern const TA_FuncDef TA_DEF_MACDFIX;
 extern const TA_FuncDef TA_DEF_MINUS_DI;
 extern const TA_FuncDef TA_DEF_MINUS_DM;
+extern const TA_FuncDef TA_DEF_MOM;
 extern const TA_FuncDef TA_DEF_PPO;
 extern const TA_FuncDef TA_DEF_PLUS_DI;
 extern const TA_FuncDef TA_DEF_PLUS_DM;
-extern const TA_FuncDef TA_DEF_RSI;
-extern const TA_FuncDef TA_DEF_ATR;
-extern const TA_FuncDef TA_DEF_TRANGE;
-extern const TA_FuncDef TA_DEF_CCI;
-extern const TA_FuncDef TA_DEF_MOM;
 extern const TA_FuncDef TA_DEF_ROC;
+extern const TA_FuncDef TA_DEF_ROCP;
 extern const TA_FuncDef TA_DEF_ROCR;
+extern const TA_FuncDef TA_DEF_ROCR100;
+extern const TA_FuncDef TA_DEF_RSI;
 extern const TA_FuncDef TA_DEF_STOCH;
 extern const TA_FuncDef TA_DEF_TRIX;
 extern const TA_FuncDef TA_DEF_OBV;
@@ -79,38 +82,42 @@ NULL };
 #define SIZE_GROUP_2 ((sizeof(TA_PerGroupFunc_2)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_3[] = {
-&TA_DEF_ADX,
-&TA_DEF_ADXR,
-&TA_DEF_APO,
-&TA_DEF_DX,
-&TA_DEF_MACD,
-&TA_DEF_MACDFIX,
-&TA_DEF_MINUS_DI,
-&TA_DEF_MINUS_DM,
-&TA_DEF_PPO,
-&TA_DEF_PLUS_DI,
-&TA_DEF_PLUS_DM,
+&TA_DEF_ATR,
+&TA_DEF_TRANGE,
 NULL };
 #define SIZE_GROUP_3 ((sizeof(TA_PerGroupFunc_3)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_4[] = {
+&TA_DEF_ADX,
+&TA_DEF_ADXR,
+&TA_DEF_APO,
+&TA_DEF_CCI,
+&TA_DEF_DX,
+&TA_DEF_MACD,
+&TA_DEF_MACDEXT,
+&TA_DEF_MACDFIX,
+&TA_DEF_MINUS_DI,
+&TA_DEF_MINUS_DM,
+&TA_DEF_MOM,
+&TA_DEF_PPO,
+&TA_DEF_PLUS_DI,
+&TA_DEF_PLUS_DM,
+&TA_DEF_ROC,
+&TA_DEF_ROCP,
+&TA_DEF_ROCR,
+&TA_DEF_ROCR100,
 &TA_DEF_RSI,
+&TA_DEF_STOCH,
+&TA_DEF_TRIX,
 NULL };
 #define SIZE_GROUP_4 ((sizeof(TA_PerGroupFunc_4)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_5[] = {
-&TA_DEF_ATR,
-&TA_DEF_TRANGE,
 NULL };
 #define SIZE_GROUP_5 ((sizeof(TA_PerGroupFunc_5)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_6[] = {
-&TA_DEF_CCI,
-&TA_DEF_MOM,
-&TA_DEF_ROC,
-&TA_DEF_ROCR,
-&TA_DEF_STOCH,
-&TA_DEF_TRIX,
+&TA_DEF_OBV,
 NULL };
 #define SIZE_GROUP_6 ((sizeof(TA_PerGroupFunc_6)/sizeof(const TA_FuncDef *))-1)
 
@@ -119,28 +126,19 @@ NULL };
 #define SIZE_GROUP_7 ((sizeof(TA_PerGroupFunc_7)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_8[] = {
-&TA_DEF_OBV,
+&TA_DEF_STDDEV,
+&TA_DEF_VAR,
 NULL };
 #define SIZE_GROUP_8 ((sizeof(TA_PerGroupFunc_8)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_9[] = {
-NULL };
-#define SIZE_GROUP_9 ((sizeof(TA_PerGroupFunc_9)/sizeof(const TA_FuncDef *))-1)
-
-const TA_FuncDef *TA_PerGroupFunc_10[] = {
-&TA_DEF_STDDEV,
-&TA_DEF_VAR,
-NULL };
-#define SIZE_GROUP_10 ((sizeof(TA_PerGroupFunc_10)/sizeof(const TA_FuncDef *))-1)
-
-const TA_FuncDef *TA_PerGroupFunc_11[] = {
 &TA_DEF_AVGPRICE,
 &TA_DEF_MEDPRICE,
 &TA_DEF_TYPPRICE,
 &TA_DEF_WCLPRICE,
 NULL };
-#define SIZE_GROUP_11 ((sizeof(TA_PerGroupFunc_11)/sizeof(const TA_FuncDef *))-1)
-const TA_FuncDef **TA_PerGroupFuncDef[12] = {
+#define SIZE_GROUP_9 ((sizeof(TA_PerGroupFunc_9)/sizeof(const TA_FuncDef *))-1)
+const TA_FuncDef **TA_PerGroupFuncDef[10] = {
 &TA_PerGroupFunc_0[0],
 &TA_PerGroupFunc_1[0],
 &TA_PerGroupFunc_2[0],
@@ -150,12 +148,10 @@ const TA_FuncDef **TA_PerGroupFuncDef[12] = {
 &TA_PerGroupFunc_6[0],
 &TA_PerGroupFunc_7[0],
 &TA_PerGroupFunc_8[0],
-&TA_PerGroupFunc_9[0],
-&TA_PerGroupFunc_10[0],
-&TA_PerGroupFunc_11[0]
+&TA_PerGroupFunc_9[0]
 };
 
-const unsigned int TA_PerGroupSize[12] = {
+const unsigned int TA_PerGroupSize[10] = {
 SIZE_GROUP_0,
 SIZE_GROUP_1,
 SIZE_GROUP_2,
@@ -165,9 +161,7 @@ SIZE_GROUP_5,
 SIZE_GROUP_6,
 SIZE_GROUP_7,
 SIZE_GROUP_8,
-SIZE_GROUP_9,
-SIZE_GROUP_10,
-SIZE_GROUP_11
+SIZE_GROUP_9
 };
 
 const unsigned int TA_TotalNbFunction =
@@ -180,6 +174,4 @@ SIZE_GROUP_5+
 SIZE_GROUP_6+
 SIZE_GROUP_7+
 SIZE_GROUP_8+
-SIZE_GROUP_9+
-SIZE_GROUP_10+
-SIZE_GROUP_11;
+SIZE_GROUP_9;

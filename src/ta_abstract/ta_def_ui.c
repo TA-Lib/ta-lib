@@ -58,8 +58,6 @@
 const char TA_GroupId_MathOperatorsString[]        = "Math Operators";
 const char TA_GroupId_MathTransformString[]        = "Math Transform";
 const char TA_GroupId_OverlapStudiesString[]       = "Overlap Studies";
-const char TA_GroupId_TrendIndicatorsString[]      = "Trend Indicators";
-const char TA_GroupId_MarketStrengthString[]       = "Market Strength";
 const char TA_GroupId_VolatilityIndicatorsString[] = "Volatility Indicators";
 const char TA_GroupId_MomentumIndicatorsString[]   = "Momentum Indicators";
 const char TA_GroupId_CycleIndicatorsString[]      = "Cycle Indicators";
@@ -73,8 +71,6 @@ const char *TA_GroupString[TA_NB_GROUP_ID] =
    &TA_GroupId_MathOperatorsString[0],
    &TA_GroupId_MathTransformString[0],
    &TA_GroupId_OverlapStudiesString[0],
-   &TA_GroupId_TrendIndicatorsString[0],
-   &TA_GroupId_MarketStrengthString[0],
    &TA_GroupId_VolatilityIndicatorsString[0],
    &TA_GroupId_MomentumIndicatorsString[0],
    &TA_GroupId_CycleIndicatorsString[0],
@@ -320,7 +316,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_HorizontalShift =
  * new MA will provide automatically a new way of calculating
  * to a multitude of other TA functions.
  */
-static const TA_IntegerDataPair TA_MA_MethodDataPair[] =
+static const TA_IntegerDataPair TA_MA_TypeDataPair[] =
 {
    {0,"Simple"},
    {1,"Exponential"},
@@ -330,10 +326,11 @@ static const TA_IntegerDataPair TA_MA_MethodDataPair[] =
 /* {5,"Triangular"},
    {6,"Linear Regression"}*/
 };
-static const TA_IntegerList TA_MA_MethodList =
+
+const TA_IntegerList TA_MA_TypeList =
 {
-   &TA_MA_MethodDataPair[0],
-   sizeof(TA_MA_MethodDataPair)/sizeof(TA_IntegerDataPair)
+   &TA_MA_TypeDataPair[0],
+   sizeof(TA_MA_TypeDataPair)/sizeof(TA_IntegerDataPair)
 };
 
 const TA_OptInputParameterInfo TA_DEF_UI_MA_Method =
@@ -342,10 +339,10 @@ const TA_OptInputParameterInfo TA_DEF_UI_MA_Method =
    "optInMethod",           /* paramName */
    0,                       /* flags */
 
-   "Method",                /* displayName */
-   (const void *)&TA_MA_MethodList, /* dataSet */
+   "MA Type",                /* displayName */
+   (const void *)&TA_MA_TypeList, /* dataSet */
    0, /* defaultValue = simple average */
-   "Define technique used for calculation", /* hint */
+   "Type of Moving Average", /* hint */
 
    NULL /* helpFile */
 };
