@@ -108,6 +108,24 @@ TA_RetCode TA_WMA_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
+TA_RetCode TA_ADX_FramePP( TA_Libc            *libHandle,
+                          TA_Integer          startIdx,
+                          TA_Integer          endIdx,
+                          TA_Integer         *outBegIdx,
+                          TA_Integer         *outNbElement,
+                          TA_ParamHolderPriv  in[],
+                          TA_ParamHolderPriv  optIn[],
+                          TA_ParamHolderPriv  out[] );
+
+TA_RetCode TA_ADXR_FramePP( TA_Libc            *libHandle,
+                          TA_Integer          startIdx,
+                          TA_Integer          endIdx,
+                          TA_Integer         *outBegIdx,
+                          TA_Integer         *outNbElement,
+                          TA_ParamHolderPriv  in[],
+                          TA_ParamHolderPriv  optIn[],
+                          TA_ParamHolderPriv  out[] );
+
 TA_RetCode TA_APO_FramePP( TA_Libc            *libHandle,
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
