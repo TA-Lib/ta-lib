@@ -238,4 +238,6 @@ thread:DEFINES -= TA_SINGLE_THREAD
 # Platform dependent options.
 win32:DEFINES         *= WIN32
 win32-msvc:DEFINES    *= _MBCS _LIB
+freebsd-g++:LIBS      -= -ldl
+freebsd-g++:INCLUDEPATH += /usr/local/include
 win32:CLEAN_FILES = ../../../../../bin/*.map ../../../../../bin/*._xe ../../../../../bin/*.tds ../../../../../bin/*.pdb ../../../../../bin/*.pbo ../../../../../bin/*.pbi ../../../../../bin/*.pbt

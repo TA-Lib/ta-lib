@@ -194,6 +194,9 @@ print "thread:DEFINES -= TA_SINGLE_THREAD\n";
 print "\# Platform dependent options.\n";
 print "win32:DEFINES         *= WIN32\n";
 print "win32-msvc:DEFINES    *= _MBCS _LIB\n";
+print "freebsd-g++:LIBS      -= -ldl\n";
+print "freebsd-g++:INCLUDEPATH += /usr/local/include\n";
+
 
 print "win32:CLEAN_FILES = ../../../../../bin/*.map ../../../../../bin/*._xe ../../../../../bin/*.tds ../../../../../bin/*.pdb ../../../../../bin/*.pbo ../../../../../bin/*.pbi ../../../../../bin/*.pbt\n";
 
