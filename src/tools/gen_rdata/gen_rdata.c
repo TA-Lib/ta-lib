@@ -73,7 +73,7 @@
 /* None */
 
 /**** Local functions declarations.    ****/
-static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr, int silent  );
+static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr, int silent, TA_Timestamp *expirationDate  );
 static int createFile         ( TA_CountryId countryId, const char *fileStr, TA_YahooIdxStrategy strategy, int silent );
 
 static int displayInfo( TA_YahooIdx *idx );
@@ -84,6 +84,7 @@ static int displayInfo( TA_YahooIdx *idx );
 /**** Global functions definitions.   ****/
 int main(int argc, char *argv[] )
 {
+   TA_Timestamp expirationDate;
    int badParam = 0;
    int retCode;
    unsigned char option = 0;
@@ -178,14 +179,33 @@ int main(int argc, char *argv[] )
    switch( option )
    {
    case 'U':
-      /*const char *listCountry[] = {"US","CA","UK","DE","ES","FR","IT","NO","SE","DK",NULL};*/
+      /* Will regenerate the file only if broken or more than 1 day old. */
+      TA_SetTimeNow(&expirationDate);
+      TA_SetDateNow(&expirationDate);
+      TA_PrevDay(&expirationDate);
+
       #define GET_INDEX(country)  \
       { \
-        printf( "Updating index [y_%s.dat]\n", country ); \
-        retCode = createFile( TA_CountryAbbrevToId(country), "y_" country ".dat", TA_USE_YAHOO_AND_REMOTE_MERGE, 1 ); \
-        if( retCode != 0 ) return retCode; \
-        retCode = verifyFileIntegrity( TA_CountryAbbrevToId(country), "y_" country ".dat", 1 ); \
-        if( retCode != 0 ) return retCode; \
+        retCode = verifyFileIntegrity( TA_CountryAbbrevToId(country), "y_" country ".dat", 1, &expirationDate ); \
+        if( retCode != 0 ) \
+        { \
+           printf( "Updating index [y_%s.dat]\n", country ); \
+           retCode = createFile( TA_CountryAbbrevToId(country), "y_" country ".dat", TA_USE_YAHOO_AND_REMOTE_MERGE, 1 ); \
+           if( retCode != 0 ) \
+           { \
+              printf( "Failed updating index [y_%s.dat]\n", country ); \
+           } \
+        } \
+      }
+
+      #define VERIFY_INDEX(country) \
+      { \
+        retCode = verifyFileIntegrity( TA_CountryAbbrevToId(country), "y_" country ".dat", 0, &expirationDate ); \
+        if( retCode != 0 ) \
+        { \
+           printf( "Index invalid or expired [y_%s.dat]\n", country ); \
+           return retCode; \
+        } \
       }
 
       GET_INDEX("us");
@@ -198,10 +218,24 @@ int main(int argc, char *argv[] )
       GET_INDEX("no");
       GET_INDEX("se");
       GET_INDEX("dk");
+
+      VERIFY_INDEX("us");
+      VERIFY_INDEX("ca");
+      VERIFY_INDEX("de");
+      VERIFY_INDEX("uk");
+      VERIFY_INDEX("es");
+      VERIFY_INDEX("fr");
+      VERIFY_INDEX("it");
+      VERIFY_INDEX("no");
+      VERIFY_INDEX("se");
+      VERIFY_INDEX("dk");
+
+      /* Get here only when all index are successfully updated. */
+      printf( "\n**** All index successfully updated.\n" );
       return 0;
 
    case 'V':
-      return verifyFileIntegrity( countryId, argv[3], 0 );
+      return verifyFileIntegrity( countryId, argv[3], 0, NULL );
 
    case 'N':
       return createFile( countryId, argv[3], TA_USE_YAHOO_SITE, 0 );
@@ -297,7 +331,7 @@ static int createFile( TA_CountryId countryId, const char *fileStr, TA_YahooIdxS
     */
    if( retValue == 0 )
    {
-      retValue = verifyFileIntegrity( countryId, fileStr, silent );
+      retValue = verifyFileIntegrity( countryId, fileStr, silent, NULL );
       if( retValue != 0 )
          printf( "Verification of file integrity failed [%d]\n", retValue );
    }
@@ -305,7 +339,7 @@ static int createFile( TA_CountryId countryId, const char *fileStr, TA_YahooIdxS
    return retValue;
 }
 
-static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr, int silent )
+static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr, int silent, TA_Timestamp *expirationDate )
 {
    FILE *in;
    TA_RetCode retCode;
@@ -320,7 +354,8 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr, int
    in = fopen( fileStr, "rb" );
    if( !in )
    {
-      printf( "Cannot re-open %s for reading\n", fileStr );
+      if( !silent )
+         printf( "Cannot re-open %s for reading\n", fileStr );
       return 0x10000001;
    }
 
@@ -330,7 +365,8 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr, int
    if( retCode != TA_SUCCESS )
    {
       fclose( in );
-      printf( "\nLibrary initialization failed [%d]\n", retCode );
+      if( !silent )
+         printf( "\nLibrary initialization failed [%d]\n", retCode );
       return 0x10000002;
    }
 
@@ -342,7 +378,8 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr, int
       retCode = TA_StreamAddFile( stream, in );
       if( retCode != TA_SUCCESS )
       {
-         printf( "\nAdding file to stream failed [%d]\n", retCode );
+         if( !silent )
+            printf( "\nAdding file to stream failed [%d]\n", retCode );
          retValue = 0x10000004;
       }
       else
@@ -351,21 +388,33 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr, int
 
          if( (retCode != TA_SUCCESS) || !idx )
          {
-            printf( "Index verification failed! [%d]\n", retCode );
+            if( !silent )
+               printf( "Index verification failed! [%d]\n", retCode );
             retValue = 0x10000008;
          }
       }
 
       if( !silent && idx && (displayInfo( idx ) != 0) )
       {
-         printf( "Accessing index failed.\n" );
+         if( !silent )
+            printf( "Accessing index failed.\n" );
          retValue |= 0x10000020;
+      }
+      
+
+      /* Check for expiration date of the index. */
+      if( expirationDate && idx && TA_TimestampLess(&idx->creationDate,expirationDate) )
+      {         
+         if( !silent )
+            printf( "Index is expired (more than one day old).\n" );
+         retValue |= 0x10000200;
       }
 
       retCode = TA_StreamFree( stream );
       if( retCode != TA_SUCCESS )
       {
-         printf( "Stream freeing failed [%d]\n", retCode );
+         if( !silent )
+            printf( "Stream freeing failed [%d]\n", retCode );
          retValue |= 0x10000040;
       }
    }
@@ -376,7 +425,8 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr, int
       retCode = TA_YahooIdxFree( idx );
       if( retCode != TA_SUCCESS )
       {
-         printf( "Yahoo index freeing failed [%d]\n", retCode );
+         if( !silent )
+            printf( "Yahoo index freeing failed [%d]\n", retCode );
          retValue |= 0x10000080;
       }
    }
@@ -387,7 +437,8 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr, int
    retCode = TA_Shutdown();
    if( retCode != TA_SUCCESS )
    {
-      printf( "Library shutdown failed! [%d]\n", retCode );
+      if( !silent )
+         printf( "Library shutdown failed! [%d]\n", retCode );
       retValue |= 0x10000100;
    }
 
@@ -402,7 +453,7 @@ static int displayInfo( TA_YahooIdx *idx )
    unsigned int i;
    TA_YahooCategory *category;
 
-   printf( "\nContent of Index: " );
+   printf( "Content of Index: " );
    if( idx->nbCategory == 0 )
       printf( "(empty)\n" );
    else
