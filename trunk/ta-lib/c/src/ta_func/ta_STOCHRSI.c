@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -37,7 +37,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  PP       Peter Pudaite
- *
+ *  AA       Andrew Atkinson
  *
  * Change history:
  *
@@ -46,6 +46,7 @@
  *  120802 MF   Template creation.
  *  101103 PP   Initial creation of code.
  *  112603 MF   Add independent control to the RSI period.
+ *  020605 AA   Fix #1117656. NULL pointer assignement.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -214,7 +215,7 @@
     * The TA-Lib version offer flexibility beyond what is explain
     * in the Stock&Commodities article.
     *
-    * To calculate the "Unsmoothed stochastic RSI" with symmetry like 
+    * To calculate the "Unsmoothed stochastic RSI" with symetry like 
     * explain in the article, keep the optInTimePeriod and optInFastK_Period
     * equal. Example:
     *        
@@ -285,7 +286,7 @@
  
    ARRAY_FREE( tempRSIBuffer );
 
-   if( retCode != TA_SUCCESS || outNbElement == 0 )
+   if( retCode != TA_SUCCESS || *outNbElement == 0 )
    {
       *outBegIdx = 0;
       *outNbElement = 0;
@@ -405,7 +406,7 @@
 /* Generated */                        outFastK,
 /* Generated */                        outFastD);
 /* Generated */    ARRAY_FREE( tempRSIBuffer );
-/* Generated */    if( retCode != TA_SUCCESS || outNbElement == 0 )
+/* Generated */    if( retCode != TA_SUCCESS || *outNbElement == 0 )
 /* Generated */    {
 /* Generated */       *outBegIdx = 0;
 /* Generated */       *outNbElement = 0;

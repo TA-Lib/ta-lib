@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,7 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  AA       Andrew Atkinson
  *
  * Change history:
  *
@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
- *
+ *  020605 AA   Fix #1117656. NULL pointer assignement.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -255,7 +255,7 @@
    /* Verify for failure or if not enough data after
     * calculating the rate-of-change.
     */
-   if( (retCode != TA_SUCCESS) || (outNbElement == 0) )
+   if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
    {
       *outNbElement = 0;
       *outBegIdx = 0;
@@ -372,7 +372,7 @@
 /* Generated */                       1,  &begIdx, outNbElement,
 /* Generated */                       outReal );
 /* Generated */    ARRAY_FREE( tempBuffer );
-/* Generated */    if( (retCode != TA_SUCCESS) || (outNbElement == 0) )
+/* Generated */    if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
 /* Generated */    {
 /* Generated */       *outNbElement = 0;
 /* Generated */       *outBegIdx = 0;
