@@ -40,6 +40,9 @@
 #define TA_SQL_VOLUME_COLUMN                "volume"
 #define TA_SQL_OI_COLUMN                    "oi"
 
+#define TA_SQL_MAX_COLUMN_NAME_SIZE         10
+
+
 #define TA_SQL_CATEGORY_PLACEHOLDER         "$c"
 #define TA_SQL_SYMBOL_PLACEHOLDER           "$s"
 #define TA_SQL_START_DATE_PLACEHOLDER       "$<"
