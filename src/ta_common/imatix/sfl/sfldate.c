@@ -835,7 +835,7 @@ timezone_string (void)
     int
         minutes;                        /*  TIMEZONE is in seconds           */
 
-    minutes = 0 - (int) (TIMEZONE / 60);
+    minutes = 0 - (((int)(TIMEZONE)) / 60);
     snprintf (formatted_string, sizeof (formatted_string), 
               "%03d%02d", minutes / 60, abs (minutes % 60));
     if (*formatted_string == '0')
@@ -883,7 +883,7 @@ gmt_to_local (long gmt_date, long gmt_time, long *date, long *time)
         *time_struct;
 
     /*  Convert from GMT                                                     */
-    time_value  = date_to_timer (gmt_date, gmt_time) - TIMEZONE;
+    time_value  = date_to_timer (gmt_date, gmt_time) - ((int)(TIMEZONE));
     time_struct = safe_localtime (&time_value);
     if (time_struct-> tm_isdst)
       {
