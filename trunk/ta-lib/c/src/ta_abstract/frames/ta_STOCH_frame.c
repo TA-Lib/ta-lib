@@ -29,14 +29,15 @@ TA_RetCode TA_STOCH_FramePP( TA_Libc            *libHandle,
               in[0].p.in.data.inPrice.high, /* inHigh_0 */
               in[0].p.in.data.inPrice.low, /* inLow_0 */
               in[0].p.in.data.inPrice.close, /* inClose_0 */
-              optIn[0].p.optIn.data.optInInteger, /* optInKPeriod_0 */
-              optIn[1].p.optIn.data.optInInteger, /* optInKSlowPeriod_1 */
-              optIn[2].p.optIn.data.optInInteger, /* optInDSlowPeriod_2 */
-              optIn[3].p.optIn.data.optInInteger, /* optInMethod_3 */
+              optIn[0].p.optIn.data.optInInteger, /* optInFastK_Period_0 */
+              optIn[1].p.optIn.data.optInInteger, /* optInSlowK_Period_1 */
+              optIn[2].p.optIn.data.optInInteger, /* optInSlowK_MAType_2 */
+              optIn[3].p.optIn.data.optInInteger, /* optInSlowD_Period_3 */
+              optIn[4].p.optIn.data.optInInteger, /* optInSlowD_MAType_4 */
               outBegIdx, 
               outNbElement, 
-              out[0].p.out.data.outReal, /*  outRealK_0 */
-              out[1].p.out.data.outReal /*  outRealD_1 */ );
+              out[0].p.out.data.outReal, /*  outSlowK_0 */
+              out[1].p.out.data.outReal /*  outSlowD_1 */ );
 }
 
 /***************
