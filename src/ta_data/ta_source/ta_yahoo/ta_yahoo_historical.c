@@ -192,6 +192,8 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
    TA_ASSERT( categoryHandle->string != NULL );
    TA_ASSERT( symbolHandle->string != NULL );
 
+   retCode = TA_BAD_PARAM;
+
    /* Set the initial first/last timestamp */
    if( start )
       TA_TimestampCopy( &firstBarTimestamp, start );
@@ -995,6 +997,9 @@ static TA_RetCode processAdjustmentTable( unsigned int line,
       if( !(yahooHandle->param->flags & TA_DO_NOT_VALUE_ADJUST) )
       {
          value = parseStringForDividend( data );
+         if( value < 0.0 )
+            return TA_INVALID_YAHOO_DIVIDEND;
+
          if( value != 0.0 )
          {
             if( !cnvtDate )
