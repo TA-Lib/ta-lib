@@ -58,6 +58,7 @@
 #include "ta_memory.h"
 #include "ta_global.h"
 #include "ta_magic_nb.h"
+#include "ta_trace.h"
 
 /**** External functions declarations. ****/
 /* None */
