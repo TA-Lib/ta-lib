@@ -113,7 +113,6 @@ int main( int argc, char **argv )
    /* Some tests are using randomness. */
    srand( (unsigned)time( NULL ) );
 
-
    /* Test utility like List/Stack/Dictionary/Memory Allocation etc... */
    retValue = test_internals();
    if( retValue != TA_TEST_PASS )
@@ -121,6 +120,11 @@ int main( int argc, char **argv )
       printf( "Failed internal cricular buffer test with code=%d\n", retValue );
       return retValue;
    }
+
+   /* Test the CSI data source. */
+   retValue = test_csi();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
 
    /* Test Performance Measurements. */
    retValue = test_pm();

@@ -12,6 +12,7 @@
 ErrorNumber test_period( TA_UDBase *unifiedDatabase );
 ErrorNumber test_ascii ( void );
 ErrorNumber test_yahoo ( void );
+ErrorNumber test_csi   ( void );
 ErrorNumber test_pm    ( void );
 ErrorNumber test_datasource_merge( void );
 ErrorNumber test_internals( void );
