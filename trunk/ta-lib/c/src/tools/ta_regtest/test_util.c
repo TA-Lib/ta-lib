@@ -137,12 +137,14 @@ void showFeedback()
       ta_g_val = 0; 
    putchar('\b');
    putchar(ta_g_wheel[ta_g_val]);
+   fflush(stdout);
    ta_g_val++;
 }
 
 void hideFeedback()
 {
    putchar('\b');
+   fflush(stdout);
    ta_g_val = 0;
 }
 
