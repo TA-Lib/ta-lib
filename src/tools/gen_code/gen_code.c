@@ -2012,6 +2012,10 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "   #include \"ta_memory.h\"\n" );
    print( out, "#endif\n" );
    print( out, "\n" );
+   print( out, "#ifndef TA_TRACE_H\n" );
+   print( out, "   #include \"ta_trace.h\"\n" );
+   print( out, "#endif\n" );
+   print( out, "\n" );
    print( out, "#define TA_PREFIX(x) TA_##x\n" );
    print( out, "#define INPUT_TYPE   double\n" );
    print( out, "\n" );
