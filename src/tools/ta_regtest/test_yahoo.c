@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -83,6 +83,7 @@ static ErrorNumber checkRangeSame( TA_UDBase          *udb,
                                    const TA_History    *historyRef,
                                    const TA_Timestamp  *start,
                                    const TA_Timestamp  *end,
+                                   TA_Period            period,
                                    unsigned int         startIdx,
                                    unsigned int         nbPRiceBar );
 
@@ -166,6 +167,7 @@ static ErrorNumber test_index( TA_UDBase *udb )
    /* Add canadian index. */
    param.id = TA_YAHOO_WEB;
    param.location = "ca";
+   /*param.flags = TA_DO_NOT_SPLIT_ADJUST|TA_DO_NOT_VALUE_ADJUST;*/
 
    retCode = TA_AddDataSource( udb, &param );
    if( retCode != TA_SUCCESS )
@@ -229,45 +231,91 @@ static ErrorNumber test_index( TA_UDBase *udb )
       return TA_YAHOO_FIELD_MISSING_3;
    }
 
-   errNumber = checkRangeSame( udb, history, &history->timestamp[0], &history->timestamp[0], 0, 1 );
+   errNumber = checkRangeSame( udb, history, &history->timestamp[0], &history->timestamp[0], TA_DAILY, 0, 1 );
    if( errNumber != TA_TEST_PASS )
    {
       printf( "Failed: Test getting first price bar only.\n" );
       return errNumber;
    }
 
-   errNumber = checkRangeSame( udb, history, &history->timestamp[1], &history->timestamp[1], 1, 1 );
+   errNumber = checkRangeSame( udb, history, &history->timestamp[1], &history->timestamp[1], TA_DAILY, 1, 1 );
    if( errNumber != TA_TEST_PASS )
    {
       printf( "Failed: Test getting second price bar only.\n" );
       return errNumber;
    }
 
-   errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-2], &history->timestamp[history->nbBars-2], history->nbBars-2, 1 );
+   errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-2], &history->timestamp[history->nbBars-2], TA_DAILY, history->nbBars-2, 1 );
    if( errNumber != TA_TEST_PASS )
    {
       printf( "Failed: Test getting before last price bar only.\n" );
       return errNumber;
    }
    
-   errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-1], &history->timestamp[history->nbBars-1], history->nbBars-1, 1 );
+   errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-1], &history->timestamp[history->nbBars-1], TA_DAILY, history->nbBars-1, 1 );
    if( errNumber != TA_TEST_PASS )
    {
       printf( "Failed: Test getting last price bar only.\n" );
       return errNumber;
    }
    
-   errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-200], &history->timestamp[history->nbBars-1], history->nbBars-200, 200 );
+   errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-200], &history->timestamp[history->nbBars-1], TA_DAILY, history->nbBars-200, 200 );
    if( errNumber != TA_TEST_PASS )
    {
       printf( "Failed: Test getting last 200 price bars only.\n" );
       return errNumber;
    }
    
-   errNumber = checkRangeSame( udb, history, &history->timestamp[0], &history->timestamp[199], 0, 200 );
+   errNumber = checkRangeSame( udb, history, &history->timestamp[0], &history->timestamp[199], TA_DAILY, 0, 200 );
    if( errNumber != TA_TEST_PASS )
    {
       printf( "Failed: Test getting first 200 price bars only.\n" );
+      return errNumber;
+   }
+
+   retCode = TA_HistoryFree( history );
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_HistoryFree", retCode );
+      return TA_YAHOO_HISTORYFREE_FAILED;
+   }
+
+   /* Do again the same test, but using Monthly data this time. */      
+   retCode = TA_HistoryAlloc( udb, "CA.TSE.STOCK", "NT",
+                              TA_MONTHLY, 0, 0, TA_ALL,
+                              &history );
+
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_HistoryAlloc for Monthly data", retCode );
+      return TA_YAHOO_HISTORYALLOC_3_FAILED;
+   }
+   
+   errNumber = checkRangeSame( udb, history, &history->timestamp[0], &history->timestamp[0], TA_MONTHLY, 0, 1 );
+   if( errNumber != TA_TEST_PASS )
+   {
+      printf( "Failed: Test getting first price bar only. (Monthly)\n" );
+      return errNumber;
+   }
+
+   errNumber = checkRangeSame( udb, history, &history->timestamp[1], &history->timestamp[1], TA_MONTHLY, 1, 1 );
+   if( errNumber != TA_TEST_PASS )
+   {
+      printf( "Failed: Test getting second price bar only. (Monthly)\n" );
+      return errNumber;
+   }
+
+   errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-2], &history->timestamp[history->nbBars-2], TA_MONTHLY, history->nbBars-2, 1 );
+   if( errNumber != TA_TEST_PASS )
+   {
+      printf( "Failed: Test getting before last price bar only. (Monthly)\n" );
+      return errNumber;
+   }
+   
+   errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-1], &history->timestamp[history->nbBars-1], TA_MONTHLY, history->nbBars-1, 1 );
+   if( errNumber != TA_TEST_PASS )
+   {
+      printf( "Failed: Test getting last price bar only. (Monthly)\n" );
       return errNumber;
    }
 
@@ -284,7 +332,8 @@ static ErrorNumber test_index( TA_UDBase *udb )
 static ErrorNumber checkRangeSame( TA_UDBase          *udb,
                                    const TA_History   *historyRef,
                                    const TA_Timestamp *start,
-                                   const TA_Timestamp *end,
+                                   const TA_Timestamp *end,      
+                                   TA_Period           period,                             
                                    unsigned int        startIdx,
                                    unsigned int        nbPriceBar )
 {
@@ -301,7 +350,7 @@ static ErrorNumber checkRangeSame( TA_UDBase          *udb,
    for( retry=0; (retry < 10) && again; retry++ )
    {
       retCode = TA_HistoryAlloc( udb, "CA.TSE.STOCK", "NT",
-                                 TA_DAILY, start, end, TA_ALL,
+                                 period, start, end, TA_ALL,
                                  &history );
 
       if( (retCode == TA_SUCCESS) && (history->nbBars == nbPriceBar) )
@@ -344,12 +393,20 @@ static ErrorNumber checkRangeSame( TA_UDBase          *udb,
           (history->volume[i] != historyRef->volume[startIdx+i]) )
       {
          printf( "Failed: Price Bar value different\n" );
-         printf( "Failed: Data = %f,%f,%f,%f,%d\n", history->open[i],
+         printf( "Failed: Data = %d/%d/%d : %f,%f,%f,%f,%d\n",
+                                             TA_GetMonth(&history->timestamp[i]),
+                                             TA_GetDay(&history->timestamp[i]),
+                                             TA_GetYear(&history->timestamp[i]),
+                                             history->open[i],
                                              history->high[i],         
                                              history->low[i],
                                              history->close[i],
                                              history->volume[i] );
-         printf( "Failed: Ref  = %f,%f,%f,%f,%d\n", historyRef->open[startIdx+i],
+         printf( "Failed: Ref  = %d/%d/%d : %f,%f,%f,%f,%d\n",
+                                             TA_GetMonth(&historyRef->timestamp[i]),
+                                             TA_GetDay(&historyRef->timestamp[i]),
+                                             TA_GetYear(&historyRef->timestamp[i]),
+                                             historyRef->open[startIdx+i],
                                              historyRef->high[startIdx+i],     
                                              historyRef->low[startIdx+i],
                                              historyRef->close[startIdx+i],
