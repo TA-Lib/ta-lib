@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  070101 MF   First version.
- *
+ *  062803 MF   Make TA_StreamAccessSearch case insensitive
  */
 
 /* Description:
@@ -865,7 +865,7 @@ TA_RetCode TA_StreamAccessSearch( TA_StreamAccess *source, const char *stringToF
       retCode = TA_StreamAccessGetByte( (TA_StreamAccess *)&movingPosition, &data );
       if( retCode != TA_SUCCESS )
          return retCode;
-      if( stringToFind[foundInString] == data )
+      if( toupper(stringToFind[foundInString]) == toupper(data) )
       {
          foundInString++;
       }         
