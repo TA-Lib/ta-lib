@@ -26,7 +26,7 @@
  * use the "NEXT AVAILABLE NUMBER" and increment the
  * number in this file.
  *
- * NEXT AVAILABLE NUMBER: 168
+ * NEXT AVAILABLE NUMBER: 169
  */
 #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR+Id)
 
@@ -88,7 +88,7 @@
 #ifdef TA_DEBUG
    #define TA_ASSERT_DEBUG(b){if(!(b)){TA_PrivError(2,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,1,1); TA_TRACE_RETURN(TA_FATAL_ERR);}}
 #else
-   #define TA_ASSERT_DEBUG(b)
+   #define TA_ASSERT_DEBUG(b) {(void)theFileNamePtr;(void)theFileDatePtr;(void)theFileTimePtr;}
 #endif
 
 /* Tracing allows to fulfill the following needs:
@@ -160,7 +160,7 @@
    #define TA_TRACE_RETURN(x) { return TA_PrivTraceReturn( theTraceFuncName, theFileNamePtr, __LINE__, x ); }
 #else
    #define TA_PROLOG
-   #define TA_TRACE_BEGIN(x)
+   #define TA_TRACE_BEGIN(x)  {(void)theFileNamePtr;(void)theFileDatePtr;(void)theFileTimePtr;}
    #define TA_TRACE_CHECKPOINT
    #define TA_TRACE_RETURN(x) {return x;}
 #endif
