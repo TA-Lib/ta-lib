@@ -38,6 +38,7 @@ typedef struct
 
 FileHandle *gOutFunc_H;        /* For "ta_func.h"  */
 FileHandle *gOutFrame_H;       /* For "ta_frame.h" */
+FileHandle *gOutFrame_C;       /* For "ta_frame.c" */
 FileHandle *gOutGroupIdx_C;    /* For "ta_group_idx.c" */
 FileHandle *gOutFunc_C;        /* For "ta_x.c" where 'x' is TA function name. */
 FileHandle *gOutRetCode_C;     /* For "ta_retcode.c" */
@@ -383,6 +384,17 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
+   /* Create the "ta_frame.c" */
+   gOutFrame_C = fileOpen( "..\\src\\ta_abstract\\frames\\ta_frame.c",
+                           "..\\src\\ta_abstract\\templates\\ta_frame.c.template",
+                           FILE_WRITE );
+
+   if( gOutFrame_C == NULL )
+   {
+      printf( "\nCannot access [%s]\n", gToOpen );
+      return -1;
+   }
+
    /* Create "excel_glue.c" */
    gOutExcelGlue_C = fileOpen( "..\\src\\ta_abstract\\excel_glue.c",
                            "..\\src\\ta_abstract\\templates\\excel_glue.c.template",
@@ -408,6 +420,7 @@ static int genCode(int argc, char* argv[])
    fileClose( gOutFuncList_TXT );
    fileClose( gOutFunc_H );
    fileClose( gOutFrame_H );
+   fileClose( gOutFrame_C );
    fileClose( gOutExcelGlue_C );
 
    if( retCode != TA_SUCCESS )
@@ -537,6 +550,9 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    fprintf( gOutFrame_H->file, ";\n\n" );
 
    fileClose( frameOut );
+
+   /* Append the frame for this function to the ta_frame.c file */
+   printCallFrame( gOutFrame_C->file, funcInfo );
 
    doFuncFile( funcInfo );
 }

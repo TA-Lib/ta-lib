@@ -1,10 +1,6 @@
 #! /usr/bin/perl
 
-# This file generates the "ta_abstract.pro" using the information
-# provided by the "func_list.txt"
-#
-# Reminder: ta_func.pro is then process by tmake for
-#           generating the multi-platform makefiles.
+# This file generates the "ta_abstract.pro"
 #
 # The output simply goes to stdout.
 
@@ -36,6 +32,7 @@ print "# Files to process\n";
 print "SOURCES	= ../../../../../src/ta_abstract/ta_abstract.c \\ \n";
 print "          ../../../../../src/ta_abstract/ta_def_ui.c \\ \n";
 print "          ../../../../../src/ta_abstract/ta_group_idx.c \\ \n";
+print "          ../../../../../src/ta_abstract/frames/ta_frame.c \\ \n";
 print "          ../../../../../src/ta_abstract/tables/table_a.c \\ \n";
 print "          ../../../../../src/ta_abstract/tables/table_b.c \\ \n";
 print "          ../../../../../src/ta_abstract/tables/table_c.c \\ \n";
@@ -64,16 +61,20 @@ print "          ../../../../../src/ta_abstract/tables/table_y.c \\ \n";
 print "          ../../../../../src/ta_abstract/tables/table_z.c";
 
 # Generate the list of functions.
-open FUNCLIST_TXT, "<../../../include/func_list.txt" or die "Can't open func_list.txt: $!";
-@funclist = <FUNCLIST_TXT>;
-foreach $z (@funclist) {
-   if( length($z) > 2 )
-   {
-      @words = split( / /, $z );
-      print " \\ \n";
-      print "          ../../../../../src/ta_abstract/frames/ta_",$words[0],"_frame.c";
-   }
-}
+
+# NOTE: This is not done anymore. Simply use "ta_frame.c" instead.
+#
+# open FUNCLIST_TXT, "<../../../include/func_list.txt" or die "Can't open func_list.txt: $!";
+# @funclist = <FUNCLIST_TXT>;
+# foreach $z (@funclist) {
+#   if( length($z) > 2 )
+#   {
+#      @words = split( / /, $z );
+#      print " \\ \n";
+#      print "          ../../../../../src/ta_abstract/frames/ta_",$words[0],"_frame.c";
+#   }
+# }
+
 print " \n";
 
 print "# Compiler Options\n";

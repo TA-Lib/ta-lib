@@ -11,7 +11,7 @@ CC	=	gcc
 CXX	=	g++
 CFLAGS	=	-pipe -Wall -W -O2 -DTA_SINGLE_THREAD -DNO_DEBUG
 CXXFLAGS=	-pipe -Wall -W -O2 -DTA_SINGLE_THREAD -DNO_DEBUG
-INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_data -I../../../../../src/ta_data/ta_source -I../../../../../src/ta_data/ta_source/ta_fileindex -I../../../../../src/ta_data/ta_source/ta_ascii -I../../../../../src/ta_data/ta_source/ta_readop -I../../../../../src/ta_data/ta_source/ta_yahoo -I../../../../../src/ta_data/ta_history -I../../../../../src/ta_data/ta_source/ta_simulator -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include -I../../../../../src/ta_common/bzip2 -I../../../../../src/ta_abstract -I../../../../../src/ta_abstract/tables -I../../../../../src/ta_abstract/frames -I/n -I../../../../../src/ta_pm -I$(QTDIR)/include
+INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_data -I../../../../../src/ta_data/ta_source -I../../../../../src/ta_data/ta_source/ta_fileindex -I../../../../../src/ta_data/ta_source/ta_ascii -I../../../../../src/ta_data/ta_source/ta_readop -I../../../../../src/ta_data/ta_source/ta_yahoo -I../../../../../src/ta_data/ta_history -I../../../../../src/ta_data/ta_source/ta_simulator -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include -I../../../../../src/ta_common/bzip2 -I../../../../../src/ta_abstract -I../../../../../src/ta_abstract/tables -I../../../../../src/ta_abstract/frames -I../../../../../src/ta_pm -I$(QTDIR)/include
 AR	=	ar cqs
 RANLIB	=	
 MOC	=	$(QTDIR)/bin/moc
@@ -83,6 +83,7 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_abstract/ta_abstract.c \
 		../../../../../src/ta_abstract/ta_def_ui.c \
 		../../../../../src/ta_abstract/ta_group_idx.c \
+		../../../../../src/ta_abstract/frames/ta_frame.c \
 		../../../../../src/ta_abstract/tables/table_a.c \
 		../../../../../src/ta_abstract/tables/table_b.c \
 		../../../../../src/ta_abstract/tables/table_c.c \
@@ -109,52 +110,6 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_abstract/tables/table_x.c \
 		../../../../../src/ta_abstract/tables/table_y.c \
 		../../../../../src/ta_abstract/tables/table_z.c \
-		../../../../../src/ta_abstract/frames/ta_MAX_frame.c \
-		../../../../../src/ta_abstract/frames/ta_MIN_frame.c \
-		../../../../../src/ta_abstract/frames/ta_BBANDS_frame.c \
-		../../../../../src/ta_abstract/frames/ta_DEMA_frame.c \
-		../../../../../src/ta_abstract/frames/ta_EMA_frame.c \
-		../../../../../src/ta_abstract/frames/ta_MA_frame.c \
-		../../../../../src/ta_abstract/frames/ta_MIDPRICE_frame.c \
-		../../../../../src/ta_abstract/frames/ta_MIDPOINT_frame.c \
-		../../../../../src/ta_abstract/frames/ta_SAR_frame.c \
-		../../../../../src/ta_abstract/frames/ta_SMA_frame.c \
-		../../../../../src/ta_abstract/frames/ta_TEMA_frame.c \
-		../../../../../src/ta_abstract/frames/ta_TRIMA_frame.c \
-		../../../../../src/ta_abstract/frames/ta_WMA_frame.c \
-		../../../../../src/ta_abstract/frames/ta_ATR_frame.c \
-		../../../../../src/ta_abstract/frames/ta_TRANGE_frame.c \
-		../../../../../src/ta_abstract/frames/ta_ADX_frame.c \
-		../../../../../src/ta_abstract/frames/ta_ADXR_frame.c \
-		../../../../../src/ta_abstract/frames/ta_APO_frame.c \
-		../../../../../src/ta_abstract/frames/ta_CCI_frame.c \
-		../../../../../src/ta_abstract/frames/ta_DX_frame.c \
-		../../../../../src/ta_abstract/frames/ta_MACD_frame.c \
-		../../../../../src/ta_abstract/frames/ta_MACDEXT_frame.c \
-		../../../../../src/ta_abstract/frames/ta_MACDFIX_frame.c \
-		../../../../../src/ta_abstract/frames/ta_MFI_frame.c \
-		../../../../../src/ta_abstract/frames/ta_MINUS_DI_frame.c \
-		../../../../../src/ta_abstract/frames/ta_MINUS_DM_frame.c \
-		../../../../../src/ta_abstract/frames/ta_MOM_frame.c \
-		../../../../../src/ta_abstract/frames/ta_PPO_frame.c \
-		../../../../../src/ta_abstract/frames/ta_PLUS_DI_frame.c \
-		../../../../../src/ta_abstract/frames/ta_PLUS_DM_frame.c \
-		../../../../../src/ta_abstract/frames/ta_ROC_frame.c \
-		../../../../../src/ta_abstract/frames/ta_ROCP_frame.c \
-		../../../../../src/ta_abstract/frames/ta_ROCR_frame.c \
-		../../../../../src/ta_abstract/frames/ta_ROCR100_frame.c \
-		../../../../../src/ta_abstract/frames/ta_RSI_frame.c \
-		../../../../../src/ta_abstract/frames/ta_STOCH_frame.c \
-		../../../../../src/ta_abstract/frames/ta_STOCHF_frame.c \
-		../../../../../src/ta_abstract/frames/ta_TRIX_frame.c \
-		../../../../../src/ta_abstract/frames/ta_WILLR_frame.c \
-		../../../../../src/ta_abstract/frames/ta_OBV_frame.c \
-		../../../../../src/ta_abstract/frames/ta_STDDEV_frame.c \
-		../../../../../src/ta_abstract/frames/ta_VAR_frame.c \
-		../../../../../src/ta_abstract/frames/ta_AVGPRICE_frame.c \
-		../../../../../src/ta_abstract/frames/ta_MEDPRICE_frame.c \
-		../../../../../src/ta_abstract/frames/ta_TYPPRICE_frame.c \
-		../../../../../src/ta_abstract/frames/ta_WCLPRICE_frame.c \
 		../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_MAX.c \
 		../../../../../src/ta_func/ta_MIN.c \
@@ -269,6 +224,7 @@ OBJECTS =	../../../../../temp/csr/ta_ascii.o \
 		../../../../../temp/csr/ta_abstract.o \
 		../../../../../temp/csr/ta_def_ui.o \
 		../../../../../temp/csr/ta_group_idx.o \
+		../../../../../temp/csr/ta_frame.o \
 		../../../../../temp/csr/table_a.o \
 		../../../../../temp/csr/table_b.o \
 		../../../../../temp/csr/table_c.o \
@@ -295,52 +251,6 @@ OBJECTS =	../../../../../temp/csr/ta_ascii.o \
 		../../../../../temp/csr/table_x.o \
 		../../../../../temp/csr/table_y.o \
 		../../../../../temp/csr/table_z.o \
-		../../../../../temp/csr/ta_MAX_frame.o \
-		../../../../../temp/csr/ta_MIN_frame.o \
-		../../../../../temp/csr/ta_BBANDS_frame.o \
-		../../../../../temp/csr/ta_DEMA_frame.o \
-		../../../../../temp/csr/ta_EMA_frame.o \
-		../../../../../temp/csr/ta_MA_frame.o \
-		../../../../../temp/csr/ta_MIDPRICE_frame.o \
-		../../../../../temp/csr/ta_MIDPOINT_frame.o \
-		../../../../../temp/csr/ta_SAR_frame.o \
-		../../../../../temp/csr/ta_SMA_frame.o \
-		../../../../../temp/csr/ta_TEMA_frame.o \
-		../../../../../temp/csr/ta_TRIMA_frame.o \
-		../../../../../temp/csr/ta_WMA_frame.o \
-		../../../../../temp/csr/ta_ATR_frame.o \
-		../../../../../temp/csr/ta_TRANGE_frame.o \
-		../../../../../temp/csr/ta_ADX_frame.o \
-		../../../../../temp/csr/ta_ADXR_frame.o \
-		../../../../../temp/csr/ta_APO_frame.o \
-		../../../../../temp/csr/ta_CCI_frame.o \
-		../../../../../temp/csr/ta_DX_frame.o \
-		../../../../../temp/csr/ta_MACD_frame.o \
-		../../../../../temp/csr/ta_MACDEXT_frame.o \
-		../../../../../temp/csr/ta_MACDFIX_frame.o \
-		../../../../../temp/csr/ta_MFI_frame.o \
-		../../../../../temp/csr/ta_MINUS_DI_frame.o \
-		../../../../../temp/csr/ta_MINUS_DM_frame.o \
-		../../../../../temp/csr/ta_MOM_frame.o \
-		../../../../../temp/csr/ta_PPO_frame.o \
-		../../../../../temp/csr/ta_PLUS_DI_frame.o \
-		../../../../../temp/csr/ta_PLUS_DM_frame.o \
-		../../../../../temp/csr/ta_ROC_frame.o \
-		../../../../../temp/csr/ta_ROCP_frame.o \
-		../../../../../temp/csr/ta_ROCR_frame.o \
-		../../../../../temp/csr/ta_ROCR100_frame.o \
-		../../../../../temp/csr/ta_RSI_frame.o \
-		../../../../../temp/csr/ta_STOCH_frame.o \
-		../../../../../temp/csr/ta_STOCHF_frame.o \
-		../../../../../temp/csr/ta_TRIX_frame.o \
-		../../../../../temp/csr/ta_WILLR_frame.o \
-		../../../../../temp/csr/ta_OBV_frame.o \
-		../../../../../temp/csr/ta_STDDEV_frame.o \
-		../../../../../temp/csr/ta_VAR_frame.o \
-		../../../../../temp/csr/ta_AVGPRICE_frame.o \
-		../../../../../temp/csr/ta_MEDPRICE_frame.o \
-		../../../../../temp/csr/ta_TYPPRICE_frame.o \
-		../../../../../temp/csr/ta_WCLPRICE_frame.o \
 		../../../../../temp/csr/ta_utility.o \
 		../../../../../temp/csr/ta_MAX.o \
 		../../../../../temp/csr/ta_MIN.o \
@@ -628,6 +538,9 @@ clean:
 ../../../../../temp/csr/ta_group_idx.o: ../../../../../src/ta_abstract/ta_group_idx.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_group_idx.o ../../../../../src/ta_abstract/ta_group_idx.c
 
+../../../../../temp/csr/ta_frame.o: ../../../../../src/ta_abstract/frames/ta_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_frame.o ../../../../../src/ta_abstract/frames/ta_frame.c
+
 ../../../../../temp/csr/table_a.o: ../../../../../src/ta_abstract/tables/table_a.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/table_a.o ../../../../../src/ta_abstract/tables/table_a.c
 
@@ -705,144 +618,6 @@ clean:
 
 ../../../../../temp/csr/table_z.o: ../../../../../src/ta_abstract/tables/table_z.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/table_z.o ../../../../../src/ta_abstract/tables/table_z.c
-
-../../../../../temp/csr/ta_MAX_frame.o: ../../../../../src/ta_abstract/frames/ta_MAX_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MAX_frame.o ../../../../../src/ta_abstract/frames/ta_MAX_frame.c
-
-../../../../../temp/csr/ta_MIN_frame.o: ../../../../../src/ta_abstract/frames/ta_MIN_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MIN_frame.o ../../../../../src/ta_abstract/frames/ta_MIN_frame.c
-
-../../../../../temp/csr/ta_BBANDS_frame.o: ../../../../../src/ta_abstract/frames/ta_BBANDS_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_BBANDS_frame.o ../../../../../src/ta_abstract/frames/ta_BBANDS_frame.c
-
-../../../../../temp/csr/ta_DEMA_frame.o: ../../../../../src/ta_abstract/frames/ta_DEMA_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_DEMA_frame.o ../../../../../src/ta_abstract/frames/ta_DEMA_frame.c
-
-../../../../../temp/csr/ta_EMA_frame.o: ../../../../../src/ta_abstract/frames/ta_EMA_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_EMA_frame.o ../../../../../src/ta_abstract/frames/ta_EMA_frame.c
-
-../../../../../temp/csr/ta_MA_frame.o: ../../../../../src/ta_abstract/frames/ta_MA_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MA_frame.o ../../../../../src/ta_abstract/frames/ta_MA_frame.c
-
-../../../../../temp/csr/ta_MIDPRICE_frame.o: ../../../../../src/ta_abstract/frames/ta_MIDPRICE_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MIDPRICE_frame.o ../../../../../src/ta_abstract/frames/ta_MIDPRICE_frame.c
-
-../../../../../temp/csr/ta_MIDPOINT_frame.o: ../../../../../src/ta_abstract/frames/ta_MIDPOINT_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MIDPOINT_frame.o ../../../../../src/ta_abstract/frames/ta_MIDPOINT_frame.c
-
-../../../../../temp/csr/ta_SAR_frame.o: ../../../../../src/ta_abstract/frames/ta_SAR_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_SAR_frame.o ../../../../../src/ta_abstract/frames/ta_SAR_frame.c
-
-../../../../../temp/csr/ta_SMA_frame.o: ../../../../../src/ta_abstract/frames/ta_SMA_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_SMA_frame.o ../../../../../src/ta_abstract/frames/ta_SMA_frame.c
-
-../../../../../temp/csr/ta_TEMA_frame.o: ../../../../../src/ta_abstract/frames/ta_TEMA_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_TEMA_frame.o ../../../../../src/ta_abstract/frames/ta_TEMA_frame.c
-
-../../../../../temp/csr/ta_TRIMA_frame.o: ../../../../../src/ta_abstract/frames/ta_TRIMA_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_TRIMA_frame.o ../../../../../src/ta_abstract/frames/ta_TRIMA_frame.c
-
-../../../../../temp/csr/ta_WMA_frame.o: ../../../../../src/ta_abstract/frames/ta_WMA_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_WMA_frame.o ../../../../../src/ta_abstract/frames/ta_WMA_frame.c
-
-../../../../../temp/csr/ta_ATR_frame.o: ../../../../../src/ta_abstract/frames/ta_ATR_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_ATR_frame.o ../../../../../src/ta_abstract/frames/ta_ATR_frame.c
-
-../../../../../temp/csr/ta_TRANGE_frame.o: ../../../../../src/ta_abstract/frames/ta_TRANGE_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_TRANGE_frame.o ../../../../../src/ta_abstract/frames/ta_TRANGE_frame.c
-
-../../../../../temp/csr/ta_ADX_frame.o: ../../../../../src/ta_abstract/frames/ta_ADX_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_ADX_frame.o ../../../../../src/ta_abstract/frames/ta_ADX_frame.c
-
-../../../../../temp/csr/ta_ADXR_frame.o: ../../../../../src/ta_abstract/frames/ta_ADXR_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_ADXR_frame.o ../../../../../src/ta_abstract/frames/ta_ADXR_frame.c
-
-../../../../../temp/csr/ta_APO_frame.o: ../../../../../src/ta_abstract/frames/ta_APO_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_APO_frame.o ../../../../../src/ta_abstract/frames/ta_APO_frame.c
-
-../../../../../temp/csr/ta_CCI_frame.o: ../../../../../src/ta_abstract/frames/ta_CCI_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_CCI_frame.o ../../../../../src/ta_abstract/frames/ta_CCI_frame.c
-
-../../../../../temp/csr/ta_DX_frame.o: ../../../../../src/ta_abstract/frames/ta_DX_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_DX_frame.o ../../../../../src/ta_abstract/frames/ta_DX_frame.c
-
-../../../../../temp/csr/ta_MACD_frame.o: ../../../../../src/ta_abstract/frames/ta_MACD_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MACD_frame.o ../../../../../src/ta_abstract/frames/ta_MACD_frame.c
-
-../../../../../temp/csr/ta_MACDEXT_frame.o: ../../../../../src/ta_abstract/frames/ta_MACDEXT_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MACDEXT_frame.o ../../../../../src/ta_abstract/frames/ta_MACDEXT_frame.c
-
-../../../../../temp/csr/ta_MACDFIX_frame.o: ../../../../../src/ta_abstract/frames/ta_MACDFIX_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MACDFIX_frame.o ../../../../../src/ta_abstract/frames/ta_MACDFIX_frame.c
-
-../../../../../temp/csr/ta_MFI_frame.o: ../../../../../src/ta_abstract/frames/ta_MFI_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MFI_frame.o ../../../../../src/ta_abstract/frames/ta_MFI_frame.c
-
-../../../../../temp/csr/ta_MINUS_DI_frame.o: ../../../../../src/ta_abstract/frames/ta_MINUS_DI_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MINUS_DI_frame.o ../../../../../src/ta_abstract/frames/ta_MINUS_DI_frame.c
-
-../../../../../temp/csr/ta_MINUS_DM_frame.o: ../../../../../src/ta_abstract/frames/ta_MINUS_DM_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MINUS_DM_frame.o ../../../../../src/ta_abstract/frames/ta_MINUS_DM_frame.c
-
-../../../../../temp/csr/ta_MOM_frame.o: ../../../../../src/ta_abstract/frames/ta_MOM_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MOM_frame.o ../../../../../src/ta_abstract/frames/ta_MOM_frame.c
-
-../../../../../temp/csr/ta_PPO_frame.o: ../../../../../src/ta_abstract/frames/ta_PPO_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_PPO_frame.o ../../../../../src/ta_abstract/frames/ta_PPO_frame.c
-
-../../../../../temp/csr/ta_PLUS_DI_frame.o: ../../../../../src/ta_abstract/frames/ta_PLUS_DI_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_PLUS_DI_frame.o ../../../../../src/ta_abstract/frames/ta_PLUS_DI_frame.c
-
-../../../../../temp/csr/ta_PLUS_DM_frame.o: ../../../../../src/ta_abstract/frames/ta_PLUS_DM_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_PLUS_DM_frame.o ../../../../../src/ta_abstract/frames/ta_PLUS_DM_frame.c
-
-../../../../../temp/csr/ta_ROC_frame.o: ../../../../../src/ta_abstract/frames/ta_ROC_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_ROC_frame.o ../../../../../src/ta_abstract/frames/ta_ROC_frame.c
-
-../../../../../temp/csr/ta_ROCP_frame.o: ../../../../../src/ta_abstract/frames/ta_ROCP_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_ROCP_frame.o ../../../../../src/ta_abstract/frames/ta_ROCP_frame.c
-
-../../../../../temp/csr/ta_ROCR_frame.o: ../../../../../src/ta_abstract/frames/ta_ROCR_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_ROCR_frame.o ../../../../../src/ta_abstract/frames/ta_ROCR_frame.c
-
-../../../../../temp/csr/ta_ROCR100_frame.o: ../../../../../src/ta_abstract/frames/ta_ROCR100_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_ROCR100_frame.o ../../../../../src/ta_abstract/frames/ta_ROCR100_frame.c
-
-../../../../../temp/csr/ta_RSI_frame.o: ../../../../../src/ta_abstract/frames/ta_RSI_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_RSI_frame.o ../../../../../src/ta_abstract/frames/ta_RSI_frame.c
-
-../../../../../temp/csr/ta_STOCH_frame.o: ../../../../../src/ta_abstract/frames/ta_STOCH_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_STOCH_frame.o ../../../../../src/ta_abstract/frames/ta_STOCH_frame.c
-
-../../../../../temp/csr/ta_STOCHF_frame.o: ../../../../../src/ta_abstract/frames/ta_STOCHF_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_STOCHF_frame.o ../../../../../src/ta_abstract/frames/ta_STOCHF_frame.c
-
-../../../../../temp/csr/ta_TRIX_frame.o: ../../../../../src/ta_abstract/frames/ta_TRIX_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_TRIX_frame.o ../../../../../src/ta_abstract/frames/ta_TRIX_frame.c
-
-../../../../../temp/csr/ta_WILLR_frame.o: ../../../../../src/ta_abstract/frames/ta_WILLR_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_WILLR_frame.o ../../../../../src/ta_abstract/frames/ta_WILLR_frame.c
-
-../../../../../temp/csr/ta_OBV_frame.o: ../../../../../src/ta_abstract/frames/ta_OBV_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_OBV_frame.o ../../../../../src/ta_abstract/frames/ta_OBV_frame.c
-
-../../../../../temp/csr/ta_STDDEV_frame.o: ../../../../../src/ta_abstract/frames/ta_STDDEV_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_STDDEV_frame.o ../../../../../src/ta_abstract/frames/ta_STDDEV_frame.c
-
-../../../../../temp/csr/ta_VAR_frame.o: ../../../../../src/ta_abstract/frames/ta_VAR_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_VAR_frame.o ../../../../../src/ta_abstract/frames/ta_VAR_frame.c
-
-../../../../../temp/csr/ta_AVGPRICE_frame.o: ../../../../../src/ta_abstract/frames/ta_AVGPRICE_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_AVGPRICE_frame.o ../../../../../src/ta_abstract/frames/ta_AVGPRICE_frame.c
-
-../../../../../temp/csr/ta_MEDPRICE_frame.o: ../../../../../src/ta_abstract/frames/ta_MEDPRICE_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MEDPRICE_frame.o ../../../../../src/ta_abstract/frames/ta_MEDPRICE_frame.c
-
-../../../../../temp/csr/ta_TYPPRICE_frame.o: ../../../../../src/ta_abstract/frames/ta_TYPPRICE_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_TYPPRICE_frame.o ../../../../../src/ta_abstract/frames/ta_TYPPRICE_frame.c
-
-../../../../../temp/csr/ta_WCLPRICE_frame.o: ../../../../../src/ta_abstract/frames/ta_WCLPRICE_frame.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_WCLPRICE_frame.o ../../../../../src/ta_abstract/frames/ta_WCLPRICE_frame.c
 
 ../../../../../temp/csr/ta_utility.o: ../../../../../src/ta_func/ta_utility.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_utility.o ../../../../../src/ta_func/ta_utility.c
