@@ -36,14 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  ML       Matt Lindblom
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  110199 MF   First version.
- *
+ *  061503 ML   Fix#731857 to stringAllocNInternal (bad memory access).
  */
 
 /* Description:
@@ -52,8 +52,8 @@
  *    The implementation is done for assuring both speed/memory efficiency
  *    in the context of the TA-LIB.
  *
- *    In particular, the TA-LIB is sometime using a large amount of repeting
- *    small string when building the symbol index (like a constantly recuring
+ *    In particular, the TA-LIB is sometime using a large amount of repeating
+ *    small strings when building the symbol index (like a constantly recurring
  *    wildcard value in the middle of a path). For this reason, a small cache
  *    allows to re-use recently allocated strings (hash table contains a copy
  *    of the last 256 allocated strings).
@@ -535,8 +535,8 @@ TA_String *stringAllocNInternal( TA_StringCache *stringCache,
    if( hashEntry && ((unsigned char)hashEntry[0] < 255) )
    {
       /* Check that this is the same string, same size. */
-      if( (hashEntry[newStringLength+1] == '\0') && 
-          (!strncmp( string, &hashEntry[1], newStringLength)) )
+      if( (!strncmp( string, &hashEntry[1], newStringLength)) &&
+          (hashEntry[newStringLength+1] == '\0') )
       {
          tmp = stringDupInternal( (TA_String *)hashEntry );
          #if !defined( TA_SINGLE_THREAD )
