@@ -60,6 +60,9 @@ typedef struct
    /* Contains MySQL Connection object */
    Connection *con;
 
+   /* database name (from location) */
+   TA_String *database;
+
 } TA_PrivateMySQLHandle;
 
 /* Alloc/Free for the TA_DataSourceHandle.

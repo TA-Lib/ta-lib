@@ -193,35 +193,56 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
          // Query::store() executes the query and returns the results
 
          // find the category column number, if present
-         for (unsigned int col = 0; col < res.columns(); col++) 
+         for (unsigned int cat_col = 0; cat_col < res.columns(); cat_col++) 
          { 
-            if( strcmp(res.names(col).c_str(), "category") == 0 )
+            if( strcmp(res.names(cat_col).c_str(), "category") == 0 )
                break;
          } 
-         if( col == res.columns() )
+         if( cat_col == res.columns() )
          {
             throw BadQuery("Column 'category' not found");
          }
+
+         // find the symbol column number, if present
+         for (unsigned int sym_col = 0; sym_col < res.columns(); sym_col++) 
+         { 
+            if( strcmp(res.names(sym_col).c_str(), "symbol") == 0 )
+               break;
+         } 
          
          Row row;
          Result::iterator i;
          // The Result class has a read-only Random Access Iterator
          for (i = res.begin(); i != res.end(); i++) {
   	        row = *i;
-            TA_String *cat_name = TA_StringAlloc( stringCache, row[col] );
+            TA_String *cat_name = TA_StringAlloc( stringCache, row[cat_col] );
+            TA_String *sym_name = NULL;
 
             if( !cat_name )
             {
                TA_TRACE_RETURN( TA_ALLOC_ERR );
             }
 
-            if( strcmp(TA_StringToChar(cat_name), "") != 0)  // ignore NULL fields
+            if( sym_col < res.columns() )
+            {
+               sym_name = TA_StringAlloc( stringCache, row[sym_col] );
+
+               if( !sym_name )
+               {
+                  TA_StringFree(stringCache, cat_name);
+                  TA_TRACE_RETURN( TA_ALLOC_ERR );
+               }
+            }
+
+            if( strcmp(TA_StringToChar(cat_name), "") != 0 )  // ignore NULL fields
             {
                retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
                                                    cat_name,
-                                                   NULL);
+                                                   sym_name);
             }
             TA_StringFree(stringCache, cat_name);
+            if( sym_name )
+               TA_StringFree(stringCache, sym_name);
 
             if( retCode != TA_SUCCESS )
             {
@@ -238,9 +259,10 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    else
    {
       /* Create one category, taking the category sting literally */
+      // TODO: support SQL query here
       retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
                                           privateHandle->param->category,
-                                          NULL);
+                                          privateHandle->param->symbol);
    }
    
    TA_TRACE_RETURN( retCode );
@@ -284,6 +306,11 @@ static TA_RetCode freePrivateHandle( TA_PrivateMySQLHandle *privateHandle )
       {
          retCode = TA_INTERNAL_ERR;
          privateHandle->con = NULL;
+      }
+
+      if( privateHandle->database )
+      {
+         TA_StringFree( TA_GetGlobalStringCache(), privateHandle->database );
       }
 
       TA_Free( privateHandle );
@@ -377,7 +404,31 @@ static TA_RetCode registerCategoryAndSymbol( TA_List *categoryIndex,
    /* Register symbol, if not yet registered */
    if( symbol )
    {
-      // NOT IMPLEMENTED
+      /* Find out if the symbol is already registered */
+      TA_String *known_symbol = (TA_String*)TA_ListAccessHead(categoryNode->theSymbols);
+      while ( known_symbol 
+           && strcmp(TA_StringToChar(known_symbol), TA_StringToChar(symbol)) != 0)
+      {
+         known_symbol = (TA_String*)TA_ListAccessNext(categoryNode->theSymbols);
+      }
+
+      if( !known_symbol )
+      {
+         /* New symbol, add it to the list */
+         if( !categoryNode->theSymbols )
+         {
+            categoryNode->theSymbols = TA_ListAlloc();
+            if( !categoryNode->theSymbols )
+               return TA_ALLOC_ERR;
+         }
+
+         retCode = TA_ListAddTail( categoryNode->theSymbols, 
+                                   TA_StringDup(TA_GetGlobalStringCache(), symbol) );
+         if( retCode != TA_SUCCESS )
+         {
+            return retCode;
+         }
+      }
    }
 
    return TA_SUCCESS;
