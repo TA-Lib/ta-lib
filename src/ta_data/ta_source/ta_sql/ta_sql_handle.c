@@ -37,7 +37,6 @@
  *  -------------------------------------------------------------------
  *  PK       Pawel Konieczny
  *
- *
  * Change history:
  *
  *  MMDDYY BY   Description
@@ -163,7 +162,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    TA_ASSERT( privateHandle->param->category != NULL );
    TA_ASSERT( privateHandle->param->location != NULL );
    TA_ASSERT( privateHandle->connection != NULL );
-   TA_ASSERT( TA_gSQLMinidriverTable[privateHandle->minidriver].executeQuery != NULL );
+   TA_ASSERT( privateHandle->minidriver->executeQuery != NULL );
 
    /* De-allocate potentialy already existing category index. */
    if( privateHandle->theCategoryIndex != NULL )
@@ -192,7 +191,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
       int catCol, symCol;
       int rowNum,
 
-      retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].executeQuery)(
+      retCode = (*privateHandle->minidriver->executeQuery)(
                   privateHandle->connection,
                   TA_StringToChar(privateHandle->param->category),
                   &queryResult);
@@ -206,12 +205,12 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
 #define RETURN_ON_ERROR( rc )              \
          if( rc != TA_SUCCESS )           \
          {                                \
-            (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult); \
+            (*privateHandle->minidriver->releaseQuery)(queryResult); \
             TA_TRACE_RETURN( rc );        \
          }
 
       /* find the category column number, if present */
-      retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getNumColumns)(
+      retCode = (*privateHandle->minidriver->getNumColumns)(
                      queryResult,
                      &resColumns );
       RETURN_ON_ERROR( retCode );
@@ -219,7 +218,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
       for ( catCol = 0; catCol < resColumns; catCol++) 
       { 
          const char *name;
-         retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getColumnName)(
+         retCode = (*privateHandle->minidriver->getColumnName)(
                               queryResult,
                               catCol,
                               &name );
@@ -236,7 +235,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
       for ( symCol = 0; symCol < resColumns; symCol++) 
       { 
          const char *name;
-         retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getColumnName)(
+         retCode = (*privateHandle->minidriver->getColumnName)(
                               queryResult,
                               symCol,
                               &name );
@@ -248,7 +247,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
       /* iterate through all rows */
       for( rowNum = 0;  
            (retCode = 
-               (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
+               (*privateHandle->minidriver->getRowString)(
                                  queryResult,
                                  rowNum, 
                                  catCol,
@@ -277,7 +276,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
 
          if( symCol < resColumns )  /* we can collect symbols as well */
          {
-            retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
+            retCode = (*privateHandle->minidriver->getRowString)(
                                  queryResult,
                                  rowNum, 
                                  symCol,
@@ -376,10 +375,10 @@ static TA_RetCode freePrivateHandle( TA_PrivateSQLHandle *privateHandle )
 
       if( privateHandle->connection )
       {
-         if( TA_gSQLMinidriverTable[privateHandle->minidriver].closeConnection )
+         if( privateHandle->minidriver->closeConnection )
          {
             TA_RetCode retCode2 = 
-               (*TA_gSQLMinidriverTable[privateHandle->minidriver].closeConnection)( privateHandle->connection );
+               (*privateHandle->minidriver->closeConnection)( privateHandle->connection );
             if( retCode2 != TA_SUCCESS )
             {
                retCode = retCode2;
@@ -570,7 +569,7 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
 
-      retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].executeQuery)(
+      retCode = (*privateHandle->minidriver->executeQuery)(
                   privateHandle->connection,
                   symQuery,
                   &queryResult);
@@ -583,13 +582,13 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
 #define RETURN_ON_ERROR( rc )              \
          if( rc != TA_SUCCESS )           \
          {                                \
-            (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult); \
+            (*privateHandle->minidriver->releaseQuery)(queryResult); \
             TA_TRACE_RETURN( rc );        \
          }
 
 
       /* find the symbol column number, if present */
-      retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getNumColumns)(
+      retCode = (*privateHandle->minidriver->getNumColumns)(
                      queryResult,
                      &resColumns );
       RETURN_ON_ERROR( retCode );
@@ -598,7 +597,7 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
       { 
          const char *name = NULL;
 
-         retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getColumnName)(
+         retCode = (*privateHandle->minidriver->getColumnName)(
                               queryResult,
                               symCol,
                               &name );
@@ -617,7 +616,7 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
       /* iterate through all rows */
       for( rowNum = 0;  
            (retCode = 
-               (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
+               (*privateHandle->minidriver->getRowString)(
                               queryResult,
                               rowNum, 
                               symCol,

@@ -70,6 +70,10 @@
 #include "ta_sql_handle.h"
 #include "ta_sql_local.h"
 
+#if defined( WIN32 )
+   #include "ta_sql_odbc.h"
+#endif
+
 /**** External functions declarations. ****/
 /* None */
 
@@ -110,9 +114,16 @@ TA_RetCode TA_SQL_InitializeSourceDriver( void )
 
    TA_TRACE_BEGIN(  TA_SQL_InitializeSourceDriver );
 
-#if !defined( TA_SINGLE_THREAD )
-   retCode = TA_SemaInit( &mod_sema, 1);
-#endif
+   #if !defined( TA_SINGLE_THREAD )
+      retCode = TA_SemaInit( &mod_sema, 1);
+      if( retCode != TA_SUCCESS )
+         TA_TRACE_RETURN( retCode );
+   #endif
+
+   #if defined( WIN32 )
+      /* ODBC driver is always enabled on WIN32 platform */
+      retCode = TA_SQL_ODBC_Initialize();
+   #endif
 
    TA_TRACE_RETURN( retCode );
 }
@@ -214,13 +225,13 @@ TA_RetCode TA_SQL_OpenSource( const TA_AddDataSourceParamPriv *param,
    privData = (TA_PrivateSQLHandle *)(tmpHandle->opaqueData);
 
    /* Determine the minidriver to use */
-   privData->minidriver = TA_SQL_IdentifyMinidriver( scheme );
+   privData->minidriver = TA_SQL_GetMinidriver( scheme );
 
    /* Establish the connection with the SQL server */
-   if(  privData->minidriver < TA_SQL_NUM_OF_MINIDRIVERS 
-     && TA_gSQLMinidriverTable[privData->minidriver].openConnection )
+   if(  privData->minidriver 
+     && privData->minidriver->openConnection )
    {
-      retCode = (*TA_gSQLMinidriverTable[privData->minidriver].openConnection)(
+      retCode = (*privData->minidriver->openConnection)(
          dbase, 
          host, 
          TA_StringToChar(param->username), 
@@ -636,7 +647,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    TA_TRACE_BEGIN( executeDataQuery );
 
    /* Now the SQL query */
-   retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].executeQuery)(
+   retCode = (*privateHandle->minidriver->executeQuery)(
                privateHandle->connection,
                queryStr,
                &queryResult);
@@ -659,12 +670,12 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    /* find recognized columns */
    dateCol = timeCol = openCol = highCol = lowCol = closeCol = volumeCol = oiCol = -1;
 
-   retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getNumColumns)(
+   retCode = (*privateHandle->minidriver->getNumColumns)(
                   queryResult,
                   &resColumns );
    RETURN_ON_ERROR( retCode );
 
-   retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getNumRows)(
+   retCode = (*privateHandle->minidriver->getNumRows)(
                   queryResult,
                   &resRows );
    if( retCode != TA_SUCCESS || resRows <= 0 )
@@ -679,7 +690,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    for( colNum = 0; colNum < resColumns; colNum++ ) 
    { 
       const char *name;
-      retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getColumnName)(
+      retCode = (*privateHandle->minidriver->getColumnName)(
                            queryResult,
                            colNum,
                            &name );
@@ -726,7 +737,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    if( timeRequired && timeCol < 0 )
    {
       /* we cannot deliver data for the requested period, thus exit gracefully */
-      retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult);
+      retCode = (*privateHandle->minidriver->releaseQuery)(queryResult);
       TA_TRACE_RETURN( retCode );
    }
    if(  dateCol < 0
@@ -738,14 +749,14 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
      || (fieldToAlloc & TA_OPENINTEREST && oiCol < 0) )
    {
       /* required column not found, so cannot deliver data */
-      retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult);
+      retCode = (*privateHandle->minidriver->releaseQuery)(queryResult);
       TA_TRACE_RETURN( retCode );
    }
       
    /* iterate through the result set */
    for( rowNum = 0, barNum = 0;  
         (retCode = 
-            (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
+            (*privateHandle->minidriver->getRowString)(
                               queryResult,
                               rowNum, 
                               dateCol,
@@ -795,7 +806,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
       if (timeCol >= 0)
       {
          strval = NULL;
-         retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
+         retCode = (*privateHandle->minidriver->getRowString)(
                               queryResult,
                               rowNum, 
                               timeCol,
@@ -819,7 +830,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
       #define TA_SQL_STORE_VALUE( type, getRow, vec, col, flag )                    \
          if (vec)                                                                   \
          {                                                                          \
-            retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRow )( \
+            retCode = (*privateHandle->minidriver->getRow )( \
                                  queryResult,                                       \
                                  rowNum,                                            \
                                  col,                                               \
@@ -902,7 +913,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
 executeDataQuery_cleanup:
 
    /* retCode is set to the exit reason, so do not overwrite it here */
-   (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult);
+   (*privateHandle->minidriver->releaseQuery)(queryResult);
 
    if ( timestampVec ) TA_Free( timestampVec );
    if ( openVec      ) TA_Free( openVec      );

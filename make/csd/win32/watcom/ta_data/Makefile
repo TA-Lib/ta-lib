@@ -44,7 +44,6 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c &
 		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_handle.c &
 		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_local.c &
 		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c &
-		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c &
 		..\..\..\..\..\src\ta_data\ta_token.c &
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo.c &
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_handle.c &
@@ -53,7 +52,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c &
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_idx.c &
 		..\..\..\..\..\src\tools\gen_data\ta_daily_ref_0.c &
 		..\..\..\..\..\src\tools\gen_data\ta_intra_ref_0.c &
-		..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c
+		..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c &
+		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj &
 		..\..\..\..\..\temp\csd\ta_ascii_handle.obj &
 		..\..\..\..\..\temp\csd\ta_build_index.obj &
@@ -78,7 +78,6 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj &
 		..\..\..\..\..\temp\csd\ta_sql_handle.obj &
 		..\..\..\..\..\temp\csd\ta_sql_local.obj &
 		..\..\..\..\..\temp\csd\ta_sql_minidriver.obj &
-		..\..\..\..\..\temp\csd\ta_sql_odbc.obj &
 		..\..\..\..\..\temp\csd\ta_token.obj &
 		..\..\..\..\..\temp\csd\ta_yahoo.obj &
 		..\..\..\..\..\temp\csd\ta_yahoo_handle.obj &
@@ -87,7 +86,8 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj &
 		..\..\..\..\..\temp\csd\ta_yahoo_idx.obj &
 		..\..\..\..\..\temp\csd\ta_daily_ref_0.obj &
 		..\..\..\..\..\temp\csd\ta_intra_ref_0.obj &
-		..\..\..\..\..\temp\csd\ta_mrg_0.obj
+		..\..\..\..\..\temp\csd\ta_mrg_0.obj &
+		..\..\..\..\..\temp\csd\ta_sql_odbc.obj
 SRCMOC	=	
 OBJMOC	=	
 DIST	=	
@@ -139,7 +139,6 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_sql_handle.obj
 	-del ..\..\..\..\..\temp\csd\ta_sql_local.obj
 	-del ..\..\..\..\..\temp\csd\ta_sql_minidriver.obj
-	-del ..\..\..\..\..\temp\csd\ta_sql_odbc.obj
 	-del ..\..\..\..\..\temp\csd\ta_token.obj
 	-del ..\..\..\..\..\temp\csd\ta_yahoo.obj
 	-del ..\..\..\..\..\temp\csd\ta_yahoo_handle.obj
@@ -149,6 +148,7 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_daily_ref_0.obj
 	-del ..\..\..\..\..\temp\csd\ta_intra_ref_0.obj
 	-del ..\..\..\..\..\temp\csd\ta_mrg_0.obj
+	-del ..\..\..\..\..\temp\csd\ta_sql_odbc.obj
 	-del $(TARGET)
 	-del ../../../../../bin/*.map
 	-del ../../../../../bin/*._xe
@@ -237,9 +237,6 @@ clean:
 ..\..\..\..\..\temp\csd\ta_sql_minidriver.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_sql_minidriver.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c
 
-..\..\..\..\..\temp\csd\ta_sql_odbc.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_sql_odbc.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
-
 ..\..\..\..\..\temp\csd\ta_token.obj: ..\..\..\..\..\src\ta_data\ta_token.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_token.obj ..\..\..\..\..\src\ta_data\ta_token.c
 
@@ -266,4 +263,7 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_mrg_0.obj: ..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_mrg_0.obj ..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c
+
+..\..\..\..\..\temp\csd\ta_sql_odbc.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_sql_odbc.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 

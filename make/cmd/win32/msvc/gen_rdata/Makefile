@@ -14,7 +14,7 @@ CXXFLAGS=	-nologo -W3 -MDd -DTA_DEBUG -D_DEBUG -DWIN32 -D_MBCS -D_LIB -DQT_THREA
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data"
 LINK	=	link
 LFLAGS	=	/NOLOGO /DEBUG /SUBSYSTEM:console
-LIBS	=	..\..\..\..\..\lib\ta_data_cmd.lib ..\..\..\..\..\lib\ta_common_cmd.lib wininet.lib
+LIBS	=	..\..\..\..\..\lib\ta_data_cmd.lib ..\..\..\..\..\lib\ta_common_cmd.lib wininet.lib odbc32.lib odbccp32.lib
 MOC	=	moc
 UIC	=	uic
 

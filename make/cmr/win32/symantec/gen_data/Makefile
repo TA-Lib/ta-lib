@@ -14,7 +14,7 @@ CXXFLAGS=	-mn -w2 -o -DWIN32
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\include"
 LINK	=	link
 LFLAGS	=	/NOLOGO /NOI /SUBSYSTEM:console
-LIBS	=	..\..\..\..\..\lib\ta_libc_cmr.lib wininet.lib
+LIBS	=	..\..\..\..\..\lib\ta_libc_cmr.lib wininet.lib odbc32.lib
 MOC	=	moc
 
 ZIP	=	zip -r -9

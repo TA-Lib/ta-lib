@@ -14,7 +14,7 @@ CXXFLAGS=	-mn -w2 -g -DTA_DEBUG -D_DEBUG -DWIN32
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\tools\ta_regtest" -I"..\..\..\..\..\src\ta_func" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\trio"
 LINK	=	link
 LFLAGS	=	/NOLOGO /NOI /DEBUG /SUBSYSTEM:console
-LIBS	=	..\..\..\..\..\lib\ta_libc_cmd.lib wininet.lib
+LIBS	=	..\..\..\..\..\lib\ta_libc_cmd.lib wininet.lib odbc32.lib
 MOC	=	moc
 
 ZIP	=	zip -r -9
@@ -47,6 +47,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_stoch.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_trange.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_util.c \
+		..\..\..\..\..\src\tools\ta_regtest\test_abstract.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 OBJECTS =	..\..\..\..\..\temp\cmd\ta_regtest.obj \
 		..\..\..\..\..\temp\cmd\test_1in_1out.obj \
@@ -73,6 +74,7 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_regtest.obj \
 		..\..\..\..\..\temp\cmd\test_stoch.obj \
 		..\..\..\..\..\temp\cmd\test_trange.obj \
 		..\..\..\..\..\temp\cmd\test_util.obj \
+		..\..\..\..\..\temp\cmd\test_abstract.obj \
 		..\..\..\..\..\temp\cmd\test_yahoo.obj
 SRCMOC	=	
 OBJMOC	=	
@@ -138,6 +140,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\test_stoch.obj
 	-del ..\..\..\..\..\temp\cmd\test_trange.obj
 	-del ..\..\..\..\..\temp\cmd\test_util.obj
+	-del ..\..\..\..\..\temp\cmd\test_abstract.obj
 	-del ..\..\..\..\..\temp\cmd\test_yahoo.obj
 	-del $(TARGET)
 	-del ../../../../../bin/*.map
@@ -229,6 +232,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\test_util.obj: ..\..\..\..\..\src\tools\ta_regtest\test_util.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_util.obj ..\..\..\..\..\src\tools\ta_regtest\test_util.c
+
+..\..\..\..\..\temp\cmd\test_abstract.obj: ..\..\..\..\..\src\tools\ta_regtest\test_abstract.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_abstract.obj ..\..\..\..\..\src\tools\ta_regtest\test_abstract.c
 
 ..\..\..\..\..\temp\cmd\test_yahoo.obj: ..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_yahoo.obj ..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c

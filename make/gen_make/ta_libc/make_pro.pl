@@ -130,6 +130,8 @@ print "cmd:OBJECTS_DIR = ../../../../../temp/cmd\n";
 print "cmr:OBJECTS_DIR = ../../../../../temp/cmr\n";
 print "csd:OBJECTS_DIR = ../../../../../temp/csd\n";
 print "csr:OBJECTS_DIR = ../../../../../temp/csr\n";
+print "cdr:OBJECTS_DIR = ../../../../../temp/cdr\n";
+print "cdd:OBJECTS_DIR = ../../../../../temp/cdd\n";
 print "\n";
 print "# Identify the target name\n";
 print "LIBTARGET = ta_libc\n";
@@ -137,9 +139,10 @@ print "cmd:TARGET = ta_libc_cmd\n";
 print "cmr:TARGET = ta_libc_cmr\n";
 print "csd:TARGET = ta_libc_csd\n";
 print "csr:TARGET = ta_libc_csr\n";
+print "cdr:TARGET = ta_libc_cdr\n";
+print "cdd:TARGET = ta_libc_cdd\n";
 print "\n";
 print "\# Output info\n";
-print "VERSION     = $libversion\n";
 print "DESTDIR     = ../../../../../lib\n";
 
 # Output the "SOURCES" variable.

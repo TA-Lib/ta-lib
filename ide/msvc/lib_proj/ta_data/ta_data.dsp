@@ -328,11 +328,6 @@ SOURCE=..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_mysql.cpp
-# ADD CPP /I "..\..\..\..\..\..\mysql++\include"
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 # End Source File
 # Begin Source File

@@ -7,6 +7,8 @@ cmd:OBJECTS_DIR = ../../../../../temp/cmd
 cmr:OBJECTS_DIR = ../../../../../temp/cmr
 csd:OBJECTS_DIR = ../../../../../temp/csd
 csr:OBJECTS_DIR = ../../../../../temp/csr
+cdr:OBJECTS_DIR = ../../../../../temp/cdr
+cdd:OBJECTS_DIR = ../../../../../temp/cdd
 
 # Identify the target name
 LIBTARGET = ta_common
@@ -14,9 +16,10 @@ cmd:TARGET = ta_common_cmd
 cmr:TARGET = ta_common_cmr
 csd:TARGET = ta_common_csd
 csr:TARGET = ta_common_csr
+cdr:TARGET = ta_common_cdr
+cdd:TARGET = ta_common_cdd
 
 # Output info
-VERSION     = 0.0.5
 DESTDIR     = ../../../../../lib
 
 # Files to process
@@ -71,25 +74,35 @@ cmd:TEMP_CLEAN_ALL = ../../../../../temp/cmd/*.pch
 cmr:TEMP_CLEAN_ALL = ../../../../../temp/cmr/*.pch
 csd:TEMP_CLEAN_ALL = ../../../../../temp/csd/*.pch
 csr:TEMP_CLEAN_ALL = ../../../../../temp/csr/*.pch
+cdr:TEMP_CLEAN_ALL = ../../../../../temp/cdr/*.pch
+cdd:TEMP_CLEAN_ALL = ../../../../../temp/cdd/*.pch
 
 cmd:TEMP_CLEAN_ALL2 = ../../../../../temp/cmd/*.idb
 cmr:TEMP_CLEAN_ALL2 = ../../../../../temp/cmr/*.idb
 csd:TEMP_CLEAN_ALL2 = ../../../../../temp/csd/*.idb
 csr:TEMP_CLEAN_ALL2 = ../../../../../temp/csr/*.idb
+cdr:TEMP_CLEAN_ALL2 = ../../../../../temp/cdr/*.idb
+cdd:TEMP_CLEAN_ALL2 = ../../../../../temp/cdd/*.idb
 
 cmd:TEMP_CLEAN_ALL3 = ../../../../../temp/cmd/$$TARGET/*.pch
 cmr:TEMP_CLEAN_ALL3 = ../../../../../temp/cmr/$$TARGET/*.pch
 csd:TEMP_CLEAN_ALL3 = ../../../../../temp/csd/$$TARGET/*.pch
 csr:TEMP_CLEAN_ALL3 = ../../../../../temp/csr/$$TARGET/*.pch
+cdr:TEMP_CLEAN_ALL3 = ../../../../../temp/cdr/$$TARGET/*.pch
+cdd:TEMP_CLEAN_ALL3 = ../../../../../temp/cdd/$$TARGET/*.pch
 
 cmd:TEMP_CLEAN_ALL4 = ../../../../../temp/cmd/$$TARGET/*.idb
 cmr:TEMP_CLEAN_ALL4 = ../../../../../temp/cmr/$$TARGET/*.idb
 csd:TEMP_CLEAN_ALL4 = ../../../../../temp/csd/$$TARGET/*.idb
 csr:TEMP_CLEAN_ALL4 = ../../../../../temp/csr/$$TARGET/*.idb
+cdr:TEMP_CLEAN_ALL4 = ../../../../../temp/cdr/$$TARGET/*.idb
+cdd:TEMP_CLEAN_ALL4 = ../../../../../temp/cdd/$$TARGET/*.idb
 
 cmd:TEMP_CLEAN_ALL5 = ../../../../../temp/cmd/$$TARGET/*.obj
 cmr:TEMP_CLEAN_ALL5 = ../../../../../temp/cmr/$$TARGET/*.obj
 csd:TEMP_CLEAN_ALL5 = ../../../../../temp/csd/$$TARGET/*.obj
 csr:TEMP_CLEAN_ALL5 = ../../../../../temp/csr/$$TARGET/*.obj
+cdr:TEMP_CLEAN_ALL5 = ../../../../../temp/cdr/$$TARGET/*.obj
+cdd:TEMP_CLEAN_ALL5 = ../../../../../temp/cdd/$$TARGET/*.obj
 
 win32:CLEAN_FILES = ../../../../../bin/*.map ../../../../../bin/*._xe ../../../../../bin/*.tds ../../../../../bin/*.pdb ../../../../../bin/*.pbo ../../../../../bin/*.pbi ../../../../../bin/*.pbt $$TEMP_CLEAN_ALL $$TEMP_CLEAN_ALL2 $$TEMP_CLEAN_ALL3 $$TEMP_CLEAN_ALL4 $$TEMP_CLEAN_ALL5

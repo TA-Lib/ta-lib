@@ -14,7 +14,7 @@ CXXFLAGS=	-mn -w2 -o -DTA_SINGLE_THREAD -DWIN32
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data"
 LINK	=	link
 LFLAGS	=	/NOLOGO /NOI /SUBSYSTEM:console
-LIBS	=	..\..\..\..\..\lib\ta_data_csr.lib ..\..\..\..\..\lib\ta_common_csr.lib wininet.lib
+LIBS	=	..\..\..\..\..\lib\ta_data_csr.lib ..\..\..\..\..\lib\ta_common_csr.lib wininet.lib odbc32.lib
 MOC	=	moc
 
 ZIP	=	zip -r -9

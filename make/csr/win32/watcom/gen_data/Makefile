@@ -14,7 +14,7 @@ CXXFLAGS=	-zq -w2 -ox -d=TA_SINGLE_THREAD -d=WIN32
 INCPATH	=	-i="..\..\..\..\..\src\ta_common" -i="..\..\..\..\..\include"
 LINK	=	wlink
 LFLAGS	=	op quiet op c sys nt
-LIBS	=	..\..\..\..\..\lib\ta_libc_csr.lib wininet.lib
+LIBS	=	..\..\..\..\..\lib\ta_libc_csr.lib wininet.lib odbc32.lib
 MOC	=	moc
 
 ZIP	=	zip -r -9
@@ -38,7 +38,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 	@%create $(TMPLIST)
 	@%append $(TMPLIST) NAME gen_data
 	@%append $(TMPLIST) FIL ..\..\..\..\..\temp\csr\gen_data.obj
-	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_libc_csr.lib,wininet.lib
+	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_libc_csr.lib,wininet.lib,odbc32.lib
 	$(LINK) $(LFLAGS) @$(TMPLIST)
 	del $(TMPLIST)
 

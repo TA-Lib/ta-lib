@@ -1,36 +1,31 @@
 #! /bin/usr/perl
 
-# I suggest to not call this script directly. Use instead
+# You should not have to call this script directly. Use instead
 # the "gen_make.pl" who effectively do everything.
 
 # This script will create all the makefiles for all
 # the plateform using the projects describe in the
-# 'ta-lib/c/make/gen_make' directory.
+# '/c/make/gen_make' directory.
 #
 # This script is called with a parameter defining the
 # type of application with which the library is link:
 # Example:
-#    'perl make_make.pl cmr' creates the console/multithread/release makefiles.
-#    'perl make_make.pl cmd' creates the console/multithread/debug makefiles.
+#    'perl make_make.pl cmr ...' creates the console/multithread/release makefiles.
+#    'perl make_make.pl cmd ...' creates the console/multithread/debug makefiles.
 #
 
 use File::Path;
 use File::DosGlob 'glob';
 use Env;
 
-$origTMAKEPATH = '.\\template\\win32-msvc';
-$ENV{'TMAKEPATH'} = $origTMAKEPATH;
-
-# print "MAKEPATH[".$TMAKEPATH."]";
-
 $a = "\\..\\*";
 
-@platformCompilerPath = glob ".\\template\\*";
-
-if( (scalar @ARGV) != 1 )
+if( (scalar @ARGV) != 4 )
 {
    print( "Missing parameter\n" );
-   print( "Usage: make_make <cmr|cmd|csr|csd>\n" );
+   print( "Usage: make_make <cmr|cmd|csr|csd|cdr|cdd> TMAKEPATH destPath platform\n" );
+   print( "\n" );
+   print( "       platform = {all|linux_only|msvc_only}\n" );
    die;
 }
 
@@ -38,32 +33,55 @@ if( @ARGV[0] eq "cmr" ) {
    $makeConsole = 1;
    $makeThread = 1;
    $makeDebug = 0;
+   $makeDLL = 0;
 }
 elsif( @ARGV[0] eq "cmd" ) {
    $makeConsole = 1;
    $makeThread = 1;
    $makeDebug = 1;
+   $makeDLL = 0;
 }
 elsif( @ARGV[0] eq "csr" ) {
    $makeConsole = 1;
    $makeThread = 0;
    $makeDebug = 0;
+   $makeDLL = 0;
 }
 elsif( @ARGV[0] eq "csd" ) {
    $makeConsole = 1;
    $makeThread = 0;
    $makeDebug = 1;
+   $makeDLL = 0;
+}
+elsif( @ARGV[0] eq "cdr" ) {
+   $makeConsole = 1;
+   $makeThread = 1;
+   $makeDebug = 0;
+   $makeDLL = 1;
+}
+elsif( @ARGV[0] eq "cdd" ) {
+   $makeConsole = 1;
+   $makeThread = 1;
+   $makeDebug = 1;
+   $makeDLL = 1;
 }
 else
 {
    print( "Bad parameter\n" );
-   print( "Usage: make_make <cmr|cmd|csr|csd>\n" );
    die;
 }
 
+$origTMAKEPATH = @ARGV[1];
+$ENV{'TMAKEPATH'} = $origTMAKEPATH;
 
+# print "MAKEPATH[".$TMAKEPATH."]";
+
+$origTemplatePath = @ARGV[2];
+@platformCompilerPath = glob $origTemplatePath;
+
+# print $origTemplatePath;
+# print @platformCompilerPath;
 print "Generating (".@ARGV[0].") ";
-
 
 if( $makeConsole == 1 ) {
    print "CONSOLE ";
@@ -73,10 +91,15 @@ else {
 }
 
 if( $makeThread == 1 ) {
-   print "MULTI-THREAD ";
+   print "MULTITHREAD ";
 }
 else {
    print "SINGLE-THREAD ";
+}
+
+if( $makeDLL == 1 )
+{
+   print "DLL ";
 }
 
 if( $makeDebug == 1 ) {
@@ -127,6 +150,23 @@ foreach $z (@platformCompilerPath) {
    {   
       next if ($platform eq "win32");
    }
+   
+   if( @ARGV[3] eq "linux_only" )
+   {
+      next if($platform eq "win32");
+      next if($platform eq "cygwin" );
+   }
+
+   if( @ARGV[3] eq "msvc_only" )
+   {
+      next if($compiler ne "msvc");
+   }
+
+   # cdr and cdb are generated with msvc only
+   if( $compiler ne "msvc" )
+   {
+      next if($makeDLL eq 1);
+   }
 
    # Create the directories
    $dirToProcess = "../".@ARGV[0]."/".$platform."/".$compiler;
@@ -154,16 +194,22 @@ foreach $z (@platformCompilerPath) {
       if( $makeDebug == 1 ) {
          $toRun = $toRun." "."\"CONFIG+=debug\"";
       }
-	  else {
+      else {
          $toRun = $toRun." "."\"CONFIG+=release\"";
-	  }
+      }
+
       if( $makeConsole == 1 ) {
          $toRun = $toRun." "."\"CONFIG+=console\"";
       }
-	  else {
+      else {
          $toRun = $toRun." "."\"CONFIG+=windows\"";
       }
+
       if( $makeThread == 1 ) {
+         $toRun = $toRun." "."\"CONFIG+=thread\"";
+      }
+
+      if( $makeDLL == 1 ) {
          $toRun = $toRun." "."\"CONFIG+=thread\"";
       }
 

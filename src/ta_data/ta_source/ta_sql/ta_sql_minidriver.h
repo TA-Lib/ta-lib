@@ -10,18 +10,8 @@
 #endif
 
 
-typedef enum
-{
-   TA_SQL_MYSQL,
-   TA_SQL_ODBC,
-   TA_SQL_NUM_OF_MINIDRIVERS
-
-} TA_SQL_MinidriverID;
-
 typedef struct
 {
-   const char *scheme;
-
    /* Function for establishing connection
     * Last parameter is the output parameter
     * It is opaque value, the minidriver can initialise it to any value it wants
@@ -102,15 +92,12 @@ typedef struct
 } TA_SQL_Minidriver;
 
 
-/* Function for converting minidriver name into enum
- * Returns TA_SQL_NUM_OF_MINIDRIVERS if minidriver not found
+/* Return the minidriver for the corresponding scheme. Will return
+ * NULL if the scheme is not recognized.
  */
-TA_SQL_MinidriverID TA_SQL_IdentifyMinidriver(const char scheme[]);
+const TA_SQL_Minidriver *TA_SQL_GetMinidriver( const char scheme[] );
 
-/* globals defined in ta_sql_minidriver.c */
-extern const TA_SQL_Minidriver TA_gSQLMinidriverTable[];
-extern const unsigned int      TA_gSQLMinidriverTableSize;
-
+/* Allows to dynamically add a mini-driver. */
+TA_RetCode TA_SQL_AddMinidriver( const char scheme[], const TA_SQL_Minidriver * );
 
 #endif
-   

@@ -17,8 +17,8 @@ CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -w-8080 -v -DTA_DEBUG -D_DEBUG
 CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -w-8080 -v -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD -DWIN32
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data"
 LINK	=	ilink32
-LFLAGS	=	-L$(BCB)\lib -c -x -Gn -v -ap -Tpe c0x32.obj
-LIBS	=	import32.lib cw32i.lib ..\..\..\..\..\lib\ta_data_csd.lib ..\..\..\..\..\lib\ta_common_csd.lib wininet.lib
+LFLAGS	=	-L$(BCB)\lib -L$(BCB)\lib\PSDK -c -x -Gn -v -ap -Tpe c0x32.obj
+LIBS	=	import32.lib cw32i.lib ..\..\..\..\..\lib\ta_data_csd.lib ..\..\..\..\..\lib\ta_common_csd.lib wininet.lib odbc32.lib
 MOC	=	moc
 UIC	=	uic
 
