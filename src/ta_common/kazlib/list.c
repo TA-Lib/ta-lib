@@ -33,7 +33,6 @@
  *       file.
  *
  * The modifications from the original are mainly:
- *   - 'assert' have been replaced by TA_ASSERT.
  *   - 'malloc' and 'free' have been replaced by TA_Malloc() and TA_Free().
  *   - Some modif eliminates warnings.
  *   - Search for the string 'TA_' for most of the changes.
