@@ -40,13 +40,13 @@
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   First version.
- *  062803 MF   Make parsing to find exchange/type more adaptive to 
- *              potential changes from Yahoo! market page format.
- *  102103 MF   Now recognize American Mutual Fund ticker.
- *  020104 MF   Fix mem leaks related to TA_TRACE_BEGIN/TA_TRACE_RETURN.
+ *  112400 MF     First version.
+ *  062803 MF     Make parsing to find exchange/type more adaptive to 
+ *                potential changes from Yahoo! market page format.
+ *  102103 MF     Now recognize American Mutual Fund ticker.
+ *  020104 MF     Fix mem leaks related to TA_TRACE_BEGIN/TA_TRACE_RETURN.
  */
 
 /* Description:
