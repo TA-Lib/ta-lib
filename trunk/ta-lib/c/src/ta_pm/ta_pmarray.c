@@ -604,7 +604,7 @@ static TA_RetCode equityPeriodTransform( TA_PMPriv     *pmPriv,
    unsigned int again, periodCompleted; /* Boolean */
    int firstIteration;
 
-   TA_TRACE_BEGIN(  TA_PeriodTransform );
+   TA_TRACE_BEGIN( TA_PeriodTransform );
 
    /* Validate some mandatory parameter. */
    TA_ASSERT( newPeriod != 0 );
