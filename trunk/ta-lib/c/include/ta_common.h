@@ -490,6 +490,19 @@ typedef void (*TA_FatalHandler)( void );
 
 TA_RetCode TA_SetFatalErrorHandler( TA_FatalHandler handler );
 
+/* Function used exclusively by TA-Lib developpers to perform
+ * regression testing.
+ * Most (if not all) TA-Lib users should ignore this function.
+ */
+typedef enum
+{
+   TA_REG_TEST_FATAL_ERROR,
+   TA_REG_TEST_ASSERT_FAIL,
+   TA_NB_REGRESSION_TEST_ID   
+} TA_RegressionTestId;
+
+TA_RetCode TA_RegressionTest( TA_RegressionTestId id );
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -47,6 +47,7 @@
  *  110903 MF   Add logging of return code, make sure logging
  *              occurs only when TA_DEBUG is defined, display
  *              compiler defines on fatal error.
+ *  050104 MF   Add TA_RegressionTest.
  */
 
 /* Description:
@@ -176,6 +177,8 @@ static TA_RetCode TA_TraceGlobalShutdown( void *globalAllocated );
 static TA_RetCode TA_TraceGlobalInit( void **globalToAlloc );
 
 /**** Local variables definitions.     ****/
+TA_FILE_INFO;
+
 const TA_GlobalControl TA_TraceGlobalControl =
 {
    TA_TRACE_GLOBAL_ID,
@@ -455,6 +458,40 @@ TA_RetCode TA_SetFatalErrorHandler( TA_FatalHandler handler )
    #endif
 
    return TA_SUCCESS;
+}
+
+TA_RetCode TA_RegressionTest( TA_RegressionTestId id )
+{
+   TA_PROLOG;
+
+   TA_TRACE_BEGIN("TA_RegressionTest");
+
+   /* Code for testing a TA_ASSERT.
+    *
+    * A failed assert trigs a fatal error, so the function
+    * will return with TA_FATAL_ERR. The application is not
+    * exited.
+    *
+    * If the user did provide an handler, it will get called.
+    */
+   TA_ASSERT( id != TA_REG_TEST_ASSERT_FAIL );
+
+   /* Other tests... */
+   switch( id )
+   {
+   case TA_REG_TEST_FATAL_ERROR:
+      /* Force a fatal error. The function returns
+       * with TA_FATAL_ERR. The application is not
+       * exited.
+       * If the user did provide an handler, it will get called.
+       */ 
+      TA_FATAL("Test",0x01234567,0x89ABCDEF);
+      break;
+   default:
+      TA_TRACE_RETURN(TA_BAD_PARAM);
+   }
+
+   TA_TRACE_RETURN(TA_SUCCESS); 
 }
 
 /**** Local functions definitions.     ****/
