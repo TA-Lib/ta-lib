@@ -62,6 +62,9 @@ int TA_WildASCII( void );
 /* Return separator used to build path. */
 int TA_SeparatorASCII( void );
 
+/* REplace the separator depending of the platform. */
+void TA_AdjustPath( char *path );
+
 /* Return some information system specific. */
 int TA_IsFileSystemCaseSensitive( void );
 int TA_NbProcessor( void );
