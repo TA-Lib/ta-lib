@@ -45,7 +45,7 @@
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
  *  101103 PP   Initial creation of code.
- *
+ *  112603 MF   Add independent control to the RSI period.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -78,11 +78,13 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::STOCHRSI_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */ int Core::STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                            int           optInFastK_Period, /* From 1 to 100000 */
 /* Generated */                            int           optInFastD_Period, /* From 1 to 100000 */
 /* Generated */                            TA_MAType     optInFastD_MAType ) /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_STOCHRSI_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */ int TA_STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                         int           optInFastK_Period, /* From 1 to 100000 */
 /* Generated */                         int           optInFastD_Period, /* From 1 to 100000 */
 /* Generated */                         TA_MAType     optInFastD_MAType ) /* Generated */ 
 /* Generated */ #endif
@@ -91,7 +93,7 @@
    /* insert lookback code here. */
    int retValue;
 
-   retValue = TA_RSI_Lookback( optInFastK_Period ) + TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+   retValue = TA_RSI_Lookback( optInTimePeriod ) + TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
 
    return retValue;
 }
@@ -105,6 +107,9 @@
  * 
  * Optional Parameters
  * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Number of period
+ * 
  * optInFastK_Period:(From 1 to 100000)
  *    Time period for building the Fast-K line
  * 
@@ -121,6 +126,7 @@
 /* Generated */ enum Core::TA_RetCode Core::STOCHRSI( int    startIdx,
 /* Generated */                                       int    endIdx,
 /* Generated */                                       double       inReal __gc [],
+/* Generated */                                       int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                       int           optInFastK_Period, /* From 1 to 100000 */
 /* Generated */                                       int           optInFastD_Period, /* From 1 to 100000 */
 /* Generated */                                       TA_MAType     optInFastD_MAType,
@@ -132,6 +138,7 @@
 /* Generated */ TA_RetCode TA_STOCHRSI( int    startIdx,
 /* Generated */                         int    endIdx,
 /* Generated */                         const double inReal[],
+/* Generated */                         int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                         int           optInFastK_Period, /* From 1 to 100000 */
 /* Generated */                         int           optInFastD_Period, /* From 1 to 100000 */
 /* Generated */                         TA_MAType     optInFastD_MAType,
@@ -146,7 +153,7 @@
    ARRAY_REF(tempRSIBuffer);
 
    TA_RetCode retCode;
-   int lookbackTotal, lookbackRSI, tempArraySize;
+   int lookbackTotal, lookbackSTOCHF, tempArraySize;
    int outBegIdx1, outBegIdx2, outNbElement1;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -161,6 +168,12 @@
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 14;
+/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */       return TA_BAD_PARAM;
+/* Generated */ 
 /* Generated */    /* min/max are checked for optInFastK_Period. */
 /* Generated */    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastK_Period = 5;
@@ -192,23 +205,43 @@
 
    /* Insert TA function code here. */
   
-   /* 
-    * Stochastic RSI
+   /* Stochastic RSI
+    * 
+    * Reference: "Stochastic RSI and Dynamic Momentum Index"
+    *            by Tushar Chande and Stanley Kroll
+    *            Stock&Commodities V.11:5 (189-199)
     *
+    * The TA-Lib version offer flexibility beyond what is explain
+    * in the Stock&Commodities article.
+    *
+    * To calculate the "Unsmoothed stochastic RSI" with symmetry like 
+    * explain in the article, keep the optInTimePeriod and optInFastK_Period
+    * equal. Example:
+    *        
+    *    unsmoothed stoch RSI 14 : optInTimePeriod   = 14
+    *                              optInFastK_Period = 14
+    *                              optInFastD_Period = 'x'
+    *
+    * The outFastK is the unsmoothed RSI discuss in the article.
+    *
+    * You can set the optInFastD_Period to smooth the RSI. The smooth
+    * version will be found in outFastD. The outFastK will still contain
+    * the unsmoothed stoch RSI. If you do not care about the smoothing of
+    * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
     */
 
    *outBegIdx    = 0;
    *outNbElement = 0;
 
    /* Adjust startIdx to account for the lookback period. */
-   lookbackRSI = TA_RSI_Lookback( optInFastK_Period );
-   lookbackTotal = lookbackRSI + TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+   lookbackSTOCHF  = TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+   lookbackTotal   = TA_RSI_Lookback( optInTimePeriod ) + lookbackSTOCHF;
 
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
 
    /* Make sure there is still something to evaluate. */
-   if( startIdx >= endIdx )
+   if( startIdx > endIdx )
    {
       *outBegIdx = 0;
       *outNbElement = 0;
@@ -217,14 +250,14 @@
 
    *outBegIdx = startIdx;
 
-   tempArraySize = (endIdx - startIdx) + 1 + lookbackTotal;
+   tempArraySize = (endIdx - startIdx) + 1 + lookbackSTOCHF;
 
    ARRAY_ALLOC( tempRSIBuffer, tempArraySize );
 
-   retCode = TA_PREFIX(RSI)(startIdx, 
+   retCode = TA_PREFIX(RSI)(startIdx-lookbackSTOCHF, 
                             endIdx, 
                             inReal, 
-                            optInFastK_Period, 
+                            optInTimePeriod, 
                             &outBegIdx1, 
                             &outNbElement1, 
                             tempRSIBuffer);
@@ -237,11 +270,8 @@
       return retCode;
    }
    
-   tempArraySize--;
-   tempArraySize -= lookbackRSI;
-
    retCode = TA_STOCHF(0,
-                       tempArraySize,
+                       tempArraySize-1,
                        tempRSIBuffer,
                        tempRSIBuffer,
                        tempRSIBuffer,
@@ -278,6 +308,7 @@
 /* Generated */ enum Core::TA_RetCode Core::STOCHRSI( int    startIdx,
 /* Generated */                                       int    endIdx,
 /* Generated */                                       float        inReal __gc [],
+/* Generated */                                       int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                       int           optInFastK_Period, /* From 1 to 100000 */
 /* Generated */                                       int           optInFastD_Period, /* From 1 to 100000 */
 /* Generated */                                       TA_MAType     optInFastD_MAType,
@@ -289,6 +320,7 @@
 /* Generated */ TA_RetCode TA_S_STOCHRSI( int    startIdx,
 /* Generated */                           int    endIdx,
 /* Generated */                           const float  inReal[],
+/* Generated */                           int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                           int           optInFastK_Period, /* From 1 to 100000 */
 /* Generated */                           int           optInFastD_Period, /* From 1 to 100000 */
 /* Generated */                           TA_MAType     optInFastD_MAType,
@@ -300,7 +332,7 @@
 /* Generated */ {
 /* Generated */    ARRAY_REF(tempRSIBuffer);
 /* Generated */    TA_RetCode retCode;
-/* Generated */    int lookbackTotal, lookbackRSI, tempArraySize;
+/* Generated */    int lookbackTotal, lookbackSTOCHF, tempArraySize;
 /* Generated */    int outBegIdx1, outBegIdx2, outNbElement1;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
@@ -308,6 +340,10 @@
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 14;
+/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastK_Period = 5;
 /* Generated */     else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
@@ -329,23 +365,23 @@
 /* Generated */  #endif 
 /* Generated */    *outBegIdx    = 0;
 /* Generated */    *outNbElement = 0;
-/* Generated */    lookbackRSI = TA_RSI_Lookback( optInFastK_Period );
-/* Generated */    lookbackTotal = lookbackRSI + TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+/* Generated */    lookbackSTOCHF  = TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+/* Generated */    lookbackTotal   = TA_RSI_Lookback( optInTimePeriod ) + lookbackSTOCHF;
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
-/* Generated */    if( startIdx >= endIdx )
+/* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       *outBegIdx = 0;
 /* Generated */       *outNbElement = 0;
 /* Generated */       return TA_SUCCESS;
 /* Generated */    }
 /* Generated */    *outBegIdx = startIdx;
-/* Generated */    tempArraySize = (endIdx - startIdx) + 1 + lookbackTotal;
+/* Generated */    tempArraySize = (endIdx - startIdx) + 1 + lookbackSTOCHF;
 /* Generated */    ARRAY_ALLOC( tempRSIBuffer, tempArraySize );
-/* Generated */    retCode = TA_PREFIX(RSI)(startIdx, 
+/* Generated */    retCode = TA_PREFIX(RSI)(startIdx-lookbackSTOCHF, 
 /* Generated */                             endIdx, 
 /* Generated */                             inReal, 
-/* Generated */                             optInFastK_Period, 
+/* Generated */                             optInTimePeriod, 
 /* Generated */                             &outBegIdx1, 
 /* Generated */                             &outNbElement1, 
 /* Generated */                             tempRSIBuffer);
@@ -356,10 +392,8 @@
 /* Generated */       *outNbElement = 0;
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    tempArraySize--;
-/* Generated */    tempArraySize -= lookbackRSI;
 /* Generated */    retCode = TA_STOCHF(0,
-/* Generated */                        tempArraySize,
+/* Generated */                        tempArraySize-1,
 /* Generated */                        tempRSIBuffer,
 /* Generated */                        tempRSIBuffer,
 /* Generated */                        tempRSIBuffer,
