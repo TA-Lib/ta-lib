@@ -209,6 +209,7 @@ static TA_InternalRetCodeInfo retCodeInfoTable[] = {
          {924,"TA_CSI_READ_FAIL_CSIM_HEADER_FILE","Read failure on CSIM data file header"},
          {925,"TA_CSI_READ_FAIL_CSIM_DATA_FILE","Read failure on CSIM data file"},
          {926,"TA_CSI_HEADER_READ_FAILED_CSIM","Failed to read CSIM header file"},
+         {927,"TA_CSI_UNABLE_FIND_QMASTER_FILE","No QMaster or QMaster2 files found"},
          {5000,"TA_INTERNAL_ERROR","Internal Error - Contact TA-Lib.org"},
          {0xFFFF,"TA_UNKNOWN_ERR","Unknown Error"}
 };
