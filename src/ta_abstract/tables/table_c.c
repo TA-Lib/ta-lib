@@ -76,6 +76,118 @@ DEF_FUNCTION( CCI,                           /* name */
 
 /* CCI END */
 
+/* CDLHIGHWAVE BEGIN */
+static const TA_InputParameterInfo    *TA_CDLHIGHWAVE_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLHIGHWAVE_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLHIGHWAVE_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLHIGHWAVE,                    /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "High-Wave Candle",             /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLHIGHWAVE END */
+
+/* CDLLONGLINE BEGIN */
+static const TA_InputParameterInfo    *TA_CDLLONGLINE_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLLONGLINE_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLLONGLINE_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLLONGLINE,                    /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Long Line Candle",             /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLLONGLINE END */
+
+/* CDLSHORTLINE BEGIN */
+static const TA_InputParameterInfo    *TA_CDLSHORTLINE_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLSHORTLINE_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLSHORTLINE_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLSHORTLINE,                   /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Short Line Candle",            /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLSHORTLINE END */
+
+/* CDLSPINNINGTOP BEGIN */
+static const TA_InputParameterInfo    *TA_CDLSPINNINGTOP_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLSPINNINGTOP_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLSPINNINGTOP_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLSPINNINGTOP,                 /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Spinning Top Candle",          /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLSPINNINGTOP END */
+
 /* CORREL BEGIN */
 static const TA_InputParameterInfo    *TA_CORREL_Inputs[]    =
 {
@@ -111,6 +223,10 @@ DEF_FUNCTION( CORREL,                      /* name */
 const TA_FuncDef *TA_DEF_TableC[] =
 {
    ADD_TO_TABLE(CCI),
+   ADD_TO_TABLE(CDLHIGHWAVE),
+   ADD_TO_TABLE(CDLLONGLINE),
+   ADD_TO_TABLE(CDLSHORTLINE),
+   ADD_TO_TABLE(CDLSPINNINGTOP),  
    ADD_TO_TABLE(CORREL),
    NULL
 };
