@@ -60,7 +60,6 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\tools\gen_data\ta_daily_ref_0.c \
 		..\..\..\..\..\src\tools\gen_data\ta_intra_ref_0.c \
 		..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c \
-		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c \
 		..\..\..\..\..\src\ta_common\bzip2\blocksort.c \
 		..\..\..\..\..\src\ta_common\bzip2\bzlib.c \
 		..\..\..\..\..\src\ta_common\bzip2\compress.c \
@@ -195,7 +194,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_pm\ta_pmreport.c \
 		..\..\..\..\..\src\ta_pm\ta_pmstring.c \
 		..\..\..\..\..\src\ta_pm\ta_datalog.c \
-		..\..\..\..\..\src\ta_pm\ta_instrument.c
+		..\..\..\..\..\src\ta_pm\ta_instrument.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj \
 		..\..\..\..\..\temp\csd\ta_ascii_handle.obj \
 		..\..\..\..\..\temp\csd\ta_build_index.obj \
@@ -229,7 +229,6 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj \
 		..\..\..\..\..\temp\csd\ta_daily_ref_0.obj \
 		..\..\..\..\..\temp\csd\ta_intra_ref_0.obj \
 		..\..\..\..\..\temp\csd\ta_mrg_0.obj \
-		..\..\..\..\..\temp\csd\ta_sql_odbc.obj \
 		..\..\..\..\..\temp\csd\blocksort.obj \
 		..\..\..\..\..\temp\csd\bzlib.obj \
 		..\..\..\..\..\temp\csd\compress.obj \
@@ -364,7 +363,8 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj \
 		..\..\..\..\..\temp\csd\ta_pmreport.obj \
 		..\..\..\..\..\temp\csd\ta_pmstring.obj \
 		..\..\..\..\..\temp\csd\ta_datalog.obj \
-		..\..\..\..\..\temp\csd\ta_instrument.obj
+		..\..\..\..\..\temp\csd\ta_instrument.obj \
+		..\..\..\..\..\temp\csd\ta_sql_odbc.obj
 INTERFACES =	
 UICDECLS =	
 UICIMPLS =	
@@ -430,7 +430,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_daily_ref_0.obj \
 +..\..\..\..\..\temp\csd\ta_intra_ref_0.obj \
 +..\..\..\..\..\temp\csd\ta_mrg_0.obj \
-+..\..\..\..\..\temp\csd\ta_sql_odbc.obj \
 +..\..\..\..\..\temp\csd\blocksort.obj \
 +..\..\..\..\..\temp\csd\bzlib.obj \
 +..\..\..\..\..\temp\csd\compress.obj \
@@ -566,6 +565,7 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_pmstring.obj \
 +..\..\..\..\..\temp\csd\ta_datalog.obj \
 +..\..\..\..\..\temp\csd\ta_instrument.obj \
++..\..\..\..\..\temp\csd\ta_sql_odbc.obj \
 +
 |
 
@@ -613,7 +613,6 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_daily_ref_0.obj
 	-del ..\..\..\..\..\temp\csd\ta_intra_ref_0.obj
 	-del ..\..\..\..\..\temp\csd\ta_mrg_0.obj
-	-del ..\..\..\..\..\temp\csd\ta_sql_odbc.obj
 	-del ..\..\..\..\..\temp\csd\blocksort.obj
 	-del ..\..\..\..\..\temp\csd\bzlib.obj
 	-del ..\..\..\..\..\temp\csd\compress.obj
@@ -749,6 +748,7 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_pmstring.obj
 	-del ..\..\..\..\..\temp\csd\ta_datalog.obj
 	-del ..\..\..\..\..\temp\csd\ta_instrument.obj
+	-del ..\..\..\..\..\temp\csd\ta_sql_odbc.obj
 	-del $(TARGET)
 	-del ta_libc_csd.tds
 	-del ../../../../../bin/*.map
@@ -859,9 +859,6 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_mrg_0.obj: ..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_mrg_0.obj ..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c
-
-..\..\..\..\..\temp\csd\ta_sql_odbc.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_sql_odbc.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 
 ..\..\..\..\..\temp\csd\blocksort.obj: ..\..\..\..\..\src\ta_common\bzip2\blocksort.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\blocksort.obj ..\..\..\..\..\src\ta_common\bzip2\blocksort.c
@@ -1267,4 +1264,7 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_instrument.obj: ..\..\..\..\..\src\ta_pm\ta_instrument.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_instrument.obj ..\..\..\..\..\src\ta_pm\ta_instrument.c
+
+..\..\..\..\..\temp\csd\ta_sql_odbc.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_sql_odbc.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 

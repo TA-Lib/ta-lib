@@ -53,7 +53,6 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\tools\gen_data\ta_daily_ref_0.c \
 		..\..\..\..\..\src\tools\gen_data\ta_intra_ref_0.c \
 		..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c \
-		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c \
 		..\..\..\..\..\src\ta_common\bzip2\blocksort.c \
 		..\..\..\..\..\src\ta_common\bzip2\bzlib.c \
 		..\..\..\..\..\src\ta_common\bzip2\compress.c \
@@ -188,7 +187,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_pm\ta_pmreport.c \
 		..\..\..\..\..\src\ta_pm\ta_pmstring.c \
 		..\..\..\..\..\src\ta_pm\ta_datalog.c \
-		..\..\..\..\..\src\ta_pm\ta_instrument.c
+		..\..\..\..\..\src\ta_pm\ta_instrument.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\ta_ascii_handle.obj \
 		..\..\..\..\..\temp\cmd\ta_build_index.obj \
@@ -222,7 +222,6 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\ta_daily_ref_0.obj \
 		..\..\..\..\..\temp\cmd\ta_intra_ref_0.obj \
 		..\..\..\..\..\temp\cmd\ta_mrg_0.obj \
-		..\..\..\..\..\temp\cmd\ta_sql_odbc.obj \
 		..\..\..\..\..\temp\cmd\blocksort.obj \
 		..\..\..\..\..\temp\cmd\bzlib.obj \
 		..\..\..\..\..\temp\cmd\compress.obj \
@@ -357,7 +356,8 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\ta_pmreport.obj \
 		..\..\..\..\..\temp\cmd\ta_pmstring.obj \
 		..\..\..\..\..\temp\cmd\ta_datalog.obj \
-		..\..\..\..\..\temp\cmd\ta_instrument.obj
+		..\..\..\..\..\temp\cmd\ta_instrument.obj \
+		..\..\..\..\..\temp\cmd\ta_sql_odbc.obj
 SRCMOC	=	
 OBJMOC	=	
 DIST	=	
@@ -418,7 +418,6 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmd\ta_daily_ref_0.obj \
 +..\..\..\..\..\temp\cmd\ta_intra_ref_0.obj \
 +..\..\..\..\..\temp\cmd\ta_mrg_0.obj \
-+..\..\..\..\..\temp\cmd\ta_sql_odbc.obj \
 +..\..\..\..\..\temp\cmd\blocksort.obj \
 +..\..\..\..\..\temp\cmd\bzlib.obj \
 +..\..\..\..\..\temp\cmd\compress.obj \
@@ -554,6 +553,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmd\ta_pmstring.obj \
 +..\..\..\..\..\temp\cmd\ta_datalog.obj \
 +..\..\..\..\..\temp\cmd\ta_instrument.obj \
++..\..\..\..\..\temp\cmd\ta_sql_odbc.obj \
 +,;
 
 moc: $(SRCMOC)
@@ -600,7 +600,6 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_daily_ref_0.obj
 	-del ..\..\..\..\..\temp\cmd\ta_intra_ref_0.obj
 	-del ..\..\..\..\..\temp\cmd\ta_mrg_0.obj
-	-del ..\..\..\..\..\temp\cmd\ta_sql_odbc.obj
 	-del ..\..\..\..\..\temp\cmd\blocksort.obj
 	-del ..\..\..\..\..\temp\cmd\bzlib.obj
 	-del ..\..\..\..\..\temp\cmd\compress.obj
@@ -736,6 +735,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_pmstring.obj
 	-del ..\..\..\..\..\temp\cmd\ta_datalog.obj
 	-del ..\..\..\..\..\temp\cmd\ta_instrument.obj
+	-del ..\..\..\..\..\temp\cmd\ta_sql_odbc.obj
 	-del $(TARGET)
 	-del ../../../../../bin/*.map
 	-del ../../../../../bin/*._xe
@@ -845,9 +845,6 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_mrg_0.obj: ..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_mrg_0.obj ..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c
-
-..\..\..\..\..\temp\cmd\ta_sql_odbc.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_sql_odbc.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 
 ..\..\..\..\..\temp\cmd\blocksort.obj: ..\..\..\..\..\src\ta_common\bzip2\blocksort.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\blocksort.obj ..\..\..\..\..\src\ta_common\bzip2\blocksort.c
@@ -1253,4 +1250,7 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_instrument.obj: ..\..\..\..\..\src\ta_pm\ta_instrument.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_instrument.obj ..\..\..\..\..\src\ta_pm\ta_instrument.c
+
+..\..\..\..\..\temp\cmd\ta_sql_odbc.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_sql_odbc.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 

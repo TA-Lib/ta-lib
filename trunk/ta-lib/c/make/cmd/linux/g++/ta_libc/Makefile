@@ -56,7 +56,6 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/tools/gen_data/ta_daily_ref_0.c \
 		../../../../../src/tools/gen_data/ta_intra_ref_0.c \
 		../../../../../src/tools/gen_data/ta_mrg_0.c \
-		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c \
 		../../../../../src/ta_common/bzip2/blocksort.c \
 		../../../../../src/ta_common/bzip2/bzlib.c \
 		../../../../../src/ta_common/bzip2/compress.c \
@@ -225,7 +224,6 @@ OBJECTS =	../../../../../temp/cmd/ta_ascii.o \
 		../../../../../temp/cmd/ta_daily_ref_0.o \
 		../../../../../temp/cmd/ta_intra_ref_0.o \
 		../../../../../temp/cmd/ta_mrg_0.o \
-		../../../../../temp/cmd/ta_sql_odbc.o \
 		../../../../../temp/cmd/blocksort.o \
 		../../../../../temp/cmd/bzlib.o \
 		../../../../../temp/cmd/compress.o \
@@ -512,9 +510,6 @@ clean:
 
 ../../../../../temp/cmd/ta_mrg_0.o: ../../../../../src/tools/gen_data/ta_mrg_0.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_mrg_0.o ../../../../../src/tools/gen_data/ta_mrg_0.c
-
-../../../../../temp/cmd/ta_sql_odbc.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_sql_odbc.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c
 
 ../../../../../temp/cmd/blocksort.o: ../../../../../src/ta_common/bzip2/blocksort.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/blocksort.o ../../../../../src/ta_common/bzip2/blocksort.c

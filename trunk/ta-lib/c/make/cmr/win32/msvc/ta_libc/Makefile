@@ -54,7 +54,6 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\tools\gen_data\ta_daily_ref_0.c \
 		..\..\..\..\..\src\tools\gen_data\ta_intra_ref_0.c \
 		..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c \
-		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c \
 		..\..\..\..\..\src\ta_common\bzip2\blocksort.c \
 		..\..\..\..\..\src\ta_common\bzip2\bzlib.c \
 		..\..\..\..\..\src\ta_common\bzip2\compress.c \
@@ -189,7 +188,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_pm\ta_pmreport.c \
 		..\..\..\..\..\src\ta_pm\ta_pmstring.c \
 		..\..\..\..\..\src\ta_pm\ta_datalog.c \
-		..\..\..\..\..\src\ta_pm\ta_instrument.c
+		..\..\..\..\..\src\ta_pm\ta_instrument.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_ascii_handle.obj \
 		..\..\..\..\..\temp\cmr\ta_build_index.obj \
@@ -223,7 +223,6 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_daily_ref_0.obj \
 		..\..\..\..\..\temp\cmr\ta_intra_ref_0.obj \
 		..\..\..\..\..\temp\cmr\ta_mrg_0.obj \
-		..\..\..\..\..\temp\cmr\ta_sql_odbc.obj \
 		..\..\..\..\..\temp\cmr\blocksort.obj \
 		..\..\..\..\..\temp\cmr\bzlib.obj \
 		..\..\..\..\..\temp\cmr\compress.obj \
@@ -358,7 +357,8 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_pmreport.obj \
 		..\..\..\..\..\temp\cmr\ta_pmstring.obj \
 		..\..\..\..\..\temp\cmr\ta_datalog.obj \
-		..\..\..\..\..\temp\cmr\ta_instrument.obj
+		..\..\..\..\..\temp\cmr\ta_instrument.obj \
+		..\..\..\..\..\temp\cmr\ta_sql_odbc.obj
 INTERFACES =	
 UICDECLS =	
 UICIMPLS =	
@@ -437,7 +437,6 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_daily_ref_0.obj
 	-del ..\..\..\..\..\temp\cmr\ta_intra_ref_0.obj
 	-del ..\..\..\..\..\temp\cmr\ta_mrg_0.obj
-	-del ..\..\..\..\..\temp\cmr\ta_sql_odbc.obj
 	-del ..\..\..\..\..\temp\cmr\blocksort.obj
 	-del ..\..\..\..\..\temp\cmr\bzlib.obj
 	-del ..\..\..\..\..\temp\cmr\compress.obj
@@ -573,6 +572,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_pmstring.obj
 	-del ..\..\..\..\..\temp\cmr\ta_datalog.obj
 	-del ..\..\..\..\..\temp\cmr\ta_instrument.obj
+	-del ..\..\..\..\..\temp\cmr\ta_sql_odbc.obj
 	-del $(TARGET)
 	-del ../../../../../bin/*.map
 	-del ../../../../../bin/*._xe
@@ -682,9 +682,6 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_mrg_0.obj: ..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_mrg_0.obj ..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c
-
-..\..\..\..\..\temp\cmr\ta_sql_odbc.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_sql_odbc.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 
 ..\..\..\..\..\temp\cmr\blocksort.obj: ..\..\..\..\..\src\ta_common\bzip2\blocksort.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\blocksort.obj ..\..\..\..\..\src\ta_common\bzip2\blocksort.c
@@ -1090,4 +1087,7 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_instrument.obj: ..\..\..\..\..\src\ta_pm\ta_instrument.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_instrument.obj ..\..\..\..\..\src\ta_pm\ta_instrument.c
+
+..\..\..\..\..\temp\cmr\ta_sql_odbc.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_sql_odbc.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 
