@@ -300,7 +300,7 @@ static ErrorNumber do_test_per_ema( TA_Libc *libHandle,
       errNb = doRangeTest( libHandle,
                            rangeTestFunction, 
                            TA_FUNC_UNST_EMA,
-                           (void *)&testParam, 1 );
+                           (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )
          return errNb;
    }
