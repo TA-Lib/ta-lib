@@ -228,7 +228,15 @@ SOURCE=..\..\..\..\src\ta_abstract\ta_abstract.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_abstract\ta_def_ui.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_abstract\frames\ta_frame.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_abstract\ta_group_idx.c
 # End Source File
 # Begin Source File
 
