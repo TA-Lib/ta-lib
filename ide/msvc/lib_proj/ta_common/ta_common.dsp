@@ -4,7 +4,7 @@
 
 # TARGTYPE "Win32 (x86) Static Library" 0x0104
 
-CFG=ta_common - Win32 DLL Debug
+CFG=ta_common - Win32 CDD Multithread DLL Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
@@ -13,7 +13,7 @@ CFG=ta_common - Win32 DLL Debug
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "ta_common.mak" CFG="ta_common - Win32 DLL Debug"
+!MESSAGE NMAKE /f "ta_common.mak" CFG="ta_common - Win32 CDD Multithread DLL Debug"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
@@ -23,7 +23,7 @@ CFG=ta_common - Win32 DLL Debug
 !MESSAGE "ta_common - Win32 CSR Single Thread Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "ta_common - Win32 CMR Multithread Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "ta_common - Win32 Profiling" (based on "Win32 (x86) Static Library")
-!MESSAGE "ta_common - Win32 DLL Debug" (based on "Win32 (x86) Static Library")
+!MESSAGE "ta_common - Win32 CDD Multithread DLL Debug" (based on "Win32 (x86) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -183,30 +183,30 @@ LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo /out:"..\..\..\..\lib\ta_common_csr.lib"
 # ADD LIB32 /nologo /out:"..\..\..\..\lib\ta_common_csr.lib"
 
-!ELSEIF  "$(CFG)" == "ta_common - Win32 DLL Debug"
+!ELSEIF  "$(CFG)" == "ta_common - Win32 CDD Multithread DLL Debug"
 
 # PROP BASE Use_MFC 0
-# PROP BASE Use_Debug_Libraries 1
-# PROP BASE Output_Dir "ta_common___Win32_DLL_Debug"
-# PROP BASE Intermediate_Dir "ta_common___Win32_DLL_Debug"
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "ta_common___Win32_CDD_Multithread_DLL_Debug"
+# PROP BASE Intermediate_Dir "ta_common___Win32_CDD_Multithread_DLL_Debug"
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
-# PROP Use_Debug_Libraries 1
-# PROP Output_Dir "ta_common___Win32_DLL_Debug"
-# PROP Intermediate_Dir "ta_common___Win32_DLL_Debug"
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "..\..\..\..\lib"
+# PROP Intermediate_Dir "..\..\..\..\temp\cdd\ta_libc"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MTd /W3 /Gm /Zi /Od /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_FUNC_NO_RANGE_CHECK" /YX /FD /GZ /c
+# ADD BASE CPP /nologo /MD /W3 /WX /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # SUBTRACT BASE CPP /Fr
-# ADD CPP /nologo /MDd /W3 /WX /Gm /Zi /Od /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_FUNC_NO_RANGE_CHECK" /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /WX /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # SUBTRACT CPP /Fr
-# ADD BASE RSC /l 0x409 /d "_DEBUG"
-# ADD RSC /l 0x409 /d "_DEBUG"
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo /out:"..\..\..\..\lib\ta_common_cmd.lib"
-# ADD LIB32 /nologo /out:"..\..\..\..\lib\ta_common_for_dll_debug.lib"
+# ADD BASE LIB32 /nologo /out:"..\..\..\..\lib\ta_common_cdr.lib"
+# ADD LIB32 /nologo /out:"..\..\..\..\lib\ta_common_cdd.lib"
 
 !ENDIF 
 
@@ -218,7 +218,7 @@ LIB32=link.exe -lib
 # Name "ta_common - Win32 CSR Single Thread Release"
 # Name "ta_common - Win32 CMR Multithread Release"
 # Name "ta_common - Win32 Profiling"
-# Name "ta_common - Win32 DLL Debug"
+# Name "ta_common - Win32 CDD Multithread DLL Debug"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -338,6 +338,50 @@ SOURCE=..\..\..\..\src\ta_common\trio\trionan.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_common\ta_country_info.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_common\ta_dict.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_common\ta_global.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_common\ta_list.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_common\ta_magic_nb.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_common\ta_memory.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_common\ta_parallel.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_common\ta_stream.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_common\ta_string.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_common\ta_system.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_common\ta_trace.h
+# End Source File
 # End Group
 # End Target
 # End Project

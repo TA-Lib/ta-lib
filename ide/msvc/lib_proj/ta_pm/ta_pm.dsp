@@ -23,6 +23,7 @@ CFG=ta_pm - Win32 CSD Single Thread Debug
 !MESSAGE "ta_pm - Win32 CSR Single Thread Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "ta_pm - Win32 CMR Multithread Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "ta_pm - Win32 Profiling" (based on "Win32 (x86) Static Library")
+!MESSAGE "ta_pm - Win32 CDD Multithread DLL Debug" (based on "Win32 (x86) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -182,6 +183,31 @@ LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo /out:"..\..\..\..\lib\ta_pm_csr.lib"
 # ADD LIB32 /nologo /out:"..\..\..\..\lib\ta_pm_csr.lib"
 
+!ELSEIF  "$(CFG)" == "ta_pm - Win32 CDD Multithread DLL Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "ta_pm___Win32_CDD_Multithread_DLL_Debug"
+# PROP BASE Intermediate_Dir "ta_pm___Win32_CDD_Multithread_DLL_Debug"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "..\..\..\..\lib"
+# PROP Intermediate_Dir "..\..\..\..\temp\cdd\ta_libc"
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /MD /W3 /WX /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_pm\ta_source\ta_readop" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_pm" /I "..\..\..\..\src\ta_pm\ta_source" /I "..\..\..\..\src\ta_pm\ta_source\ta_fileindex" /I "..\..\..\..\src\ta_pm\ta_source\ta_ascii" /I "..\..\..\..\src\ta_pm\ta_history" /I "..\..\..\..\src\ta_pm\ta_source\ta_simulator" /I "..\..\..\..\src\ta_pm\ta_fileindex" /I "..\..\..\..\src\ta_pm\ta_source\ta_yahoo" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# SUBTRACT BASE CPP /Fr
+# ADD CPP /nologo /MDd /W3 /WX /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_pm\ta_source\ta_readop" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_pm" /I "..\..\..\..\src\ta_pm\ta_source" /I "..\..\..\..\src\ta_pm\ta_source\ta_fileindex" /I "..\..\..\..\src\ta_pm\ta_source\ta_ascii" /I "..\..\..\..\src\ta_pm\ta_history" /I "..\..\..\..\src\ta_pm\ta_source\ta_simulator" /I "..\..\..\..\src\ta_pm\ta_fileindex" /I "..\..\..\..\src\ta_pm\ta_source\ta_yahoo" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# SUBTRACT CPP /Fr
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo /out:"..\..\..\..\lib\ta_pm_cdr.lib"
+# ADD LIB32 /nologo /out:"..\..\..\..\lib\ta_pm_cdd.lib"
+
 !ENDIF 
 
 # Begin Target
@@ -192,6 +218,7 @@ LIB32=link.exe -lib
 # Name "ta_pm - Win32 CSR Single Thread Release"
 # Name "ta_pm - Win32 CMR Multithread Release"
 # Name "ta_pm - Win32 Profiling"
+# Name "ta_pm - Win32 CDD Multithread DLL Debug"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
