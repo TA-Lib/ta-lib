@@ -120,9 +120,10 @@ TA_RetCode TA_YahooIdxStream( const TA_YahooIdx *idx, TA_Stream **streamAllocate
  * 
  * The specific web site address and page location is also encoded.
  */
-typedef enum {TA_YAHOOIDX_CVS_PAGE,
+typedef enum {TA_YAHOOIDX_CSV_PAGE,
               TA_YAHOOIDX_MARKET_PAGE,
-              TA_YAHOOIDX_INFO} TA_DecodeType;
+              TA_YAHOOIDX_INFO,
+              TA_YAHOOIDX_ADJUSTMENT} TA_DecodeType;
 
 TA_DecodingParam *TA_YahooIdxDecodingParam( TA_YahooIdx *idx, TA_DecodeType type );
 

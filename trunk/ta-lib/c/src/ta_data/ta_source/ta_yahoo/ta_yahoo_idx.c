@@ -270,6 +270,14 @@ static TA_DecodingParam defaultInfoDecoding =
    0x00000000,0x00,0x00,0x00,0x00,0x0000,0x0000
 };
 
+static TA_DecodingParam defaultAdjustDecoding =
+{
+   "finance.yahoo.com",
+   "/q/hp?s=",
+   "&a=1&b=1&c=1950&d=1&e=1&f=3000&g=m",
+   0x00000000,0x00,0x00,0x00,0x00,0x0000,0x0000
+};
+
 /* European Web Site decoding info.
  *
  * Just use the UK site for all european
@@ -314,7 +322,7 @@ TA_DecodingParam *TA_YahooIdxDecodingParam( TA_YahooIdx *idx, TA_DecodeType type
 
    switch( type )
    {
-   case TA_YAHOOIDX_CVS_PAGE:
+   case TA_YAHOOIDX_CSV_PAGE:
       return idxHidden->decodingParam.historical;
 
    case TA_YAHOOIDX_MARKET_PAGE:
@@ -322,6 +330,9 @@ TA_DecodingParam *TA_YahooIdxDecodingParam( TA_YahooIdx *idx, TA_DecodeType type
 
    case TA_YAHOOIDX_INFO:
       return idxHidden->decodingParam.info;
+
+   case TA_YAHOOIDX_ADJUSTMENT:
+      return idxHidden->decodingParam.adjustment;
 
    default:
       return NULL;
@@ -526,7 +537,7 @@ TA_RetCode TA_YahooIdxFree( TA_YahooIdx *idxToBeFreed )
             }
          }
 
-         TA_Free(  idxToBeFreed->categories );
+         TA_Free( idxToBeFreed->categories );
       }
 
       /* Free hidden data. */
@@ -538,11 +549,12 @@ TA_RetCode TA_YahooIdxFree( TA_YahooIdx *idxToBeFreed )
          freeDecodingParam( idxHidden->decodingParam.market );
       if( idxHidden->decodingParam.info )
          freeDecodingParam( idxHidden->decodingParam.info );
+      /* Note: idxHidden->decodingParam.adjustment is hard coded. */
 
-      TA_Free(  idxHidden );
+      TA_Free( idxHidden );
 
       /* Finally, free the TA_YahooIdx itself. */
-      TA_Free(  idxToBeFreed );
+      TA_Free( idxToBeFreed );
    }
 
    return TA_SUCCESS;
@@ -921,7 +933,7 @@ static TA_RetCode buildIndexFromRemoteCache( TA_YahooIdx *idx, TA_Timestamp *cac
    sprintf( buffer, "/rdata/y_%c%c.dat",
             tolower(idx->countryAbbrev[0]),
             tolower(idx->countryAbbrev[1]) );
-   retCode = TA_WebPageAlloc( "ta-lib.sourceforge.net",
+   retCode = TA_WebPageAlloc( "ta-lib.org",
                               buffer,
                               NULL, NULL,
                               &webPage, 2 );
@@ -1290,6 +1302,7 @@ static TA_RetCode convertStreamToTables( TA_YahooIdx *idx, TA_StreamAccess *stre
    unsigned int i, j, intData, tempInt;
    unsigned int nbCategory, nbSymbol;
    unsigned char data;
+   unsigned char version;
    TA_YahooIdxHidden *idxHidden;
    TA_YahooCategory *category;
    unsigned char countryAbbrev[3];
@@ -1309,12 +1322,12 @@ static TA_RetCode convertStreamToTables( TA_YahooIdx *idx, TA_StreamAccess *stre
       return TA_BAD_YAHOO_IDX_HDR;
 
    /* Get the version. */    
-   retCode = TA_StreamAccessGetByte( streamAccess, &data );
+   retCode = TA_StreamAccessGetByte( streamAccess, &version );
    if( retCode != TA_SUCCESS )
       return retCode;
    
-   /* This code support only Version 0.2 of this encoding. */
-   if( data != 0x02 )
+   /* This code supports only Version 0.2 for now. */
+   if( version != 0x02 )
       return TA_UNSUPORTED_YAHOO_IDX_VERSION;
 
    /* Get the timestamp. This is unused here. */
@@ -1345,6 +1358,9 @@ static TA_RetCode convertStreamToTables( TA_YahooIdx *idx, TA_StreamAccess *stre
    retCode = allocDecodingParam( streamAccess, &idxHidden->decodingParam.info );
    if( retCode != TA_SUCCESS )
       return retCode;
+
+   /* "Adjustment" decoding info is hard coded for now. */ 
+   idxHidden->decodingParam.adjustment = &defaultAdjustDecoding;
 
    /* Get the number of category and allocate the needed space. */
    retCode = TA_StreamAccessGetInt16( streamAccess, &nbCategory );

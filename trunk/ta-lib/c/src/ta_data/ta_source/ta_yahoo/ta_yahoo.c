@@ -120,12 +120,16 @@ TA_RetCode TA_YAHOO_GetParameters( TA_DataSourceParameters *param )
 {
    TA_PROLOG
 
-   TA_TRACE_BEGIN(  TA_YAHOO_GetParameters );
+   TA_TRACE_BEGIN( TA_YAHOO_GetParameters );
 
    memset( param, 0, sizeof( TA_DataSourceParameters ) );
 
    /* Internet access is considered slow. */
    param->flags = TA_SLOW_ACCESS;
+
+   /* Indicate the support for split/value adjustment. */
+   param->flags |= TA_DO_NOT_SPLIT_ADJUST;
+   param->flags |= TA_DO_NOT_VALUE_ADJUST;
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }

@@ -393,7 +393,7 @@ TA_RetCode TA_WebPageAllocFromYahooName( const TA_DecodingParam *decodingParam,
    const char *uirPrefix, *uirSuffix;
    TA_WebPage *webPage;
 
-   TA_TRACE_BEGIN(  TA_WebPageAllocFromYahooName );
+   TA_TRACE_BEGIN( TA_WebPageAllocFromYahooName );
 
    retCode = TA_INTERNAL_ERROR(117);
 
