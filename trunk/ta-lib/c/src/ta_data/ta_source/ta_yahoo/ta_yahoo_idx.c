@@ -45,6 +45,7 @@
  *  061201 MF   First version.
  *  062803 MF   Add printf when failed to add the symbol to index.
  *  031604 SD   Fix #917085 - Unprotected fclose was causing segfault.
+ *  061304 MF   Replace chart.yahoo.com with ichart.yahoo.com
  */
 
 /* Description:
@@ -249,7 +250,7 @@ TA_FILE_INFO;
 /* American and Canadian decoding info. */
 static TA_DecodingParam defaultHistoricalDecoding =
 {
-   "chart.yahoo.com",
+   "ichart.yahoo.com",
    "/table.csv?s=",
    "&a=1&b=1&c=1950&d=1&e=1&f=3000&g=d&q=q&y=0&z=file&x=.csv",
    0x00000000,0x00,0x00,0x00,0x00,0x0000,0x0000
@@ -315,7 +316,28 @@ TA_DecodingParam *TA_YahooIdxDecodingParam( TA_YahooIdx *idx, TA_DecodeType type
 {
    TA_YahooIdxHidden *idxHidden;
 
-   TA_ASSERT_RET( idx != NULL, NULL );
+   if( idx == NULL )
+   {
+      // When no index (from .dat file) is provided, we
+      // use by default the US web-site for now.
+      switch( type )
+      {
+      case TA_YAHOOIDX_CSV_PAGE:
+         return &defaultHistoricalDecoding;
+
+      case TA_YAHOOIDX_MARKET_PAGE:
+         return &defaultMarketDecoding;
+
+      case TA_YAHOOIDX_INFO:
+         return &defaultInfoDecoding;
+
+      case TA_YAHOOIDX_ADJUSTMENT:
+         return &defaultAdjustDecoding;
+
+      default:
+         return NULL;
+      }
+   }
 
    idxHidden = (TA_YahooIdxHidden *)idx->hiddenData;
    if( !idxHidden )
