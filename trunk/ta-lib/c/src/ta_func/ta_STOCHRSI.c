@@ -44,7 +44,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
- *  240903 PP   Initial creation of code.
+ *  101103 PP   Initial creation of code.
  *
  */
 
@@ -89,7 +89,11 @@
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   return 0;
+   int retValue;
+
+   retValue = TA_RSI_Lookback( optInFastK_Period ) + TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+
+   return retValue;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -139,6 +143,11 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* insert local variable here */
+   ARRAY_REF(tempRSIBuffer);
+
+   TA_RetCode retCode;
+   int lookbackTotal, lookbackRSI, tempArraySize;
+   int outBegIdx1, outBegIdx2, outNbElement1;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -183,8 +192,76 @@
 
    /* Insert TA function code here. */
   
+   /* 
+    * Stochastic RSI
+    *
+    */
+
    *outBegIdx    = 0;
    *outNbElement = 0;
+
+   /* Adjust startIdx to account for the lookback period. */
+   lookbackRSI = TA_RSI_Lookback( optInFastK_Period );
+   lookbackTotal = lookbackRSI + TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
+
+   /* Make sure there is still something to evaluate. */
+   if( startIdx >= endIdx )
+  {
+     *outBegIdx = 0;
+     *outNbElement = 0;
+     return retCode;
+  }
+
+   *outBegIdx = startIdx;
+
+   tempArraySize = (endIdx - startIdx) + 1 + lookbackTotal;
+
+   ARRAY_ALLOC( tempRSIBuffer, tempArraySize );
+
+   retCode = TA_RSI(startIdx, 
+                    endIdx, 
+                    inReal, 
+                    optInFastK_Period, 
+                    &outBegIdx1, 
+                    &outNbElement1, 
+                    tempRSIBuffer);
+
+  if( retCode != TA_SUCCESS || outNbElement1 == 0 )
+  {
+     ARRAY_FREE( tempRSIBuffer );
+     *outBegIdx = 0;
+     *outNbElement = 0;
+     return retCode;
+  }
+   
+   tempArraySize--;
+   tempArraySize -= lookbackRSI;
+
+   retCode = TA_STOCHF(0,
+                       tempArraySize,
+                       tempRSIBuffer,
+                       tempRSIBuffer,
+                       tempRSIBuffer,
+                       optInFastK_Period,
+                       optInFastD_Period,
+                       optInFastD_MAType,
+                       &outBegIdx2,
+                       outNbElement,
+                       outFastK,
+                       outFastD);
+ 
+   ARRAY_FREE( tempRSIBuffer );
+
+  if( retCode != TA_SUCCESS || outNbElement == 0 )
+  {
+     *outBegIdx = 0;
+     *outNbElement = 0;
+     return retCode;
+  }
+
    return TA_SUCCESS;
 }
 
