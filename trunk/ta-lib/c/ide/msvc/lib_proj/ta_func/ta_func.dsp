@@ -456,6 +456,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_TRIX.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_TSF.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_TYPPRICE.c
 # End Source File
 # Begin Source File
