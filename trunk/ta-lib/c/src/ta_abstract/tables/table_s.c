@@ -137,7 +137,7 @@ static const TA_RealRange TA_DEF_AccelerationInit =
 
 static const TA_RealRange TA_DEF_SARStartValue =
 {
-   0.0,         /* min */
+   TA_REAL_MIN, /* min */
    TA_REAL_MAX, /* max */
    4,     /* precision */
    0, /* suggested start */

@@ -84,7 +84,7 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::SAREXT_Lookback( double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+/* Generated */ int Core::SAREXT_Lookback( double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                          double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
 /* Generated */                          double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
 /* Generated */                          double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
@@ -94,7 +94,7 @@
 /* Generated */                          double        optInAccelerationMaxShort_7 )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_SAREXT_Lookback( double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+/* Generated */ int TA_SAREXT_Lookback( double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                       double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
 /* Generated */                       double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
 /* Generated */                       double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
@@ -132,7 +132,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInStartValue_0:(From 0 to TA_REAL_MAX)
+ * optInStartValue_0:(From TA_REAL_MIN to TA_REAL_MAX)
  *    Start value and direction. 0 for Auto, >0 for Long, <0 for Short
  * 
  * optInOffsetOnReverse_1:(From 0 to TA_REAL_MAX)
@@ -164,7 +164,7 @@
 /* Generated */                                     int    endIdx,
 /* Generated */                                     double       inHigh_0 __gc [],
 /* Generated */                                     double       inLow_0 __gc [],
-/* Generated */                                     double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                                     double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
 /* Generated */                                     double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
 /* Generated */                                     double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
@@ -180,7 +180,7 @@
 /* Generated */                       int    endIdx,
 /* Generated */                       const double inHigh_0[],
 /* Generated */                       const double inLow_0[],
-/* Generated */                       double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                       double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
 /* Generated */                       double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
 /* Generated */                       double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
@@ -228,7 +228,7 @@
 /* Generated */ 
 /* Generated */    if( optInStartValue_0 == TA_REAL_DEFAULT )
 /* Generated */       optInStartValue_0 = 0.000000e+0;
-/* Generated */    else if( (optInStartValue_0 < 0.000000e+0) ||/* Generated */  (optInStartValue_0 > 3.000000e+37) )
+/* Generated */    else if( (optInStartValue_0 < -3.000000e+37) ||/* Generated */  (optInStartValue_0 > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInOffsetOnReverse_1 == TA_REAL_DEFAULT )
@@ -617,7 +617,7 @@
 /* Generated */                                     int    endIdx,
 /* Generated */                                     float        inHigh_0 __gc [],
 /* Generated */                                     float        inLow_0 __gc [],
-/* Generated */                                     double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                                     double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
 /* Generated */                                     double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
 /* Generated */                                     double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
@@ -633,7 +633,7 @@
 /* Generated */                         int    endIdx,
 /* Generated */                         const float  inHigh_0[],
 /* Generated */                         const float  inLow_0[],
-/* Generated */                         double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                         double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                         double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
 /* Generated */                         double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
 /* Generated */                         double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
