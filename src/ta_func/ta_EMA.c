@@ -107,9 +107,9 @@ TA_RetCode TA_EMA( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
-   if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 30;
-   else if( (optInTimePeriod_0 < 2) || (optInTimePeriod_0 > 2147483647) )
+   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -181,7 +181,7 @@ TA_RetCode TA_INT_EMA( TA_Integer    startIdx,
       *outNbElement = 0;
       return TA_SUCCESS;
    }
-
+   *outBegIdx = startIdx;
 
    /* Do the EMA calculation using tight loops. */
    
@@ -245,7 +245,6 @@ TA_RetCode TA_INT_EMA( TA_Integer    startIdx,
    /* Write the first value. */
    outReal_0[0] = prevMA;
    outIdx = 1;
-   *outBegIdx = today-1;
 
    /* Calculate the remaining range. */
    while( today <= endIdx )

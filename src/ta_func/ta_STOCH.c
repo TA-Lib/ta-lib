@@ -154,31 +154,31 @@ TA_RetCode TA_STOCH( TA_Integer    startIdx,
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInFastK_Period_0. */
-   if( optInFastK_Period_0 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInFastK_Period_0 == TA_INTEGER_DEFAULT )
       optInFastK_Period_0 = 5;
-   else if( (optInFastK_Period_0 < 1) || (optInFastK_Period_0 > 2147483647) )
+   else if( ((TA_Integer)optInFastK_Period_0 < 1) || ((TA_Integer)optInFastK_Period_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowK_Period_1. */
-   if( optInSlowK_Period_1 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInSlowK_Period_1 == TA_INTEGER_DEFAULT )
       optInSlowK_Period_1 = 3;
-   else if( (optInSlowK_Period_1 < 1) || (optInSlowK_Period_1 > 2147483647) )
+   else if( ((TA_Integer)optInSlowK_Period_1 < 1) || ((TA_Integer)optInSlowK_Period_1 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( optInSlowK_MAType_2 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInSlowK_MAType_2 == TA_INTEGER_DEFAULT )
       optInSlowK_MAType_2 = 0;
-   else if( (optInSlowK_MAType_2 < 0) || (optInSlowK_MAType_2 > 7) )
+   else if( ((TA_Integer)optInSlowK_MAType_2 < 0) || ((TA_Integer)optInSlowK_MAType_2 > 8) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowD_Period_3. */
-   if( optInSlowD_Period_3 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInSlowD_Period_3 == TA_INTEGER_DEFAULT )
       optInSlowD_Period_3 = 3;
-   else if( (optInSlowD_Period_3 < 1) || (optInSlowD_Period_3 > 2147483647) )
+   else if( ((TA_Integer)optInSlowD_Period_3 < 1) || ((TA_Integer)optInSlowD_Period_3 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( optInSlowD_MAType_4 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInSlowD_MAType_4 == TA_INTEGER_DEFAULT )
       optInSlowD_MAType_4 = 0;
-   else if( (optInSlowD_MAType_4 < 0) || (optInSlowD_MAType_4 > 7) )
+   else if( ((TA_Integer)optInSlowD_MAType_4 < 0) || ((TA_Integer)optInSlowD_MAType_4 > 8) )
       return TA_BAD_PARAM;
 
    if( outSlowK_0 == NULL )

@@ -152,36 +152,36 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInFastPeriod_0. */
-   if( optInFastPeriod_0 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
       optInFastPeriod_0 = 12;
-   else if( (optInFastPeriod_0 < 2) || (optInFastPeriod_0 > 2147483647) )
+   else if( ((TA_Integer)optInFastPeriod_0 < 2) || ((TA_Integer)optInFastPeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( optInFastMAType_1 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInFastMAType_1 == TA_INTEGER_DEFAULT )
       optInFastMAType_1 = 0;
-   else if( (optInFastMAType_1 < 0) || (optInFastMAType_1 > 7) )
+   else if( ((TA_Integer)optInFastMAType_1 < 0) || ((TA_Integer)optInFastMAType_1 > 8) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowPeriod_2. */
-   if( optInSlowPeriod_2 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInSlowPeriod_2 == TA_INTEGER_DEFAULT )
       optInSlowPeriod_2 = 26;
-   else if( (optInSlowPeriod_2 < 2) || (optInSlowPeriod_2 > 2147483647) )
+   else if( ((TA_Integer)optInSlowPeriod_2 < 2) || ((TA_Integer)optInSlowPeriod_2 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( optInSlowMAType_3 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInSlowMAType_3 == TA_INTEGER_DEFAULT )
       optInSlowMAType_3 = 0;
-   else if( (optInSlowMAType_3 < 0) || (optInSlowMAType_3 > 7) )
+   else if( ((TA_Integer)optInSlowMAType_3 < 0) || ((TA_Integer)optInSlowMAType_3 > 8) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSignalPeriod_4. */
-   if( optInSignalPeriod_4 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInSignalPeriod_4 == TA_INTEGER_DEFAULT )
       optInSignalPeriod_4 = 9;
-   else if( (optInSignalPeriod_4 < 1) || (optInSignalPeriod_4 > 2147483647) )
+   else if( ((TA_Integer)optInSignalPeriod_4 < 1) || ((TA_Integer)optInSignalPeriod_4 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( optInSignalMAType_5 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInSignalMAType_5 == TA_INTEGER_DEFAULT )
       optInSignalMAType_5 = 0;
-   else if( (optInSignalMAType_5 < 0) || (optInSignalMAType_5 > 7) )
+   else if( ((TA_Integer)optInSignalMAType_5 < 0) || ((TA_Integer)optInSignalMAType_5 > 8) )
       return TA_BAD_PARAM;
 
    if( outMACD_0 == NULL )

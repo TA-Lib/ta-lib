@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  022203 MF   Add MAMA
+ *  040503 Mf   Add T3
  *
  */
 
@@ -96,8 +97,13 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX
    case TA_MAType_KAMA:
       return TA_KAMA_Lookback( optInTimePeriod_0 );
       break;
+
    case TA_MAType_MAMA:
       return TA_MAMA_Lookback( 0.5, 0.05 );
+      break;
+
+   case TA_MAType_T3:
+      return TA_T3_Lookback( optInTimePeriod_0, 0.7 );
       break;
    }
 
@@ -149,14 +155,14 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
-   if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 30;
-   else if( (optInTimePeriod_0 < 2) || (optInTimePeriod_0 > 2147483647) )
+   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( optInMAType_1 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInMAType_1 == TA_INTEGER_DEFAULT )
       optInMAType_1 = 0;
-   else if( (optInMAType_1 < 0) || (optInMAType_1 > 7) )
+   else if( ((TA_Integer)optInMAType_1 < 0) || ((TA_Integer)optInMAType_1 > 8) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -221,6 +227,12 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
                          outReal_0, dummyBuffer );
       TA_Free( dummyBuffer );
       return retCode;
+      break;
+   case TA_MAType_T3:
+      return TA_T3( startIdx, endIdx,
+                    inReal_0, optInTimePeriod_0, 0.7,
+                    outBegIdx, outNbElement, outReal_0 );
+      break;
    }
 
    *outBegIdx    = 0;

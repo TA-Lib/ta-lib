@@ -139,20 +139,20 @@ TA_RetCode TA_STOCHF( TA_Integer    startIdx,
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInFastK_Period_0. */
-   if( optInFastK_Period_0 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInFastK_Period_0 == TA_INTEGER_DEFAULT )
       optInFastK_Period_0 = 5;
-   else if( (optInFastK_Period_0 < 1) || (optInFastK_Period_0 > 2147483647) )
+   else if( ((TA_Integer)optInFastK_Period_0 < 1) || ((TA_Integer)optInFastK_Period_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInFastD_Period_1. */
-   if( optInFastD_Period_1 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInFastD_Period_1 == TA_INTEGER_DEFAULT )
       optInFastD_Period_1 = 3;
-   else if( (optInFastD_Period_1 < 1) || (optInFastD_Period_1 > 2147483647) )
+   else if( ((TA_Integer)optInFastD_Period_1 < 1) || ((TA_Integer)optInFastD_Period_1 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( optInFastD_MAType_2 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInFastD_MAType_2 == TA_INTEGER_DEFAULT )
       optInFastD_MAType_2 = 0;
-   else if( (optInFastD_MAType_2 < 0) || (optInFastD_MAType_2 > 7) )
+   else if( ((TA_Integer)optInFastD_MAType_2 < 0) || ((TA_Integer)optInFastD_MAType_2 > 8) )
       return TA_BAD_PARAM;
 
    if( outFastK_0 == NULL )
