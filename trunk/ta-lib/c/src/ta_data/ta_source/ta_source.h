@@ -146,6 +146,8 @@ TA_RetCode TA_GetInfoFromAddedData( TA_ParamForAddData *paramForAddData,
 
 typedef struct
 {
+    const char *defaultName;
+
     /* The driver initialization is the VERY first
      * function called. This allows the driver to initialize
      * its own global variables etc...
