@@ -96,30 +96,26 @@ static TA_RetCode fieldToStr( TA_TokenInfo *currentToken,
                               char *str, int maxStrLength,
                               int *nbCharAdded, int *valueConsumed );
 
-static TA_RetCode extractTokenValue( TA_Libc *libHandle,
-                                     TA_FileIndexPriv *fileIndexPriv,
+static TA_RetCode extractTokenValue( TA_FileIndexPriv *fileIndexPriv,
                                      TA_ValueTreeNode **addedHead,
                                      const char *string,
                                      int allowIndexUpdate );
 
-static TA_RetCode extractTokenValueRecursive( TA_Libc *libHandle,
-                                              TA_FileIndexPriv *fileIndexPriv,
+static TA_RetCode extractTokenValueRecursive( TA_FileIndexPriv *fileIndexPriv,
                                               TA_PatternIter *iter,
                                               const char *string,
                                               unsigned int firstOfOneOrMore );
 
-static TA_RetCode addValueDown( TA_Libc *libHandle,
-                                TA_FileIndexPriv *fileIndexPriv,
+static TA_RetCode addValueDown( TA_FileIndexPriv *fileIndexPriv,
                                 TA_TokenId id,
                                 const char *string );
 
-static TA_RetCode addCurrentDataToIndex( TA_Libc *libHandle,
-                                         TA_FileIndexPriv *fileIndexPriv,
+static TA_RetCode addCurrentDataToIndex( TA_FileIndexPriv *fileIndexPriv,
                                          TA_ValueTreeNode *treeNodeValue );
 
-static TA_RetCode TA_PatternInit( TA_Libc *libHandle, TA_FileIndexPriv *fileIndexPriv, TA_PatternIter *iter );
-static char getPatternChar ( TA_Libc *libHandle, TA_PatternIter *iter );
-static char nextPatternChar( TA_Libc *libHandle, TA_PatternIter *iter );
+static TA_RetCode TA_PatternInit( TA_FileIndexPriv *fileIndexPriv, TA_PatternIter *iter );
+static char getPatternChar ( TA_PatternIter *iter );
+static char nextPatternChar( TA_PatternIter *iter );
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
@@ -127,22 +123,19 @@ TA_FILE_INFO;
 /**** Global functions definitions.   ****/
 TA_RetCode TA_FileIndexBuildIndex( TA_FileIndexPriv *fileIndexPriv )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    unsigned int fileDepth;
-   TA_Libc *libHandle;
 
    if( !fileIndexPriv )
       return TA_ALLOC_ERR;
 
-   libHandle = fileIndexPriv->libHandle;
-
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexBuildIndex );
+   TA_TRACE_BEGIN(  TA_FileIndexBuildIndex );
 
    /* Verify parameters. */
    if( !fileIndexPriv->listLocationToken )
    {
-      TA_FATAL( libHandle, NULL, fileIndexPriv, fileIndexPriv->listLocationToken );
+      TA_FATAL( NULL, fileIndexPriv, fileIndexPriv->listLocationToken );
    }
 
    /* Identify at which level that files are
@@ -169,23 +162,20 @@ TA_RetCode TA_FileIndexMakePathPattern( TA_FileIndexPriv *fileIndexPriv,
                                         char *bufferToUse,
                                         int maxBufferSize )
 {
-   TA_PROLOG;
+   TA_PROLOG
    int maxDepth;
-   TA_Libc *libHandle;
    TA_RetCode retCode;
 
-   libHandle = fileIndexPriv->libHandle;
+   TA_TRACE_BEGIN(  TA_FileIndexMakePathPattern );
 
-   TA_TRACE_BEGIN( libHandle, TA_FileIndexMakePathPattern );
+   TA_ASSERT( fileIndexPriv != NULL );
+   TA_ASSERT( node !=  NULL );
+   TA_ASSERT( bufferToUse != NULL );
+   TA_ASSERT( maxBufferSize >= 1 );
 
-   TA_ASSERT( libHandle, fileIndexPriv != NULL );
-   TA_ASSERT( libHandle, node !=  NULL );
-   TA_ASSERT( libHandle, bufferToUse != NULL );
-   TA_ASSERT( libHandle, maxBufferSize >= 1 );
-
-   TA_ASSERT( libHandle, fileIndexPriv->listLocationToken != NULL );
+   TA_ASSERT( fileIndexPriv->listLocationToken != NULL );
    maxDepth = TA_ListSize( fileIndexPriv->listLocationToken ) - 1;
-   TA_ASSERT( libHandle, maxDepth >= 1 );
+   TA_ASSERT( maxDepth >= 1 );
 
    bufferToUse[0] = '\0';
 
@@ -199,9 +189,8 @@ TA_RetCode TA_FileIndexMakePathPattern( TA_FileIndexPriv *fileIndexPriv,
 /**** Local functions definitions.     ****/
 static TA_RetCode buildIndexList( TA_FileIndexPriv *fileIndexPriv, unsigned int fileDepth )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
-   TA_Libc *libHandle;
 
    /* Note: this function is recursively called. */
 
@@ -209,13 +198,11 @@ static TA_RetCode buildIndexList( TA_FileIndexPriv *fileIndexPriv, unsigned int 
    if( fileIndexPriv == NULL )
       return TA_ALLOC_ERR;
 
-   libHandle = fileIndexPriv->libHandle;
-
-   TA_TRACE_BEGIN( libHandle, buildIndexList );
+   TA_TRACE_BEGIN(  buildIndexList );
 
    if( fileIndexPriv->curTokenDepth > 500 )
    {
-      TA_FATAL( libHandle, NULL, fileIndexPriv->curTokenDepth, 0 );
+      TA_FATAL(  NULL, fileIndexPriv->curTokenDepth, 0 );
    }
 
    if( fileIndexPriv->curToken )
@@ -224,7 +211,7 @@ static TA_RetCode buildIndexList( TA_FileIndexPriv *fileIndexPriv, unsigned int 
           (fileIndexPriv->curToken->id > TA_NB_TOKEN_ID) ||
           (fileIndexPriv->curToken->id == TA_TOK_END) )
       {
-         TA_FATAL( libHandle, NULL, fileIndexPriv->curTokenDepth, fileIndexPriv->curToken->id );
+         TA_FATAL(  NULL, fileIndexPriv->curTokenDepth, fileIndexPriv->curToken->id );
       }
    }
 
@@ -237,7 +224,7 @@ static TA_RetCode buildIndexList( TA_FileIndexPriv *fileIndexPriv, unsigned int 
 
    if( fileIndexPriv->curToken == NULL )
    {
-      TA_FATAL( libHandle, NULL, fileIndexPriv->prevToken, fileIndexPriv->nextToken );
+      TA_FATAL(  NULL, fileIndexPriv->prevToken, fileIndexPriv->nextToken );
    }
 
    /* Skip all fix part not requiring processing. */
@@ -273,12 +260,11 @@ static TA_RetCode makePathPattern( TA_FileIndexPriv *fileIndexPriv,
                                    TA_ValueTreeNode *node, int maxDepth,
                                    char *bufferToUse, int maxBufferSize )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_List *listOfValue;
    TA_TokenInfo *currentToken;
    TA_ValueTreeNode *currentValue;
    TA_RetCode retCode;
-   TA_Libc *libHandle;
 
    int i;
    int nbCharAdded, valueConsumed;
@@ -287,11 +273,10 @@ static TA_RetCode makePathPattern( TA_FileIndexPriv *fileIndexPriv,
    if( !fileIndexPriv )
       return TA_INTERNAL_ERROR(63);
 
-   libHandle = fileIndexPriv->libHandle;
-   TA_TRACE_BEGIN( libHandle, makePathPattern );
+   TA_TRACE_BEGIN( makePathPattern );
 
    /* Build a list of value up to the root. */
-   listOfValue = TA_ListAlloc( libHandle );
+   listOfValue = TA_ListAlloc( );
 
    if( !listOfValue )
    {
@@ -355,7 +340,7 @@ static TA_RetCode makePathPattern( TA_FileIndexPriv *fileIndexPriv,
    {
       if( currentToken != fileIndexPriv->nextToken )
       {
-         TA_FATAL( fileIndexPriv->libHandle, NULL, currentToken->id, fileIndexPriv->curToken->id );
+         TA_FATAL( NULL, currentToken->id, fileIndexPriv->curToken->id );
       }
    }
 
@@ -456,7 +441,7 @@ static TA_RetCode fieldToStr( TA_TokenInfo *currentToken,
 
 static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned int fileDepth )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_Directory *directory;
    char *basename;
@@ -464,16 +449,14 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
    TA_ValueTreeNode *addedHead;
    TA_String *curDirectoryString;
    int dataSourceEmpty;
-   TA_Libc *libHandle;
    TA_StringCache *stringCache;
 
    if( !fileIndexPriv )
       return TA_INTERNAL_ERROR(73);
 
-   libHandle = fileIndexPriv->libHandle;
-   TA_TRACE_BEGIN( libHandle, processDirectory );
+   TA_TRACE_BEGIN(  processDirectory );
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache( );
 
    /* Note: This function is recursively called. */
 
@@ -493,10 +476,10 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
       if(addedHead) \
       { \
          fileIndexPriv->currentNode=addedHead->parent; \
-         TA_FileIndexFreeValueTree(libHandle,addedHead); \
+         TA_FileIndexFreeValueTree(addedHead); \
       } \
       if(directory) \
-         TA_DirectoryFree(libHandle,directory); \
+         TA_DirectoryFree(directory); \
       if(curDirectoryString) \
          TA_StringFree(stringCache,curDirectoryString);  \
    }
@@ -511,14 +494,14 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
    if( !(fileIndexPriv->nextToken) || !(fileIndexPriv->curToken) )
    {
       CLEAN_UP;
-      TA_FATAL( libHandle, NULL, fileIndexPriv->nextToken, fileIndexPriv->curToken );
+      TA_FATAL(  NULL, fileIndexPriv->nextToken, fileIndexPriv->curToken );
    }
 
    if( (fileIndexPriv->curToken->id == TA_TOK_END) ||
        (fileIndexPriv->nextToken->id == TA_TOK_END) )
    {
       CLEAN_UP;
-      TA_FATAL( libHandle, NULL, fileIndexPriv->nextToken->id, fileIndexPriv->curToken->id );
+      TA_FATAL(  NULL, fileIndexPriv->nextToken->id, fileIndexPriv->curToken->id );
    }
 
    /* Skip tokens until the next TA_TOK_SEP. The directory
@@ -545,7 +528,7 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
    basename = fileIndexPriv->scratchPad;
 
    /* Get all the corresponding directory entries. */
-   retCode = TA_DirectoryAlloc( libHandle, basename, &directory );
+   retCode = TA_DirectoryAlloc( basename, &directory );
    if( retCode != TA_SUCCESS )
       RETURN( retCode );
 
@@ -567,7 +550,7 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
        * removal of all value added from addedHead.
        */
       addedHead = NULL;
-      retCode = extractTokenValue( libHandle, fileIndexPriv,
+      retCode = extractTokenValue( fileIndexPriv,
                                    &addedHead,
                                    TA_StringToChar( curDirectoryString ),
                                    0 );
@@ -579,7 +562,7 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
       if( fileIndexPriv->nextToken->id == TA_TOK_END )
       {
          /* End-up here if TA_TOK_END is prematury seen... */
-         TA_FATAL( libHandle, NULL, fileIndexPriv->curTokenDepth, fileIndexPriv->nextToken->id );
+         TA_FATAL(  NULL, fileIndexPriv->curTokenDepth, fileIndexPriv->nextToken->id );
          RETURN( TA_INTERNAL_ERROR(77) );
       }
 
@@ -613,7 +596,7 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
             /* TA_NO_DATA_SOURCE was establish and some value are still in
              * the value tree... make sure all added values are freed.
              */
-            TA_FileIndexFreeValueTree( libHandle, addedHead );
+            TA_FileIndexFreeValueTree( addedHead );
          }
 
          /* At this point the value are either good and belongs to the
@@ -635,7 +618,7 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
    }
 
    /* Clean-up and return successfully. */
-   retCode = TA_DirectoryFree( libHandle, directory );
+   retCode = TA_DirectoryFree( directory );
    directory = NULL;
    if( retCode != TA_SUCCESS )
       RETURN( TA_ALLOC_ERR );
@@ -650,14 +633,13 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
 
 static TA_RetCode processFiles( TA_FileIndexPriv *fileIndexPriv, unsigned int fileDepth )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_Directory *directory;
    char *basename;
    int rememberDepth;
    TA_ValueTreeNode *addedHead;
    TA_String *curFileString;
-   TA_Libc *libHandle;
    TA_StringCache *stringCache;
 
    int dataSourceEmpty;
@@ -667,11 +649,9 @@ static TA_RetCode processFiles( TA_FileIndexPriv *fileIndexPriv, unsigned int fi
    if( !fileIndexPriv )
       return TA_INTERNAL_ERROR(78);
 
-   libHandle = fileIndexPriv->libHandle;
+   TA_TRACE_BEGIN(  processFiles );
 
-   TA_TRACE_BEGIN( libHandle, processFiles );
-
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache( );
 
    /* Processing Files. */
 
@@ -693,10 +673,10 @@ static TA_RetCode processFiles( TA_FileIndexPriv *fileIndexPriv, unsigned int fi
    if(addedHead) \
    { \
       fileIndexPriv->currentNode=addedHead->parent; \
-      TA_FileIndexFreeValueTree(libHandle,addedHead);\
+      TA_FileIndexFreeValueTree(addedHead);\
    } \
    if(directory) \
-      TA_DirectoryFree(libHandle,directory); \
+      TA_DirectoryFree(directory); \
    if(curFileString) \
       TA_StringFree(stringCache,curFileString); \
    }
@@ -710,13 +690,13 @@ static TA_RetCode processFiles( TA_FileIndexPriv *fileIndexPriv, unsigned int fi
    if( !(fileIndexPriv->nextToken) || !(fileIndexPriv->curToken) )
    {
       CLEAN_UP;
-      TA_FATAL( libHandle, NULL, fileIndexPriv->nextToken, fileIndexPriv->curToken );
+      TA_FATAL( NULL, fileIndexPriv->nextToken, fileIndexPriv->curToken );
    }
 
    if( fileIndexPriv->curToken->id == TA_TOK_END )
    {
       CLEAN_UP;
-      TA_FATAL( libHandle, NULL, fileIndexPriv->nextToken->id, fileIndexPriv->curToken->id );      
+      TA_FATAL( NULL, fileIndexPriv->nextToken->id, fileIndexPriv->curToken->id );      
    }
 
    /* Skip tokens until the TA_TOK_END. The directory pattern
@@ -731,17 +711,17 @@ static TA_RetCode processFiles( TA_FileIndexPriv *fileIndexPriv, unsigned int fi
 
    /* Identify the basename and the pattern. */
    retCode = makePathPattern( fileIndexPriv, 
-		              fileIndexPriv->currentNode,
-			      fileIndexPriv->curTokenDepth-1,
+                              fileIndexPriv->currentNode,
+                              fileIndexPriv->curTokenDepth-1,
                               fileIndexPriv->scratchPad,
-			      TA_SOURCELOCATION_MAX_LENGTH );
+                              TA_SOURCELOCATION_MAX_LENGTH );
    if( retCode != TA_SUCCESS )
       RETURN( retCode );
 
    basename = fileIndexPriv->scratchPad;
 
    /* Get all the corresponding files entries. */
-   retCode = TA_DirectoryAlloc( libHandle, basename, &directory );
+   retCode = TA_DirectoryAlloc( basename, &directory );
    if( retCode != TA_SUCCESS )
       RETURN( retCode );
 
@@ -762,7 +742,7 @@ static TA_RetCode processFiles( TA_FileIndexPriv *fileIndexPriv, unsigned int fi
       /* printf( " File:[%s]\n", TA_StringToChar( curFileString ) ); */
 
       addedHead = NULL;
-      retCode = extractTokenValue( libHandle, fileIndexPriv, &addedHead,
+      retCode = extractTokenValue( fileIndexPriv, &addedHead,
                                    TA_StringToChar( curFileString ),
                                    1 );
 
@@ -780,7 +760,7 @@ static TA_RetCode processFiles( TA_FileIndexPriv *fileIndexPriv, unsigned int fi
             /* TA_NO_DATA_SOURCE was establish and some value are still in
              * the value tree... make sure all added values are freed.
              */
-            TA_FileIndexFreeValueTree( libHandle, addedHead );
+            TA_FileIndexFreeValueTree( addedHead );
          }
 
          /* At this point the value are either good and belongs to the
@@ -813,7 +793,7 @@ static TA_RetCode processFiles( TA_FileIndexPriv *fileIndexPriv, unsigned int fi
    }
 
    /* Clean-up and return successfully. */
-   retCode = TA_DirectoryFree( libHandle, directory );
+   retCode = TA_DirectoryFree( directory );
    directory = NULL;
    if( retCode != TA_SUCCESS )
       RETURN( retCode );
@@ -826,20 +806,19 @@ static TA_RetCode processFiles( TA_FileIndexPriv *fileIndexPriv, unsigned int fi
    #undef CLEAN_UP
 }
 
-static TA_RetCode TA_PatternInit( TA_Libc *libHandle,
-                                  TA_FileIndexPriv *fileIndexPriv,
+static TA_RetCode TA_PatternInit( TA_FileIndexPriv *fileIndexPriv,
                                   TA_PatternIter *iter )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
 
-   TA_TRACE_BEGIN( libHandle, TA_PatternInit );
+   TA_TRACE_BEGIN(  TA_PatternInit );
 
-   TA_ASSERT( libHandle, fileIndexPriv != NULL );
-   TA_ASSERT( libHandle, iter != NULL );
-   TA_ASSERT( libHandle, fileIndexPriv->curToken != NULL );
-   TA_ASSERT( libHandle, fileIndexPriv->curToken->id != TA_TOK_END );
-   TA_ASSERT( libHandle, fileIndexPriv->listLocationToken != NULL );
+   TA_ASSERT( fileIndexPriv != NULL );
+   TA_ASSERT( iter != NULL );
+   TA_ASSERT( fileIndexPriv->curToken != NULL );
+   TA_ASSERT( fileIndexPriv->curToken->id != TA_TOK_END );
+   TA_ASSERT( fileIndexPriv->listLocationToken != NULL );
 
    retCode = TA_ListIterInit( &iter->iter, fileIndexPriv->listLocationToken );
    if( retCode != TA_SUCCESS )
@@ -887,10 +866,10 @@ static TA_RetCode TA_PatternInit( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-static char nextPatternChar( TA_Libc *libHandle, TA_PatternIter *iter )
+static char nextPatternChar( TA_PatternIter *iter )
 {
-   TA_ASSERT_RET( libHandle, iter != NULL, '\0' );
-   TA_ASSERT_RET( libHandle, iter->curToken != NULL, '\0' );
+   TA_ASSERT_RET( iter != NULL, '\0' );
+   TA_ASSERT_RET( iter->curToken != NULL, '\0' );
 
    if( ((iter->curToken->id) == TA_TOK_END) ||
        ((iter->curToken->id) == TA_TOK_SEP) )
@@ -908,7 +887,7 @@ static char nextPatternChar( TA_Libc *libHandle, TA_PatternIter *iter )
 
        if( !iter->curToken )
        {
-          TA_FATAL_RET( libHandle, NULL, 0, 0, '\0' );
+          TA_FATAL_RET( NULL, 0, 0, '\0' );
        }
 
        switch( iter->curToken->id )
@@ -937,13 +916,13 @@ static char nextPatternChar( TA_Libc *libHandle, TA_PatternIter *iter )
        iter->curPosInToken++;
     }
 
-    return getPatternChar(libHandle, iter);
+    return getPatternChar( iter);
 }
 
-static char getPatternChar ( TA_Libc *libHandle, TA_PatternIter *iter )
+static char getPatternChar ( TA_PatternIter *iter )
 {
-   TA_ASSERT_RET( libHandle, iter != NULL, '\0' );
-   TA_ASSERT_RET( libHandle, iter->curToken != NULL,'\0' );
+   TA_ASSERT_RET( iter != NULL, '\0' );
+   TA_ASSERT_RET( iter->curToken != NULL,'\0' );
 
    /* These token delimitate the end of the pattern... */
    if( (iter->curToken->id == TA_TOK_SEP) ||
@@ -956,7 +935,7 @@ static char getPatternChar ( TA_Libc *libHandle, TA_PatternIter *iter )
    if( iter->curToken->id == TA_TOK_WILD_CHAR )
       return '?'; /* One character. */
 
-   TA_ASSERT_RET( libHandle, iter->curPosInToken != NULL, 0 );
+   TA_ASSERT_RET( iter->curPosInToken != NULL, 0 );
 
    switch( iter->curToken->id )
    {
@@ -978,28 +957,27 @@ static char getPatternChar ( TA_Libc *libHandle, TA_PatternIter *iter )
    return *iter->curPosInToken;
 }
 
-static TA_RetCode extractTokenValue( TA_Libc *libHandle, 
-                                     TA_FileIndexPriv *fileIndexPriv,
+static TA_RetCode extractTokenValue( TA_FileIndexPriv *fileIndexPriv,
                                      TA_ValueTreeNode **addedHead,
                                      const char *string,
                                      int allowIndexUpdate )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_PatternIter iterPattern;
    unsigned int atLeastOneValueToExtract; /* Boolean */
    int rememberStartOfLeg, rememberEndOfLeg;
    TA_ValueTreeNode *rememberTail;
 
-   TA_TRACE_BEGIN( libHandle, extractTokenValue );
+   TA_TRACE_BEGIN(  extractTokenValue );
 
    /* Note: for proper clean-up of ressources used by this function, you must
     * exit by jumping at  extractTokenValue_exit.
     */
-   TA_ASSERT( libHandle, fileIndexPriv != NULL );
-   TA_ASSERT( libHandle, addedHead != NULL );
-   TA_ASSERT( libHandle, string != NULL );
-   TA_ASSERT( libHandle, (allowIndexUpdate == 0) || (allowIndexUpdate == 1) );
+   TA_ASSERT( fileIndexPriv != NULL );
+   TA_ASSERT( addedHead != NULL );
+   TA_ASSERT( string != NULL );
+   TA_ASSERT( (allowIndexUpdate == 0) || (allowIndexUpdate == 1) );
 
    /* When calling this function, it is assumed that the fileIndexPriv->curtoken is
     * somewhere in the leg that needs to be resolved.
@@ -1065,7 +1043,7 @@ static TA_RetCode extractTokenValue( TA_Libc *libHandle,
 
          if( *addedHead == NULL )
          {
-            TA_FATAL( libHandle, NULL, *addedHead, 0 );
+            TA_FATAL( NULL, *addedHead, 0 );
             retCode = TA_INTERNAL_ERROR(82);
             goto extractTokenValue_exit;
          }
@@ -1091,7 +1069,7 @@ static TA_RetCode extractTokenValue( TA_Libc *libHandle,
    {
       /* fileIndexPriv->currentCategoryString = fileIndexPriv->initialCategoryString; */
 
-      retCode = addCurrentDataToIndex( libHandle, fileIndexPriv,  rememberTail );
+      retCode = addCurrentDataToIndex( fileIndexPriv,  rememberTail );
 
       goto extractTokenValue_exit;
    }
@@ -1112,14 +1090,14 @@ static TA_RetCode extractTokenValue( TA_Libc *libHandle,
       goto extractTokenValue_exit;
 
    /* Start the mechanism for iterating in the pattern. */
-   retCode = TA_PatternInit( libHandle, fileIndexPriv, &iterPattern );
+   retCode = TA_PatternInit( fileIndexPriv, &iterPattern );
    if( retCode != TA_SUCCESS )
       goto extractTokenValue_exit;
 
    /* Start to recursively extract the token values while
     * modifying the value in the value tree.
     */
-   retCode = extractTokenValueRecursive( libHandle, fileIndexPriv, &iterPattern, string, 0 );
+   retCode = extractTokenValueRecursive( fileIndexPriv, &iterPattern, string, 0 );
 
    if( retCode != TA_SUCCESS )
       goto extractTokenValue_exit;
@@ -1144,7 +1122,7 @@ static TA_RetCode extractTokenValue( TA_Libc *libHandle,
          fileIndexPriv->currentCategoryString = fileIndexPriv->initialCategoryString;
       #endif
 
-      retCode = addCurrentDataToIndex( libHandle, fileIndexPriv, rememberTail );
+      retCode = addCurrentDataToIndex( fileIndexPriv, rememberTail );
    }
 
    /* Must stay the only possible exit point of this function. */
@@ -1159,7 +1137,7 @@ extractTokenValue_exit:
           * used while going down on this path.
           */
          fileIndexPriv->currentNode = (*addedHead)->parent;
-         TA_FileIndexFreeValueTree( libHandle, *addedHead );
+         TA_FileIndexFreeValueTree( *addedHead );
          *addedHead = NULL;
       }
    }
@@ -1172,8 +1150,7 @@ extractTokenValue_exit:
 }
 
 /* Set the 'fileIndexPriv->currentNode' and move down to the first child. */
-static TA_RetCode addValueDown( TA_Libc *libHandle,
-                                TA_FileIndexPriv *fileIndexPriv,
+static TA_RetCode addValueDown( TA_FileIndexPriv *fileIndexPriv,
                                 TA_TokenId id,
                                 const char *string )
 {
@@ -1181,14 +1158,14 @@ static TA_RetCode addValueDown( TA_Libc *libHandle,
    TA_RetCode retCode;
    TA_StringCache *stringCache;
    
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache( );
 
    newStr = TA_StringAlloc( stringCache, string );
 
    if( !newStr )
       return TA_ALLOC_ERR;
 
-   retCode = TA_FileIndexChangeValueTreeNodeValue( libHandle, fileIndexPriv->currentNode, newStr );
+   retCode = TA_FileIndexChangeValueTreeNodeValue( fileIndexPriv->currentNode, newStr );
 
    switch( id )
    {
@@ -1223,13 +1200,12 @@ static TA_RetCode addValueDown( TA_Libc *libHandle,
    return TA_SUCCESS;
 }
 
-static TA_RetCode extractTokenValueRecursive( TA_Libc *libHandle,
-                                              TA_FileIndexPriv *fileIndexPriv,
+static TA_RetCode extractTokenValueRecursive( TA_FileIndexPriv *fileIndexPriv,
                                               TA_PatternIter *iter,
                                               const char *string,
                                               unsigned int firstOfOneOrMore )
 {
-    TA_PROLOG;
+    TA_PROLOG
     int i, again;
     int patternChar, stringChar;
     /* int caseSensitive; */
@@ -1239,7 +1215,7 @@ static TA_RetCode extractTokenValueRecursive( TA_Libc *libHandle,
     char tmpOneCharBuf[2];
     TA_TokenId curTokenId;
 
-    TA_TRACE_BEGIN( libHandle, extractTokenValueRecursive );
+    TA_TRACE_BEGIN( extractTokenValueRecursive );
 
     firstOfOneOrMore = 0;
 
@@ -1248,7 +1224,7 @@ static TA_RetCode extractTokenValueRecursive( TA_Libc *libHandle,
 
     /* caseSensitive = TA_IsFileSystemCaseSensitive(); */
 
-    patternChar = getPatternChar(libHandle, iter);
+    patternChar = getPatternChar( iter);
 
     /* ScratchPad used as temporary buffer. */
     fileIndexPriv->scratchPad[0] = '\0';
@@ -1262,7 +1238,7 @@ static TA_RetCode extractTokenValueRecursive( TA_Libc *libHandle,
         curTokenId = iter->curToken->id;
 
         /* Move to the next character in the pattern. */
-        nextPatternChar( libHandle, iter);
+        nextPatternChar( iter);
 
         switch( patternChar )
         {
@@ -1276,7 +1252,7 @@ static TA_RetCode extractTokenValueRecursive( TA_Libc *libHandle,
 
            /* Save the value in the "value tree". */
            tmpOneCharBuf[0] = (char)stringChar;
-           retCode = addValueDown( libHandle, fileIndexPriv, iter->curToken->id, &tmpOneCharBuf[0] );
+           retCode = addValueDown( fileIndexPriv, iter->curToken->id, &tmpOneCharBuf[0] );
            tmpOneCharBuf[0] = '\0';
 
            if( retCode != TA_SUCCESS )
@@ -1315,7 +1291,7 @@ static TA_RetCode extractTokenValueRecursive( TA_Libc *libHandle,
             while (string[i] != '\0')
                i++;
 
-            if( getPatternChar(libHandle,iter) == '\0' )
+            if( getPatternChar(iter) == '\0' )
             {
                /* There is not pattern following, that means the '*'
                 * is the last pattern on the line. Simply take the
@@ -1330,10 +1306,10 @@ static TA_RetCode extractTokenValueRecursive( TA_Libc *libHandle,
                {
                   /* Call recursively while saving/restoring the currentNode. */
                   currentNode = TA_FileIndexGetCurrentTreeValueNode( fileIndexPriv );
-                  TA_ASSERT( libHandle, currentNode != NULL );
+                  TA_ASSERT( currentNode != NULL );
                   TA_FileIndexGoDownTreeValue( fileIndexPriv );
                   iterCopy = *iter; /* Recursive call use their own iterator... */
-                  retCode = extractTokenValueRecursive( libHandle, fileIndexPriv, &iterCopy, ( const char *)&string[i-1], firstOfOneOrMore );
+                  retCode = extractTokenValueRecursive( fileIndexPriv, &iterCopy, ( const char *)&string[i-1], firstOfOneOrMore );
                   TA_FileIndexSetCurrentTreeValueNode( fileIndexPriv, currentNode );
 
                   if( retCode != TA_SUCCESS )
@@ -1380,7 +1356,7 @@ static TA_RetCode extractTokenValueRecursive( TA_Libc *libHandle,
             }
 
             /* Always do the writing even if empty string. */
-            retCode = addValueDown( libHandle, fileIndexPriv, curTokenId, fileIndexPriv->scratchPad );
+            retCode = addValueDown( fileIndexPriv, curTokenId, fileIndexPriv->scratchPad );
             if( retCode != TA_SUCCESS )
             {
                TA_TRACE_RETURN( retCode );
@@ -1414,7 +1390,7 @@ static TA_RetCode extractTokenValueRecursive( TA_Libc *libHandle,
             break;
         }
 
-        patternChar = getPatternChar(libHandle,iter);
+        patternChar = getPatternChar(iter);
     }
 
     /* Trap case where string is longer than the expected pattern... */
@@ -1429,11 +1405,10 @@ static TA_RetCode extractTokenValueRecursive( TA_Libc *libHandle,
     TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-static TA_RetCode addCurrentDataToIndex( TA_Libc *libHandle,
-                                         TA_FileIndexPriv *fileIndexPriv,
+static TA_RetCode addCurrentDataToIndex( TA_FileIndexPriv *fileIndexPriv,
                                          TA_ValueTreeNode *treeNodeValue )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_FileIndexCategoryData *addedCategory;
    TA_String *theCategoryString;
@@ -1441,14 +1416,14 @@ static TA_RetCode addCurrentDataToIndex( TA_Libc *libHandle,
    unsigned int tmpBufferSize;
    TA_StringCache *stringCache;
 
-   TA_TRACE_BEGIN( libHandle, addCurrentDataToIndex );
-   TA_ASSERT( libHandle, fileIndexPriv != NULL );
+   TA_TRACE_BEGIN(  addCurrentDataToIndex );
+   TA_ASSERT( fileIndexPriv != NULL );
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache( );
 
    if( fileIndexPriv->currentSymbolString == NULL )
    {
-      TA_FATAL( libHandle, NULL, fileIndexPriv->currentSymbolString, fileIndexPriv->currentCategoryString );
+      TA_FATAL(  NULL, fileIndexPriv->currentSymbolString, fileIndexPriv->currentCategoryString );
    }
 
    /* Build the category string. */
@@ -1473,7 +1448,7 @@ static TA_RetCode addCurrentDataToIndex( TA_Libc *libHandle,
       tmpBufferSize += strlen( TA_StringToChar(fileIndexPriv->currentCategoryTypeString) );
       tmpBufferSize += 3;
 
-      tmpBuffer = TA_Malloc(  libHandle, tmpBufferSize );
+      tmpBuffer = TA_Malloc( tmpBufferSize );
       if( !tmpBuffer )
       {
          TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -1485,7 +1460,7 @@ static TA_RetCode addCurrentDataToIndex( TA_Libc *libHandle,
                TA_StringToChar(fileIndexPriv->currentCategoryTypeString ));
                
       theCategoryString = TA_StringAlloc( stringCache, tmpBuffer );
-      TA_Free( libHandle, tmpBuffer );
+      TA_Free(  tmpBuffer );
    }
    else if( !fileIndexPriv->currentCategoryString )
    {
@@ -1506,7 +1481,7 @@ static TA_RetCode addCurrentDataToIndex( TA_Libc *libHandle,
       TA_TRACE_RETURN( retCode );
    }
 
-   retCode = TA_FileIndexAddSymbolData( libHandle, addedCategory,
+   retCode = TA_FileIndexAddSymbolData( addedCategory,
                                         fileIndexPriv->currentSymbolString,
                                         treeNodeValue, NULL );
 

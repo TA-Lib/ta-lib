@@ -75,7 +75,7 @@ int TA_ATR_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_
     * (optInTimePeriod_0-1) is for the simple
     * moving average.
     */
-   return optInTimePeriod_0 + TA_UnstablePeriodTable[TA_FUNC_UNST_ATR];
+   return optInTimePeriod_0 + TA_Globals.unstablePeriod[TA_FUNC_UNST_ATR];
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -93,8 +93,7 @@ int TA_ATR_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_
  * 
  */
 
-TA_RetCode TA_ATR( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_ATR( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inHigh_0[],
                    const TA_Real inLow_0[],
@@ -113,8 +112,6 @@ TA_RetCode TA_ATR( TA_Libc      *libHandle,
    TA_Real prevATR, *tempBuffer;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -169,24 +166,24 @@ TA_RetCode TA_ATR( TA_Libc      *libHandle,
    if( optInTimePeriod_0 <= 1 )
    {
       /* No smoothing needed. Just do a TRANGE. */
-      return TA_TRANGE( libHandle,
+      return TA_TRANGE(
                         startIdx, endIdx,
                         inHigh_0, inLow_0, inClose_0,
                         outBegIdx, outNbElement, outReal_0 );
    }
 
    /* Allocate an intermediate buffer for TRANGE. */
-   tempBuffer = (TA_Real *)TA_Malloc( libHandle, (lookbackTotal+(endIdx-startIdx)+1) * sizeof( TA_Real ) );
+   tempBuffer = (TA_Real *)TA_Malloc( (lookbackTotal+(endIdx-startIdx)+1) * sizeof( TA_Real ) );
 
    /* Do TRANGE in the intermediate buffer. */
-   retCode = TA_TRANGE( libHandle,
+   retCode = TA_TRANGE(
                         (startIdx-lookbackTotal+1), endIdx,
                         inHigh_0, inLow_0, inClose_0,
                         &outBegIdxTmp, &outNbElementTmp, tempBuffer );
 
    if( retCode != TA_SUCCESS )
    {
-      TA_Free(libHandle, tempBuffer );
+      TA_Free( tempBuffer );
       return retCode;
    }
 
@@ -201,7 +198,7 @@ TA_RetCode TA_ATR( TA_Libc      *libHandle,
 
    if( retCode != TA_SUCCESS )
    {
-      TA_Free(libHandle, tempBuffer );
+      TA_Free( tempBuffer );
       return retCode;    
    }
 
@@ -212,7 +209,7 @@ TA_RetCode TA_ATR( TA_Libc      *libHandle,
     *  3) Divide by 'period'.
     */
    today = optInTimePeriod_0;
-   outIdx = TA_UnstablePeriodTable[TA_FUNC_UNST_ATR];
+   outIdx = TA_Globals.unstablePeriod[TA_FUNC_UNST_ATR];
    /* Skip the unstable period. */
    while( outIdx != 0 )
    {
@@ -242,7 +239,7 @@ TA_RetCode TA_ATR( TA_Libc      *libHandle,
    *outBegIdx    = startIdx;
    *outNbElement = outIdx;
    
-   TA_Free(libHandle, tempBuffer );
+   TA_Free( tempBuffer );
     
    return retCode;
 }

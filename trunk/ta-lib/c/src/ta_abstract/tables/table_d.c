@@ -37,7 +37,6 @@ static const TA_OutputParameterInfo   *TA_DEMA_Outputs[]   =
 
 static const TA_OptInputParameterInfo *TA_DEMA_OptInputs[] =
 { &TA_DEF_UI_TimePeriod_30,
-  &TA_DEF_UI_Compatibility_CL_MS,
   NULL
 };
 

@@ -76,29 +76,28 @@
 /* None */
 
 /**** Local variables definitions.     ****/
-static ErrorNumber test_refmerge( TA_Libc *libHandle, TA_UDBase *udb );
+static ErrorNumber test_refmerge( TA_UDBase *udb );
 
 /**** Global functions definitions.   ****/
 ErrorNumber test_datasource_merge( void )
 {
    ErrorNumber retValue;
    TA_UDBase *udb;
-   TA_Libc   *libHandle;
 
    printf( "Testing multiple data source merging\n" );
 
-   retValue = allocLib( &libHandle, &udb );
+   retValue = allocLib( &udb );
    if( retValue != TA_TEST_PASS )
       return retValue;    
 
-   retValue = test_refmerge( libHandle, udb );
+   retValue = test_refmerge( udb );
    if( retValue != TA_TEST_PASS )
    {
       printf( "\nTest failed with value %d", retValue );
       return retValue;
    }
 
-   retValue = freeLib( libHandle, udb );
+   retValue = freeLib( udb );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -107,9 +106,8 @@ ErrorNumber test_datasource_merge( void )
 
 
 /**** Local functions definitions.     ****/
-static ErrorNumber test_refmerge( TA_Libc *libHandle, TA_UDBase *udb )
+static ErrorNumber test_refmerge( TA_UDBase *udb )
 {
-   (void)libHandle;
    (void)udb;
 
    /* !!! Not implemented yet !!! */

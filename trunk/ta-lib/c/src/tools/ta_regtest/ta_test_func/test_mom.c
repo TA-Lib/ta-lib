@@ -132,8 +132,7 @@ typedef struct
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 
 /**** Local variables definitions.     ****/
@@ -261,7 +260,7 @@ static TA_Test tableTest[] =
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
-ErrorNumber test_func_mom_roc( TA_Libc *libHandle, TA_History *history )
+ErrorNumber test_func_mom_roc( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
@@ -275,7 +274,7 @@ ErrorNumber test_func_mom_roc( TA_Libc *libHandle, TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
 
-      retValue = do_test( libHandle, history, &tableTest[i] );
+      retValue = do_test( history, &tableTest[i] );
       if( retValue != 0 )
       {
          printf( "%s Failed Test #%d (Code=%d)\n", __FILE__,
@@ -289,7 +288,7 @@ ErrorNumber test_func_mom_roc( TA_Libc *libHandle, TA_History *history )
 }
 
 /**** Local functions definitions.     ****/
-static TA_RetCode rangeTestFunction( TA_Libc *libHandle, 
+static TA_RetCode rangeTestFunction( 
                               TA_Integer startIdx,
                               TA_Integer endIdx,
                               TA_Real *outputBuffer,
@@ -308,7 +307,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    switch( testParam->test->theFunction )
    {
    case TA_MOM_TEST:
-      retCode = TA_MOM( libHandle,
+      retCode = TA_MOM(
                         startIdx,
                         endIdx,
                         testParam->close,
@@ -320,7 +319,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
       *lookback = TA_MOM_Lookback(testParam->test->optInTimePeriod_0 );
       break;
    case TA_ROC_TEST:
-      retCode = TA_ROC( libHandle,
+      retCode = TA_ROC(
                         startIdx,
                         endIdx,
                         testParam->close,
@@ -331,7 +330,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
       *lookback = TA_ROC_Lookback(testParam->test->optInTimePeriod_0 );
       break;
    case TA_ROCR_TEST:
-      retCode = TA_ROCR( libHandle,
+      retCode = TA_ROCR(
                          startIdx,
                          endIdx,
                          testParam->close,
@@ -342,7 +341,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
       *lookback = TA_ROCR_Lookback(testParam->test->optInTimePeriod_0 );
       break;
    case TA_ROCR100_TEST:
-      retCode = TA_ROCR100( libHandle,
+      retCode = TA_ROCR100(
                             startIdx,
                             endIdx,
                             testParam->close,
@@ -353,7 +352,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
       *lookback = TA_ROCR100_Lookback(testParam->test->optInTimePeriod_0 );
       break;
    case TA_ROCP_TEST:
-      retCode = TA_ROCP( libHandle,
+      retCode = TA_ROCP(
                          startIdx,
                          endIdx,
                          testParam->close,
@@ -370,8 +369,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    return retCode;
 }
 
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test )
 {
    TA_RetCode retCode;
@@ -393,7 +391,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    switch( test->theFunction )
    {
    case TA_MOM_TEST:
-      retCode = TA_MOM( libHandle,
+      retCode = TA_MOM(
                         test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
@@ -404,7 +402,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TA_ROC_TEST:
-      retCode = TA_ROC( libHandle,
+      retCode = TA_ROC(
                         test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
@@ -414,7 +412,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                         gBuffer[0].out0 );
       break;
    case TA_ROCR_TEST:
-      retCode = TA_ROCR( libHandle,
+      retCode = TA_ROCR(
                          test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
@@ -424,7 +422,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                          gBuffer[0].out0 );
       break;
    case TA_ROCR100_TEST:
-      retCode = TA_ROCR100( libHandle,
+      retCode = TA_ROCR100(
                             test->startIdx,
                             test->endIdx,
                             gBuffer[0].in,
@@ -435,7 +433,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TA_ROCP_TEST:
-      retCode = TA_ROCP( libHandle,
+      retCode = TA_ROCP(
                          test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
@@ -464,7 +462,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    switch( test->theFunction )
    {
    case TA_MOM_TEST:
-      retCode = TA_MOM( libHandle,
+      retCode = TA_MOM(
                         test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
@@ -474,7 +472,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                         gBuffer[1].in );
       break;
    case TA_ROC_TEST:
-      retCode = TA_ROC( libHandle,
+      retCode = TA_ROC(
                         test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
@@ -484,7 +482,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                         gBuffer[1].in );
       break;
    case TA_ROCR_TEST:
-      retCode = TA_ROCR( libHandle,
+      retCode = TA_ROCR(
                          test->startIdx,
                          test->endIdx,
                          gBuffer[1].in,
@@ -494,7 +492,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                          gBuffer[1].in );
       break;
    case TA_ROCR100_TEST:
-      retCode = TA_ROCR100( libHandle,
+      retCode = TA_ROCR100(
                             test->startIdx,
                             test->endIdx,
                             gBuffer[1].in,
@@ -504,7 +502,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                             gBuffer[1].in );
       break;
    case TA_ROCP_TEST:
-      retCode = TA_ROCP( libHandle,
+      retCode = TA_ROCP(
                          test->startIdx,
                          test->endIdx,
                          gBuffer[1].in,
@@ -537,7 +535,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( libHandle,
+      errNb = doRangeTest(
                            rangeTestFunction, 
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );

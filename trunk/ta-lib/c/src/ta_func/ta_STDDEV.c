@@ -91,8 +91,7 @@ int TA_STDDEV_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER
  * 
  */
 
-TA_RetCode TA_STDDEV( TA_Libc      *libHandle,
-                      TA_Integer    startIdx,
+TA_RetCode TA_STDDEV( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real inReal_0[],
                       TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -107,8 +106,6 @@ TA_RetCode TA_STDDEV( TA_Libc      *libHandle,
    TA_RetCode retCode;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 

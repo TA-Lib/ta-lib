@@ -77,8 +77,7 @@
 static TA_RetCode processCache( TA_PMPriv *pmPriv,
                                 TA_TradeLogPriv *tradeLog );
 
-static TA_Timestamp *allocTimestampArray( TA_Libc            *libHandle,
-                                          const TA_Timestamp *start,
+static TA_Timestamp *allocTimestampArray( const TA_Timestamp *start,
                                           const TA_Timestamp *end,
                                           int                *nbDays );
 
@@ -89,8 +88,7 @@ static int findTimestampIndex( const TA_PMPriv *pmPriv,
 static TA_RetCode processDailyEquityArray( TA_PMPriv *pmPriv,
                                            TA_PMGroup grp );
 
-static TA_RetCode equityPeriodTransform( TA_Libc       *libHandle,
-                                         TA_PMPriv     *pmPriv,
+static TA_RetCode equityPeriodTransform( TA_PMPriv     *pmPriv,
                                          TA_Period      newPeriod, /* The new desired period. */
                                          unsigned int  *nbBars,    /* Return the number of price bar */
                                          TA_Timestamp **timestamp, /* Allocated new timestamp. */
@@ -110,7 +108,6 @@ TA_RetCode TA_PMArrayAlloc( TA_PM        *pm,
    TA_List         *tradeLogList;
    TA_TradeLogPriv *tradeLogPriv;
    int              timeSerieSize;
-   TA_Libc         *libHandle;
    TA_RetCode       retCode;
    TA_PMArray      *newPMArray;
    unsigned int     finalNbBars;
@@ -132,7 +129,6 @@ TA_RetCode TA_PMArrayAlloc( TA_PM        *pm,
    if( pmPriv->magicNb != TA_PMPRIV_MAGIC_NB )
       return TA_BAD_OBJECT;
 
-   libHandle = pmPriv->libHandle;
 
    #if 0
    /* Get the number of trade that applies to the period.
@@ -158,8 +154,7 @@ TA_RetCode TA_PMArrayAlloc( TA_PM        *pm,
        * There is only one array of timestamps for all the
        * time series. 
        */
-      pmPriv->arrayTimestamp = allocTimestampArray( pmPriv->libHandle,
-                                                    &pmPriv->startDate,
+      pmPriv->arrayTimestamp = allocTimestampArray( &pmPriv->startDate,
                                                     &pmPriv->endDate,
                                                     (int *)&pmPriv->nbDailyBars );
       if( !pmPriv->arrayTimestamp )
@@ -186,7 +181,7 @@ TA_RetCode TA_PMArrayAlloc( TA_PM        *pm,
          #define TRY_ALLOC_IF_NULL(x) { \
             if( !x ) \
             { \
-               x = TA_Malloc( libHandle, timeSerieSize ); \
+               x = TA_Malloc( timeSerieSize ); \
                if( !x ) \
                   return TA_ALLOC_ERR; \
             } }
@@ -241,8 +236,7 @@ TA_RetCode TA_PMArrayAlloc( TA_PM        *pm,
       }
       else
       {
-         retCode = equityPeriodTransform( pmPriv->libHandle,
-                                          pmPriv, period, &finalNbBars,
+         retCode = equityPeriodTransform( pmPriv, period, &finalNbBars,
                                           &finalTimestamp, &finalData );
 
          if( retCode != TA_SUCCESS )
@@ -257,13 +251,13 @@ TA_RetCode TA_PMArrayAlloc( TA_PM        *pm,
       return TA_BAD_PARAM;
    }
 
-   TA_ASSERT_RET( pmPriv->libHandle, pmPriv->arrayTimestamp != NULL, TA_INTERNAL_ERROR(122) );
-   TA_ASSERT_RET( pmPriv->libHandle, pmPriv->equity != NULL, TA_INTERNAL_ERROR(123) );
-   TA_ASSERT_RET( pmPriv->libHandle, finalData != NULL, TA_INTERNAL_ERROR(124) );
-   TA_ASSERT_RET( pmPriv->libHandle, finalTimestamp != NULL, TA_INTERNAL_ERROR(125) );
+   TA_ASSERT_RET( pmPriv->arrayTimestamp != NULL, TA_INTERNAL_ERROR(122) );
+   TA_ASSERT_RET( pmPriv->equity != NULL, TA_INTERNAL_ERROR(123) );
+   TA_ASSERT_RET( finalData != NULL, TA_INTERNAL_ERROR(124) );
+   TA_ASSERT_RET( finalTimestamp != NULL, TA_INTERNAL_ERROR(125) );
  
    /* At last, allocate and fill up the TA_PMArray. */
-   newPMArray = TA_Malloc( libHandle, sizeof( TA_PMArray ) );
+   newPMArray = TA_Malloc( sizeof( TA_PMArray ) );
    if( !newPMArray )
       return TA_ALLOC_ERR;
    newPMArray->arrayId    = arrayId;
@@ -283,7 +277,6 @@ TA_RetCode TA_PMArrayFree( TA_PMArray *toBeFreed )
 {
    TA_PMPriv *pmPriv;
    TA_PM *pm;
-   TA_Libc *libHandle;
 
    if( toBeFreed )
    {
@@ -296,20 +289,15 @@ TA_RetCode TA_PMArrayFree( TA_PMArray *toBeFreed )
             if( pmPriv->magicNb != TA_PMPRIV_MAGIC_NB )
                return TA_BAD_OBJECT;
 
-            libHandle = pmPriv->libHandle;
-            if( libHandle )
+            if( toBeFreed->period != TA_DAILY ) 
             {
-               if( toBeFreed->period != TA_DAILY ) 
-               {
-                  if( toBeFreed->timestamp )
-                     TA_Free( libHandle, (void *)toBeFreed->timestamp );
+               if( toBeFreed->timestamp )
+                  TA_Free( (void *)toBeFreed->timestamp );
 
-                  if( toBeFreed->data )
-                     TA_Free( libHandle, (void *)toBeFreed->data );
-               }
-   
-               TA_Free( libHandle, toBeFreed );
+               if( toBeFreed->data )
+                  TA_Free( (void *)toBeFreed->data );
             }
+            TA_Free( toBeFreed );
          }
       }
    }
@@ -319,8 +307,7 @@ TA_RetCode TA_PMArrayFree( TA_PMArray *toBeFreed )
 
 /**** Local functions definitions.     ****/
 
-static TA_Timestamp *allocTimestampArray( TA_Libc            *libHandle,
-                                          const TA_Timestamp *start,
+static TA_Timestamp *allocTimestampArray( const TA_Timestamp *start,
                                           const TA_Timestamp *end,
                                           int                *nbDays )
 {
@@ -330,9 +317,9 @@ static TA_Timestamp *allocTimestampArray( TA_Libc            *libHandle,
    TA_Timestamp curDate;
    TA_DayOfWeek dayOfTheWeek;
 
-   TA_ASSERT_RET( libHandle, TA_TimestampValidate(start) == TA_SUCCESS, (TA_Timestamp *)NULL );
-   TA_ASSERT_RET( libHandle, TA_TimestampValidate(end  ) == TA_SUCCESS, (TA_Timestamp *)NULL );
-   TA_ASSERT_RET( libHandle, nbDays != NULL, (TA_Timestamp *)NULL );
+   TA_ASSERT_RET( TA_TimestampValidate(start) == TA_SUCCESS, (TA_Timestamp *)NULL );
+   TA_ASSERT_RET( TA_TimestampValidate(end  ) == TA_SUCCESS, (TA_Timestamp *)NULL );
+   TA_ASSERT_RET( nbDays != NULL, (TA_Timestamp *)NULL );
 
    /* Calculate the exact number of week days
     * between start and end inclusive.
@@ -343,7 +330,7 @@ static TA_Timestamp *allocTimestampArray( TA_Libc            *libHandle,
       return (TA_Timestamp *)NULL;
 
    /* Allocate the array. Add two element just to be on the safe side. */
-   array = TA_Malloc( libHandle, sizeof( TA_Timestamp ) * ((*nbDays)+2) );
+   array = TA_Malloc( sizeof( TA_Timestamp ) * ((*nbDays)+2) );
    if( !array )
       return (TA_Timestamp *)NULL;
 
@@ -358,7 +345,7 @@ static TA_Timestamp *allocTimestampArray( TA_Libc            *libHandle,
       TA_TimestampCopy( &array[outIdx], &curDate );
       outIdx++;
       TA_NextWeekday( &curDate );
-      TA_ASSERT_RET( libHandle, TA_TimestampValidate(&curDate) == TA_SUCCESS, (TA_Timestamp *)NULL );
+      TA_ASSERT_RET( TA_TimestampValidate(&curDate) == TA_SUCCESS, (TA_Timestamp *)NULL );
    }
 
    /* Count the number of weekday */
@@ -367,7 +354,7 @@ static TA_Timestamp *allocTimestampArray( TA_Libc            *libHandle,
       TA_TimestampCopy( &array[outIdx], &curDate );
       outIdx++;
       TA_NextWeekday( &curDate );
-      TA_ASSERT_RET( libHandle, TA_TimestampValidate(&curDate) == TA_SUCCESS, (TA_Timestamp *)NULL );
+      TA_ASSERT_RET( TA_TimestampValidate(&curDate) == TA_SUCCESS, (TA_Timestamp *)NULL );
    } 
 
    /* Check if the ending point is a weekday. */
@@ -378,7 +365,7 @@ static TA_Timestamp *allocTimestampArray( TA_Libc            *libHandle,
          TA_TimestampCopy( &array[outIdx++], &curDate );
    }
 
-   TA_ASSERT_RET( libHandle, outIdx == (*nbDays), (TA_Timestamp *)NULL );
+   TA_ASSERT_RET( outIdx == (*nbDays), (TA_Timestamp *)NULL );
 
    return array;
 }
@@ -469,11 +456,6 @@ static int findTimestampIndex( const TA_PMPriv *pmPriv,
    const TA_Timestamp *endDate;
    TA_DayOfWeek dayOfTheWeek;
 
-   #ifdef TA_DEBUG
-   TA_Libc *libHandle;
-   libHandle = pmPriv->libHandle;
-   #endif
-
    /* Return 0 when no index can be resolved. */
    startDate = &pmPriv->startDate;
    endDate   = &pmPriv->endDate;
@@ -493,9 +475,9 @@ static int findTimestampIndex( const TA_PMPriv *pmPriv,
          *idx -= 1;
 
          #ifdef TA_DEBUG
-         TA_ASSERT_RET( libHandle, *idx >= 0, 0 );
-         TA_ASSERT_RET( libHandle, (unsigned int)*idx < pmPriv->nbDailyBars, 0 );             
-         TA_ASSERT_RET( libHandle, TA_TimestampEqual(&pmPriv->arrayTimestamp[*idx], exitTimestamp ), 0 );
+         TA_ASSERT_RET( *idx >= 0, 0 );
+         TA_ASSERT_RET( (unsigned int)*idx < pmPriv->nbDailyBars, 0 );             
+         TA_ASSERT_RET( TA_TimestampEqual(&pmPriv->arrayTimestamp[*idx], exitTimestamp ), 0 );
          #endif
 
          return 1;
@@ -525,7 +507,7 @@ static TA_RetCode processDailyEquityArray( TA_PMPriv *pmPriv, TA_PMGroup grp )
    /* Allocate the array if not already done. */
    if( !equity )
    {
-      pmPriv->equity = TA_Malloc( pmPriv->libHandle, equityByteSize );
+      pmPriv->equity = TA_Malloc( equityByteSize );
 
       if( !pmPriv->equity )
          return TA_ALLOC_ERR;      
@@ -575,7 +557,7 @@ static TA_RetCode processDailyEquityArray( TA_PMPriv *pmPriv, TA_PMGroup grp )
       }
       break;
    default:
-      TA_Free( pmPriv->libHandle, equity );
+      TA_Free( equity );
       pmPriv->equity = NULL;
       return TA_BAD_PARAM;
    }
@@ -583,14 +565,13 @@ static TA_RetCode processDailyEquityArray( TA_PMPriv *pmPriv, TA_PMGroup grp )
    return TA_SUCCESS;
 }
 
-static TA_RetCode equityPeriodTransform( TA_Libc       *libHandle,
-                                         TA_PMPriv     *pmPriv,
+static TA_RetCode equityPeriodTransform( TA_PMPriv     *pmPriv,
                                          TA_Period      newPeriod, /* The new desired period. */
                                          unsigned int  *nbBars,    /* Return the number of price bar */
                                          TA_Timestamp **timestamp, /* Allocate new timestamp. */
                                          TA_Real      **equity )   /* Allocate new equity. */
 {
-   TA_PROLOG;
+   TA_PROLOG
 
    /* Notice that this function is very similar to the
     * TA_PeriodTransform function in ta_period.c
@@ -624,19 +605,19 @@ static TA_RetCode equityPeriodTransform( TA_Libc       *libHandle,
    unsigned int again, periodCompleted; /* Boolean */
    int firstIteration;
 
-   TA_TRACE_BEGIN( libHandle, TA_PeriodTransform );
+   TA_TRACE_BEGIN(  TA_PeriodTransform );
 
    /* Validate some mandatory parameter. */
-   TA_ASSERT( libHandle, newPeriod != 0 );
-   TA_ASSERT( libHandle, nbBars  != NULL );
+   TA_ASSERT( newPeriod != 0 );
+   TA_ASSERT( nbBars  != NULL );
 
    /* It is assume that the caller call this function
     * when there is really a transform to do.
     */
-   TA_ASSERT( libHandle, newPeriod != TA_DAILY );
+   TA_ASSERT( newPeriod != TA_DAILY );
 
    /* Of course, timestamps from the source are needed. */
-   TA_ASSERT( libHandle, pmPriv->arrayTimestamp != NULL );
+   TA_ASSERT( pmPriv->arrayTimestamp != NULL );
 
    /* Initialize all callers pointers to NULL.
     * These will be initialize only on success.
@@ -713,15 +694,15 @@ static TA_RetCode equityPeriodTransform( TA_Libc       *libHandle,
    new_nbBars += 2; /* To be on the safe side */
 
    /* Allocate the new data. */      
-   new_timestamp = TA_Malloc( libHandle, new_nbBars * sizeof( TA_Timestamp ) );
+   new_timestamp = TA_Malloc( new_nbBars * sizeof( TA_Timestamp ) );
    if( !new_timestamp )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
-   new_equity = TA_Malloc( libHandle, new_nbBars * sizeof( TA_Real ) );
+   new_equity = TA_Malloc( new_nbBars * sizeof( TA_Real ) );
    if( !new_equity )
    {
-      TA_Free( libHandle, new_timestamp );
+      TA_Free(  new_timestamp );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
       
@@ -828,7 +809,7 @@ static TA_RetCode equityPeriodTransform( TA_Libc       *libHandle,
       /* We got all the info needed in the cur_XXXXX variables for
        * proceeding with the initialization of the new period price bar.
        */
-      TA_DEBUG_ASSERT( libHandle, newPriceBar < new_nbBars );
+      TA_DEBUG_ASSERT( newPriceBar < new_nbBars );
 
       /* If the timestamp is requested, some adjustment could be
        * needed to cur_timestamp.

@@ -102,8 +102,7 @@ int TA_SAR_Lookback( TA_Real       optInAcceleration_0, /* From TA_REAL_MIN to T
  * 
  */
 
-TA_RetCode TA_SAR( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_SAR( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inHigh_0[],
                    const TA_Real inLow_0[],
@@ -126,8 +125,6 @@ TA_RetCode TA_SAR( TA_Libc      *libHandle,
    TA_Real af, ep, sar;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -230,7 +227,7 @@ TA_RetCode TA_SAR( TA_Libc      *libHandle,
     * (ep is just used as a temp buffer here, the name
     *  of the parameter is not significant).
     */
-   retCode = TA_MINUS_DM( libHandle, startIdx-1, startIdx, inHigh_0, inLow_0,
+   retCode = TA_MINUS_DM( startIdx-1, startIdx, inHigh_0, inLow_0,
                           1, &tempInt, &tempInt, &ep );
    if( ep > 0 )
       isLong = 0;

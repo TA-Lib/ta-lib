@@ -164,12 +164,12 @@ typedef struct
 /**** Local functions declarations.    ****/
 static void stringListFree( TA_StringCache *stringCache, TA_List *list );
 
-static TA_RetCode TA_SystemGlobalInit    ( TA_Libc *libHandle, void **globalToAlloc );
-static TA_RetCode TA_SystemGlobalShutdown( TA_Libc *libHandle, void *globalAllocated );
+static TA_RetCode TA_SystemGlobalInit    ( void **globalToAlloc );
+static TA_RetCode TA_SystemGlobalShutdown( void *globalAllocated );
 
 #if defined( USE_WIN32_API )
-static LPVOID allocDiskBuffer( TA_Libc *libHandle, const char *path, DWORD *nbByteAlloc );
-static TA_RetCode freeDiskBuffer( TA_Libc *libHandle, LPVOID buffer, DWORD nbByteAlloc );
+static LPVOID allocDiskBuffer( const char *path, DWORD *nbByteAlloc );
+static TA_RetCode freeDiskBuffer( LPVOID buffer, DWORD nbByteAlloc );
 static void initSysInfo( TA_SystemGlobal *global );
 #endif
 
@@ -184,15 +184,12 @@ const TA_GlobalControl TA_SystemGlobalControl =
 };
 
 /**** Global functions definitions.   ****/
-int TA_GetLastError( TA_Libc *libHandle )
+int TA_GetLastError( void )
 {
    TA_RetCode retCode;
    TA_SystemGlobal *global;
 
-   if( !libHandle )
-      return 0;
-
-   retCode = TA_GetGlobal( libHandle, &TA_SystemGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_SystemGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return 0;
 
@@ -226,8 +223,7 @@ int TA_WildASCII( void )
    return '*';
 }
 
-TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
-                              const char *path,
+TA_RetCode TA_DirectoryAlloc( const char *path,
                               TA_Directory **directory )
 {
    #if defined( USE_WIN32_API )
@@ -256,14 +252,14 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
 
    *directory = NULL;
 
-   if( (path == NULL) || (directory == NULL) || (libHandle == NULL))
+   if( (path == NULL) || (directory == NULL) )
       return TA_BAD_PARAM;
 
-   retCode = TA_GetGlobal( libHandle, &TA_SystemGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_SystemGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return retCode;
 
-   dir = (TA_Directory *)TA_Malloc( libHandle, sizeof( TA_Directory ) );
+   dir = (TA_Directory *)TA_Malloc( sizeof( TA_Directory ) );
 
    if( dir == NULL )
       return TA_ALLOC_ERR;
@@ -271,12 +267,12 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
    dir->nbFile = 0;
    dir->nbDirectory = 0;
 
-   dir->listOfFile = TA_ListAlloc( libHandle );
-   dir->listOfDirectory = TA_ListAlloc( libHandle );
+   dir->listOfFile = TA_ListAlloc();
+   dir->listOfDirectory = TA_ListAlloc();
 
    if( (dir->listOfFile == NULL) || (dir->listOfDirectory == NULL) )
    {
-      TA_DirectoryFree( libHandle, dir );
+      TA_DirectoryFree( dir );
       return TA_ALLOC_ERR;
    }
 
@@ -285,7 +281,7 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
 
    if( (pathLength == 0) || (pathLength >= MAX_PATH) )
    {
-      TA_DirectoryFree( libHandle, dir );
+      TA_DirectoryFree( dir );
       return TA_BAD_PARAM;
    }
 
@@ -301,7 +297,7 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
       if( (win32Error != ERROR_FILE_NOT_FOUND) &&
           (win32Error != ERROR_PATH_NOT_FOUND) )
       {
-         TA_DirectoryFree( libHandle, dir );
+         TA_DirectoryFree( dir );
          return TA_ACCESS_FAILED;
       }
 
@@ -319,9 +315,9 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
 
    #if defined( USE_OSLAYER )
    /* Split the path into the basePath and the filePattern. */
-   basePath = TA_Malloc( libHandle, pathLength+1 ); 
+   basePath = TA_Malloc( pathLength+1 ); 
    memcpy( basePath, path, pathLength+1 );
-   filePattern = split_path_and_file( libHandle, basePath );
+   filePattern = split_path_and_file( basePath );
 
    if( !filePattern )
    {
@@ -329,17 +325,17 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
        * so return an empty directory to the caller.
        */
       *directory = dir;
-      TA_Free( libHandle, basePath );
+      TA_Free(  basePath );
       return TA_SUCCESS;
    }
 
    /* Look for last separetor. */
-   if( !open_dir(libHandle,&dirHandle, basePath ) )
+   if( !open_dir(&dirHandle, basePath ) )
    {
       /* Errors, or no files or no directory... but
        * still have to pass the result to the caller.
        */      
-      TA_Free( libHandle, basePath );
+      TA_Free(  basePath );
       *directory = dir;
       return TA_SUCCESS;
    }
@@ -351,7 +347,7 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
    do
    {
       #if defined( USE_OSLAYER )
-      if( file_matches( libHandle, entryName, filePattern ) )
+      if( file_matches( entryName, filePattern ) )
       {
       #endif
          if( entryIsDirectory )
@@ -363,10 +359,10 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
                if( string == NULL )
                {
                   #if defined( USE_OSLAYER )
-                     close_dir(libHandle,&dirHandle);
-                     TA_Free( libHandle, basePath );
+                     close_dir(&dirHandle);
+                     TA_Free(  basePath );
                   #endif
-                  TA_DirectoryFree( libHandle, dir );
+                  TA_DirectoryFree( dir );
                   return TA_ALLOC_ERR;
                }
 
@@ -375,10 +371,10 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
                if( retCode != TA_SUCCESS )
                {
                   #if defined( USE_OSLAYER )
-                     close_dir(libHandle,&dirHandle);
-                     TA_Free( libHandle, basePath );
+                     close_dir(&dirHandle);
+                     TA_Free(  basePath );
                   #endif
-                  TA_DirectoryFree( libHandle, dir );
+                  TA_DirectoryFree( dir );
                   return retCode;
                }
                dir->nbDirectory++;
@@ -391,10 +387,10 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
             if( string == NULL )
             {
                #if defined( USE_OSLAYER )
-                  close_dir(libHandle,&dirHandle);
-                  TA_Free( libHandle, basePath );
+                  close_dir(&dirHandle);
+                  TA_Free(  basePath );
                #endif
-               TA_DirectoryFree( libHandle, dir );
+               TA_DirectoryFree( dir );
                return TA_ALLOC_ERR;
             }
 
@@ -403,10 +399,10 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
             if( retCode != TA_SUCCESS )
             {
                #if defined( USE_OSLAYER )
-                  close_dir(libHandle,&dirHandle);
-                  TA_Free( libHandle, basePath );
+                  close_dir(&dirHandle);
+                  TA_Free(  basePath );
                #endif
-               TA_DirectoryFree( libHandle, dir );
+               TA_DirectoryFree( dir );
                return retCode;
             }
             dir->nbFile++;
@@ -422,7 +418,7 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
       #endif
 
       #if defined( USE_OSLAYER )
-      findNextRetCode = read_dir( libHandle, &dirHandle );
+      findNextRetCode = read_dir( &dirHandle );
       entryName = dirHandle.file_name;
       entryIsDirectory = dirHandle.file_attrs & ATTR_SUBDIR;
       #endif
@@ -431,10 +427,10 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
 
 
    #if defined( USE_OSLAYER )
-   TA_Free( libHandle, basePath );
-   if( !close_dir(libHandle,&dirHandle) )
+   TA_Free(  basePath );
+   if( !close_dir(&dirHandle) )
    {
-      TA_DirectoryFree( libHandle, dir );
+      TA_DirectoryFree( dir );
       return TA_INTERNAL_ERROR(11);
    }
    #endif
@@ -443,7 +439,7 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
    if( FindClose( handle ) != TRUE )
    {
       global->lastError = GetLastError();
-      TA_DirectoryFree( libHandle, dir );
+      TA_DirectoryFree( dir );
       return TA_INTERNAL_ERROR(12);
    }
    #endif
@@ -454,12 +450,12 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
    return TA_SUCCESS;
 }
 
-TA_RetCode TA_DirectoryFree( TA_Libc *libHandle, TA_Directory *directory )
+TA_RetCode TA_DirectoryFree( TA_Directory *directory )
 {
    TA_RetCode retCode;
    TA_SystemGlobal *global;
 
-   retCode = TA_GetGlobal( libHandle, &TA_SystemGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_SystemGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return retCode;
 
@@ -467,7 +463,7 @@ TA_RetCode TA_DirectoryFree( TA_Libc *libHandle, TA_Directory *directory )
    {
       stringListFree( global->filenameCache, directory->listOfFile );
       stringListFree( global->dirnameCache, directory->listOfDirectory );
-      TA_Free( libHandle, directory );
+      TA_Free(  directory );
    }
 
    return TA_SUCCESS;
@@ -486,16 +482,14 @@ int TA_IsFileSystemCaseSensitive( void )
    #endif
 }
 
-int TA_NbProcessor( TA_Libc *libHandle )
+int TA_NbProcessor( void )
 {
 #if defined( USE_WIN32_API )
    TA_RetCode retCode;
 
    TA_SystemGlobal *global;
-
-   (void)libHandle;
    
-   retCode = TA_GetGlobal( libHandle, &TA_SystemGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_SystemGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return 1;
 
@@ -504,9 +498,7 @@ int TA_NbProcessor( TA_Libc *libHandle )
     */
    initSysInfo(global);
    return global->sysInfo.dwNumberOfProcessors;
-#else
-   (void)libHandle;
-   
+#else   
    /* For the time being... do not assume more than one
     * processor on other platform.    
     */
@@ -694,20 +686,19 @@ TA_RetCode TA_SemaDestroy( TA_Sema *sema )
 #endif
 
 /* Like TA_FileSeqOpen, but work with a stream instead. */
-TA_RetCode TA_FileSeqOpenFromStream( TA_Libc *libHandle,
-                                     TA_Stream *stream,
+TA_RetCode TA_FileSeqOpenFromStream( TA_Stream *stream,
                                      TA_FileHandle **handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_FileHandlePriv *fileHandlePriv;
 
-   TA_TRACE_BEGIN( libHandle, TA_FileSeqOpen );
+   TA_TRACE_BEGIN(  TA_FileSeqOpen );
 
-   TA_ASSERT( libHandle, stream != NULL );
-   TA_ASSERT( libHandle, handle != NULL );
+   TA_ASSERT( stream != NULL );
+   TA_ASSERT( handle != NULL );
 
    /* Allocate the private file handle. */
-   fileHandlePriv = (TA_FileHandlePriv *)TA_Malloc( libHandle, sizeof( TA_FileHandlePriv ) );
+   fileHandlePriv = (TA_FileHandlePriv *)TA_Malloc( sizeof( TA_FileHandlePriv ) );
    if( !fileHandlePriv )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -737,17 +728,17 @@ TA_RetCode TA_FileSeqOpenFromStream( TA_Libc *libHandle,
 }
 
 
-TA_RetCode TA_FileSeqOpen( TA_Libc *libHandle, const char *path, TA_FileHandle **handle )
+TA_RetCode TA_FileSeqOpen( const char *path, TA_FileHandle **handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_FileHandlePriv *fileHandlePriv;
 
-   TA_TRACE_BEGIN( libHandle, TA_FileSeqOpen );
+   TA_TRACE_BEGIN(  TA_FileSeqOpen );
 
-   TA_ASSERT( libHandle, path != NULL );
-   TA_ASSERT( libHandle, handle != NULL );
+   TA_ASSERT( path != NULL );
+   TA_ASSERT( handle != NULL );
 
-   fileHandlePriv = (TA_FileHandlePriv *)TA_Malloc( libHandle, sizeof( TA_FileHandlePriv ) );
+   fileHandlePriv = (TA_FileHandlePriv *)TA_Malloc( sizeof( TA_FileHandlePriv ) );
    if( !fileHandlePriv )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -762,7 +753,7 @@ TA_RetCode TA_FileSeqOpen( TA_Libc *libHandle, const char *path, TA_FileHandle *
 
    if( fileHandlePriv->handle == INVALID_HANDLE_VALUE )
    {
-      TA_FileSeqClose( libHandle, (TA_FileHandle *)fileHandlePriv );
+      TA_FileSeqClose( (TA_FileHandle *)fileHandlePriv );
       TA_TRACE_RETURN( TA_ACCESS_FAILED );
    }
    #else
@@ -771,25 +762,25 @@ TA_RetCode TA_FileSeqOpen( TA_Libc *libHandle, const char *path, TA_FileHandle *
 
    if( fileHandlePriv->handle == 0 )
    {
-      TA_FileSeqClose( libHandle, (TA_FileHandle *)fileHandlePriv );
+      TA_FileSeqClose( (TA_FileHandle *)fileHandlePriv );
       TA_TRACE_RETURN( TA_ACCESS_FAILED );
    }
    #endif
 
    /* Allocate buffer memory. */
    #if defined( USE_WIN32_API )
-      fileHandlePriv->allocBuffer = allocDiskBuffer( libHandle, path, &fileHandlePriv->allocBufferSize );
+      fileHandlePriv->allocBuffer = allocDiskBuffer( path, &fileHandlePriv->allocBufferSize );
       if( !fileHandlePriv->allocBuffer || (fileHandlePriv->allocBufferSize == 0) )
       {
-         TA_FileSeqClose( libHandle, (TA_FileHandle *)fileHandlePriv );
+         TA_FileSeqClose( (TA_FileHandle *)fileHandlePriv );
          TA_TRACE_RETURN( TA_ACCESS_FAILED );
       }
    #else
-      fileHandlePriv->allocBuffer = TA_Malloc( libHandle, FILE_BUFFER_SIZE );
+      fileHandlePriv->allocBuffer = TA_Malloc( FILE_BUFFER_SIZE );
       fileHandlePriv->allocBufferSize = FILE_BUFFER_SIZE;
       if( !fileHandlePriv->allocBuffer )
       {
-         TA_FileSeqClose( libHandle, (TA_FileHandle *)fileHandlePriv );
+         TA_FileSeqClose( (TA_FileHandle *)fileHandlePriv );
          TA_TRACE_RETURN( TA_ACCESS_FAILED );
       }
    #endif
@@ -802,7 +793,7 @@ TA_RetCode TA_FileSeqOpen( TA_Libc *libHandle, const char *path, TA_FileHandle *
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-unsigned int TA_FileSize( TA_Libc *libHandle, TA_FileHandle *handle )
+unsigned int TA_FileSize( TA_FileHandle *handle )
 {
    #if defined( USE_WIN32_API )
    BY_HANDLE_FILE_INFORMATION bhfi;
@@ -811,7 +802,7 @@ unsigned int TA_FileSize( TA_Libc *libHandle, TA_FileHandle *handle )
    TA_FileHandlePriv *fileHandlePriv;
    unsigned int fileSize;
 
-   TA_ASSERT_RET( libHandle, handle != NULL, 0 );
+   TA_ASSERT_RET( handle != NULL, 0 );
 
    fileHandlePriv = (TA_FileHandlePriv *)handle;
 
@@ -823,21 +814,21 @@ unsigned int TA_FileSize( TA_Libc *libHandle, TA_FileHandle *handle )
    else
    {
       #if defined( USE_WIN32_API )
-         TA_ASSERT_RET( libHandle, fileHandlePriv->handle != INVALID_HANDLE_VALUE, 0 );
+         TA_ASSERT_RET( fileHandlePriv->handle != INVALID_HANDLE_VALUE, 0 );
          GetFileInformationByHandle( fileHandlePriv->handle, &bhfi );
          fileSize = bhfi.nFileSizeLow;
       #endif
 
       #if defined( USE_OSLAYER )
-         TA_ASSERT_RET( libHandle, fileHandlePriv->handle != NULL, 0 );
-         fileSize = get_file_size( libHandle, fileHandlePriv->path );
+         TA_ASSERT_RET( fileHandlePriv->handle != NULL, 0 );
+         fileSize = get_file_size( fileHandlePriv->path );
       #endif
    }
 
    return fileSize;
 }
 
-const char *TA_FileSeqRead( TA_Libc *libHandle, TA_FileHandle *handle, unsigned int *nbByteRead )
+const char *TA_FileSeqRead( TA_FileHandle *handle, unsigned int *nbByteRead )
 {
    #if defined( USE_WIN32_API )
    BOOL retValue;
@@ -850,8 +841,8 @@ const char *TA_FileSeqRead( TA_Libc *libHandle, TA_FileHandle *handle, unsigned 
    const char *returnValue;
    TA_RetCode retCode;
 
-   TA_ASSERT_RET( libHandle, handle != NULL, (char *)NULL );
-   TA_ASSERT_RET( libHandle, nbByteRead != NULL, (char *)NULL );
+   TA_ASSERT_RET( handle != NULL, (char *)NULL );
+   TA_ASSERT_RET( nbByteRead != NULL, (char *)NULL );
 
    fileHandlePriv = (TA_FileHandlePriv *)handle;
 
@@ -869,13 +860,13 @@ const char *TA_FileSeqRead( TA_Libc *libHandle, TA_FileHandle *handle, unsigned 
    else
    { 
 	   
-      TA_ASSERT_RET( libHandle, fileHandlePriv->allocBuffer != NULL, (char *)NULL );
-      TA_ASSERT_RET( libHandle, fileHandlePriv->allocBufferSize >= 128, (char *)NULL );
+      TA_ASSERT_RET( fileHandlePriv->allocBuffer != NULL, (char *)NULL );
+      TA_ASSERT_RET( fileHandlePriv->allocBufferSize >= 128, (char *)NULL );
 
       *nbByteRead = 0;
 
       #if defined( USE_WIN32_API )
-         TA_ASSERT_RET( libHandle, fileHandlePriv->handle != INVALID_HANDLE_VALUE, (char *)NULL );
+         TA_ASSERT_RET( fileHandlePriv->handle != INVALID_HANDLE_VALUE, (char *)NULL );
          retValue = ReadFile( fileHandlePriv->handle,
                               fileHandlePriv->allocBuffer,
                               fileHandlePriv->allocBufferSize,
@@ -885,7 +876,7 @@ const char *TA_FileSeqRead( TA_Libc *libHandle, TA_FileHandle *handle, unsigned 
          if( retValue == 0 )
             return NULL;
       #else
-         TA_ASSERT_RET( libHandle, fileHandlePriv->handle != NULL, (char *)NULL );
+         TA_ASSERT_RET( fileHandlePriv->handle != NULL, (char *)NULL );
          if( feof(fileHandlePriv->handle) || ferror(fileHandlePriv->handle) )
             return NULL;
 
@@ -905,9 +896,9 @@ const char *TA_FileSeqRead( TA_Libc *libHandle, TA_FileHandle *handle, unsigned 
    return returnValue;
 }
 
-TA_RetCode TA_FileSeqClose( TA_Libc *libHandle, TA_FileHandle *handle )
+TA_RetCode TA_FileSeqClose( TA_FileHandle *handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_FileHandlePriv *fileHandlePriv;
    TA_SystemGlobal *global;
@@ -916,15 +907,15 @@ TA_RetCode TA_FileSeqClose( TA_Libc *libHandle, TA_FileHandle *handle )
    BOOL retValue;
    #endif
 
-   TA_TRACE_BEGIN( libHandle, TA_FileSeqClose );
+   TA_TRACE_BEGIN(  TA_FileSeqClose );
 
-   retCode = TA_GetGlobal( libHandle, &TA_SystemGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_SystemGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
    {
       TA_TRACE_RETURN( retCode );
    }
 
-   TA_ASSERT( libHandle, handle != NULL );
+   TA_ASSERT( handle != NULL );
 
    fileHandlePriv = (TA_FileHandlePriv *)handle;
 
@@ -938,12 +929,12 @@ TA_RetCode TA_FileSeqClose( TA_Libc *libHandle, TA_FileHandle *handle )
             {
                win32Error = GetLastError();
                global->lastError = win32Error;
-               TA_FATAL( libHandle, NULL, 0, win32Error );
+               TA_FATAL(  NULL, 0, win32Error );
             }
          }
          if( fileHandlePriv->allocBuffer )
          {
-            freeDiskBuffer( libHandle, fileHandlePriv->allocBuffer,
+            freeDiskBuffer( fileHandlePriv->allocBuffer,
                             fileHandlePriv->allocBufferSize );
          }
       #endif
@@ -952,7 +943,7 @@ TA_RetCode TA_FileSeqClose( TA_Libc *libHandle, TA_FileHandle *handle )
          if( fileHandlePriv->handle != NULL )
             fclose( fileHandlePriv->handle );
          if( fileHandlePriv->allocBuffer )
-            TA_Free( libHandle, fileHandlePriv->allocBuffer );
+            TA_Free(  fileHandlePriv->allocBuffer );
       #endif
 
       if( fileHandlePriv->streamAccess )
@@ -960,7 +951,7 @@ TA_RetCode TA_FileSeqClose( TA_Libc *libHandle, TA_FileHandle *handle )
          TA_StreamAccessFree( fileHandlePriv->streamAccess );
       }
 
-      TA_Free( libHandle, fileHandlePriv );
+      TA_Free(  fileHandlePriv );
    }
 
    TA_TRACE_RETURN( TA_SUCCESS );
@@ -982,7 +973,7 @@ static void stringListFree( TA_StringCache *stringCache, TA_List *list )
 }
 
 #if defined( USE_WIN32_API )
-static LPVOID allocDiskBuffer( TA_Libc *libHandle, const char *path, DWORD *nbByteAlloc )
+static LPVOID allocDiskBuffer( const char *path, DWORD *nbByteAlloc )
 {
    BOOL retValue;
    LPCTSTR lpRootPathName; /* address of root path */
@@ -995,7 +986,7 @@ static LPVOID allocDiskBuffer( TA_Libc *libHandle, const char *path, DWORD *nbBy
    TA_RetCode retCode;
    TA_SystemGlobal *global;
 
-   retCode = TA_GetGlobal( libHandle, &TA_SystemGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_SystemGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return (LPVOID)NULL;
 
@@ -1036,17 +1027,17 @@ static LPVOID allocDiskBuffer( TA_Libc *libHandle, const char *path, DWORD *nbBy
 #endif
 
 #if defined( USE_WIN32_API )
-static TA_RetCode freeDiskBuffer( TA_Libc *libHandle, LPVOID buffer, DWORD nbByteAlloc )
+static TA_RetCode freeDiskBuffer( LPVOID buffer, DWORD nbByteAlloc )
 {
-   TA_PROLOG;
+   TA_PROLOG
    BOOL retValue;
    DWORD win32Error;
    TA_RetCode retCode;
    TA_SystemGlobal *global;
 
-   TA_TRACE_BEGIN( libHandle, freeDiskBuffer );
+   TA_TRACE_BEGIN(  freeDiskBuffer );
 
-   retCode = TA_GetGlobal( libHandle, &TA_SystemGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal(  &TA_SystemGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
    {
       TA_TRACE_RETURN( retCode );
@@ -1058,7 +1049,7 @@ static TA_RetCode freeDiskBuffer( TA_Libc *libHandle, LPVOID buffer, DWORD nbByt
    {
       win32Error = GetLastError();
       global->lastError = win32Error;
-      TA_FATAL( libHandle, "Win32 Cannot free paged mem", nbByteAlloc, win32Error );
+      TA_FATAL(  "Win32 Cannot free paged mem", nbByteAlloc, win32Error );
    }
 
    /* Unreserve all pages. */
@@ -1067,7 +1058,7 @@ static TA_RetCode freeDiskBuffer( TA_Libc *libHandle, LPVOID buffer, DWORD nbByt
    {
       win32Error = GetLastError();
       global->lastError = win32Error;
-      TA_FATAL( libHandle, "Win32 Cannot free paged mem", 0, win32Error );
+      TA_FATAL(  "Win32 Cannot free paged mem", 0, win32Error );
    }
 
    TA_TRACE_RETURN( TA_SUCCESS );
@@ -1085,25 +1076,19 @@ static void initSysInfo( TA_SystemGlobal *global )
 }
 #endif
 
-static TA_RetCode TA_SystemGlobalInit( TA_Libc *libHandle,
-                                       void **globalToAlloc )
+static TA_RetCode TA_SystemGlobalInit( void **globalToAlloc )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_SystemGlobal *global;
 
-   TA_TRACE_BEGIN( libHandle, TA_SystemGlobalInit );
+   TA_TRACE_BEGIN( TA_SystemGlobalInit );
 
-   if( libHandle == NULL )
-   {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
-   }
-
-   TA_ASSERT( libHandle, globalToAlloc != NULL );
+   TA_ASSERT( globalToAlloc != NULL );
 
    *globalToAlloc = NULL;
 
-   global = (TA_SystemGlobal *)TA_Malloc( libHandle, sizeof( TA_SystemGlobal ) );
+   global = (TA_SystemGlobal *)TA_Malloc( sizeof( TA_SystemGlobal ) );
    if( !global )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -1111,18 +1096,18 @@ static TA_RetCode TA_SystemGlobalInit( TA_Libc *libHandle,
 
    memset( global, 0, sizeof( TA_SystemGlobal ) );
 
-   retCode = TA_StringCacheAlloc( libHandle, &global->dirnameCache );
+   retCode = TA_StringCacheAlloc( &global->dirnameCache );
    if( retCode != TA_SUCCESS )
    {
-      TA_Free( libHandle, global );
+      TA_Free( global );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
-   retCode = TA_StringCacheAlloc( libHandle, &global->filenameCache );
+   retCode = TA_StringCacheAlloc( &global->filenameCache );
    if( retCode != TA_SUCCESS )
    {
       TA_StringCacheFree( global->dirnameCache );
-      TA_Free( libHandle, global );
+      TA_Free( global );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
@@ -1131,16 +1116,13 @@ static TA_RetCode TA_SystemGlobalInit( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-static TA_RetCode TA_SystemGlobalShutdown( TA_Libc *libHandle,
-                                           void *globalAllocated )
+static TA_RetCode TA_SystemGlobalShutdown( void *globalAllocated )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode, finalRetCode;
    TA_SystemGlobal *global;
 
-   TA_TRACE_BEGIN( libHandle, TA_SystemGlobalShutdown );
-
-   TA_ASSERT( libHandle, libHandle != NULL );
+   TA_TRACE_BEGIN( TA_SystemGlobalShutdown );
 
    /* No need to shutdown if the initialization failed. */
    if( globalAllocated == NULL )
@@ -1155,7 +1137,7 @@ static TA_RetCode TA_SystemGlobalShutdown( TA_Libc *libHandle,
    if( global->dirnameCache )
    {
       retCode = TA_StringCacheFree( global->dirnameCache );
-      TA_ASSERT( libHandle, retCode == TA_SUCCESS );
+      TA_ASSERT( retCode == TA_SUCCESS );
       if( retCode != TA_SUCCESS )
          finalRetCode = retCode;
    }
@@ -1163,12 +1145,12 @@ static TA_RetCode TA_SystemGlobalShutdown( TA_Libc *libHandle,
    if( global->filenameCache )
    {
       retCode = TA_StringCacheFree( global->filenameCache );
-      TA_ASSERT( libHandle, retCode == TA_SUCCESS );
+      TA_ASSERT( retCode == TA_SUCCESS );
       if( retCode != TA_SUCCESS )
          finalRetCode = retCode;
    }
 
-   TA_Free( libHandle, global );
+   TA_Free(  global );
 
    TA_TRACE_RETURN( finalRetCode );
 }

@@ -75,7 +75,7 @@ int TA_STOCHF_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEG
    retValue = (optInFastK_Period_0 - 1);
          
    /* Add the smoothing being done for Fast-D */
-   retValue += TA_MA_Lookback( optInFastD_Period_1, optInFastD_MAType_2, TA_MA_CLASSIC );
+   retValue += TA_MA_Lookback( optInFastD_Period_1, optInFastD_MAType_2 );
 
    return retValue;
 }
@@ -101,8 +101,7 @@ int TA_STOCHF_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEG
  * 
  */
 
-TA_RetCode TA_STOCHF( TA_Libc      *libHandle,
-                      TA_Integer    startIdx,
+TA_RetCode TA_STOCHF( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real inHigh_0[],
                       const TA_Real inLow_0[],
@@ -125,8 +124,6 @@ TA_RetCode TA_STOCHF( TA_Libc      *libHandle,
    TA_Integer trailingIdx, today, i, bufferIsAllocated;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -203,7 +200,7 @@ TA_RetCode TA_STOCHF( TA_Libc      *libHandle,
 
    /* Identify the lookback needed. */
    lookbackK      = optInFastK_Period_0-1;
-   lookbackFastD  = TA_MA_Lookback( optInFastD_Period_1, optInFastD_MAType_2, TA_MA_CLASSIC );
+   lookbackFastD  = TA_MA_Lookback( optInFastD_Period_1, optInFastD_MAType_2 );
    lookbackTotal  = lookbackK + lookbackFastD;
 
    /* Move up the start index if there is not
@@ -244,6 +241,7 @@ TA_RetCode TA_STOCHF( TA_Libc      *libHandle,
    trailingIdx = startIdx-lookbackTotal;
    today       = trailingIdx+lookbackK;
    lowestIdx   = highestIdx = -1;
+   diff = highest = lowest  = 0.0;
 
    /* Allocate a temporary buffer large enough to
     * store the K.
@@ -267,7 +265,7 @@ TA_RetCode TA_STOCHF( TA_Libc      *libHandle,
    else
    {
       bufferIsAllocated = 1;
-      tempBuffer = TA_Malloc( libHandle, (endIdx-today+1)*sizeof(TA_Real) );
+      tempBuffer = TA_Malloc( (endIdx-today+1)*sizeof(TA_Real) );
    }
 
    /* Do the K calculation */
@@ -336,16 +334,16 @@ TA_RetCode TA_STOCHF( TA_Libc      *libHandle,
    /* Fast-K calculation completed. This K calculation is returned
     * to the caller. It is smoothed to become Fast-D.
     */
-   retCode = TA_MA( libHandle, 0, outIdx-1,
+   retCode = TA_MA( 0, outIdx-1,
                     tempBuffer, optInFastD_Period_1,
-                    optInFastD_MAType_2, TA_MA_CLASSIC, 
+                    optInFastD_MAType_2, 
                     outBegIdx, outNbElement, tempBuffer );
 
 
    if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
    {
       if( bufferIsAllocated )
-        TA_Free( libHandle, tempBuffer ); 
+        TA_Free(  tempBuffer ); 
       /* Something wrong happen? No further data? */
       *outBegIdx    = 0;
       *outNbElement = 0;
@@ -361,7 +359,7 @@ TA_RetCode TA_STOCHF( TA_Libc      *libHandle,
 
    /* Don't need K anymore, free it if it was allocated here. */
    if( bufferIsAllocated )
-      TA_Free( libHandle, tempBuffer ); 
+      TA_Free(  tempBuffer ); 
 
    if( retCode != TA_SUCCESS )
    {

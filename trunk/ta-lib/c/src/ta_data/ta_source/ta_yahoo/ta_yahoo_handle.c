@@ -77,8 +77,8 @@
 /* None */
 
 /**** Local functions.    ****/
-static TA_PrivateYahooHandle *allocPrivateHandle( TA_Libc *libHandle );
-static TA_RetCode freePrivateHandle( TA_Libc *libHandle, TA_PrivateYahooHandle *privateHandle );
+static TA_PrivateYahooHandle *allocPrivateHandle( void );
+static TA_RetCode freePrivateHandle( TA_PrivateYahooHandle *privateHandle );
 
 
 /**** Local variables definitions.     ****/
@@ -86,23 +86,23 @@ TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
 
-TA_DataSourceHandle *TA_YAHOO_DataSourceHandleAlloc( TA_Libc *libHandle )
+TA_DataSourceHandle *TA_YAHOO_DataSourceHandleAlloc( void )
 {
    TA_DataSourceHandle *handle;
    TA_PrivateYahooHandle *privateHandle;
 
-   handle = (TA_DataSourceHandle *)TA_Malloc(libHandle,sizeof( TA_DataSourceHandle ));
+   handle = (TA_DataSourceHandle *)TA_Malloc(sizeof( TA_DataSourceHandle ));
    if( !handle )
       return NULL;
 
    memset( handle, 0, sizeof( TA_DataSourceHandle ) );
 
    /* Allocate the opaque data. */
-   privateHandle = allocPrivateHandle(libHandle);
+   privateHandle = allocPrivateHandle();
    handle->opaqueData = privateHandle;
    if( !handle->opaqueData )
    {
-      TA_Free( libHandle, handle );
+      TA_Free(  handle );
       return NULL;
    }
     
@@ -113,75 +113,68 @@ TA_DataSourceHandle *TA_YAHOO_DataSourceHandleAlloc( TA_Libc *libHandle )
 
 TA_RetCode TA_YAHOO_DataSourceHandleFree( TA_DataSourceHandle *handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_PrivateYahooHandle *privateHandle;
-   TA_Libc *libHandle;
-
-   if( !handle )
-      return TA_INTERNAL_ERROR(102);
 
    privateHandle = (TA_PrivateYahooHandle *)handle->opaqueData;
-   libHandle = privateHandle->libHandle;
 
-   TA_TRACE_BEGIN( libHandle, TA_YAHOO_DataSourceHandleFree );
+   TA_TRACE_BEGIN( TA_YAHOO_DataSourceHandleFree );
 
    if( handle )
    {
-      if( freePrivateHandle( libHandle, (TA_PrivateYahooHandle *)handle->opaqueData ) != TA_SUCCESS )
+      if( freePrivateHandle( (TA_PrivateYahooHandle *)handle->opaqueData ) != TA_SUCCESS )
       {
-         TA_FATAL( libHandle, NULL, handle, 0 );
+         TA_FATAL( NULL, handle, 0 );
       }
 
-      TA_Free( libHandle, handle );
+      TA_Free( handle );
    }
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
 /**** Local functions definitions.     ****/
-static TA_PrivateYahooHandle *allocPrivateHandle( TA_Libc *libHandle )
+static TA_PrivateYahooHandle *allocPrivateHandle( void )
 {
    TA_PrivateYahooHandle *privateHandle;
    TA_RetCode retCode;
 
-   privateHandle = (TA_PrivateYahooHandle *)TA_Malloc( libHandle, sizeof( TA_PrivateYahooHandle ) );
+   privateHandle = (TA_PrivateYahooHandle *)TA_Malloc( sizeof( TA_PrivateYahooHandle ) );
    if( !privateHandle )
       return NULL;
 
    memset( privateHandle, 0, sizeof( TA_PrivateYahooHandle ) );
 
-   privateHandle->libHandle = libHandle;
-
    /* freePrivateHandle can be safely called from this point. */
 
-   retCode = TA_ReadOpInfoAlloc( libHandle, "[D][MMM][YY][O][H][L][C][V]",                               
+   retCode = TA_ReadOpInfoAlloc( "[D][MMM][YY][O][H][L][C][V]",                               
                                  &privateHandle->readOp6Fields );
    if( retCode != TA_SUCCESS )
    {
-      freePrivateHandle( libHandle, privateHandle );
+      freePrivateHandle( privateHandle );
       return NULL;
    }
 
-   retCode = TA_ReadOpInfoAlloc( libHandle, "[D][MMM][YY][C]",
+   retCode = TA_ReadOpInfoAlloc( "[D][MMM][YY][C]",
                                  &privateHandle->readOp2Fields );
    if( retCode != TA_SUCCESS )
    {
-      freePrivateHandle( libHandle, privateHandle );
+      freePrivateHandle( privateHandle );
       return NULL;
    }
 
-   retCode = TA_ReadOpInfoAlloc( libHandle, "[D][MMM][YY][O][H][L][C]",
+   retCode = TA_ReadOpInfoAlloc( "[D][MMM][YY][O][H][L][C]",
                                  &privateHandle->readOp5Fields );
    if( retCode != TA_SUCCESS )
    {
-      freePrivateHandle( libHandle, privateHandle );
+      freePrivateHandle( privateHandle );
       return NULL;
    }
 
    return privateHandle;
 }
 
-static TA_RetCode freePrivateHandle( TA_Libc *libHandle, TA_PrivateYahooHandle *privateHandle )
+static TA_RetCode freePrivateHandle( TA_PrivateYahooHandle *privateHandle )
 {
    if( privateHandle )
    {
@@ -197,7 +190,7 @@ static TA_RetCode freePrivateHandle( TA_Libc *libHandle, TA_PrivateYahooHandle *
       if( privateHandle->readOp2Fields )
          TA_ReadOpInfoFree( privateHandle->readOp2Fields );
 
-      TA_Free( libHandle, privateHandle );
+      TA_Free(  privateHandle );
    }
 
    return TA_SUCCESS;

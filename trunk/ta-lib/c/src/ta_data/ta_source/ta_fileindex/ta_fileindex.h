@@ -37,8 +37,7 @@
 /* Functions to build the index of files. */
 typedef unsigned int TA_FileIndex; /* Implementation hidden. */
 
-TA_RetCode TA_FileIndexAlloc( TA_Libc *libHandle,
-                              TA_String *path,
+TA_RetCode TA_FileIndexAlloc( TA_String *path,
                               TA_String *initialCategory,
                               TA_String *initialCategoryCountry,
                               TA_String *initialCategoryExchange,
@@ -73,10 +72,10 @@ TA_FileInfo *TA_FileIndexNextSymbol ( TA_FileIndex *fileIndex );
 unsigned int TA_FileIndexNbSymbol( TA_FileIndex *fileIndex );
 
 /* Function to extract information from a TA_FileInfo. */
-TA_String   *TA_FileInfoSymbol  ( TA_Libc *libHandle, TA_FileInfo *fileInfo );
-TA_String   *TA_FileInfoCategory( TA_Libc *libHandle, TA_FileInfo *fileInfo );
+TA_String   *TA_FileInfoSymbol  ( TA_FileInfo *fileInfo );
+TA_String   *TA_FileInfoCategory( TA_FileInfo *fileInfo );
 
-const char *TA_FileInfoPath( TA_Libc *libHandle, TA_FileInfo *fileInfo );
+const char *TA_FileInfoPath( TA_FileInfo *fileInfo );
 
 /* Note 1: The pointer returned by TA_FileInfoPath will stay valid until
  *         the next call to any functions defined in this header file.

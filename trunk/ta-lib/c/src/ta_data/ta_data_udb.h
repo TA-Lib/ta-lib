@@ -99,8 +99,7 @@ typedef struct
   /* Keep a pointer on the default category. */
   TA_UDB_Category *defaultCategory;
 
-  /* The structure has been allocated for this library. */
-  TA_Libc *libHandle;
 } TA_UDBasePriv;
 
 #endif
+

@@ -83,8 +83,7 @@ int TA_MIDPOINT_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INT
  * 
  */
 
-TA_RetCode TA_MIDPOINT( TA_Libc      *libHandle,
-                        TA_Integer    startIdx,
+TA_RetCode TA_MIDPOINT( TA_Integer    startIdx,
                         TA_Integer    endIdx,
                         const TA_Real inReal_0[],
                         TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -100,8 +99,6 @@ TA_RetCode TA_MIDPOINT( TA_Libc      *libHandle,
    TA_Integer trailingIdx, today, i;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 

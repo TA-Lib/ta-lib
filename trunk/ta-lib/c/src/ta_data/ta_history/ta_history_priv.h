@@ -75,7 +75,6 @@ typedef struct
 typedef struct
 {
   /* This structure is the private version for the TA_ParamForAddData type. */
-  TA_Libc *libHandle;
 
   /* Parameter needed to be passed to the thread for parallel execution. */
   TA_BuilderSupport   *parent;
@@ -160,7 +159,7 @@ typedef struct
  *          and another in daily price bar, all data block will be normalize
  *          to daily period.
  */
-TA_RetCode TA_PeriodNormalize( TA_Libc *libHandle, TA_BuilderSupport *builderSupport );
+TA_RetCode TA_PeriodNormalize( TA_BuilderSupport *builderSupport );
 
 
 /* Allocate data in a different timeframe from
@@ -171,8 +170,7 @@ TA_RetCode TA_PeriodNormalize( TA_Libc *libHandle, TA_BuilderSupport *builderSup
  * this pointer to free this data when not needed
  * anymore.
  */
-TA_RetCode TA_PeriodTransform( TA_Libc *libHandle,
-                               const TA_History *history, /* The original history. */
+TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original history. */
                                TA_Period newPeriod,       /* The new desired period. */
                                TA_Integer *nbBars,        /* Return the number of price bar */
                                TA_Timestamp **timestamp,  /* Allocate new timestamp. */

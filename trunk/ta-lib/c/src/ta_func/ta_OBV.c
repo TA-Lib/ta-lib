@@ -77,8 +77,7 @@ int TA_OBV_Lookback( void )
  * 
  */
 
-TA_RetCode TA_OBV( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_OBV( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    const TA_Integer inVolume_1[],
@@ -93,8 +92,6 @@ TA_RetCode TA_OBV( TA_Libc      *libHandle,
    TA_Real prevReal, tempReal;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 

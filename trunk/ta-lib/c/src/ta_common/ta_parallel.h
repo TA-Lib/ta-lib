@@ -73,11 +73,11 @@
  *    trashing because of "over-threading".
  *
  *    Example:
- *      void TA_NewIndicator( TA_Libc *libHandle, ... )
+ *      void TA_NewIndicator( ... )
  *      {
  *         TA_PAR_VARS;
  *
- *         TA_PAR_INIT( libHandle );
+ *         TA_PAR_INIT();
  *
  *         TA_PAR_FUNC( TA_MA( ... ) );
  *         TA_PAR_FUNC( TA_EMA( ... ) );
@@ -101,7 +101,7 @@
 
 #if defined(TA_PARALLEL) && !defined( TA_SINGLE_THREAD )
    #define TA_PAR_VARS    TA_BarrierSync TA_PAR_BS
-   #define TA_PAR_INIT(LH){TA_BarrierSyncInit(LH,&TA_PAR_BS);}
+   #define TA_PAR_INIT()  {TA_BarrierSyncInit(&TA_PAR_BS);}
    #define TA_PAR_JOIN    {TA_BarrierSyncWaitAllDone(&TA_PAR_BS);}
    #define TA_PAR_END     {TA_BarrierSyncDestroy(&TA_PAR_BS);}
 
@@ -119,10 +119,9 @@
       TA_Sema mutexSema; /* Mutex for this structure. */
       volatile unsigned int nbThread; /* Nb thread left to be done. */
       TA_Sema barrierSema;   /* Stay block until all thread are done. */
-      TA_Libc *libHandle;
    } TA_BarrierSync;
 
-   TA_RetCode TA_BarrierSyncInit       ( TA_Libc *libHandle, TA_BarrierSync *bs );
+   TA_RetCode TA_BarrierSyncInit       ( TA_BarrierSync *bs );
    TA_RetCode TA_BarrierSyncDestroy    ( TA_BarrierSync *bs );
    TA_RetCode TA_BarrierSyncThreadAdd  ( TA_BarrierSync *bs );
    TA_RetCode TA_BarrierSyncThreadDone ( TA_BarrierSync *bs );
@@ -134,7 +133,7 @@
    void TA_PAR_EXEC_F( TA_BarrierSync *bs, TA_ThreadFunction newThread, void *args );
 #else
    #define TA_PAR_VARS
-   #define TA_PAR_INIT(x)
+   #define TA_PAR_INIT()
    #define TA_PAR_FUNC(rc,x) rc=x
    #define TA_PAR_JOIN
    #define TA_PAR_END

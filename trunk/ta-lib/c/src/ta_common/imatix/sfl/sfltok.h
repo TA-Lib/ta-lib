@@ -31,14 +31,14 @@
 extern "C" {
 #endif
 
-char **tok_split      (TA_Libc *libHandle, const char *string);
-char **tok_split_rich (TA_Libc *libHandle, const char *string, const char *delims);
-void   tok_free       (TA_Libc *libHandle, char **token_list);
-char **tok_push       (TA_Libc *libHandle, char **token_list, const char *string);
-int    tok_size       (TA_Libc *libHandle, char **token_list);
-size_t tok_text_size  (TA_Libc *libHandle, char **token_list);
+char **tok_split      (const char *string);
+char **tok_split_rich (const char *string, const char *delims);
+void   tok_free       (char **token_list);
+char **tok_push       (char **token_list, const char *string);
+int    tok_size       (char **token_list);
+size_t tok_text_size  (char **token_list);
 
-char  *tok_subst      (TA_Libc *libHandle, const char *string, SYMTAB *symbols);
+char  *tok_subst      (const char *string, SYMTAB *symbols);
 
 #ifdef __cplusplus
 }

@@ -84,12 +84,11 @@
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_ReadOp_Optimize( TA_Libc       *libHandle,
-                               TA_ReadOpInfo *readOpInfo,
+TA_RetCode TA_ReadOp_Optimize( TA_ReadOpInfo *readOpInfo,
                                TA_Period      period,
                                TA_Field       fieldToAlloc )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_ReadOp *lastOp;
    unsigned int tmpIdx;
    unsigned int i, nbReadOp;
@@ -97,9 +96,9 @@ TA_RetCode TA_ReadOp_Optimize( TA_Libc       *libHandle,
    TA_Field field;
    TA_ReadOp *readOp;
     
-   TA_TRACE_BEGIN( libHandle, TA_OptimizeReadOp );
+   TA_TRACE_BEGIN(  TA_OptimizeReadOp );
 
-   TA_ASSERT( libHandle, fieldToAlloc != 0 );
+   TA_ASSERT( fieldToAlloc != 0 );
 
    nbReadOp = readOpInfo->nbReadOp;
    readOp = readOpInfo->arrayReadOp;
@@ -114,7 +113,7 @@ TA_RetCode TA_ReadOp_Optimize( TA_Libc       *libHandle,
       else
       {
          TA_CLR_SKIP_FLAG(readOp[i]);
-         field = TA_ReadOpToField( libHandle, readOp[i] );
+         field = TA_ReadOpToField( readOp[i] );
 
          if( field == TA_TIMESTAMP )
          {
@@ -161,7 +160,7 @@ TA_RetCode TA_ReadOp_Optimize( TA_Libc       *libHandle,
       }
    }
 
-   TA_ASSERT( libHandle, TA_IS_LAST_SET(readOp[nbReadOp-1]) );
+   TA_ASSERT( TA_IS_LAST_SET(readOp[nbReadOp-1]) );
 
    /* Determine the last needed field. Mark it with the STOP flag.
     * Make sure all previous get their STOP flag clear.

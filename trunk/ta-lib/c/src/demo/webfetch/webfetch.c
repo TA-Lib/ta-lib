@@ -19,7 +19,6 @@ static void print_error( TA_RetCode retCode );
 
 int main( int argc, char **argv )
 {
-   TA_Libc *libHandle;
    TA_RetCode retCode;
    int retValue;
 
@@ -31,7 +30,7 @@ int main( int argc, char **argv )
    }
 
    /* Initialize TA-LIB. */
-   retCode = TA_Initialize( &libHandle, NULL );
+   retCode = TA_Initialize( NULL );
    if( retCode != TA_SUCCESS )
    {
       print_error( retCode );
@@ -39,7 +38,7 @@ int main( int argc, char **argv )
    }
 
    /* Fetch and display the WebPage. */
-   retCode = TA_WebFetch( libHandle, argv[1], stdout );
+   retCode = TA_WebFetch( argv[1], stdout );
 
    if( retCode != TA_SUCCESS )
    {
@@ -50,7 +49,7 @@ int main( int argc, char **argv )
       retValue = 0;
       
    /* Clean-up and exit. */
-   TA_Shutdown( libHandle );
+   TA_Shutdown();
 
    return retValue;
 }

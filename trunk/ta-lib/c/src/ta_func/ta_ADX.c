@@ -67,7 +67,7 @@ int TA_ADX_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_
 {
    /* insert lookback code here. */
    if( optInTimePeriod_0 > 1 )
-      return (2 * optInTimePeriod_0) + TA_UnstablePeriodTable[TA_FUNC_UNST_ADX] - 1;
+      return (2 * optInTimePeriod_0) + TA_Globals.unstablePeriod[TA_FUNC_UNST_ADX] - 1;
    else
       return 2;
 
@@ -88,8 +88,7 @@ int TA_ADX_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_
  * 
  */
 
-TA_RetCode TA_ADX( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_ADX( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inHigh_0[],
                    const TA_Real inLow_0[],
@@ -120,8 +119,6 @@ TA_RetCode TA_ADX( TA_Libc      *libHandle,
    }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -258,7 +255,7 @@ TA_RetCode TA_ADX( TA_Libc      *libHandle,
     */
 
    if( optInTimePeriod_0 > 1 )
-      lookbackTotal = (2*optInTimePeriod_0) + TA_UnstablePeriodTable[TA_FUNC_UNST_ADX] - 1;
+      lookbackTotal = (2*optInTimePeriod_0) + TA_Globals.unstablePeriod[TA_FUNC_UNST_ADX] - 1;
    else
       lookbackTotal = 2;
 
@@ -364,7 +361,7 @@ TA_RetCode TA_ADX( TA_Libc      *libHandle,
    prevADX = round_pos( sumDX / optInTimePeriod_0 );
 
    /* Skip the unstable period */
-   i = TA_UnstablePeriodTable[TA_FUNC_UNST_ADX];
+   i = TA_Globals.unstablePeriod[TA_FUNC_UNST_ADX];
    while( i-- > 0 )
    {
       /* Calculate the prevMinusDM and prevPlusDM */

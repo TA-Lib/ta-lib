@@ -67,7 +67,7 @@ int TA_TRIX_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   unsigned int emaLookback = TA_EMA_Lookback( optInTimePeriod_0, TA_EMA_CLASSIC );
+   unsigned int emaLookback = TA_EMA_Lookback( optInTimePeriod_0 );
    return (emaLookback*3) + TA_ROCR_Lookback( 1 );
 }
 
@@ -86,8 +86,7 @@ int TA_TRIX_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER
  * 
  */
 
-TA_RetCode TA_TRIX( TA_Libc      *libHandle,
-                    TA_Integer    startIdx,
+TA_RetCode TA_TRIX( TA_Integer    startIdx,
                     TA_Integer    endIdx,
                     const TA_Real inReal_0[],
                     TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -105,8 +104,6 @@ TA_RetCode TA_TRIX( TA_Libc      *libHandle,
    TA_Integer nbElementToOutput;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -134,7 +131,7 @@ TA_RetCode TA_TRIX( TA_Libc      *libHandle,
    /* Insert TA function code here. */
 
    /* Adjust the startIdx to account for the lookback. */
-   emaLookback   = TA_EMA_Lookback( optInTimePeriod_0, TA_EMA_CLASSIC );
+   emaLookback   = TA_EMA_Lookback( optInTimePeriod_0 );
    rocLookback   = TA_ROCR_Lookback( 1 );
    totalLookback = (emaLookback*3) + rocLookback;
 
@@ -156,7 +153,7 @@ TA_RetCode TA_TRIX( TA_Libc      *libHandle,
    /* Allocate a temporary buffer for performing
     * the calculation.
     */
-   tempBuffer = TA_Malloc( libHandle, nbElementToOutput * sizeof(TA_Real) );
+   tempBuffer = TA_Malloc( nbElementToOutput * sizeof(TA_Real) );
    if( !tempBuffer )
    {
       *outNbElement = 0;
@@ -168,7 +165,6 @@ TA_RetCode TA_TRIX( TA_Libc      *libHandle,
    k = PER_TO_K(optInTimePeriod_0);  
    retCode = TA_INT_EMA( (startIdx-totalLookback), endIdx, inReal_0,
                          optInTimePeriod_0, k,
-                         TA_EMA_CLASSIC,
                          &begIdx, &nbElement, tempBuffer );
    
    /* Verify for failure or if not enough data after
@@ -178,7 +174,7 @@ TA_RetCode TA_TRIX( TA_Libc      *libHandle,
    {
       *outNbElement = 0;
       *outBegIdx = 0;
-      TA_Free( libHandle, tempBuffer );
+      TA_Free(  tempBuffer );
       return retCode;
    }
 
@@ -188,7 +184,6 @@ TA_RetCode TA_TRIX( TA_Libc      *libHandle,
    nbElementToOutput -= emaLookback;
    retCode = TA_INT_EMA( 0, nbElementToOutput, tempBuffer,
                          optInTimePeriod_0, k,
-                         TA_EMA_CLASSIC,
                          &begIdx, &nbElement, tempBuffer );
    
    /* Verify for failure or if not enough data after
@@ -198,7 +193,7 @@ TA_RetCode TA_TRIX( TA_Libc      *libHandle,
    {
       *outNbElement = 0;
       *outBegIdx = 0;
-      TA_Free( libHandle, tempBuffer );
+      TA_Free(  tempBuffer );
       return retCode;
    }
 
@@ -206,7 +201,6 @@ TA_RetCode TA_TRIX( TA_Libc      *libHandle,
    nbElementToOutput -= emaLookback;
    retCode = TA_INT_EMA( 0, nbElementToOutput, tempBuffer,
                          optInTimePeriod_0, k,
-                         TA_EMA_CLASSIC,
                          &begIdx, &nbElement, tempBuffer );
    
    /* Verify for failure or if not enough data after
@@ -216,18 +210,18 @@ TA_RetCode TA_TRIX( TA_Libc      *libHandle,
    {
       *outNbElement = 0;
       *outBegIdx = 0;
-      TA_Free( libHandle, tempBuffer );
+      TA_Free(  tempBuffer );
       return retCode;
    }
 
    /* Calculate the 1-day Rate-Of-Change */
    nbElementToOutput -= emaLookback;
-   retCode = TA_ROC( libHandle, 0, nbElementToOutput,
+   retCode = TA_ROC( 0, nbElementToOutput,
                       tempBuffer,
                       1,  &begIdx, outNbElement,
                       outReal_0 );
 
-   TA_Free( libHandle, tempBuffer );
+   TA_Free(  tempBuffer );
    /* Verify for failure or if not enough data after
     * calculating the rate-of-change.
     */

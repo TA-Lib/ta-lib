@@ -50,6 +50,15 @@ extern "C" {
 
 %%%GENCODE%%%
 
+typedef enum
+{
+  TA_COMPATIBILITY_DEFAULT,
+  TA_COMPATIBILITY_METASTOCK,
+} TA_Compatibility;
+
+TA_RetCode TA_SetCompatibility( TA_Compatibility value );
+TA_Compatibility TA_GetCompatibility( void );
+
 #ifdef __cplusplus
 }
 #endif

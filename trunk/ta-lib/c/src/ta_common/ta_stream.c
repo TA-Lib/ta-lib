@@ -93,7 +93,6 @@
 struct TA_Stream_struct
 {
   unsigned int    magicNb;
-  TA_Libc        *libHandle;
 
   unsigned char  *data;         /* Start of the data. */
   unsigned int    nbBitWritten; /* Number of bit in this block. */
@@ -120,7 +119,6 @@ typedef struct TA_Stream_struct TA_StreamPriv;
 typedef struct
 {
   unsigned int     magicNb;
-  TA_Libc         *libHandle;
 
   unsigned int     endOfStream; /* No more bit in the stream. */
 
@@ -161,19 +159,18 @@ typedef enum
 /**** Local functions declarations.    ****/
 static TA_RetCode streamJumpToNextByteBoundary( TA_StreamPriv *stream, unsigned int *nbBitAdded );
 static TA_RetCode accessJumpToNextByteBoundary( TA_StreamAccessPriv *streamAcc );
-static TA_StreamPriv *streamAllocSize( TA_Libc *libHandle, unsigned int nbByte );
+static TA_StreamPriv *streamAllocSize( unsigned int nbByte );
 static TA_RetCode streamCompressBZIP2( const TA_StreamPriv *streamToCompress, TA_StreamPriv **retStream );
 static TA_RetCode streamDecompressBZIP2( TA_StreamPriv *stream, TA_StreamAccessPriv *streamToDecompress );
 static int accessMoveToNextBlock( TA_StreamAccessPriv *access );
 
-static TA_RetCode streamPrivInit( TA_Libc *libHandle,
-                                  TA_StreamPriv *streamPriv,
+static TA_RetCode streamPrivInit( TA_StreamPriv *streamPriv,
                                   unsigned char *data,
                                   unsigned int nbByte,
                                   TA_FreeFuncPtr freeFunc,
                                   void *opaqueData );
 
-static void freeData( TA_Libc *libHandle, TA_StreamPriv *streamPriv );
+static void freeData( TA_StreamPriv *streamPriv );
 
 static TA_RetCode calcCRC( TA_Stream *stream,
                            unsigned int start, /* First byte to include. Zero base. */
@@ -202,19 +199,15 @@ TA_FILE_INFO;
 /**** Global functions definitions.   ****/
 
 /* Use to alloc/dealloc a stream for the user. */
-TA_Stream *TA_StreamAlloc( TA_Libc *libHandle )
+TA_Stream *TA_StreamAlloc( void )
 {
-   if( !libHandle )
-      return NULL;
-
-   return (TA_Stream *)streamAllocSize( libHandle, TA_STREAM_FIRST_BLOCK_SIZE );
+   return (TA_Stream *)streamAllocSize( TA_STREAM_FIRST_BLOCK_SIZE );
 }
 
 TA_RetCode TA_StreamFree( TA_Stream *stream )
 {
    TA_StreamPriv *streamPriv;
    TA_StreamPriv *tmp;
-   TA_Libc *libHandle;
 
    streamPriv = (TA_StreamPriv *)stream;
    
@@ -223,30 +216,27 @@ TA_RetCode TA_StreamFree( TA_Stream *stream )
       if( streamPriv->magicNb != TA_STREAM_MAGIC_NB )
          return TA_BAD_OBJECT;
 
-      libHandle = streamPriv->libHandle;
-
-      freeData( libHandle, streamPriv );
+      freeData( streamPriv );
 
       tmp = streamPriv->next;
-      TA_Free( libHandle, streamPriv );
+      TA_Free(  streamPriv );
       streamPriv = tmp;
    }
 
    return TA_SUCCESS;
 }
 
-TA_Stream *TA_StreamAllocFromBuffer( TA_Libc *libHandle,
-                                     unsigned char *data,
+TA_Stream *TA_StreamAllocFromBuffer( unsigned char *data,
                                      unsigned int dataSize,
                                      TA_FreeFuncPtr freeFunc,
                                      void *opaqueData )
 {
    TA_StreamPriv *newStreamPriv;
 
-   if( !libHandle || !data || !dataSize )
+   if( !data || !dataSize )
       return (TA_Stream *)NULL;
 
-   newStreamPriv = (TA_StreamPriv *)TA_Malloc( libHandle, sizeof( TA_StreamPriv ) );
+   newStreamPriv = (TA_StreamPriv *)TA_Malloc( sizeof( TA_StreamPriv ) );
    if( !newStreamPriv )
       return (TA_Stream *)NULL;
 
@@ -271,7 +261,6 @@ TA_Stream *TA_StreamAllocFromBuffer( TA_Libc *libHandle,
    /* and the rest... */
    newStreamPriv->nbByteToSkip  = 0;
    newStreamPriv->magicNb   = TA_STREAM_MAGIC_NB;
-   newStreamPriv->libHandle = libHandle;
 
    return (TA_Stream *)newStreamPriv;
 }
@@ -282,7 +271,6 @@ TA_RetCode TA_StreamAddBit( TA_Stream *stream, unsigned int bit )
    TA_StreamPriv *lastBlock;
    TA_StreamPriv *tempBlock;
    TA_StreamPriv *streamPriv;
-   TA_Libc *libHandle;
 
    streamPriv = (TA_StreamPriv *)stream;
 
@@ -291,8 +279,6 @@ TA_RetCode TA_StreamAddBit( TA_Stream *stream, unsigned int bit )
 
    if( streamPriv->magicNb != TA_STREAM_MAGIC_NB )
      return TA_BAD_OBJECT;
-
-   libHandle = streamPriv->libHandle;
 
    lastBlock = streamPriv->lastBlock;
 
@@ -304,7 +290,7 @@ TA_RetCode TA_StreamAddBit( TA_Stream *stream, unsigned int bit )
          /* Allocate a new block for the stream and add it at the end
           * of the link list of block.
           */
-         tempBlock = streamAllocSize( libHandle, TA_STREAM_OTHER_BLOCK_SIZE );
+         tempBlock = streamAllocSize( TA_STREAM_OTHER_BLOCK_SIZE );
          if( !tempBlock )
             return TA_ALLOC_ERR;
 
@@ -337,7 +323,6 @@ TA_RetCode TA_StreamAddByte( TA_Stream *stream, unsigned char data )
    TA_RetCode retCode;
    TA_StreamPriv *streamPriv;
    TA_StreamPriv *lastBlock;
-   TA_Libc *libHandle;
 
    streamPriv = (TA_StreamPriv *)stream;
 
@@ -347,7 +332,6 @@ TA_RetCode TA_StreamAddByte( TA_Stream *stream, unsigned char data )
    if( streamPriv->magicNb != TA_STREAM_MAGIC_NB )
      return TA_BAD_OBJECT;
 
-   libHandle = streamPriv->libHandle;
    lastBlock = streamPriv->lastBlock;
 
    /* Add byte in one shot if already on a byte boundary, else
@@ -364,7 +348,7 @@ TA_RetCode TA_StreamAddByte( TA_Stream *stream, unsigned char data )
          /* Allocate a new block for the stream and add it at the end
           * of the link list of block.
           */
-         tempBlock = streamAllocSize( libHandle, TA_STREAM_OTHER_BLOCK_SIZE );
+         tempBlock = streamAllocSize( TA_STREAM_OTHER_BLOCK_SIZE );
          if( !tempBlock )
             return TA_ALLOC_ERR;
 
@@ -410,7 +394,6 @@ TA_RetCode TA_StreamAddInt16( TA_Stream *stream, unsigned short data )
    retCode = TA_StreamAddByte( stream, temp );
    if( retCode != TA_SUCCESS )
       return retCode;
-
 
    return TA_SUCCESS;
 }
@@ -501,7 +484,6 @@ TA_RetCode TA_StreamAddBuffer( TA_Stream *stream,
 {
    TA_StreamPriv *newStreamPriv;
    TA_StreamPriv *firstStreamPriv;
-   TA_Libc *libHandle;
 
    if( !data || !stream || (dataSize <= 0) )
       return TA_BAD_PARAM;
@@ -511,12 +493,7 @@ TA_RetCode TA_StreamAddBuffer( TA_Stream *stream,
    if( firstStreamPriv->magicNb != TA_STREAM_MAGIC_NB )
       return TA_BAD_OBJECT;
 
-   libHandle = firstStreamPriv->libHandle;
-
-   if( !libHandle )
-      return TA_INTERNAL_ERROR(6);
-
-   newStreamPriv = (TA_StreamPriv *)TA_Malloc( libHandle, sizeof( TA_StreamPriv ) );
+   newStreamPriv = (TA_StreamPriv *)TA_Malloc( sizeof( TA_StreamPriv ) );
    if( !newStreamPriv )
       return TA_ALLOC_ERR;
 
@@ -541,7 +518,6 @@ TA_RetCode TA_StreamAddBuffer( TA_Stream *stream,
    /* and the rest... */
    newStreamPriv->nbByteToSkip  = 0;
    newStreamPriv->magicNb   = TA_STREAM_MAGIC_NB;
-   newStreamPriv->libHandle = libHandle;
 
    return TA_StreamMerge( stream, (TA_Stream *)newStreamPriv );
 }
@@ -592,7 +568,6 @@ TA_StreamAccess *TA_StreamAccessAlloc( const TA_Stream *stream )
 {
    TA_StreamAccessPriv *accessPriv;
    const TA_StreamPriv *streamPriv;
-   TA_Libc *libHandle;
 
    streamPriv = (const TA_StreamPriv *)stream;
 
@@ -602,8 +577,7 @@ TA_StreamAccess *TA_StreamAccessAlloc( const TA_Stream *stream )
    if( streamPriv->magicNb != TA_STREAM_MAGIC_NB )
       return (TA_StreamAccess *)NULL;
      
-   libHandle = streamPriv->libHandle;
-   accessPriv = (TA_StreamAccessPriv *) TA_Malloc( libHandle, sizeof( TA_StreamAccessPriv ) );
+   accessPriv = (TA_StreamAccessPriv *) TA_Malloc( sizeof( TA_StreamAccessPriv ) );
 
    if( !accessPriv )
       return (TA_StreamAccess *)NULL;
@@ -614,7 +588,6 @@ TA_StreamAccess *TA_StreamAccessAlloc( const TA_Stream *stream )
    accessPriv->nbBitRead    = 0;
    accessPriv->endOfStream  = 0;
    accessPriv->magicNb      = TA_STREAM_ACCESS_MAGIC_NB;
-   accessPriv->libHandle    = libHandle;
 
    if( streamPriv->nbBitWritten == 0 )
    {
@@ -637,7 +610,7 @@ TA_RetCode TA_StreamAccessFree( TA_StreamAccess *access )
       if( accessPriv->magicNb != TA_STREAM_ACCESS_MAGIC_NB )
          return TA_BAD_OBJECT;
 
-      TA_Free( accessPriv ->libHandle, access );
+      TA_Free( access );
    }
 
    return TA_SUCCESS;
@@ -646,14 +619,11 @@ TA_RetCode TA_StreamAccessFree( TA_StreamAccess *access )
 TA_StreamAccess *TA_StreamAccessAllocCopy( const TA_StreamAccess *stream )
 {
     TA_StreamAccessPriv *accessPriv = (TA_StreamAccessPriv *)stream;
-    TA_Libc *libHandle;
 
     if( !stream )
        return NULL;
     if( accessPriv->magicNb != TA_STREAM_ACCESS_MAGIC_NB )
        return NULL;
-
-    libHandle = accessPriv->libHandle;
 
     return TA_StreamAccessAlloc( (TA_Stream *)accessPriv->currentBlock );
 }
@@ -837,7 +807,6 @@ TA_RetCode TA_StreamAccessGetString( TA_StreamAccess *access, TA_String **string
    unsigned char buffer[256];
    TA_String *stringPtr;
    int i;
-   TA_Libc *libHandle;
    TA_StringCache *stringCache;
    TA_StreamAccessPriv *accessPriv;
 
@@ -848,8 +817,6 @@ TA_RetCode TA_StreamAccessGetString( TA_StreamAccess *access, TA_String **string
 
    if( accessPriv->magicNb != TA_STREAM_ACCESS_MAGIC_NB )
       return TA_BAD_OBJECT;
-
-   libHandle = accessPriv->libHandle;
 
    *string = NULL;
 
@@ -865,7 +832,7 @@ TA_RetCode TA_StreamAccessGetString( TA_StreamAccess *access, TA_String **string
          return retCode;
    }
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
        
    stringPtr = TA_StringAllocN( stringCache, (const char *)&buffer[0], length );
    if( !stringPtr )
@@ -920,19 +887,17 @@ TA_RetCode TA_StreamAccessGetHTMLTable( TA_StreamAccess *access,
                                         void *opaqueData )
 {
    TA_RetCode retCode;
-   TA_Libc *libHandle;
    char *buffer;
    char *hrefBuffer;
 
-   libHandle = ((TA_StreamAccessPriv *)access)->libHandle;
-   buffer = TA_Malloc( libHandle, maxElementSize+1 );
+   buffer = TA_Malloc( maxElementSize+1 );
    if( !buffer )
       return TA_ALLOC_ERR;
 
-   hrefBuffer = TA_Malloc( libHandle, maxElementSize+1 );
+   hrefBuffer = TA_Malloc( maxElementSize+1 );
    if( !hrefBuffer )
    {
-      TA_Free( libHandle, buffer );
+      TA_Free(  buffer );
       return TA_ALLOC_ERR;
    }
 
@@ -941,8 +906,8 @@ TA_RetCode TA_StreamAccessGetHTMLTable( TA_StreamAccess *access,
 
    retCode = streamGetHTMLTable( access, maxElementSize, buffer, hrefBuffer, funcPtr, opaqueData );
 
-   TA_Free( libHandle, buffer );
-   TA_Free( libHandle, hrefBuffer );
+   TA_Free( buffer );
+   TA_Free( hrefBuffer );
 
    return retCode;
 }
@@ -991,12 +956,11 @@ unsigned int TA_StreamSizeInByte( const TA_Stream *stream )
 
 TA_RetCode TA_StreamAppendCopy( TA_Stream *dst, const TA_Stream *src )
 {
-    TA_PROLOG;
+    TA_PROLOG
     TA_RetCode retCode;
     TA_StreamPriv *tmpStreamPriv;
     TA_StreamPriv *dstStreamPriv;
     TA_StreamPriv *srcStreamPriv;
-    TA_Libc *libHandle;
 
     unsigned int nbByteToCopy;
 
@@ -1010,11 +974,7 @@ TA_RetCode TA_StreamAppendCopy( TA_Stream *dst, const TA_Stream *src )
         (srcStreamPriv->magicNb != TA_STREAM_MAGIC_NB) )
        return TA_BAD_OBJECT;
 
-    libHandle = dstStreamPriv->libHandle;
-    if( libHandle != srcStreamPriv->libHandle )
-       return TA_BAD_PARAM;
-
-    TA_TRACE_BEGIN( libHandle, TA_StreamAppendCopy );
+    TA_TRACE_BEGIN( TA_StreamAppendCopy );
      
     /* The append is certainly not very efficient.
      * This function could easily be optimized in both speed
@@ -1025,7 +985,7 @@ TA_RetCode TA_StreamAppendCopy( TA_Stream *dst, const TA_Stream *src )
     while( srcStreamPriv )
     {
         /* Make a copy of the 'src' block into a TA_Stream. */
-        TA_ASSERT( libHandle, srcStreamPriv->nbByteToSkip <= srcStreamPriv->allocSize );
+        TA_ASSERT( srcStreamPriv->nbByteToSkip <= srcStreamPriv->allocSize );
 
         /* Do not bother to copy if there is no data in this block. */
         if( srcStreamPriv->nbBitWritten != 0 )
@@ -1035,7 +995,7 @@ TA_RetCode TA_StreamAppendCopy( TA_Stream *dst, const TA_Stream *src )
             */
            nbByteToCopy = srcStreamPriv->allocSize-srcStreamPriv->nbByteToSkip;
 
-           tmpStreamPriv = streamAllocSize( libHandle, nbByteToCopy );
+           tmpStreamPriv = streamAllocSize( nbByteToCopy );
            if( !tmpStreamPriv )
            {
               TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -1103,7 +1063,6 @@ unsigned int TA_StreamCountChar( const TA_Stream *stream, char toCount )
 TA_RetCode TA_StreamMerge( TA_Stream *firstStream, TA_Stream *secondStream )
 {
     TA_StreamPriv *firstStreamPriv, *secondStreamPriv;
-    TA_Libc *libHandle;
 
     if( !firstStream || !secondStream )
        return TA_SUCCESS;
@@ -1115,15 +1074,14 @@ TA_RetCode TA_StreamMerge( TA_Stream *firstStream, TA_Stream *secondStream )
         TA_StreamFree( secondStream ); /* Free secondStream block and data. */
     else if( firstStreamPriv->nbBitWritten == 0 )
     {
-        libHandle = firstStreamPriv->libHandle;
-        freeData( libHandle, firstStreamPriv );
+        freeData( firstStreamPriv );
         *firstStreamPriv = *secondStreamPriv;
 
         /* No next block? Make sure we point to ourselve as the lastBlock. */
         if( !secondStreamPriv->next )
            firstStreamPriv->lastBlock = firstStreamPriv;
 
-        TA_Free( libHandle, secondStreamPriv ); /* Free only the block, not the data! */
+        TA_Free( secondStreamPriv ); /* Free only the block, not the data! */
     }
     else
     {
@@ -1137,10 +1095,9 @@ TA_RetCode TA_StreamMerge( TA_Stream *firstStream, TA_Stream *secondStream )
 
 TA_RetCode TA_StreamCompress( TA_Stream *stream, const TA_Stream *streamToCompress )
 {
-    TA_PROLOG;
+    TA_PROLOG
     TA_RetCode retCode;
     TA_StreamPriv *bzipOutputStreamPriv;
-    TA_Libc *libHandle;
 
     TA_StreamPriv *mostEfficientStreamPriv;
     TA_StreamType  mostEfficientType;
@@ -1161,8 +1118,7 @@ TA_RetCode TA_StreamCompress( TA_Stream *stream, const TA_Stream *streamToCompre
         (streamPriv->magicNb != TA_STREAM_MAGIC_NB) )
        return TA_BAD_OBJECT;
 
-    libHandle = streamPriv->libHandle;
-    TA_TRACE_BEGIN( libHandle, TA_StreamCompress );
+    TA_TRACE_BEGIN( TA_StreamCompress );
 
     /* Set variables used to keep track of the most efficient
      * compression algorithm.
@@ -1274,7 +1230,6 @@ TA_RetCode TA_StreamDecompress( TA_StreamAccess *streamToDecompress,
     unsigned int  size, nbBit, nbByte;
     unsigned int i;
     TA_StreamType type;
-    TA_Libc *libHandle;
 
     TA_StreamPriv *streamPriv;
     TA_Stream *stream;
@@ -1290,8 +1245,6 @@ TA_RetCode TA_StreamDecompress( TA_StreamAccess *streamToDecompress,
 
     if( accessPriv->magicNb != TA_STREAM_ACCESS_MAGIC_NB )
        return TA_BAD_OBJECT;
-
-    libHandle = accessPriv->libHandle;
 
     /* This function needs some re-work for being speed optimized as much
      * as possible.
@@ -1346,7 +1299,7 @@ TA_RetCode TA_StreamDecompress( TA_StreamAccess *streamToDecompress,
     accessJumpToNextByteBoundary( (TA_StreamAccessPriv *)streamToDecompress );
 
     /* Allocate the target stream. */
-    streamPriv = streamAllocSize( libHandle, nbByte );
+    streamPriv = streamAllocSize( nbByte );
     if( !streamPriv )
        return TA_ALLOC_ERR;
     stream = (TA_Stream *)streamPriv;
@@ -1401,11 +1354,10 @@ TA_RetCode TA_StreamDecompress( TA_StreamAccess *streamToDecompress,
 /* Return a CRC-32 of the data in the stream. */
 TA_RetCode TA_StreamCRC_32( TA_Stream *stream, unsigned int *crc32 )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_StreamPriv *streamPriv;
    qbyte runningData, temp;
-   TA_Libc *libHandle;
    TA_StreamAccess *access;
    unsigned char data, lastData;
 
@@ -1419,8 +1371,7 @@ TA_RetCode TA_StreamCRC_32( TA_Stream *stream, unsigned int *crc32 )
    if( streamPriv->magicNb != TA_STREAM_MAGIC_NB )
       return TA_BAD_OBJECT;
 
-   libHandle = streamPriv->libHandle;
-   TA_TRACE_BEGIN( libHandle, TA_StreamCRC_32 );
+   TA_TRACE_BEGIN(  TA_StreamCRC_32 );
 
    runningData = 0xFFFFFFFFL;
 
@@ -1596,7 +1547,6 @@ TA_RetCode TA_StreamEncapsulate( TA_Stream    **ptrToStream,
 {
    TA_RetCode retCode;
    TA_StreamPriv *streamPriv;
-   TA_Libc *libHandle;
    unsigned int i, totalSize, nbBitAdded;
    TA_Stream *header;
    TA_Stream *stream;
@@ -1614,10 +1564,6 @@ TA_RetCode TA_StreamEncapsulate( TA_Stream    **ptrToStream,
    if( streamPriv->magicNb != TA_STREAM_MAGIC_NB )
       return TA_BAD_OBJECT;
 
-   libHandle = streamPriv->libHandle;
-   if( !libHandle )
-      return TA_INTERNAL_ERROR(9);
-
    /* Stream is completed to a byte boundary. */
    retCode = streamJumpToNextByteBoundary( (TA_StreamPriv *)stream, &nbBitAdded );
    if( retCode != TA_SUCCESS )
@@ -1633,7 +1579,7 @@ TA_RetCode TA_StreamEncapsulate( TA_Stream    **ptrToStream,
     *    32 bits streamCRC32   (CRC-32 of the original stream)
     *    32 bits headerCRC32   (CRC-32 of the header)
     */
-   header = (TA_Stream *)streamAllocSize( libHandle, sizeof( qbyte ) * 4 );
+   header = (TA_Stream *)streamAllocSize( sizeof( qbyte ) * 4 );
    if( !header )
       return TA_ALLOC_ERR;
 
@@ -1788,7 +1734,6 @@ TA_RetCode TA_StreamPrint( TA_Stream *stream )
 {
    TA_StreamPriv *streamPriv;
    TA_StreamAccess *access;
-   TA_Libc *libHandle;
    TA_RetCode retCode;
    FILE *out;
 
@@ -1800,8 +1745,7 @@ TA_RetCode TA_StreamPrint( TA_Stream *stream )
    if( !stream )
       return TA_BAD_PARAM;
 
-   libHandle = streamPriv->libHandle;
-   out = TA_GetStdioFilePtr( libHandle );
+   out = TA_GetStdioFilePtr();
 
    access = TA_StreamAccessAlloc(stream);
    if( !access )
@@ -1925,35 +1869,34 @@ static TA_RetCode accessJumpToNextByteBoundary( TA_StreamAccessPriv *streamAcc )
     return TA_SUCCESS;
 }
 
-static TA_StreamPriv *streamAllocSize( TA_Libc *libHandle, unsigned int nbByte )
+static TA_StreamPriv *streamAllocSize( unsigned int nbByte )
 {
    TA_RetCode retCode;
    TA_StreamPriv *streamPriv;
    unsigned char *data;
 
-   streamPriv = (TA_StreamPriv *)TA_Malloc( libHandle, sizeof( TA_StreamPriv ) );
+   streamPriv = (TA_StreamPriv *)TA_Malloc( sizeof( TA_StreamPriv ) );
    if( !streamPriv )
       return (TA_StreamPriv *)NULL;
 
-   data = (unsigned char *)TA_Malloc( libHandle, nbByte );
+   data = (unsigned char *)TA_Malloc( nbByte );
    if( !data )
    {
-      TA_Free( libHandle, streamPriv );
+      TA_Free(  streamPriv );
       return (TA_StreamPriv *)NULL;
    }
 
-   retCode = streamPrivInit( libHandle, streamPriv, data, nbByte, NULL, NULL );
+   retCode = streamPrivInit( streamPriv, data, nbByte, NULL, NULL );
    if( retCode != TA_SUCCESS )
    {
-      TA_Free( libHandle, streamPriv );
+      TA_Free(  streamPriv );
       return (TA_StreamPriv *)NULL;
    }
 
    return streamPriv;
 }
 
-static TA_RetCode streamPrivInit( TA_Libc *libHandle,
-                                  TA_StreamPriv *streamPriv,
+static TA_RetCode streamPrivInit( TA_StreamPriv *streamPriv,
                                   unsigned char *data,
                                   unsigned int size,
                                   TA_FreeFuncPtr freeFunc,
@@ -1992,15 +1935,13 @@ static TA_RetCode streamPrivInit( TA_Libc *libHandle,
 
    /* Management variables... */
    streamPriv->magicNb   = TA_STREAM_MAGIC_NB;
-   streamPriv->libHandle = libHandle;
 
    return TA_SUCCESS;
 }
 
 static TA_RetCode streamCompressBZIP2( const TA_StreamPriv *streamToCompress, TA_StreamPriv **retStream )
 {
-    TA_PROLOG;
-    TA_Libc *libHandle;
+    TA_PROLOG
     bz_stream bzipStream;
     unsigned int returnCode, nbByteInThisBlock;
     unsigned int compressionCompleted;
@@ -2011,7 +1952,6 @@ static TA_RetCode streamCompressBZIP2( const TA_StreamPriv *streamToCompress, TA
     TA_StreamPriv *currentOutputBlock;
 
     TA_StreamPriv *streamToCompressPriv;
-
 
     #ifdef TA_DEBUG
        FILE *out;
@@ -2024,11 +1964,10 @@ static TA_RetCode streamCompressBZIP2( const TA_StreamPriv *streamToCompress, TA
 
     streamToCompressPriv = (TA_StreamPriv *)streamToCompress;
 
-    libHandle = streamToCompressPriv->libHandle;
     if( streamToCompressPriv->magicNb != TA_STREAM_MAGIC_NB )
        return TA_BAD_OBJECT;
 
-    TA_TRACE_BEGIN( libHandle, streamCompressBZIP2 );
+    TA_TRACE_BEGIN(  streamCompressBZIP2 );
 
     /* No particular alloc/free mechanism needed. The BZIP library
      * will directly used the standard malloc/free.
@@ -2041,7 +1980,7 @@ static TA_RetCode streamCompressBZIP2( const TA_StreamPriv *streamToCompress, TA
     returnCode = BZ2_bzCompressInit( &bzipStream, 5, 0, 0 );
     if( returnCode != BZ_OK )
     {
-        TA_FATAL( libHandle, "BZIP2 cannot compress data", returnCode, 0 );
+        TA_FATAL(  "BZIP2 cannot compress data", returnCode, 0 );
     }
 
     /* Now... compress block per block. */
@@ -2049,7 +1988,7 @@ static TA_RetCode streamCompressBZIP2( const TA_StreamPriv *streamToCompress, TA
     compressionCompleted = 0;
 
     /* Initialize output stream. */
-    outputStream = TA_StreamAlloc(libHandle);
+    outputStream = TA_StreamAlloc();
     if( !outputStream )
     {
        TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -2094,7 +2033,7 @@ static TA_RetCode streamCompressBZIP2( const TA_StreamPriv *streamToCompress, TA
         {
             if( (TA_StreamPriv *)outputStream != currentOutputBlock )
                 TA_StreamMerge( outputStream, (TA_Stream *)currentOutputBlock );
-            currentOutputBlock = (TA_StreamPriv *)TA_StreamAlloc(libHandle);
+            currentOutputBlock = (TA_StreamPriv *)TA_StreamAlloc();
             bzipStream.avail_out = currentOutputBlock->allocSize;
             bzipStream.next_out  = (char *)currentOutputBlock->data;
         }
@@ -2124,12 +2063,12 @@ static TA_RetCode streamCompressBZIP2( const TA_StreamPriv *streamToCompress, TA
             if( (TA_StreamPriv *)outputStream != currentOutputBlock )
                 TA_StreamFree( (TA_Stream *)currentOutputBlock );
             TA_StreamFree( outputStream );
-            TA_FATAL( libHandle, "BZIP2 cannot compress data", returnCode, 0 );
+            TA_FATAL(  "BZIP2 cannot compress data", returnCode, 0 );
         }
     } while( !compressionCompleted );
 
     #ifdef TA_DEBUG
-    out = TA_GetStdioFilePtr( libHandle );
+    out = TA_GetStdioFilePtr();
     if( out )
        fprintf( out, "Compression completed: Before: %d  After: %d\n",
                 bzipStream.total_in_lo32, bzipStream.total_out_lo32 );
@@ -2140,7 +2079,7 @@ static TA_RetCode streamCompressBZIP2( const TA_StreamPriv *streamToCompress, TA
     if( returnCode != BZ_OK )
     {
         TA_StreamFree( outputStream );
-        TA_FATAL( libHandle, "BZIP2 cannot release ressources", returnCode, 0 );
+        TA_FATAL(  "BZIP2 cannot release ressources", returnCode, 0 );
     }
 
     *retStream = (TA_StreamPriv *)outputStream;
@@ -2150,12 +2089,11 @@ static TA_RetCode streamCompressBZIP2( const TA_StreamPriv *streamToCompress, TA
 
 static TA_RetCode streamDecompressBZIP2( TA_StreamPriv *stream, TA_StreamAccessPriv *streamToDecompress )
 {
-    TA_PROLOG;
+    TA_PROLOG
     TA_RetCode retCode;
     bz_stream bzipStream;
     unsigned int returnCode, nbByteInThisBlock;
     unsigned int decompressionCompleted;
-    TA_Libc *libHandle;
 
     TA_Stream *outputStream;
     TA_StreamPriv *currentOutputBlock;
@@ -2168,9 +2106,7 @@ static TA_RetCode streamDecompressBZIP2( TA_StreamPriv *stream, TA_StreamAccessP
         (streamToDecompress->magicNb != TA_STREAM_ACCESS_MAGIC_NB ) )
        return TA_BAD_OBJECT;
 
-    libHandle = stream->libHandle;
-
-    TA_TRACE_BEGIN( libHandle, streamDecompressBZIP2 );
+    TA_TRACE_BEGIN(  streamDecompressBZIP2 );
         
     /* No particular alloc/free mechanism needed. The BZIP library
      * will directly used the standard malloc/free.
@@ -2183,14 +2119,14 @@ static TA_RetCode streamDecompressBZIP2( TA_StreamPriv *stream, TA_StreamAccessP
     returnCode = BZ2_bzDecompressInit( &bzipStream, 0, 0 );
     if( returnCode != BZ_OK )
     {
-        TA_FATAL( libHandle, "BZIP2 cannot decompress data", returnCode, 0 );
+        TA_FATAL(  "BZIP2 cannot decompress data", returnCode, 0 );
     }
 
     /* Now... decompress block per block. */
     decompressionCompleted = 0;
 
     /* Initialize output stream. */
-    outputStream = TA_StreamAlloc(libHandle);
+    outputStream = TA_StreamAlloc();
     if( !outputStream )
     {
        TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -2219,7 +2155,7 @@ static TA_RetCode streamDecompressBZIP2( TA_StreamPriv *stream, TA_StreamAccessP
         {
             /* Get the next block. */
             if( !accessMoveToNextBlock( streamToDecompress ) )
-                TA_FATAL( libHandle, "Decompression failed. No input byte left", 0, 0 );
+                TA_FATAL(  "Decompression failed. No input byte left", 0, 0 );
 
             currentInputBlock = streamToDecompress->currentBlock;
             bzipStream.next_in = (char *)&currentInputBlock->data[0];
@@ -2234,7 +2170,7 @@ static TA_RetCode streamDecompressBZIP2( TA_StreamPriv *stream, TA_StreamAccessP
         {
             if( (TA_StreamPriv *)outputStream != currentOutputBlock )
                 TA_StreamMerge( outputStream, (TA_Stream *)currentOutputBlock );
-            currentOutputBlock = (TA_StreamPriv *)TA_StreamAlloc(libHandle);
+            currentOutputBlock = (TA_StreamPriv *)TA_StreamAlloc();
             bzipStream.avail_out = currentOutputBlock->allocSize;
             bzipStream.next_out  = (char *)currentOutputBlock->data;
         }
@@ -2263,7 +2199,7 @@ static TA_RetCode streamDecompressBZIP2( TA_StreamPriv *stream, TA_StreamAccessP
             if( (TA_StreamPriv *)outputStream != currentOutputBlock )
                 TA_StreamFree( (TA_Stream *)currentOutputBlock );
             TA_StreamFree( outputStream );
-            TA_FATAL( libHandle, "BZIP2 cannot decompress data", returnCode, 0 );
+            TA_FATAL(  "BZIP2 cannot decompress data", returnCode, 0 );
         }
     } while( !decompressionCompleted );
 
@@ -2283,7 +2219,7 @@ static TA_RetCode streamDecompressBZIP2( TA_StreamPriv *stream, TA_StreamAccessP
     if( returnCode != BZ_OK )
     {
         TA_StreamFree( outputStream );
-        TA_FATAL( libHandle, "BZIP2 cannot release ressources", returnCode, 0 );
+        TA_FATAL(  "BZIP2 cannot release ressources", returnCode, 0 );
     }
 
     retCode = TA_StreamMerge( (TA_Stream *)stream, outputStream );
@@ -2300,14 +2236,14 @@ void bz_internal_error ( int errCode )
     /* TA_FATAL( "BZIP internal error occured", errCode, 0 ); */
 }
 
-static void freeData( TA_Libc *libHandle, TA_StreamPriv *streamPriv )
+static void freeData( TA_StreamPriv *streamPriv )
 {   
    if( streamPriv->freeData )
    {
       if( streamPriv->freeFunc )
-         streamPriv->freeFunc( libHandle, streamPriv->freeData, streamPriv->opaqueData );
+         streamPriv->freeFunc(  streamPriv->freeData, streamPriv->opaqueData );
       else
-         TA_Free( libHandle, streamPriv->freeData );
+         TA_Free(  streamPriv->freeData );
    }
 }
 
@@ -2421,11 +2357,8 @@ static TA_RetCode streamGetHTMLTable( TA_StreamAccess *accessStart,
    unsigned int line, column;
    unsigned int bufPos, again;
    unsigned char data;
-   TA_Libc *libHandle;
    int tableLevel;
    int skipRestOfTable;
-
-   libHandle = ((TA_StreamAccessPriv *)accessStart)->libHandle;
 
    accessPrivCopy( (TA_StreamAccessPriv *)accessStart,  &accessPriv );
  
@@ -2576,7 +2509,7 @@ static TA_RetCode streamGetHTMLTable( TA_StreamAccess *accessStart,
                   if( !skipRestOfTable )
                   {
                      buffer[bufPos] = '\0';
-                     retCode = funcPtr( libHandle, line, column, buffer, hrefBuffer, opaqueData );
+                     retCode = funcPtr( line, column, buffer, hrefBuffer, opaqueData );
                      if( retCode == TA_FINISH_TABLE )
                         skipRestOfTable = 1;
                      else if( retCode != TA_SUCCESS )
@@ -2622,7 +2555,6 @@ static TA_RetCode streamGetHREF( TA_StreamAccess *access,
    TA_RetCode retCode;
    unsigned int i, again;
    unsigned char data;
-
 
    /* Extract a "href=x>" where 'x' is returned in
     * buffer as a NULL terminated string.

@@ -62,8 +62,8 @@
    #include "ta_utility.h"
 #endif
 
-int TA_DEMA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                      TA_Integer    optInCompatibility_1 ) 
+int TA_DEMA_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -71,7 +71,7 @@ int TA_DEMA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_M
    /* Get lookback for one EMA.
     * Multiply by two (because double smoothing).
     */
-   return TA_EMA_Lookback( optInTimePeriod_0, optInCompatibility_1 ) * 2;
+   return TA_EMA_Lookback( optInTimePeriod_0 ) * 2;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -86,18 +86,13 @@ int TA_DEMA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_M
  * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
  *    Number of period
  * 
- * optInCompatibility_1:
- *    Make function compatible to some software
- * 
  * 
  */
 
-TA_RetCode TA_DEMA( TA_Libc      *libHandle,
-                    TA_Integer    startIdx,
+TA_RetCode TA_DEMA( TA_Integer    startIdx,
                     TA_Integer    endIdx,
                     const TA_Real inReal_0[],
                     TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                    TA_Integer    optInCompatibility_1,
                     TA_Integer   *outBegIdx,
                     TA_Integer   *outNbElement,
                     TA_Real       outReal_0[] )
@@ -113,8 +108,6 @@ TA_RetCode TA_DEMA( TA_Libc      *libHandle,
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
-   (void)libHandle; /* Get ride of warning if unused. */
-
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
    /* Validate the requested output range. */
@@ -129,11 +122,6 @@ TA_RetCode TA_DEMA( TA_Libc      *libHandle,
    if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 30;
    else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
-      return TA_BAD_PARAM;
-
-   if( optInCompatibility_1 == TA_INTEGER_DEFAULT )
-      optInCompatibility_1 = 0;
-   else if( (optInCompatibility_1 < 0) || (optInCompatibility_1 > 1) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -174,7 +162,7 @@ TA_RetCode TA_DEMA( TA_Libc      *libHandle,
    *outBegIdx    = 0;
 
    /* Adjust startIdx to account for the lookback period. */
-   lookbackEMA = TA_EMA_Lookback( optInTimePeriod_0, optInCompatibility_1 );
+   lookbackEMA = TA_EMA_Lookback( optInTimePeriod_0 );
    lookbackTotal = lookbackEMA * 2;
 
    if( startIdx < lookbackTotal )
@@ -195,7 +183,7 @@ TA_RetCode TA_DEMA( TA_Libc      *libHandle,
    else
    {
       tempInt = lookbackTotal+(endIdx-startIdx)+1;
-      firstEMA = (TA_Real *)TA_Malloc( libHandle, tempInt * sizeof( TA_Real) );
+      firstEMA = (TA_Real *)TA_Malloc( tempInt * sizeof( TA_Real) );
       if( !firstEMA )
           return TA_ALLOC_ERR;
    }
@@ -204,7 +192,6 @@ TA_RetCode TA_DEMA( TA_Libc      *libHandle,
    k = PER_TO_K(optInTimePeriod_0);
    retCode = TA_INT_EMA( startIdx-lookbackEMA, endIdx, inReal_0,
                          optInTimePeriod_0, k,
-                         optInCompatibility_1,
                          &firstEMABegIdx, &firstEMANbElement, firstEMA );
    
    /* Verify for failure or if not enough data after
@@ -213,25 +200,24 @@ TA_RetCode TA_DEMA( TA_Libc      *libHandle,
    if( (retCode != TA_SUCCESS) || (firstEMANbElement == 0) )
    {
       if( firstEMA != outReal_0 )
-         TA_Free( libHandle, firstEMA );
+         TA_Free(  firstEMA );
 
       return retCode;
    }
 
    /* Allocate a temporary buffer for storing the EMA of the EMA. */
-   secondEMA = (TA_Real *)TA_Malloc( libHandle, firstEMANbElement * sizeof( TA_Real) );
+   secondEMA = (TA_Real *)TA_Malloc( firstEMANbElement * sizeof( TA_Real) );
 
    if( !secondEMA )
    {
       if( firstEMA != outReal_0 )
-         TA_Free( libHandle, firstEMA );
+         TA_Free(  firstEMA );
 
       return TA_ALLOC_ERR;
    }
 
    retCode = TA_INT_EMA( 0, firstEMANbElement-1, firstEMA,
                          optInTimePeriod_0, k,
-                         optInCompatibility_1,
                          &secondEMABegIdx, &secondEMANbElement, secondEMA );
 
    /* Return empty output on failure or if not enough data after
@@ -240,9 +226,9 @@ TA_RetCode TA_DEMA( TA_Libc      *libHandle,
    if( (retCode != TA_SUCCESS) || (secondEMANbElement == 0) )      
    {
       if( firstEMA != outReal_0 )
-         TA_Free( libHandle, firstEMA );
+         TA_Free(  firstEMA );
 
-      TA_Free( libHandle, secondEMA );
+      TA_Free(  secondEMA );
       return retCode;
    }
 
@@ -258,9 +244,9 @@ TA_RetCode TA_DEMA( TA_Libc      *libHandle,
    }
 
    if( firstEMA != outReal_0 )
-      TA_Free( libHandle, firstEMA );
+      TA_Free(  firstEMA );
 
-   TA_Free( libHandle, secondEMA );
+   TA_Free(  secondEMA );
 
    /* Succeed. Indicate where the output starts relative to
     * the caller input.

@@ -103,8 +103,7 @@ typedef struct
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
-static ErrorNumber do_test_per_ema( TA_Libc *libHandle,
-                                    const TA_History *history,
+static ErrorNumber do_test_per_ema( const TA_History *history,
                                     const TA_Test *test );
 
 /**** Local variables definitions.     ****/
@@ -132,13 +131,13 @@ static TA_Test tableTest[] =
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
-ErrorNumber test_func_per_ema( TA_Libc *libHandle, TA_History *history )
+ErrorNumber test_func_per_ema( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
 
    /* Re-initialize all the unstable period to zero. */
-   TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ALL, 0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    for( i=0; i < NB_TEST; i++ )
    {
@@ -149,7 +148,7 @@ ErrorNumber test_func_per_ema( TA_Libc *libHandle, TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
 
-      retValue = do_test_per_ema( libHandle, history, &tableTest[i] );
+      retValue = do_test_per_ema( history, &tableTest[i] );
       if( retValue != 0 )
       {
          printf( "TA_MA Failed Test #%d (Code=%d)\n", i, retValue );
@@ -158,14 +157,14 @@ ErrorNumber test_func_per_ema( TA_Libc *libHandle, TA_History *history )
    }
 
    /* Re-initialize all the unstable period to zero. */
-   TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ALL, 0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
    return 0; 
 }
 
 /**** Local functions definitions.     ****/
-static TA_RetCode rangeTestFunction( TA_Libc *libHandle, 
+static TA_RetCode rangeTestFunction( 
                               TA_Integer startIdx,
                               TA_Integer endIdx,
                               TA_Real *outputBuffer,
@@ -185,7 +184,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    switch( testParam->test->theFunction )
    {
    case TA_TRIX_TEST:
-      retCode = TA_TRIX( libHandle,
+      retCode = TA_TRIX(
                          startIdx,
                          endIdx,
                          testParam->close,
@@ -201,8 +200,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    return retCode;
 }
 
-static ErrorNumber do_test_per_ema( TA_Libc *libHandle,
-                                    const TA_History *history,
+static ErrorNumber do_test_per_ema( const TA_History *history,
                                     const TA_Test *test )
 {
    TA_RetCode retCode;
@@ -219,7 +217,7 @@ static ErrorNumber do_test_per_ema( TA_Libc *libHandle,
    setInputBuffer( 1, history->close, history->nbBars );
    
    /* Set the unstable period requested for that test. */
-   retCode = TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_EMA, test->unstablePeriod );
+   retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, test->unstablePeriod );
    if( retCode != TA_SUCCESS )
       return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
 
@@ -227,7 +225,7 @@ static ErrorNumber do_test_per_ema( TA_Libc *libHandle,
    switch( test->theFunction )
    {
    case TA_TRIX_TEST:
-      retCode = TA_TRIX( libHandle,
+      retCode = TA_TRIX(
                          test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
@@ -260,7 +258,7 @@ static ErrorNumber do_test_per_ema( TA_Libc *libHandle,
    switch( test->theFunction )
    {
    case TA_TRIX_TEST:
-      retCode = TA_TRIX( libHandle,
+      retCode = TA_TRIX(
                          test->startIdx,
                          test->endIdx,
                          gBuffer[1].in,
@@ -297,7 +295,7 @@ static ErrorNumber do_test_per_ema( TA_Libc *libHandle,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( libHandle,
+      errNb = doRangeTest(
                            rangeTestFunction, 
                            TA_FUNC_UNST_EMA,
                            (void *)&testParam, 1, 0 );

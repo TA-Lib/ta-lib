@@ -40,12 +40,10 @@ typedef struct
    TA_List *listOfFile;      /* List of TA_String. */
 } TA_Directory;
 
-TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
-                              const char *path,
+TA_RetCode TA_DirectoryAlloc( const char *path,
                               TA_Directory **directory );
 
-TA_RetCode TA_DirectoryFree( TA_Libc *libHandle,
-                             TA_Directory *directory );
+TA_RetCode TA_DirectoryFree( TA_Directory *directory );
 
 /* Identify if the specified character is a seperator
  * used to seperates the directories in a path.
@@ -63,7 +61,7 @@ int TA_SeparatorASCII( void );
 
 /* Return some information system specific. */
 int TA_IsFileSystemCaseSensitive( void );
-int TA_NbProcessor( TA_Libc *libHandle );
+int TA_NbProcessor( void );
 
 /* When an operation fails, the operating system may provides additional
  * information on the reason of the failure of the most recent OS call.
@@ -71,7 +69,7 @@ int TA_NbProcessor( TA_Libc *libHandle );
  * Note: the error code can be misleading if you are in a multithread
  *       situation.
  */
-int TA_GetLastError( TA_Libc *libHandle );
+int TA_GetLastError( void );
 
 /* Simplified thread functionality.
  *   A thread is created and started by calling TA_ThreadExec.
@@ -168,10 +166,10 @@ TA_RetCode TA_SemaDec( TA_Sema *sema );
  */
 typedef unsigned int TA_FileHandle; /* Hidden implementation. */
 
-TA_RetCode TA_FileSeqOpen( TA_Libc *libHandle, const char *path, TA_FileHandle **handle );
-const char *TA_FileSeqRead( TA_Libc *libHandle, TA_FileHandle *handle, unsigned int *nbByteRead );
-TA_RetCode TA_FileSeqClose( TA_Libc *libHandle, TA_FileHandle *handle );
-unsigned int TA_FileSize( TA_Libc *libHandle, TA_FileHandle *handle );
+TA_RetCode TA_FileSeqOpen( const char *path, TA_FileHandle **handle );
+const char *TA_FileSeqRead( TA_FileHandle *handle, unsigned int *nbByteRead );
+TA_RetCode TA_FileSeqClose( TA_FileHandle *handle );
+unsigned int TA_FileSize( TA_FileHandle *handle );
 
 /* Like TA_FileSeqOpen, but work with a stream instead. Following this TA_FileSeqRead,
  * TA_FileSeqClose and TA_FileSize can be called as if it was a real file.
@@ -180,7 +178,7 @@ unsigned int TA_FileSize( TA_Libc *libHandle, TA_FileHandle *handle );
  * data is returned in "chunks" and often a stream will be compose of just a
  * few large block).
  */
-TA_RetCode TA_FileSeqOpenFromStream( TA_Libc *libHandle, TA_Stream *stream, TA_FileHandle **handle );
+TA_RetCode TA_FileSeqOpenFromStream( TA_Stream *stream, TA_FileHandle **handle );
 
 #endif
 

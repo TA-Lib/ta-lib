@@ -18,7 +18,7 @@
 #endif
 
 
-TA_RetCode TA_MAX_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_MAX_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -27,7 +27,7 @@ TA_RetCode TA_MAX_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_MIN_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_MIN_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -36,7 +36,7 @@ TA_RetCode TA_MIN_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_BBANDS_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_BBANDS_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -45,7 +45,7 @@ TA_RetCode TA_BBANDS_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_DEMA_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_DEMA_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -54,7 +54,7 @@ TA_RetCode TA_DEMA_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_EMA_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_EMA_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -63,7 +63,7 @@ TA_RetCode TA_EMA_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_MA_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_MA_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -72,7 +72,7 @@ TA_RetCode TA_MA_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_MIDPRICE_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_MIDPRICE_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -81,7 +81,7 @@ TA_RetCode TA_MIDPRICE_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_MIDPOINT_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_MIDPOINT_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -90,7 +90,7 @@ TA_RetCode TA_MIDPOINT_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_SAR_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_SAR_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -99,7 +99,7 @@ TA_RetCode TA_SAR_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_SMA_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_SMA_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -108,7 +108,7 @@ TA_RetCode TA_SMA_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_TEMA_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_TEMA_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -117,7 +117,7 @@ TA_RetCode TA_TEMA_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_WMA_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_WMA_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -126,7 +126,7 @@ TA_RetCode TA_WMA_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_ATR_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_ATR_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -135,7 +135,7 @@ TA_RetCode TA_ATR_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_TRANGE_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_TRANGE_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -144,7 +144,7 @@ TA_RetCode TA_TRANGE_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_ADX_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_ADX_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -153,7 +153,7 @@ TA_RetCode TA_ADX_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_ADXR_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_ADXR_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -162,7 +162,7 @@ TA_RetCode TA_ADXR_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_APO_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_APO_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -171,7 +171,7 @@ TA_RetCode TA_APO_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_CCI_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_CCI_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -180,7 +180,7 @@ TA_RetCode TA_CCI_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_DX_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_DX_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -189,7 +189,7 @@ TA_RetCode TA_DX_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_MACD_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_MACD_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -198,7 +198,7 @@ TA_RetCode TA_MACD_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_MACDEXT_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_MACDEXT_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -207,7 +207,7 @@ TA_RetCode TA_MACDEXT_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_MACDFIX_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_MACDFIX_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -216,7 +216,7 @@ TA_RetCode TA_MACDFIX_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_MINUS_DI_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_MINUS_DI_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -225,7 +225,7 @@ TA_RetCode TA_MINUS_DI_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_MINUS_DM_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_MINUS_DM_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -234,7 +234,7 @@ TA_RetCode TA_MINUS_DM_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_MOM_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_MOM_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -243,7 +243,7 @@ TA_RetCode TA_MOM_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_PPO_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_PPO_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -252,7 +252,7 @@ TA_RetCode TA_PPO_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_PLUS_DI_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_PLUS_DI_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -261,7 +261,7 @@ TA_RetCode TA_PLUS_DI_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_PLUS_DM_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_PLUS_DM_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -270,7 +270,7 @@ TA_RetCode TA_PLUS_DM_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_ROC_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_ROC_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -279,7 +279,7 @@ TA_RetCode TA_ROC_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_ROCP_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_ROCP_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -288,7 +288,7 @@ TA_RetCode TA_ROCP_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_ROCR_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_ROCR_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -297,7 +297,7 @@ TA_RetCode TA_ROCR_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_ROCR100_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_ROCR100_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -306,7 +306,7 @@ TA_RetCode TA_ROCR100_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_RSI_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_RSI_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -315,7 +315,7 @@ TA_RetCode TA_RSI_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_STOCH_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_STOCH_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -324,7 +324,7 @@ TA_RetCode TA_STOCH_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_STOCHF_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_STOCHF_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -333,7 +333,7 @@ TA_RetCode TA_STOCHF_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_TRIX_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_TRIX_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -342,7 +342,7 @@ TA_RetCode TA_TRIX_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_WILLR_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_WILLR_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -351,7 +351,7 @@ TA_RetCode TA_WILLR_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_OBV_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_OBV_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -360,7 +360,7 @@ TA_RetCode TA_OBV_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_STDDEV_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_STDDEV_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -369,7 +369,7 @@ TA_RetCode TA_STDDEV_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_VAR_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_VAR_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -378,7 +378,7 @@ TA_RetCode TA_VAR_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_AVGPRICE_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_AVGPRICE_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -387,7 +387,7 @@ TA_RetCode TA_AVGPRICE_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_MEDPRICE_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_MEDPRICE_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -396,7 +396,7 @@ TA_RetCode TA_MEDPRICE_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_TYPPRICE_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_TYPPRICE_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -405,7 +405,7 @@ TA_RetCode TA_TYPPRICE_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
-TA_RetCode TA_WCLPRICE_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_WCLPRICE_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,

@@ -98,7 +98,7 @@ static unsigned isTimeNeeded( const TA_ReadOp *readOp );
 #define GET_CHAR \
 { \
    if( nbByteRead == 0 ) \
-      car = TA_FileSeqRead( libHandle, fileHandle, &nbByteRead ); \
+      car = TA_FileSeqRead( fileHandle, &nbByteRead ); \
    else \
       ++car; \
    --nbByteRead; \
@@ -141,7 +141,7 @@ static unsigned isTimeNeeded( const TA_ReadOp *readOp );
 
 #define READ_N_CHAR_IN_CNVT_ARRAY(n) \
 { \
-   TA_ASSERT( libHandle, n > 0 ); \
+   TA_ASSERT( n > 0 ); \
    do \
    { \
       cnvtArray[cnvtArrayIdx++] = *car; \
@@ -179,8 +179,7 @@ static unsigned isTimeNeeded( const TA_ReadOp *readOp );
    } \
 }
 
-TA_RetCode TA_ReadOp_Do( TA_Libc             *libHandle,
-                         TA_FileHandle       *fileHandle,
+TA_RetCode TA_ReadOp_Do( TA_FileHandle       *fileHandle,
                          const TA_ReadOpInfo *readOpInfo,
                          TA_Period            period,
                          const TA_Timestamp  *start,
@@ -190,7 +189,7 @@ TA_RetCode TA_ReadOp_Do( TA_Libc             *libHandle,
                          TA_ParamForAddData  *paramForAddData,
                          unsigned int        *nbBarAdded )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_EstimateInfo estimationInfo;
 
@@ -237,7 +236,7 @@ TA_RetCode TA_ReadOp_Do( TA_Libc             *libHandle,
    register unsigned int tmpIdx;
    register unsigned int nbCharToRead;
 
-   TA_TRACE_BEGIN( libHandle, TA_PriceBarRead );
+   TA_TRACE_BEGIN(  TA_PriceBarRead );
 
    /* Initialization of local variables. */
    openBeg = highBeg = lowBeg = closeBeg = NULL;
@@ -256,7 +255,7 @@ TA_RetCode TA_ReadOp_Do( TA_Libc             *libHandle,
    }
 
    /* Estimate the initial amount of memory to allocate. */
-   fileSize = TA_FileSize( libHandle, fileHandle );
+   fileSize = TA_FileSize( fileHandle );
    retCode = TA_EstimateAllocInit( start, end, period,                                   
                                    minimumNbBar, 2048,
                                    &estimationInfo,
@@ -292,7 +291,7 @@ TA_RetCode TA_ReadOp_Do( TA_Libc             *libHandle,
 
    /* 'car' always point to the character being currently handled. */
    nbByteRead = 0;
-   car = TA_FileSeqRead( libHandle, fileHandle, &nbByteRead );
+   car = TA_FileSeqRead( fileHandle, &nbByteRead );
    if( (car == NULL) || (nbByteRead == 0) )
       return TA_SUCCESS; /* End of file! */
    --nbByteRead;
@@ -327,7 +326,7 @@ line_loop: /* Always jump here when end-of-line is found (EOL). */
          nbByteToAllocReal = nbElementToAllocate * sizeof( TA_Real );
          nbByteToAllocInteger = nbElementToAllocate * sizeof( TA_Integer );
 
-         timestamp = (TA_Timestamp *)TA_Malloc( libHandle, nbElementToAllocate * sizeof( TA_Timestamp ) );
+         timestamp = (TA_Timestamp *)TA_Malloc( nbElementToAllocate * sizeof( TA_Timestamp ) );
          timestampBeg = timestamp;
 
          if( !timestampBeg )
@@ -340,7 +339,7 @@ line_loop: /* Always jump here when end-of-line is found (EOL). */
          { \
             if( fieldToProcess & TA_##upperc ) \
             { \
-               lowerc##Beg = (TA_##typepar *)TA_Malloc( libHandle, nbByteToAlloc##typepar ); \
+               lowerc##Beg = (TA_##typepar *)TA_Malloc( nbByteToAlloc##typepar ); \
                array##typepar[TA_##upperc##_IDX] = lowerc##Beg; \
                if( !lowerc##Beg ) \
                { \
@@ -389,7 +388,7 @@ op_loop: /* Jump here when ready to proceed with the next command. */
             if( skipField == 0 )
             {
                skipField = TA_GET_NB_NUMERIC(op);
-               TA_ASSERT( libHandle, skipField > 0 );
+               TA_ASSERT( skipField > 0 );
             }
 
             if( --skipField == 0 )
@@ -425,8 +424,8 @@ op_loop: /* Jump here when ready to proceed with the next command. */
 
             /* Write the TA_Real in memory. */
             tmpIdx = TA_GET_IDX(op);
-            TA_ASSERT( libHandle, tmpIdx < TA_REAL_ARRAY_SIZE );
-            TA_ASSERT( libHandle, arrayReal[tmpIdx] != NULL );
+            TA_ASSERT( tmpIdx < TA_REAL_ARRAY_SIZE );
+            TA_ASSERT( arrayReal[tmpIdx] != NULL );
             *(arrayReal[tmpIdx]) = tmpReal;
 
             arrayReal[tmpIdx]++;
@@ -502,8 +501,8 @@ op_loop: /* Jump here when ready to proceed with the next command. */
 
             /* Write the TA_Integer in memory. */
             tmpIdx = TA_GET_IDX(op);
-            TA_ASSERT( libHandle, tmpIdx < TA_INTEGER_ARRAY_SIZE );
-            TA_ASSERT( libHandle, arrayInteger[tmpIdx] != NULL );
+            TA_ASSERT( tmpIdx < TA_INTEGER_ARRAY_SIZE );
+            TA_ASSERT( arrayInteger[tmpIdx] != NULL );
             *(arrayInteger[tmpIdx]) = tmpInt;
 
             if( tmpIdx > TA_YEAR_IDX )
@@ -618,13 +617,13 @@ exit_loops: /* Jump here when the end-of-file is hit (or an error occured) */
    }
    
    /* ALWAYS verify if locally allocated memory needs to be freed. ALWAYS. */
-   FREE_IF_NOT_NULL( libHandle, openBeg );
-   FREE_IF_NOT_NULL( libHandle, highBeg );
-   FREE_IF_NOT_NULL( libHandle, lowBeg );
-   FREE_IF_NOT_NULL( libHandle, closeBeg );
-   FREE_IF_NOT_NULL( libHandle, volumeBeg );
-   FREE_IF_NOT_NULL( libHandle, openInterestBeg );
-   FREE_IF_NOT_NULL( libHandle, timestampBeg );
+   FREE_IF_NOT_NULL( openBeg );
+   FREE_IF_NOT_NULL( highBeg );
+   FREE_IF_NOT_NULL( lowBeg );
+   FREE_IF_NOT_NULL( closeBeg );
+   FREE_IF_NOT_NULL( volumeBeg );
+   FREE_IF_NOT_NULL( openInterestBeg );
+   FREE_IF_NOT_NULL( timestampBeg );
 
    /* An indication that no more data needs to be provided is not a failure. */
    if( retCode == TA_ENOUGH_DATA )

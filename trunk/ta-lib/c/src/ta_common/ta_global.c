@@ -73,15 +73,18 @@
 #include "ta_string.h"
 #include "ta_memory.h"
 #include "ta_trace.h"
+#include "ta_func.h"
 
 /**** External functions declarations. ****/
-extern TA_RetCode TA_TraceInit( TA_Libc *libHandle );
+extern TA_RetCode TA_TraceInit( void );
 
 /**** External variables declarations. ****/
 /* None */
 
 /**** Global variables definitions.    ****/
-/* None */
+
+/* The entry point for all globals */
+TA_LibcPriv TA_Globals;
 
 /**** Local declarations.              ****/
 /* None */
@@ -90,132 +93,58 @@ extern TA_RetCode TA_TraceInit( TA_Libc *libHandle );
 /* None */
 
 /**** Local variables definitions.     ****/
-
-/* TA_ModuleControl will be allocated for each module. */
-typedef struct
-{
-  #if !defined( TA_SINGLE_THREAD )
-  TA_Sema sema;
-  #endif
-  unsigned int initialize;
-  const TA_GlobalControl * control;
-  void *global;
-} TA_ModuleControl;
-
-/* This is the hidden implementation of TA_Libc. */
-typedef struct
-{
-   unsigned int magicNb; /* Unique identifier of this object. */
-   TA_StringCache *dfltCache;
-   TA_ModuleControl moduleControl[TA_NB_GLOBAL_ID];
-
-   unsigned int traceEnabled;
-   unsigned int stdioEnabled;
-   FILE *stdioFile;
-
-   const char *localCachePath;
-
-} TA_LibcPriv;
+/* None */
 
 /**** Global functions definitions.   ****/
-int TA_IsTraceEnabled( TA_Libc *libHandle )
+int TA_IsTraceEnabled( void )
 {
    /* Note: Keep that function simple.
     *       No tracing, no stdio and no assert.
     */
 
-   TA_LibcPriv *privLibHandle;
-
-   if( !libHandle )
-      return 0;
-
-   privLibHandle = (TA_LibcPriv *)libHandle;
-
-   return privLibHandle->traceEnabled;
+   return TA_Globals.traceEnabled;
 }
 
-void TA_TraceEnable( TA_Libc *libHandle )
+void TA_TraceEnable( void )
 {
    /* Note: Keep that function simple.
     *       No tracing, no stdio and no assert.
     */
-
-   TA_LibcPriv *privLibHandle;
-
-   if( !libHandle )
-      return;
-
-   privLibHandle = (TA_LibcPriv *)libHandle;
-
-   privLibHandle->traceEnabled = 1;
+   TA_Globals.traceEnabled = 1;
 }
 
-void TA_TraceDisable( TA_Libc *libHandle )
+void TA_TraceDisable( void )
 {
    /* Note: Keep that function simple.
     *       No tracing, no stdio and no assert.
     */
-
-   TA_LibcPriv *privLibHandle;
-
-   if( !libHandle )
-      return;
-
-   privLibHandle = (TA_LibcPriv *)libHandle;
-
-   privLibHandle->traceEnabled = 0;
+   TA_Globals.traceEnabled = 0;
 }
 
-TA_StringCache *TA_GetGlobalStringCache( TA_Libc *libHandle )
+TA_StringCache *TA_GetGlobalStringCache( void )
 {
    /* Note: Keep that function simple.
     *       No tracing, no stdio and no assert.
     */
-
-   TA_LibcPriv *privLibHandle;
-
-   /* Strings allocation use a "cache" mechanism. There is
-    * one global cache allocated for each instance of the
-    * library (for each TA_Libc).
-    * This cache is currently shared by all modules.
-    */
-   if( !libHandle )
-      return NULL;
-
-   privLibHandle = (TA_LibcPriv *)libHandle;
-
-   return privLibHandle->dfltCache;
+   return TA_Globals.dfltCache;
 }
 
-TA_RetCode TA_Initialize( TA_Libc **libHandle,
-                          const TA_InitializeParam *param )
+TA_RetCode TA_Initialize( const TA_InitializeParam *param )
 {
    /* Note: Keep that function simple.
     *       No tracing, no stdio and no assert.
     */
-
-   TA_LibcPriv *privLibHandle;
    TA_RetCode retCode;
    #if !defined( TA_SINGLE_THREAD )
    unsigned int again; /* Boolean */
    unsigned int i;
    #endif
 
-   if( !libHandle )
-      return TA_BAD_PARAM;
-
-   *libHandle = NULL;
-
    /* Allocate the "global variable" used to manage the global
     * variables of all other modules...
     */
-   privLibHandle = (TA_LibcPriv *)malloc( sizeof( TA_LibcPriv ) );
-
-   if( !privLibHandle )
-      return TA_ALLOC_ERR;
-
-   memset( privLibHandle, 0, sizeof( TA_LibcPriv ) );
-   privLibHandle->magicNb = TA_LIBC_PRIV_MAGIC_NB;
+   memset( &TA_Globals, 0, sizeof( TA_LibcPriv ) );
+   TA_Globals.magicNb = TA_LIBC_PRIV_MAGIC_NB;
 
    if( param )
    { 
@@ -223,15 +152,15 @@ TA_RetCode TA_Initialize( TA_Libc **libHandle,
       {
          /* Override someone intention to use stdin!? */
          if( param->logOutput == stdin )
-            privLibHandle->stdioFile = stdout;
+            TA_Globals.stdioFile = stdout;
          else
-            privLibHandle->stdioFile = param->logOutput;
+            TA_Globals.stdioFile = param->logOutput;
 
-         privLibHandle->stdioEnabled = 1;      
+         TA_Globals.stdioEnabled = 1;      
       }
 
       if( param->userLocalDrive )
-         privLibHandle->localCachePath = param->userLocalDrive;
+         TA_Globals.localCachePath = param->userLocalDrive;
    }
 
    #if !defined( TA_SINGLE_THREAD )
@@ -241,7 +170,7 @@ TA_RetCode TA_Initialize( TA_Libc **libHandle,
       again = 1;
       for( i=0; i < TA_NB_GLOBAL_ID && again; i++ )
       {
-         retCode = TA_SemaInit( &privLibHandle->moduleControl[i].sema, 1 );
+         retCode = TA_SemaInit( &TA_Globals.moduleControl[i].sema, 1 );
          if( retCode != TA_SUCCESS )
             again = 0;
       }
@@ -250,11 +179,10 @@ TA_RetCode TA_Initialize( TA_Libc **libHandle,
       {
          /* Clean-up and exit. */
          for( i=0; i < TA_NB_GLOBAL_ID; i++ )
-            TA_SemaDestroy( &privLibHandle->moduleControl[i].sema );
+            TA_SemaDestroy( &TA_Globals.moduleControl[i].sema );
 
-         memset( privLibHandle, 0, sizeof( TA_LibcPriv ) );
+         memset( &TA_Globals, 0, sizeof( TA_LibcPriv ) );
 
-         free( privLibHandle );
          return TA_INTERNAL_ERROR(4);
       }
 
@@ -263,68 +191,56 @@ TA_RetCode TA_Initialize( TA_Libc **libHandle,
    /* Force immediatly the initialization of the memory module. 
     * Note: No call to the tracing capability are allowed in TA_MemInit.
     */
-   retCode = TA_MemInit( (TA_Libc *)privLibHandle, sizeof( TA_LibcPriv ) );
+   retCode = TA_MemInit( sizeof( TA_LibcPriv ) );
 
    /* Force immediatly the initialization of the tracing module. */
    if( retCode == TA_SUCCESS )
-      retCode = TA_TraceInit( (TA_Libc *)privLibHandle );
+      retCode = TA_TraceInit();
 
    if( retCode != TA_SUCCESS )
    {
       /* Clean-up and exit. */
       #if !defined( TA_SINGLE_THREAD )
       for( i=0; i < TA_NB_GLOBAL_ID; i++ )
-         TA_SemaDestroy( &privLibHandle->moduleControl[i].sema );
+         TA_SemaDestroy( &TA_Globals.moduleControl[i].sema );
       #endif
-      memset( privLibHandle, 0, sizeof( TA_LibcPriv ) );
+      memset( &TA_Globals, 0, sizeof( TA_LibcPriv ) );
 
-      free( privLibHandle );
       return TA_INTERNAL_ERROR(5);
    }
 
    /* Tracing can now be safely used by the memory module until
     * shutdown in TA_Shutdown.
     */
-   privLibHandle->traceEnabled = 1;
+   TA_Globals.traceEnabled = 1;
 
 
    /*** At this point, TA_Shutdown can be called to clean-up. ***/
 
 
    /* Allocate the default string cache used throughout the library. */
-   retCode = TA_StringCacheAlloc( (TA_Libc *)privLibHandle,
-                                  &privLibHandle->dfltCache );
+   retCode = TA_StringCacheAlloc( &TA_Globals.dfltCache );
 
    if( retCode != TA_SUCCESS )
    {
-      TA_Shutdown( (TA_Libc *)privLibHandle );
+      TA_Shutdown();
       return retCode;
    }
-
-   /* Success! Return the info to the caller. */
-   *libHandle = (TA_Libc *)privLibHandle;
 
    return TA_SUCCESS;
 }
 
-TA_RetCode TA_Shutdown( TA_Libc *libHandle )
+TA_RetCode TA_Shutdown( void )
 {
    /* Note: Keep that function simple.
     *       No tracing, no stdio and no assert.
     */
-
-   TA_LibcPriv *privLibHandle;
    const TA_GlobalControl *control;
    unsigned int i;
    TA_RetCode retCode, finalRetCode;
 
-   privLibHandle = (TA_LibcPriv *)libHandle;
-
-   if( !privLibHandle )
-      return TA_BAD_PARAM;
-
-   if( privLibHandle->magicNb != TA_LIBC_PRIV_MAGIC_NB )
-      return TA_BAD_OBJECT;
+   if( TA_Globals.magicNb != TA_LIBC_PRIV_MAGIC_NB )
+      return TA_LIB_NOT_INITIALIZE;
 
    /* Will change if an error occured at any point. */
    finalRetCode = TA_SUCCESS;
@@ -340,12 +256,12 @@ TA_RetCode TA_Shutdown( TA_Libc *libHandle )
 	   * are shutting down the tracing itself!!!
 	   */
 	  if( i == TA_TRACE_GLOBAL_ID )
-         privLibHandle->traceEnabled = 0;
+         TA_Globals.traceEnabled = 0;
 
       #if !defined( TA_SINGLE_THREAD )
-      if( privLibHandle->moduleControl[i].sema.flags & TA_SEMA_INITIALIZED )
+      if( TA_Globals.moduleControl[i].sema.flags & TA_SEMA_INITIALIZED )
       {
-         retCode = TA_SemaWait( &(privLibHandle->moduleControl[i].sema) );
+         retCode = TA_SemaWait( &(TA_Globals.moduleControl[i].sema) );
          if( retCode != TA_SUCCESS )
             finalRetCode = retCode;
       #endif
@@ -353,27 +269,27 @@ TA_RetCode TA_Shutdown( TA_Libc *libHandle )
          /* Just before shutting down the ta_memory module,
           * free the global string cache.
           */
-         if( (i == TA_MEMORY_GLOBAL_ID) && (privLibHandle->dfltCache) )
+         if( (i == TA_MEMORY_GLOBAL_ID) && (TA_Globals.dfltCache) )
          {
-            retCode = TA_StringCacheFree( privLibHandle->dfltCache );
+            retCode = TA_StringCacheFree( TA_Globals.dfltCache );
             if( retCode != TA_SUCCESS )
                finalRetCode = retCode;
          }
 
-         if( privLibHandle->moduleControl[i].initialize )
+         if( TA_Globals.moduleControl[i].initialize )
          {
-            control = privLibHandle->moduleControl[i].control;
+            control = TA_Globals.moduleControl[i].control;
             if( control && control->shutdown )
             {
-               retCode = (*control->shutdown)( libHandle, privLibHandle->moduleControl[i].global );
+               retCode = (*control->shutdown)( TA_Globals.moduleControl[i].global );
                if( retCode != TA_SUCCESS )
                   finalRetCode = retCode;
             }
-            privLibHandle->moduleControl[i].initialize = 0;
+            TA_Globals.moduleControl[i].initialize = 0;
          }
 
       #if !defined( TA_SINGLE_THREAD )
-         retCode = TA_SemaDestroy( &(privLibHandle->moduleControl[i].sema) );
+         retCode = TA_SemaDestroy( &(TA_Globals.moduleControl[i].sema) );
          if( retCode != TA_SUCCESS )
             finalRetCode = retCode;
       }
@@ -381,9 +297,7 @@ TA_RetCode TA_Shutdown( TA_Libc *libHandle )
    }
 
    /* Initialize to all zero to make sure we invalidate that object. */
-   memset( privLibHandle, 0, sizeof( TA_LibcPriv ) );
-
-   free( privLibHandle );
+   memset( &TA_Globals, 0, sizeof( TA_LibcPriv ) );
 
    return finalRetCode;
 }
@@ -393,8 +307,7 @@ TA_RetCode TA_Shutdown( TA_Libc *libHandle )
  * If the global variables are NOT initialized, this function will
  * call the corresponding 'init' function for this module.
  */
-TA_RetCode TA_GetGlobal( TA_Libc *libHandle,
-                         const TA_GlobalControl * const control,
+TA_RetCode TA_GetGlobal( const TA_GlobalControl * const control,
                          void **global )
 {
    /* Note: Keep that function simple.
@@ -403,11 +316,10 @@ TA_RetCode TA_GetGlobal( TA_Libc *libHandle,
 
    TA_GlobalModuleId id;
    TA_RetCode retCode, finalRetCode;
-   TA_LibcPriv *privLibHandle;
    const TA_GlobalControl * const locControl = control;
 
    /* Validate parameters */
-   if( !libHandle || !control || !global )
+   if( !control || !global )
       return TA_FATAL_ERR;
 
    *global = NULL;
@@ -416,14 +328,10 @@ TA_RetCode TA_GetGlobal( TA_Libc *libHandle,
    if( id >= TA_NB_GLOBAL_ID )
       return TA_FATAL_ERR;
 
-   privLibHandle = (TA_LibcPriv *)libHandle;
-   if( privLibHandle->magicNb != TA_LIBC_PRIV_MAGIC_NB )
-      return TA_FATAL_ERR;
-
-   if( privLibHandle->moduleControl[id].initialize )
+   if( TA_Globals.moduleControl[id].initialize )
    {
       /* This module is already initialized, just return the global. */
-      *global = privLibHandle->moduleControl[id].global;
+      *global = TA_Globals.moduleControl[id].global;
       return TA_SUCCESS;
    }
 
@@ -433,37 +341,37 @@ TA_RetCode TA_GetGlobal( TA_Libc *libHandle,
    finalRetCode = TA_SUCCESS;
 
    #if !defined( TA_SINGLE_THREAD )
-   if( !(privLibHandle->moduleControl[id].sema.flags&TA_SEMA_INITIALIZED) )
+   if( !(TA_Globals.moduleControl[id].sema.flags&TA_SEMA_INITIALIZED) )
       return TA_FATAL_ERR;
 
-   retCode = TA_SemaWait( &(privLibHandle->moduleControl[id].sema) );
+   retCode = TA_SemaWait( &(TA_Globals.moduleControl[id].sema) );
    if( retCode != TA_SUCCESS )
       return TA_FATAL_ERR;
 
    /* Check again if initialize AFTER we got the semaphore. */
-   if( !privLibHandle->moduleControl[id].initialize )
+   if( !TA_Globals.moduleControl[id].initialize )
    {
    #endif
 
       /* The module needs to be initialized. Call the corresponding
        * 'init' function.
        */
-      if( !privLibHandle->moduleControl[id].control )
-         privLibHandle->moduleControl[id].control = locControl;         
+      if( !TA_Globals.moduleControl[id].control )
+         TA_Globals.moduleControl[id].control = locControl;         
 
       if( locControl->init )
       {
-         retCode = (*locControl->init)( libHandle, &privLibHandle->moduleControl[id].global );
+         retCode = (*locControl->init)( &TA_Globals.moduleControl[id].global );
 
          if( retCode != TA_SUCCESS )
             finalRetCode = retCode;
          else
-            privLibHandle->moduleControl[id].initialize = 1;
+            TA_Globals.moduleControl[id].initialize = 1;
       }
 
    #if !defined( TA_SINGLE_THREAD )
    }
-   retCode = TA_SemaPost( &(privLibHandle->moduleControl[id].sema) );
+   retCode = TA_SemaPost( &(TA_Globals.moduleControl[id].sema) );
    if( retCode != TA_SUCCESS )
       finalRetCode = TA_FATAL_ERR;
    #endif
@@ -472,12 +380,12 @@ TA_RetCode TA_GetGlobal( TA_Libc *libHandle,
    if( finalRetCode != TA_SUCCESS )
       return finalRetCode;
 
-   if( privLibHandle->moduleControl[id].initialize )
+   if( TA_Globals.moduleControl[id].initialize )
    {
       /* Ok, everything is now alloc/initialized at this point, simply
        * return the pointer on the "global variable" for this module.
        */
-      *global = privLibHandle->moduleControl[id].global;
+      *global = TA_Globals.moduleControl[id].global;
    }
    else
       return TA_FATAL_ERR;
@@ -485,40 +393,25 @@ TA_RetCode TA_GetGlobal( TA_Libc *libHandle,
    return TA_SUCCESS;
 }
 
-FILE *TA_GetStdioFilePtr( TA_Libc *libHandle )
+FILE *TA_GetStdioFilePtr( void )
 {
    /* Note: Keep that function simple.
     *       No tracing, no stdio and no assert.
     */
 
-   TA_LibcPriv *privLibHandle;
-
-   privLibHandle = (TA_LibcPriv *)libHandle;
-
-   if( !privLibHandle )
-      return NULL;
-
-   if( privLibHandle->stdioEnabled )
-      return privLibHandle->stdioFile;
+   if( TA_Globals.stdioEnabled )
+      return TA_Globals.stdioFile;
 
    return NULL;
 }
 
-const char *TA_GetLocalCachePath( TA_Libc *libHandle )
+const char *TA_GetLocalCachePath( void )
 {
    /* Note: Keep that function simple.
     *       No tracing, no stdio and no assert.
     */
-
-   TA_LibcPriv *privLibHandle;
-
-   privLibHandle = (TA_LibcPriv *)libHandle;
-
-   if( !privLibHandle )
-      return NULL;
-
-   if( privLibHandle->localCachePath )
-      return privLibHandle->localCachePath;
+   if( TA_Globals.localCachePath )
+      return TA_Globals.localCachePath;
 
    return NULL;
 }

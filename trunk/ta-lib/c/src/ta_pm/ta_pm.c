@@ -72,7 +72,7 @@
 
 /**** Local functions declarations.    ****/
 static TA_RetCode TA_PMDelTradeLog( TA_TradeLogPriv *tradeLogToDel );
-static void freeTradeDictEntry( TA_Libc *libHandle, void *toBeFreed );
+static void freeTradeDictEntry( void *toBeFreed );
                                 
 
 
@@ -81,8 +81,7 @@ static void freeTradeDictEntry( TA_Libc *libHandle, void *toBeFreed );
 
 /**** Global functions definitions.   ****/
 
-TA_RetCode TA_TradeLogAlloc( TA_Libc *libHandle,
-                             TA_TradeLog **allocatedTradeLog )
+TA_RetCode TA_TradeLogAlloc( TA_TradeLog **allocatedTradeLog )
 {
    TA_TradeLog     *tradeLog;
    TA_TradeLogPriv *tradeLogPriv;
@@ -93,50 +92,46 @@ TA_RetCode TA_TradeLogAlloc( TA_Libc *libHandle,
    else
       return TA_BAD_PARAM;
 
-   if( !libHandle )
-      return TA_BAD_PARAM;
-
    /* Allocate the public and private structure. */
-   tradeLog = TA_Malloc( libHandle, sizeof( TA_TradeLog ) + sizeof( TA_TradeLogPriv ) );
+   tradeLog = TA_Malloc( sizeof( TA_TradeLog ) + sizeof( TA_TradeLogPriv ) );
    if( !tradeLog )
       return TA_ALLOC_ERR;
    memset( tradeLog, 0, sizeof( TA_TradeLog ) + sizeof( TA_TradeLogPriv ) );
    tradeLogPriv = (TA_TradeLogPriv *)(((char *)tradeLog)+sizeof(TA_TradeLog));
-   tradeLogPriv->libHandle = libHandle;
    tradeLogPriv->magicNb   = TA_TRADELOGPRIV_MAGIC_NB;
    tradeLog->hiddenData    = tradeLogPriv;
 
    /* TA_TradeLogFree can be safely called from this point. */
 
-   tradeLogPriv->tradeDictCAT = TA_DictAlloc( libHandle, TA_DICT_KEY_ONE_STRING, freeTradeDictEntry );
+   tradeLogPriv->tradeDictCAT = TA_DictAlloc( TA_DICT_KEY_ONE_STRING, freeTradeDictEntry );
    if( !tradeLogPriv->tradeDictCAT )
    {
       TA_TradeLogFree( tradeLog );
       return TA_ALLOC_ERR;
    }
 
-   tradeLogPriv->tradeDictSYM = TA_DictAlloc( libHandle, TA_DICT_KEY_ONE_STRING, freeTradeDictEntry );
+   tradeLogPriv->tradeDictSYM = TA_DictAlloc( TA_DICT_KEY_ONE_STRING, freeTradeDictEntry );
    if( !tradeLogPriv->tradeDictSYM )
    {
       TA_TradeLogFree( tradeLog );
       return TA_ALLOC_ERR;
    }
 
-   tradeLogPriv->tradeDictCATSYM = TA_DictAlloc( libHandle, TA_DICT_KEY_TWO_STRING, freeTradeDictEntry );
+   tradeLogPriv->tradeDictCATSYM = TA_DictAlloc( TA_DICT_KEY_TWO_STRING, freeTradeDictEntry );
    if( !tradeLogPriv->tradeDictCATSYM )
    {
       TA_TradeLogFree( tradeLog );
       return TA_ALLOC_ERR;
    }
 
-   tradeLogPriv->tradeDictUserKey = TA_DictAlloc( libHandle, TA_DICT_KEY_INTEGER, freeTradeDictEntry );
+   tradeLogPriv->tradeDictUserKey = TA_DictAlloc( TA_DICT_KEY_INTEGER, freeTradeDictEntry );
    if( !tradeLogPriv->tradeDictUserKey )
    {
       TA_TradeLogFree( tradeLog );
       return TA_ALLOC_ERR;
    }
 
-   retCode = TA_AllocatorForDataLog_Init( libHandle, &tradeLogPriv->allocator );
+   retCode = TA_AllocatorForDataLog_Init( &tradeLogPriv->allocator );
    if( retCode != TA_SUCCESS )
    {
       TA_TradeLogFree( tradeLog );
@@ -152,7 +147,6 @@ TA_RetCode TA_TradeLogAlloc( TA_Libc *libHandle,
 TA_RetCode TA_TradeLogFree( TA_TradeLog *toBeFreed )
 {
    TA_TradeLogPriv *tradeLogPriv;
-   TA_Libc *libHandle;
 
    if( toBeFreed )
    {
@@ -178,8 +172,7 @@ TA_RetCode TA_TradeLogFree( TA_TradeLog *toBeFreed )
       TA_AllocatorForDataLog_FreeAll( &tradeLogPriv->allocator );
 
       /* Free the public portion. */
-      libHandle = tradeLogPriv->libHandle;
-      TA_Free( libHandle, toBeFreed );
+      TA_Free( toBeFreed );
    }
 
    return TA_SUCCESS;
@@ -194,7 +187,6 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
    TA_Dict *theDict;
    TA_DataLog *dataLog;
    TA_TradeDictEntry *dictEntry;
-   TA_Libc *libHandle;
    TA_StringCache *stringCache;
    TA_String *catString;
    TA_String *symString;
@@ -241,9 +233,6 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
    /* Get access to the hidden data of the TA_TradeLog. */
    tradeLogPriv = (TA_TradeLogPriv *)tradeLog->hiddenData;
 
-   if( !tradeLogPriv->libHandle )
-      return TA_TRADE_LOG_NOT_INITIALIZED;
-
    /* Make sure this is a valid object. */
    if( tradeLogPriv->magicNb != TA_TRADELOGPRIV_MAGIC_NB )
       return TA_BAD_OBJECT;
@@ -283,24 +272,23 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
    if( !dictEntry )
    {
       /* The TA_TradeDictEntry was not found, create it! */
-      libHandle = tradeLogPriv->libHandle;
-      dictEntry = TA_Malloc( libHandle, sizeof( TA_TradeDictEntry ) );
+      dictEntry = TA_Malloc( sizeof( TA_TradeDictEntry ) );
       if( !dictEntry )
          return TA_ALLOC_ERR;
 
       dictEntry->id = id;
-      TA_ListInit( libHandle, &dictEntry->shortEntryPrivList );
-      TA_ListInit( libHandle, &dictEntry->longEntryPrivList );
+      TA_ListInit(  &dictEntry->shortEntryPrivList );
+      TA_ListInit(  &dictEntry->longEntryPrivList );
 
       /* Add the dictEntry to the corresponding dictionary. */
-      stringCache = TA_GetGlobalStringCache(libHandle);
+      stringCache = TA_GetGlobalStringCache();
 
       if( flags & TA_INSTRUMENT_USE_CATSTRING )
       {         
          catString = TA_StringAlloc( stringCache, id->key.catSym.catString );
          if( !catString )
          {
-            TA_Free( libHandle, dictEntry );
+            TA_Free(  dictEntry );
             return TA_ALLOC_ERR;
          }
 
@@ -309,7 +297,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
             symString = TA_StringAlloc( stringCache, id->key.catSym.symString );
             if( !symString )
             {
-               TA_Free( libHandle, dictEntry );
+               TA_Free(  dictEntry );
                TA_StringFree( stringCache, catString );
                return TA_ALLOC_ERR;
             }
@@ -326,7 +314,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
          symString = TA_StringAlloc( stringCache, id->key.catSym.symString );
          if( !symString )
          {
-           TA_Free( libHandle, dictEntry );
+           TA_Free(  dictEntry );
            return TA_ALLOC_ERR;
          }
 
@@ -339,7 +327,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
       /* Check the retCode of the TA_DictAddXXXXX function. */
       if( retCode != TA_SUCCESS )
       {
-         TA_Free( libHandle, dictEntry );
+         TA_Free(  dictEntry );
          return TA_ALLOC_ERR;
       }
    }
@@ -505,8 +493,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
    return TA_SUCCESS;
 }
 
-TA_RetCode TA_PMAlloc( TA_Libc             *libHandle,
-                       const TA_Timestamp  *startDate,
+TA_RetCode TA_PMAlloc( const TA_Timestamp  *startDate,
                        const TA_Timestamp  *endDate,
                        TA_Real              initialCapital,
                        TA_PM              **allocatedPM )
@@ -521,7 +508,7 @@ TA_RetCode TA_PMAlloc( TA_Libc             *libHandle,
       return TA_BAD_PARAM;
    *allocatedPM = NULL;
 
-   if( !libHandle || !startDate || !endDate )
+   if( !startDate || !endDate )
       return TA_BAD_PARAM;
 
    if( TA_TimestampValidate( startDate ) )
@@ -541,7 +528,7 @@ TA_RetCode TA_PMAlloc( TA_Libc             *libHandle,
       return TA_NO_WEEKDAY_IN_DATE_RANGE;
 
    /* Allocate the public and private structure. */
-   pm = TA_Malloc( libHandle, sizeof( TA_PM ) + sizeof( TA_PMPriv ) );
+   pm = TA_Malloc( sizeof( TA_PM ) + sizeof( TA_PMPriv ) );
    if( !pm )
    {
       *allocatedPM = NULL;
@@ -550,14 +537,13 @@ TA_RetCode TA_PMAlloc( TA_Libc             *libHandle,
 
    memset( pm, 0, sizeof( TA_PM ) + sizeof( TA_PMPriv ) );
    pmPriv = (TA_PMPriv *)(((char *)pm)+sizeof(TA_PM));
-   pmPriv->libHandle      = libHandle;
    pmPriv->magicNb        = TA_PMPRIV_MAGIC_NB;
    pmPriv->initialCapital = initialCapital;
    pm->hiddenData         = pmPriv;
 
    /* TA_PMFree can be safely called from this point. */
 
-   TA_ListInit( libHandle, &pmPriv->tradeLogList );
+   TA_ListInit(  &pmPriv->tradeLogList );
    if( endDate )
       TA_TimestampCopy( &pmPriv->endDate, endDate );
             
@@ -573,7 +559,6 @@ TA_RetCode TA_PMAlloc( TA_Libc             *libHandle,
 TA_RetCode TA_PMFree( TA_PM *toBeFreed )
 {
    TA_PMPriv *pmPriv;
-   TA_Libc *libHandle;
    TA_TradeLogPriv *tradeLogPriv;
 
    if( toBeFreed )
@@ -598,21 +583,20 @@ TA_RetCode TA_PMFree( TA_PM *toBeFreed )
       TA_ListFree( &pmPriv->tradeLogList );   
 
       /* Free all the cached arrays. */
-      libHandle = pmPriv->libHandle;
-      FREE_IF_NOT_NULL( libHandle, pmPriv->equity );
-      FREE_IF_NOT_NULL( libHandle, pmPriv->arrayTimestamp );
+      FREE_IF_NOT_NULL( pmPriv->equity );
+      FREE_IF_NOT_NULL( pmPriv->arrayTimestamp );
 
-      FREE_IF_NOT_NULL( libHandle, pmPriv->shortArrayCache.investment );
-      FREE_IF_NOT_NULL( libHandle, pmPriv->shortArrayCache.profit );
+      FREE_IF_NOT_NULL( pmPriv->shortArrayCache.investment );
+      FREE_IF_NOT_NULL( pmPriv->shortArrayCache.profit );
 
-      FREE_IF_NOT_NULL( libHandle, pmPriv->longArrayCache.investment );
-      FREE_IF_NOT_NULL( libHandle, pmPriv->longArrayCache.profit );
+      FREE_IF_NOT_NULL( pmPriv->longArrayCache.investment );
+      FREE_IF_NOT_NULL( pmPriv->longArrayCache.profit );
 
-      FREE_IF_NOT_NULL( libHandle, pmPriv->totalArrayCache.investment );
-      FREE_IF_NOT_NULL( libHandle, pmPriv->totalArrayCache.profit );
+      FREE_IF_NOT_NULL( pmPriv->totalArrayCache.investment );
+      FREE_IF_NOT_NULL( pmPriv->totalArrayCache.profit );
 
       /* Last thing that must be freed... */
-      TA_Free( libHandle, toBeFreed );
+      TA_Free(  toBeFreed );
    }
 
    return TA_SUCCESS;
@@ -657,12 +641,12 @@ TA_RetCode TA_PMAddTradeLog( TA_PM *pm, TA_TradeLog *tradeLogToAdd )
 
 
 /**** Local functions definitions.     ****/
-static void freeTradeDictEntry( TA_Libc *libHandle, void *toBeFreed )
+static void freeTradeDictEntry( void *toBeFreed )
 {
    if( !toBeFreed )
       return;
 
-   TA_Free( libHandle, (TA_TradeDictEntry *)toBeFreed );
+   TA_Free(  (TA_TradeDictEntry *)toBeFreed );
 }
 
 static TA_RetCode TA_PMDelTradeLog( TA_TradeLogPriv *tradeLogToDel )

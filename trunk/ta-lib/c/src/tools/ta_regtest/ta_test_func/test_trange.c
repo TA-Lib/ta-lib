@@ -98,8 +98,7 @@ typedef struct
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 
 /**** Local variables definitions.     ****/
@@ -134,7 +133,7 @@ static TA_Test tableTest[] =
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
-ErrorNumber test_func_trange( TA_Libc *libHandle, TA_History *history )
+ErrorNumber test_func_trange( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
@@ -149,7 +148,7 @@ ErrorNumber test_func_trange( TA_Libc *libHandle, TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
 
-      retValue = do_test( libHandle, history, &tableTest[i] );
+      retValue = do_test( history, &tableTest[i] );
       if( retValue != 0 )
       {
          printf( "%s Failed Test #%d (Code=%d)\n",
@@ -165,7 +164,7 @@ ErrorNumber test_func_trange( TA_Libc *libHandle, TA_History *history )
 }
 
 /**** Local functions definitions.     ****/
-static TA_RetCode rangeTestFunction( TA_Libc *libHandle, 
+static TA_RetCode rangeTestFunction( 
                               TA_Integer startIdx,
                               TA_Integer endIdx,
                               TA_Real *outputBuffer,
@@ -185,7 +184,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
 
    if( testParam->test->doAverage )
    {
-      retCode = TA_ATR( libHandle,
+      retCode = TA_ATR(
                         startIdx,
                         endIdx,
                         testParam->high,
@@ -199,7 +198,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    }
    else
    {
-      retCode = TA_TRANGE( libHandle,
+      retCode = TA_TRANGE(
                         startIdx,
                         endIdx,
                         testParam->high,
@@ -215,8 +214,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    return retCode;
 }
 
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test )
 {
    TA_RetCode retCode;
@@ -235,9 +233,8 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
    if( test->doAverage )
    {
-      TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ATR, test->unstablePeriod );
-      retCode = TA_ATR(    libHandle,
-                           test->startIdx,
+      TA_SetUnstablePeriod( TA_FUNC_UNST_ATR, test->unstablePeriod );
+      retCode = TA_ATR(    test->startIdx,
                            test->endIdx,
                            gBuffer[0].in,
                            gBuffer[1].in,
@@ -249,8 +246,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    }
    else
    {
-      retCode = TA_TRANGE( libHandle,
-                           test->startIdx,
+      retCode = TA_TRANGE( test->startIdx,
                            test->endIdx,
                            gBuffer[0].in,
                            gBuffer[1].in,
@@ -286,9 +282,8 @@ static ErrorNumber do_test( TA_Libc *libHandle,
     */
    if( test->doAverage )
    {
-      TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ATR, test->unstablePeriod );
-      retCode = TA_ATR(    libHandle,
-                           test->startIdx,
+      TA_SetUnstablePeriod( TA_FUNC_UNST_ATR, test->unstablePeriod );
+      retCode = TA_ATR(    test->startIdx,
                            test->endIdx,
                            gBuffer[0].in,
                            gBuffer[1].in,
@@ -300,8 +295,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    }
    else
    {
-      retCode = TA_TRANGE( libHandle,
-                           test->startIdx,
+      retCode = TA_TRANGE( test->startIdx,
                            test->endIdx,
                            gBuffer[0].in,
                            gBuffer[1].in,
@@ -340,8 +334,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( libHandle,
-                           rangeTestFunction, 
+      errNb = doRangeTest( rangeTestFunction, 
                            TA_FUNC_UNST_ATR,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )

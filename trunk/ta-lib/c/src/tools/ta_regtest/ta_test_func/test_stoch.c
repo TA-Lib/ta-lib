@@ -84,8 +84,6 @@ typedef struct
    TA_Integer    optInSlowD_Period_3;
    TA_Integer    optInSlowD_MAType_4;
 
-   /* TA_Integer    optInCompatibility_4;*/
-
    TA_RetCode expectedRetCode;
 
    TA_Integer expectedBegIdx;
@@ -107,12 +105,10 @@ typedef struct
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 
-static TA_RetCode referenceStoch( TA_Libc      *libHandle,
-                                  TA_Integer    startIdx,
+static TA_RetCode referenceStoch( TA_Integer    startIdx,
                                   TA_Integer    endIdx,
                                   const TA_Real inHigh_0[],
                                   const TA_Real inLow_0[],
@@ -157,13 +153,13 @@ static TA_Test tableTest[] =
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
-ErrorNumber test_func_stoch( TA_Libc *libHandle, TA_History *history )
+ErrorNumber test_func_stoch( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
 
    /* Re-initialize all the unstable period to zero. */
-   TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ALL, 0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    for( i=0; i < NB_TEST; i++ )
    {
@@ -174,7 +170,7 @@ ErrorNumber test_func_stoch( TA_Libc *libHandle, TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
 
-      retValue = do_test( libHandle, history, &tableTest[i] );
+      retValue = do_test( history, &tableTest[i] );
       if( retValue != 0 )
       {
          printf( "%s Failed Test #%d (Code=%d)\n", __FILE__,
@@ -184,14 +180,14 @@ ErrorNumber test_func_stoch( TA_Libc *libHandle, TA_History *history )
    }
 
    /* Re-initialize all the unstable period to zero. */
-   TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ALL, 0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
    return TA_TEST_PASS; 
 }
 
 /**** Local functions definitions.     ****/
-static TA_RetCode rangeTestFunction( TA_Libc *libHandle, 
+static TA_RetCode rangeTestFunction( 
                               TA_Integer startIdx,
                               TA_Integer endIdx,
                               TA_Real *outputBuffer,
@@ -208,11 +204,11 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
   testParam = (TA_RangeTestParam *)opaqueData;   
 
 
-  dummyOutput = TA_Malloc( libHandle, (endIdx-startIdx+1) * sizeof(TA_Real) );
+  dummyOutput = TA_Malloc( (endIdx-startIdx+1) * sizeof(TA_Real) );
                      
   if( outputNb == 0 )
   {
-     retCode = TA_STOCH( libHandle,
+     retCode = TA_STOCH(
                          startIdx,
                          endIdx,
                          testParam->high,
@@ -230,7 +226,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    }
    else
    {
-     retCode = TA_STOCH( libHandle,
+     retCode = TA_STOCH(
                          startIdx,
                          endIdx,
                          testParam->high,
@@ -246,7 +242,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
                          outputBuffer );
    }
 
-   TA_Free( libHandle, dummyOutput );
+   TA_Free(  dummyOutput );
 
    *lookback = TA_STOCH_Lookback( testParam->test->optInFastK_Period_0,
                          testParam->test->optInSlowK_Period_1,
@@ -257,8 +253,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    return retCode;
 }
 
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test )
 {
    TA_RetCode retCode;
@@ -279,7 +274,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    switch( test->optInSlowK_MAType_2 )
    {
    case TA_STOCH_EXPONENTIAL:
-      retCode = TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_EMA, test->unstablePeriod );
+      retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, test->unstablePeriod );
       if( retCode != TA_SUCCESS )
          return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
       break;
@@ -289,7 +284,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    }
 
    /* Make a simple first call. */
-   retCode = TA_STOCH( libHandle,
+   retCode = TA_STOCH(
                        test->startIdx,
                        test->endIdx,
                        gBuffer[0].in,
@@ -320,7 +315,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    outBegIdx = outNbElement = 0;
 
    /* Compare to the non-optimized version */
-   retCode = referenceStoch( libHandle,
+   retCode = referenceStoch(
                        test->startIdx,
                        test->endIdx,
                        gBuffer[0].in,
@@ -365,7 +360,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   retCode = TA_STOCH( libHandle,
+   retCode = TA_STOCH(
                        test->startIdx,
                        test->endIdx,
                        gBuffer[0].in,
@@ -410,7 +405,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( libHandle,
+      errNb = doRangeTest(
                            rangeTestFunction, 
                            TA_FUNC_UNST_EMA,
                            (void *)&testParam, 2, 0 );
@@ -428,8 +423,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
 
 /* This is an un-optimized version of the STOCH function */
-static TA_RetCode referenceStoch( TA_Libc      *libHandle,
-                     TA_Integer    startIdx,
+static TA_RetCode referenceStoch( TA_Integer    startIdx,
                      TA_Integer    endIdx,
                      const TA_Real inHigh_0[],
                      const TA_Real inLow_0[],
@@ -453,8 +447,6 @@ static TA_RetCode referenceStoch( TA_Libc      *libHandle,
    TA_Integer trailingIdx, today, i, bufferIsAllocated;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -511,8 +503,8 @@ static TA_RetCode referenceStoch( TA_Libc      *libHandle,
 
    /* Identify the lookback needed. */
    lookbackK      = optInFastK_Period_0-1;
-   lookbackKSlow  = TA_MA_Lookback( optInSlowK_Period_1, optInSlowK_MAType_2, TA_MA_CLASSIC );
-   lookbackDSlow  = TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4, TA_MA_CLASSIC );
+   lookbackKSlow  = TA_MA_Lookback( optInSlowK_Period_1, optInSlowK_MAType_2 );
+   lookbackDSlow  = TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4 );
    lookbackTotal  = lookbackK + lookbackDSlow + lookbackKSlow;
 
    /* Move up the start index if there is not
@@ -575,7 +567,7 @@ static TA_RetCode referenceStoch( TA_Libc      *libHandle,
    else
    {
       bufferIsAllocated = 1;
-      tempBuffer = TA_Malloc( libHandle, (endIdx-today+1)*sizeof(TA_Real) );
+      tempBuffer = TA_Malloc( (endIdx-today+1)*sizeof(TA_Real) );
    }
 
    /* Do the K calculation */
@@ -606,16 +598,16 @@ static TA_RetCode referenceStoch( TA_Libc      *libHandle,
     * Some documentation will refer to the smoothed version as being 
     * "K-Slow", but often this end up to be shorten to "K".
     */
-   retCode = TA_MA( libHandle, 0, outIdx-1,
+   retCode = TA_MA( 0, outIdx-1,
                     tempBuffer, optInSlowK_Period_1,
-                    optInSlowK_MAType_2, TA_MA_CLASSIC, 
+                    optInSlowK_MAType_2,
                     outBegIdx, outNbElement, tempBuffer );
 
 
    if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
    {
       if( bufferIsAllocated )
-        TA_Free( libHandle, tempBuffer ); 
+        TA_Free(  tempBuffer ); 
       /* Something wrong happen? No further data? */
       *outBegIdx    = 0;
       *outNbElement = 0;
@@ -625,9 +617,9 @@ static TA_RetCode referenceStoch( TA_Libc      *libHandle,
    /* Calculate the %D which is simply a moving average of
     * the already smoothed %K.
     */
-   retCode = TA_MA( libHandle, 0, (*outNbElement)-1,
+   retCode = TA_MA( 0, (*outNbElement)-1,
                     tempBuffer, optInSlowD_Period_3,
-                    optInSlowD_MAType_4, TA_MA_CLASSIC, 
+                    optInSlowD_MAType_4,
                     outBegIdx, outNbElement, outSlowD_1 );
 
    /* Copy tempBuffer into the caller buffer. 
@@ -639,7 +631,7 @@ static TA_RetCode referenceStoch( TA_Libc      *libHandle,
 
    /* Don't need K anymore, free it if it was allocated here. */
    if( bufferIsAllocated )
-      TA_Free( libHandle, tempBuffer ); 
+      TA_Free(  tempBuffer ); 
 
    if( retCode != TA_SUCCESS )
    {

@@ -78,7 +78,6 @@ static const TA_OptInputParameterInfo *TA_BBANDS_OptInputs[] =
   &TA_DEF_UI_NbDeviationUp,
   &TA_DEF_UI_NbDeviationDn,
   &TA_DEF_UI_MA_Method,
-  &TA_DEF_UI_Compatibility_CL_MS,
   NULL
 };
 

@@ -1,18 +1,18 @@
 
-ErrorNumber test_func_adx    ( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_ma     ( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_trange ( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_rsi    ( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_po     ( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_macd   ( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_stddev ( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_bbands ( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_mom_roc( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_stoch  ( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_minmax ( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_per_ema( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_per_hlc( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_per    ( TA_Libc *libHandle, TA_History *history );
-ErrorNumber test_func_sar    ( TA_Libc *libHandle, TA_History *history );
+ErrorNumber test_func_adx    ( TA_History *history );
+ErrorNumber test_func_ma     ( TA_History *history );
+ErrorNumber test_func_trange ( TA_History *history );
+ErrorNumber test_func_rsi    ( TA_History *history );
+ErrorNumber test_func_po     ( TA_History *history );
+ErrorNumber test_func_macd   ( TA_History *history );
+ErrorNumber test_func_stddev ( TA_History *history );
+ErrorNumber test_func_bbands ( TA_History *history );
+ErrorNumber test_func_mom_roc( TA_History *history );
+ErrorNumber test_func_stoch  ( TA_History *history );
+ErrorNumber test_func_minmax ( TA_History *history );
+ErrorNumber test_func_per_ema( TA_History *history );
+ErrorNumber test_func_per_hlc( TA_History *history );
+ErrorNumber test_func_per    ( TA_History *history );
+ErrorNumber test_func_sar    ( TA_History *history );
 
 

@@ -40,17 +40,17 @@
  * The user of the library can retreive the recorded information on the failure
  * by using TA_FatalReport.
  */
-#define TA_ASSERT(libH,b) {if(!(b)) {TA_PrivError(libH,1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); TA_TRACE_RETURN(TA_FATAL_ERR);}}
+#define TA_ASSERT(b) {if(!(b)) {TA_PrivError(1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); TA_TRACE_RETURN(TA_FATAL_ERR);}}
 /* Same as TA_ASSERT, but return the specified value on failure. */
-#define TA_ASSERT_RET(libH,b,ret) {if(!(b)) {TA_PrivError(libH,1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); return ret;}}
+#define TA_ASSERT_RET(b,ret) {if(!(b)) {TA_PrivError(1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); return ret;}}
 /* Same as TA_ASSERT, but for function returning void. */
-#define TA_ASSERT_NO_RET(libH,b) {if(!(b)) {TA_PrivError(libH,1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); return;}}
+#define TA_ASSERT_NO_RET(b) {if(!(b)) {TA_PrivError(1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); return;}}
 
-#define TA_FATAL(libH,str,param1,param2) {TA_PrivError(libH,0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); TA_TRACE_RETURN( TA_FATAL_ERR );}
+#define TA_FATAL(str,param1,param2) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); TA_TRACE_RETURN( TA_FATAL_ERR );}
 /* Same as TA_ASSERT, but return the specified value on failure. */
-#define TA_FATAL_RET(libH,str,param1,param2,ret) {TA_PrivError(libH,0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); return ret;}
+#define TA_FATAL_RET(str,param1,param2,ret) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); return ret;}
 /* Same as TA_FATAL, but for function returning void. */
-#define TA_FATAL_NO_RET(libH,str,param1,param2) {TA_PrivError(libH,0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); return;}
+#define TA_FATAL_NO_RET(str,param1,param2) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); return;}
 
 /* When TA_DEBUG is defined, additional "paranoiac" testing can be performed
  * for checking the integrity of the software.
@@ -58,9 +58,9 @@
  * This assert mechanism will NOT be enabled in the final library.
  */
 #ifdef TA_DEBUG
-   #define TA_DEBUG_ASSERT(libH,b){if(!(b)){TA_PrivError(libH,2,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,1,1); return TA_FATAL_ERR;}}
+   #define TA_DEBUG_ASSERT(b){if(!(b)){TA_PrivError(2,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,1,1); return TA_FATAL_ERR;}}
 #else
-   #define TA_DEBUG_ASSERT(libH,b)
+   #define TA_DEBUG_ASSERT(b)
 #endif
 
 /* Tracing allows to fulfill the following needs:
@@ -91,12 +91,12 @@
  *
  *    TA_FILE_INFO;
  *
- *    TA_RetCode myFunction( TA_Libc *libHandle, int param )
+ *    TA_RetCode myFunction( int param )
  *    {
- *       TA_PROLOG;
+ *       TA_PROLOG
  *       int i, j;  
  *
- *       TA_TRACE_BEGIN(libHandle,myFunction);
+ *       TA_TRACE_BEGIN(myFunction);
  *
  *       if( param == 0 )
  *       {
@@ -116,44 +116,37 @@
  */
 
 #ifdef TA_DEBUG
-   #define TA_PROLOG    const char *theTraceFuncName; \
-                        TA_Libc    *theTraceLibcHandle
+   #define TA_PROLOG    const char *theTraceFuncName;
+   #define TA_TRACE_BEGIN(name) { TA_PrivTraceBegin( #name, theFileNamePtr, __LINE__ ); \
+                                  theTraceFuncName = #name; \
+								        }
 
-   #define TA_TRACE_BEGIN(x,name) { TA_PrivTraceBegin( x, #name, theFileNamePtr, __LINE__ ); \
-									         theTraceLibcHandle = x; \
-                                    theTraceFuncName = #name; \
-								          }
+   #define TA_TRACE_CHECKPOINT { TA_PrivTraceCheckpoint( theTraceFuncName, theFileNamePtr, __LINE__ ); }
 
-   #define TA_TRACE_CHECKPOINT { TA_PrivTraceCheckpoint( theTraceLibcHandle, theTraceFuncName, theFileNamePtr, __LINE__ ); }
-
-   #define TA_TRACE_RETURN(x) { return TA_PrivTraceReturn( theTraceLibcHandle, theTraceFuncName, theFileNamePtr, __LINE__, x ); }
+   #define TA_TRACE_RETURN(x) { return TA_PrivTraceReturn( theTraceFuncName, theFileNamePtr, __LINE__, x ); }
 #else
-   #define TA_PROLOG   const char *aDummyVariable
-   #define TA_TRACE_BEGIN(x,name) { aDummyVariable=NULL; TA_PrivTraceBegin(x,aDummyVariable,theFileNamePtr,__LINE__); }
+   #define TA_PROLOG
+   #define TA_TRACE_BEGIN(x)
    #define TA_TRACE_CHECKPOINT
    #define TA_TRACE_RETURN(x) {return x;}
 #endif
 
 
 /* Never call directly the following functions. Always use the macro define above. */
-void TA_PrivTraceCheckpoint( TA_Libc *libHandle,
-					              const char *funcname,
+void TA_PrivTraceCheckpoint( const char *funcname,
 							        const char *filename,
 						           unsigned int lineNb );
    
-TA_RetCode TA_PrivTraceReturn( TA_Libc *libHandle,
-					                const char *funcname,
+TA_RetCode TA_PrivTraceReturn( const char *funcname,
 							          const char *filename,
 						             unsigned int lineNb,
 						             TA_RetCode retCode );
 
-void TA_PrivTraceBegin( TA_Libc *libHandle,
-					         const char *funcname,
+void TA_PrivTraceBegin( const char *funcname,
 						      const char *filename, 
 						      unsigned int lineNb );
 
-void TA_PrivError( TA_Libc *libHandle,
-                   unsigned int type, const char *str,
+void TA_PrivError( unsigned int type, const char *str,
                    const char *filename, const char *date,
                    const char *time, int lineNb,
                    unsigned int j, unsigned int k  );

@@ -76,14 +76,13 @@ int TA_MACDEXT_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGE
    TA_Integer tempInteger, lookbackLargest;
 
    /* Find the MA with the largest lookback */
-   lookbackLargest = TA_MA_Lookback( optInFastPeriod_0, optInFastMAType_1, TA_MA_CLASSIC );
-   tempInteger     = TA_MA_Lookback( optInSlowPeriod_2, optInSlowMAType_3, TA_MA_CLASSIC );
+   lookbackLargest = TA_MA_Lookback( optInFastPeriod_0, optInFastMAType_1 );
+   tempInteger     = TA_MA_Lookback( optInSlowPeriod_2, optInSlowMAType_3 );
    if( tempInteger > lookbackLargest )
       lookbackLargest = tempInteger;
 
    /* Add to the largest MA lookback the signal line lookback */
-   return lookbackLargest + 
-          TA_MA_Lookback( optInSignalPeriod_4, optInSignalMAType_5, TA_MA_CLASSIC );
+   return lookbackLargest + TA_MA_Lookback( optInSignalPeriod_4, optInSignalMAType_5 );          
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -116,8 +115,7 @@ int TA_MACDEXT_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGE
  * 
  */
 
-TA_RetCode TA_MACDEXT( TA_Libc      *libHandle,
-                       TA_Integer    startIdx,
+TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
                        TA_Integer    endIdx,
                        const TA_Real inReal_0[],
                        TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -142,8 +140,6 @@ TA_RetCode TA_MACDEXT( TA_Libc      *libHandle,
    int i;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -219,14 +215,14 @@ TA_RetCode TA_MACDEXT( TA_Libc      *libHandle,
    }
 
    /* Find the MA with the largest lookback */
-   lookbackLargest = TA_MA_Lookback( optInFastPeriod_0, optInFastMAType_1, TA_MA_CLASSIC );
-   tempInteger     = TA_MA_Lookback( optInSlowPeriod_2, optInSlowMAType_3, TA_MA_CLASSIC );
+   lookbackLargest = TA_MA_Lookback( optInFastPeriod_0, optInFastMAType_1 );
+   tempInteger     = TA_MA_Lookback( optInSlowPeriod_2, optInSlowMAType_3 );
    if( tempInteger > lookbackLargest )
       lookbackLargest = tempInteger;
 
    /* Add the lookback needed for the signal line */
-   lookbackSignal  = TA_MA_Lookback( optInSignalPeriod_4, optInSignalMAType_5, TA_MA_CLASSIC ); 
-   lookbackTotal = lookbackSignal+lookbackLargest;
+   lookbackSignal = TA_MA_Lookback( optInSignalPeriod_4, optInSignalMAType_5 ); 
+   lookbackTotal  = lookbackSignal+lookbackLargest;
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -244,7 +240,7 @@ TA_RetCode TA_MACDEXT( TA_Libc      *libHandle,
 
    /* Allocate intermediate buffer for fast/slow MA. */
    tempInteger = (endIdx-startIdx)+1+lookbackSignal;
-   fastMABuffer = TA_Malloc( libHandle, tempInteger * sizeof( TA_Real ) );
+   fastMABuffer = TA_Malloc( tempInteger * sizeof( TA_Real ) );
    if( !fastMABuffer )
    {
       *outBegIdx = 0;
@@ -252,12 +248,12 @@ TA_RetCode TA_MACDEXT( TA_Libc      *libHandle,
       return TA_ALLOC_ERR;
    }
 
-   slowMABuffer = TA_Malloc( libHandle, tempInteger * sizeof( TA_Real ) );
+   slowMABuffer = TA_Malloc( tempInteger * sizeof( TA_Real ) );
    if( !slowMABuffer )
    {
       *outBegIdx = 0;
       *outNbElement = 0;
-      TA_Free( libHandle, fastMABuffer );
+      TA_Free(  fastMABuffer );
       return TA_ALLOC_ERR;
    }
 
@@ -269,30 +265,30 @@ TA_RetCode TA_MACDEXT( TA_Libc      *libHandle,
     * will start at the requested 'startIdx'.
     */
    tempInteger = startIdx-lookbackSignal;
-   retCode = TA_MA( libHandle, tempInteger, endIdx,
-                    inReal_0, optInSlowPeriod_2, optInSlowMAType_3, TA_MA_CLASSIC,
+   retCode = TA_MA( tempInteger, endIdx,
+                    inReal_0, optInSlowPeriod_2, optInSlowMAType_3,
                     &outBegIdx1, &outNbElement1, slowMABuffer );
 
    if( retCode != TA_SUCCESS )
    {
       *outBegIdx = 0;
       *outNbElement = 0;
-      TA_Free( libHandle, fastMABuffer );
-      TA_Free( libHandle, slowMABuffer );
+      TA_Free(  fastMABuffer );
+      TA_Free(  slowMABuffer );
       return retCode;
    }
 
    /* Calculate the fast MA. */
-   retCode = TA_MA( libHandle, tempInteger, endIdx,
-                    inReal_0, optInFastPeriod_0, optInFastMAType_1, TA_MA_CLASSIC,
+   retCode = TA_MA( tempInteger, endIdx,
+                    inReal_0, optInFastPeriod_0, optInFastMAType_1,
                     &outBegIdx2, &outNbElement2, fastMABuffer );
 
    if( retCode != TA_SUCCESS )
    {
       *outBegIdx = 0;
       *outNbElement = 0;
-      TA_Free( libHandle, fastMABuffer );
-      TA_Free( libHandle, slowMABuffer );
+      TA_Free(  fastMABuffer );
+      TA_Free(  slowMABuffer );
       return retCode;
    }
 
@@ -304,8 +300,8 @@ TA_RetCode TA_MACDEXT( TA_Libc      *libHandle,
    {
       *outBegIdx = 0;
       *outNbElement = 0;
-      TA_Free( libHandle, fastMABuffer );
-      TA_Free( libHandle, slowMABuffer );
+      TA_Free(  fastMABuffer );
+      TA_Free(  slowMABuffer );
       return TA_INTERNAL_ERROR(119);
    }
 
@@ -317,12 +313,12 @@ TA_RetCode TA_MACDEXT( TA_Libc      *libHandle,
    memcpy( outRealMACD_0, &fastMABuffer[lookbackSignal], ((endIdx-startIdx)+1)*sizeof(TA_Real) );
 
    /* Calculate the signal/trigger line. */
-   retCode = TA_MA( libHandle, 0, outNbElement1-1,
-                    fastMABuffer, optInSignalPeriod_4, optInSignalMAType_5, TA_MA_CLASSIC,                    
+   retCode = TA_MA( 0, outNbElement1-1,
+                    fastMABuffer, optInSignalPeriod_4, optInSignalMAType_5,
                     &outBegIdx2, &outNbElement2, outRealMACDSignal_1 );
 
-   TA_Free( libHandle, fastMABuffer );
-   TA_Free( libHandle, slowMABuffer );
+   TA_Free( fastMABuffer );
+   TA_Free( slowMABuffer );
 
    if( retCode != TA_SUCCESS )
    {

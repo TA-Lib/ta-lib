@@ -79,7 +79,6 @@
 typedef struct
 {
    unsigned int magicNb;
-   TA_Libc *libHandle;
 } TA_PMReportPriv;
 
 /* Colums are large enough to display a float value
@@ -124,12 +123,11 @@ TA_RetCode TA_PMReportAlloc( TA_PM *pm, TA_PMReport **newAllocatedReport )
       return TA_BAD_PARAM;
 
    /* Allocate the report, including the hidden part. */
-   newReport = TA_Malloc( pmPriv->libHandle, sizeof( TA_PMReport ) + sizeof( TA_PMReportPriv ) );
+   newReport = TA_Malloc( sizeof( TA_PMReport ) + sizeof( TA_PMReportPriv ) );
    if( !newReport)
       return TA_ALLOC_ERR;
    memset( newReport, 0, sizeof( TA_PMReport ) + sizeof( TA_PMReportPriv ) );
    newReportPriv = (TA_PMReportPriv *)(((char *)newReport)+sizeof(TA_PMReport));
-   newReportPriv->libHandle = pmPriv->libHandle;
    newReportPriv->magicNb   = TA_PMREPORT_MAGIC_NB;
    newReport->hiddenData    = newReportPriv;
 
@@ -163,7 +161,7 @@ TA_RetCode TA_PMReportAlloc( TA_PM *pm, TA_PMReport **newAllocatedReport )
    nbLine = (TA_PM_NB_VALUEID+7);
    sizeInByte = lineSizeInByte*nbLine;
 
-   theBuffer = TA_Malloc( pmPriv->libHandle, sizeInByte );
+   theBuffer = TA_Malloc( sizeInByte );
 
    if( !theBuffer )
    {
@@ -257,7 +255,6 @@ TA_RetCode TA_PMReportAlloc( TA_PM *pm, TA_PMReport **newAllocatedReport )
 TA_RetCode TA_PMReportFree ( TA_PMReport *reportToBeFreed )
 {
    TA_PMReportPriv  *reportPriv;
-   TA_Libc *libHandle;
 
    if( reportToBeFreed )
    {
@@ -267,11 +264,10 @@ TA_RetCode TA_PMReportFree ( TA_PMReport *reportToBeFreed )
          if( reportPriv->magicNb != TA_PMREPORT_MAGIC_NB )
             return TA_BAD_OBJECT;
 
-         libHandle = reportPriv->libHandle;
          if( reportToBeFreed->buffer )
-            TA_Free( libHandle, (void *)reportToBeFreed->buffer );
+            TA_Free(  (void *)reportToBeFreed->buffer );
 
-         TA_Free( libHandle, reportToBeFreed );
+         TA_Free(  reportToBeFreed );
       }
    }
 

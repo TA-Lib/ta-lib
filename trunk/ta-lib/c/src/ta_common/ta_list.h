@@ -53,7 +53,6 @@ typedef struct
    /* Hidden implementation. Never touch these. Never. */
    list_t d;
    lnode_t *node;
-   TA_Libc *libHandle;   
    unsigned int flags;
 } TA_List;
 
@@ -72,7 +71,7 @@ typedef struct
  * Return: An handle used to manipulate the list or NULL if
  *         there is an allocation error.
  */
-TA_List *TA_ListAlloc( TA_Libc *libHandle );
+TA_List *TA_ListAlloc( void );
 
 /* Free a list.
  *
@@ -113,19 +112,19 @@ TA_RetCode TA_ListFree( TA_List *list );
  * Return: TA_SUCCESS or TA_BAD_PARAM.
  */
 TA_RetCode TA_ListFreeAll( TA_List *list,
-                           TA_RetCode (*freeFunc)( TA_Libc *libHandle, void *toBeFreed ));
+                           TA_RetCode (*freeFunc)(  void *toBeFreed ));
 
 /* Initialize a pre-allocated list. 
  *
  * Example:
  *      TA_List myList;
- *      TA_ListInit( libHandle, &myList );
+ *      TA_ListInit(  &myList );
  *      'myList' can be used from this point.
  *
  * This function can replace the slower TA_ListAlloc if
  * the application has already a TA_List allocated.
  */
-void TA_ListInit( TA_Libc *libHandle, TA_List *list );
+void TA_ListInit( TA_List *list );
 
 /* Add a (void *) to the list.
  *
@@ -287,4 +286,3 @@ TA_RetCode TA_ListSort( TA_List *list, int compare(const void *, const void *) )
 
 
 #endif
-

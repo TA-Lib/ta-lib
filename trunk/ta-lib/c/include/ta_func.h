@@ -67,8 +67,7 @@ extern "C" {
  * 
  * 
  */
-TA_RetCode TA_MAX( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_MAX( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -92,8 +91,7 @@ int TA_MAX_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  * 
  * 
  */
-TA_RetCode TA_MIN( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_MIN( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -129,9 +127,6 @@ int TA_MIN_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  * optInMethod_3:
  *    Type of Moving Average
  * 
- * optInCompatibility_4:
- *    Make function compatible to some software
- * 
  * 
  */
 
@@ -142,20 +137,13 @@ int TA_MIN_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
 #define TA_BBANDS_DEMA 3
 #define TA_BBANDS_TEMA 4
 
-
-/* TA_BBANDS: Optional Parameter optInCompatibility_4 */
-#define TA_BBANDS_CLASSIC 0
-#define TA_BBANDS_METASTOCK 1
-
-TA_RetCode TA_BBANDS( TA_Libc      *libHandle,
-                      TA_Integer    startIdx,
+TA_RetCode TA_BBANDS( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real inReal_0[],
                       TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
                       TA_Real       optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                       TA_Real       optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
                       TA_Integer    optInMethod_3,
-                      TA_Integer    optInCompatibility_4,
                       TA_Integer   *outBegIdx,
                       TA_Integer   *outNbElement,
                       TA_Real       outRealUpperBand_0[],
@@ -165,8 +153,7 @@ TA_RetCode TA_BBANDS( TA_Libc      *libHandle,
 int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
                         TA_Real       optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                         TA_Real       optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        TA_Integer    optInMethod_3,
-                        TA_Integer    optInCompatibility_4 ); 
+                        TA_Integer    optInMethod_3 ); 
 
 /*
  * TA_DEMA - Double Exponential Moving Average
@@ -179,28 +166,18 @@ int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER
  * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
  *    Number of period
  * 
- * optInCompatibility_1:
- *    Make function compatible to some software
- * 
  * 
  */
-
-/* TA_DEMA: Optional Parameter optInCompatibility_1 */
-#define TA_DEMA_CLASSIC 0
-#define TA_DEMA_METASTOCK 1
-
-TA_RetCode TA_DEMA( TA_Libc      *libHandle,
-                    TA_Integer    startIdx,
+TA_RetCode TA_DEMA( TA_Integer    startIdx,
                     TA_Integer    endIdx,
                     const TA_Real inReal_0[],
                     TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                    TA_Integer    optInCompatibility_1,
                     TA_Integer   *outBegIdx,
                     TA_Integer   *outNbElement,
                     TA_Real       outReal_0[] );
 
-int TA_DEMA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                      TA_Integer    optInCompatibility_1 ); 
+int TA_DEMA_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
 
 /*
  * TA_EMA - Exponential Moving Average
@@ -213,28 +190,18 @@ int TA_DEMA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_M
  * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
  *    Number of period
  * 
- * optInCompatibility_1:
- *    Make function compatible to some software
- * 
  * 
  */
-
-/* TA_EMA: Optional Parameter optInCompatibility_1 */
-#define TA_EMA_CLASSIC 0
-#define TA_EMA_METASTOCK 1
-
-TA_RetCode TA_EMA( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_EMA( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                   TA_Integer    optInCompatibility_1,
                    TA_Integer   *outBegIdx,
                    TA_Integer   *outNbElement,
                    TA_Real       outReal_0[] );
 
-int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInCompatibility_1 ); 
+int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
 
 /*
  * TA_MA - All Moving Average
@@ -250,9 +217,6 @@ int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MA
  * optInMethod_1:
  *    Type of Moving Average
  * 
- * optInCompatibility_2:
- *    Make function compatible to some software
- * 
  * 
  */
 
@@ -263,25 +227,17 @@ int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MA
 #define TA_MA_DEMA 3
 #define TA_MA_TEMA 4
 
-
-/* TA_MA: Optional Parameter optInCompatibility_2 */
-#define TA_MA_CLASSIC 0
-#define TA_MA_METASTOCK 1
-
-TA_RetCode TA_MA( TA_Libc      *libHandle,
-                  TA_Integer    startIdx,
+TA_RetCode TA_MA( TA_Integer    startIdx,
                   TA_Integer    endIdx,
                   const TA_Real inReal_0[],
                   TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
                   TA_Integer    optInMethod_1,
-                  TA_Integer    optInCompatibility_2,
                   TA_Integer   *outBegIdx,
                   TA_Integer   *outNbElement,
                   TA_Real       outReal_0[] );
 
 int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                    TA_Integer    optInMethod_1,
-                    TA_Integer    optInCompatibility_2 ); 
+                    TA_Integer    optInMethod_1 ); 
 
 /*
  * TA_MIDPRICE - Midpoint Price over period
@@ -296,8 +252,7 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX
  * 
  * 
  */
-TA_RetCode TA_MIDPRICE( TA_Libc      *libHandle,
-                        TA_Integer    startIdx,
+TA_RetCode TA_MIDPRICE( TA_Integer    startIdx,
                         TA_Integer    endIdx,
                         const TA_Real inHigh_0[],
                         const TA_Real inLow_0[],
@@ -322,8 +277,7 @@ int TA_MIDPRICE_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_IN
  * 
  * 
  */
-TA_RetCode TA_MIDPOINT( TA_Libc      *libHandle,
-                        TA_Integer    startIdx,
+TA_RetCode TA_MIDPOINT( TA_Integer    startIdx,
                         TA_Integer    endIdx,
                         const TA_Real inReal_0[],
                         TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -350,8 +304,7 @@ int TA_MIDPOINT_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_IN
  * 
  * 
  */
-TA_RetCode TA_SAR( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_SAR( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inHigh_0[],
                    const TA_Real inLow_0[],
@@ -378,8 +331,7 @@ int TA_SAR_Lookback( TA_Real       optInAcceleration_0, /* From TA_REAL_MIN to T
  * 
  * 
  */
-TA_RetCode TA_SMA( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_SMA( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -401,28 +353,18 @@ int TA_SMA_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
  *    Number of period
  * 
- * optInCompatibility_1:
- *    Make function compatible to some software
- * 
  * 
  */
-
-/* TA_TEMA: Optional Parameter optInCompatibility_1 */
-#define TA_TEMA_CLASSIC 0
-#define TA_TEMA_METASTOCK 1
-
-TA_RetCode TA_TEMA( TA_Libc      *libHandle,
-                    TA_Integer    startIdx,
+TA_RetCode TA_TEMA( TA_Integer    startIdx,
                     TA_Integer    endIdx,
                     const TA_Real inReal_0[],
                     TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                    TA_Integer    optInCompatibility_1,
                     TA_Integer   *outBegIdx,
                     TA_Integer   *outNbElement,
                     TA_Real       outReal_0[] );
 
-int TA_TEMA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                      TA_Integer    optInCompatibility_1 ); 
+int TA_TEMA_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
 
 /*
  * TA_WMA - Weighted Moving Average
@@ -437,8 +379,7 @@ int TA_TEMA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_M
  * 
  * 
  */
-TA_RetCode TA_WMA( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_WMA( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -467,8 +408,7 @@ int TA_WMA_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  * 
  * 
  */
-TA_RetCode TA_ATR( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_ATR( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inHigh_0[],
                    const TA_Real inLow_0[],
@@ -488,8 +428,7 @@ int TA_ATR_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  * Output = TA_Real
  * 
  */
-TA_RetCode TA_TRANGE( TA_Libc      *libHandle,
-                      TA_Integer    startIdx,
+TA_RetCode TA_TRANGE( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real inHigh_0[],
                       const TA_Real inLow_0[],
@@ -519,8 +458,7 @@ int TA_TRANGE_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_ADX( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_ADX( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inHigh_0[],
                    const TA_Real inLow_0[],
@@ -546,8 +484,7 @@ int TA_ADX_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  * 
  * 
  */
-TA_RetCode TA_ADXR( TA_Libc      *libHandle,
-                    TA_Integer    startIdx,
+TA_RetCode TA_ADXR( TA_Integer    startIdx,
                     TA_Integer    endIdx,
                     const TA_Real inHigh_0[],
                     const TA_Real inLow_0[],
@@ -577,9 +514,6 @@ int TA_ADXR_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGE
  * optInMethod_2:
  *    Type of Moving Average
  * 
- * optInCompatibility_3:
- *    Make function compatible to some software
- * 
  * 
  */
 
@@ -590,27 +524,19 @@ int TA_ADXR_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGE
 #define TA_APO_DEMA 3
 #define TA_APO_TEMA 4
 
-
-/* TA_APO: Optional Parameter optInCompatibility_3 */
-#define TA_APO_CLASSIC 0
-#define TA_APO_METASTOCK 1
-
-TA_RetCode TA_APO( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_APO( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
                    TA_Integer    optInSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
                    TA_Integer    optInMethod_2,
-                   TA_Integer    optInCompatibility_3,
                    TA_Integer   *outBegIdx,
                    TA_Integer   *outNbElement,
                    TA_Real       outReal_0[] );
 
 int TA_APO_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
                      TA_Integer    optInSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInMethod_2,
-                     TA_Integer    optInCompatibility_3 ); 
+                     TA_Integer    optInMethod_2 ); 
 
 /*
  * TA_CCI - Commodity Channel Index
@@ -625,8 +551,7 @@ int TA_APO_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MA
  * 
  * 
  */
-TA_RetCode TA_CCI( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_CCI( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inHigh_0[],
                    const TA_Real inLow_0[],
@@ -652,8 +577,7 @@ int TA_CCI_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 5 to TA_INTEGER
  * 
  * 
  */
-TA_RetCode TA_DX( TA_Libc      *libHandle,
-                  TA_Integer    startIdx,
+TA_RetCode TA_DX( TA_Integer    startIdx,
                   TA_Integer    endIdx,
                   const TA_Real inHigh_0[],
                   const TA_Real inLow_0[],
@@ -683,24 +607,14 @@ int TA_DX_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_
  * optInSignalPeriod_2:(From 1 to TA_INTEGER_MAX)
  *    Smoothing for the signal line (nb of period)
  * 
- * optInCompatibility_3:
- *    Make function compatible to some software
- * 
  * 
  */
-
-/* TA_MACD: Optional Parameter optInCompatibility_3 */
-#define TA_MACD_CLASSIC 0
-#define TA_MACD_METASTOCK 1
-
-TA_RetCode TA_MACD( TA_Libc      *libHandle,
-                    TA_Integer    startIdx,
+TA_RetCode TA_MACD( TA_Integer    startIdx,
                     TA_Integer    endIdx,
                     const TA_Real inReal_0[],
                     TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
                     TA_Integer    optInSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
                     TA_Integer    optInSignalPeriod_2, /* From 1 to TA_INTEGER_MAX */
-                    TA_Integer    optInCompatibility_3,
                     TA_Integer   *outBegIdx,
                     TA_Integer   *outNbElement,
                     TA_Real       outRealMACD_0[],
@@ -709,8 +623,8 @@ TA_RetCode TA_MACD( TA_Libc      *libHandle,
 
 int TA_MACD_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
                       TA_Integer    optInSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
-                      TA_Integer    optInSignalPeriod_2, /* From 1 to TA_INTEGER_MAX */
-                      TA_Integer    optInCompatibility_3 ); 
+                      TA_Integer    optInSignalPeriod_2 );  /* From 1 to TA_INTEGER_MAX */
+
 
 /*
  * TA_MACDEXT - MACD with controllable MA type
@@ -764,8 +678,7 @@ int TA_MACD_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_M
 #define TA_MACDEXT_DEMA 3
 #define TA_MACDEXT_TEMA 4
 
-TA_RetCode TA_MACDEXT( TA_Libc      *libHandle,
-                       TA_Integer    startIdx,
+TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
                        TA_Integer    endIdx,
                        const TA_Real inReal_0[],
                        TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -798,30 +711,20 @@ int TA_MACDEXT_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGE
  * optInSignalPeriod_0:(From 1 to TA_INTEGER_MAX)
  *    Smoothing for the signal line (nb of period)
  * 
- * optInCompatibility_1:
- *    Make function compatible to some software
- * 
  * 
  */
-
-/* TA_MACDFIX: Optional Parameter optInCompatibility_1 */
-#define TA_MACDFIX_CLASSIC 0
-#define TA_MACDFIX_METASTOCK 1
-
-TA_RetCode TA_MACDFIX( TA_Libc      *libHandle,
-                       TA_Integer    startIdx,
+TA_RetCode TA_MACDFIX( TA_Integer    startIdx,
                        TA_Integer    endIdx,
                        const TA_Real inReal_0[],
                        TA_Integer    optInSignalPeriod_0, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInCompatibility_1,
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
                        TA_Real       outRealMACD_0[],
                        TA_Real       outRealMACDSignal_1[],
                        TA_Real       outRealMACDHist_2[] );
 
-int TA_MACDFIX_Lookback( TA_Integer    optInSignalPeriod_0, /* From 1 to TA_INTEGER_MAX */
-                         TA_Integer    optInCompatibility_1 ); 
+int TA_MACDFIX_Lookback( TA_Integer    optInSignalPeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
 
 /*
  * TA_MINUS_DI - Minus Directional Indicator
@@ -836,8 +739,7 @@ int TA_MACDFIX_Lookback( TA_Integer    optInSignalPeriod_0, /* From 1 to TA_INTE
  * 
  * 
  */
-TA_RetCode TA_MINUS_DI( TA_Libc      *libHandle,
-                        TA_Integer    startIdx,
+TA_RetCode TA_MINUS_DI( TA_Integer    startIdx,
                         TA_Integer    endIdx,
                         const TA_Real inHigh_0[],
                         const TA_Real inLow_0[],
@@ -863,8 +765,7 @@ int TA_MINUS_DI_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_IN
  * 
  * 
  */
-TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
-                        TA_Integer    startIdx,
+TA_RetCode TA_MINUS_DM( TA_Integer    startIdx,
                         TA_Integer    endIdx,
                         const TA_Real inHigh_0[],
                         const TA_Real inLow_0[],
@@ -889,8 +790,7 @@ int TA_MINUS_DM_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_IN
  * 
  * 
  */
-TA_RetCode TA_MOM( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_MOM( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -918,9 +818,6 @@ int TA_MOM_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  * optInMethod_2:
  *    Type of Moving Average
  * 
- * optInCompatibility_3:
- *    Make function compatible to some software
- * 
  * 
  */
 
@@ -931,27 +828,19 @@ int TA_MOM_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
 #define TA_PPO_DEMA 3
 #define TA_PPO_TEMA 4
 
-
-/* TA_PPO: Optional Parameter optInCompatibility_3 */
-#define TA_PPO_CLASSIC 0
-#define TA_PPO_METASTOCK 1
-
-TA_RetCode TA_PPO( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_PPO( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
                    TA_Integer    optInSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
                    TA_Integer    optInMethod_2,
-                   TA_Integer    optInCompatibility_3,
                    TA_Integer   *outBegIdx,
                    TA_Integer   *outNbElement,
                    TA_Real       outReal_0[] );
 
 int TA_PPO_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
                      TA_Integer    optInSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInMethod_2,
-                     TA_Integer    optInCompatibility_3 ); 
+                     TA_Integer    optInMethod_2 ); 
 
 /*
  * TA_PLUS_DI - Plus Directional Indicator
@@ -966,8 +855,7 @@ int TA_PPO_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MA
  * 
  * 
  */
-TA_RetCode TA_PLUS_DI( TA_Libc      *libHandle,
-                       TA_Integer    startIdx,
+TA_RetCode TA_PLUS_DI( TA_Integer    startIdx,
                        TA_Integer    endIdx,
                        const TA_Real inHigh_0[],
                        const TA_Real inLow_0[],
@@ -993,8 +881,7 @@ int TA_PLUS_DI_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INT
  * 
  * 
  */
-TA_RetCode TA_PLUS_DM( TA_Libc      *libHandle,
-                       TA_Integer    startIdx,
+TA_RetCode TA_PLUS_DM( TA_Integer    startIdx,
                        TA_Integer    endIdx,
                        const TA_Real inHigh_0[],
                        const TA_Real inLow_0[],
@@ -1019,8 +906,7 @@ int TA_PLUS_DM_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INT
  * 
  * 
  */
-TA_RetCode TA_ROC( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_ROC( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -1044,8 +930,7 @@ int TA_ROC_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  * 
  * 
  */
-TA_RetCode TA_ROCP( TA_Libc      *libHandle,
-                    TA_Integer    startIdx,
+TA_RetCode TA_ROCP( TA_Integer    startIdx,
                     TA_Integer    endIdx,
                     const TA_Real inReal_0[],
                     TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -1069,8 +954,7 @@ int TA_ROCP_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGE
  * 
  * 
  */
-TA_RetCode TA_ROCR( TA_Libc      *libHandle,
-                    TA_Integer    startIdx,
+TA_RetCode TA_ROCR( TA_Integer    startIdx,
                     TA_Integer    endIdx,
                     const TA_Real inReal_0[],
                     TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -1094,8 +978,7 @@ int TA_ROCR_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGE
  * 
  * 
  */
-TA_RetCode TA_ROCR100( TA_Libc      *libHandle,
-                       TA_Integer    startIdx,
+TA_RetCode TA_ROCR100( TA_Integer    startIdx,
                        TA_Integer    endIdx,
                        const TA_Real inReal_0[],
                        TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -1117,28 +1000,18 @@ int TA_ROCR100_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INT
  * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
  *    Number of period
  * 
- * optInCompatibility_1:
- *    Make function compatible to some software
- * 
  * 
  */
-
-/* TA_RSI: Optional Parameter optInCompatibility_1 */
-#define TA_RSI_CLASSIC 0
-#define TA_RSI_METASTOCK 1
-
-TA_RetCode TA_RSI( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_RSI( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                   TA_Integer    optInCompatibility_1,
                    TA_Integer   *outBegIdx,
                    TA_Integer   *outNbElement,
                    TA_Real       outReal_0[] );
 
-int TA_RSI_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInCompatibility_1 ); 
+int TA_RSI_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
 
 /*
  * TA_STOCH - Stochastic
@@ -1181,8 +1054,7 @@ int TA_RSI_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MA
 #define TA_STOCH_DEMA 3
 #define TA_STOCH_TEMA 4
 
-TA_RetCode TA_STOCH( TA_Libc      *libHandle,
-                     TA_Integer    startIdx,
+TA_RetCode TA_STOCH( TA_Integer    startIdx,
                      TA_Integer    endIdx,
                      const TA_Real inHigh_0[],
                      const TA_Real inLow_0[],
@@ -1230,8 +1102,7 @@ int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGE
 #define TA_STOCHF_DEMA 3
 #define TA_STOCHF_TEMA 4
 
-TA_RetCode TA_STOCHF( TA_Libc      *libHandle,
-                      TA_Integer    startIdx,
+TA_RetCode TA_STOCHF( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real inHigh_0[],
                       const TA_Real inLow_0[],
@@ -1261,8 +1132,7 @@ int TA_STOCHF_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEG
  * 
  * 
  */
-TA_RetCode TA_TRIX( TA_Libc      *libHandle,
-                    TA_Integer    startIdx,
+TA_RetCode TA_TRIX( TA_Integer    startIdx,
                     TA_Integer    endIdx,
                     const TA_Real inReal_0[],
                     TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -1286,8 +1156,7 @@ int TA_TRIX_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGE
  * 
  * 
  */
-TA_RetCode TA_WILLR( TA_Libc      *libHandle,
-                     TA_Integer    startIdx,
+TA_RetCode TA_WILLR( TA_Integer    startIdx,
                      TA_Integer    endIdx,
                      const TA_Real inHigh_0[],
                      const TA_Real inLow_0[],
@@ -1312,8 +1181,7 @@ int TA_WILLR_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEG
  * Output = TA_Integer
  * 
  */
-TA_RetCode TA_OBV( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_OBV( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    const TA_Integer inVolume_1[],
@@ -1345,8 +1213,7 @@ int TA_OBV_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_STDDEV( TA_Libc      *libHandle,
-                      TA_Integer    startIdx,
+TA_RetCode TA_STDDEV( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real inReal_0[],
                       TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -1375,8 +1242,7 @@ int TA_STDDEV_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER
  * 
  * 
  */
-TA_RetCode TA_VAR( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_VAR( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
@@ -1401,8 +1267,7 @@ int TA_VAR_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MA
  * Output = TA_Real
  * 
  */
-TA_RetCode TA_AVGPRICE( TA_Libc      *libHandle,
-                        TA_Integer    startIdx,
+TA_RetCode TA_AVGPRICE( TA_Integer    startIdx,
                         TA_Integer    endIdx,
                         const TA_Real inOpen_0[],
                         const TA_Real inHigh_0[],
@@ -1422,8 +1287,7 @@ int TA_AVGPRICE_Lookback( void );
  * Output = TA_Real
  * 
  */
-TA_RetCode TA_MEDPRICE( TA_Libc      *libHandle,
-                        TA_Integer    startIdx,
+TA_RetCode TA_MEDPRICE( TA_Integer    startIdx,
                         TA_Integer    endIdx,
                         const TA_Real inHigh_0[],
                         const TA_Real inLow_0[],
@@ -1441,8 +1305,7 @@ int TA_MEDPRICE_Lookback( void );
  * Output = TA_Real
  * 
  */
-TA_RetCode TA_TYPPRICE( TA_Libc      *libHandle,
-                        TA_Integer    startIdx,
+TA_RetCode TA_TYPPRICE( TA_Integer    startIdx,
                         TA_Integer    endIdx,
                         const TA_Real inHigh_0[],
                         const TA_Real inLow_0[],
@@ -1461,8 +1324,7 @@ int TA_TYPPRICE_Lookback( void );
  * Output = TA_Real
  * 
  */
-TA_RetCode TA_WCLPRICE( TA_Libc      *libHandle,
-                        TA_Integer    startIdx,
+TA_RetCode TA_WCLPRICE( TA_Integer    startIdx,
                         TA_Integer    endIdx,
                         const TA_Real inHigh_0[],
                         const TA_Real inLow_0[],
@@ -1483,10 +1345,10 @@ int TA_WCLPRICE_Lookback( void );
  * (See documentation for more info)
  *
  * Examples:
- *      TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_EMA, 30 );
+ *      TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 30 );
  *           Always strip off 30 price bar for the TA_EMA function.
  *
- *      TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ALL, 30 );
+ *      TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 30 );
  *           Always strip off 30 price bar from ALL functions
  *           having an unstable period.
  *
@@ -1505,13 +1367,20 @@ typedef enum {
                TA_FUNC_UNST_ALL,
                TA_FUNC_UNST_NONE=-1 } TA_FuncUnstId;
 
-TA_RetCode TA_SetUnstablePeriod( TA_Libc      *libHandle,
-                                 TA_FuncUnstId id,
+TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
                                  unsigned int  unstablePeriod );
 
-unsigned int TA_GetUnstablePeriod( TA_Libc      *libHandle,
-                                   TA_FuncUnstId id);
+unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );
 
+
+typedef enum
+{
+  TA_COMPATIBILITY_DEFAULT,
+  TA_COMPATIBILITY_METASTOCK,
+} TA_Compatibility;
+
+TA_RetCode TA_SetCompatibility( TA_Compatibility value );
+TA_Compatibility TA_GetCompatibility( void );
 
 #ifdef __cplusplus
 }

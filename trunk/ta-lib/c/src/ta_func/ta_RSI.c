@@ -62,15 +62,15 @@
    #include "ta_utility.h"
 #endif
 
-int TA_RSI_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInCompatibility_1 ) 
+int TA_RSI_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
    int retValue;
 
-   retValue = optInTimePeriod_0 + TA_UnstablePeriodTable[TA_FUNC_UNST_RSI];
-   if( optInCompatibility_1 == TA_RSI_METASTOCK )
+   retValue = optInTimePeriod_0 + TA_Globals.unstablePeriod[TA_FUNC_UNST_RSI];
+   if( TA_Globals.compatibility == TA_COMPATIBILITY_METASTOCK )
       retValue--;
 
    return retValue;
@@ -88,18 +88,13 @@ int TA_RSI_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MA
  * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
  *    Number of period
  * 
- * optInCompatibility_1:
- *    Make function compatible to some software
- * 
  * 
  */
 
-TA_RetCode TA_RSI( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
+TA_RetCode TA_RSI( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                   TA_Integer    optInCompatibility_1,
                    TA_Integer   *outBegIdx,
                    TA_Integer   *outNbElement,
                    TA_Real       outReal_0[] )
@@ -113,8 +108,6 @@ TA_RetCode TA_RSI( TA_Libc      *libHandle,
    TA_Real tempValue1, tempValue2;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -130,11 +123,6 @@ TA_RetCode TA_RSI( TA_Libc      *libHandle,
    if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 14;
    else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
-      return TA_BAD_PARAM;
-
-   if( optInCompatibility_1 == TA_INTEGER_DEFAULT )
-      optInCompatibility_1 = 0;
-   else if( (optInCompatibility_1 < 0) || (optInCompatibility_1 > 1) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -160,7 +148,7 @@ TA_RetCode TA_RSI( TA_Libc      *libHandle,
    *outNbElement = 0;
    
    /* Adjust startIdx to account for the lookback period. */
-   lookbackTotal = TA_RSI_Lookback( optInTimePeriod_0, optInCompatibility_1 );
+   lookbackTotal = TA_RSI_Lookback( optInTimePeriod_0 );
 
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
@@ -190,7 +178,7 @@ TA_RetCode TA_RSI( TA_Libc      *libHandle,
    today = startIdx-lookbackTotal;
    prevValue = inReal_0[today];
 
-   unstablePeriod = TA_UnstablePeriodTable[TA_FUNC_UNST_RSI];
+   unstablePeriod = TA_Globals.unstablePeriod[TA_FUNC_UNST_RSI];
 
    /* If there is no unstable period,
     * calculate the 'additional' initial
@@ -200,7 +188,8 @@ TA_RetCode TA_RSI( TA_Libc      *libHandle,
     * no need to calculate since this
     * first value will be surely skip.
     */
-   if( (unstablePeriod == 0) && (optInCompatibility_1 == TA_RSI_METASTOCK) )
+   if( (unstablePeriod == 0) && 
+       (TA_Globals.compatibility == TA_COMPATIBILITY_METASTOCK))
    {
       /* Preserve prevValue because it may get 
        * overwritten by the output.

@@ -85,7 +85,7 @@
  *           or
  *        TA_WebFetch( "http://www.yahoo.com/mt", myFile );
  */
-TA_RetCode TA_WebFetch( TA_Libc *libHandle, const char *url, FILE *out )
+TA_RetCode TA_WebFetch( const char *url, FILE *out )
 {
    TA_RetCode retCode;
    TA_WebPage *webPage;
@@ -118,7 +118,7 @@ TA_RetCode TA_WebFetch( TA_Libc *libHandle, const char *url, FILE *out )
       else
       {
          webSiteLength = webSitePage - stringStart - 1;
-         allocString = (char *)TA_Malloc( libHandle, webSiteLength+1 );
+         allocString = (char *)TA_Malloc( webSiteLength+1 );
          if( !allocString )
             return TA_ALLOC_ERR;
          strncpy( allocString, stringStart, webSiteLength );
@@ -127,7 +127,7 @@ TA_RetCode TA_WebFetch( TA_Libc *libHandle, const char *url, FILE *out )
       }
    }
 
-   retCode = TA_WebPageAlloc( libHandle,
+   retCode = TA_WebPageAlloc(
                               stringStart,
                               webSitePage,
                               NULL, NULL,
@@ -135,7 +135,7 @@ TA_RetCode TA_WebFetch( TA_Libc *libHandle, const char *url, FILE *out )
                               2 );
 
    if( allocString )
-      TA_Free( libHandle, allocString );
+      TA_Free(  allocString );
 
    if( retCode == TA_SUCCESS )
    {

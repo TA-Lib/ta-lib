@@ -90,28 +90,25 @@ typedef struct
    TA_Sema    sema;
    #endif
    TA_String *cache[NB_CACHE_ENTRY];
-   TA_Libc   *libHandle;
 } TA_StringCachePriv;
 
 typedef enum { NO_CASE, UPPER_CASE } TA_CharCase;
 
 /**** Local functions declarations.    ****/
 static unsigned int calcHash( const char *string, TA_CharCase caseType );
-static void stringFreeInternal( TA_Libc *libHandle, TA_String *string );
+static void stringFreeInternal( TA_String *string );
 TA_String *stringAllocNInternal( TA_StringCache *stringCache,
                                  const char *string,
                                  unsigned int maxNbChar,
                                  TA_CharCase caseType );
 
-static TA_String *stringDupInternal( TA_Libc *libHandle, TA_String *string );
+static TA_String *stringDupInternal( TA_String *string );
 
-static TA_String *stringAllocInternal( TA_Libc *libHandle,
-                                       const char *string,
+static TA_String *stringAllocInternal( const char *string,
                                        unsigned int newStringLength,
                                        TA_CharCase caseType );
 
-static TA_String *stringValueAllocInternal( TA_Libc *libHandle,
-                                            const char *string,
+static TA_String *stringValueAllocInternal( const char *string,
                                             unsigned int value );
 
 /**** Local variables definitions.     ****/
@@ -121,36 +118,30 @@ TA_FILE_INFO;
 
 
 /* Initialize the cache mechanism. */
-TA_RetCode TA_StringCacheAlloc( TA_Libc *libHandle,
-                                TA_StringCache **newStringCache )
+TA_RetCode TA_StringCacheAlloc( TA_StringCache **newStringCache )
 {
    TA_StringCachePriv *stringCachePriv;
    #if !defined( TA_SINGLE_THREAD )
    TA_RetCode retCode;
    #endif
 
-   if( !libHandle )
-      return TA_BAD_PARAM;
-
    if( !newStringCache )
       return TA_BAD_PARAM;
 
    *newStringCache = NULL;
 
-   stringCachePriv = (TA_StringCachePriv *)TA_Malloc( libHandle, sizeof( TA_StringCachePriv ) );
+   stringCachePriv = (TA_StringCachePriv *)TA_Malloc( sizeof( TA_StringCachePriv ) );
 
    if( !stringCachePriv )
       return TA_ALLOC_ERR;
 
    memset( stringCachePriv, 0, sizeof( TA_StringCachePriv ) );
 
-   stringCachePriv->libHandle = libHandle;
-
    #if !defined( TA_SINGLE_THREAD )
    retCode = TA_SemaInit( &stringCachePriv->sema, 1 );
    if( retCode != TA_SUCCESS )
    {
-      TA_Free( libHandle, stringCachePriv );
+      TA_Free(  stringCachePriv );
       return retCode;
    }
    #endif
@@ -163,7 +154,6 @@ TA_RetCode TA_StringCacheAlloc( TA_Libc *libHandle,
 
 TA_RetCode TA_StringCacheFree( TA_StringCache *stringCacheToFree )
 {
-   TA_Libc *libHandle;
    TA_StringCachePriv *stringCachePriv;
    unsigned int i;
 
@@ -171,9 +161,6 @@ TA_RetCode TA_StringCacheFree( TA_StringCache *stringCacheToFree )
       return TA_BAD_PARAM;
 
    stringCachePriv = (TA_StringCachePriv *)stringCacheToFree;
-   libHandle = stringCachePriv->libHandle;
-   if( !libHandle )
-      return TA_BAD_PARAM;
 
    for( i=0; i < NB_CACHE_ENTRY; i++ )
    {
@@ -186,7 +173,7 @@ TA_RetCode TA_StringCacheFree( TA_StringCache *stringCacheToFree )
       TA_SemaDestroy( &stringCachePriv->sema );
    #endif
 
-   TA_Free( libHandle, stringCachePriv );
+   TA_Free(  stringCachePriv );
 
    return TA_SUCCESS;
 }
@@ -217,7 +204,6 @@ TA_String *TA_StringValueAlloc( TA_StringCache *stringCache,
                                 const char *string,
                                 unsigned int value )
 {
-   TA_Libc *libHandle;
    TA_StringCachePriv *stringCachePriv;
    TA_String *retString;
    #if !defined( TA_SINGLE_THREAD )
@@ -228,7 +214,6 @@ TA_String *TA_StringValueAlloc( TA_StringCache *stringCache,
       return NULL;
 
    stringCachePriv = (TA_StringCachePriv *)stringCache;
-   libHandle = stringCachePriv->libHandle;
 
    #if !defined( TA_SINGLE_THREAD )
       /* Get the semaphore for this cache. */
@@ -238,12 +223,11 @@ TA_String *TA_StringValueAlloc( TA_StringCache *stringCache,
          return NULL;
    #endif
 
-
    /* The "StringValue" strings are not stored in the cache.
     * (Because they are known of not being copied often in the context
     *  of the TA-LIB).
     */
-   retString = stringValueAllocInternal( libHandle, string, value );
+   retString = stringValueAllocInternal( string, value );
 
    #if !defined( TA_SINGLE_THREAD )
       TA_SemaPost( &stringCachePriv->sema );
@@ -263,7 +247,6 @@ TA_String *TA_StringAllocTrim( TA_StringCache *stringCache,
    const char *ptrCharTmp2;
    unsigned int trimmedSize;
    unsigned int nonTrimmedSize;
-   TA_Libc *libHandle;
    TA_StringCachePriv *stringCachePriv;
 
    if( stringCache == NULL )
@@ -271,9 +254,7 @@ TA_String *TA_StringAllocTrim( TA_StringCache *stringCache,
 
    stringCachePriv = (TA_StringCachePriv *)stringCache;
 
-   libHandle = stringCachePriv->libHandle;
-
-   if( !libHandle || !string )
+   if( !string )
       return NULL;
 
    /* Evaluate the size and see if any trimming is needed. */
@@ -292,7 +273,7 @@ TA_String *TA_StringAllocTrim( TA_StringCache *stringCache,
 
    trimmedSize = (trimmedSize + 1)*sizeof( unsigned char );
 
-   str = (char *)TA_Malloc( libHandle, trimmedSize );
+   str = (char *)TA_Malloc( trimmedSize );
 
    if( str != NULL )
    {
@@ -326,7 +307,6 @@ void TA_StringFree( TA_StringCache *stringCache,
    #if !defined( TA_SINGLE_THREAD )
    TA_RetCode retCode;
    #endif
-   TA_Libc *libHandle;
    TA_StringCachePriv *stringCachePriv;
 
    if( stringCache == NULL )
@@ -334,8 +314,7 @@ void TA_StringFree( TA_StringCache *stringCache,
 
    stringCachePriv = (TA_StringCachePriv *)stringCache;
 
-   libHandle = stringCachePriv->libHandle;
-   if( !libHandle || !string )
+   if( !string )
       return;
 
    #if !defined( TA_SINGLE_THREAD )
@@ -345,7 +324,7 @@ void TA_StringFree( TA_StringCache *stringCache,
          return;
    #endif
 
-   stringFreeInternal( libHandle, string );
+   stringFreeInternal( string );
 
    #if !defined( TA_SINGLE_THREAD )
       TA_SemaPost( &stringCachePriv->sema );      
@@ -356,7 +335,6 @@ void TA_StringFree( TA_StringCache *stringCache,
 TA_String *TA_StringDup( TA_StringCache *stringCache, TA_String *string )
 {
    TA_String *str;
-   TA_Libc *libHandle;
 
    #if !defined( TA_SINGLE_THREAD )
    TA_RetCode retCode;
@@ -369,9 +347,7 @@ TA_String *TA_StringDup( TA_StringCache *stringCache, TA_String *string )
 
    stringCachePriv = (TA_StringCachePriv *)stringCache;
 
-   libHandle = stringCachePriv->libHandle;
-
-   if( !libHandle || !string )
+   if( !string )
       return NULL;
 
    #if !defined( TA_SINGLE_THREAD )
@@ -381,7 +357,7 @@ TA_String *TA_StringDup( TA_StringCache *stringCache, TA_String *string )
          return NULL;
    #endif
 
-   str = stringDupInternal( libHandle, string );
+   str = stringDupInternal( string );
 
    #if !defined( TA_SINGLE_THREAD )
       TA_SemaPost( &stringCachePriv->sema );
@@ -415,18 +391,18 @@ static unsigned int calcHash( const char *string, TA_CharCase caseType )
    return retValue%NB_CACHE_ENTRY;
 }
 
-static void stringFreeInternal( TA_Libc *libHandle, TA_String *string )
+static void stringFreeInternal( TA_String *string )
 {
    char *str = (char *)string;
 
-   if( !string || !libHandle )
+   if( !string )
       return;
 
    if( str[0] == 1 )
    {
       /* This was the last reference, delete the complete string. */
       str[0] = 0; /* To trap memory allocation problem... */
-      TA_Free( libHandle, str );
+      TA_Free(  str );
    }
    else if( str[0] == 0 )
       return; /* Already freed!? Just ignore. */
@@ -437,11 +413,11 @@ static void stringFreeInternal( TA_Libc *libHandle, TA_String *string )
    }
 }
 
-static TA_String *stringDupInternal( TA_Libc *libHandle, TA_String *string )
+static TA_String *stringDupInternal( TA_String *string )
 {
    char *str = (char *)string;
 
-   if( !libHandle || !string || (str[0] == 0) )
+   if( !string || (str[0] == 0) )
       return NULL;
 
    /* We have to make a true copy when we have reach the
@@ -450,7 +426,7 @@ static TA_String *stringDupInternal( TA_Libc *libHandle, TA_String *string )
     * the difference...
     */
    if( ((unsigned char)str[0]) == 0xFF )
-      return stringAllocInternal( libHandle, &str[1], strlen(&str[1]), NO_CASE );
+      return stringAllocInternal( &str[1], strlen(&str[1]), NO_CASE );
 
    /* Increment the number of reference. */
    str[0]++;
@@ -458,8 +434,7 @@ static TA_String *stringDupInternal( TA_Libc *libHandle, TA_String *string )
    return string;
 }
 
-static TA_String *stringAllocInternal( TA_Libc *libHandle,
-                                       const char *string,
+static TA_String *stringAllocInternal( const char *string,
                                        unsigned int newStringLength,
                                        TA_CharCase caseType )
 {
@@ -471,7 +446,7 @@ static TA_String *stringAllocInternal( TA_Libc *libHandle,
     */
    size = ( newStringLength + 2 ) * sizeof( unsigned char );
 
-   str = (char *)TA_Malloc( libHandle, size );
+   str = (char *)TA_Malloc( size );
 
    if( str != NULL )
    {
@@ -493,15 +468,14 @@ static TA_String *stringAllocInternal( TA_Libc *libHandle,
    return (TA_String *)str;
 }
 
-static TA_String *stringValueAllocInternal( TA_Libc *libHandle,
-                                            const char *string,
+static TA_String *stringValueAllocInternal( const char *string,
                                             unsigned int value )
 {
    unsigned int size;
    char *str;
 
    size = ( strlen(string) + 2 + 8 );
-   str = (char *)TA_Malloc( libHandle, size );
+   str = (char *)TA_Malloc( size );
 
    if( str != NULL )
    {
@@ -522,7 +496,6 @@ TA_String *stringAllocNInternal( TA_StringCache *stringCache,
    TA_String *tmp;
    unsigned int hashIndex;
    char *hashEntry;
-   TA_Libc *libHandle;
    TA_StringCachePriv *stringCachePriv;
    unsigned int newStringLength;
 
@@ -534,13 +507,12 @@ TA_String *stringAllocNInternal( TA_StringCache *stringCache,
       return NULL;
 
    stringCachePriv = (TA_StringCachePriv *)stringCache;
-   libHandle = stringCachePriv->libHandle;
 
-   if( (libHandle == NULL) || (string == NULL) )
+   if( !string )
       return NULL;
 
    hashIndex = calcHash( string, caseType );
-   TA_ASSERT_RET( libHandle, hashIndex < NB_CACHE_ENTRY, (TA_String *)NULL );
+   TA_ASSERT_RET( hashIndex < NB_CACHE_ENTRY, (TA_String *)NULL );
 
    /* Evaluate the final length of the new string. */
    newStringLength = strlen( string );
@@ -566,7 +538,7 @@ TA_String *stringAllocNInternal( TA_StringCache *stringCache,
       if( (hashEntry[newStringLength+1] == '\0') && 
           (!strncmp( string, &hashEntry[1], newStringLength)) )
       {
-         tmp = stringDupInternal( libHandle, (TA_String *)hashEntry );
+         tmp = stringDupInternal( (TA_String *)hashEntry );
          #if !defined( TA_SINGLE_THREAD )
             TA_SemaPost( &stringCachePriv->sema );         
          #endif
@@ -574,7 +546,7 @@ TA_String *stringAllocNInternal( TA_StringCache *stringCache,
       }
    }
 
-   tmp = stringAllocInternal( libHandle, string, newStringLength, caseType );
+   tmp = stringAllocInternal( string, newStringLength, caseType );
 
    if( tmp != NULL )
    {
@@ -582,10 +554,10 @@ TA_String *stringAllocNInternal( TA_StringCache *stringCache,
 
       /* Delete previous entry in the same position in the cache. */
       if( hashEntry )
-         stringFreeInternal( libHandle, (TA_String *)hashEntry );
+         stringFreeInternal( (TA_String *)hashEntry );
 
       /* Keep track of this latest allocation. */
-      stringCachePriv->cache[hashIndex] = stringDupInternal( libHandle, tmp );
+      stringCachePriv->cache[hashIndex] = stringDupInternal( tmp );
    }
 
    #if !defined( TA_SINGLE_THREAD )

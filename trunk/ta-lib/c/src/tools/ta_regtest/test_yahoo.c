@@ -77,7 +77,7 @@
 /* None */
 
 /**** Local variables definitions.     ****/
-static ErrorNumber test_index( TA_Libc *libHandle, TA_UDBase *udb );
+static ErrorNumber test_index( TA_UDBase *udb );
 
 static ErrorNumber checkRangeSame( TA_UDBase          *udb,
                                    const TA_History    *historyRef,
@@ -91,15 +91,14 @@ ErrorNumber test_yahoo( void )
 {
    ErrorNumber retValue;
    TA_UDBase *udb;
-   TA_Libc   *libHandle;
 
    printf( "Testing Yahoo! data source\n" );
 
-   retValue = allocLib( &libHandle, &udb );
+   retValue = allocLib( &udb );
    if( retValue != TA_TEST_PASS )
       return retValue;    
 
-   retValue = test_index( libHandle, udb );
+   retValue = test_index( udb );
    if( retValue != TA_TEST_PASS )
    {
       printf( "Note: Yahoo! data source tests requires \n" );
@@ -109,7 +108,7 @@ ErrorNumber test_yahoo( void )
       return retValue;
    }
 
-   retValue = freeLib( libHandle, udb );
+   retValue = freeLib( udb );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -118,14 +117,12 @@ ErrorNumber test_yahoo( void )
 
 
 /**** Local functions definitions.     ****/
-static ErrorNumber test_index( TA_Libc *libHandle, TA_UDBase *udb )
+static ErrorNumber test_index( TA_UDBase *udb )
 {
    TA_RetCode retCode;
    TA_AddDataSourceParam param;
    TA_History *history;
    ErrorNumber errNumber;
-
-   (void)libHandle;
 
    /* Add the Yaho! data source. */
    memset( &param, 0, sizeof( param ) );

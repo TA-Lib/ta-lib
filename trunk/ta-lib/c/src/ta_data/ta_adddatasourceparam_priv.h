@@ -20,14 +20,10 @@ typedef struct
   TA_String *exchange;
   TA_String *type;
   TA_String *symbol;
-
-  /* The structure has been allocated for this library. */
-  TA_Libc *libHandle;
 } TA_AddDataSourceParamPriv;
 
 /* Function to alloc/free a TA_AddDataSourceParamPriv. */
-TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( TA_Libc *libHandle,
-                                                           const TA_AddDataSourceParam *param );
+TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDataSourceParam *param );
 
 TA_RetCode TA_AddDataSourceParamPrivFree( TA_AddDataSourceParamPriv *toBeFreed );
 

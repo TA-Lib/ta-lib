@@ -101,7 +101,6 @@ static const TA_OutputParameterInfo   *TA_MA_Outputs[]   =
 static const TA_OptInputParameterInfo *TA_MA_OptInputs[] =
 { &TA_DEF_UI_TimePeriod_30,
   &TA_DEF_UI_MA_Method,
-  &TA_DEF_UI_Compatibility_CL_MS,
   NULL
 };
 
@@ -133,7 +132,6 @@ static const TA_OptInputParameterInfo *TA_MACD_OptInputs[] =
 { &TA_DEF_UI_Fast_Period,
   &TA_DEF_UI_Slow_Period,
   &TA_DEF_UI_Signal_Period,
-  &TA_DEF_UI_Compatibility_CL_MS,
   NULL
 };
 
@@ -197,7 +195,6 @@ static const TA_OutputParameterInfo   *TA_MACDFIX_Outputs[]   =
 
 static const TA_OptInputParameterInfo *TA_MACDFIX_OptInputs[] =
 { &TA_DEF_UI_Signal_Period,
-  &TA_DEF_UI_Compatibility_CL_MS,
   NULL
 };
 

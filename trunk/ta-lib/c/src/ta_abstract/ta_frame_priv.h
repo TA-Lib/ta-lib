@@ -75,8 +75,6 @@ typedef enum
 
 typedef struct
 {
-   TA_Libc *libHandle;
-
    /* Magic number is used to detect internal error. */
    const unsigned int magicNumber;
 
@@ -98,8 +96,7 @@ typedef struct
    const void *function;  /* At runtime, points on a TA_FrameFunction */
 } TA_ParamHolderPriv;
 
-typedef TA_RetCode (*TA_FrameFunction)( TA_Libc    *libHandle,
-                                        TA_Integer  startIdx,
+typedef TA_RetCode (*TA_FrameFunction)( TA_Integer  startIdx,
                                         TA_Integer  endIdx,
                                         TA_Integer *outBegIdx,
                                         TA_Integer *outNbElement,

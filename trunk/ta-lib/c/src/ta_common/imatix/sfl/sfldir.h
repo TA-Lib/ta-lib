@@ -170,35 +170,35 @@ typedef struct _FILEINFO
 extern "C" {
 #endif
 
-Bool      open_dir      (TA_Libc *libHandle,DIRST *dir, const char *dir_name);
-Bool      read_dir      (TA_Libc *libHandle,DIRST *dir);
-Bool      close_dir     (TA_Libc *libHandle,DIRST *dir);
+Bool      open_dir      (DIRST *dir, const char *dir_name);
+Bool      read_dir      (DIRST *dir);
+Bool      close_dir     (DIRST *dir);
 
 #if 0
 !!! Not needed within TA-Lib
-char     *format_dir    (TA_Libc *libHandle,DIRST *dir, Bool full);
-int       fix_dir       (TA_Libc *libHandle,DIRST *dir);
+char     *format_dir    (DIRST *dir, Bool full);
+int       fix_dir       (DIRST *dir);
 #endif
 
-int       free_dir      (TA_Libc *libHandle,DIRST *dir);
+int       free_dir      (DIRST *dir);
 
-char     *resolve_path  (TA_Libc *libHandle,const char *path);
-char     *locate_path   (TA_Libc *libHandle,const char *root, const char *path);
-char     *clean_path    (TA_Libc *libHandle,const char *path);
+char     *resolve_path  (const char *path);
+char     *locate_path   (const char *root, const char *path);
+char     *clean_path    (const char *path);
 
 #if 0
 !!! Not needed within TA-Lib
 NODE     *load_dir_list (const char *dir_name, const char *sort);
 void      sort_dir_list (NODE *filelist, const char *sort);
 FILEINFO *add_dir_list  (NODE *filelist, const DIRST *dir);
-void      free_dir_list (TA_Libc *libHandle,NODE *filelist);
+void      free_dir_list (NODE *filelist);
 #endif
 
-char     *get_curdir    (TA_Libc *libHandle);
-int       set_curdir    (TA_Libc *libHandle,const char *path);
-Bool      file_matches  (TA_Libc *libHandle,const char *filename, const char *pattern);
-int       make_dir      (TA_Libc *libHandle,const char *path);
-int       remove_dir    (TA_Libc *libHandle,const char *path);
+char     *get_curdir    (void);
+int       set_curdir    (const char *path);
+Bool      file_matches  (const char *filename, const char *pattern);
+int       make_dir      (const char *path);
+int       remove_dir    (const char *path);
 
 #if 0
 !!! Not needed within TA-Lib

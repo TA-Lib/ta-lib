@@ -14,7 +14,7 @@
 
 /* NEVER CALL directly this function! Use TA_CallFunc. */
  
-TA_RetCode TA_TYPPRICE_FramePP( TA_Libc            *libHandle,
+TA_RetCode TA_TYPPRICE_FramePP(
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
@@ -24,7 +24,7 @@ TA_RetCode TA_TYPPRICE_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  out[] )
 {
    (void)optIn; /* Get rid of compiler warning. */
-   return TA_TYPPRICE( libHandle,
+   return TA_TYPPRICE(
                  startIdx,
                  endIdx,
                  in[0].p.in.data.inPrice.high, /* inHigh_0 */

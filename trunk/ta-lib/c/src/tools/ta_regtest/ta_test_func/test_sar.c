@@ -93,8 +93,7 @@ typedef struct
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 
 /**** Local variables definitions.     ****/
@@ -132,7 +131,7 @@ static TA_Test tableTest[] =
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
-ErrorNumber test_func_sar( TA_Libc *libHandle, TA_History *history )
+ErrorNumber test_func_sar( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
@@ -140,7 +139,7 @@ ErrorNumber test_func_sar( TA_Libc *libHandle, TA_History *history )
    /* Set all the unstable period to a weird value. This is to make sure
     * that no unstable period affects the SAR.
     */
-   TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ALL, 124 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 124 );
 
    for( i=0; i < NB_TEST; i++ )
    {
@@ -151,7 +150,7 @@ ErrorNumber test_func_sar( TA_Libc *libHandle, TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
 
-      retValue = do_test( libHandle, history, &tableTest[i] );
+      retValue = do_test( history, &tableTest[i] );
       if( retValue != 0 )
       {
          printf( "%s Failed Test #%d (Code=%d)\n", __FILE__,
@@ -161,7 +160,7 @@ ErrorNumber test_func_sar( TA_Libc *libHandle, TA_History *history )
    }
 
    /* Re-initialize all the unstable period to zero. */
-   TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ALL, 0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
    return TA_TEST_PASS; 
@@ -169,8 +168,7 @@ ErrorNumber test_func_sar( TA_Libc *libHandle, TA_History *history )
 
 /**** Local functions definitions.     ****/
 
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test )
 {
    TA_RetCode retCode;
@@ -203,7 +201,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    setInputBuffer( 1, lowPtr,   nbPriceBar );
 
    /* Make a simple first call. */
-   retCode = TA_SAR( libHandle,
+   retCode = TA_SAR(
                      test->startIdx,
                      test->endIdx,
                      gBuffer[0].in,
@@ -228,7 +226,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   retCode = TA_SAR( libHandle,
+   retCode = TA_SAR(
                      test->startIdx,
                      test->endIdx,
                      gBuffer[0].in,
@@ -270,7 +268,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   retCode = TA_SAR( libHandle,
+   retCode = TA_SAR(
                      test->startIdx,
                      test->endIdx,
                      gBuffer[0].in,

@@ -96,7 +96,7 @@ extern "C" {
  *   TA_RetCode retCode;
  *   int i;
  *
- *   retCode = TA_GroupTableAlloc( libHandle, &table );
+ *   retCode = TA_GroupTableAlloc( &table );
  *
  *   if( retCode == TA_SUCCESS )
  *   {
@@ -106,7 +106,7 @@ extern "C" {
  *      TA_GroupTableFree( table );
  *   }
  */
-TA_RetCode TA_GroupTableAlloc( TA_Libc *libHandle, TA_StringTable **table );
+TA_RetCode TA_GroupTableAlloc( TA_StringTable **table );
 TA_RetCode TA_GroupTableFree ( TA_StringTable *table );
 
 /* The following functions are used to obtain the name of all the
@@ -127,8 +127,7 @@ TA_RetCode TA_GroupTableFree ( TA_StringTable *table );
  *   TA_RetCode retCode;
  *   int i;
  *
- *   retCode = TA_FuncTableAlloc( libHandle,
- *                                "Market Strength",
+ *   retCode = TA_FuncTableAlloc( "Market Strength",
  *                                &table );
  *
  *   if( retCode == TA_SUCCESS )
@@ -139,9 +138,7 @@ TA_RetCode TA_GroupTableFree ( TA_StringTable *table );
  *      TA_FuncTableFree( table );
  *   }
  */
-TA_RetCode TA_FuncTableAlloc( TA_Libc *libHandle,
-                              const char *group,
-                              TA_StringTable **table );
+TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table );                              
 TA_RetCode TA_FuncTableFree ( TA_StringTable *table );
 
 /* Using the name, you can obtain an handle unique to this function.
@@ -152,8 +149,7 @@ TA_RetCode TA_FuncTableFree ( TA_StringTable *table );
  * the TA_FuncInfo structure (see below).
  */
 typedef unsigned int TA_FuncHandle;
-TA_RetCode TA_GetFuncHandle( TA_Libc *libHandle,
-                             const char *name,
+TA_RetCode TA_GetFuncHandle( const char *name,
                              const TA_FuncHandle **handle );
 
 /* Get some basic information about a function.
@@ -169,7 +165,7 @@ TA_RetCode TA_GetFuncHandle( TA_Libc *libHandle,
  *   TA_FuncHandle *handle;
  *   const TA_FuncInfo *theInfo;
  *
- *   retCode = TA_GetFuncHandle( libHandle, "MA", &handle );
+ *   retCode = TA_GetFuncHandle( "MA", &handle );
  *
  *   if( retCode == TA_SUCCESS )
  *   {
@@ -220,21 +216,19 @@ TA_RetCode TA_GetFuncInfo( const TA_FuncHandle *handle,
  * Example:
  *  This code will print the group and name of all available functions.
  *
- *  void printFuncInfo( TA_Libc *libHandle,
- *                      const TA_FuncInfo *funcInfo,
- *                      void *opaqueData )
+ *  void printFuncInfo( const TA_FuncInfo *funcInfo, void *opaqueData )
  *  {
  *     printf( "Group=%s Name=%s\n", funcInfo->group, funcInfo->name );
  *  }
  *
- *  void displayListOfTAFunctions( TA_Libc *libHandle )
+ *  void displayListOfTAFunctions( void )
  *  {
- *     TA_ForEachFunc( libHandle, printFuncInfo, NULL );
+ *     TA_ForEachFunc( printFuncInfo, NULL );
  *  }
  */
-typedef void (*TA_CallForEachFunc)(TA_Libc *libHandle, const TA_FuncInfo *funcInfo, void *opaqueData );
+typedef void (*TA_CallForEachFunc)(const TA_FuncInfo *funcInfo, void *opaqueData );
 
-TA_RetCode TA_ForEachFunc( TA_Libc *libHandle, TA_CallForEachFunc functionToCall, void *opaqueData );
+TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData );
 
 /* The next section includes the data structures and function allowing to
  * proceed with the call of a Tech. Analysis function.
@@ -512,8 +506,7 @@ TA_RetCode TA_SetOutputParameterInfoPtr( const TA_FuncHandle *handle,
  */
 typedef unsigned int TA_ParamHolder; /* Implementation hidden. */
 
-TA_RetCode TA_ParamHoldersAlloc( TA_Libc *libHandle,
-                                 const TA_FuncHandle *handle,
+TA_RetCode TA_ParamHoldersAlloc( const TA_FuncHandle *handle,
                                  TA_ParamHolder **newInputParams,
                                  TA_ParamHolder **newOptInputParams,
                                  TA_ParamHolder **newOutputParams );

@@ -182,7 +182,6 @@ int main(int argc, char *argv[] )
 static int createFile( TA_CountryId countryId, const char *fileStr, TA_YahooIdxStrategy strategy )
 {
    FILE *out;
-   TA_Libc *libHandle;
    TA_YahooIdx *idx;
    TA_RetCode retCode;
    int retValue;
@@ -202,7 +201,7 @@ static int createFile( TA_CountryId countryId, const char *fileStr, TA_YahooIdxS
 
    memset( &initializeParam, 0, sizeof( TA_InitializeParam ) );
    initializeParam.logOutput = stdout;
-   retCode = TA_Initialize( &libHandle, &initializeParam );
+   retCode = TA_Initialize( &initializeParam );
 
    if( retCode != TA_SUCCESS )
    {
@@ -211,7 +210,7 @@ static int createFile( TA_CountryId countryId, const char *fileStr, TA_YahooIdxS
       return -1;
    }
 
-   retCode = TA_YahooIdxAlloc( libHandle, countryId, &idx, strategy, NULL, NULL, NULL );
+   retCode = TA_YahooIdxAlloc( countryId, &idx, strategy, NULL, NULL, NULL );
 
    if( !idx )
    {
@@ -247,7 +246,7 @@ static int createFile( TA_CountryId countryId, const char *fileStr, TA_YahooIdxS
    }
 
    /* Clean-up and exit */
-   retCode = TA_Shutdown( libHandle );
+   retCode = TA_Shutdown();
    if( retCode != TA_SUCCESS )
    {
       printf( "Library shutdown failed! [%d]\n", retCode );
@@ -272,7 +271,6 @@ static int createFile( TA_CountryId countryId, const char *fileStr, TA_YahooIdxS
 static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr )
 {
    FILE *in;
-   TA_Libc *libHandle;
    TA_RetCode retCode;
    TA_Stream *stream;
    TA_YahooIdx *idx = NULL;
@@ -290,7 +288,7 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr )
 
    memset( &initializeParam, 0, sizeof( TA_InitializeParam  ) );
    initializeParam.logOutput = stdout;
-   retCode = TA_Initialize( &libHandle, &initializeParam );
+   retCode = TA_Initialize( &initializeParam );
    if( retCode != TA_SUCCESS )
    {
       fclose( in );
@@ -298,7 +296,7 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr )
       return 0x10000002;
    }
 
-   stream = TA_StreamAlloc( libHandle );
+   stream = TA_StreamAlloc();
    if( stream )
    {
       retValue = 0; /* Will change if an error occured. */
@@ -311,7 +309,7 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr )
       }
       else
       {
-         retCode = TA_YahooIdxAlloc( libHandle, countryId, &idx, TA_USE_STREAM, stream, NULL, NULL );
+         retCode = TA_YahooIdxAlloc( countryId, &idx, TA_USE_STREAM, stream, NULL, NULL );
 
          if( (retCode != TA_SUCCESS) || !idx )
          {
@@ -348,7 +346,7 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr )
    /* Clean-up and exit. */
    fclose( in );
 
-   retCode = TA_Shutdown( libHandle );
+   retCode = TA_Shutdown();
    if( retCode != TA_SUCCESS )
    {
       printf( "Library shutdown failed! [%d]\n", retCode );

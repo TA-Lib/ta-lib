@@ -145,16 +145,15 @@ typedef struct
      * function called. This allows the driver to initialize
      * its own global variables etc...
      */
-    TA_RetCode (*initializeSourceDriver)( TA_Libc *libHandle );
+    TA_RetCode (*initializeSourceDriver)( void );
 
     /* Free all ressources. */
-    TA_RetCode (*shutdownSourceDriver)( TA_Libc *libHandle );
+    TA_RetCode (*shutdownSourceDriver)( void );
 
     /* Allows the data source to indicate which capability
      * are available from it.
      */
-    TA_RetCode (*getParameters)( TA_Libc *libHandle,
-                                 TA_DataSourceParameters *param );
+    TA_RetCode (*getParameters)( TA_DataSourceParameters *param );
 
     /* The data cannot be access from the source without
      * opening it.
@@ -175,12 +174,10 @@ typedef struct
      * pass by the library user. The data source can safely keep
      * a pointer on these parameters until CloseSource gets called.
      */
-    TA_RetCode (*openSource)( TA_Libc *libHandle,
-                              const TA_AddDataSourceParamPriv *param,
+    TA_RetCode (*openSource)( const TA_AddDataSourceParamPriv *param,
                               TA_DataSourceHandle **handle );
 
-    TA_RetCode (*closeSource)( TA_Libc *libHandle,
-                               TA_DataSourceHandle *handle );
+    TA_RetCode (*closeSource)( TA_DataSourceHandle *handle );
 
     /* The followings allows to get the "index" of the category and symbol
      * provided by this data source.
@@ -198,22 +195,18 @@ typedef struct
      *
      * Must return TA_END_OF_INDEX when no further elements are available.
      */
-    TA_RetCode (*getFirstCategoryHandle)( TA_Libc *libHandle,
-                                          TA_DataSourceHandle *handle,
+    TA_RetCode (*getFirstCategoryHandle)( TA_DataSourceHandle *handle,
                                           TA_CategoryHandle *categoryHandle );
 
-    TA_RetCode (*getNextCategoryHandle) ( TA_Libc *libHandle,
-                                          TA_DataSourceHandle *handle,
+    TA_RetCode (*getNextCategoryHandle) ( TA_DataSourceHandle *handle,
                                           TA_CategoryHandle *categoryHandle,
                                           unsigned int index );
 
-    TA_RetCode (*getFirstSymbolHandle)( TA_Libc *libHandle,
-                                        TA_DataSourceHandle *handle,
+    TA_RetCode (*getFirstSymbolHandle)( TA_DataSourceHandle *handle,
                                         TA_CategoryHandle *categoryHandle,
                                         TA_SymbolHandle *symbolHandle );
 
-    TA_RetCode (*getNextSymbolHandle)( TA_Libc *libHandle,
-                                       TA_DataSourceHandle *handle,
+    TA_RetCode (*getNextSymbolHandle)( TA_DataSourceHandle *handle,
                                        TA_CategoryHandle *categoryHandle,
                                        TA_SymbolHandle *symbolHandle,
                                        unsigned int index );
@@ -225,8 +218,7 @@ typedef struct
      * corresponding to the symbol and pass it to the library by
      * doing one or many call to TA_HistoryAddData().
      */
-    TA_RetCode (*getHistoryData)( TA_Libc *libHandle,
-                                  TA_DataSourceHandle *handle,
+    TA_RetCode (*getHistoryData)( TA_DataSourceHandle *handle,
                                   TA_CategoryHandle   *categoryHandle,
                                   TA_SymbolHandle     *symbolHandle,
                                   TA_Period            period,

@@ -63,16 +63,16 @@ typedef enum
 /* The following will return the number of character a token
  * can take maximum. If this is an unlimited size, Zero is returned.
  */
-unsigned int TA_TokenMaxSize( TA_Libc *libHandle, TA_TokenId id );
+unsigned int TA_TokenMaxSize( TA_TokenId id );
 
 /* Return the string corresponding to the specified TA_TokenId.
  * That string is the one used within the '[' and ']'.
  */
-const char *TA_TokenString( TA_Libc *libHandle, TA_TokenId id );
+const char *TA_TokenString( TA_TokenId id );
 
 /* Return a string corresponding to a TA_TokenId.
  * That string can be used to display debug information.
  */
-const char *TA_TokenDebugString( TA_Libc *libHandle, TA_TokenId id );
+const char *TA_TokenDebugString( TA_TokenId id );
 
 #endif

@@ -101,8 +101,6 @@ typedef struct {
    long time;
 } TA_Timestamp;
 
-typedef unsigned int TA_Libc;
-
 typedef enum
 {
   /* The history can have a precision of up to 1
@@ -541,11 +539,10 @@ typedef struct
     *
     * The safest way is to ALWAYS do something like:
     *    TA_InitializeParam param;
-    *    TA_Libc *libHandle;
     *
     *    memset( &param, 0, sizeof( TA_InitializeParam ) );
     *    ... set only the parameter you need ...
-    *    retCode = TA_Initialize( &libHandle, &param ); 
+    *    retCode = TA_Initialize( &param ); 
     *
     * Initializing the whole structure to zero assure
     * that the actual (or future) unused parameters
@@ -555,10 +552,9 @@ typedef struct
    const char *userLocalDrive;
 } TA_InitializeParam;
 
-TA_RetCode TA_Initialize( TA_Libc **allocatedLibHandle,
-                          const TA_InitializeParam *param );
+TA_RetCode TA_Initialize( const TA_InitializeParam *param );
 
-TA_RetCode TA_Shutdown  ( TA_Libc *libHandleToFree );
+TA_RetCode TA_Shutdown( void );
 
 /* Output the information recorded on the last occurence of a TA_FATAL_ERR. 
  * Can be output to a file or stdio.
@@ -568,18 +564,18 @@ TA_RetCode TA_Shutdown  ( TA_Libc *libHandleToFree );
  *
  * Example:
  *    TA_RetCode retCode;
- *    retCode = TA_HistoryAlloc( libHandle, .... );
+ *    retCode = TA_HistoryAlloc( .... );
  *    if( retCode == TA_FATAL_ERR )
- *       TA_FatalReport( libHandle, stderr );
+ *       TA_FatalReport( stderr );
  */
-void TA_FatalReport( TA_Libc *libHandle, FILE *out );
+void TA_FatalReport( FILE *out );
 
 /* You can also output the log into a provided buffer.
  * TA_FATAL_ERROR_BUF_SIZE is the recommended size in byte.
  * The returned buffer will be NULL terminated.
  */
 #define TA_FATAL_ERROR_BUF_SIZE 1024
-void TA_FatalReportToBuffer( TA_Libc *libHandle, char *buffer, unsigned int buffferSize );
+void TA_FatalReportToBuffer( char *buffer, unsigned int buffferSize );
 
 /* You can provide your own handler to intercept fatal error. 
  * You can use printf or whatever you want in the handler, but
@@ -594,7 +590,7 @@ void TA_FatalReportToBuffer( TA_Libc *libHandle, char *buffer, unsigned int buff
  *    int nbFatalError = 0;
  *    ...
  *
- *    void myFatalErrorHandler( TA_Libc *libHandle )
+ *    void myFatalErrorHandler( void )
  *    {
  *        FILE *out;
  *
@@ -603,17 +599,17 @@ void TA_FatalReportToBuffer( TA_Libc *libHandle, char *buffer, unsigned int buff
  *        out = fopen( "fatal.log", "w+" );
  *        if( out )
  *        {
- *           TA_FatalReport( libHandle, out );
+ *           TA_FatalReport( out );
  *           fclose(out);
  *        }
  *    }
  *    ...
  *
- *    TA_SetFatalErrorHandler( libHandle, myFatalErrorHandler );
+ *    TA_SetFatalErrorHandler( myFatalErrorHandler );
  */
-typedef void (*TA_FatalHandler)( TA_Libc *libHandle );
+typedef void (*TA_FatalHandler)( void );
 
-TA_RetCode TA_SetFatalErrorHandler( TA_Libc *libHandle, TA_FatalHandler handler );
+TA_RetCode TA_SetFatalErrorHandler( TA_FatalHandler handler );
 
 #ifdef __cplusplus
 }

@@ -78,7 +78,7 @@ TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
 
-unsigned int TA_TokenMaxSize( TA_Libc *libHandle, TA_TokenId id )
+unsigned int TA_TokenMaxSize( TA_TokenId id )
 {
    /* NOTE: The following data structure MUST correspond exactly to the
     *       TA_TokenId enumeration order!
@@ -141,14 +141,14 @@ unsigned int TA_TokenMaxSize( TA_Libc *libHandle, TA_TokenId id )
 
    if( (id == TA_INVALID_TOKEN_ID) || (id < 0) )
    {
-      TA_FATAL_RET( libHandle, NULL, id, TA_INVALID_TOKEN_ID, 0 );
+      TA_FATAL_RET( NULL, id, TA_INVALID_TOKEN_ID, 0 );
    }
 
    return tokenSize[id];
 }
 
 
-const char *TA_TokenDebugString( TA_Libc *libHandle, TA_TokenId id )
+const char *TA_TokenDebugString( TA_TokenId id )
 {
    /* NOTE: The following data structure MUST correspond exactly to the
     *       TA_TokenId enumeration order!
@@ -200,15 +200,13 @@ const char *TA_TokenDebugString( TA_Libc *libHandle, TA_TokenId id )
       "END"
    };
 
-   (void)libHandle; /* Get ride of compiler warning. */
-
    if( (id == TA_INVALID_TOKEN_ID) || (id < 0) )
       return (char *)NULL;
 
    return tokenString[id];
 }
 
-const char *TA_TokenString( TA_Libc *libHandle, TA_TokenId id )
+const char *TA_TokenString( TA_TokenId id )
 {
    /* NOTE: The following data structure MUST correspond exactly to the
     *       TA_TokenId enumeration order!
@@ -259,8 +257,6 @@ const char *TA_TokenString( TA_Libc *libHandle, TA_TokenId id )
 
       NULL  /* TA_TOK_END */
    };
-
-   (void)libHandle; /* Get ride of compiler warning. */
 
    if( (id == TA_INVALID_TOKEN_ID) || (id < 0) )
       return (char *)NULL;

@@ -26,12 +26,12 @@ typedef struct
  *
  * Example 1  (http://www.yahoo.com):           
  *    TA_WebPage *webPage;
- *    TA_WebPageAlloc( libHandle, "www.yahoo.com",
+ *    TA_WebPageAlloc( "www.yahoo.com",
  *                     NULL, NULL, NULL, &webPage, 1 );
  *
  * Example 2 (http://finance.yahoo.com/q?s=LNUX&d=v1):
  *    TA_WebPage *webPage;
- *    TA_WebPageAlloc( libHandle, "finance.yahoo.com",
+ *    TA_WebPageAlloc( "finance.yahoo.com",
  *                     "q?s=LNUX&d=v1", NULL, NULL, &webPage, 1 );
  *           
  * If no proxy is used, 'proxyName' and 'proxyPort' shall
@@ -42,8 +42,7 @@ typedef struct
  *
  * webSiteAddr can be the dotted-decimal address as well (x.x.x.x)
  */
-TA_RetCode TA_WebPageAlloc( TA_Libc       *libHandle,
-                            const char    *webSiteAddr,
+TA_RetCode TA_WebPageAlloc( const char    *webSiteAddr,
                             const char    *webSitePage,
                             const char    *proxyName,
                             const char    *proxyPort,

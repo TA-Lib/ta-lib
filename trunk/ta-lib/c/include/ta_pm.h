@@ -177,8 +177,7 @@ TA_RetCode TA_InstrumentAttachUDBase( TA_Instrument   *instrument,
                                       TA_UDBase       *udBase );
 
 /* Function for building a TA_TradeLog */
-TA_RetCode TA_TradeLogAlloc( TA_Libc *libHandle,
-                             TA_TradeLog **allocatedTradeLog );
+TA_RetCode TA_TradeLogAlloc( TA_TradeLog **allocatedTradeLog );
 
 TA_RetCode TA_TradeLogFree( TA_TradeLog *toBeFreed );
 
@@ -200,8 +199,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog *tradeLog,
  *    the specified startDate/endDate, else some
  *    measurements will be incorrect.
  */
-TA_RetCode TA_PMAlloc( TA_Libc             *libHandle,
-                       const TA_Timestamp  *startDate,
+TA_RetCode TA_PMAlloc( const TA_Timestamp  *startDate,
                        const TA_Timestamp  *endDate,
                        TA_Real              initialCapital,
                        TA_PM              **allocatedPM );

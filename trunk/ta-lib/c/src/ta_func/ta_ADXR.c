@@ -89,8 +89,7 @@ int TA_ADXR_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER
  * 
  */
 
-TA_RetCode TA_ADXR( TA_Libc      *libHandle,
-                    TA_Integer    startIdx,
+TA_RetCode TA_ADXR( TA_Integer    startIdx,
                     TA_Integer    endIdx,
                     const TA_Real inHigh_0[],
                     const TA_Real inLow_0[],
@@ -107,8 +106,6 @@ TA_RetCode TA_ADXR( TA_Libc      *libHandle,
    TA_RetCode retCode;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -155,17 +152,17 @@ TA_RetCode TA_ADXR( TA_Libc      *libHandle,
       return TA_SUCCESS;
    }
 
-   adx = TA_Malloc( libHandle, sizeof(TA_Real)*(endIdx-startIdx+optInTimePeriod_0) );
+   adx = TA_Malloc( sizeof(TA_Real)*(endIdx-startIdx+optInTimePeriod_0) );
    if( !adx )
       return TA_ALLOC_ERR;
 
-   retCode = TA_ADX( libHandle, startIdx-(optInTimePeriod_0-1), endIdx,
+   retCode = TA_ADX( startIdx-(optInTimePeriod_0-1), endIdx,
                      inHigh_0, inLow_0, inClose_0,
                      optInTimePeriod_0, outBegIdx, outNbElement, adx );
 
    if( retCode != TA_SUCCESS )      
    {
-      TA_Free( libHandle, adx );
+      TA_Free(  adx );
       return retCode;
    }
 
@@ -176,7 +173,7 @@ TA_RetCode TA_ADXR( TA_Libc      *libHandle,
    while( --nbElement != 0 )
       outReal_0[outIdx++] = round_pos( (adx[i++]+adx[j++])/2.0 );
 
-   TA_Free( libHandle, adx );
+   TA_Free(  adx );
 
    *outBegIdx    = startIdx;
    *outNbElement = outIdx;

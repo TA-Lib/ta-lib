@@ -85,13 +85,11 @@
 /* None */
 
 /**** Local functions declarations.    ****/
-static TA_RetCode initCategoryHandle( TA_Libc *libHandle,
-                                      TA_DataSourceHandle *handle,
+static TA_RetCode initCategoryHandle( TA_DataSourceHandle *handle,
                                       TA_CategoryHandle   *categoryHandle,
                                       unsigned int index );
 
-static TA_RetCode initSymbolHandle( TA_Libc *libHandle,
-                                    TA_DataSourceHandle *handle,
+static TA_RetCode initSymbolHandle( TA_DataSourceHandle *handle,
                                     TA_CategoryHandle   *categoryHandle,
                                     TA_SymbolHandle     *symbolHandle,
                                     unsigned int index );
@@ -100,29 +98,29 @@ static TA_RetCode initSymbolHandle( TA_Libc *libHandle,
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_YAHOO_InitializeSourceDriver( TA_Libc *libHandle )
+TA_RetCode TA_YAHOO_InitializeSourceDriver( void )
 {
-   TA_PROLOG;
-   TA_TRACE_BEGIN( libHandle, TA_YAHOO_InitializeSourceDriver );
+   TA_PROLOG
+   TA_TRACE_BEGIN(  TA_YAHOO_InitializeSourceDriver );
 
     /* Nothing to do for the time being. */
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_YAHOO_ShutdownSourceDriver( TA_Libc *libHandle )
+TA_RetCode TA_YAHOO_ShutdownSourceDriver( void )
 {
-   TA_PROLOG;
-   TA_TRACE_BEGIN( libHandle, TA_YAHOO_ShutdownSourceDriver );
+   TA_PROLOG
+   TA_TRACE_BEGIN(  TA_YAHOO_ShutdownSourceDriver );
 
     /* Nothing to do for the time being. */
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_YAHOO_GetParameters( TA_Libc *libHandle, TA_DataSourceParameters *param )
+TA_RetCode TA_YAHOO_GetParameters( TA_DataSourceParameters *param )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
-   TA_TRACE_BEGIN( libHandle, TA_YAHOO_GetParameters );
+   TA_TRACE_BEGIN(  TA_YAHOO_GetParameters );
 
    memset( param, 0, sizeof( TA_DataSourceParameters ) );
 
@@ -143,11 +141,10 @@ TA_RetCode TA_YAHOO_GetParameters( TA_Libc *libHandle, TA_DataSourceParameters *
 }
 
 
-TA_RetCode TA_YAHOO_OpenSource( TA_Libc *libHandle,
-                                const TA_AddDataSourceParamPriv *param,
+TA_RetCode TA_YAHOO_OpenSource( const TA_AddDataSourceParamPriv *param,
                                 TA_DataSourceHandle **handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_DataSourceHandle *tmpHandle;
    TA_PrivateYahooHandle *privData;
    TA_RetCode retCode;
@@ -160,9 +157,9 @@ TA_RetCode TA_YAHOO_OpenSource( TA_Libc *libHandle,
 
    *handle = NULL;
 
-   TA_TRACE_BEGIN( libHandle, TA_YAHOO_OpenSource );
+   TA_TRACE_BEGIN(  TA_YAHOO_OpenSource );
 
-   stringCache = TA_GetGlobalStringCache( libHandle );
+   stringCache = TA_GetGlobalStringCache();
 
    /* Verify that the requested functionality is supported or not. */
    if( (param->flags & TA_ENABLE_UPDATE_INDEX) ||
@@ -174,7 +171,7 @@ TA_RetCode TA_YAHOO_OpenSource( TA_Libc *libHandle,
    /* Allocate and initialize the handle. This function will also allocate the
     * private handle (opaque data).
     */
-   tmpHandle = TA_YAHOO_DataSourceHandleAlloc(libHandle);
+   tmpHandle = TA_YAHOO_DataSourceHandleAlloc();
 
    if( tmpHandle == NULL )
    {
@@ -230,7 +227,7 @@ TA_RetCode TA_YAHOO_OpenSource( TA_Libc *libHandle,
     * need in the handle.
     * Now build the TA_YahooIdx.
     */
-   retCode = TA_YahooIdxAlloc( libHandle,
+   retCode = TA_YahooIdxAlloc(
                                countryId,
                                &privData->index,
                                TA_USE_LOCAL_CACHE|TA_USE_REMOTE_CACHE,
@@ -251,12 +248,11 @@ TA_RetCode TA_YAHOO_OpenSource( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_YAHOO_CloseSource( TA_Libc *libHandle,
-                                 TA_DataSourceHandle *handle )
+TA_RetCode TA_YAHOO_CloseSource( TA_DataSourceHandle *handle )
 {
-   TA_PROLOG;
+   TA_PROLOG
 
-   TA_TRACE_BEGIN( libHandle, TA_YAHOO_CloseSource );
+   TA_TRACE_BEGIN(  TA_YAHOO_CloseSource );
 
    /* Free all ressource used by this handle. */
    if( handle )
@@ -265,34 +261,31 @@ TA_RetCode TA_YAHOO_CloseSource( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_YAHOO_GetFirstCategoryHandle( TA_Libc *libHandle,
-                                            TA_DataSourceHandle *handle,
+TA_RetCode TA_YAHOO_GetFirstCategoryHandle( TA_DataSourceHandle *handle,
                                             TA_CategoryHandle   *categoryHandle )
 {
-   return initCategoryHandle( libHandle,
+   return initCategoryHandle(
                               handle,
                               categoryHandle,
                               0 );
 
 }
 
-TA_RetCode TA_YAHOO_GetNextCategoryHandle( TA_Libc *libHandle,
-                                           TA_DataSourceHandle *handle,
+TA_RetCode TA_YAHOO_GetNextCategoryHandle( TA_DataSourceHandle *handle,
                                            TA_CategoryHandle   *categoryHandle,
                                            unsigned int index )
 {
-   return initCategoryHandle( libHandle,
+   return initCategoryHandle(
                               handle,
                               categoryHandle,
                               index );
 }
 
-TA_RetCode TA_YAHOO_GetFirstSymbolHandle( TA_Libc *libHandle,
-                                          TA_DataSourceHandle *handle,
+TA_RetCode TA_YAHOO_GetFirstSymbolHandle( TA_DataSourceHandle *handle,
                                           TA_CategoryHandle   *categoryHandle,
                                           TA_SymbolHandle     *symbolHandle )
 {
-    return initSymbolHandle( libHandle,
+    return initSymbolHandle(
                              handle,
                              categoryHandle,
                              symbolHandle,
@@ -300,21 +293,19 @@ TA_RetCode TA_YAHOO_GetFirstSymbolHandle( TA_Libc *libHandle,
 }
 
 
-TA_RetCode TA_YAHOO_GetNextSymbolHandle( TA_Libc *libHandle,
-                                         TA_DataSourceHandle *handle,
+TA_RetCode TA_YAHOO_GetNextSymbolHandle( TA_DataSourceHandle *handle,
                                          TA_CategoryHandle   *categoryHandle,
                                          TA_SymbolHandle     *symbolHandle,
                                          unsigned int index )
 {
-    return initSymbolHandle( libHandle,
+    return initSymbolHandle(
                              handle,
                              categoryHandle,
                              symbolHandle,
                              index );
 }
 
-TA_RetCode TA_YAHOO_GetHistoryData( TA_Libc *libHandle,
-                                    TA_DataSourceHandle *handle,
+TA_RetCode TA_YAHOO_GetHistoryData( TA_DataSourceHandle *handle,
                                     TA_CategoryHandle   *categoryHandle,
                                     TA_SymbolHandle     *symbolHandle,
                                     TA_Period            period,
@@ -323,20 +314,20 @@ TA_RetCode TA_YAHOO_GetHistoryData( TA_Libc *libHandle,
                                     TA_Field             fieldToAlloc,
                                     TA_ParamForAddData  *paramForAddData )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_RetCode retCode;
    TA_PrivateYahooHandle *yahooHandle;
    int again;
 
-   TA_TRACE_BEGIN( libHandle, TA_YAHOO_GetHistoryData );
+   TA_TRACE_BEGIN(  TA_YAHOO_GetHistoryData );
 
-   TA_ASSERT( libHandle, handle != NULL );
-   TA_ASSERT( libHandle, paramForAddData != NULL );
-   TA_ASSERT( libHandle, categoryHandle != NULL );
-   TA_ASSERT( libHandle, symbolHandle != NULL );
+   TA_ASSERT( handle != NULL );
+   TA_ASSERT( paramForAddData != NULL );
+   TA_ASSERT( categoryHandle != NULL );
+   TA_ASSERT( symbolHandle != NULL );
 
    yahooHandle = (TA_PrivateYahooHandle *)handle->opaqueData;
-   TA_ASSERT( libHandle, yahooHandle != NULL );
+   TA_ASSERT( yahooHandle != NULL );
 
    /* If the requested period is too precise for the
     * period that can be provided by this data source,
@@ -359,7 +350,7 @@ TA_RetCode TA_YAHOO_GetHistoryData( TA_Libc *libHandle,
    again = 5;
    do
    {
-      retCode = TA_GetHistoryDataFromWeb( libHandle, handle,                                       
+      retCode = TA_GetHistoryDataFromWeb( handle,                                       
                                           categoryHandle, symbolHandle,
                                           TA_DAILY, start, end,                                            
                                           fieldToAlloc, paramForAddData );
@@ -390,17 +381,16 @@ TA_RetCode TA_YAHOO_GetHistoryData( TA_Libc *libHandle,
 }
 
 /**** Local functions definitions.     ****/
-static TA_RetCode initCategoryHandle( TA_Libc *libHandle,
-                                      TA_DataSourceHandle *handle,
+static TA_RetCode initCategoryHandle( TA_DataSourceHandle *handle,
                                       TA_CategoryHandle   *categoryHandle,
                                       unsigned int index )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_PrivateYahooHandle *privData;
    TA_YahooIdx *yahooIndex;
    TA_String   *string;
 
-   TA_TRACE_BEGIN( libHandle, TA_YAHOO_GetFirstCategoryHandle );
+   TA_TRACE_BEGIN(  TA_YAHOO_GetFirstCategoryHandle );
 
    if( (handle == NULL) || (categoryHandle == NULL) )
    {
@@ -439,16 +429,15 @@ static TA_RetCode initCategoryHandle( TA_Libc *libHandle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-static TA_RetCode initSymbolHandle( TA_Libc *libHandle,
-                                    TA_DataSourceHandle *handle,
+static TA_RetCode initSymbolHandle( TA_DataSourceHandle *handle,
                                     TA_CategoryHandle   *categoryHandle,
                                     TA_SymbolHandle     *symbolHandle,
                                     unsigned int index )
 {
-   TA_PROLOG;
+   TA_PROLOG
    TA_YahooCategory *category;
 
-   TA_TRACE_BEGIN( libHandle, TA_YAHOO_GetFirstSymbolHandle );
+   TA_TRACE_BEGIN(  TA_YAHOO_GetFirstSymbolHandle );
 
    if( (handle == NULL) || (categoryHandle == NULL) || (symbolHandle == NULL) )
    {

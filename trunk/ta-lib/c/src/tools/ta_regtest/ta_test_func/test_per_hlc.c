@@ -109,8 +109,7 @@ typedef struct
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 
 /**** Local variables definitions.     ****/
@@ -169,13 +168,13 @@ static TA_Test tableTest[] =
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
-ErrorNumber test_func_per_hlc( TA_Libc *libHandle, TA_History *history )
+ErrorNumber test_func_per_hlc( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
 
    /* Re-initialize all the unstable period to zero. */
-   TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ALL, 0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    for( i=0; i < NB_TEST; i++ )
    {
@@ -186,7 +185,7 @@ ErrorNumber test_func_per_hlc( TA_Libc *libHandle, TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
 
-      retValue = do_test( libHandle, history, &tableTest[i] );
+      retValue = do_test( history, &tableTest[i] );
       if( retValue != 0 )
       {
          printf( "Failed Test #%d (Code=%d)\n", i, retValue );
@@ -195,14 +194,14 @@ ErrorNumber test_func_per_hlc( TA_Libc *libHandle, TA_History *history )
    }
 
    /* Re-initialize all the unstable period to zero. */
-   TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_ALL, 0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
    return 0; 
 }
 
 /**** Local functions definitions.     ****/
-static TA_RetCode rangeTestFunction( TA_Libc *libHandle, 
+static TA_RetCode rangeTestFunction( 
                               TA_Integer startIdx,
                               TA_Integer endIdx,
                               TA_Real *outputBuffer,
@@ -222,7 +221,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    switch( testParam->test->theFunction )
    {
    case TA_CCI_TEST:
-      retCode = TA_CCI( libHandle,
+      retCode = TA_CCI(
                         startIdx,
                         endIdx,
                         testParam->high,
@@ -235,7 +234,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
       *lookback = TA_CCI_Lookback( testParam->test->optInTimePeriod_0 );
       break;
    case TA_WILLR_TEST:
-      retCode = TA_WILLR( libHandle,
+      retCode = TA_WILLR(
                           startIdx,
                           endIdx,
                           testParam->high,
@@ -254,8 +253,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
    return retCode;
 }
 
-static ErrorNumber do_test( TA_Libc *libHandle,
-                            const TA_History *history,
+static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test )
 {
    TA_RetCode retCode;
@@ -276,7 +274,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    switch( test->theFunction )
    {
    case TA_CCI_TEST:
-      retCode = TA_CCI( libHandle,
+      retCode = TA_CCI(
                          test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
@@ -289,7 +287,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TA_WILLR_TEST:
-      retCode = TA_WILLR( libHandle,
+      retCode = TA_WILLR(
                           test->startIdx,
                           test->endIdx,
                           gBuffer[0].in,
@@ -326,7 +324,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    switch( test->theFunction )
    {
    case TA_CCI_TEST:
-      retCode = TA_CCI( libHandle,
+      retCode = TA_CCI(
                          test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
@@ -338,7 +336,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                          gBuffer[0].in );
       break;
    case TA_WILLR_TEST:
-      retCode = TA_WILLR( libHandle,
+      retCode = TA_WILLR(
                           test->startIdx,
                           test->endIdx,
                           gBuffer[0].in,
@@ -380,7 +378,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    switch( test->theFunction )
    {
    case TA_CCI_TEST:
-      retCode = TA_CCI( libHandle,
+      retCode = TA_CCI(
                          test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
@@ -392,7 +390,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                          gBuffer[1].in );
       break;
    case TA_WILLR_TEST:
-      retCode = TA_WILLR( libHandle,
+      retCode = TA_WILLR(
                           test->startIdx,
                           test->endIdx,
                           gBuffer[0].in,
@@ -434,7 +432,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    switch( test->theFunction )
    {
    case TA_CCI_TEST:
-      retCode = TA_CCI( libHandle,
+      retCode = TA_CCI(
                          test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
@@ -446,7 +444,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                          gBuffer[2].in );
       break;
    case TA_WILLR_TEST:
-      retCode = TA_WILLR( libHandle,
+      retCode = TA_WILLR(
                           test->startIdx,
                           test->endIdx,
                           gBuffer[0].in,
@@ -492,7 +490,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( libHandle,
+      errNb = doRangeTest(
                            rangeTestFunction, 
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );

@@ -68,7 +68,7 @@ int TA_MINUS_DI_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INT
    /* insert lookback code here. */
 
    if( optInTimePeriod_0 > 1 )
-      return optInTimePeriod_0 + TA_UnstablePeriodTable[TA_FUNC_UNST_MINUS_DI];
+      return optInTimePeriod_0 + TA_Globals.unstablePeriod[TA_FUNC_UNST_MINUS_DI];
    else
       return 2;
 }
@@ -88,8 +88,7 @@ int TA_MINUS_DI_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INT
  * 
  */
 
-TA_RetCode TA_MINUS_DI( TA_Libc      *libHandle,
-                        TA_Integer    startIdx,
+TA_RetCode TA_MINUS_DI( TA_Integer    startIdx,
                         TA_Integer    endIdx,
                         const TA_Real inHigh_0[],
                         const TA_Real inLow_0[],
@@ -120,8 +119,6 @@ TA_RetCode TA_MINUS_DI( TA_Libc      *libHandle,
    }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   (void)libHandle; /* Get ride of warning if unused. */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
 
@@ -233,7 +230,7 @@ TA_RetCode TA_MINUS_DI( TA_Libc      *libHandle,
     */
 
    if( optInTimePeriod_0 > 1 )
-      lookbackTotal = optInTimePeriod_0 + TA_UnstablePeriodTable[TA_FUNC_UNST_MINUS_DI];
+      lookbackTotal = optInTimePeriod_0 + TA_Globals.unstablePeriod[TA_FUNC_UNST_MINUS_DI];
    else
       lookbackTotal = 2;
 
@@ -290,7 +287,7 @@ TA_RetCode TA_MINUS_DI( TA_Libc      *libHandle,
    /* Skip the unstable period. Note that this loop must be executed
     * at least ONCE to calculate the first DI.
     */
-   i = TA_UnstablePeriodTable[TA_FUNC_UNST_MINUS_DI] + 1;
+   i = TA_Globals.unstablePeriod[TA_FUNC_UNST_MINUS_DI] + 1;
    while( i-- != 0 )
    {
       /* Calculate the prevMinusDM */

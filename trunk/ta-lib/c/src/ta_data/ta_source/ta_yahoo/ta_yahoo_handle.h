@@ -22,9 +22,7 @@
 #endif
 
 typedef struct
-{
-   TA_Libc *libHandle;
-   
+{   
    /* Keep a local copy of the initial parameters. */
    const TA_AddDataSourceParamPriv *param;
 
@@ -41,7 +39,7 @@ typedef struct
  * Takes care also to alloc/initialize/free the TA_PrivateHandle which
  * become the 'opaque' part of the TA_DataSourceHandle.
  */
-TA_DataSourceHandle *TA_YAHOO_DataSourceHandleAlloc( TA_Libc *libHandle );
+TA_DataSourceHandle *TA_YAHOO_DataSourceHandleAlloc( void );
 TA_RetCode TA_YAHOO_DataSourceHandleFree( TA_DataSourceHandle *handle );
 
 #endif

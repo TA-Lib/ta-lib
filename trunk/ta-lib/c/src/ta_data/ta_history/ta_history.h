@@ -24,8 +24,7 @@
  *
  * (function can be found in "ta_history_builder.c")
  */
-TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
-                              TA_UDBasePriv       *privUDB,
+TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
                               TA_UDB_Symbol       *symbolData,
                               TA_Period            period,
                               const TA_Timestamp  *start,
@@ -46,8 +45,7 @@ TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
  *
  * (function can be found in "ta_historycheck.c")
  */
-TA_RetCode TA_HistoryCheckInternal( TA_Libc            *libHandle,
-                                    TA_Period           expectedPeriod,
+TA_RetCode TA_HistoryCheckInternal( TA_Period           expectedPeriod,
                                     const TA_Timestamp *expectedStart,
                                     const TA_Timestamp *expectedEnd,
                                     TA_Field            fieldToCheck,
@@ -64,8 +62,7 @@ TA_RetCode TA_HistoryCheckInternal( TA_Libc            *libHandle,
  *
  * (function can be found in "ta_period.c")
  */
-TA_RetCode TA_HistoryAllocCopyInternal( TA_Libc *libHandle,
-                                        const TA_History *history,
+TA_RetCode TA_HistoryAllocCopyInternal( const TA_History *history,
                                         TA_History **newHistory,
                                         TA_Period newPeriod );
 
