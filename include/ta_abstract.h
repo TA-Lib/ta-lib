@@ -188,6 +188,7 @@ typedef int TA_FuncFlags;
                                           * for these functions for allowing to set that
                                           * unstable period. See Documentation.
                                           */
+#define TA_FUNC_FLG_CANDLESTICK 0x10000000 /* Output shall be a candlestick */
 
 typedef struct
 {
