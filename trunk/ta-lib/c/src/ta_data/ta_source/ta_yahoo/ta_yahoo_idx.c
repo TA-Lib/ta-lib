@@ -238,12 +238,6 @@ static TA_RetCode addTheSymbolFromWebPage( unsigned int line,
                                            const char *href,
                                            void *opaqueData);
 
-static TA_RetCode findStringFromCacheUsingYahooName( TA_YahooIdx *idx,
-                                                     const char *data,                                           
-                                                     TA_String **category,
-                                                     TA_String **symbol );
-
-
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
 
@@ -2198,6 +2192,7 @@ static TA_RetCode buildIndexFromLocalCache( TA_YahooIdx *idx,
    return TA_SUCCESS;
 }
 
+#if 0
 static TA_RetCode findStringFromCacheUsingYahooName( TA_YahooIdx *idx,
                                                      const char *data,                                           
                                                      TA_String **category,
@@ -2238,3 +2233,4 @@ static TA_RetCode findStringFromCacheUsingYahooName( TA_YahooIdx *idx,
     return TA_INVALID_SECURITY_SYMBOL;
     
 }
+#endif
