@@ -46,7 +46,7 @@ extern "C" {
    #include "ta_defs.h"
 #endif
 
-/* Some functions to get the version of the TA-Lib.
+/* Some functions to get the version of TA-Lib.
  *
  * Format is "Major.Minor.Build (Month Day Year Hour:Min:Sec)"
  * 
@@ -141,7 +141,7 @@ typedef struct
     unsigned int size;    /* Number of string. */
     const char **string;  /* Pointer to the strings. */
 
-   /* Hidden data for internal use by the TA-LIB. Do not modify. */
+   /* Hidden data for internal use by TA-Lib. Do not modify. */
    void *hiddenData;
 } TA_StringTable;
 
@@ -225,7 +225,7 @@ TA_RetCode TA_SetTime( unsigned int hour,
  *   00 to 10 becomes 2000 to 2010
  *   11 to 99 becomes 1911 to 1999
  *
- * It is strongly suggest to make all your source 4 digits.
+ * It is recommended to always use 4 digits for 'year'.
  */
 
 /* Default is: Jan 1st 1900, 00:00:00 */
@@ -401,12 +401,12 @@ TA_RetCode TA_TimestampDeltaQuarter( const TA_Timestamp *t1,
                                      const TA_Timestamp *t2,
                                      unsigned int *delta );
 
-/* TA_Initialize() initialize the ressources used by the TA-LIB. This
+/* TA_Initialize() initialize the ressources used by TA-Lib. This
  * function must be called once prior to any other functions declared in
  * this file.
  *
- * TA_Shutdown() allows to free all ressources used by the TA-LIB. Following
- * a shutdown, TA_Initialize() must be called again for re-using the TA-LIB.
+ * TA_Shutdown() allows to free all ressources used by TA-Lib. Following
+ * a shutdown, TA_Initialize() must be called again for re-using TA-Lib.
  *
  * TA_Shutdown() should be called prior to exiting the application code.
  */
@@ -435,21 +435,30 @@ TA_RetCode TA_Initialize( const TA_InitializeParam *param );
 
 TA_RetCode TA_Shutdown( void );
 
-/* Output the information recorded on the last occurence of a TA_FATAL_ERR. 
+/* Output the information recorded on the occurence of a TA_FATAL_ERR. 
  * Can be output to a file or stdio.
  *
  * This output shall be usually forwarded to the library developper for
- * further analysis.
+ * further analysis ( http://ta-lib.org ).
+ *
+ * TA-Lib records only the first occurence of a fatal error. It is 
+ * assumed that the application will properly exit following the
+ * first detection of a fatal error.
  *
  * Example:
  *    TA_RetCode retCode;
  *    retCode = TA_HistoryAlloc( .... );
  *    if( retCode == TA_FATAL_ERR )
+ *    {
  *       TA_FatalReport( stderr );
+ *       exit(-1);
+ *    }
  */
 void TA_FatalReport( FILE *out );
 
-/* You can choose to output the log into a provided buffer.
+/* You can choose to output the fatal error information
+ * into a provided buffer.
+ *
  * The output will be NULL terminated. No character more than
  * bufferSize will be written.
  */
@@ -457,42 +466,66 @@ void TA_FatalReport( FILE *out );
 void TA_FatalReportToBuffer( char *buffer, unsigned int bufferSize );
 
 /* You can provide your own handler to intercept fatal error. 
- * You can use printf or whatever you want in the handler, but
- * no TA-LIB function other than TA_FatalReport and TA_FatalReportToBuffer
- * can be called within this handler (to avoid recursive call if the failure
- * persist!). 
+ *
+ * The handler is called by TA-Lib on the first occurent of a fatal 
+ * error. You can use printf or whatever you want in the handler, but
+ * no TA-Lib function other than TA_FatalReport and TA_FatalReportToBuffer
+ * can be called (to avoid recursive call if the failure persist!).
+ * DO NOT CALL TA_Shutdown/TA_Initialize from the handler. A fatal error
+ * really means that you should exit. You just get here the opportunity
+ * to record or display some information and properly free other
+ * application ressources before a relatively clean exit.
  *
  * Example:
- *    Whenever a fatal error occured, we wish to increment a global
- *    variable and append the log of the fatal error in a file.
- *
- *    int nbFatalError = 0;
- *    ...
+ *    Whenever a fatal error occured, we wish to append the log of the 
+ *    fatal error in a file, display it to the user and exit.
  *
  *    void myFatalErrorHandler( void )
  *    {
+ *        // Append to a file
  *        FILE *out;
- *
- *        nbFatalError++;
- *
  *        out = fopen( "fatal.log", "w+" );
  *        if( out )
  *        {
  *           TA_FatalReport( out );
  *           fclose(out);
  *        }
- *    }
- *    ...
  *
- *    TA_SetFatalErrorHandler( myFatalErrorHandler );
+ *        // Show to the user in a dialog that the
+ *        // application will be shutdown.
+ *        char myBuffer[100];
+ *        TA_FatalReportToBuffer( myBuffer, 100 );
+ *        myDisplayErrorDialog( myBuffer );
+ *
+ *        // Free any possible ressource use by 
+ *        // your application. Do NOT call TA_Shutdown().
+ *        ...
+ *
+ *        // It is recommended to exit the application now. 
+ *        exit(-1);
+ *    }
+ *
+ *    int main( )
+ *    {
+ *        ...
+ *        TA_Initialize(...);
+ *        TA_SetFatalErrorHandler( myFatalErrorHandler );
+ *        ...
+ *    }
  */
 typedef void (*TA_FatalHandler)( void );
 
 TA_RetCode TA_SetFatalErrorHandler( TA_FatalHandler handler );
 
-/* Function used exclusively by TA-Lib developpers to perform
+/* Function used exclusively by TA-Lib developers to perform
  * regression testing.
+ *
  * Most (if not all) TA-Lib users should ignore this function.
+ *
+ * The Fatal and assert error are simulated ones and the
+ * stability of the application is not affected. Meaning
+ * that the application do not need to exit and normal
+ * operation with TA-Lib can resume.
  */
 typedef enum
 {
