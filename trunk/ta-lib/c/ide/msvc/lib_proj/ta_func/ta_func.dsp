@@ -265,6 +265,18 @@ SOURCE=..\..\..\..\src\ta_func\ta_CCI.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLDOJISTAR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLEVENINGDOJISTAR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
 # End Source File
 # Begin Source File
@@ -273,11 +285,23 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLLONGLINE.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLMORNINGDOJISTAR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLMORNINGSTAR.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLTRISTAR.c
 # End Source File
 # Begin Source File
 
