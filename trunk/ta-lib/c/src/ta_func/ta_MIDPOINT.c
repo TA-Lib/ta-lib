@@ -172,7 +172,7 @@ TA_RetCode TA_MIDPOINT( TA_Integer    startIdx,
          else if( tmp > highest) highest = tmp;
       }
 
-      outReal_0[outIdx++] = (highest+lowest)/2;
+      outReal_0[outIdx++] = (highest+lowest)/2.0;
       today++;
    }
 
