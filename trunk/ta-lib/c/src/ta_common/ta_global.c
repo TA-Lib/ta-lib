@@ -460,7 +460,13 @@ TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType )
         /* shadow is short when it's shorter than half the average of the 10 previous candles' sum of shadows */
         { TA_ShadowShort, TA_RangeType_Shadows, 10, 1.0 },
         /* shadow is very short when it's shorter than 10% the average of the 10 previous candles' high-low range */
-        { TA_ShadowVeryShort, TA_RangeType_HighLow, 10, 0.1 }
+        { TA_ShadowVeryShort, TA_RangeType_HighLow, 10, 0.1 },
+        /* when measuring distance between parts of candles or width of gaps */
+        /* "near" means "<= 20% of the average of the 5 previous candles' high-low range" */
+        { TA_Near, TA_RangeType_HighLow, 5, 0.2 },
+        /* when measuring distance between parts of candles or width of gaps */
+        /* "far" means ">= 60% of the average of the 5 previous candles' high-low range" */
+        { TA_Far, TA_RangeType_HighLow, 5, 0.6 }
     };
 
     int i;
