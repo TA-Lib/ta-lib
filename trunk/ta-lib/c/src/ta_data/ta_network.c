@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -44,6 +44,8 @@
  *  -------------------------------------------------------------------
  *  052101 MF   First version.
  *  060302 MF   Add better retry/timeout mechanism.
+ *  121204 MF   Return TA_INTERNET_NO_CONTENT when a HTTP response
+ *              has no content.
  */
 
 /* Description:
@@ -222,6 +224,10 @@ TA_RetCode TA_WebPageAlloc( const char    *webSiteAddr,
    if( nbAttempt == 0 )
       nbAttempt = 1;
 
+   /* Do not attempt more than 50 times (realistic upper limit). */
+   if( nbAttempt > 50 )
+      nbAttempt = 50;
+
    retCode = TA_SUCCESS;
 
    for( i=0; i < nbAttempt; i++ )
@@ -284,13 +290,13 @@ TA_RetCode TA_WebPageFree( TA_WebPage *webPage )
        */
 
       /* Free private data */
-      TA_Free(  hiddenData );
+      TA_Free( hiddenData );
 
       /* Free public data. */
       if( webPage->content )
          TA_StreamFree( webPage->content );
 
-      TA_Free(  webPage );
+      TA_Free( webPage );
    }
 
    return TA_SUCCESS;
@@ -763,7 +769,7 @@ static TA_RetCode buildListDataWinInet( TA_WebPage *webPage,
 	   }
       else if( dwSize == 0 )
       {
-         again = 0; /* We got all the data, exit. */
+         again = 0; /* No more data. Exit. */
       }
       else
       {    
@@ -781,6 +787,7 @@ static TA_RetCode buildListDataWinInet( TA_WebPage *webPage,
          if(!InternetReadFile(hRessource,(LPVOID)lpszData,dwSize,&dwDownloaded))
          {
             again = 0;
+            TA_Free( lpszData );
          }
          else
          {
@@ -797,7 +804,7 @@ static TA_RetCode buildListDataWinInet( TA_WebPage *webPage,
 
                if( !webPage->content )
                {
-                  TA_Free(  lpszData );
+                  TA_Free( lpszData );
                   TA_TRACE_RETURN( TA_ALLOC_ERR );
                } 
             }
@@ -807,7 +814,7 @@ static TA_RetCode buildListDataWinInet( TA_WebPage *webPage,
                retCode = TA_StreamAddBuffer( webPage->content, (unsigned char *)lpszData, dwSize, NULL, NULL );
                if( retCode != TA_SUCCESS )
                {
-                  TA_Free(  lpszData );
+                  TA_Free( lpszData );
                   TA_TRACE_RETURN( TA_ALLOC_ERR );
                }
             }
@@ -820,6 +827,10 @@ static TA_RetCode buildListDataWinInet( TA_WebPage *webPage,
          }
       }
    }
+
+   /* If there is no content, must be an error. */
+   if( !webPage->content )
+      TA_TRACE_RETURN( TA_INTERNET_NO_CONTENT );
 
    /* Everything suceed!  */
    TA_TRACE_RETURN( TA_SUCCESS );
