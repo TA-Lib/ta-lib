@@ -127,13 +127,12 @@ TA_RetCode TA_HistoryCheck( TA_Period           expectedPeriod,
    {
       TA_TRACE_RETURN( TA_INTERNAL_ERROR(47) );
    }
-   else if( history->nbBars < 0 )
-   {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(168) );
-   }
    else if( history->nbBars > 0 )
    {
-      TA_ASSERT( history->timestamp != NULL );
+      if( history->timestamp == NULL )
+      {
+         TA_TRACE_RETURN( TA_INTERNAL_ERROR(168) );
+      }
 
       /* Verify that the data is not older than "start". */
       if( expectedStart )
