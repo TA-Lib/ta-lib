@@ -291,6 +291,7 @@ static int testTAFunction_ALL( TA_History *history )
       printf( "done.\n" ); \
       fflush(stdout); \
       }
+   DO_TEST( test_func_po,       "PO,APO" );
    DO_TEST( test_func_adx,      "ADX,ADXR,DI,DM,DX" );
    DO_TEST( test_func_sar,      "Parabolic SAR" );
    DO_TEST( test_candlestick,   "Candlesticks" );
@@ -307,7 +308,6 @@ static int testTAFunction_ALL( TA_History *history )
    DO_TEST( test_func_macd,     "MACD,MACDFIX,MACDEXT" );
    DO_TEST( test_func_mom_roc,  "MOM,ROC,ROCP,ROCR,ROCR100" );
    DO_TEST( test_func_trange,   "TRANGE,ATR" );
-   DO_TEST( test_func_po,       "PO,APO" );
    DO_TEST( test_func_stddev,   "STDDEV,VAR" );
    DO_TEST( test_func_bbands,   "BBANDS" );
 
