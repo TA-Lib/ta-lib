@@ -46,6 +46,7 @@
  *  022203 MF   Add MAMA
  *  040503 MF   Add T3
  *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  111603 MF   Allow period of 1. Just copy input into output.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -78,10 +79,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::MA_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */ int Core::MA_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                      TA_MAType     optInMAType ) /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_MA_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */ int TA_MA_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                   TA_MAType     optInMAType ) /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -89,6 +90,9 @@
    /* insert lookback code here. */
    int retValue;
 
+   if( optInTimePeriod <= 1 )
+      return 0;
+   
    switch( optInMAType )
    {
    case TA_MAType_SMA:
@@ -143,7 +147,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod:(From 2 to 100000)
+ * optInTimePeriod:(From 1 to 100000)
  *    Number of period
  * 
  * optInMAType:
@@ -156,7 +160,7 @@
 /* Generated */ enum Core::TA_RetCode Core::MA( int    startIdx,
 /* Generated */                                 int    endIdx,
 /* Generated */                                 double       inReal __gc [],
-/* Generated */                                 int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                 int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                 TA_MAType     optInMAType,
 /* Generated */                                 [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                 [OutAttribute]Int32 *outNbElement,
@@ -165,7 +169,7 @@
 /* Generated */ TA_RetCode TA_MA( int    startIdx,
 /* Generated */                   int    endIdx,
 /* Generated */                   const double inReal[],
-/* Generated */                   int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                   int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                   TA_MAType     optInMAType,
 /* Generated */                   int          *outBegIdx,
 /* Generated */                   int          *outNbElement,
@@ -176,6 +180,9 @@
    /* Insert local variables here. */
    ARRAY_REF(dummyBuffer);
    TA_RetCode retCode;
+
+   int nbElement;
+   int outIdx, todayIdx;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -192,7 +199,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED)
@@ -209,6 +216,15 @@
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
+   if( optInTimePeriod == 1 )
+   {
+      nbElement = endIdx-startIdx+1;
+      *outNbElement = nbElement;      
+      for( todayIdx=startIdx, outIdx=0; outIdx < nbElement; outIdx++, todayIdx++ )
+         outReal[outIdx] = inReal[todayIdx];
+      *outBegIdx    = startIdx;
+      return TA_SUCCESS;
+   }
    /* Simply call the internal implementation of the
     * requested moving average.
     */
@@ -292,7 +308,7 @@
 /* Generated */ enum Core::TA_RetCode Core::MA( int    startIdx,
 /* Generated */                                 int    endIdx,
 /* Generated */                                 float        inReal __gc [],
-/* Generated */                                 int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                 int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                 TA_MAType     optInMAType,
 /* Generated */                                 [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                 [OutAttribute]Int32 *outNbElement,
@@ -301,7 +317,7 @@
 /* Generated */ TA_RetCode TA_S_MA( int    startIdx,
 /* Generated */                     int    endIdx,
 /* Generated */                     const float  inReal[],
-/* Generated */                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                     int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                     TA_MAType     optInMAType,
 /* Generated */                     int          *outBegIdx,
 /* Generated */                     int          *outNbElement,
@@ -310,6 +326,8 @@
 /* Generated */ {
 /* Generated */    ARRAY_REF(dummyBuffer);
 /* Generated */    TA_RetCode retCode;
+/* Generated */    int nbElement;
+/* Generated */    int outIdx, todayIdx;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
@@ -318,7 +336,7 @@
 /* Generated */     if( !inReal ) return TA_BAD_PARAM;
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
-/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     #if !defined(_MANAGED)
 /* Generated */     if( (int)optInMAType == TA_INTEGER_DEFAULT )
@@ -329,6 +347,15 @@
 /* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
+/* Generated */    if( optInTimePeriod == 1 )
+/* Generated */    {
+/* Generated */       nbElement = endIdx-startIdx+1;
+/* Generated */       *outNbElement = nbElement;      
+/* Generated */       for( todayIdx=startIdx, outIdx=0; outIdx < nbElement; outIdx++, todayIdx++ )
+/* Generated */          outReal[outIdx] = inReal[todayIdx];
+/* Generated */       *outBegIdx    = startIdx;
+/* Generated */       return TA_SUCCESS;
+/* Generated */    }
 /* Generated */    switch( optInMAType )
 /* Generated */    {
 /* Generated */    case TA_MAType_SMA:
