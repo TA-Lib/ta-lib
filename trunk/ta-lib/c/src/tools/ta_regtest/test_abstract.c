@@ -134,7 +134,7 @@ ErrorNumber test_abstract( void )
 static ErrorNumber testLookback( TA_ParamHolder *paramHolder )
 {
   TA_RetCode retCode;
-  unsigned int lookback;
+  int lookback;
 
   /* Change the parameters of STOCH and verify that TA_GetLookback respond correctly. */
   retCode = TA_SetOptInputParamInteger( paramHolder, 0, 3 );
