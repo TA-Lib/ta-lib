@@ -53,9 +53,8 @@ TA_RetCode TA_UDBaseFree( TA_UDBase *toBefreed );
 
 #define TA_SOURCELOCATION_MAX_LENGTH  2048  /* Maximum number of character. */
 #define TA_SOURCEINFO_MAX_LENGTH      1024  /* Maximum number of character. */
-
-#define TA_CATEGORY_MAX_LENGTH        64    /* Maximum number of character. */
-#define TA_SYMBOL_MAX_LENGTH          64    /* Maximum number of character. */
+#define TA_CATEGORY_MAX_LENGTH        1024  /* Maximum number of character. */
+#define TA_SYMBOL_MAX_LENGTH          1024  /* Maximum number of character. */
 
 /* A category respecting the TA-LIB guideline shall
  * respect the following limit for its 3 components.
@@ -102,19 +101,25 @@ typedef enum
  *    Some datasource return a price bar with some price to be zero as an
  *    an indication that there was no change in price. This option allows 
  *    to replace these "zero" price with the previous close.
- *
  *    If the zero price are in the initial bars e.g. no previous valid close
  *    are known, these zero price bar will be ignored.
- *    
  *    Without this option, a "zero" detected in a price bar will be considered 
  *    an error and a call to TA_HistoryAlloc will fail.
- *
  *    A volume of zero is valid.
+ *
+ * TA_DO_NOT_SPLIT_ADJUST
+ *    Return data that is not split adjusted.
+ *
+ * TA_DO_NOT_VALUE_ADJUST
+ *    Return data that is not dividend adjusted.
+ *
  */
 
 typedef int TA_SourceFlag;
 #define TA_NO_FLAGS  0
 #define TA_REPLACE_ZERO_PRICE_BAR (1<<0)
+#define TA_DO_NOT_SPLIT_ADJUST    (1<<1)
+#define TA_DO_NOT_VALUE_ADJUST    (1<<2)
 
 typedef struct
 {
