@@ -23,6 +23,7 @@ CFG=ta_libc - Win32 CDR Multithread DLL Release
 !MESSAGE "ta_libc - Win32 CSR Single Thread Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "ta_libc - Win32 CMR Multithread Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "ta_libc - Win32 Profiling" (based on "Win32 (x86) Static Library")
+!MESSAGE "ta_libc - Win32 CDD Multithread DLL Debug" (based on "Win32 (x86) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -69,6 +70,7 @@ LIB32=link.exe -lib
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /Zi /Od /D "_LIB" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_DEBUG" /YX /FD /GZ /c
 # ADD CPP /nologo /MTd /W3 /WX /Gm /Zi /Od /D "_LIB" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_FUNC_NO_RANGE_CHECK" /YX /FD /GZ /c
+# SUBTRACT CPP /Fr
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -170,6 +172,29 @@ LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo /out:"..\..\..\..\lib\ta_libc_csr.lib"
 # ADD LIB32 /nologo /out:"..\..\..\..\lib\ta_libc_csr.lib"
 
+!ELSEIF  "$(CFG)" == "ta_libc - Win32 CDD Multithread DLL Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "ta_libc___Win32_CDD_Multithread_DLL_Debug"
+# PROP BASE Intermediate_Dir "ta_libc___Win32_CDD_Multithread_DLL_Debug"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "..\..\..\..\lib"
+# PROP Intermediate_Dir "..\..\..\..\temp\cdd\ta_libc"
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /MD /W3 /WX /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /MDd /W3 /WX /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo /out:"..\..\..\..\lib\ta_libc_cdr.lib"
+# ADD LIB32 /nologo /out:"..\..\..\..\lib\ta_libc_cdd.lib"
+
 !ENDIF 
 
 # Begin Target
@@ -180,6 +205,7 @@ LIB32=link.exe -lib
 # Name "ta_libc - Win32 CSR Single Thread Release"
 # Name "ta_libc - Win32 CMR Multithread Release"
 # Name "ta_libc - Win32 Profiling"
+# Name "ta_libc - Win32 CDD Multithread DLL Debug"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
