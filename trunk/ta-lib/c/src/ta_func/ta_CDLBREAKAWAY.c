@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -122,7 +122,7 @@
 {
    /* Insert local variables here. */
     double BodyLongPeriodTotal;
-    int i, outIdx, totIdx, BodyLongTrailingIdx, lookbackTotal;
+    int i, outIdx, BodyLongTrailingIdx, lookbackTotal;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -264,7 +264,7 @@
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */     double BodyLongPeriodTotal;
-/* Generated */     int i, outIdx, totIdx, BodyLongTrailingIdx, lookbackTotal;
+/* Generated */     int i, outIdx, BodyLongTrailingIdx, lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
