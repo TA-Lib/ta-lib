@@ -167,7 +167,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    /* De-allocate potentialy already existing category index. */
    if( privateHandle->theCategoryIndex != NULL )
    {
-      retCode = TA_ListFreeAll(privateHandle->theCategoryIndex, &freeCategoryIndex);
+      retCode = TA_ListFreeAll(privateHandle->theCategoryIndex, freeCategoryIndex);
       privateHandle->theCategoryIndex = NULL;
       if( retCode != TA_SUCCESS )
       {
@@ -202,12 +202,19 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
       
 
       /* from now on: the query has to be released upon premature return */
-#define RETURN_ON_ERROR( rc )              \
+      #define RETURN_ON_ERROR( rc )       \
+      {                                   \
          if( rc != TA_SUCCESS )           \
          {                                \
             (*privateHandle->minidriver->releaseQuery)(queryResult); \
             TA_TRACE_RETURN( rc );        \
-         }
+         }                                \
+      }
+      #define RETURN_FUNC( rc )           \
+      {                                   \
+         (*privateHandle->minidriver->releaseQuery)(queryResult); \
+         TA_TRACE_RETURN( rc );        \
+      }
 
       /* find the category column number, if present */
       retCode = (*privateHandle->minidriver->getNumColumns)(
@@ -228,7 +235,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
       } 
       if( catCol == resColumns )
       {
-         RETURN_ON_ERROR( TA_CATEGORY_NOT_FOUND );
+         RETURN_FUNC( TA_CATEGORY_NOT_FOUND );
       }
 
       /* find the symbol column number, if present */
@@ -271,7 +278,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
 
          if( !cat_name )
          {
-            RETURN_ON_ERROR( TA_ALLOC_ERR );
+            RETURN_FUNC( TA_ALLOC_ERR );
          }
 
          if( symCol < resColumns )  /* we can collect symbols as well */
@@ -293,7 +300,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
 
                 if( !sym_name )
                 {
-                    RETURN_ON_ERROR( TA_ALLOC_ERR );
+                    RETURN_FUNC( TA_ALLOC_ERR );
                 }
             }
          }
@@ -333,6 +340,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    }
 
 #undef RETURN_ON_ERROR
+#undef RETURN_FUNC
    
    TA_TRACE_RETURN( retCode );
 }
@@ -369,7 +377,7 @@ static TA_RetCode freePrivateHandle( TA_PrivateSQLHandle *privateHandle )
 
       if( privateHandle->theCategoryIndex )
       {
-         retCode = TA_ListFreeAll(privateHandle->theCategoryIndex, &freeCategoryIndex);
+         retCode = TA_ListFreeAll(privateHandle->theCategoryIndex, freeCategoryIndex);
          privateHandle->theCategoryIndex = NULL;
       }
 
@@ -415,7 +423,7 @@ static TA_RetCode freeCategoryIndex( void *toBeFreed )
 
    if( node->theSymbols && retCode == TA_SUCCESS )
    {
-      retCode = TA_ListFreeAll( node->theSymbols, &freeSymbolsIndex);
+      retCode = TA_ListFreeAll( node->theSymbols, freeSymbolsIndex);
       node->theSymbols = NULL;
    }
    
@@ -579,12 +587,19 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
       }
       
       /* from now on: the query has to be released upon premature return */
-#define RETURN_ON_ERROR( rc )              \
+      #define RETURN_ON_ERROR( rc )       \
+      {                                   \
          if( rc != TA_SUCCESS )           \
          {                                \
             (*privateHandle->minidriver->releaseQuery)(queryResult); \
             TA_TRACE_RETURN( rc );        \
-         }
+         } \
+      }
+      #define RETURN_FUNC( rc )           \
+      {                                   \
+         (*privateHandle->minidriver->releaseQuery)(queryResult); \
+         TA_TRACE_RETURN( rc );        \
+      }
 
 
       /* find the symbol column number, if present */
@@ -610,7 +625,7 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
       }
       if( symCol == resColumns )
       {
-         RETURN_ON_ERROR( TA_BAD_QUERY );
+         RETURN_FUNC( TA_BAD_QUERY );
       }
 
       /* iterate through all rows */
@@ -635,7 +650,7 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
 
          if( !sym_name )
          {
-            RETURN_ON_ERROR( TA_ALLOC_ERR );
+            RETURN_FUNC( TA_ALLOC_ERR );
          }
 
          if( strcmp(TA_StringToChar(sym_name), "") != 0 )  /* ignore NULL fields */
@@ -675,6 +690,7 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
    }
 
 #undef RETURN_ON_ERROR
+#undef RETURN_FUNC
       
    TA_TRACE_RETURN( retCode );   
 }

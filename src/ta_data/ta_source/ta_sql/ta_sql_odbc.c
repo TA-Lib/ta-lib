@@ -432,7 +432,7 @@ static TA_RetCode TA_SQL_ODBC_GetColumnName(void *query_result, int column, cons
    privStatement = (TA_SQL_ODBC_Statement*)query_result;
    TA_ASSERT( column < privStatement->numCols );
 
-   *name = privStatement->columns[column].name;
+   *name = (const char *)privStatement->columns[column].name;
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -740,6 +740,7 @@ static TA_RetCode freeRowData( TA_SQL_ODBC_Statement *statement )
    return TA_SUCCESS;
 }
 
+#if 0
 static void printDiagnostic( SQLHSTMT hstmt )
 {
    SQLRETURN sqlRetCode;
@@ -758,3 +759,4 @@ static void printDiagnostic( SQLHSTMT hstmt )
       OutputDebugString(message);
    }
 }
+#endif
