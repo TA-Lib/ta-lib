@@ -945,7 +945,7 @@ static void doForEachUnstableFunction( const TA_FuncInfo *funcInfo,
 
    if( funcInfo->flags & TA_FUNC_FLG_UNST_PER )
    {
-      fprintf( gOutDefs_H->file, "    /* %03d */  TA_FUNC_UNST_%s,\n", *i, funcInfo->name );
+      print( gOutDefs_H->file, "    /* %03d */  TA_FUNC_UNST_%s,\n", *i, funcInfo->name );
       (*i)++;
    }
 }
@@ -2058,8 +2058,11 @@ static void doDefsFile( void )
    /* Generate the GENCODE SECTION */
    out = gOutDefs_H->file;
    
+   genPrefix = 1;
    addFuncEnumeration( out );
    addUnstablePeriodEnum( out );
+   print( out, "\n" );
+   genPrefix = 0;
 
    fileClose( gOutDefs_H );
    fileDelete( FILE_TA_DEFS_TMP );
@@ -2552,28 +2555,19 @@ static int addUnstablePeriodEnum( FILE *out )
 {
    TA_RetCode retCode;
    unsigned int id;
-   
-   fprintf( out, "\n" );
-   fprintf( out, "#if defined( _MANAGED )\n");
-   fprintf( out, "__value enum TA_FuncUnstId\n");
-   fprintf( out, "#else\n");
-   fprintf( out, "typedef enum\n");
-   fprintf( out, "#endif\n");
-   fprintf( out, "{\n");
+
+   print( out, "\n" );
+   print( out, "ENUM_BEGIN( TA_FuncUnstId )\n");
 
    /* Enumerate the function having an "unstable period". Give
-    * to each an unique identifier.
+    * to each a unique identifier.
     */
    id = 0;
    retCode = TA_ForEachFunc( doForEachUnstableFunction, &id );
 
-   fprintf( out, "               TA_FUNC_UNST_ALL,\n");
-   fprintf( out, "               TA_FUNC_UNST_NONE=-1\n" );
-   fprintf( out, "#if defined( _MANAGED )\n");
-   fprintf( out, "};\n");
-   fprintf( out, "#else\n");
-   fprintf( out, "} TA_FuncUnstId;\n");
-   fprintf( out, "#endif\n");
+   print( out, "               TA_FUNC_UNST_ALL,\n");
+   print( out, "               TA_FUNC_UNST_NONE=-1\n" );
+   print( out, "ENUM_END( TA_FuncUnstId )\n");
 
    if( retCode != TA_SUCCESS )
       return -1;
@@ -2798,30 +2792,20 @@ static void addFuncEnumeration( FILE *out )
    TA_IntegerList *intList;
    unsigned int j;
 
+   print( out, "\n" );
    /* Add the TA_MAType enumeration */
-   intList = (TA_IntegerList *)TA_DEF_UI_MA_Method.dataSet;
-   fprintf( out, "\n" );
-   fprintf( out, "#if defined( _MANAGED )\n" );
-   fprintf( out, "__value enum TA_MAType\n" );
-   fprintf( out, "#else\n" );
-   fprintf( out, "typedef enum\n" );
-   fprintf( out, "#endif\n" );
-   fprintf( out, "{\n" );
+   intList = (TA_IntegerList *)TA_DEF_UI_MA_Method.dataSet;   
+   print( out, "ENUM_BEGIN( TA_MAType )\n" );
    for( j=0; j < intList->nbElement; j++ )
    {
       strcpy( gTempBuf, intList->data[j].string );
       strconvch( gTempBuf, ' ', '_' );
       trim( gTempBuf );
       strupc( gTempBuf );
-      fprintf( out, "   TA_MAType_%-10s=%d%s", gTempBuf, intList->data[j].value,
+      print( out, "   TA_MAType_%-10s=%d%s", gTempBuf, intList->data[j].value,
                      j < (intList->nbElement)-1?",\n":"\n");
    }
-
-   fprintf( out, "#if defined( _MANAGED )\n" );
-   fprintf( out, "};\n" );
-   fprintf( out, "#else\n" );
-   fprintf( out, "} TA_MAType;\n" );
-   fprintf( out, "#endif\n" );
+   print( out, "ENUM_END( TA_MAType )\n" );
 }
 
 static void extractTALogic( FILE *inFile, FILE *outFile )
@@ -3071,14 +3055,6 @@ static void appendToFunc( FILE *out )
    fprintf( out, " * to allow the user to specify what should be the meaning of \n" );
    fprintf( out, " * 'long body', 'short shadows', etc.\n" );
    fprintf( out, " */\n" );
-   fprintf( out, "\n" );
-   fprintf( out, "/* TA_CandleSetting is the one setting struct */\n" );
-   fprintf( out, "typedef struct {\n" );
-   fprintf( out, "    TA_CandleSettingType    settingType;\n" );
-   fprintf( out, "    TA_RangeType            rangeType;\n" );
-   fprintf( out, "    int                     avgPeriod;\n" );
-   fprintf( out, "    double                  factor;\n" );
-   fprintf( out, "} TA_CandleSetting;\n" );
    fprintf( out, "\n" );
    fprintf( out, "/* Call TA_SetCandleSettings to set that when comparing a candle \n" );
    fprintf( out, " * basing on settingType it must be compared with the average \n" );
