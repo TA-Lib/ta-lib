@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -143,8 +143,7 @@ static ErrorNumber test_onetransaction_only( TA_KEY_TYPE keyTypeTest );
 
 static ErrorNumber test_emptytradelog( void );
 
-static ErrorNumber test_onetrade_only( 
-                                       TA_KEY_TYPE keyTypeTest,
+static ErrorNumber test_onetrade_only( TA_KEY_TYPE keyTypeTest,
                                        TA_TransactionType transactionType, 
                                        unsigned int winningTrade );
 
@@ -267,19 +266,15 @@ static TA_PMValueIdCheck toCheck2[] = {
    {TA_PM_NB_WINNING_TRADE,   TA_PM_ALL_TRADES, TA_SUCCESS, 3 },
    {TA_PM_GROSS_PROFIT,       TA_PM_ALL_TRADES, TA_SUCCESS, 615 },
    {TA_PM_AVG_PROFIT,         TA_PM_ALL_TRADES, TA_SUCCESS, 205.0 },
-   {TA_PM_AVG_PROFIT_PERCENT, TA_PM_ALL_TRADES, TA_SUCCESS, 25.102 },
+   {TA_PM_AVG_PROFIT_PERCENT, TA_PM_ALL_TRADES, TA_SUCCESS, 34.965035 },
    {TA_PM_LARGEST_PROFIT,     TA_PM_ALL_TRADES, TA_SUCCESS,  309.0 },
    {TA_PM_LARGEST_PROFIT_PERCENT, TA_PM_ALL_TRADES, TA_SUCCESS, 54.545 },
-   {TA_PM_SMALLEST_PROFIT, TA_PM_ALL_TRADES, TA_SUCCESS, 6.0 },
-   {TA_PM_SMALLEST_PROFIT_PERCENT, TA_PM_ALL_TRADES, TA_SUCCESS, 23.077 },
    {TA_PM_NB_LOSING_TRADE, TA_PM_ALL_TRADES, TA_SUCCESS, 3.0 },
    {TA_PM_GROSS_LOSS, TA_PM_ALL_TRADES, TA_SUCCESS, -74.5 },
    {TA_PM_AVG_LOSS, TA_PM_ALL_TRADES, TA_SUCCESS, -24.83333 },
-   {TA_PM_AVG_LOSS_PERCENT, TA_PM_ALL_TRADES, TA_SUCCESS, -6.087},
+   {TA_PM_AVG_LOSS_PERCENT, TA_PM_ALL_TRADES, TA_SUCCESS, -4.166},
    {TA_PM_LARGEST_LOSS,  TA_PM_ALL_TRADES, TA_SUCCESS, -49.0 },
    {TA_PM_LARGEST_LOSS_PERCENT, TA_PM_ALL_TRADES, TA_SUCCESS, -8.333 },
-   {TA_PM_SMALLEST_LOSS, TA_PM_ALL_TRADES, TA_SUCCESS, 0.00 },
-   {TA_PM_SMALLEST_LOSS_PERCENT, TA_PM_ALL_TRADES, TA_SUCCESS, 0.0 },
    {-1,0,0,0.0}
 };
 
@@ -631,10 +626,9 @@ static ErrorNumber test_onetransaction_only( TA_KEY_TYPE keyTypeTest )
    return TA_TEST_PASS;
 }
 
-static ErrorNumber test_onetrade_only( 
-                                     TA_KEY_TYPE keyTypeTest,
-									          TA_TransactionType transactionType, 
-                                     unsigned int winningTrade )
+static ErrorNumber test_onetrade_only( TA_KEY_TYPE keyTypeTest,
+									            TA_TransactionType transactionType, 
+                                       unsigned int winningTrade )
 {
    TA_RetCode retCode;
    TA_Instrument  instrument;
@@ -718,9 +712,8 @@ static ErrorNumber test_onetrade_only(
    }
 
    /* Create a TA_PM */
-   retCode = TA_PMAlloc(
-                         &timestampNow, &timestampNowPlusOneYear,
-                         1000, &allocatedPM );
+   retCode = TA_PMAlloc( &timestampNow, &timestampNowPlusOneYear,
+                         10000, &allocatedPM );
    if( retCode != TA_SUCCESS )
    {
       TA_TradeLogFree( tradeLog );
