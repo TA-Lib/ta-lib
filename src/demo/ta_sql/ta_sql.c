@@ -11,8 +11,6 @@
 #include <windows.h>
 #endif
 */
-#undef TA_CATEGORY_MAX_LENGTH
-#define TA_CATEGORY_MAX_LENGTH 200
 
 typedef enum
 {
