@@ -271,10 +271,10 @@ static int testTAFunction_ALL( TA_History *history )
       printf( "done.\n" ); \
       }
 
+   DO_TEST( test_func_per_hlcv, "MFI,AD,ADOSC" );
    DO_TEST( test_func_1in_1out, "Function Group 1-1" );
    DO_TEST( test_func_ma,       "All Moving Averages" );
    DO_TEST( test_func_1in_2out, "Function Group 1-2" );
-   DO_TEST( test_func_per_hlcv, "MFI,AD,ADOSC" );
    DO_TEST( test_func_per_hl,   "AROON" );
    DO_TEST( test_func_rsi,      "RSI" );
    DO_TEST( test_func_per_ema,  "TRIX" );
