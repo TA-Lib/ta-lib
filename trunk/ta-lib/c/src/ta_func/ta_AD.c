@@ -90,8 +90,9 @@ TA_RetCode TA_AD( TA_Integer    startIdx,
 {
 	/* insert local variable here */
    TA_Integer nbBar, today, outIdx;
+
    TA_Real high, low, close, tmp;
-   TA_Real cumulative;
+   TA_Real ad;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -117,6 +118,21 @@ TA_RetCode TA_AD( TA_Integer    startIdx,
 
    /* Insert TA function code here. */
 
+   /* Note: Results from this function might vary slightly
+    *       from what Metastock outputs. The reason being
+    *       that Metastock use float instead of double and 
+    *       this cause a different number of precision digit to 
+    *       be used.
+    *
+    *       For most function, this is not an apparent difference
+    *       but for function using large cummulative values (like
+    *       this AD function), minor imprecision adds up and becomes
+    *       significative.
+    *
+    *       For better precision, TA-Lib always use double in
+    *       all its calculations.
+    */
+
    /* Default return values */
    nbBar = endIdx-startIdx+1;
    *outNbElement = nbBar;
@@ -124,25 +140,19 @@ TA_RetCode TA_AD( TA_Integer    startIdx,
    outIdx = 0;
    today  = 0;
    outIdx = 0;
-   cumulative = 0.0;
+   ad = 0.0;
 
    while( nbBar != 0 )
    {
       high  = inHigh_0[today];
       low   = inLow_0[today];
-      tmp = high-low;
+      tmp   = high-low;
       close = inClose_0[today];
 
       if( tmp > 0.0 )
-      {
-         cumulative += (((close-low)-(high-close))/tmp)*((double)inVolume_0[today]);
-         outReal_0[outIdx++] = cumulative;
-      }
-      else
-      {
-         *outNbElement = 0;
-         return TA_BAD_PARAM;
-      }
+         ad += (((close-low)-(high-close))/tmp)*((double)inVolume_0[today]);
+      
+      outReal_0[outIdx++] = ad;
 
       today++;
       nbBar--;
