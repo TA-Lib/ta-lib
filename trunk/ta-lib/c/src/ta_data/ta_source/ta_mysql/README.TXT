@@ -96,8 +96,12 @@ Example:
 TA_AddDataSourceParam.info = "SELECT * FROM stock_data WHERE '$<' <= date AND '$'> >= date ORDER BY date"
 TA_AddDataSourceParam.info = "SELECT * FROM stock_data WHERE date BETWEEN '$<' AND '$>' ORDER BY date"
 
-Note that the order of the data is important! TA-Lib cannot process unordered 
-historical data.
+IMPORTANT NOTES
+---------------
+The order of the data is important! TA-Lib cannot process unordered 
+historical data.  Data should be ordered by date, time (or just date if time
+is not available).  All rows should be unique on (date, time) key (or just
+date if time is not available).
 
 ========================================================================
 Compilation Notes
