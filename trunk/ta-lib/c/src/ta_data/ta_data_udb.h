@@ -70,7 +70,6 @@ typedef struct
    /* This structure keep tracks of everything needed to retreive
     * a symbol from a particular data source drivers.
     */
-   TA_SourceId          index;
    TA_DataSourceHandle *sourceHandle;
    TA_CategoryHandle   *categoryHandle;
    TA_SymbolHandle      symbolHandle;
@@ -79,6 +78,9 @@ typedef struct
     * this structure into the listDriverHandle in the TA_UDB_Symbol.
     */
    TA_ListNode node;
+
+   /* Parameters that were used when TA_AddDataSource was done. */
+   const TA_AddDataSourceParamPriv *addDataSourceParamPriv;
 
    /* Allocation Strategy: This structure does not owns the pointed elements. */
 } TA_UDB_Driver;
