@@ -77,10 +77,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::TRANGE_Lookback( /* Generated */ void )
+/* Generated */ int Core::TRANGE_Lookback( void )
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_TRANGE_Lookback( /* Generated */ void )
+/* Generated */ int TA_TRANGE_Lookback( void )
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
