@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,7 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  AA       Andrew Atkinson
  *
  * Change history:
  *
@@ -45,6 +45,7 @@
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  062804 MF   Resolve div by zero bug on limit case.
+ *  020605 AA   Fix #1117666 Lookback bug.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -88,10 +89,9 @@
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   (void)optInFastPeriod;
 
    /* The slow MA is the key factor determining the lookback period. */
-   return TA_MA_Lookback( optInSlowPeriod, optInMAType );
+   return TA_MA_Lookback( max(optInSlowPeriod,optInFastPeriod), optInMAType );
 }
 
 
