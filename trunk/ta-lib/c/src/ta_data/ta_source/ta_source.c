@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  110199 MF   First version.
- *
+ *  032704 MF   Add CSI and CSIM support.
  */
 
 /* Description:
@@ -70,6 +70,7 @@
 #include "ta_simulator.h"
 #include "ta_yahoo.h"
 #include "ta_sql.h"
+#include "ta_csi.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -134,34 +135,35 @@ const TA_DataSourceDriver TA_gDataSourceTable[] =
         TA_SQL_GetFirstSymbolHandle,
         TA_SQL_GetNextSymbolHandle,
         TA_SQL_GetHistoryData
-    }
-
-#if 0
-    {   /* TA_CSI format. */
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL
     },
 
-    {   /* TA_COMP format. */
+    {   /* TA_CSI format. */
+        "CSI",
+        TA_CSI_InitializeSourceDriver,
+        TA_CSI_ShutdownSourceDriver,
+        TA_CSI_GetParameters,
+        TA_CSI_OpenSource,
+        TA_CSI_CloseSource,
+        TA_CSI_GetFirstCategoryHandle,
         NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-    }
-#endif
+        TA_CSI_GetFirstSymbolHandle,
+        TA_CSI_GetNextSymbolHandle,
+        TA_CSI_GetHistoryData
+    },
 
+    {   /* TA_CSIM format. */
+        "CSIM",
+        TA_CSIM_InitializeSourceDriver,
+        TA_CSIM_ShutdownSourceDriver,
+        TA_CSIM_GetParameters,
+        TA_CSIM_OpenSource,
+        TA_CSIM_CloseSource,
+        TA_CSIM_GetFirstCategoryHandle,
+        NULL,
+        TA_CSIM_GetFirstSymbolHandle,
+        TA_CSIM_GetNextSymbolHandle,
+        TA_CSIM_GetHistoryData
+    }
 };
 
 const unsigned int TA_gDataSourceTableSize = (sizeof(TA_gDataSourceTable)/sizeof(TA_DataSourceDriver));
