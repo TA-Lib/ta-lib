@@ -112,10 +112,10 @@
  * Optional Parameters
  * -------------------
  * optInAcceleration_0:(From TA_REAL_MIN to TA_REAL_MAX)
- *    Acceleration Factor used up to the Maximum parameter
+ *    Acceleration Factor used up to the Maximum value
  * 
  * optInMaximum_1:(From TA_REAL_MIN to TA_REAL_MAX)
- *    Maximum value for the acceleration factor
+ *    Acceleration Factor Maximum value
  * 
  * 
  */
