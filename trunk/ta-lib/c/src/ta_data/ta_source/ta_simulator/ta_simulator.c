@@ -360,7 +360,7 @@ TA_RetCode TA_SIMULATOR_GetFirstSymbolHandle( TA_DataSourceHandle *handle,
    }
 
    /* Get the first symbol in this category. */
-   switch( (unsigned int)categoryHandle->opaqueData )
+   switch( (unsigned long)categoryHandle->opaqueData )
    {
    case 0: /* This is TA_SIM_REF */
       privData->catRefIter = 1;
@@ -403,7 +403,7 @@ TA_RetCode TA_SIMULATOR_GetNextSymbolHandle( TA_DataSourceHandle *handle,
       TA_TRACE_RETURN( TA_INTERNAL_ERROR(96) );
    }
    /* Get the first symbol in this category. */
-   switch( (unsigned int)categoryHandle->opaqueData )
+   switch( (unsigned long)categoryHandle->opaqueData )
    {
    case 0: /* This is TA_SIM_REF */
       if( privData->catRefIter == 1 )
@@ -465,10 +465,10 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_DataSourceHandle *handle,
     */
 
    /* Identify the category. */
-   switch( (unsigned int)categoryHandle->opaqueData )
+   switch( (unsigned long)categoryHandle->opaqueData )
    {
    case 0: /* This is TA_SIM_REF */
-      switch( (unsigned int)symbolHandle->opaqueData )
+      switch( (unsigned long)symbolHandle->opaqueData )
       {
       case 0:
           timestamp = (TA_Timestamp *)NULL;

@@ -1520,9 +1520,9 @@ getstrfld (
        if (curfld == fldno)
          {
            strncpy (retstr, strptr,
-              (!(int)offset ? (int)strlen (strptr)+ 1 :
-              (int)(offset - strptr)));
-           if ((int)offset)
+              (!offset ? strlen (strptr)+ 1 :
+              (size_t)(offset - strptr)));
+           if (offset)
               retstr[offset - strptr - 1] = 0;
 
            break;
@@ -1579,8 +1579,8 @@ setstrfld (
        if (curfld == fldno)
           {
             insertstring (strptr, strtoins,
-               (int)(!(int)offset ? (int)strlen (strptr):
-               (int)(offset - strptr)));
+               (!offset ? (int)strlen (strptr):
+               (offset - strptr)));
             break;
           }
        curfld++;
@@ -1630,7 +1630,7 @@ getstrfldlen (
          }
        if (curfld == fldno)
          {
-           retlen = (!offset ? (int)strlen (strptr) + 1 : ((int)offset - (int)strptr));
+           retlen = (!offset ? (int)strlen (strptr) + 1 : (offset - strptr));
            break;
          }
        curfld++;

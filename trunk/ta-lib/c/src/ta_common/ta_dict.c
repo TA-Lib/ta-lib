@@ -289,7 +289,7 @@ TA_RetCode TA_DictAddPair_I( TA_Dict *dict,
    kazlibDict = &theDict->d;
 
    /* Verify if an entry exist already with the same key. */
-   node = dict_lookup( kazlibDict, (void *)key );
+   node = dict_lookup( kazlibDict, (void *)(long)key );
 
    if( node )
    {
@@ -305,7 +305,7 @@ TA_RetCode TA_DictAddPair_I( TA_Dict *dict,
    else
    {
       /* Insert the new key-value pair in the dictionary. */
-      if( !dict_alloc_insert( kazlibDict, (void *)key, value ) )
+      if( !dict_alloc_insert( kazlibDict, (void *)(long)key, value ) )
          return TA_ALLOC_ERR;
    }
 
@@ -398,7 +398,7 @@ TA_RetCode TA_DictDeletePair_I( TA_Dict *dict, int key )
    kazlibDict = &theDict->d;
 
    /* Find the key-value pair. */
-   node = dict_lookup( kazlibDict, (void *)key );
+   node = dict_lookup( kazlibDict, (void *)(long)key );
 
    if( node )
    {
@@ -472,7 +472,7 @@ void *TA_DictGetValue_I( TA_Dict *dict, int key )
       return NULL;
 
    /* Find the key-value pair. */
-   node = dict_lookup( &theDict->d, (void *)key );
+   node = dict_lookup( &theDict->d, (void *)(long)key );
 
    if( !node )
       return NULL;
@@ -594,5 +594,6 @@ static int compareFunction_S( const void *key1, const void *key2 )
 
 static int compareFunction_I( const void *key1, const void *key2 )
 {
-   return (int)key1 - (int)key2;
+   long res = (long)key1 - (long)key2;
+   return (res > 0)? 1 : (res < 0)? -1 : 0;
 }

@@ -97,8 +97,8 @@ typedef struct
    char *str;
    const char *date;
    const char *time;
-   unsigned int param1;
-   unsigned int param2;
+   unsigned long param1;
+   unsigned long param2;
    unsigned int type;
 } TA_FatalErrorLog;
 
@@ -344,7 +344,7 @@ void TA_PrivTraceBegin( const char *funcname,
 void TA_PrivError( unsigned int type, const char *str,
                    const char *filename, const char *date,
                    const char *time, int line,
-                   unsigned int j, unsigned int k )
+                   unsigned long j, unsigned long k )
 {
    TA_RetCode retCode;
    TA_TraceGlobal *global;

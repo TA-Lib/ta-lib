@@ -543,11 +543,11 @@ void      *ptr
       return;
 
 #if defined(TA_MEM_WHERE)
-   if( (ptr == (TA_MEMHDR *)0x0) || (ptr == (TA_MEMHDR *)0xFFFFFFFF) )
+   if( (ptr == (TA_MEMHDR *)0x0) || (ptr == (TA_MEMHDR *)UINT_MAX) )
    {
       if( TA_IsTraceEnabled() )
       {
-         TA_FATAL_NO_RET(  "Invalid Memory Block", (unsigned int)ptr, (unsigned int)lin );
+         TA_FATAL_NO_RET(  "Invalid Memory Block", (unsigned long)ptr, (unsigned int)lin );
       }
 	   return;
    }
@@ -724,7 +724,7 @@ void internalMemDisplay( TA_MemoryGlobal *global, FILE *fp )
    while (p != NULL && (idx < MAX_DISPLAY_LINE) )
    {
       /* Unused? ((const char *)p)+TA_RESERVE_SIZE+(sizeof(unsigned int)*2) */
-      fprintf(fp, "%5d%6u %08X", idx++, p->mh_size, (unsigned int)(TA_HDR_2_CLIENT(p)) ) ;
+      fprintf(fp, "%5d%6lu %08lX", idx++, (unsigned long)p->mh_size, (unsigned long)(TA_HDR_2_CLIENT(p)) ) ;
       #if defined(TA_MEM_WHERE)
          fprintf(fp, "  %s(%d)", p->mh_file, p->mh_line) ;
       #endif
@@ -821,14 +821,14 @@ int        lin
 
    if( *TA_MEMTAG_H_PTR(p) != TA_MEMTAG_H )
    {
-       TA_FATAL_RET( "Header Out-of-bound memory access", (unsigned int)p, (unsigned int)lin, TA_ALLOC_ERR );
+       TA_FATAL_RET( "Header Out-of-bound memory access", (unsigned long)p, (unsigned long)lin, TA_ALLOC_ERR );
    }
    else if( *TA_MEMTAG_T_PTR(p) != TA_MEMTAG_T)
    {
-       TA_FATAL_RET( "Trailer Out-of-bound memory access", (unsigned int)p, (unsigned int)lin, TA_ALLOC_ERR );
+       TA_FATAL_RET( "Trailer Out-of-bound memory access", (unsigned long)p, (unsigned long)lin, TA_ALLOC_ERR );
    }
 
-   TA_FATAL_RET( "Bad memory allocation memtag", (unsigned int)p, (unsigned int)lin, TA_ALLOC_ERR );
+   TA_FATAL_RET( "Bad memory allocation memtag", (unsigned long)p, (unsigned long)lin, TA_ALLOC_ERR );
 }
 
 
