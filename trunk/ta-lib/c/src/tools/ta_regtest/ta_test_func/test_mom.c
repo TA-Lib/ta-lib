@@ -352,6 +352,17 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
                             outputBuffer );
       *lookback = TA_ROCR100_Lookback(testParam->test->optInTimePeriod_0 );
       break;
+   case TA_ROCP_TEST:
+      retCode = TA_ROCP( libHandle,
+                         startIdx,
+                         endIdx,
+                         testParam->close,
+                         testParam->test->optInTimePeriod_0,                         
+                         outBegIdx,
+                         outNbElement,
+                         outputBuffer );
+      *lookback = TA_ROCP_Lookback(testParam->test->optInTimePeriod_0 );
+      break;
    default:
       retCode = TA_INTERNAL_ERROR(130);
    }
@@ -422,6 +433,20 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                             &outNbElement,
                             gBuffer[0].out0 );
       break;
+
+   case TA_ROCP_TEST:
+      retCode = TA_ROCP( libHandle,
+                         test->startIdx,
+                         test->endIdx,
+                         gBuffer[0].in,
+                         test->optInTimePeriod_0,                         
+                         &outBegIdx,
+                         &outNbElement,
+                         gBuffer[0].out0 );
+      break;
+
+   default:
+      retCode = TA_BAD_PARAM;
    }
 
    errNb = checkDataSame( gBuffer[0].in, history->close,history->nbBars );
@@ -477,6 +502,16 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                             &outBegIdx,
                             &outNbElement,
                             gBuffer[1].in );
+      break;
+   case TA_ROCP_TEST:
+      retCode = TA_ROCP( libHandle,
+                         test->startIdx,
+                         test->endIdx,
+                         gBuffer[1].in,
+                         test->optInTimePeriod_0,                         
+                         &outBegIdx,
+                         &outNbElement,
+                         gBuffer[1].in );
       break;
    }
 
