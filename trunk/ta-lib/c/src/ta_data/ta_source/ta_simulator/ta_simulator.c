@@ -176,12 +176,6 @@ TA_RetCode TA_SIMULATOR_OpenSource( const TA_AddDataSourceParamPriv *param,
       TA_TRACE_RETURN( TA_INTERNAL_ERROR(91) );
    }
 
-   /* Verify that the requested functionality is supported or not. */
-   if( param->flags & TA_REPLACE_ZERO_PRICE_BAR )
-   {
-      TA_TRACE_RETURN( TA_NOT_SUPPORTED );
-   }
-
    /* Allocate and initialize the handle. This function will also allocate the
     * private handle (opaque data).
     */
