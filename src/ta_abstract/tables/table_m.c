@@ -99,7 +99,7 @@ static const TA_OutputParameterInfo   *TA_MA_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_MA_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_30,
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
   &TA_DEF_UI_MA_Method,
   NULL
 };
@@ -221,7 +221,7 @@ static const TA_OutputParameterInfo   *TA_MAX_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_MAX_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_30,
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
   NULL
 };
 
@@ -274,7 +274,7 @@ static const TA_OutputParameterInfo   *TA_MFI_Outputs[]   =
 
 static const TA_OptInputParameterInfo *TA_MFI_OptInputs[] = 
 {
-  &TA_DEF_UI_TimePeriod_14,
+  &TA_DEF_UI_TimePeriod_14_MINIMUM2,
   NULL
 };
 
@@ -301,7 +301,7 @@ static const TA_OutputParameterInfo   *TA_MIDPRICE_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_MIDPRICE_OptInputs[] = 
-{ &TA_DEF_UI_TimePeriod_14,
+{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
   NULL
 };
 
@@ -329,7 +329,7 @@ static const TA_OutputParameterInfo   *TA_MIDPOINT_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_MIDPOINT_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_14,
+{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
   NULL
 };
 
@@ -356,7 +356,7 @@ static const TA_OutputParameterInfo   *TA_MIN_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_MIN_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_30,
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
   NULL
 };
 

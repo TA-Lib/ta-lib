@@ -19,6 +19,7 @@ extern const TA_FuncDef TA_DEF_MIN;
 extern const TA_FuncDef TA_DEF_BBANDS;
 extern const TA_FuncDef TA_DEF_DEMA;
 extern const TA_FuncDef TA_DEF_EMA;
+extern const TA_FuncDef TA_DEF_KAMA;
 extern const TA_FuncDef TA_DEF_MA;
 extern const TA_FuncDef TA_DEF_MIDPRICE;
 extern const TA_FuncDef TA_DEF_MIDPOINT;
@@ -75,6 +76,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_BBANDS,
 &TA_DEF_DEMA,
 &TA_DEF_EMA,
+&TA_DEF_KAMA,
 &TA_DEF_MA,
 &TA_DEF_MIDPRICE,
 &TA_DEF_MIDPOINT,

@@ -232,7 +232,12 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 0, history->high,  history->nbBars );
    setInputBuffer( 1, history->low,   history->nbBars );
    setInputBuffer( 2, history->close, history->nbBars );
-      
+
+   /* Clear the unstable periods from previous tests. */
+   retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_MFI, 0 );
+   if( retCode != TA_SUCCESS )
+      return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;      
+
    /* Make a simple first call. */
    switch( test->theFunction )
    {
@@ -392,22 +397,29 @@ static ErrorNumber do_test( const TA_History *history,
    CHECK_EXPECTED_VALUE( gBuffer[2].in, 0 );
    setInputBuffer( 2, history->close, history->nbBars );
 
-   /* Do a systematic test of most of the
-    * possible startIdx/endIdx range.
-    */
-   testParam.test   = test;
-   testParam.high   = history->high;
-   testParam.low    = history->low;
-   testParam.close  = history->close;
-   testParam.volume = history->volume;
-
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( rangeTestFunction, 
-                           TA_FUNC_UNST_NONE,
-                           (void *)&testParam, 1, 0 );
-      if( errNb != TA_TEST_PASS )
-         return errNb;
+      /* Do a systematic test of most of the
+       * possible startIdx/endIdx range.
+       */
+      testParam.test   = test;
+      testParam.high   = history->high;
+      testParam.low    = history->low;
+      testParam.close  = history->close;
+      testParam.volume = history->volume;
+
+      switch( test->theFunction )
+      {
+      case TA_MFI_TEST:
+         errNb = doRangeTest( rangeTestFunction, 
+                              TA_FUNC_UNST_MFI,
+                              (void *)&testParam, 1, 0 );
+         if( errNb != TA_TEST_PASS )
+            return errNb;
+         break;
+      default:
+         break;
+      }
    }
 
    return TA_TEST_PASS;

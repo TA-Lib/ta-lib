@@ -264,6 +264,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_EMA.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_KAMA.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_MA.c
 # End Source File
 # Begin Source File

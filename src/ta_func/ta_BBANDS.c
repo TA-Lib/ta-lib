@@ -64,7 +64,7 @@
    #include "ta_utility.h"
 #endif
 
-int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                         TA_Real       optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                         TA_Real       optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
                         TA_Integer    optInMethod_3 ) 
@@ -87,7 +87,7 @@ int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
  *    Number of period
  * 
  * optInNbDevUp_1:(From TA_REAL_MIN to TA_REAL_MAX)
@@ -105,7 +105,7 @@ int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER
 TA_RetCode TA_BBANDS( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real inReal_0[],
-                      TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                      TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                       TA_Real       optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                       TA_Real       optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
                       TA_Integer    optInMethod_3,
@@ -138,7 +138,7 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
    /* min/max are checked for optInTimePeriod_0. */
    if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 5;
-   else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
+   else if( (optInTimePeriod_0 < 2) || (optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( optInNbDevUp_1 == TA_REAL_DEFAULT )
@@ -153,7 +153,7 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
 
    if( optInMethod_3 == TA_INTEGER_DEFAULT )
       optInMethod_3 = 0;
-   else if( (optInMethod_3 < 0) || (optInMethod_3 > 5) )
+   else if( (optInMethod_3 < 0) || (optInMethod_3 > 6) )
       return TA_BAD_PARAM;
 
    if( outRealUpperBand_0 == NULL )

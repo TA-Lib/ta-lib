@@ -36,7 +36,7 @@ static const TA_OutputParameterInfo   *TA_DEMA_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_DEMA_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_30,
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
   NULL
 };
 
@@ -63,7 +63,7 @@ static const TA_OutputParameterInfo   *TA_DX_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_DX_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_14,
+{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
   NULL
 };
 

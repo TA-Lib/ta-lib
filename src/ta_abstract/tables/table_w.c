@@ -60,7 +60,7 @@ static const TA_OutputParameterInfo   *TA_WILLR_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_WILLR_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_14,
+{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
   NULL
 };
 
@@ -87,7 +87,7 @@ static const TA_OutputParameterInfo   *TA_WMA_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_WMA_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_30,
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
   NULL
 };
 

@@ -160,6 +160,15 @@ const TA_IntegerRange TA_DEF_TimePeriod_Positive_Minimum5 =
    1              /* suggested increment */
 };
 
+const TA_IntegerRange TA_DEF_TimePeriod_Positive_Minimum2 =
+{
+   2,             /* min */
+   TA_INTEGER_MAX,/* max */
+   4,             /* suggested start */
+   200,           /* suggested end   */
+   1              /* suggested increment */
+};
+
 const TA_IntegerRange TA_DEF_HorizontalShiftPeriod =
 {
    -200,               /* min */
@@ -197,6 +206,76 @@ const TA_RealRange TA_DEF_NbDeviation =
  * Define from here the TA_OptInputParameterInfo.
  ****************************************************/
 
+const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_30_MINIMUM2 =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInTimePeriod",        /* paramName */
+   0,                        /* flags */
+
+   "Time Period",            /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2, /* dataSet */
+   30, /* defaultValue */
+   "Number of period", /* hint */
+
+   NULL /* helpFile */
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_MINIMUM2 =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInTimePeriod",        /* paramName */
+   0,                        /* flags */
+
+   "Time Period",            /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2, /* dataSet */
+   14, /* defaultValue */
+   "Number of period", /* hint */
+
+   NULL /* helpFile */
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_MINIMUM5 =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInTimePeriod",        /* paramName */
+   0,                        /* flags */
+
+   "Time Period",            /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum5, /* dataSet */
+   14, /* defaultValue */
+   "Number of period", /* hint */
+
+   NULL /* helpFile */
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_10_MINIMUM2 =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInTimePeriod",        /* paramName */
+   0,                        /* flags */
+
+   "Time Period",            /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2, /* dataSet */
+   10, /* defaultValue */
+   "Number of period", /* hint */
+
+   NULL /* helpFile */
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_5_MINIMUM2 =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInTimePeriod",        /* paramName */
+   0,                        /* flags */
+
+   "Time Period",            /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2, /* dataSet */
+   5, /* defaultValue */
+   "Number of period", /* hint */
+
+   NULL /* helpFile */
+};
+
 const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_30 =
 {
    TA_OptInput_IntegerRange, /* type */
@@ -219,20 +298,6 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14 =
 
    "Time Period",            /* displayName */
    (const void *)&TA_DEF_TimePeriod_Positive, /* dataSet */
-   14, /* defaultValue */
-   "Number of period", /* hint */
-
-   NULL /* helpFile */
-};
-
-const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_MINIMUM5 =
-{
-   TA_OptInput_IntegerRange, /* type */
-   "optInTimePeriod",        /* paramName */
-   0,                        /* flags */
-
-   "Time Period",            /* displayName */
-   (const void *)&TA_DEF_TimePeriod_Positive_Minimum5, /* dataSet */
    14, /* defaultValue */
    "Number of period", /* hint */
 
@@ -266,7 +331,6 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_5 =
 
    NULL /* helpFile */
 };
-
 
 
 /* Use for the multiplier of standard deviations. */
@@ -326,8 +390,9 @@ static const TA_IntegerDataPair TA_MA_TypeDataPair[] =
    {2,"WMA"},
    {3,"DEMA" },
    {4,"TEMA" },
-   {5,"TRIMA"}
-   /*{6,"Linear Regression"}*/
+   {5,"TRIMA"},
+   {6,"KAMA" }
+   /*{...,"Linear Regression"}*/
 };
 
 const TA_IntegerList TA_MA_TypeList =
@@ -360,7 +425,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_Fast_Period =
    0,                        /* flags */
 
    "Fast Period",            /* displayName */
-   (const void *)&TA_DEF_TimePeriod_Positive, /* dataSet */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2, /* dataSet */
    12, /* defaultValue */
    "Number of period for the fast MA", /* hint */
 
@@ -374,7 +439,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_Slow_Period =
    0,                        /* flags */
 
    "Slow Period",            /* displayName */
-   (const void *)&TA_DEF_TimePeriod_Positive, /* dataSet */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2, /* dataSet */
    26, /* defaultValue */
    "Number of period for the slow MA", /* hint */
 

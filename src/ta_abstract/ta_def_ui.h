@@ -68,9 +68,14 @@ extern const TA_OutputParameterInfo TA_DEF_UI_Output_Lines;
 /* Optional Inputs. */
 extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_30;
 extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14;
-extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_MINIMUM5;
 extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_10;
 extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_5;
+
+extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_30_MINIMUM2;
+extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_MINIMUM2;
+extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_MINIMUM5;
+extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_10_MINIMUM2;
+extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_5_MINIMUM2;
 
 extern const TA_OptInputParameterInfo TA_DEF_UI_VerticalShift;
 extern const TA_OptInputParameterInfo TA_DEF_UI_HorizontalShift;

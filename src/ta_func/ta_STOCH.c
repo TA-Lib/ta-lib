@@ -167,7 +167,7 @@ TA_RetCode TA_STOCH( TA_Integer    startIdx,
 
    if( optInSlowK_MAType_2 == TA_INTEGER_DEFAULT )
       optInSlowK_MAType_2 = 0;
-   else if( (optInSlowK_MAType_2 < 0) || (optInSlowK_MAType_2 > 5) )
+   else if( (optInSlowK_MAType_2 < 0) || (optInSlowK_MAType_2 > 6) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowD_Period_3. */
@@ -178,7 +178,7 @@ TA_RetCode TA_STOCH( TA_Integer    startIdx,
 
    if( optInSlowD_MAType_4 == TA_INTEGER_DEFAULT )
       optInSlowD_MAType_4 = 0;
-   else if( (optInSlowD_MAType_4 < 0) || (optInSlowD_MAType_4 > 5) )
+   else if( (optInSlowD_MAType_4 < 0) || (optInSlowD_MAType_4 > 6) )
       return TA_BAD_PARAM;
 
    if( outSlowK_0 == NULL )

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -60,7 +60,7 @@
    #include "ta_utility.h"
 #endif
 
-int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                     TA_Integer    optInMethod_1 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -91,6 +91,10 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX
    case TA_MA_TRIMA:
       return TA_TRIMA_Lookback( optInTimePeriod_0 );
       break;
+
+   case TA_MA_KAMA:
+      return TA_KAMA_Lookback( optInTimePeriod_0 );
+      break;
    }
 
    return 0;
@@ -105,7 +109,7 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
  *    Number of period
  * 
  * optInMethod_1:
@@ -117,7 +121,7 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX
 TA_RetCode TA_MA( TA_Integer    startIdx,
                   TA_Integer    endIdx,
                   const TA_Real inReal_0[],
-                  TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                  TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                   TA_Integer    optInMethod_1,
                   TA_Integer   *outBegIdx,
                   TA_Integer   *outNbElement,
@@ -141,12 +145,12 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
    /* min/max are checked for optInTimePeriod_0. */
    if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 30;
-   else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
+   else if( (optInTimePeriod_0 < 2) || (optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( optInMethod_1 == TA_INTEGER_DEFAULT )
       optInMethod_1 = 0;
-   else if( (optInMethod_1 < 0) || (optInMethod_1 > 5) )
+   else if( (optInMethod_1 < 0) || (optInMethod_1 > 6) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -192,7 +196,11 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
                        inReal_0, optInTimePeriod_0,
                        outBegIdx, outNbElement, outReal_0 );
       break;
-
+   case TA_MA_KAMA:
+      return TA_KAMA( startIdx, endIdx,
+                      inReal_0, optInTimePeriod_0,
+                      outBegIdx, outNbElement, outReal_0 );
+      break;
    }
 
    *outBegIdx    = 0;

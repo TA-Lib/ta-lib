@@ -26,6 +26,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_BBANDS.c \
 		..\..\..\..\..\src\ta_func\ta_DEMA.c \
 		..\..\..\..\..\src\ta_func\ta_EMA.c \
+		..\..\..\..\..\src\ta_func\ta_KAMA.c \
 		..\..\..\..\..\src\ta_func\ta_MA.c \
 		..\..\..\..\..\src\ta_func\ta_MIDPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_MIDPOINT.c \
@@ -73,6 +74,7 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_utility.obj \
 		..\..\..\..\..\temp\csd\ta_BBANDS.obj \
 		..\..\..\..\..\temp\csd\ta_DEMA.obj \
 		..\..\..\..\..\temp\csd\ta_EMA.obj \
+		..\..\..\..\..\temp\csd\ta_KAMA.obj \
 		..\..\..\..\..\temp\csd\ta_MA.obj \
 		..\..\..\..\..\temp\csd\ta_MIDPRICE.obj \
 		..\..\..\..\..\temp\csd\ta_MIDPOINT.obj \
@@ -147,6 +149,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_BBANDS.obj \
 +..\..\..\..\..\temp\csd\ta_DEMA.obj \
 +..\..\..\..\..\temp\csd\ta_EMA.obj \
++..\..\..\..\..\temp\csd\ta_KAMA.obj \
 +..\..\..\..\..\temp\csd\ta_MA.obj \
 +..\..\..\..\..\temp\csd\ta_MIDPRICE.obj \
 +..\..\..\..\..\temp\csd\ta_MIDPOINT.obj \
@@ -207,6 +210,7 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_BBANDS.obj
 	-del ..\..\..\..\..\temp\csd\ta_DEMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_EMA.obj
+	-del ..\..\..\..\..\temp\csd\ta_KAMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_MA.obj
 	-del ..\..\..\..\..\temp\csd\ta_MIDPRICE.obj
 	-del ..\..\..\..\..\temp\csd\ta_MIDPOINT.obj
@@ -281,6 +285,9 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_EMA.obj: ..\..\..\..\..\src\ta_func\ta_EMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_EMA.obj ..\..\..\..\..\src\ta_func\ta_EMA.c
+
+..\..\..\..\..\temp\csd\ta_KAMA.obj: ..\..\..\..\..\src\ta_func\ta_KAMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_KAMA.obj ..\..\..\..\..\src\ta_func\ta_KAMA.c
 
 ..\..\..\..\..\temp\csd\ta_MA.obj: ..\..\..\..\..\src\ta_func\ta_MA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_MA.obj ..\..\..\..\..\src\ta_func\ta_MA.c
