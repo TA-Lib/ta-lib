@@ -83,6 +83,14 @@ extern "C" {
 
 typedef struct
 {
+   Result *res;
+   int rownum;
+   Row row;
+   
+} TA_SQL_MySQL_QueryResult;
+
+typedef struct
+{
 #if !defined( TA_SINGLE_THREAD )
    TA_Sema sema;
 #endif
@@ -162,6 +170,7 @@ TA_RetCode TA_SQL_MySQL_ExecuteQuery(void *connection,
 {
    TA_PROLOG
    TA_SQL_MySQL_Connection *privConnection;
+   TA_SQL_MySQL_QueryResult *privResult = NULL;
    TA_RetCode retCode = TA_SUCCESS;
 
    TA_TRACE_BEGIN( TA_SQL_MySQL_ExecuteQuery );
@@ -169,7 +178,6 @@ TA_RetCode TA_SQL_MySQL_ExecuteQuery(void *connection,
    TA_ASSERT( connection != NULL );
 
    privConnection = (TA_SQL_MySQL_Connection*)connection;
-   *query_result = NULL;
 
 #if !defined( TA_SINGLE_THREAD )
    retCode = TA_SemaWait( &privConnection->sema );
@@ -181,6 +189,15 @@ TA_RetCode TA_SQL_MySQL_ExecuteQuery(void *connection,
 
    try 
    {
+
+      privResult = new TA_SQL_MySQL_QueryResult;
+      if( privResult == NULL )
+      {
+         retCode = TA_ALLOC_ERR;
+         throw retCode;
+      }
+      privResult->res = NULL;
+
       // This creates a query object that is bound to con.
       Query query = privConnection->con->query();
 
@@ -188,23 +205,29 @@ TA_RetCode TA_SQL_MySQL_ExecuteQuery(void *connection,
       query << sql_query;
 
       // Query::store() executes the query and returns the results
-      *query_result = new Result(query.store());
+      privResult->res = new Result(query.store());
+      privResult->rownum = -1; // no row fetched
    }
    catch (...)
    {                    
       // handle any connection or query errors that may come up
-      if( *query_result )
+      if( privResult && privResult->res )
       {
-         delete *query_result;
-         *query_result = NULL;
+         delete privResult->res;
       }
-      retCode = TA_BAD_PARAM;  // should be TA_BAD_QUERY
+      delete privResult;
+      privResult = NULL;
+      if( retCode == TA_SUCCESS )
+      {
+         retCode = TA_BAD_QUERY;
+      }
    } 
 
 #if !defined( TA_SINGLE_THREAD )
    TA_SemaPost( &privConnection->sema );
 #endif
 
+   *query_result = privResult;
    TA_TRACE_RETURN( retCode );
 }
 
@@ -214,16 +237,16 @@ TA_RetCode TA_SQL_MySQL_GetNumColumns(void *query_result, int *num)
 {
    TA_PROLOG
 
-   Result *res = (Result*)query_result;
+   TA_SQL_MySQL_QueryResult *privResult = (TA_SQL_MySQL_QueryResult*)query_result;
    
    TA_TRACE_BEGIN( TA_SQL_MySQL_GetNumColumns );
 
-   TA_ASSERT( res != NULL );
+   TA_ASSERT( query_result != NULL );
    TA_ASSERT( num != NULL );
 
    try
    {
-      *num = res->columns();
+      *num = privResult->res->columns();
    }
    catch (...)
    {
@@ -239,16 +262,16 @@ TA_RetCode TA_SQL_MySQL_GetNumRows(void *query_result, int *num)
 {
    TA_PROLOG
 
-   Result *res = (Result*)query_result;
+   TA_SQL_MySQL_QueryResult *privResult = (TA_SQL_MySQL_QueryResult*)query_result;
    
    TA_TRACE_BEGIN( TA_SQL_MySQL_GetNumRows );
 
-   TA_ASSERT( res != NULL );
+   TA_ASSERT( query_result != NULL );
    TA_ASSERT( num != NULL );
 
    try
    {
-      *num = res->rows();
+      *num = privResult->res->rows();
    }
    catch (...)
    {
@@ -264,16 +287,16 @@ TA_RetCode TA_SQL_MySQL_GetColumnName(void *query_result, int column, const char
 {
    TA_PROLOG
 
-   Result *res = (Result*)query_result;
+   TA_SQL_MySQL_QueryResult *privResult = (TA_SQL_MySQL_QueryResult*)query_result;
    
    TA_TRACE_BEGIN( TA_SQL_MySQL_GetColumnName );
 
-   TA_ASSERT( res != NULL );
+   TA_ASSERT( query_result != NULL );
    TA_ASSERT( name != NULL );
 
    try
    {
-      *name = res->names(column).c_str();
+      *name = privResult->res->names(column).c_str();
    }
    catch (...)
    {
@@ -285,37 +308,29 @@ TA_RetCode TA_SQL_MySQL_GetColumnName(void *query_result, int column, const char
 
 
 
-TA_RetCode TA_SQL_MySQL_GetRowString(void *query_result, int row, int column, char **value)
+TA_RetCode TA_SQL_MySQL_GetRowString(void *query_result, int row, int column, const char **value)
 {
    TA_PROLOG
 
-   Result *res = (Result*)query_result;
+   TA_SQL_MySQL_QueryResult *privResult = (TA_SQL_MySQL_QueryResult*)query_result;
    
    TA_TRACE_BEGIN( TA_SQL_MySQL_GetRowString );
 
-   TA_ASSERT( res != NULL );
+   TA_ASSERT( query_result != NULL );
    TA_ASSERT( value != NULL );
 
-   *value = NULL;
    try
    {
-      Row res_row = (*res)[row];
-
-      size_t len = strlen(res_row[column]);
-      *value = (char*)TA_Malloc(len+1);
-      if( *value == NULL )
+      if( row != privResult->rownum )
       {
-         TA_TRACE_RETURN( TA_ALLOC_ERR );  
+         privResult->row = (*privResult->res)[row];
+         privResult->rownum = row;
       }
-      strcpy(*value, res_row[column]);
+
+      *value = privResult->row.raw_data(column);
    }
    catch (...)
    {
-      if( *value )
-      {
-         TA_Free( *value );
-         *value = NULL;
-      }
       TA_TRACE_RETURN( TA_INTERNAL_ERR );  
    }
 
@@ -328,17 +343,22 @@ TA_RetCode TA_SQL_MySQL_GetRowReal(void *query_result, int row, int column, TA_R
 {
    TA_PROLOG
 
-   Result *res = (Result*)query_result;
+   TA_SQL_MySQL_QueryResult *privResult = (TA_SQL_MySQL_QueryResult*)query_result;
    
    TA_TRACE_BEGIN( TA_SQL_MySQL_GetRowReal );
 
-   TA_ASSERT( res != NULL );
+   TA_ASSERT( query_result!= NULL );
    TA_ASSERT( value != NULL );
 
    try
    {
-      Row res_row = (*res)[row];
-      *value = res_row[column];
+      if( row != privResult->rownum )
+      {
+         privResult->row = (*privResult->res)[row];
+         privResult->rownum = row;
+      }
+
+      *value = privResult->row[column];
    }
    catch (...)
    {
@@ -354,17 +374,22 @@ TA_RetCode TA_SQL_MySQL_GetRowInteger(void *query_result, int row, int column, T
 {
    TA_PROLOG
 
-   Result *res = (Result*)query_result;
+   TA_SQL_MySQL_QueryResult *privResult = (TA_SQL_MySQL_QueryResult*)query_result;
    
    TA_TRACE_BEGIN( TA_SQL_MySQL_GetRowInteger );
 
-   TA_ASSERT( res != NULL );
+   TA_ASSERT( query_result != NULL );
    TA_ASSERT( value != NULL );
 
    try
    {
-      Row res_row = (*res)[row];
-      *value = res_row[column];
+      if( row != privResult->rownum )
+      {
+         privResult->row = (*privResult->res)[row];
+         privResult->rownum = row;
+      }
+      
+      *value = privResult->row[column];
    }
    catch (...)
    {
@@ -380,15 +405,16 @@ TA_RetCode TA_SQL_MySQL_ReleaseQuery(void *query_result)
 {
    TA_PROLOG
 
-   Result *res = (Result*)query_result;
+   TA_SQL_MySQL_QueryResult *privResult = (TA_SQL_MySQL_QueryResult*)query_result;
    
    TA_TRACE_BEGIN( TA_SQL_MySQL_ReleaseQuery );
    
-   if( res )
+   if( privResult )
    {
       try
       {
-         delete res;
+         delete privResult->res;
+         delete privResult;
       }
       catch (...)
       {

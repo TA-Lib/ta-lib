@@ -753,7 +753,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    for( rowNum = 0, barNum = 0;  rowNum < resRows;  rowNum++, barNum++) 
    { 
       unsigned int u1, u2, u3;
-      char *strval;
+      char *strval = NULL;
 
       retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
                            queryResult,
@@ -765,10 +765,6 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
       /* date must be always present */
       if ( sscanf(strval, "%4u-%2u-%2u", &u1, &u2, &u3) != 3 )
       {
-         if( strval )
-         {
-            TA_Free( strval );
-         }
          RETURN_ON_ERROR( TA_BAD_PARAM )  /* other error code? */
       }
 
@@ -788,16 +784,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
          if ( strval && *strval ) {  
             if (sscanf(strval, "%2u:%2u:%2u", &u1, &u2, &u3) != 3 )
             {
-               if( strval )
-               {
-                  TA_Free( strval );
-               }
                RETURN_ON_ERROR( TA_BAD_PARAM )
-            }
-
-            if( strval )
-            {
-               TA_Free( strval );
             }
 
             retCode = TA_SetTime(u1, u2, u3, &timestampVec[barNum]);

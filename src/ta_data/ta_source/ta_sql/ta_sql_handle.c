@@ -257,7 +257,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
          
       for( rownum = 0;  rownum < res_rows;  rownum++) 
       {
-         char *strval;
+         char *strval = NULL;
          TA_String *cat_name = NULL;
          TA_String *sym_name = NULL;
 
@@ -275,11 +275,6 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
          else // for NULL values fall back to default
          {
             cat_name = TA_StringAlloc( stringCache, TA_DEFAULT_CATEGORY );
-         }
-
-         if( strval )
-         {
-            TA_Free( strval );
          }
 
          if( !cat_name )
@@ -312,7 +307,6 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
                      RETURN_ON_ERROR( TA_ALLOC_ERR )
                   }
                }
-               TA_Free( strval );
             }
          }
 
@@ -647,7 +641,6 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
          if( strval )
          {
             sym_name = TA_StringAlloc( stringCache, strval );
-            TA_Free( strval );
          }
 
          if( !sym_name )
