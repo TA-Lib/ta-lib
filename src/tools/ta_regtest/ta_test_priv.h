@@ -138,8 +138,7 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
 #define MAX_RANGE_SIZE 252
 #define MAX_RANGE_END  (MAX_RANGE_SIZE-1)
 
-typedef TA_RetCode (*RangeTestFunction)( 
-                                         TA_Integer startIdx,
+typedef TA_RetCode (*RangeTestFunction)( TA_Integer startIdx,
                                          TA_Integer endIdx,
                                          TA_Real *outputBuffer,
                                          TA_Integer *outBegIdx,
@@ -152,20 +151,39 @@ typedef TA_RetCode (*RangeTestFunction)(
  * The parameter 'nbOutput' allows to repeat the
  * tests indepedently for each outputs.
  *
+ * A lot of coherency tests are performed,
+ * including comparing that the same value are
+ * returned even when using a different startIdx
+ * and endIdx.
+ *
+ * Because of the complexity added by algorithm that
+ * have an unstable period, the comparison is
+ * done using a tolerance algorithm (see test_util.c).
+ *
+ * Comparison can be ignored by specifiying 
+ * an integerTolerance == TA_DO_NOT_COMPARE
+ *
+ * Even without comparison, a lot of coherency
+ * tests are still performed (like making sure the
+ * lookback function is coherent with its TA function).
+ *
  * In the case that the TA function output are
- * integer, the tolerance indicate by how much
+ * integer, the integerTolerance indicate by how much
  * the value can vary for a function having an
  * unstable period. Example: If 2 is pass, the
  * value can vary of no more or less 2.
  * When passing zero, the tolerance is done using
- * a "reasonable" logic (see the function for
- * more info).
+ * a "reasonable" logic using double calculation (see
+ * test_util.c for more info).
  */
+#define TA_DO_NOT_COMPARE 0xFFFFFFFF
 ErrorNumber doRangeTest( RangeTestFunction testFunction,
                          TA_FuncUnstId unstId,
                          void *opaqueData,
                          unsigned int nbOutput,
                          unsigned int integerTolerance );
+
+
 
 /* Compare two TA_Real and verify that they are
  * identiqual within the specified epsilon.
