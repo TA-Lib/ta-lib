@@ -129,6 +129,14 @@ int main( int argc, char **argv )
       return retValue;
    }
 
+   /* Test abstract interface. */
+   retValue = test_abstract();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "Failed: Abstract interface Tests (error number = %d)\n", retValue );
+      return retValue;
+   }
+
    /* Test history alloc. */
    retValue = testHistoryAlloc();
    if( retValue != TA_TEST_PASS )
@@ -270,13 +278,13 @@ static int testTAFunction_ALL( TA_History *history )
          return retValue; \
       printf( "done.\n" ); \
       }
+   DO_TEST( test_func_ma,       "All Moving Averages" );
    DO_TEST( test_func_stoch,    "STOCH,STOCHF,STOCHRSI" );
    DO_TEST( test_func_per_hl,   "AROON,CORREL" );
    DO_TEST( test_func_rsi,      "RSI" );
    DO_TEST( test_func_per_hlc,  "CCI,WILLR" );
    DO_TEST( test_func_per_hlcv, "MFI,AD,ADOSC" );
    DO_TEST( test_func_1in_1out, "Function Group 1-1" );
-   DO_TEST( test_func_ma,       "All Moving Averages" );
    DO_TEST( test_func_1in_2out, "Function Group 1-2" );
    DO_TEST( test_func_per_ema,  "TRIX" );
    DO_TEST( test_func_minmax,   "MIN,MAX" );

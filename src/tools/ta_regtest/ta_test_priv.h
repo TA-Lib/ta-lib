@@ -15,6 +15,7 @@ ErrorNumber test_yahoo ( void );
 ErrorNumber test_pm    ( void );
 ErrorNumber test_datasource_merge( void );
 ErrorNumber test_internals( void );
+ErrorNumber test_abstract( void );
 
 ErrorNumber freeLib( TA_UDBase  *uDBase );
 ErrorNumber allocLib( TA_UDBase **uDBasePtr );
