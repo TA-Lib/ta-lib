@@ -722,9 +722,9 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
      || (fieldToAlloc & TA_VOLUME && volume_col < 0)
      || (fieldToAlloc & TA_OPENINTEREST && oi_col < 0) )
    {
-      /* required column not found */
-      RETURN_ON_ERROR( TA_BAD_PARAM )
-      /* I would prefer TA_BAD_QUERY */
+      /* required column not found, so cannot deliver data */
+      retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult);
+      TA_TRACE_RETURN( retCode );
    }
       
    // Preallocate vectors memory
