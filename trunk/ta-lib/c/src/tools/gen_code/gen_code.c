@@ -1997,6 +1997,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "#if defined( _MANAGED )\n" );
    print( out, "   #using <mscorlib.dll>\n" );
    print( out, "   #include \"Core.h\"\n" );
+   print( out, "   #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)\n" );
    print( out, "   namespace TA { namespace Lib {\n" );
    print( out, "#else\n" );
    print( out, "   #include <string.h>\n" );
@@ -2010,10 +2011,6 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "\n" );
    print( out, "#ifndef TA_MEMORY_H\n" );
    print( out, "   #include \"ta_memory.h\"\n" );
-   print( out, "#endif\n" );
-   print( out, "\n" );
-   print( out, "#ifndef TA_TRACE_H\n" );
-   print( out, "   #include \"ta_trace.h\"\n" );
    print( out, "#endif\n" );
    print( out, "\n" );
    print( out, "#define TA_PREFIX(x) TA_##x\n" );
