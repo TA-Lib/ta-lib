@@ -125,8 +125,9 @@ typedef struct
    const TA_OptInputParameterInfo * const optInput;
    const TA_OutputParameterInfo   * const output;
 
-   /* Entry point of the function. */
+   /* Entry point of the TA function and its lookback function. */
    const TA_FrameFunction function;
+   const TA_FrameLookback lookback;
 } TA_FuncDef;
 
 /* The following MACROs are helpers being used in
@@ -151,7 +152,8 @@ typedef struct
       (const TA_InputParameterInfo    * const)&TA_##name##_Inputs[0],    \
       (const TA_OptInputParameterInfo * const)&TA_##name##_OptInputs[0], \
       (const TA_OutputParameterInfo   * const)&TA_##name##_Outputs[0],   \
-      TA_##name##_FramePP \
+      TA_##name##_FramePP, \
+      TA_##name##_FramePPLB \
    }; \
    TA_FuncInfo TA_INFO_##name = \
    { \
@@ -187,6 +189,7 @@ typedef struct
       (const TA_InputParameterInfo    * const)&TA_##name##_Inputs[0],    \
       (const TA_OptInputParameterInfo * const)&TA_##name##_OptInputs[0], \
       (const TA_OutputParameterInfo   * const)&TA_##name##_Outputs[0],   \
+      NULL, \
       NULL \
    }; \
    TA_FuncInfo TA_INFO_##name = \
