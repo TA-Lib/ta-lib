@@ -22,6 +22,7 @@ CFG=ta_abstract - Win32 CSD Single Thread Debug
 !MESSAGE "ta_abstract - Win32 CSD Single Thread Debug" (based on "Win32 (x86) Static Library")
 !MESSAGE "ta_abstract - Win32 CSR Single Thread Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "ta_abstract - Win32 CMR Multithread Release" (based on "Win32 (x86) Static Library")
+!MESSAGE "ta_abstract - Win32 Profiling" (based on "Win32 (x86) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -156,6 +157,31 @@ LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo /out:"..\..\..\..\lib\ta_abstract_cmr.lib"
 # ADD LIB32 /nologo /out:"..\..\..\..\lib\ta_abstract_cmr.lib"
 
+!ELSEIF  "$(CFG)" == "ta_abstract - Win32 Profiling"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "ta_abstract___Win32_Profiling"
+# PROP BASE Intermediate_Dir "ta_abstract___Win32_Profiling"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "ta_abstract___Win32_Profiling"
+# PROP Intermediate_Dir "ta_abstract___Win32_Profiling"
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /W3 /O2 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common" /I "..\..\..\..\src\ta_abstract\frames" /I "..\..\..\..\src\ta_abstract" /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# SUBTRACT BASE CPP /Fr
+# ADD CPP /nologo /W3 /O2 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common" /I "..\..\..\..\src\ta_abstract\frames" /I "..\..\..\..\src\ta_abstract" /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# SUBTRACT CPP /Fr
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo /out:"..\..\..\..\lib\ta_abstract_csr.lib"
+# ADD LIB32 /nologo /out:"..\..\..\..\lib\ta_abstract_csr.lib"
+
 !ENDIF 
 
 # Begin Target
@@ -165,6 +191,7 @@ LIB32=link.exe -lib
 # Name "ta_abstract - Win32 CSD Single Thread Debug"
 # Name "ta_abstract - Win32 CSR Single Thread Release"
 # Name "ta_abstract - Win32 CMR Multithread Release"
+# Name "ta_abstract - Win32 Profiling"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
