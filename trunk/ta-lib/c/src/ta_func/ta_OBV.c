@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -72,24 +72,24 @@ int TA_OBV_Lookback( void )
 /*
  * TA_OBV - On Balance Volume
  * 
- * Input  = TA_Real, Volume
- * Output = TA_Integer
+ * Input  = double, Volume
+ * Output = int
  * 
  */
 
-TA_RetCode TA_OBV( TA_Integer    startIdx,
-                   TA_Integer    endIdx,
-                   const TA_Real inReal_0[],
-                   const TA_Integer inVolume_1[],
-                   TA_Integer   *outBegIdx,
-                   TA_Integer   *outNbElement,
-                   TA_Integer    outInteger_0[] )
+TA_RetCode TA_OBV( int    startIdx,
+                   int    endIdx,
+                   const double inReal_0[],
+                   const int    inVolume_1[],
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   int           outInteger_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
    int i;
    TA_Integer prevOBV, outIdx;
-   TA_Real prevReal, tempReal;
+   double prevReal, tempReal;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 

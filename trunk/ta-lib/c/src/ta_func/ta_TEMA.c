@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -62,7 +62,7 @@
    #include "ta_utility.h"
 #endif
 
-int TA_TEMA_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+int TA_TEMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -78,8 +78,8 @@ int TA_TEMA_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGER
 /*
  * TA_TEMA - Triple Exponential Moving Average
  * 
- * Input  = TA_Real
- * Output = TA_Real
+ * Input  = double
+ * Output = double
  * 
  * Optional Parameters
  * -------------------
@@ -89,18 +89,18 @@ int TA_TEMA_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGER
  * 
  */
 
-TA_RetCode TA_TEMA( TA_Integer    startIdx,
-                    TA_Integer    endIdx,
-                    const TA_Real inReal_0[],
-                    TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    TA_Integer   *outBegIdx,
-                    TA_Integer   *outNbElement,
-                    TA_Real       outReal_0[] )
+TA_RetCode TA_TEMA( int    startIdx,
+                    int    endIdx,
+                    const double inReal_0[],
+                    int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                    int          *outBegIdx,
+                    int          *outNbElement,
+                    double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   TA_Real *firstEMA, *secondEMA;
-   TA_Real k;
+   double *firstEMA, *secondEMA;
+   double k;
 
    TA_Integer firstEMABegIdx, firstEMANbElement;
    TA_Integer secondEMABegIdx, secondEMANbElement;
@@ -123,9 +123,9 @@ TA_RetCode TA_TEMA( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
-   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 30;
-   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -178,7 +178,7 @@ TA_RetCode TA_TEMA( TA_Integer    startIdx,
 
    /* Allocate a temporary buffer for the firstEMA. */
    tempInt = lookbackTotal+(endIdx-startIdx)+1;
-   firstEMA = (TA_Real *)TA_Malloc( tempInt * sizeof( TA_Real) );
+   firstEMA = (double *)TA_Malloc( tempInt * sizeof( double) );
    if( !firstEMA )
       return TA_ALLOC_ERR;
 
@@ -198,7 +198,7 @@ TA_RetCode TA_TEMA( TA_Integer    startIdx,
    }
 
    /* Allocate a temporary buffer for storing the EMA2 */
-   secondEMA = (TA_Real *)TA_Malloc( firstEMANbElement * sizeof( TA_Real) );
+   secondEMA = (double *)TA_Malloc( firstEMANbElement * sizeof( double) );
 
    if( !secondEMA )
    {

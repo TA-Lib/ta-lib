@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -61,8 +61,8 @@
    #include "ta_utility.h"
 #endif
 
-int TA_PPO_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                     TA_Integer    optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+int TA_PPO_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
                      TA_MAType     optInMAType_2 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -77,8 +77,8 @@ int TA_PPO_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MA
 /*
  * TA_PPO - Percentage Price Oscillator
  * 
- * Input  = TA_Real
- * Output = TA_Real
+ * Input  = double
+ * Output = double
  * 
  * Optional Parameters
  * -------------------
@@ -94,19 +94,19 @@ int TA_PPO_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MA
  * 
  */
 
-TA_RetCode TA_PPO( TA_Integer    startIdx,
-                   TA_Integer    endIdx,
-                   const TA_Real inReal_0[],
-                   TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                   TA_Integer    optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+TA_RetCode TA_PPO( int    startIdx,
+                   int    endIdx,
+                   const double inReal_0[],
+                   int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                   int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
                    TA_MAType     optInMAType_2,
-                   TA_Integer   *outBegIdx,
-                   TA_Integer   *outNbElement,
-                   TA_Real       outReal_0[] )
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   TA_Real *tempBuffer;
+   double *tempBuffer;
    TA_RetCode retCode;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -122,20 +122,20 @@ TA_RetCode TA_PPO( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInFastPeriod_0. */
-   if( (TA_Integer)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
       optInFastPeriod_0 = 12;
-   else if( ((TA_Integer)optInFastPeriod_0 < 2) || ((TA_Integer)optInFastPeriod_0 > 2147483647) )
+   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowPeriod_1. */
-   if( (TA_Integer)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
+   if( (int)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
       optInSlowPeriod_1 = 26;
-   else if( ((TA_Integer)optInSlowPeriod_1 < 2) || ((TA_Integer)optInSlowPeriod_1 > 2147483647) )
+   else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( (TA_Integer)optInMAType_2 == TA_INTEGER_DEFAULT )
+   if( (int)optInMAType_2 == TA_INTEGER_DEFAULT )
       optInMAType_2 = 0;
-   else if( ((TA_Integer)optInMAType_2 < 0) || ((TA_Integer)optInMAType_2 > 8) )
+   else if( ((int)optInMAType_2 < 0) || ((int)optInMAType_2 > 8) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -148,7 +148,7 @@ TA_RetCode TA_PPO( TA_Integer    startIdx,
    /* Insert TA function code here. */
 
    /* Allocate an intermediate buffer. */
-   tempBuffer = TA_Malloc( (endIdx-startIdx+1) * sizeof(TA_Real) );
+   tempBuffer = TA_Malloc( (endIdx-startIdx+1) * sizeof(double) );
    if( !tempBuffer )
       return TA_ALLOC_ERR;
 

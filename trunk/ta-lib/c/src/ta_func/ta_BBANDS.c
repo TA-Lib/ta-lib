@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -64,9 +64,9 @@
    #include "ta_utility.h"
 #endif
 
-int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                        TA_Real       optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        TA_Real       optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
+int TA_BBANDS_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                        double        optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                        double        optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
                         TA_MAType     optInMAType_3 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -82,8 +82,8 @@ int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER
 /*
  * TA_BBANDS - Bollinger Bands
  * 
- * Input  = TA_Real
- * Output = TA_Real, TA_Real, TA_Real
+ * Input  = double
+ * Output = double, double, double
  * 
  * Optional Parameters
  * -------------------
@@ -102,26 +102,26 @@ int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER
  * 
  */
 
-TA_RetCode TA_BBANDS( TA_Integer    startIdx,
-                      TA_Integer    endIdx,
-                      const TA_Real inReal_0[],
-                      TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                      TA_Real       optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
-                      TA_Real       optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
+TA_RetCode TA_BBANDS( int    startIdx,
+                      int    endIdx,
+                      const double inReal_0[],
+                      int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                      double        optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
                       TA_MAType     optInMAType_3,
-                      TA_Integer   *outBegIdx,
-                      TA_Integer   *outNbElement,
-                      TA_Real       outRealUpperBand_0[],
-                      TA_Real       outRealMiddleBand_1[],
-                      TA_Real       outRealLowerBand_2[] )
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outRealUpperBand_0[],
+                      double        outRealMiddleBand_1[],
+                      double        outRealLowerBand_2[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
    TA_RetCode retCode;
    int i;
-   TA_Real tempReal;
-   TA_Real *tempBuffer1, *tempBuffer2;
-   register TA_Real tempReal2;
+   double tempReal;
+   double *tempBuffer1, *tempBuffer2;
+   register double tempReal2;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -136,9 +136,9 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
-   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 5;
-   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( optInNbDevUp_1 == TA_REAL_DEFAULT )
@@ -151,9 +151,9 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
    else if( (optInNbDevDn_2 < -3.000000e+37) || (optInNbDevDn_2 > 3.000000e+37) )
       return TA_BAD_PARAM;
 
-   if( (TA_Integer)optInMAType_3 == TA_INTEGER_DEFAULT )
+   if( (int)optInMAType_3 == TA_INTEGER_DEFAULT )
       optInMAType_3 = 0;
-   else if( ((TA_Integer)optInMAType_3 < 0) || ((TA_Integer)optInMAType_3 > 8) )
+   else if( ((int)optInMAType_3 < 0) || ((int)optInMAType_3 > 8) )
       return TA_BAD_PARAM;
 
    if( outRealUpperBand_0 == NULL )
@@ -250,7 +250,7 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
     * the calculation was done into it already!
     */
    if( tempBuffer1 != outRealMiddleBand_1 )
-      memcpy( outRealMiddleBand_1, tempBuffer1, sizeof(TA_Real)*(*outNbElement) );
+      memcpy( outRealMiddleBand_1, tempBuffer1, sizeof(double)*(*outNbElement) );
    
    /* Now do a tight loop to calculate the upper/lower band at
     * the same time. 

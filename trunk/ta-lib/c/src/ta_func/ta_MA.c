@@ -62,7 +62,7 @@
    #include "ta_utility.h"
 #endif
 
-int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+int TA_MA_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                     TA_MAType     optInMAType_1 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -114,8 +114,8 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX
 /*
  * TA_MA - All Moving Average
  * 
- * Input  = TA_Real
- * Output = TA_Real
+ * Input  = double
+ * Output = double
  * 
  * Optional Parameters
  * -------------------
@@ -128,18 +128,18 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX
  * 
  */
 
-TA_RetCode TA_MA( TA_Integer    startIdx,
-                  TA_Integer    endIdx,
-                  const TA_Real inReal_0[],
-                  TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+TA_RetCode TA_MA( int    startIdx,
+                  int    endIdx,
+                  const double inReal_0[],
+                  int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                   TA_MAType     optInMAType_1,
-                  TA_Integer   *outBegIdx,
-                  TA_Integer   *outNbElement,
-                  TA_Real       outReal_0[] )
+                  int          *outBegIdx,
+                  int          *outNbElement,
+                  double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   TA_Real *dummyBuffer;
+   double *dummyBuffer;
    TA_RetCode retCode;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -155,14 +155,14 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
-   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 30;
-   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( (TA_Integer)optInMAType_1 == TA_INTEGER_DEFAULT )
+   if( (int)optInMAType_1 == TA_INTEGER_DEFAULT )
       optInMAType_1 = 0;
-   else if( ((TA_Integer)optInMAType_1 < 0) || ((TA_Integer)optInMAType_1 > 8) )
+   else if( ((int)optInMAType_1 < 0) || ((int)optInMAType_1 > 8) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -217,7 +217,7 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
       /* The optInTimePeriod_0 is ignored and the FAMA output of the MAMA
        * is ignored.
        */
-      dummyBuffer = TA_Malloc( sizeof(TA_Real)*(endIdx-startIdx+1) );
+      dummyBuffer = TA_Malloc( sizeof(double)*(endIdx-startIdx+1) );
       if( !dummyBuffer )
          return TA_ALLOC_ERR;
 

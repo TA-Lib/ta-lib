@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -69,8 +69,8 @@
    #include "ta_utility.h"
 #endif
 
-int TA_SAR_Lookback( TA_Real       optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-                     TA_Real       optInMaximum_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+int TA_SAR_Lookback( double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
+                     double        optInMaximum_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -89,7 +89,7 @@ int TA_SAR_Lookback( TA_Real       optInAcceleration_0, /* From TA_REAL_MIN to T
  * TA_SAR - Parabolic SAR
  * 
  * Input  = High, Low
- * Output = TA_Real
+ * Output = double
  * 
  * Optional Parameters
  * -------------------
@@ -102,15 +102,15 @@ int TA_SAR_Lookback( TA_Real       optInAcceleration_0, /* From TA_REAL_MIN to T
  * 
  */
 
-TA_RetCode TA_SAR( TA_Integer    startIdx,
-                   TA_Integer    endIdx,
-                   const TA_Real inHigh_0[],
-                   const TA_Real inLow_0[],
-                   TA_Real       optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-                   TA_Real       optInMaximum_1, /* From TA_REAL_MIN to TA_REAL_MAX */
-                   TA_Integer   *outBegIdx,
-                   TA_Integer   *outNbElement,
-                   TA_Real       outReal_0[] )
+TA_RetCode TA_SAR( int    startIdx,
+                   int    endIdx,
+                   const double inHigh_0[],
+                   const double inLow_0[],
+                   double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
+                   double        optInMaximum_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
@@ -121,8 +121,8 @@ TA_RetCode TA_SAR( TA_Integer    startIdx,
 
    TA_Integer tempInt;
 
-   TA_Real newHigh, newLow, prevHigh, prevLow;
-   TA_Real af, ep, sar;
+   double newHigh, newLow, prevHigh, prevLow;
+   double af, ep, sar;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 

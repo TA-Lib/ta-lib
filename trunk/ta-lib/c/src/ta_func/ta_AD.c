@@ -73,26 +73,26 @@ int TA_AD_Lookback( void )
  * TA_AD - Chaikin A/D Line
  * 
  * Input  = High, Low, Close, Volume
- * Output = TA_Real
+ * Output = double
  * 
  */
 
-TA_RetCode TA_AD( TA_Integer    startIdx,
-                  TA_Integer    endIdx,
-                  const TA_Real inHigh_0[],
-                  const TA_Real inLow_0[],
-                  const TA_Real inClose_0[],
-                  const TA_Integer inVolume_0[],
-                  TA_Integer   *outBegIdx,
-                  TA_Integer   *outNbElement,
-                  TA_Real       outReal_0[] )
+TA_RetCode TA_AD( int    startIdx,
+                  int    endIdx,
+                  const double inHigh_0[],
+                  const double inLow_0[],
+                  const double inClose_0[],
+                  const int    inVolume_0[],
+                  int          *outBegIdx,
+                  int          *outNbElement,
+                  double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
    TA_Integer nbBar, today, outIdx;
 
-   TA_Real high, low, close, tmp;
-   TA_Real ad;
+   double high, low, close, tmp;
+   double ad;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -63,7 +63,7 @@
    #include "ta_utility.h"
 #endif
 
-int TA_ADXR_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+int TA_ADXR_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -79,7 +79,7 @@ int TA_ADXR_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGER
  * TA_ADXR - Average Directional Movement Index Rating
  * 
  * Input  = High, Low, Close
- * Output = TA_Real
+ * Output = double
  * 
  * Optional Parameters
  * -------------------
@@ -89,19 +89,19 @@ int TA_ADXR_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGER
  * 
  */
 
-TA_RetCode TA_ADXR( TA_Integer    startIdx,
-                    TA_Integer    endIdx,
-                    const TA_Real inHigh_0[],
-                    const TA_Real inLow_0[],
-                    const TA_Real inClose_0[],
-                    TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    TA_Integer   *outBegIdx,
-                    TA_Integer   *outNbElement,
-                    TA_Real       outReal_0[] )
+TA_RetCode TA_ADXR( int    startIdx,
+                    int    endIdx,
+                    const double inHigh_0[],
+                    const double inLow_0[],
+                    const double inClose_0[],
+                    int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                    int          *outBegIdx,
+                    int          *outNbElement,
+                    double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
-   TA_Real *adx;
+   double *adx;
    int adxrLookback, i, j, outIdx, nbElement;
    TA_RetCode retCode;
 
@@ -121,9 +121,9 @@ TA_RetCode TA_ADXR( TA_Integer    startIdx,
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInTimePeriod_0. */
-   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 14;
-   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -152,7 +152,7 @@ TA_RetCode TA_ADXR( TA_Integer    startIdx,
       return TA_SUCCESS;
    }
 
-   adx = TA_Malloc( sizeof(TA_Real)*(endIdx-startIdx+optInTimePeriod_0) );
+   adx = TA_Malloc( sizeof(double)*(endIdx-startIdx+optInTimePeriod_0) );
    if( !adx )
       return TA_ALLOC_ERR;
 

@@ -60,8 +60,8 @@
    #include "ta_utility.h"
 #endif
 
-int TA_ADOSC_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                       TA_Integer    optInSlowPeriod_1 )  /* From 2 to TA_INTEGER_MAX */
+int TA_ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                       int           optInSlowPeriod_1 )  /* From 2 to TA_INTEGER_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -84,7 +84,7 @@ int TA_ADOSC_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_
  * TA_ADOSC - Chaikin A/D Oscillator
  * 
  * Input  = High, Low, Close, Volume
- * Output = TA_Real
+ * Output = double
  * 
  * Optional Parameters
  * -------------------
@@ -97,28 +97,28 @@ int TA_ADOSC_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_
  * 
  */
 
-TA_RetCode TA_ADOSC( TA_Integer    startIdx,
-                     TA_Integer    endIdx,
-                     const TA_Real inHigh_0[],
-                     const TA_Real inLow_0[],
-                     const TA_Real inClose_0[],
-                     const TA_Integer inVolume_0[],
-                     TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                     TA_Integer    optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                     TA_Integer   *outBegIdx,
-                     TA_Integer   *outNbElement,
-                     TA_Real       outReal_0[] )
+TA_RetCode TA_ADOSC( int    startIdx,
+                     int    endIdx,
+                     const double inHigh_0[],
+                     const double inLow_0[],
+                     const double inClose_0[],
+                     const int    inVolume_0[],
+                     int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
 
    TA_Integer today, outIdx, lookbackTotal;
    TA_Integer slowestPeriod;
-   TA_Real high, low, close, tmp;
+   double high, low, close, tmp;
 
-   TA_Real slowEMA, slowk, one_minus_slowk;
-   TA_Real fastEMA, fastk, one_minus_fastk;
-   TA_Real ad;
+   double slowEMA, slowk, one_minus_slowk;
+   double fastEMA, fastk, one_minus_fastk;
+   double ad;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -136,15 +136,15 @@ TA_RetCode TA_ADOSC( TA_Integer    startIdx,
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInFastPeriod_0. */
-   if( (TA_Integer)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
       optInFastPeriod_0 = 3;
-   else if( ((TA_Integer)optInFastPeriod_0 < 2) || ((TA_Integer)optInFastPeriod_0 > 2147483647) )
+   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowPeriod_1. */
-   if( (TA_Integer)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
+   if( (int)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
       optInSlowPeriod_1 = 10;
-   else if( ((TA_Integer)optInSlowPeriod_1 < 2) || ((TA_Integer)optInSlowPeriod_1 > 2147483647) )
+   else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
