@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112703 MF   First version.
- *
+ *  030104 MF   Add tests for TA_GetLookback
  */
 
 /* Description:
@@ -73,7 +73,7 @@
 /* None */
 
 /**** Local functions declarations.    ****/
-/* None */
+static ErrorNumber testLookback(TA_ParamHolder *paramHolder );
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -81,13 +81,123 @@
 /**** Global functions definitions.   ****/
 ErrorNumber test_abstract( void )
 {
-   printf( "Testing Abstract interface\n" );
+   ErrorNumber retValue;
+   TA_RetCode retCode;
+   TA_ParamHolder *paramHolder;
+   const TA_FuncHandle *handle;
 
-   /* Nothing here yet... I need a volunteer to work on this! */
+   printf( "Testing Abstract interface\n" );
+   
+   /* Verify TA_GetLookback. */
+   retCode = TA_GetFuncHandle( "STOCH", &handle );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Can't get the function handle [%d]\n", retCode );
+      return TA_ABS_TST_FAIL_GETFUNCHANDLE;   
+   }
+                             
+   retCode = TA_ParamHolderAlloc( handle, &paramHolder );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Can't allocate the param holder [%d]\n", retCode );
+      return TA_ABS_TST_FAIL_PARAMHOLDERALLOC;
+   }
+
+   retValue = testLookback(paramHolder);
+   if( retValue != TA_SUCCESS )
+   {
+      printf( "testLookback() failed [%d]\n", retValue );
+      TA_ParamHolderFree( paramHolder );
+      return retValue;
+   }      
+
+   retCode = TA_ParamHolderFree( paramHolder );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "TA_ParamHolderFree failed [%d]\n", retCode );
+      return TA_ABS_TST_FAIL_PARAMHOLDERFREE;
+   }
 
    return TA_TEST_PASS; /* Succcess. */
 }
 
 /**** Local functions definitions.     ****/
-/* None */
+static ErrorNumber testLookback( TA_ParamHolder *paramHolder )
+{
+  TA_RetCode retCode;
+  unsigned int lookback;
+
+  /* Change the parameters of STOCH and verify that TA_GetLookback respond correctly. */
+  retCode = TA_SetOptInputParamInteger( paramHolder, 0, 3 );
+  if( retCode != TA_SUCCESS )
+  {
+     printf( "TA_SetOptInputParamInteger call failed [%d]\n", retCode );
+     return TA_ABS_TST_FAIL_OPTINPUTPARAMINTEGER;
+  }
+
+  retCode = TA_SetOptInputParamInteger( paramHolder, 1, 4 );
+  if( retCode != TA_SUCCESS )
+  {
+     printf( "TA_SetOptInputParamInteger call failed [%d]\n", retCode );
+     return TA_ABS_TST_FAIL_OPTINPUTPARAMINTEGER;
+  }
+
+  retCode = TA_SetOptInputParamInteger( paramHolder, 2, (TA_Integer)TA_MAType_SMA );
+  if( retCode != TA_SUCCESS )
+  {
+     printf( "TA_SetOptInputParamInteger call failed [%d]\n", retCode );
+     return TA_ABS_TST_FAIL_OPTINPUTPARAMINTEGER;
+  }
+
+  retCode = TA_SetOptInputParamInteger( paramHolder, 3, 4 );
+  if( retCode != TA_SUCCESS )
+  {
+     printf( "TA_SetOptInputParamInteger call failed [%d]\n", retCode );
+     return TA_ABS_TST_FAIL_OPTINPUTPARAMINTEGER;
+  }
+
+  retCode = TA_SetOptInputParamInteger( paramHolder, 4, (TA_Integer)TA_MAType_SMA );
+  if( retCode != TA_SUCCESS )
+  {
+     printf( "TA_SetOptInputParamInteger call failed [%d]\n", retCode );
+     return TA_ABS_TST_FAIL_OPTINPUTPARAMINTEGER;
+  }
+
+  retCode = TA_GetLookback(paramHolder,&lookback);
+  if( retCode != TA_SUCCESS )
+  {
+     printf( "TA_GetLookback failed [%d]\n", retCode );
+     return TA_ABS_TST_FAIL_GETLOOKBACK_CALL_1;
+  }
+
+  if( lookback != 8 )
+  {
+     printf( "TA_GetLookback failed [%d != 8]\n", lookback );
+     return TA_ABS_TST_FAIL_GETLOOKBACK_1;
+  }
+
+  /* Change one parameter and check again. */
+  retCode = TA_SetOptInputParamInteger( paramHolder, 3, 3 );
+  if( retCode != TA_SUCCESS )
+  {
+     printf( "TA_SetOptInputParamInteger call failed [%d]\n", retCode );
+     return TA_ABS_TST_FAIL_OPTINPUTPARAMINTEGER;
+  }
+
+  retCode = TA_GetLookback(paramHolder,&lookback);
+  if( retCode != TA_SUCCESS )
+  {
+     printf( "TA_GetLookback failed [%d]\n", retCode );
+     return TA_ABS_TST_FAIL_GETLOOKBACK_CALL_2;
+  }
+
+  if( lookback != 7 )
+  {
+     printf( "TA_GetLookback failed [%d != 7]\n", lookback );
+     return TA_ABS_TST_FAIL_GETLOOKBACK_2;
+  }
+  
+  return TA_TEST_PASS;
+}
+
 
