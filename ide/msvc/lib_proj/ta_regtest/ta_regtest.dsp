@@ -213,6 +213,10 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_rsi.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_sar.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_stddev.c
 # End Source File
 # Begin Source File
