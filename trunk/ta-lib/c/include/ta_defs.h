@@ -202,7 +202,7 @@ typedef enum
     /* 809 */  TA_HTTP_SC_501,          /* Not Implemented            */
     /* 810 */  TA_HTTP_SC_502,          /* Bad Gateway                */
     /* 811 */  TA_HTTP_SC_503,          /* Service Unavailable        */
-    /* 821 */  TA_HTTP_SC_UNKNOWN,      /* Unknown error code.        */ 
+    /* 812 */  TA_HTTP_SC_UNKNOWN,      /* Unknown error code.        */ 
 
     /****** TA-LIB Internal Error Code *****/
 
@@ -261,27 +261,27 @@ __value enum TA_FuncUnstId
 typedef enum
 #endif
 {
-    /* 001 */  TA_FUNC_UNST_EMA,
-    /* 002 */  TA_FUNC_UNST_HT_TRENDLINE,
-    /* 003 */  TA_FUNC_UNST_KAMA,
-    /* 004 */  TA_FUNC_UNST_MAMA,
-    /* 005 */  TA_FUNC_UNST_T3,
-    /* 006 */  TA_FUNC_UNST_ATR,
-    /* 007 */  TA_FUNC_UNST_ADX,
-    /* 008 */  TA_FUNC_UNST_ADXR,
-    /* 009 */  TA_FUNC_UNST_DX,
-    /* 010 */  TA_FUNC_UNST_MFI,
-    /* 011 */  TA_FUNC_UNST_MINUS_DI,
-    /* 012 */  TA_FUNC_UNST_MINUS_DM,
-    /* 013 */  TA_FUNC_UNST_PLUS_DI,
-    /* 014 */  TA_FUNC_UNST_PLUS_DM,
-    /* 015 */  TA_FUNC_UNST_RSI,
-    /* 016 */  TA_FUNC_UNST_STOCHRSI,
-    /* 017 */  TA_FUNC_UNST_HT_DCPERIOD,
-    /* 018 */  TA_FUNC_UNST_HT_DCPHASE,
-    /* 019 */  TA_FUNC_UNST_HT_PHASOR,
-    /* 020 */  TA_FUNC_UNST_HT_SINE,
-    /* 021 */  TA_FUNC_UNST_HT_TRENDMODE,
+    /* 000 */  TA_FUNC_UNST_EMA,
+    /* 001 */  TA_FUNC_UNST_HT_TRENDLINE,
+    /* 002 */  TA_FUNC_UNST_KAMA,
+    /* 003 */  TA_FUNC_UNST_MAMA,
+    /* 004 */  TA_FUNC_UNST_T3,
+    /* 005 */  TA_FUNC_UNST_ATR,
+    /* 006 */  TA_FUNC_UNST_ADX,
+    /* 007 */  TA_FUNC_UNST_ADXR,
+    /* 008 */  TA_FUNC_UNST_DX,
+    /* 009 */  TA_FUNC_UNST_MFI,
+    /* 010 */  TA_FUNC_UNST_MINUS_DI,
+    /* 011 */  TA_FUNC_UNST_MINUS_DM,
+    /* 012 */  TA_FUNC_UNST_PLUS_DI,
+    /* 013 */  TA_FUNC_UNST_PLUS_DM,
+    /* 014 */  TA_FUNC_UNST_RSI,
+    /* 015 */  TA_FUNC_UNST_STOCHRSI,
+    /* 016 */  TA_FUNC_UNST_HT_DCPERIOD,
+    /* 017 */  TA_FUNC_UNST_HT_DCPHASE,
+    /* 018 */  TA_FUNC_UNST_HT_PHASOR,
+    /* 019 */  TA_FUNC_UNST_HT_SINE,
+    /* 020 */  TA_FUNC_UNST_HT_TRENDMODE,
                TA_FUNC_UNST_ALL,
                TA_FUNC_UNST_NONE=-1
 #if defined( _MANAGED )
