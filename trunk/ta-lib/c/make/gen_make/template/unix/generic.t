@@ -232,8 +232,8 @@ ifeq ($(shell uname -m), x86_64)
 endif
 
 ####### Apply additional overruling user flags, if any
-CFLAGS   += $(CUSERFLAGS))
-CXXFLAGS += $(CUSERFLAGS))
+CFLAGS   += $(CUSERFLAGS)
+CXXFLAGS += $(CUSERFLAGS)
 
 ####### Files
 
