@@ -160,6 +160,28 @@ TA_RetCode TA_TradeLogFree( TA_TradeLog *toBeFreed );
 TA_RetCode TA_TradeLogAdd( TA_TradeLog *tradeLog,
                            const TA_Transaction *newTransaction );
 
+#if 0
+!!! NOT Implemented
+/* Save the TA_TradeLog into a file.
+ *
+ * The log is written in binary and is design for
+ * being read back with TA_TradeLogRead only.
+ *
+ * The output is compress for efficient storage/transmission.
+ * The file format use CRC to detect data corruption.
+ */
+TA_RetCode TA_TradeLogWrite( FILE *out, const TA_TradeLog *logToWrite );
+TA_RetCode TA_TradeLogRead ( FILE *in, TA_TradeLog **newAllocatedTradeLog );
+
+/* Copy the closed transaction from a TA_TradeLog
+ *
+ * You can use this to merge a log into another.
+ * Open transaction are not copied.
+ * The source trade log is left untouched.
+ */
+TA_RetCode TA_TradeLogMerge( TA_TradeLog *dest, const TA_TradeLog *src );
+#endif
+
 /* Functions for TA_PM
  *
  * These functions allows to do the measurements on one
@@ -415,7 +437,7 @@ typedef struct
 } TA_PMReport;
 
 TA_RetCode TA_PMReportAlloc( TA_PM *pm, TA_PMReport **newAllocatedReport );
-TA_RetCode TA_PMReportFree ( TA_PMReport *reportToBeFreed );
+TA_RetCode TA_PMReportFree ( TA_PMReport *toBeFreed );
 
 /* Append all measurements into a file. 
  *
@@ -423,18 +445,6 @@ TA_RetCode TA_PMReportFree ( TA_PMReport *reportToBeFreed );
  * being printer friendly.
  */
 TA_RetCode TA_PMReportToFile( TA_PM *pm, FILE *out ); 
-
-/* Save the TA_PM into a file.
- *
- * The report is written in binary and is design for
- * being read back with TA_PMRead.
- *
- * Keep in mind that this read back TA_PM cannot
- * have further TA_TradeLog added to it. This
- * TA_PM can be used only to generate reports.
- */
-TA_RetCode TA_PMWrite( FILE *out, const TA_PM *pmToWrite );
-TA_RetCode TA_PMRead ( FILE *in, TA_PM **newAllocatedPM );
 
 /* Functions for TA_TradeReport
  *
@@ -510,8 +520,8 @@ typedef struct
    void *hiddenData;
 } TA_TradeReport;
 
-TA_RetCode TA_PMTradeReportAlloc( TA_PM *pm, TA_TradeReport **tradeReportAllocated );
-TA_RetCode TA_PMTradeReportFree ( TA_PM *pm, TA_TradeReport *tradeReport );
+TA_RetCode TA_TradeReportAlloc( TA_PM *pm, TA_TradeReport **tradeReportAllocated );
+TA_RetCode TA_TradeReportFree ( TA_TradeReport *toBeFreed );
 
 #ifdef __cplusplus
 }

@@ -282,4 +282,9 @@ typedef struct
     
 } TA_TradeLogPriv;
 
+typedef struct
+{
+   unsigned int magicNb;
+} TA_TradeReportPriv;
+
 #endif
