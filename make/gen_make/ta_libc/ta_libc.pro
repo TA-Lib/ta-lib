@@ -141,7 +141,9 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_abstract/frames/ta_ROCR100_frame.c \
           ../../../../../src/ta_abstract/frames/ta_RSI_frame.c \
           ../../../../../src/ta_abstract/frames/ta_STOCH_frame.c \
+          ../../../../../src/ta_abstract/frames/ta_STOCHF_frame.c \
           ../../../../../src/ta_abstract/frames/ta_TRIX_frame.c \
+          ../../../../../src/ta_abstract/frames/ta_WILLR_frame.c \
           ../../../../../src/ta_abstract/frames/ta_OBV_frame.c \
           ../../../../../src/ta_abstract/frames/ta_STDDEV_frame.c \
           ../../../../../src/ta_abstract/frames/ta_VAR_frame.c \
@@ -184,7 +186,9 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_ROCR100.c \
           ../../../../../src/ta_func/ta_RSI.c \
           ../../../../../src/ta_func/ta_STOCH.c \
+          ../../../../../src/ta_func/ta_STOCHF.c \
           ../../../../../src/ta_func/ta_TRIX.c \
+          ../../../../../src/ta_func/ta_WILLR.c \
           ../../../../../src/ta_func/ta_OBV.c \
           ../../../../../src/ta_func/ta_STDDEV.c \
           ../../../../../src/ta_func/ta_VAR.c \

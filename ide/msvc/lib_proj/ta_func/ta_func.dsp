@@ -337,6 +337,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_STOCH.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_STOCHF.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_TEMA.c
 # End Source File
 # Begin Source File
@@ -362,6 +366,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_VAR.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_WCLPRICE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_WILLR.c
 # End Source File
 # Begin Source File
 

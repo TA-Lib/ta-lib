@@ -143,7 +143,9 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_abstract/frames/ta_ROCR100_frame.c \
 		../../../../../src/ta_abstract/frames/ta_RSI_frame.c \
 		../../../../../src/ta_abstract/frames/ta_STOCH_frame.c \
+		../../../../../src/ta_abstract/frames/ta_STOCHF_frame.c \
 		../../../../../src/ta_abstract/frames/ta_TRIX_frame.c \
+		../../../../../src/ta_abstract/frames/ta_WILLR_frame.c \
 		../../../../../src/ta_abstract/frames/ta_OBV_frame.c \
 		../../../../../src/ta_abstract/frames/ta_STDDEV_frame.c \
 		../../../../../src/ta_abstract/frames/ta_VAR_frame.c \
@@ -186,7 +188,9 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_ROCR100.c \
 		../../../../../src/ta_func/ta_RSI.c \
 		../../../../../src/ta_func/ta_STOCH.c \
+		../../../../../src/ta_func/ta_STOCHF.c \
 		../../../../../src/ta_func/ta_TRIX.c \
+		../../../../../src/ta_func/ta_WILLR.c \
 		../../../../../src/ta_func/ta_OBV.c \
 		../../../../../src/ta_func/ta_STDDEV.c \
 		../../../../../src/ta_func/ta_VAR.c \
@@ -321,7 +325,9 @@ OBJECTS =	../../../../../temp/csd/ta_ascii.o \
 		../../../../../temp/csd/ta_ROCR100_frame.o \
 		../../../../../temp/csd/ta_RSI_frame.o \
 		../../../../../temp/csd/ta_STOCH_frame.o \
+		../../../../../temp/csd/ta_STOCHF_frame.o \
 		../../../../../temp/csd/ta_TRIX_frame.o \
+		../../../../../temp/csd/ta_WILLR_frame.o \
 		../../../../../temp/csd/ta_OBV_frame.o \
 		../../../../../temp/csd/ta_STDDEV_frame.o \
 		../../../../../temp/csd/ta_VAR_frame.o \
@@ -364,7 +370,9 @@ OBJECTS =	../../../../../temp/csd/ta_ascii.o \
 		../../../../../temp/csd/ta_ROCR100.o \
 		../../../../../temp/csd/ta_RSI.o \
 		../../../../../temp/csd/ta_STOCH.o \
+		../../../../../temp/csd/ta_STOCHF.o \
 		../../../../../temp/csd/ta_TRIX.o \
+		../../../../../temp/csd/ta_WILLR.o \
 		../../../../../temp/csd/ta_OBV.o \
 		../../../../../temp/csd/ta_STDDEV.o \
 		../../../../../temp/csd/ta_VAR.o \
@@ -792,8 +800,14 @@ clean:
 ../../../../../temp/csd/ta_STOCH_frame.o: ../../../../../src/ta_abstract/frames/ta_STOCH_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_STOCH_frame.o ../../../../../src/ta_abstract/frames/ta_STOCH_frame.c
 
+../../../../../temp/csd/ta_STOCHF_frame.o: ../../../../../src/ta_abstract/frames/ta_STOCHF_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_STOCHF_frame.o ../../../../../src/ta_abstract/frames/ta_STOCHF_frame.c
+
 ../../../../../temp/csd/ta_TRIX_frame.o: ../../../../../src/ta_abstract/frames/ta_TRIX_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_TRIX_frame.o ../../../../../src/ta_abstract/frames/ta_TRIX_frame.c
+
+../../../../../temp/csd/ta_WILLR_frame.o: ../../../../../src/ta_abstract/frames/ta_WILLR_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_WILLR_frame.o ../../../../../src/ta_abstract/frames/ta_WILLR_frame.c
 
 ../../../../../temp/csd/ta_OBV_frame.o: ../../../../../src/ta_abstract/frames/ta_OBV_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_OBV_frame.o ../../../../../src/ta_abstract/frames/ta_OBV_frame.c
@@ -921,8 +935,14 @@ clean:
 ../../../../../temp/csd/ta_STOCH.o: ../../../../../src/ta_func/ta_STOCH.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_STOCH.o ../../../../../src/ta_func/ta_STOCH.c
 
+../../../../../temp/csd/ta_STOCHF.o: ../../../../../src/ta_func/ta_STOCHF.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_STOCHF.o ../../../../../src/ta_func/ta_STOCHF.c
+
 ../../../../../temp/csd/ta_TRIX.o: ../../../../../src/ta_func/ta_TRIX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_TRIX.o ../../../../../src/ta_func/ta_TRIX.c
+
+../../../../../temp/csd/ta_WILLR.o: ../../../../../src/ta_func/ta_WILLR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_WILLR.o ../../../../../src/ta_func/ta_WILLR.c
 
 ../../../../../temp/csd/ta_OBV.o: ../../../../../src/ta_func/ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_OBV.o ../../../../../src/ta_func/ta_OBV.c

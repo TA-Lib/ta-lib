@@ -48,7 +48,9 @@ extern const TA_FuncDef TA_DEF_ROCR;
 extern const TA_FuncDef TA_DEF_ROCR100;
 extern const TA_FuncDef TA_DEF_RSI;
 extern const TA_FuncDef TA_DEF_STOCH;
+extern const TA_FuncDef TA_DEF_STOCHF;
 extern const TA_FuncDef TA_DEF_TRIX;
+extern const TA_FuncDef TA_DEF_WILLR;
 extern const TA_FuncDef TA_DEF_OBV;
 extern const TA_FuncDef TA_DEF_STDDEV;
 extern const TA_FuncDef TA_DEF_VAR;
@@ -108,7 +110,9 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_ROCR100,
 &TA_DEF_RSI,
 &TA_DEF_STOCH,
+&TA_DEF_STOCHF,
 &TA_DEF_TRIX,
+&TA_DEF_WILLR,
 NULL };
 #define SIZE_GROUP_4 ((sizeof(TA_PerGroupFunc_4)/sizeof(const TA_FuncDef *))-1)
 

@@ -1148,22 +1148,33 @@ int TA_RSI_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MA
  * 
  * Optional Parameters
  * -------------------
- * optInKPeriod_0:(From 1 to TA_INTEGER_MAX)
- *    Time periods for the stochastic %K line
+ * optInFastK_Period_0:(From 1 to TA_INTEGER_MAX)
+ *    Time period for building the Fast-K line
  * 
- * optInKSlowPeriod_1:(From 1 to TA_INTEGER_MAX)
- *    Internal smoothing for the %K line. Usually between 1 to 3
+ * optInSlowK_Period_1:(From 1 to TA_INTEGER_MAX)
+ *    Smoothing for making the Slow-K line. Usually set to 3
  * 
- * optInDSlowPeriod_2:(From 1 to TA_INTEGER_MAX)
- *    Time periods for the moving average of the %K line. That average is the %D line
+ * optInSlowK_MAType_2:
+ *    Type of Moving Average for Slow-K
  * 
- * optInMethod_3:
- *    Type of Moving Average
+ * optInSlowD_Period_3:(From 1 to TA_INTEGER_MAX)
+ *    Smoothing for making the Slow-D line
+ * 
+ * optInSlowD_MAType_4:
+ *    Type of Moving Average for Slow-D
  * 
  * 
  */
 
-/* TA_STOCH: Optional Parameter optInMethod_3 */
+/* TA_STOCH: Optional Parameter optInSlowK_MAType_2 */
+#define TA_STOCH_SIMPLE 0
+#define TA_STOCH_EXPONENTIAL 1
+#define TA_STOCH_WEIGHTED 2
+#define TA_STOCH_DEMA 3
+#define TA_STOCH_TEMA 4
+
+
+/* TA_STOCH: Optional Parameter optInSlowD_MAType_4 */
 #define TA_STOCH_SIMPLE 0
 #define TA_STOCH_EXPONENTIAL 1
 #define TA_STOCH_WEIGHTED 2
@@ -1176,19 +1187,66 @@ TA_RetCode TA_STOCH( TA_Libc      *libHandle,
                      const TA_Real inHigh_0[],
                      const TA_Real inLow_0[],
                      const TA_Real inClose_0[],
-                     TA_Integer    optInKPeriod_0, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInKSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInDSlowPeriod_2, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInMethod_3,
+                     TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer    optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer    optInSlowK_MAType_2,
+                     TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer    optInSlowD_MAType_4,
                      TA_Integer   *outBegIdx,
                      TA_Integer   *outNbElement,
-                     TA_Real       outRealK_0[],
-                     TA_Real       outRealD_1[] );
+                     TA_Real       outSlowK_0[],
+                     TA_Real       outSlowD_1[] );
 
-int TA_STOCH_Lookback( TA_Integer    optInKPeriod_0, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInKSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInDSlowPeriod_2, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInMethod_3 ); 
+int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
+                       TA_Integer    optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+                       TA_Integer    optInSlowK_MAType_2,
+                       TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                       TA_Integer    optInSlowD_MAType_4 ); 
+
+/*
+ * TA_STOCHF - Stochastic Fast
+ * 
+ * Input  = High, Low, Close
+ * Output = TA_Real, TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInFastK_Period_0:(From 1 to TA_INTEGER_MAX)
+ *    Time period for building the Fast-K line
+ * 
+ * optInFastD_Period_1:(From 1 to TA_INTEGER_MAX)
+ *    Smoothing for making the Fast-D line. Usually set to 3
+ * 
+ * optInFastD_MAType_2:
+ *    Type of Moving Average for Fast-D
+ * 
+ * 
+ */
+
+/* TA_STOCHF: Optional Parameter optInFastD_MAType_2 */
+#define TA_STOCHF_SIMPLE 0
+#define TA_STOCHF_EXPONENTIAL 1
+#define TA_STOCHF_WEIGHTED 2
+#define TA_STOCHF_DEMA 3
+#define TA_STOCHF_TEMA 4
+
+TA_RetCode TA_STOCHF( TA_Libc      *libHandle,
+                      TA_Integer    startIdx,
+                      TA_Integer    endIdx,
+                      const TA_Real inHigh_0[],
+                      const TA_Real inLow_0[],
+                      const TA_Real inClose_0[],
+                      TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
+                      TA_Integer    optInFastD_Period_1, /* From 1 to TA_INTEGER_MAX */
+                      TA_Integer    optInFastD_MAType_2,
+                      TA_Integer   *outBegIdx,
+                      TA_Integer   *outNbElement,
+                      TA_Real       outFastK_0[],
+                      TA_Real       outFastD_1[] );
+
+int TA_STOCHF_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
+                        TA_Integer    optInFastD_Period_1, /* From 1 to TA_INTEGER_MAX */
+                        TA_Integer    optInFastD_MAType_2 ); 
 
 /*
  * TA_TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
@@ -1213,6 +1271,33 @@ TA_RetCode TA_TRIX( TA_Libc      *libHandle,
                     TA_Real       outReal_0[] );
 
 int TA_TRIX_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
+
+/*
+ * TA_WILLR - Williams' %R
+ * 
+ * Input  = High, Low, Close
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_WILLR( TA_Libc      *libHandle,
+                     TA_Integer    startIdx,
+                     TA_Integer    endIdx,
+                     const TA_Real inHigh_0[],
+                     const TA_Real inLow_0[],
+                     const TA_Real inClose_0[],
+                     TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer   *outBegIdx,
+                     TA_Integer   *outNbElement,
+                     TA_Real       outReal_0[] );
+
+int TA_WILLR_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
 
 
 

@@ -58,7 +58,9 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_ROCR100.c \
 		../../../../../src/ta_func/ta_RSI.c \
 		../../../../../src/ta_func/ta_STOCH.c \
+		../../../../../src/ta_func/ta_STOCHF.c \
 		../../../../../src/ta_func/ta_TRIX.c \
+		../../../../../src/ta_func/ta_WILLR.c \
 		../../../../../src/ta_func/ta_OBV.c \
 		../../../../../src/ta_func/ta_STDDEV.c \
 		../../../../../src/ta_func/ta_VAR.c \
@@ -101,7 +103,9 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_ROCR100.o \
 		../../../../../temp/cmd/ta_RSI.o \
 		../../../../../temp/cmd/ta_STOCH.o \
+		../../../../../temp/cmd/ta_STOCHF.o \
 		../../../../../temp/cmd/ta_TRIX.o \
+		../../../../../temp/cmd/ta_WILLR.o \
 		../../../../../temp/cmd/ta_OBV.o \
 		../../../../../temp/cmd/ta_STDDEV.o \
 		../../../../../temp/cmd/ta_VAR.o \
@@ -267,8 +271,14 @@ clean:
 ../../../../../temp/cmd/ta_STOCH.o: ../../../../../src/ta_func/ta_STOCH.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_STOCH.o ../../../../../src/ta_func/ta_STOCH.c
 
+../../../../../temp/cmd/ta_STOCHF.o: ../../../../../src/ta_func/ta_STOCHF.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_STOCHF.o ../../../../../src/ta_func/ta_STOCHF.c
+
 ../../../../../temp/cmd/ta_TRIX.o: ../../../../../src/ta_func/ta_TRIX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_TRIX.o ../../../../../src/ta_func/ta_TRIX.c
+
+../../../../../temp/cmd/ta_WILLR.o: ../../../../../src/ta_func/ta_WILLR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_WILLR.o ../../../../../src/ta_func/ta_WILLR.c
 
 ../../../../../temp/cmd/ta_OBV.o: ../../../../../src/ta_func/ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_OBV.o ../../../../../src/ta_func/ta_OBV.c
