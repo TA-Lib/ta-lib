@@ -72,6 +72,9 @@
 #if defined(TA_SUPPORT_MYSQL)
 #include "ta_mysql.h"
 #endif
+#if defined(TA_SUPPORT_SQL)
+#include "ta_sql.h"
+#endif
 
 /**** External functions declarations. ****/
 /* None */
@@ -122,7 +125,18 @@ const TA_DataSourceDriver TA_gDataSourceTable[] =
     },
 
     {   /* TA_SQL data source. */
-#if defined(TA_SUPPORT_MYSQL)
+#if defined(TA_SUPPORT_SQL)
+        TA_SQL_InitializeSourceDriver,
+        TA_SQL_ShutdownSourceDriver,
+        TA_SQL_GetParameters,
+        TA_SQL_OpenSource,
+        TA_SQL_CloseSource,
+        TA_SQL_GetFirstCategoryHandle,
+        TA_SQL_GetNextCategoryHandle,
+        TA_SQL_GetFirstSymbolHandle,
+        TA_SQL_GetNextSymbolHandle,
+        TA_SQL_GetHistoryData
+#elif defined(TA_SUPPORT_MYSQL)
         TA_MYSQL_InitializeSourceDriver,
         TA_MYSQL_ShutdownSourceDriver,
         TA_MYSQL_GetParameters,
