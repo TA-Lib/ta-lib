@@ -283,15 +283,15 @@ static ErrorNumber do_test( const TA_History *history,
    if( test->doAverage )
    {
       TA_SetUnstablePeriod( TA_FUNC_UNST_ATR, test->unstablePeriod );
-      retCode = TA_ATR(    test->startIdx,
-                           test->endIdx,
-                           gBuffer[0].in,
-                           gBuffer[1].in,
-                           gBuffer[2].in,
-                           test->optInTimePeriod_0,                           
-                           &outBegIdx,
-                           &outNbElement,
-                           gBuffer[0].in );
+      retCode = TA_ATR( test->startIdx,
+                        test->endIdx,
+                        gBuffer[0].in,
+                        gBuffer[1].in,
+                        gBuffer[2].in,
+                        test->optInTimePeriod_0,                           
+                        &outBegIdx,
+                        &outNbElement,
+                        gBuffer[0].in );
    }
    else
    {

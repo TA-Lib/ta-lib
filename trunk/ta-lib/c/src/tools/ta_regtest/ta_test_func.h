@@ -16,5 +16,7 @@ ErrorNumber test_func_per_hlc ( TA_History *history );
 ErrorNumber test_func_per_hlcv( TA_History *history );
 ErrorNumber test_func_per     ( TA_History *history );
 ErrorNumber test_func_sar     ( TA_History *history );
+ErrorNumber test_func_1in_1out( TA_History *history );
+ErrorNumber test_func_1in_2out( TA_History *history );
 
 
