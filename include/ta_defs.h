@@ -316,6 +316,31 @@ typedef enum
 #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 
+/* The TA_RangeType enum specifies the types of range that can be considered 
+ * when to compare a part of a candle to other candles
+ */
+
+ENUM_BEGIN( TA_RangeType )
+   TA_RangeType_RealBody,
+   TA_RangeType_HighLow,
+   TA_RangeType_Shadows
+ENUM_END( TA_RangeType )
+
+/* The TA_CandleSettingType enum specifies which kind of setting to consider;
+ * the settings are based on the parts of the candle and the common words
+ * indicating the length (short, long, very long)
+ */
+ENUM_BEGIN( TA_CandleSettingType )
+    TA_BodyLong,
+    TA_BodyVeryLong,
+    TA_BodyShort,
+    TA_BodyDoji,
+    TA_ShadowLong,
+    TA_ShadowVeryLong,
+    TA_ShadowShort,
+    TA_ShadowVeryShort,
+    TA_AllCandleSettings
+ENUM_END( TA_CandleSettingType )
 
 #endif
 
