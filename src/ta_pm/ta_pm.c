@@ -71,10 +71,7 @@
 /* None */
 
 /**** Local functions declarations.    ****/
-static TA_RetCode TA_PMDelTradeLog( TA_TradeLogPriv *tradeLogToDel );
 static void freeTradeDictEntry( void *toBeFreed );
-                                
-
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -100,6 +97,9 @@ TA_RetCode TA_TradeLogAlloc( TA_TradeLog **allocatedTradeLog )
    tradeLogPriv = (TA_TradeLogPriv *)(((char *)tradeLog)+sizeof(TA_TradeLog));
    tradeLogPriv->magicNb   = TA_TRADELOGPRIV_MAGIC_NB;
    tradeLog->hiddenData    = tradeLogPriv;
+
+   TA_ListInit( &tradeLogPriv->defaultDictEntry.shortEntryPrivList );
+   TA_ListInit( &tradeLogPriv->defaultDictEntry.longEntryPrivList );
 
    /* TA_TradeLogFree can be safely called from this point. */
 
@@ -155,9 +155,9 @@ TA_RetCode TA_TradeLogFree( TA_TradeLog *toBeFreed )
       if( tradeLogPriv->magicNb != TA_TRADELOGPRIV_MAGIC_NB )
          return TA_BAD_OBJECT;
 
-      /* If it currently belong to a TA_PM, remove it. */       
-      if( tradeLogPriv->parentPMPriv )
-         TA_PMDelTradeLog( tradeLogPriv );
+      /* If it currently belong to a TA_PM, prevent the de-allocation. */       
+      if( tradeLogPriv->nbReferenceFromTA_PM != 0 )
+         return TA_PM_REFERENCE_EXIST;
 
       /* Free the private members */
       if( tradeLogPriv->tradeDictCAT )
@@ -182,19 +182,19 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
                            const TA_Transaction *newTransaction )
 {
    TA_TradeLogPriv *tradeLogPriv;
-   const TA_Instrument *id;
-   unsigned int flags;
+   TA_Instrument *id;
    TA_Dict *theDict;
    TA_DataLog *dataLog;
    TA_TradeDictEntry *dictEntry;
    TA_StringCache *stringCache;
    TA_String *catString;
    TA_String *symString;
+   const char *catCharPtr;
+   const char *symCharPtr;
    TA_RetCode retCode;
    int quantity, entryTradeQuantity;
    TA_List *entryListToUse;
    TA_DataLog *entryTradeLog;
-   TA_PMPriv *pmPriv;
 
    TA_Real tempReal;
 
@@ -205,30 +205,15 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
     * be translated into multiple trade if there was multiple
     * entry point).
     */
-
    if( !tradeLog || !newTransaction )
       return TA_BAD_PARAM;
 
    /* Check that the TA_Transaction makes sense. */
    if( (newTransaction->price <= 0.0)   ||
        (newTransaction->quantity <= 0) ||
-       (TA_TimestampValidate(&newTransaction->timestamp)!= TA_SUCCESS) ||
+       (TA_TimestampValidate(&newTransaction->timestamp) != TA_SUCCESS) ||
        (newTransaction->type >= TA_NB_TRADE_TYPE))
       return TA_BAD_PARAM;
-
-   /* Check that the id makes sense. */
-   id = newTransaction->id;
-   if( !id )
-      return TA_INSTRUMENT_ID_BAD;
-
-   flags = id->flags;
-   if( !(flags & (TA_INSTRUMENT_USE_USERKEY|
-                  TA_INSTRUMENT_USE_CATSTRING|
-                  TA_INSTRUMENT_USE_SYMSTRING|
-                  TA_INSTRUMENT_USE_CATSYMSTRING)) )
-   {
-      return TA_INSTRUMENT_ID_BAD;
-   }
 
    /* Get access to the hidden data of the TA_TradeLog. */
    tradeLogPriv = (TA_TradeLogPriv *)tradeLog->hiddenData;
@@ -242,33 +227,46 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
     *
     * Use the dictionary corresponding to the type of
     * key of the TA_Instrument.
+    *
+    * If TA_Instrument is NULL, use the pre-allocated
+    * default TA_TradeDictEntry.
     */
-   if( flags & TA_INSTRUMENT_USE_CATSTRING )
+   id = newTransaction->id;
+   if( !id )
    {
-      if( flags & TA_INSTRUMENT_USE_SYMSTRING )
+      dictEntry = &tradeLogPriv->defaultDictEntry;
+      catCharPtr = NULL;
+      symCharPtr = NULL;
+   }
+   else
+   {   
+      catCharPtr = id->catString;
+      symCharPtr = id->symString;
+      if( catCharPtr )
       {
-         theDict = tradeLogPriv->tradeDictCATSYM;
-         dictEntry = TA_DictGetValue_S2( theDict, id->key.catSym.catString, id->key.catSym.symString );
+         if( symCharPtr )
+         {
+            theDict = tradeLogPriv->tradeDictCATSYM;
+            dictEntry = TA_DictGetValue_S2( theDict, catCharPtr, symCharPtr );
+         }
+         else
+         {
+            theDict = tradeLogPriv->tradeDictCAT;
+            dictEntry = TA_DictGetValue_S( theDict, catCharPtr );
+         }
+      }
+      else if( symCharPtr )
+      {
+         theDict = tradeLogPriv->tradeDictCAT;
+         dictEntry = TA_DictGetValue_S( theDict, symCharPtr );
       }
       else
       {
-         theDict = tradeLogPriv->tradeDictCAT;
-         dictEntry = TA_DictGetValue_S( theDict, id->key.catSym.catString );
+         theDict = tradeLogPriv->tradeDictUserKey;
+         dictEntry = TA_DictGetValue_I( theDict, id->userKey );
       }
    }
-   else if( flags & TA_INSTRUMENT_USE_SYMSTRING )
-   {
-      theDict = tradeLogPriv->tradeDictCAT;
-      dictEntry = TA_DictGetValue_S( theDict, id->key.catSym.symString );
-   }
-   else if( flags & TA_INSTRUMENT_USE_USERKEY )
-   {
-      theDict = tradeLogPriv->tradeDictUserKey;
-      dictEntry = TA_DictGetValue_I( theDict, id->key.userKey );
-   }
-   else
-      return TA_INSTRUMENT_ID_BAD;
-   
+      
    if( !dictEntry )
    {
       /* The TA_TradeDictEntry was not found, create it! */
@@ -276,58 +274,61 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
       if( !dictEntry )
          return TA_ALLOC_ERR;
 
-      dictEntry->id = id;
-      TA_ListInit(  &dictEntry->shortEntryPrivList );
-      TA_ListInit(  &dictEntry->longEntryPrivList );
+      memset( &dictEntry->id, 0, sizeof(TA_Instrument) );
+      TA_ListInit( &dictEntry->shortEntryPrivList );
+      TA_ListInit( &dictEntry->longEntryPrivList );
 
       /* Add the dictEntry to the corresponding dictionary. */
       stringCache = TA_GetGlobalStringCache();
 
-      if( flags & TA_INSTRUMENT_USE_CATSTRING )
+      if( catCharPtr )
       {         
-         catString = TA_StringAlloc( stringCache, id->key.catSym.catString );
+         catString = TA_StringAlloc( stringCache, catCharPtr );
          if( !catString )
          {
-            TA_Free(  dictEntry );
+            TA_Free( dictEntry );
             return TA_ALLOC_ERR;
          }
 
-         if( flags & TA_INSTRUMENT_USE_SYMSTRING )
+         if( symCharPtr )
          {
-            symString = TA_StringAlloc( stringCache, id->key.catSym.symString );
+            symString = TA_StringAlloc( stringCache, symCharPtr );
             if( !symString )
             {
-               TA_Free(  dictEntry );
+               TA_Free( dictEntry );
                TA_StringFree( stringCache, catString );
                return TA_ALLOC_ERR;
             }
             retCode = TA_DictAddPair_S2( theDict, catString, symString, dictEntry );
-            TA_StringFree( stringCache, symString );
+            dictEntry->id.symString = TA_StringToChar(symString);
          }
          else
             retCode = TA_DictAddPair_S( theDict, catString, dictEntry );
 
-        TA_StringFree( stringCache, catString );
+         dictEntry->id.catString = TA_StringToChar(catString);
       }
-      else if( flags & TA_INSTRUMENT_USE_SYMSTRING )
+      else if( symCharPtr )
       {
-         symString = TA_StringAlloc( stringCache, id->key.catSym.symString );
+         symString = TA_StringAlloc( stringCache, symCharPtr );
          if( !symString )
          {
-           TA_Free(  dictEntry );
+           TA_Free( dictEntry );
            return TA_ALLOC_ERR;
          }
 
          retCode = TA_DictAddPair_S( theDict, symString, dictEntry );
-         TA_StringFree( stringCache, symString );
+         dictEntry->id.symString = TA_StringToChar(symString);
       }
-      else if( flags & TA_INSTRUMENT_USE_USERKEY )
-         retCode = TA_DictAddPair_I( theDict, id->key.userKey, dictEntry );
+      else
+      {
+         retCode = TA_DictAddPair_I( theDict, id->userKey, dictEntry );
+         dictEntry->id.userKey = id->userKey;
+      }
 
       /* Check the retCode of the TA_DictAddXXXXX function. */
       if( retCode != TA_SUCCESS )
       {
-         TA_Free(  dictEntry );
+         TA_Free( dictEntry );
          return TA_ALLOC_ERR;
       }
    }
@@ -359,9 +360,9 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
       dataLog = TA_AllocatorForDataLog_Alloc( &tradeLogPriv->allocator );
       if( !dataLog )
          return TA_ALLOC_ERR;
-      dataLog->quantity  = -(newTransaction->quantity);
-      dataLog->entryPrice = newTransaction->price;
-      TA_TimestampCopy( &dataLog->entryTimestamp,
+      dataLog->u.entry.quantity  = -(newTransaction->quantity);
+      dataLog->u.entry.entryPrice = newTransaction->price;
+      TA_TimestampCopy( &dataLog->u.entry.entryTimestamp,
                         &newTransaction->timestamp );
       TA_ListNodeAddTail( entryListToUse, &dataLog->u.entry.node, dataLog );
       break;
@@ -370,11 +371,6 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
    case TA_SHORT_EXIT:
       /* Invalidate cached calculation of this trade log. */
       tradeLogPriv->flags &= ~TA_PMVALUECACHE_CALCULATED;
-
-      /* Invalidate cached calculation of the parent TA_PM (if applicable) */
-      pmPriv = tradeLogPriv->parentPMPriv;
-      if( pmPriv )
-         pmPriv->flags &= ~TA_PMVALUECACHE_CALCULATED;
 
       /* Transform this transaction into one or 
        * multiple trade(s).
@@ -386,14 +382,14 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
       quantity = newTransaction->quantity;
       while( quantity )
       {
-         entryTradeQuantity = -entryTradeLog->quantity;
+         entryTradeQuantity = -entryTradeLog->u.trade.quantity;
          if( entryTradeQuantity == quantity )
          {
             /* This entry have exactly the right amount of 
              * position for what needs to be closed.
              * Just transform the entry into a trade.
              */
-             entryTradeLog->quantity = quantity;
+             entryTradeLog->u.trade.quantity = quantity;
              entryTradeLog->u.trade.id = id;
              TA_TimestampCopy( &entryTradeLog->u.trade.exitTimestamp,
                                &newTransaction->timestamp );
@@ -402,7 +398,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
               * Both are multiplied by the quantity being
               * traded.
               */
-             tempReal = entryTradeLog->entryPrice;
+             tempReal = entryTradeLog->u.entry.entryPrice;
              if( newTransaction->type == TA_LONG_EXIT )
              {
                 entryTradeLog->u.trade.profit = (newTransaction->price-tempReal)*quantity;
@@ -412,7 +408,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
                 entryTradeLog->u.trade.profit = (tempReal-newTransaction->price)*quantity;
                 tempReal = -tempReal;
              }
-             entryTradeLog->entryPrice = tempReal * quantity;
+             entryTradeLog->u.entry.entryPrice = tempReal * quantity;
              return TA_SUCCESS; /* Done! */
          }
          else if( entryTradeQuantity < quantity )
@@ -422,7 +418,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
              * Just transform the entry into a trade
              * and move to the next entry.
              */
-             entryTradeLog->quantity = entryTradeQuantity;
+             entryTradeLog->u.trade.quantity = entryTradeQuantity;
              quantity -= entryTradeQuantity;
              entryTradeLog->u.trade.id = id;
              TA_TimestampCopy( &entryTradeLog->u.trade.exitTimestamp,
@@ -432,7 +428,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
               * Both are multiplied by the quantity being
               * traded.
               */
-             tempReal = entryTradeLog->entryPrice;
+             tempReal = entryTradeLog->u.trade.entryPrice;
              if( newTransaction->type == TA_LONG_EXIT )
                 entryTradeLog->u.trade.profit = (newTransaction->price-tempReal)*entryTradeQuantity;
              else
@@ -440,7 +436,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
                 entryTradeLog->u.trade.profit = (tempReal-newTransaction->price)*entryTradeQuantity;
                 tempReal = -tempReal;
              }
-             entryTradeLog->entryPrice = tempReal * entryTradeQuantity;
+             entryTradeLog->u.trade.entryPrice = tempReal * entryTradeQuantity;
 
              /* Move to the next entry. If none available, that means there
               * was more "exit" than "entry" and this is considered an
@@ -460,12 +456,12 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
             if( !dataLog )
                return TA_ALLOC_ERR;
 
-            TA_TimestampCopy( &dataLog->entryTimestamp,
-                              &entryTradeLog->entryTimestamp );
+            TA_TimestampCopy( &dataLog->u.trade.entryTimestamp,
+                              &entryTradeLog->u.trade.entryTimestamp );
             TA_TimestampCopy( &dataLog->u.trade.exitTimestamp,
                               &newTransaction->timestamp );
-            dataLog->quantity = quantity;
-            tempReal = entryTradeLog->entryPrice;
+            dataLog->u.trade.quantity = quantity;
+            tempReal = entryTradeLog->u.trade.entryPrice;
             if( newTransaction->type == TA_LONG_EXIT )
                 dataLog->u.trade.profit = (newTransaction->price-tempReal)*quantity;
             else
@@ -473,13 +469,13 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
                 dataLog->u.trade.profit = (tempReal-newTransaction->price)*quantity;
                 tempReal = -tempReal;
             }
-            dataLog->entryPrice = tempReal*quantity;
+            dataLog->u.trade.entryPrice = tempReal*quantity;
             dataLog->u.trade.id = id;
 
             /* Adjust the entry and put it back for being process
              * again later.
              */
-            entryTradeLog->quantity += quantity;
+            entryTradeLog->u.trade.quantity += quantity;
             TA_ListNodeAddHead( entryListToUse, &entryTradeLog->u.entry.node, entryTradeLog );            
             return TA_SUCCESS; /* Done! */
          }
@@ -514,7 +510,7 @@ TA_RetCode TA_PMAlloc( const TA_Timestamp  *startDate,
    if( TA_TimestampValidate( startDate ) )
       return TA_BAD_START_DATE;
 
-   if( TA_TimestampValidate( endDate ) )
+   if( TA_TimestampValidate( endDate ) || TA_TimestampGreater( startDate, endDate ) )
       return TA_BAD_END_DATE;
 
    /* To keep things simple, it is assumed that
@@ -541,9 +537,10 @@ TA_RetCode TA_PMAlloc( const TA_Timestamp  *startDate,
    pmPriv->initialCapital = initialCapital;
    pm->hiddenData         = pmPriv;
 
+   TA_ListInit(  &pmPriv->tradeLogList );
+
    /* TA_PMFree can be safely called from this point. */
 
-   TA_ListInit(  &pmPriv->tradeLogList );
    if( endDate )
       TA_TimestampCopy( &pmPriv->endDate, endDate );
             
@@ -577,7 +574,7 @@ TA_RetCode TA_PMFree( TA_PM *toBeFreed )
       tradeLogPriv = TA_ListAccessHead( &pmPriv->tradeLogList );
       while( tradeLogPriv )
       {
-         tradeLogPriv->parentPMPriv = NULL;
+         tradeLogPriv->nbReferenceFromTA_PM--;
          tradeLogPriv = TA_ListAccessNext( &pmPriv->tradeLogList );
       }
       TA_ListFree( &pmPriv->tradeLogList );   
@@ -596,7 +593,7 @@ TA_RetCode TA_PMFree( TA_PM *toBeFreed )
       FREE_IF_NOT_NULL( pmPriv->totalArrayCache.profit );
 
       /* Last thing that must be freed... */
-      TA_Free(  toBeFreed );
+      TA_Free( toBeFreed );
    }
 
    return TA_SUCCESS;
@@ -605,6 +602,7 @@ TA_RetCode TA_PMFree( TA_PM *toBeFreed )
 TA_RetCode TA_PMAddTradeLog( TA_PM *pm, TA_TradeLog *tradeLogToAdd )
 {
    TA_TradeLogPriv *tradeLogPriv;
+   TA_TradeLogPriv *tradeLogPrivIter;
    TA_PMPriv *pmPriv;
    TA_RetCode retCode;
 
@@ -621,20 +619,24 @@ TA_RetCode TA_PMAddTradeLog( TA_PM *pm, TA_TradeLog *tradeLogToAdd )
    if( tradeLogPriv->magicNb != TA_TRADELOGPRIV_MAGIC_NB )
       return TA_BAD_OBJECT;
    
-   /* Make sure it is not already added to another TA_PM */
-   if( tradeLogPriv->parentPMPriv )
-      return TA_TRADELOG_ALREADY_ADDED;
+   /* Make sure it was not already added */
+   tradeLogPrivIter = TA_ListAccessHead( &pmPriv->tradeLogList );
+   while( tradeLogPrivIter )
+   {
+      if( tradeLogPrivIter == tradeLogPriv )
+         return TA_TRADELOG_ALREADY_ADDED;
+      tradeLogPrivIter = TA_ListAccessNext( &pmPriv->tradeLogList );
+   }
 
-   tradeLogPriv->parentPMPriv = pmPriv;
-
-   /* Just add it to the list. */
+   /* Add it to the list and bump the reference count of the TA_TradeLog */
    retCode = TA_ListAddTail( &pmPriv->tradeLogList, tradeLogPriv );
    if( retCode != TA_SUCCESS )
       return retCode;
 
+   tradeLogPriv->nbReferenceFromTA_PM++;
+
    /* Invalidate cached calculation. */
    pmPriv->flags &= ~TA_PMVALUECACHE_CALCULATED;
-   tradeLogPriv->flags &= ~TA_PMVALUECACHE_CALCULATED;
 
    return TA_SUCCESS;
 }
@@ -643,39 +645,40 @@ TA_RetCode TA_PMAddTradeLog( TA_PM *pm, TA_TradeLog *tradeLogToAdd )
 /**** Local functions definitions.     ****/
 static void freeTradeDictEntry( void *toBeFreed )
 {
-   if( !toBeFreed )
+   TA_TradeDictEntry *dictEntry;
+   TA_StringCache *stringCache;
+   TA_String *catString;
+   TA_String *symString;
+   const char *tempCharPtr;
+
+   dictEntry = (TA_TradeDictEntry *)toBeFreed;
+   if( !dictEntry )
       return;
 
-   TA_Free(  (TA_TradeDictEntry *)toBeFreed );
-}
-
-static TA_RetCode TA_PMDelTradeLog( TA_TradeLogPriv *tradeLogToDel )
-{
-   TA_PMPriv *pmPriv;
-   TA_RetCode retCode;
-
-   if( !tradeLogToDel )
-      return TA_BAD_PARAM;
-
-   pmPriv = tradeLogToDel->parentPMPriv;
-   if( pmPriv )
+   tempCharPtr = dictEntry->id.catString;
+   if( tempCharPtr )
    {
-      /* Make sure this TA_PM is a valid object */
-      if( pmPriv->magicNb != TA_PMPRIV_MAGIC_NB )
-         return TA_BAD_OBJECT;
+      catString = TA_StringFromChar(tempCharPtr);
+      stringCache = TA_GetGlobalStringCache();
+      TA_StringFree( stringCache, catString );
 
-      /* Make sure this TA_TradeLog is a valid object. */
-      if( tradeLogToDel->magicNb != TA_TRADELOGPRIV_MAGIC_NB )
-         return TA_BAD_OBJECT;
-   
-      /* Invalidate cached calculation. */
-      pmPriv->flags &= ~TA_PMVALUECACHE_CALCULATED;
-
-      /* Just remove it from the list. */
-      retCode = TA_ListRemoveEntry( &pmPriv->tradeLogList, tradeLogToDel );
-      if( retCode != TA_SUCCESS )
-         return retCode;
+      tempCharPtr = dictEntry->id.symString;
+      if( tempCharPtr )
+      {
+         symString = TA_StringFromChar(tempCharPtr);
+         TA_StringFree( stringCache, symString );
+      }
+   }
+   else
+   {
+      tempCharPtr = dictEntry->id.symString;
+      if( tempCharPtr )
+      {
+         symString = TA_StringFromChar(tempCharPtr);
+         stringCache = TA_GetGlobalStringCache();
+         TA_StringFree( stringCache, symString );
+      }
    }
 
-   return TA_SUCCESS;
+   TA_Free( dictEntry );
 }

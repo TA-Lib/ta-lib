@@ -412,7 +412,7 @@ static TA_RetCode processCache( TA_PMPriv *pmPriv, TA_TradeLogPriv *tradeLog )
                 * a trade (not an entry)
                 * An entry have a negative 'quantity'.
                 */
-               tempInt1 = curDataLog->quantity;
+               tempInt1 = curDataLog->u.trade.quantity;
                if( tempInt1 > 0 )
                {
                   /* This is a trade. Consider only the trades that are
@@ -421,7 +421,7 @@ static TA_RetCode processCache( TA_PMPriv *pmPriv, TA_TradeLogPriv *tradeLog )
                   exitTimestamp = &curDataLog->u.trade.exitTimestamp;
                   if( findTimestampIndex( pmPriv, exitTimestamp, &idx ) )
                   {                   
-                     tempReal1 = curDataLog->entryPrice; /* Positive = long, negative = short */
+                     tempReal1 = curDataLog->u.trade.entryPrice; /* Positive = long, negative = short */
                      tempReal2 = curDataLog->u.trade.profit; /* Positive = winning, negative = losing */
                      if( tempReal1 > 0.0 )
                      {

@@ -179,11 +179,11 @@
  */
 #if defined( _MANAGED )
 
-#define CIRCBUF_PROLOG(Id,Type,Size) int Id##_Idx; \
+#define CIRCBUF_PROLOG(Id,Type,Size) int Id##_Idx = 0; \
                                      Type Id __gc []; \
-                                     int maxIdx_##Id
+                                     int maxIdx_##Id = (Size-1)
 
-#define CIRCBUF_CONSTRUCT(Id,Type,Size) \
+#define CIRCBUF_INIT(Id,Type,Size) \
    { \
       if( Size <= 0 ) \
          return TA_ALLOC_ERR; \
@@ -191,7 +191,13 @@
       if( !Id ) \
          return TA_ALLOC_ERR; \
       maxIdx_##Id = (Size-1); \
-      Id##_Idx = 0; \
+   }
+
+#define CIRCBUF_INIT_LOCAL_ONLY(Id,Type) \
+   { \
+      Id = new Type __gc [maxIdx_##Id+1]; \
+      if( !Id ) \
+         return TA_ALLOC_ERR; \
    }
 
 #define CIRCBUF_DESTROY(Id)
@@ -203,9 +209,9 @@
                                   Type *Id; \
                                   int maxIdx_##Id
 
-#define CIRCBUF_CONSTRUCT(Id,Type,Size) \
+#define CIRCBUF_INIT(Id,Type,Size) \
    { \
-      if( Size <= 0 ) \
+      if( Size < 1 ) \
          return TA_INTERNAL_ERROR(137); \
       if( (int)Size > (int)(sizeof(local_##Id)/sizeof(Type)) ) \
       { \
@@ -216,6 +222,13 @@
       else \
          Id = &local_##Id[0]; \
       maxIdx_##Id = (Size-1); \
+      Id##_Idx = 0; \
+   }
+
+#define CIRCBUF_INIT_LOCAL_ONLY(Id,Type) \
+   { \
+      Id = &local_##Id[0]; \
+      maxIdx_##Id = (int)(sizeof(local_##Id)/sizeof(Type))-1; \
       Id##_Idx = 0; \
    }
 

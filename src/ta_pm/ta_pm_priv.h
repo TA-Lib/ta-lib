@@ -1,3 +1,36 @@
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are permitted provided that the following
+ * conditions are met:
+ *
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in
+ *   the documentation and/or other materials provided with the
+ *   distribution.
+ *
+ * - Neither name of author nor the names of its contributors
+ *   may be used to endorse or promote products derived from this
+ *   software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * REGENTS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #ifndef TA_PM_PRIV_H
 #define TA_PM_PRIV_H
 
@@ -50,44 +83,31 @@ typedef struct
    /* Some boolean information is hidden by using the 
     * sign of the quantity and entryPrice.
     */
-
-   /* Positive=trade, negative=entry */
-   int quantity;
-
-   /* entryPrice: 
-    *   Positive=long, negative=short
-    *   but ONLY when this structure
-    *   is a trade.
-    */
-   TA_Real      entryPrice;
-   TA_Timestamp entryTimestamp;
-
    union TA_DataLogUnion
    {
       struct TA_EntryLog
       {
+         /* These 3 fields are identical in the TA_Trade struct */
+         int quantity;            /* positive=completed trade, negative=entry */
+         TA_Real      entryPrice; /* positive=long, negative=short */
+         TA_Timestamp entryTimestamp;
+
          TA_ListNode  node;
       } entry;
 
-      struct TA_TradeLog
-      {
-        const TA_Instrument *id;
-        TA_Timestamp exitTimestamp;
-        TA_Real      profit; /* Positive=Winning, negative=Losing */
-      } trade;
+      TA_Trade trade;
    } u;
 } TA_DataLog;
 
 /* TA_AllocatorForDataLog is an attempt to 
  * provide speed efficient memory allocation 
  * for the TA_DataLog structures.
- */
-
-/* The TA_DataLog are allocated in block. 
+ *
+ * The TA_DataLog are allocated in block. 
  * Each block is kept in a list for
  * easily freeing them all at once.
  */
-#define TA_TRADE_BLOCK_SIZE 20
+#define TA_TRADE_BLOCK_SIZE 100
 typedef struct
 {
    TA_ListNode node;
@@ -96,8 +116,8 @@ typedef struct
 
 typedef struct
 {
-   /* Keep a pointer on the next block
-    * available to be allocated.
+   /* Keep a pointer on the next available
+    * TA_DataLog to be allocated.
     */   
    TA_DataLog *nextAvailableTrade;
 
@@ -187,11 +207,9 @@ typedef struct
 typedef struct
 {
    /* Unique Id for the traded instrument. */
-   const TA_Instrument *id;
+   TA_Instrument id;
 
-   /* FIFO of TA_DataLog for this instrument. 
-    * This FIFO are the entry transactions.
-    */
+   /* List of TA_DataLog for this instrument. */
    TA_List shortEntryPrivList; 
    TA_List longEntryPrivList;
 } TA_TradeDictEntry;
@@ -238,6 +256,11 @@ typedef struct
    TA_Dict *tradeDictSYM;
    TA_Dict *tradeDictUserKey;
 
+   /* When no TA_Instrument is specified,
+    * just use this default dictionary entry.
+    */
+   TA_TradeDictEntry defaultDictEntry;
+
    /* Stored result of calculation for all
     * trades of ALL instruments.
     */
@@ -250,14 +273,12 @@ typedef struct
     */
    TA_AllocatorForDataLog allocator;
 
-   /* A TA_TradeLogPriv can be added only
-    * to one TA_PM at the time. This ptr
-    * keep track of that parent TA_PM.
-    *
-    * The TA_TradeLog can be freed only
-    * when this value is NULL.
+   /* A TA_TradeLogPriv cannot be freed or having
+    * transaction added while being part of a TA_PM.
+    * 
+    * Consequently, a reference count must be maintain.
     */
-   TA_PMPriv *parentPMPriv;
+   unsigned int nbReferenceFromTA_PM;
     
 } TA_TradeLogPriv;
 

@@ -68,7 +68,8 @@
 #include "triodef.h"
 #include "trionan.h"
 
-static TRIO_CONST char rcsid[] = "@(#)$Id$";
+/* Removed to avoid "unused" compilation warning (Mario Fortier) */
+/* static TRIO_CONST char rcsid[] = "@(#)$Id$"; */
 
 #include <math.h>
 #include <string.h>

@@ -34,6 +34,9 @@
 /* The TA_FATAL/TA_ASSERT macro are going to be ALWAYS enabled in the
  * final library.
  *
+ * Upon failure, these macro will "return" from the function. There is no 
+ * "exit" done to prevent to shutdown unpropriatly the application.
+ *
  * On a fatal/assertion failure, the software will record information. The
  * function will return the failed function.
  *

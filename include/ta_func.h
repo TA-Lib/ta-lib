@@ -66,7 +66,7 @@ extern "C" {
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -74,12 +74,12 @@ extern "C" {
 TA_RetCode TA_MAX( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 2 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_MAX_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_MAX_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -90,7 +90,7 @@ int TA_MAX_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -98,12 +98,12 @@ int TA_MAX_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER
 TA_RetCode TA_MIN( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 2 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_MIN_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_MIN_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 
@@ -119,7 +119,7 @@ int TA_MIN_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * optInNbDevUp_1:(From TA_REAL_MIN to TA_REAL_MAX)
@@ -136,7 +136,7 @@ int TA_MIN_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER
 TA_RetCode TA_BBANDS( int    startIdx,
                       int    endIdx,
                       const double inReal_0[],
-                      int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                      int           optInTimePeriod_0, /* From 2 to 100000 */
                       double        optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                       double        optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
                       TA_MAType     optInMAType_3,
@@ -146,10 +146,10 @@ TA_RetCode TA_BBANDS( int    startIdx,
                       double        outRealMiddleBand_1[],
                       double        outRealLowerBand_2[] );
 
-int TA_BBANDS_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                        double        optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        double        optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        TA_MAType     optInMAType_3 ); 
+int TA_BBANDS_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
+                      double        optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      TA_MAType     optInMAType_3 ); 
 
 /*
  * TA_DEMA - Double Exponential Moving Average
@@ -159,7 +159,7 @@ int TA_BBANDS_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -167,12 +167,12 @@ int TA_BBANDS_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER
 TA_RetCode TA_DEMA( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
-                    int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                    int           optInTimePeriod_0, /* From 2 to 100000 */
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
 
-int TA_DEMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_DEMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -183,7 +183,7 @@ int TA_DEMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -191,12 +191,12 @@ int TA_DEMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGE
 TA_RetCode TA_EMA( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 2 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_EMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_EMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -224,7 +224,7 @@ int TA_HT_TRENDLINE_Lookback( void );
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -232,12 +232,12 @@ int TA_HT_TRENDLINE_Lookback( void );
 TA_RetCode TA_KAMA( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
-                    int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                    int           optInTimePeriod_0, /* From 2 to 100000 */
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
 
-int TA_KAMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_KAMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -248,7 +248,7 @@ int TA_KAMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * optInMAType_1:
@@ -259,14 +259,14 @@ int TA_KAMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGE
 TA_RetCode TA_MA( int    startIdx,
                   int    endIdx,
                   const double inReal_0[],
-                  int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                  int           optInTimePeriod_0, /* From 2 to 100000 */
                   TA_MAType     optInMAType_1,
                   int          *outBegIdx,
                   int          *outNbElement,
                   double        outReal_0[] );
 
-int TA_MA_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    TA_MAType     optInMAType_1 ); 
+int TA_MA_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
+                  TA_MAType     optInMAType_1 ); 
 
 /*
  * TA_MAMA - MESA Adaptive Moving Average
@@ -295,7 +295,7 @@ TA_RetCode TA_MAMA( int    startIdx,
                     double        outFAMA_1[] );
 
 int TA_MAMA_Lookback( double        optInFastLimit_0, /* From 0.01 to 0.99 */
-                      double        optInSlowLimit_1 );  /* From 0.01 to 0.99 */
+                    double        optInSlowLimit_1 );  /* From 0.01 to 0.99 */
 
 
 /*
@@ -306,7 +306,7 @@ int TA_MAMA_Lookback( double        optInFastLimit_0, /* From 0.01 to 0.99 */
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -315,12 +315,12 @@ TA_RetCode TA_MIDPRICE( int    startIdx,
                         int    endIdx,
                         const double inHigh_0[],
                         const double inLow_0[],
-                        int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                        int           optInTimePeriod_0, /* From 2 to 100000 */
                         int          *outBegIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
 
-int TA_MIDPRICE_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_MIDPRICE_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -331,7 +331,7 @@ int TA_MIDPRICE_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_IN
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -339,12 +339,12 @@ int TA_MIDPRICE_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_IN
 TA_RetCode TA_MIDPOINT( int    startIdx,
                         int    endIdx,
                         const double inReal_0[],
-                        int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                        int           optInTimePeriod_0, /* From 2 to 100000 */
                         int          *outBegIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
 
-int TA_MIDPOINT_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_MIDPOINT_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -374,7 +374,7 @@ TA_RetCode TA_SAR( int    startIdx,
                    double        outReal_0[] );
 
 int TA_SAR_Lookback( double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-                     double        optInMaximum_1 );  /* From TA_REAL_MIN to TA_REAL_MAX */
+                   double        optInMaximum_1 );  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 
 /*
@@ -385,7 +385,7 @@ int TA_SAR_Lookback( double        optInAcceleration_0, /* From TA_REAL_MIN to T
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -393,12 +393,12 @@ int TA_SAR_Lookback( double        optInAcceleration_0, /* From TA_REAL_MIN to T
 TA_RetCode TA_SMA( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 2 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_SMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_SMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -409,7 +409,7 @@ int TA_SMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * optInVFactor_1:(From 0 to 1)
@@ -420,14 +420,14 @@ int TA_SMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER
 TA_RetCode TA_T3( int    startIdx,
                   int    endIdx,
                   const double inReal_0[],
-                  int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                  int           optInTimePeriod_0, /* From 2 to 100000 */
                   double        optInVFactor_1, /* From 0 to 1 */
                   int          *outBegIdx,
                   int          *outNbElement,
                   double        outReal_0[] );
 
-int TA_T3_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    double        optInVFactor_1 );  /* From 0 to 1 */
+int TA_T3_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
+                  double        optInVFactor_1 );  /* From 0 to 1 */
 
 
 /*
@@ -438,7 +438,7 @@ int TA_T3_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -446,12 +446,12 @@ int TA_T3_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX
 TA_RetCode TA_TEMA( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
-                    int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                    int           optInTimePeriod_0, /* From 2 to 100000 */
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
 
-int TA_TEMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_TEMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -462,7 +462,7 @@ int TA_TEMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -470,12 +470,12 @@ int TA_TEMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGE
 TA_RetCode TA_TRIMA( int    startIdx,
                      int    endIdx,
                      const double inReal_0[],
-                     int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     int           optInTimePeriod_0, /* From 2 to 100000 */
                      int          *outBegIdx,
                      int          *outNbElement,
                      double        outReal_0[] );
 
-int TA_TRIMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_TRIMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -486,7 +486,7 @@ int TA_TRIMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEG
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -494,12 +494,12 @@ int TA_TRIMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEG
 TA_RetCode TA_WMA( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 2 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_WMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_WMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 
@@ -515,7 +515,7 @@ int TA_WMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -525,12 +525,12 @@ TA_RetCode TA_ATR( int    startIdx,
                    const double inHigh_0[],
                    const double inLow_0[],
                    const double inClose_0[],
-                   int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 1 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_ATR_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+int TA_ATR_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
 /*
@@ -565,7 +565,7 @@ int TA_TRANGE_Lookback( void );
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -575,12 +575,12 @@ TA_RetCode TA_ADX( int    startIdx,
                    const double inHigh_0[],
                    const double inLow_0[],
                    const double inClose_0[],
-                   int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 2 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_ADX_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_ADX_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -591,7 +591,7 @@ int TA_ADX_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -601,12 +601,12 @@ TA_RetCode TA_ADXR( int    startIdx,
                     const double inHigh_0[],
                     const double inLow_0[],
                     const double inClose_0[],
-                    int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                    int           optInTimePeriod_0, /* From 2 to 100000 */
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
 
-int TA_ADXR_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_ADXR_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -617,10 +617,10 @@ int TA_ADXR_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInFastPeriod_0:(From 2 to 100000)
  *    Number of period for the fast MA
  * 
- * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
+ * optInSlowPeriod_1:(From 2 to 100000)
  *    Number of period for the slow MA
  * 
  * optInMAType_2:
@@ -631,16 +631,16 @@ int TA_ADXR_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGE
 TA_RetCode TA_APO( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                   int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                   int           optInFastPeriod_0, /* From 2 to 100000 */
+                   int           optInSlowPeriod_1, /* From 2 to 100000 */
                    TA_MAType     optInMAType_2,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_APO_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                     int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                     TA_MAType     optInMAType_2 ); 
+int TA_APO_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
+                   int           optInSlowPeriod_1, /* From 2 to 100000 */
+                   TA_MAType     optInMAType_2 ); 
 
 /*
  * TA_AROON - Aroon
@@ -650,7 +650,7 @@ int TA_APO_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MA
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -659,13 +659,13 @@ TA_RetCode TA_AROON( int    startIdx,
                      int    endIdx,
                      const double inHigh_0[],
                      const double inLow_0[],
-                     int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     int           optInTimePeriod_0, /* From 2 to 100000 */
                      int          *outBegIdx,
                      int          *outNbElement,
                      double        outAroonDown_0[],
                      double        outAroonUp_1[] );
 
-int TA_AROON_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_AROON_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -676,7 +676,7 @@ int TA_AROON_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEG
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -685,12 +685,12 @@ TA_RetCode TA_AROONOSC( int    startIdx,
                         int    endIdx,
                         const double inHigh_0[],
                         const double inLow_0[],
-                        int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                        int           optInTimePeriod_0, /* From 2 to 100000 */
                         int          *outBegIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
 
-int TA_AROONOSC_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_AROONOSC_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -701,7 +701,7 @@ int TA_AROONOSC_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_IN
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 5 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 5 to 100000)
  *    Number of period
  * 
  * 
@@ -711,12 +711,12 @@ TA_RetCode TA_CCI( int    startIdx,
                    const double inHigh_0[],
                    const double inLow_0[],
                    const double inClose_0[],
-                   int           optInTimePeriod_0, /* From 5 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 5 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_CCI_Lookback( int           optInTimePeriod_0 );  /* From 5 to TA_INTEGER_MAX */
+int TA_CCI_Lookback( int           optInTimePeriod_0 );  /* From 5 to 100000 */
 
 
 /*
@@ -727,7 +727,7 @@ int TA_CCI_Lookback( int           optInTimePeriod_0 );  /* From 5 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -737,12 +737,12 @@ TA_RetCode TA_DX( int    startIdx,
                   const double inHigh_0[],
                   const double inLow_0[],
                   const double inClose_0[],
-                  int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                  int           optInTimePeriod_0, /* From 2 to 100000 */
                   int          *outBegIdx,
                   int          *outNbElement,
                   double        outReal_0[] );
 
-int TA_DX_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_DX_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -753,13 +753,13 @@ int TA_DX_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_
  * 
  * Optional Parameters
  * -------------------
- * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInFastPeriod_0:(From 2 to 100000)
  *    Number of period for the fast MA
  * 
- * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
+ * optInSlowPeriod_1:(From 2 to 100000)
  *    Number of period for the slow MA
  * 
- * optInSignalPeriod_2:(From 1 to TA_INTEGER_MAX)
+ * optInSignalPeriod_2:(From 1 to 100000)
  *    Smoothing for the signal line (nb of period)
  * 
  * 
@@ -767,18 +767,18 @@ int TA_DX_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_
 TA_RetCode TA_MACD( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
-                    int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                    int           optInSignalPeriod_2, /* From 1 to TA_INTEGER_MAX */
+                    int           optInFastPeriod_0, /* From 2 to 100000 */
+                    int           optInSlowPeriod_1, /* From 2 to 100000 */
+                    int           optInSignalPeriod_2, /* From 1 to 100000 */
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outMACD_0[],
                     double        outMACDSignal_1[],
                     double        outMACDHist_2[] );
 
-int TA_MACD_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                      int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                      int           optInSignalPeriod_2 );  /* From 1 to TA_INTEGER_MAX */
+int TA_MACD_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
+                    int           optInSlowPeriod_1, /* From 2 to 100000 */
+                    int           optInSignalPeriod_2 );  /* From 1 to 100000 */
 
 
 /*
@@ -789,19 +789,19 @@ int TA_MACD_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_M
  * 
  * Optional Parameters
  * -------------------
- * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInFastPeriod_0:(From 2 to 100000)
  *    Number of period for the fast MA
  * 
  * optInFastMAType_1:
  *    Type of Moving Average for fast MA
  * 
- * optInSlowPeriod_2:(From 2 to TA_INTEGER_MAX)
+ * optInSlowPeriod_2:(From 2 to 100000)
  *    Number of period for the slow MA
  * 
  * optInSlowMAType_3:
  *    Type of Moving Average for slow MA
  * 
- * optInSignalPeriod_4:(From 1 to TA_INTEGER_MAX)
+ * optInSignalPeriod_4:(From 1 to 100000)
  *    Smoothing for the signal line (nb of period)
  * 
  * optInSignalMAType_5:
@@ -812,11 +812,11 @@ int TA_MACD_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_M
 TA_RetCode TA_MACDEXT( int    startIdx,
                        int    endIdx,
                        const double inReal_0[],
-                       int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                       int           optInFastPeriod_0, /* From 2 to 100000 */
                        TA_MAType     optInFastMAType_1,
-                       int           optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
+                       int           optInSlowPeriod_2, /* From 2 to 100000 */
                        TA_MAType     optInSlowMAType_3,
-                       int           optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
+                       int           optInSignalPeriod_4, /* From 1 to 100000 */
                        TA_MAType     optInSignalMAType_5,
                        int          *outBegIdx,
                        int          *outNbElement,
@@ -824,12 +824,12 @@ TA_RetCode TA_MACDEXT( int    startIdx,
                        double        outMACDSignal_1[],
                        double        outMACDHist_2[] );
 
-int TA_MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                         TA_MAType     optInFastMAType_1,
-                         int           optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
-                         TA_MAType     optInSlowMAType_3,
-                         int           optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
-                         TA_MAType     optInSignalMAType_5 ); 
+int TA_MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
+                       TA_MAType     optInFastMAType_1,
+                       int           optInSlowPeriod_2, /* From 2 to 100000 */
+                       TA_MAType     optInSlowMAType_3,
+                       int           optInSignalPeriod_4, /* From 1 to 100000 */
+                       TA_MAType     optInSignalMAType_5 ); 
 
 /*
  * TA_MACDFIX - Moving Average Convergence/Divergence Fix 12/26
@@ -839,7 +839,7 @@ int TA_MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInSignalPeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInSignalPeriod_0:(From 1 to 100000)
  *    Smoothing for the signal line (nb of period)
  * 
  * 
@@ -847,14 +847,14 @@ int TA_MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGE
 TA_RetCode TA_MACDFIX( int    startIdx,
                        int    endIdx,
                        const double inReal_0[],
-                       int           optInSignalPeriod_0, /* From 1 to TA_INTEGER_MAX */
+                       int           optInSignalPeriod_0, /* From 1 to 100000 */
                        int          *outBegIdx,
                        int          *outNbElement,
                        double        outMACD_0[],
                        double        outMACDSignal_1[],
                        double        outMACDHist_2[] );
 
-int TA_MACDFIX_Lookback( int           optInSignalPeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+int TA_MACDFIX_Lookback( int           optInSignalPeriod_0 );  /* From 1 to 100000 */
 
 
 /*
@@ -865,7 +865,7 @@ int TA_MACDFIX_Lookback( int           optInSignalPeriod_0 );  /* From 1 to TA_I
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -876,12 +876,12 @@ TA_RetCode TA_MFI( int    startIdx,
                    const double inLow_0[],
                    const double inClose_0[],
                    const int    inVolume_0[],
-                   int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 2 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_MFI_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_MFI_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -892,7 +892,7 @@ int TA_MFI_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -902,12 +902,12 @@ TA_RetCode TA_MINUS_DI( int    startIdx,
                         const double inHigh_0[],
                         const double inLow_0[],
                         const double inClose_0[],
-                        int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                        int           optInTimePeriod_0, /* From 1 to 100000 */
                         int          *outBegIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
 
-int TA_MINUS_DI_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+int TA_MINUS_DI_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
 /*
@@ -918,7 +918,7 @@ int TA_MINUS_DI_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_IN
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -927,12 +927,12 @@ TA_RetCode TA_MINUS_DM( int    startIdx,
                         int    endIdx,
                         const double inHigh_0[],
                         const double inLow_0[],
-                        int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                        int           optInTimePeriod_0, /* From 1 to 100000 */
                         int          *outBegIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
 
-int TA_MINUS_DM_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+int TA_MINUS_DM_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
 /*
@@ -943,7 +943,7 @@ int TA_MINUS_DM_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_IN
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -951,12 +951,12 @@ int TA_MINUS_DM_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_IN
 TA_RetCode TA_MOM( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 1 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_MOM_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+int TA_MOM_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
 /*
@@ -967,10 +967,10 @@ int TA_MOM_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInFastPeriod_0:(From 2 to 100000)
  *    Number of period for the fast MA
  * 
- * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
+ * optInSlowPeriod_1:(From 2 to 100000)
  *    Number of period for the slow MA
  * 
  * optInMAType_2:
@@ -981,16 +981,16 @@ int TA_MOM_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER
 TA_RetCode TA_PPO( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                   int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                   int           optInFastPeriod_0, /* From 2 to 100000 */
+                   int           optInSlowPeriod_1, /* From 2 to 100000 */
                    TA_MAType     optInMAType_2,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_PPO_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                     int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                     TA_MAType     optInMAType_2 ); 
+int TA_PPO_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
+                   int           optInSlowPeriod_1, /* From 2 to 100000 */
+                   TA_MAType     optInMAType_2 ); 
 
 /*
  * TA_PLUS_DI - Plus Directional Indicator
@@ -1000,7 +1000,7 @@ int TA_PPO_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MA
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -1010,12 +1010,12 @@ TA_RetCode TA_PLUS_DI( int    startIdx,
                        const double inHigh_0[],
                        const double inLow_0[],
                        const double inClose_0[],
-                       int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                       int           optInTimePeriod_0, /* From 2 to 100000 */
                        int          *outBegIdx,
                        int          *outNbElement,
                        double        outReal_0[] );
 
-int TA_PLUS_DI_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_PLUS_DI_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -1026,7 +1026,7 @@ int TA_PLUS_DI_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INT
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -1035,12 +1035,12 @@ TA_RetCode TA_PLUS_DM( int    startIdx,
                        int    endIdx,
                        const double inHigh_0[],
                        const double inLow_0[],
-                       int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                       int           optInTimePeriod_0, /* From 2 to 100000 */
                        int          *outBegIdx,
                        int          *outNbElement,
                        double        outReal_0[] );
 
-int TA_PLUS_DM_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_PLUS_DM_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -1051,7 +1051,7 @@ int TA_PLUS_DM_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INT
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -1059,12 +1059,12 @@ int TA_PLUS_DM_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INT
 TA_RetCode TA_ROC( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 1 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_ROC_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+int TA_ROC_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
 /*
@@ -1075,7 +1075,7 @@ int TA_ROC_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -1083,12 +1083,12 @@ int TA_ROC_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER
 TA_RetCode TA_ROCP( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
-                    int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                    int           optInTimePeriod_0, /* From 1 to 100000 */
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
 
-int TA_ROCP_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+int TA_ROCP_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
 /*
@@ -1099,7 +1099,7 @@ int TA_ROCP_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -1107,12 +1107,12 @@ int TA_ROCP_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGE
 TA_RetCode TA_ROCR( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
-                    int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                    int           optInTimePeriod_0, /* From 1 to 100000 */
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
 
-int TA_ROCR_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+int TA_ROCR_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
 /*
@@ -1123,7 +1123,7 @@ int TA_ROCR_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -1131,12 +1131,12 @@ int TA_ROCR_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGE
 TA_RetCode TA_ROCR100( int    startIdx,
                        int    endIdx,
                        const double inReal_0[],
-                       int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                       int           optInTimePeriod_0, /* From 1 to 100000 */
                        int          *outBegIdx,
                        int          *outNbElement,
                        double        outReal_0[] );
 
-int TA_ROCR100_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+int TA_ROCR100_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
 /*
@@ -1147,7 +1147,7 @@ int TA_ROCR100_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INT
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -1155,12 +1155,12 @@ int TA_ROCR100_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INT
 TA_RetCode TA_RSI( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 2 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_RSI_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_RSI_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 /*
@@ -1171,16 +1171,16 @@ int TA_RSI_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInFastK_Period_0:(From 1 to TA_INTEGER_MAX)
+ * optInFastK_Period_0:(From 1 to 100000)
  *    Time period for building the Fast-K line
  * 
- * optInSlowK_Period_1:(From 1 to TA_INTEGER_MAX)
+ * optInSlowK_Period_1:(From 1 to 100000)
  *    Smoothing for making the Slow-K line. Usually set to 3
  * 
  * optInSlowK_MAType_2:
  *    Type of Moving Average for Slow-K
  * 
- * optInSlowD_Period_3:(From 1 to TA_INTEGER_MAX)
+ * optInSlowD_Period_3:(From 1 to 100000)
  *    Smoothing for making the Slow-D line
  * 
  * optInSlowD_MAType_4:
@@ -1193,21 +1193,21 @@ TA_RetCode TA_STOCH( int    startIdx,
                      const double inHigh_0[],
                      const double inLow_0[],
                      const double inClose_0[],
-                     int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                     int           optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+                     int           optInFastK_Period_0, /* From 1 to 100000 */
+                     int           optInSlowK_Period_1, /* From 1 to 100000 */
                      TA_MAType     optInSlowK_MAType_2,
-                     int           optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                     int           optInSlowD_Period_3, /* From 1 to 100000 */
                      TA_MAType     optInSlowD_MAType_4,
                      int          *outBegIdx,
                      int          *outNbElement,
                      double        outSlowK_0[],
                      double        outSlowD_1[] );
 
-int TA_STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                       int           optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
-                       TA_MAType     optInSlowK_MAType_2,
-                       int           optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
-                       TA_MAType     optInSlowD_MAType_4 ); 
+int TA_STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
+                     int           optInSlowK_Period_1, /* From 1 to 100000 */
+                     TA_MAType     optInSlowK_MAType_2,
+                     int           optInSlowD_Period_3, /* From 1 to 100000 */
+                     TA_MAType     optInSlowD_MAType_4 ); 
 
 /*
  * TA_STOCHF - Stochastic Fast
@@ -1217,10 +1217,10 @@ int TA_STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInFastK_Period_0:(From 1 to TA_INTEGER_MAX)
+ * optInFastK_Period_0:(From 1 to 100000)
  *    Time period for building the Fast-K line
  * 
- * optInFastD_Period_1:(From 1 to TA_INTEGER_MAX)
+ * optInFastD_Period_1:(From 1 to 100000)
  *    Smoothing for making the Fast-D line. Usually set to 3
  * 
  * optInFastD_MAType_2:
@@ -1233,17 +1233,17 @@ TA_RetCode TA_STOCHF( int    startIdx,
                       const double inHigh_0[],
                       const double inLow_0[],
                       const double inClose_0[],
-                      int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                      int           optInFastD_Period_1, /* From 1 to TA_INTEGER_MAX */
+                      int           optInFastK_Period_0, /* From 1 to 100000 */
+                      int           optInFastD_Period_1, /* From 1 to 100000 */
                       TA_MAType     optInFastD_MAType_2,
                       int          *outBegIdx,
                       int          *outNbElement,
                       double        outFastK_0[],
                       double        outFastD_1[] );
 
-int TA_STOCHF_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                        int           optInFastD_Period_1, /* From 1 to TA_INTEGER_MAX */
-                        TA_MAType     optInFastD_MAType_2 ); 
+int TA_STOCHF_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
+                      int           optInFastD_Period_1, /* From 1 to 100000 */
+                      TA_MAType     optInFastD_MAType_2 ); 
 
 /*
  * TA_TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
@@ -1253,7 +1253,7 @@ int TA_STOCHF_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEG
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -1261,12 +1261,12 @@ int TA_STOCHF_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEG
 TA_RetCode TA_TRIX( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
-                    int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                    int           optInTimePeriod_0, /* From 1 to 100000 */
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
 
-int TA_TRIX_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+int TA_TRIX_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
 /*
@@ -1277,7 +1277,7 @@ int TA_TRIX_Lookback( int           optInTimePeriod_0 );  /* From 1 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -1287,12 +1287,12 @@ TA_RetCode TA_WILLR( int    startIdx,
                      const double inHigh_0[],
                      const double inLow_0[],
                      const double inClose_0[],
-                     int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     int           optInTimePeriod_0, /* From 2 to 100000 */
                      int          *outBegIdx,
                      int          *outNbElement,
                      double        outReal_0[] );
 
-int TA_WILLR_Lookback( int           optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_WILLR_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
 
@@ -1420,10 +1420,10 @@ int TA_AD_Lookback( void );
  * 
  * Optional Parameters
  * -------------------
- * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInFastPeriod_0:(From 2 to 100000)
  *    Number of period for the fast MA
  * 
- * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
+ * optInSlowPeriod_1:(From 2 to 100000)
  *    Number of period for the slow MA
  * 
  * 
@@ -1434,14 +1434,14 @@ TA_RetCode TA_ADOSC( int    startIdx,
                      const double inLow_0[],
                      const double inClose_0[],
                      const int    inVolume_0[],
-                     int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                     int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                     int           optInFastPeriod_0, /* From 2 to 100000 */
+                     int           optInSlowPeriod_1, /* From 2 to 100000 */
                      int          *outBegIdx,
                      int          *outNbElement,
                      double        outReal_0[] );
 
-int TA_ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                       int           optInSlowPeriod_1 );  /* From 2 to TA_INTEGER_MAX */
+int TA_ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
+                     int           optInSlowPeriod_1 );  /* From 2 to 100000 */
 
 
 /*
@@ -1475,7 +1475,7 @@ int TA_OBV_Lookback( void );
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * optInNbDev_1:(From TA_REAL_MIN to TA_REAL_MAX)
@@ -1486,14 +1486,14 @@ int TA_OBV_Lookback( void );
 TA_RetCode TA_STDDEV( int    startIdx,
                       int    endIdx,
                       const double inReal_0[],
-                      int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                      int           optInTimePeriod_0, /* From 2 to 100000 */
                       double        optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                       int          *outBegIdx,
                       int          *outNbElement,
                       double        outReal_0[] );
 
-int TA_STDDEV_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                        double        optInNbDev_1 );  /* From TA_REAL_MIN to TA_REAL_MAX */
+int TA_STDDEV_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
+                      double        optInNbDev_1 );  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 
 /*
@@ -1504,7 +1504,7 @@ int TA_STDDEV_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 1 to 100000)
  *    Number of period
  * 
  * optInNbDev_1:(From TA_REAL_MIN to TA_REAL_MAX)
@@ -1515,14 +1515,14 @@ int TA_STDDEV_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER
 TA_RetCode TA_VAR( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 1 to 100000 */
                    double        optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
-int TA_VAR_Lookback( int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                     double        optInNbDev_1 );  /* From TA_REAL_MIN to TA_REAL_MAX */
+int TA_VAR_Lookback( int           optInTimePeriod_0, /* From 1 to 100000 */
+                   double        optInNbDev_1 );  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 
 

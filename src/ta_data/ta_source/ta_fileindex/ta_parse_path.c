@@ -319,7 +319,9 @@ TA_RetCode TA_FileIndexParsePath( TA_FileIndexPriv *fileIndexPriv, TA_String *pa
    if( currentState == INIT_PROCESSING )
    {
       TA_FATAL(  NULL, pos, currentTokenStart );
-      RETURN( TA_INVALID_PATH );
+      /* unreachable code:
+       * RETURN( TA_INVALID_PATH );
+       */
    }
 
    FLUSH_FIX();

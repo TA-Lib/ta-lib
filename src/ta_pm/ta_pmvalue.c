@@ -866,10 +866,10 @@ static TA_RetCode processTradeLog_BasicCalculation( TA_TradeLogPriv *tradeLog )
                 * a trade (not an entry)
                 * An entry have a negative 'quantity'.
                 */
-               tempInt1 = curDataLog->quantity;
+               tempInt1 = curDataLog->u.trade.quantity;
                if( tempInt1 > 0 )
                {
-                  tempReal1 = curDataLog->entryPrice; /* Positive = long, negative = short */
+                  tempReal1 = curDataLog->u.trade.entryPrice; /* Positive = long, negative = short */
                   tempReal2 = curDataLog->u.trade.profit; /* Positive = winning, negative = losing */
                   if( tempReal1 > 0.0 )
                   {
