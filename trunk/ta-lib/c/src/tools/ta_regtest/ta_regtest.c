@@ -263,7 +263,7 @@ static int testTAFunction_ALL( TA_History *history )
    /* Make tests for each TA functions. */
    #define DO_TEST(func,str) \
       { \
-      printf( "%25s: Testing...", str ); \
+      printf( "%30s: Testing...", str ); \
       TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT ); \
       retValue = func( history ); \
       if( retValue != TA_TEST_PASS ) \
@@ -271,9 +271,9 @@ static int testTAFunction_ALL( TA_History *history )
       printf( "done.\n" ); \
       }
 
-   DO_TEST( test_func_per_hl,  "AROON" );
    DO_TEST( test_func_ma,      "All Moving Averages" );
-   DO_TEST( test_func_per_hlcv,"MFI" );
+   DO_TEST( test_func_per_hlcv,"MFI,AD,ADOSC" );
+   DO_TEST( test_func_per_hl,  "AROON" );
    DO_TEST( test_func_rsi,     "RSI" );
    DO_TEST( test_func_per_ema, "TRIX" );
    DO_TEST( test_func_stoch,   "STOCH,STOCHF" );

@@ -220,6 +220,20 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_30_MINIMUM2 =
    NULL /* helpFile */
 };
 
+const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_21_MINIMUM2 =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInTimePeriod",        /* paramName */
+   0,                        /* flags */
+
+   "Time Period",            /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2, /* dataSet */
+   21, /* defaultValue */
+   "Number of period", /* hint */
+
+   NULL /* helpFile */
+};
+
 const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_MINIMUM2 =
 {
    TA_OptInput_IntegerRange, /* type */
@@ -391,7 +405,8 @@ static const TA_IntegerDataPair TA_MA_TypeDataPair[] =
    {3,"DEMA" },
    {4,"TEMA" },
    {5,"TRIMA"},
-   {6,"KAMA" }
+   {6,"KAMA" },
+   {7,"MAMA" }
    /*{...,"Linear Regression"}*/
 };
 
@@ -404,7 +419,7 @@ const TA_IntegerList TA_MA_TypeList =
 const TA_OptInputParameterInfo TA_DEF_UI_MA_Method =
 {
    TA_OptInput_IntegerList, /* type */
-   "optInMethod",           /* paramName */
+   "optInMAType",           /* paramName */
    0,                       /* flags */
 
    "MA Type",                /* displayName */

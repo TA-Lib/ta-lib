@@ -72,6 +72,7 @@ extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_10;
 extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_5;
 
 extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_30_MINIMUM2;
+extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_21_MINIMUM2;
 extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_MINIMUM2;
 extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_MINIMUM5;
 extern const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_10_MINIMUM2;
