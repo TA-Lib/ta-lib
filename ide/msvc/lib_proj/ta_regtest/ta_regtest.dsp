@@ -210,6 +210,10 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_bbands.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\tools\ta_regtest\test_csi.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\tools\ta_regtest\test_internals.c
 # End Source File
 # Begin Source File

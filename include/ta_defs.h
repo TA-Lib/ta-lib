@@ -152,29 +152,29 @@ typedef enum
     /*  83 */  TA_YAHOO_IDX_UNAVAILABLE_2, /* Possibly timeout of internet connection */
     /*  84 */  TA_YAHOO_IDX_UNAVAILABLE_3, /* Failed to find a Yahoo! index */
     /*  85 */  TA_NO_WEEKDAY_IN_DATE_RANGE,
-    /*  86 */  TA_VALUE_NOT_APPLICABLE,    /* This PM value is not applicable to these trades. */
-    /*  87 */  TA_DATA_GAP, /* Data source returned data with gaps */
-    /*  88 */  TA_NOT_IMPLEMENTED, /* Feature not implemented */
-    /*  89 */  TA_PM_REFERENCE_EXIST, /* Can not free a TA_TradeLog when added to a TA_PM */
-    /*  90 */  TA_PRICE_BAR_CONTAINS_ZERO, /* A price of zero is invalid in a price bar */
-    /*  91 */  TA_MISSING_CLOSE_PRICE_FIELD, /* Close must be provided with TA_REPLACE_ZERO_PRICE_BAR flag. */
+    /*  86 */  TA_VALUE_NOT_APPLICABLE,            /* This PM value is not applicable to these trades. */
+    /*  87 */  TA_DATA_GAP,                        /* Data source returned data with gaps */
+    /*  88 */  TA_NOT_IMPLEMENTED,                 /* Feature not implemented */
+    /*  89 */  TA_PM_REFERENCE_EXIST,              /* Can not free a TA_TradeLog when added to a TA_PM */
+    /*  90 */  TA_PRICE_BAR_CONTAINS_ZERO,         /* A price of zero is invalid in a price bar */
+    /*  91 */  TA_MISSING_CLOSE_PRICE_FIELD,       /* Close must be provided with TA_REPLACE_ZERO_PRICE_BAR flag. */
     /*  92 */  TA_UNSUPPORTED_REPLACE_ZERO_PRICE_BAR, /* TA_REPLACE_ZERO_PRICE_BAR flag is not supported for this data source. */
-    /*  93 */  TA_MISSING_INPUT_DIGITS, /* A digit was missing in one of the price bar field */
-    /*  94 */  TA_DICT_TYPE_MISMATCH,   /* Error with handling of dictionary */
-    /*  95 */  TA_YAHOO_IDX_UNAVAILABLE_4, /* Failed to find a Yahoo! index */
-    /*  96 */  TA_OBSOLETED_SYMBOL, /* This symbol is no longuer valid */
-    /*  97 */  TA_BAD_QUERY,   /* Query could not be executed or syntax error in query */
+    /*  93 */  TA_MISSING_INPUT_DIGITS,            /* A digit was missing in one of the price bar field */
+    /*  94 */  TA_DICT_TYPE_MISMATCH,              /* Error with handling of dictionary */
+    /*  95 */  TA_YAHOO_IDX_UNAVAILABLE_4,         /* Failed to find a Yahoo! index */
+    /*  96 */  TA_OBSOLETED_SYMBOL,                /* This symbol is no longuer valid */
+    /*  97 */  TA_BAD_QUERY,                       /* Query could not be executed or syntax error in query */
     /*  98 */  TA_UNSUPPORTED_DO_NOT_SPLIT_ADJUST, /* TA_DO_NOT_SPLIT_ADJUST flag is not supported by this data source */
     /*  99 */  TA_UNSUPPORTED_DO_NOT_VALUE_ADJUST, /* TA_DO_NOT_VALUE_ADJUST flag is not supported by this data source */
-    /* 100 */  TA_MISSING_PRICE_FOR_ADJUSTMENT, /* At least one price field must be requested when doing price adjustment. */
-    /* 101 */  TA_INVALID_DATABASE_TYPE, /* location parameter does not refer to a supported database type. */
-    /* 102 */  TA_UNEXPECTED_SQL_TYPE, /* One of the field is not of the expected SQL type. */
-    /* 103 */  TA_UNEXPECTED_SQL_TYPE_FOR_OPEN,   /* Open price field is not of the expected SQL type. */
-    /* 104 */  TA_UNEXPECTED_SQL_TYPE_FOR_HIGH,   /* High price field is not of the expected SQL type. */
-    /* 105 */  TA_UNEXPECTED_SQL_TYPE_FOR_LOW,    /* Low price field is not of the expected SQL type. */
-    /* 106 */  TA_UNEXPECTED_SQL_TYPE_FOR_CLOSE,  /* Close price field is not of the expected SQL type. */
-    /* 107 */  TA_UNEXPECTED_SQL_TYPE_FOR_VOLUME, /* Volume field is not of the expected SQL type. */
-    /* 108 */  TA_UNEXPECTED_SQL_TYPE_FOR_OI,     /* Open interest field is not of the expected SQL type. */
+    /* 100 */  TA_MISSING_PRICE_FOR_ADJUSTMENT,    /* At least one price field must be requested when doing price adjustment. */
+    /* 101 */  TA_INVALID_DATABASE_TYPE,           /* location parameter does not refer to a supported database type. */
+    /* 102 */  TA_UNEXPECTED_SQL_TYPE,             /* One of the field is not of the expected SQL type. */
+    /* 103 */  TA_UNEXPECTED_SQL_TYPE_FOR_OPEN,    /* Open price field is not of the expected SQL type. */
+    /* 104 */  TA_UNEXPECTED_SQL_TYPE_FOR_HIGH,    /* High price field is not of the expected SQL type. */
+    /* 105 */  TA_UNEXPECTED_SQL_TYPE_FOR_LOW,     /* Low price field is not of the expected SQL type. */
+    /* 106 */  TA_UNEXPECTED_SQL_TYPE_FOR_CLOSE,   /* Close price field is not of the expected SQL type. */
+    /* 107 */  TA_UNEXPECTED_SQL_TYPE_FOR_VOLUME,  /* Volume field is not of the expected SQL type. */
+    /* 108 */  TA_UNEXPECTED_SQL_TYPE_FOR_OI,      /* Open interest field is not of the expected SQL type. */
 
     /****** IP Error Code *****/
     /* 700 */  TA_IP_NOSOCKETS = 700,  /* Sockets not supported      */
@@ -203,6 +203,36 @@ typedef enum
     /* 810 */  TA_HTTP_SC_502,          /* Bad Gateway                */
     /* 811 */  TA_HTTP_SC_503,          /* Service Unavailable        */
     /* 812 */  TA_HTTP_SC_UNKNOWN,      /* Unknown error code.        */ 
+
+    /****** CSI Error Code *****/
+    /* 900 */  TA_CSI_UNABLE_OPEN_QMASTER_FILE = 900, /* QMaster file unaccessible */
+    /* 901 */  TA_CSI_QMASTER_READ_ERROR,             /* QMaster file read error */
+    /* 902 */  TA_CSI_QMASTER_BAD_PERIOD,             /* QMaster has invalid period */
+    /* 903 */  TA_CSI_QMASTER_INVALID_STOCKCOM_FIELD, /* QMaster has invalid Stock/Commodity field */
+    /* 904 */  TA_CSI_QMASTER_INVALID_DELETED_FIELD,  /* QMaster has invalid Deleted field */
+    /* 905 */  TA_CSI_QMASTER_INVALID_PUTCALL_FIELD,  /* QMaster has invalid Put/Call field */
+    /* 906 */  TA_CSI_UNABLE_OPEN_QMASTER2_FILE,      /* QMaster2 file unaccessible */
+    /* 907 */  TA_CSI_QMASTER2_READ_ERROR,            /* QMaster2 file read error */
+    /* 908 */  TA_CSI_QMASTER2_BAD_PERIOD,            /* QMaster2 has invalid period */
+    /* 909 */  TA_CSI_QMASTER2_INVALID_STOCKCOM_FIELD,/* QMaster2 has invalid Stock/Commodity field */
+    /* 910 */  TA_CSI_QMASTER2_INVALID_DELETED_FIELD, /* QMaster2 has invalid Deleted field */
+    /* 911 */  TA_CSI_UNKNOWN_QMASTER_VERSION,        /* Unknown QMaster file version */
+    /* 912 */  TA_CSI_DATA_FILE_HEADER_READ_ERROR,    /* Read failure on CSI data file header */
+    /* 913 */  TA_CSI_DATA_FILE_READ_ERROR,           /* Read failure on CSI data file */
+    /* 914 */  TA_CSI_DATA_FILE_HEADER_READ_ERROR_2,  /* Read failure on CSI data file header (Version 2) */
+    /* 915 */  TA_CSI_DATA_FILE_READ_ERROR_2,         /* Read failure on CSI data file (Version 2) */
+    /* 916 */  TA_CSI_UNKNOWN_DATA_FILE_VERSION,      /* Unknown data file version */
+    /* 917 */  TA_CSI_DATA_FILE_MISSING,              /* No CSI data file file found */
+    /* 918 */  TA_CSI_DATA_FILE_ACCESS_FAILED,        /* Unable to open CSI data file */
+    /* 919 */  TA_CSI_MASTER_FILE_NOT_FOUND,          /* 'master' file not found */
+    /* 920 */  TA_CSI_MASTER_FILE_ACCESS_FAILED,      /* Unable to open 'master' file */
+    /* 921 */  TA_CSI_MASTER_BAD_PERIOD,              /* Bad period in 'master' file */
+    /* 922 */  TA_CSI_MISSING_CSIM_DATA_FILE,         /* Missing CSIM data file */
+    /* 923 */  TA_CSI_FAIL_TO_OPEN_CSIM_DATA_FILE,    /* Unable to open CSIM data file */
+    /* 924 */  TA_CSI_READ_FAIL_CSIM_HEADER_FILE,     /* Read failure on CSIM data file header */
+    /* 925 */  TA_CSI_READ_FAIL_CSIM_DATA_FILE,       /* Read failure on CSIM data file */
+    /* 926 */  TA_CSI_HEADER_READ_FAILED_CSIM,        /* Failed to read CSIM header file */
+    /* 927 */  TA_CSI_UNABLE_FIND_QMASTER_FILE,       /* No QMaster or QMaster2 files found */
 
     /****** TA-LIB Internal Error Code *****/
 

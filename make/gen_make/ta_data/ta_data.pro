@@ -53,6 +53,9 @@ SOURCES	= ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_historical.c \
           ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_market.c \
           ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_idx.c \
+          ../../../../../src/ta_data/ta_source/ta_csi/ta_csi.c \
+          ../../../../../src/ta_data/ta_source/ta_csi/ta_csi_handle.c \
+          ../../../../../src/ta_data/ta_source/ta_csi/ta_csi_files.c \
           ../../../../../src/tools/gen_data/ta_daily_ref_0.c \
           ../../../../../src/tools/gen_data/ta_intra_ref_0.c \          
           ../../../../../src/tools/gen_data/ta_mrg_0.c
@@ -69,6 +72,7 @@ INCLUDEPATH = ../../../../../src/ta_common \
               ../../../../../src/ta_data/ta_source/ta_readop \
               ../../../../../src/ta_data/ta_source/ta_yahoo \
               ../../../../../src/ta_data/ta_source/ta_sql \
+              ../../../../../src/ta_data/ta_source/ta_csi \
               ../../../../../src/ta_data/ta_history \
               ../../../../../src/ta_data/ta_source/ta_simulator \
               ../../../../../src/ta_common/imatix/sfl \

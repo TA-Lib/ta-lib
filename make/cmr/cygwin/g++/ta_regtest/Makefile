@@ -50,6 +50,7 @@ SOURCES =	../../../../../src/tools/ta_regtest/ta_regtest.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_trange.c \
 		../../../../../src/tools/ta_regtest/test_util.c \
 		../../../../../src/tools/ta_regtest/test_abstract.c \
+		../../../../../src/tools/ta_regtest/test_csi.c \
 		../../../../../src/tools/ta_regtest/test_yahoo.c
 OBJECTS =	../../../../../temp/cmr/ta_regtest.o \
 		../../../../../temp/cmr/test_1in_1out.o \
@@ -77,6 +78,7 @@ OBJECTS =	../../../../../temp/cmr/ta_regtest.o \
 		../../../../../temp/cmr/test_trange.o \
 		../../../../../temp/cmr/test_util.o \
 		../../../../../temp/cmr/test_abstract.o \
+		../../../../../temp/cmr/test_csi.o \
 		../../../../../temp/cmr/test_yahoo.o
 INTERFACES =	
 UICDECLS =	
@@ -205,6 +207,9 @@ clean:
 
 ../../../../../temp/cmr/test_abstract.o: ../../../../../src/tools/ta_regtest/test_abstract.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/test_abstract.o ../../../../../src/tools/ta_regtest/test_abstract.c
+
+../../../../../temp/cmr/test_csi.o: ../../../../../src/tools/ta_regtest/test_csi.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/test_csi.o ../../../../../src/tools/ta_regtest/test_csi.c
 
 ../../../../../temp/cmr/test_yahoo.o: ../../../../../src/tools/ta_regtest/test_yahoo.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/test_yahoo.o ../../../../../src/tools/ta_regtest/test_yahoo.c
