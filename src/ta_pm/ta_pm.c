@@ -314,6 +314,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
       dictEntry = &tradeLogPriv->defaultDictEntry;
       catCharPtr = NULL;
       symCharPtr = NULL;
+      theDict    = NULL;
    }
    else
    {   
@@ -346,6 +347,9 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
       
    if( !dictEntry )
    {
+      if( !theDict )
+         return TA_INTERNAL_ERROR(146);
+
       /* The TA_TradeDictEntry was not found, create it! */
       dictEntry = TA_Malloc( sizeof( TA_TradeDictEntry ) );
       if( !dictEntry )
