@@ -1,67 +1,67 @@
-MAX                 Highest value over a specified period
-MIN                 Lowest value over a specified period
-BBANDS              Bollinger Bands
-DEMA                Double Exponential Moving Average
-EMA                 Exponential Moving Average
-HT_TRENDLINE        Hilbert Transform - Instantaneous Trendline
-KAMA                Kaufman Adaptive Moving Average
-MA                  All Moving Average
-MAMA                MESA Adaptive Moving Average
-MIDPRICE            Midpoint Price over period
-MIDPOINT            MidPoint over period
-SAR                 Parabolic SAR
-SAREXT              Parabolic SAR - Extended
-SMA                 Simple Moving Average
-T3                  Triple Exponential Moving Average (T3)
-TEMA                Triple Exponential Moving Average
-TRIMA               Triangular Moving Average
-WMA                 Weighted Moving Average
-ATR                 Average True Range
-TRANGE              True Range
+AD                  Chaikin A/D Line
+ADOSC               Chaikin A/D Oscillator
 ADX                 Average Directional Movement Index
 ADXR                Average Directional Movement Index Rating
 APO                 Absolute Price Oscillator
 AROON               Aroon
 AROONOSC            Aroon Oscillator
+ATR                 Average True Range
+AVGPRICE            Average Price
+BBANDS              Bollinger Bands
 CCI                 Commodity Channel Index
+CORREL              Pearson's Correlation Coefficient (r)
+DEMA                Double Exponential Moving Average
 DX                  Directional Movement Index
+EMA                 Exponential Moving Average
+HT_DCPERIOD         Hilbert Transform - Dominant Cycle Period
+HT_DCPHASE          Hilbert Transform - Dominant Cycle Phase
+HT_PHASOR           Hilbert Transform - Phasor Components
+HT_SINE             Hilbert Transform - SineWave
+HT_TRENDLINE        Hilbert Transform - Instantaneous Trendline
+HT_TRENDMODE        Hilbert Transform - Trend vs Cycle Mode
+KAMA                Kaufman Adaptive Moving Average
+LINEARREG           Linear Regression
+LINEARREG_ANGLE     Linear Regression Angle
+LINEARREG_INTERCEPT Linear Regression Intercept
+LINEARREG_SLOPE     Linear Regression Slope
+MA                  All Moving Average
 MACD                Moving Average Convergence/Divergence
 MACDEXT             MACD with controllable MA type
 MACDFIX             Moving Average Convergence/Divergence Fix 12/26
+MAMA                MESA Adaptive Moving Average
+MAX                 Highest value over a specified period
+MEDPRICE            Median Price
 MFI                 Money Flow Index
+MIDPOINT            MidPoint over period
+MIDPRICE            Midpoint Price over period
+MIN                 Lowest value over a specified period
 MINUS_DI            Minus Directional Indicator
 MINUS_DM            Minus Directional Movement
 MOM                 Momentum
-PPO                 Percentage Price Oscillator
+OBV                 On Balance Volume
 PLUS_DI             Plus Directional Indicator
 PLUS_DM             Plus Directional Movement
+PPO                 Percentage Price Oscillator
 ROC                 Rate of change : ((price/prevPrice)-1)*100
 ROCP                Rate of change Percentage: (price-prevPrice)/prevPrice
 ROCR                Rate of change ratio: (price/prevPrice)
 ROCR100             Rate of change ratio 100 scale: (price/prevPrice)*100
 RSI                 Relative Strength Index
+SAR                 Parabolic SAR
+SAREXT              Parabolic SAR - Extended
+SMA                 Simple Moving Average
+STDDEV              Standard Deviation
 STOCH               Stochastic
 STOCHF              Stochastic Fast
 STOCHRSI            Stochastic Relative Strength Index
+T3                  Triple Exponential Moving Average (T3)
+TEMA                Triple Exponential Moving Average
+TRANGE              True Range
+TRIMA               Triangular Moving Average
 TRIX                1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
-WILLR               Williams' %R
-HT_DCPERIOD         Hilbert Transform - Dominant Cycle Period
-HT_DCPHASE          Hilbert Transform - Dominant Cycle Phase
-HT_PHASOR           Hilbert Transform - Phasor Components
-HT_SINE             Hilbert Transform - SineWave
-HT_TRENDMODE        Hilbert Transform - Trend vs Cycle Mode
-AD                  Chaikin A/D Line
-ADOSC               Chaikin A/D Oscillator
-OBV                 On Balance Volume
-CORREL              Pearson's Correlation Coefficient (r)
-LINEARREG           Linear Regression
-LINEARREG_SLOPE     Linear Regression Slope
-LINEARREG_ANGLE     Linear Regression Angle
-LINEARREG_INTERCEPT Linear Regression Intercept
-STDDEV              Standard Deviation
 TSF                 Time Series Forecast
-VAR                 Variance
-AVGPRICE            Average Price
-MEDPRICE            Median Price
 TYPPRICE            Typical Price
+VAR                 Variance
 WCLPRICE            Weighted Close Price
+WILLR               Williams' %R
+WMA                 Weighted Moving Average
