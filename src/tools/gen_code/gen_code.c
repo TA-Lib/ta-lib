@@ -234,7 +234,7 @@ int main(int argc, char* argv[])
          printf( "     5) ta-lib/c/src/ta_abstract/ta_group_idx.c\n");     
          printf( "     6) ta-lib/c/src/ta_abstract/frames/*.*\n");
          printf( "     7) ta-lib/c/src/ta_abstract/excel_glue.c\n" );
-         printf( "     8) ta-lib/dotnet/src/Core/Core.vcproj\n" );
+         printf( "     8) ta-lib/dotnet/src/Core/TA-Lib-Core.vcproj\n" );
          printf( "     9) ta-lib/dotnet/src/Core/Core.h\n" );
 
          printf( "\n" );
@@ -413,7 +413,7 @@ static int genCode(int argc, char* argv[])
    (void)argv; /* Get ride of compiler warning */
 
    /* Create .NET project files template */
-   #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\Core\\Core.vcproj"
+   #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.vcproj"
    #define FILE_NET_PROJ_TMP "..\\temp\\dotnetproj.tmp"
    gOutProjFile = fileOpen( FILE_NET_PROJ, NULL, FILE_READ );
    if( gOutProjFile == NULL )   
@@ -695,6 +695,8 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1 );
    printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1 );
    fprintf( gOutDotNet_H->file, "\n" );
+   fprintf( gOutDotNet_H->file, "         #define TA_%s Core::%s\n", funcInfo->name, funcInfo->name );
+   fprintf( gOutDotNet_H->file, "         #define TA_%s_Lookback Core::%s_Lookback\n\n", funcInfo->name, funcInfo->name );
 
    doFuncFile( funcInfo );
 }
@@ -845,6 +847,7 @@ static void printFunc( FILE *out,
    const char *inputIntArrayType;
    const char *outputIntParam;
    const char *arrayBracket;
+   int excludeFromManaged;
 
    if( managedCPPCode )
    {
@@ -1180,6 +1183,8 @@ static void printFunc( FILE *out,
    lastParam = 0;
    for( i=0; i < funcInfo->nbOptInput; i++ )
    {
+      excludeFromManaged = 0;
+
       if( (i == (funcInfo->nbOptInput-1)) && lookbackSignature )
          lastParam = 1;
 
@@ -1210,6 +1215,7 @@ static void printFunc( FILE *out,
          {
             typeString = "TA_MAType";
             defaultParamName = "optInMAType";
+            excludeFromManaged = 1;
          }
          else
          {
@@ -1230,7 +1236,21 @@ static void printFunc( FILE *out,
          paramName = defaultParamName;
 
       if( validationCode )
+      {
+         if( excludeFromManaged )
+         {
+             printIndent( out, indent );
+             fprintf( out, "#if !defined(_MANAGED)\n" );
+         }
+
          printOptInputValidation( out, paramName, paramNb, optInputParamInfo );
+
+         if( excludeFromManaged )
+         {
+             printIndent( out, indent );
+             fprintf( out, "#endif /* !defined(_MANAGED) */\n" );
+         }
+      }
       else
       {
          if( !(lookbackSignature && (i == 0 )) )
@@ -1732,11 +1752,17 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    fprintf( out, "   #include \"Core.h\"\n" );
    fprintf( out, "   namespace TA { namespace Lib {\n" );
    fprintf( out, "#else\n" );
+   fprintf( out, "   #include <string.h>\n" );
+   fprintf( out, "   #include <math.h>\n" );
    fprintf( out, "   #include \"ta_func.h\"\n" );
    fprintf( out, "#endif\n" );
    fprintf( out, "\n" );
    fprintf( out, "#ifndef TA_UTILITY_H\n" );
    fprintf( out, "   #include \"ta_utility.h\"\n" );
+   fprintf( out, "#endif\n" );
+   fprintf( out, "\n" );
+   fprintf( out, "#ifndef TA_MEMORY_H\n" );
+   fprintf( out, "   #include \"ta_memory.h\"\n" );
    fprintf( out, "#endif\n" );
    fprintf( out, "\n" );
    fprintf( out, "#if defined( _MANAGED )\n" );

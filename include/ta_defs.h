@@ -195,7 +195,12 @@ typedef enum
 #endif
 
 /* Id can be from 1 to 999 */
-#define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR+Id)
+#if defined( _MANAGED )
+   /* Sadly, we loose the Id info with Managed C++ */
+   #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+#else
+   #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR+Id)
+#endif
 
 #if defined( _MANAGED )
 public __value enum TA_Compatibility
