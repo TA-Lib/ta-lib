@@ -149,6 +149,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    TA_RetCode retCode = TA_SUCCESS;
    TA_PrivateSQLHandle *privateHandle;
    TA_StringCache *stringCache = TA_GetGlobalStringCache();
+   char *strval = NULL;
 
    if( !handle )
       return (TA_RetCode)TA_INTERNAL_ERROR(61);
@@ -186,15 +187,15 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    {
       /* This is an SQL query; execute it to obtain the list of categories */
 
-      void *query_result;
-      int res_columns, res_rows;
-      int cat_col, sym_col;
-      int rownum,
+      void *queryResult;
+      int resColumns;
+      int catCol, symCol;
+      int rowNum,
 
       retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].executeQuery)(
                   privateHandle->connection,
                   TA_StringToChar(privateHandle->param->category),
-                  &query_result);
+                  &queryResult);
       if( retCode != TA_SUCCESS )
       {
          TA_TRACE_RETURN( retCode );
@@ -205,94 +206,86 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
 #define RETURN_ON_ERROR( rc )              \
          if( rc != TA_SUCCESS )           \
          {                                \
-            (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(query_result); \
+            (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult); \
             TA_TRACE_RETURN( rc );        \
          }
 
       /* find the category column number, if present */
       retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getNumColumns)(
-                     query_result,
-                     &res_columns );
-      RETURN_ON_ERROR( retCode )
+                     queryResult,
+                     &resColumns );
+      RETURN_ON_ERROR( retCode );
       
-      for ( cat_col = 0; cat_col < res_columns; cat_col++) 
+      for ( catCol = 0; catCol < resColumns; catCol++) 
       { 
          const char *name;
          retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getColumnName)(
-                              query_result,
-                              cat_col,
+                              queryResult,
+                              catCol,
                               &name );
-         RETURN_ON_ERROR( retCode )
+         RETURN_ON_ERROR( retCode );
          if( stricmp(name, TA_SQL_CATEGORY_COLUMN) == 0 )
             break;
       } 
-      if( cat_col == res_columns )
+      if( catCol == resColumns )
       {
-         RETURN_ON_ERROR( TA_CATEGORY_NOT_FOUND )
+         RETURN_ON_ERROR( TA_CATEGORY_NOT_FOUND );
       }
 
       /* find the symbol column number, if present */
-      for ( sym_col = 0; sym_col < res_columns; sym_col++) 
+      for ( symCol = 0; symCol < resColumns; symCol++) 
       { 
          const char *name;
          retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getColumnName)(
-                              query_result,
-                              sym_col,
+                              queryResult,
+                              symCol,
                               &name );
-         RETURN_ON_ERROR( retCode )
+         RETURN_ON_ERROR( retCode );
          if( stricmp(name, TA_SQL_SYMBOL_COLUMN) == 0 )
             break;
       }
 
       /* iterate through all rows */
-      retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getNumRows)(
-                     query_result,
-                     &res_rows );
-      RETURN_ON_ERROR( retCode )
-
-      if( res_rows <= 0 )
-      {                    
-         RETURN_ON_ERROR( TA_CATEGORY_NOT_FOUND )
-      } 
-         
-      for( rownum = 0;  rownum < res_rows;  rownum++) 
+      for( rowNum = 0;  
+           (retCode = 
+               (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
+                                 queryResult,
+                                 rowNum, 
+                                 catCol,
+                                 &strval )
+           ) != TA_END_OF_INDEX;
+           rowNum++) 
       {
-         char *strval = NULL;
          TA_String *cat_name = NULL;
          TA_String *sym_name = NULL;
 
-         retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
-                              query_result,
-                              rownum, 
-                              cat_col,
-                              &strval );
-         RETURN_ON_ERROR( retCode )
+         RETURN_ON_ERROR( retCode );  /* retCode from the for-condition */
 
          if( strval && strval[0] != '\0' )  
          {
             cat_name = TA_StringAlloc( stringCache, strval );
          }
-         else // for NULL values fall back to default
+         else /* for NULL values fall back to default */
          {
             cat_name = TA_StringAlloc( stringCache, TA_DEFAULT_CATEGORY );
          }
 
          if( !cat_name )
          {
-            RETURN_ON_ERROR( TA_ALLOC_ERR )
+            RETURN_ON_ERROR( TA_ALLOC_ERR );
          }
 
-         if( sym_col < res_columns )  /* we can collect symbols as well */
+         if( symCol < resColumns )  /* we can collect symbols as well */
          {
             retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
-                                 query_result,
-                                 rownum, 
-                                 sym_col,
+                                 queryResult,
+                                 rowNum, 
+                                 symCol,
                                  &strval );
             if ( retCode != TA_SUCCESS )
             {
                TA_StringFree(stringCache, cat_name);
-               RETURN_ON_ERROR( retCode )
+               RETURN_ON_ERROR( retCode );
             }
        
             if( strval ) 
@@ -304,7 +297,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
                   if( !sym_name )
                   {
                      TA_Free( strval );
-                     RETURN_ON_ERROR( TA_ALLOC_ERR )
+                     RETURN_ON_ERROR( TA_ALLOC_ERR );
                   }
                }
             }
@@ -331,6 +324,11 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
             break;
          }
       } 
+
+      if( retCode == TA_END_OF_INDEX )
+      {
+        retCode = TA_SUCCESS;
+      }
    }
    else
    {
@@ -536,6 +534,7 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
    TA_PROLOG
    TA_RetCode retCode;
    TA_StringCache *stringCache = TA_GetGlobalStringCache();
+   char *strval = NULL;
 
    /* is trace allowed through static fuctions? */
    TA_TRACE_BEGIN( registerCategoryAndAllSymbols );
@@ -549,11 +548,11 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
        && strnicmp("SELECT ", TA_StringToChar(privateHandle->param->symbol), 7) == 0)
    {
       /* This is an SQL query; execute it to obtain the list of symbols */
-      void *query_result;
-      int res_columns, res_rows;
-      int sym_col;
-      int rownum;
-      char *sym_query;
+      void *queryResult;
+      int resColumns;
+      int symCol;
+      int rowNum;
+      char *symQuery;
    
       /* Because the query may return no results, we must make sure that
        * at leas the category will be registered.
@@ -567,18 +566,18 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
       }
 
       /* Now the SQL query */
-      sym_query = TA_SQL_ExpandPlaceholders(TA_StringToChar(privateHandle->param->symbol),
+      symQuery = TA_SQL_ExpandPlaceholders(TA_StringToChar(privateHandle->param->symbol),
                                             TA_SQL_CATEGORY_PLACEHOLDER,
                                             TA_StringToChar(category));
-      if( !sym_query )
+      if( !symQuery )
       {
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
 
       retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].executeQuery)(
                   privateHandle->connection,
-                  sym_query,
-                  &query_result);
+                  symQuery,
+                  &queryResult);
       if( retCode != TA_SUCCESS )
       {
          TA_TRACE_RETURN( retCode );
@@ -588,55 +587,51 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
 #define RETURN_ON_ERROR( rc )              \
          if( rc != TA_SUCCESS )           \
          {                                \
-            (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(query_result); \
+            (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult); \
             TA_TRACE_RETURN( rc );        \
          }
 
 
       /* find the symbol column number, if present */
       retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getNumColumns)(
-                     query_result,
-                     &res_columns );
-      RETURN_ON_ERROR( retCode )
+                     queryResult,
+                     &resColumns );
+      RETURN_ON_ERROR( retCode );
 
-      for ( sym_col = 0; sym_col < res_columns; sym_col++) 
+      for ( symCol = 0; symCol < resColumns; symCol++) 
       { 
          const char *name = NULL;
 
          retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getColumnName)(
-                              query_result,
-                              sym_col,
+                              queryResult,
+                              symCol,
                               &name );
-         RETURN_ON_ERROR( retCode )
+         RETURN_ON_ERROR( retCode );
 
          if( (stricmp(name, TA_SQL_SYMBOL_COLUMN) == 0) )
          {
             break;
          }
       }
-      if( sym_col == res_columns )
+      if( symCol == resColumns )
       {
-         RETURN_ON_ERROR( TA_BAD_PARAM )
-         /* I would prefer: TA_BAD_QUERY */
+         RETURN_ON_ERROR( TA_BAD_QUERY );
       }
 
       /* iterate through all rows */
-      retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getNumRows)(
-                     query_result,
-                     &res_rows );
-      RETURN_ON_ERROR( retCode )
-         
-      for( rownum = 0;  rownum < res_rows;  rownum++) 
+      for( rowNum = 0;  
+           (retCode = 
+               (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
+                              queryResult,
+                              rowNum, 
+                              symCol,
+                              &strval )
+           ) != TA_END_OF_INDEX;
+           rowNum++) 
       {
-         char *strval = NULL;
          TA_String *sym_name = NULL;
 
-         retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
-                              query_result,
-                              rownum, 
-                              sym_col,
-                              &strval );
-         RETURN_ON_ERROR( retCode )
+         RETURN_ON_ERROR( retCode );  /* retCode from the for-condition */
 
          if( strval )
          {
@@ -645,10 +640,10 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
 
          if( !sym_name )
          {
-            RETURN_ON_ERROR( TA_ALLOC_ERR )
+            RETURN_ON_ERROR( TA_ALLOC_ERR );
          }
 
-         if( strcmp(TA_StringToChar(sym_name), "") != 0 )  // ignore NULL fields
+         if( strcmp(TA_StringToChar(sym_name), "") != 0 )  /* ignore NULL fields */
          {
             retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
                                                 category,
@@ -661,8 +656,12 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
             break;
          }
       }
+      if( retCode == TA_END_OF_INDEX )
+      {
+         retCode = TA_SUCCESS;
+      }
 
-      TA_Free(sym_query);
+      TA_Free(symQuery);
    }
    else if ( privateHandle->param->symbol
              && *TA_StringToChar(privateHandle->param->symbol) != '\0' )

@@ -56,7 +56,6 @@
  */
 
 /**** Headers ****/
-//#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include "ta_source.h"
@@ -143,7 +142,7 @@ TA_RetCode TA_SQL_GetParameters( TA_DataSourceParameters *param )
 
    memset( param, 0, sizeof( TA_DataSourceParameters ) );
 
-   // Parameters supported by TA_SQL
+   /* Parameters supported by TA_SQL */
    param->flags = TA_REPLACE_ZERO_PRICE_BAR;
 
    TA_TRACE_RETURN( TA_SUCCESS );
@@ -611,11 +610,12 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    TA_Integer *oiVec = NULL;
 
    /* recognized columns */
-   int date_col, time_col, open_col, high_col, low_col, close_col, volume_col, oi_col;
+   int dateCol, timeCol, openCol, highCol, lowCol, closeCol, volumeCol, oiCol;
 
    void *queryResult;
-   int resColumns, resRows;
+   int resColumns, resRows = -1;
    int colNum, rowNum, barNum;
+   char *strval = NULL;
 
 
    TA_TRACE_BEGIN( executeDataQuery );
@@ -633,23 +633,16 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    /* from now on: the query result has to be released upon premature return 
     * later, also allocated vectors have to be released
     */
-#define RETURN_ON_ERROR( rc )                               \
+   #define RETURN_ON_ERROR( rc )                            \
          if( rc != TA_SUCCESS )                             \
          {                                                  \
-            (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult); \
-            if ( timestampVec ) TA_Free(timestampVec);      \
-            if ( openVec      ) TA_Free(openVec);           \
-            if ( highVec      ) TA_Free(highVec);           \
-            if ( lowVec       ) TA_Free(lowVec);            \
-            if ( closeVec     ) TA_Free(closeVec);          \
-            if ( volumeVec    ) TA_Free(volumeVec);         \
-            if ( oiVec        ) TA_Free(oiVec);             \
-            TA_TRACE_RETURN( rc );                          \
+            retCode = rc;                                   \
+            goto executeDataQuery_cleanup;                  \
          }
 
 
    /* find recognized columns */
-   date_col = time_col = open_col = high_col = low_col = close_col = volume_col = oi_col = -1;
+   dateCol = timeCol = openCol = highCol = lowCol = closeCol = volumeCol = oiCol = -1;
 
    retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getNumColumns)(
                   queryResult,
@@ -659,7 +652,14 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getNumRows)(
                   queryResult,
                   &resRows );
-   RETURN_ON_ERROR( retCode );
+   if( retCode != TA_SUCCESS || resRows <= 0 )
+   {
+      /* not all minidrivers support reporting the number of rows in a query in advance
+       * it is not a disaster, just less efficient
+       * data will be collected in fixed size chunks
+       */
+      resRows = 500;
+   }
 
    for( colNum = 0; colNum < resColumns; colNum++ ) 
    { 
@@ -671,28 +671,28 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
       RETURN_ON_ERROR( retCode );
 
       if( stricmp(name, TA_SQL_DATE_COLUMN) == 0 )
-         date_col = colNum;
+         dateCol = colNum;
       else
       if( stricmp(name, TA_SQL_TIME_COLUMN) == 0 )
-         time_col = colNum;
+         timeCol = colNum;
       else
       if( stricmp(name, TA_SQL_OPEN_COLUMN) == 0 )
-         open_col = colNum;
+         openCol = colNum;
       else
       if( stricmp(name, TA_SQL_HIGH_COLUMN) == 0 )
-         high_col = colNum;
+         highCol = colNum;
       else
       if( stricmp(name, TA_SQL_LOW_COLUMN) == 0 )
-         low_col = colNum;
+         lowCol = colNum;
       else
       if( stricmp(name, TA_SQL_CLOSE_COLUMN) == 0 )
-         close_col = colNum;
+         closeCol = colNum;
       else
       if( stricmp(name, TA_SQL_VOLUME_COLUMN) == 0 )
-         volume_col = colNum;
+         volumeCol = colNum;
       else
       if( stricmp(name, TA_SQL_OI_COLUMN) == 0 )
-         oi_col = colNum;
+         oiCol = colNum;
    } 
 
    /* timestamp is always needed */
@@ -708,59 +708,65 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    }
 
    /* verify whether all required columns are present */
-   if( timeRequired && time_col < 0 )
+   if( timeRequired && timeCol < 0 )
    {
       /* we cannot deliver data for the requested period, thus exit gracefully */
       retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult);
       TA_TRACE_RETURN( retCode );
    }
-   if(  date_col < 0
-     || (fieldToAlloc & TA_OPEN   && open_col   < 0)
-     || (fieldToAlloc & TA_HIGH   && high_col   < 0)
-     || (fieldToAlloc & TA_LOW    && low_col    < 0)
-     || (fieldToAlloc & TA_CLOSE  && close_col  < 0)
-     || (fieldToAlloc & TA_VOLUME && volume_col < 0)
-     || (fieldToAlloc & TA_OPENINTEREST && oi_col < 0) )
+   if(  dateCol < 0
+     || (fieldToAlloc & TA_OPEN   && openCol   < 0)
+     || (fieldToAlloc & TA_HIGH   && highCol   < 0)
+     || (fieldToAlloc & TA_LOW    && lowCol    < 0)
+     || (fieldToAlloc & TA_CLOSE  && closeCol  < 0)
+     || (fieldToAlloc & TA_VOLUME && volumeCol < 0)
+     || (fieldToAlloc & TA_OPENINTEREST && oiCol < 0) )
    {
       /* required column not found, so cannot deliver data */
       retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult);
       TA_TRACE_RETURN( retCode );
    }
       
-   // Preallocate vectors memory
-   if ( !(timestampVec = (TA_Timestamp*)TA_Malloc( resRows * sizeof(TA_Timestamp))))
-         RETURN_ON_ERROR( TA_ALLOC_ERR );
-   memset(timestampVec, 0, resRows * sizeof(TA_Timestamp));
-
-   #define TA_SQL_ALLOC_VEC( col_num, field_flag, type, vec )           \
-         if( col_num >= 0                                               \
-            && (fieldToAlloc & field_flag || fieldToAlloc == TA_ALL)    \
-            && !(vec = (type*)TA_Malloc( resRows * sizeof(type) )))     \
-         {                                                              \
-               RETURN_ON_ERROR( TA_ALLOC_ERR);                          \
-         }
-
-   TA_SQL_ALLOC_VEC( open_col,   TA_OPEN,         TA_Real,    openVec   )
-   TA_SQL_ALLOC_VEC( high_col,   TA_HIGH,         TA_Real,    highVec   )
-   TA_SQL_ALLOC_VEC( low_col,    TA_LOW,          TA_Real,    lowVec    )
-   TA_SQL_ALLOC_VEC( close_col,  TA_CLOSE,        TA_Real,    closeVec  )
-   TA_SQL_ALLOC_VEC( volume_col, TA_VOLUME,       TA_Integer, volumeVec )
-   TA_SQL_ALLOC_VEC( oi_col,     TA_OPENINTEREST, TA_Integer, oiVec     )
-
-   #undef TA_SQL_ALLOC_VEC
-   
    /* iterate through the result set */
-   for( rowNum = 0, barNum = 0;  rowNum < resRows;  rowNum++, barNum++) 
+   for( rowNum = 0, barNum = 0;  
+        (retCode = 
+            (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
+                              queryResult,
+                              rowNum, 
+                              dateCol,
+                              &strval )
+        ) != TA_END_OF_INDEX;
+        rowNum++ ) 
    { 
       unsigned int u1, u2, u3;
-      char *strval = NULL;
 
-      retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
-                           queryResult,
-                           rowNum, 
-                           date_col,
-                           &strval );
-      RETURN_ON_ERROR( retCode );
+      RETURN_ON_ERROR( retCode );  /* retCode from the for-condition */
+
+      if( timestampVec == NULL )
+      {
+         /* Preallocate vectors memory */
+         if ( !(timestampVec = (TA_Timestamp*)TA_Malloc( resRows * sizeof(TA_Timestamp))))
+            RETURN_ON_ERROR( TA_ALLOC_ERR );
+         memset(timestampVec, 0, resRows * sizeof(TA_Timestamp));
+         
+         #define TA_SQL_ALLOC_VEC( col_num, field_flag, type, vec )           \
+               if( col_num >= 0                                               \
+                  && (fieldToAlloc & field_flag || fieldToAlloc == TA_ALL)    \
+                  && !(vec = (type*)TA_Malloc( resRows * sizeof(type) )))     \
+               {                                                              \
+                  RETURN_ON_ERROR( TA_ALLOC_ERR);                             \
+               }
+         
+         TA_SQL_ALLOC_VEC( openCol,   TA_OPEN,         TA_Real,    openVec   )
+         TA_SQL_ALLOC_VEC( highCol,   TA_HIGH,         TA_Real,    highVec   )
+         TA_SQL_ALLOC_VEC( lowCol,    TA_LOW,          TA_Real,    lowVec    )
+         TA_SQL_ALLOC_VEC( closeCol,  TA_CLOSE,        TA_Real,    closeVec  )
+         TA_SQL_ALLOC_VEC( volumeCol, TA_VOLUME,       TA_Integer, volumeVec )
+         TA_SQL_ALLOC_VEC( oiCol,     TA_OPENINTEREST, TA_Integer, oiVec     )
+            
+         #undef TA_SQL_ALLOC_VEC
+            
+      }
 
       /* date must be always present */
       if ( sscanf(strval, "%4u-%2u-%2u", &u1, &u2, &u3) != 3 )
@@ -769,19 +775,20 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
       }
 
       retCode = TA_SetDate(u1, u2, u3, &timestampVec[barNum]);
-      RETURN_ON_ERROR( retCode )
+      RETURN_ON_ERROR( retCode );
 
-      if (time_col >= 0)
+      if (timeCol >= 0)
       {
          strval = NULL;
          retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRowString)(
                               queryResult,
                               rowNum, 
-                              time_col,
+                              timeCol,
                               &strval );
          RETURN_ON_ERROR( retCode );
          
-         if ( strval && *strval ) {  
+         if ( strval && *strval ) 
+         {  
             if (sscanf(strval, "%2u:%2u:%2u", &u1, &u2, &u3) != 3 )
             {
                RETURN_ON_ERROR( TA_BAD_QUERY );
@@ -790,59 +797,105 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
             retCode = TA_SetTime(u1, u2, u3, &timestampVec[barNum]);
             RETURN_ON_ERROR( retCode );
          }
-         else { // ignore NULL fields
-            barNum--;
+         else /* ignore NULL fields */
             continue;
-         }
       }
 
       #define TA_SQL_STORE_VALUE( type, getRow, vec, col, flag )                    \
-         if (vec) {                                                                 \
+         if (vec)                                                                   \
+         {                                                                          \
             retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getRow )( \
                                  queryResult,                                       \
                                  rowNum,                                            \
                                  col,                                               \
                                  &vec[barNum] );                                    \
             RETURN_ON_ERROR( retCode );                                             \
+                                                                                    \
             if (vec[barNum] == 0 && (privateHandle->param->flags & flag) )          \
                vec[barNum] = (type) ( (barNum > 0)? closeVec[barNum-1] : 0 );       \
-            if (vec[barNum] == 0) {                                                 \
-               barNum--;                                                            \
+                                                                                    \
+            if (vec[barNum] == 0)                                                   \
                continue;                                                            \
-            }                                                                       \
          }
       
-      TA_SQL_STORE_VALUE(TA_Real,    getRowReal,    openVec,   open_col,   TA_REPLACE_ZERO_PRICE_BAR)
-      TA_SQL_STORE_VALUE(TA_Real,    getRowReal,    highVec,   high_col,   TA_REPLACE_ZERO_PRICE_BAR)
-      TA_SQL_STORE_VALUE(TA_Real,    getRowReal,    lowVec,    low_col,    TA_REPLACE_ZERO_PRICE_BAR)
-      TA_SQL_STORE_VALUE(TA_Real,    getRowReal,    closeVec,  close_col,  TA_REPLACE_ZERO_PRICE_BAR)
-      TA_SQL_STORE_VALUE(TA_Integer, getRowInteger, volumeVec, volume_col, TA_NO_FLAGS)
-      TA_SQL_STORE_VALUE(TA_Integer, getRowInteger, oiVec,     oi_col,     TA_NO_FLAGS)
+      TA_SQL_STORE_VALUE(TA_Real,    getRowReal,    openVec,   openCol,   TA_REPLACE_ZERO_PRICE_BAR)
+      TA_SQL_STORE_VALUE(TA_Real,    getRowReal,    highVec,   highCol,   TA_REPLACE_ZERO_PRICE_BAR)
+      TA_SQL_STORE_VALUE(TA_Real,    getRowReal,    lowVec,    lowCol,    TA_REPLACE_ZERO_PRICE_BAR)
+      TA_SQL_STORE_VALUE(TA_Real,    getRowReal,    closeVec,  closeCol,  TA_REPLACE_ZERO_PRICE_BAR)
+      TA_SQL_STORE_VALUE(TA_Integer, getRowInteger, volumeVec, volumeCol, TA_NO_FLAGS)
+      TA_SQL_STORE_VALUE(TA_Integer, getRowInteger, oiVec,     oiCol,     TA_NO_FLAGS)
 
       #undef TA_SQL_STORE_VALUE
+
+      barNum++;  /* bar stored */
+
+      if( barNum == resRows )   /* vectors filled up completely, pass to ta_history */
+      {
+         retCode = TA_HistoryAddData(  paramForAddData,
+                                       barNum,
+                                       period,
+                                       timestampVec,
+                                       openVec,
+                                       highVec,
+                                       lowVec,
+                                       closeVec,
+                                       volumeVec,
+                                       oiVec );
+         
+         /* whatever happened, the vectors are not belonging to us anymore */
+         timestampVec = NULL;
+         openVec = highVec = lowVec = closeVec = NULL;
+         volumeVec = oiVec = NULL;
+         barNum = 0;
+         
+         if( retCode == TA_ENOUGH_DATA )
+            break;
+
+         RETURN_ON_ERROR( retCode );
+      }
    }
-   // uff... done! 
-   // now pass collected data to history module
-   retCode = TA_HistoryAddData( paramForAddData,
-                           barNum,
-                           period,
-                           timestampVec,
-                           openVec,
-                           highVec,
-                           lowVec,
-                           closeVec,
-                           volumeVec,
-                           oiVec );
 
-   /* whatever happened, the vectors are not belonging to us anymore */
-   timestampVec = NULL;
-   openVec = highVec = lowVec = closeVec = NULL;
-   volumeVec = oiVec = NULL;
+   /* now pass remaining collected data to ta_history module */
+   if( barNum > 0 )
+   {
+      retCode = TA_HistoryAddData(  paramForAddData,
+                                    barNum,
+                                    period,
+                                    timestampVec,
+                                    openVec,
+                                    highVec,
+                                    lowVec,
+                                    closeVec,
+                                    volumeVec,
+                                    oiVec );
+      
+      /* whatever happened, the vectors are not belonging to us anymore */
+      timestampVec = NULL;
+      openVec = highVec = lowVec = closeVec = NULL;
+      volumeVec = oiVec = NULL;
+      
+      if( retCode != TA_ENOUGH_DATA )
+         RETURN_ON_ERROR( retCode );
+   }
 
+   if( retCode == TA_ENOUGH_DATA || retCode == TA_END_OF_INDEX )
+      retCode = TA_SUCCESS;
+   
    /* cleanup */
-#undef RETURN_ON_ERROR
+   #undef RETURN_ON_ERROR
 
-   retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult);
+executeDataQuery_cleanup:
+
+   /* retCode is set to the exit reason, so do not overwrite it here */
+   (*TA_gSQLMinidriverTable[privateHandle->minidriver].releaseQuery)(queryResult);
+
+   if ( timestampVec ) TA_Free( timestampVec );
+   if ( openVec      ) TA_Free( openVec      );
+   if ( highVec      ) TA_Free( highVec      );
+   if ( lowVec       ) TA_Free( lowVec       );
+   if ( closeVec     ) TA_Free( closeVec     );
+   if ( volumeVec    ) TA_Free( volumeVec    );
+   if ( oiVec        ) TA_Free( oiVec        );
 
    TA_TRACE_RETURN( retCode );
 }
