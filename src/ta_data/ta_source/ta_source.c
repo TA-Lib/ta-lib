@@ -69,12 +69,7 @@
 #include "ta_ascii.h"
 #include "ta_simulator.h"
 #include "ta_yahoo.h"
-#if defined(TA_SUPPORT_MYSQL)
-#include "ta_mysql.h"
-#endif
-#if defined(TA_SUPPORT_SQL)
 #include "ta_sql.h"
-#endif
 
 /**** External functions declarations. ****/
 /* None */
@@ -125,7 +120,6 @@ const TA_DataSourceDriver TA_gDataSourceTable[] =
     },
 
     {   /* TA_SQL data source. */
-#if defined(TA_SUPPORT_SQL)
         TA_SQL_InitializeSourceDriver,
         TA_SQL_ShutdownSourceDriver,
         TA_SQL_GetParameters,
@@ -136,28 +130,6 @@ const TA_DataSourceDriver TA_gDataSourceTable[] =
         TA_SQL_GetFirstSymbolHandle,
         TA_SQL_GetNextSymbolHandle,
         TA_SQL_GetHistoryData
-#elif defined(TA_SUPPORT_MYSQL)
-        TA_MYSQL_InitializeSourceDriver,
-        TA_MYSQL_ShutdownSourceDriver,
-        TA_MYSQL_GetParameters,
-        TA_MYSQL_OpenSource,
-        TA_MYSQL_CloseSource,
-        TA_MYSQL_GetFirstCategoryHandle,
-        TA_MYSQL_GetNextCategoryHandle,
-        TA_MYSQL_GetFirstSymbolHandle,
-        TA_MYSQL_GetNextSymbolHandle,
-        TA_MYSQL_GetHistoryData
-#else
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-#endif
     }
 
 #if 0

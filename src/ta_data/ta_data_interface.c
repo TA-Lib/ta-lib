@@ -428,11 +428,6 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
    if( param->id >= TA_NUM_OF_SOURCE_ID )
       return TA_BAD_PARAM;
 
-#if !defined(TA_SUPPORT_MYSQL) && !defined(TA_SUPPORT_SQL)
-   if( param->id == TA_SQL )
-      return TA_NOT_SUPPORTED;
-#endif
-
    retCode = TA_GetGlobal( &TA_DataGlobalControl, (void *)&global );
    if( retCode != TA_SUCCESS )
       return retCode;
