@@ -499,7 +499,6 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
                                void *opaqueData )
 {
    static const char *prevGroup = NULL;
-   FileHandle *frameOut;
 
    (void)opaqueData; /* Get ride of compiler warning */
 
@@ -537,21 +536,9 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    /* Generate the excel glue code */
    printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
 
-   /* Create the frame for TA_CallFunc. */
-   sprintf( gTempBuf, "..\\src\\ta_abstract\\frames\\ta_%s_frame.c", funcInfo->name );
-
-   frameOut = fileOpen( gTempBuf,
-                        "..\\src\\ta_abstract\\templates\\ta_x_frame.c.template",
-                        FILE_WRITE );
-
-   printCallFrame( frameOut->file, funcInfo );
-
+   /* Create the frame definition (ta_frame.c) and declaration (ta_frame.h) */
    printFrameHeader( gOutFrame_H->file, funcInfo );
    fprintf( gOutFrame_H->file, ";\n\n" );
-
-   fileClose( frameOut );
-
-   /* Append the frame for this function to the ta_frame.c file */
    printCallFrame( gOutFrame_C->file, funcInfo );
 
    doFuncFile( funcInfo );
