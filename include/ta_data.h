@@ -122,6 +122,7 @@ typedef int TA_SourceFlag;
 #define TA_REPLACE_ZERO_PRICE_BAR (1<<0)
 #define TA_DO_NOT_SPLIT_ADJUST    (1<<1)
 #define TA_DO_NOT_VALUE_ADJUST    (1<<2)
+#define TA_ALLOW_INCOMPLETE_BARS  (1<<3)
 
 typedef struct
 {
@@ -362,15 +363,30 @@ typedef struct
    void *hiddenData;
 } TA_History;
 
+
+/* Flags that can be specified when allocating a TA_History.
+ *
+ * TA_ALLOW_INCOMPLETE_BARS
+ *    Allows to build price bar for which not all the data is 
+ *    yet available. As an example, requesting historical monthly
+ *    data will not return a month that is not yet finish.
+ *    The default behavior is to not include incomplete
+ *    price bar, this flag allows to do the contrary.
+ *
+ */
+typedef int TA_HistoryFlag;
+#define TA_ALLOW_INCOMPLETE_PRICE_BARS (1<<0)
+
 typedef struct
 {
-   const char   *source;
-   const char   *category;
-   const char   *symbol;   
-   TA_Period     period;
-   TA_Timestamp  start;
-   TA_Timestamp  end;
-   TA_Field      field;
+   const char    *source;
+   const char    *category;
+   const char    *symbol;   
+   TA_Period      period;
+   TA_Timestamp   start;
+   TA_Timestamp   end;
+   TA_Field       field;
+   TA_HistoryFlag flags;
 } TA_HistoryAllocParam;
 
 TA_RetCode TA_HistoryAlloc( TA_UDBase *unifiedDatabase,
