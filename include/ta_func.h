@@ -1396,7 +1396,7 @@ int TA_PPO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod:(From 2 to 100000)
+ * optInTimePeriod:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -1406,7 +1406,7 @@ TA_RetCode TA_PLUS_DI( int    startIdx,
                        const double inHigh[],
                        const double inLow[],
                        const double inClose[],
-                       int           optInTimePeriod, /* From 2 to 100000 */
+                       int           optInTimePeriod, /* From 1 to 100000 */
                        int          *outBegIdx,
                        int          *outNbElement,
                        double        outReal[] );
@@ -1416,12 +1416,12 @@ TA_RetCode TA_S_PLUS_DI( int    startIdx,
                          const float  inHigh[],
                          const float  inLow[],
                          const float  inClose[],
-                         int           optInTimePeriod, /* From 2 to 100000 */
+                         int           optInTimePeriod, /* From 1 to 100000 */
                          int          *outBegIdx,
                          int          *outNbElement,
                          double        outReal[] );
 
-int TA_PLUS_DI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+int TA_PLUS_DI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -1432,7 +1432,7 @@ int TA_PLUS_DI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 *
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod:(From 2 to 100000)
+ * optInTimePeriod:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -1441,7 +1441,7 @@ TA_RetCode TA_PLUS_DM( int    startIdx,
                        int    endIdx,
                        const double inHigh[],
                        const double inLow[],
-                       int           optInTimePeriod, /* From 2 to 100000 */
+                       int           optInTimePeriod, /* From 1 to 100000 */
                        int          *outBegIdx,
                        int          *outNbElement,
                        double        outReal[] );
@@ -1450,12 +1450,12 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
                          int    endIdx,
                          const float  inHigh[],
                          const float  inLow[],
-                         int           optInTimePeriod, /* From 2 to 100000 */
+                         int           optInTimePeriod, /* From 1 to 100000 */
                          int          *outBegIdx,
                          int          *outNbElement,
                          double        outReal[] );
 
-int TA_PLUS_DM_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+int TA_PLUS_DM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
