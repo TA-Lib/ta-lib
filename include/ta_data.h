@@ -417,11 +417,20 @@ typedef struct
  *    greater to weekly.Without this flag, the default behavior is to return 
  *    the daily average open interest.
  *
+ *
+ * TA_DISABLE_PRICE_VALIDATION
+ * ===========================
+ *    By default TA-Lib fails a TA_HistoryAlloc call when an inconsistency is
+ *    found among the high, low, close, open e.g. high<low. This option disable 
+ *    these price validations and the caller is left on its own to detect 
+ *    erroneous data.
+ *
  */
 typedef int TA_HistoryFlag;
 #define TA_ALLOW_INCOMPLETE_PRICE_BARS (1<<0)
 #define TA_USE_TOTAL_VOLUME            (1<<1)
 #define TA_USE_TOTAL_OPENINTEREST      (1<<2)
+#define TA_DISABLE_PRICE_VALIDATION    (1<<3)
 
 typedef struct
 {
