@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -37,6 +37,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AM       Adrian Michel
+ *  MIF      Mirek Fontan (mira@fontan.cz)
  *
  * Change history:
  *
@@ -45,6 +46,7 @@
  *  010802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
+ *  062704 MF   Fix #965557. Div by zero bug reported by MIF.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -362,10 +364,14 @@
       prevClose = inClose[today];
    }
 
+
    /* Now start to write the output in
     * the caller provided outReal.
     */
-   outReal[0] = round_pos(100.0*(prevMinusDM/prevTR));
+   if( !TA_IS_ZERO(prevTR) )
+      outReal[0] = round_pos(100.0*(prevMinusDM/prevTR));
+   else
+      outReal[0] = 0.0;
    outIdx = 1;
 
    while( today < endIdx )
@@ -395,7 +401,10 @@
       prevClose = inClose[today];
 
       /* Calculate the DI. The value is rounded (see Wilder book). */
-      outReal[outIdx++] = round_pos(100.0*(prevMinusDM/prevTR));
+      if( !TA_IS_ZERO(prevTR) )
+         outReal[outIdx++] = round_pos(100.0*(prevMinusDM/prevTR));
+      else
+         outReal[outIdx++] = 0.0;
    }
 
    *outNbElement = outIdx;

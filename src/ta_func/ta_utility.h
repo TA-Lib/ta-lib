@@ -193,6 +193,25 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define round_pos_2(x) ((floor((x*100.0)+0.5))/100.0)
 #define round_neg_2(x) ((ceil((x*100.0)-0.5))/100.0)
 
+/* In the context of TA-Lib, floating point are often 
+ * compared within a precision of +/- 0.000001
+ *
+ * This allows to work around limit cases where floating
+ * point minimal step (EPSILON) cause unexpected cummulative
+ * effect.
+ *
+ * For a float, FLT_EPSILON is defined as 1.192092896e-07 on intel
+ * with msvc. This precision is expected for the inputs of the TA functions
+ * which are typically prices. All calculations in TA-Lib are done with 
+ * double which has a smaller epsilon of 2.2204460492503131e-016. The choice of
+ * using a 1.0e-6 precision internally is then relatively safe considering that 
+ * the useful domain for TA analysis can reasonably be expected to be within 
+ * the following 15 digits range: -99999999.9999999 to +99999999.9999999
+ */
+#define TA_EPSILON 0.000001
+#define TA_IS_EQ(x,v) (((v-TA_EPSILON)<x)&&(x<(v+TA_EPSILON)))
+#define TA_IS_ZERO(v) (((-TA_EPSILON)<v)&&(v<TA_EPSILON))
+
 /* The following macros are being used to do
  * the Hilbert Transform logic as documented
  * in John Ehlers books "Rocket Science For Traders".
