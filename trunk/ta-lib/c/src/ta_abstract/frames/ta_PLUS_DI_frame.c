@@ -28,6 +28,7 @@ TA_RetCode TA_PLUS_DI_FramePP( TA_Libc            *libHandle,
                 endIdx,
                 in[0].p.in.data.inPrice.high, /* inHigh_0 */
                 in[0].p.in.data.inPrice.low, /* inLow_0 */
+                in[0].p.in.data.inPrice.close, /* inClose_0 */
                 optIn[0].p.optIn.data.optInInteger, /* optInTimePeriod_0 */
                 outBegIdx, 
                 outNbElement, 
