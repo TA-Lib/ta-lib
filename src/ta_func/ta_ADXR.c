@@ -183,3 +183,4 @@ TA_RetCode TA_ADXR( TA_Libc      *libHandle,
 
    return TA_SUCCESS;
 }
+
