@@ -174,6 +174,7 @@ typedef struct
    TA_CountryId countryId;
    const char *serverName;
    const char *topIndex;
+   TA_YahooIdx *idx_remote;
 } TA_TableParseOpaqueData;
 
 /**** Local functions declarations.    ****/
@@ -192,18 +193,18 @@ static TA_RetCode buildIndexFromLocalCache( TA_YahooIdx *idx,
 static TA_RetCode buildIndexFromRemoteCache( TA_YahooIdx *idx,
                                              TA_Timestamp *cacheTimeout );
 
-static TA_RetCode buildIndexFromYahooWebSite( TA_YahooIdx *idx );
+static TA_RetCode buildIndexFromYahooWebSite( TA_YahooIdx *idx, int buildFromScratch );
 
 static TA_RetCode convertDictToTables( TA_YahooIdx *idx );
 static TA_RetCode convertStreamToTables( TA_YahooIdx *idx, TA_StreamAccess *stream );
 static TA_RetCode buildIdxStream( const TA_YahooIdx *idx, TA_Stream *stream );
 
 static TA_RetCode buildDictFromWebSite( TA_YahooIdx *yahooIdx, 
-                                        TA_CountryId countryId );
+                                        TA_CountryId countryId,
+                                        int buildFromScratch );
 
 /* Write the equivalent of a TA_DecodingParam to a stream. */
-static TA_RetCode writeDecodingParam( 
-                                      TA_Stream *stream,
+static TA_RetCode writeDecodingParam( TA_Stream *stream,
                                       TA_DecodingParam *param );
 
 /* Alloc a TA_DecodingParam from a stream. */
@@ -235,6 +236,12 @@ static TA_RetCode addTheSymbolFromWebPage( unsigned int line,
                                            const char *data,
                                            const char *href,
                                            void *opaqueData);
+
+static TA_RetCode findStringFromCacheUsingYahooName( TA_YahooIdx *idx,
+                                                     const char *data,                                           
+                                                     TA_String **category,
+                                                     TA_String **symbol );
+
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
@@ -404,7 +411,7 @@ TA_RetCode TA_YahooIdxAlloc( TA_CountryId           countryId,
 
          if( retCode == TA_SUCCESS )
             idxDone = 1; /* idx is now build. */
-         else if( !(strategy & (TA_USE_REMOTE_CACHE|TA_USE_YAHOO_SITE)) )
+         else if( !(strategy & (TA_USE_REMOTE_CACHE|TA_USE_YAHOO_SITE|TA_USE_YAHOO_AND_REMOTE_MERGE)) )
          {
             /* No other alternative offer, so return with failure. */
             TA_YahooIdxFree( idx );
@@ -425,7 +432,7 @@ TA_RetCode TA_YahooIdxAlloc( TA_CountryId           countryId,
             idxDone = 1; /* idx is now build. */
          else
          { 
-            if( !(strategy & TA_USE_YAHOO_SITE) )
+            if( !(strategy & (TA_USE_YAHOO_SITE|TA_USE_YAHOO_AND_REMOTE_MERGE)) )
             {
                /* No other alternative offer, so return with failure. */
                TA_YahooIdxFree( idx );
@@ -436,7 +443,23 @@ TA_RetCode TA_YahooIdxAlloc( TA_CountryId           countryId,
    
       if( !idxDone && (strategy & TA_USE_YAHOO_SITE) )
       {
-         retCode = buildIndexFromYahooWebSite( idx );
+         retCode = buildIndexFromYahooWebSite( idx, 1 );
+         if( retCode == TA_SUCCESS )
+            idxDone = 1; /* idx is now build. */
+         else
+         { 
+            if( !(strategy & (TA_USE_YAHOO_AND_REMOTE_MERGE)) )
+            {
+               /* No other alternative offer, so return with failure. */
+               TA_YahooIdxFree( idx );
+               TA_TRACE_RETURN( TA_YAHOO_IDX_UNAVAILABLE_4 );
+            }
+         }  
+      }
+
+      if( !idxDone && (strategy & TA_USE_YAHOO_AND_REMOTE_MERGE) )
+      {
+         retCode = buildIndexFromYahooWebSite( idx, 0 );
          if( retCode == TA_SUCCESS )
             idxDone = 1; /* idx is now build. */
       }
@@ -445,7 +468,7 @@ TA_RetCode TA_YahooIdxAlloc( TA_CountryId           countryId,
    if( !idxDone )
    {
       TA_YahooIdxFree( idx );
-      if( strategy & (TA_USE_YAHOO_SITE|TA_USE_REMOTE_CACHE) )
+      if( strategy & (TA_USE_YAHOO_SITE|TA_USE_REMOTE_CACHE|TA_USE_YAHOO_AND_REMOTE_MERGE) )
       {
          TA_TRACE_RETURN( TA_YAHOO_IDX_UNAVAILABLE_3 );
       }
@@ -968,7 +991,7 @@ static TA_RetCode buildIndexFromRemoteCache( TA_YahooIdx *idx, TA_Timestamp *cac
    return TA_SUCCESS;
 }
 
-static TA_RetCode buildIndexFromYahooWebSite( TA_YahooIdx *idx )
+static TA_RetCode buildIndexFromYahooWebSite( TA_YahooIdx *idx, int buildFromScratch )
 {
    TA_RetCode retCode;
    TA_YahooIdxHidden *idxHidden;
@@ -982,7 +1005,7 @@ static TA_RetCode buildIndexFromYahooWebSite( TA_YahooIdx *idx )
       return TA_ALLOC_ERR;
    }
 
-   retCode = buildDictFromWebSite( idx, idx->countryId );
+   retCode = buildDictFromWebSite( idx, idx->countryId, buildFromScratch );
    if( retCode != TA_SUCCESS )
    {
       return retCode;
@@ -1560,7 +1583,7 @@ static TA_RetCode freeDecodingParam( TA_DecodingParam *param )
    return TA_SUCCESS;
 }
 
-static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_CountryId countryId )
+static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_CountryId countryId, int buildFromScratch )
 {
    TA_RetCode retCode;
    TA_WebPage *webPage;
@@ -1579,7 +1602,8 @@ static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_CountryId countryId
 
    opaqueData.countryId = countryId;
    opaqueData.idx = idx;
-      
+   opaqueData.idx_remote = NULL;
+
    /* Identify the server. */
    switch( countryId )
    {
@@ -1645,6 +1669,24 @@ static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_CountryId countryId
     * at the end.
     */
 
+   /* Watch-out... this is indirectly a recursive call, but it
+    * will be fine as long this remains TA_USE_REMOTE_CACHE only.
+    * The remote US index is used for speed optimization to find
+    * category when working to build the US/CA index.
+    */
+   switch( countryId )
+   {
+   case TA_Country_ID_US:
+   case TA_Country_ID_CA:
+      retCode = TA_YahooIdxAlloc( TA_Country_ID_US,
+                                  &opaqueData.idx_remote,
+                                  TA_USE_REMOTE_CACHE,
+                                  NULL, NULL, NULL );
+
+      if( retCode != TA_SUCCESS )
+         goto Exit_buildPageList;
+   }
+
    /* Find the table at the top representing the 
     * top index.
     */
@@ -1658,8 +1700,7 @@ static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_CountryId countryId
          goto Exit_buildPageList;
    }
 
-   /* Now go for the table we are looking for. */
-   printf( "\n" );
+   /* Now go for the table we are looking for. */   
    retCode = TA_StreamAccessGetHTMLTable( access, 100, processTopIndex, &opaqueData );
    if( retCode != TA_SUCCESS )
       goto Exit_buildPageList;
@@ -1713,12 +1754,14 @@ Exit_buildPageList:
 
    TA_StreamAccessFree( access );
    TA_WebPageFree( webPage );
-          
+   
+   if( opaqueData.idx_remote )       
+      TA_YahooIdxFree( opaqueData.idx_remote );
+
    return retCode;
 }
 
-static TA_RetCode processTopIndex( 
-                                   unsigned int line,
+static TA_RetCode processTopIndex( unsigned int line,
                                    unsigned int column,
                                    const char *data,
                                    const char *href,
@@ -1910,7 +1953,7 @@ static TA_RetCode addSymbolsFromWebPage( TA_WebPage *webPage, void *opaqueData )
       break;
 
    default:
-      for( i=0; i < 8; i++ )
+      for( i=0; i < 7; i++ )
       {
          retCode = TA_StreamAccessSkipHTMLTable( access );
          if( retCode != TA_SUCCESS )
@@ -1963,34 +2006,58 @@ static TA_RetCode addTheSymbolFromWebPage( unsigned int line,
          tableParseInfo = (TA_TableParseOpaqueData *)opaqueData;
 
          /* Convert from Yahoo! classification to the TA-LIB classification. */
+         category = NULL;
+         symbol = NULL;
 
-         /* Go online only when processing US stocks. All other
+         /* Go online only when processing US/CA stocks. All other
           * country have extension allowing to identify the
           * exchange so there is no need to do additional online
           * processing to identify the exchange.
-          */          
-         if( tableParseInfo->countryId == TA_Country_ID_US )
-            allowOnlineProcessing = 1;
-         else
-            allowOnlineProcessing = 0;
-
-         retCode = TA_AllocStringFromYahooName( &defaultMarketDecoding,
-                                                data, &category, &symbol,
-                                                allowOnlineProcessing );
-
-         if( retCode != TA_SUCCESS && retCode != TA_INVALID_SECURITY_EXCHANGE )
+          */ 
+         switch( tableParseInfo->countryId )
          {
-            printf( "Warning: Failed to find exchange for [%s] (%d)\n", data, retCode );
-            return retCode;
+         case TA_Country_ID_US:
+         case TA_Country_ID_CA:
+            allowOnlineProcessing = 1;
+            break;
+         default:
+            allowOnlineProcessing = 0;
          }
 
-         if( retCode == TA_INVALID_SECURITY_EXCHANGE )
+         /* When online allowed and the remote index is available,
+          * cache the US index to quickly identify the category.          
+          * For audit purpose, still go online for randomly selected
+          * symbols. We try to not go online for ALL symbols for
+          * performance reason.
+          */       
+         if( allowOnlineProcessing && (tableParseInfo->idx_remote != NULL) && ((rand()%100)>5) )
          {
-            /* Everything went fine, except it was not possible
-             * to identify the exchange. Simply skip this symbol.
-             */
-            printf( "Warning: Could not identify exchange for [%s]\n", data );
-            return TA_SUCCESS;
+            retCode = findStringFromCacheUsingYahooName( tableParseInfo->idx_remote,
+                                                         data, &category, &symbol );
+         }
+         else
+            retCode = TA_INVALID_SECURITY_SYMBOL;
+         
+         if( retCode != TA_SUCCESS )
+         {
+            retCode = TA_AllocStringFromYahooName( &defaultMarketDecoding,
+                                                   data, &category, &symbol,
+                                                   allowOnlineProcessing );
+
+            if( retCode == TA_OBSOLETED_SYMBOL )
+            {
+               /* Symbol is obsolete, just ignore it with no fatal error. */
+               printf( "Warning: This symbol is no longuer in use [%s]\n", data );
+               return TA_SUCCESS;
+            }
+
+            if( retCode != TA_SUCCESS )
+            {
+               /* Just a warning for now... */
+               printf( "Warning. Does not recognize exchange for [%s] (%d)\n", data, retCode );
+               return TA_SUCCESS;
+            }
+
          }
 
          stringCache = TA_GetGlobalStringCache();
@@ -2084,4 +2151,45 @@ static TA_RetCode buildIndexFromLocalCache( TA_YahooIdx *idx,
    /* printf( "Using local cache for [%s]\n", idx->countryAbbrev ); */
 
    return TA_SUCCESS;
+}
+
+static TA_RetCode findStringFromCacheUsingYahooName( TA_YahooIdx *idx,
+                                                     const char *data,                                           
+                                                     TA_String **category,
+                                                     TA_String **symbol )
+{
+    TA_StringCache *stringCache;
+    TA_YahooCategory *yahooCategory;
+    unsigned int i, j;
+
+    if( !idx || !data || !category || !symbol )
+       return TA_BAD_PARAM;
+    
+    /* Do nothing if the Yahoo! string contains a dot.
+     * In that case, there is better way to figure out the
+     * category.
+     */
+    if( strchr( data, '.' ) != NULL )
+       return TA_INVALID_SECURITY_SYMBOL;
+    
+    for( i=0; i < idx->nbCategory; i++ )
+    {
+       yahooCategory = idx->categories[i];
+       for( j=0; j < yahooCategory->nbSymbol; j++ )
+       {
+          if( strcmp(data, TA_StringToChar(yahooCategory->symbols[j])) == 0 )
+          {
+             stringCache = TA_GetGlobalStringCache();
+             if( !stringCache )
+                return TA_INTERNAL_ERROR(140);;
+
+             *category = TA_StringDup( stringCache, yahooCategory->name );
+             *symbol   = TA_StringDup( stringCache, yahooCategory->symbols[j] );
+             return TA_SUCCESS;
+          }
+       }
+    }
+
+    return TA_INVALID_SECURITY_SYMBOL;
+    
 }
