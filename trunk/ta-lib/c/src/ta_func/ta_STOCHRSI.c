@@ -209,11 +209,11 @@
 
    /* Make sure there is still something to evaluate. */
    if( startIdx >= endIdx )
-  {
-     *outBegIdx = 0;
-     *outNbElement = 0;
-     return TA_SUCCESS;
-  }
+   {
+      *outBegIdx = 0;
+      *outNbElement = 0;
+      return TA_SUCCESS;
+   }
 
    *outBegIdx = startIdx;
 
@@ -221,21 +221,21 @@
 
    ARRAY_ALLOC( tempRSIBuffer, tempArraySize );
 
-   retCode = TA_RSI(startIdx, 
-                    endIdx, 
-                    inReal, 
-                    optInFastK_Period, 
-                    &outBegIdx1, 
-                    &outNbElement1, 
-                    tempRSIBuffer);
+   retCode = TA_PREFIX(RSI)(startIdx, 
+                            endIdx, 
+                            inReal, 
+                            optInFastK_Period, 
+                            &outBegIdx1, 
+                            &outNbElement1, 
+                            tempRSIBuffer);
 
-  if( retCode != TA_SUCCESS || outNbElement1 == 0 )
-  {
-     ARRAY_FREE( tempRSIBuffer );
-     *outBegIdx = 0;
-     *outNbElement = 0;
-     return retCode;
-  }
+   if( retCode != TA_SUCCESS || outNbElement1 == 0 )
+   {
+      ARRAY_FREE( tempRSIBuffer );
+      *outBegIdx = 0;
+      *outNbElement = 0;
+      return retCode;
+   }
    
    tempArraySize--;
    tempArraySize -= lookbackRSI;
@@ -255,12 +255,12 @@
  
    ARRAY_FREE( tempRSIBuffer );
 
-  if( retCode != TA_SUCCESS || outNbElement == 0 )
-  {
-     *outBegIdx = 0;
-     *outNbElement = 0;
-     return retCode;
-  }
+   if( retCode != TA_SUCCESS || outNbElement == 0 )
+   {
+      *outBegIdx = 0;
+      *outNbElement = 0;
+      return retCode;
+   }
 
    return TA_SUCCESS;
 }
@@ -298,6 +298,10 @@
 /* Generated */                           double        outFastD[] )
 /* Generated */ #endif
 /* Generated */ {
+/* Generated */    ARRAY_REF(tempRSIBuffer);
+/* Generated */    TA_RetCode retCode;
+/* Generated */    int lookbackTotal, lookbackRSI, tempArraySize;
+/* Generated */    int outBegIdx1, outBegIdx2, outNbElement1;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
@@ -325,6 +329,54 @@
 /* Generated */  #endif 
 /* Generated */    *outBegIdx    = 0;
 /* Generated */    *outNbElement = 0;
+/* Generated */    lookbackRSI = TA_RSI_Lookback( optInFastK_Period );
+/* Generated */    lookbackTotal = lookbackRSI + TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+/* Generated */    if( startIdx < lookbackTotal )
+/* Generated */       startIdx = lookbackTotal;
+/* Generated */    if( startIdx >= endIdx )
+/* Generated */    {
+/* Generated */       *outBegIdx = 0;
+/* Generated */       *outNbElement = 0;
+/* Generated */       return TA_SUCCESS;
+/* Generated */    }
+/* Generated */    *outBegIdx = startIdx;
+/* Generated */    tempArraySize = (endIdx - startIdx) + 1 + lookbackTotal;
+/* Generated */    ARRAY_ALLOC( tempRSIBuffer, tempArraySize );
+/* Generated */    retCode = TA_PREFIX(RSI)(startIdx, 
+/* Generated */                             endIdx, 
+/* Generated */                             inReal, 
+/* Generated */                             optInFastK_Period, 
+/* Generated */                             &outBegIdx1, 
+/* Generated */                             &outNbElement1, 
+/* Generated */                             tempRSIBuffer);
+/* Generated */    if( retCode != TA_SUCCESS || outNbElement1 == 0 )
+/* Generated */    {
+/* Generated */       ARRAY_FREE( tempRSIBuffer );
+/* Generated */       *outBegIdx = 0;
+/* Generated */       *outNbElement = 0;
+/* Generated */       return retCode;
+/* Generated */    }
+/* Generated */    tempArraySize--;
+/* Generated */    tempArraySize -= lookbackRSI;
+/* Generated */    retCode = TA_STOCHF(0,
+/* Generated */                        tempArraySize,
+/* Generated */                        tempRSIBuffer,
+/* Generated */                        tempRSIBuffer,
+/* Generated */                        tempRSIBuffer,
+/* Generated */                        optInFastK_Period,
+/* Generated */                        optInFastD_Period,
+/* Generated */                        optInFastD_MAType,
+/* Generated */                        &outBegIdx2,
+/* Generated */                        outNbElement,
+/* Generated */                        outFastK,
+/* Generated */                        outFastD);
+/* Generated */    ARRAY_FREE( tempRSIBuffer );
+/* Generated */    if( retCode != TA_SUCCESS || outNbElement == 0 )
+/* Generated */    {
+/* Generated */       *outBegIdx = 0;
+/* Generated */       *outNbElement = 0;
+/* Generated */       return retCode;
+/* Generated */    }
 /* Generated */    return TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
