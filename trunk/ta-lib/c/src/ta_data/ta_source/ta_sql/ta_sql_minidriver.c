@@ -36,22 +36,18 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  PK       Pawel Konieczny
- *
+ *  MF       Mario Fortier
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  110103 PK   First version.
- *
+ *  112203 MF   Allows dynamic addition of mini drivers.
  */
 
 /* Description:
  *    This file helps to make abstraction of the SQL access library
- *
- *    It defines basically two global dispatch table for calling
- *    low-level database access functions
- *
  */
 
 /**** Headers ****/
@@ -59,8 +55,8 @@
 #include <string.h>
 #include "ta_trace.h"
 #include "ta_sql_minidriver.h"
-#include "ta_sql_mysql.h"
-#include "ta_sql_odbc.h"
+#include "ta_dict.h"
+#include "ta_global.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -69,63 +65,7 @@
 /* None */
 
 /**** Global variables definitions.    ****/
-const TA_SQL_Minidriver TA_gSQLMinidriverTable[] =
-{
-   {
-      "odbc",
-#ifdef TA_SUPPORT_ODBC
-      TA_SQL_ODBC_OpenConnection,
-      TA_SQL_ODBC_ExecuteQuery,
-      TA_SQL_ODBC_GetNumColumns,
-      TA_SQL_ODBC_GetNumRows,
-      TA_SQL_ODBC_GetColumnName,
-      TA_SQL_ODBC_GetRowString,
-      TA_SQL_ODBC_GetRowReal,
-      TA_SQL_ODBC_GetRowInteger,
-      TA_SQL_ODBC_ReleaseQuery,
-      TA_SQL_ODBC_CloseConnection
-#else
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      NULL
-#endif
-   },
-   {
-      "mysql",
-#ifdef TA_SUPPORT_MYSQL
-      TA_SQL_MySQL_OpenConnection,
-      TA_SQL_MySQL_ExecuteQuery,
-      TA_SQL_MySQL_GetNumColumns,
-      TA_SQL_MySQL_GetNumRows,
-      TA_SQL_MySQL_GetColumnName,
-      TA_SQL_MySQL_GetRowString,
-      TA_SQL_MySQL_GetRowReal,
-      TA_SQL_MySQL_GetRowInteger,
-      TA_SQL_MySQL_ReleaseQuery,
-      TA_SQL_MySQL_CloseConnection
-#else
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      NULL
-#endif
-   }
-};
-
-const unsigned int TA_gSQLMinidriverTableSize = (sizeof(TA_gSQLMinidriverTable)/sizeof(TA_SQL_Minidriver));
+/* None */
 
 /**** Local declarations.              ****/
 /* None */
@@ -135,26 +75,48 @@ const unsigned int TA_gSQLMinidriverTableSize = (sizeof(TA_gSQLMinidriverTable)/
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
+static TA_Dict *minidriverDict = NULL;
 
 /**** Global functions definitions.   ****/
-TA_SQL_MinidriverID TA_SQL_IdentifyMinidriver(const char scheme[])
+
+/* Allows to dynamically add a mini-driver. */
+TA_RetCode TA_SQL_AddMinidriver( const char scheme[], const TA_SQL_Minidriver *minidriver )
 {
    TA_PROLOG
-   unsigned int index;
+   TA_String *schemeStr;
+   TA_StringCache *cache;
 
-   TA_TRACE_BEGIN( TA_SQL_IdentifyMinidriver );
+   TA_RetCode retCode;
 
-   TA_ASSERT_RET( TA_gSQLMinidriverTableSize == TA_SQL_NUM_OF_MINIDRIVERS,  TA_SQL_NUM_OF_MINIDRIVERS);
+   TA_TRACE_BEGIN( TA_SQL_AddMinidriver );
 
-   for( index = 0;  index < TA_gSQLMinidriverTableSize;  index++)
+   if( !minidriverDict )
    {
-      if( strcmp( scheme, TA_gSQLMinidriverTable[index].scheme ) == 0 )
+      minidriverDict = TA_DictAlloc( TA_DICT_KEY_ONE_STRING, NULL );
+      if( !minidriverDict )
       {
-         break;
+         TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
    }
 
-   TA_TRACE_RETURN( (TA_SQL_MinidriverID)index );
+   cache = TA_GetGlobalStringCache();
+   schemeStr = TA_StringAlloc( cache, scheme );
+   if( !schemeStr )
+   {
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   retCode = TA_DictAddPair_S( minidriverDict, schemeStr, (void *)minidriver );
+   TA_StringFree( cache, schemeStr );
+
+   TA_TRACE_RETURN( retCode );
+}
+
+/* Get the minidriver for the specified scheme */
+const TA_SQL_Minidriver *TA_SQL_GetMinidriver( const char scheme[] )
+{
+   /* Return NULL if scheme not found, or dictionary not initialized. */
+   return (TA_SQL_Minidriver *)TA_DictGetValue_S( minidriverDict, scheme);
 }
 
 /**** Local functions definitions.     ****/

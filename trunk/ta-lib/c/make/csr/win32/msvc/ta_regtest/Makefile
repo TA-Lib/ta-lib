@@ -14,7 +14,7 @@ CXXFLAGS=	-nologo -W3 -O1 -DTA_SINGLE_THREAD -DWIN32 -D_MBCS -D_LIB
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\tools\ta_regtest" -I"..\..\..\..\..\src\ta_func" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\trio"
 LINK	=	link
 LFLAGS	=	/NOLOGO /SUBSYSTEM:console
-LIBS	=	..\..\..\..\..\lib\ta_libc_csr.lib wininet.lib
+LIBS	=	..\..\..\..\..\lib\ta_libc_csr.lib wininet.lib odbc32.lib odbccp32.lib
 MOC	=	moc
 UIC	=	uic
 
@@ -48,6 +48,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_stoch.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_trange.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_util.c \
+		..\..\..\..\..\src\tools\ta_regtest\test_abstract.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 OBJECTS =	..\..\..\..\..\temp\csr\ta_regtest.obj \
 		..\..\..\..\..\temp\csr\test_1in_1out.obj \
@@ -74,6 +75,7 @@ OBJECTS =	..\..\..\..\..\temp\csr\ta_regtest.obj \
 		..\..\..\..\..\temp\csr\test_stoch.obj \
 		..\..\..\..\..\temp\csr\test_trange.obj \
 		..\..\..\..\..\temp\csr\test_util.obj \
+		..\..\..\..\..\temp\csr\test_abstract.obj \
 		..\..\..\..\..\temp\csr\test_yahoo.obj
 INTERFACES =	
 UICDECLS =	
@@ -145,6 +147,7 @@ clean:
 	-del ..\..\..\..\..\temp\csr\test_stoch.obj
 	-del ..\..\..\..\..\temp\csr\test_trange.obj
 	-del ..\..\..\..\..\temp\csr\test_util.obj
+	-del ..\..\..\..\..\temp\csr\test_abstract.obj
 	-del ..\..\..\..\..\temp\csr\test_yahoo.obj
 	-del $(TARGET)
 	-del ../../../../../bin/*.map
@@ -236,6 +239,9 @@ clean:
 
 ..\..\..\..\..\temp\csr\test_util.obj: ..\..\..\..\..\src\tools\ta_regtest\test_util.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\test_util.obj ..\..\..\..\..\src\tools\ta_regtest\test_util.c
+
+..\..\..\..\..\temp\csr\test_abstract.obj: ..\..\..\..\..\src\tools\ta_regtest\test_abstract.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\test_abstract.obj ..\..\..\..\..\src\tools\ta_regtest\test_abstract.c
 
 ..\..\..\..\..\temp\csr\test_yahoo.obj: ..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\test_yahoo.obj ..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c

@@ -51,7 +51,6 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_handle.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_local.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c \
-		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c \
 		..\..\..\..\..\src\ta_data\ta_token.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_handle.c \
@@ -61,6 +60,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\tools\gen_data\ta_daily_ref_0.c \
 		..\..\..\..\..\src\tools\gen_data\ta_intra_ref_0.c \
 		..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c \
 		..\..\..\..\..\src\ta_common\bzip2\blocksort.c \
 		..\..\..\..\..\src\ta_common\bzip2\bzlib.c \
 		..\..\..\..\..\src\ta_common\bzip2\compress.c \
@@ -220,7 +220,6 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_sql_handle.obj \
 		..\..\..\..\..\temp\cmr\ta_sql_local.obj \
 		..\..\..\..\..\temp\cmr\ta_sql_minidriver.obj \
-		..\..\..\..\..\temp\cmr\ta_sql_odbc.obj \
 		..\..\..\..\..\temp\cmr\ta_token.obj \
 		..\..\..\..\..\temp\cmr\ta_yahoo.obj \
 		..\..\..\..\..\temp\cmr\ta_yahoo_handle.obj \
@@ -230,6 +229,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_daily_ref_0.obj \
 		..\..\..\..\..\temp\cmr\ta_intra_ref_0.obj \
 		..\..\..\..\..\temp\cmr\ta_mrg_0.obj \
+		..\..\..\..\..\temp\cmr\ta_sql_odbc.obj \
 		..\..\..\..\..\temp\cmr\blocksort.obj \
 		..\..\..\..\..\temp\cmr\bzlib.obj \
 		..\..\..\..\..\temp\cmr\compress.obj \
@@ -421,7 +421,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_sql_handle.obj \
 +..\..\..\..\..\temp\cmr\ta_sql_local.obj \
 +..\..\..\..\..\temp\cmr\ta_sql_minidriver.obj \
-+..\..\..\..\..\temp\cmr\ta_sql_odbc.obj \
 +..\..\..\..\..\temp\cmr\ta_token.obj \
 +..\..\..\..\..\temp\cmr\ta_yahoo.obj \
 +..\..\..\..\..\temp\cmr\ta_yahoo_handle.obj \
@@ -431,6 +430,7 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_daily_ref_0.obj \
 +..\..\..\..\..\temp\cmr\ta_intra_ref_0.obj \
 +..\..\..\..\..\temp\cmr\ta_mrg_0.obj \
++..\..\..\..\..\temp\cmr\ta_sql_odbc.obj \
 +..\..\..\..\..\temp\cmr\blocksort.obj \
 +..\..\..\..\..\temp\cmr\bzlib.obj \
 +..\..\..\..\..\temp\cmr\compress.obj \
@@ -604,7 +604,6 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_sql_handle.obj
 	-del ..\..\..\..\..\temp\cmr\ta_sql_local.obj
 	-del ..\..\..\..\..\temp\cmr\ta_sql_minidriver.obj
-	-del ..\..\..\..\..\temp\cmr\ta_sql_odbc.obj
 	-del ..\..\..\..\..\temp\cmr\ta_token.obj
 	-del ..\..\..\..\..\temp\cmr\ta_yahoo.obj
 	-del ..\..\..\..\..\temp\cmr\ta_yahoo_handle.obj
@@ -614,6 +613,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_daily_ref_0.obj
 	-del ..\..\..\..\..\temp\cmr\ta_intra_ref_0.obj
 	-del ..\..\..\..\..\temp\cmr\ta_mrg_0.obj
+	-del ..\..\..\..\..\temp\cmr\ta_sql_odbc.obj
 	-del ..\..\..\..\..\temp\cmr\blocksort.obj
 	-del ..\..\..\..\..\temp\cmr\bzlib.obj
 	-del ..\..\..\..\..\temp\cmr\compress.obj
@@ -833,9 +833,6 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_sql_minidriver.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_sql_minidriver.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c
 
-..\..\..\..\..\temp\cmr\ta_sql_odbc.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_sql_odbc.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
-
 ..\..\..\..\..\temp\cmr\ta_token.obj: ..\..\..\..\..\src\ta_data\ta_token.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_token.obj ..\..\..\..\..\src\ta_data\ta_token.c
 
@@ -862,6 +859,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_mrg_0.obj: ..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_mrg_0.obj ..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c
+
+..\..\..\..\..\temp\cmr\ta_sql_odbc.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_sql_odbc.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 
 ..\..\..\..\..\temp\cmr\blocksort.obj: ..\..\..\..\..\src\ta_common\bzip2\blocksort.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\blocksort.obj ..\..\..\..\..\src\ta_common\bzip2\blocksort.c

@@ -14,7 +14,7 @@ CXXFLAGS=	-zq -w2 -d2 -d=TA_DEBUG -d=_DEBUG -d=TA_SINGLE_THREAD -d=WIN32
 INCPATH	=	-i="..\..\..\..\..\src\ta_common" -i="..\..\..\..\..\include" -i="..\..\..\..\..\src\ta_common\imatix\sfl"
 LINK	=	wlink
 LFLAGS	=	op quiet op c d all sys nt
-LIBS	=	..\..\..\..\..\lib\ta_libc_csd.lib wininet.lib
+LIBS	=	..\..\..\..\..\lib\ta_libc_csd.lib wininet.lib odbc32.lib
 MOC	=	moc
 
 ZIP	=	zip -r -9
@@ -38,7 +38,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 	@%create $(TMPLIST)
 	@%append $(TMPLIST) NAME webfetch
 	@%append $(TMPLIST) FIL ..\..\..\..\..\temp\csd\webfetch\webfetch.obj
-	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_libc_csd.lib,wininet.lib
+	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_libc_csd.lib,wininet.lib,odbc32.lib
 	$(LINK) $(LFLAGS) @$(TMPLIST)
 	del $(TMPLIST)
 

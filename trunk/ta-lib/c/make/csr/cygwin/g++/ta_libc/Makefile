@@ -47,7 +47,6 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_handle.c \
 		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_local.c \
 		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c \
-		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c \
 		../../../../../src/ta_data/ta_token.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_handle.c \
@@ -57,6 +56,7 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/tools/gen_data/ta_daily_ref_0.c \
 		../../../../../src/tools/gen_data/ta_intra_ref_0.c \
 		../../../../../src/tools/gen_data/ta_mrg_0.c \
+		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c \
 		../../../../../src/ta_common/bzip2/blocksort.c \
 		../../../../../src/ta_common/bzip2/bzlib.c \
 		../../../../../src/ta_common/bzip2/compress.c \
@@ -216,7 +216,6 @@ OBJECTS =	../../../../../temp/csr/ta_ascii.o \
 		../../../../../temp/csr/ta_sql_handle.o \
 		../../../../../temp/csr/ta_sql_local.o \
 		../../../../../temp/csr/ta_sql_minidriver.o \
-		../../../../../temp/csr/ta_sql_odbc.o \
 		../../../../../temp/csr/ta_token.o \
 		../../../../../temp/csr/ta_yahoo.o \
 		../../../../../temp/csr/ta_yahoo_handle.o \
@@ -226,6 +225,7 @@ OBJECTS =	../../../../../temp/csr/ta_ascii.o \
 		../../../../../temp/csr/ta_daily_ref_0.o \
 		../../../../../temp/csr/ta_intra_ref_0.o \
 		../../../../../temp/csr/ta_mrg_0.o \
+		../../../../../temp/csr/ta_sql_odbc.o \
 		../../../../../temp/csr/blocksort.o \
 		../../../../../temp/csr/bzlib.o \
 		../../../../../temp/csr/compress.o \
@@ -486,9 +486,6 @@ clean:
 ../../../../../temp/csr/ta_sql_minidriver.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_sql_minidriver.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c
 
-../../../../../temp/csr/ta_sql_odbc.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_sql_odbc.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c
-
 ../../../../../temp/csr/ta_token.o: ../../../../../src/ta_data/ta_token.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_token.o ../../../../../src/ta_data/ta_token.c
 
@@ -515,6 +512,9 @@ clean:
 
 ../../../../../temp/csr/ta_mrg_0.o: ../../../../../src/tools/gen_data/ta_mrg_0.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_mrg_0.o ../../../../../src/tools/gen_data/ta_mrg_0.c
+
+../../../../../temp/csr/ta_sql_odbc.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_sql_odbc.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c
 
 ../../../../../temp/csr/blocksort.o: ../../../../../src/ta_common/bzip2/blocksort.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/blocksort.o ../../../../../src/ta_common/bzip2/blocksort.c

@@ -14,7 +14,7 @@ CXXFLAGS=	-zq -w2 -ox -d=WIN32
 INCPATH	=	-i="..\..\..\..\..\src\ta_common" -i="..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -i="..\..\..\..\..\include" -i="..\..\..\..\..\src\ta_data\ta_source" -i="..\..\..\..\..\src\ta_data"
 LINK	=	wlink
 LFLAGS	=	op quiet op c sys nt
-LIBS	=	..\..\..\..\..\lib\ta_data_cmr.lib ..\..\..\..\..\lib\ta_common_cmr.lib wininet.lib
+LIBS	=	..\..\..\..\..\lib\ta_data_cmr.lib ..\..\..\..\..\lib\ta_common_cmr.lib wininet.lib odbc32.lib
 MOC	=	moc
 
 ZIP	=	zip -r -9
@@ -38,7 +38,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 	@%create $(TMPLIST)
 	@%append $(TMPLIST) NAME gen_rdata
 	@%append $(TMPLIST) FIL ..\..\..\..\..\temp\cmr\gen_rdata.obj
-	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_data_cmr.lib,..\..\..\..\..\lib\ta_common_cmr.lib,wininet.lib
+	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_data_cmr.lib,..\..\..\..\..\lib\ta_common_cmr.lib,wininet.lib,odbc32.lib
 	$(LINK) $(LFLAGS) @$(TMPLIST)
 	del $(TMPLIST)
 

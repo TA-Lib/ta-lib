@@ -83,8 +83,8 @@ typedef struct
     */
    TA_List *theCategoryIndex;
 
-   /* ID of the minidriver requested for this connection */
-   TA_SQL_MinidriverID minidriver;
+   /* minidriver for this connection */
+   const TA_SQL_Minidriver *minidriver;
 
    /* Contains database connection object 
     * It is opaque data used by connection minidrivers

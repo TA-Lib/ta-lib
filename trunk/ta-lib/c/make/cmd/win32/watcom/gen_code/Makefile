@@ -14,7 +14,7 @@ CXXFLAGS=	-zq -w2 -d2 -d=TA_GEN_CODE -d=TA_DEBUG -d=_DEBUG -d=WIN32
 INCPATH	=	-i="..\..\..\..\..\include" -i="..\..\..\..\..\src\ta_common" -i="..\..\..\..\..\src\ta_common\imatix\sfl" -i="..\..\..\..\..\src\ta_common\kazlib" -i="..\..\..\..\..\src\ta_abstract" -i="..\..\..\..\..\src\ta_abstract\tables" -i="..\..\..\..\..\src\ta_abstract\frames"
 LINK	=	wlink
 LFLAGS	=	op quiet op c d all sys nt
-LIBS	=	..\..\..\..\..\lib\ta_common_cmd.lib wininet.lib
+LIBS	=	..\..\..\..\..\lib\ta_common_cmd.lib wininet.lib odbc32.lib
 MOC	=	moc
 
 ZIP	=	zip -r -9
@@ -94,7 +94,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 	@%create $(TMPLIST)
 	@%append $(TMPLIST) NAME gen_code
 	@%append $(TMPLIST) FIL ..\..\..\..\..\temp\cmd\gen_code\gen_code.obj,..\..\..\..\..\temp\cmd\gen_code\ta_abstract.obj,..\..\..\..\..\temp\cmd\gen_code\ta_def_ui.obj,..\..\..\..\..\temp\cmd\gen_code\table_a.obj,..\..\..\..\..\temp\cmd\gen_code\table_b.obj,..\..\..\..\..\temp\cmd\gen_code\table_c.obj,..\..\..\..\..\temp\cmd\gen_code\table_d.obj,..\..\..\..\..\temp\cmd\gen_code\table_e.obj,..\..\..\..\..\temp\cmd\gen_code\table_f.obj,..\..\..\..\..\temp\cmd\gen_code\table_g.obj,..\..\..\..\..\temp\cmd\gen_code\table_h.obj,..\..\..\..\..\temp\cmd\gen_code\table_i.obj,..\..\..\..\..\temp\cmd\gen_code\table_j.obj,..\..\..\..\..\temp\cmd\gen_code\table_k.obj,..\..\..\..\..\temp\cmd\gen_code\table_l.obj,..\..\..\..\..\temp\cmd\gen_code\table_m.obj,..\..\..\..\..\temp\cmd\gen_code\table_n.obj,..\..\..\..\..\temp\cmd\gen_code\table_o.obj,..\..\..\..\..\temp\cmd\gen_code\table_p.obj,..\..\..\..\..\temp\cmd\gen_code\table_q.obj,..\..\..\..\..\temp\cmd\gen_code\table_r.obj,..\..\..\..\..\temp\cmd\gen_code\table_s.obj,..\..\..\..\..\temp\cmd\gen_code\table_t.obj,..\..\..\..\..\temp\cmd\gen_code\table_u.obj,..\..\..\..\..\temp\cmd\gen_code\table_v.obj,..\..\..\..\..\temp\cmd\gen_code\table_w.obj,..\..\..\..\..\temp\cmd\gen_code\table_x.obj,..\..\..\..\..\temp\cmd\gen_code\table_y.obj,..\..\..\..\..\temp\cmd\gen_code\table_z.obj
-	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_common_cmd.lib,wininet.lib
+	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_common_cmd.lib,wininet.lib,odbc32.lib
 	$(LINK) $(LFLAGS) @$(TMPLIST)
 	del $(TMPLIST)
 

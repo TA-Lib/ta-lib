@@ -14,7 +14,7 @@ CXXFLAGS=	-zq -w2 -d2 -d=TA_DEBUG -d=_DEBUG -d=WIN32
 INCPATH	=	-i="..\..\..\..\..\src\ta_common" -i="..\..\..\..\..\src\tools\ta_regtest" -i="..\..\..\..\..\src\ta_func" -i="..\..\..\..\..\include" -i="..\..\..\..\..\src\ta_common\imatix\sfl" -i="..\..\..\..\..\src\ta_common\trio"
 LINK	=	wlink
 LFLAGS	=	op quiet op c d all sys nt
-LIBS	=	..\..\..\..\..\lib\ta_libc_cmd.lib wininet.lib
+LIBS	=	..\..\..\..\..\lib\ta_libc_cmd.lib wininet.lib odbc32.lib
 MOC	=	moc
 
 ZIP	=	zip -r -9
@@ -47,6 +47,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_stoch.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_trange.c &
 		..\..\..\..\..\src\tools\ta_regtest\test_util.c &
+		..\..\..\..\..\src\tools\ta_regtest\test_abstract.c &
 		..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 OBJECTS =	..\..\..\..\..\temp\cmd\ta_regtest.obj &
 		..\..\..\..\..\temp\cmd\test_1in_1out.obj &
@@ -73,6 +74,7 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_regtest.obj &
 		..\..\..\..\..\temp\cmd\test_stoch.obj &
 		..\..\..\..\..\temp\cmd\test_trange.obj &
 		..\..\..\..\..\temp\cmd\test_util.obj &
+		..\..\..\..\..\temp\cmd\test_abstract.obj &
 		..\..\..\..\..\temp\cmd\test_yahoo.obj
 SRCMOC	=	
 OBJMOC	=	
@@ -87,8 +89,8 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS) $(OBJMOC) 
 	@%create $(TMPLIST)
 	@%append $(TMPLIST) NAME ta_regtest
-	@%append $(TMPLIST) FIL ..\..\..\..\..\temp\cmd\ta_regtest.obj,..\..\..\..\..\temp\cmd\test_1in_1out.obj,..\..\..\..\..\temp\cmd\test_1in_2out.obj,..\..\..\..\..\temp\cmd\test_ascii.obj,..\..\..\..\..\temp\cmd\test_internals.obj,..\..\..\..\..\temp\cmd\test_adx.obj,..\..\..\..\..\temp\cmd\test_bbands.obj,..\..\..\..\..\temp\cmd\test_ma.obj,..\..\..\..\..\temp\cmd\test_macd.obj,..\..\..\..\..\temp\cmd\test_merge.obj,..\..\..\..\..\temp\cmd\test_minmax.obj,..\..\..\..\..\temp\cmd\test_mom.obj,..\..\..\..\..\temp\cmd\test_per_ema.obj,..\..\..\..\..\temp\cmd\test_per_hl.obj,..\..\..\..\..\temp\cmd\test_per_hlc.obj,..\..\..\..\..\temp\cmd\test_per_hlcv.obj,..\..\..\..\..\temp\cmd\test_period.obj,..\..\..\..\..\temp\cmd\test_pm.obj,..\..\..\..\..\temp\cmd\test_po.obj,..\..\..\..\..\temp\cmd\test_rsi.obj,..\..\..\..\..\temp\cmd\test_sar.obj,..\..\..\..\..\temp\cmd\test_stddev.obj,..\..\..\..\..\temp\cmd\test_stoch.obj,..\..\..\..\..\temp\cmd\test_trange.obj,..\..\..\..\..\temp\cmd\test_util.obj,..\..\..\..\..\temp\cmd\test_yahoo.obj
-	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_libc_cmd.lib,wininet.lib
+	@%append $(TMPLIST) FIL ..\..\..\..\..\temp\cmd\ta_regtest.obj,..\..\..\..\..\temp\cmd\test_1in_1out.obj,..\..\..\..\..\temp\cmd\test_1in_2out.obj,..\..\..\..\..\temp\cmd\test_ascii.obj,..\..\..\..\..\temp\cmd\test_internals.obj,..\..\..\..\..\temp\cmd\test_adx.obj,..\..\..\..\..\temp\cmd\test_bbands.obj,..\..\..\..\..\temp\cmd\test_ma.obj,..\..\..\..\..\temp\cmd\test_macd.obj,..\..\..\..\..\temp\cmd\test_merge.obj,..\..\..\..\..\temp\cmd\test_minmax.obj,..\..\..\..\..\temp\cmd\test_mom.obj,..\..\..\..\..\temp\cmd\test_per_ema.obj,..\..\..\..\..\temp\cmd\test_per_hl.obj,..\..\..\..\..\temp\cmd\test_per_hlc.obj,..\..\..\..\..\temp\cmd\test_per_hlcv.obj,..\..\..\..\..\temp\cmd\test_period.obj,..\..\..\..\..\temp\cmd\test_pm.obj,..\..\..\..\..\temp\cmd\test_po.obj,..\..\..\..\..\temp\cmd\test_rsi.obj,..\..\..\..\..\temp\cmd\test_sar.obj,..\..\..\..\..\temp\cmd\test_stddev.obj,..\..\..\..\..\temp\cmd\test_stoch.obj,..\..\..\..\..\temp\cmd\test_trange.obj,..\..\..\..\..\temp\cmd\test_util.obj,..\..\..\..\..\temp\cmd\test_abstract.obj,..\..\..\..\..\temp\cmd\test_yahoo.obj
+	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_libc_cmd.lib,wininet.lib,odbc32.lib
 	$(LINK) $(LFLAGS) @$(TMPLIST)
 	del $(TMPLIST)
 
@@ -128,6 +130,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\test_stoch.obj
 	-del ..\..\..\..\..\temp\cmd\test_trange.obj
 	-del ..\..\..\..\..\temp\cmd\test_util.obj
+	-del ..\..\..\..\..\temp\cmd\test_abstract.obj
 	-del ..\..\..\..\..\temp\cmd\test_yahoo.obj
 	-del $(TARGET)
 	-del ../../../../../bin/*.map
@@ -219,6 +222,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\test_util.obj: ..\..\..\..\..\src\tools\ta_regtest\test_util.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\test_util.obj ..\..\..\..\..\src\tools\ta_regtest\test_util.c
+
+..\..\..\..\..\temp\cmd\test_abstract.obj: ..\..\..\..\..\src\tools\ta_regtest\test_abstract.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\test_abstract.obj ..\..\..\..\..\src\tools\ta_regtest\test_abstract.c
 
 ..\..\..\..\..\temp\cmd\test_yahoo.obj: ..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\test_yahoo.obj ..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c

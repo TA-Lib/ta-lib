@@ -36,27 +36,25 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  PK       Pawel Konieczny
- *
+ *  MF       Mario Fortier
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  110903 PK   First version.
- *
+ *  112203 MF   Allows dynamic addition of minidriver.
  */
 
 /* Description:
- *    This file implements the SQL minidriver using the ODBC library
- *    It is build in the project only when TA_SUPPORT_ODBC is enabled
+ *    This file implements the SQL minidriver using the Microsoft ODBC library
+ *    This version is build only on a WIN32 platform. For an ODBC driver
+ *    on unix, check for the package "TA-unixODBC" distributed seperatly.
  */
 
-#ifdef TA_SUPPORT_ODBC
 
 /**** Headers ****/
-#if defined(WIN32)
-#include "WINDOWS.h"
-#endif
+#include "windows.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -125,14 +123,57 @@ typedef struct
 static TA_RetCode allocRowData( TA_SQL_ODBC_Statement *statement );
 static TA_RetCode freeRowData( TA_SQL_ODBC_Statement *statement );
 
+static TA_RetCode TA_SQL_ODBC_RegisterMinidriver(void);
+
+
+static TA_RetCode TA_SQL_ODBC_OpenConnection(const char database[], 
+                                      const char host[], 
+                                      const char username[], 
+                                      const char password[],
+                                      unsigned int port,
+                                      void **connection);
+static TA_RetCode TA_SQL_ODBC_ExecuteQuery(void *connection, 
+                                    const char sql_query[], 
+                                    void **query_result);
+static TA_RetCode TA_SQL_ODBC_GetNumColumns(void *query_result, int *num);
+static TA_RetCode TA_SQL_ODBC_GetNumRows(void *query_result, int *num);
+static TA_RetCode TA_SQL_ODBC_GetColumnName(void *query_result, int column, const char **name);
+static TA_RetCode TA_SQL_ODBC_GetRowString(void *query_result, int row, int column, const char **value);
+static TA_RetCode TA_SQL_ODBC_GetRowReal(void *query_result, int row, int column, TA_Real *value);
+static TA_RetCode TA_SQL_ODBC_GetRowInteger(void *query_result, int row, int column, TA_Integer *value);
+static TA_RetCode TA_SQL_ODBC_ReleaseQuery(void *query_result);
+static TA_RetCode TA_SQL_ODBC_CloseConnection(void *connection);
+
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
 
+static const TA_SQL_Minidriver localODBCSQLMinidriver =
+{
+      TA_SQL_ODBC_OpenConnection,
+      TA_SQL_ODBC_ExecuteQuery,
+      TA_SQL_ODBC_GetNumColumns,
+      TA_SQL_ODBC_GetNumRows,
+      TA_SQL_ODBC_GetColumnName,
+      TA_SQL_ODBC_GetRowString,
+      TA_SQL_ODBC_GetRowReal,
+      TA_SQL_ODBC_GetRowInteger,
+      TA_SQL_ODBC_ReleaseQuery,
+      TA_SQL_ODBC_CloseConnection
+};
+
 /**** Global functions definitions.    ****/
 
+TA_RetCode TA_SQL_ODBC_Initialize(void)
+{
+   TA_PROLOG
+   TA_TRACE_BEGIN( TA_SQL_ODBC_Initialize );
 
+   TA_TRACE_RETURN( TA_SQL_AddMinidriver( "odbc", &localODBCSQLMinidriver ) );
+}
 
-TA_RetCode TA_SQL_ODBC_OpenConnection(const char database[], 
+/**** Local functions definitions.     ****/
+
+static TA_RetCode TA_SQL_ODBC_OpenConnection(const char database[], 
                                       const char host[], 
                                       const char username[], 
                                       const char password[],
@@ -224,7 +265,7 @@ TA_RetCode TA_SQL_ODBC_OpenConnection(const char database[],
 
 
 
-TA_RetCode TA_SQL_ODBC_ExecuteQuery(void *connection, 
+static TA_RetCode TA_SQL_ODBC_ExecuteQuery(void *connection, 
                                     const char sql_query[], 
                                     void **query_result)
 {
@@ -342,7 +383,7 @@ TA_RetCode TA_SQL_ODBC_ExecuteQuery(void *connection,
 
 
 
-TA_RetCode TA_SQL_ODBC_GetNumColumns(void *query_result, int *num)
+static TA_RetCode TA_SQL_ODBC_GetNumColumns(void *query_result, int *num)
 {
    TA_PROLOG
    TA_SQL_ODBC_Statement *privStatement;
@@ -360,7 +401,7 @@ TA_RetCode TA_SQL_ODBC_GetNumColumns(void *query_result, int *num)
 
 
 
-TA_RetCode TA_SQL_ODBC_GetNumRows(void *query_result, int *num)
+static TA_RetCode TA_SQL_ODBC_GetNumRows(void *query_result, int *num)
 {
    TA_PROLOG
    TA_SQL_ODBC_Statement *privStatement;
@@ -378,7 +419,7 @@ TA_RetCode TA_SQL_ODBC_GetNumRows(void *query_result, int *num)
 
 
 
-TA_RetCode TA_SQL_ODBC_GetColumnName(void *query_result, int column, const char **name)
+static TA_RetCode TA_SQL_ODBC_GetColumnName(void *query_result, int column, const char **name)
 {
    TA_PROLOG
    TA_SQL_ODBC_Statement *privStatement;
@@ -397,7 +438,7 @@ TA_RetCode TA_SQL_ODBC_GetColumnName(void *query_result, int column, const char 
 
 
 
-TA_RetCode TA_SQL_ODBC_GetRowString(void *query_result, int row, int column, const char **value)
+static TA_RetCode TA_SQL_ODBC_GetRowString(void *query_result, int row, int column, const char **value)
 {
    TA_PROLOG
    TA_SQL_ODBC_Statement *privStatement;
@@ -444,7 +485,7 @@ TA_RetCode TA_SQL_ODBC_GetRowString(void *query_result, int row, int column, con
 
 
 
-TA_RetCode TA_SQL_ODBC_GetRowReal(void *query_result, int row, int column, TA_Real *value)
+static TA_RetCode TA_SQL_ODBC_GetRowReal(void *query_result, int row, int column, TA_Real *value)
 {
    TA_PROLOG
    TA_SQL_ODBC_Statement *privStatement;
@@ -491,7 +532,7 @@ TA_RetCode TA_SQL_ODBC_GetRowReal(void *query_result, int row, int column, TA_Re
 
 
 
-TA_RetCode TA_SQL_ODBC_GetRowInteger(void *query_result, int row, int column, TA_Integer *value)
+static TA_RetCode TA_SQL_ODBC_GetRowInteger(void *query_result, int row, int column, TA_Integer *value)
 {
    TA_PROLOG
    TA_SQL_ODBC_Statement *privStatement;
@@ -538,7 +579,7 @@ TA_RetCode TA_SQL_ODBC_GetRowInteger(void *query_result, int row, int column, TA
 
 
 
-TA_RetCode TA_SQL_ODBC_ReleaseQuery(void *query_result)
+static TA_RetCode TA_SQL_ODBC_ReleaseQuery(void *query_result)
 {
    TA_PROLOG
    TA_SQL_ODBC_Statement *privStatement;
@@ -568,7 +609,7 @@ TA_RetCode TA_SQL_ODBC_ReleaseQuery(void *query_result)
 
 
 
-TA_RetCode TA_SQL_ODBC_CloseConnection(void *connection)
+static TA_RetCode TA_SQL_ODBC_CloseConnection(void *connection)
 {
    TA_PROLOG
    TA_SQL_ODBC_Connection *privConnection;
@@ -602,11 +643,6 @@ TA_RetCode TA_SQL_ODBC_CloseConnection(void *connection)
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
-
-
-
-/**** Local functions definitions.     ****/
-
 
 static TA_RetCode allocRowData( TA_SQL_ODBC_Statement *statement )
 {
@@ -704,7 +740,6 @@ static TA_RetCode freeRowData( TA_SQL_ODBC_Statement *statement )
    return TA_SUCCESS;
 }
 
-#if defined(WIN32)
 static void printDiagnostic( SQLHSTMT hstmt )
 {
    SQLRETURN sqlRetCode;
@@ -723,6 +758,3 @@ static void printDiagnostic( SQLHSTMT hstmt )
       OutputDebugString(message);
    }
 }
-#endif
-
-#endif

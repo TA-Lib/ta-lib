@@ -14,7 +14,7 @@ CXXFLAGS=	-nologo -W3 -MDd -DTA_GEN_CODE -DTA_DEBUG -D_DEBUG -DWIN32 -D_MBCS -D_
 INCPATH	=	-I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\src\ta_abstract" -I"..\..\..\..\..\src\ta_abstract\tables" -I"..\..\..\..\..\src\ta_abstract\frames"
 LINK	=	link
 LFLAGS	=	/NOLOGO /DEBUG /SUBSYSTEM:console
-LIBS	=	..\..\..\..\..\lib\ta_common_cmd.lib wininet.lib
+LIBS	=	..\..\..\..\..\lib\ta_common_cmd.lib wininet.lib odbc32.lib odbccp32.lib
 MOC	=	moc
 UIC	=	uic
 

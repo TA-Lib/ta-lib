@@ -17,8 +17,8 @@ CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -w-8080 -tWM -O2 -DWIN32 -DQT_
 CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -w-8080 -tWM -O2 -DWIN32 -DQT_THREAD_SUPPORT
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common\imatix\sfl"
 LINK	=	ilink32
-LFLAGS	=	-L$(BCB)\lib -c -x -Gn -ap -Tpe c0x32.obj
-LIBS	=	import32.lib cw32mti.lib ..\..\..\..\..\lib\ta_libc_cmr.lib wininet.lib
+LFLAGS	=	-L$(BCB)\lib -L$(BCB)\lib\PSDK -c -x -Gn -ap -Tpe c0x32.obj
+LIBS	=	import32.lib cw32mti.lib ..\..\..\..\..\lib\ta_libc_cmr.lib wininet.lib odbc32.lib
 MOC	=	moc
 UIC	=	uic
 
