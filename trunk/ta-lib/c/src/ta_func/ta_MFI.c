@@ -172,7 +172,7 @@ typedef struct
 
 #define CIRCBUF_CONSTRUCT(Id,Type,Size) \
    { \
-      if( Size > (sizeof(Id)/sizeof(Type)) ) \
+      if( (TA_Integer)Size > (TA_Integer)(sizeof(Id)/sizeof(Type)) ) \
       { \
          alloc_##Id = TA_Malloc( sizeof(Type)*Size ); \
          return TA_ALLOC_ERR; \
