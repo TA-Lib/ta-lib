@@ -143,9 +143,10 @@ TA_RetCode TA_MYSQL_DataSourceHandleFree( TA_DataSourceHandle *handle )
 TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
 {
    TA_PROLOG
-   TA_RetCode retCode;
+   TA_RetCode retCode = TA_SUCCESS;
    TA_PrivateMySQLHandle *privateHandle;
    TA_MySQLCategoryNode *categoryNode;
+   TA_StringCache *stringCache = TA_GetGlobalStringCache();
 
    if( !handle )
       return (TA_RetCode)TA_INTERNAL_ERROR(61);
@@ -178,11 +179,93 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
-   /* create one category */
-   categoryNode = (TA_MySQLCategoryNode*)TA_Malloc(sizeof( TA_MySQLCategoryNode ));
-   memset(categoryNode, 0, sizeof( TA_MySQLCategoryNode ));
-   categoryNode->category = TA_StringDup( TA_GetGlobalStringCache(), privateHandle->param->category);
-   retCode = TA_ListAddTail(privateHandle->theCategoryIndex, categoryNode);
+   if( strnicmp("SELECT ", TA_StringToChar(privateHandle->param->category), 7) == 0)
+   {
+      /* This is an SQL query; execute it to obtain the list of categories */
+      try {
+         Query query = privateHandle->con->query();
+         // This creates a query object that is bound to con.
+
+         query << TA_StringToChar(privateHandle->param->category);
+         // You can write to the query object like you would any other ostrem
+
+         Result res = query.store();
+         // Query::store() executes the query and returns the results
+
+         // cout << "Query: " << query.preview() << endl;
+         // Query::preview() simply returns a string with the current query
+         // string in it.
+
+         // cout << "Records Found: " << res.size() << endl << endl;
+
+         // find the category column number, if present
+         for (unsigned int col = 0; col < res.columns(); col++) 
+         { 
+            if( strcmp(res.names(col).c_str(), "category") == 0 )
+               break;
+         } 
+         if( col == res.columns() )
+         {
+            throw BadQuery("Column 'category' not found");
+         }
+         
+         Row row;
+         Result::iterator i;
+         // The Result class has a read-only Random Access Iterator
+         for (i = res.begin(); i != res.end(); i++) {
+  	        row = *i;
+            TA_String *cat_name = TA_StringAlloc( stringCache, row[col] );
+
+            if( !cat_name )
+            {
+               TA_TRACE_RETURN( TA_ALLOC_ERR );
+            }
+
+            if( strcmp(TA_StringToChar(cat_name), "") == 0)  // ignore NULL fields
+               continue;
+
+            categoryNode = (TA_MySQLCategoryNode*)TA_Malloc(sizeof( TA_MySQLCategoryNode ));
+            if( !categoryNode )
+            {
+               TA_StringFree(stringCache, cat_name);
+               TA_TRACE_RETURN( TA_ALLOC_ERR );
+            }
+            memset(categoryNode, 0, sizeof( TA_MySQLCategoryNode ));
+
+            categoryNode->category = cat_name;
+            retCode = TA_ListAddTail( privateHandle->theCategoryIndex, categoryNode );
+            if( retCode != TA_SUCCESS )
+            {
+               TA_StringFree(stringCache, categoryNode->category);
+               TA_Free(categoryNode);
+               break;
+            }
+         }
+      } 
+      catch (BadQuery er)
+      {                    
+         // handle any connection or query errors that may come up
+         retCode = TA_CATEGORY_NOT_FOUND;
+      } 
+   }
+   else
+   {
+      /* Create one category, taking the category sting literally */
+      categoryNode = (TA_MySQLCategoryNode*)TA_Malloc(sizeof( TA_MySQLCategoryNode ));
+      if( !categoryNode )
+      {
+         TA_TRACE_RETURN( TA_ALLOC_ERR );
+      }
+      memset(categoryNode, 0, sizeof( TA_MySQLCategoryNode ));
+
+      categoryNode->category = TA_StringDup( stringCache, privateHandle->param->category);
+      retCode = TA_ListAddTail(privateHandle->theCategoryIndex, categoryNode);
+      if( retCode != TA_SUCCESS )
+      {
+         TA_StringFree(stringCache, categoryNode->category);
+         TA_Free(categoryNode);
+      }
+   }
    
    TA_TRACE_RETURN( retCode );
 }
