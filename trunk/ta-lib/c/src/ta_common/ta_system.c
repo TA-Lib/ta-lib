@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  110199 MF   First version.
  *  032704 MF   Add TA_AdjustPath
- *
+ *  122904 MF   Fix#1023151 for memory leak cause by open_dir/close_dir
  */
 
 /* Description:
@@ -347,7 +347,7 @@ TA_RetCode TA_DirectoryAlloc( const char *path,
        * so return an empty directory to the caller.
        */
       *directory = dir;
-      TA_Free(  basePath );
+      TA_Free( basePath );
       return TA_SUCCESS;
    }
 
@@ -357,7 +357,8 @@ TA_RetCode TA_DirectoryAlloc( const char *path,
       /* Errors, or no files or no directory... but
        * still have to pass the result to the caller.
        */      
-      TA_Free(  basePath );
+      close_dir(&dirHandle);
+      TA_Free( basePath );
       *directory = dir;
       return TA_SUCCESS;
    }
@@ -382,7 +383,7 @@ TA_RetCode TA_DirectoryAlloc( const char *path,
                {
                   #if defined( USE_OSLAYER )
                      close_dir(&dirHandle);
-                     TA_Free(  basePath );
+                     TA_Free( basePath );
                   #endif
                   TA_DirectoryFree( dir );
                   return TA_ALLOC_ERR;
@@ -394,7 +395,7 @@ TA_RetCode TA_DirectoryAlloc( const char *path,
                {
                   #if defined( USE_OSLAYER )
                      close_dir(&dirHandle);
-                     TA_Free(  basePath );
+                     TA_Free( basePath );
                   #endif
                   TA_DirectoryFree( dir );
                   return retCode;
@@ -410,7 +411,7 @@ TA_RetCode TA_DirectoryAlloc( const char *path,
             {
                #if defined( USE_OSLAYER )
                   close_dir(&dirHandle);
-                  TA_Free(  basePath );
+                  TA_Free( basePath );
                #endif
                TA_DirectoryFree( dir );
                return TA_ALLOC_ERR;
@@ -422,7 +423,7 @@ TA_RetCode TA_DirectoryAlloc( const char *path,
             {
                #if defined( USE_OSLAYER )
                   close_dir(&dirHandle);
-                  TA_Free(  basePath );
+                  TA_Free( basePath );
                #endif
                TA_DirectoryFree( dir );
                return retCode;
@@ -449,7 +450,7 @@ TA_RetCode TA_DirectoryAlloc( const char *path,
 
 
    #if defined( USE_OSLAYER )
-   TA_Free(  basePath );
+   TA_Free( basePath );
    if( !close_dir(&dirHandle) )
    {
       TA_DirectoryFree( dir );
@@ -485,7 +486,7 @@ TA_RetCode TA_DirectoryFree( TA_Directory *directory )
    {
       stringListFree( global->filenameCache, directory->listOfFile );
       stringListFree( global->dirnameCache, directory->listOfDirectory );
-      TA_Free(  directory );
+      TA_Free( directory );
    }
 
    return TA_SUCCESS;
@@ -1001,7 +1002,7 @@ TA_RetCode TA_FileSeqClose( TA_FileHandle *handle )
          if( fileHandlePriv->handle != NULL )
             fclose( fileHandlePriv->handle );
          if( fileHandlePriv->allocBuffer )
-            TA_Free(  fileHandlePriv->allocBuffer );
+            TA_Free( fileHandlePriv->allocBuffer );
       #endif
 
       if( fileHandlePriv->streamAccess )
@@ -1009,7 +1010,7 @@ TA_RetCode TA_FileSeqClose( TA_FileHandle *handle )
          TA_StreamAccessFree( fileHandlePriv->streamAccess );
       }
 
-      TA_Free(  fileHandlePriv );
+      TA_Free( fileHandlePriv );
    }
 
    TA_TRACE_RETURN( TA_SUCCESS );
@@ -1208,7 +1209,7 @@ static TA_RetCode TA_SystemGlobalShutdown( void *globalAllocated )
          finalRetCode = retCode;
    }
 
-   TA_Free(  global );
+   TA_Free( global );
 
    TA_TRACE_RETURN( finalRetCode );
 }
