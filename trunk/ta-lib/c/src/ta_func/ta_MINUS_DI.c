@@ -45,6 +45,7 @@
  *  010802 MF   Template creation.
  *
  */
+#include "math.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -65,14 +66,18 @@ int TA_MINUS_DI_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INT
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   return 0;
+
+   if( optInTimePeriod_0 > 1 )
+      return optInTimePeriod_0 + TA_UnstablePeriodTable[TA_FUNC_UNST_MINUS_DI];
+   else
+      return 2;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 /*
  * TA_MINUS_DI - Minus Directional Indicator
  * 
- * Input  = High, Low
+ * Input  = High, Low, Close
  * Output = TA_Real
  * 
  * Optional Parameters
@@ -88,6 +93,7 @@ TA_RetCode TA_MINUS_DI( TA_Libc      *libHandle,
                         TA_Integer    endIdx,
                         const TA_Real inHigh_0[],
                         const TA_Real inLow_0[],
+                        const TA_Real inClose_0[],
                         TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
                         TA_Integer   *outBegIdx,
                         TA_Integer   *outNbElement,
@@ -95,6 +101,23 @@ TA_RetCode TA_MINUS_DI( TA_Libc      *libHandle,
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
+
+   TA_Integer today, lookbackTotal, outIdx;
+   TA_Real prevHigh, prevLow, prevClose;
+   TA_Real prevMinusDM, prevTR;
+   TA_Real tempReal, tempReal2, diffP, diffM;
+
+   int i;
+
+   #define TRUE_RANGE(TH,TL,YC,OUT) {\
+      OUT = TH-TL; \
+      tempReal2 = fabs(TH-YC); \
+      if( tempReal2 > OUT ) \
+         OUT = tempReal2; \
+      tempReal2 = fabs(TL-YC); \
+      if( tempReal2 > OUT ) \
+         OUT = tempReal2; \
+   }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -110,7 +133,7 @@ TA_RetCode TA_MINUS_DI( TA_Libc      *libHandle,
 
    /* Validate the parameters. */
    /* Verify required price component. */
-   if(!inHigh_0||!inLow_0)
+   if(!inHigh_0||!inLow_0||!inClose_0)
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInTimePeriod_0. */
@@ -127,6 +150,211 @@ TA_RetCode TA_MINUS_DI( TA_Libc      *libHandle,
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
+
+   /* 
+    * The DM1 (one period) is base on the largest part of
+    * today's range that is outside of yesterdays range.
+    * 
+    * The following 7 cases explain how the +DM and -DM are
+    * calculated on one period:
+    *
+    * Case 1:                       Case 2:
+    *    C|                        A|
+    *     |                         | C|
+    *     | +DM1 = (C-A)           B|  | +DM1 = 0
+    *     | -DM1 = 0                   | -DM1 = (B-D)
+    * A|  |                           D| 
+    *  | D|                    
+    * B|
+    *
+    * Case 3:                       Case 4:
+    *    C|                           C|
+    *     |                        A|  |
+    *     | +DM1 = (C-A)            |  | +DM1 = 0
+    *     | -DM1 = 0               B|  | -DM1 = (B-D)
+    * A|  |                            | 
+    *  |  |                           D|
+    * B|  |
+    *    D|
+    * 
+    * Case 5:                      Case 6:
+    * A|                           A| C|
+    *  | C| +DM1 = 0                |  |  +DM1 = 0
+    *  |  | -DM1 = 0                |  |  -DM1 = 0
+    *  | D|                         |  |
+    * B|                           B| D|
+    *
+    *
+    * Case 7:
+    * 
+    *    C|
+    * A|  |
+    *  |  | +DM=0
+    * B|  | -DM=0
+    *    D|
+    *
+    * In case 3 and 4, the rule is that the smallest delta between
+    * (C-A) and (B-D) determine which of +DM or -DM is zero.
+    *
+    * In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+    * zero.
+    *
+    * The rules remain the same when A=B and C=D (when the highs
+    * equal the lows).
+    *
+    * When calculating the DM over a period > 1, the one-period DM
+    * for the desired period are initialy sum. In other word, 
+    * for a -DM14, sum the -DM1 for the first 14 days (that's 
+    * 13 values because there is no DM for the first day!)
+    * Subsequent DM are calculated using the Wilder's
+    * smoothing approach:
+    * 
+    *                                    Previous -DM14
+    *  Today's -DM14 = Previous -DM14 -  -------------- + Today's -DM1
+    *                                         14
+    *
+    * Calculation of a -DI14 is as follow:
+    * 
+    *               -DM14
+    *     -DI14 =  --------
+    *                TR14
+    *
+    * Calculation of the TR14 is:
+    *
+    *                                   Previous TR14
+    *    Today's TR14 = Previous TR14 - -------------- + Today's TR1
+    *                                         14
+    *
+    *    The first TR14 is the summation of the first 14 TR1. See the
+    *    TA_TRANGE function on how to calculate the true range.
+    *
+    * Reference:
+    *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+    */
+
+   if( optInTimePeriod_0 > 1 )
+      lookbackTotal = optInTimePeriod_0 + TA_UnstablePeriodTable[TA_FUNC_UNST_MINUS_DI];
+   else
+      lookbackTotal = 2;
+
+   /* Adjust startIdx to account for the lookback period. */
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
+
+   /* Make sure there is still something to evaluate. */
+   if( startIdx > endIdx )
+   {
+      *outBegIdx    = 0;
+      *outNbElement = 0;
+      return TA_SUCCESS;
+   }
+
+   /* Indicate where the next output should be put
+    * in the outReal_0.
+    */
+   outIdx = 0;
+
+   /* Process the initial DM and TR */
+   *outBegIdx = today = startIdx;
+
+   prevMinusDM = 0.0;
+   prevTR      = 0.0;
+   today       = startIdx - lookbackTotal;
+   prevHigh    = inHigh_0[today];
+   prevLow     = inLow_0[today];
+   prevClose   = inClose_0[today];
+   i           = optInTimePeriod_0-1;
+   while( i-- > 0 )
+   {
+      today++;
+      tempReal = inHigh_0[today];
+      diffP    = tempReal-prevHigh; /* Plus Delta */
+      prevHigh = tempReal;
+
+      tempReal = inLow_0[today];
+      diffM    = prevLow-tempReal;   /* Minus Delta */
+      prevLow  = tempReal;
+      if( (diffM > 0) && (diffP < diffM) )
+      {
+         /* Case 2 and 4: +DM=0,-DM=diffM */
+         prevMinusDM += diffM;
+      }
+
+      TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
+      prevTR += tempReal;
+      prevClose = inClose_0[today];
+   }
+
+   /* Process subsequent DI */
+
+   /* Skip the unstable period. Note that this loop must be executed
+    * at least ONCE to calculate the first DI.
+    */
+   i = TA_UnstablePeriodTable[TA_FUNC_UNST_MINUS_DI] + 1;
+   while( i-- != 0 )
+   {
+      /* Calculate the prevMinusDM */
+      today++;
+      tempReal = inHigh_0[today];
+      diffP    = tempReal-prevHigh; /* Plus Delta */
+      prevHigh = tempReal;
+      tempReal = inLow_0[today];
+      diffM    = prevLow-tempReal;   /* Minus Delta */
+      prevLow  = tempReal;
+      if( (diffM > 0) && (diffP < diffM) )
+      {
+         /* Case 2 and 4: +DM=0,-DM=diffM */
+         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0) + diffM;
+      }
+      else
+      {
+         /* Case 1,3,5 and 7 */
+         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0);
+      }
+
+      /* Calculate the prevTR */
+      TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
+      prevTR = prevTR - (prevTR/optInTimePeriod_0) + tempReal;
+      prevClose = inClose_0[today];
+   }
+
+   /* Now start to write the output in
+    * the caller provided outReal_0.
+    */
+   outReal_0[0] = round_pos(100.0*(prevMinusDM/prevTR));
+   outIdx = 1;
+
+   while( today < endIdx )
+   {
+      /* Calculate the prevMinusDM */
+      today++;
+      tempReal = inHigh_0[today];
+      diffP    = tempReal-prevHigh; /* Plus Delta */
+      prevHigh = tempReal;
+      tempReal = inLow_0[today];
+      diffM    = prevLow-tempReal;   /* Minus Delta */
+      prevLow  = tempReal;
+      if( (diffM > 0) && (diffP < diffM) )
+      {
+         /* Case 2 and 4: +DM=0,-DM=diffM */
+         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0) + diffM;
+      }
+      else
+      {
+         /* Case 1,3,5 and 7 */
+         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0);
+      }
+
+      /* Calculate the prevTR */
+      TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
+      prevTR = prevTR - (prevTR/optInTimePeriod_0) + tempReal;
+      prevClose = inClose_0[today];
+
+      /* Calculate the DI. The value is rounded (see Wilder book). */
+      outReal_0[outIdx++] = round_pos(100.0*(prevMinusDM/prevTR));
+   }
+
+   *outNbElement = outIdx;
 
    return TA_SUCCESS;
 }

@@ -99,8 +99,9 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
 {
 	/* insert local variable here */
    TA_Integer today, lookbackTotal, outIdx;
-   TA_Real prevHigh, prevLow, tempReal, diffP, diffM, prevDM;
-   TA_Real sumP, sumM;
+   TA_Real prevHigh, prevLow, tempReal;
+   TA_Real prevMinusDM;
+   TA_Real diffP, diffM;
    int i;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -139,7 +140,7 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
     * The DM1 (one period) is base on the largest part of
     * today's range that is outside of yesterdays range.
     * 
-    * The following 6 cases explain how the +DM and -DM are
+    * The following 7 cases explain how the +DM and -DM are
     * calculated on one period:
     *
     * Case 1:                       Case 2:
@@ -240,17 +241,7 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
          tempReal = inLow_0[today];
          diffM    = prevLow-tempReal;   /* Minus Delta */
          prevLow  = tempReal;
-         if( ((diffM <= 0) && (diffP <= 0)) || (diffP == diffM))
-         {
-            /* Case 5, 6 or 7: +DM=0,-DM=0 */
-            outReal_0[outIdx++] = 0;
-         }
-         else if( diffP > diffM )
-         {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            outReal_0[outIdx++] = 0;
-         }
-         else
+         if( (diffM > 0) && (diffP < diffM) )
          {
             /* Case 2 and 4: +DM=0,-DM=diffM */
             outReal_0[outIdx++] = diffM;
@@ -264,12 +255,11 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
    /* Process the initial DM */
    *outBegIdx = today = startIdx;
 
-   sumP     = 0.0;
-   sumM     = 0.0;
-   today    = startIdx - lookbackTotal - 1;
-   prevHigh = inHigh_0[today];
-   prevLow  = inLow_0[today];
-   i        = optInTimePeriod_0;
+   prevMinusDM = 0.0;
+   today       = startIdx - lookbackTotal;
+   prevHigh    = inHigh_0[today];
+   prevLow     = inLow_0[today];
+   i           = optInTimePeriod_0-1;
    while( i-- > 0 )
    {
       today++;
@@ -279,18 +269,13 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
       tempReal = inLow_0[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if(!((diffM <= 0) && (diffP <= 0)) || (diffP == diffM))
+
+      if( (diffM > 0) && (diffP < diffM) )
       {
-         /* NOT case 1,3,5,6 and 7 */
-         if( diffP <= diffM )
-         {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            sumM += diffM;
-         }
+         /* Case 2 and 4: +DM=0,-DM=diffM */
+         prevMinusDM += diffM;
       }
    }
-
-   prevDM = sumM;
 
    /* Process subsequent DM */
 
@@ -305,20 +290,22 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
       tempReal = inLow_0[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if((!((diffM <= 0) && (diffP <= 0)) || (diffP == diffM)) && (diffP <= diffM))
+      if( (diffM > 0) && (diffP < diffM) )
       {
-         /* NOT case 1,3,5,6 and 7 */
          /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevDM = prevDM - (prevDM/optInTimePeriod_0) + diffM;
+         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0) + diffM;
       }
       else
-         prevDM = prevDM - (prevDM/optInTimePeriod_0);
+      {
+         /* Case 1,3,5 and 7 */
+         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0);
+      }
    }
 
    /* Now start to write the output in
     * the caller provided outReal_0.
     */
-   outReal_0[0] = prevDM;
+   outReal_0[0] = prevMinusDM;
    outIdx = 1;
 
    while( today < endIdx )
@@ -328,18 +315,21 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
       diffP    = tempReal-prevHigh; /* Plus Delta */
       prevHigh = tempReal;
       tempReal = inLow_0[today];
-      diffM    = prevLow-tempReal;   /* Minus Delta */
+      diffM    = prevLow-tempReal;  /* Minus Delta */
       prevLow  = tempReal;
-      if((!((diffM <= 0) && (diffP <= 0)) || (diffP == diffM)) && (diffP <= diffM))
+
+      if( (diffM > 0) && (diffP < diffM) )
       {
-         /* NOT case 1,3,5,6 and 7 */
          /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevDM = prevDM - (prevDM/optInTimePeriod_0) + diffM;
+         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0) + diffM;
       }
       else
-         prevDM = prevDM - (prevDM/optInTimePeriod_0);
+      {
+         /* Case 1,3,5 and 7 */
+         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0);
+      }
 
-      outReal_0[outIdx++] = prevDM;
+      outReal_0[outIdx++] = prevMinusDM;
    }
 
    *outNbElement = outIdx;
