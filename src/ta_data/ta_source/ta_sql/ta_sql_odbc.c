@@ -147,8 +147,9 @@ TA_RetCode TA_SQL_ODBC_OpenConnection(const char database[],
 
    TA_ASSERT( connection != NULL );
    
-   if( !port && host[0] )
-      port = 0; /* dummy use of unused parameters, to get rid of gcc warnings */
+   /* unused parameters */
+   (void)port;
+   (void)host;
 
    privConnection = (TA_SQL_ODBC_Connection*)TA_Malloc( sizeof(TA_SQL_ODBC_Connection) );
    if( privConnection == NULL )
