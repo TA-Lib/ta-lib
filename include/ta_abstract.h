@@ -42,12 +42,12 @@
 extern "C" {
 #endif
 
-/* This file define the interface for calling all the TA functions without
+/* This file defines the interface for calling all the TA functions without
  * knowing at priori the parameters.
  *
- * This capability is particularly interesting for an application who
- * wishes to support the complete list of TA functions without having to
- * re-write new code each time a new function is added to the TA-LIB.
+ * This capability is particularly useful for an application who needs
+ * to support the complete list of TA functions without having to
+ * re-write new code each time a new function is added to TA-LIB.
  *
  * Example 1:
  *        Let's say you are doing a charting software. When the user select
@@ -55,11 +55,11 @@ extern "C" {
  *        that could be applied to a price bar. The user selects one of
  *        these, then a dialog open for allowing to adjust some parameter
  *        (TA-LIB will tell your software which parameter are needed and the
- *        valid values for each). Once all the parameter are set, you can
+ *        valid range for each). Once all the parameter are set, you can
  *        call blindly the corresponding TA function. The returned
  *        information can then also blindly be drawn on the chart (some
- *        output flags allows to get some hint on how the data shall be
- *        drawn).
+ *        output flags allows to get some hint about how the data shall be
+ *        displayed).
  *        The same "abstract" logic apply to all the TA functions.
  *        Some TA Functions works only on volume, or can work indiferently
  *        with any time serie data (the open, close, another indicator...).
@@ -80,6 +80,10 @@ extern "C" {
  *        well within Perl... see the project SWIG if you are
  *        interested by such things.
  *
+ * The abstract interface is used within TA-Lib to perform at least 
+ * the following:
+ *   - used by gen_code to generate all the glue code.
+ *   - used by the Excel interface to call all the TA functions.
  */
 
 /* The following functions are used to obtain the name of all the
