@@ -212,7 +212,7 @@
   {
      *outBegIdx = 0;
      *outNbElement = 0;
-     return retCode;
+     return TA_SUCCESS;
   }
 
    *outBegIdx = startIdx;
