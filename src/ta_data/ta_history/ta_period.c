@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  AK       Alexander Kugel
  *
  *
  * Change history:
@@ -43,6 +44,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
+ *  052604 AK   Added intraday-to-intraday conversion
  *
  */
 
@@ -122,6 +124,7 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
    TA_RetCode retCode;
 
    unsigned int transformToDailyAndMore; /* Boolean */
+   unsigned int transformToIntraday;     /* Boolean */
 
    /* Temporaries. */
    const TA_Timestamp *tempTimestamp;
@@ -163,7 +166,7 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
    unsigned int again, periodCompleted, errorOccured, newDay; /* Boolean */
    int nbDayAccumulated, firstIteration;
 
-   TA_TRACE_BEGIN(  TA_PeriodTransform );
+   TA_TRACE_BEGIN( TA_PeriodTransform );
 
    /* Validate some mandatory parameter. */
    TA_ASSERT( history != NULL );
@@ -210,6 +213,7 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
     * needed to perform the transformation.
     */
    transformToDailyAndMore = 0;
+   transformToIntraday     = 0;
 
    switch( history->period )
    {
@@ -228,20 +232,13 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
       case TA_YEARLY:
          transformToDailyAndMore = 1;
          break;
-      case TA_1MIN:
-      case TA_5MINS:
-      case TA_10MINS:
-      case TA_15MINS:
-      case TA_30MINS:
-      case TA_1HOUR:
-         if( newPeriod <= history->period )
-         {
-            TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );
-         }
-         break;
 
       default:
-         TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );
+         if(newPeriod <= TA_12HOURS)
+            transformToIntraday = 1;
+         else
+            TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );
+         
       }
       break;
 
@@ -293,11 +290,12 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
    cur_close        = 0.0;     /* Current new close of new period. */
    cur_volume       = 0;       /* Current new volume of new period. */
    cur_openInterest = 0;       /* Current new openInterest of new period. */
-
-   /* If needed, proceed with transformation to daily and more... */
+   
+   /* Calculate the number of required new price bar. */
+   retCode   = TA_UNKNOWN_ERR;
+   new_nbBars = 0;
    if( transformToDailyAndMore )
    {
-      /* Calculate the number of required new price bar. */
       switch( newPeriod )
       {
       case TA_WEEKLY:
@@ -318,46 +316,56 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
       default:
          TA_TRACE_RETURN( TA_INTERNAL_ERROR(48) );
       }
+   } 
+   else if( transformToIntraday)
+   {
+       retCode = TA_TimestampDeltaIntraday(&old_timestamp[0], &old_timestamp[old_nbBars-1], (unsigned int *)&new_nbBars, 
+                                           history->period, newPeriod);
+   }
 
-      if( retCode != TA_SUCCESS )
-      {
-         TA_TRACE_RETURN( retCode );
-      }
+   if( retCode != TA_SUCCESS )
+   {
+      TA_TRACE_RETURN( retCode );
+   }
+   
+   /* Do memory allocation of output.  */
 
-      /* Slightly over-estimate to avoid limit cases */
-      new_nbBars += 2;
+   /* Slightly over-estimate to avoid limit cases */
+   new_nbBars += 2;
 
-      /* Allocate the new data. */      
-      errorOccured = 0;
-      #define TRY_ALLOC( varName, varType ) \
+   /* Allocate the new data. */      
+   errorOccured = 0;
+   #define TRY_ALLOC( varName, varType ) \
+   { \
+      if( !errorOccured && varName && old_##varName ) \
       { \
-         if( !errorOccured && varName && old_##varName ) \
-         { \
-            new_##varName = TA_Malloc( new_nbBars * sizeof( TA_##varType ) ); \
-            if( !new_##varName ) \
-               errorOccured = 1; \
-         } \
-      }
-      TRY_ALLOC( timestamp, Timestamp );
-      TRY_ALLOC( open, Real );
-      TRY_ALLOC( high, Real );
-      TRY_ALLOC( low, Real );
-      TRY_ALLOC( close, Real );
-      TRY_ALLOC( volume, Integer );
-      TRY_ALLOC( openInterest, Integer );
+         new_##varName = TA_Malloc( new_nbBars * sizeof( TA_##varType ) ); \
+         if( !new_##varName ) \
+            errorOccured = 1; \
+      } \
+   }
+   TRY_ALLOC( timestamp, Timestamp );
+   TRY_ALLOC( open, Real );
+   TRY_ALLOC( high, Real );
+   TRY_ALLOC( low, Real );
+   TRY_ALLOC( close, Real );
+   TRY_ALLOC( volume, Integer );
+   TRY_ALLOC( openInterest, Integer );
 
-      if( errorOccured )
-      {
-         FREE_IF_NOT_NULL( new_timestamp );
-         FREE_IF_NOT_NULL( new_open );
-         FREE_IF_NOT_NULL( new_high);
-         FREE_IF_NOT_NULL( new_low );
-         FREE_IF_NOT_NULL( new_close )
-         FREE_IF_NOT_NULL( new_volume );
-         FREE_IF_NOT_NULL( new_openInterest );
-         TA_TRACE_RETURN( TA_ALLOC_ERR );
-      }
+   if( errorOccured )
+   {
+      FREE_IF_NOT_NULL( new_timestamp );
+      FREE_IF_NOT_NULL( new_open );
+      FREE_IF_NOT_NULL( new_high);
+      FREE_IF_NOT_NULL( new_low );
+      FREE_IF_NOT_NULL( new_close )
+      FREE_IF_NOT_NULL( new_volume );
+      FREE_IF_NOT_NULL( new_openInterest );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
 
+   if(transformToDailyAndMore)
+   {
       /* Macro used to adjust the current value for the new period price bar. */
       #define SET_CUR_IF_NOT_NULL(var,todo) {if(new_##var) { cur_##var=todo; }}
       
@@ -564,6 +572,86 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
 
       #undef SET_CUR_IF_NOT_NULL
       /* Daily to other timeframe transform is completed. */
+      
+   
+   }
+   else if( transformToIntraday )
+   {
+      /* The intraday conversion goes from here --AK-- */
+      TA_Timestamp tmp_ts;
+      TA_Timestamp next_new_ts = {0,0};
+
+      /* There is no open interest on the intraday data --AK-- */
+      /* We can free some memory here                          */
+      FREE_IF_NOT_NULL( new_openInterest );
+
+      /* Iterate through the old and new price bar. --AK--     */
+      oldPriceBar = 0;
+      newPriceBar = -1;
+
+      periodCompleted = 0;
+      newDay = 0;
+
+      day = month = year = 0;
+
+      /* Process all old bars --AK-- */
+      while( oldPriceBar < old_nbBars )
+      {
+         #define SET_NEW_FROM_OLD_IF_NOT_NULL(var,todo) { if( new_##var ) { new_##var[newPriceBar] = todo; } }
+         
+         /* Check if we are at a new day */
+         currentDay   = TA_GetDay  ( &old_timestamp[oldPriceBar] );
+         currentMonth = TA_GetMonth( &old_timestamp[oldPriceBar] );
+         currentYear  = TA_GetYear ( &old_timestamp[oldPriceBar] );
+
+         if( (currentDay != day )  || (currentMonth != month) || (currentYear != year) ){
+            newDay = 1;
+            day    = currentDay;
+            month  = currentMonth;
+            year   = currentYear;
+         }else{
+            newDay = 0;
+         }
+
+         /* Check if the new bar is already completed --AK-- */
+         if( newDay || !TA_TimestampLess(&old_timestamp[oldPriceBar],&next_new_ts) ){
+             periodCompleted = 1;
+         }
+
+         if(periodCompleted){
+            /* Move to the next new bar --AK-- */
+            newPriceBar++;
+
+            /* Take care of the missing data (market inactivity, market 
+               close hours, new day, etc.): recalculate the timestamp 
+               for the new bar.  --AK--                                  */
+            TA_TimestampAlign(&tmp_ts, &old_timestamp[oldPriceBar], newPeriod);
+
+            /* Create a new bar --AK-- */
+            SET_NEW_FROM_OLD_IF_NOT_NULL( timestamp,     tmp_ts );
+            SET_NEW_FROM_OLD_IF_NOT_NULL( open,          old_open        [oldPriceBar] );
+            SET_NEW_FROM_OLD_IF_NOT_NULL( high,          old_high        [oldPriceBar] );
+            SET_NEW_FROM_OLD_IF_NOT_NULL( low,           old_low         [oldPriceBar] );
+            SET_NEW_FROM_OLD_IF_NOT_NULL( close,         old_close       [oldPriceBar] );
+            SET_NEW_FROM_OLD_IF_NOT_NULL( volume,        old_volume      [oldPriceBar] );
+
+            /* Find the timestamp of the next new bar --AK-- */
+            TA_AddTimeToTimestamp(&next_new_ts, &new_timestamp[newPriceBar], newPeriod);
+            periodCompleted = 0;
+         }else{
+            /* Modify the current new --AK-- */
+            SET_NEW_FROM_OLD_IF_NOT_NULL( high, max( new_high[newPriceBar], old_high[oldPriceBar]) );
+            SET_NEW_FROM_OLD_IF_NOT_NULL( low,  min( new_low[newPriceBar],  old_low [oldPriceBar]) );
+            SET_NEW_FROM_OLD_IF_NOT_NULL( close, old_close[oldPriceBar] );
+            SET_NEW_FROM_OLD_IF_NOT_NULL( volume, new_volume[newPriceBar]+old_volume[oldPriceBar] );
+         }
+
+         /* Go to the next old bar */
+         oldPriceBar ++;
+
+         #undef SET_NEW_FROM_OLD_IF_NOT_NULL
+      }
+      newPriceBar++;
    }
 
    /* All done! Return the final result to the caller. */
