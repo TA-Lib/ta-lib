@@ -198,8 +198,15 @@ TA_RetCode TA_MYSQL_OpenSource( const TA_AddDataSourceParamPriv *param,
       TA_MYSQL_DataSourceHandleFree( tmpHandle );
       TA_TRACE_RETURN( TA_ACCESS_FAILED );
    }
+
+   /* Database name is a fallback symbol name when not available from parameters */
+   privData->database = TA_StringAlloc(TA_GetGlobalStringCache(), dbase);
    TA_Free(host);
    TA_Free(dbase);
+   if( !privData->database )
+   {
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
 
    /* Now build the symbols index. */
    retCode = TA_MYSQL_BuildSymbolsIndex( tmpHandle );
@@ -270,8 +277,8 @@ TA_RetCode TA_MYSQL_GetFirstCategoryHandle( TA_DataSourceHandle *handle,
 
    /* Set the categoryHandle. */
    categoryHandle->string = categoryNode->category;
-   categoryHandle->nbSymbol = 0;
-   categoryHandle->opaqueData = NULL; /* Not needed... */
+   categoryHandle->nbSymbol = TA_ListSize(categoryNode->theSymbols);
+   categoryHandle->opaqueData = categoryNode->theSymbols;
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -318,8 +325,8 @@ TA_RetCode TA_MYSQL_GetNextCategoryHandle( TA_DataSourceHandle *handle,
 
    /* Set the categoryHandle. */
    categoryHandle->string = categoryNode->category;
-   categoryHandle->nbSymbol = 0;
-   categoryHandle->opaqueData = NULL; /* Not needed... */
+   categoryHandle->nbSymbol = TA_ListSize(categoryNode->theSymbols);
+   categoryHandle->opaqueData = categoryNode->theSymbols;
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -329,62 +336,38 @@ TA_RetCode TA_MYSQL_GetFirstSymbolHandle( TA_DataSourceHandle *handle,
                                           TA_SymbolHandle     *symbolHandle )
 {
    TA_PROLOG
-   //TA_RetCode retCode;
-   //TA_PrivateAsciiHandle *privData;
-   //TA_FileIndex *fileIndex;
-   //TA_FileInfo *sourceInfo;
+   TA_PrivateMySQLHandle *privData;
+   TA_List               *symbolsIndex;
+   TA_String             *symbol;
 
    TA_TRACE_BEGIN(  TA_MYSQL_GetFirstSymbolHandle );
 
-#if 0
    if( (handle == NULL) || (categoryHandle == NULL) || (symbolHandle == NULL) )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
    }
 
-   privData = (TA_PrivateAsciiHandle *)(handle->opaqueData);
+   privData = (TA_PrivateMySQLHandle *)(handle->opaqueData);
 
    if( !privData )
    {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(54) );
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(49) );
    }
 
-   fileIndex = privData->theFileIndex;
-
-   if( !fileIndex || !categoryHandle->string )
-   {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(55) );
-   }
-
-   /* Make sure the current category is the one requested. */
-   retCode = TA_FileIndexSelectCategory( fileIndex, categoryHandle->string );
-   if( retCode != TA_SUCCESS )
-   {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(56) );
-   }
+   symbolsIndex = (TA_List*)categoryHandle->opaqueData;
 
    /* Get the first symbol in this category. */
-   sourceInfo = TA_FileIndexFirstSymbol( fileIndex );
+   symbol = (TA_String*)TA_ListAccessHead(symbolsIndex);
 
-   if( !sourceInfo )
+   if( !symbol )
    {
       TA_TRACE_RETURN( TA_END_OF_INDEX );
    }
 
-   /* Parano sanity check: the string of the requested categoryHandle should
-    * correspond to the string of this sourceInfo.
-    */
-   if( strcmp( TA_StringToChar( TA_FileInfoCategory( sourceInfo ) ),
-               TA_StringToChar( categoryHandle->string ) ) != 0 )
-   {
-      TA_FATAL(  NULL, 0, 0 );
-   }
-
    /* Set the symbolHandle. */
-   symbolHandle->string = TA_FileInfoSymbol( sourceInfo );
-   symbolHandle->opaqueData = sourceInfo;
+   symbolHandle->string = symbol;
+   symbolHandle->opaqueData = NULL;  /* not needed */
 
-#endif
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -394,64 +377,40 @@ TA_RetCode TA_MYSQL_GetNextSymbolHandle( TA_DataSourceHandle *handle,
                                          unsigned int index )
 {
    TA_PROLOG
-   //TA_RetCode retCode;
-   //TA_PrivateAsciiHandle *privData;
-   //TA_FileIndex *fileIndex;
-   //TA_FileInfo *sourceInfo;
+   TA_PrivateMySQLHandle *privData;
+   TA_List               *symbolsIndex;
+   TA_String             *symbol;
 
    TA_TRACE_BEGIN(  TA_MYSQL_GetNextSymbolHandle );
 
-#if 0
-   (void)index; /* Get ride of compiler warnings. */
+   (void)index; /* Get rid of compiler warnings. */
 
    if( (handle == NULL) || (categoryHandle == NULL) || (symbolHandle == NULL) )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
    }
 
-   privData = (TA_PrivateAsciiHandle *)(handle->opaqueData);
+   privData = (TA_PrivateMySQLHandle *)(handle->opaqueData);
 
    if( !privData )
    {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(57) );
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(57) );
    }
 
-   fileIndex = privData->theFileIndex;
+   symbolsIndex = (TA_List*)categoryHandle->opaqueData;
 
-   if( !fileIndex || !categoryHandle->string )
-   {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(58) );
-   }
+   /* Get the first symbol in this category. */
+   symbol = (TA_String*)TA_ListAccessNext(symbolsIndex);
 
-   /* Make sure the current category is the one requested. */
-   retCode = TA_FileIndexSelectCategory( fileIndex, categoryHandle->string );
-   if( retCode != TA_SUCCESS )
-   {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(59) );
-   }
-
-   /* Get the next symbol in this category. */
-   sourceInfo = TA_FileIndexNextSymbol( fileIndex );
-
-   if( !sourceInfo )
+   if( !symbol )
    {
       TA_TRACE_RETURN( TA_END_OF_INDEX );
    }
 
-   /* Parano sanity check: the string of the requested categoryHandle should
-    * correspond to the string of this sourceInfo.
-    */
-   if( strcmp( TA_StringToChar( TA_FileInfoCategory( sourceInfo ) ),
-               TA_StringToChar( categoryHandle->string ) ) != 0 )
-   {
-      TA_FATAL(  NULL, 0, 0 );
-   }
-
    /* Set the symbolHandle. */
-   symbolHandle->string = TA_FileInfoSymbol( sourceInfo );
-   symbolHandle->opaqueData = sourceInfo;
+   symbolHandle->string = symbol;
+   symbolHandle->opaqueData = NULL;  /* not needed */
 
-#endif
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 

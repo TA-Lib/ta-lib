@@ -39,18 +39,19 @@ void print_usage( char *str )
    printf( "\n" );
    printf( "ta_mysql V%s - Query stock market data MySQL database!\n", TA_GetVersionString() );
    printf( "\n" );
-   printf( "Usage: ta_mysql -c <location> <user> <pass> <category>\n" );
-   printf( "       ta_mysql -s <location> <user> <pass> <category> <stock>\n" );
+   printf( "Usage: ta_mysql -c <location> <user> <pass> <category (query)>\n" );
+   printf( "       ta_mysql -s <location> <user> <pass> <category (query)> <given category>\n" );
    printf( "       ta_mysql -d <location> <user> <pass> <category> <stock> <info>\n" );
    printf( "\n" );
    printf( "  -c  Display all supported categories\n" );
-   printf( "  -s  Display all symbols for a given category query\n" );
+   printf( "  -s  Display all symbols for a given category\n" );
    printf( "  -d  Query and display quotes data\n" );
    printf( "\n" );
    printf( "  Quotes output is \"Date,Open,High,Low,Close,Volume\"\n" );
    printf( "\n" );
    printf( "  Examples:\"\n" );
    printf( "    ta_mysql -c mysql://localhost/db guest \"\" \"SELECT * FROM cat\"\n" );
+   printf( "    ta_mysql -c mysql://localhost/db guest \"\" \"SELECT * FROM cat\" NL.EURONEXT.STOCKS\n" );
    printf( "    ta_mysql -d mysql://localhost/db guest \"\" \"SELECT * FROM cat\" MSFT \"SELECT ...\"\n" );
    printf( "\n" );
    printf( "  Online help: http://www.ta-lib.org\n" );
@@ -134,7 +135,9 @@ int print_categories( TA_UDBase *udb,
    unsigned int i;
    TA_StringTable *table;
 
-   dsParam.info = "";
+   /* info not needed for getting just categories, but the driver insists on it */
+   dsParam.info = "";  
+   dsParam.symbol = "XYZ";
    retCode = TA_AddDataSource( udb, &dsParam );
    if( retCode != TA_SUCCESS )
    {
@@ -161,12 +164,15 @@ int print_categories( TA_UDBase *udb,
 
 
 int print_symbols( TA_UDBase *udb,
-                   TA_AddDataSourceParam dsParam)
+                   TA_AddDataSourceParam dsParam,
+                   const char *category)
 {
    TA_RetCode retCode;
    unsigned int i;
    TA_StringTable *table = NULL;
 
+   /* info not needed for getting just categories, but the driver insists on it */
+   dsParam.info = "";  
    retCode = TA_AddDataSource( udb, &dsParam );
    if( retCode != TA_SUCCESS )
    {
@@ -174,7 +180,7 @@ int print_symbols( TA_UDBase *udb,
       return -1;
    }
 
-   //retCode = TA_SymbolTableAlloc( udb, category, &table );
+   retCode = TA_SymbolTableAlloc( udb, category, &table );
    if( retCode != TA_SUCCESS )
    {
       print_error( retCode );
@@ -203,8 +209,8 @@ int main( int argc, char *argv[] )
    int retValue;
    unsigned int i, stringSize;
 
-   char location[TA_SOURCELOCATION_MAX_LENGTH+1];
-   char info[TA_SOURCEINFO_MAX_LENGTH+1];
+   //char location[TA_SOURCELOCATION_MAX_LENGTH+1];
+   //char info[TA_SOURCEINFO_MAX_LENGTH+1];
    //char country[TA_CAT_COUNTRY_MAX_LENGTH+1];
    //char exchange[TA_CAT_EXCHANGE_MAX_LENGTH+1];
    //char type[TA_CAT_TYPE_MAX_LENGTH+1];
@@ -309,21 +315,13 @@ int main( int argc, char *argv[] )
       return -1;
    }
 
-   /* Copy location */
-   strncpy(location, argv[2], TA_SOURCELOCATION_MAX_LENGTH);
-   location[TA_SOURCELOCATION_MAX_LENGTH] = '\0';
-   
-   /* Copy location */
-   strncpy(category, argv[5], TA_CATEGORY_MAX_LENGTH);
-   category[TA_CATEGORY_MAX_LENGTH] = '\0';
-   
    memset( &dsParam, 0, sizeof( TA_AddDataSourceParam ) );
    dsParam.id = TA_MYSQL;
 
-   dsParam.location = location;
+   dsParam.location = argv[2];
    dsParam.username = argv[3];
    dsParam.password = argv[4];
-   dsParam.category = category;
+   dsParam.category = argv[5];
 
    /* Do 'theAction' after making an uppercase copy
     * of the symbol and category.
@@ -349,18 +347,13 @@ int main( int argc, char *argv[] )
        break;
 
    case DISPLAY_SYMBOLS:
-       stringSize = strlen(argv[2]);
-       if( stringSize > TA_CATEGORY_MAX_LENGTH )
-          stringSize = TA_CATEGORY_MAX_LENGTH;
-       for( i=0; i < stringSize; i++ )
-          category[i] = toupper(argv[2][i]);
-       category[stringSize] = '\0';
-
-       retValue = print_symbols(udb, dsParam);
+       retValue = print_symbols(udb, dsParam, argv[6]);
        break;
+
    case DISPLAY_CATEGORIES:
        retValue = print_categories(udb, dsParam);
        break;
+
    default:
        retValue = -1;
        break;
