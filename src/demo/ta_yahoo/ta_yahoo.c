@@ -57,15 +57,15 @@ static const CommandLineSwitch tableSwitch[] =
 void print_usage( char *str ) 
 {
    printf( "\n" );
-   printf( "ta_yahoo V%s - Fetch stock market data from Yahoo!\n", TA_GetVersionString() );
+   printf( "ta_yahoo V%s - Fetch market data from Yahoo!\n", TA_GetVersionString() );
    printf( "\n" );
    printf( "Usage: ta_yahoo -c\n" );
    printf( "       ta_yahoo -s <category>\n" );
-   printf( "       ta_yahoo -{c,s,d,u,i,z}{d,w,m,q,y} <category> <symbol>\n" );
-   printf( "       ta_yahoo -{c,s,d,u,i,z}{d,w,m,q,y} DIRECT=US <Yahoo! symbol>\n" );
+   printf( "       ta_yahoo -{d,u,i,z}{d,w,m,q,y} <category> <symbol>\n" );
+   printf( "       ta_yahoo -{d,u,i,z}{d,w,m,q,y} DIRECT=US <Yahoo! symbol>\n" );
    printf( "\n" );
-   printf( "  -c Display all supported categories\n" );
-   printf( "  -s Display all symbols for a given category\n" );
+   printf( "  -c Display all supported categories.\n" );
+   printf( "  -s Display all symbols for a given category.\n" );
    printf( "  -d Fetch split and dividend adjusted data.\n" );
    printf( "  -u Fetch non adjusted data.\n" );
    printf( "  -i Fetch dividend-only adjusted data.\n" );
@@ -75,15 +75,19 @@ void print_usage( char *str )
    printf( "\n" );
    printf( "  Specify \"DIRECT=US\" to use Yahoo! names directly with the US\n" );
    printf( "  web site of Yahoo! instead of the TA-Lib category/symbol index.\n" );
+   printf( "  Use double quote when symbol name contains special characters.\n" );
    printf( "\n" );
    printf( "  Stock output is \"Date,Open,High,Low,Close,Volume\"\n" );
    printf( "  Funds output is \"Date,Close\". Date are \"mm-dd-yyyy\"\n" );
+   printf( "\n" );
+   printf( "  For period greater than daily, volume is the daily volume average.\n" );
    printf( "\n" );
    printf( "  Examples: ta_yahoo -s  US.NASDAQ.FUND\n" );
    printf( "            ta_yahoo -dd US.NASDAQ.STOCK MSFT\n" );
    printf( "            ta_yahoo -ud US.NASDAQ.STOCK MSFT\n" );
    printf( "            ta_yahoo -zw US.NASDAQ.STOCK MSFT\n" );
    printf( "            ta_yahoo -dd DIRECT=US 2812.TW\n" );
+   printf( "            ta_yahoo -uy DIRECT=US \"^DJI\"\n" );
    printf( "\n" );
    printf( "  This utility may creates files \"y_xx.dat\" to speed\n" );
    printf( "  up subsequent remote access. These are automatically\n" );
@@ -92,7 +96,7 @@ void print_usage( char *str )
    printf( "  * Data cannot be resdistributed. You must respect\n" );
    printf( "  * Yahoo! terms of service (www.yahoo.com)\n" );
    printf( "\n" );
-   printf( "  Online help: http://www.ta-lib.org\n" );
+   printf( "  Online help: http://ta-lib.org\n" );
    printf( "\n" );
    printf( "Error: [%s]\n", str );
 }
@@ -348,18 +352,15 @@ int main( int argc, char *argv[] )
       }
    }
 
-   /* Trap case where the user prefer the "DIRECT" approach
-    * instead of the category/symbol index of TA-Lib.
-    */
-   {
-
-   }
    
    /* Identify country when needed. */
    switch( theAction )
    {
    case DISPLAY_HISTORIC_DATA:
    case DISPLAY_SYMBOLS:
+      /* Trap case where the user prefer the "DIRECT" approach
+       * instead of the category/symbol index of TA-Lib.
+       */
       if( strncmp( &argv[2][0], "DIRECT=", 7 ) == 0 )
       {
          if( strlen(&argv[2][0]) != 9 )
