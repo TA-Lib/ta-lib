@@ -71,6 +71,15 @@ TA_RetCode TA_HistoryAllocCopyInternal( const TA_History *history,
 typedef struct
 {
    TA_UDBasePriv *privUDB;
+
+   /* Ptr on the date that must be freed. */
+   const void *open;
+   const void *high;
+   const void *low;
+   const void *close;
+   const void *volume;
+   const void *openInterest;
+   const void *timestamp;
 } TA_HistoryHiddenData;
 
 #endif
