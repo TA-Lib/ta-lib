@@ -197,8 +197,16 @@ TA_RetCode TA_YAHOO_OpenSource( TA_Libc *libHandle,
       countryId = TA_CountryAbbrevToId(locationPtr);
       switch( countryId )
       {
-      case TA_Country_ID_US:   
-      case TA_Country_ID_CA:
+      case TA_Country_ID_US: /* United States */
+      case TA_Country_ID_CA: /* Canada */
+      case TA_Country_ID_UK: /* United Kingdom */
+      case TA_Country_ID_DE: /* Germany */
+      case TA_Country_ID_DK: /* Denmark */
+      case TA_Country_ID_ES: /* Spain */
+      case TA_Country_ID_FR: /* France */
+      case TA_Country_ID_IT: /* Italy */
+      case TA_Country_ID_SE: /* Sweden */
+      case TA_Country_ID_NO: /* Norway */
          /* These country are currently supported. */
          break;
       default:
