@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,17 +36,18 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  ST       Steve Thames (steve@softlife.com)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  112400 MF   First version.
- *  052403 MF   Many modifications related to generate code that works
- *              with the windows .NET Managed C++ compiler.
- *  092103 MF   Now touch files only when there is really a change.
- *  101303 MF   Remove underscore from names.
+ *  112400 MF    First version.
+ *  052403 MF    Many modifications related to generate code that works
+ *               with the windows .NET Managed C++ compiler.
+ *  092103 MF    Now touch files only when there is really a change.
+ *  101303 MF    Remove underscore from names.
+ *  020804 MF,ST Fixes to make it work on Linux (Bug#873879).
  */
 
 /* Description:
@@ -69,6 +70,7 @@
 #include "ta_common.h"
 #include "ta_abstract.h"
 #include "ta_system.h"
+#include "ta_memory.h"
 #include "sfl.h"
 
 #define BUFFER_SIZE 8192
@@ -107,10 +109,15 @@ FileHandle *gOutFunc_C;        /* For "ta_x.c" where 'x' is TA function name. */
 FileHandle *gOutRetCode_C;     /* For "ta_retcode.c" */
 FileHandle *gOutRetCode_CSV;   /* For "ta_retcode.csv" */
 FileHandle *gOutFuncList_TXT;  /* For "func_list.txt" */
-FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
 FileHandle *gOutDefs_H;        /* For "ta_defs.h" */
-FileHandle *gOutProjFile;      /* For .NET project file */
 FileHandle *gOutDotNet_H;      /* For .NET interface file */
+
+#ifdef _MSVC
+FileHandle *gOutProjFile;      /* For .NET project file */
+FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
+
+static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
+#endif
 
 typedef void (*TA_ForEachGroup)( const char *groupName,
                                  unsigned int index,
@@ -146,7 +153,6 @@ static void printFunc( FILE *out,
                        unsigned int inputIsSinglePrecision /* Boolean */
                       );
 
-static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
 static void printCallFrame  ( FILE *out, const TA_FuncInfo *funcInfo );
 static void printFrameHeader( FILE *out, const TA_FuncInfo *funcInfo );
 
@@ -212,7 +218,8 @@ char gToOpen[BUFFER_SIZE];
 char gTempBuf[BUFFER_SIZE];
 char gTempBuf2[BUFFER_SIZE];
 char gTempBuf3[BUFFER_SIZE];
-char gTempDoubleToStr[50];
+char gTempBufForPrint[BUFFER_SIZE];
+char gTempDoubleToStr[200];
 
 /* Because Microsoft and Borland does not display
  * the value of a double in the same way (%e), this
@@ -235,17 +242,23 @@ int genPrefix = 0;
 void print( FILE *out, const char *text, ... )
 {
    va_list arglist;
-   char buff[1024];
-   memset(buff,0,sizeof(buff));
+   memset(gTempBufForPrint,0,sizeof(gTempBufForPrint));
 
    va_start(arglist,text);
-   vsprintf(buff,text,arglist);
+   vsprintf(gTempBufForPrint,text,arglist);
    va_end(arglist);
 
+   if( strlen(gTempBufForPrint) >= BUFFER_SIZE-strlen("/* Generated */ ") )
+   {
+      printf( "Lines length exceed internal buffers (%d,%d)\n",
+              strlen(gTempBufForPrint),
+              BUFFER_SIZE-strlen("/* Generated */ ") );
+      exit(-1);
+   }
    if( genPrefix )
-      fprintf( out, "/* Generated */ %s", buff );
+      fprintf( out, "/* Generated */ %s", gTempBufForPrint );
    else
-      fprintf( out, "%s", buff );
+      fprintf( out, "%s", gTempBufForPrint );
 }
 
 static void printIndent( FILE *out, unsigned int indent )
@@ -320,7 +333,11 @@ int main(int argc, char* argv[])
 
    retValue = genCode( argc, argv );
 
-   TA_Shutdown();
+   retCode = TA_Shutdown();
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Shutdown failed (%d)\n", retCode );
+   }
 
    return retValue;
 }
@@ -388,7 +405,13 @@ static  FileHandle *fileOpen( const char *fileToOpen,
       return (FileHandle *)NULL;
    }
 
-   retValue = malloc( sizeof(FileHandle) );
+   retValue = TA_Malloc( sizeof(FileHandle) );
+   if( !retValue )
+   {
+      printf( "Memmory alloc error line %d", __LINE__ );
+      return (FileHandle *)NULL;
+   }
+
    memset( retValue, 0, sizeof(FileHandle) );
 
    retValue->flags = flags;
@@ -399,13 +422,13 @@ static  FileHandle *fileOpen( const char *fileToOpen,
    /* First let's try to open the file. Might fail when
     * for writing but that is ok. (the file might not exist).
     */
-
    if( flags&FILE_READ )
    {      
       retValue->file = fopen( gToOpen, "r" );
       if( retValue->file == NULL )
       {
-         free( retValue );
+         memset( retValue, 0, sizeof(FileHandle) );
+         TA_Free( retValue );
          return (FileHandle *)NULL;
       }
    }
@@ -414,7 +437,8 @@ static  FileHandle *fileOpen( const char *fileToOpen,
       retValue->file = fopen( gToOpen, "w" );
       if( retValue->file == NULL )
       {
-         free( retValue );
+         memset( retValue, 0, sizeof(FileHandle) );
+         TA_Free( retValue );
          return (FileHandle *)NULL;
       }
    }
@@ -437,7 +461,8 @@ static  FileHandle *fileOpen( const char *fileToOpen,
          if( !retValue->file )
          {
             fclose( retValue->fileTarget );
-            free( retValue );
+            memset( retValue, 0, sizeof(FileHandle) );
+            TA_Free( retValue );
             return (FileHandle *)NULL;
          }
        }
@@ -450,8 +475,8 @@ static  FileHandle *fileOpen( const char *fileToOpen,
 
          if( retValue->file == NULL )
          {
-            if(retValue->fileTarget)   fclose( retValue->fileTarget );
-            free( retValue );
+            memset( retValue, 0, sizeof(FileHandle) );
+            TA_Free( retValue );
             return (FileHandle *)NULL;
          }
       }
@@ -469,7 +494,8 @@ static  FileHandle *fileOpen( const char *fileToOpen,
             if(retValue->fileTarget)   fclose( retValue->fileTarget );
             if(retValue->file)         fclose( retValue->file );
             if(retValue->templateFile) fclose( retValue->templateFile );
-            free( retValue );
+            memset( retValue, 0, sizeof(FileHandle) );
+            TA_Free( retValue );
             printf( "\nCannot open template [%s]\n", gToOpen );
             return (FileHandle *)NULL;
          }
@@ -480,8 +506,9 @@ static  FileHandle *fileOpen( const char *fileToOpen,
             if(retValue->fileTarget)   fclose( retValue->fileTarget );
             if(retValue->file)         fclose( retValue->file );
             if(retValue->templateFile) fclose( retValue->templateFile );
-            free( retValue );
-            retValue = NULL;
+            memset( retValue, 0, sizeof(FileHandle) );
+            TA_Free( retValue );
+            return (FileHandle *)NULL;
          }
       }
    }
@@ -491,8 +518,10 @@ static  FileHandle *fileOpen( const char *fileToOpen,
 
 static void fileClose( FileHandle *handle )
 {
+   if( !handle ) return;
+
    /* Write remaining template info. */
-   if( handle->templateFile )
+   if( handle->templateFile && handle->file )
    {
       while( fgets( gTempBuf, BUFFER_SIZE, handle->templateFile ) != NULL )
       {
@@ -513,8 +542,6 @@ static void fileClose( FileHandle *handle )
             fprintf( handle->file, "\n" );
 	     }
       #endif
-
-      fclose( handle->templateFile );
    }
 
    if(handle->fileTarget)   fclose( handle->fileTarget );
@@ -531,8 +558,9 @@ static void fileClose( FileHandle *handle )
 
       file_delete( handle->f2_name );      
    }
-   
-   free( handle );
+
+   memset( handle, 0, sizeof(FileHandle) );   
+   TA_Free( handle );
 }
 
 static void fileDelete( const char *fileToDelete )
@@ -550,28 +578,30 @@ static int genCode(int argc, char* argv[])
    (void)argc; /* Get ride of compiler warning */
    (void)argv; /* Get ride of compiler warning */
 
-   /* Create .NET project files template */
-   #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.vcproj"
-   #define FILE_NET_PROJ_TMP "..\\temp\\dotnetproj.tmp"
-   gOutProjFile = fileOpen( FILE_NET_PROJ, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
-   if( gOutProjFile == NULL )   
-   {
-      printf( "\nCannot access [%s]\n", gToOpen );
-      return -1;
-   }
-   tempFile = fileOpen( FILE_NET_PROJ_TMP, NULL, FILE_WRITE|WRITE_ALWAYS );
-   if( tempFile == NULL )
-   {
-      printf( "Cannot create temporary .NET project file!\n" );
-      return -1;
-   }
-   if( createProjTemplate( gOutProjFile, tempFile ) != 0 )
-   {
-      printf( "Failed to parse and write the temporary .NET project file!\n" );
-      return -1;
-   }
-   fileClose(gOutProjFile);
-   fileClose(tempFile);
+   #ifdef _MSVC
+      /* Create .NET project files template */
+      #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.vcproj"
+      #define FILE_NET_PROJ_TMP "..\\temp\\dotnetproj.tmp"
+      gOutProjFile = fileOpen( FILE_NET_PROJ, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
+      if( gOutProjFile == NULL )   
+      {
+         printf( "\nCannot access [%s]\n", gToOpen );
+         return -1;
+      }
+      tempFile = fileOpen( FILE_NET_PROJ_TMP, NULL, FILE_WRITE|WRITE_ALWAYS );
+      if( tempFile == NULL )
+      {
+         printf( "Cannot create temporary .NET project file!\n" );
+         return -1;
+      }
+      if( createProjTemplate( gOutProjFile, tempFile ) != 0 )
+      {
+         printf( "Failed to parse and write the temporary .NET project file!\n" );
+         return -1;
+      }
+      fileClose(gOutProjFile);
+      fileClose(tempFile);
+   #endif
 
    /* Create the .NET interface file template */
    #define FILE_NET_HEADER     "..\\..\\dotnet\\src\\Core\\Core.h"
@@ -648,24 +678,26 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
-   /* Create "excel_glue.c" */
-   gOutExcelGlue_C = fileOpen( "..\\src\\ta_abstract\\excel_glue.c",
-                           "..\\src\\ta_abstract\\templates\\excel_glue.c.template",
-                           FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+   #ifdef _MSVC
+      /* Create "excel_glue.c" */
+      gOutExcelGlue_C = fileOpen( "..\\src\\ta_abstract\\excel_glue.c",
+                              "..\\src\\ta_abstract\\templates\\excel_glue.c.template",
+                              FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
-   if( gOutExcelGlue_C == NULL )
-   {
-      printf( "\nCannot access [%s]\n", gToOpen );
-      return -1;
-   }
+      if( gOutExcelGlue_C == NULL )
+      {
+         printf( "\nCannot access [%s]\n", gToOpen );
+         return -1;
+      }
 
-   /* Re-open the .NET project template. */
-   gOutProjFile = fileOpen( FILE_NET_PROJ, FILE_NET_PROJ_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
-   if( gOutProjFile == NULL )
-   {
-      printf( "Cannot update [%s]\n", FILE_NET_PROJ );
-      return -1;
-   }
+      /* Re-open the .NET project template. */
+      gOutProjFile = fileOpen( FILE_NET_PROJ, FILE_NET_PROJ_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+      if( gOutProjFile == NULL )
+      {
+         printf( "Cannot update [%s]\n", FILE_NET_PROJ );
+         return -1;
+      }
+   #endif
 
    /* Re-open the .NET interface template. */
    gOutDotNet_H = fileOpen( FILE_NET_HEADER, FILE_NET_HEADER_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
@@ -680,12 +712,15 @@ static int genCode(int argc, char* argv[])
 
    /* Close all files who were updated with the list of TA functions. */
    fileClose( gOutDotNet_H );
-   fileClose( gOutProjFile );
    fileClose( gOutFuncList_TXT );
    fileClose( gOutFunc_H );
    fileClose( gOutFrame_H );
    fileClose( gOutFrame_C );
-   fileClose( gOutExcelGlue_C );
+
+   #ifdef _MSVC
+      fileClose( gOutProjFile );
+      fileClose( gOutExcelGlue_C );
+   #endif
 
    if( retCode != TA_SUCCESS )
    {
@@ -732,7 +767,9 @@ static int genCode(int argc, char* argv[])
    doDefsFile();
 
    /* Remove some temporary files */
-   fileDelete( FILE_NET_PROJ_TMP   );
+   #ifdef _MSVC   
+      fileDelete( FILE_NET_PROJ_TMP   );
+   #endif
    fileDelete( FILE_NET_HEADER_TMP );
 
    printf( "\n** Update completed with success **\n");
@@ -761,7 +798,7 @@ static unsigned int forEachGroup( TA_ForEachGroup forEachGroupFunc,
                         i==(table->size-1)? 1:0 );
    }
    
-   retCode = TA_GroupTableFree ( table );
+   retCode = TA_GroupTableFree( table );
    if( retCode != TA_SUCCESS )
       return 0;
 
@@ -811,35 +848,39 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    /* Generate the corresponding lookback function prototype. */
    printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0 );
 
-   /* Generate the excel glue code */
-   printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
-
    /* Create the frame definition (ta_frame.c) and declaration (ta_frame.h) */
    genPrefix = 1;
    printFrameHeader( gOutFrame_H->file, funcInfo );
    fprintf( gOutFrame_H->file, ";\n\n" );
    printCallFrame( gOutFrame_C->file, funcInfo );
 
-   /* Add the entry in the .NET project file */
-   fprintf( gOutProjFile->file, "				<File\n" );
-   fprintf( gOutProjFile->file, "					RelativePath=\"..\\..\\..\\c\\src\\ta_func\\ta_%s.c\">\n", funcInfo->name );
-   fprintf( gOutProjFile->file, "					<FileConfiguration\n" );
-   fprintf( gOutProjFile->file, "						Name=\"Debug|Win32\">\n" );
-   fprintf( gOutProjFile->file, "						<Tool\n" );
-   fprintf( gOutProjFile->file, "							Name=\"VCCLCompilerTool\"\n" );
-   fprintf( gOutProjFile->file, "							AdditionalIncludeDirectories=\"\"\n" );
-   fprintf( gOutProjFile->file, "							UsePrecompiledHeader=\"0\"\n" );
-   fprintf( gOutProjFile->file, "							CompileAs=\"2\"/>\n" );
-   fprintf( gOutProjFile->file, "					</FileConfiguration>\n" );
-   fprintf( gOutProjFile->file, "					<FileConfiguration\n" );
-   fprintf( gOutProjFile->file, "						Name=\"Release|Win32\">\n" );
-   fprintf( gOutProjFile->file, "						<Tool\n" );
-   fprintf( gOutProjFile->file, "							Name=\"VCCLCompilerTool\"\n" );
-   fprintf( gOutProjFile->file, "							AdditionalIncludeDirectories=\"\"\n" );
-   fprintf( gOutProjFile->file, "							UsePrecompiledHeader=\"0\"\n" );
-   fprintf( gOutProjFile->file, "							CompileAs=\"2\"/>\n" );
-   fprintf( gOutProjFile->file, "					</FileConfiguration>\n" );
-   fprintf( gOutProjFile->file, "				</File>\n" );
+   
+   #ifdef _MSVC
+      /* Add the entry in the .NET project file */
+      fprintf( gOutProjFile->file, "				<File\n" );
+      fprintf( gOutProjFile->file, "					RelativePath=\"..\\..\\..\\c\\src\\ta_func\\ta_%s.c\">\n", funcInfo->name );
+      fprintf( gOutProjFile->file, "					<FileConfiguration\n" );
+      fprintf( gOutProjFile->file, "						Name=\"Debug|Win32\">\n" );
+      fprintf( gOutProjFile->file, "						<Tool\n" );
+      fprintf( gOutProjFile->file, "							Name=\"VCCLCompilerTool\"\n" );
+      fprintf( gOutProjFile->file, "							AdditionalIncludeDirectories=\"\"\n" );
+      fprintf( gOutProjFile->file, "							UsePrecompiledHeader=\"0\"\n" );
+      fprintf( gOutProjFile->file, "							CompileAs=\"2\"/>\n" );
+      fprintf( gOutProjFile->file, "					</FileConfiguration>\n" );
+      fprintf( gOutProjFile->file, "					<FileConfiguration\n" );
+      fprintf( gOutProjFile->file, "						Name=\"Release|Win32\">\n" );
+      fprintf( gOutProjFile->file, "						<Tool\n" );
+      fprintf( gOutProjFile->file, "							Name=\"VCCLCompilerTool\"\n" );
+      fprintf( gOutProjFile->file, "							AdditionalIncludeDirectories=\"\"\n" );
+      fprintf( gOutProjFile->file, "							UsePrecompiledHeader=\"0\"\n" );
+      fprintf( gOutProjFile->file, "							CompileAs=\"2\"/>\n" );
+      fprintf( gOutProjFile->file, "					</FileConfiguration>\n" );
+      fprintf( gOutProjFile->file, "				</File>\n" );
+
+      /* Generate the excel glue code */
+      printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
+
+   #endif
 
    /* Generate the functions declaration for the .NET interface. */
    printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0 );
@@ -1736,7 +1777,6 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
       gOutFunc_C = fileOpen( TEMPLATE_PASS2, TEMPLATE_PASS1, FILE_WRITE|WRITE_ALWAYS );
    else
       gOutFunc_C = fileOpen( TEMPLATE_PASS2, TEMPLATE_DEFAULT, FILE_WRITE|WRITE_ALWAYS );
-      
 
    if( gOutFunc_C == NULL )
    {
@@ -1762,15 +1802,18 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    }
 
    /* Extract the TA function code in a temporary file */
-   logicIn = fopen( localBuf1, "r" );
+   init_gToOpen( localBuf1, NULL );
+   logicIn = fopen( gToOpen, "r" );   
    if( !logicIn )
    {
       printf( "Cannot open [%s] for extracting TA logic\n", localBuf1 );
       return;
    }
-   logicTmp = fopen( LOGIC_TEMP, "w" );
+   init_gToOpen( LOGIC_TEMP, NULL );
+   logicTmp = fopen( gToOpen, "w" );
    if( !logicTmp )
    {
+      fclose(logicIn);
       printf( "Cannot open logic.tmp\n" );
       return;
    }
@@ -1805,9 +1848,11 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    print( gOutFunc_C->file, "#endif\n" );
 
    /* Insert the internal logic of the function */
-   logicTmp = fopen( LOGIC_TEMP, "r" );
+   init_gToOpen( LOGIC_TEMP, NULL );
+   logicTmp = fopen( gToOpen, "r" );
    if( !logicTmp )
    {
+      fileClose( gOutFunc_C );
       printf( "Cannot read open logic.tmp\n" );
       return;
    }
@@ -1880,6 +1925,7 @@ static void doDefsFile( void )
    #undef FILE_TA_DEFS_TMP
 }
 
+#ifdef _MSVC
 static int createProjTemplate( FileHandle *in, FileHandle *out )
 {
    FILE *inFile;
@@ -1937,6 +1983,7 @@ static int createProjTemplate( FileHandle *in, FileHandle *out )
 
    return 0;
 }
+#endif
 
 static int createTemplate( FileHandle *in, FileHandle *out )
 {
@@ -2507,6 +2554,7 @@ static int gen_retcode( void )
 gen_retcode_exit:
    fileClose( inHdr );
    fileClose( gOutRetCode_C );
+   fileClose( gOutRetCode_CSV );
 
    return retValue; /* Success. */
 }
@@ -2553,6 +2601,7 @@ const char *doubleToStr( double value )
    return gTempDoubleToStr;
 }
 
+#ifdef _MSVC
 static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo )
 {
    /*fprintf( out, "#include \"ta_%s.c\"\n", funcInfo->name );
@@ -2600,6 +2649,7 @@ static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo )
            nbParam,
            funcInfo->name );
 }
+#endif
 
 static void addFuncEnumeration( FILE *out )
 {
@@ -2750,11 +2800,13 @@ static int copyFile( const char *src, const char *dest )
    FILE *in;
    FILE *out;
 
-   in = fopen( src, "rb" );
+   init_gToOpen( src, NULL );
+   in = fopen( gToOpen, "rb" );   
    if( !in )
       return 0;
 
-   out = fopen( dest, "wb" );
+   init_gToOpen( dest, NULL );
+   out = fopen( gToOpen, "wb" );
    if( !out )
    {
       fclose( in );
@@ -2779,11 +2831,14 @@ static int areFileSame( const char *file1, const char *file2 )
    FILE *f1;
    FILE *f2;
 
-   f1 = fopen( file1, "r" );
+
+   init_gToOpen( file1, NULL );
+   f1 = fopen( gToOpen, "r" );
    if( !f1 )
       return 0;
 
-   f2 = fopen( file2, "r" );
+   init_gToOpen( file2, NULL );
+   f2 = fopen( gToOpen, "r" );
    if( !f2 )
    {
       fclose( f1 );
