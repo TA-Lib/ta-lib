@@ -72,13 +72,32 @@ typedef struct
    unsigned int nbElementToCopy;
 } TA_MergeOp;
 
+/* Structure to store split/value adjustments.
+ *
+ * A split adjustement affects both the price and
+ * the volume in the same proportion.
+ *
+ * A value  adjustment affects only the price. Examples
+ * are dividend, disbursment etc...
+ */
 typedef struct
 {
-  /* This structure is the private version for the TA_ParamForAddData type. */
+   TA_Timestamp timestamp;
+   double factor;
+} TA_SplitAdjust;
 
+typedef struct
+{
+   TA_Timestamp timestamp;
+   double amount;
+} TA_ValueAdjust;
+
+
+/* This structure is the private version for the TA_ParamForAddData type. */
+typedef struct
+{
   /* Parameter needed to be passed to the thread for parallel execution. */
   TA_BuilderSupport   *parent;
-  unsigned int         index;
   TA_DataSourceHandle *sourceHandle;
   TA_CategoryHandle   *categoryHandle;
   TA_SymbolHandle     *symbolHandle;
@@ -124,6 +143,7 @@ typedef struct
 
   TA_List *listOfDataBlock; /* Lists of TA_DataBlock. */
 
+
   /* We keep track of the extremes in the listOfDataBlock. */
   const TA_Timestamp *lowestTimestamp;
   const TA_Timestamp *highestTimestamp;
@@ -135,8 +155,21 @@ typedef struct
   const TA_Timestamp *lowestTimestampAddedSinceLastCall;
   const TA_Timestamp *highestTimestampAddedSinceLastCall; 
 
-  /* Contains some further information about the datasource. */
-  TA_DataSourceParameters param;
+  /* Provides information about which feature the
+   * datasource can support.
+   */
+  TA_DataSourceParameters supportedParameter;
+
+  /* Parameter that were used when this data
+   * source was added.
+   */
+  const TA_AddDataSourceParamPriv *addDataSourceParamPriv;
+
+  /* List ist of TA_SplitAdjust structures. */
+  TA_List *listOfSplitAdjust;
+
+  /* List ist of TA_ValueAdjust structures. */
+  TA_List *listOfValueAdjust;
 
   /* The following variables are used only while doing the merging with
    * the other data sources. They allow to keep track of the next
