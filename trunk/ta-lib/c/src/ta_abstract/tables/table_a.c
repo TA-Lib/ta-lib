@@ -14,7 +14,11 @@
  *          Consider the ones already defined in "ta_def_ui.c".
  ***************************************************************************/
 
-/* None */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_AroonUp =
+                               { TA_Output_Real, "outAroonDown", TA_OUT_DASH_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_AroonDown =
+                                { TA_Output_Real, "outAroonUp", TA_OUT_LINE };
 
 /****************************************************************************
  * Step 2 - Define here the interface to your TA functions with
@@ -76,33 +80,6 @@ DEF_FUNCTION( ADXR,                         /* name */
              );
 /* ADXR END */
 
-/* ATR BEGIN */
-static const TA_InputParameterInfo    *TA_ATR_Inputs[]    =
-{
-  &TA_DEF_UI_Input_Price_HLC,
-  NULL
-};
-
-static const TA_OutputParameterInfo   *TA_ATR_Outputs[]   =
-{
-  &TA_DEF_UI_Output_Real,
-  NULL
-};
-
-static const TA_OptInputParameterInfo *TA_ATR_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_14,
-  NULL
-};
-
-DEF_FUNCTION( ATR,                        /* name */
-              TA_GroupId_VolatilityIndicators, /* groupId */
-              "Average True Range",       /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER,       /* flags */
-              NULL                        /* analysis function */
-             );
-/* ATR END */
-
 /* APO BEGIN */
 static const TA_InputParameterInfo *TA_APO_Inputs[] =
 {
@@ -131,6 +108,92 @@ DEF_FUNCTION( APO,                         /* name */
               NULL                         /* analysis function */
              );
 /* APO END */
+
+/* AROON BEGIN */
+static const TA_InputParameterInfo    *TA_AROON_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_AROON_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_AroonUp,
+  &TA_DEF_UI_Output_Real_AroonDown,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_AROON_OptInputs[] = 
+{ 
+  &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( AROON,                          /* name */
+              TA_GroupId_MomentumIndicators,  /* groupId */
+              "Aroon",                        /* hint */
+              NULL,                           /* helpFile */
+              0,                              /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* AROON END */
+
+/* AROONOSC BEGIN */
+static const TA_InputParameterInfo    *TA_AROONOSC_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_AROONOSC_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_AROONOSC_OptInputs[] = 
+{ 
+  &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( AROONOSC,                       /* name */
+              TA_GroupId_MomentumIndicators,  /* groupId */
+              "Aroon Oscillator",             /* hint */
+              NULL,                           /* helpFile */
+              0,                              /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* AROONOSC END */
+
+/* ATR BEGIN */
+static const TA_InputParameterInfo    *TA_ATR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ATR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ATR_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( ATR,                        /* name */
+              TA_GroupId_VolatilityIndicators, /* groupId */
+              "Average True Range",       /* hint */
+              NULL,                       /* helpFile */
+              TA_FUNC_FLG_UNST_PER,       /* flags */
+              NULL                        /* analysis function */
+             );
+/* ATR END */
 
 /* AVGPRICE BEGIN */
 static const TA_InputParameterInfo    *TA_AVGPRICE_Inputs[]    =
@@ -165,6 +228,8 @@ const TA_FuncDef *TA_DEF_TableA[] =
    ADD_TO_TABLE(ADX),
    ADD_TO_TABLE(ADXR),
    ADD_TO_TABLE(APO),
+   ADD_TO_TABLE(AROON),
+   ADD_TO_TABLE(AROONOSC),
    ADD_TO_TABLE(ATR),
    ADD_TO_TABLE(AVGPRICE),
    NULL

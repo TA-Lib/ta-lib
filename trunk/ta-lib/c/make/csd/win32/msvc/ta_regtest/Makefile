@@ -34,6 +34,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_minmax.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_mom.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c \
+		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_period.c \
@@ -57,6 +58,7 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_regtest.obj \
 		..\..\..\..\..\temp\csd\test_minmax.obj \
 		..\..\..\..\..\temp\csd\test_mom.obj \
 		..\..\..\..\..\temp\csd\test_per_ema.obj \
+		..\..\..\..\..\temp\csd\test_per_hl.obj \
 		..\..\..\..\..\temp\csd\test_per_hlc.obj \
 		..\..\..\..\..\temp\csd\test_per_hlcv.obj \
 		..\..\..\..\..\temp\csd\test_period.obj \
@@ -125,6 +127,7 @@ clean:
 	-del ..\..\..\..\..\temp\csd\test_minmax.obj
 	-del ..\..\..\..\..\temp\csd\test_mom.obj
 	-del ..\..\..\..\..\temp\csd\test_per_ema.obj
+	-del ..\..\..\..\..\temp\csd\test_per_hl.obj
 	-del ..\..\..\..\..\temp\csd\test_per_hlc.obj
 	-del ..\..\..\..\..\temp\csd\test_per_hlcv.obj
 	-del ..\..\..\..\..\temp\csd\test_period.obj
@@ -188,6 +191,9 @@ clean:
 
 ..\..\..\..\..\temp\csd\test_per_ema.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\test_per_ema.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c
+
+..\..\..\..\..\temp\csd\test_per_hl.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\test_per_hl.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c
 
 ..\..\..\..\..\temp\csd\test_per_hlc.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\test_per_hlc.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c

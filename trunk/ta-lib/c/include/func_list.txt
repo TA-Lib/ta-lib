@@ -17,6 +17,8 @@ TRANGE      True Range
 ADX         Average Directional Movement Index
 ADXR        Average Directional Movement Index Rating
 APO         Absolute Price Oscillator
+AROON       Aroon
+AROONOSC    Aroon Oscillator
 CCI         Commodity Channel Index
 DX          Directional Movement Index
 MACD        Moving Average Convergence/Divergence

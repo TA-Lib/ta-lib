@@ -236,6 +236,14 @@ SOURCE=..\..\..\..\src\ta_func\ta_APO.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_AROON.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_AROONOSC.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_ATR.c
 # End Source File
 # Begin Source File

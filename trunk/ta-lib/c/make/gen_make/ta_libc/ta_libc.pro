@@ -128,6 +128,8 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_ADX.c \
           ../../../../../src/ta_func/ta_ADXR.c \
           ../../../../../src/ta_func/ta_APO.c \
+          ../../../../../src/ta_func/ta_AROON.c \
+          ../../../../../src/ta_func/ta_AROONOSC.c \
           ../../../../../src/ta_func/ta_CCI.c \
           ../../../../../src/ta_func/ta_DX.c \
           ../../../../../src/ta_func/ta_MACD.c \

@@ -134,6 +134,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_ADX.c \
 		..\..\..\..\..\src\ta_func\ta_ADXR.c \
 		..\..\..\..\..\src\ta_func\ta_APO.c \
+		..\..\..\..\..\src\ta_func\ta_AROON.c \
+		..\..\..\..\..\src\ta_func\ta_AROONOSC.c \
 		..\..\..\..\..\src\ta_func\ta_CCI.c \
 		..\..\..\..\..\src\ta_func\ta_DX.c \
 		..\..\..\..\..\src\ta_func\ta_MACD.c \
@@ -276,6 +278,8 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\ta_ADX.obj \
 		..\..\..\..\..\temp\cmd\ta_ADXR.obj \
 		..\..\..\..\..\temp\cmd\ta_APO.obj \
+		..\..\..\..\..\temp\cmd\ta_AROON.obj \
+		..\..\..\..\..\temp\cmd\ta_AROONOSC.obj \
 		..\..\..\..\..\temp\cmd\ta_CCI.obj \
 		..\..\..\..\..\temp\cmd\ta_DX.obj \
 		..\..\..\..\..\temp\cmd\ta_MACD.obj \
@@ -450,6 +454,8 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmd\ta_ADX.obj \
 +..\..\..\..\..\temp\cmd\ta_ADXR.obj \
 +..\..\..\..\..\temp\cmd\ta_APO.obj \
++..\..\..\..\..\temp\cmd\ta_AROON.obj \
++..\..\..\..\..\temp\cmd\ta_AROONOSC.obj \
 +..\..\..\..\..\temp\cmd\ta_CCI.obj \
 +..\..\..\..\..\temp\cmd\ta_DX.obj \
 +..\..\..\..\..\temp\cmd\ta_MACD.obj \
@@ -606,6 +612,8 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_ADX.obj
 	-del ..\..\..\..\..\temp\cmd\ta_ADXR.obj
 	-del ..\..\..\..\..\temp\cmd\ta_APO.obj
+	-del ..\..\..\..\..\temp\cmd\ta_AROON.obj
+	-del ..\..\..\..\..\temp\cmd\ta_AROONOSC.obj
 	-del ..\..\..\..\..\temp\cmd\ta_CCI.obj
 	-del ..\..\..\..\..\temp\cmd\ta_DX.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MACD.obj
@@ -973,6 +981,12 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_APO.obj: ..\..\..\..\..\src\ta_func\ta_APO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_APO.obj ..\..\..\..\..\src\ta_func\ta_APO.c
+
+..\..\..\..\..\temp\cmd\ta_AROON.obj: ..\..\..\..\..\src\ta_func\ta_AROON.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_AROON.obj ..\..\..\..\..\src\ta_func\ta_AROON.c
+
+..\..\..\..\..\temp\cmd\ta_AROONOSC.obj: ..\..\..\..\..\src\ta_func\ta_AROONOSC.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_AROONOSC.obj ..\..\..\..\..\src\ta_func\ta_AROONOSC.c
 
 ..\..\..\..\..\temp\cmd\ta_CCI.obj: ..\..\..\..\..\src\ta_func\ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CCI.obj ..\..\..\..\..\src\ta_func\ta_CCI.c

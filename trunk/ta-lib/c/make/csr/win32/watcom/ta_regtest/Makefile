@@ -33,6 +33,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_minmax.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_mom.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c &
+		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c &
 		..\..\..\..\..\src\tools\ta_regtest\test_period.c &
@@ -56,6 +57,7 @@ OBJECTS =	..\..\..\..\..\temp\csr\ta_regtest.obj &
 		..\..\..\..\..\temp\csr\test_minmax.obj &
 		..\..\..\..\..\temp\csr\test_mom.obj &
 		..\..\..\..\..\temp\csr\test_per_ema.obj &
+		..\..\..\..\..\temp\csr\test_per_hl.obj &
 		..\..\..\..\..\temp\csr\test_per_hlc.obj &
 		..\..\..\..\..\temp\csr\test_per_hlcv.obj &
 		..\..\..\..\..\temp\csr\test_period.obj &
@@ -81,7 +83,7 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS) $(OBJMOC) 
 	@%create $(TMPLIST)
 	@%append $(TMPLIST) NAME ta_regtest
-	@%append $(TMPLIST) FIL ..\..\..\..\..\temp\csr\ta_regtest.obj,..\..\..\..\..\temp\csr\test_ascii.obj,..\..\..\..\..\temp\csr\test_internals.obj,..\..\..\..\..\temp\csr\test_adx.obj,..\..\..\..\..\temp\csr\test_bbands.obj,..\..\..\..\..\temp\csr\test_ma.obj,..\..\..\..\..\temp\csr\test_macd.obj,..\..\..\..\..\temp\csr\test_merge.obj,..\..\..\..\..\temp\csr\test_minmax.obj,..\..\..\..\..\temp\csr\test_mom.obj,..\..\..\..\..\temp\csr\test_per_ema.obj,..\..\..\..\..\temp\csr\test_per_hlc.obj,..\..\..\..\..\temp\csr\test_per_hlcv.obj,..\..\..\..\..\temp\csr\test_period.obj,..\..\..\..\..\temp\csr\test_pm.obj,..\..\..\..\..\temp\csr\test_po.obj,..\..\..\..\..\temp\csr\test_rsi.obj,..\..\..\..\..\temp\csr\test_sar.obj,..\..\..\..\..\temp\csr\test_stddev.obj,..\..\..\..\..\temp\csr\test_stoch.obj,..\..\..\..\..\temp\csr\test_trange.obj,..\..\..\..\..\temp\csr\test_util.obj,..\..\..\..\..\temp\csr\test_yahoo.obj
+	@%append $(TMPLIST) FIL ..\..\..\..\..\temp\csr\ta_regtest.obj,..\..\..\..\..\temp\csr\test_ascii.obj,..\..\..\..\..\temp\csr\test_internals.obj,..\..\..\..\..\temp\csr\test_adx.obj,..\..\..\..\..\temp\csr\test_bbands.obj,..\..\..\..\..\temp\csr\test_ma.obj,..\..\..\..\..\temp\csr\test_macd.obj,..\..\..\..\..\temp\csr\test_merge.obj,..\..\..\..\..\temp\csr\test_minmax.obj,..\..\..\..\..\temp\csr\test_mom.obj,..\..\..\..\..\temp\csr\test_per_ema.obj,..\..\..\..\..\temp\csr\test_per_hl.obj,..\..\..\..\..\temp\csr\test_per_hlc.obj,..\..\..\..\..\temp\csr\test_per_hlcv.obj,..\..\..\..\..\temp\csr\test_period.obj,..\..\..\..\..\temp\csr\test_pm.obj,..\..\..\..\..\temp\csr\test_po.obj,..\..\..\..\..\temp\csr\test_rsi.obj,..\..\..\..\..\temp\csr\test_sar.obj,..\..\..\..\..\temp\csr\test_stddev.obj,..\..\..\..\..\temp\csr\test_stoch.obj,..\..\..\..\..\temp\csr\test_trange.obj,..\..\..\..\..\temp\csr\test_util.obj,..\..\..\..\..\temp\csr\test_yahoo.obj
 	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_libc_csr.lib,wininet.lib
 	$(LINK) $(LFLAGS) @$(TMPLIST)
 	del $(TMPLIST)
@@ -108,6 +110,7 @@ clean:
 	-del ..\..\..\..\..\temp\csr\test_minmax.obj
 	-del ..\..\..\..\..\temp\csr\test_mom.obj
 	-del ..\..\..\..\..\temp\csr\test_per_ema.obj
+	-del ..\..\..\..\..\temp\csr\test_per_hl.obj
 	-del ..\..\..\..\..\temp\csr\test_per_hlc.obj
 	-del ..\..\..\..\..\temp\csr\test_per_hlcv.obj
 	-del ..\..\..\..\..\temp\csr\test_period.obj
@@ -168,6 +171,9 @@ clean:
 
 ..\..\..\..\..\temp\csr\test_per_ema.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csr\test_per_ema.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c
+
+..\..\..\..\..\temp\csr\test_per_hl.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csr\test_per_hl.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c
 
 ..\..\..\..\..\temp\csr\test_per_hlc.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csr\test_per_hlc.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c

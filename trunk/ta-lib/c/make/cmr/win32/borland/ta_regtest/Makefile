@@ -40,6 +40,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_minmax.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_mom.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c \
+		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_period.c \
@@ -63,6 +64,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_regtest.obj \
 		..\..\..\..\..\temp\cmr\test_minmax.obj \
 		..\..\..\..\..\temp\cmr\test_mom.obj \
 		..\..\..\..\..\temp\cmr\test_per_ema.obj \
+		..\..\..\..\..\temp\cmr\test_per_hl.obj \
 		..\..\..\..\..\temp\cmr\test_per_hlc.obj \
 		..\..\..\..\..\temp\cmr\test_per_hlcv.obj \
 		..\..\..\..\..\temp\cmr\test_period.obj \
@@ -131,6 +133,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\test_minmax.obj
 	-del ..\..\..\..\..\temp\cmr\test_mom.obj
 	-del ..\..\..\..\..\temp\cmr\test_per_ema.obj
+	-del ..\..\..\..\..\temp\cmr\test_per_hl.obj
 	-del ..\..\..\..\..\temp\cmr\test_per_hlc.obj
 	-del ..\..\..\..\..\temp\cmr\test_per_hlcv.obj
 	-del ..\..\..\..\..\temp\cmr\test_period.obj
@@ -192,6 +195,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\test_per_ema.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\test_per_ema.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c
+
+..\..\..\..\..\temp\cmr\test_per_hl.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\test_per_hl.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c
 
 ..\..\..\..\..\temp\cmr\test_per_hlc.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\test_per_hlc.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c
