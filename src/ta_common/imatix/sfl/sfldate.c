@@ -912,14 +912,14 @@ gmt_to_local (long gmt_date, long gmt_time, long *date, long *time)
 struct tm
 *safe_localtime (const time_t *time_secs)
 {
-    qbyte
+    unsigned long
         adjusted_time;
     struct tm
         *time_struct;
     int
         adjust_years = 0;
 
-    adjusted_time = (qbyte) *time_secs;
+    adjusted_time = (unsigned long) *time_secs;
     while (adjusted_time > LONG_MAX)
       {
         adjust_years  += 20;
@@ -946,14 +946,14 @@ struct tm
 struct tm
 *safe_gmtime (const time_t *time_secs)
 {
-    qbyte
+    unsigned long
         adjusted_time;
     struct tm
         *time_struct;
     int
         adjust_years = 0;
 
-    adjusted_time = (qbyte) *time_secs;
+    adjusted_time = (unsigned long) *time_secs;
     while (adjusted_time > LONG_MAX)
       {
         adjust_years  += 20;

@@ -74,9 +74,9 @@
 #define TA_ASSERT_RET(b,ret) {if(!(b)) {TA_PrivError(1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); return ret;}}
 #define TA_ASSERT_NO_RET(b) {if(!(b)) {TA_PrivError(1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); return;}}
 
-#define TA_FATAL(str,param1,param2) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); TA_TRACE_RETURN( TA_FATAL_ERR );}
-#define TA_FATAL_RET(str,param1,param2,ret) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); return ret;}
-#define TA_FATAL_NO_RET(str,param1,param2) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); return;}
+#define TA_FATAL(str,param1,param2) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned long)param1,(unsigned long)param2); TA_TRACE_RETURN( TA_FATAL_ERR );}
+#define TA_FATAL_RET(str,param1,param2,ret) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned long)param1,(unsigned long)param2); return ret;}
+#define TA_FATAL_NO_RET(str,param1,param2) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned long)param1,(unsigned long)param2); return;}
 
 /* When TA_DEBUG is defined, additional "paranoiac" testing can be performed
  * for checking the integrity of the software.
@@ -184,7 +184,7 @@ void TA_PrivTraceBegin( const char *funcname,
 void TA_PrivError( unsigned int type, const char *str,
                    const char *filename, const char *date,
                    const char *time, int lineNb,
-                   unsigned int j, unsigned int k  );
+                   unsigned long j, unsigned long k  );
 
 #endif
 

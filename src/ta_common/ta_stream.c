@@ -1775,8 +1775,8 @@ TA_RetCode TA_StreamPrint( TA_Stream *stream )
       }
    }
 
-   fprintf( out, "Stream %08X:[%02X,%02X..%02X,%02X] NBit:%d NByte:%d Pos:%d,%02X\n",
-                 (unsigned int)stream,
+   fprintf( out, "Stream %08lX:[%02X,%02X..%02X,%02X] NBit:%d NByte:%d Pos:%d,%02X\n",
+                 (unsigned long)stream,
                  byte0, byte1, byte2, byte3,
                  TA_StreamSizeInBit ( stream ),
                  TA_StreamSizeInByte( stream ),

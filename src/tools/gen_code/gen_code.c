@@ -263,9 +263,9 @@ void print( FILE *out, const char *text, ... )
 
    if( strlen(gTempBufForPrint) >= BUFFER_SIZE-strlen("/* Generated */ ") )
    {
-      printf( "Lines length exceed internal buffers (%d,%d)\n",
-              strlen(gTempBufForPrint),
-              BUFFER_SIZE-strlen("/* Generated */ ") );
+      printf( "Lines length exceed internal buffers (%lu,%lu)\n",
+              (unsigned long)strlen(gTempBufForPrint),
+              (unsigned long)(BUFFER_SIZE-strlen("/* Generated */ ")) );
       exit(-1);
    }
    if( genPrefix )
