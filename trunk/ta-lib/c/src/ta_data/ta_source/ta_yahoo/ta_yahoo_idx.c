@@ -193,15 +193,14 @@ static TA_RetCode buildIndexFromLocalCache( TA_YahooIdx *idx,
 static TA_RetCode buildIndexFromRemoteCache( TA_YahooIdx *idx,
                                              TA_Timestamp *cacheTimeout );
 
-static TA_RetCode buildIndexFromYahooWebSite( TA_YahooIdx *idx, int buildFromScratch );
+static TA_RetCode buildIndexFromYahooWebSite( TA_YahooIdx *idx );
 
 static TA_RetCode convertDictToTables( TA_YahooIdx *idx );
 static TA_RetCode convertStreamToTables( TA_YahooIdx *idx, TA_StreamAccess *stream );
 static TA_RetCode buildIdxStream( const TA_YahooIdx *idx, TA_Stream *stream );
 
 static TA_RetCode buildDictFromWebSite( TA_YahooIdx *yahooIdx, 
-                                        TA_CountryId countryId,
-                                        int buildFromScratch );
+                                        TA_CountryId countryId );
 
 /* Write the equivalent of a TA_DecodingParam to a stream. */
 static TA_RetCode writeDecodingParam( TA_Stream *stream,
@@ -443,7 +442,7 @@ TA_RetCode TA_YahooIdxAlloc( TA_CountryId           countryId,
    
       if( !idxDone && (strategy & TA_USE_YAHOO_SITE) )
       {
-         retCode = buildIndexFromYahooWebSite( idx, 1 );
+         retCode = buildIndexFromYahooWebSite( idx );
          if( retCode == TA_SUCCESS )
             idxDone = 1; /* idx is now build. */
          else
@@ -459,7 +458,7 @@ TA_RetCode TA_YahooIdxAlloc( TA_CountryId           countryId,
 
       if( !idxDone && (strategy & TA_USE_YAHOO_AND_REMOTE_MERGE) )
       {
-         retCode = buildIndexFromYahooWebSite( idx, 0 );
+         retCode = buildIndexFromYahooWebSite( idx );
          if( retCode == TA_SUCCESS )
             idxDone = 1; /* idx is now build. */
       }
@@ -991,7 +990,7 @@ static TA_RetCode buildIndexFromRemoteCache( TA_YahooIdx *idx, TA_Timestamp *cac
    return TA_SUCCESS;
 }
 
-static TA_RetCode buildIndexFromYahooWebSite( TA_YahooIdx *idx, int buildFromScratch )
+static TA_RetCode buildIndexFromYahooWebSite( TA_YahooIdx *idx )
 {
    TA_RetCode retCode;
    TA_YahooIdxHidden *idxHidden;
@@ -1005,7 +1004,7 @@ static TA_RetCode buildIndexFromYahooWebSite( TA_YahooIdx *idx, int buildFromScr
       return TA_ALLOC_ERR;
    }
 
-   retCode = buildDictFromWebSite( idx, idx->countryId, buildFromScratch );
+   retCode = buildDictFromWebSite( idx, idx->countryId );
    if( retCode != TA_SUCCESS )
    {
       return retCode;
@@ -1583,7 +1582,7 @@ static TA_RetCode freeDecodingParam( TA_DecodingParam *param )
    return TA_SUCCESS;
 }
 
-static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_CountryId countryId, int buildFromScratch )
+static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_CountryId countryId )
 {
    TA_RetCode retCode;
    TA_WebPage *webPage;
@@ -1685,6 +1684,8 @@ static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_CountryId countryId
 
       if( retCode != TA_SUCCESS )
          goto Exit_buildPageList;
+   default:
+      break;
    }
 
    /* Find the table at the top representing the 
