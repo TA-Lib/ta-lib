@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -44,6 +44,9 @@
  *  -------------------------------------------------------------------
  *  031202 MF   Template creation.
  *  052603 MF   Port to managed C++. Change to use CIRCBUF macros.
+ *  061704 MF   Lower limit for period to 2, and correct algorithm
+ *              to avoid cummulative error when value are close to
+ *              the floating point epsilon.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -76,10 +79,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::CCI_Lookback( int           optInTimePeriod )  /* From 5 to 100000 */
+/* Generated */ int Core::CCI_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_CCI_Lookback( int           optInTimePeriod )  /* From 5 to 100000 */
+/* Generated */ int TA_CCI_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -97,7 +100,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod:(From 5 to 100000)
+ * optInTimePeriod:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -109,7 +112,7 @@
 /* Generated */                                  double       inHigh __gc [],
 /* Generated */                                  double       inLow __gc [],
 /* Generated */                                  double       inClose __gc [],
-/* Generated */                                  int           optInTimePeriod, /* From 5 to 100000 */
+/* Generated */                                  int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
 /* Generated */                                  double        outReal __gc [] )
@@ -119,7 +122,7 @@
 /* Generated */                    const double inHigh[],
 /* Generated */                    const double inLow[],
 /* Generated */                    const double inClose[],
-/* Generated */                    int           optInTimePeriod, /* From 5 to 100000 */
+/* Generated */                    int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                    int          *outBegIdx,
 /* Generated */                    int          *outNbElement,
 /* Generated */                    double        outReal[] )
@@ -128,7 +131,7 @@
 {
 
 	/* insert local variable here */
-   double periodTotal, tempReal, tempReal2, theAverage, lastValue;
+   double tempReal, tempReal2, theAverage, lastValue;
    int i, j, outIdx, lookbackTotal;
 
    /* This ptr will points on a circular buffer of
@@ -154,7 +157,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 5) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( outReal == NULL )
@@ -195,16 +198,13 @@
    /* Add-up the initial period, except for the last value. 
     * Fill up the circular buffer at the same time.
     */
-   periodTotal = 0;   
    i=startIdx-lookbackTotal;
    if( optInTimePeriod > 1 )
    {
       while( i < startIdx )
       {
-         lastValue = (inHigh[i]+inLow[i]+inClose[i])/3;
+         circBuffer[circBuffer_Idx] = (inHigh[i]+inLow[i]+inClose[i])/3;
          i++;
-         periodTotal += lastValue;
-         circBuffer[circBuffer_Idx] = lastValue; 
          CIRCBUF_NEXT(circBuffer);
       }
    }
@@ -216,16 +216,14 @@
    outIdx = 0;
    do
    {
-      /* Calculate the average for the whole period. */
       lastValue = (inHigh[i]+inLow[i]+inClose[i])/3;
       circBuffer[circBuffer_Idx] = lastValue;
-      periodTotal += lastValue;
-      tempReal  = periodTotal;
-      if( circBuffer_Idx == (optInTimePeriod-1) )
-         periodTotal -= circBuffer[0];
-      else
-         periodTotal -= circBuffer[circBuffer_Idx+1];
-      theAverage = tempReal / optInTimePeriod;
+
+      /* Calculate the average for the whole period. */
+      theAverage = 0;
+      for( j=0; j < optInTimePeriod; j++ )
+         theAverage += circBuffer[j];
+      theAverage /= optInTimePeriod;
 
       /* Do the summation of the ABS(TypePrice-average)
        * for the whole period.
@@ -235,12 +233,12 @@
          tempReal2 += fabs(circBuffer[j]-theAverage);
 
       /* And finally, the CCI... */
-      tempReal2 /= optInTimePeriod;
       tempReal = lastValue-theAverage;
 
-      // printf( "%g,%g,[%g]", lastValue, theAverage, tempReal2 );
       if( (tempReal != 0.0) && (tempReal2 != 0.0) )
-         outReal[outIdx++] = tempReal/(0.015*tempReal2);
+      {
+         outReal[outIdx++] = tempReal/(0.015*(tempReal2/optInTimePeriod));
+      }
       else
          outReal[outIdx++] = 0.0;
       
@@ -275,7 +273,7 @@
 /* Generated */                                  float        inHigh __gc [],
 /* Generated */                                  float        inLow __gc [],
 /* Generated */                                  float        inClose __gc [],
-/* Generated */                                  int           optInTimePeriod, /* From 5 to 100000 */
+/* Generated */                                  int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
 /* Generated */                                  double        outReal __gc [] )
@@ -285,13 +283,13 @@
 /* Generated */                      const float  inHigh[],
 /* Generated */                      const float  inLow[],
 /* Generated */                      const float  inClose[],
-/* Generated */                      int           optInTimePeriod, /* From 5 to 100000 */
+/* Generated */                      int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                      int          *outBegIdx,
 /* Generated */                      int          *outNbElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
-/* Generated */    double periodTotal, tempReal, tempReal2, theAverage, lastValue;
+/* Generated */    double tempReal, tempReal2, theAverage, lastValue;
 /* Generated */    int i, j, outIdx, lookbackTotal;
 /* Generated */    CIRCBUF_PROLOG(circBuffer,double,30);
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
@@ -303,7 +301,7 @@
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
-/* Generated */     else if( ((int)optInTimePeriod < 5) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
@@ -318,16 +316,13 @@
 /* Generated */       return TA_SUCCESS;
 /* Generated */    }
 /* Generated */    CIRCBUF_INIT( circBuffer, double, optInTimePeriod );
-/* Generated */    periodTotal = 0;   
 /* Generated */    i=startIdx-lookbackTotal;
 /* Generated */    if( optInTimePeriod > 1 )
 /* Generated */    {
 /* Generated */       while( i < startIdx )
 /* Generated */       {
-/* Generated */          lastValue = (inHigh[i]+inLow[i]+inClose[i])/3;
+/* Generated */          circBuffer[circBuffer_Idx] = (inHigh[i]+inLow[i]+inClose[i])/3;
 /* Generated */          i++;
-/* Generated */          periodTotal += lastValue;
-/* Generated */          circBuffer[circBuffer_Idx] = lastValue; 
 /* Generated */          CIRCBUF_NEXT(circBuffer);
 /* Generated */       }
 /* Generated */    }
@@ -336,21 +331,18 @@
 /* Generated */    {
 /* Generated */       lastValue = (inHigh[i]+inLow[i]+inClose[i])/3;
 /* Generated */       circBuffer[circBuffer_Idx] = lastValue;
-/* Generated */       periodTotal += lastValue;
-/* Generated */       tempReal  = periodTotal;
-/* Generated */       if( circBuffer_Idx == (optInTimePeriod-1) )
-/* Generated */          periodTotal -= circBuffer[0];
-/* Generated */       else
-/* Generated */          periodTotal -= circBuffer[circBuffer_Idx+1];
-/* Generated */       theAverage = tempReal / optInTimePeriod;
+/* Generated */       theAverage = 0;
+/* Generated */       for( j=0; j < optInTimePeriod; j++ )
+/* Generated */          theAverage += circBuffer[j];
+/* Generated */       theAverage /= optInTimePeriod;
 /* Generated */       tempReal2 = 0;
 /* Generated */       for( j=0; j < optInTimePeriod; j++ )
 /* Generated */          tempReal2 += fabs(circBuffer[j]-theAverage);
-/* Generated */       tempReal2 /= optInTimePeriod;
 /* Generated */       tempReal = lastValue-theAverage;
-/* Generated */       // printf( "%g,%g,[%g]", lastValue, theAverage, tempReal2 );
 /* Generated */       if( (tempReal != 0.0) && (tempReal2 != 0.0) )
-/* Generated */          outReal[outIdx++] = tempReal/(0.015*tempReal2);
+/* Generated */       {
+/* Generated */          outReal[outIdx++] = tempReal/(0.015*(tempReal2/optInTimePeriod));
+/* Generated */       }
 /* Generated */       else
 /* Generated */          outReal[outIdx++] = 0.0;
 /* Generated */       CIRCBUF_NEXT(circBuffer);
