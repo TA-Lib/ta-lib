@@ -147,11 +147,25 @@ typedef TA_RetCode (*RangeTestFunction)( TA_Libc *libHandle,
                                          void *opaqueData,
                                          unsigned int outputNb );
 
+/* This is the function starting the range tests.
+ * The parameter 'nbOutput' allows to repeat the
+ * tests indepedently for each outputs.
+ *
+ * In the case that the TA function output are
+ * integer, the tolerance indicate by how much
+ * the value can vary for a function having an
+ * unstable period. Example: If 2 is pass, the
+ * value can vary of no more or less 2.
+ * When passing zero, the tolerance is done using
+ * a "reasonable" logic (see the function for
+ * more info).
+ */
 ErrorNumber doRangeTest( TA_Libc *libHandle,
                          RangeTestFunction testFunction,
                          TA_FuncUnstId unstId,
                          void *opaqueData,
-                         unsigned int nbOutput );
+                         unsigned int nbOutput,
+                         unsigned int integerTolerance );
 
 /* Compare two TA_Real and verify that they are
  * identiqual within the specified epsilon.
