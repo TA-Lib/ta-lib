@@ -36,20 +36,22 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  JP       John Price <jp_talib@gcfl.net>
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY  Description
  *  -------------------------------------------------------------------
- *  120100 MF   First version.
+ *  120100 MF  First version.
+ *  010503 MF  Fix #660248. Intra-day range problem submitted by JP.
+ *             
  *
  */
 
 /* Description:
  *    Provides function to estimate the minimum memory allocation space
  *    needed for a given ASCII file.
- *    Consider multiple factor, including the time range requested
+ *    Consider multiple factor, including the start/end range requested
  *    by the user.
  */
 
@@ -115,7 +117,27 @@ TA_RetCode TA_EstimateAllocInit( const TA_Timestamp *start,
          TA_TimestampDeltaYear( start, end, &nbElement );
          break;
       default:
-         return TA_BAD_PARAM;
+         if( (period >= TA_1SEC) && (period <= TA_HOURLY) )
+         {
+            /* Estimate the number of day */
+            if( (TA_GetDay  (start) != TA_GetDay  (end)) ||
+                (TA_GetMonth(start) != TA_GetMonth(end)) ||
+                (TA_GetYear (start) != TA_GetYear (end)) )
+            {
+               /* Estimate assuming market is open for 8 hours per day 
+                * (it does not hurt to slightly under or over estimate)
+                */
+               TA_TimestampDeltaDay( start, end, &nbElement );
+               nbElement *= (8*60*60);
+               nbElement /= period;
+            }
+            else
+            {
+               nbElement = (8*60*60);
+               nbElement /= period;
+            }
+         }
+         break;
       }
       nbElement += 2;
    }
