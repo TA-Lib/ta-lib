@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  110199 MF   First version.
  *  032704 MF   Add CSI and CSIM support.
+ *  061004 MF   Add TA_YAHOO_ONE_SYMBOL
  */
 
 /* Description:
@@ -163,6 +164,20 @@ const TA_DataSourceDriver TA_gDataSourceTable[] =
         TA_CSIM_GetFirstSymbolHandle,
         TA_CSIM_GetNextSymbolHandle,
         TA_CSIM_GetHistoryData
+    },
+
+    {   /* TA_YAHOO_ONE_SYMBOL data source. */
+        "YAHOO",
+        TA_YAHOO_InitializeSourceDriver,
+        TA_YAHOO_ShutdownSourceDriver,
+        TA_YAHOO_GetParameters,
+        TA_YAHOO_OpenSource,
+        TA_YAHOO_CloseSource,
+        TA_YAHOO_GetFirstCategoryHandle,
+        NULL,
+        TA_YAHOO_GetFirstSymbolHandle,
+        TA_YAHOO_GetNextSymbolHandle,
+        TA_YAHOO_GetHistoryData
     }
 };
 

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  070701 MF   First version.
  *  041802 MF   Add better retry/timeout mechanism.
- *
+ *  061404 MF   Add TA_YAHOO_ONE_SYMBOL support.
  */
 
 /* Description:
@@ -204,10 +204,10 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
       TA_SetDateNow( &lastBarTimestamp );
 
    /* Time component is not important for Yahoo! but all end of day
-    * price bar use 23:59:59, so do the same here.
+    * price bar use 00:00:00, so do the same here.
     */
-   TA_SetTime( 23, 59, 59, &firstBarTimestamp );
-   TA_SetTime( 23, 59, 59, &lastBarTimestamp );
+   TA_SetTime( 0, 0, 0, &firstBarTimestamp );
+   TA_SetTime( 0, 0, 0, &lastBarTimestamp );
 
    /* Make sure that lastBarTimestamp is a week-day. */
    dayOfWeek = TA_GetDayOfTheWeek( &lastBarTimestamp );
@@ -215,16 +215,35 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
       TA_PrevWeekday( &lastBarTimestamp );
 
    /* Map the TA-Lib name into the Yahoo! name. */
-   retCode = TA_AllocStringFromLibName( categoryHandle->string,
-                                        symbolHandle->string,
-                                        &yahooName );  
-   if( retCode != TA_SUCCESS )
+   TA_ASSERT( yahooHandle != NULL );
+
+   if( yahooHandle->param->id == TA_YAHOO_ONE_SYMBOL )
    {
-      TA_TRACE_RETURN( retCode );
+      yahooName = TA_StringDup(stringCache,yahooHandle->webSiteSymbol);
+      TA_ASSERT( yahooName != NULL );
+   }
+   else
+   {
+      retCode = TA_AllocStringFromLibName( categoryHandle->string,
+                                           symbolHandle->string,
+                                           &yahooName );  
+      if( retCode != TA_SUCCESS )
+      {
+         TA_TRACE_RETURN( retCode );
+      }
+
+      TA_ASSERT( yahooName != NULL );
+
    }
 
-   TA_ASSERT( yahooName != NULL );
-   TA_ASSERT( yahooHandle != NULL );
+   /* Get the decoding parameter for the CSV web page. */
+   decodingParam = TA_YahooIdxDecodingParam( yahooHandle->index, TA_YAHOOIDX_CSV_PAGE );
+   if( !decodingParam )
+   {
+      TA_StringFree( stringCache, yahooName );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(103) );
+   }
+   localDecodingParam = *decodingParam;
 
    /* Check if split/value adjustment are necessary. */
    if( (yahooHandle->param->flags & TA_DO_NOT_SPLIT_ADJUST) &&
@@ -235,14 +254,6 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
    else
       doAdjustment = 1;
 
-   /* Get the decoding parameter for the CSV web page. */
-   decodingParam = TA_YahooIdxDecodingParam( yahooHandle->index, TA_YAHOOIDX_CSV_PAGE );
-   if( !decodingParam )
-   {
-      TA_StringFree( stringCache, yahooName );
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(103) );
-   }
-   localDecodingParam = *decodingParam;
 
    /* Parse the uirSuffix so the start/end date can be changed. */
    if( !setUIRSuffixParsing( decodingParam->uirSuffix, &suffixParsing ) )

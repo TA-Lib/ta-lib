@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  070701 MF   First version.
- *
+ *  061104 MF   Add TA_YAHOO_ONE_SYMBOL.
  */
 
 /* Description:
@@ -175,8 +175,8 @@ TA_RetCode TA_YAHOO_OpenSource( const TA_AddDataSourceParamPriv *param,
 
    /* Copy some parameters in the private handle. */
    privData->param = param;
-
-   /* Validate if this is a supported country. */
+   
+   /* Indentify the country and replace with the default as needed. */
    if( !privData->param->location )
    {
       countryId = TA_Country_ID_US;
@@ -185,6 +185,32 @@ TA_RetCode TA_YAHOO_OpenSource( const TA_AddDataSourceParamPriv *param,
    {
       locationPtr = TA_StringToChar(privData->param->location);
       countryId = TA_CountryAbbrevToId(locationPtr);
+   }
+
+   if( privData->param->id == TA_YAHOO_ONE_SYMBOL )
+   {
+      /* Check for the web site providing the data when adding
+       * only ONE symbol to the index.
+       */
+      switch( countryId )
+      {
+      case TA_Country_ID_US:
+         /* For this data source, US is the only Yahoo! web
+          * site supported for now.
+          */
+         break;
+      default:
+         TA_YAHOO_DataSourceHandleFree( tmpHandle );
+         TA_TRACE_RETURN( TA_UNSUPPORTED_COUNTRY );
+      }
+      privData->index = NULL;
+      privData->webSiteCountry = countryId;
+      privData->webSiteSymbol  = privData->param->info;
+      tmpHandle->nbCategory = 1;
+   }
+   else
+   {
+      /* Build the index using .dat files */
       switch( countryId )
       {
       case TA_Country_ID_US: /* United States */
@@ -203,37 +229,36 @@ TA_RetCode TA_YAHOO_OpenSource( const TA_AddDataSourceParamPriv *param,
          TA_YAHOO_DataSourceHandleFree( tmpHandle );
          TA_TRACE_RETURN( TA_UNSUPPORTED_COUNTRY );
       }
-   }
 
-   /* Establish the timeout for local cache of the index.
-    * Let's make it 3 business days.
-    */
-   timeout_set = 0;
-   TA_SetDefault( &now );
-   retCode = TA_SetDateNow( &now );
-   for( i=0; (i < 3) && (retCode == TA_SUCCESS); i++ )
-      retCode = TA_PrevWeekday( &now );
-   if( (i == 3) && (retCode == TA_SUCCESS) )
-      timeout_set = 1;
+      /* Establish the timeout for local cache of the index.
+       * Let's make it 4 business days.
+       */
+      timeout_set = 0;
+      TA_SetDefault( &now );
+      retCode = TA_SetDateNow( &now );
+      for( i=0; (i < 4) && (retCode == TA_SUCCESS); i++ )
+         retCode = TA_PrevWeekday( &now );
+      if( (i == 4) && (retCode == TA_SUCCESS) )
+         timeout_set = 1;
       
-   /* At this point, we got all the information we
-    * need in the handle.
-    * Now build the TA_YahooIdx.
-    */
-   retCode = TA_YahooIdxAlloc( countryId,
-                               &privData->index,
-                               TA_USE_LOCAL_CACHE|TA_USE_REMOTE_CACHE,
-                               NULL, timeout_set?&now:NULL, NULL );
+      /* At this point, we got all the information we
+       * need in the handle.
+       * Now build the TA_YahooIdx.
+       */
+      retCode = TA_YahooIdxAlloc( countryId,
+                                  &privData->index,
+                                  TA_USE_LOCAL_CACHE|TA_USE_REMOTE_CACHE,
+                                  NULL, timeout_set?&now:NULL, NULL );
 
+      if( retCode != TA_SUCCESS )
+      {
+         TA_YAHOO_DataSourceHandleFree( tmpHandle );
+         TA_TRACE_RETURN( retCode );
+      }
 
-   if( retCode != TA_SUCCESS )
-   {
-      TA_YAHOO_DataSourceHandleFree( tmpHandle );
-      TA_TRACE_RETURN( retCode );
+      /* Set the total number of distinct category. */
+      tmpHandle->nbCategory = privData->index->nbCategory;
    }
-
-   /* Set the total number of distinct category. */
-   tmpHandle->nbCategory = privData->index->nbCategory;
 
    *handle = tmpHandle;
 
@@ -244,7 +269,7 @@ TA_RetCode TA_YAHOO_CloseSource( TA_DataSourceHandle *handle )
 {
    TA_PROLOG
 
-   TA_TRACE_BEGIN(  TA_YAHOO_CloseSource );
+   TA_TRACE_BEGIN( TA_YAHOO_CloseSource );
 
    /* Free all ressource used by this handle. */
    if( handle )
@@ -256,29 +281,54 @@ TA_RetCode TA_YAHOO_CloseSource( TA_DataSourceHandle *handle )
 TA_RetCode TA_YAHOO_GetFirstCategoryHandle( TA_DataSourceHandle *handle,
                                             TA_CategoryHandle   *categoryHandle )
 {
-   return initCategoryHandle( handle,
-                              categoryHandle,
-                              0 );
+   TA_PrivateYahooHandle *privData;
 
+   privData = (TA_PrivateYahooHandle *)(handle->opaqueData);
+
+   if( privData->param->id == TA_YAHOO_ONE_SYMBOL )
+   {
+      categoryHandle->nbSymbol = 1;
+      categoryHandle->string = privData->param->category;
+      return TA_SUCCESS;
+   }
+
+   return initCategoryHandle( handle, categoryHandle, 0 );
 }
 
 TA_RetCode TA_YAHOO_GetNextCategoryHandle( TA_DataSourceHandle *handle,
                                            TA_CategoryHandle   *categoryHandle,
                                            unsigned int index )
 {
-   return initCategoryHandle( handle,
-                              categoryHandle,
-                              index );
+   TA_PrivateYahooHandle *privData;
+   privData = (TA_PrivateYahooHandle *)(handle->opaqueData);
+
+   if( privData->param->id == TA_YAHOO_ONE_SYMBOL )
+      return TA_END_OF_INDEX;
+
+   return initCategoryHandle( handle, categoryHandle, index );                              
 }
 
 TA_RetCode TA_YAHOO_GetFirstSymbolHandle( TA_DataSourceHandle *handle,
                                           TA_CategoryHandle   *categoryHandle,
                                           TA_SymbolHandle     *symbolHandle )
 {
-    return initSymbolHandle( handle,
-                             categoryHandle,
-                             symbolHandle,
-                             0 );
+   TA_PrivateYahooHandle *privData;
+   TA_String *symbol;
+   TA_String *info;
+
+   privData = (TA_PrivateYahooHandle *)(handle->opaqueData);
+
+   if( privData->param->id == TA_YAHOO_ONE_SYMBOL )
+   {
+      info = privData->param->info;
+      symbol = privData->param->symbol;
+      if( !symbol )      
+         symbol = info;
+      symbolHandle->string = symbol;
+      return TA_SUCCESS;
+   }
+
+   return initSymbolHandle( handle, categoryHandle, symbolHandle, 0 );
 }
 
 
@@ -287,10 +337,15 @@ TA_RetCode TA_YAHOO_GetNextSymbolHandle( TA_DataSourceHandle *handle,
                                          TA_SymbolHandle     *symbolHandle,
                                          unsigned int index )
 {
-    return initSymbolHandle( handle,
-                             categoryHandle,
-                             symbolHandle,
-                             index );
+    TA_PrivateYahooHandle *privData;
+    privData = (TA_PrivateYahooHandle *)(handle->opaqueData);
+
+    if( privData->param->id == TA_YAHOO_ONE_SYMBOL )
+       return TA_END_OF_INDEX;
+
+    return initSymbolHandle( handle, categoryHandle,                             
+                             symbolHandle, index );
+                             
 }
 
 TA_RetCode TA_YAHOO_GetHistoryData( TA_DataSourceHandle *handle,
