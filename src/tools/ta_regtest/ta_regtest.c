@@ -110,6 +110,9 @@ int main( int argc, char **argv )
       return TA_REGTEST_BAD_USER_PARAM;
    }
 
+   /* Some tests are using randomness. */
+   srand( (unsigned)time( NULL ) );
+
    /* Test Performance Measurements. */
    retValue = test_pm();
    if( retValue != TA_TEST_PASS )
@@ -125,9 +128,6 @@ int main( int argc, char **argv )
       printf( "Failed TA_HistoryAlloc test with code=%d\n", retValue );
       return retValue;
    }
-
-   /* Some tests are using randomness. */
-   srand( (unsigned)time( NULL ) );
 
    /* Perform the tests who simply used the TA_SIMULATOR data
     * to perform their test.
@@ -257,12 +257,11 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    }
 
    /* Make tests for each TA functions. */
-
    #define PRINTF_TEST_HDR      printf( "    %22s: Testing...", TEST_ID );
    #define PRINTF_TEST_SUCCESS  printf( "done.\n" );
 
    /* Test Directional Movement related functions */
-   #define TEST_ID "DI,DM,ADX,ADXR"
+   #define TEST_ID "ADX,ADXR,DI,DM,DX"
    PRINTF_TEST_HDR;
    retValue = test_func_adx( libHandle, history );
    if( retValue != TA_TEST_PASS )
