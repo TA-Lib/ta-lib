@@ -808,7 +808,7 @@ static TA_RetCode equityPeriodTransform( TA_PMPriv     *pmPriv,
       /* We got all the info needed in the cur_XXXXX variables for
        * proceeding with the initialization of the new period price bar.
        */
-      TA_DEBUG_ASSERT( newPriceBar < new_nbBars );
+      TA_ASSERT_DEBUG( newPriceBar < new_nbBars );
 
       /* If the timestamp is requested, some adjustment could be
        * needed to cur_timestamp.
