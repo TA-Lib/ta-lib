@@ -61,7 +61,6 @@ const TA_OptInputParameterInfo TA_DEF_UI_Signal_MA_Type =
    TA_OptInput_IntegerList, /* type */
    "optInSignalMAType",     /* paramName */
    0,                       /* flags */
-
    "Signal MA",             /* displayName */
    (const void *)&TA_MA_TypeList, /* dataSet */
    0, /* defaultValue = simple average */
@@ -71,13 +70,14 @@ const TA_OptInputParameterInfo TA_DEF_UI_Signal_MA_Type =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACD =
-                               { TA_Output_Real, "outRealMACD", TA_OUT_LINE };
+                               { TA_Output_Real, "outMACD", TA_OUT_LINE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDSignal =
-                               { TA_Output_Real, "outRealMACDSignal", TA_OUT_DASH_LINE };
+                               { TA_Output_Real, "outMACDSignal", TA_OUT_DASH_LINE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDHist =
-                                { TA_Output_Real, "outRealMACDHist", TA_OUT_HISTO };
+                                { TA_Output_Real, "outMACDHist", TA_OUT_HISTO };
+
 
 /****************************************************************************
  * Step 2 - Define here the interface to your TA functions with
@@ -206,6 +206,86 @@ DEF_FUNCTION( MACDFIX,                    /* name */
               NULL                        /* analysis function */
              );
 /* MACDFIX END */
+
+/* MAMA BEGIN */
+const TA_RealRange TA_DEF_MAMA_FastLimit =
+{
+   0.01,          /* min */
+   0.99,          /* max */
+   2,            /* precision */
+   0.21,         /* suggested start */
+   0.80,         /* suggested end   */
+   0.01          /* suggested increment */
+};
+
+const TA_RealRange TA_DEF_MAMA_SlowLimit =
+{
+   0.01,         /* min */
+   0.99,         /* max   */
+   2,            /* precision */
+   0.01,         /* suggested start */
+   0.60,         /* suggested end   */
+   0.01          /* suggested increment */
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_MAMA_FastLimit =
+{
+   TA_OptInput_RealRange, /* type */
+   "optInFastLimit",      /* paramName */
+   0,                        /* flags */
+   "Fast Limit",            /* displayName */
+   (const void *)&TA_DEF_MAMA_FastLimit, /* dataSet */
+   0.5, /* defaultValue */
+   "Upper limit use in the adaptive algorithm", /* hint */
+   NULL /* helpFile */
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_MAMA_SlowLimit =
+{
+   TA_OptInput_RealRange, /* type */
+   "optInSlowLimit",      /* paramName */
+   0,                        /* flags */
+
+   "Slow Limit",            /* displayName */
+   (const void *)&TA_DEF_MAMA_SlowLimit, /* dataSet */
+   0.05, /* defaultValue */
+   "Lower limit use in the adaptive algorithm", /* hint */
+   NULL /* helpFile */
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MAMA =
+                               { TA_Output_Real, "outMAMA", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_FAMA =
+                               { TA_Output_Real, "outFAMA", TA_OUT_DASH_LINE };
+
+static const TA_InputParameterInfo    *TA_MAMA_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MAMA_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_MAMA,
+  &TA_DEF_UI_Output_Real_FAMA,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MAMA_OptInputs[] =
+{ &TA_DEF_UI_MAMA_FastLimit,
+  &TA_DEF_UI_MAMA_SlowLimit,
+  NULL
+};
+
+DEF_FUNCTION( MAMA,                         /* name */
+              TA_GroupId_OverlapStudies,  /* groupId */
+              "MESA Adaptive Moving Average",       /* hint */
+              NULL,                       /* helpFile */
+              TA_FUNC_FLG_UNST_PER|TA_FUNC_FLG_OVERLAP, /* flags */
+              NULL                        /* analysis function */
+             );
+/* MAMA END */
 
 /* MAX BEGIN */
 static const TA_InputParameterInfo    *TA_MAX_Inputs[]    =
@@ -462,6 +542,7 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MACD),
    ADD_TO_TABLE(MACDEXT),
    ADD_TO_TABLE(MACDFIX),
+   ADD_TO_TABLE(MAMA),
    ADD_TO_TABLE(MAX),
    ADD_TO_TABLE(MEDPRICE),
    ADD_TO_TABLE(MFI),
