@@ -104,13 +104,13 @@ int print_data( TA_UDBase *udb,
                              TA_GetDay(&history->timestamp[i]),
                              TA_GetYear(&history->timestamp[i]) );
          if( history->open )
-            printf( ",%f", history->open[i] );
+            printf( ",%.2f", history->open[i] );
          if( history->high )
-            printf( ",%f", history->high[i] );
+            printf( ",%.2f", history->high[i] );
          if( history->low )
-            printf( ",%f", history->low[i] );
+            printf( ",%.2f", history->low[i] );
          if( history->close )
-            printf( ",%f", history->close[i] );
+            printf( ",%.2f", history->close[i] );
          if( history->volume )
             printf( ",%d", history->volume[i] );
          printf( "\n" );
@@ -195,7 +195,7 @@ int print_symbols( TA_UDBase *udb,
    for( i=0; i < table->size; i++ )
    {
       /* Display all categories... except the default one. */
-      if( strcmp( table->string[i], "ZZZ.OTHER.OTHER" ) )
+      if( strcmp( table->string[i], "ZZ.OTHER.OTHER" ) )
          printf( "%s\n", table->string[i] );
    }
 
