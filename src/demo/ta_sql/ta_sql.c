@@ -22,6 +22,7 @@ typedef enum
 void fatal_error_handler(void)
 {
 #if defined (_MSC_VER) && 0  /* disabled for now since TA_FatalReportToBuffer is missing */
+   /* Update: TA_FatalReportToBuffer is now implemented - Mario */
    char buffer[TA_FATAL_ERROR_BUF_SIZE];
    TA_FatalReportToBuffer( buffer, TA_FATAL_ERROR_BUF_SIZE);
    OutputDebugString(buffer);
