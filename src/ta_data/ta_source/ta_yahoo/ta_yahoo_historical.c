@@ -51,6 +51,8 @@
  *    Get historical data from the Yahoo! Web Site. 
  */
 
+/* #define DEBUG_PRINTF 1 */
+
 /**** Headers ****/
 #include <stdlib.h>
 #include <string.h>
