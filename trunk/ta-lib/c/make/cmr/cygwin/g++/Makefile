@@ -19,7 +19,8 @@ SUBDIRS	=	ta_common \
 		gen_data \
 		ta_regtest \
 		ta_yahoo \
-		webfetch
+		webfetch \
+		ta_sql
 
 all: $(SUBDIRS)
 

@@ -19,7 +19,8 @@ SUBDIRS =	ta_common \
 		gen_data \
 		ta_regtest \
 		ta_yahoo \
-		webfetch
+		webfetch \
+		ta_sql
 
 all: $(SUBDIRS)
 
@@ -83,6 +84,11 @@ webfetch: FORCE
 	$(MAKE)
 	@cd ..
 
+ta_sql: FORCE
+	cd ta_sql
+	$(MAKE)
+	@cd ..
+
 
 tmake: ../csr/win32/watcom/Makefile
 
@@ -126,6 +132,9 @@ tmake_all:
 	cd webfetch
 	$(TMAKE) webfetch.pro -o $(MAKEFILE)
 	@cd ..
+	cd ta_sql
+	$(TMAKE) ta_sql.pro -o $(MAKEFILE)
+	@cd ..
 
 
 clean:
@@ -163,6 +172,9 @@ clean:
 	$(MAKE) clean
 	@cd ..
 	cd webfetch
+	$(MAKE) clean
+	@cd ..
+	cd ta_sql
 	$(MAKE) clean
 	@cd ..
 
