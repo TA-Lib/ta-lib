@@ -135,19 +135,23 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
  *
  * Opaque data (for mostly passing optional parameters) are
  * pass through the pointer 'void * opaqueData'.
+ *
+ * The output of the function must be put in the outputBuffer
+ * or outputBufferInt depending of the return type.
  */
-
 #define MAX_RANGE_SIZE 252
 #define MAX_RANGE_END  (MAX_RANGE_SIZE-1)
 
-typedef TA_RetCode (*RangeTestFunction)( TA_Integer startIdx,
-                                         TA_Integer endIdx,
-                                         TA_Real *outputBuffer,
-                                         TA_Integer *outBegIdx,
-                                         TA_Integer *outNbElement,
-                                         TA_Integer *lookback,
-                                         void *opaqueData,
-                                         unsigned int outputNb );
+typedef TA_RetCode (*RangeTestFunction)( TA_Integer    startIdx,
+                                         TA_Integer    endIdx,
+                                         TA_Real      *outputBuffer,
+                                         TA_Integer   *outputBufferInt,
+                                         TA_Integer   *outBegIdx,
+                                         TA_Integer   *outNbElement,
+                                         TA_Integer   *lookback,
+                                         void         *opaqueData,
+                                         unsigned int  outputNb,
+                                         unsigned int *isOutputInteger );
 
 /* This is the function starting the range tests.
  * The parameter 'nbOutput' allows to repeat the
@@ -184,13 +188,6 @@ ErrorNumber doRangeTest( RangeTestFunction testFunction,
                          void *opaqueData,
                          unsigned int nbOutput,
                          unsigned int integerTolerance );
-
-
-
-/* Compare two TA_Real and verify that they are
- * identiqual within the specified epsilon.
- */
-#define TA_REAL_EQ(x,v,EPSILON) (((v - EPSILON) < x) && (x <( v + EPSILON)))
 
 /* Print out info about a retCode */
 void printRetCode( TA_RetCode retCode );

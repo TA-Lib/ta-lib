@@ -60,6 +60,7 @@
 #include "ta_common.h"
 #include "ta_test_priv.h"
 #include "ta_system.h"
+#include "ta_utility.h"
 
 /**** External functions declarations. ****/
 /* None */

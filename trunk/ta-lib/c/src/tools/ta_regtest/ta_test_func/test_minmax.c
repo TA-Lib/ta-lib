@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -284,20 +284,24 @@ ErrorNumber test_func_minmax( TA_History *history )
 }
 
 /**** Local functions definitions.     ****/
-static TA_RetCode rangeTestFunction( 
-                              TA_Integer startIdx,
-                              TA_Integer endIdx,
-                              TA_Real *outputBuffer,
-                              TA_Integer *outBegIdx,
-                              TA_Integer *outNbElement,
-                              TA_Integer *lookback,
-                              void *opaqueData,
-                              unsigned int outputNb )
+static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
+                                     TA_Integer    endIdx,
+                                     TA_Real      *outputBuffer,
+                                     TA_Integer   *outputBufferInt,
+                                     TA_Integer   *outBegIdx,
+                                     TA_Integer   *outNbElement,
+                                     TA_Integer   *lookback,
+                                     void         *opaqueData,
+                                     unsigned int  outputNb,
+                                     unsigned int *isOutputInteger )
 {
    TA_RetCode retCode;
    TA_RangeTestParam *testParam;
   
    (void)outputNb;
+   (void)outputBufferInt;
+
+   *isOutputInteger = 0;
 
    testParam = (TA_RangeTestParam *)opaqueData;   
 
