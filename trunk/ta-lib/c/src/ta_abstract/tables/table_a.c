@@ -26,6 +26,61 @@ const TA_OutputParameterInfo TA_DEF_UI_Output_Real_AroonDown =
  *
  ****************************************************************************/
 
+/* AD BEGIN */
+static const TA_InputParameterInfo    *TA_AD_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLCV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_AD_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_AD_OptInputs[] =
+{
+  NULL
+};
+
+DEF_FUNCTION( AD,                         /* name */
+              TA_GroupId_VolumeIndicators,   /* groupId */
+              "Chaikin A/D Line", /* hint */
+              NULL,                         /* helpFile */
+              0,                            /* flags */
+              NULL                          /* analysis function */
+             );
+/* AD END */
+
+/* ADOSC BEGIN */
+static const TA_InputParameterInfo    *TA_ADOSC_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLCV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ADOSC_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ADOSC_OptInputs[] =
+{
+  &TA_DEF_UI_TimePeriod_21_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( ADOSC,                         /* name */
+              TA_GroupId_VolumeIndicators,   /* groupId */
+              "Chaikin A/D Oscillator", /* hint */
+              NULL,                         /* helpFile */
+              0,                            /* flags */
+              NULL                          /* analysis function */
+             );
+/* ADOSC END */
+
 /* ADX BEGIN */
 static const TA_InputParameterInfo    *TA_ADX_Inputs[]    =
 {
@@ -225,6 +280,8 @@ DEF_FUNCTION( AVGPRICE,                   /* name */
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableA[] =
 {
+   ADD_TO_TABLE(AD),
+   ADD_TO_TABLE(ADOSC),
    ADD_TO_TABLE(ADX),
    ADD_TO_TABLE(ADXR),
    ADD_TO_TABLE(APO),
