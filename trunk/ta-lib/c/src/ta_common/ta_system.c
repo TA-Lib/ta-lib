@@ -1169,7 +1169,11 @@ void TA_Printf( TA_PrintfVar *outp, char *format, ... )
   
      if( outp->buffer && (outp->size > 1) )
      {
-        retValue = _vsnprintf( outp->buffer, outp->size-1, format, args );
+        #if defined( WIN32 )
+           retValue = _vsnprintf( outp->buffer, outp->size-1, format, args );
+        #else
+           retValue = vsnprintf( outp->buffer, outp->size-1, format, args );
+        #endif
         if( retValue >= 0 )
         {
            outp->buffer += retValue;
