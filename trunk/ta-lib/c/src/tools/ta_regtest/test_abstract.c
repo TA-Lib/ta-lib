@@ -90,3 +90,4 @@ ErrorNumber test_abstract( void )
 
 /**** Local functions definitions.     ****/
 /* None */
+
