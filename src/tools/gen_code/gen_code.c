@@ -121,6 +121,9 @@ static void printFuncHeaderDoc( FILE *out,
                                 const TA_FuncInfo *funcInfo,
                                 const char *prefix );
 
+
+static void addFuncEnumeration( FILE *out );
+
 char gToOpen[1024];
 char gTempBuf[2048];
 char gTempBuf2[2048];
@@ -137,6 +140,8 @@ const char *doubleToStr( TA_Real value );
 const char *gCurrentGroupName;
 
 static int genCode(int argc, char* argv[]);
+
+extern const TA_OptInputParameterInfo TA_DEF_UI_MA_Method;
 
 int main(int argc, char* argv[])
 {
@@ -360,6 +365,9 @@ static int genCode(int argc, char* argv[])
       printf( "\nCannot access [%s]\n", gToOpen );
       return -1;
    }
+
+   /* Generate some enumeration in ta_func.h */
+   addFuncEnumeration( gOutFunc_H->file );
 
    /* Create the "func_list.txt" */
    gOutFuncList_TXT = fileOpen( "..\\include\\func_list.txt",
@@ -614,47 +622,52 @@ static void printDefines( FILE *out, const TA_FuncInfo *funcInfo )
          paramName = defaultParamName;
 
       /* Output a comment to guide the user. */
-      fprintf( out, "\n/* TA_%s: Optional Parameter %s_%d */\n",
-               funcInfo->name, paramName, paramNb );
-
-      switch( optInputParamInfo->type )
-      {
-      case TA_OptInput_IntegerList:
-         intList = (TA_IntegerList *)optInputParamInfo->dataSet;
-         for( j=0; j < intList->nbElement; j++ )
+         switch( optInputParamInfo->type )
          {
-            strcpy( gTempBuf, intList->data[j].string );
-            strconvch( gTempBuf, ' ', '_' );
-            trim( gTempBuf );
-            strupc( gTempBuf );
-            fprintf( out, "#define TA_%s_%s %d\n",
-                     funcInfo->name,
-                     gTempBuf,
-                     intList->data[j].value );
+         case TA_OptInput_IntegerList:
+            intList = (TA_IntegerList *)optInputParamInfo->dataSet;
+            if( intList != (TA_IntegerList *)TA_DEF_UI_MA_Method.dataSet )
+            {
+               fprintf( out, "\n/* TA_%s: Optional Parameter %s_%d */\n",
+                        funcInfo->name, paramName, paramNb );
+               for( j=0; j < intList->nbElement; j++ )
+               {
+                  strcpy( gTempBuf, intList->data[j].string );
+                  strconvch( gTempBuf, ' ', '_' );
+                  trim( gTempBuf );
+                  strupc( gTempBuf );
+                  fprintf( out, "#define TA_%s_%s %d\n",
+                           funcInfo->name,
+                           gTempBuf,
+                           intList->data[j].value );
 
-         }
-         fprintf( out, "\n" );
-         break;
-      case TA_OptInput_RealList:
-         realList = (TA_RealList *)optInputParamInfo->dataSet;
-         for( j=0; j < realList->nbElement; j++ )
-         {
-            strcpy( gTempBuf, realList->data[j].string );
-            strconvch( gTempBuf, ' ', '_' );
-            trim( gTempBuf );
-            strupc( gTempBuf );
-            fprintf( out, "#define TA_%s_%s %s\n",
-                     funcInfo->name,
-                     gTempBuf,
-                     doubleToStr(realList->data[j].value) );
+               }
+               fprintf( out, "\n" );
+            }
+            break;
+         case TA_OptInput_RealList:
+            fprintf( out, "\n/* TA_%s: Optional Parameter %s_%d */\n",
+                     funcInfo->name, paramName, paramNb );
 
+            realList = (TA_RealList *)optInputParamInfo->dataSet;
+            for( j=0; j < realList->nbElement; j++ )
+            {
+               strcpy( gTempBuf, realList->data[j].string );
+               strconvch( gTempBuf, ' ', '_' );
+               trim( gTempBuf );
+               strupc( gTempBuf );
+               fprintf( out, "#define TA_%s_%s %s\n",
+                        funcInfo->name,
+                        gTempBuf,
+                        doubleToStr(realList->data[j].value) );
+
+            }
+            fprintf( out, "\n" );
+            break;
+         default:
+            /* Do nothing */
+            break;
          }
-         fprintf( out, "\n" );
-         break;
-      default:
-         /* Do nothing */
-         break;
-      }
 
       paramNb++;
    }
@@ -996,9 +1009,20 @@ static void printFunc( FILE *out,
          defaultParamName = "optInReal";
          break;
       case TA_OptInput_IntegerRange:
-      case TA_OptInput_IntegerList:
          typeString = "TA_Integer";
          defaultParamName = "optInInteger";
+         break;
+      case TA_OptInput_IntegerList:
+         if( (optInputParamInfo->dataSet == TA_DEF_UI_MA_Method.dataSet) && !frame )
+         {
+            typeString = "TA_MAType";
+            defaultParamName = "optInMAType";
+         }
+         else
+         {
+            typeString = "TA_Integer";
+            defaultParamName = "optInInteger";
+         }
          break;
       default:
          if( !paramName )
@@ -1040,7 +1064,7 @@ static void printFunc( FILE *out,
                if( ((TA_RealRange *)(optInputParamInfo->dataSet))->min == TA_REAL_MIN )
                   fprintf( out, " /* From TA_REAL_MIN" );
                else
-                  fprintf( out, " /* From %.*e",
+                  fprintf( out, " /* From %.*g",
                            ((TA_RealRange *)(optInputParamInfo->dataSet))->precision,
                            ((TA_RealRange *)(optInputParamInfo->dataSet))->min );
 
@@ -1048,7 +1072,7 @@ static void printFunc( FILE *out,
                   fprintf( out, " to TA_REAL_MAX */\n" );
                else
                {
-                  fprintf( out, " to %.*e%s */\n", 
+                  fprintf( out, " to %.*g%s */\n", 
                           ((TA_RealRange *)(optInputParamInfo->dataSet))->precision,
                           ((TA_RealRange *)(optInputParamInfo->dataSet))->max,
                           optInputParamInfo->flags & TA_OPTIN_IS_PERCENT? " %":"" );
@@ -1699,7 +1723,7 @@ static void printFuncHeaderDoc( FILE *out,
                   fprintf( out, "(From TA_REAL_MIN" );
                else
                {
-                  fprintf( out, "(From %.*e",
+                  fprintf( out, "(From %.*g",
                            ((TA_RealRange *)(optInputParamInfo->dataSet))->precision,
                            ((TA_RealRange *)(optInputParamInfo->dataSet))->min );
                }
@@ -1708,7 +1732,7 @@ static void printFuncHeaderDoc( FILE *out,
                   fprintf( out, " to TA_REAL_MAX)\n" );
                else
                {
-                  fprintf( out, " to %.*e%s)\n", 
+                  fprintf( out, " to %.*g%s)\n", 
                           ((TA_RealRange *)(optInputParamInfo->dataSet))->precision,
                           ((TA_RealRange *)(optInputParamInfo->dataSet))->max,
                           optInputParamInfo->flags & TA_OPTIN_IS_PERCENT? " %":"" );
@@ -1991,4 +2015,26 @@ static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo )
    fprintf( out, "EXCEL_GLUE_CODE_WITH_%d_PARAM(%s)\n", 
            nbParam,
            funcInfo->name );
+}
+
+static void addFuncEnumeration( FILE *out )
+{
+   TA_IntegerList *intList;
+   unsigned int j;
+
+   /* Add the TA_MAType enumeration */
+   intList = (TA_IntegerList *)TA_DEF_UI_MA_Method.dataSet;
+   fprintf( out, "typedef enum\n" );
+   fprintf( out, "{\n" );
+   for( j=0; j < intList->nbElement; j++ )
+   {
+      strcpy( gTempBuf, intList->data[j].string );
+      strconvch( gTempBuf, ' ', '_' );
+      trim( gTempBuf );
+      strupc( gTempBuf );
+      fprintf( out, "   TA_MAType_%-10s=%d%s", gTempBuf, intList->data[j].value,
+                     j < (intList->nbElement)-1?",\n":"\n");
+   }
+
+   fprintf( out, "} TA_MAType;\n\n" );
 }
