@@ -340,6 +340,7 @@ ENUM_BEGIN( TA_CandleSettingType )
     TA_ShadowVeryShort,
     TA_Near,
     TA_Far,
+    TA_Equal,
     TA_AllCandleSettings
 ENUM_END( TA_CandleSettingType )
 
