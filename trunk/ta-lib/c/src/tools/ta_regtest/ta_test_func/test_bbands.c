@@ -120,13 +120,13 @@ static TA_Test tableTest[] =
    /* With upper band multiplier only. */
    /* With lower band multiplier only. */
    /* With identical upper/lower multiplier. */
-   { 0, 0,  251, 20, 2.0, 2.0, TA_BBANDS_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,
+   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,
      19, 252-19,
      13, 93.674,   /* Upper */
      13, 87.679,   /* Middle */
      13, 81.685 }, /* Lower */
 
-   { 0, 0,  251, 20, 2.0, 2.0, TA_BBANDS_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,
+   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,
      19, 252-19,
      0, 98.0734,   /* Upper */
      0, 92.8910,   /* Middle */
@@ -140,7 +140,7 @@ static TA_Test tableTest[] =
    /* With upper band multiplier only. */
    /* With lower band multiplier only. */
    /* With identical upper/lower multiplier. */
-   { 1, 0,  251, 20, 2.0, 2.0, TA_BBANDS_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,
+   { 1, 0,  251, 20, 2.0, 2.0, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,
      19, 252-19,
      0, 98.0734,   /* Upper */
      0, 92.8910,   /* Middle */
@@ -157,7 +157,7 @@ static TA_Test tableTest[] =
    /* With lower band multiplier only. */
 
    /* With identical upper/lower multiplier. */
-   { 1, 0,  251, 20, 2.0, 2.0, TA_BBANDS_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 1, 0,  251, 20, 2.0, 2.0, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      0, 98.0734,    /* Upper */
      0, 92.8910,    /* Middle */
@@ -170,85 +170,85 @@ static TA_Test tableTest[] =
    /******************************/
 
    /* No multiplier */
-   { 1, 0,  251, 20, 1.0, 1.0, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 1, 0,  251, 20, 1.0, 1.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      0, 94.6914,   /* Upper  */
      0, 92.1002,   /* Middle */
      0, 89.5090 }, /* Lower  */
-   { 0, 0,  251, 20, 1.0, 1.0, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 1.0, 1.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      3, 94.0477,   /* Upper  */
      3, 90.7270,   /* Middle */
      3, 87.4063 }, /* Lower  */
-   { 0, 0,  251, 20, 1.0, 1.0, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 1.0, 1.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      252-20, 111.5415,   /* Upper  */
      252-20, 108.5265,   /* Middle */
      252-20, 105.5115 }, /* Lower  */
 
    /* With upper band multiplier only. */
-   { 0, 0,  251, 20, 1.5, 1.0, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 1.5, 1.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      0, 95.9870,   /* Upper */
      0, 92.1002,   /* Middle */
      0, 89.5090},  /* Lower */
-   { 0, 0,  251, 20, 1.5, 1.0, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 1.5, 1.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      3, 95.7080,  /* Upper */
      3, 90.7270,  /* Middle */
      3, 87.4063}, /* Lower */
-   { 0, 0,  251, 20, 1.5, 1.0, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 1.5, 1.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      252-20, 113.0490,   /* Upper */
      252-20, 108.5265,   /* Middle */
      252-20, 105.5115 }, /* Lower */
 
    /* With lower band multiplier only. */
-   { 1, 0,  251, 20, 1.0, 1.5, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 1, 0,  251, 20, 1.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      0, 94.6914,   /* Upper */
      0, 92.1002,   /* Middle */
      0, 88.2134 }, /* Lower */
-   { 0, 0,  251, 20, 1.0, 1.5, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 1.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      3, 94.0477,  /* Upper */
      3, 90.7270,  /* Middle */
      3, 85.7460}, /* Lower */
-   { 0, 0,  251, 20, 1.0, 1.5, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 1.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      252-20, 111.5415,   /* Upper */
      252-20, 108.5265,   /* Middle */
      252-20, 104.0040},  /* Lower */
 
    /* With identical upper/lower multiplier. */
-   { 0, 0,  251, 20, 2.0, 2.0, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      0, 97.2826,  /* Upper */
      0, 92.1002,  /* Middle */
      0, 86.9178}, /* Lower */
-   { 0, 0,  251, 20, 2.0, 2.0, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      1, 97.2637,    /* Upper */
      1, 91.7454,    /* Middle */
      1, 86.2271}, /* Lower */
-   { 0, 0,  251, 20, 2.0, 2.0, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      252-20, 114.5564,  /* Upper */
      252-20, 108.5265,  /* Middle */
      252-20, 102.4965}, /* Lower */
   
    /* With distinctive upper/lower multiplier. */
-   { 0, 0,  251, 20, 2.0, 1.5, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 2.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      0, 97.2826,   /* Upper */
      0, 92.1002,   /* Middle */
      0, 88.2134 }, /* Lower */
-   { 0, 0,  251, 20, 2.0, 1.5, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 2.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      3, 97.3684,    /* Upper */
      3, 90.7270,    /* Middle */
      3, 85.7460}, /* Lower */
-   { 0, 0,  251, 20, 2.0, 1.5, TA_BBANDS_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 2.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
      252-20, 114.5564, /* Upper */
      252-20, 108.5265, /* Middle */
@@ -506,7 +506,7 @@ static ErrorNumber do_test( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      if( test->optInMethod_3 == TA_BBANDS_EMA )
+      if( test->optInMethod_3 == TA_MAType_EMA )
       {
          errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_EMA,
