@@ -102,7 +102,7 @@ TA_DataSourceHandle *TA_YAHOO_DataSourceHandleAlloc( void )
    handle->opaqueData = privateHandle;
    if( !handle->opaqueData )
    {
-      TA_Free(  handle );
+      TA_Free( handle );
       return NULL;
    }
     
@@ -190,7 +190,7 @@ static TA_RetCode freePrivateHandle( TA_PrivateYahooHandle *privateHandle )
       if( privateHandle->readOp2Fields )
          TA_ReadOpInfoFree( privateHandle->readOp2Fields );
 
-      TA_Free(  privateHandle );
+      TA_Free( privateHandle );
    }
 
    return TA_SUCCESS;

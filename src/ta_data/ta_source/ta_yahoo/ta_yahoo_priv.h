@@ -71,6 +71,9 @@ typedef struct
 
    /* Basic parameters for extracting security info. */
    TA_DecodingParam *info;
+
+   /* Basic parameters for extracting adjustment info */
+   TA_DecodingParam *adjustment;
 } TA_YahooDecodingParam;
 
 /* Reflect the information that can be extracted from the
