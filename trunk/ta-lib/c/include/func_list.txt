@@ -10,6 +10,7 @@ MAMA                MESA Adaptive Moving Average
 MIDPRICE            Midpoint Price over period
 MIDPOINT            MidPoint over period
 SAR                 Parabolic SAR
+SAREXT              Parabolic SAR - Extended
 SMA                 Simple Moving Average
 T3                  Triple Exponential Moving Average (T3)
 TEMA                Triple Exponential Moving Average

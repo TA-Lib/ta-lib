@@ -121,6 +121,7 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_MIDPRICE.c \
           ../../../../../src/ta_func/ta_MIDPOINT.c \
           ../../../../../src/ta_func/ta_SAR.c \
+          ../../../../../src/ta_func/ta_SAREXT.c \
           ../../../../../src/ta_func/ta_SMA.c \
           ../../../../../src/ta_func/ta_T3.c \
           ../../../../../src/ta_func/ta_TEMA.c \

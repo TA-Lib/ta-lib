@@ -42,10 +42,11 @@
  * file.
  */
 
-/***************************************************************************
- * Step 1 - Define user inputs that are particular to your function.
- *          Consider the ones already defined in "ta_def_ui.c".
- ***************************************************************************/
+/****************************************************************************
+ * Step 1 - Define here the interface to your TA functions with
+ *          the macro DEF_FUNCTION.
+ *
+ ****************************************************************************/
 
 /* OBV BEGIN */
 static const TA_InputParameterInfo    *TA_OBV_Inputs[]    =
@@ -72,14 +73,6 @@ DEF_FUNCTION( OBV,                          /* name */
               NULL                          /* analysis function */
              );
 /* OBV END */
-
-/****************************************************************************
- * Step 1 - Define here the interface to your TA functions with
- *          the macro DEF_FUNCTION.
- *
- ****************************************************************************/
-
-/* None */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.

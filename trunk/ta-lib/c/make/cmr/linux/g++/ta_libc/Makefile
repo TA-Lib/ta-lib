@@ -123,6 +123,7 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_MIDPRICE.c \
 		../../../../../src/ta_func/ta_MIDPOINT.c \
 		../../../../../src/ta_func/ta_SAR.c \
+		../../../../../src/ta_func/ta_SAREXT.c \
 		../../../../../src/ta_func/ta_SMA.c \
 		../../../../../src/ta_func/ta_T3.c \
 		../../../../../src/ta_func/ta_TEMA.c \
@@ -282,6 +283,7 @@ OBJECTS =	../../../../../temp/cmr/ta_ascii.o \
 		../../../../../temp/cmr/ta_MIDPRICE.o \
 		../../../../../temp/cmr/ta_MIDPOINT.o \
 		../../../../../temp/cmr/ta_SAR.o \
+		../../../../../temp/cmr/ta_SAREXT.o \
 		../../../../../temp/cmr/ta_SMA.o \
 		../../../../../temp/cmr/ta_T3.o \
 		../../../../../temp/cmr/ta_TEMA.o \
@@ -693,6 +695,9 @@ clean:
 
 ../../../../../temp/cmr/ta_SAR.o: ../../../../../src/ta_func/ta_SAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_SAR.o ../../../../../src/ta_func/ta_SAR.c
+
+../../../../../temp/cmr/ta_SAREXT.o: ../../../../../src/ta_func/ta_SAREXT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_SAREXT.o ../../../../../src/ta_func/ta_SAREXT.c
 
 ../../../../../temp/cmr/ta_SMA.o: ../../../../../src/ta_func/ta_SMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_SMA.o ../../../../../src/ta_func/ta_SMA.c

@@ -42,67 +42,13 @@
  * file.
  */
 
-/***************************************************************************
- * Step 1 - Define user inputs that are particular to your function.
- *          Consider the ones already defined in "ta_def_ui.c".
- ***************************************************************************/
+/****************************************************************************
+ * Step 1 - Define here the interface to your TA functions with
+ *          the macro DEF_FUNCTION.
+ *
+ ****************************************************************************/
 
-static const TA_OptInputParameterInfo TA_DEF_UI_FastK_Period =
-{
-   TA_OptInput_IntegerRange, /* type */
-   "optInFastK_Period",           /* paramName */
-   0,                        /* flags */
-
-   "Fast-K Period", /* displayName */
-   (const void *)&TA_DEF_TimePeriod_Positive, /* dataSet */
-   5, /* defaultValue */
-   "Time period for building the Fast-K line", /* hint */
-
-   NULL /* helpFile */
-};
-
-static const TA_OptInputParameterInfo TA_DEF_UI_SlowK_Period =
-{
-   TA_OptInput_IntegerRange, /* type */
-   "optInSlowK_Period",       /* paramName */
-   0,                        /* flags */
-
-   "Slow-K Period",     /* displayName */
-   (const void *)&TA_DEF_TimePeriod_Positive, /* dataSet */
-   3, /* defaultValue */
-   "Smoothing for making the Slow-K line. Usually set to 3", /* hint */
-
-   NULL /* helpFile */
-};
-
-static const TA_OptInputParameterInfo TA_DEF_UI_FastD_Period =
-{
-   TA_OptInput_IntegerRange, /* type */
-   "optInFastD_Period",       /* paramName */
-   0,                        /* flags */
-
-   "Fast-D Period",     /* displayName */
-   (const void *)&TA_DEF_TimePeriod_Positive, /* dataSet */
-   3, /* defaultValue */
-   "Smoothing for making the Fast-D line. Usually set to 3", /* hint */
-
-   NULL /* helpFile */
-};
-
-static const TA_OptInputParameterInfo TA_DEF_UI_SlowD_Period =
-{
-   TA_OptInput_IntegerRange, /* type */
-   "optInSlowD_Period",           /* paramName */
-   0,                        /* flags */
-
-   "Slow-D Period",            /* displayName */
-   (const void *)&TA_DEF_TimePeriod_Positive, /* dataSet */
-   3, /* defaultValue */
-   "Smoothing for making the Slow-D line", /* hint */
-
-   NULL /* helpFile */
-};
-
+/* SAR BEGIN */
 static const TA_RealRange TA_DEF_AccelerationFactor =
 {
    TA_REAL_MIN,  /* min */
@@ -118,9 +64,9 @@ static const TA_RealRange TA_DEF_AccelerationMax =
    TA_REAL_MIN, /* min */
    TA_REAL_MAX, /* max */
    4,     /* precision */
-   0.1,  /* suggested start */
-   1.0,  /* suggested end   */
-   0.1   /* suggested increment */
+   0.20,  /* suggested start */
+   0.40,  /* suggested end   */
+   0.01   /* suggested increment */
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationFactor =
@@ -132,7 +78,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationFactor =
    "Acceleration Factor", /* displayName */
    (const void *)&TA_DEF_AccelerationFactor, /* dataSet */
    0.02, /* defaultValue */
-   "Acceleration Factor used up to the Maximum parameter", /* hint */
+   "Acceleration Factor used up to the Maximum value", /* hint */
    NULL /* helpFile */
 };
 
@@ -142,76 +88,14 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationMaximum =
    "optInMaximum",        /* paramName */
    0,                     /* flags */
 
-   "Acceleration Maximum", /* displayName */
+   "AF Maximum", /* displayName */
    (const void *)&TA_DEF_AccelerationMax, /* dataSet */
    0.20, /* defaultValue */
-   "Maximum value for the acceleration factor", /* hint */
+   "Acceleration Factor Maximum value", /* hint */
 
    NULL /* helpFile */
 };
 
-const TA_OptInputParameterInfo TA_DEF_UI_SlowK_MAType =
-{
-   TA_OptInput_IntegerList, /* type */
-   "optInSlowK_MAType",     /* paramName */
-   0,                       /* flags */
-
-   "Slow-K MA",                /* displayName */
-   (const void *)&TA_MA_TypeList, /* dataSet */
-   0, /* defaultValue = simple average */
-   "Type of Moving Average for Slow-K", /* hint */
-
-   NULL /* helpFile */
-};
-
-const TA_OptInputParameterInfo TA_DEF_UI_SlowD_MAType =
-{
-   TA_OptInput_IntegerList, /* type */
-   "optInSlowD_MAType",     /* paramName */
-   0,                       /* flags */
-
-   "Slow-D MA",                /* displayName */
-   (const void *)&TA_MA_TypeList, /* dataSet */
-   0, /* defaultValue = simple average */
-   "Type of Moving Average for Slow-D", /* hint */
-
-   NULL /* helpFile */
-};
-
-const TA_OptInputParameterInfo TA_DEF_UI_FastD_MAType =
-{
-   TA_OptInput_IntegerList, /* type */
-   "optInFastD_MAType",     /* paramName */
-   0,                       /* flags */
-
-   "Fast-D MA",                /* displayName */
-   (const void *)&TA_MA_TypeList, /* dataSet */
-   0, /* defaultValue = simple average */
-   "Type of Moving Average for Fast-D", /* hint */
-
-   NULL /* helpFile */
-};
-
-
-const TA_OutputParameterInfo TA_DEF_UI_Output_SlowK =
-                               { TA_Output_Real, "outSlowK", TA_OUT_DASH_LINE };
-
-const TA_OutputParameterInfo TA_DEF_UI_Output_SlowD =
-                               { TA_Output_Real, "outSlowD", TA_OUT_DASH_LINE };
-
-const TA_OutputParameterInfo TA_DEF_UI_Output_FastK =
-                               { TA_Output_Real, "outFastK", TA_OUT_LINE };
-
-const TA_OutputParameterInfo TA_DEF_UI_Output_FastD =
-                               { TA_Output_Real, "outFastD", TA_OUT_LINE };
-
-/****************************************************************************
- * Step 1 - Define here the interface to your TA functions with
- *          the macro DEF_FUNCTION.
- *
- ****************************************************************************/
-
-/* SAR BEGIN */
 static const TA_InputParameterInfo    *TA_SAR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HL,
@@ -239,6 +123,181 @@ DEF_FUNCTION( SAR,                        /* name */
              );
 
 /* SAR END */
+
+/* SAREXT BEGIN */
+static const TA_RealRange TA_DEF_AccelerationInit =
+{
+   TA_REAL_MIN, /* min */
+   TA_REAL_MAX, /* max */
+   4,     /* precision */
+   0.01,  /* suggested start */
+   0.19,  /* suggested end   */
+   0.01   /* suggested increment */
+};
+
+static const TA_RealRange TA_DEF_SARStartValue =
+{
+   TA_REAL_MIN, /* min */
+   TA_REAL_MAX, /* max */
+   4,     /* precision */
+   0, /* suggested start */
+   0, /* suggested end   */
+   0  /* suggested increment */
+};
+
+static const TA_RealRange TA_DEF_SAROffsetOnReverse =
+{
+   TA_REAL_MIN, /* min */
+   TA_REAL_MAX, /* max */
+   4,     /* precision */
+   0.01,  /* suggested start */
+   0.15,  /* suggested end   */
+   0.01   /* suggested increment */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_StartValue =
+{
+   TA_OptInput_RealRange, /* type */
+   "optInStartValue",        /* paramName */
+   0,                     /* flags */
+
+   "Start Value", /* displayName */
+   (const void *)&TA_DEF_SARStartValue, /* dataSet */
+   0.20, /* defaultValue */
+   "Start value and direction. 0 for Auto, >0 for Long, <0 for Short", /* hint */
+
+   NULL /* helpFile */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_OffsetOnReverse =
+{
+   TA_OptInput_RealRange,  /* type */
+   "optInOffsetOnReverse", /* paramName */
+   0,                      /* flags */
+
+   "Offset on Reverse", /* displayName */
+   (const void *)&TA_DEF_SAROffsetOnReverse, /* dataSet */
+   0.20, /* defaultValue */
+   "Percent offset added/removed to initial stop on short/long reversal", /* hint */
+
+   NULL /* helpFile */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationInitLong =
+{
+   TA_OptInput_RealRange, /* type */
+   "optInAccelerationInitLong",        /* paramName */
+   0,                     /* flags */
+
+   "AF Init Long", /* displayName */
+   (const void *)&TA_DEF_AccelerationInit, /* dataSet */
+   0.20, /* defaultValue */
+   "Acceleration Factor initial value for the Long direction", /* hint */
+
+   NULL /* helpFile */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationLong =
+{
+   TA_OptInput_RealRange, /* type */
+   "optInAccelerationLong",  /* paramName */
+   0,          /* flags */
+
+   "AF Long", /* displayName */
+   (const void *)&TA_DEF_AccelerationFactor, /* dataSet */
+   0.02, /* defaultValue */
+   "Acceleration Factor for the Long direction", /* hint */
+   NULL /* helpFile */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationMaxLong =
+{
+   TA_OptInput_RealRange, /* type */
+   "optInAccelerationMaxLong",        /* paramName */
+   0,                     /* flags */
+
+   "AF Max Long", /* displayName */
+   (const void *)&TA_DEF_AccelerationMax, /* dataSet */
+   0.20, /* defaultValue */
+   "Acceleration Factor maximum value for the Long direction", /* hint */
+
+   NULL /* helpFile */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationInitShort =
+{
+   TA_OptInput_RealRange, /* type */
+   "optInAccelerationInitShort",        /* paramName */
+   0,                     /* flags */
+
+   "AF Init Short", /* displayName */
+   (const void *)&TA_DEF_AccelerationInit, /* dataSet */
+   0.20, /* defaultValue */
+   "Acceleration Factor initial value for the Short direction", /* hint */
+
+   NULL /* helpFile */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationShort =
+{
+   TA_OptInput_RealRange, /* type */
+   "optInAccelerationShort",  /* paramName */
+   0,          /* flags */
+
+   "AF Short", /* displayName */
+   (const void *)&TA_DEF_AccelerationFactor, /* dataSet */
+   0.02, /* defaultValue */
+   "Acceleration Factor for the Short direction", /* hint */
+   NULL /* helpFile */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationMaxShort =
+{
+   TA_OptInput_RealRange, /* type */
+   "optInAccelerationMaxShort",        /* paramName */
+   0,                     /* flags */
+
+   "AF Max Short", /* displayName */
+   (const void *)&TA_DEF_AccelerationMax, /* dataSet */
+   0.20, /* defaultValue */
+   "Acceleration Factor maximum value for the Short direction", /* hint */
+
+   NULL /* helpFile */
+};
+
+static const TA_InputParameterInfo    *TA_SAREXT_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SAREXT_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SAREXT_OptInputs[] =
+{ &TA_DEF_UI_D_StartValue,
+  &TA_DEF_UI_D_OffsetOnReverse,
+  &TA_DEF_UI_D_AccelerationInitLong,
+  &TA_DEF_UI_D_AccelerationLong,
+  &TA_DEF_UI_D_AccelerationMaxLong,
+  &TA_DEF_UI_D_AccelerationInitShort,
+  &TA_DEF_UI_D_AccelerationShort,
+  &TA_DEF_UI_D_AccelerationMaxShort,
+  NULL
+};
+
+DEF_FUNCTION( SAREXT,                     /* name */
+              TA_GroupId_OverlapStudies,  /* groupId */
+              "Parabolic SAR - Extended", /* hint */
+              NULL,                       /* helpFile */
+              TA_FUNC_FLG_OVERLAP,        /* flags */
+              NULL                        /* analysis function */
+             );
+
+/* SAREXT END */
 
 /* SMA BEGIN */
 static const TA_InputParameterInfo    *TA_SMA_Inputs[]    =
@@ -297,6 +356,82 @@ DEF_FUNCTION( STDDEV,                   /* name */
 /* STDDEV END */
 
 /* STOCH BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_FastK_Period =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInFastK_Period",           /* paramName */
+   0,                        /* flags */
+
+   "Fast-K Period", /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive, /* dataSet */
+   5, /* defaultValue */
+   "Time period for building the Fast-K line", /* hint */
+
+   NULL /* helpFile */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_SlowK_Period =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInSlowK_Period",       /* paramName */
+   0,                        /* flags */
+
+   "Slow-K Period",     /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive, /* dataSet */
+   3, /* defaultValue */
+   "Smoothing for making the Slow-K line. Usually set to 3", /* hint */
+
+   NULL /* helpFile */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_SlowD_Period =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInSlowD_Period",           /* paramName */
+   0,                        /* flags */
+
+   "Slow-D Period",            /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive, /* dataSet */
+   3, /* defaultValue */
+   "Smoothing for making the Slow-D line", /* hint */
+
+   NULL /* helpFile */
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_SlowK_MAType =
+{
+   TA_OptInput_IntegerList, /* type */
+   "optInSlowK_MAType",     /* paramName */
+   0,                       /* flags */
+
+   "Slow-K MA",                /* displayName */
+   (const void *)&TA_MA_TypeList, /* dataSet */
+   0, /* defaultValue = simple average */
+   "Type of Moving Average for Slow-K", /* hint */
+
+   NULL /* helpFile */
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_SlowD_MAType =
+{
+   TA_OptInput_IntegerList, /* type */
+   "optInSlowD_MAType",     /* paramName */
+   0,                       /* flags */
+
+   "Slow-D MA",                /* displayName */
+   (const void *)&TA_MA_TypeList, /* dataSet */
+   0, /* defaultValue = simple average */
+   "Type of Moving Average for Slow-D", /* hint */
+
+   NULL /* helpFile */
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_SlowK =
+                               { TA_Output_Real, "outSlowK", TA_OUT_DASH_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_SlowD =
+                               { TA_Output_Real, "outSlowD", TA_OUT_DASH_LINE };
+
 static const TA_InputParameterInfo    *TA_STOCH_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -329,6 +464,40 @@ DEF_FUNCTION( STOCH,                   /* name */
 /* STOCH END */
 
 /* STOCHF BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_FastD_Period =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInFastD_Period",       /* paramName */
+   0,                        /* flags */
+
+   "Fast-D Period",     /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive, /* dataSet */
+   3, /* defaultValue */
+   "Smoothing for making the Fast-D line. Usually set to 3", /* hint */
+
+   NULL /* helpFile */
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_FastD_MAType =
+{
+   TA_OptInput_IntegerList, /* type */
+   "optInFastD_MAType",     /* paramName */
+   0,                       /* flags */
+
+   "Fast-D MA",                /* displayName */
+   (const void *)&TA_MA_TypeList, /* dataSet */
+   0, /* defaultValue = simple average */
+   "Type of Moving Average for Fast-D", /* hint */
+
+   NULL /* helpFile */
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_FastK =
+                               { TA_Output_Real, "outFastK", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_FastD =
+                               { TA_Output_Real, "outFastD", TA_OUT_LINE };
+
 static const TA_InputParameterInfo    *TA_STOCHF_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -365,6 +534,7 @@ DEF_FUNCTION( STOCHF,                   /* name */
 const TA_FuncDef *TA_DEF_TableS[] =
 {
    ADD_TO_TABLE(SAR),
+   ADD_TO_TABLE(SAREXT),
    ADD_TO_TABLE(STDDEV),
    ADD_TO_TABLE(SMA),
    ADD_TO_TABLE(STOCH),

@@ -120,6 +120,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_MIDPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_MIDPOINT.c \
 		..\..\..\..\..\src\ta_func\ta_SAR.c \
+		..\..\..\..\..\src\ta_func\ta_SAREXT.c \
 		..\..\..\..\..\src\ta_func\ta_SMA.c \
 		..\..\..\..\..\src\ta_func\ta_T3.c \
 		..\..\..\..\..\src\ta_func\ta_TEMA.c \
@@ -279,6 +280,7 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj \
 		..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj \
 		..\..\..\..\..\temp\cmd\ta_SAR.obj \
+		..\..\..\..\..\temp\cmd\ta_SAREXT.obj \
 		..\..\..\..\..\temp\cmd\ta_SMA.obj \
 		..\..\..\..\..\temp\cmd\ta_T3.obj \
 		..\..\..\..\..\temp\cmd\ta_TEMA.obj \
@@ -465,6 +467,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj \
 +..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj \
 +..\..\..\..\..\temp\cmd\ta_SAR.obj \
++..\..\..\..\..\temp\cmd\ta_SAREXT.obj \
 +..\..\..\..\..\temp\cmd\ta_SMA.obj \
 +..\..\..\..\..\temp\cmd\ta_T3.obj \
 +..\..\..\..\..\temp\cmd\ta_TEMA.obj \
@@ -637,6 +640,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj
 	-del ..\..\..\..\..\temp\cmd\ta_SAR.obj
+	-del ..\..\..\..\..\temp\cmd\ta_SAREXT.obj
 	-del ..\..\..\..\..\temp\cmd\ta_SMA.obj
 	-del ..\..\..\..\..\temp\cmd\ta_T3.obj
 	-del ..\..\..\..\..\temp\cmd\ta_TEMA.obj
@@ -1006,6 +1010,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_SAR.obj: ..\..\..\..\..\src\ta_func\ta_SAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_SAR.obj ..\..\..\..\..\src\ta_func\ta_SAR.c
+
+..\..\..\..\..\temp\cmd\ta_SAREXT.obj: ..\..\..\..\..\src\ta_func\ta_SAREXT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_SAREXT.obj ..\..\..\..\..\src\ta_func\ta_SAREXT.c
 
 ..\..\..\..\..\temp\cmd\ta_SMA.obj: ..\..\..\..\..\src\ta_func\ta_SMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_SMA.obj ..\..\..\..\..\src\ta_func\ta_SMA.c
