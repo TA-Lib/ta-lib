@@ -177,7 +177,7 @@ Compilation Notes for ODBC
 Currently, this driver is tested only with ODBC lib version 3.52 for Visual C++
 The following ODBC drivers were tested (Windows 2000):
     MySQL ODBC 3.51                     version 3.51.06.00
-
+    Microsoft Access Driver (*.mdb)     version 4.00.6200.00
 
 Compilation of this driver is DISABLED by default.  In order to get this
 driver compiled in your ta-lib build, you need to do the following:
