@@ -280,9 +280,17 @@ TA_RetCode TA_ListIterSavePos   ( TA_ListIter *iter, TA_ListIterPos *iterPos );
 void      *TA_ListIterRestorePos( TA_ListIterPos *iterPos );
 
 /* Sort a list using the provided compare function:
- *    int compare(TA_Libc *, const void *, const void *)
+ *    int compare(const void *, const void *)
  */
 TA_RetCode TA_ListSort( TA_List *list, int compare(const void *, const void *) );
 
-
+/* Remove duplicate from the list using the provided equal function:
+ *     int equal(const void *, const void *)
+ *
+ * equal must return 1 when the two elements are considered duplicate, else
+ * return 0.
+ */
+TA_RetCode TA_ListRemoveDuplicate( TA_List *list, 
+                                   int equal(const void *, const void *),
+                                   TA_RetCode (*freeFunc)( void *toBeFreed ) );
 #endif

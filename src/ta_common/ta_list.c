@@ -646,6 +646,55 @@ TA_RetCode TA_ListSort( TA_List *list, int compare(const void *, const void *) )
    return TA_SUCCESS;
 }
 
+TA_RetCode TA_ListRemoveDuplicate( TA_List *list, 
+                                   int equal(const void *, const void *),
+                                   TA_RetCode (*freeFunc)( void *toBeFreed ) )
+{
+   TA_ListIter outerLoop;
+   TA_ListIterPos savePos;
+   void *a;
+   void *b; 
+   void *toBeRemove;
+   TA_RetCode retCode;
+
+   if( list == NULL )
+      return TA_BAD_PARAM;
+
+   if( TA_ListSize(list) < 2 )
+      return TA_SUCCESS;
+
+   TA_ListIterInit( &outerLoop, list );
+   a = TA_ListIterHead( &outerLoop );
+      
+   do
+   {     
+      retCode = TA_ListIterSavePos( &outerLoop, &savePos);
+      if( retCode != TA_SUCCESS )
+         return retCode;
+      b = TA_ListIterNext(&outerLoop);
+      while(b) 
+      {
+         if( equal(a,b) )
+         {
+            toBeRemove = b;
+            b = TA_ListIterNext(&outerLoop);
+            retCode = TA_ListRemoveEntry(list,toBeRemove);
+            if( retCode != TA_SUCCESS )
+               return retCode;
+            if( freeFunc )
+               freeFunc(toBeRemove);
+         }
+         else
+            b = TA_ListIterNext(&outerLoop);
+      }
+
+      TA_ListIterRestorePos(&savePos);
+      a = TA_ListIterNext( &outerLoop );
+   } while(a);
+
+   return TA_SUCCESS;
+}
+
 /**** Local functions definitions.     ****/
 /* None */
 
