@@ -178,9 +178,9 @@ unsigned int TA_GetYear   ( const TA_Timestamp *timestamp ); /* [1600..9999] */
 unsigned int TA_GetMonth  ( const TA_Timestamp *timestamp ); /* [1..12] */
 unsigned int TA_GetDay    ( const TA_Timestamp *timestamp ); /* [1..31] */
 
-unsigned int TA_GetHour   ( const TA_Timestamp *timestamp ); /* [1..23] */
-unsigned int TA_GetMin    ( const TA_Timestamp *timestamp ); /* [1..59] */
-unsigned int TA_GetSec    ( const TA_Timestamp *timestamp ); /* [1..59] */
+unsigned int TA_GetHour   ( const TA_Timestamp *timestamp ); /* [0..23] */
+unsigned int TA_GetMin    ( const TA_Timestamp *timestamp ); /* [0..59] */
+unsigned int TA_GetSec    ( const TA_Timestamp *timestamp ); /* [0..59] */
 
 typedef enum
 { 
