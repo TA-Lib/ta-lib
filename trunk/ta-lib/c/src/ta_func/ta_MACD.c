@@ -36,7 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  JPP      JP Pienaar (j.pienaar@mci.co.za)
  *
  * Change history:
  *
@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  080403 JPP  Fix #767653 for logic when swapping periods.
  *
  */
 
@@ -278,6 +279,17 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
     * !!! If only I had time....
     */
 
+   /* Make sure slow is really slower than
+    * the fast period! if not, swap...
+    */
+   if( optInSlowPeriod_1 < optInFastPeriod_0 )
+   {
+       /* swap */
+       tempInteger       = optInSlowPeriod_1;
+       optInSlowPeriod_1 = optInFastPeriod_0;
+       optInFastPeriod_0 = tempInteger;
+   }
+
    /* Catch special case for fix 26/12 MACD. */
    if( optInSlowPeriod_1 != 0 )
       k1 = PER_TO_K(optInSlowPeriod_1);
@@ -293,17 +305,6 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    {
       optInFastPeriod_0 = 12;
       k2 = (double)0.15; /* Fix 12 */
-   }
-
-   /* Make sure slow is really slower than
-    * the fast period! if not, swap...
-    */
-   if( optInSlowPeriod_1 < optInFastPeriod_0 )
-   {
-       /* swap */
-       tempInteger       = optInSlowPeriod_1;
-       optInSlowPeriod_1 = optInFastPeriod_0;
-       optInFastPeriod_0 = tempInteger;
    }
 
    lookbackSignal = TA_EMA_Lookback( optInSignalPeriod_2 ); 
