@@ -297,11 +297,31 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLADVANCEBLOCK.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLBELTHOLD.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLBREAKAWAY.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLCOUNTERATTACK.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLDARKCLOUDCOVER.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLDOJI.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLDOJISTAR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLDRAGONFLYDOJI.c
 # End Source File
 # Begin Source File
 
@@ -314,6 +334,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLEVENINGDOJISTAR.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLGRAVESTONEDOJI.c
 # End Source File
 # Begin Source File
 
@@ -349,7 +373,23 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLINVERTEDHAMMER.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLKICKING.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLKICKINGBYLENGTH.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLLONGLINE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c
 # End Source File
 # Begin Source File
 
@@ -369,6 +409,14 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLPIERCING.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLRICKSHAWMAN.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLSEPARATINGLINES.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLSHOOTINGSTAR.c
 # End Source File
 # Begin Source File
@@ -385,6 +433,14 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLSTALLEDPATTERN.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLTAKURI.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLTASUKIGAP.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLTHRUSTING.c
 # End Source File
 # Begin Source File
@@ -394,6 +450,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLTRISTAR.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_CDLUPSIDEGAP2CROWS.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLXSIDEGAP3METHODS.c
 # End Source File
 # Begin Source File
 
