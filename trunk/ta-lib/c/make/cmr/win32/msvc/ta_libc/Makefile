@@ -155,14 +155,17 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_CDLHARAMI.c \
 		..\..\..\..\..\src\ta_func\ta_CDLHARAMICROSS.c \
 		..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c \
+		..\..\..\..\..\src\ta_func\ta_CDLHOMINGPIGEON.c \
 		..\..\..\..\..\src\ta_func\ta_CDLIDENTICAL3CROWS.c \
 		..\..\..\..\..\src\ta_func\ta_CDLINNECK.c \
 		..\..\..\..\..\src\ta_func\ta_CDLINVERTEDHAMMER.c \
 		..\..\..\..\..\src\ta_func\ta_CDLKICKING.c \
 		..\..\..\..\..\src\ta_func\ta_CDLKICKINGBYLENGTH.c \
+		..\..\..\..\..\src\ta_func\ta_CDLLADDERBOTTOM.c \
 		..\..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c \
 		..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c \
 		..\..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c \
+		..\..\..\..\..\src\ta_func\ta_CDLMATCHINGLOW.c \
 		..\..\..\..\..\src\ta_func\ta_CDLMATHOLD.c \
 		..\..\..\..\..\src\ta_func\ta_CDLMORNINGDOJISTAR.c \
 		..\..\..\..\..\src\ta_func\ta_CDLMORNINGSTAR.c \
@@ -175,6 +178,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c \
 		..\..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c \
 		..\..\..\..\..\src\ta_func\ta_CDLSTALLEDPATTERN.c \
+		..\..\..\..\..\src\ta_func\ta_CDLSTICKSANDWICH.c \
 		..\..\..\..\..\src\ta_func\ta_CDLTAKURI.c \
 		..\..\..\..\..\src\ta_func\ta_CDLTASUKIGAP.c \
 		..\..\..\..\..\src\ta_func\ta_CDLTHRUSTING.c \
@@ -380,14 +384,17 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLHARAMI.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLHARAMICROSS.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLHIGHWAVE.obj \
+		..\..\..\..\..\temp\cmr\ta_CDLHOMINGPIGEON.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLIDENTICAL3CROWS.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLINNECK.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLINVERTEDHAMMER.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLKICKING.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLKICKINGBYLENGTH.obj \
+		..\..\..\..\..\temp\cmr\ta_CDLLADDERBOTTOM.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLLONGLEGGEDDOJI.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLLONGLINE.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLMARUBOZU.obj \
+		..\..\..\..\..\temp\cmr\ta_CDLMATCHINGLOW.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLMATHOLD.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLMORNINGDOJISTAR.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLMORNINGSTAR.obj \
@@ -400,6 +407,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLSHORTLINE.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLSPINNINGTOP.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLSTALLEDPATTERN.obj \
+		..\..\..\..\..\temp\cmr\ta_CDLSTICKSANDWICH.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLTAKURI.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLTASUKIGAP.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLTHRUSTING.obj \
@@ -650,14 +658,17 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_CDLHARAMI.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLHARAMICROSS.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLHIGHWAVE.obj
+	-del ..\..\..\..\..\temp\cmr\ta_CDLHOMINGPIGEON.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLIDENTICAL3CROWS.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLINNECK.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLINVERTEDHAMMER.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLKICKING.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLKICKINGBYLENGTH.obj
+	-del ..\..\..\..\..\temp\cmr\ta_CDLLADDERBOTTOM.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLLONGLEGGEDDOJI.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLLONGLINE.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLMARUBOZU.obj
+	-del ..\..\..\..\..\temp\cmr\ta_CDLMATCHINGLOW.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLMATHOLD.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLMORNINGDOJISTAR.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLMORNINGSTAR.obj
@@ -670,6 +681,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_CDLSHORTLINE.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLSPINNINGTOP.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLSTALLEDPATTERN.obj
+	-del ..\..\..\..\..\temp\cmr\ta_CDLSTICKSANDWICH.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLTAKURI.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLTASUKIGAP.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLTHRUSTING.obj
@@ -1154,6 +1166,9 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_CDLHIGHWAVE.obj: ..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_CDLHIGHWAVE.obj ..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
 
+..\..\..\..\..\temp\cmr\ta_CDLHOMINGPIGEON.obj: ..\..\..\..\..\src\ta_func\ta_CDLHOMINGPIGEON.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_CDLHOMINGPIGEON.obj ..\..\..\..\..\src\ta_func\ta_CDLHOMINGPIGEON.c
+
 ..\..\..\..\..\temp\cmr\ta_CDLIDENTICAL3CROWS.obj: ..\..\..\..\..\src\ta_func\ta_CDLIDENTICAL3CROWS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_CDLIDENTICAL3CROWS.obj ..\..\..\..\..\src\ta_func\ta_CDLIDENTICAL3CROWS.c
 
@@ -1169,6 +1184,9 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_CDLKICKINGBYLENGTH.obj: ..\..\..\..\..\src\ta_func\ta_CDLKICKINGBYLENGTH.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_CDLKICKINGBYLENGTH.obj ..\..\..\..\..\src\ta_func\ta_CDLKICKINGBYLENGTH.c
 
+..\..\..\..\..\temp\cmr\ta_CDLLADDERBOTTOM.obj: ..\..\..\..\..\src\ta_func\ta_CDLLADDERBOTTOM.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_CDLLADDERBOTTOM.obj ..\..\..\..\..\src\ta_func\ta_CDLLADDERBOTTOM.c
+
 ..\..\..\..\..\temp\cmr\ta_CDLLONGLEGGEDDOJI.obj: ..\..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_CDLLONGLEGGEDDOJI.obj ..\..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c
 
@@ -1177,6 +1195,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_CDLMARUBOZU.obj: ..\..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_CDLMARUBOZU.obj ..\..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c
+
+..\..\..\..\..\temp\cmr\ta_CDLMATCHINGLOW.obj: ..\..\..\..\..\src\ta_func\ta_CDLMATCHINGLOW.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_CDLMATCHINGLOW.obj ..\..\..\..\..\src\ta_func\ta_CDLMATCHINGLOW.c
 
 ..\..\..\..\..\temp\cmr\ta_CDLMATHOLD.obj: ..\..\..\..\..\src\ta_func\ta_CDLMATHOLD.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_CDLMATHOLD.obj ..\..\..\..\..\src\ta_func\ta_CDLMATHOLD.c
@@ -1213,6 +1234,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_CDLSTALLEDPATTERN.obj: ..\..\..\..\..\src\ta_func\ta_CDLSTALLEDPATTERN.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_CDLSTALLEDPATTERN.obj ..\..\..\..\..\src\ta_func\ta_CDLSTALLEDPATTERN.c
+
+..\..\..\..\..\temp\cmr\ta_CDLSTICKSANDWICH.obj: ..\..\..\..\..\src\ta_func\ta_CDLSTICKSANDWICH.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_CDLSTICKSANDWICH.obj ..\..\..\..\..\src\ta_func\ta_CDLSTICKSANDWICH.c
 
 ..\..\..\..\..\temp\cmr\ta_CDLTAKURI.obj: ..\..\..\..\..\src\ta_func\ta_CDLTAKURI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_CDLTAKURI.obj ..\..\..\..\..\src\ta_func\ta_CDLTAKURI.c

@@ -162,14 +162,17 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_CDLHARAMI.c \
           ../../../../../src/ta_func/ta_CDLHARAMICROSS.c \
           ../../../../../src/ta_func/ta_CDLHIGHWAVE.c \
+          ../../../../../src/ta_func/ta_CDLHOMINGPIGEON.c \
           ../../../../../src/ta_func/ta_CDLIDENTICAL3CROWS.c \
           ../../../../../src/ta_func/ta_CDLINNECK.c \
           ../../../../../src/ta_func/ta_CDLINVERTEDHAMMER.c \
           ../../../../../src/ta_func/ta_CDLKICKING.c \
           ../../../../../src/ta_func/ta_CDLKICKINGBYLENGTH.c \
+          ../../../../../src/ta_func/ta_CDLLADDERBOTTOM.c \
           ../../../../../src/ta_func/ta_CDLLONGLEGGEDDOJI.c \
           ../../../../../src/ta_func/ta_CDLLONGLINE.c \
           ../../../../../src/ta_func/ta_CDLMARUBOZU.c \
+          ../../../../../src/ta_func/ta_CDLMATCHINGLOW.c \
           ../../../../../src/ta_func/ta_CDLMATHOLD.c \
           ../../../../../src/ta_func/ta_CDLMORNINGDOJISTAR.c \
           ../../../../../src/ta_func/ta_CDLMORNINGSTAR.c \
@@ -182,6 +185,7 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_CDLSHORTLINE.c \
           ../../../../../src/ta_func/ta_CDLSPINNINGTOP.c \
           ../../../../../src/ta_func/ta_CDLSTALLEDPATTERN.c \
+          ../../../../../src/ta_func/ta_CDLSTICKSANDWICH.c \
           ../../../../../src/ta_func/ta_CDLTAKURI.c \
           ../../../../../src/ta_func/ta_CDLTASUKIGAP.c \
           ../../../../../src/ta_func/ta_CDLTHRUSTING.c \
