@@ -30,6 +30,8 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_DEMA.c \
 		../../../../../src/ta_func/ta_EMA.c \
 		../../../../../src/ta_func/ta_MA.c \
+		../../../../../src/ta_func/ta_MIDPRICE.c \
+		../../../../../src/ta_func/ta_MIDPOINT.c \
 		../../../../../src/ta_func/ta_SAR.c \
 		../../../../../src/ta_func/ta_SMA.c \
 		../../../../../src/ta_func/ta_TEMA.c \
@@ -57,6 +59,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_OBV.c \
 		../../../../../src/ta_func/ta_STDDEV.c \
 		../../../../../src/ta_func/ta_VAR.c \
+		../../../../../src/ta_func/ta_AVGPRICE.c \
 		../../../../../src/ta_func/ta_MEDPRICE.c \
 		../../../../../src/ta_func/ta_TYPPRICE.c \
 		../../../../../src/ta_func/ta_WCLPRICE.c
@@ -67,6 +70,8 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_DEMA.o \
 		../../../../../temp/cmd/ta_EMA.o \
 		../../../../../temp/cmd/ta_MA.o \
+		../../../../../temp/cmd/ta_MIDPRICE.o \
+		../../../../../temp/cmd/ta_MIDPOINT.o \
 		../../../../../temp/cmd/ta_SAR.o \
 		../../../../../temp/cmd/ta_SMA.o \
 		../../../../../temp/cmd/ta_TEMA.o \
@@ -94,6 +99,7 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_OBV.o \
 		../../../../../temp/cmd/ta_STDDEV.o \
 		../../../../../temp/cmd/ta_VAR.o \
+		../../../../../temp/cmd/ta_AVGPRICE.o \
 		../../../../../temp/cmd/ta_MEDPRICE.o \
 		../../../../../temp/cmd/ta_TYPPRICE.o \
 		../../../../../temp/cmd/ta_WCLPRICE.o
@@ -170,6 +176,12 @@ clean:
 
 ../../../../../temp/cmd/ta_MA.o: ../../../../../src/ta_func/ta_MA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MA.o ../../../../../src/ta_func/ta_MA.c
+
+../../../../../temp/cmd/ta_MIDPRICE.o: ../../../../../src/ta_func/ta_MIDPRICE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MIDPRICE.o ../../../../../src/ta_func/ta_MIDPRICE.c
+
+../../../../../temp/cmd/ta_MIDPOINT.o: ../../../../../src/ta_func/ta_MIDPOINT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MIDPOINT.o ../../../../../src/ta_func/ta_MIDPOINT.c
 
 ../../../../../temp/cmd/ta_SAR.o: ../../../../../src/ta_func/ta_SAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_SAR.o ../../../../../src/ta_func/ta_SAR.c
@@ -251,6 +263,9 @@ clean:
 
 ../../../../../temp/cmd/ta_VAR.o: ../../../../../src/ta_func/ta_VAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_VAR.o ../../../../../src/ta_func/ta_VAR.c
+
+../../../../../temp/cmd/ta_AVGPRICE.o: ../../../../../src/ta_func/ta_AVGPRICE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_AVGPRICE.o ../../../../../src/ta_func/ta_AVGPRICE.c
 
 ../../../../../temp/cmd/ta_MEDPRICE.o: ../../../../../src/ta_func/ta_MEDPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MEDPRICE.o ../../../../../src/ta_func/ta_MEDPRICE.c

@@ -55,9 +55,9 @@
  *       ROCR = (price/prevPrice)*100       [Rate of change ratio]
  *
  *     Tradestation       Metastock         TA-Lib
- *     ROC                P-ROC (Percent)   ROC
- *     MOM                P-ROC (Point)     MOM
- *     -                  MOM               ROCR (R for ratio)
+ *     ROC                ROC (Percent)     ROC
+ *     MOM                ROC (Point)       MOM
+ *     -                  MO                ROCR (R for ratio)
  *
  */
 

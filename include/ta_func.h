@@ -284,6 +284,57 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX
                     TA_Integer    optInCompatibility_2 ); 
 
 /*
+ * TA_MIDPRICE - Midpoint Price over period
+ * 
+ * Input  = High, Low
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_MIDPRICE( TA_Libc      *libHandle,
+                        TA_Integer    startIdx,
+                        TA_Integer    endIdx,
+                        const TA_Real inHigh_0[],
+                        const TA_Real inLow_0[],
+                        TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                        TA_Integer   *outBegIdx,
+                        TA_Integer   *outNbElement,
+                        TA_Real       outReal_0[] );
+
+int TA_MIDPRICE_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
+
+/*
+ * TA_MIDPOINT - MidPoint over period
+ * 
+ * Input  = TA_Real
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_MIDPOINT( TA_Libc      *libHandle,
+                        TA_Integer    startIdx,
+                        TA_Integer    endIdx,
+                        const TA_Real inReal_0[],
+                        TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                        TA_Integer   *outBegIdx,
+                        TA_Integer   *outNbElement,
+                        TA_Real       outReal_0[] );
+
+int TA_MIDPOINT_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
+
+/*
  * TA_SAR - Parabolic SAR
  * 
  * Input  = High, Low
@@ -1142,6 +1193,27 @@ int TA_VAR_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MA
 /******************************************
  * Group: [Price Transform]
  ******************************************/
+
+/*
+ * TA_AVGPRICE - Average Price
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = TA_Real
+ * 
+ */
+TA_RetCode TA_AVGPRICE( TA_Libc      *libHandle,
+                        TA_Integer    startIdx,
+                        TA_Integer    endIdx,
+                        const TA_Real inOpen_0[],
+                        const TA_Real inHigh_0[],
+                        const TA_Real inLow_0[],
+                        const TA_Real inClose_0[],
+                        TA_Integer   *outBegIdx,
+                        TA_Integer   *outNbElement,
+                        TA_Real       outReal_0[] );
+
+int TA_AVGPRICE_Lookback( void );
+
 
 /*
  * TA_MEDPRICE - Median Price

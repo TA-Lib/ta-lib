@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
+ *  010802 MF   Template creation.
  *
  */
 
@@ -60,44 +60,39 @@
    #include "ta_utility.h"
 #endif
 
-int TA_MIN_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+int TA_AVGPRICE_Lookback( void )
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
 
-   return (optInTimePeriod_0-1);
+   /* This function have no lookback needed. */
+   return 0;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 /*
- * TA_MIN - Lowest value over a specified period
+ * TA_AVGPRICE - Average Price
  * 
- * Input  = TA_Real
+ * Input  = Open, High, Low, Close
  * Output = TA_Real
- * 
- * Optional Parameters
- * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
- *    Number of period
- * 
  * 
  */
 
-TA_RetCode TA_MIN( TA_Libc      *libHandle,
-                   TA_Integer    startIdx,
-                   TA_Integer    endIdx,
-                   const TA_Real inReal_0[],
-                   TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                   TA_Integer   *outBegIdx,
-                   TA_Integer   *outNbElement,
-                   TA_Real       outReal_0[] )
+TA_RetCode TA_AVGPRICE( TA_Libc      *libHandle,
+                        TA_Integer    startIdx,
+                        TA_Integer    endIdx,
+                        const TA_Real inOpen_0[],
+                        const TA_Real inHigh_0[],
+                        const TA_Real inLow_0[],
+                        const TA_Real inClose_0[],
+                        TA_Integer   *outBegIdx,
+                        TA_Integer   *outNbElement,
+                        TA_Real       outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
-   /* Insert local variables here. */
-   TA_Real lowest, tmp;
-   TA_Integer outIdx, nbInitialElementNeeded;
-   TA_Integer trailingIdx, today, i;
+	/* insert local variable here */
+   int outIdx, i;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -112,11 +107,8 @@ TA_RetCode TA_MIN( TA_Libc      *libHandle,
       return TA_OUT_OF_RANGE_END_INDEX;
 
    /* Validate the parameters. */
-   if( !inReal_0 ) return TA_BAD_PARAM;
-   /* min/max are checked for optInTimePeriod_0. */
-   if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-      optInTimePeriod_0 = 30;
-   else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
+   /* Verify required price component. */
+   if(!inOpen_0||!inHigh_0||!inLow_0||!inClose_0)
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -128,52 +120,20 @@ TA_RetCode TA_MIN( TA_Libc      *libHandle,
 
    /* Insert TA function code here. */
 
-   /* Identify the minimum number of price bar needed
-    * to identify at least one output over the specified
-    * period.
-    */
-   nbInitialElementNeeded = (optInTimePeriod_0-1);
+   /* Average price = (High + Low + Open + Close) / 4 */
 
-   /* Move up the start index if there is not
-    * enough initial data.
-    */
-   if( startIdx < nbInitialElementNeeded )
-      startIdx = nbInitialElementNeeded;
-
-   /* Make sure there is still something to evaluate. */
-   if( startIdx > endIdx )
-   {
-      *outBegIdx    = 0;
-      *outNbElement = 0;
-      return TA_SUCCESS;
-   }
-
-   /* Proceed with the calculation for the requested range.
-    * Note that this algorithm allows the input and
-    * output to be the same buffer.
-    */
    outIdx = 0;
-   today       = startIdx;
-   trailingIdx = startIdx-nbInitialElementNeeded;
-   
-   while( today <= endIdx )
-   {
-      lowest = inReal_0[trailingIdx++];
-      for( i=trailingIdx; i <= today; i++ )
-      {
-         tmp = inReal_0[i];
-         if( tmp < lowest) lowest= tmp;
-      }
 
-      outReal_0[outIdx++] = lowest;
-      today++;
+   for( i=startIdx; i <= endIdx; i++ )
+   {
+      outReal_0[outIdx++] = ( inHigh_0 [i] +
+                              inLow_0  [i] +
+                              inClose_0[i] +
+                              inOpen_0 [i]) / 4;
    }
 
-   /* Keep the outBegIdx relative to the
-    * caller input before returning.
-    */
-   *outBegIdx    = startIdx;
    *outNbElement = outIdx;
+   *outBegIdx    = 0;
 
    return TA_SUCCESS;
 }

@@ -217,6 +217,10 @@ SOURCE=..\..\..\..\src\ta_abstract\frames\ta_ATR_frame.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_AVGPRICE_frame.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_abstract\frames\ta_BBANDS_frame.c
 # End Source File
 # Begin Source File
@@ -262,6 +266,14 @@ SOURCE=..\..\..\..\src\ta_abstract\frames\ta_MAX_frame.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_abstract\frames\ta_MEDPRICE_frame.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_MIDPOINT_frame.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_MIDPRICE_frame.c
 # End Source File
 # Begin Source File
 

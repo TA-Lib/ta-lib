@@ -186,6 +186,61 @@ DEF_FUNCTION( MEDPRICE,                   /* name */
 
 /* MEDPRICE END */
 
+/* MIDPRICE BEGIN */
+static const TA_InputParameterInfo    *TA_MIDPRICE_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MIDPRICE_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MIDPRICE_OptInputs[] = 
+{ &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( MIDPRICE,                    /* name */
+              TA_GroupId_OverlapStudies,   /* groupId */
+              "Midpoint Price over period",/* hint */
+              NULL,                        /* helpFile */
+              TA_FUNC_FLG_OVERLAP,         /* flags */
+              NULL                         /* analysis function */
+             );
+
+/* MIDPRICE END */
+
+/* MIDPOINT BEGIN */
+static const TA_InputParameterInfo    *TA_MIDPOINT_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MIDPOINT_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MIDPOINT_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( MIDPOINT,                   /* name */
+              TA_GroupId_OverlapStudies,  /* groupId */
+              "MidPoint over period",     /* hint */
+              NULL,                       /* helpFile */
+              TA_FUNC_FLG_OVERLAP,        /* flags */
+              NULL                        /* analysis function */
+             );
+/* MIDPOINT END */
+
 /* MIN BEGIN */
 static const TA_InputParameterInfo    *TA_MIN_Inputs[]    =
 {
@@ -307,6 +362,8 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MACDFIX),
    ADD_TO_TABLE(MAX),
    ADD_TO_TABLE(MEDPRICE),
+   ADD_TO_TABLE(MIDPRICE),
+   ADD_TO_TABLE(MIDPOINT),
    ADD_TO_TABLE(MIN),
    ADD_TO_TABLE(MINUS_DI),
    ADD_TO_TABLE(MINUS_DM),

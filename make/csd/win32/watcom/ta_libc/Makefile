@@ -113,6 +113,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c &
 		..\..\..\..\..\src\ta_abstract\frames\ta_DEMA_frame.c &
 		..\..\..\..\..\src\ta_abstract\frames\ta_EMA_frame.c &
 		..\..\..\..\..\src\ta_abstract\frames\ta_MA_frame.c &
+		..\..\..\..\..\src\ta_abstract\frames\ta_MIDPRICE_frame.c &
+		..\..\..\..\..\src\ta_abstract\frames\ta_MIDPOINT_frame.c &
 		..\..\..\..\..\src\ta_abstract\frames\ta_SAR_frame.c &
 		..\..\..\..\..\src\ta_abstract\frames\ta_SMA_frame.c &
 		..\..\..\..\..\src\ta_abstract\frames\ta_TEMA_frame.c &
@@ -140,6 +142,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c &
 		..\..\..\..\..\src\ta_abstract\frames\ta_OBV_frame.c &
 		..\..\..\..\..\src\ta_abstract\frames\ta_STDDEV_frame.c &
 		..\..\..\..\..\src\ta_abstract\frames\ta_VAR_frame.c &
+		..\..\..\..\..\src\ta_abstract\frames\ta_AVGPRICE_frame.c &
 		..\..\..\..\..\src\ta_abstract\frames\ta_MEDPRICE_frame.c &
 		..\..\..\..\..\src\ta_abstract\frames\ta_TYPPRICE_frame.c &
 		..\..\..\..\..\src\ta_abstract\frames\ta_WCLPRICE_frame.c &
@@ -150,6 +153,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c &
 		..\..\..\..\..\src\ta_func\ta_DEMA.c &
 		..\..\..\..\..\src\ta_func\ta_EMA.c &
 		..\..\..\..\..\src\ta_func\ta_MA.c &
+		..\..\..\..\..\src\ta_func\ta_MIDPRICE.c &
+		..\..\..\..\..\src\ta_func\ta_MIDPOINT.c &
 		..\..\..\..\..\src\ta_func\ta_SAR.c &
 		..\..\..\..\..\src\ta_func\ta_SMA.c &
 		..\..\..\..\..\src\ta_func\ta_TEMA.c &
@@ -177,6 +182,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c &
 		..\..\..\..\..\src\ta_func\ta_OBV.c &
 		..\..\..\..\..\src\ta_func\ta_STDDEV.c &
 		..\..\..\..\..\src\ta_func\ta_VAR.c &
+		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c &
 		..\..\..\..\..\src\ta_func\ta_MEDPRICE.c &
 		..\..\..\..\..\src\ta_func\ta_TYPPRICE.c &
 		..\..\..\..\..\src\ta_func\ta_WCLPRICE.c &
@@ -279,6 +285,8 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj &
 		..\..\..\..\..\temp\csd\ta_DEMA_frame.obj &
 		..\..\..\..\..\temp\csd\ta_EMA_frame.obj &
 		..\..\..\..\..\temp\csd\ta_MA_frame.obj &
+		..\..\..\..\..\temp\csd\ta_MIDPRICE_frame.obj &
+		..\..\..\..\..\temp\csd\ta_MIDPOINT_frame.obj &
 		..\..\..\..\..\temp\csd\ta_SAR_frame.obj &
 		..\..\..\..\..\temp\csd\ta_SMA_frame.obj &
 		..\..\..\..\..\temp\csd\ta_TEMA_frame.obj &
@@ -306,6 +314,7 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj &
 		..\..\..\..\..\temp\csd\ta_OBV_frame.obj &
 		..\..\..\..\..\temp\csd\ta_STDDEV_frame.obj &
 		..\..\..\..\..\temp\csd\ta_VAR_frame.obj &
+		..\..\..\..\..\temp\csd\ta_AVGPRICE_frame.obj &
 		..\..\..\..\..\temp\csd\ta_MEDPRICE_frame.obj &
 		..\..\..\..\..\temp\csd\ta_TYPPRICE_frame.obj &
 		..\..\..\..\..\temp\csd\ta_WCLPRICE_frame.obj &
@@ -316,6 +325,8 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj &
 		..\..\..\..\..\temp\csd\ta_DEMA.obj &
 		..\..\..\..\..\temp\csd\ta_EMA.obj &
 		..\..\..\..\..\temp\csd\ta_MA.obj &
+		..\..\..\..\..\temp\csd\ta_MIDPRICE.obj &
+		..\..\..\..\..\temp\csd\ta_MIDPOINT.obj &
 		..\..\..\..\..\temp\csd\ta_SAR.obj &
 		..\..\..\..\..\temp\csd\ta_SMA.obj &
 		..\..\..\..\..\temp\csd\ta_TEMA.obj &
@@ -343,6 +354,7 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj &
 		..\..\..\..\..\temp\csd\ta_OBV.obj &
 		..\..\..\..\..\temp\csd\ta_STDDEV.obj &
 		..\..\..\..\..\temp\csd\ta_VAR.obj &
+		..\..\..\..\..\temp\csd\ta_AVGPRICE.obj &
 		..\..\..\..\..\temp\csd\ta_MEDPRICE.obj &
 		..\..\..\..\..\temp\csd\ta_TYPPRICE.obj &
 		..\..\..\..\..\temp\csd\ta_WCLPRICE.obj &
@@ -472,6 +484,8 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_DEMA_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_EMA_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_MA_frame.obj
+	-del ..\..\..\..\..\temp\csd\ta_MIDPRICE_frame.obj
+	-del ..\..\..\..\..\temp\csd\ta_MIDPOINT_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_SAR_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_SMA_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_TEMA_frame.obj
@@ -499,6 +513,7 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_OBV_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_STDDEV_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_VAR_frame.obj
+	-del ..\..\..\..\..\temp\csd\ta_AVGPRICE_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_MEDPRICE_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_TYPPRICE_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_WCLPRICE_frame.obj
@@ -509,6 +524,8 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_DEMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_EMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_MA.obj
+	-del ..\..\..\..\..\temp\csd\ta_MIDPRICE.obj
+	-del ..\..\..\..\..\temp\csd\ta_MIDPOINT.obj
 	-del ..\..\..\..\..\temp\csd\ta_SAR.obj
 	-del ..\..\..\..\..\temp\csd\ta_SMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_TEMA.obj
@@ -536,6 +553,7 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_OBV.obj
 	-del ..\..\..\..\..\temp\csd\ta_STDDEV.obj
 	-del ..\..\..\..\..\temp\csd\ta_VAR.obj
+	-del ..\..\..\..\..\temp\csd\ta_AVGPRICE.obj
 	-del ..\..\..\..\..\temp\csd\ta_MEDPRICE.obj
 	-del ..\..\..\..\..\temp\csd\ta_TYPPRICE.obj
 	-del ..\..\..\..\..\temp\csd\ta_WCLPRICE.obj
@@ -833,6 +851,12 @@ clean:
 ..\..\..\..\..\temp\csd\ta_MA_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_MA_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MA_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_MA_frame.c
 
+..\..\..\..\..\temp\csd\ta_MIDPRICE_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_MIDPRICE_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MIDPRICE_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_MIDPRICE_frame.c
+
+..\..\..\..\..\temp\csd\ta_MIDPOINT_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_MIDPOINT_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MIDPOINT_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_MIDPOINT_frame.c
+
 ..\..\..\..\..\temp\csd\ta_SAR_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_SAR_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_SAR_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_SAR_frame.c
 
@@ -914,6 +938,9 @@ clean:
 ..\..\..\..\..\temp\csd\ta_VAR_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_VAR_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_VAR_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_VAR_frame.c
 
+..\..\..\..\..\temp\csd\ta_AVGPRICE_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_AVGPRICE_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_AVGPRICE_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_AVGPRICE_frame.c
+
 ..\..\..\..\..\temp\csd\ta_MEDPRICE_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_MEDPRICE_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MEDPRICE_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_MEDPRICE_frame.c
 
@@ -943,6 +970,12 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_MA.obj: ..\..\..\..\..\src\ta_func\ta_MA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MA.obj ..\..\..\..\..\src\ta_func\ta_MA.c
+
+..\..\..\..\..\temp\csd\ta_MIDPRICE.obj: ..\..\..\..\..\src\ta_func\ta_MIDPRICE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MIDPRICE.obj ..\..\..\..\..\src\ta_func\ta_MIDPRICE.c
+
+..\..\..\..\..\temp\csd\ta_MIDPOINT.obj: ..\..\..\..\..\src\ta_func\ta_MIDPOINT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MIDPOINT.obj ..\..\..\..\..\src\ta_func\ta_MIDPOINT.c
 
 ..\..\..\..\..\temp\csd\ta_SAR.obj: ..\..\..\..\..\src\ta_func\ta_SAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_SAR.obj ..\..\..\..\..\src\ta_func\ta_SAR.c
@@ -1024,6 +1057,9 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_VAR.obj: ..\..\..\..\..\src\ta_func\ta_VAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_VAR.obj ..\..\..\..\..\src\ta_func\ta_VAR.c
+
+..\..\..\..\..\temp\csd\ta_AVGPRICE.obj: ..\..\..\..\..\src\ta_func\ta_AVGPRICE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_AVGPRICE.obj ..\..\..\..\..\src\ta_func\ta_AVGPRICE.c
 
 ..\..\..\..\..\temp\csd\ta_MEDPRICE.obj: ..\..\..\..\..\src\ta_func\ta_MEDPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MEDPRICE.obj ..\..\..\..\..\src\ta_func\ta_MEDPRICE.c

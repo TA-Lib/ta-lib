@@ -96,6 +96,13 @@ const TA_InputParameterInfo TA_DEF_UI_Input_Price_OHLCV =
                                     TA_IN_PRICE_CLOSE  |
                                     TA_IN_PRICE_VOLUME };
 
+const TA_InputParameterInfo TA_DEF_UI_Input_Price_OHLC =
+                                  { TA_Input_Price, "inPriceOHLC",
+                                    TA_IN_PRICE_OPEN   |
+                                    TA_IN_PRICE_HIGH   |
+                                    TA_IN_PRICE_LOW    |
+                                    TA_IN_PRICE_CLOSE  };
+
 const TA_InputParameterInfo TA_DEF_UI_Input_Price_HLC =
                                   { TA_Input_Price, "inPriceHLC",
                                     TA_IN_PRICE_HIGH   |

@@ -27,6 +27,8 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_DEMA.c \
 		..\..\..\..\..\src\ta_func\ta_EMA.c \
 		..\..\..\..\..\src\ta_func\ta_MA.c \
+		..\..\..\..\..\src\ta_func\ta_MIDPRICE.c \
+		..\..\..\..\..\src\ta_func\ta_MIDPOINT.c \
 		..\..\..\..\..\src\ta_func\ta_SAR.c \
 		..\..\..\..\..\src\ta_func\ta_SMA.c \
 		..\..\..\..\..\src\ta_func\ta_TEMA.c \
@@ -54,6 +56,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_OBV.c \
 		..\..\..\..\..\src\ta_func\ta_STDDEV.c \
 		..\..\..\..\..\src\ta_func\ta_VAR.c \
+		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_MEDPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_TYPPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_WCLPRICE.c
@@ -64,6 +67,8 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_utility.obj \
 		..\..\..\..\..\temp\csd\ta_DEMA.obj \
 		..\..\..\..\..\temp\csd\ta_EMA.obj \
 		..\..\..\..\..\temp\csd\ta_MA.obj \
+		..\..\..\..\..\temp\csd\ta_MIDPRICE.obj \
+		..\..\..\..\..\temp\csd\ta_MIDPOINT.obj \
 		..\..\..\..\..\temp\csd\ta_SAR.obj \
 		..\..\..\..\..\temp\csd\ta_SMA.obj \
 		..\..\..\..\..\temp\csd\ta_TEMA.obj \
@@ -91,6 +96,7 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_utility.obj \
 		..\..\..\..\..\temp\csd\ta_OBV.obj \
 		..\..\..\..\..\temp\csd\ta_STDDEV.obj \
 		..\..\..\..\..\temp\csd\ta_VAR.obj \
+		..\..\..\..\..\temp\csd\ta_AVGPRICE.obj \
 		..\..\..\..\..\temp\csd\ta_MEDPRICE.obj \
 		..\..\..\..\..\temp\csd\ta_TYPPRICE.obj \
 		..\..\..\..\..\temp\csd\ta_WCLPRICE.obj
@@ -128,6 +134,8 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_DEMA.obj \
 +..\..\..\..\..\temp\csd\ta_EMA.obj \
 +..\..\..\..\..\temp\csd\ta_MA.obj \
++..\..\..\..\..\temp\csd\ta_MIDPRICE.obj \
++..\..\..\..\..\temp\csd\ta_MIDPOINT.obj \
 +..\..\..\..\..\temp\csd\ta_SAR.obj \
 +..\..\..\..\..\temp\csd\ta_SMA.obj \
 +..\..\..\..\..\temp\csd\ta_TEMA.obj \
@@ -155,6 +163,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_OBV.obj \
 +..\..\..\..\..\temp\csd\ta_STDDEV.obj \
 +..\..\..\..\..\temp\csd\ta_VAR.obj \
++..\..\..\..\..\temp\csd\ta_AVGPRICE.obj \
 +..\..\..\..\..\temp\csd\ta_MEDPRICE.obj \
 +..\..\..\..\..\temp\csd\ta_TYPPRICE.obj \
 +..\..\..\..\..\temp\csd\ta_WCLPRICE.obj \
@@ -178,6 +187,8 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_DEMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_EMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_MA.obj
+	-del ..\..\..\..\..\temp\csd\ta_MIDPRICE.obj
+	-del ..\..\..\..\..\temp\csd\ta_MIDPOINT.obj
 	-del ..\..\..\..\..\temp\csd\ta_SAR.obj
 	-del ..\..\..\..\..\temp\csd\ta_SMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_TEMA.obj
@@ -205,6 +216,7 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_OBV.obj
 	-del ..\..\..\..\..\temp\csd\ta_STDDEV.obj
 	-del ..\..\..\..\..\temp\csd\ta_VAR.obj
+	-del ..\..\..\..\..\temp\csd\ta_AVGPRICE.obj
 	-del ..\..\..\..\..\temp\csd\ta_MEDPRICE.obj
 	-del ..\..\..\..\..\temp\csd\ta_TYPPRICE.obj
 	-del ..\..\..\..\..\temp\csd\ta_WCLPRICE.obj
@@ -244,6 +256,12 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_MA.obj: ..\..\..\..\..\src\ta_func\ta_MA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_MA.obj ..\..\..\..\..\src\ta_func\ta_MA.c
+
+..\..\..\..\..\temp\csd\ta_MIDPRICE.obj: ..\..\..\..\..\src\ta_func\ta_MIDPRICE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_MIDPRICE.obj ..\..\..\..\..\src\ta_func\ta_MIDPRICE.c
+
+..\..\..\..\..\temp\csd\ta_MIDPOINT.obj: ..\..\..\..\..\src\ta_func\ta_MIDPOINT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_MIDPOINT.obj ..\..\..\..\..\src\ta_func\ta_MIDPOINT.c
 
 ..\..\..\..\..\temp\csd\ta_SAR.obj: ..\..\..\..\..\src\ta_func\ta_SAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_SAR.obj ..\..\..\..\..\src\ta_func\ta_SAR.c
@@ -325,6 +343,9 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_VAR.obj: ..\..\..\..\..\src\ta_func\ta_VAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_VAR.obj ..\..\..\..\..\src\ta_func\ta_VAR.c
+
+..\..\..\..\..\temp\csd\ta_AVGPRICE.obj: ..\..\..\..\..\src\ta_func\ta_AVGPRICE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_AVGPRICE.obj ..\..\..\..\..\src\ta_func\ta_AVGPRICE.c
 
 ..\..\..\..\..\temp\csd\ta_MEDPRICE.obj: ..\..\..\..\..\src\ta_func\ta_MEDPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_MEDPRICE.obj ..\..\..\..\..\src\ta_func\ta_MEDPRICE.c
