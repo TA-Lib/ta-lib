@@ -161,6 +161,8 @@ typedef enum
     /*  92 */  TA_UNSUPPORTED_REPLACE_ZERO_PRICE_BAR, /* TA_REPLACE_ZERO_PRICE_BAR flag is not supported for this data source. */
     /*  93 */  TA_MISSING_INPUT_DIGITS, /* A digit was missing in one of the price bar field */
     /*  94 */  TA_DICT_TYPE_MISMATCH,   /* Error with handling of dictionary */
+    /*  95 */  TA_YAHOO_IDX_UNAVAILABLE_4, /* Failed to find a Yahoo! index */
+    /*  96 */  TA_OBSOLETED_SYMBOL, /* This symbol is no longuer valid */
 
     /****** IP Error Code *****/
     /* 700 */  TA_IP_NOSOCKETS = 700,  /* Sockets not supported      */
@@ -191,7 +193,10 @@ typedef enum
     /* 821 */  TA_HTTP_SC_UNKNOWN,      /* Unknown error code.        */ 
 
     /****** TA-LIB Internal Error Code *****/
+
     /* 5000 */ TA_INTERNAL_ERROR = 5000, /* Internal Error - Contact TA-Lib.org */
+
+    /****** TA-Lib Contributors: See ta_trace.h for the TA_INTERNAL_ERROR macro *****/
 
     TA_UNKNOWN_ERR = 0xFFFF
 #if defined( _MANAGED )
@@ -200,13 +205,6 @@ typedef enum
 } TA_RetCode;
 #endif
 
-/* Id can be from 1 to 999 */
-#if defined( _MANAGED )
-   /* Sadly, we loose the Id info with Managed C++ */
-   #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
-#else
-   #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR+Id)
-#endif
 
 #if defined( _MANAGED )
 __value enum TA_Compatibility
