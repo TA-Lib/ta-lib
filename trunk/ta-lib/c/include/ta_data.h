@@ -308,18 +308,6 @@ TA_RetCode TA_ForEachSymbol( TA_UDBase *unifiedDatabase,
                              TA_ForEachSymbolFunc functionToCall,
                              void *opaqueData );
 
-typedef struct
-{
-   const char    *source;
-   const char    *category;
-   const char    *symbol;   
-   TA_Period      period;
-   TA_Timestamp   start;
-   TA_Timestamp   end;
-   TA_Field       field;
-   TA_HistoryFlag flags;
-} TA_HistoryAllocParam;
-
 /* The following functions allows to access historic data.
  * On success, it becomes the responsibility of the caller to
  * call TA_HistoryFree once the 'history' is no longuer needed.
