@@ -42,6 +42,10 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_AVGPRICE.c \ 
           ../../../../../src/ta_func/ta_BBANDS.c \ 
           ../../../../../src/ta_func/ta_CCI.c \ 
+          ../../../../../src/ta_func/ta_CDLHIGHWAVE.c \ 
+          ../../../../../src/ta_func/ta_CDLLONGLINE.c \ 
+          ../../../../../src/ta_func/ta_CDLSHORTLINE.c \ 
+          ../../../../../src/ta_func/ta_CDLSPINNINGTOP.c \ 
           ../../../../../src/ta_func/ta_CORREL.c \ 
           ../../../../../src/ta_func/ta_DEMA.c \ 
           ../../../../../src/ta_func/ta_DX.c \ 

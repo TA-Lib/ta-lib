@@ -129,6 +129,10 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_AVGPRICE.c \
 		../../../../../src/ta_func/ta_BBANDS.c \
 		../../../../../src/ta_func/ta_CCI.c \
+		../../../../../src/ta_func/ta_CDLHIGHWAVE.c \
+		../../../../../src/ta_func/ta_CDLLONGLINE.c \
+		../../../../../src/ta_func/ta_CDLSHORTLINE.c \
+		../../../../../src/ta_func/ta_CDLSPINNINGTOP.c \
 		../../../../../src/ta_func/ta_CORREL.c \
 		../../../../../src/ta_func/ta_DEMA.c \
 		../../../../../src/ta_func/ta_DX.c \
@@ -298,6 +302,10 @@ OBJECTS =	../../../../../temp/csr/ta_ascii.o \
 		../../../../../temp/csr/ta_AVGPRICE.o \
 		../../../../../temp/csr/ta_BBANDS.o \
 		../../../../../temp/csr/ta_CCI.o \
+		../../../../../temp/csr/ta_CDLHIGHWAVE.o \
+		../../../../../temp/csr/ta_CDLLONGLINE.o \
+		../../../../../temp/csr/ta_CDLSHORTLINE.o \
+		../../../../../temp/csr/ta_CDLSPINNINGTOP.o \
 		../../../../../temp/csr/ta_CORREL.o \
 		../../../../../temp/csr/ta_DEMA.o \
 		../../../../../temp/csr/ta_DX.o \
@@ -731,6 +739,18 @@ clean:
 
 ../../../../../temp/csr/ta_CCI.o: ../../../../../src/ta_func/ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_CCI.o ../../../../../src/ta_func/ta_CCI.c
+
+../../../../../temp/csr/ta_CDLHIGHWAVE.o: ../../../../../src/ta_func/ta_CDLHIGHWAVE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_CDLHIGHWAVE.o ../../../../../src/ta_func/ta_CDLHIGHWAVE.c
+
+../../../../../temp/csr/ta_CDLLONGLINE.o: ../../../../../src/ta_func/ta_CDLLONGLINE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_CDLLONGLINE.o ../../../../../src/ta_func/ta_CDLLONGLINE.c
+
+../../../../../temp/csr/ta_CDLSHORTLINE.o: ../../../../../src/ta_func/ta_CDLSHORTLINE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_CDLSHORTLINE.o ../../../../../src/ta_func/ta_CDLSHORTLINE.c
+
+../../../../../temp/csr/ta_CDLSPINNINGTOP.o: ../../../../../src/ta_func/ta_CDLSPINNINGTOP.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_CDLSPINNINGTOP.o ../../../../../src/ta_func/ta_CDLSPINNINGTOP.c
 
 ../../../../../temp/csr/ta_CORREL.o: ../../../../../src/ta_func/ta_CORREL.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_CORREL.o ../../../../../src/ta_func/ta_CORREL.c
