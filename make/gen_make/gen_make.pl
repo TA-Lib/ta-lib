@@ -37,5 +37,7 @@ system( "perl ./make_make.pl cdr $MAKEPATH \"template/*\" all" );
 system( "perl ./make_make.pl cdd $MAKEPATH \"template/*\" all" );
 system( "perl ./make_make.pl cmd $MAKEPATH \"template/*\" all" );
 system( "perl ./make_make.pl cmr $MAKEPATH \"template/*\" all" );
+system( "perl ./make_make.pl cmp $MAKEPATH \"template/*\" all" );
 system( "perl ./make_make.pl csr $MAKEPATH \"template/*\" all" );
 system( "perl ./make_make.pl csd $MAKEPATH \"template/*\" all" );
+system( "perl ./make_make.pl csp $MAKEPATH \"template/*\" all" );

@@ -8,8 +8,10 @@ CONFIG   += staticlib
 # Identify the temp dir
 cmd:OBJECTS_DIR = ../../../../../temp/cmd
 cmr:OBJECTS_DIR = ../../../../../temp/cmr
+cmp:OBJECTS_DIR = ../../../../../temp/cmp
 csd:OBJECTS_DIR = ../../../../../temp/csd
 csr:OBJECTS_DIR = ../../../../../temp/csr
+csp:OBJECTS_DIR = ../../../../../temp/csp
 cdr:OBJECTS_DIR = ../../../../../temp/cdr
 cdd:OBJECTS_DIR = ../../../../../temp/cdd
 
@@ -17,8 +19,10 @@ cdd:OBJECTS_DIR = ../../../../../temp/cdd
 LIBTARGET = ta_abstract
 cmd:TARGET = ta_abstract_cmd
 cmr:TARGET = ta_abstract_cmr
+cmp:TARGET = ta_abstract_cmp
 csd:TARGET = ta_abstract_csd
 csr:TARGET = ta_abstract_csr
+csp:TARGET = ta_abstract_csp
 cdr:TARGET = ta_abstract_cdr
 cdd:TARGET = ta_abstract_cdd
 
@@ -77,36 +81,46 @@ freebsd-g++:INCLUDEPATH += /usr/local/include
 
 cmd:TEMP_CLEAN_ALL = ../../../../../temp/cmd/*.pch
 cmr:TEMP_CLEAN_ALL = ../../../../../temp/cmr/*.pch
+cmp:TEMP_CLEAN_ALL = ../../../../../temp/cmp/*.pch
 csd:TEMP_CLEAN_ALL = ../../../../../temp/csd/*.pch
 csr:TEMP_CLEAN_ALL = ../../../../../temp/csr/*.pch
+csp:TEMP_CLEAN_ALL = ../../../../../temp/csp/*.pch
 cdr:TEMP_CLEAN_ALL = ../../../../../temp/cdr/*.pch
 cdd:TEMP_CLEAN_ALL = ../../../../../temp/cdd/*.pch
 
 cmd:TEMP_CLEAN_ALL2 = ../../../../../temp/cmd/*.idb
 cmr:TEMP_CLEAN_ALL2 = ../../../../../temp/cmr/*.idb
+cmp:TEMP_CLEAN_ALL2 = ../../../../../temp/cmp/*.idb
 csd:TEMP_CLEAN_ALL2 = ../../../../../temp/csd/*.idb
 csr:TEMP_CLEAN_ALL2 = ../../../../../temp/csr/*.idb
+csp:TEMP_CLEAN_ALL2 = ../../../../../temp/csp/*.idb
 cdr:TEMP_CLEAN_ALL2 = ../../../../../temp/cdr/*.idb
 cdd:TEMP_CLEAN_ALL2 = ../../../../../temp/cdd/*.idb
 
 cmd:TEMP_CLEAN_ALL3 = ../../../../../temp/cmd/$$LIBTARGET/*.pch
 cmr:TEMP_CLEAN_ALL3 = ../../../../../temp/cmr/$$LIBTARGET/*.pch
+cmp:TEMP_CLEAN_ALL3 = ../../../../../temp/cmp/$$LIBTARGET/*.pch
 csd:TEMP_CLEAN_ALL3 = ../../../../../temp/csd/$$LIBTARGET/*.pch
 csr:TEMP_CLEAN_ALL3 = ../../../../../temp/csr/$$LIBTARGET/*.pch
+csp:TEMP_CLEAN_ALL3 = ../../../../../temp/csp/$$LIBTARGET/*.pch
 cdr:TEMP_CLEAN_ALL3 = ../../../../../temp/cdr/$$LIBTARGET/*.pch
 cdd:TEMP_CLEAN_ALL3 = ../../../../../temp/cdd/$$LIBTARGET/*.pch
 
 cmd:TEMP_CLEAN_ALL4 = ../../../../../temp/cmd/$$LIBTARGET/*.idb
 cmr:TEMP_CLEAN_ALL4 = ../../../../../temp/cmr/$$LIBTARGET/*.idb
+cmp:TEMP_CLEAN_ALL4 = ../../../../../temp/cmp/$$LIBTARGET/*.idb
 csd:TEMP_CLEAN_ALL4 = ../../../../../temp/csd/$$LIBTARGET/*.idb
 csr:TEMP_CLEAN_ALL4 = ../../../../../temp/csr/$$LIBTARGET/*.idb
+csp:TEMP_CLEAN_ALL4 = ../../../../../temp/csp/$$LIBTARGET/*.idb
 cdr:TEMP_CLEAN_ALL4 = ../../../../../temp/cdr/$$LIBTARGET/*.idb
 cdd:TEMP_CLEAN_ALL4 = ../../../../../temp/cdd/$$LIBTARGET/*.idb
 
 cmd:TEMP_CLEAN_ALL5 = ../../../../../temp/cmd/$$LIBTARGET/*.obj
 cmr:TEMP_CLEAN_ALL5 = ../../../../../temp/cmr/$$LIBTARGET/*.obj
+cmp:TEMP_CLEAN_ALL5 = ../../../../../temp/cmp/$$LIBTARGET/*.obj
 csd:TEMP_CLEAN_ALL5 = ../../../../../temp/csd/$$LIBTARGET/*.obj
 csr:TEMP_CLEAN_ALL5 = ../../../../../temp/csr/$$LIBTARGET/*.obj
+csp:TEMP_CLEAN_ALL5 = ../../../../../temp/csp/$$LIBTARGET/*.obj
 cdr:TEMP_CLEAN_ALL5 = ../../../../../temp/cdr/$$LIBTARGET/*.obj
 cdd:TEMP_CLEAN_ALL5 = ../../../../../temp/cdd/$$LIBTARGET/*.obj
 

@@ -83,7 +83,7 @@ clean:
 	-del ../../../../../temp/cdr/*.idb
 	-del ../../../../../temp/cdr/gen_rdata/*.pch
 	-del ../../../../../temp/cdr/gen_rdata/*.idb
-	-del ../../../../../temp/csr/gen_rdata/*.obj
+	-del ../../../../../temp/cdr/gen_rdata/*.obj
 
 ####### Compile
 
