@@ -159,7 +159,7 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
 
    if( optInFastMAType_1 == TA_INTEGER_DEFAULT )
       optInFastMAType_1 = 0;
-   else if( (optInFastMAType_1 < 0) || (optInFastMAType_1 > 4) )
+   else if( (optInFastMAType_1 < 0) || (optInFastMAType_1 > 5) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowPeriod_2. */
@@ -170,7 +170,7 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
 
    if( optInSlowMAType_3 == TA_INTEGER_DEFAULT )
       optInSlowMAType_3 = 0;
-   else if( (optInSlowMAType_3 < 0) || (optInSlowMAType_3 > 4) )
+   else if( (optInSlowMAType_3 < 0) || (optInSlowMAType_3 > 5) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSignalPeriod_4. */
@@ -181,7 +181,7 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
 
    if( optInSignalMAType_5 == TA_INTEGER_DEFAULT )
       optInSignalMAType_5 = 0;
-   else if( (optInSignalMAType_5 < 0) || (optInSignalMAType_5 > 4) )
+   else if( (optInSignalMAType_5 < 0) || (optInSignalMAType_5 > 5) )
       return TA_BAD_PARAM;
 
    if( outRealMACD_0 == NULL )

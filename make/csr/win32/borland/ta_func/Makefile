@@ -39,6 +39,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_SAR.c \
 		..\..\..\..\..\src\ta_func\ta_SMA.c \
 		..\..\..\..\..\src\ta_func\ta_TEMA.c \
+		..\..\..\..\..\src\ta_func\ta_TRIMA.c \
 		..\..\..\..\..\src\ta_func\ta_WMA.c \
 		..\..\..\..\..\src\ta_func\ta_ATR.c \
 		..\..\..\..\..\src\ta_func\ta_TRANGE.c \
@@ -50,6 +51,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_MACD.c \
 		..\..\..\..\..\src\ta_func\ta_MACDEXT.c \
 		..\..\..\..\..\src\ta_func\ta_MACDFIX.c \
+		..\..\..\..\..\src\ta_func\ta_MFI.c \
 		..\..\..\..\..\src\ta_func\ta_MINUS_DI.c \
 		..\..\..\..\..\src\ta_func\ta_MINUS_DM.c \
 		..\..\..\..\..\src\ta_func\ta_MOM.c \
@@ -84,6 +86,7 @@ OBJECTS =	..\..\..\..\..\temp\csr\ta_utility.obj \
 		..\..\..\..\..\temp\csr\ta_SAR.obj \
 		..\..\..\..\..\temp\csr\ta_SMA.obj \
 		..\..\..\..\..\temp\csr\ta_TEMA.obj \
+		..\..\..\..\..\temp\csr\ta_TRIMA.obj \
 		..\..\..\..\..\temp\csr\ta_WMA.obj \
 		..\..\..\..\..\temp\csr\ta_ATR.obj \
 		..\..\..\..\..\temp\csr\ta_TRANGE.obj \
@@ -95,6 +98,7 @@ OBJECTS =	..\..\..\..\..\temp\csr\ta_utility.obj \
 		..\..\..\..\..\temp\csr\ta_MACD.obj \
 		..\..\..\..\..\temp\csr\ta_MACDEXT.obj \
 		..\..\..\..\..\temp\csr\ta_MACDFIX.obj \
+		..\..\..\..\..\temp\csr\ta_MFI.obj \
 		..\..\..\..\..\temp\csr\ta_MINUS_DI.obj \
 		..\..\..\..\..\temp\csr\ta_MINUS_DM.obj \
 		..\..\..\..\..\temp\csr\ta_MOM.obj \
@@ -161,6 +165,7 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csr\ta_SAR.obj \
 +..\..\..\..\..\temp\csr\ta_SMA.obj \
 +..\..\..\..\..\temp\csr\ta_TEMA.obj \
++..\..\..\..\..\temp\csr\ta_TRIMA.obj \
 +..\..\..\..\..\temp\csr\ta_WMA.obj \
 +..\..\..\..\..\temp\csr\ta_ATR.obj \
 +..\..\..\..\..\temp\csr\ta_TRANGE.obj \
@@ -172,6 +177,7 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csr\ta_MACD.obj \
 +..\..\..\..\..\temp\csr\ta_MACDEXT.obj \
 +..\..\..\..\..\temp\csr\ta_MACDFIX.obj \
++..\..\..\..\..\temp\csr\ta_MFI.obj \
 +..\..\..\..\..\temp\csr\ta_MINUS_DI.obj \
 +..\..\..\..\..\temp\csr\ta_MINUS_DM.obj \
 +..\..\..\..\..\temp\csr\ta_MOM.obj \
@@ -220,6 +226,7 @@ clean:
 	-del ..\..\..\..\..\temp\csr\ta_SAR.obj
 	-del ..\..\..\..\..\temp\csr\ta_SMA.obj
 	-del ..\..\..\..\..\temp\csr\ta_TEMA.obj
+	-del ..\..\..\..\..\temp\csr\ta_TRIMA.obj
 	-del ..\..\..\..\..\temp\csr\ta_WMA.obj
 	-del ..\..\..\..\..\temp\csr\ta_ATR.obj
 	-del ..\..\..\..\..\temp\csr\ta_TRANGE.obj
@@ -231,6 +238,7 @@ clean:
 	-del ..\..\..\..\..\temp\csr\ta_MACD.obj
 	-del ..\..\..\..\..\temp\csr\ta_MACDEXT.obj
 	-del ..\..\..\..\..\temp\csr\ta_MACDFIX.obj
+	-del ..\..\..\..\..\temp\csr\ta_MFI.obj
 	-del ..\..\..\..\..\temp\csr\ta_MINUS_DI.obj
 	-del ..\..\..\..\..\temp\csr\ta_MINUS_DM.obj
 	-del ..\..\..\..\..\temp\csr\ta_MOM.obj
@@ -306,6 +314,9 @@ clean:
 ..\..\..\..\..\temp\csr\ta_TEMA.obj: ..\..\..\..\..\src\ta_func\ta_TEMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_TEMA.obj ..\..\..\..\..\src\ta_func\ta_TEMA.c
 
+..\..\..\..\..\temp\csr\ta_TRIMA.obj: ..\..\..\..\..\src\ta_func\ta_TRIMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_TRIMA.obj ..\..\..\..\..\src\ta_func\ta_TRIMA.c
+
 ..\..\..\..\..\temp\csr\ta_WMA.obj: ..\..\..\..\..\src\ta_func\ta_WMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_WMA.obj ..\..\..\..\..\src\ta_func\ta_WMA.c
 
@@ -338,6 +349,9 @@ clean:
 
 ..\..\..\..\..\temp\csr\ta_MACDFIX.obj: ..\..\..\..\..\src\ta_func\ta_MACDFIX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_MACDFIX.obj ..\..\..\..\..\src\ta_func\ta_MACDFIX.c
+
+..\..\..\..\..\temp\csr\ta_MFI.obj: ..\..\..\..\..\src\ta_func\ta_MFI.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_MFI.obj ..\..\..\..\..\src\ta_func\ta_MFI.c
 
 ..\..\..\..\..\temp\csr\ta_MINUS_DI.obj: ..\..\..\..\..\src\ta_func\ta_MINUS_DI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_MINUS_DI.obj ..\..\..\..\..\src\ta_func\ta_MINUS_DI.c

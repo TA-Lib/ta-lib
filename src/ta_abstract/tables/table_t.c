@@ -73,6 +73,33 @@ DEF_FUNCTION( TRANGE,                     /* name */
              );
 /* TRANGE END */
 
+/* TRIMA BEGIN */
+static const TA_InputParameterInfo    *TA_TRIMA_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_TRIMA_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_TRIMA_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_30,
+  NULL
+};
+
+DEF_FUNCTION( TRIMA,                       /* name */
+              TA_GroupId_OverlapStudies,  /* groupId */
+              "Triangular Moving Average", /* hint */
+              NULL,                       /* helpFile */
+              TA_FUNC_FLG_OVERLAP,        /* flags */
+              NULL                        /* analysis function */
+             );
+/* TRIMA END */
+
 /* TRIX BEGIN */
 static const TA_InputParameterInfo    *TA_TRIX_Inputs[]    =
 {
@@ -132,6 +159,7 @@ const TA_FuncDef *TA_DEF_TableT[] =
 {
    ADD_TO_TABLE(TEMA),
    ADD_TO_TABLE(TRANGE),
+   ADD_TO_TABLE(TRIMA),
    ADD_TO_TABLE(TRIX),
    ADD_TO_TABLE(TYPPRICE),
    NULL

@@ -259,6 +259,34 @@ DEF_FUNCTION( MEDPRICE,                   /* name */
 
 /* MEDPRICE END */
 
+/* MFI BEGIN */
+static const TA_InputParameterInfo    *TA_MFI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLCV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MFI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MFI_OptInputs[] = 
+{
+  &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( MFI,                   /* name */
+              TA_GroupId_MomentumIndicators,  /* groupId */
+              "Money Flow Index",            /* hint */
+              NULL,                       /* helpFile */
+              TA_FUNC_FLG_UNST_PER,        /* flags */
+              NULL                        /* analysis function */
+             );
+/* MFI END */
+
 /* MIDPRICE BEGIN */
 static const TA_InputParameterInfo    *TA_MIDPRICE_Inputs[]    =
 {
@@ -436,6 +464,7 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MACDFIX),
    ADD_TO_TABLE(MAX),
    ADD_TO_TABLE(MEDPRICE),
+   ADD_TO_TABLE(MFI),
    ADD_TO_TABLE(MIDPRICE),
    ADD_TO_TABLE(MIDPOINT),
    ADD_TO_TABLE(MIN),

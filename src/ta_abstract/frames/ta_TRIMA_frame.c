@@ -55,21 +55,21 @@
 
 /* NEVER CALL directly this function! Use TA_CallFunc. */
  
-TA_RetCode TA_MOM_FramePP( const TA_ParamHolderPriv *params,
+TA_RetCode TA_TRIMA_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
                           TA_Integer            endIdx,
                           TA_Integer           *outBegIdx,
                           TA_Integer           *outNbElement )
 
 {
-   return TA_MOM(
-            startIdx,
-            endIdx,
-            params->in[0].data.inReal, /* inReal_0 */
-            params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
-            outBegIdx, 
-            outNbElement, 
-            params->out[0].data.outReal /*  outReal_0 */ );
+   return TA_TRIMA(
+              startIdx,
+              endIdx,
+              params->in[0].data.inReal, /* inReal_0 */
+              params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
+              outBegIdx, 
+              outNbElement, 
+              params->out[0].data.outReal /*  outReal_0 */ );
 }
 
 /***************

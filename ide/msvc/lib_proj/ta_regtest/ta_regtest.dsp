@@ -4,7 +4,7 @@
 
 # TARGTYPE "Win32 (x86) Console Application" 0x0103
 
-CFG=ta_regtest - Win32 CSD Single Thread Debug
+CFG=TA_REGTEST - WIN32 CMD MULTITHREAD DEBUG
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
@@ -13,7 +13,7 @@ CFG=ta_regtest - Win32 CSD Single Thread Debug
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "ta_regtest.mak" CFG="ta_regtest - Win32 CSD Single Thread Debug"
+!MESSAGE NMAKE /f "ta_regtest.mak" CFG="TA_REGTEST - WIN32 CMD MULTITHREAD DEBUG"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 

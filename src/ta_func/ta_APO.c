@@ -136,7 +136,7 @@ TA_RetCode TA_APO( TA_Integer    startIdx,
 
    if( optInMethod_2 == TA_INTEGER_DEFAULT )
       optInMethod_2 = 0;
-   else if( (optInMethod_2 < 0) || (optInMethod_2 > 4) )
+   else if( (optInMethod_2 < 0) || (optInMethod_2 > 5) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )

@@ -34,7 +34,6 @@ typedef struct
    {
       const TA_Real      *inReal;
       const TA_Integer   *inInteger;
-      const TA_Draw      *inDraw;
       TA_PricePtrs        inPrice;
    } data;
 
@@ -60,47 +59,34 @@ typedef struct
    {
       TA_Real        *outReal;
       TA_Integer     *outInteger;
-      TA_Draw        *outDraw;
    } data;
 
    const TA_OutputParameterInfo *outputInfo;
 } TA_ParamHolderOutput;
 
-typedef enum
-{
-   TA_PARAM_HOLDER_INPUT,
-   TA_PARAM_HOLDER_OPTINPUT,
-   TA_PARAM_HOLDER_OUTPUT
-} TA_ParamHolderType;
-
 typedef struct
 {
    /* Magic number is used to detect internal error. */
-   const unsigned int magicNumber;
+   unsigned int magicNumber;
 
-   unsigned int valueInitialize; /* Boolean indicating that the user did called
-                                  * the function to set the param holder.
-                                  */
+   TA_ParamHolderInput    *in;
+   TA_ParamHolderOptInput *optIn;
+   TA_ParamHolderOutput   *out;
 
-   TA_ParamHolderType type; /* Identify also which of the structure shall
-                             * be used in the following 'p' union.
-                             */
-   union TA_ParamHolderValue
-   {
-      TA_ParamHolderInput    in;
-      TA_ParamHolderOptInput optIn;
-      TA_ParamHolderOutput   out;
-   } p;
+   /* Indicate which parameter have been initialized.
+    * The LSB (Less Significant Bit) is the first parameter
+    * and a bit equal to '1' indicate that the parameter is
+    * not initialized.
+    */
+   unsigned int inBitmap;
+   unsigned int outBitmap;
 
-   /* These parameters shall be used only with this function. */
-   const void *function;  /* At runtime, points on a TA_FrameFunction */
+   const TA_FuncInfo *funcInfo;
 } TA_ParamHolderPriv;
 
-typedef TA_RetCode (*TA_FrameFunction)( TA_Integer  startIdx,
+typedef TA_RetCode (*TA_FrameFunction)( const TA_ParamHolderPriv *params,
+                                        TA_Integer  startIdx,
                                         TA_Integer  endIdx,
                                         TA_Integer *outBegIdx,
-                                        TA_Integer *outNbElement,
-                                        TA_ParamHolderPriv *in,
-                                        TA_ParamHolderPriv *optIn,
-                                        TA_ParamHolderPriv *out );
+                                        TA_Integer *outNbElement );
 #endif

@@ -42,10 +42,9 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
+ *  010802 MF   Template creation.
  *
  */
-#include "ta_memory.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -61,53 +60,42 @@
    #include "ta_utility.h"
 #endif
 
-int TA_PPO_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInMethod_2 ) 
+int TA_TRIMA_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   (void)optInFastPeriod_0;
-
-   /* Lookback is driven by the slow MA. */
-   return TA_MA_Lookback( optInSlowPeriod_1, optInMethod_2 );
+   return optInTimePeriod_0-1;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 /*
- * TA_PPO - Percentage Price Oscillator
+ * TA_TRIMA - Triangular Moving Average
  * 
  * Input  = TA_Real
  * Output = TA_Real
  * 
  * Optional Parameters
  * -------------------
- * optInFastPeriod_0:(From 1 to TA_INTEGER_MAX)
- *    Number of period for the fast MA
- * 
- * optInSlowPeriod_1:(From 1 to TA_INTEGER_MAX)
- *    Number of period for the slow MA
- * 
- * optInMethod_2:
- *    Type of Moving Average
+ * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ *    Number of period
  * 
  * 
  */
 
-TA_RetCode TA_PPO( TA_Integer    startIdx,
-                   TA_Integer    endIdx,
-                   const TA_Real inReal_0[],
-                   TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
-                   TA_Integer    optInSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
-                   TA_Integer    optInMethod_2,
-                   TA_Integer   *outBegIdx,
-                   TA_Integer   *outNbElement,
-                   TA_Real       outReal_0[] )
+TA_RetCode TA_TRIMA( TA_Integer    startIdx,
+                     TA_Integer    endIdx,
+                     const TA_Real inReal_0[],
+                     TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer   *outBegIdx,
+                     TA_Integer   *outNbElement,
+                     TA_Real       outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
-   /* Insert local variables here. */
-   TA_Real *tempBuffer;
+	/* insert local variable here */
    TA_RetCode retCode;
+   int lookbackTotal, innerPeriod, outerPeriod;
+   TA_Real *innerData;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -121,21 +109,10 @@ TA_RetCode TA_PPO( TA_Integer    startIdx,
 
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
-   /* min/max are checked for optInFastPeriod_0. */
-   if( optInFastPeriod_0 == TA_INTEGER_DEFAULT )
-      optInFastPeriod_0 = 12;
-   else if( (optInFastPeriod_0 < 1) || (optInFastPeriod_0 > 2147483647) )
-      return TA_BAD_PARAM;
-
-   /* min/max are checked for optInSlowPeriod_1. */
-   if( optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
-      optInSlowPeriod_1 = 26;
-   else if( (optInSlowPeriod_1 < 1) || (optInSlowPeriod_1 > 2147483647) )
-      return TA_BAD_PARAM;
-
-   if( optInMethod_2 == TA_INTEGER_DEFAULT )
-      optInMethod_2 = 0;
-   else if( (optInMethod_2 < 0) || (optInMethod_2 > 5) )
+   /* min/max are checked for optInTimePeriod_0. */
+   if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+      optInTimePeriod_0 = 30;
+   else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -147,24 +124,79 @@ TA_RetCode TA_PPO( TA_Integer    startIdx,
 
    /* Insert TA function code here. */
 
-   /* Allocate an intermediate buffer. */
-   tempBuffer = TA_Malloc( (endIdx-startIdx+1) * sizeof(TA_Real) );
-   if( !tempBuffer )
+   /* If someone have time, this function can be speed
+    * and memory optimized by doing the inner and
+    * outer MA all within this function. This will prevent
+    * the memory allocation.
+    */
+
+   /* Identify the minimum number of price bar needed
+    * to calculate at least one output.
+    */
+   lookbackTotal = (optInTimePeriod_0-1);
+
+   /* Move up the start index if there is not
+    * enough initial data.
+    */
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
+
+   /* Make sure there is still something to evaluate. */
+   if( startIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNbElement = 0;
+      return TA_SUCCESS;
+   }
+
+   /* Identify the two MA periods */
+   if( optInTimePeriod_0 & 1 )
+   {    
+      innerPeriod = (optInTimePeriod_0 >> 1) + 1;
+      outerPeriod = innerPeriod;
+   }
+   else
+   {
+      innerPeriod = optInTimePeriod_0 >> 1;
+      outerPeriod = innerPeriod + 1;
+   }
+
+   /* Do the inner MA */
+   innerData = TA_Malloc(sizeof(TA_Real)*(endIdx-startIdx+lookbackTotal+1));
+   if( !innerData )
+   {
+      *outBegIdx = 0;
+      *outNbElement = 0;
       return TA_ALLOC_ERR;
+   }
 
-   retCode = TA_INT_PO( startIdx, endIdx,                        
-                        inReal_0,
-                        optInFastPeriod_0, /* From 1 to 200 */
-                        optInSlowPeriod_1, /* From 1 to 200 */
-                        optInMethod_2,
-                        outBegIdx,
-                        outNbElement,
-                        outReal_0,
-                        tempBuffer,
-                        1 /* Do percentage processing. */ );
+   retCode = TA_INT_SMA( startIdx-outerPeriod+1, endIdx, inReal_0, innerPeriod,
+                         outBegIdx, outNbElement, innerData );
+   if( retCode != TA_SUCCESS )
+   {
+      TA_Free( innerData );
+      *outBegIdx = 0;
+      *outNbElement = 0;
+      return retCode;
+   }
 
-   TA_Free(  tempBuffer );
-   
+   /* Do the outer MA. */
+   retCode = TA_INT_SMA( 0, endIdx-innerPeriod+1, innerData, outerPeriod, 
+                         outBegIdx, outNbElement, outReal_0 );
+   TA_Free( innerData );
+
+   if( retCode != TA_SUCCESS )
+   {
+      *outBegIdx = 0;
+      *outNbElement = 0;
+      return retCode;
+   }
+
+   /* Adjust outBegIdx to remain relative to the caller.
+    * outNbElement is correctly set from the last TA_INT_SMA call.
+    */
+   *outBegIdx = startIdx;
+
    return TA_SUCCESS;
 }
 

@@ -108,6 +108,13 @@ static TA_Test tableTest[] =
    /*****************************************/
    /*   SMA TEST - CLASSIC/METASTOCK        */
    /*****************************************/
+
+#ifndef TA_FUNC_NO_RANGE_CHECK
+   /* Test with invalid parameters */
+   { 0, 0, 0, 251, -1, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_BAD_PARAM,  0,   0,  0,  0 },
+#endif
+
+   /* Test suppose to succeed. */
    { 1, 0, 0, 251,  1, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,   91.50,  0,  252-0 }, /* First Value */
    { 0, 0, 0, 251,  1, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,   94.81,  0,  252-0 },
    { 0, 0, 0, 251,  1, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 250,  108.75,  0,  252-0 },
@@ -142,6 +149,7 @@ static TA_Test tableTest[] =
    { 0, 0, 0, 251, 30, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,  29,  87.12,  29,  252-29 },
    { 0, 0, 0, 251, 30, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 221, 107.95,  29,  252-29 },
    { 0, 0, 0, 251, 30, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 222, 108.42,  29,  252-29 }, /* Last Value */
+
 
    /*******************************/
    /*   WMA TEST  - CLASSIC       */

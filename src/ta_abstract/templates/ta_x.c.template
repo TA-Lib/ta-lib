@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
+ *  120802 MF   Template creation.
  *
  */
 
@@ -65,6 +65,10 @@
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
+
+   /* Default return values */
+   *outBegIdx    = 0;
+   *outNbElement = 0;
 
    return TA_SUCCESS;
 }

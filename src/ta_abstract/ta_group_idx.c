@@ -25,6 +25,7 @@ extern const TA_FuncDef TA_DEF_MIDPOINT;
 extern const TA_FuncDef TA_DEF_SAR;
 extern const TA_FuncDef TA_DEF_SMA;
 extern const TA_FuncDef TA_DEF_TEMA;
+extern const TA_FuncDef TA_DEF_TRIMA;
 extern const TA_FuncDef TA_DEF_WMA;
 extern const TA_FuncDef TA_DEF_ATR;
 extern const TA_FuncDef TA_DEF_TRANGE;
@@ -36,6 +37,7 @@ extern const TA_FuncDef TA_DEF_DX;
 extern const TA_FuncDef TA_DEF_MACD;
 extern const TA_FuncDef TA_DEF_MACDEXT;
 extern const TA_FuncDef TA_DEF_MACDFIX;
+extern const TA_FuncDef TA_DEF_MFI;
 extern const TA_FuncDef TA_DEF_MINUS_DI;
 extern const TA_FuncDef TA_DEF_MINUS_DM;
 extern const TA_FuncDef TA_DEF_MOM;
@@ -79,6 +81,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_SAR,
 &TA_DEF_SMA,
 &TA_DEF_TEMA,
+&TA_DEF_TRIMA,
 &TA_DEF_WMA,
 NULL };
 #define SIZE_GROUP_2 ((sizeof(TA_PerGroupFunc_2)/sizeof(const TA_FuncDef *))-1)
@@ -98,6 +101,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_MACD,
 &TA_DEF_MACDEXT,
 &TA_DEF_MACDFIX,
+&TA_DEF_MFI,
 &TA_DEF_MINUS_DI,
 &TA_DEF_MINUS_DM,
 &TA_DEF_MOM,

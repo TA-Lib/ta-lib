@@ -4,7 +4,7 @@
 
 # TARGTYPE "Win32 (x86) Static Library" 0x0104
 
-CFG=ta_libc - Win32 CSD Single Thread Debug
+CFG=ta_libc - Win32 CDR Multithread DLL Release
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
@@ -13,7 +13,7 @@ CFG=ta_libc - Win32 CSD Single Thread Debug
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "ta_libc.mak" CFG="ta_libc - Win32 CSD Single Thread Debug"
+!MESSAGE NMAKE /f "ta_libc.mak" CFG="ta_libc - Win32 CDR Multithread DLL Release"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
