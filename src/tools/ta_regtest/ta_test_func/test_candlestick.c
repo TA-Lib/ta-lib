@@ -105,6 +105,12 @@ typedef struct
    TA_RangeType shadowVeryShort_type;
    int          shadowVeryShort_avg;
    double       shadowVeryShort_factor;
+   TA_RangeType near_type;
+   int          near_avg;
+   double       near_factor;
+   TA_RangeType far_type;
+   int          far_avg;
+   double       far_factor;
 } TA_CDLGlobals;
 
 typedef struct
@@ -182,17 +188,27 @@ static ErrorNumber callCandlestick( const char   *name,
 /* List of test to perform. */
 static TA_Test tableTest[] =
 {
-   { "CDLHIGHWAVE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
-   { "CDLDOJISTAR",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
-   { "CDLEVENINGDOJISTAR", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
-   { "CDLEVENINGSTAR",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
-   { "CDLHIGHWAVE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
-   { "CDLLONGLINE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
-   { "CDLMORNINGDOJISTAR", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
-   { "CDLMORNINGSTAR",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
-   { "CDLSHORTLINE",       1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
-   { "CDLSPINNINGTOP",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
-   { "CDLTRISTAR",         1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }}
+   { "CDL3BLACKCROWS",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLABANDONEDBABY",   1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLDOJISTAR",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLENGULFING",       1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLEVENINGDOJISTAR", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLEVENINGSTAR",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLHAMMER",          1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLHANGINGMAN",      1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLHARAMI",          1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLHARAMICROSS",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLHIGHWAVE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLIDENTICAL3CROWS", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLINVERTEDHAMMER",  1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLLONGLINE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLMORNINGDOJISTAR", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLMORNINGSTAR",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLSHOOTINGSTAR",    1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLSHORTLINE",       1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLSPINNINGTOP",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLUPSIDEGAP2CROWS", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLTRISTAR",         1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }}
 
 };
 
