@@ -162,8 +162,10 @@ then mysql++ should be in
    of ta_data (or Visual C++ project settings).
 6. Add C:\src\mysql++\include and C:\src\mysql++\mysql\include 
    to include search path for ta-lib
-7. Add C:\src\lib\mysql++.lib to link libs.
-8. Rebuild ta-lib.
+7. Make sure that support for C++ exceptions is enabled when compiling 
+   ta_sql_mysql.cpp
+8. Add C:\src\lib\mysql++.lib to link libs.
+9. Rebuild ta-lib.
 Note that the resulting ta_libc_???.lib will be GPL, not BSD, because mysql++
 is GPL.
 
@@ -173,6 +175,9 @@ Compilation Notes for ODBC
 ========================================================================
 
 Currently, this driver is tested only with ODBC lib version 3.52 for Visual C++
+The following ODBC drivers were tested (Windows 2000):
+    MySQL ODBC 3.51                     version 3.51.06.00
+
 
 Compilation of this driver is DISABLED by default.  In order to get this
 driver compiled in your ta-lib build, you need to do the following:
@@ -185,20 +190,18 @@ driver compiled in your ta-lib build, you need to do the following:
 ========================================================================
 To Do:
 
-Increase TA_CATEGORY_MAX_LENGTH to 200 (to accomodate longer SQL queries).
-Implement handling of country, exchange, and type (on hold, because not
++ Increase TA_CATEGORY_MAX_LENGTH to 200 (to accomodate longer SQL queries).
++ Add period parameter in TA_AddDataSourceParam.
+- Implement handling of country, exchange, and type (on hold, because not
 really needed).
-Replace MySQL++ by libMYSQL and switch to plain C (on hold because of
+- Replace MySQL++ by libMYSQL and switch to plain C (on hold because of
 incompatible MySQL license).
-Create ODBC minidriver
 
 To do for Mario:
-Implement TA_FatalReportToBuffer().
-Implement automatic conversion from PERIOD_1SEC to PERIOD_1MIN and higher.
-Complete strings for error codes.
-Allow for null-drivers (drivers with function pointers set to null), 
++ Implement automatic conversion from PERIOD_1SEC to PERIOD_1MIN and higher.
++ Implement merging of different period data and TA_REPLACE_ZERO_PRICE_TAG in
+ta_history.
++ Complete strings for error codes.
++ Allow for null-drivers (drivers with function pointers set to null), 
 to simplify development 
-
-Questions for Mario:
-What error codes to use for specific cases in my driver.
 
