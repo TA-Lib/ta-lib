@@ -36,7 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  AM       Adrian Michel
  *
  * Change history:
  *
@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  010802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
- *
+ *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -165,16 +165,16 @@
 
    /* Original implementation from Wilder's book was doing some integer
     * rounding in its calculations.
-	*
+    *
     * This was understandable in the context that at the time the book
-	* was written, most user were doing the calculation by hand.
-	* 
-    * For a computer, rounding is un-necessary (and even problematic when inputs
-	* are close to 1).
-	*
-	* TA-Lib does not do the rounding. Still, if you want to repdroduce Wilder's examples,
-	* you need to comment out the following #undef/#define and rebuild the library.
-	*/
+    * was written, most user were doing the calculation by hand.
+    * 
+    * For a computer, rounding is unnecessary (and even problematic when inputs
+    * are close to 1).
+    *
+    * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
+    * you can comment out the following #undef/#define and rebuild the library.
+    */
    #undef  round_pos
    #define round_pos(x) (x)
 
