@@ -18,8 +18,6 @@ use File::Path;
 use File::DosGlob 'glob';
 use Env;
 
-$a = "\\..\\*";
-
 if( (scalar @ARGV) != 4 )
 {
    print( "Missing parameter\n" );
@@ -74,13 +72,13 @@ else
 $origTMAKEPATH = @ARGV[1];
 $ENV{'TMAKEPATH'} = $origTMAKEPATH;
 
-# print "MAKEPATH[".$TMAKEPATH."]";
+# print "MAKEPATH[".$origTMAKEPATH."]\n";
 
 $origTemplatePath = @ARGV[2];
 @platformCompilerPath = glob $origTemplatePath;
 
-# print $origTemplatePath;
-# print @platformCompilerPath;
+# print "Template Path[$origTemplatePath]\n";
+# print "Platform-Compiler Path[@platformCompilerPath]\n";
 print "Generating (".@ARGV[0].") ";
 
 if( $makeConsole == 1 ) {
@@ -118,7 +116,7 @@ print "makefiles...\n";
 #foreach $z (@platformCompilerPath) {
    # Get the last element of each path. This
    # is the platformcompiler string.
-#   @splitPath = split( /\\/, $z );
+#   @splitPath = split( /[\\\/]/, $z );
 #   $platformCompiler = @splitPath[$#splitPath];
    
 #   ($platform,$compiler) = split( /-/, $platformCompiler );
@@ -136,7 +134,7 @@ foreach $z (@platformCompilerPath) {
 
    # Get the last element of each path. This
    # is the platformcompiler string.
-   @splitPath = split( /\\/, $z );
+   @splitPath = split( /[\\\/]/, $z );
    $platformCompiler = @splitPath[$#splitPath];
 
    ($platform,$compiler) = split( /-/, $platformCompiler );
@@ -176,10 +174,10 @@ foreach $z (@platformCompilerPath) {
    # For each .pro file in the ta-lib/c/make/tmake,
    # duplicate the same directory structure and
    # execute tmake.
-   @proList = glob "*\\*.pro";
+   @proList = glob "*/*.pro";
 
    foreach $y (@proList) {
-      ($proPath, $proFile) = split( /\\/, $y );
+      ($proPath, $proFile) = split( /[\\\/]/, $y );
 
       mkpath( $dirToProcess."/".$proPath );
       if ($platform ne "win32")
@@ -217,15 +215,17 @@ foreach $z (@platformCompilerPath) {
      
       $toRun = $toRun." ".$proPath."/".$proFile;
       $toRun = $toRun." -o "."../".@ARGV[0]."/".$platform."/".$compiler."/".$proPath."/"."Makefile";
-      $ENV{'TMAKEPATH'} = $origTMAKEPATH."\\..\\".$platformCompiler;
+      # print "$ENV{TMAKEPATH}\n";
+      # print "to run = $toRun\n";
       system $toRun;
    }
 
    # Create the root Makefile.
    $toRun = "tmake";
-   $toRun = $toRun." "."\"TMAKEPATH=".$TMAKEPATH."\\..\\".$platformCompiler."\"";
+   $toRun = $toRun." "."\"TMAKEPATH=".$origTMAKEPATH."/../".$platformCompiler."\"";
    $toRun = $toRun." rootmake.pro";
    $toRun = $toRun." -o "."../".@ARGV[0]."/".$platform."/".$compiler."/Makefile";
+   # print "to run = $toRun\n";
    system $toRun;
 
    print "done."."\n";

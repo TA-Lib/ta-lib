@@ -6,13 +6,13 @@
 
 if( $^O eq "MSWin32" )
 {
-   $ENV{'TMAKEPATH'} = '.\\template\\win32-msvc';
-   $MAKEPATH = '.\\\\template\\\\win32-msvc';
+   $ENV{'TMAKEPATH'} = './template/win32-msvc';
+   $MAKEPATH = './template/win32-msvc';
 }
 else
 {
-   $ENV{'TMAKEPATH'} = '.\\template\\linux-g++';
-   $MAKEPATH = '.\\\\template\\\\linux-g++';
+   $ENV{'TMAKEPATH'} = './template/linux-g++';
+   $MAKEPATH = './template/linux-g++';
 }
 
 print "Generating ta_func.pro template...";
@@ -33,9 +33,9 @@ system( "perl make_pro.pl >ta_libc.pro" );
 chdir "..";
 print "done.\n";
 
-system( "perl ./make_make.pl cdr $MAKEPATH template\\\\* all" );
-system( "perl ./make_make.pl cdd $MAKEPATH template\\\\* all" );
-system( "perl ./make_make.pl cmd $MAKEPATH template\\\\* all" );
-system( "perl ./make_make.pl cmr $MAKEPATH template\\\\* all" );
-system( "perl ./make_make.pl csr $MAKEPATH template\\\\* all" );
-system( "perl ./make_make.pl csd $MAKEPATH template\\\\* all" );
+system( "perl ./make_make.pl cdr $MAKEPATH \"template/*\" all" );
+system( "perl ./make_make.pl cdd $MAKEPATH \"template/*\" all" );
+system( "perl ./make_make.pl cmd $MAKEPATH \"template/*\" all" );
+system( "perl ./make_make.pl cmr $MAKEPATH \"template/*\" all" );
+system( "perl ./make_make.pl csr $MAKEPATH \"template/*\" all" );
+system( "perl ./make_make.pl csd $MAKEPATH \"template/*\" all" );
