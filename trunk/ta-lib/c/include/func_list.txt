@@ -42,6 +42,7 @@ ROCR100             Rate of change ratio 100 scale: (price/prevPrice)*100
 RSI                 Relative Strength Index
 STOCH               Stochastic
 STOCHF              Stochastic Fast
+STOCHRSI            Stochastic Relative Strength Index
 TRIX                1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 WILLR               Williams' %R
 HT_DCPERIOD         Hilbert Transform - Dominant Cycle Period

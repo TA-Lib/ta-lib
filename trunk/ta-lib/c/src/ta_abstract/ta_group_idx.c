@@ -92,6 +92,7 @@ extern const TA_FuncDef TA_DEF_ROCR100;
 extern const TA_FuncDef TA_DEF_RSI;
 extern const TA_FuncDef TA_DEF_STOCH;
 extern const TA_FuncDef TA_DEF_STOCHF;
+extern const TA_FuncDef TA_DEF_STOCHRSI;
 extern const TA_FuncDef TA_DEF_TRIX;
 extern const TA_FuncDef TA_DEF_WILLR;
 extern const TA_FuncDef TA_DEF_HT_DCPERIOD;
@@ -175,6 +176,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_RSI,
 &TA_DEF_STOCH,
 &TA_DEF_STOCHF,
+&TA_DEF_STOCHRSI,
 &TA_DEF_TRIX,
 &TA_DEF_WILLR,
 NULL };
@@ -259,4 +261,3 @@ SIZE_GROUP_9;
 /***************/
 /* End of File */
 /***************/
-

@@ -527,6 +527,36 @@ DEF_FUNCTION( STOCHF,                   /* name */
              );
 /* STOCHF END */
 
+/* STOCHRSI BEGIN */
+
+static const TA_InputParameterInfo    *TA_STOCHRSI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_STOCHRSI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_STOCHRSI_OptInputs[] =
+{
+  &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( STOCHRSI,                        /* name */
+              TA_GroupId_MomentumIndicators,  /* groupId */
+              "Stochastic Relative Strength Index",  /* hint */
+              NULL,                       /* helpFile */
+              TA_FUNC_FLG_UNST_PER,       /* flags */
+              NULL                        /* analysis function */
+             );
+
+/* STOCHRSI END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Order is not important. Must be NULL terminated.
@@ -539,6 +569,7 @@ const TA_FuncDef *TA_DEF_TableS[] =
    ADD_TO_TABLE(SMA),
    ADD_TO_TABLE(STOCH),
    ADD_TO_TABLE(STOCHF),
+   ADD_TO_TABLE(STOCHRSI),
    NULL
 };
 

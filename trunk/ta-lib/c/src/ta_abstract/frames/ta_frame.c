@@ -787,6 +787,21 @@
 /* Generated */                params->out[0].data.outReal, /*  outFastK_0 */
 /* Generated */                params->out[1].data.outReal /*  outFastD_1 */ );
 /* Generated */ }
+/* Generated */ TA_RetCode TA_STOCHRSI_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_STOCHRSI(
+/* Generated */                  startIdx,
+/* Generated */                  endIdx,
+/* Generated */                  params->in[0].data.inReal, /* inReal_0 */
+/* Generated */                  params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
+/* Generated */                  outBegIdx, 
+/* Generated */                  outNbElement, 
+/* Generated */                  params->out[0].data.outReal /*  outReal_0 */ );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_TRIX_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
@@ -1117,4 +1132,3 @@
 /***************/
 /* End of File */
 /***************/
-

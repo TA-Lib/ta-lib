@@ -1729,6 +1729,38 @@ int TA_STOCHF_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 *
                       TA_MAType     optInFastD_MAType_2 ); 
 
 /*
+ * TA_STOCHRSI - Stochastic Relative Strength Index
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_STOCHRSI( int    startIdx,
+                        int    endIdx,
+                        const double inReal_0[],
+                        int           optInTimePeriod_0, /* From 2 to 100000 */
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double        outReal_0[] );
+
+TA_RetCode TA_S_STOCHRSI( int    startIdx,
+                          int    endIdx,
+                          const float  inReal_0[],
+                          int           optInTimePeriod_0, /* From 2 to 100000 */
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          double        outReal_0[] );
+
+int TA_STOCHRSI_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
+
+
+/*
  * TA_TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
  * 
  * Input  = double

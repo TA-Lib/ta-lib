@@ -266,11 +266,12 @@ typedef enum
     /* 013 */  TA_FUNC_UNST_PLUS_DI,
     /* 014 */  TA_FUNC_UNST_PLUS_DM,
     /* 015 */  TA_FUNC_UNST_RSI,
-    /* 016 */  TA_FUNC_UNST_HT_DCPERIOD,
-    /* 017 */  TA_FUNC_UNST_HT_DCPHASE,
-    /* 018 */  TA_FUNC_UNST_HT_PHASOR,
-    /* 019 */  TA_FUNC_UNST_HT_SINE,
-    /* 020 */  TA_FUNC_UNST_HT_TRENDMODE,
+    /* 016 */  TA_FUNC_UNST_STOCHRSI,
+    /* 017 */  TA_FUNC_UNST_HT_DCPERIOD,
+    /* 018 */  TA_FUNC_UNST_HT_DCPHASE,
+    /* 019 */  TA_FUNC_UNST_HT_PHASOR,
+    /* 020 */  TA_FUNC_UNST_HT_SINE,
+    /* 021 */  TA_FUNC_UNST_HT_TRENDMODE,
                TA_FUNC_UNST_ALL,
                TA_FUNC_UNST_NONE=-1
 #if defined( _MANAGED )

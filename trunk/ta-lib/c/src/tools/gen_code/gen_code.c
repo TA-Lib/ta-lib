@@ -1699,7 +1699,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
 {
 
    FileHandle *tempFile1;
-   FileHandle *tempFile2;
+   
    unsigned int useTempFile;
    FILE *logicIn;
    FILE *logicTmp;
@@ -1735,11 +1735,12 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
 
    /* Open the file using the template. */
    if( useTempFile )
-      tempFile2 = fileOpen( TEMPLATE_PASS2, TEMPLATE_PASS1, FILE_WRITE, WRITE_ALWAYS );
+      gOutFunc_C = fileOpen( TEMPLATE_PASS2, TEMPLATE_PASS1, FILE_WRITE, WRITE_ALWAYS );
    else
-      tempFile2 = fileOpen( TEMPLATE_PASS2, TEMPLATE_DEFAULT, FILE_WRITE, WRITE_ALWAYS );
+      gOutFunc_C = fileOpen( TEMPLATE_PASS2, TEMPLATE_DEFAULT, FILE_WRITE, WRITE_ALWAYS );
+      
 
-   if( tempFile2 == NULL )
+   if( gOutFunc_C == NULL )
    {
       printf( "Cannot create [%s]\n", localBuf1 );
       return;
@@ -1748,19 +1749,19 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    /* Generate. 1st Pass */
    writeFuncFile( funcInfo );
 
-   fileClose( tempFile2 );
+   fileClose( gOutFunc_C );
 
-#if 0
-   /* Copy the 1st pass result and make it the template for
-    * the 2nd pass.
-    */
-   sprintf( localBuf2, "..\\temp\\ta_%s.tmp", funcInfo->name );
-   if( !copyFile( localBuf1, localBuf2 ) )
+   if( !useTempFile )
    {
-      printf( "Cannot copy %s to %s\n", localBuf1, localBuf2 );
-      return;
+      /* When the file is new, the first pass becomes the 
+       * original.
+       */
+      if( !copyFile( TEMPLATE_PASS2, localBuf1 ) )
+      {
+         printf( "Cannot copy %s to %s\n", TEMPLATE_PASS2, localBuf1 );
+         return;
+      }
    }
-#endif
 
    /* Extract the TA function code in a temporary file */
    logicIn = fopen( localBuf1, "r" );
