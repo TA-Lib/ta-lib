@@ -29,6 +29,9 @@ typedef struct
    /* Represent all the categories and symbols available. */
    TA_YahooIdx *index;
 
+   /* Copy of the optional "server=" modifier */
+   TA_String *userSpecifiedServer;
+    
    /* When 'index' is NULL, it means it is only one symbol.
     * In that case the info to reach the Yahoo! web site 
     * and the proper symbol is in the following "webSite"

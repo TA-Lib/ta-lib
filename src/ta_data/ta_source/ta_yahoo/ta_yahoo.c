@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  070701 MF   First version.
  *  061104 MF   Add TA_YAHOO_ONE_SYMBOL.
+ *  062104 MF   Server can now be override using the 'location' param.
  */
 
 /* Description:
@@ -71,6 +72,7 @@
 #include "ta_yahoo_priv.h"
 #include "ta_global.h"
 #include "ta_country_info.h"
+#include "sfl.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -82,7 +84,9 @@
 /* None */
 
 /**** Local declarations.              ****/
-/* None */
+
+/* String used to specify an alternate "server" in the location parameter. */
+#define TA_SERVER_STR "server="
 
 /**** Local functions declarations.    ****/
 static TA_RetCode initCategoryHandle( TA_DataSourceHandle *handle,
@@ -101,7 +105,7 @@ TA_FILE_INFO;
 TA_RetCode TA_YAHOO_InitializeSourceDriver( void )
 {
    TA_PROLOG
-   TA_TRACE_BEGIN(  TA_YAHOO_InitializeSourceDriver );
+   TA_TRACE_BEGIN( TA_YAHOO_InitializeSourceDriver );
 
     /* Nothing to do for the time being. */
    TA_TRACE_RETURN( TA_SUCCESS );
@@ -110,7 +114,7 @@ TA_RetCode TA_YAHOO_InitializeSourceDriver( void )
 TA_RetCode TA_YAHOO_ShutdownSourceDriver( void )
 {
    TA_PROLOG
-   TA_TRACE_BEGIN(  TA_YAHOO_ShutdownSourceDriver );
+   TA_TRACE_BEGIN( TA_YAHOO_ShutdownSourceDriver );
 
     /* Nothing to do for the time being. */
    TA_TRACE_RETURN( TA_SUCCESS );
@@ -144,14 +148,19 @@ TA_RetCode TA_YAHOO_OpenSource( const TA_AddDataSourceParamPriv *param,
    TA_RetCode retCode;
    TA_StringCache *stringCache;
    TA_CountryId countryId;
+   TA_CountryId countryIdTemp;
    TA_Timestamp now;
    const char *locationPtr;
+   char locationBuffer[3];
    int timeout_set; /* boolean */
    int i;
+   unsigned int strLength;
+   char *strTemp;
+   char **tokens;
 
    *handle = NULL;
 
-   TA_TRACE_BEGIN(  TA_YAHOO_OpenSource );
+   TA_TRACE_BEGIN( TA_YAHOO_OpenSource );
 
    stringCache = TA_GetGlobalStringCache();
 
@@ -176,15 +185,67 @@ TA_RetCode TA_YAHOO_OpenSource( const TA_AddDataSourceParamPriv *param,
    /* Copy some parameters in the private handle. */
    privData->param = param;
    
-   /* Indentify the country and replace with the default as needed. */
-   if( !privData->param->location )
-   {
-      countryId = TA_Country_ID_US;
-   }
-   else
+   /* Indentify the country and replace with the default as needed.
+    * At the same time, identify optional "server=" modifier.
+    */
+   countryId = TA_Country_ID_INVALID;
+   if( privData->param->location )
    {
       locationPtr = TA_StringToChar(privData->param->location);
-      countryId = TA_CountryAbbrevToId(locationPtr);
+
+      /* Split into token (seperator is ';' or space) */
+      tokens = tok_split_rich( locationPtr, ";" );
+      i = 0;
+      if( tokens )
+      {
+         while( tokens[i] )
+         {
+            strLength = strlen(tokens[i]); 
+            if( strLength == 2 )
+            {
+               locationBuffer[0] = tokens[i][0];
+               locationBuffer[1] = tokens[i][1];
+               locationBuffer[2] = '\0';
+               countryIdTemp = TA_CountryAbbrevToId(locationBuffer);
+               if( countryIdTemp == TA_Country_ID_INVALID )
+               {
+                  tok_free(tokens);
+                  TA_TRACE_RETURN( TA_UNSUPPORTED_COUNTRY );
+               }
+
+               if( countryId != TA_Country_ID_INVALID )
+               {
+                  tok_free(tokens);
+                  TA_TRACE_RETURN( TA_LIMIT_OF_ONE_COUNTRY_ID_EXCEEDED );
+               }
+               countryId = countryIdTemp;         
+            }
+
+            strTemp = stricstr( tokens[i], TA_SERVER_STR );
+            if( strTemp )
+            {
+               strLength = strlen(TA_SERVER_STR);
+               if( strlen(strTemp) > strLength )
+               {
+                  if( privData->userSpecifiedServer )
+                  {
+                     tok_free(tokens);
+                     TA_TRACE_RETURN( TA_LIMIT_OF_ONE_SERVER_EXCEEDED );
+                  }
+                  privData->userSpecifiedServer = TA_StringAlloc( stringCache, &tokens[i][strLength] );
+                                                     
+               }
+            }         
+            i++;
+         }
+         tok_free(tokens);
+      }
+   }
+
+   if( countryId == TA_Country_ID_INVALID )
+   {
+      /* Default is United States. */
+      countryId = TA_Country_ID_US;
    }
 
    if( privData->param->id == TA_YAHOO_ONE_SYMBOL )
@@ -205,7 +266,7 @@ TA_RetCode TA_YAHOO_OpenSource( const TA_AddDataSourceParamPriv *param,
       }
       privData->index = NULL;
       privData->webSiteCountry = countryId;
-      privData->webSiteSymbol  = privData->param->info;
+      privData->webSiteSymbol  = TA_StringDup(stringCache,privData->param->info);
       tmpHandle->nbCategory = 1;
    }
    else
@@ -362,7 +423,7 @@ TA_RetCode TA_YAHOO_GetHistoryData( TA_DataSourceHandle *handle,
    TA_PrivateYahooHandle *yahooHandle;
    int again;
 
-   TA_TRACE_BEGIN(  TA_YAHOO_GetHistoryData );
+   TA_TRACE_BEGIN( TA_YAHOO_GetHistoryData );
 
    TA_ASSERT( handle != NULL );
    TA_ASSERT( paramForAddData != NULL );
@@ -433,7 +494,7 @@ static TA_RetCode initCategoryHandle( TA_DataSourceHandle *handle,
    TA_YahooIdx *yahooIndex;
    TA_String   *string;
 
-   TA_TRACE_BEGIN(  TA_YAHOO_GetFirstCategoryHandle );
+   TA_TRACE_BEGIN( TA_YAHOO_GetFirstCategoryHandle );
 
    if( (handle == NULL) || (categoryHandle == NULL) )
    {
@@ -480,7 +541,7 @@ static TA_RetCode initSymbolHandle( TA_DataSourceHandle *handle,
    TA_PROLOG
    TA_YahooCategory *category;
 
-   TA_TRACE_BEGIN(  TA_YAHOO_GetFirstSymbolHandle );
+   TA_TRACE_BEGIN( TA_YAHOO_GetFirstSymbolHandle );
 
    if( (handle == NULL) || (categoryHandle == NULL) || (symbolHandle == NULL) )
    {
