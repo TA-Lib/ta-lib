@@ -142,8 +142,7 @@ TA_RetCode TA_ReadOp_Do( TA_Libc             *libHandle,
                          unsigned int         minimumNbBar,
                          TA_Field             fieldToAlloc,
                          TA_ParamForAddData  *paramForAddData,
-                         unsigned int        *nbTotalBarAdded,
-                         TA_Timestamp        *lastBarTimestamp );
+                         unsigned int        *nbBarAdded );
 
 unsigned int TA_ReadOpToField( TA_Libc *libHandle, TA_ReadOp readOp );
 
