@@ -544,7 +544,9 @@ unsigned int TA_ReadOpToField( TA_ReadOp readOp )
 
   TA_FATAL_RET( NULL, readOp, 0, TA_ALL );
 
-  return TA_ALL;
+  /* Unreachable code:
+   * return TA_ALL;
+   */
 }
 
 /**** Local functions definitions.     ****/

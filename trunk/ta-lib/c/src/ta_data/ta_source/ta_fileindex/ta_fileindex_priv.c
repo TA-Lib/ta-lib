@@ -780,7 +780,7 @@ static TA_RetCode freeListAndElement( TA_List *list, TA_RetCode (*freeFunc)( voi
          if( retCode != TA_SUCCESS )
          {
             TA_FATAL(  NULL, node, retCode );
-            TA_TRACE_RETURN( TA_ALLOC_ERR );
+            /* TA_TRACE_RETURN( TA_ALLOC_ERR ); */
          }
       }
 
@@ -788,7 +788,7 @@ static TA_RetCode freeListAndElement( TA_List *list, TA_RetCode (*freeFunc)( voi
       if( retCode != TA_SUCCESS )
       {
          TA_FATAL(  NULL, list, retCode );
-         TA_TRACE_RETURN( TA_ALLOC_ERR );
+         /*TA_TRACE_RETURN( TA_ALLOC_ERR );*/
       }
    }
 

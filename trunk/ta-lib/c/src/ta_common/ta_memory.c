@@ -818,12 +818,8 @@ int        lin
    {
        TA_FATAL_RET( "Trailer Out-of-bound memory access", (unsigned int)p, (unsigned int)lin, TA_ALLOC_ERR );
    }
-   else
-   {
-       TA_FATAL_RET( "Bad memory allocation memtag", (unsigned int)p, (unsigned int)lin, TA_ALLOC_ERR );
-   }
 
-   return TA_SUCCESS;
+   TA_FATAL_RET( "Bad memory allocation memtag", (unsigned int)p, (unsigned int)lin, TA_ALLOC_ERR );
 }
 
 

@@ -58,6 +58,10 @@
   For more information on these sources, see the manual.
 --*/
 
+/* This source CODE has been slightly modified to eliminate
+ * some compilation warnings.
+ * Mario Fortier ( http://ta-lib.org )
+ */
 
 #ifndef _BZLIB_PRIVATE_H
 #define _BZLIB_PRIVATE_H
@@ -97,6 +101,9 @@ typedef unsigned short  UInt16;
 extern void BZ2_bz__AssertH__fail ( int errcode );
 #define AssertH(cond,errcode) \
    { if (!(cond)) BZ2_bz__AssertH__fail ( errcode ); }
+
+#define AssertAlways(errcode) BZ2_bz__AssertH__fail ( errcode );
+
 #if BZ_DEBUG
 #define AssertD(cond,msg) \
    { if (!(cond)) {       \
@@ -123,6 +130,7 @@ extern void BZ2_bz__AssertH__fail ( int errcode );
 extern void bz_internal_error ( int errcode );
 #define AssertH(cond,errcode) \
    { if (!(cond)) bz_internal_error ( errcode ); }
+#define AssertAlways(errcode) bz_internal_error ( errcode );
 #define AssertD(cond,msg) /* */
 #define VPrintf0(zf) /* */
 #define VPrintf1(zf,za1) /* */

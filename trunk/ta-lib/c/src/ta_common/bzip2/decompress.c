@@ -58,6 +58,11 @@
   For more information on these sources, see the manual.
 --*/
 
+/* This source CODE has been slightly modified to eliminate
+ * some compilation warnings.
+ * Mario Fortier ( http://ta-lib.org )
+ */
+
 
 #include "bzlib_private.h"
 
@@ -619,10 +624,13 @@ Int32 BZ2_decompress ( DState* s )
       s->state = BZ_X_IDLE;
       RETURN(BZ_STREAM_END);
 
-      default: AssertH ( False, 4001 );
+      default: 
+         AssertAlways( 4001 );      
+      // AssertH ( False, 4001 );
    }
 
-   AssertH ( False, 4002 );
+   AssertAlways( 4002 );
+   // AssertH ( False, 4002 );
 
    save_state_and_return:
 

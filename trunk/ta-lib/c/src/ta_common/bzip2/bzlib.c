@@ -73,6 +73,11 @@
         bzBuffToBuffDecompress.  Fixed.
 --*/
 
+/* This source CODE has been slightly modified to eliminate
+ * some compilation warnings.
+ * Mario Fortier ( http://ta-lib.org )
+ */
+
 #include "bzlib_private.h"
 
 
@@ -135,9 +140,12 @@ void BZ2_bz__AssertH__fail ( int errcode )
 static
 int bz_config_ok ( void )
 {
-   if (sizeof(int)   != 4) return 0;
-   if (sizeof(short) != 2) return 0;
-   if (sizeof(char)  != 1) return 0;
+   #ifndef WIN32
+      if (sizeof(int)   != 4) return 0;
+      if (sizeof(short) != 2) return 0;
+      if (sizeof(char)  != 1) return 0;
+   #endif
+
    return 1;
 }
 
@@ -875,9 +883,9 @@ int BZ_API(BZ2_bzDecompress) ( bz_stream *strm )
       }
    }
 
-   AssertH ( 0, 6001 );
+   AssertAlways( 6001 );
 
-   return 0;  /*NOTREACHED*/
+   return 0; 
 }
 
 
@@ -1236,7 +1244,7 @@ int BZ_API(BZ2_bzRead)
       
    }
 
-   return 0; /*not reached*/
+   /*return 0;*/ /*not reached*/
 }
 
 

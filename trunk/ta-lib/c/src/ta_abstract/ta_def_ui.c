@@ -145,7 +145,7 @@ const TA_OutputParameterInfo TA_DEF_UI_Output_Integer =
 const TA_IntegerRange TA_DEF_TimePeriod_Positive =
 {
    1,             /* min */
-   TA_INTEGER_MAX,/* max */
+   100000,        /* max */
    1,             /* suggested start */
    200,           /* suggested end   */
    1              /* suggested increment */
@@ -154,7 +154,7 @@ const TA_IntegerRange TA_DEF_TimePeriod_Positive =
 const TA_IntegerRange TA_DEF_TimePeriod_Positive_Minimum5 =
 {
    5,             /* min */
-   TA_INTEGER_MAX,/* max */
+   100000,        /* max */
    5,             /* suggested start */
    200,           /* suggested end   */
    1              /* suggested increment */
@@ -163,7 +163,7 @@ const TA_IntegerRange TA_DEF_TimePeriod_Positive_Minimum5 =
 const TA_IntegerRange TA_DEF_TimePeriod_Positive_Minimum2 =
 {
    2,             /* min */
-   TA_INTEGER_MAX,/* max */
+   100000,        /* max */
    4,             /* suggested start */
    200,           /* suggested end   */
    1              /* suggested increment */

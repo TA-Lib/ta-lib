@@ -148,13 +148,14 @@ typedef enum
     /*  79 */  TA_ENTRY_TRANSACTION_MISSING,
     /*  80 */  TA_INVALID_VALUE_ID,
     /*  81 */  TA_BAD_STARTING_CAPITAL,
-    /*  82 */  TA_TRADELOG_ALREADY_ADDED, /* TA_TradeLog already added to a TA_PM. When that TA_PM is freed, the TA_TradeLog can be added again. */
+    /*  82 */  TA_TRADELOG_ALREADY_ADDED,  /* This TA_TradeLog is already added to this TA_PM. */
     /*  83 */  TA_YAHOO_IDX_UNAVAILABLE_2, /* Possibly timeout of internet connection */
     /*  84 */  TA_YAHOO_IDX_UNAVAILABLE_3, /* Failed to find a Yahoo! index */
     /*  85 */  TA_NO_WEEKDAY_IN_DATE_RANGE,
     /*  86 */  TA_VALUE_NOT_APPLICABLE,    /* This PM value is not applicable to these trades. */
     /*  87 */  TA_DATA_GAP, /* Data source returned data with gaps */
     /*  88 */  TA_NOT_IMPLEMENTED, /* Feature not implemented */
+    /*  89 */  TA_PM_REFERENCE_EXIST, /* Can not free a TA_TradeLog when added to a TA_PM */
 
     /****** IP Error Code *****/
     /* 700 */  TA_IP_NOSOCKETS = 700,  /* Sockets not supported      */

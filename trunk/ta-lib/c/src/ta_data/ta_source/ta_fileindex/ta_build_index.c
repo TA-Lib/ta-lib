@@ -562,8 +562,7 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
       if( fileIndexPriv->nextToken->id == TA_TOK_END )
       {
          /* End-up here if TA_TOK_END is prematury seen... */
-         TA_FATAL(  NULL, fileIndexPriv->curTokenDepth, fileIndexPriv->nextToken->id );
-         RETURN( TA_INTERNAL_ERROR(77) );
+         TA_FATAL(  NULL, fileIndexPriv->curTokenDepth, fileIndexPriv->nextToken->id );         
       }
 
       /* Trap all internal error from extractTokenValue */
@@ -1044,8 +1043,6 @@ static TA_RetCode extractTokenValue( TA_FileIndexPriv *fileIndexPriv,
          if( *addedHead == NULL )
          {
             TA_FATAL( NULL, *addedHead, 0 );
-            retCode = TA_INTERNAL_ERROR(82);
-            goto extractTokenValue_exit;
          }
 
          atLeastOneValueToExtract = 1;

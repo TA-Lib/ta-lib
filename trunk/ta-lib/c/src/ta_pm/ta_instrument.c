@@ -76,6 +76,8 @@
 /**** Local variables definitions.     ****/
 /* None */
 
+#if 0
+CURRENTLY DEPRECATED
 /**** Global functions definitions.   ****/
 TA_RetCode TA_InstrumentInit ( TA_Instrument *instrument,
                                const char *category,
@@ -173,6 +175,7 @@ TA_RetCode TA_InstrumentAttachUDBase( TA_Instrument   *instrument,
 
    return TA_SUCCESS;
 }
+#endif
 
 /**** Local functions definitions.     ****/
 /* None */

@@ -47,53 +47,19 @@ extern "C" {
 
 typedef struct
 {
-   /* This structure must be initialized only
-    * by using the following functions:
-    *      TA_InstrumentInit
-    *             OR
-    *      TA_InstrumentInitWithUserKey
+   /* Allows to make a unique identifier for an instrument.
     *
-    * Data "between the transaction" can
-    * be attach by using only:
-    *      TA_InstrumentAttachData
-    *             OR
-    *      TA_InstrumentAttachUDBase
+    * You can use one or two strings.
+    *
+    * If you prefer you can set both strings to NULL
+    * and use instead a user defined integer value.
+    *
+    * userKey is ignore whenever catString or symString
+    * are != NULL.
     */
-
-   /* Application should not access directly these
-    * structure members.
-    */
-   #define TA_INSTRUMENT_USE_UDBASE       0x00000001
-   #define TA_INSTRUMENT_USE_USERDATA     0x00000002
-   #define TA_INSTRUMENT_USE_CATSTRING    0x00000004
-   #define TA_INSTRUMENT_USE_SYMSTRING    0x00000008
-   #define TA_INSTRUMENT_USE_USERKEY      0x00000010
-   #define TA_INSTRUMENT_USE_CATSYMSTRING 0x0000000C
-   unsigned int flags;
-
-   union DataSource
-   {
-      TA_UDBase *udBase;
-      struct UserData
-      {
-         unsigned int        nbPrice;
-         const TA_Real      *price;
-         const TA_Real      *lowPrice;
-         const TA_Real      *highPrice;
-         const TA_Timestamp *timestamp;
-      } userData;
-   } ds;
-
-   union InstrumentKey
-   {
-      struct CatSym
-      {
-         const char   *catString;
-         const char   *symString;
-      } catSym;
-      int userKey;
-   } key;
-
+   const char *catString;
+   const char *symString;
+   int userKey;
 } TA_Instrument;
 
 typedef enum
@@ -105,13 +71,54 @@ typedef enum
   TA_NB_TRADE_TYPE
 } TA_TransactionType;
 
+/* The TA_Transaction is used exclusively as a way to 
+ * pass the parameters to the TA_TradeLogAdd function.
+ */
 typedef struct
 {
-   TA_TransactionType   type;
-   const TA_Instrument *id;
+   TA_TransactionType type;
+
+   /* TA_Instrument is a unique identifier that allows to
+    * distinguish one instrument from another.
+    *
+    * When 'id' is NULL, all the transaction are assume to refer
+    * to the same unspecified instrument.
+    *
+    * When applicable, the relevant content of the 'id' is
+    * copied. Consequently, the TA_Instrument and its inner
+    * strings can be freed after a TA_TradeLogAdd call.
+    */
+   TA_Instrument        *id;
+
+   /* The "when" and "how much" about the transaction */
    TA_Timestamp         timestamp;
    int                  quantity;
    TA_Real              price;
+
+   /* You can provide the historic prices.
+    * This is used only for EXIT transaction.
+    *
+    * Maximum adverse excursion values are
+    * derived from this information.
+    *
+    * Leave these pointers to NULL if
+    * you do not care for MAE measurements.
+    *
+    * It is assumed that highPrice[0] and lowPrice[0] 
+    * are for the bar where the ENTRY occured.
+    * 
+    * It is assumed that highPrice[nbPriceBar-1] and
+    * lowPrice[nbPriceBar-1] are for the bar where
+    * the EXIT occured.
+    *
+    * These pointers are used solely while
+    * the call to TA_TradeLogAdd, so you
+    * can free the data after the call.
+    */
+   int nbPriceBar;
+   double *highPrice;
+   double *lowPrice;
+
 } TA_Transaction;
 
 typedef struct
@@ -126,57 +133,26 @@ typedef struct
    void *hiddenData;   
 } TA_PM;
 
-/* Make a TA_Instrument to represent a unique entity being traded. 
- * Can be initialized by using a category/symbol string (like
- * the TA-Lib data management module does), or the user can 
- * provide their own unique key (assumed to not change in the
- * lifetime of the usage of that TA_Instrument).
+/* Functions for TA_TradeLog
+ *
+ * TA_TradeLog Design Limitation:
+ *
+ *  - The TA_TradeLog can not be freed while being part
+ *    of a TA_PM. Attempt to free the TA_TradeLog will
+ *    fail.
  * 
- * A TA_Instrument must be initialize either with TA_InstrumentInit
- * or TA_InstrumentInitWithUserKey, not both!
+ *  - You can not add new transaction to a TA_Tradelog
+ *    while it is being part of a TA_PM. Attempt to add
+ *    transactions will fail.
+ *
+ * Once all the related TA_PM are freed, these limitations
+ * do not exist anymore and the TA_TradeLog can be freed
+ * or have new transactions added.
+ *
+ * These limitations allow some speed optimization useful in
+ * the context of TA application doing repetitive measurements 
+ * for parameter optimization.
  */
-TA_RetCode TA_InstrumentInit ( TA_Instrument *instrument,
-                               const char *category,
-                               const char *symbol ); 
-
-TA_RetCode TA_InstrumentInitWithUserKey ( TA_Instrument *instrument,
-                                          unsigned int uniqueUserDefinedKey );
-
-/* Allows to link historical data to a particular instrument.
- * This will help for more "fine grain" measurements.
- *
- * Example: Without historical data, the equity line is based
- * only from the entry/exit transaction being log.
- *
- * The price variation between these transactions won’t be
- * accounted for.
- *
- * There is two way to attach data to the instrument:
- *  - Using TA-Lib data management (use a unified database).
- *  - Your application can provide pointers on the historical price.
- *
- * For a given instrument, data can be attach either with
- * TA_InstrumentAttachData or TA_InstrumentAttachUDBase, but
- * not both
- */
-
-/* Note: In V0.0.5, you can attach data, though there is
- *       not yet a measurements who used that data.
- */
-
-/* Attach user owned buffers to retrieve data for this instrument. */
-TA_RetCode TA_InstrumentAttachData( TA_Instrument      *instrument,
-                                    unsigned int        nbPrice,
-                                    const TA_Timestamp *timestamp,
-                                    const TA_Real      *lowPrice,
-                                    const TA_Real      *price,
-                                    const TA_Real      *highPrice );
-
-/* Attach a UDBase to retreive data for this instrument. */
-TA_RetCode TA_InstrumentAttachUDBase( TA_Instrument   *instrument,
-                                      TA_UDBase       *udBase );
-
-/* Function for building a TA_TradeLog */
 TA_RetCode TA_TradeLogAlloc( TA_TradeLog **allocatedTradeLog );
 
 TA_RetCode TA_TradeLogFree( TA_TradeLog *toBeFreed );
@@ -184,20 +160,15 @@ TA_RetCode TA_TradeLogFree( TA_TradeLog *toBeFreed );
 TA_RetCode TA_TradeLogAdd( TA_TradeLog *tradeLog,
                            const TA_Transaction *newTransaction );
 
-/* Functions for performing Performance measurements for one
- * or many TA_TradeLog.
+/* Functions for TA_PM
  *
- * Important: 
- *  - The TA_TradeLog must not be modified while
- *    being added to a TA_PM. Once the TA_PM is 
- *    freed, you can safely continue to add trades
- *    to the TA_TradeLog if you wish.
+ * These functions allows to do the measurements on one
+ * or many TA_TradeLog over a specific period of time.
  *
- *  - It is the caller responsibility to maintain
- *    a coherent startDate/endDate. In other word,
- *    the TA_TradeLog must contains data only within
- *    the specified startDate/endDate, else some
- *    measurements will be incorrect.
+ * You can add the same TA_TradeLog to multiple independent TA_PM.
+ * This might be useful if you want measurements related to one or
+ * a subset of instrument and at the same time get the measurements
+ * for the whole portfolio.
  */
 TA_RetCode TA_PMAlloc( const TA_Timestamp  *startDate,
                        const TA_Timestamp  *endDate,
@@ -207,7 +178,7 @@ TA_RetCode TA_PMAlloc( const TA_Timestamp  *startDate,
 TA_RetCode TA_PMFree( TA_PM *toBeFreed );
 TA_RetCode TA_PMAddTradeLog( TA_PM *pm, TA_TradeLog *tradeLogToAdd );
 
-/* Measurements are individual field extracted with 'TA_PMValue'. */
+/* Measurements are obtained with the 'TA_PMValue' function. */
 typedef enum 
 {
    TA_PM_LONG_TRADES,
@@ -308,13 +279,6 @@ TA_RetCode TA_PMValue( TA_PM        *pm,
                        TA_PMGroup    grp,
                        TA_Real      *value );
 
-/* 
-TA_RetCode TA_PMErrMargin( TA_PM        *pm,
-                           TA_PMValueId  valueId,
-                           TA_PMGroup    grp,
-                           TA_Real      *value );
-*/
-
 /* Return a string corresponding to a TA_PMValueId.
  * Aim at being used in a user interface.
  *
@@ -334,14 +298,13 @@ const char *TA_PMValueIdHint( TA_PMValueId valueId );
 #define TA_PM_VALUE_ID_IS_PERCENT       0x00000002
 #define TA_PM_VALUE_ID_IS_INTEGER       0x00000004
 
-/* Each VALUE_ID must be in at least one of the 
+/* Each measurements must be in at least one of the 
  * following four category.
  */
 #define TA_PM_VALUE_ID_GENERAL          0x00000100
 #define TA_PM_VALUE_ID_LOSING_RELATED   0x00000200
 #define TA_PM_VALUE_ID_WINNING_RELATED  0x00000400
 #define TA_PM_VALUE_ID_NOT_RECOMMENDED  0x00000800
-
 
 unsigned int TA_PMValueIdFlags( TA_PMValueId valueId );
 
@@ -413,8 +376,19 @@ TA_RetCode TA_PMArrayAlloc( TA_PM        *pm,
 
 TA_RetCode TA_PMArrayFree( TA_PMArray *toBeFreed );
 
-
-/* Allocate and Free a report into a memory buffer. */
+/* Functions for TA_PMReport
+ *
+ * Allows to allocate/free a report into a memory buffer or
+ * output to a file.
+ *
+ * Design limitation:
+ *   - You cannot free a TA_PM while a TA_TradeReport is 
+ *     still allocated. Attempt to free the TA_PM will fail.
+ *
+ * In other word, you have to free all the TA_PMReport before 
+ * freeing the corresponding TA_PM.
+ *
+ */
 typedef struct
 {
    /* The report is in the 'buffer'.
@@ -443,8 +417,101 @@ typedef struct
 TA_RetCode TA_PMReportAlloc( TA_PM *pm, TA_PMReport **newAllocatedReport );
 TA_RetCode TA_PMReportFree ( TA_PMReport *reportToBeFreed );
 
-/* Append all measurements into a file. */
+/* Append all measurements into a file. 
+ *
+ * The report is in text and formatted for
+ * being printer friendly.
+ */
 TA_RetCode TA_PMReportToFile( TA_PM *pm, FILE *out ); 
+
+/* Save the TA_PM into a file.
+ *
+ * The report is written in binary and is design for
+ * being read back with TA_PMRead.
+ *
+ * Keep in mind that this read back TA_PM cannot
+ * have further TA_TradeLog added to it. This
+ * TA_PM can be used only to generate reports.
+ */
+TA_RetCode TA_PMWrite( FILE *out, const TA_PM *pmToWrite );
+TA_RetCode TA_PMRead ( FILE *in, TA_PM **newAllocatedPM );
+
+/* Functions for TA_TradeReport
+ *
+ * Allows to get info trade-by-trade.
+ *
+ * Design limitation:
+ *   - You cannot free a TA_PM while a TA_TradeReport is
+ *     still allocated. Attempt to free the TA_PM will fail.
+ *
+ * In other word, you have to free all the TA_TradeReport before 
+ * freeing the corresponding TA_PM.
+ * 
+ * Here is an example displaying many fields of the report:
+ *
+ *
+ * void displayAllTrades( TA_PM *thePM )
+ * {
+ *    TA_RetCode retCode;
+ *    TA_PMTradeReport *report;
+ *
+ *    retCode = TA_PMTradeReportAlloc( thePM, &report );
+ *
+ *    if( retCode == TA_SUCCESS )
+ *    {
+ *       printf( "Entry Price   Exit Price   Profit   Qty   MAE   MinFE" );
+ *       printf( "=====================================================" );
+ *       for( i=0; i < report->nbTrades; i++ )
+ *       {
+ *          ...
+ *       }
+ *       TA_PMTradeReportFree( report );
+ *    }
+ * }
+ */
+typedef struct
+{
+   int quantity;
+
+   double entryPrice; /* Positive=long, negative=short */
+
+   TA_Timestamp entryTimestamp;
+   TA_Timestamp exitTimestamp;
+
+   double profit; /* Positive=Winning, negative=Losing */
+
+   /* Identify the instrument */
+   TA_Instrument *id;     
+
+   /* Excursion info (in percent from entry price).
+    *
+    * If price info was not available, it is not possible
+    * to calculate these so they are going to be set
+    * to TA_REAL_DEFAULT (see ta_defs.h).
+    *
+    * These calculations are the same as defined by
+    * John Sweeney in his books:
+    *
+    *
+    *
+    */
+   double mae;   /* Maximum Adverse Excursion   */
+   double minfe; /* Minimum Favorable Excursion */
+   double maxfe; /* Maximum Favorable Excursion */
+
+} TA_Trade;
+
+typedef struct
+{
+   unsigned int nbTrades;
+   const TA_Trade **trades;
+
+   /* Used internally by TA-Lib. Do not modify. */
+   void *hiddenData;
+} TA_TradeReport;
+
+TA_RetCode TA_PMTradeReportAlloc( TA_PM *pm, TA_TradeReport **tradeReportAllocated );
+TA_RetCode TA_PMTradeReportFree ( TA_PM *pm, TA_TradeReport *tradeReport );
 
 #ifdef __cplusplus
 }

@@ -220,8 +220,10 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
       if( driver->getParameters == NULL )
       {
          TA_FATAL(  "Get parameters must be implemented", 0, 0 );
-         stopAllGetDataThread( builderSupport );
-         builderSupport->retCode = TA_INTERNAL_ERROR(35);
+         /*Unreachable code:
+          * stopAllGetDataThread( builderSupport );
+          * builderSupport->retCode = TA_INTERNAL_ERROR(35);
+          */
          break; /* Exit the loop righ away! */
       }
       else

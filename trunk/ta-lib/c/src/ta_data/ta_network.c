@@ -109,6 +109,8 @@
 /* None */
 
 /**** Local declarations.              ****/
+TA_FILE_INFO;
+
 #define BUFFER_SIZE 1500
 
 typedef struct
@@ -198,8 +200,6 @@ size_t libcurlWriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *da
 
 
 /**** Local variables definitions.     ****/
-TA_FILE_INFO;
-
 const TA_GlobalControl TA_NetworkGlobalControl =
 {
    TA_NETWORK_GLOBAL_ID,
@@ -379,7 +379,7 @@ static TA_RetCode TA_NetworkGlobalShutdown( void *globalAllocated )
       retCode = TA_SemaDestroy( &global->mutexSema );
    #endif
 
-   TA_Free(  global );
+   TA_Free( global );
 
    return retCode;
 }

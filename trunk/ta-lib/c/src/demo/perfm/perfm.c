@@ -38,7 +38,9 @@ int main( int argc, char **argv )
     * Here I am using the string "MSFT" to make the
     * instrument unique.
     */
-   TA_InstrumentInit( &msft, NULL, "MSFT" );
+   msft.catString = NULL;
+   msft.symString = "MSFT";
+   msft.userKey   = 0;
 
    /* Allocate a TA_TradeLog. */
    retCode = TA_TradeLogAlloc( &tradeLog );
