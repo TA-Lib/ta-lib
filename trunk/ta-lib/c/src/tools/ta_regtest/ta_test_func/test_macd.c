@@ -294,6 +294,8 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
                                        testParam->test->optInSignalPeriod_2,
                                        TA_MA_EXPONENTIAL );
       break;
+   default:
+      retCode = TA_BAD_PARAM;
    }
 
    TA_Free( libHandle, dummyBuffer1 );
