@@ -21,6 +21,7 @@ typedef struct
   TA_String *exchange;
   TA_String *type;
   TA_String *symbol;
+  TA_String *name;
 } TA_AddDataSourceParamPriv;
 
 /* Function to alloc/free a TA_AddDataSourceParamPriv. */
