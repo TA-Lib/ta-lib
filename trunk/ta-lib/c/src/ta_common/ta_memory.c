@@ -37,20 +37,21 @@
  *  -------------------------------------------------------------------
  *  JC       Jim Schimandle (From a Dr. Dobbs article)
  *  MF       Mario Fortier
- *
+ *  JS       Jon Sudul
  *
  * Change history:
  *
- *  MMDDYY BY      Description
- *  -------------------------------------------------------------------
- *  110199 MF      First version. This code was took from the work
- *                 performed by Jim Schimandle (Dr Dobbs August 1990
- *                 in the article "ENCAPSULATING C MEMORY ALLOCATION").
- *                 Many modifications have been performed (mainly
- *                 changing of names). I did add some code for detecting
- *                 out-of-bound access to the allocated memory and
- *                 for protecting multithread access.
- *  022801 MF      Add libHandle, now allocate "global variables".
+ *  MMDDYY BY    Description
+ *  ------------------------------------------------------------------
+ *  110199 MF    First version. This code was took from the work
+ *               performed by Jim Schimandle (Dr Dobbs August 1990
+ *               in the article "ENCAPSULATING C MEMORY ALLOCATION").
+ *               Many modifications have been performed (mainly
+ *               changing of names). I did add some code for detecting
+ *               out-of-bound access to the allocated memory and
+ *               for protecting multithread access.
+ *  022801 MF    Add libHandle, now allocate "global variables".
+ *  012504 MF,JS Allow printf in mem_tag_err only when enabled(Bug#881950)
  */
 
 /*  Memory management utilities
@@ -798,16 +799,18 @@ int        lin
 )
 
 {
-   /* TA_PROLOG*/
+   #if defined(TA_DEBUG) && defined(TA_MEM_LIST)
+   FILE *fp;
+   #endif
 
    (void)fil;
 
-   /* Note: This function must NOT use the tracing functionality from ta_trace.h
-	*       unless authorize by TA_IsTraceEnabled.
-	*/
-
-   #if defined(TA_MEM_LIST)
-      TA_MemDisplay(stderr);
+   #if defined(TA_DEBUG) && defined(TA_MEM_LIST)
+      fp = TA_GetStdioFilePtr();
+      if( fp )
+      {
+         TA_MemDisplay(fp);
+      }
    #endif
 
    if( *TA_MEMTAG_H_PTR(p) != TA_MEMTAG_H )
