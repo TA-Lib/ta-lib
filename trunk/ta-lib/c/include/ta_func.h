@@ -48,6 +48,18 @@
 extern "C" {
 #endif
 
+typedef enum
+{
+   TA_MAType_SMA       =0,
+   TA_MAType_EMA       =1,
+   TA_MAType_WMA       =2,
+   TA_MAType_DEMA      =3,
+   TA_MAType_TEMA      =4,
+   TA_MAType_TRIMA     =5,
+   TA_MAType_KAMA      =6,
+   TA_MAType_MAMA      =7
+} TA_MAType;
+
 
 
 /******************************************
@@ -124,28 +136,18 @@ int TA_MIN_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 2 to TA_INTEGER
  * optInNbDevDn_2:(From TA_REAL_MIN to TA_REAL_MAX)
  *    Deviation multiplier for lower band
  * 
- * optInMethod_3:
+ * optInMAType_3:
  *    Type of Moving Average
  * 
  * 
  */
-
-/* TA_BBANDS: Optional Parameter optInMethod_3 */
-#define TA_BBANDS_SMA 0
-#define TA_BBANDS_EMA 1
-#define TA_BBANDS_WMA 2
-#define TA_BBANDS_DEMA 3
-#define TA_BBANDS_TEMA 4
-#define TA_BBANDS_TRIMA 5
-#define TA_BBANDS_KAMA 6
-
 TA_RetCode TA_BBANDS( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real inReal_0[],
                       TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                       TA_Real       optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                       TA_Real       optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-                      TA_Integer    optInMethod_3,
+                      TA_MAType     optInMAType_3,
                       TA_Integer   *outBegIdx,
                       TA_Integer   *outNbElement,
                       TA_Real       outRealUpperBand_0[],
@@ -155,7 +157,7 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
 int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                         TA_Real       optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                         TA_Real       optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        TA_Integer    optInMethod_3 ); 
+                        TA_MAType     optInMAType_3 ); 
 
 /*
  * TA_DEMA - Double Exponential Moving Average
@@ -240,32 +242,52 @@ int TA_KAMA_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 2 to TA_INTEGE
  * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
  *    Number of period
  * 
- * optInMethod_1:
+ * optInMAType_1:
  *    Type of Moving Average
  * 
  * 
  */
-
-/* TA_MA: Optional Parameter optInMethod_1 */
-#define TA_MA_SMA 0
-#define TA_MA_EMA 1
-#define TA_MA_WMA 2
-#define TA_MA_DEMA 3
-#define TA_MA_TEMA 4
-#define TA_MA_TRIMA 5
-#define TA_MA_KAMA 6
-
 TA_RetCode TA_MA( TA_Integer    startIdx,
                   TA_Integer    endIdx,
                   const TA_Real inReal_0[],
                   TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                  TA_Integer    optInMethod_1,
+                  TA_MAType     optInMAType_1,
                   TA_Integer   *outBegIdx,
                   TA_Integer   *outNbElement,
                   TA_Real       outReal_0[] );
 
 int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    TA_Integer    optInMethod_1 ); 
+                    TA_MAType     optInMAType_1 ); 
+
+/*
+ * TA_MAMA - MESA Adaptive Moving Average
+ * 
+ * Input  = TA_Real
+ * Output = TA_Real, TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInFastLimit_0:(From 0.01 to 0.99)
+ *    Upper limit use in the adaptive algorithm
+ * 
+ * optInSlowLimit_1:(From 0.01 to 0.99)
+ *    Lower limit use in the adaptive algorithm
+ * 
+ * 
+ */
+TA_RetCode TA_MAMA( TA_Integer    startIdx,
+                    TA_Integer    endIdx,
+                    const TA_Real inReal_0[],
+                    TA_Real       optInFastLimit_0, /* From 0.01 to 0.99 */
+                    TA_Real       optInSlowLimit_1, /* From 0.01 to 0.99 */
+                    TA_Integer   *outBegIdx,
+                    TA_Integer   *outNbElement,
+                    TA_Real       outMAMA_0[],
+                    TA_Real       outFAMA_1[] );
+
+int TA_MAMA_Lookback( TA_Real       optInFastLimit_0, /* From 0.01 to 0.99 */
+                      TA_Real       optInSlowLimit_1 );  /* From 0.01 to 0.99 */
+
 
 /*
  * TA_MIDPRICE - Midpoint Price over period
@@ -563,34 +585,24 @@ int TA_ADXR_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 2 to TA_INTEGE
  * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
  *    Number of period for the slow MA
  * 
- * optInMethod_2:
+ * optInMAType_2:
  *    Type of Moving Average
  * 
  * 
  */
-
-/* TA_APO: Optional Parameter optInMethod_2 */
-#define TA_APO_SMA 0
-#define TA_APO_EMA 1
-#define TA_APO_WMA 2
-#define TA_APO_DEMA 3
-#define TA_APO_TEMA 4
-#define TA_APO_TRIMA 5
-#define TA_APO_KAMA 6
-
 TA_RetCode TA_APO( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
                    TA_Integer    optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                   TA_Integer    optInMethod_2,
+                   TA_MAType     optInMAType_2,
                    TA_Integer   *outBegIdx,
                    TA_Integer   *outNbElement,
                    TA_Real       outReal_0[] );
 
 int TA_APO_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
                      TA_Integer    optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                     TA_Integer    optInMethod_2 ); 
+                     TA_MAType     optInMAType_2 ); 
 
 /*
  * TA_AROON - Aroon
@@ -722,9 +734,9 @@ TA_RetCode TA_MACD( TA_Integer    startIdx,
                     TA_Integer    optInSignalPeriod_2, /* From 1 to TA_INTEGER_MAX */
                     TA_Integer   *outBegIdx,
                     TA_Integer   *outNbElement,
-                    TA_Real       outRealMACD_0[],
-                    TA_Real       outRealMACDSignal_1[],
-                    TA_Real       outRealMACDHist_2[] );
+                    TA_Real       outMACD_0[],
+                    TA_Real       outMACDSignal_1[],
+                    TA_Real       outMACDHist_2[] );
 
 int TA_MACD_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
                       TA_Integer    optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
@@ -759,57 +771,27 @@ int TA_MACD_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_M
  * 
  * 
  */
-
-/* TA_MACDEXT: Optional Parameter optInFastMAType_1 */
-#define TA_MACDEXT_SMA 0
-#define TA_MACDEXT_EMA 1
-#define TA_MACDEXT_WMA 2
-#define TA_MACDEXT_DEMA 3
-#define TA_MACDEXT_TEMA 4
-#define TA_MACDEXT_TRIMA 5
-#define TA_MACDEXT_KAMA 6
-
-
-/* TA_MACDEXT: Optional Parameter optInSlowMAType_3 */
-#define TA_MACDEXT_SMA 0
-#define TA_MACDEXT_EMA 1
-#define TA_MACDEXT_WMA 2
-#define TA_MACDEXT_DEMA 3
-#define TA_MACDEXT_TEMA 4
-#define TA_MACDEXT_TRIMA 5
-#define TA_MACDEXT_KAMA 6
-
-
-/* TA_MACDEXT: Optional Parameter optInSignalMAType_5 */
-#define TA_MACDEXT_SMA 0
-#define TA_MACDEXT_EMA 1
-#define TA_MACDEXT_WMA 2
-#define TA_MACDEXT_DEMA 3
-#define TA_MACDEXT_TEMA 4
-#define TA_MACDEXT_TRIMA 5
-#define TA_MACDEXT_KAMA 6
-
 TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
                        TA_Integer    endIdx,
                        const TA_Real inReal_0[],
                        TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                       TA_Integer    optInFastMAType_1,
+                       TA_MAType     optInFastMAType_1,
                        TA_Integer    optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
-                       TA_Integer    optInSlowMAType_3,
+                       TA_MAType     optInSlowMAType_3,
                        TA_Integer    optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInSignalMAType_5,
+                       TA_MAType     optInSignalMAType_5,
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
-                       TA_Real       outRealMACD_0[],
-                       TA_Real       outRealMACDSignal_1[],
-                       TA_Real       outRealMACDHist_2[] );
+                       TA_Real       outMACD_0[],
+                       TA_Real       outMACDSignal_1[],
+                       TA_Real       outMACDHist_2[] );
 
 int TA_MACDEXT_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                         TA_Integer    optInFastMAType_1,
+                         TA_MAType     optInFastMAType_1,
                          TA_Integer    optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
-                         TA_Integer    optInSlowMAType_3,
+                         TA_MAType     optInSlowMAType_3,
                          TA_Integer    optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
-                         TA_Integer    optInSignalMAType_5 ); 
+                         TA_MAType     optInSignalMAType_5 ); 
 
 /*
  * TA_MACDFIX - Moving Average Convergence/Divergence Fix 12/26
@@ -830,9 +812,9 @@ TA_RetCode TA_MACDFIX( TA_Integer    startIdx,
                        TA_Integer    optInSignalPeriod_0, /* From 1 to TA_INTEGER_MAX */
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
-                       TA_Real       outRealMACD_0[],
-                       TA_Real       outRealMACDSignal_1[],
-                       TA_Real       outRealMACDHist_2[] );
+                       TA_Real       outMACD_0[],
+                       TA_Real       outMACDSignal_1[],
+                       TA_Real       outMACDHist_2[] );
 
 int TA_MACDFIX_Lookback( TA_Integer    optInSignalPeriod_0 );  /* From 1 to TA_INTEGER_MAX */
 
@@ -953,34 +935,24 @@ int TA_MOM_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
  *    Number of period for the slow MA
  * 
- * optInMethod_2:
+ * optInMAType_2:
  *    Type of Moving Average
  * 
  * 
  */
-
-/* TA_PPO: Optional Parameter optInMethod_2 */
-#define TA_PPO_SMA 0
-#define TA_PPO_EMA 1
-#define TA_PPO_WMA 2
-#define TA_PPO_DEMA 3
-#define TA_PPO_TEMA 4
-#define TA_PPO_TRIMA 5
-#define TA_PPO_KAMA 6
-
 TA_RetCode TA_PPO( TA_Integer    startIdx,
                    TA_Integer    endIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
                    TA_Integer    optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                   TA_Integer    optInMethod_2,
+                   TA_MAType     optInMAType_2,
                    TA_Integer   *outBegIdx,
                    TA_Integer   *outNbElement,
                    TA_Real       outReal_0[] );
 
 int TA_PPO_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
                      TA_Integer    optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                     TA_Integer    optInMethod_2 ); 
+                     TA_MAType     optInMAType_2 ); 
 
 /*
  * TA_PLUS_DI - Plus Directional Indicator
@@ -1178,26 +1150,6 @@ int TA_RSI_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 2 to TA_INTEGER
  * 
  * 
  */
-
-/* TA_STOCH: Optional Parameter optInSlowK_MAType_2 */
-#define TA_STOCH_SMA 0
-#define TA_STOCH_EMA 1
-#define TA_STOCH_WMA 2
-#define TA_STOCH_DEMA 3
-#define TA_STOCH_TEMA 4
-#define TA_STOCH_TRIMA 5
-#define TA_STOCH_KAMA 6
-
-
-/* TA_STOCH: Optional Parameter optInSlowD_MAType_4 */
-#define TA_STOCH_SMA 0
-#define TA_STOCH_EMA 1
-#define TA_STOCH_WMA 2
-#define TA_STOCH_DEMA 3
-#define TA_STOCH_TEMA 4
-#define TA_STOCH_TRIMA 5
-#define TA_STOCH_KAMA 6
-
 TA_RetCode TA_STOCH( TA_Integer    startIdx,
                      TA_Integer    endIdx,
                      const TA_Real inHigh_0[],
@@ -1205,9 +1157,9 @@ TA_RetCode TA_STOCH( TA_Integer    startIdx,
                      const TA_Real inClose_0[],
                      TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
                      TA_Integer    optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInSlowK_MAType_2,
+                     TA_MAType     optInSlowK_MAType_2,
                      TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInSlowD_MAType_4,
+                     TA_MAType     optInSlowD_MAType_4,
                      TA_Integer   *outBegIdx,
                      TA_Integer   *outNbElement,
                      TA_Real       outSlowK_0[],
@@ -1215,9 +1167,9 @@ TA_RetCode TA_STOCH( TA_Integer    startIdx,
 
 int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
                        TA_Integer    optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInSlowK_MAType_2,
+                       TA_MAType     optInSlowK_MAType_2,
                        TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInSlowD_MAType_4 ); 
+                       TA_MAType     optInSlowD_MAType_4 ); 
 
 /*
  * TA_STOCHF - Stochastic Fast
@@ -1238,16 +1190,6 @@ int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGE
  * 
  * 
  */
-
-/* TA_STOCHF: Optional Parameter optInFastD_MAType_2 */
-#define TA_STOCHF_SMA 0
-#define TA_STOCHF_EMA 1
-#define TA_STOCHF_WMA 2
-#define TA_STOCHF_DEMA 3
-#define TA_STOCHF_TEMA 4
-#define TA_STOCHF_TRIMA 5
-#define TA_STOCHF_KAMA 6
-
 TA_RetCode TA_STOCHF( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real inHigh_0[],
@@ -1255,7 +1197,7 @@ TA_RetCode TA_STOCHF( TA_Integer    startIdx,
                       const TA_Real inClose_0[],
                       TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
                       TA_Integer    optInFastD_Period_1, /* From 1 to TA_INTEGER_MAX */
-                      TA_Integer    optInFastD_MAType_2,
+                      TA_MAType     optInFastD_MAType_2,
                       TA_Integer   *outBegIdx,
                       TA_Integer   *outNbElement,
                       TA_Real       outFastK_0[],
@@ -1263,7 +1205,7 @@ TA_RetCode TA_STOCHF( TA_Integer    startIdx,
 
 int TA_STOCHF_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
                         TA_Integer    optInFastD_Period_1, /* From 1 to TA_INTEGER_MAX */
-                        TA_Integer    optInFastD_MAType_2 ); 
+                        TA_MAType     optInFastD_MAType_2 ); 
 
 /*
  * TA_TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
@@ -1319,6 +1261,53 @@ int TA_WILLR_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 2 to TA_INTEG
 /******************************************
  * Group: [Volume Indicators]
  ******************************************/
+
+/*
+ * TA_AD - Chaikin A/D Line
+ * 
+ * Input  = High, Low, Close, Volume
+ * Output = TA_Real
+ * 
+ */
+TA_RetCode TA_AD( TA_Integer    startIdx,
+                  TA_Integer    endIdx,
+                  const TA_Real inHigh_0[],
+                  const TA_Real inLow_0[],
+                  const TA_Real inClose_0[],
+                  const TA_Integer inVolume_0[],
+                  TA_Integer   *outBegIdx,
+                  TA_Integer   *outNbElement,
+                  TA_Real       outReal_0[] );
+
+int TA_AD_Lookback( void );
+
+
+/*
+ * TA_ADOSC - Chaikin A/D Oscillator
+ * 
+ * Input  = High, Low, Close, Volume
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_ADOSC( TA_Integer    startIdx,
+                     TA_Integer    endIdx,
+                     const TA_Real inHigh_0[],
+                     const TA_Real inLow_0[],
+                     const TA_Real inClose_0[],
+                     const TA_Integer inVolume_0[],
+                     TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     TA_Integer   *outBegIdx,
+                     TA_Integer   *outNbElement,
+                     TA_Real       outReal_0[] );
+
+int TA_ADOSC_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+
 
 /*
  * TA_OBV - On Balance Volume
@@ -1502,16 +1491,17 @@ int TA_WCLPRICE_Lookback( void );
 typedef enum {
     /* 001 */  TA_FUNC_UNST_EMA,
     /* 002 */  TA_FUNC_UNST_KAMA,
-    /* 003 */  TA_FUNC_UNST_ATR,
-    /* 004 */  TA_FUNC_UNST_ADX,
-    /* 005 */  TA_FUNC_UNST_ADXR,
-    /* 006 */  TA_FUNC_UNST_DX,
-    /* 007 */  TA_FUNC_UNST_MFI,
-    /* 008 */  TA_FUNC_UNST_MINUS_DI,
-    /* 009 */  TA_FUNC_UNST_MINUS_DM,
-    /* 010 */  TA_FUNC_UNST_PLUS_DI,
-    /* 011 */  TA_FUNC_UNST_PLUS_DM,
-    /* 012 */  TA_FUNC_UNST_RSI,
+    /* 003 */  TA_FUNC_UNST_MAMA,
+    /* 004 */  TA_FUNC_UNST_ATR,
+    /* 005 */  TA_FUNC_UNST_ADX,
+    /* 006 */  TA_FUNC_UNST_ADXR,
+    /* 007 */  TA_FUNC_UNST_DX,
+    /* 008 */  TA_FUNC_UNST_MFI,
+    /* 009 */  TA_FUNC_UNST_MINUS_DI,
+    /* 010 */  TA_FUNC_UNST_MINUS_DM,
+    /* 011 */  TA_FUNC_UNST_PLUS_DI,
+    /* 012 */  TA_FUNC_UNST_PLUS_DM,
+    /* 013 */  TA_FUNC_UNST_RSI,
                TA_FUNC_UNST_ALL,
                TA_FUNC_UNST_NONE=-1 } TA_FuncUnstId;
 
