@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  110199 MF   First version.
- *
+ *  040304 MF   Fix #927808. Adapt code to a format change from Yahoo!
  */
 
 /* Description:
@@ -147,7 +147,7 @@ static TA_PrivateYahooHandle *allocPrivateHandle( void )
 
    /* freePrivateHandle can be safely called from this point. */
 
-   retCode = TA_ReadOpInfoAlloc( "[D][MMM][YY][O][H][L][C][V]",                               
+   retCode = TA_ReadOpInfoAlloc( "[D][MMM][YY][O][H][L][C][V][-NDL]",                               
                                  &privateHandle->readOp6Fields, 0 );
    if( retCode != TA_SUCCESS )
    {
@@ -155,7 +155,7 @@ static TA_PrivateYahooHandle *allocPrivateHandle( void )
       return NULL;
    }
 
-   retCode = TA_ReadOpInfoAlloc( "[D][MMM][YY][C]",
+   retCode = TA_ReadOpInfoAlloc( "[D][MMM][YY][C][-NDL]",
                                  &privateHandle->readOp2Fields, 0 );
    if( retCode != TA_SUCCESS )
    {
@@ -163,7 +163,7 @@ static TA_PrivateYahooHandle *allocPrivateHandle( void )
       return NULL;
    }
 
-   retCode = TA_ReadOpInfoAlloc( "[D][MMM][YY][O][H][L][C]",
+   retCode = TA_ReadOpInfoAlloc( "[D][MMM][YY][O][H][L][C][-NDL]",
                                  &privateHandle->readOp5Fields, 0 );
    if( retCode != TA_SUCCESS )
    {
