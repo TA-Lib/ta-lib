@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -191,6 +191,9 @@ typedef struct
     */
    const char *symbol;
 
+   /* The user can optionaly name this data source. */
+   const char *name;
+
 } TA_AddDataSourceParam;
 
 TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
@@ -335,6 +338,27 @@ typedef int TA_Field;
 #define TA_VOLUME       (1<<4)
 #define TA_OPENINTEREST (1<<5)
 #define TA_TIMESTAMP    (1<<6)
+
+typedef struct
+{
+   unsigned int nbBars; /* Nb of element into the following arrays. */
+   TA_Period period;    /* Amount of time between each bar. */
+
+   /* The arrays containing data. Unused array are set to NULL. */
+   const TA_Timestamp *timestamp;
+   const TA_Real      *open;
+   const TA_Real      *high;
+   const TA_Real      *low;
+   const TA_Real      *close;
+   const TA_Integer   *volume;
+   const TA_Integer   *openInterest;
+
+   /* Enumerate all the data source that did contribute. */
+   TA_StringTable listOfSource;
+
+   /* Hidden data for internal use by the TA-LIB. Do not modify. */
+   void *hiddenData;
+} TA_History;
 
 TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
                             const char          *category,
