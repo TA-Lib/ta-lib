@@ -112,6 +112,7 @@ static Bool   fully_specified     (const char *filename);
     character under MS-DOS or OS/2.
     ---------------------------------------------------------------------[>]-*/
 
+
 FILE *
 file_open (
     const char *filename,               /*  Name of file to open             */
@@ -1222,6 +1223,8 @@ build_next_path_ext ( char *dest, const char *path,
 }
 #endif
 
+#if 0
+!not needed in context of TA-Lib
 /*  ---------------------------------------------------------------------[<]-
     Function: file_cycle
 
@@ -1377,7 +1380,7 @@ file_cycle_needed (
       }
     return (cycle);
 }
-
+#endif
 
 /*  ---------------------------------------------------------------------[<]-
     Function: file_has_changed
