@@ -75,6 +75,8 @@ int TA_SAR_Lookback( TA_Real       optInAcceleration_0, /* From TA_REAL_MIN to T
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
+   (void)optInAcceleration_0;
+   (void)optInMaximum_1;
 
    /* SAR always sacrify one price bar to establish the
     * initial extreme price.
