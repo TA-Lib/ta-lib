@@ -60,7 +60,7 @@
 #define TA_REAL_DEFAULT    ((double)-4e+37)
 
 #if defined( _MANAGED )
-public __value enum TA_RetCode 
+__value enum TA_RetCode 
 #else
 typedef enum
 #endif
@@ -208,7 +208,7 @@ typedef enum
 #endif
 
 #if defined( _MANAGED )
-public __value enum TA_Compatibility
+__value enum TA_Compatibility
 #else
 typedef enum
 #endif
@@ -224,7 +224,7 @@ typedef enum
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 
 #if defined( _MANAGED )
-public __value enum TA_MAType
+__value enum TA_MAType
 #else
 typedef enum
 #endif
@@ -245,7 +245,7 @@ typedef enum
 #endif
 
 #if defined( _MANAGED )
-public __value enum TA_FuncUnstId
+__value enum TA_FuncUnstId
 #else
 typedef enum
 #endif
