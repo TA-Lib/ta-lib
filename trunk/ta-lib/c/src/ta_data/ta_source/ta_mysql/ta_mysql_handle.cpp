@@ -79,6 +79,8 @@ extern "C" {
 /**** Local functions.    ****/
 static TA_PrivateMySQLHandle *allocPrivateHandle( void );
 static TA_RetCode freePrivateHandle( TA_PrivateMySQLHandle *privateHandle );
+static TA_RetCode freeCategoryIndex( void *toBeFreed );
+static TA_RetCode freeSymbolsIndex( void *toBeFreed );
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
@@ -138,54 +140,51 @@ TA_RetCode TA_MYSQL_DataSourceHandleFree( TA_DataSourceHandle *handle )
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_MYSQL_BuildFileIndex( TA_DataSourceHandle *handle )
+TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
 {
    TA_PROLOG
    TA_RetCode retCode;
-   TA_FileIndex *newIndex;
    TA_PrivateMySQLHandle *privateHandle;
+   TA_MySQLCategoryNode *categoryNode;
 
    if( !handle )
       return (TA_RetCode)TA_INTERNAL_ERROR(61);
 
    privateHandle = (TA_PrivateMySQLHandle *)handle->opaqueData;
 
-   TA_TRACE_BEGIN(  TA_MYSQL_BuildFileIndex );
+   TA_TRACE_BEGIN(  TA_MYSQL_BuildSymbolsIndex );
 
    TA_ASSERT( privateHandle != NULL );
    TA_ASSERT( privateHandle->param != NULL );
    TA_ASSERT( privateHandle->param->category != NULL );
    TA_ASSERT( privateHandle->param->location != NULL );
+   TA_ASSERT( privateHandle->con != NULL );
 
-   /* De-allocate potentialy already existing file index. */
-   if( privateHandle->theFileIndex != NULL )
+   /* De-allocate potentialy already existing category index. */
+   if( privateHandle->theCategoryIndex != NULL )
    {
-      retCode = TA_FileIndexFree( privateHandle->theFileIndex );
-      privateHandle->theFileIndex = NULL;
+      retCode = TA_ListFreeAll(privateHandle->theCategoryIndex, &freeCategoryIndex);
+      privateHandle->theCategoryIndex = NULL;
       if( retCode != TA_SUCCESS )
       {
          TA_TRACE_RETURN( retCode );
       }
    }
 
-   /* Allocate new file index. */
-   retCode = TA_FileIndexAlloc( privateHandle->param->location,
-                                privateHandle->param->category,
-                                privateHandle->param->country,
-                                privateHandle->param->exchange,
-                                privateHandle->param->type,
-                                &newIndex );
-
-   if( retCode != TA_SUCCESS )
+   /* Allocate new category index. */
+   privateHandle->theCategoryIndex = TA_ListAlloc();
+   if( !privateHandle->theCategoryIndex )
    {
-      TA_TRACE_RETURN( retCode );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
-   TA_ASSERT( newIndex != NULL );
-
-   privateHandle->theFileIndex = newIndex;
-
-   TA_TRACE_RETURN( TA_SUCCESS );
+   /* create one category */
+   categoryNode = (TA_MySQLCategoryNode*)TA_Malloc(sizeof( TA_MySQLCategoryNode ));
+   memset(categoryNode, 0, sizeof( TA_MySQLCategoryNode ));
+   categoryNode->category = TA_StringDup( TA_GetGlobalStringCache(), privateHandle->param->category);
+   retCode = TA_ListAddTail(privateHandle->theCategoryIndex, categoryNode);
+   
+   TA_TRACE_RETURN( retCode );
 }
 
 
@@ -206,16 +205,72 @@ static TA_PrivateMySQLHandle *allocPrivateHandle( void  )
 
 static TA_RetCode freePrivateHandle( TA_PrivateMySQLHandle *privateHandle )
 {
+   TA_RetCode retCode = TA_SUCCESS;
+
    if( privateHandle )
    {
-      if( privateHandle->theFileIndex )
-         TA_FileIndexFree( privateHandle->theFileIndex );
+      if( privateHandle->theCategoryIndex )
+      {
+         retCode = TA_ListFreeAll(privateHandle->theCategoryIndex, &freeCategoryIndex);
+         privateHandle->theCategoryIndex = NULL;
+      }
 
       if( privateHandle->con )
+      try
+      {
          delete privateHandle->con;
+         privateHandle->con = NULL;
+      }
+      catch (...)
+      {
+         retCode = TA_INTERNAL_ERR;
+         privateHandle->con = NULL;
+      }
 
-      TA_Free(  privateHandle );
+      TA_Free( privateHandle );
    }
 
-   return TA_SUCCESS;
+   return retCode;
+}
+
+static TA_RetCode freeCategoryIndex( void *toBeFreed )
+{
+   TA_MySQLCategoryNode *node = (TA_MySQLCategoryNode*)toBeFreed;
+   TA_RetCode retCode = TA_SUCCESS;
+
+   if( !node )
+      return TA_SUCCESS;
+
+   if( node->category && retCode == TA_SUCCESS )
+   {
+      TA_StringFree( TA_GetGlobalStringCache(), node->category );
+      node->category = NULL;
+   }
+
+   if( node->theSymbols && retCode == TA_SUCCESS )
+   {
+      retCode = TA_ListFreeAll( node->theSymbols, &freeSymbolsIndex);
+      node->theSymbols = NULL;
+   }
+   
+   if( retCode == TA_SUCCESS )
+   {
+      TA_Free(node);
+   }
+
+   return retCode;
+}
+
+static TA_RetCode freeSymbolsIndex( void *toBeFreed )
+{
+   TA_String *symbol = (TA_String*)toBeFreed;
+   TA_RetCode retCode = TA_SUCCESS;
+
+   if( symbol )
+   {
+      TA_StringFree( TA_GetGlobalStringCache(), symbol );
+      symbol = NULL;
+   }
+
+   return retCode;
 }

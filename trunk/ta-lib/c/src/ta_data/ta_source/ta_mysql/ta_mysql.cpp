@@ -163,7 +163,7 @@ TA_RetCode TA_MYSQL_OpenSource( const TA_AddDataSourceParamPriv *param,
    if( retCode != TA_SUCCESS )
    {
       TA_Free(host);
-      TA_Tree(dbase);
+      TA_Free(dbase);
       TA_TRACE_RETURN( retCode );
    }
 
@@ -201,8 +201,8 @@ TA_RetCode TA_MYSQL_OpenSource( const TA_AddDataSourceParamPriv *param,
    TA_Free(host);
    TA_Free(dbase);
 
-   /* Now build the TA_FileIndex. */
-   retCode = TA_MYSQL_BuildFileIndex( tmpHandle );
+   /* Now build the symbols index. */
+   retCode = TA_MYSQL_BuildSymbolsIndex( tmpHandle );
 
    if( retCode != TA_SUCCESS )
    {
@@ -211,7 +211,7 @@ TA_RetCode TA_MYSQL_OpenSource( const TA_AddDataSourceParamPriv *param,
    }
 
    /* Set the total number of distinct categories. */
-   tmpHandle->nbCategory = TA_FileIndexNbCategory( privData->theFileIndex );
+   tmpHandle->nbCategory = TA_ListSize(privData->theCategoryIndex);
 
    *handle = tmpHandle;
 
@@ -235,45 +235,42 @@ TA_RetCode TA_MYSQL_GetFirstCategoryHandle( TA_DataSourceHandle *handle,
                                             TA_CategoryHandle   *categoryHandle )
 {
    TA_PROLOG
-   //TA_PrivateMySQLHandle *privData;
-   //TA_FileIndex     *fileIndex;
-   //TA_String        *string;
+   TA_PrivateMySQLHandle *privData;
+   TA_List               *categoryIndex;
+   TA_MySQLCategoryNode  *categoryNode;
 
    TA_TRACE_BEGIN(  TA_MYSQL_GetFirstCategoryHandle );
 
-#if 0
    if( (handle == NULL) || (categoryHandle == NULL) )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
    }
 
-   privData = (TA_PrivateAsciiHandle *)(handle->opaqueData);
+   privData = (TA_PrivateMySQLHandle *)(handle->opaqueData);
 
    if( !privData )
    {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(49) );
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(49) );
    }
 
-   fileIndex = privData->theFileIndex;
+   categoryIndex = privData->theCategoryIndex;
 
-   if( !fileIndex )
+   if( !categoryIndex )
    {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(50) );
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(50) );
    }
 
-   string = TA_FileIndexFirstCategory( fileIndex );
-
-   if( !string )
+   categoryNode = (TA_MySQLCategoryNode*)TA_ListAccessHead(categoryIndex);
+   if( !categoryNode || !categoryNode->category )
    {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(51) ); /* At least one category must exist. */
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(51) ); /* At least one category must exist. */
    }
 
    /* Set the categoryHandle. */
-   categoryHandle->string = string;
-   categoryHandle->nbSymbol = TA_FileIndexNbSymbol( fileIndex );
+   categoryHandle->string = categoryNode->category;
+   categoryHandle->nbSymbol = 0;
    categoryHandle->opaqueData = categoryHandle;
 
-#endif
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -324,8 +321,9 @@ TA_RetCode TA_MYSQL_GetNextCategoryHandle( TA_DataSourceHandle *handle,
    categoryHandle->nbSymbol = TA_FileIndexNbSymbol( fileIndex );
    categoryHandle->opaqueData = NULL; /* Not needed... */
 
-#endif
    TA_TRACE_RETURN( TA_SUCCESS );
+#endif
+   TA_TRACE_RETURN( TA_END_OF_INDEX );
 }
 
 TA_RetCode TA_MYSQL_GetFirstSymbolHandle( TA_DataSourceHandle *handle,
