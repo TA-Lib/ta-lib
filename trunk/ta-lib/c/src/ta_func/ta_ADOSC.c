@@ -75,12 +75,12 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
-/* Generated */                         int           optInSlowPeriod_1 )  /* From 2 to 100000 */
+/* Generated */ int Core::ADOSC_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                         int           optInSlowPeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
-/* Generated */                      int           optInSlowPeriod_1 )  /* From 2 to 100000 */
+/* Generated */ int TA_ADOSC_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                      int           optInSlowPeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -90,10 +90,10 @@
    /* Use the slowest EMA period to evaluate the total lookback. */
    int slowestPeriod;
 
-   if( optInFastPeriod_0 < optInSlowPeriod_1 )
-      slowestPeriod = optInSlowPeriod_1;
+   if( optInFastPeriod < optInSlowPeriod )
+      slowestPeriod = optInSlowPeriod;
    else
-      slowestPeriod = optInFastPeriod_0;
+      slowestPeriod = optInFastPeriod;
 
    /* Adjust startIdx to account for the lookback period. */
    return TA_EMA_Lookback( slowestPeriod );
@@ -108,10 +108,10 @@
  * 
  * Optional Parameters
  * -------------------
- * optInFastPeriod_0:(From 2 to 100000)
+ * optInFastPeriod:(From 2 to 100000)
  *    Number of period for the fast MA
  * 
- * optInSlowPeriod_1:(From 2 to 100000)
+ * optInSlowPeriod:(From 2 to 100000)
  *    Number of period for the slow MA
  * 
  * 
@@ -120,27 +120,27 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::ADOSC( int    startIdx,
 /* Generated */                                    int    endIdx,
-/* Generated */                                    double       inHigh_0 __gc [],
-/* Generated */                                    double       inLow_0 __gc [],
-/* Generated */                                    double       inClose_0 __gc [],
-/* Generated */                                    int          inVolume_0 __gc [],
-/* Generated */                                    int           optInFastPeriod_0, /* From 2 to 100000 */
-/* Generated */                                    int           optInSlowPeriod_1, /* From 2 to 100000 */
+/* Generated */                                    double       inHigh __gc [],
+/* Generated */                                    double       inLow __gc [],
+/* Generated */                                    double       inClose __gc [],
+/* Generated */                                    int          inVolume __gc [],
+/* Generated */                                    int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                    int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                                    [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                    [OutAttribute]Int32 *outNbElement,
-/* Generated */                                    double        outReal_0 __gc [] )
+/* Generated */                                    double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_ADOSC( int    startIdx,
 /* Generated */                      int    endIdx,
-/* Generated */                      const double inHigh_0[],
-/* Generated */                      const double inLow_0[],
-/* Generated */                      const double inClose_0[],
-/* Generated */                      const int    inVolume_0[],
-/* Generated */                      int           optInFastPeriod_0, /* From 2 to 100000 */
-/* Generated */                      int           optInSlowPeriod_1, /* From 2 to 100000 */
+/* Generated */                      const double inHigh[],
+/* Generated */                      const double inLow[],
+/* Generated */                      const double inClose[],
+/* Generated */                      const int    inVolume[],
+/* Generated */                      int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                      int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                      int          *outBegIdx,
 /* Generated */                      int          *outNbElement,
-/* Generated */                      double        outReal_0[] )
+/* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -166,22 +166,22 @@
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
-/* Generated */    if(!inHigh_0||!inLow_0||!inClose_0||!inVolume_0)
+/* Generated */    if(!inHigh||!inLow||!inClose||!inVolume)
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    /* min/max are checked for optInFastPeriod_0. */
-/* Generated */    if( (int)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInFastPeriod_0 = 3;
-/* Generated */    else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 100000) )
+/* Generated */    /* min/max are checked for optInFastPeriod. */
+/* Generated */    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInFastPeriod = 3;
+/* Generated */    else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    /* min/max are checked for optInSlowPeriod_1. */
-/* Generated */    if( (int)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
-/* Generated */       optInSlowPeriod_1 = 10;
-/* Generated */    else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 100000) )
+/* Generated */    /* min/max are checked for optInSlowPeriod. */
+/* Generated */    if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInSlowPeriod = 10;
+/* Generated */    else if( ((int)optInSlowPeriod < 2) || ((int)optInSlowPeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -217,10 +217,10 @@
     * This infomration is used soleley to bootstrap
     * the algorithm (skip the lookback period).
     */
-   if( optInFastPeriod_0 < optInSlowPeriod_1 )
-      slowestPeriod = optInSlowPeriod_1;
+   if( optInFastPeriod < optInSlowPeriod )
+      slowestPeriod = optInSlowPeriod;
    else
-      slowestPeriod = optInFastPeriod_0;
+      slowestPeriod = optInFastPeriod;
 
    /* Adjust startIdx to account for the lookback period. */
    lookbackTotal = TA_EMA_Lookback( slowestPeriod );
@@ -244,20 +244,20 @@
    ad = 0.0;
    #define CALCULATE_AD \
    { \
-      high  = inHigh_0[today]; \
-      low   = inLow_0[today]; \
+      high  = inHigh[today]; \
+      low   = inLow[today]; \
       tmp   = high-low; \
-      close = inClose_0[today]; \
+      close = inClose[today]; \
       if( tmp > 0.0 ) \
-         ad += (((close-low)-(high-close))/tmp)*((double)inVolume_0[today]); \
+         ad += (((close-low)-(high-close))/tmp)*((double)inVolume[today]); \
       today++; \
    }
 
    /* Constants for EMA */
-   fastk = PER_TO_K( optInFastPeriod_0 );
+   fastk = PER_TO_K( optInFastPeriod );
    one_minus_fastk = 1.0 - fastk;
 
-   slowk = PER_TO_K( optInSlowPeriod_1 );
+   slowk = PER_TO_K( optInSlowPeriod );
    one_minus_slowk = 1.0 - slowk;
 
    /* Initialize the two EMA
@@ -287,7 +287,7 @@
       fastEMA = (fastk*ad)+(one_minus_fastk*fastEMA);
       slowEMA = (slowk*ad)+(one_minus_slowk*slowEMA);
 
-      outReal_0[outIdx++] = fastEMA - slowEMA;
+      outReal[outIdx++] = fastEMA - slowEMA;
    }
    *outNbElement = outIdx;
 
@@ -306,27 +306,27 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::ADOSC( int    startIdx,
 /* Generated */                                    int    endIdx,
-/* Generated */                                    float        inHigh_0 __gc [],
-/* Generated */                                    float        inLow_0 __gc [],
-/* Generated */                                    float        inClose_0 __gc [],
-/* Generated */                                    int          inVolume_0 __gc [],
-/* Generated */                                    int           optInFastPeriod_0, /* From 2 to 100000 */
-/* Generated */                                    int           optInSlowPeriod_1, /* From 2 to 100000 */
+/* Generated */                                    float        inHigh __gc [],
+/* Generated */                                    float        inLow __gc [],
+/* Generated */                                    float        inClose __gc [],
+/* Generated */                                    int          inVolume __gc [],
+/* Generated */                                    int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                    int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                                    [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                    [OutAttribute]Int32 *outNbElement,
-/* Generated */                                    double        outReal_0 __gc [] )
+/* Generated */                                    double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ADOSC( int    startIdx,
 /* Generated */                        int    endIdx,
-/* Generated */                        const float  inHigh_0[],
-/* Generated */                        const float  inLow_0[],
-/* Generated */                        const float  inClose_0[],
-/* Generated */                        const int    inVolume_0[],
-/* Generated */                        int           optInFastPeriod_0, /* From 2 to 100000 */
-/* Generated */                        int           optInSlowPeriod_1, /* From 2 to 100000 */
+/* Generated */                        const float  inHigh[],
+/* Generated */                        const float  inLow[],
+/* Generated */                        const float  inClose[],
+/* Generated */                        const int    inVolume[],
+/* Generated */                        int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                        int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                        int          *outBegIdx,
 /* Generated */                        int          *outNbElement,
-/* Generated */                        double        outReal_0[] )
+/* Generated */                        double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int today, outIdx, lookbackTotal;
@@ -340,23 +340,23 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if(!inHigh_0||!inLow_0||!inClose_0||!inVolume_0)
+/* Generated */     if(!inHigh||!inLow||!inClose||!inVolume)
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( (int)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInFastPeriod_0 = 3;
-/* Generated */     else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 100000) )
+/* Generated */     if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInFastPeriod = 3;
+/* Generated */     else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( (int)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
-/* Generated */        optInSlowPeriod_1 = 10;
-/* Generated */     else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 100000) )
+/* Generated */     if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInSlowPeriod = 10;
+/* Generated */     else if( ((int)optInSlowPeriod < 2) || ((int)optInSlowPeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    if( optInFastPeriod_0 < optInSlowPeriod_1 )
-/* Generated */       slowestPeriod = optInSlowPeriod_1;
+/* Generated */    if( optInFastPeriod < optInSlowPeriod )
+/* Generated */       slowestPeriod = optInSlowPeriod;
 /* Generated */    else
-/* Generated */       slowestPeriod = optInFastPeriod_0;
+/* Generated */       slowestPeriod = optInFastPeriod;
 /* Generated */    lookbackTotal = TA_EMA_Lookback( slowestPeriod );
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
@@ -371,17 +371,17 @@
 /* Generated */    ad = 0.0;
 /* Generated */    #define CALCULATE_AD \
 /* Generated */    { \
-/* Generated */       high  = inHigh_0[today]; \
-/* Generated */       low   = inLow_0[today]; \
+/* Generated */       high  = inHigh[today]; \
+/* Generated */       low   = inLow[today]; \
 /* Generated */       tmp   = high-low; \
-/* Generated */       close = inClose_0[today]; \
+/* Generated */       close = inClose[today]; \
 /* Generated */       if( tmp > 0.0 ) \
-/* Generated */          ad += (((close-low)-(high-close))/tmp)*((double)inVolume_0[today]); \
+/* Generated */          ad += (((close-low)-(high-close))/tmp)*((double)inVolume[today]); \
 /* Generated */       today++; \
 /* Generated */    }
-/* Generated */    fastk = PER_TO_K( optInFastPeriod_0 );
+/* Generated */    fastk = PER_TO_K( optInFastPeriod );
 /* Generated */    one_minus_fastk = 1.0 - fastk;
-/* Generated */    slowk = PER_TO_K( optInSlowPeriod_1 );
+/* Generated */    slowk = PER_TO_K( optInSlowPeriod );
 /* Generated */    one_minus_slowk = 1.0 - slowk;
 /* Generated */    CALCULATE_AD;
 /* Generated */    fastEMA = ad;
@@ -398,7 +398,7 @@
 /* Generated */       CALCULATE_AD;
 /* Generated */       fastEMA = (fastk*ad)+(one_minus_fastk*fastEMA);
 /* Generated */       slowEMA = (slowk*ad)+(one_minus_slowk*slowEMA);
-/* Generated */       outReal_0[outIdx++] = fastEMA - slowEMA;
+/* Generated */       outReal[outIdx++] = fastEMA - slowEMA;
 /* Generated */    }
 /* Generated */    *outNbElement = outIdx;
 /* Generated */    return TA_SUCCESS;

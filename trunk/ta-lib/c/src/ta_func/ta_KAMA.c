@@ -75,16 +75,16 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::KAMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
+/* Generated */ int Core::KAMA_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_KAMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
+/* Generated */ int TA_KAMA_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   return optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_KAMA];
+   return optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_KAMA];
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -96,7 +96,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to 100000)
+ * optInTimePeriod:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -105,19 +105,19 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::KAMA( int    startIdx,
 /* Generated */                                   int    endIdx,
-/* Generated */                                   double       inReal_0 __gc [],
-/* Generated */                                   int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                                   double       inReal __gc [],
+/* Generated */                                   int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                   [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double        outReal_0 __gc [] )
+/* Generated */                                   double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_KAMA( int    startIdx,
 /* Generated */                     int    endIdx,
-/* Generated */                     const double inReal_0[],
-/* Generated */                     int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                     const double inReal[],
+/* Generated */                     int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                     int          *outBegIdx,
 /* Generated */                     int          *outNbElement,
-/* Generated */                     double        outReal_0[] )
+/* Generated */                     double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -143,14 +143,14 @@
 /* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */    /* min/max are checked for optInTimePeriod_0. */
-/* Generated */    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod_0 = 30;
-/* Generated */    else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 30;
+/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -166,7 +166,7 @@
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_KAMA];
+   lookbackTotal = optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_KAMA];
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -188,30 +188,30 @@
    sumROC1 = 0.0;
    today = startIdx-lookbackTotal;   
    trailingIdx = today;
-   i = optInTimePeriod_0;
+   i = optInTimePeriod;
    while( i-- > 0 )
    {      
-      tempReal  = inReal_0[today++];
-      tempReal -= inReal_0[today];
+      tempReal  = inReal[today++];
+      tempReal -= inReal[today];
       sumROC1  += fabs(tempReal);
    }
 
    /* At this point sumROC1 represent the 
     * summation of the 1-day price difference
-    * over the (optInTimePeriod_0-1)
+    * over the (optInTimePeriod-1)
     */
 
    /* Calculate the first KAMA */
 
    /* The yesterday price is used here as the previous KAMA. */
-   prevKAMA = inReal_0[today-1];
+   prevKAMA = inReal[today-1];
 
-   tempReal  = inReal_0[today];
-   tempReal2 = inReal_0[trailingIdx++];
+   tempReal  = inReal[today];
+   tempReal2 = inReal[trailingIdx++];
    periodROC = tempReal-tempReal2;
 
-   /* Save the trailing value. Do this because inReal_0
-    * and outReal_0 can be pointers to the same buffer. 
+   /* Save the trailing value. Do this because inReal
+    * and outReal can be pointers to the same buffer. 
     */
    trailingValue = tempReal2;
 
@@ -225,7 +225,7 @@
    /* Calculate the KAMA like an EMA, using the
     * smoothing constant as the adaptive factor.
     */
-   prevKAMA = ((inReal_0[today++]-prevKAMA)*tempReal) + prevKAMA;
+   prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
 
    /* 'today' keep track of where the processing is within the
     * input.
@@ -236,8 +236,8 @@
     */   
    while( today <= startIdx )
    {
-      tempReal  = inReal_0[today];
-      tempReal2 = inReal_0[trailingIdx++];
+      tempReal  = inReal[today];
+      tempReal2 = inReal[trailingIdx++];
       periodROC = tempReal-tempReal2;
 
       /* Adjust sumROC1:
@@ -245,10 +245,10 @@
        *  - Add new ROC1
        */
       sumROC1 -= fabs(trailingValue-tempReal2);
-      sumROC1 += fabs(tempReal-inReal_0[today-1]);
+      sumROC1 += fabs(tempReal-inReal[today-1]);
 
-      /* Save the trailing value. Do this because inReal_0
-       * and outReal_0 can be pointers to the same buffer. 
+      /* Save the trailing value. Do this because inReal
+       * and outReal can be pointers to the same buffer. 
        */
       trailingValue = tempReal2;
 
@@ -262,19 +262,19 @@
       /* Calculate the KAMA like an EMA, using the
        * smoothing constant as the adaptive factor.
        */
-      prevKAMA = ((inReal_0[today++]-prevKAMA)*tempReal) + prevKAMA;
+      prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
    }
 
    /* Write the first value. */
-   outReal_0[0] = prevKAMA;
+   outReal[0] = prevKAMA;
    outIdx = 1;
    *outBegIdx = today-1;
 
    /* Do the KAMA calculation for the requested range. */
    while( today <= endIdx )
    {
-      tempReal  = inReal_0[today];
-      tempReal2 = inReal_0[trailingIdx++];
+      tempReal  = inReal[today];
+      tempReal2 = inReal[trailingIdx++];
       periodROC = tempReal-tempReal2;
 
       /* Adjust sumROC1:
@@ -282,10 +282,10 @@
        *  - Add new ROC1
        */
       sumROC1 -= fabs(trailingValue-tempReal2);
-      sumROC1 += fabs(tempReal-inReal_0[today-1]);
+      sumROC1 += fabs(tempReal-inReal[today-1]);
 
-      /* Save the trailing value. Do this because inReal_0
-       * and outReal_0 can be pointers to the same buffer. 
+      /* Save the trailing value. Do this because inReal
+       * and outReal can be pointers to the same buffer. 
        */
       trailingValue = tempReal2;
 
@@ -299,8 +299,8 @@
       /* Calculate the KAMA like an EMA, using the
        * smoothing constant as the adaptive factor.
        */
-      prevKAMA = ((inReal_0[today++]-prevKAMA)*tempReal) + prevKAMA;
-      outReal_0[outIdx++] = prevKAMA;
+      prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
+      outReal[outIdx++] = prevKAMA;
    }
 
    *outNbElement = outIdx;
@@ -320,19 +320,19 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::KAMA( int    startIdx,
 /* Generated */                                   int    endIdx,
-/* Generated */                                   float        inReal_0 __gc [],
-/* Generated */                                   int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                                   float        inReal __gc [],
+/* Generated */                                   int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                   [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double        outReal_0 __gc [] )
+/* Generated */                                   double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_KAMA( int    startIdx,
 /* Generated */                       int    endIdx,
-/* Generated */                       const float  inReal_0[],
-/* Generated */                       int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                       const float  inReal[],
+/* Generated */                       int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                       int          *outBegIdx,
 /* Generated */                       int          *outNbElement,
-/* Generated */                       double        outReal_0[] )
+/* Generated */                       double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    const double constMax  = 2.0/(30.0+1.0);
@@ -347,17 +347,17 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */     if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInTimePeriod_0 = 30;
-/* Generated */     else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 30;
+/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    *outBegIdx    = 0;
 /* Generated */    *outNbElement = 0;
-/* Generated */    lookbackTotal = optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_KAMA];
+/* Generated */    lookbackTotal = optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_KAMA];
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
@@ -369,51 +369,51 @@
 /* Generated */    sumROC1 = 0.0;
 /* Generated */    today = startIdx-lookbackTotal;   
 /* Generated */    trailingIdx = today;
-/* Generated */    i = optInTimePeriod_0;
+/* Generated */    i = optInTimePeriod;
 /* Generated */    while( i-- > 0 )
 /* Generated */    {      
-/* Generated */       tempReal  = inReal_0[today++];
-/* Generated */       tempReal -= inReal_0[today];
+/* Generated */       tempReal  = inReal[today++];
+/* Generated */       tempReal -= inReal[today];
 /* Generated */       sumROC1  += fabs(tempReal);
 /* Generated */    }
-/* Generated */    prevKAMA = inReal_0[today-1];
-/* Generated */    tempReal  = inReal_0[today];
-/* Generated */    tempReal2 = inReal_0[trailingIdx++];
+/* Generated */    prevKAMA = inReal[today-1];
+/* Generated */    tempReal  = inReal[today];
+/* Generated */    tempReal2 = inReal[trailingIdx++];
 /* Generated */    periodROC = tempReal-tempReal2;
 /* Generated */    trailingValue = tempReal2;
 /* Generated */    tempReal = fabs(periodROC/sumROC1);
 /* Generated */    tempReal  = (tempReal*constDiff)+constMax;
 /* Generated */    tempReal *= tempReal;
-/* Generated */    prevKAMA = ((inReal_0[today++]-prevKAMA)*tempReal) + prevKAMA;
+/* Generated */    prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
 /* Generated */    while( today <= startIdx )
 /* Generated */    {
-/* Generated */       tempReal  = inReal_0[today];
-/* Generated */       tempReal2 = inReal_0[trailingIdx++];
+/* Generated */       tempReal  = inReal[today];
+/* Generated */       tempReal2 = inReal[trailingIdx++];
 /* Generated */       periodROC = tempReal-tempReal2;
 /* Generated */       sumROC1 -= fabs(trailingValue-tempReal2);
-/* Generated */       sumROC1 += fabs(tempReal-inReal_0[today-1]);
+/* Generated */       sumROC1 += fabs(tempReal-inReal[today-1]);
 /* Generated */       trailingValue = tempReal2;
 /* Generated */       tempReal = fabs(periodROC/sumROC1);
 /* Generated */       tempReal  = (tempReal*constDiff)+constMax;
 /* Generated */       tempReal *= tempReal;
-/* Generated */       prevKAMA = ((inReal_0[today++]-prevKAMA)*tempReal) + prevKAMA;
+/* Generated */       prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
 /* Generated */    }
-/* Generated */    outReal_0[0] = prevKAMA;
+/* Generated */    outReal[0] = prevKAMA;
 /* Generated */    outIdx = 1;
 /* Generated */    *outBegIdx = today-1;
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
-/* Generated */       tempReal  = inReal_0[today];
-/* Generated */       tempReal2 = inReal_0[trailingIdx++];
+/* Generated */       tempReal  = inReal[today];
+/* Generated */       tempReal2 = inReal[trailingIdx++];
 /* Generated */       periodROC = tempReal-tempReal2;
 /* Generated */       sumROC1 -= fabs(trailingValue-tempReal2);
-/* Generated */       sumROC1 += fabs(tempReal-inReal_0[today-1]);
+/* Generated */       sumROC1 += fabs(tempReal-inReal[today-1]);
 /* Generated */       trailingValue = tempReal2;
 /* Generated */       tempReal = fabs(periodROC / sumROC1);
 /* Generated */       tempReal  = (tempReal*constDiff)+constMax;
 /* Generated */       tempReal *= tempReal;
-/* Generated */       prevKAMA = ((inReal_0[today++]-prevKAMA)*tempReal) + prevKAMA;
-/* Generated */       outReal_0[outIdx++] = prevKAMA;
+/* Generated */       prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
+/* Generated */       outReal[outIdx++] = prevKAMA;
 /* Generated */    }
 /* Generated */    *outNbElement = outIdx;
 /* Generated */    return TA_SUCCESS;

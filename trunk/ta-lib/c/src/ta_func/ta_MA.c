@@ -76,45 +76,45 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::MA_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
-/* Generated */                      TA_MAType     optInMAType_1 ) /* Generated */ 
+/* Generated */ int Core::MA_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                      TA_MAType     optInMAType ) /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_MA_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
-/* Generated */                   TA_MAType     optInMAType_1 ) /* Generated */ 
+/* Generated */ int TA_MA_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                   TA_MAType     optInMAType ) /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
    int retValue;
 
-   switch( optInMAType_1 )
+   switch( optInMAType )
    {
    case TA_MAType_SMA:
-      retValue = TA_SMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_SMA_Lookback( optInTimePeriod );
       break;
 
    case TA_MAType_EMA:
-      retValue = TA_EMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_EMA_Lookback( optInTimePeriod );
       break;
 
    case TA_MAType_WMA:
-      retValue = TA_WMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_WMA_Lookback( optInTimePeriod );
       break;
 
    case TA_MAType_DEMA:
-      retValue = TA_DEMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_DEMA_Lookback( optInTimePeriod );
       break;
 
    case TA_MAType_TEMA:
-      retValue = TA_TEMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_TEMA_Lookback( optInTimePeriod );
       break;
 
    case TA_MAType_TRIMA:
-      retValue = TA_TRIMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_TRIMA_Lookback( optInTimePeriod );
       break;
 
    case TA_MAType_KAMA:
-      retValue = TA_KAMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_KAMA_Lookback( optInTimePeriod );
       break;
 
    case TA_MAType_MAMA:
@@ -122,7 +122,7 @@
       break;
 
    case TA_MAType_T3:
-      retValue = TA_T3_Lookback( optInTimePeriod_0, 0.7 );
+      retValue = TA_T3_Lookback( optInTimePeriod, 0.7 );
       break;
 
    default:
@@ -141,10 +141,10 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to 100000)
+ * optInTimePeriod:(From 2 to 100000)
  *    Number of period
  * 
- * optInMAType_1:
+ * optInMAType:
  *    Type of Moving Average
  * 
  * 
@@ -153,21 +153,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::MA( int    startIdx,
 /* Generated */                                 int    endIdx,
-/* Generated */                                 double       inReal_0 __gc [],
-/* Generated */                                 int           optInTimePeriod_0, /* From 2 to 100000 */
-/* Generated */                                 TA_MAType     optInMAType_1,
+/* Generated */                                 double       inReal __gc [],
+/* Generated */                                 int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                 TA_MAType     optInMAType,
 /* Generated */                                 [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                 [OutAttribute]Int32 *outNbElement,
-/* Generated */                                 double        outReal_0 __gc [] )
+/* Generated */                                 double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MA( int    startIdx,
 /* Generated */                   int    endIdx,
-/* Generated */                   const double inReal_0[],
-/* Generated */                   int           optInTimePeriod_0, /* From 2 to 100000 */
-/* Generated */                   TA_MAType     optInMAType_1,
+/* Generated */                   const double inReal[],
+/* Generated */                   int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                   TA_MAType     optInMAType,
 /* Generated */                   int          *outBegIdx,
 /* Generated */                   int          *outNbElement,
-/* Generated */                   double        outReal_0[] )
+/* Generated */                   double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -186,21 +186,21 @@
 /* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */    /* min/max are checked for optInTimePeriod_0. */
-/* Generated */    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod_0 = 30;
-/* Generated */    else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 30;
+/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED)
-/* Generated */    if( (int)optInMAType_1 == TA_INTEGER_DEFAULT )
-/* Generated */       optInMAType_1 = 0;
-/* Generated */    else if( ((int)optInMAType_1 < 0) || ((int)optInMAType_1 > 8) )
+/* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
+/* Generated */       optInMAType = 0;
+/* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) */
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -210,63 +210,63 @@
    /* Simply call the internal implementation of the
     * requested moving average.
     */
-   switch( optInMAType_1 )
+   switch( optInMAType )
    {
    case TA_MAType_SMA:
-      retCode = TA_PREFIX(INT_SMA)( startIdx, endIdx, inReal_0, optInTimePeriod_0,
-                                  outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_PREFIX(INT_SMA)( startIdx, endIdx, inReal, optInTimePeriod,
+                                  outBegIdx, outNbElement, outReal );
       break;
 
    case TA_MAType_EMA:
-      retCode = TA_PREFIX(INT_EMA)( startIdx, endIdx, inReal_0,
-                                  optInTimePeriod_0, PER_TO_K(optInTimePeriod_0),
-                                  outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_PREFIX(INT_EMA)( startIdx, endIdx, inReal,
+                                  optInTimePeriod, PER_TO_K(optInTimePeriod),
+                                  outBegIdx, outNbElement, outReal );
       break;
 
    case TA_MAType_WMA:
-      retCode = TA_PREFIX(WMA)( startIdx, endIdx, inReal_0, optInTimePeriod_0,
-                              outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_PREFIX(WMA)( startIdx, endIdx, inReal, optInTimePeriod,
+                              outBegIdx, outNbElement, outReal );
       break;
 
    case TA_MAType_DEMA:
-      retCode = TA_PREFIX(DEMA)( startIdx, endIdx, inReal_0, optInTimePeriod_0,
-                               outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_PREFIX(DEMA)( startIdx, endIdx, inReal, optInTimePeriod,
+                               outBegIdx, outNbElement, outReal );
       break;
 
    case TA_MAType_TEMA:
-      retCode = TA_PREFIX(TEMA)( startIdx, endIdx, inReal_0, optInTimePeriod_0,
-                               outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_PREFIX(TEMA)( startIdx, endIdx, inReal, optInTimePeriod,
+                               outBegIdx, outNbElement, outReal );
       break;
 
    case TA_MAType_TRIMA:
-      retCode = TA_PREFIX(TRIMA)( startIdx, endIdx, inReal_0, optInTimePeriod_0,
-                                outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_PREFIX(TRIMA)( startIdx, endIdx, inReal, optInTimePeriod,
+                                outBegIdx, outNbElement, outReal );
       break;
 
    case TA_MAType_KAMA:
-      retCode = TA_PREFIX(KAMA)( startIdx, endIdx, inReal_0, optInTimePeriod_0,
-                               outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_PREFIX(KAMA)( startIdx, endIdx, inReal, optInTimePeriod,
+                               outBegIdx, outNbElement, outReal );
       break;
 
    case TA_MAType_MAMA:
-      /* The optInTimePeriod_0 is ignored and the FAMA output of the MAMA
+      /* The optInTimePeriod is ignored and the FAMA output of the MAMA
        * is ignored.
        */
       ARRAY_ALLOC(dummyBuffer, (endIdx-startIdx+1) );
       if( !dummyBuffer )
          return TA_ALLOC_ERR;
 
-      retCode = TA_PREFIX(MAMA)( startIdx, endIdx, inReal_0, 0.5, 0.05,                           
+      retCode = TA_PREFIX(MAMA)( startIdx, endIdx, inReal, 0.5, 0.05,                           
                                outBegIdx, outNbElement,
-                               outReal_0, dummyBuffer );
+                               outReal, dummyBuffer );
                          
       ARRAY_FREE( dummyBuffer );
       break;
 
    case TA_MAType_T3:
-      retCode = TA_PREFIX(T3)( startIdx, endIdx, inReal_0,
-                             optInTimePeriod_0, 0.7,
-                             outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_PREFIX(T3)( startIdx, endIdx, inReal,
+                             optInTimePeriod, 0.7,
+                             outBegIdx, outNbElement, outReal );
       break;
 
    default:
@@ -289,21 +289,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::MA( int    startIdx,
 /* Generated */                                 int    endIdx,
-/* Generated */                                 float        inReal_0 __gc [],
-/* Generated */                                 int           optInTimePeriod_0, /* From 2 to 100000 */
-/* Generated */                                 TA_MAType     optInMAType_1,
+/* Generated */                                 float        inReal __gc [],
+/* Generated */                                 int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                 TA_MAType     optInMAType,
 /* Generated */                                 [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                 [OutAttribute]Int32 *outNbElement,
-/* Generated */                                 double        outReal_0 __gc [] )
+/* Generated */                                 double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MA( int    startIdx,
 /* Generated */                     int    endIdx,
-/* Generated */                     const float  inReal_0[],
-/* Generated */                     int           optInTimePeriod_0, /* From 2 to 100000 */
-/* Generated */                     TA_MAType     optInMAType_1,
+/* Generated */                     const float  inReal[],
+/* Generated */                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                     TA_MAType     optInMAType,
 /* Generated */                     int          *outBegIdx,
 /* Generated */                     int          *outNbElement,
-/* Generated */                     double        outReal_0[] )
+/* Generated */                     double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    ARRAY_REF(dummyBuffer);
@@ -313,64 +313,64 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */     if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInTimePeriod_0 = 30;
-/* Generated */     else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 30;
+/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     #if !defined(_MANAGED)
-/* Generated */     if( (int)optInMAType_1 == TA_INTEGER_DEFAULT )
-/* Generated */        optInMAType_1 = 0;
-/* Generated */     else if( ((int)optInMAType_1 < 0) || ((int)optInMAType_1 > 8) )
+/* Generated */     if( (int)optInMAType == TA_INTEGER_DEFAULT )
+/* Generated */        optInMAType = 0;
+/* Generated */     else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     #endif 
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    switch( optInMAType_1 )
+/* Generated */    switch( optInMAType )
 /* Generated */    {
 /* Generated */    case TA_MAType_SMA:
-/* Generated */       retCode = TA_PREFIX(INT_SMA)( startIdx, endIdx, inReal_0, optInTimePeriod_0,
-/* Generated */                                   outBegIdx, outNbElement, outReal_0 );
+/* Generated */       retCode = TA_PREFIX(INT_SMA)( startIdx, endIdx, inReal, optInTimePeriod,
+/* Generated */                                   outBegIdx, outNbElement, outReal );
 /* Generated */       break;
 /* Generated */    case TA_MAType_EMA:
-/* Generated */       retCode = TA_PREFIX(INT_EMA)( startIdx, endIdx, inReal_0,
-/* Generated */                                   optInTimePeriod_0, PER_TO_K(optInTimePeriod_0),
-/* Generated */                                   outBegIdx, outNbElement, outReal_0 );
+/* Generated */       retCode = TA_PREFIX(INT_EMA)( startIdx, endIdx, inReal,
+/* Generated */                                   optInTimePeriod, PER_TO_K(optInTimePeriod),
+/* Generated */                                   outBegIdx, outNbElement, outReal );
 /* Generated */       break;
 /* Generated */    case TA_MAType_WMA:
-/* Generated */       retCode = TA_PREFIX(WMA)( startIdx, endIdx, inReal_0, optInTimePeriod_0,
-/* Generated */                               outBegIdx, outNbElement, outReal_0 );
+/* Generated */       retCode = TA_PREFIX(WMA)( startIdx, endIdx, inReal, optInTimePeriod,
+/* Generated */                               outBegIdx, outNbElement, outReal );
 /* Generated */       break;
 /* Generated */    case TA_MAType_DEMA:
-/* Generated */       retCode = TA_PREFIX(DEMA)( startIdx, endIdx, inReal_0, optInTimePeriod_0,
-/* Generated */                                outBegIdx, outNbElement, outReal_0 );
+/* Generated */       retCode = TA_PREFIX(DEMA)( startIdx, endIdx, inReal, optInTimePeriod,
+/* Generated */                                outBegIdx, outNbElement, outReal );
 /* Generated */       break;
 /* Generated */    case TA_MAType_TEMA:
-/* Generated */       retCode = TA_PREFIX(TEMA)( startIdx, endIdx, inReal_0, optInTimePeriod_0,
-/* Generated */                                outBegIdx, outNbElement, outReal_0 );
+/* Generated */       retCode = TA_PREFIX(TEMA)( startIdx, endIdx, inReal, optInTimePeriod,
+/* Generated */                                outBegIdx, outNbElement, outReal );
 /* Generated */       break;
 /* Generated */    case TA_MAType_TRIMA:
-/* Generated */       retCode = TA_PREFIX(TRIMA)( startIdx, endIdx, inReal_0, optInTimePeriod_0,
-/* Generated */                                 outBegIdx, outNbElement, outReal_0 );
+/* Generated */       retCode = TA_PREFIX(TRIMA)( startIdx, endIdx, inReal, optInTimePeriod,
+/* Generated */                                 outBegIdx, outNbElement, outReal );
 /* Generated */       break;
 /* Generated */    case TA_MAType_KAMA:
-/* Generated */       retCode = TA_PREFIX(KAMA)( startIdx, endIdx, inReal_0, optInTimePeriod_0,
-/* Generated */                                outBegIdx, outNbElement, outReal_0 );
+/* Generated */       retCode = TA_PREFIX(KAMA)( startIdx, endIdx, inReal, optInTimePeriod,
+/* Generated */                                outBegIdx, outNbElement, outReal );
 /* Generated */       break;
 /* Generated */    case TA_MAType_MAMA:
 /* Generated */       ARRAY_ALLOC(dummyBuffer, (endIdx-startIdx+1) );
 /* Generated */       if( !dummyBuffer )
 /* Generated */          return TA_ALLOC_ERR;
-/* Generated */       retCode = TA_PREFIX(MAMA)( startIdx, endIdx, inReal_0, 0.5, 0.05,                           
+/* Generated */       retCode = TA_PREFIX(MAMA)( startIdx, endIdx, inReal, 0.5, 0.05,                           
 /* Generated */                                outBegIdx, outNbElement,
-/* Generated */                                outReal_0, dummyBuffer );
+/* Generated */                                outReal, dummyBuffer );
 /* Generated */       ARRAY_FREE( dummyBuffer );
 /* Generated */       break;
 /* Generated */    case TA_MAType_T3:
-/* Generated */       retCode = TA_PREFIX(T3)( startIdx, endIdx, inReal_0,
-/* Generated */                              optInTimePeriod_0, 0.7,
-/* Generated */                              outBegIdx, outNbElement, outReal_0 );
+/* Generated */       retCode = TA_PREFIX(T3)( startIdx, endIdx, inReal,
+/* Generated */                              optInTimePeriod, 0.7,
+/* Generated */                              outBegIdx, outNbElement, outReal );
 /* Generated */       break;
 /* Generated */    default:
 /* Generated */       retCode = TA_BAD_PARAM;

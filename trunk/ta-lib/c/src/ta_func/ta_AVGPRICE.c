@@ -101,23 +101,23 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::AVGPRICE( int    startIdx,
 /* Generated */                                       int    endIdx,
-/* Generated */                                       double       inOpen_0 __gc [],
-/* Generated */                                       double       inHigh_0 __gc [],
-/* Generated */                                       double       inLow_0 __gc [],
-/* Generated */                                       double       inClose_0 __gc [],
+/* Generated */                                       double       inOpen __gc [],
+/* Generated */                                       double       inHigh __gc [],
+/* Generated */                                       double       inLow __gc [],
+/* Generated */                                       double       inClose __gc [],
 /* Generated */                                       [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                       [OutAttribute]Int32 *outNbElement,
-/* Generated */                                       double        outReal_0 __gc [] )
+/* Generated */                                       double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_AVGPRICE( int    startIdx,
 /* Generated */                         int    endIdx,
-/* Generated */                         const double inOpen_0[],
-/* Generated */                         const double inHigh_0[],
-/* Generated */                         const double inLow_0[],
-/* Generated */                         const double inClose_0[],
+/* Generated */                         const double inOpen[],
+/* Generated */                         const double inHigh[],
+/* Generated */                         const double inLow[],
+/* Generated */                         const double inClose[],
 /* Generated */                         int          *outBegIdx,
 /* Generated */                         int          *outNbElement,
-/* Generated */                         double        outReal_0[] )
+/* Generated */                         double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -136,10 +136,10 @@
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
-/* Generated */    if(!inOpen_0||!inHigh_0||!inLow_0||!inClose_0)
+/* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -154,10 +154,10 @@
 
    for( i=startIdx; i <= endIdx; i++ )
    {
-      outReal_0[outIdx++] = ( inHigh_0 [i] +
-                              inLow_0  [i] +
-                              inClose_0[i] +
-                              inOpen_0 [i]) / 4;
+      outReal[outIdx++] = ( inHigh [i] +
+                              inLow  [i] +
+                              inClose[i] +
+                              inOpen [i]) / 4;
    }
 
    *outNbElement = outIdx;
@@ -178,23 +178,23 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::AVGPRICE( int    startIdx,
 /* Generated */                                       int    endIdx,
-/* Generated */                                       float        inOpen_0 __gc [],
-/* Generated */                                       float        inHigh_0 __gc [],
-/* Generated */                                       float        inLow_0 __gc [],
-/* Generated */                                       float        inClose_0 __gc [],
+/* Generated */                                       float        inOpen __gc [],
+/* Generated */                                       float        inHigh __gc [],
+/* Generated */                                       float        inLow __gc [],
+/* Generated */                                       float        inClose __gc [],
 /* Generated */                                       [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                       [OutAttribute]Int32 *outNbElement,
-/* Generated */                                       double        outReal_0 __gc [] )
+/* Generated */                                       double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_AVGPRICE( int    startIdx,
 /* Generated */                           int    endIdx,
-/* Generated */                           const float  inOpen_0[],
-/* Generated */                           const float  inHigh_0[],
-/* Generated */                           const float  inLow_0[],
-/* Generated */                           const float  inClose_0[],
+/* Generated */                           const float  inOpen[],
+/* Generated */                           const float  inHigh[],
+/* Generated */                           const float  inLow[],
+/* Generated */                           const float  inClose[],
 /* Generated */                           int          *outBegIdx,
 /* Generated */                           int          *outNbElement,
-/* Generated */                           double        outReal_0[] )
+/* Generated */                           double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int outIdx, i;
@@ -203,18 +203,18 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if(!inOpen_0||!inHigh_0||!inLow_0||!inClose_0)
+/* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    outIdx = 0;
 /* Generated */    for( i=startIdx; i <= endIdx; i++ )
 /* Generated */    {
-/* Generated */       outReal_0[outIdx++] = ( inHigh_0 [i] +
-/* Generated */                               inLow_0  [i] +
-/* Generated */                               inClose_0[i] +
-/* Generated */                               inOpen_0 [i]) / 4;
+/* Generated */       outReal[outIdx++] = ( inHigh [i] +
+/* Generated */                               inLow  [i] +
+/* Generated */                               inClose[i] +
+/* Generated */                               inOpen [i]) / 4;
 /* Generated */    }
 /* Generated */    *outNbElement = outIdx;
 /* Generated */    *outBegIdx    = 0;

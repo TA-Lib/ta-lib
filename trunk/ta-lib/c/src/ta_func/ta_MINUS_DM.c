@@ -75,17 +75,17 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::MINUS_DM_Lookback( int           optInTimePeriod_0 )  /* From 1 to 100000 */
+/* Generated */ int Core::MINUS_DM_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_MINUS_DM_Lookback( int           optInTimePeriod_0 )  /* From 1 to 100000 */
+/* Generated */ int TA_MINUS_DM_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   if( optInTimePeriod_0 > 1 )
-      return optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_MINUS_DM] - 1;
+   if( optInTimePeriod > 1 )
+      return optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_MINUS_DM] - 1;
    else
       return 1;
 }
@@ -99,7 +99,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to 100000)
+ * optInTimePeriod:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -108,21 +108,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::MINUS_DM( int    startIdx,
 /* Generated */                                       int    endIdx,
-/* Generated */                                       double       inHigh_0 __gc [],
-/* Generated */                                       double       inLow_0 __gc [],
-/* Generated */                                       int           optInTimePeriod_0, /* From 1 to 100000 */
+/* Generated */                                       double       inHigh __gc [],
+/* Generated */                                       double       inLow __gc [],
+/* Generated */                                       int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                       [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                       [OutAttribute]Int32 *outNbElement,
-/* Generated */                                       double        outReal_0 __gc [] )
+/* Generated */                                       double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MINUS_DM( int    startIdx,
 /* Generated */                         int    endIdx,
-/* Generated */                         const double inHigh_0[],
-/* Generated */                         const double inLow_0[],
-/* Generated */                         int           optInTimePeriod_0, /* From 1 to 100000 */
+/* Generated */                         const double inHigh[],
+/* Generated */                         const double inLow[],
+/* Generated */                         int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                         int          *outBegIdx,
 /* Generated */                         int          *outNbElement,
-/* Generated */                         double        outReal_0[] )
+/* Generated */                         double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -145,16 +145,16 @@
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
-/* Generated */    if(!inHigh_0||!inLow_0)
+/* Generated */    if(!inHigh||!inLow)
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    /* min/max are checked for optInTimePeriod_0. */
-/* Generated */    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod_0 = 14;
-/* Generated */    else if( ((int)optInTimePeriod_0 < 1) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 14;
+/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -229,8 +229,8 @@
     *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
     */
 
-   if( optInTimePeriod_0 > 1 )
-      lookbackTotal = optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_MINUS_DM] - 1;
+   if( optInTimePeriod > 1 )
+      lookbackTotal = optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_MINUS_DM] - 1;
    else
       lookbackTotal = 1;
 
@@ -247,36 +247,36 @@
    }
 
    /* Indicate where the next output should be put
-    * in the outReal_0.
+    * in the outReal.
     */
    outIdx = 0;
 
    /* Trap the case where no smoothing is needed. */
-   if( optInTimePeriod_0 <= 1 )
+   if( optInTimePeriod <= 1 )
    {
       /* No smoothing needed. Just do a simple DM1
        * for each price bar.
        */
       *outBegIdx = startIdx;
       today = startIdx-1;
-      prevHigh = inHigh_0[today];
-      prevLow  = inLow_0[today];
+      prevHigh = inHigh[today];
+      prevLow  = inLow[today];
       while( today < endIdx )
       {      
          today++;
-         tempReal = inHigh_0[today];
+         tempReal = inHigh[today];
          diffP    = tempReal-prevHigh; /* Plus Delta */
          prevHigh = tempReal;
-         tempReal = inLow_0[today];
+         tempReal = inLow[today];
          diffM    = prevLow-tempReal;   /* Minus Delta */
          prevLow  = tempReal;
          if( (diffM > 0) && (diffP < diffM) )
          {
             /* Case 2 and 4: +DM=0,-DM=diffM */
-            outReal_0[outIdx++] = diffM;
+            outReal[outIdx++] = diffM;
          }
          else
-            outReal_0[outIdx++] = 0;
+            outReal[outIdx++] = 0;
       }
 
       *outNbElement = outIdx;
@@ -288,16 +288,16 @@
 
    prevMinusDM = 0.0;
    today       = startIdx - lookbackTotal;
-   prevHigh    = inHigh_0[today];
-   prevLow     = inLow_0[today];
-   i           = optInTimePeriod_0-1;
+   prevHigh    = inHigh[today];
+   prevLow     = inLow[today];
+   i           = optInTimePeriod-1;
    while( i-- > 0 )
    {
       today++;
-      tempReal = inHigh_0[today];
+      tempReal = inHigh[today];
       diffP    = tempReal-prevHigh; /* Plus Delta */
       prevHigh = tempReal;
-      tempReal = inLow_0[today];
+      tempReal = inLow[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
 
@@ -315,52 +315,52 @@
    while( i-- != 0 )
    {
       today++;
-      tempReal = inHigh_0[today];
+      tempReal = inHigh[today];
       diffP    = tempReal-prevHigh; /* Plus Delta */
       prevHigh = tempReal;
-      tempReal = inLow_0[today];
+      tempReal = inLow[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
       if( (diffM > 0) && (diffP < diffM) )
       {
          /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0) + diffM;
+         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod) + diffM;
       }
       else
       {
          /* Case 1,3,5 and 7 */
-         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0);
+         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod);
       }
    }
 
    /* Now start to write the output in
-    * the caller provided outReal_0.
+    * the caller provided outReal.
     */
-   outReal_0[0] = prevMinusDM;
+   outReal[0] = prevMinusDM;
    outIdx = 1;
 
    while( today < endIdx )
    {
       today++;
-      tempReal = inHigh_0[today];
+      tempReal = inHigh[today];
       diffP    = tempReal-prevHigh; /* Plus Delta */
       prevHigh = tempReal;
-      tempReal = inLow_0[today];
+      tempReal = inLow[today];
       diffM    = prevLow-tempReal;  /* Minus Delta */
       prevLow  = tempReal;
 
       if( (diffM > 0) && (diffP < diffM) )
       {
          /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0) + diffM;
+         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod) + diffM;
       }
       else
       {
          /* Case 1,3,5 and 7 */
-         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0);
+         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod);
       }
 
-      outReal_0[outIdx++] = prevMinusDM;
+      outReal[outIdx++] = prevMinusDM;
    }
 
    *outNbElement = outIdx;
@@ -380,21 +380,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::MINUS_DM( int    startIdx,
 /* Generated */                                       int    endIdx,
-/* Generated */                                       float        inHigh_0 __gc [],
-/* Generated */                                       float        inLow_0 __gc [],
-/* Generated */                                       int           optInTimePeriod_0, /* From 1 to 100000 */
+/* Generated */                                       float        inHigh __gc [],
+/* Generated */                                       float        inLow __gc [],
+/* Generated */                                       int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                       [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                       [OutAttribute]Int32 *outNbElement,
-/* Generated */                                       double        outReal_0 __gc [] )
+/* Generated */                                       double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MINUS_DM( int    startIdx,
 /* Generated */                           int    endIdx,
-/* Generated */                           const float  inHigh_0[],
-/* Generated */                           const float  inLow_0[],
-/* Generated */                           int           optInTimePeriod_0, /* From 1 to 100000 */
+/* Generated */                           const float  inHigh[],
+/* Generated */                           const float  inLow[],
+/* Generated */                           int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                           int          *outBegIdx,
 /* Generated */                           int          *outNbElement,
-/* Generated */                           double        outReal_0[] )
+/* Generated */                           double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int today, lookbackTotal, outIdx;
@@ -407,17 +407,17 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if(!inHigh_0||!inLow_0)
+/* Generated */     if(!inHigh||!inLow)
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInTimePeriod_0 = 14;
-/* Generated */     else if( ((int)optInTimePeriod_0 < 1) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 14;
+/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    if( optInTimePeriod_0 > 1 )
-/* Generated */       lookbackTotal = optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_MINUS_DM] - 1;
+/* Generated */    if( optInTimePeriod > 1 )
+/* Generated */       lookbackTotal = optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_MINUS_DM] - 1;
 /* Generated */    else
 /* Generated */       lookbackTotal = 1;
 /* Generated */    if( startIdx < lookbackTotal )
@@ -429,27 +429,27 @@
 /* Generated */       return TA_SUCCESS;
 /* Generated */    }
 /* Generated */    outIdx = 0;
-/* Generated */    if( optInTimePeriod_0 <= 1 )
+/* Generated */    if( optInTimePeriod <= 1 )
 /* Generated */    {
 /* Generated */       *outBegIdx = startIdx;
 /* Generated */       today = startIdx-1;
-/* Generated */       prevHigh = inHigh_0[today];
-/* Generated */       prevLow  = inLow_0[today];
+/* Generated */       prevHigh = inHigh[today];
+/* Generated */       prevLow  = inLow[today];
 /* Generated */       while( today < endIdx )
 /* Generated */       {      
 /* Generated */          today++;
-/* Generated */          tempReal = inHigh_0[today];
+/* Generated */          tempReal = inHigh[today];
 /* Generated */          diffP    = tempReal-prevHigh; 
 /* Generated */          prevHigh = tempReal;
-/* Generated */          tempReal = inLow_0[today];
+/* Generated */          tempReal = inLow[today];
 /* Generated */          diffM    = prevLow-tempReal;   
 /* Generated */          prevLow  = tempReal;
 /* Generated */          if( (diffM > 0) && (diffP < diffM) )
 /* Generated */          {
-/* Generated */             outReal_0[outIdx++] = diffM;
+/* Generated */             outReal[outIdx++] = diffM;
 /* Generated */          }
 /* Generated */          else
-/* Generated */             outReal_0[outIdx++] = 0;
+/* Generated */             outReal[outIdx++] = 0;
 /* Generated */       }
 /* Generated */       *outNbElement = outIdx;
 /* Generated */       return TA_SUCCESS;
@@ -457,16 +457,16 @@
 /* Generated */    *outBegIdx = startIdx;
 /* Generated */    prevMinusDM = 0.0;
 /* Generated */    today       = startIdx - lookbackTotal;
-/* Generated */    prevHigh    = inHigh_0[today];
-/* Generated */    prevLow     = inLow_0[today];
-/* Generated */    i           = optInTimePeriod_0-1;
+/* Generated */    prevHigh    = inHigh[today];
+/* Generated */    prevLow     = inLow[today];
+/* Generated */    i           = optInTimePeriod-1;
 /* Generated */    while( i-- > 0 )
 /* Generated */    {
 /* Generated */       today++;
-/* Generated */       tempReal = inHigh_0[today];
+/* Generated */       tempReal = inHigh[today];
 /* Generated */       diffP    = tempReal-prevHigh; 
 /* Generated */       prevHigh = tempReal;
-/* Generated */       tempReal = inLow_0[today];
+/* Generated */       tempReal = inLow[today];
 /* Generated */       diffM    = prevLow-tempReal;   
 /* Generated */       prevLow  = tempReal;
 /* Generated */       if( (diffM > 0) && (diffP < diffM) )
@@ -478,41 +478,41 @@
 /* Generated */    while( i-- != 0 )
 /* Generated */    {
 /* Generated */       today++;
-/* Generated */       tempReal = inHigh_0[today];
+/* Generated */       tempReal = inHigh[today];
 /* Generated */       diffP    = tempReal-prevHigh; 
 /* Generated */       prevHigh = tempReal;
-/* Generated */       tempReal = inLow_0[today];
+/* Generated */       tempReal = inLow[today];
 /* Generated */       diffM    = prevLow-tempReal;   
 /* Generated */       prevLow  = tempReal;
 /* Generated */       if( (diffM > 0) && (diffP < diffM) )
 /* Generated */       {
-/* Generated */          prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0) + diffM;
+/* Generated */          prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod) + diffM;
 /* Generated */       }
 /* Generated */       else
 /* Generated */       {
-/* Generated */          prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0);
+/* Generated */          prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod);
 /* Generated */       }
 /* Generated */    }
-/* Generated */    outReal_0[0] = prevMinusDM;
+/* Generated */    outReal[0] = prevMinusDM;
 /* Generated */    outIdx = 1;
 /* Generated */    while( today < endIdx )
 /* Generated */    {
 /* Generated */       today++;
-/* Generated */       tempReal = inHigh_0[today];
+/* Generated */       tempReal = inHigh[today];
 /* Generated */       diffP    = tempReal-prevHigh; 
 /* Generated */       prevHigh = tempReal;
-/* Generated */       tempReal = inLow_0[today];
+/* Generated */       tempReal = inLow[today];
 /* Generated */       diffM    = prevLow-tempReal;  
 /* Generated */       prevLow  = tempReal;
 /* Generated */       if( (diffM > 0) && (diffP < diffM) )
 /* Generated */       {
-/* Generated */          prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0) + diffM;
+/* Generated */          prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod) + diffM;
 /* Generated */       }
 /* Generated */       else
 /* Generated */       {
-/* Generated */          prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod_0);
+/* Generated */          prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod);
 /* Generated */       }
-/* Generated */       outReal_0[outIdx++] = prevMinusDM;
+/* Generated */       outReal[outIdx++] = prevMinusDM;
 /* Generated */    }
 /* Generated */    *outNbElement = outIdx;
 /* Generated */    return TA_SUCCESS;

@@ -79,19 +79,19 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::T3_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
-/* Generated */                      double        optInVFactor_1 )  /* From 0 to 1 */
+/* Generated */ int Core::T3_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                      double        optInVFactor )  /* From 0 to 1 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_T3_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
-/* Generated */                   double        optInVFactor_1 )  /* From 0 to 1 */
+/* Generated */ int TA_T3_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                   double        optInVFactor )  /* From 0 to 1 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   (void)optInVFactor_1;
-   return 6 * (optInTimePeriod_0-1) + TA_Globals->unstablePeriod[TA_FUNC_UNST_T3];
+   (void)optInVFactor;
+   return 6 * (optInTimePeriod-1) + TA_Globals->unstablePeriod[TA_FUNC_UNST_T3];
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -103,10 +103,10 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to 100000)
+ * optInTimePeriod:(From 2 to 100000)
  *    Number of period
  * 
- * optInVFactor_1:(From 0 to 1)
+ * optInVFactor:(From 0 to 1)
  *    Volume Factor
  * 
  * 
@@ -115,21 +115,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::T3( int    startIdx,
 /* Generated */                                 int    endIdx,
-/* Generated */                                 double       inReal_0 __gc [],
-/* Generated */                                 int           optInTimePeriod_0, /* From 2 to 100000 */
-/* Generated */                                 double        optInVFactor_1, /* From 0 to 1 */
+/* Generated */                                 double       inReal __gc [],
+/* Generated */                                 int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                 double        optInVFactor, /* From 0 to 1 */
 /* Generated */                                 [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                 [OutAttribute]Int32 *outNbElement,
-/* Generated */                                 double        outReal_0 __gc [] )
+/* Generated */                                 double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_T3( int    startIdx,
 /* Generated */                   int    endIdx,
-/* Generated */                   const double inReal_0[],
-/* Generated */                   int           optInTimePeriod_0, /* From 2 to 100000 */
-/* Generated */                   double        optInVFactor_1, /* From 0 to 1 */
+/* Generated */                   const double inReal[],
+/* Generated */                   int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                   double        optInVFactor, /* From 0 to 1 */
 /* Generated */                   int          *outBegIdx,
 /* Generated */                   int          *outNbElement,
-/* Generated */                   double        outReal_0[] )
+/* Generated */                   double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -153,19 +153,19 @@
 /* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */    /* min/max are checked for optInTimePeriod_0. */
-/* Generated */    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod_0 = 5;
-/* Generated */    else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 5;
+/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( optInVFactor_1 == TA_REAL_DEFAULT )
-/* Generated */       optInVFactor_1 = 7.000000e-1;
-/* Generated */    else if( (optInVFactor_1 < 0.000000e+0) ||/* Generated */  (optInVFactor_1 > 1.000000e+0) )
+/* Generated */    if( optInVFactor == TA_REAL_DEFAULT )
+/* Generated */       optInVFactor = 7.000000e-1;
+/* Generated */    else if( (optInVFactor < 0.000000e+0) ||/* Generated */  (optInVFactor > 1.000000e+0) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -191,7 +191,7 @@
     * in the litterature.
     *
     */
-   lookbackTotal = 6 * (optInTimePeriod_0 - 1) + TA_Globals->unstablePeriod[TA_FUNC_UNST_T3];
+   lookbackTotal = 6 * (optInTimePeriod - 1) + TA_Globals->unstablePeriod[TA_FUNC_UNST_T3];
    if( startIdx <= lookbackTotal )
       startIdx = lookbackTotal;
 
@@ -206,75 +206,75 @@
    *outBegIdx = startIdx;
    today = startIdx - lookbackTotal;
 
-   k = 2.0/(optInTimePeriod_0+1.0);
+   k = 2.0/(optInTimePeriod+1.0);
    one_minus_k = 1.0-k;
 
    /* Initialize e1 */
-   tempReal = inReal_0[today++];
-   for( i=optInTimePeriod_0-1; i > 0 ; i-- ) 
-      tempReal += inReal_0[today++];
-   e1 = tempReal / optInTimePeriod_0;
+   tempReal = inReal[today++];
+   for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+      tempReal += inReal[today++];
+   e1 = tempReal / optInTimePeriod;
 
    /* Initialize e2 */
    tempReal = e1;
-   for( i=optInTimePeriod_0-1; i > 0 ; i-- ) 
+   for( i=optInTimePeriod-1; i > 0 ; i-- ) 
    {
-      e1 = (k*inReal_0[today++])+(one_minus_k*e1);
+      e1 = (k*inReal[today++])+(one_minus_k*e1);
       tempReal += e1;
    }
-   e2 = tempReal / optInTimePeriod_0;
+   e2 = tempReal / optInTimePeriod;
 
    /* Initialize e3 */
    tempReal = e2;
-   for( i=optInTimePeriod_0-1; i > 0 ; i-- ) 
+   for( i=optInTimePeriod-1; i > 0 ; i-- ) 
    {
-      e1  = (k*inReal_0[today++])+(one_minus_k*e1);
+      e1  = (k*inReal[today++])+(one_minus_k*e1);
       e2  = (k*e1)+(one_minus_k*e2);
       tempReal += e2;
    }
-   e3 = tempReal / optInTimePeriod_0;
+   e3 = tempReal / optInTimePeriod;
 
    /* Initialize e4 */
    tempReal = e3;
-   for( i=optInTimePeriod_0-1; i > 0 ; i-- ) 
+   for( i=optInTimePeriod-1; i > 0 ; i-- ) 
    {
-      e1  = (k*inReal_0[today++])+(one_minus_k*e1);
+      e1  = (k*inReal[today++])+(one_minus_k*e1);
       e2  = (k*e1)+(one_minus_k*e2);
       e3  = (k*e2)+(one_minus_k*e3);
       tempReal += e3;
    }
-   e4 = tempReal / optInTimePeriod_0;
+   e4 = tempReal / optInTimePeriod;
 
    /* Initialize e5 */
    tempReal = e4;
-   for( i=optInTimePeriod_0-1; i > 0 ; i-- ) 
+   for( i=optInTimePeriod-1; i > 0 ; i-- ) 
    {
-      e1  = (k*inReal_0[today++])+(one_minus_k*e1);
+      e1  = (k*inReal[today++])+(one_minus_k*e1);
       e2  = (k*e1)+(one_minus_k*e2);
       e3  = (k*e2)+(one_minus_k*e3);
       e4  = (k*e3)+(one_minus_k*e4);
       tempReal += e4;
    }
-   e5 = tempReal / optInTimePeriod_0;
+   e5 = tempReal / optInTimePeriod;
 
    /* Initialize e6 */
    tempReal = e5;
-   for( i=optInTimePeriod_0-1; i > 0 ; i-- ) 
+   for( i=optInTimePeriod-1; i > 0 ; i-- ) 
    {
-      e1  = (k*inReal_0[today++])+(one_minus_k*e1);
+      e1  = (k*inReal[today++])+(one_minus_k*e1);
       e2  = (k*e1)+(one_minus_k*e2);
       e3  = (k*e2)+(one_minus_k*e3);
       e4  = (k*e3)+(one_minus_k*e4);
       e5  = (k*e4)+(one_minus_k*e5);
       tempReal += e5;
    }
-   e6 = tempReal / optInTimePeriod_0;
+   e6 = tempReal / optInTimePeriod;
 
    /* Skip the unstable period */
    while( today <= startIdx )
    {
       /* Do the calculation but do not write the output */
-      e1  = (k*inReal_0[today++])+(one_minus_k*e1);
+      e1  = (k*inReal[today++])+(one_minus_k*e1);
       e2  = (k*e1)+(one_minus_k*e2);
       e3  = (k*e2)+(one_minus_k*e3);
       e4  = (k*e3)+(one_minus_k*e4);
@@ -283,26 +283,26 @@
    }
 
    /* Calculate the constants */
-   tempReal = optInVFactor_1 * optInVFactor_1;
-   c1 = -(tempReal * optInVFactor_1);
+   tempReal = optInVFactor * optInVFactor;
+   c1 = -(tempReal * optInVFactor);
    c2 = 3.0 * (tempReal - c1);
-   c3 = -6.0 * tempReal - 3.0 * (optInVFactor_1-c1);
-   c4 = 1.0 + 3.0 * optInVFactor_1 - c1 + 3.0 * tempReal;
+   c3 = -6.0 * tempReal - 3.0 * (optInVFactor-c1);
+   c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
 
    /* Write the first output */
    outIdx = 0;
-  	outReal_0[outIdx++] = c1*e6+c2*e5+c3*e4+c4*e3;
+  	outReal[outIdx++] = c1*e6+c2*e5+c3*e4+c4*e3;
 
    /* Calculate and output the remaining of the range. */
    while( today <= endIdx )
    {
-      e1  = (k*inReal_0[today++])+(one_minus_k*e1);
+      e1  = (k*inReal[today++])+(one_minus_k*e1);
       e2  = (k*e1)+(one_minus_k*e2);
       e3  = (k*e2)+(one_minus_k*e3);
       e4  = (k*e3)+(one_minus_k*e4);
       e5  = (k*e4)+(one_minus_k*e5);
       e6  = (k*e5)+(one_minus_k*e6);
-      outReal_0[outIdx++] = c1*e6+c2*e5+c3*e4+c4*e3;
+      outReal[outIdx++] = c1*e6+c2*e5+c3*e4+c4*e3;
    }
 
    /* Indicates to the caller the number of output
@@ -325,21 +325,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::T3( int    startIdx,
 /* Generated */                                 int    endIdx,
-/* Generated */                                 float        inReal_0 __gc [],
-/* Generated */                                 int           optInTimePeriod_0, /* From 2 to 100000 */
-/* Generated */                                 double        optInVFactor_1, /* From 0 to 1 */
+/* Generated */                                 float        inReal __gc [],
+/* Generated */                                 int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                 double        optInVFactor, /* From 0 to 1 */
 /* Generated */                                 [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                 [OutAttribute]Int32 *outNbElement,
-/* Generated */                                 double        outReal_0 __gc [] )
+/* Generated */                                 double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_T3( int    startIdx,
 /* Generated */                     int    endIdx,
-/* Generated */                     const float  inReal_0[],
-/* Generated */                     int           optInTimePeriod_0, /* From 2 to 100000 */
-/* Generated */                     double        optInVFactor_1, /* From 0 to 1 */
+/* Generated */                     const float  inReal[],
+/* Generated */                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                     double        optInVFactor, /* From 0 to 1 */
 /* Generated */                     int          *outBegIdx,
 /* Generated */                     int          *outNbElement,
-/* Generated */                     double        outReal_0[] )
+/* Generated */                     double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int outIdx, lookbackTotal;
@@ -353,19 +353,19 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */     if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInTimePeriod_0 = 5;
-/* Generated */     else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 5;
+/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( optInVFactor_1 == TA_REAL_DEFAULT )
-/* Generated */        optInVFactor_1 = 7.000000e-1;
-/* Generated */     else if( (optInVFactor_1 < 0.000000e+0) ||  (optInVFactor_1 > 1.000000e+0) )
+/* Generated */     if( optInVFactor == TA_REAL_DEFAULT )
+/* Generated */        optInVFactor = 7.000000e-1;
+/* Generated */     else if( (optInVFactor < 0.000000e+0) ||  (optInVFactor > 1.000000e+0) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    lookbackTotal = 6 * (optInTimePeriod_0 - 1) + TA_Globals->unstablePeriod[TA_FUNC_UNST_T3];
+/* Generated */    lookbackTotal = 6 * (optInTimePeriod - 1) + TA_Globals->unstablePeriod[TA_FUNC_UNST_T3];
 /* Generated */    if( startIdx <= lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
@@ -376,82 +376,82 @@
 /* Generated */    }
 /* Generated */    *outBegIdx = startIdx;
 /* Generated */    today = startIdx - lookbackTotal;
-/* Generated */    k = 2.0/(optInTimePeriod_0+1.0);
+/* Generated */    k = 2.0/(optInTimePeriod+1.0);
 /* Generated */    one_minus_k = 1.0-k;
-/* Generated */    tempReal = inReal_0[today++];
-/* Generated */    for( i=optInTimePeriod_0-1; i > 0 ; i-- ) 
-/* Generated */       tempReal += inReal_0[today++];
-/* Generated */    e1 = tempReal / optInTimePeriod_0;
+/* Generated */    tempReal = inReal[today++];
+/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+/* Generated */       tempReal += inReal[today++];
+/* Generated */    e1 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e1;
-/* Generated */    for( i=optInTimePeriod_0-1; i > 0 ; i-- ) 
+/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- ) 
 /* Generated */    {
-/* Generated */       e1 = (k*inReal_0[today++])+(one_minus_k*e1);
+/* Generated */       e1 = (k*inReal[today++])+(one_minus_k*e1);
 /* Generated */       tempReal += e1;
 /* Generated */    }
-/* Generated */    e2 = tempReal / optInTimePeriod_0;
+/* Generated */    e2 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e2;
-/* Generated */    for( i=optInTimePeriod_0-1; i > 0 ; i-- ) 
+/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- ) 
 /* Generated */    {
-/* Generated */       e1  = (k*inReal_0[today++])+(one_minus_k*e1);
+/* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
 /* Generated */       e2  = (k*e1)+(one_minus_k*e2);
 /* Generated */       tempReal += e2;
 /* Generated */    }
-/* Generated */    e3 = tempReal / optInTimePeriod_0;
+/* Generated */    e3 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e3;
-/* Generated */    for( i=optInTimePeriod_0-1; i > 0 ; i-- ) 
+/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- ) 
 /* Generated */    {
-/* Generated */       e1  = (k*inReal_0[today++])+(one_minus_k*e1);
+/* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
 /* Generated */       e2  = (k*e1)+(one_minus_k*e2);
 /* Generated */       e3  = (k*e2)+(one_minus_k*e3);
 /* Generated */       tempReal += e3;
 /* Generated */    }
-/* Generated */    e4 = tempReal / optInTimePeriod_0;
+/* Generated */    e4 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e4;
-/* Generated */    for( i=optInTimePeriod_0-1; i > 0 ; i-- ) 
+/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- ) 
 /* Generated */    {
-/* Generated */       e1  = (k*inReal_0[today++])+(one_minus_k*e1);
+/* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
 /* Generated */       e2  = (k*e1)+(one_minus_k*e2);
 /* Generated */       e3  = (k*e2)+(one_minus_k*e3);
 /* Generated */       e4  = (k*e3)+(one_minus_k*e4);
 /* Generated */       tempReal += e4;
 /* Generated */    }
-/* Generated */    e5 = tempReal / optInTimePeriod_0;
+/* Generated */    e5 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e5;
-/* Generated */    for( i=optInTimePeriod_0-1; i > 0 ; i-- ) 
+/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- ) 
 /* Generated */    {
-/* Generated */       e1  = (k*inReal_0[today++])+(one_minus_k*e1);
+/* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
 /* Generated */       e2  = (k*e1)+(one_minus_k*e2);
 /* Generated */       e3  = (k*e2)+(one_minus_k*e3);
 /* Generated */       e4  = (k*e3)+(one_minus_k*e4);
 /* Generated */       e5  = (k*e4)+(one_minus_k*e5);
 /* Generated */       tempReal += e5;
 /* Generated */    }
-/* Generated */    e6 = tempReal / optInTimePeriod_0;
+/* Generated */    e6 = tempReal / optInTimePeriod;
 /* Generated */    while( today <= startIdx )
 /* Generated */    {
-/* Generated */       e1  = (k*inReal_0[today++])+(one_minus_k*e1);
+/* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
 /* Generated */       e2  = (k*e1)+(one_minus_k*e2);
 /* Generated */       e3  = (k*e2)+(one_minus_k*e3);
 /* Generated */       e4  = (k*e3)+(one_minus_k*e4);
 /* Generated */       e5  = (k*e4)+(one_minus_k*e5);
 /* Generated */       e6  = (k*e5)+(one_minus_k*e6);
 /* Generated */    }
-/* Generated */    tempReal = optInVFactor_1 * optInVFactor_1;
-/* Generated */    c1 = -(tempReal * optInVFactor_1);
+/* Generated */    tempReal = optInVFactor * optInVFactor;
+/* Generated */    c1 = -(tempReal * optInVFactor);
 /* Generated */    c2 = 3.0 * (tempReal - c1);
-/* Generated */    c3 = -6.0 * tempReal - 3.0 * (optInVFactor_1-c1);
-/* Generated */    c4 = 1.0 + 3.0 * optInVFactor_1 - c1 + 3.0 * tempReal;
+/* Generated */    c3 = -6.0 * tempReal - 3.0 * (optInVFactor-c1);
+/* Generated */    c4 = 1.0 + 3.0 * optInVFactor - c1 + 3.0 * tempReal;
 /* Generated */    outIdx = 0;
-/* Generated */   	outReal_0[outIdx++] = c1*e6+c2*e5+c3*e4+c4*e3;
+/* Generated */   	outReal[outIdx++] = c1*e6+c2*e5+c3*e4+c4*e3;
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
-/* Generated */       e1  = (k*inReal_0[today++])+(one_minus_k*e1);
+/* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
 /* Generated */       e2  = (k*e1)+(one_minus_k*e2);
 /* Generated */       e3  = (k*e2)+(one_minus_k*e3);
 /* Generated */       e4  = (k*e3)+(one_minus_k*e4);
 /* Generated */       e5  = (k*e4)+(one_minus_k*e5);
 /* Generated */       e6  = (k*e5)+(one_minus_k*e6);
-/* Generated */       outReal_0[outIdx++] = c1*e6+c2*e5+c3*e4+c4*e3;
+/* Generated */       outReal[outIdx++] = c1*e6+c2*e5+c3*e4+c4*e3;
 /* Generated */    }
 /* Generated */    *outNbElement = outIdx;
 /* Generated */    return TA_SUCCESS;

@@ -43,6 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
+ *  101003 MF   Initial Coding
  *
  */
 
@@ -74,16 +75,16 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::CORREL_Lookback( int           optInTimePeriod_0 )  /* From 1 to 100000 */
+/* Generated */ int Core::CORREL_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_CORREL_Lookback( int           optInTimePeriod_0 )  /* From 1 to 100000 */
+/* Generated */ int TA_CORREL_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   return optInTimePeriod_0-1;
+   return optInTimePeriod-1;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -95,7 +96,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to 100000)
+ * optInTimePeriod:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -104,21 +105,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::CORREL( int    startIdx,
 /* Generated */                                     int    endIdx,
-/* Generated */                                     double       inReal_0 __gc [],
-/* Generated */                                     double       inReal_1 __gc [],
-/* Generated */                                     int           optInTimePeriod_0, /* From 1 to 100000 */
+/* Generated */                                     double       inReal0 __gc [],
+/* Generated */                                     double       inReal1 __gc [],
+/* Generated */                                     int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                     [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                     [OutAttribute]Int32 *outNbElement,
-/* Generated */                                     double        outReal_0 __gc [] )
+/* Generated */                                     double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CORREL( int    startIdx,
 /* Generated */                       int    endIdx,
-/* Generated */                       const double inReal_0[],
-/* Generated */                       const double inReal_1[],
-/* Generated */                       int           optInTimePeriod_0, /* From 1 to 100000 */
+/* Generated */                       const double inReal0[],
+/* Generated */                       const double inReal1[],
+/* Generated */                       int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                       int          *outBegIdx,
 /* Generated */                       int          *outNbElement,
-/* Generated */                       double        outReal_0[] )
+/* Generated */                       double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -137,15 +138,15 @@
 /* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */    if( !inReal_1 ) return TA_BAD_PARAM;
-/* Generated */    /* min/max are checked for optInTimePeriod_0. */
-/* Generated */    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod_0 = 30;
-/* Generated */    else if( ((int)optInTimePeriod_0 < 1) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */    if( !inReal0 ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal1 ) return TA_BAD_PARAM;
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 30;
+/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -157,7 +158,7 @@
    /* Move up the start index if there is not
     * enough initial data.
     */
-   lookbackTotal = optInTimePeriod_0-1;
+   lookbackTotal = optInTimePeriod-1;
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
 
@@ -176,11 +177,11 @@
    sumXY = sumX = sumY = sumX2 = sumY2 = 0.0;
    for( today=trailingIdx; today <= startIdx; today++ )
    {
-      x = inReal_0[today];
+      x = inReal0[today];
       sumX  += x;
       sumX2 += x*x;
 
-      y = inReal_1[today];
+      y = inReal1[today];
       sumXY += x*y;
       sumY  += y;
       sumY2 += y*y;
@@ -190,10 +191,10 @@
     * Save first the trailing values since the input
     * and output might be the same array,
     */
-   trailingX = inReal_0[trailingIdx];
-   trailingY = inReal_1[trailingIdx++];
-   n = optInTimePeriod_0;
-   outReal_0[0] = (sumXY-((sumX*sumY)/n)) / sqrt( (sumX2-((sumX*sumX)/n)) * (sumY2-((sumY*sumY)/n)));
+   trailingX = inReal0[trailingIdx];
+   trailingY = inReal1[trailingIdx++];
+   n = optInTimePeriod;
+   outReal[0] = (sumXY-((sumX*sumY)/n)) / sqrt( (sumX2-((sumX*sumX)/n)) * (sumY2-((sumY*sumY)/n)));
 
 
    /* Tight loop to do subsequent values. */
@@ -209,11 +210,11 @@
       sumY2 -= trailingY*trailingY;
 
       /* Add new values */
-      x = inReal_0[today];
+      x = inReal0[today];
       sumX  += x;
       sumX2 += x*x;
 
-      y = inReal_1[today++];
+      y = inReal1[today++];
       sumXY += x*y;
       sumY  += y;
       sumY2 += y*y;
@@ -222,9 +223,9 @@
        * Save first the trailing values since the input
        * and output might be the same array,
        */
-      trailingX = inReal_0[trailingIdx];
-      trailingY = inReal_1[trailingIdx++];
-      outReal_0[outIdx++] = (sumXY-((sumX*sumY)/n)) / sqrt( (sumX2-((sumX*sumX)/n)) * (sumY2-((sumY*sumY)/n)));
+      trailingX = inReal0[trailingIdx];
+      trailingY = inReal1[trailingIdx++];
+      outReal[outIdx++] = (sumXY-((sumX*sumY)/n)) / sqrt( (sumX2-((sumX*sumX)/n)) * (sumY2-((sumY*sumY)/n)));
    }  
 
    *outNbElement = outIdx;
@@ -244,21 +245,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::CORREL( int    startIdx,
 /* Generated */                                     int    endIdx,
-/* Generated */                                     float        inReal_0 __gc [],
-/* Generated */                                     float        inReal_1 __gc [],
-/* Generated */                                     int           optInTimePeriod_0, /* From 1 to 100000 */
+/* Generated */                                     float        inReal0 __gc [],
+/* Generated */                                     float        inReal1 __gc [],
+/* Generated */                                     int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                     [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                     [OutAttribute]Int32 *outNbElement,
-/* Generated */                                     double        outReal_0 __gc [] )
+/* Generated */                                     double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CORREL( int    startIdx,
 /* Generated */                         int    endIdx,
-/* Generated */                         const float  inReal_0[],
-/* Generated */                         const float  inReal_1[],
-/* Generated */                         int           optInTimePeriod_0, /* From 1 to 100000 */
+/* Generated */                         const float  inReal0[],
+/* Generated */                         const float  inReal1[],
+/* Generated */                         int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                         int          *outBegIdx,
 /* Generated */                         int          *outNbElement,
-/* Generated */                         double        outReal_0[] )
+/* Generated */                         double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */     double sumXY, sumX, sumY, sumX2, sumY2, n, x, y, trailingX, trailingY;
@@ -268,16 +269,16 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */     if( !inReal_1 ) return TA_BAD_PARAM;
-/* Generated */     if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInTimePeriod_0 = 30;
-/* Generated */     else if( ((int)optInTimePeriod_0 < 1) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */     if( !inReal0 ) return TA_BAD_PARAM;
+/* Generated */     if( !inReal1 ) return TA_BAD_PARAM;
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 30;
+/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    lookbackTotal = optInTimePeriod_0-1;
+/* Generated */    lookbackTotal = optInTimePeriod-1;
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
@@ -291,18 +292,18 @@
 /* Generated */    sumXY = sumX = sumY = sumX2 = sumY2 = 0.0;
 /* Generated */    for( today=trailingIdx; today <= startIdx; today++ )
 /* Generated */    {
-/* Generated */       x = inReal_0[today];
+/* Generated */       x = inReal0[today];
 /* Generated */       sumX  += x;
 /* Generated */       sumX2 += x*x;
-/* Generated */       y = inReal_1[today];
+/* Generated */       y = inReal1[today];
 /* Generated */       sumXY += x*y;
 /* Generated */       sumY  += y;
 /* Generated */       sumY2 += y*y;
 /* Generated */    }
-/* Generated */    trailingX = inReal_0[trailingIdx];
-/* Generated */    trailingY = inReal_1[trailingIdx++];
-/* Generated */    n = optInTimePeriod_0;
-/* Generated */    outReal_0[0] = (sumXY-((sumX*sumY)/n)) / sqrt( (sumX2-((sumX*sumX)/n)) * (sumY2-((sumY*sumY)/n)));
+/* Generated */    trailingX = inReal0[trailingIdx];
+/* Generated */    trailingY = inReal1[trailingIdx++];
+/* Generated */    n = optInTimePeriod;
+/* Generated */    outReal[0] = (sumXY-((sumX*sumY)/n)) / sqrt( (sumX2-((sumX*sumX)/n)) * (sumY2-((sumY*sumY)/n)));
 /* Generated */    outIdx = 1;
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
@@ -311,16 +312,16 @@
 /* Generated */       sumXY -= trailingX*trailingY;
 /* Generated */       sumY  -= trailingY;
 /* Generated */       sumY2 -= trailingY*trailingY;
-/* Generated */       x = inReal_0[today];
+/* Generated */       x = inReal0[today];
 /* Generated */       sumX  += x;
 /* Generated */       sumX2 += x*x;
-/* Generated */       y = inReal_1[today++];
+/* Generated */       y = inReal1[today++];
 /* Generated */       sumXY += x*y;
 /* Generated */       sumY  += y;
 /* Generated */       sumY2 += y*y;
-/* Generated */       trailingX = inReal_0[trailingIdx];
-/* Generated */       trailingY = inReal_1[trailingIdx++];
-/* Generated */       outReal_0[outIdx++] = (sumXY-((sumX*sumY)/n)) / sqrt( (sumX2-((sumX*sumX)/n)) * (sumY2-((sumY*sumY)/n)));
+/* Generated */       trailingX = inReal0[trailingIdx];
+/* Generated */       trailingY = inReal1[trailingIdx++];
+/* Generated */       outReal[outIdx++] = (sumXY-((sumX*sumY)/n)) / sqrt( (sumX2-((sumX*sumX)/n)) * (sumY2-((sumY*sumY)/n)));
 /* Generated */    }  
 /* Generated */    *outNbElement = outIdx;
 /* Generated */    return TA_SUCCESS;

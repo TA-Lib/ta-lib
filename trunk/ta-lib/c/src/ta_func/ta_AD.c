@@ -99,23 +99,23 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::AD( int    startIdx,
 /* Generated */                                 int    endIdx,
-/* Generated */                                 double       inHigh_0 __gc [],
-/* Generated */                                 double       inLow_0 __gc [],
-/* Generated */                                 double       inClose_0 __gc [],
-/* Generated */                                 int          inVolume_0 __gc [],
+/* Generated */                                 double       inHigh __gc [],
+/* Generated */                                 double       inLow __gc [],
+/* Generated */                                 double       inClose __gc [],
+/* Generated */                                 int          inVolume __gc [],
 /* Generated */                                 [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                 [OutAttribute]Int32 *outNbElement,
-/* Generated */                                 double        outReal_0 __gc [] )
+/* Generated */                                 double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_AD( int    startIdx,
 /* Generated */                   int    endIdx,
-/* Generated */                   const double inHigh_0[],
-/* Generated */                   const double inLow_0[],
-/* Generated */                   const double inClose_0[],
-/* Generated */                   const int    inVolume_0[],
+/* Generated */                   const double inHigh[],
+/* Generated */                   const double inLow[],
+/* Generated */                   const double inClose[],
+/* Generated */                   const int    inVolume[],
 /* Generated */                   int          *outBegIdx,
 /* Generated */                   int          *outNbElement,
-/* Generated */                   double        outReal_0[] )
+/* Generated */                   double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -137,10 +137,10 @@
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
-/* Generated */    if(!inHigh_0||!inLow_0||!inClose_0||!inVolume_0)
+/* Generated */    if(!inHigh||!inLow||!inClose||!inVolume)
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -175,15 +175,15 @@
 
    while( nbBar != 0 )
    {
-      high  = inHigh_0[today];
-      low   = inLow_0[today];
+      high  = inHigh[today];
+      low   = inLow[today];
       tmp   = high-low;
-      close = inClose_0[today];
+      close = inClose[today];
 
       if( tmp > 0.0 )
-         ad += (((close-low)-(high-close))/tmp)*((double)inVolume_0[today]);
+         ad += (((close-low)-(high-close))/tmp)*((double)inVolume[today]);
       
-      outReal_0[outIdx++] = ad;
+      outReal[outIdx++] = ad;
 
       today++;
       nbBar--;
@@ -204,23 +204,23 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::AD( int    startIdx,
 /* Generated */                                 int    endIdx,
-/* Generated */                                 float        inHigh_0 __gc [],
-/* Generated */                                 float        inLow_0 __gc [],
-/* Generated */                                 float        inClose_0 __gc [],
-/* Generated */                                 int          inVolume_0 __gc [],
+/* Generated */                                 float        inHigh __gc [],
+/* Generated */                                 float        inLow __gc [],
+/* Generated */                                 float        inClose __gc [],
+/* Generated */                                 int          inVolume __gc [],
 /* Generated */                                 [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                 [OutAttribute]Int32 *outNbElement,
-/* Generated */                                 double        outReal_0 __gc [] )
+/* Generated */                                 double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_AD( int    startIdx,
 /* Generated */                     int    endIdx,
-/* Generated */                     const float  inHigh_0[],
-/* Generated */                     const float  inLow_0[],
-/* Generated */                     const float  inClose_0[],
-/* Generated */                     const int    inVolume_0[],
+/* Generated */                     const float  inHigh[],
+/* Generated */                     const float  inLow[],
+/* Generated */                     const float  inClose[],
+/* Generated */                     const int    inVolume[],
 /* Generated */                     int          *outBegIdx,
 /* Generated */                     int          *outNbElement,
-/* Generated */                     double        outReal_0[] )
+/* Generated */                     double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int nbBar, today, outIdx;
@@ -231,9 +231,9 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if(!inHigh_0||!inLow_0||!inClose_0||!inVolume_0)
+/* Generated */     if(!inHigh||!inLow||!inClose||!inVolume)
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    nbBar = endIdx-startIdx+1;
@@ -245,13 +245,13 @@
 /* Generated */    ad = 0.0;
 /* Generated */    while( nbBar != 0 )
 /* Generated */    {
-/* Generated */       high  = inHigh_0[today];
-/* Generated */       low   = inLow_0[today];
+/* Generated */       high  = inHigh[today];
+/* Generated */       low   = inLow[today];
 /* Generated */       tmp   = high-low;
-/* Generated */       close = inClose_0[today];
+/* Generated */       close = inClose[today];
 /* Generated */       if( tmp > 0.0 )
-/* Generated */          ad += (((close-low)-(high-close))/tmp)*((double)inVolume_0[today]);
-/* Generated */       outReal_0[outIdx++] = ad;
+/* Generated */          ad += (((close-low)-(high-close))/tmp)*((double)inVolume[today]);
+/* Generated */       outReal[outIdx++] = ad;
 /* Generated */       today++;
 /* Generated */       nbBar--;
 /* Generated */    }

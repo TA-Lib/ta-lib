@@ -75,16 +75,16 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::MFI_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
+/* Generated */ int Core::MFI_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_MFI_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
+/* Generated */ int TA_MFI_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   return optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_MFI];
+   return optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_MFI];
 }
 
 #if defined( _MANAGED )
@@ -112,7 +112,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to 100000)
+ * optInTimePeriod:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -121,25 +121,25 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::MFI( int    startIdx,
 /* Generated */                                  int    endIdx,
-/* Generated */                                  double       inHigh_0 __gc [],
-/* Generated */                                  double       inLow_0 __gc [],
-/* Generated */                                  double       inClose_0 __gc [],
-/* Generated */                                  int          inVolume_0 __gc [],
-/* Generated */                                  int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                                  double       inHigh __gc [],
+/* Generated */                                  double       inLow __gc [],
+/* Generated */                                  double       inClose __gc [],
+/* Generated */                                  int          inVolume __gc [],
+/* Generated */                                  int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal_0 __gc [] )
+/* Generated */                                  double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MFI( int    startIdx,
 /* Generated */                    int    endIdx,
-/* Generated */                    const double inHigh_0[],
-/* Generated */                    const double inLow_0[],
-/* Generated */                    const double inClose_0[],
-/* Generated */                    const int    inVolume_0[],
-/* Generated */                    int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                    const double inHigh[],
+/* Generated */                    const double inLow[],
+/* Generated */                    const double inClose[],
+/* Generated */                    const int    inVolume[],
+/* Generated */                    int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                    int          *outBegIdx,
 /* Generated */                    int          *outNbElement,
-/* Generated */                    double        outReal_0[] )
+/* Generated */                    double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -162,16 +162,16 @@
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
-/* Generated */    if(!inHigh_0||!inLow_0||!inClose_0||!inVolume_0)
+/* Generated */    if(!inHigh||!inLow||!inClose||!inVolume)
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    /* min/max are checked for optInTimePeriod_0. */
-/* Generated */    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod_0 = 14;
-/* Generated */    else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 14;
+/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -180,13 +180,13 @@
 
    /* Insert TA function code here. */
 
-   CIRCBUF_INIT( mflow, MoneyFlow, optInTimePeriod_0 );
+   CIRCBUF_INIT( mflow, MoneyFlow, optInTimePeriod );
 
    *outBegIdx    = 0;
    *outNbElement = 0;
    
    /* Adjust startIdx to account for the lookback period. */
-   lookbackTotal = optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_MFI];
+   lookbackTotal = optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_MFI];
 
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
@@ -204,17 +204,17 @@
     * among the initial period.
     */
    today = startIdx-lookbackTotal;
-   prevValue = (inHigh_0[today]+inLow_0[today]+inClose_0[today])/3.0;
+   prevValue = (inHigh[today]+inLow[today]+inClose[today])/3.0;
 
    posSumMF = 0.0;
    negSumMF = 0.0;
    today++;
-   for( i=optInTimePeriod_0; i > 0; i-- )
+   for( i=optInTimePeriod; i > 0; i-- )
    {
-      tempValue1 = (inHigh_0[today]+inLow_0[today]+inClose_0[today])/3.0;
+      tempValue1 = (inHigh[today]+inLow[today]+inClose[today])/3.0;
       tempValue2 = tempValue1 - prevValue;
       prevValue  = tempValue1;
-      tempValue1 *= inVolume_0[today++];
+      tempValue1 *= inVolume[today++];
       if( tempValue2 < 0 )
       {
          mflow[mflow_Idx].negative = tempValue1;
@@ -237,7 +237,7 @@
     * The second equation is used here for speed optimization.
     */
    if( today > startIdx )
-      outReal_0[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
+      outReal[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
    else
    {
       /* Skip the unstable period. Do the processing 
@@ -248,10 +248,10 @@
          posSumMF -= mflow[mflow_Idx].positive;
          negSumMF -= mflow[mflow_Idx].negative;
 
-         tempValue1 = (inHigh_0[today]+inLow_0[today]+inClose_0[today])/3.0;
+         tempValue1 = (inHigh[today]+inLow[today]+inClose[today])/3.0;
          tempValue2 = tempValue1 - prevValue;
          prevValue  = tempValue1;
-         tempValue1 *= inVolume_0[today++];
+         tempValue1 *= inVolume[today++];
          if( tempValue2 < 0 )
          {
             mflow[mflow_Idx].negative = tempValue1;
@@ -277,10 +277,10 @@
       posSumMF -= mflow[mflow_Idx].positive;
       negSumMF -= mflow[mflow_Idx].negative;
 
-      tempValue1 = (inHigh_0[today]+inLow_0[today]+inClose_0[today])/3.0;
+      tempValue1 = (inHigh[today]+inLow[today]+inClose[today])/3.0;
       tempValue2 = tempValue1 - prevValue;
       prevValue  = tempValue1;
-      tempValue1 *= inVolume_0[today++];
+      tempValue1 *= inVolume[today++];
       if( tempValue2 < 0 )
       {
          mflow[mflow_Idx].negative = tempValue1;
@@ -294,7 +294,7 @@
          mflow[mflow_Idx].negative = 0.0;
       }
 
-      outReal_0[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
+      outReal[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
 
       CIRCBUF_NEXT(mflow);
    }
@@ -319,25 +319,25 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::MFI( int    startIdx,
 /* Generated */                                  int    endIdx,
-/* Generated */                                  float        inHigh_0 __gc [],
-/* Generated */                                  float        inLow_0 __gc [],
-/* Generated */                                  float        inClose_0 __gc [],
-/* Generated */                                  int          inVolume_0 __gc [],
-/* Generated */                                  int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                                  float        inHigh __gc [],
+/* Generated */                                  float        inLow __gc [],
+/* Generated */                                  float        inClose __gc [],
+/* Generated */                                  int          inVolume __gc [],
+/* Generated */                                  int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal_0 __gc [] )
+/* Generated */                                  double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MFI( int    startIdx,
 /* Generated */                      int    endIdx,
-/* Generated */                      const float  inHigh_0[],
-/* Generated */                      const float  inLow_0[],
-/* Generated */                      const float  inClose_0[],
-/* Generated */                      const int    inVolume_0[],
-/* Generated */                      int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                      const float  inHigh[],
+/* Generated */                      const float  inLow[],
+/* Generated */                      const float  inClose[],
+/* Generated */                      const int    inVolume[],
+/* Generated */                      int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                      int          *outBegIdx,
 /* Generated */                      int          *outNbElement,
-/* Generated */                      double        outReal_0[] )
+/* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    double posSumMF, negSumMF, prevValue;
@@ -349,19 +349,19 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if(!inHigh_0||!inLow_0||!inClose_0||!inVolume_0)
+/* Generated */     if(!inHigh||!inLow||!inClose||!inVolume)
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInTimePeriod_0 = 14;
-/* Generated */     else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 14;
+/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    CIRCBUF_INIT( mflow, MoneyFlow, optInTimePeriod_0 );
+/* Generated */    CIRCBUF_INIT( mflow, MoneyFlow, optInTimePeriod );
 /* Generated */    *outBegIdx    = 0;
 /* Generated */    *outNbElement = 0;
-/* Generated */    lookbackTotal = optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_MFI];
+/* Generated */    lookbackTotal = optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_MFI];
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
@@ -371,16 +371,16 @@
 /* Generated */    }
 /* Generated */    outIdx = 0; 
 /* Generated */    today = startIdx-lookbackTotal;
-/* Generated */    prevValue = (inHigh_0[today]+inLow_0[today]+inClose_0[today])/3.0;
+/* Generated */    prevValue = (inHigh[today]+inLow[today]+inClose[today])/3.0;
 /* Generated */    posSumMF = 0.0;
 /* Generated */    negSumMF = 0.0;
 /* Generated */    today++;
-/* Generated */    for( i=optInTimePeriod_0; i > 0; i-- )
+/* Generated */    for( i=optInTimePeriod; i > 0; i-- )
 /* Generated */    {
-/* Generated */       tempValue1 = (inHigh_0[today]+inLow_0[today]+inClose_0[today])/3.0;
+/* Generated */       tempValue1 = (inHigh[today]+inLow[today]+inClose[today])/3.0;
 /* Generated */       tempValue2 = tempValue1 - prevValue;
 /* Generated */       prevValue  = tempValue1;
-/* Generated */       tempValue1 *= inVolume_0[today++];
+/* Generated */       tempValue1 *= inVolume[today++];
 /* Generated */       if( tempValue2 < 0 )
 /* Generated */       {
 /* Generated */          mflow[mflow_Idx].negative = tempValue1;
@@ -396,17 +396,17 @@
 /* Generated */       CIRCBUF_NEXT(mflow);
 /* Generated */    }
 /* Generated */    if( today > startIdx )
-/* Generated */       outReal_0[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
+/* Generated */       outReal[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
 /* Generated */    else
 /* Generated */    {
 /* Generated */       while( today < startIdx )
 /* Generated */       {
 /* Generated */          posSumMF -= mflow[mflow_Idx].positive;
 /* Generated */          negSumMF -= mflow[mflow_Idx].negative;
-/* Generated */          tempValue1 = (inHigh_0[today]+inLow_0[today]+inClose_0[today])/3.0;
+/* Generated */          tempValue1 = (inHigh[today]+inLow[today]+inClose[today])/3.0;
 /* Generated */          tempValue2 = tempValue1 - prevValue;
 /* Generated */          prevValue  = tempValue1;
-/* Generated */          tempValue1 *= inVolume_0[today++];
+/* Generated */          tempValue1 *= inVolume[today++];
 /* Generated */          if( tempValue2 < 0 )
 /* Generated */          {
 /* Generated */             mflow[mflow_Idx].negative = tempValue1;
@@ -426,10 +426,10 @@
 /* Generated */    {
 /* Generated */       posSumMF -= mflow[mflow_Idx].positive;
 /* Generated */       negSumMF -= mflow[mflow_Idx].negative;
-/* Generated */       tempValue1 = (inHigh_0[today]+inLow_0[today]+inClose_0[today])/3.0;
+/* Generated */       tempValue1 = (inHigh[today]+inLow[today]+inClose[today])/3.0;
 /* Generated */       tempValue2 = tempValue1 - prevValue;
 /* Generated */       prevValue  = tempValue1;
-/* Generated */       tempValue1 *= inVolume_0[today++];
+/* Generated */       tempValue1 *= inVolume[today++];
 /* Generated */       if( tempValue2 < 0 )
 /* Generated */       {
 /* Generated */          mflow[mflow_Idx].negative = tempValue1;
@@ -442,7 +442,7 @@
 /* Generated */          posSumMF += tempValue1;
 /* Generated */          mflow[mflow_Idx].negative = 0.0;
 /* Generated */       }
-/* Generated */       outReal_0[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
+/* Generated */       outReal[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
 /* Generated */       CIRCBUF_NEXT(mflow);
 /* Generated */    }
 /* Generated */    CIRCBUF_DESTROY(mflow);

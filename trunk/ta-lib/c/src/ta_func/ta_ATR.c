@@ -75,10 +75,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::ATR_Lookback( int           optInTimePeriod_0 )  /* From 1 to 100000 */
+/* Generated */ int Core::ATR_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_ATR_Lookback( int           optInTimePeriod_0 )  /* From 1 to 100000 */
+/* Generated */ int TA_ATR_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -86,13 +86,13 @@
    /* insert lookback code here. */
 
    /* The ATR lookback is the sum of:
-    *    1 + (optInTimePeriod_0 - 1)
+    *    1 + (optInTimePeriod - 1)
     *
     * Where 1 is for the True Range, and
-    * (optInTimePeriod_0-1) is for the simple
+    * (optInTimePeriod-1) is for the simple
     * moving average.
     */
-   return optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_ATR];
+   return optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_ATR];
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -104,7 +104,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to 100000)
+ * optInTimePeriod:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -113,23 +113,23 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::ATR( int    startIdx,
 /* Generated */                                  int    endIdx,
-/* Generated */                                  double       inHigh_0 __gc [],
-/* Generated */                                  double       inLow_0 __gc [],
-/* Generated */                                  double       inClose_0 __gc [],
-/* Generated */                                  int           optInTimePeriod_0, /* From 1 to 100000 */
+/* Generated */                                  double       inHigh __gc [],
+/* Generated */                                  double       inLow __gc [],
+/* Generated */                                  double       inClose __gc [],
+/* Generated */                                  int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal_0 __gc [] )
+/* Generated */                                  double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_ATR( int    startIdx,
 /* Generated */                    int    endIdx,
-/* Generated */                    const double inHigh_0[],
-/* Generated */                    const double inLow_0[],
-/* Generated */                    const double inClose_0[],
-/* Generated */                    int           optInTimePeriod_0, /* From 1 to 100000 */
+/* Generated */                    const double inHigh[],
+/* Generated */                    const double inLow[],
+/* Generated */                    const double inClose[],
+/* Generated */                    int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                    int          *outBegIdx,
 /* Generated */                    int          *outNbElement,
-/* Generated */                    double        outReal_0[] )
+/* Generated */                    double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -159,16 +159,16 @@
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
-/* Generated */    if(!inHigh_0||!inLow_0||!inClose_0)
+/* Generated */    if(!inHigh||!inLow||!inClose)
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    /* min/max are checked for optInTimePeriod_0. */
-/* Generated */    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod_0 = 14;
-/* Generated */    else if( ((int)optInTimePeriod_0 < 1) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 14;
+/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -189,7 +189,7 @@
    *outNbElement = 0;
 
    /* Adjust startIdx to account for the lookback period. */
-   lookbackTotal = TA_ATR_Lookback( optInTimePeriod_0 );
+   lookbackTotal = TA_ATR_Lookback( optInTimePeriod );
 
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
@@ -199,12 +199,12 @@
       return TA_SUCCESS;
 
    /* Trap the case where no smoothing is needed. */
-   if( optInTimePeriod_0 <= 1 )
+   if( optInTimePeriod <= 1 )
    {
       /* No smoothing needed. Just do a TRANGE. */
       return TA_PREFIX(TRANGE)( startIdx, endIdx,
-                                inHigh_0, inLow_0, inClose_0,
-                                outBegIdx, outNbElement, outReal_0 );
+                                inHigh, inLow, inClose,
+                                outBegIdx, outNbElement, outReal );
    }
 
    /* Allocate an intermediate buffer for TRANGE. */
@@ -212,7 +212,7 @@
 
    /* Do TRANGE in the intermediate buffer. */
    retCode = TA_PREFIX(TRANGE)( (startIdx-lookbackTotal+1), endIdx,
-                                inHigh_0, inLow_0, inClose_0,
+                                inHigh, inLow, inClose,
                                 &outBegIdxTmp, &outNbElementTmp, tempBuffer );
 
    if( retCode != TA_SUCCESS )
@@ -224,9 +224,9 @@
    /* First value of the ATR is a simple Average of
     * the TRANGE output for the specified period.
     */
-   retCode = TA_INT_SMA( optInTimePeriod_0-1,
-                         optInTimePeriod_0-1,
-                         tempBuffer, optInTimePeriod_0,
+   retCode = TA_INT_SMA( optInTimePeriod-1,
+                         optInTimePeriod-1,
+                         tempBuffer, optInTimePeriod,
                          &outBegIdx_MA, &outNbElement_MA, prevATRTemp );
 
    if( retCode != TA_SUCCESS )
@@ -242,32 +242,32 @@
     *  2) Add today TR value. 
     *  3) Divide by 'period'.
     */
-   today = optInTimePeriod_0;
+   today = optInTimePeriod;
    outIdx = TA_Globals->unstablePeriod[TA_FUNC_UNST_ATR];
    /* Skip the unstable period. */
    while( outIdx != 0 )
    {
-      prevATR *= optInTimePeriod_0 - 1;
+      prevATR *= optInTimePeriod - 1;
       prevATR += tempBuffer[today++];
-      prevATR /= optInTimePeriod_0;
+      prevATR /= optInTimePeriod;
       outIdx--;
    }
 
    /* Now start to write the final ATR in the caller 
-    * provided outReal_0.
+    * provided outReal.
     */
    outIdx = 1;
-   outReal_0[0] = prevATR;
+   outReal[0] = prevATR;
 
    /* Now do the number of requested ATR. */
    nbATR = (endIdx - startIdx)+1;
 
    while( --nbATR != 0 )
    {
-      prevATR *= optInTimePeriod_0 - 1;
+      prevATR *= optInTimePeriod - 1;
       prevATR += tempBuffer[today++];
-      prevATR /= optInTimePeriod_0;
-      outReal_0[outIdx++] = prevATR;
+      prevATR /= optInTimePeriod;
+      outReal[outIdx++] = prevATR;
    }
 
    *outBegIdx    = startIdx;
@@ -290,23 +290,23 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::ATR( int    startIdx,
 /* Generated */                                  int    endIdx,
-/* Generated */                                  float        inHigh_0 __gc [],
-/* Generated */                                  float        inLow_0 __gc [],
-/* Generated */                                  float        inClose_0 __gc [],
-/* Generated */                                  int           optInTimePeriod_0, /* From 1 to 100000 */
+/* Generated */                                  float        inHigh __gc [],
+/* Generated */                                  float        inLow __gc [],
+/* Generated */                                  float        inClose __gc [],
+/* Generated */                                  int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal_0 __gc [] )
+/* Generated */                                  double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ATR( int    startIdx,
 /* Generated */                      int    endIdx,
-/* Generated */                      const float  inHigh_0[],
-/* Generated */                      const float  inLow_0[],
-/* Generated */                      const float  inClose_0[],
-/* Generated */                      int           optInTimePeriod_0, /* From 1 to 100000 */
+/* Generated */                      const float  inHigh[],
+/* Generated */                      const float  inLow[],
+/* Generated */                      const float  inClose[],
+/* Generated */                      int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                      int          *outBegIdx,
 /* Generated */                      int          *outNbElement,
-/* Generated */                      double        outReal_0[] )
+/* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    TA_RetCode retCode;
@@ -325,40 +325,40 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if(!inHigh_0||!inLow_0||!inClose_0)
+/* Generated */     if(!inHigh||!inLow||!inClose)
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInTimePeriod_0 = 14;
-/* Generated */     else if( ((int)optInTimePeriod_0 < 1) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 14;
+/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    *outBegIdx    = 0;
 /* Generated */    *outNbElement = 0;
-/* Generated */    lookbackTotal = TA_ATR_Lookback( optInTimePeriod_0 );
+/* Generated */    lookbackTotal = TA_ATR_Lookback( optInTimePeriod );
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */       return TA_SUCCESS;
-/* Generated */    if( optInTimePeriod_0 <= 1 )
+/* Generated */    if( optInTimePeriod <= 1 )
 /* Generated */    {
 /* Generated */       return TA_PREFIX(TRANGE)( startIdx, endIdx,
-/* Generated */                                 inHigh_0, inLow_0, inClose_0,
-/* Generated */                                 outBegIdx, outNbElement, outReal_0 );
+/* Generated */                                 inHigh, inLow, inClose,
+/* Generated */                                 outBegIdx, outNbElement, outReal );
 /* Generated */    }
 /* Generated */    ARRAY_ALLOC(tempBuffer, lookbackTotal+(endIdx-startIdx)+1 );
 /* Generated */    retCode = TA_PREFIX(TRANGE)( (startIdx-lookbackTotal+1), endIdx,
-/* Generated */                                 inHigh_0, inLow_0, inClose_0,
+/* Generated */                                 inHigh, inLow, inClose,
 /* Generated */                                 &outBegIdxTmp, &outNbElementTmp, tempBuffer );
 /* Generated */    if( retCode != TA_SUCCESS )
 /* Generated */    {
 /* Generated */       ARRAY_FREE( tempBuffer );
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    retCode = TA_INT_SMA( optInTimePeriod_0-1,
-/* Generated */                          optInTimePeriod_0-1,
-/* Generated */                          tempBuffer, optInTimePeriod_0,
+/* Generated */    retCode = TA_INT_SMA( optInTimePeriod-1,
+/* Generated */                          optInTimePeriod-1,
+/* Generated */                          tempBuffer, optInTimePeriod,
 /* Generated */                          &outBegIdx_MA, &outNbElement_MA, prevATRTemp );
 /* Generated */    if( retCode != TA_SUCCESS )
 /* Generated */    {
@@ -366,24 +366,24 @@
 /* Generated */       return retCode;    
 /* Generated */    }
 /* Generated */    prevATR = prevATRTemp[0];
-/* Generated */    today = optInTimePeriod_0;
+/* Generated */    today = optInTimePeriod;
 /* Generated */    outIdx = TA_Globals->unstablePeriod[TA_FUNC_UNST_ATR];
 /* Generated */    while( outIdx != 0 )
 /* Generated */    {
-/* Generated */       prevATR *= optInTimePeriod_0 - 1;
+/* Generated */       prevATR *= optInTimePeriod - 1;
 /* Generated */       prevATR += tempBuffer[today++];
-/* Generated */       prevATR /= optInTimePeriod_0;
+/* Generated */       prevATR /= optInTimePeriod;
 /* Generated */       outIdx--;
 /* Generated */    }
 /* Generated */    outIdx = 1;
-/* Generated */    outReal_0[0] = prevATR;
+/* Generated */    outReal[0] = prevATR;
 /* Generated */    nbATR = (endIdx - startIdx)+1;
 /* Generated */    while( --nbATR != 0 )
 /* Generated */    {
-/* Generated */       prevATR *= optInTimePeriod_0 - 1;
+/* Generated */       prevATR *= optInTimePeriod - 1;
 /* Generated */       prevATR += tempBuffer[today++];
-/* Generated */       prevATR /= optInTimePeriod_0;
-/* Generated */       outReal_0[outIdx++] = prevATR;
+/* Generated */       prevATR /= optInTimePeriod;
+/* Generated */       outReal[outIdx++] = prevATR;
 /* Generated */    }
 /* Generated */    *outBegIdx    = startIdx;
 /* Generated */    *outNbElement = outIdx;

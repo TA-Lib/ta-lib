@@ -75,17 +75,17 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
-/* Generated */                         int           optInSlowK_Period_1, /* From 1 to 100000 */
-/* Generated */                         TA_MAType     optInSlowK_MAType_2,
-/* Generated */                         int           optInSlowD_Period_3, /* From 1 to 100000 */
-/* Generated */                         TA_MAType     optInSlowD_MAType_4 ) /* Generated */ 
+/* Generated */ int Core::STOCH_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                         int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                         TA_MAType     optInSlowK_MAType,
+/* Generated */                         int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                         TA_MAType     optInSlowD_MAType ) /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
-/* Generated */                      int           optInSlowK_Period_1, /* From 1 to 100000 */
-/* Generated */                      TA_MAType     optInSlowK_MAType_2,
-/* Generated */                      int           optInSlowD_Period_3, /* From 1 to 100000 */
-/* Generated */                      TA_MAType     optInSlowD_MAType_4 ) /* Generated */ 
+/* Generated */ int TA_STOCH_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                      int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                      TA_MAType     optInSlowK_MAType,
+/* Generated */                      int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                      TA_MAType     optInSlowD_MAType ) /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -94,13 +94,13 @@
    int retValue;
    
    /* Account for the initial data needed for Fast-K. */
-   retValue = (optInFastK_Period_0 - 1);
+   retValue = (optInFastK_Period - 1);
          
    /* Add the smoothing being done for %K slow */
-   retValue += TA_MA_Lookback( optInSlowK_Period_1, optInSlowK_MAType_2 );  
+   retValue += TA_MA_Lookback( optInSlowK_Period, optInSlowK_MAType );  
 
    /* Add the smoothing being done for %D slow. */
-   retValue += TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4 );
+   retValue += TA_MA_Lookback( optInSlowD_Period, optInSlowD_MAType );
 
    return retValue;
 }
@@ -114,19 +114,19 @@
  * 
  * Optional Parameters
  * -------------------
- * optInFastK_Period_0:(From 1 to 100000)
+ * optInFastK_Period:(From 1 to 100000)
  *    Time period for building the Fast-K line
  * 
- * optInSlowK_Period_1:(From 1 to 100000)
+ * optInSlowK_Period:(From 1 to 100000)
  *    Smoothing for making the Slow-K line. Usually set to 3
  * 
- * optInSlowK_MAType_2:
+ * optInSlowK_MAType:
  *    Type of Moving Average for Slow-K
  * 
- * optInSlowD_Period_3:(From 1 to 100000)
+ * optInSlowD_Period:(From 1 to 100000)
  *    Smoothing for making the Slow-D line
  * 
- * optInSlowD_MAType_4:
+ * optInSlowD_MAType:
  *    Type of Moving Average for Slow-D
  * 
  * 
@@ -135,33 +135,33 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::STOCH( int    startIdx,
 /* Generated */                                    int    endIdx,
-/* Generated */                                    double       inHigh_0 __gc [],
-/* Generated */                                    double       inLow_0 __gc [],
-/* Generated */                                    double       inClose_0 __gc [],
-/* Generated */                                    int           optInFastK_Period_0, /* From 1 to 100000 */
-/* Generated */                                    int           optInSlowK_Period_1, /* From 1 to 100000 */
-/* Generated */                                    TA_MAType     optInSlowK_MAType_2,
-/* Generated */                                    int           optInSlowD_Period_3, /* From 1 to 100000 */
-/* Generated */                                    TA_MAType     optInSlowD_MAType_4,
+/* Generated */                                    double       inHigh __gc [],
+/* Generated */                                    double       inLow __gc [],
+/* Generated */                                    double       inClose __gc [],
+/* Generated */                                    int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                    int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                                    TA_MAType     optInSlowK_MAType,
+/* Generated */                                    int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                                    TA_MAType     optInSlowD_MAType,
 /* Generated */                                    [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                    [OutAttribute]Int32 *outNbElement,
-/* Generated */                                    double        outSlowK_0 __gc [],
-/* Generated */                                    double        outSlowD_1 __gc [] )
+/* Generated */                                    double        outSlowK __gc [],
+/* Generated */                                    double        outSlowD __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_STOCH( int    startIdx,
 /* Generated */                      int    endIdx,
-/* Generated */                      const double inHigh_0[],
-/* Generated */                      const double inLow_0[],
-/* Generated */                      const double inClose_0[],
-/* Generated */                      int           optInFastK_Period_0, /* From 1 to 100000 */
-/* Generated */                      int           optInSlowK_Period_1, /* From 1 to 100000 */
-/* Generated */                      TA_MAType     optInSlowK_MAType_2,
-/* Generated */                      int           optInSlowD_Period_3, /* From 1 to 100000 */
-/* Generated */                      TA_MAType     optInSlowD_MAType_4,
+/* Generated */                      const double inHigh[],
+/* Generated */                      const double inLow[],
+/* Generated */                      const double inClose[],
+/* Generated */                      int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                      int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                      TA_MAType     optInSlowK_MAType,
+/* Generated */                      int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                      TA_MAType     optInSlowD_MAType,
 /* Generated */                      int          *outBegIdx,
 /* Generated */                      int          *outNbElement,
-/* Generated */                      double        outSlowK_0[],
-/* Generated */                      double        outSlowD_1[] )
+/* Generated */                      double        outSlowK[],
+/* Generated */                      double        outSlowD[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -188,45 +188,45 @@
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
-/* Generated */    if(!inHigh_0||!inLow_0||!inClose_0)
+/* Generated */    if(!inHigh||!inLow||!inClose)
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    /* min/max are checked for optInFastK_Period_0. */
-/* Generated */    if( (int)optInFastK_Period_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInFastK_Period_0 = 5;
-/* Generated */    else if( ((int)optInFastK_Period_0 < 1) || ((int)optInFastK_Period_0 > 100000) )
+/* Generated */    /* min/max are checked for optInFastK_Period. */
+/* Generated */    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
+/* Generated */       optInFastK_Period = 5;
+/* Generated */    else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    /* min/max are checked for optInSlowK_Period_1. */
-/* Generated */    if( (int)optInSlowK_Period_1 == TA_INTEGER_DEFAULT )
-/* Generated */       optInSlowK_Period_1 = 3;
-/* Generated */    else if( ((int)optInSlowK_Period_1 < 1) || ((int)optInSlowK_Period_1 > 100000) )
-/* Generated */       return TA_BAD_PARAM;
-/* Generated */ 
-/* Generated */    #if !defined(_MANAGED)
-/* Generated */    if( (int)optInSlowK_MAType_2 == TA_INTEGER_DEFAULT )
-/* Generated */       optInSlowK_MAType_2 = 0;
-/* Generated */    else if( ((int)optInSlowK_MAType_2 < 0) || ((int)optInSlowK_MAType_2 > 8) )
-/* Generated */       return TA_BAD_PARAM;
-/* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) */
-/* Generated */    /* min/max are checked for optInSlowD_Period_3. */
-/* Generated */    if( (int)optInSlowD_Period_3 == TA_INTEGER_DEFAULT )
-/* Generated */       optInSlowD_Period_3 = 3;
-/* Generated */    else if( ((int)optInSlowD_Period_3 < 1) || ((int)optInSlowD_Period_3 > 100000) )
+/* Generated */    /* min/max are checked for optInSlowK_Period. */
+/* Generated */    if( (int)optInSlowK_Period == TA_INTEGER_DEFAULT )
+/* Generated */       optInSlowK_Period = 3;
+/* Generated */    else if( ((int)optInSlowK_Period < 1) || ((int)optInSlowK_Period > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED)
-/* Generated */    if( (int)optInSlowD_MAType_4 == TA_INTEGER_DEFAULT )
-/* Generated */       optInSlowD_MAType_4 = 0;
-/* Generated */    else if( ((int)optInSlowD_MAType_4 < 0) || ((int)optInSlowD_MAType_4 > 8) )
+/* Generated */    if( (int)optInSlowK_MAType == TA_INTEGER_DEFAULT )
+/* Generated */       optInSlowK_MAType = 0;
+/* Generated */    else if( ((int)optInSlowK_MAType < 0) || ((int)optInSlowK_MAType > 8) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) */
-/* Generated */    if( outSlowK_0 == NULL )
+/* Generated */    /* min/max are checked for optInSlowD_Period. */
+/* Generated */    if( (int)optInSlowD_Period == TA_INTEGER_DEFAULT )
+/* Generated */       optInSlowD_Period = 3;
+/* Generated */    else if( ((int)optInSlowD_Period < 1) || ((int)optInSlowD_Period > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outSlowD_1 == NULL )
+/* Generated */    #if !defined(_MANAGED)
+/* Generated */    if( (int)optInSlowD_MAType == TA_INTEGER_DEFAULT )
+/* Generated */       optInSlowD_MAType = 0;
+/* Generated */    else if( ((int)optInSlowD_MAType < 0) || ((int)optInSlowD_MAType > 8) )
+/* Generated */       return TA_BAD_PARAM;
+/* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) */
+/* Generated */    if( outSlowK == NULL )
+/* Generated */       return TA_BAD_PARAM;
+/* Generated */ 
+/* Generated */    if( outSlowD == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -267,9 +267,9 @@
     */
 
    /* Identify the lookback needed. */
-   lookbackK      = optInFastK_Period_0-1;
-   lookbackKSlow  = TA_MA_Lookback( optInSlowK_Period_1, optInSlowK_MAType_2 );
-   lookbackDSlow  = TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4 );
+   lookbackK      = optInFastK_Period-1;
+   lookbackKSlow  = TA_MA_Lookback( optInSlowK_Period, optInSlowK_MAType );
+   lookbackDSlow  = TA_MA_Lookback( optInSlowD_Period, optInSlowD_MAType );
    lookbackTotal  = lookbackK + lookbackDSlow + lookbackKSlow;
 
    /* Move up the start index if there is not
@@ -329,17 +329,17 @@
        */
       ARRAY_ALLOC( tempBuffer, endIdx-today+1 );
    #else
-      if( (outSlowK_0 == inHigh_0) || 
-          (outSlowK_0 == inLow_0)  || 
-          (outSlowK_0 == inClose_0) )
+      if( (outSlowK == inHigh) || 
+          (outSlowK == inLow)  || 
+          (outSlowK == inClose) )
       {
-         tempBuffer = outSlowK_0;
+         tempBuffer = outSlowK;
       }
-      else if( (outSlowD_1 == inHigh_0) ||
-               (outSlowD_1 == inLow_0)  ||
-               (outSlowD_1 == inClose_0) )
+      else if( (outSlowD == inHigh) ||
+               (outSlowD == inLow)  ||
+               (outSlowD == inClose) )
       {
-         tempBuffer = outSlowD_1;
+         tempBuffer = outSlowD;
       }
       else
       {
@@ -354,15 +354,15 @@
    while( today <= endIdx )
    {
       /* Set the lowest low */
-      tmp = inLow_0[today];
+      tmp = inLow[today];
       if( lowestIdx < trailingIdx )
       {
          lowestIdx = trailingIdx;
-         lowest = inLow_0[lowestIdx];
+         lowest = inLow[lowestIdx];
          i = lowestIdx;
          while( ++i<=today )
          {
-            tmp = inLow_0[i];
+            tmp = inLow[i];
             if( tmp < lowest )
             {
                lowestIdx = i;
@@ -379,15 +379,15 @@
       }
 
       /* Set the highest high */
-      tmp = inHigh_0[today];
+      tmp = inHigh[today];
       if( highestIdx < trailingIdx )
       {
          highestIdx = trailingIdx;
-         highest = inHigh_0[highestIdx];
+         highest = inHigh[highestIdx];
          i = highestIdx;
          while( ++i<=today )
          {
-            tmp = inHigh_0[i];
+            tmp = inHigh[i];
             if( tmp > highest )
             {
                highestIdx = i;
@@ -405,7 +405,7 @@
 
       /* Calculate stochastic. */
       if( diff != 0.0 )
-        tempBuffer[outIdx++] = (inClose_0[today]-lowest)/diff;
+        tempBuffer[outIdx++] = (inClose[today]-lowest)/diff;
       else
         tempBuffer[outIdx++] = 0.0;
 
@@ -419,8 +419,8 @@
     * "K-Slow", but often this end up to be shorten to "K".
     */
    retCode = TA_MA( 0, outIdx-1,
-                    tempBuffer, optInSlowK_Period_1,
-                    optInSlowK_MAType_2, 
+                    tempBuffer, optInSlowK_Period,
+                    optInSlowK_MAType, 
                     outBegIdx, outNbElement, tempBuffer );
 
 
@@ -441,16 +441,16 @@
     * the already smoothed %K.
     */
    retCode = TA_MA( 0, (*outNbElement)-1,
-                    tempBuffer, optInSlowD_Period_3,
-                    optInSlowD_MAType_4,
-                    outBegIdx, outNbElement, outSlowD_1 );
+                    tempBuffer, optInSlowD_Period,
+                    optInSlowD_MAType,
+                    outBegIdx, outNbElement, outSlowD );
 
    /* Copy tempBuffer into the caller buffer. 
     * (Calculation could not be done directly in the
     *  caller buffer because more input data then the
     *  requested range was needed for doing %D).
     */
-   ARRAY_MEMMOVE( outSlowK_0,0,tempBuffer,lookbackDSlow,*outNbElement);
+   ARRAY_MEMMOVE( outSlowK,0,tempBuffer,lookbackDSlow,*outNbElement);
 
    /* Don't need K anymore, free it if it was allocated here. */
    #if defined(USE_SINGLE_PRECISION_INPUT)
@@ -488,33 +488,33 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::STOCH( int    startIdx,
 /* Generated */                                    int    endIdx,
-/* Generated */                                    float        inHigh_0 __gc [],
-/* Generated */                                    float        inLow_0 __gc [],
-/* Generated */                                    float        inClose_0 __gc [],
-/* Generated */                                    int           optInFastK_Period_0, /* From 1 to 100000 */
-/* Generated */                                    int           optInSlowK_Period_1, /* From 1 to 100000 */
-/* Generated */                                    TA_MAType     optInSlowK_MAType_2,
-/* Generated */                                    int           optInSlowD_Period_3, /* From 1 to 100000 */
-/* Generated */                                    TA_MAType     optInSlowD_MAType_4,
+/* Generated */                                    float        inHigh __gc [],
+/* Generated */                                    float        inLow __gc [],
+/* Generated */                                    float        inClose __gc [],
+/* Generated */                                    int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                    int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                                    TA_MAType     optInSlowK_MAType,
+/* Generated */                                    int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                                    TA_MAType     optInSlowD_MAType,
 /* Generated */                                    [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                    [OutAttribute]Int32 *outNbElement,
-/* Generated */                                    double        outSlowK_0 __gc [],
-/* Generated */                                    double        outSlowD_1 __gc [] )
+/* Generated */                                    double        outSlowK __gc [],
+/* Generated */                                    double        outSlowD __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STOCH( int    startIdx,
 /* Generated */                        int    endIdx,
-/* Generated */                        const float  inHigh_0[],
-/* Generated */                        const float  inLow_0[],
-/* Generated */                        const float  inClose_0[],
-/* Generated */                        int           optInFastK_Period_0, /* From 1 to 100000 */
-/* Generated */                        int           optInSlowK_Period_1, /* From 1 to 100000 */
-/* Generated */                        TA_MAType     optInSlowK_MAType_2,
-/* Generated */                        int           optInSlowD_Period_3, /* From 1 to 100000 */
-/* Generated */                        TA_MAType     optInSlowD_MAType_4,
+/* Generated */                        const float  inHigh[],
+/* Generated */                        const float  inLow[],
+/* Generated */                        const float  inClose[],
+/* Generated */                        int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                        int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                        TA_MAType     optInSlowK_MAType,
+/* Generated */                        int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                        TA_MAType     optInSlowD_MAType,
 /* Generated */                        int          *outBegIdx,
 /* Generated */                        int          *outNbElement,
-/* Generated */                        double        outSlowK_0[],
-/* Generated */                        double        outSlowD_1[] )
+/* Generated */                        double        outSlowK[],
+/* Generated */                        double        outSlowD[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    TA_RetCode retCode;
@@ -531,40 +531,40 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if(!inHigh_0||!inLow_0||!inClose_0)
+/* Generated */     if(!inHigh||!inLow||!inClose)
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( (int)optInFastK_Period_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInFastK_Period_0 = 5;
-/* Generated */     else if( ((int)optInFastK_Period_0 < 1) || ((int)optInFastK_Period_0 > 100000) )
+/* Generated */     if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
+/* Generated */        optInFastK_Period = 5;
+/* Generated */     else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( (int)optInSlowK_Period_1 == TA_INTEGER_DEFAULT )
-/* Generated */        optInSlowK_Period_1 = 3;
-/* Generated */     else if( ((int)optInSlowK_Period_1 < 1) || ((int)optInSlowK_Period_1 > 100000) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     #if !defined(_MANAGED)
-/* Generated */     if( (int)optInSlowK_MAType_2 == TA_INTEGER_DEFAULT )
-/* Generated */        optInSlowK_MAType_2 = 0;
-/* Generated */     else if( ((int)optInSlowK_MAType_2 < 0) || ((int)optInSlowK_MAType_2 > 8) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     #endif 
-/* Generated */     if( (int)optInSlowD_Period_3 == TA_INTEGER_DEFAULT )
-/* Generated */        optInSlowD_Period_3 = 3;
-/* Generated */     else if( ((int)optInSlowD_Period_3 < 1) || ((int)optInSlowD_Period_3 > 100000) )
+/* Generated */     if( (int)optInSlowK_Period == TA_INTEGER_DEFAULT )
+/* Generated */        optInSlowK_Period = 3;
+/* Generated */     else if( ((int)optInSlowK_Period < 1) || ((int)optInSlowK_Period > 100000) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     #if !defined(_MANAGED)
-/* Generated */     if( (int)optInSlowD_MAType_4 == TA_INTEGER_DEFAULT )
-/* Generated */        optInSlowD_MAType_4 = 0;
-/* Generated */     else if( ((int)optInSlowD_MAType_4 < 0) || ((int)optInSlowD_MAType_4 > 8) )
+/* Generated */     if( (int)optInSlowK_MAType == TA_INTEGER_DEFAULT )
+/* Generated */        optInSlowK_MAType = 0;
+/* Generated */     else if( ((int)optInSlowK_MAType < 0) || ((int)optInSlowK_MAType > 8) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     #endif 
-/* Generated */     if( outSlowK_0 == NULL )
+/* Generated */     if( (int)optInSlowD_Period == TA_INTEGER_DEFAULT )
+/* Generated */        optInSlowD_Period = 3;
+/* Generated */     else if( ((int)optInSlowD_Period < 1) || ((int)optInSlowD_Period > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outSlowD_1 == NULL )
+/* Generated */     #if !defined(_MANAGED)
+/* Generated */     if( (int)optInSlowD_MAType == TA_INTEGER_DEFAULT )
+/* Generated */        optInSlowD_MAType = 0;
+/* Generated */     else if( ((int)optInSlowD_MAType < 0) || ((int)optInSlowD_MAType > 8) )
+/* Generated */        return TA_BAD_PARAM;
+/* Generated */     #endif 
+/* Generated */     if( outSlowK == NULL )
+/* Generated */        return TA_BAD_PARAM;
+/* Generated */     if( outSlowD == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    lookbackK      = optInFastK_Period_0-1;
-/* Generated */    lookbackKSlow  = TA_MA_Lookback( optInSlowK_Period_1, optInSlowK_MAType_2 );
-/* Generated */    lookbackDSlow  = TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4 );
+/* Generated */    lookbackK      = optInFastK_Period-1;
+/* Generated */    lookbackKSlow  = TA_MA_Lookback( optInSlowK_Period, optInSlowK_MAType );
+/* Generated */    lookbackDSlow  = TA_MA_Lookback( optInSlowD_Period, optInSlowD_MAType );
 /* Generated */    lookbackTotal  = lookbackK + lookbackDSlow + lookbackKSlow;
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
@@ -585,17 +585,17 @@
 /* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT)
 /* Generated */       ARRAY_ALLOC( tempBuffer, endIdx-today+1 );
 /* Generated */    #else
-/* Generated */       if( (outSlowK_0 == inHigh_0) || 
-/* Generated */           (outSlowK_0 == inLow_0)  || 
-/* Generated */           (outSlowK_0 == inClose_0) )
+/* Generated */       if( (outSlowK == inHigh) || 
+/* Generated */           (outSlowK == inLow)  || 
+/* Generated */           (outSlowK == inClose) )
 /* Generated */       {
-/* Generated */          tempBuffer = outSlowK_0;
+/* Generated */          tempBuffer = outSlowK;
 /* Generated */       }
-/* Generated */       else if( (outSlowD_1 == inHigh_0) ||
-/* Generated */                (outSlowD_1 == inLow_0)  ||
-/* Generated */                (outSlowD_1 == inClose_0) )
+/* Generated */       else if( (outSlowD == inHigh) ||
+/* Generated */                (outSlowD == inLow)  ||
+/* Generated */                (outSlowD == inClose) )
 /* Generated */       {
-/* Generated */          tempBuffer = outSlowD_1;
+/* Generated */          tempBuffer = outSlowD;
 /* Generated */       }
 /* Generated */       else
 /* Generated */       {
@@ -607,15 +607,15 @@
 /* Generated */    #endif
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
-/* Generated */       tmp = inLow_0[today];
+/* Generated */       tmp = inLow[today];
 /* Generated */       if( lowestIdx < trailingIdx )
 /* Generated */       {
 /* Generated */          lowestIdx = trailingIdx;
-/* Generated */          lowest = inLow_0[lowestIdx];
+/* Generated */          lowest = inLow[lowestIdx];
 /* Generated */          i = lowestIdx;
 /* Generated */          while( ++i<=today )
 /* Generated */          {
-/* Generated */             tmp = inLow_0[i];
+/* Generated */             tmp = inLow[i];
 /* Generated */             if( tmp < lowest )
 /* Generated */             {
 /* Generated */                lowestIdx = i;
@@ -630,15 +630,15 @@
 /* Generated */          lowest = tmp;
 /* Generated */          diff = (highest - lowest)/100.0;
 /* Generated */       }
-/* Generated */       tmp = inHigh_0[today];
+/* Generated */       tmp = inHigh[today];
 /* Generated */       if( highestIdx < trailingIdx )
 /* Generated */       {
 /* Generated */          highestIdx = trailingIdx;
-/* Generated */          highest = inHigh_0[highestIdx];
+/* Generated */          highest = inHigh[highestIdx];
 /* Generated */          i = highestIdx;
 /* Generated */          while( ++i<=today )
 /* Generated */          {
-/* Generated */             tmp = inHigh_0[i];
+/* Generated */             tmp = inHigh[i];
 /* Generated */             if( tmp > highest )
 /* Generated */             {
 /* Generated */                highestIdx = i;
@@ -654,15 +654,15 @@
 /* Generated */          diff = (highest - lowest)/100.0;
 /* Generated */       }
 /* Generated */       if( diff != 0.0 )
-/* Generated */         tempBuffer[outIdx++] = (inClose_0[today]-lowest)/diff;
+/* Generated */         tempBuffer[outIdx++] = (inClose[today]-lowest)/diff;
 /* Generated */       else
 /* Generated */         tempBuffer[outIdx++] = 0.0;
 /* Generated */       trailingIdx++;
 /* Generated */       today++; 
 /* Generated */    }
 /* Generated */    retCode = TA_MA( 0, outIdx-1,
-/* Generated */                     tempBuffer, optInSlowK_Period_1,
-/* Generated */                     optInSlowK_MAType_2, 
+/* Generated */                     tempBuffer, optInSlowK_Period,
+/* Generated */                     optInSlowK_MAType, 
 /* Generated */                     outBegIdx, outNbElement, tempBuffer );
 /* Generated */    if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
 /* Generated */    {
@@ -676,10 +676,10 @@
 /* Generated */       return retCode; 
 /* Generated */    }
 /* Generated */    retCode = TA_MA( 0, (*outNbElement)-1,
-/* Generated */                     tempBuffer, optInSlowD_Period_3,
-/* Generated */                     optInSlowD_MAType_4,
-/* Generated */                     outBegIdx, outNbElement, outSlowD_1 );
-/* Generated */    ARRAY_MEMMOVE( outSlowK_0,0,tempBuffer,lookbackDSlow,*outNbElement);
+/* Generated */                     tempBuffer, optInSlowD_Period,
+/* Generated */                     optInSlowD_MAType,
+/* Generated */                     outBegIdx, outNbElement, outSlowD );
+/* Generated */    ARRAY_MEMMOVE( outSlowK,0,tempBuffer,lookbackDSlow,*outNbElement);
 /* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT)
 /* Generated */       ARRAY_FREE( tempBuffer ); 
 /* Generated */    #else

@@ -75,10 +75,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::TEMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
+/* Generated */ int Core::TEMA_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_TEMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
+/* Generated */ int TA_TEMA_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -86,7 +86,7 @@
    /* insert lookback code here. */
 
    /* Get lookack for one EMA. */
-   int retValue = TA_EMA_Lookback( optInTimePeriod_0 );
+   int retValue = TA_EMA_Lookback( optInTimePeriod );
 
    return retValue * 3;
 }
@@ -100,7 +100,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to 100000)
+ * optInTimePeriod:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -109,19 +109,19 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::TEMA( int    startIdx,
 /* Generated */                                   int    endIdx,
-/* Generated */                                   double       inReal_0 __gc [],
-/* Generated */                                   int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                                   double       inReal __gc [],
+/* Generated */                                   int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                   [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double        outReal_0 __gc [] )
+/* Generated */                                   double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_TEMA( int    startIdx,
 /* Generated */                     int    endIdx,
-/* Generated */                     const double inReal_0[],
-/* Generated */                     int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                     const double inReal[],
+/* Generated */                     int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                     int          *outBegIdx,
 /* Generated */                     int          *outNbElement,
-/* Generated */                     double        outReal_0[] )
+/* Generated */                     double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -149,14 +149,14 @@
 /* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */    /* min/max are checked for optInTimePeriod_0. */
-/* Generated */    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod_0 = 30;
-/* Generated */    else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 30;
+/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -194,7 +194,7 @@
    *outBegIdx    = 0;
 
    /* Adjust startIdx to account for the lookback period. */
-   lookbackEMA = TA_EMA_Lookback( optInTimePeriod_0 );
+   lookbackEMA = TA_EMA_Lookback( optInTimePeriod );
    lookbackTotal = lookbackEMA * 3;
 
    if( startIdx < lookbackTotal )
@@ -211,9 +211,9 @@
       return TA_ALLOC_ERR;
 
    /* Calculate the first EMA */   
-   k = PER_TO_K(optInTimePeriod_0);
-   retCode = TA_PREFIX(INT_EMA)( startIdx-(lookbackEMA*2), endIdx, inReal_0,
-                                 optInTimePeriod_0, k,
+   k = PER_TO_K(optInTimePeriod);
+   retCode = TA_PREFIX(INT_EMA)( startIdx-(lookbackEMA*2), endIdx, inReal,
+                                 optInTimePeriod, k,
                                  &firstEMABegIdx, &firstEMANbElement, firstEMA );
    
    /* Verify for failure or if not enough data after
@@ -234,7 +234,7 @@
    }
 
    retCode = TA_INT_EMA( 0, firstEMANbElement-1, firstEMA,
-                         optInTimePeriod_0, k,
+                         optInTimePeriod, k,
                          &secondEMABegIdx, &secondEMANbElement, secondEMA );
 
    /* Return empty output on failure or if not enough data after
@@ -249,9 +249,9 @@
 
    /* Calculate the EMA3 into the caller provided output. */
    retCode = TA_INT_EMA( 0, secondEMANbElement-1, secondEMA,
-                         optInTimePeriod_0, k,
+                         optInTimePeriod, k,
                          &thirdEMABegIdx, &thirdEMANbElement,
-                         outReal_0 );
+                         outReal );
 
    /* Return empty output on failure or if not enough data after
     * calculating the third EMA.
@@ -277,7 +277,7 @@
    outIdx = 0;
    while( outIdx < thirdEMANbElement ) 
    {
-      outReal_0[outIdx] += (3.0*firstEMA[firstEMAIdx++]) - (3.0*secondEMA[secondEMAIdx++]);
+      outReal[outIdx] += (3.0*firstEMA[firstEMAIdx++]) - (3.0*secondEMA[secondEMAIdx++]);
       outIdx++;
    }
 
@@ -305,19 +305,19 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::TEMA( int    startIdx,
 /* Generated */                                   int    endIdx,
-/* Generated */                                   float        inReal_0 __gc [],
-/* Generated */                                   int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                                   float        inReal __gc [],
+/* Generated */                                   int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                   [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double        outReal_0 __gc [] )
+/* Generated */                                   double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_TEMA( int    startIdx,
 /* Generated */                       int    endIdx,
-/* Generated */                       const float  inReal_0[],
-/* Generated */                       int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                       const float  inReal[],
+/* Generated */                       int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                       int          *outBegIdx,
 /* Generated */                       int          *outNbElement,
-/* Generated */                       double        outReal_0[] )
+/* Generated */                       double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    ARRAY_REF(firstEMA);
@@ -334,17 +334,17 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */     if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInTimePeriod_0 = 30;
-/* Generated */     else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 30;
+/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    *outNbElement = 0;
 /* Generated */    *outBegIdx    = 0;
-/* Generated */    lookbackEMA = TA_EMA_Lookback( optInTimePeriod_0 );
+/* Generated */    lookbackEMA = TA_EMA_Lookback( optInTimePeriod );
 /* Generated */    lookbackTotal = lookbackEMA * 3;
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
@@ -354,9 +354,9 @@
 /* Generated */    ARRAY_ALLOC(firstEMA,tempInt);
 /* Generated */    if( !firstEMA )
 /* Generated */       return TA_ALLOC_ERR;
-/* Generated */    k = PER_TO_K(optInTimePeriod_0);
-/* Generated */    retCode = TA_PREFIX(INT_EMA)( startIdx-(lookbackEMA*2), endIdx, inReal_0,
-/* Generated */                                  optInTimePeriod_0, k,
+/* Generated */    k = PER_TO_K(optInTimePeriod);
+/* Generated */    retCode = TA_PREFIX(INT_EMA)( startIdx-(lookbackEMA*2), endIdx, inReal,
+/* Generated */                                  optInTimePeriod, k,
 /* Generated */                                  &firstEMABegIdx, &firstEMANbElement, firstEMA );
 /* Generated */    if( (retCode != TA_SUCCESS) || (firstEMANbElement == 0) )
 /* Generated */    {
@@ -370,7 +370,7 @@
 /* Generated */       return TA_ALLOC_ERR;
 /* Generated */    }
 /* Generated */    retCode = TA_INT_EMA( 0, firstEMANbElement-1, firstEMA,
-/* Generated */                          optInTimePeriod_0, k,
+/* Generated */                          optInTimePeriod, k,
 /* Generated */                          &secondEMABegIdx, &secondEMANbElement, secondEMA );
 /* Generated */    if( (retCode != TA_SUCCESS) || (secondEMANbElement == 0) )      
 /* Generated */    {
@@ -379,9 +379,9 @@
 /* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    retCode = TA_INT_EMA( 0, secondEMANbElement-1, secondEMA,
-/* Generated */                          optInTimePeriod_0, k,
+/* Generated */                          optInTimePeriod, k,
 /* Generated */                          &thirdEMABegIdx, &thirdEMANbElement,
-/* Generated */                          outReal_0 );
+/* Generated */                          outReal );
 /* Generated */    if( (retCode != TA_SUCCESS) || (thirdEMANbElement == 0) )
 /* Generated */    {
 /* Generated */       ARRAY_FREE( firstEMA );
@@ -394,7 +394,7 @@
 /* Generated */    outIdx = 0;
 /* Generated */    while( outIdx < thirdEMANbElement ) 
 /* Generated */    {
-/* Generated */       outReal_0[outIdx] += (3.0*firstEMA[firstEMAIdx++]) - (3.0*secondEMA[secondEMAIdx++]);
+/* Generated */       outReal[outIdx] += (3.0*firstEMA[firstEMAIdx++]) - (3.0*secondEMA[secondEMAIdx++]);
 /* Generated */       outIdx++;
 /* Generated */    }
 /* Generated */    ARRAY_FREE( firstEMA );
