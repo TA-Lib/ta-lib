@@ -117,9 +117,11 @@ static ErrorNumber do_test( const TA_History *history,
 
 static TA_Test tableTest[] =
 {
-   /* Test the fix for Bug#1089506 */
-   { TST_MINUS_DM, 1, 0, 0, 251, 1, TA_SUCCESS, 0,   0.0,   1,  252-1 },
-   { TST_PLUS_DM,  1, 0, 0, 251, 1, TA_SUCCESS, 0,   1.69,  1,  252-1 },
+   /* Test the fixes for Bug#1089506 */
+   { TST_MINUS_DI, 1, 0, 0, 251, 1, TA_SUCCESS, 0,   0.0, 1,  252-1 },
+   { TST_PLUS_DI,  1, 0, 0, 251, 1, TA_SUCCESS, 0,  0.478,  1,  252-1 },
+   { TST_MINUS_DM, 1, 0, 0, 251, 1, TA_SUCCESS, 0,   0.0,      1,  252-1 },
+   { TST_PLUS_DM,  1, 0, 0, 251, 1, TA_SUCCESS, 0,   1.69,     1,  252-1 },
    
    /* Normal regression tests. */
    { TST_ADXR,1, 0, 0, 251, 14, TA_SUCCESS, 0,   19.8666,   40,  252-40 }, /* First Value */
