@@ -304,5 +304,9 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
         * ( TA_CANDLEAVGPERIOD(SET) ? SUM / TA_CANDLEAVGPERIOD(SET) : TA_CANDLERANGE(SET,IDX) ) \
         / ( TA_CANDLERANGETYPE(SET) == TA_RangeType_Shadows ? 2 : 1 ) \
     )
+#define TA_REALBODYGAPUP(IDX2,IDX1)     ( min(inOpen[IDX2],inClose[IDX2]) > max(inOpen[IDX1],inClose[IDX1]) )
+#define TA_REALBODYGAPDOWN(IDX2,IDX1)   ( max(inOpen[IDX2],inClose[IDX2]) < min(inOpen[IDX1],inClose[IDX1]) )
+#define TA_CANDLEGAPUP(IDX2,IDX1)       ( inLow[IDX2] > inHigh[IDX1] )
+#define TA_CANDLEGAPDOWN(IDX2,IDX1)     ( inHigh[IDX2] < inLow[IDX1] )
 
 #endif
