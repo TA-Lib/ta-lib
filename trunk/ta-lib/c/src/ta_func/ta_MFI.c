@@ -408,7 +408,13 @@
 /* Generated */       CIRCBUF_NEXT(mflow);
 /* Generated */    }
 /* Generated */    if( today > startIdx )
-/* Generated */       outReal[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
+/* Generated */    {
+/* Generated */       tempValue1 = posSumMF+negSumMF;
+/* Generated */       if( tempValue1 < 1.0 )
+/* Generated */          outReal[outIdx++] = 0.0;
+/* Generated */       else
+/* Generated */          outReal[outIdx++] = 100.0*(posSumMF/tempValue1);
+/* Generated */    }
 /* Generated */    else
 /* Generated */    {
 /* Generated */       while( today < startIdx )
@@ -454,7 +460,11 @@
 /* Generated */          posSumMF += tempValue1;
 /* Generated */          mflow[mflow_Idx].negative = 0.0;
 /* Generated */       }
-/* Generated */       outReal[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
+/* Generated */       tempValue1 = posSumMF+negSumMF;
+/* Generated */       if( tempValue1 < 1.0 )
+/* Generated */          outReal[outIdx++] = 0.0;
+/* Generated */       else
+/* Generated */          outReal[outIdx++] = 100.0*(posSumMF/tempValue1);
 /* Generated */       CIRCBUF_NEXT(mflow);
 /* Generated */    }
 /* Generated */    CIRCBUF_DESTROY(mflow);

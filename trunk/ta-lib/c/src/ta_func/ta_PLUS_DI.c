@@ -533,7 +533,10 @@
 /* Generated */       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
 /* Generated */       prevClose = inClose[today];
 /* Generated */    }
-/* Generated */    outReal[0] = round_pos(100.0*(prevPlusDM/prevTR));
+/* Generated */    if( !TA_IS_ZERO(prevTR) )
+/* Generated */       outReal[0] = round_pos(100.0*(prevPlusDM/prevTR));
+/* Generated */    else
+/* Generated */       outReal[0] = 0.0;
 /* Generated */    outIdx = 1;
 /* Generated */    while( today < endIdx )
 /* Generated */    {
@@ -555,7 +558,10 @@
 /* Generated */       TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
 /* Generated */       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
 /* Generated */       prevClose = inClose[today];
-/* Generated */       outReal[outIdx++] = round_pos(100.0*(prevPlusDM/prevTR));
+/* Generated */       if( !TA_IS_ZERO(prevTR) )
+/* Generated */          outReal[outIdx++] = round_pos(100.0*(prevPlusDM/prevTR));
+/* Generated */       else
+/* Generated */          outReal[outIdx++] = 0.0;
 /* Generated */    }
 /* Generated */    *outNbElement = outIdx;
 /* Generated */    return TA_SUCCESS;
