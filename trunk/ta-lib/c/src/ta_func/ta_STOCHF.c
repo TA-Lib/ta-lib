@@ -65,7 +65,7 @@
 
 int TA_STOCHF_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
                         TA_Integer    optInFastD_Period_1, /* From 1 to TA_INTEGER_MAX */
-                        TA_Integer    optInFastD_MAType_2 ) 
+                        TA_MAType     optInFastD_MAType_2 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -108,7 +108,7 @@ TA_RetCode TA_STOCHF( TA_Integer    startIdx,
                       const TA_Real inClose_0[],
                       TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
                       TA_Integer    optInFastD_Period_1, /* From 1 to TA_INTEGER_MAX */
-                      TA_Integer    optInFastD_MAType_2,
+                      TA_MAType     optInFastD_MAType_2,
                       TA_Integer   *outBegIdx,
                       TA_Integer   *outNbElement,
                       TA_Real       outFastK_0[],
@@ -152,7 +152,7 @@ TA_RetCode TA_STOCHF( TA_Integer    startIdx,
 
    if( optInFastD_MAType_2 == TA_INTEGER_DEFAULT )
       optInFastD_MAType_2 = 0;
-   else if( (optInFastD_MAType_2 < 0) || (optInFastD_MAType_2 > 6) )
+   else if( (optInFastD_MAType_2 < 0) || (optInFastD_MAType_2 > 7) )
       return TA_BAD_PARAM;
 
    if( outFastK_0 == NULL )

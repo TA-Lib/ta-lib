@@ -63,14 +63,14 @@
 
 int TA_PPO_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
                      TA_Integer    optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                     TA_Integer    optInMethod_2 ) 
+                     TA_MAType     optInMAType_2 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
    (void)optInFastPeriod_0;
 
    /* Lookback is driven by the slow MA. */
-   return TA_MA_Lookback( optInSlowPeriod_1, optInMethod_2 );
+   return TA_MA_Lookback( optInSlowPeriod_1, optInMAType_2 );
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -88,7 +88,7 @@ int TA_PPO_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MA
  * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
  *    Number of period for the slow MA
  * 
- * optInMethod_2:
+ * optInMAType_2:
  *    Type of Moving Average
  * 
  * 
@@ -99,7 +99,7 @@ TA_RetCode TA_PPO( TA_Integer    startIdx,
                    const TA_Real inReal_0[],
                    TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
                    TA_Integer    optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                   TA_Integer    optInMethod_2,
+                   TA_MAType     optInMAType_2,
                    TA_Integer   *outBegIdx,
                    TA_Integer   *outNbElement,
                    TA_Real       outReal_0[] )
@@ -133,9 +133,9 @@ TA_RetCode TA_PPO( TA_Integer    startIdx,
    else if( (optInSlowPeriod_1 < 2) || (optInSlowPeriod_1 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( optInMethod_2 == TA_INTEGER_DEFAULT )
-      optInMethod_2 = 0;
-   else if( (optInMethod_2 < 0) || (optInMethod_2 > 6) )
+   if( optInMAType_2 == TA_INTEGER_DEFAULT )
+      optInMAType_2 = 0;
+   else if( (optInMAType_2 < 0) || (optInMAType_2 > 7) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -156,7 +156,7 @@ TA_RetCode TA_PPO( TA_Integer    startIdx,
                         inReal_0,
                         optInFastPeriod_0, /* From 1 to 200 */
                         optInSlowPeriod_1, /* From 1 to 200 */
-                        optInMethod_2,
+                        optInMAType_2,
                         outBegIdx,
                         outNbElement,
                         outReal_0,

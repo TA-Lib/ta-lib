@@ -64,11 +64,11 @@
 #endif
 
 int TA_MACDEXT_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                         TA_Integer    optInFastMAType_1,
+                         TA_MAType     optInFastMAType_1,
                          TA_Integer    optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
-                         TA_Integer    optInSlowMAType_3,
+                         TA_MAType     optInSlowMAType_3,
                          TA_Integer    optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
-                         TA_Integer    optInSignalMAType_5 ) 
+                         TA_MAType     optInSignalMAType_5 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -119,16 +119,16 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
                        TA_Integer    endIdx,
                        const TA_Real inReal_0[],
                        TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                       TA_Integer    optInFastMAType_1,
+                       TA_MAType     optInFastMAType_1,
                        TA_Integer    optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
-                       TA_Integer    optInSlowMAType_3,
+                       TA_MAType     optInSlowMAType_3,
                        TA_Integer    optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInSignalMAType_5,
+                       TA_MAType     optInSignalMAType_5,
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
-                       TA_Real       outRealMACD_0[],
-                       TA_Real       outRealMACDSignal_1[],
-                       TA_Real       outRealMACDHist_2[] )
+                       TA_Real       outMACD_0[],
+                       TA_Real       outMACDSignal_1[],
+                       TA_Real       outMACDHist_2[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
@@ -159,7 +159,7 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
 
    if( optInFastMAType_1 == TA_INTEGER_DEFAULT )
       optInFastMAType_1 = 0;
-   else if( (optInFastMAType_1 < 0) || (optInFastMAType_1 > 6) )
+   else if( (optInFastMAType_1 < 0) || (optInFastMAType_1 > 7) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowPeriod_2. */
@@ -170,7 +170,7 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
 
    if( optInSlowMAType_3 == TA_INTEGER_DEFAULT )
       optInSlowMAType_3 = 0;
-   else if( (optInSlowMAType_3 < 0) || (optInSlowMAType_3 > 6) )
+   else if( (optInSlowMAType_3 < 0) || (optInSlowMAType_3 > 7) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSignalPeriod_4. */
@@ -181,16 +181,16 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
 
    if( optInSignalMAType_5 == TA_INTEGER_DEFAULT )
       optInSignalMAType_5 = 0;
-   else if( (optInSignalMAType_5 < 0) || (optInSignalMAType_5 > 6) )
+   else if( (optInSignalMAType_5 < 0) || (optInSignalMAType_5 > 7) )
       return TA_BAD_PARAM;
 
-   if( outRealMACD_0 == NULL )
+   if( outMACD_0 == NULL )
       return TA_BAD_PARAM;
 
-   if( outRealMACDSignal_1 == NULL )
+   if( outMACDSignal_1 == NULL )
       return TA_BAD_PARAM;
 
-   if( outRealMACDHist_2 == NULL )
+   if( outMACDHist_2 == NULL )
       return TA_BAD_PARAM;
 
 #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -310,12 +310,12 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
       fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
 
    /* Copy the result into the output for the caller. */
-   memcpy( outRealMACD_0, &fastMABuffer[lookbackSignal], ((endIdx-startIdx)+1)*sizeof(TA_Real) );
+   memcpy( outMACD_0, &fastMABuffer[lookbackSignal], ((endIdx-startIdx)+1)*sizeof(TA_Real) );
 
    /* Calculate the signal/trigger line. */
    retCode = TA_MA( 0, outNbElement1-1,
                     fastMABuffer, optInSignalPeriod_4, optInSignalMAType_5,
-                    &outBegIdx2, &outNbElement2, outRealMACDSignal_1 );
+                    &outBegIdx2, &outNbElement2, outMACDSignal_1 );
 
    TA_Free( fastMABuffer );
    TA_Free( slowMABuffer );
@@ -329,7 +329,7 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
 
    /* Calculate the histogram. */
    for( i=0; i < outNbElement2; i++ )
-      outRealMACDHist_2[i] = outRealMACD_0[i]-outRealMACDSignal_1[i];
+      outMACDHist_2[i] = outMACD_0[i]-outMACDSignal_1[i];
 
    /* All done! Indicate the output limits and return success. */
    *outBegIdx     = startIdx;

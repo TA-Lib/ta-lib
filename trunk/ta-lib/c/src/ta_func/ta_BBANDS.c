@@ -67,7 +67,7 @@
 int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                         TA_Real       optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                         TA_Real       optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        TA_Integer    optInMethod_3 ) 
+                        TA_MAType     optInMAType_3 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -75,7 +75,7 @@ int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER
    (void)optInNbDevDn_2;
 
    /* The lookback is driven by the middle band moving average. */
-   return TA_MA_Lookback( optInTimePeriod_0, optInMethod_3 );                          
+   return TA_MA_Lookback( optInTimePeriod_0, optInMAType_3 );                          
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -96,7 +96,7 @@ int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER
  * optInNbDevDn_2:(From TA_REAL_MIN to TA_REAL_MAX)
  *    Deviation multiplier for lower band
  * 
- * optInMethod_3:
+ * optInMAType_3:
  *    Type of Moving Average
  * 
  * 
@@ -108,7 +108,7 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
                       TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                       TA_Real       optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                       TA_Real       optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-                      TA_Integer    optInMethod_3,
+                      TA_MAType     optInMAType_3,
                       TA_Integer   *outBegIdx,
                       TA_Integer   *outNbElement,
                       TA_Real       outRealUpperBand_0[],
@@ -151,9 +151,9 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
    else if( (optInNbDevDn_2 < -3.000000e+37) || (optInNbDevDn_2 > 3.000000e+37) )
       return TA_BAD_PARAM;
 
-   if( optInMethod_3 == TA_INTEGER_DEFAULT )
-      optInMethod_3 = 0;
-   else if( (optInMethod_3 < 0) || (optInMethod_3 > 6) )
+   if( optInMAType_3 == TA_INTEGER_DEFAULT )
+      optInMAType_3 = 0;
+   else if( (optInMAType_3 < 0) || (optInMAType_3 > 7) )
       return TA_BAD_PARAM;
 
    if( outRealUpperBand_0 == NULL )
@@ -213,7 +213,7 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
    retCode = TA_MA( startIdx, endIdx,
                     inReal_0,
                     optInTimePeriod_0,
-                    optInMethod_3,
+                    optInMAType_3,
                     outBegIdx, outNbElement, tempBuffer1 );
 
    if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
@@ -223,7 +223,7 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
    }
 
    /* Calculate the standard deviation into tempBuffer2. */
-   if( optInMethod_3 == TA_BBANDS_SMA )
+   if( optInMAType_3 == TA_MAType_SMA )
    {
       /* A small speed optimization by re-using the
        * already calculated SMA.
