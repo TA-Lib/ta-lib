@@ -102,7 +102,7 @@ typedef struct
     * derived from this information.
     *
     * Leave these pointers to NULL if
-    * you do not care for MAE measurements.
+    * you do not care for excursion measurements.
     *
     * It is assumed that highPrice[0] and lowPrice[0] 
     * are for the bar where the ENTRY occured.
@@ -439,9 +439,9 @@ typedef struct
 TA_RetCode TA_PMReportAlloc( TA_PM *pm, TA_PMReport **newAllocatedReport );
 TA_RetCode TA_PMReportFree ( TA_PMReport *toBeFreed );
 
-/* Append all measurements into a file. 
+/* Append all measurements to a file. 
  *
- * The report is in text and formatted for
+ * The report is in ASCII and is formatted for
  * being printer friendly.
  */
 TA_RetCode TA_PMReportToFile( TA_PM *pm, FILE *out ); 
@@ -457,27 +457,6 @@ TA_RetCode TA_PMReportToFile( TA_PM *pm, FILE *out );
  * In other word, you have to free all the TA_TradeReport before 
  * freeing the corresponding TA_PM.
  * 
- * Here is an example displaying many fields of the report:
- *
- *
- * void displayAllTrades( TA_PM *thePM )
- * {
- *    TA_RetCode retCode;
- *    TA_PMTradeReport *report;
- *
- *    retCode = TA_PMTradeReportAlloc( thePM, &report );
- *
- *    if( retCode == TA_SUCCESS )
- *    {
- *       printf( "Entry Price   Exit Price   Profit   Qty   MAE   MinFE" );
- *       printf( "=====================================================" );
- *       for( i=0; i < report->nbTrades; i++ )
- *       {
- *          ...
- *       }
- *       TA_PMTradeReportFree( report );
- *    }
- * }
  */
 typedef struct
 {
@@ -499,11 +478,11 @@ typedef struct
     * to calculate these so they are going to be set
     * to TA_REAL_DEFAULT (see ta_defs.h).
     *
-    * These calculations are the same as defined by
-    * John Sweeney in his books:
-    *
-    *
-    *
+    * These calculations are the same as defined in the
+	* book:
+    *  Maximum Adverse Excursion
+	*  Analyzing Price Fluctuations For Trading Management
+    *  by John Sweeney. ISBN: 0-471-14152-6
     */
    double mae;   /* Maximum Adverse Excursion   */
    double minfe; /* Minimum Favorable Excursion */
@@ -522,6 +501,13 @@ typedef struct
 
 TA_RetCode TA_TradeReportAlloc( TA_PM *pm, TA_TradeReport **tradeReportAllocated );
 TA_RetCode TA_TradeReportFree ( TA_TradeReport *toBeFreed );
+
+/* Append the trade-by-trade report to a file.
+ *
+ * The report is in ASCII and is formatted for
+ * being printer friendly.
+ */
+TA_RetCode TA_TradeReportToFile( TA_TradeReport *tradeReport, FILE *out );
 
 #ifdef __cplusplus
 }
