@@ -368,7 +368,37 @@ static ErrorNumber test_one_symbol( TA_UDBase *udb )
    ErrorNumber errNumber;
    TA_HistoryAllocParam histParam;
 
-   /* Add the Yaho! data source. */
+#if 0
+   /* Get KPN.AS 
+    *
+    * Around 9/5/2004 that symbol had a negative dividend returned from Yahoo!.
+    * Un-comment this section of the code to test the TA_INVALID_NEGATIVE_DIVIDEND
+    * return value.
+    */
+   memset( &param, 0, sizeof( param ) );
+   param.id = TA_YAHOO_ONE_SYMBOL;
+   param.info = "KPN.AS";
+   retCode = TA_AddDataSource( udb, &param );
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_AddDataSource", retCode );
+      return TA_YAHOO_ADDDATASOURCE_KPN_AS_FAILED;
+   }
+
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.symbol   = "KPN.AS";
+   histParam.field    = TA_CLOSE|TA_VOLUME;
+   histParam.period   = TA_DAILY;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_HistoryAlloc", retCode );
+      return TA_YAHOO_HISTORYALLOC_KPN_AS_FAILED;
+   } 
+   TA_HistoryFree( history );
+#endif
+
+   /* Test with MSFT on NASDAQ stock. */
    memset( &param, 0, sizeof( param ) );
    param.id = TA_YAHOO_ONE_SYMBOL;
    param.info = "MSFT";
@@ -484,7 +514,7 @@ static ErrorNumber test_one_symbol( TA_UDBase *udb )
       reportError( "TA_HistoryFree", retCode );
       return TA_YAHOO_HISTORYFREE_FAILED;
    }
-
+   
    return TA_TEST_PASS;
 }
 
