@@ -2639,14 +2639,6 @@ TA_Compatibility TA_GetCompatibility( void );
  * 'long body', 'short shadows', etc.
  */
 
-/* TA_CandleSetting is the one setting struct */
-typedef struct {
-    TA_CandleSettingType    settingType;
-    TA_RangeType            rangeType;
-    int                     avgPeriod;
-    double                  factor;
-} TA_CandleSetting;
-
 /* Call TA_SetCandleSettings to set that when comparing a candle 
  * basing on settingType it must be compared with the average 
  * of the last avgPeriod candles' rangeType multiplied by factor.
