@@ -2959,13 +2959,13 @@ int TA_CDLKICKING_Lookback( void );
 
 
 /*
- * TA_CDLKICKINGbyLength - Kicking - bull/bear determined by the longer marubozu
+ * TA_CDLKICKINGBYLENGTH - Kicking - bull/bear determined by the longer marubozu
  * 
  * Input  = Open, High, Low, Close
  * Output = int
  * 
  */
-TA_RetCode TA_CDLKICKINGbyLength( int    startIdx,
+TA_RetCode TA_CDLKICKINGBYLENGTH( int    startIdx,
                                   int    endIdx,
                                   const double inOpen[],
                                   const double inHigh[],
@@ -2975,7 +2975,7 @@ TA_RetCode TA_CDLKICKINGbyLength( int    startIdx,
                                   int          *outNbElement,
                                   int           outInteger[] );
 
-TA_RetCode TA_S_CDLKICKINGbyLength( int    startIdx,
+TA_RetCode TA_S_CDLKICKINGBYLENGTH( int    startIdx,
                                     int    endIdx,
                                     const float  inOpen[],
                                     const float  inHigh[],
@@ -2985,7 +2985,7 @@ TA_RetCode TA_S_CDLKICKINGbyLength( int    startIdx,
                                     int          *outNbElement,
                                     int           outInteger[] );
 
-int TA_CDLKICKINGbyLength_Lookback( void );
+int TA_CDLKICKINGBYLENGTH_Lookback( void );
 
 
 /*

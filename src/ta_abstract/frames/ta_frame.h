@@ -798,13 +798,13 @@
 /* Generated */ unsigned int TA_CDLKICKING_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
-/* Generated */ TA_RetCode TA_CDLKICKINGbyLength_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */ TA_RetCode TA_CDLKICKINGBYLENGTH_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
 /* Generated */                           int           *outBegIdx,
 /* Generated */                           int           *outNbElement )
 ;
-/* Generated */ unsigned int TA_CDLKICKINGbyLength_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ unsigned int TA_CDLKICKINGBYLENGTH_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
 /* Generated */ TA_RetCode TA_CDLLONGLEGGEDDOJI_FramePP( const TA_ParamHolderPriv *params,

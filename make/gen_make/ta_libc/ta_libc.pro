@@ -162,7 +162,7 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_CDLINNECK.c \
           ../../../../../src/ta_func/ta_CDLINVERTEDHAMMER.c \
           ../../../../../src/ta_func/ta_CDLKICKING.c \
-          ../../../../../src/ta_func/ta_CDLKICKINGbyLength.c \
+          ../../../../../src/ta_func/ta_CDLKICKINGBYLENGTH.c \
           ../../../../../src/ta_func/ta_CDLLONGLEGGEDDOJI.c \
           ../../../../../src/ta_func/ta_CDLLONGLINE.c \
           ../../../../../src/ta_func/ta_CDLMARUBOZU.c \

@@ -1841,13 +1841,13 @@
 /* Generated */    (void)params;
 /* Generated */    return TA_CDLKICKING_Lookback( );
 /* Generated */ }
-/* Generated */ TA_RetCode TA_CDLKICKINGbyLength_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */ TA_RetCode TA_CDLKICKINGBYLENGTH_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
 /* Generated */                           int           *outBegIdx,
 /* Generated */                           int           *outNbElement )
 /* Generated */ {
-/* Generated */    return TA_CDLKICKINGbyLength(
+/* Generated */    return TA_CDLKICKINGBYLENGTH(
 /* Generated */                            startIdx,
 /* Generated */                            endIdx,
 /* Generated */                            params->in[0].data.inPrice.open, /* inOpen */
@@ -1858,10 +1858,10 @@
 /* Generated */                            outNbElement, 
 /* Generated */                            params->out[0].data.outInteger /*  outInteger */ );
 /* Generated */ }
-/* Generated */ unsigned int TA_CDLKICKINGbyLength_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ unsigned int TA_CDLKICKINGBYLENGTH_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
 /* Generated */    (void)params;
-/* Generated */    return TA_CDLKICKINGbyLength_Lookback( );
+/* Generated */    return TA_CDLKICKINGBYLENGTH_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_CDLLONGLEGGEDDOJI_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
