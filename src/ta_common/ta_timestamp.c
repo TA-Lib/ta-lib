@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -45,6 +45,7 @@
  *  110199 MF   First version. Simply encapsulate iMatix.
  *  042003 MF   Fix #724662 for TA_GetTime + code clean-up
  *  082703 MF   Add TA_TimestampCompare
+ *  020104 MF   Add TA_TimestampValidateYMD and TA_TimestampValidateHMS
  */
 
 /* Description:
@@ -277,6 +278,28 @@ TA_RetCode TA_TimestampValidate( const TA_Timestamp *timestamp )
        return TA_BAD_PARAM;
 
     if( valid_date(timestamp->date) && valid_time(timestamp->time) )
+       return TA_SUCCESS;
+
+    return TA_BAD_PARAM;
+}
+
+TA_RetCode TA_TimestampValidateYMD( const TA_Timestamp *timestamp )
+{
+    if( !timestamp )
+       return TA_BAD_PARAM;
+
+    if( valid_date(timestamp->date) )
+       return TA_SUCCESS;
+
+    return TA_BAD_PARAM;
+}
+
+TA_RetCode TA_TimestampValidateHMS( const TA_Timestamp *timestamp )
+{
+    if( !timestamp )
+       return TA_BAD_PARAM;
+
+    if( valid_time(timestamp->time) )
        return TA_SUCCESS;
 
     return TA_BAD_PARAM;
