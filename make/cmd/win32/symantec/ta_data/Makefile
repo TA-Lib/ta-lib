@@ -44,6 +44,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_handle.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_local.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c \
 		..\..\..\..\..\src\ta_data\ta_token.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_handle.c \
@@ -77,6 +78,7 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\ta_sql_handle.obj \
 		..\..\..\..\..\temp\cmd\ta_sql_local.obj \
 		..\..\..\..\..\temp\cmd\ta_sql_minidriver.obj \
+		..\..\..\..\..\temp\cmd\ta_sql_odbc.obj \
 		..\..\..\..\..\temp\cmd\ta_token.obj \
 		..\..\..\..\..\temp\cmd\ta_yahoo.obj \
 		..\..\..\..\..\temp\cmd\ta_yahoo_handle.obj \
@@ -137,6 +139,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmd\ta_sql_handle.obj \
 +..\..\..\..\..\temp\cmd\ta_sql_local.obj \
 +..\..\..\..\..\temp\cmd\ta_sql_minidriver.obj \
++..\..\..\..\..\temp\cmd\ta_sql_odbc.obj \
 +..\..\..\..\..\temp\cmd\ta_token.obj \
 +..\..\..\..\..\temp\cmd\ta_yahoo.obj \
 +..\..\..\..\..\temp\cmd\ta_yahoo_handle.obj \
@@ -183,6 +186,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_sql_handle.obj
 	-del ..\..\..\..\..\temp\cmd\ta_sql_local.obj
 	-del ..\..\..\..\..\temp\cmd\ta_sql_minidriver.obj
+	-del ..\..\..\..\..\temp\cmd\ta_sql_odbc.obj
 	-del ..\..\..\..\..\temp\cmd\ta_token.obj
 	-del ..\..\..\..\..\temp\cmd\ta_yahoo.obj
 	-del ..\..\..\..\..\temp\cmd\ta_yahoo_handle.obj
@@ -279,6 +283,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_sql_minidriver.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_sql_minidriver.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c
+
+..\..\..\..\..\temp\cmd\ta_sql_odbc.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_sql_odbc.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_odbc.c
 
 ..\..\..\..\..\temp\cmd\ta_token.obj: ..\..\..\..\..\src\ta_data\ta_token.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_token.obj ..\..\..\..\..\src\ta_data\ta_token.c
