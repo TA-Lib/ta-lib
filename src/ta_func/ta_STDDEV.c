@@ -36,14 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  JV       Jesus Virer <324122@cienz.unizar.es>
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
- *
+ *  100502 JV   Speed optimization of the algorithm
  */
 
 #include <math.h>
@@ -190,34 +190,37 @@ void TA_INT_stddev_using_precalc_ma( const TA_Real *inReal,
                                      TA_Integer timePeriod,
                                      TA_Real *output )
 {
-   int i, j;
-   TA_Real tempReal, devSum;
+   TA_Real tempReal, periodTotal2, meanValue2;
+   int outIdx;
 
-   /* Start/end index for sumation of deviation. */
-   int startDevSum, endDevSum; 
-     
-   startDevSum = 1+inMovAvgBegIdx-timePeriod;
-   endDevSum   = inMovAvgBegIdx;
+   /* Start/end index for sumation. */
+   int startSum, endSum;
 
-   for( i=0; i < inMovAvgNbElement; i++, startDevSum++, endDevSum++ )
+   startSum = 1+inMovAvgBegIdx-timePeriod;
+   endSum = inMovAvgBegIdx;
+
+   periodTotal2 = 0;
+
+   for( outIdx = startSum; outIdx < endSum; outIdx++)
    {
-      /* Square and add all the deviation over
-       * the moving average period.
-       */
-      devSum = 0;
-      for( j=startDevSum; j <= endDevSum; j++ )
-      {
-         tempReal  = inReal[j]-inMovAvg[i];
-         tempReal *= tempReal;
-         devSum   += tempReal;
-      }
+      tempReal = inReal[outIdx];
+      tempReal *= tempReal;
+      periodTotal2 += tempReal;
+   }
 
-      /* Dividing the sum of deviation by the period
-       * gives the variance. The sqrt finally gives
-       * the standard deviation.
-       */
-      output[i] = sqrt( devSum / timePeriod );
+   for( outIdx=0; outIdx < inMovAvgNbElement; outIdx++, startSum++, endSum++ )
+   {
+      tempReal = inReal[endSum];
+      tempReal *= tempReal;
+      periodTotal2 += tempReal;
+      meanValue2 = periodTotal2/timePeriod;
+
+      tempReal = inReal[startSum];
+      tempReal *= tempReal;
+      periodTotal2 -= tempReal;
+
+      tempReal = inMovAvg[outIdx];
+      tempReal *= tempReal;
+      output[outIdx] = sqrt( meanValue2-tempReal );
    }
 }
-
-
