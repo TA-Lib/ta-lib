@@ -203,9 +203,9 @@ typedef struct
    const char * helpFile;
    TA_FuncFlags flags;
 
-   const unsigned int nbInput;
-   const unsigned int nbOptInput;
-   const unsigned int nbOutput;
+   unsigned int nbInput;
+   unsigned int nbOptInput;
+   unsigned int nbOutput;
 
    const TA_FuncHandle *handle;
 } TA_FuncInfo;
