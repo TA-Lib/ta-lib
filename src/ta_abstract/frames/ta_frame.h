@@ -324,7 +324,25 @@ TA_RetCode TA_STOCH_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
+TA_RetCode TA_STOCHF_FramePP( TA_Libc            *libHandle,
+                          TA_Integer          startIdx,
+                          TA_Integer          endIdx,
+                          TA_Integer         *outBegIdx,
+                          TA_Integer         *outNbElement,
+                          TA_ParamHolderPriv  in[],
+                          TA_ParamHolderPriv  optIn[],
+                          TA_ParamHolderPriv  out[] );
+
 TA_RetCode TA_TRIX_FramePP( TA_Libc            *libHandle,
+                          TA_Integer          startIdx,
+                          TA_Integer          endIdx,
+                          TA_Integer         *outBegIdx,
+                          TA_Integer         *outNbElement,
+                          TA_ParamHolderPriv  in[],
+                          TA_ParamHolderPriv  optIn[],
+                          TA_ParamHolderPriv  out[] );
+
+TA_RetCode TA_WILLR_FramePP( TA_Libc            *libHandle,
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
