@@ -159,8 +159,8 @@ TA_RetCode TA_GetFuncHandle( const char *name,
 /* Get some basic information about a function.
  *
  * A const pointer will be set on the corresponding TA_FuncInfo structure.
- * The whole structure is constant and it can be assumed it will not change
- * in the running lifetime of the software.
+ * The whole structure are hard coded constants and it can be assumed they
+ * will not change at runtime.
  *
  * Example:
  *   Print the number of inputs used by the MA (moving average) function.
@@ -215,7 +215,7 @@ TA_RetCode TA_GetFuncInfo( const TA_FuncHandle *handle,
 
 /* An alternate way to access all the functions is through the
  * use of the TA_ForEachFunc(). You can setup a function to be
- * call back for each TA function in the TA-LIB.
+ * call back for each TA function in the TA-Lib.
  *
  * Example:
  *  This code will print the group and name of all available functions.
@@ -237,9 +237,9 @@ TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
 /* The next section includes the data structures and function allowing to
  * proceed with the call of a Tech. Analysis function.
  *
- * At first, it may seems a little bit complexe, but it is worth to take the
- * effort to understand these well. After all, once you did implement it, you
- * get access to the complete library of TA functions without further effort.
+ * At first, it may seems a little bit complicated, but it is worth to take the
+ * effort to learn about it. Once you succeed to interface with TA-Abstract you get
+ * access to the complete library of TA functions at once without further effort.
  */
 
 /* Structures representing extended information on a parameter. */
@@ -407,7 +407,7 @@ typedef struct
 
 } TA_OutputParameterInfo;
 
-/* Functions to set a const ptr on the "TA_XXXXXXParameterInfo".
+/* Functions to get a const ptr on the "TA_XXXXXXParameterInfo".
  * Max value for the 'paramIndex' can be found in the TA_FuncInfo structure.
  * The 'handle' can be obtained from TA_GetFuncHandle or from a TA_FuncInfo.
  *
@@ -420,7 +420,7 @@ typedef struct
  *
  *    for( i=0; i < funcInfo->nbInput; i++ )
  *    {
- *       TA_SetInputParameterInfoPtr( funcInfo->handle, i, &paramInfo );
+ *       TA_GetInputParameterInfo( funcInfo->handle, i, &paramInfo );
  *       switch( paramInfo->type )
  *       {
  *       case TA_Input_Price:
@@ -434,17 +434,17 @@ typedef struct
  *    }
  * }
  */
-TA_RetCode TA_SetInputParameterInfoPtr( const TA_FuncHandle *handle,
+TA_RetCode TA_GetInputParameterInfo( const TA_FuncHandle *handle,
+                                     unsigned int paramIndex,
+                                     const TA_InputParameterInfo **info );
+
+TA_RetCode TA_GetOptInputParameterInfo( const TA_FuncHandle *handle,
                                         unsigned int paramIndex,
-                                        const TA_InputParameterInfo **info );
+                                        const TA_OptInputParameterInfo **info );
 
-TA_RetCode TA_SetOptInputParameterInfoPtr( const TA_FuncHandle *handle,
-                                           unsigned int paramIndex,
-                                           const TA_OptInputParameterInfo **info );
-
-TA_RetCode TA_SetOutputParameterInfoPtr( const TA_FuncHandle *handle,
-                                         unsigned int paramIndex,
-                                         const TA_OutputParameterInfo **info );
+TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
+                                      unsigned int paramIndex,
+                                      const TA_OutputParameterInfo **info );
 
 /* Alloc a structure allowing to build the list of parameters
  * for doing a call.
@@ -458,7 +458,7 @@ TA_RetCode TA_SetOutputParameterInfoPtr( const TA_FuncHandle *handle,
  * If there is an attempts to set a parameter with the wrong function
  * (and thus the wrong type), TA_BAD_PARAM will be immediatly returned.
  *
- * Although this mechanism looks complexe, it is written for being fairly solid.
+ * Although this mechanism looks complicated, it is written for being fairly solid.
  * If you provide a wrong parameter value, or wrong type, or wrong pointer etc. the
  * library shall return TA_BAD_PARAM or TA_BAD_OBJECT and not hang.
  */

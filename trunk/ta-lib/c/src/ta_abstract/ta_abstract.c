@@ -46,6 +46,8 @@
  *  110302 MF   Re-design the interface related to TA_CallFunc for being
  *              faster and use less memory allocation.
  *  022904 MF   Add TA_GetLookback
+ *  031404 MF   Some function renaming for consistency and better
+ *              Perl integration.
  */
 
 /* Description:
@@ -511,9 +513,9 @@ TA_RetCode TA_GetFuncInfo(  const TA_FuncHandle *handle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_SetInputParameterInfoPtr( const TA_FuncHandle *handle,
-                                        unsigned int paramIndex,
-                                        const TA_InputParameterInfo **info )
+TA_RetCode TA_GetInputParameterInfo( const TA_FuncHandle *handle,
+                                     unsigned int paramIndex,
+                                     const TA_InputParameterInfo **info )
 {
    TA_PROLOG
    const TA_FuncDef  *funcDef;
@@ -555,9 +557,9 @@ TA_RetCode TA_SetInputParameterInfoPtr( const TA_FuncHandle *handle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_SetOptInputParameterInfoPtr( const TA_FuncHandle *handle,
-                                           unsigned int paramIndex,
-                                           const TA_OptInputParameterInfo **info )
+TA_RetCode TA_GetOptInputParameterInfo( const TA_FuncHandle *handle,
+                                        unsigned int paramIndex,
+                                        const TA_OptInputParameterInfo **info )
 {
    TA_PROLOG
    const TA_FuncDef  *funcDef;
@@ -600,9 +602,9 @@ TA_RetCode TA_SetOptInputParameterInfoPtr( const TA_FuncHandle *handle,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_SetOutputParameterInfoPtr( const TA_FuncHandle *handle,
-                                         unsigned int paramIndex,
-                                         const TA_OutputParameterInfo **info )
+TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
+                                      unsigned int paramIndex,
+                                      const TA_OutputParameterInfo **info )
 {
    TA_PROLOG
    const TA_FuncDef  *funcDef;
