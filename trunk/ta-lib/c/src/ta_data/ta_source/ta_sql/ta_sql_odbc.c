@@ -35,7 +35,7 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
- *  MF       Pawel Konieczny
+ *  PK       Pawel Konieczny
  *
  *
  * Change history:
@@ -47,7 +47,7 @@
  */
 
 /* Description:
- *    This file implements the SQL minidriver using ODBC library
+ *    This file implements the SQL minidriver using the ODBC library
  *    It is build in the project only when TA_SUPPORT_ODBC is enabled
  */
 
@@ -105,6 +105,7 @@ typedef struct
 
    int curRow;
    char **rowData;  /* fields to be bound to columns */
+   SQLINTEGER *rowIndicator;  /* NULL data indicator array for bound fields */
 
 } TA_SQL_ODBC_Statement;
 
@@ -119,6 +120,10 @@ typedef struct
 
 
 /**** Local functions declarations.    ****/
+
+/* functions for allocating and freeing rowData field in TA_SQL_ODBC_Statement
+ * making use of information in columns array
+ */
 TA_RetCode allocRowData( TA_SQL_ODBC_Statement *statement );
 TA_RetCode freeRowData( TA_SQL_ODBC_Statement *statement );
 
@@ -130,11 +135,11 @@ TA_FILE_INFO;
 
 
 TA_RetCode TA_SQL_ODBC_OpenConnection(const char database[], 
-                                       const char host[], 
-                                       const char username[], 
-                                       const char password[],
-                                       unsigned int port,
-                                       void **connection)
+                                      const char host[], 
+                                      const char username[], 
+                                      const char password[],
+                                      unsigned int port,
+                                      void **connection)
 {
    TA_PROLOG
    TA_SQL_ODBC_Connection *privConnection;
@@ -218,8 +223,8 @@ TA_RetCode TA_SQL_ODBC_OpenConnection(const char database[],
 
 
 TA_RetCode TA_SQL_ODBC_ExecuteQuery(void *connection, 
-                           const char sql_query[], 
-                           void **query_result)
+                                    const char sql_query[], 
+                                    void **query_result)
 {
    TA_PROLOG
    TA_SQL_ODBC_Connection *privConnection;
@@ -304,7 +309,8 @@ TA_RetCode TA_SQL_ODBC_ExecuteQuery(void *connection,
 
    /* prepare buffers for row data */
    allocRowData( privStatement );
-   if ( privStatement->rowData == NULL ) {
+   if( privStatement->rowData == NULL || privStatement->rowIndicator == NULL ) 
+   {
       sqlRetCode = SQL_ERROR; /* to force RETURN_ON_ERROR to return */
       RETURN_ON_ERROR( TA_ALLOC_ERR );
    }
@@ -314,11 +320,11 @@ TA_RetCode TA_SQL_ODBC_ExecuteQuery(void *connection,
       if( privStatement->rowData[col] )
       {
          sqlRetCode = SQLBindCol( privStatement->hstmt,
-            (SQLSMALLINT)(col + 1),  /* ODBC counts columns starting at 1 */
+            (SQLSMALLINT)(col + 1),                /* ODBC counts columns starting at 1 */
             privStatement->columns[col].ctype,
             privStatement->rowData[col],
-            privStatement->columns[col].size + 1,  /* relevant only for SQL_C_CHAR columns */
-            NULL);
+            privStatement->columns[col].size + 1,  /* relevant (used) only for SQL_C_CHAR columns */
+            &privStatement->rowIndicator[col]);    /* to recognize NULL fields */
          RETURN_ON_ERROR( TA_INTERNAL_ERR );
       }
    }
@@ -400,9 +406,8 @@ TA_RetCode TA_SQL_ODBC_GetRowString(void *query_result, int row, int column, con
 
    privStatement = (TA_SQL_ODBC_Statement*)query_result;
    TA_ASSERT( row >= privStatement->curRow );
-   TA_ASSERT( row <= privStatement->curRow + 1 );
-
-   if( row > privStatement->curRow )
+ 
+   while( row > privStatement->curRow )
    {
       sqlRetCode = SQLFetch( privStatement->hstmt );
       if( ! SQL_SUCCEEDED(sqlRetCode) )
@@ -417,7 +422,14 @@ TA_RetCode TA_SQL_ODBC_GetRowString(void *query_result, int row, int column, con
       TA_TRACE_RETURN( TA_NOT_SUPPORTED );
    }
 
-   *value = privStatement->rowData[column];
+   if( privStatement->rowIndicator[column] == SQL_NULL_DATA )
+   {
+      *value = "";
+   }
+   else
+   {
+      *value = privStatement->rowData[column];
+   }
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -436,9 +448,8 @@ TA_RetCode TA_SQL_ODBC_GetRowReal(void *query_result, int row, int column, TA_Re
    
    privStatement = (TA_SQL_ODBC_Statement*)query_result;
    TA_ASSERT( row >= privStatement->curRow );
-   TA_ASSERT( row <= privStatement->curRow + 1 );
    
-   if( row > privStatement->curRow )
+   while( row > privStatement->curRow )
    {
       sqlRetCode = SQLFetch( privStatement->hstmt );
       if( ! SQL_SUCCEEDED(sqlRetCode) )
@@ -453,7 +464,14 @@ TA_RetCode TA_SQL_ODBC_GetRowReal(void *query_result, int row, int column, TA_Re
       TA_TRACE_RETURN( TA_NOT_SUPPORTED );
    }
    
-   *value = *(double*)privStatement->rowData[column];
+   if( privStatement->rowIndicator[column] == SQL_NULL_DATA )
+   {
+      *value = 0.0;
+   }
+   else
+   {
+      *value = *(double*)privStatement->rowData[column];
+   }
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -472,9 +490,8 @@ TA_RetCode TA_SQL_ODBC_GetRowInteger(void *query_result, int row, int column, TA
    
    privStatement = (TA_SQL_ODBC_Statement*)query_result;
    TA_ASSERT( row >= privStatement->curRow );
-   TA_ASSERT( row <= privStatement->curRow + 1 );
    
-   if( row > privStatement->curRow )
+   while( row > privStatement->curRow )
    {
       sqlRetCode = SQLFetch( privStatement->hstmt );
       if( ! SQL_SUCCEEDED(sqlRetCode) )
@@ -489,7 +506,14 @@ TA_RetCode TA_SQL_ODBC_GetRowInteger(void *query_result, int row, int column, TA
       TA_TRACE_RETURN( TA_NOT_SUPPORTED );
    }
    
-   *value = *(long*)privStatement->rowData[column];
+   if( privStatement->rowIndicator[column] == SQL_NULL_DATA )
+   {
+      *value = 0;
+   }
+   else
+   {
+      *value = *(long*)privStatement->rowData[column];
+   }
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -532,8 +556,6 @@ TA_RetCode TA_SQL_ODBC_CloseConnection(void *connection)
    SQLRETURN sqlRetCode;
 
    TA_TRACE_BEGIN( TA_SQL_ODBC_CloseConnection );
-
-   TA_ASSERT( connection != NULL );
 
    privConnection = (TA_SQL_ODBC_Connection*)connection;
    if ( privConnection )
@@ -578,6 +600,13 @@ TA_RetCode allocRowData( TA_SQL_ODBC_Statement *statement )
    }
    memset( statement->rowData, 0, statement->numCols * sizeof(char*) );
 
+   statement->rowIndicator = TA_Malloc( statement->numCols * sizeof(SQLINTEGER) );
+   if( statement->rowIndicator == NULL )
+   {
+      return TA_ALLOC_ERR;
+   }
+   memset( statement->rowIndicator, 0, statement->numCols * sizeof(SQLINTEGER) );
+   
    for( col = 0;  col < statement->numCols;  col++)
    {
       int size = 0;
@@ -640,6 +669,12 @@ TA_RetCode freeRowData( TA_SQL_ODBC_Statement *statement )
       }
       TA_Free( statement->rowData );
       statement->rowData = NULL;
+   }
+
+   if( statement->rowIndicator != NULL)
+   {
+      TA_Free( statement->rowIndicator );
+      statement->rowIndicator = NULL;
    }
 
    return TA_SUCCESS;
