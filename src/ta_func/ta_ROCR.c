@@ -71,7 +71,7 @@ int TA_ROCR_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 /*
- * TA_ROCR - Rate of change ratio: (price/prevPrice)*100
+ * TA_ROCR - Rate of change ratio: (price/prevPrice)
  * 
  * Input  = TA_Real
  * Output = TA_Real
@@ -97,6 +97,7 @@ TA_RetCode TA_ROCR( TA_Libc      *libHandle,
    /* Insert local variables here. */
 
    int inIdx, outIdx, trailingIdx;
+   TA_Real tempReal;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -127,6 +128,38 @@ TA_RetCode TA_ROCR( TA_Libc      *libHandle,
 
    /* Insert TA function code here. */
 
+   /* The interpretation of the rate of change varies widely depending
+    * which software and/or books you are refering to.
+    *
+    * The following is the table of Rate-Of-Change implemented in TA-LIB:
+    *       MOM     = (price - prevPrice)         [Momentum]
+    *       ROC     = ((price/prevPrice)-1)*100   [Rate of change]
+    *       ROCP    = (price-prevPrice)/prevPrice [Rate of change Percentage]
+    *       ROCR    = (price/prevPrice)           [Rate of change ratio]
+    *       ROCR100 = (price/prevPrice)*100       [Rate of change ratio 100 Scale]
+    *
+    * Here are the equivalent function in other software:
+    *       TA-Lib  |   Tradestation   |    Metastock         
+    *       =================================================
+    *       MOM     |   Momentum       |    ROC (Point)
+    *       ROC     |   ROC            |    ROC (Percent)
+    *       ROCP    |   PercentChange  |    -     
+    *       ROCR    |   -              |    -
+    *       ROCR100 |   -              |    MO
+    *
+    * The MOM function is the only one who is not normalized, and thus
+    * should be avoided for comparing different time serie of prices.
+    * 
+    * ROC and ROCP are centered at zero and can have positive and negative
+    * value. Here are some equivalence:
+    *    ROC = ROCP/100 
+    *        = ((price-prevPrice)/prevPrice)/100
+    *        = ((price/prevPrice)-1)*100
+    *
+    * ROCR and ROCR100 are ratio respectively centered at 1 and 100 and are
+    * always positive values.
+    */
+
    /* Move up the start index if there is not
     * enough initial data.
     */
@@ -141,13 +174,21 @@ TA_RetCode TA_ROCR( TA_Libc      *libHandle,
       return TA_SUCCESS;
    }
 
-   /* Calculate Rate of change: ((price / prevPrice)-1)*100 */
+   /* Calculate Rate of change Ratio: (price / prevPrice) */
    outIdx      = 0;
    inIdx       = startIdx;
    trailingIdx = startIdx - optInTimePeriod_0;
 
    while( inIdx <= endIdx )
-      outReal_0[outIdx++] = (inReal_0[inIdx++] / inReal_0[trailingIdx++])*100.0;
+   {
+      tempReal = inReal_0[trailingIdx++];
+      if( tempReal != 0.0 )
+         outReal_0[outIdx++] = (inReal_0[inIdx] / tempReal);
+      else
+         outReal_0[outIdx++] = 0.0; 
+         
+      inIdx++;
+   }
 
    /* Set output limits. */
    *outNbElement = outIdx;
@@ -155,6 +196,4 @@ TA_RetCode TA_ROCR( TA_Libc      *libHandle,
 
    return TA_SUCCESS;
 }
-
-
 
