@@ -322,10 +322,6 @@ TA_RetCode TA_TimestampAlign( TA_Timestamp *dest,
    /* Allign seconds --AK-- */
    seconds -= seconds % period;
 
-   /* Add the magic 59 seconds if necessary --AK--   */
-   /* This line should be removed after the MF's fix */
-   //seconds += 59;
-
    /* Put the result into the destination timestamp --AK-- */
    dest->date = src->date;
    dest->time = timer_to_time(sec2+seconds);
