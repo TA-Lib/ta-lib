@@ -125,5 +125,8 @@ extern unsigned int TA_UnstablePeriodTable[TA_FUNC_UNST_ALL];
 /* Rounding macro for doubles. Works only with negative numbers. */
 #define round_neg(x) (ceil((x)-0.5))
 
+/* Rounding with a precision of 2 digit after the dot */
+#define round_pos_2(x) ((floor((x*100.0)+0.5))/100.0)
+#define round_neg_2(x) ((ceil((x*100.0)-0.5))/100.0)
 
 #endif
