@@ -124,8 +124,8 @@ typedef struct
 /* functions for allocating and freeing rowData field in TA_SQL_ODBC_Statement
  * making use of information in columns array
  */
-TA_RetCode allocRowData( TA_SQL_ODBC_Statement *statement );
-TA_RetCode freeRowData( TA_SQL_ODBC_Statement *statement );
+static TA_RetCode allocRowData( TA_SQL_ODBC_Statement *statement );
+static TA_RetCode freeRowData( TA_SQL_ODBC_Statement *statement );
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
@@ -283,8 +283,10 @@ TA_RetCode TA_SQL_ODBC_ExecuteQuery(void *connection,
     * to allocate proper size arrays in the upper part of the ta_sql driver 
     */
    sqlRetCode = SQLRowCount( privStatement->hstmt, &privStatement->numRows );
-   RETURN_ON_ERROR( TA_NOT_SUPPORTED );
-
+   if( ! SQL_SUCCEEDED(sqlRetCode) || privStatement->numRows <= 0 )
+   {
+      privStatement->numRows = -1;
+   }
    /* collect information about the columns */
    privStatement->columns = TA_Malloc( privStatement->numCols * sizeof(TA_SQL_ODBC_ColumnDef) );
    if ( privStatement->columns == NULL ) {
@@ -403,6 +405,7 @@ TA_RetCode TA_SQL_ODBC_GetRowString(void *query_result, int row, int column, con
 
    TA_ASSERT( query_result != NULL );
    TA_ASSERT( value != NULL );
+   TA_ASSERT_RET( row >= 0, TA_BAD_PARAM );
 
    privStatement = (TA_SQL_ODBC_Statement*)query_result;
    TA_ASSERT( row >= privStatement->curRow );
@@ -410,6 +413,10 @@ TA_RetCode TA_SQL_ODBC_GetRowString(void *query_result, int row, int column, con
    while( row > privStatement->curRow )
    {
       sqlRetCode = SQLFetch( privStatement->hstmt );
+      if( sqlRetCode == SQL_NO_DATA )
+      {
+         TA_TRACE_RETURN( TA_END_OF_INDEX );
+      }
       if( ! SQL_SUCCEEDED(sqlRetCode) )
       {
          TA_TRACE_RETURN( TA_BAD_QUERY );
@@ -445,6 +452,7 @@ TA_RetCode TA_SQL_ODBC_GetRowReal(void *query_result, int row, int column, TA_Re
 
    TA_ASSERT( query_result != NULL );
    TA_ASSERT( value != NULL );
+   TA_ASSERT_RET( row >= 0, TA_BAD_PARAM );
    
    privStatement = (TA_SQL_ODBC_Statement*)query_result;
    TA_ASSERT( row >= privStatement->curRow );
@@ -452,6 +460,10 @@ TA_RetCode TA_SQL_ODBC_GetRowReal(void *query_result, int row, int column, TA_Re
    while( row > privStatement->curRow )
    {
       sqlRetCode = SQLFetch( privStatement->hstmt );
+      if( sqlRetCode == SQL_NO_DATA )
+      {
+         TA_TRACE_RETURN( TA_END_OF_INDEX );
+      }
       if( ! SQL_SUCCEEDED(sqlRetCode) )
       {
          TA_TRACE_RETURN( TA_BAD_QUERY );
@@ -487,6 +499,7 @@ TA_RetCode TA_SQL_ODBC_GetRowInteger(void *query_result, int row, int column, TA
 
    TA_ASSERT( query_result != NULL );
    TA_ASSERT( value != NULL );
+   TA_ASSERT_RET( row >= 0, TA_BAD_PARAM );
    
    privStatement = (TA_SQL_ODBC_Statement*)query_result;
    TA_ASSERT( row >= privStatement->curRow );
@@ -494,6 +507,10 @@ TA_RetCode TA_SQL_ODBC_GetRowInteger(void *query_result, int row, int column, TA
    while( row > privStatement->curRow )
    {
       sqlRetCode = SQLFetch( privStatement->hstmt );
+      if( sqlRetCode == SQL_NO_DATA )
+      {
+         TA_TRACE_RETURN( TA_END_OF_INDEX );
+      }
       if( ! SQL_SUCCEEDED(sqlRetCode) )
       {
          TA_TRACE_RETURN( TA_BAD_QUERY );
@@ -589,7 +606,7 @@ TA_RetCode TA_SQL_ODBC_CloseConnection(void *connection)
 /**** Local functions definitions.     ****/
 
 
-TA_RetCode allocRowData( TA_SQL_ODBC_Statement *statement )
+static TA_RetCode allocRowData( TA_SQL_ODBC_Statement *statement )
 {
    int col;
 
@@ -616,14 +633,19 @@ TA_RetCode allocRowData( TA_SQL_ODBC_Statement *statement )
       {
          case SQL_CHAR:
          case SQL_VARCHAR:
+         case SQL_DATETIME:
          case SQL_TYPE_TIME:
          case SQL_TYPE_DATE:
+         case SQL_TYPE_TIMESTAMP:
             size = statement->columns[col].size + 1;  /* add 1 for terminating '\0' */
             ctype = SQL_C_CHAR;
          	break;
 
-         case SQL_DECIMAL:
          case SQL_NUMERIC:
+         case SQL_DECIMAL:
+         case SQL_FLOAT:
+         case SQL_REAL:
+         case SQL_DOUBLE:
             size = sizeof( double );
             ctype = SQL_C_DOUBLE;
             break;
@@ -654,7 +676,7 @@ TA_RetCode allocRowData( TA_SQL_ODBC_Statement *statement )
 
 
 
-TA_RetCode freeRowData( TA_SQL_ODBC_Statement *statement )
+static TA_RetCode freeRowData( TA_SQL_ODBC_Statement *statement )
 {
    int col;
 
@@ -680,5 +702,25 @@ TA_RetCode freeRowData( TA_SQL_ODBC_Statement *statement )
    return TA_SUCCESS;
 }
 
+#if defined(WIN32)
+static void printDiagnostic( SQLHSTMT hstmt )
+{
+   SQLRETURN sqlRetCode;
+   SQLCHAR state[6];
+   SQLINTEGER native_error = 0;
+   SQLCHAR message[100];
+   SQLSMALLINT message_size = 100;
+   SQLSMALLINT num = 0;
+   
+   while ( SQL_SUCCEEDED(
+      sqlRetCode = SQLGetDiagRec( SQL_HANDLE_STMT, hstmt, ++num,
+                                  state, &native_error, message, message_size, 
+                                  NULL)
+      ))
+   {
+      OutputDebugString(message);
+   }
+}
+#endif
 
 #endif
