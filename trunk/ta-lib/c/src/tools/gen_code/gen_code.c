@@ -502,12 +502,16 @@ static void fileClose( FileHandle *handle )
          }
       }
 
-      /* Make sure the last line of the output 
-       * finish with a carriage return. This may
-       * avoid warning from some compilers.
-       */
-      if( gTempBuf[0] != '\n' )
-         fprintf( handle->file, "\n" );
+      #ifdef _MSVC
+         /* Make sure the last line of the output 
+          * finish with a carriage return. This may
+          * avoid warning from some compilers.
+          */
+         if( gTempBuf[0] != '\n' )
+	     {
+            fprintf( handle->file, "\n" );
+	     }
+      #endif
 
       fclose( handle->templateFile );
    }
