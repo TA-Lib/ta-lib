@@ -36,7 +36,6 @@ SOURCES =	../../../../../src/ta_common/bzip2/blocksort.c \
 		../../../../../src/ta_common/imatix/sfl/sfldate.c \
 		../../../../../src/ta_common/imatix/sfl/sflstr.c \
 		../../../../../src/ta_common/imatix/sfl/sfltok.c \
-		../../../../../src/ta_common/imatix/sfl/sflfile.c \
 		../../../../../src/ta_common/imatix/sfl/sfldir.c \
 		../../../../../src/ta_common/trio/trionan.c \
 		../../../../../src/ta_common/ta_country_info.c \
@@ -64,7 +63,6 @@ OBJECTS =	../../../../../temp/cmr/blocksort.o \
 		../../../../../temp/cmr/sfldate.o \
 		../../../../../temp/cmr/sflstr.o \
 		../../../../../temp/cmr/sfltok.o \
-		../../../../../temp/cmr/sflfile.o \
 		../../../../../temp/cmr/sfldir.o \
 		../../../../../temp/cmr/trionan.o \
 		../../../../../temp/cmr/ta_country_info.o \
@@ -170,9 +168,6 @@ clean:
 
 ../../../../../temp/cmr/sfltok.o: ../../../../../src/ta_common/imatix/sfl/sfltok.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/sfltok.o ../../../../../src/ta_common/imatix/sfl/sfltok.c
-
-../../../../../temp/cmr/sflfile.o: ../../../../../src/ta_common/imatix/sfl/sflfile.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/sflfile.o ../../../../../src/ta_common/imatix/sfl/sflfile.c
 
 ../../../../../temp/cmr/sfldir.o: ../../../../../src/ta_common/imatix/sfl/sfldir.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/sfldir.o ../../../../../src/ta_common/imatix/sfl/sfldir.c

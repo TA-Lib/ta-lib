@@ -13,8 +13,8 @@ BCB = $(MAKEDIR)\..
 
 CC	=	bcc32
 CXX	=	bcc32
-CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8066 -w-8008 -w-8080 -w-8057 -O2 -DTA_SINGLE_THREAD -DWIN32
-CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8066 -w-8008 -w-8080 -w-8057 -O2 -DTA_SINGLE_THREAD -DWIN32
+CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -O2 -DTA_SINGLE_THREAD -DWIN32
+CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -O2 -DTA_SINGLE_THREAD -DWIN32
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_abstract" -I"..\..\..\..\..\src\ta_abstract\tables" -I"..\..\..\..\..\src\ta_abstract\frames" -I"..\..\..\..\..\include"
 LIB	=	tlib /C /P256
 MOC	=	moc

@@ -13,8 +13,8 @@ BCB = $(MAKEDIR)\..
 
 CC	=	bcc32
 CXX	=	bcc32
-CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8066 -w-8008 -w-8080 -w-8057 -tWM -O2 -DWIN32 -DQT_THREAD_SUPPORT
-CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8066 -w-8008 -w-8080 -w-8057 -tWM -O2 -DWIN32 -DQT_THREAD_SUPPORT
+CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -tWM -O2 -DWIN32 -DQT_THREAD_SUPPORT
+CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -tWM -O2 -DWIN32 -DQT_THREAD_SUPPORT
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\tools\ta_regtest" -I"..\..\..\..\..\src\ta_func" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\trio"
 LINK	=	ilink32
 LFLAGS	=	-L$(BCB)\lib -c -x -Gn -ap -Tpe c0x32.obj
