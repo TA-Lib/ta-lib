@@ -74,6 +74,7 @@ int print_data( TA_UDBase *udb,
    TA_RetCode retCode;
    TA_History *history = NULL;
    unsigned int i;
+   TA_HistoryAllocParam histParam;
 
    retCode = TA_AddDataSource( udb, &dsParam );
    if( retCode != TA_SUCCESS )
@@ -83,11 +84,13 @@ int print_data( TA_UDBase *udb,
    }
 
    /* Get the historical data. */
-   retCode = TA_HistoryAlloc( udb, 
-                              dsParam.category, 
-                              dsParam.symbol,
-                              period, 0, 0, TA_ALL,
-                              &history );
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = dsParam.category;
+   histParam.symbol   = dsParam.symbol;
+   histParam.period   = period;
+   histParam.field    = TA_ALL;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
+                              
    if( retCode != TA_SUCCESS )
    {
       print_error( retCode );

@@ -122,6 +122,7 @@ static ErrorNumber test_index( TA_UDBase *udb )
    TA_AddDataSourceParam param;
    TA_History *history;
    ErrorNumber errNumber;
+   TA_HistoryAllocParam histParam;
 
    /* Add the Yaho! data source. */
    memset( &param, 0, sizeof( param ) );
@@ -137,9 +138,13 @@ static ErrorNumber test_index( TA_UDBase *udb )
    }
 
    /* Get something from NASDAQ. */
-   retCode = TA_HistoryAlloc( udb, "US.NASDAQ.STOCK", "MSFT",
-                              TA_DAILY, 0, 0, TA_CLOSE|TA_TIMESTAMP|TA_VOLUME,
-                              &history );
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = "US.NASDAQ.STOCK";
+   histParam.symbol   = "MSFT";
+   histParam.field    = TA_CLOSE|TA_TIMESTAMP|TA_VOLUME;
+   histParam.period   = TA_DAILY;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
+
    if( retCode != TA_SUCCESS )
    {
       reportError( "TA_HistoryAlloc", retCode );
@@ -178,9 +183,12 @@ static ErrorNumber test_index( TA_UDBase *udb )
    }
 
    /* Get something from NYSE. */
-   retCode = TA_HistoryAlloc( udb, "US.NYSE.STOCK", "IBM",
-                              TA_WEEKLY, 0, 0, TA_OPEN,
-                              &history );
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = "US.NYSE.STOCK";
+   histParam.symbol   = "IBM";
+   histParam.field    = TA_OPEN;
+   histParam.period   = TA_WEEKLY;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
    if( retCode != TA_SUCCESS )
    {
       reportError( "TA_HistoryAlloc", retCode );
@@ -206,10 +214,13 @@ static ErrorNumber test_index( TA_UDBase *udb )
 
    /* Get something from canadian market. 
     * Also test stock using 200 price bar slice.
-    */   
-   retCode = TA_HistoryAlloc( udb, "CA.TSE.STOCK", "NT",
-                              TA_DAILY, 0, 0, TA_ALL,
-                              &history );
+    */
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = "CA.TSE.STOCK";
+   histParam.symbol   = "NT";
+   histParam.field    = TA_ALL,
+   histParam.period   = TA_DAILY;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
    if( retCode != TA_SUCCESS )
    {
       reportError( "TA_HistoryAlloc", retCode );
@@ -281,9 +292,12 @@ static ErrorNumber test_index( TA_UDBase *udb )
    }
 
    /* Do again the same test, but using Monthly data this time. */      
-   retCode = TA_HistoryAlloc( udb, "CA.TSE.STOCK", "NT",
-                              TA_MONTHLY, 0, 0, TA_ALL,
-                              &history );
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = "CA.TSE.STOCK";
+   histParam.symbol   = "NT";
+   histParam.field    = TA_ALL;
+   histParam.period   = TA_MONTHLY;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
 
    if( retCode != TA_SUCCESS )
    {
@@ -340,6 +354,7 @@ static ErrorNumber checkRangeSame( TA_UDBase          *udb,
    TA_History *history;
    unsigned int i;
    TA_RetCode retCode;
+   TA_HistoryAllocParam histParam;
 
    int retry, again;
    /* Try up to 10 times to get the requested number of 
@@ -349,9 +364,14 @@ static ErrorNumber checkRangeSame( TA_UDBase          *udb,
    again = 1;
    for( retry=0; (retry < 10) && again; retry++ )
    {
-      retCode = TA_HistoryAlloc( udb, "CA.TSE.STOCK", "NT",
-                                 period, start, end, TA_ALL,
-                                 &history );
+      memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+      histParam.category = "CA.TSE.STOCK";
+      histParam.symbol   = "NT";
+      histParam.field    = TA_ALL;
+      histParam.start    = *start;
+      histParam.end      = *end;
+      histParam.period   = period;
+      retCode = TA_HistoryAlloc( udb, &histParam, &history );
 
       if( (retCode == TA_SUCCESS) && (history->nbBars == nbPriceBar) )
          again = 0;

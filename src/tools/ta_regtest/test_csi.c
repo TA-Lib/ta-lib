@@ -137,6 +137,7 @@ static ErrorNumber test_source( TA_UDBase *udb, TA_SourceId id, const char *symb
    TA_AddDataSourceParam param;
    TA_History *history;
    ErrorNumber errNumber;
+   TA_HistoryAllocParam histParam;
 
    /* Add the CSI data source. */
    memset( &param, 0, sizeof( param ) );
@@ -151,9 +152,12 @@ static ErrorNumber test_source( TA_UDBase *udb, TA_SourceId id, const char *symb
       return TA_CSI_ADDDATASOURCE_FAILED;
    }
 
-   retCode = TA_HistoryAlloc( udb, "CSI_ID", symbol,
-                              TA_DAILY, 0, 0, TA_ALL,
-                              &history );
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = "CSI_ID";
+   histParam.symbol   = symbol;
+   histParam.field    = TA_ALL;
+   histParam.period   = TA_DAILY;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
    if( retCode != TA_SUCCESS )
    {
       reportError( "TA_HistoryAlloc", retCode );
@@ -231,9 +235,12 @@ static ErrorNumber test_source( TA_UDBase *udb, TA_SourceId id, const char *symb
    }
 
    /* Do again the same test, but using Monthly data this time. */      
-   retCode = TA_HistoryAlloc( udb, "CSI_ID", symbol,
-                              TA_MONTHLY, 0, 0, TA_ALL,
-                              &history );
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = "CSI_ID";
+   histParam.symbol   = symbol;
+   histParam.field    = TA_ALL;
+   histParam.period   = TA_MONTHLY;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
 
    if( retCode != TA_SUCCESS )
    {
@@ -291,10 +298,16 @@ static ErrorNumber checkRangeSame( TA_UDBase          *udb,
    TA_History *history;
    unsigned int i;
    TA_RetCode retCode;
+   TA_HistoryAllocParam histParam;
 
-   retCode = TA_HistoryAlloc( udb, "CSI_ID", symbol,
-                              period, start, end, TA_ALL,
-                              &history );
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = "CSI_ID";
+   histParam.symbol   = symbol;
+   histParam.field    = TA_ALL;
+   histParam.period   = period;
+   histParam.start    = *start;
+   histParam.end      = *end;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
 
    if( retCode != TA_SUCCESS )
    {
