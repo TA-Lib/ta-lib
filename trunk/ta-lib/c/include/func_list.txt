@@ -38,10 +38,12 @@ MIN                 Lowest value over a specified period
 MINUS_DI            Minus Directional Indicator
 MINUS_DM            Minus Directional Movement
 MOM                 Momentum
+NVI                 Negative Volume Index
 OBV                 On Balance Volume
 PLUS_DI             Plus Directional Indicator
 PLUS_DM             Plus Directional Movement
 PPO                 Percentage Price Oscillator
+PVI                 Positive Volume Index
 ROC                 Rate of change : ((price/prevPrice)-1)*100
 ROCP                Rate of change Percentage: (price-prevPrice)/prevPrice
 ROCR                Rate of change ratio: (price/prevPrice)

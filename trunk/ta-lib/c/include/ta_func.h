@@ -2050,6 +2050,32 @@ int TA_ADOSC_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
 
 
 /*
+ * TA_NVI - Negative Volume Index
+ * 
+ * Input  = Close, Volume
+ * Output = double
+ * 
+ */
+TA_RetCode TA_NVI( int    startIdx,
+                   int    endIdx,
+                   const double inClose[],
+                   const int    inVolume[],
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   double        outReal[] );
+
+TA_RetCode TA_S_NVI( int    startIdx,
+                     int    endIdx,
+                     const float  inClose[],
+                     const int    inVolume[],
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal[] );
+
+int TA_NVI_Lookback( void );
+
+
+/*
  * TA_OBV - On Balance Volume
  * 
  * Input  = double, Volume
@@ -2073,6 +2099,32 @@ TA_RetCode TA_S_OBV( int    startIdx,
                      int           outInteger[] );
 
 int TA_OBV_Lookback( void );
+
+
+/*
+ * TA_PVI - Positive Volume Index
+ * 
+ * Input  = Close, Volume
+ * Output = double
+ * 
+ */
+TA_RetCode TA_PVI( int    startIdx,
+                   int    endIdx,
+                   const double inClose[],
+                   const int    inVolume[],
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   double        outReal[] );
+
+TA_RetCode TA_S_PVI( int    startIdx,
+                     int    endIdx,
+                     const float  inClose[],
+                     const int    inVolume[],
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal[] );
+
+int TA_PVI_Lookback( void );
 
 
 
