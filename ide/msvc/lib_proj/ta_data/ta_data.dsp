@@ -348,7 +348,23 @@ SOURCE=..\..\..\..\src\ta_data\ta_adddatasourceparam_priv.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_data\ta_data_udb.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_data\ta_network.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_data\ta_source\ta_readop\ta_readop.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_data\ta_source\ta_source.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_data\ta_token.h
 # End Source File
 # End Group
 # End Target
