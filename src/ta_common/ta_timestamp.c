@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  110199 MF   First version. Simply encapsulate iMatix.
  *  042003 MF   Fix #724662 for TA_GetTime + code clean-up
- *              
+ *  082703 MF   Add TA_TimestampCompare
  */
 
 /* Description:
@@ -306,6 +306,19 @@ int TA_TimestampEqual( const TA_Timestamp *t1, const TA_Timestamp *t2 )
    return timeeq(t1->date,t1->time,t2->date,t2->time);
 }
 
+int TA_TimestampCompare( const TA_Timestamp *t1, const TA_Timestamp *t2 )
+{
+   int temp;
+
+   if( !t1 || !t2 )
+      return 0;
+
+   temp = t1->date - t2->date;
+   if( temp != 0  )
+      return temp;
+
+   return t1->time - t2->time;
+}
 
 /* Move the timestamp to the next day. Will continue to the next
  * month and/or year if needed.

@@ -240,6 +240,7 @@ TA_RetCode TA_TimestampValidate( const TA_Timestamp *timestamp );
 int TA_TimestampEqual  ( const TA_Timestamp *t1, const TA_Timestamp *t2 );
 int TA_TimestampLess   ( const TA_Timestamp *t1, const TA_Timestamp *t2 );
 int TA_TimestampGreater( const TA_Timestamp *t1, const TA_Timestamp *t2 );
+int TA_TimestampCompare( const TA_Timestamp *t1, const TA_Timestamp *t2 );
 
 /* Move the timestamp to the next day. Will continue to
  * the next month and/or year if needed.
