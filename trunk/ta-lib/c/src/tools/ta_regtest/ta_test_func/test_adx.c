@@ -74,6 +74,7 @@ typedef enum
    TST_MINUS_DI,
    TST_PLUS_DM,
    TST_PLUS_DI,
+   TST_DX,
    TST_ADX,
    TST_ADXR
 } TestId;
@@ -90,7 +91,6 @@ typedef struct
    TA_Integer endIdx;
 
    TA_Integer optInTimePeriod_0;
-   TA_Integer optInCompatibility;
 
    TA_RetCode expectedRetCode;
 
@@ -118,85 +118,33 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
 static TA_Test tableTest[] =
 {
-   /*{ TST_MINUS_DM, 1, 0, 0, 251, 14, TA_RSI_CLASSIC, TA_SUCCESS, 0,   12.995,  13,  252-13 }, */ /* First Value */
-   { TST_MINUS_DM, 1, 0, 0, 251, 14, TA_RSI_CLASSIC, TA_SUCCESS, 238,  9.672,  13,  252-13 }, /* First Value */
+   { TST_PLUS_DM, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   10.28,  13,  252-13 }, /* First Value */
+   { TST_PLUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 10.317, 13,  252-13 },
+   { TST_PLUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 238,  9.58,  13,  252-13 }, /* Last Value */
 
-#if 0
-   { 0, 0, 0, 251, 14, TA_RSI_CLASSIC, TA_SUCCESS,      1, 52.32,  14,  252-14 },
-   { 0, 0, 0, 251, 14, TA_RSI_CLASSIC, TA_SUCCESS,      2, 46.07,  14,  252-14 },
-   { 0, 0, 0, 251, 14, TA_RSI_CLASSIC, TA_SUCCESS, 252-15, 49.63,  14,  252-14 },  /* Last Value */
+   { TST_PLUS_DI, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   20.0,   14,  252-14 }, /* First Value */
+   { TST_PLUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 13,  22.0,   14,  252-14 },
+   { TST_PLUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 14,  20.0,   14,  252-14 },
+   { TST_PLUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 21.0,   14,  252-14 }, /* Last Value */
 
-   /* No output value. */
-   { 0, 0, 1, 1,  14, TA_RSI_CLASSIC, TA_SUCCESS, 0, 0, 0, 0},
+   { TST_MINUS_DM, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   12.995,  13,  252-13 }, /* First Value */
+   { TST_MINUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 237,  8.33,   13,  252-13 },
+   { TST_MINUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 238,  9.672,  13,  252-13 }, /* Last Value */
 
-   /* One value tests. */
-   { 0, 0, 14,  14, 14, TA_RSI_CLASSIC, TA_SUCCESS, 0, 49.14,     14, 1},
+   { TST_MINUS_DI, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   30.0,   14,  252-14 }, /* First Value */
+   { TST_MINUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 14,  25.0,   14,  252-14 },
+   { TST_MINUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 21.0,   14,  252-14 }, /* Last Value */
 
-   /* Index too low test. */
-   { 0, 0, 0,  15, 14, TA_RSI_CLASSIC, TA_SUCCESS, 0, 49.14,     14, 2},
-   { 0, 0, 1,  15, 14, TA_RSI_CLASSIC, TA_SUCCESS, 0, 49.14,     14, 2},
-   { 0, 0, 2,  16, 14, TA_RSI_CLASSIC, TA_SUCCESS, 0, 49.14,     14, 3},
-   { 0, 0, 2,  16, 14, TA_RSI_CLASSIC, TA_SUCCESS, 1, 52.32,     14, 3},
-   { 0, 0, 2,  16, 14, TA_RSI_CLASSIC, TA_SUCCESS, 2, 46.07,     14, 3},
-   { 0, 0, 0,  14, 14, TA_RSI_CLASSIC, TA_SUCCESS, 0, 49.14,     14, 1},
-   { 0, 0, 0,  13, 14, TA_RSI_CLASSIC, TA_SUCCESS, 0, 49.14,     14, 0},
+   { TST_DX, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   20.0,   14,  252-14 }, /* First Value */
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 1,    9.0,   14,  252-14 }, 
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 2,   18.0,   14,  252-14 }, 
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 236, 10.0,   14,  252-14 }, 
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 237,  0.0,   14,  252-14 }, /* Last Value */
 
-   /* Test with 1 unstable price bar. Test for period 1, 2, 14 */
-   { 0, 1, 0, 251, 14, TA_RSI_CLASSIC, TA_SUCCESS,      0,     52.32,  15,  252-(14+1) },
-   { 0, 1, 0, 251, 14, TA_RSI_CLASSIC, TA_SUCCESS,      1,     46.07,  15,  252-(14+1) },
-   { 0, 1, 0, 251, 14, TA_RSI_CLASSIC, TA_SUCCESS, 252-(15+1), 49.63,  15,  252-(14+1) },  /* Last Value */
-
-   /* Test with 2 unstable price bar. Test for period 1, 2, 14 */
-   { 0, 2, 0, 251, 14, TA_RSI_CLASSIC, TA_SUCCESS,      0,     46.07,  16,  252-(14+2) },
-   { 0, 2, 0, 251, 14, TA_RSI_CLASSIC, TA_SUCCESS, 252-(15+2), 49.63,  16,  252-(14+2) },  /* Last Value */
-
-   /* Test some limit case with unstable period. */
-   { 0, 1,   0,   0,  1, TA_RSI_CLASSIC, TA_SUCCESS,   0,  0,   0, 0 }, /* no data */
-   { 0, 252, 0,   0,  1, TA_RSI_CLASSIC, TA_SUCCESS,   0,  0,   0, 0 }, /* no data */
-   { 0, 300, 0,   0,  1, TA_RSI_CLASSIC, TA_SUCCESS,   0,  0,   0, 0 }, /* no data */
-
-   /**********************/
-   /* RSI Metastock TEST */
-   /**********************/
-   { 1, 0, 0, 251, 14, TA_RSI_METASTOCK, TA_SUCCESS,      0, 47.11,  13,  252-13 }, /* First Value */
-   { 0, 0, 0, 251, 14, TA_RSI_METASTOCK, TA_SUCCESS,      1, 49.14,  13,  252-13 },
-   { 0, 0, 0, 251, 14, TA_RSI_METASTOCK, TA_SUCCESS,      2, 52.32,  13,  252-13 },
-   { 0, 0, 0, 251, 14, TA_RSI_METASTOCK, TA_SUCCESS,      3, 46.07,  13,  252-13 },
-   { 0, 0, 0, 251, 14, TA_RSI_METASTOCK, TA_SUCCESS, 252-14, 49.63,  13,  252-13 }, /* Last Value */
-
-   /* No output value. */
-   { 0, 0, 1, 1,  14, TA_RSI_METASTOCK, TA_SUCCESS, 0, 0, 0, 0},
-
-   /* One value tests. */
-   { 0, 0, 13, 13, 14, TA_RSI_METASTOCK, TA_SUCCESS, 0, 47.11, 13, 1},
-   { 0, 0, 13, 13, 14, TA_RSI_METASTOCK, TA_SUCCESS, 0, 47.11, 13, 1},
-
-   /* Index too low test. */
-   { 0, 0, 0,  15, 14, TA_RSI_METASTOCK, TA_SUCCESS, 0, 47.11,     13, 3},
-   { 0, 0, 1,  15, 14, TA_RSI_METASTOCK, TA_SUCCESS, 0, 47.11,     13, 3},
-   { 0, 0, 2,  16, 14, TA_RSI_METASTOCK, TA_SUCCESS, 0, 47.11,     13, 4},
-   { 0, 0, 2,  16, 14, TA_RSI_METASTOCK, TA_SUCCESS, 1, 49.14,     13, 4},
-   { 0, 0, 2,  16, 14, TA_RSI_METASTOCK, TA_SUCCESS, 2, 52.32,     13, 4},
-   { 0, 0, 0,  14, 14, TA_RSI_METASTOCK, TA_SUCCESS, 0, 47.11,     13, 2},
-   { 0, 0, 0,  13, 14, TA_RSI_METASTOCK, TA_SUCCESS, 0, 47.11,     13, 1},
-   { 0, 0, 0,  12, 14, TA_RSI_METASTOCK, TA_SUCCESS, 0, 47.11,     13, 0},
-
-   /* Test with 1 unstable price bar. Test for period 1, 2, 14 */
-   { 0, 1, 0, 251, 14, TA_RSI_METASTOCK, TA_SUCCESS,      0,     49.14,  14,  252-(13+1) },
-   { 0, 1, 0, 251, 14, TA_RSI_METASTOCK, TA_SUCCESS,      1,     52.32,  14,  252-(13+1) },
-   { 0, 1, 0, 251, 14, TA_RSI_METASTOCK, TA_SUCCESS, 252-(14+1), 49.63,  14,  252-(13+1) },  /* Last Value */
-
-   /* Test with 2 unstable price bar. Test for period 1, 2, 14 */
-   { 0, 2, 0, 251, 14, TA_RSI_METASTOCK, TA_SUCCESS,      0,     52.32,  15,  252-(13+2) },
-   { 0, 2, 0, 251, 14, TA_RSI_METASTOCK, TA_SUCCESS, 252-(14+2), 49.63,  15,  252-(13+2) },  /* Last Value */
-
-
-   /* Test some limit case with unstable period. */
-   { 1, 1,   0,   0,  1, TA_RSI_METASTOCK, TA_SUCCESS,   0,  0,   0, 0 }, /* no data */
-   { 0, 252, 0,   0,  1, TA_RSI_METASTOCK, TA_SUCCESS,   0,  0,   0, 0 }, /* no data */
-   { 0, 300, 0,   0,  1, TA_RSI_METASTOCK, TA_SUCCESS,   0,  0,   0, 0 }, /* no data */
-#endif
-
+   { TST_ADX, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   23.0,   27,  252-27 }, /* First Value */
+   { TST_ADX, 0, 0, 0, 251, 14, TA_SUCCESS, 1,   22.0,   27,  252-27 },
+   { TST_ADX, 0, 0, 0, 251, 14, TA_SUCCESS, 223, 17.0,   27,  252-27 },
+   { TST_ADX, 0, 0, 0, 251, 14, TA_SUCCESS, 224, 16.0,   27,  252-27 }  /* Last Value */
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
@@ -261,19 +209,88 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
                              endIdx,
                              testParam->high,
                              testParam->low,
-                             /* testParam->close,*/
                              testParam->test->optInTimePeriod_0,
-                             /*testParam->test->optInCompatibility, */
                              outBegIdx,
                              outNbElement,
                              outputBuffer );
 
       *lookback = TA_MINUS_DM_Lookback( testParam->test->optInTimePeriod_0 );
       break;
+
    case TST_MINUS_DI:
-   case TST_PLUS_DM:
-   case TST_PLUS_DI:
+      retCode = TA_MINUS_DI( libHandle,
+                             startIdx,
+                             endIdx,
+                             testParam->high,
+                             testParam->low,
+                             testParam->close,
+                             testParam->test->optInTimePeriod_0,
+                             outBegIdx,
+                             outNbElement,
+                             outputBuffer );
+
+      *lookback = TA_MINUS_DI_Lookback( testParam->test->optInTimePeriod_0 );
+      break;
+
+   case TST_DX:
+      retCode = TA_DX( libHandle,
+                       startIdx,
+                       endIdx,
+                       testParam->high,
+                       testParam->low,
+                       testParam->close,
+                       testParam->test->optInTimePeriod_0,
+                       outBegIdx,
+                       outNbElement,
+                       outputBuffer );
+
+      *lookback = TA_DX_Lookback( testParam->test->optInTimePeriod_0 );
+      break;
+
    case TST_ADX:
+      retCode = TA_ADX( libHandle,
+                        startIdx,
+                        endIdx,
+                        testParam->high,
+                        testParam->low,
+                        testParam->close,
+                        testParam->test->optInTimePeriod_0,
+                        outBegIdx,
+                        outNbElement,
+                        outputBuffer );
+
+      *lookback = TA_ADX_Lookback( testParam->test->optInTimePeriod_0 );
+      break;
+
+   case TST_PLUS_DM:
+      retCode = TA_PLUS_DM( libHandle,
+                            startIdx,
+                            endIdx,
+                            testParam->high,
+                            testParam->low,
+                            testParam->test->optInTimePeriod_0,
+                            outBegIdx,
+                            outNbElement,
+                            outputBuffer );
+
+      *lookback = TA_PLUS_DM_Lookback( testParam->test->optInTimePeriod_0 );
+      break;
+
+   case TST_PLUS_DI:
+      retCode = TA_PLUS_DI( libHandle,
+                             startIdx,
+                             endIdx,
+                             testParam->high,
+                             testParam->low,
+                             testParam->close,
+                             testParam->test->optInTimePeriod_0,
+                             outBegIdx,
+                             outNbElement,
+                             outputBuffer );
+
+      *lookback = TA_PLUS_DI_Lookback( testParam->test->optInTimePeriod_0 );
+      break;
+
    case TST_ADXR:
       return TA_BAD_PARAM;
    }
@@ -300,36 +317,134 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    setInputBuffer( 2, history->close, history->nbBars );
    setInputBuffer( 3, history->high,  history->nbBars );
    
-   /* Set the unstable period requested for that test. */
-   retCode = TA_SetUnstablePeriod( libHandle, TA_FUNC_UNST_RSI, test->unstablePeriod );
-   if( retCode != TA_SUCCESS )
-      return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
 
    /* Make a simple first call. */
    switch( test->id )
    {
    case TST_MINUS_DM:
+      retCode = TA_SetUnstablePeriod( libHandle,
+                                      TA_FUNC_UNST_MINUS_DM,
+                                      test->unstablePeriod );
+      if( retCode != TA_SUCCESS )
+         return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
+
       retCode = TA_MINUS_DM( libHandle,
                              test->startIdx,
                              test->endIdx,
                              gBuffer[0].in,
                              gBuffer[1].in,
-                             /*gBuffer[2].in,*/
                              test->optInTimePeriod_0,
-                             /* test->optInCompatibility, */
                              &outBegIdx,
                              &outNbElement,
                              gBuffer[0].out0 );
       break;
+
    case TST_MINUS_DI:
-   case TST_PLUS_DM:
-   case TST_PLUS_DI:
+      retCode = TA_SetUnstablePeriod( libHandle,
+                                      TA_FUNC_UNST_MINUS_DI,
+                                      test->unstablePeriod );
+      if( retCode != TA_SUCCESS )
+         return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
+
+      retCode = TA_MINUS_DI( libHandle,
+                             test->startIdx,
+                             test->endIdx,
+                             gBuffer[0].in,
+                             gBuffer[1].in,
+                             gBuffer[2].in,
+                             test->optInTimePeriod_0,
+                             &outBegIdx,
+                             &outNbElement,
+                             gBuffer[0].out0 );
+      break;
+
+   case TST_DX:
+      retCode = TA_SetUnstablePeriod( libHandle,
+                                      TA_FUNC_UNST_DX,
+                                      test->unstablePeriod );
+      if( retCode != TA_SUCCESS )
+         return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
+
+      retCode = TA_DX( libHandle,
+                       test->startIdx,
+                       test->endIdx,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       test->optInTimePeriod_0,
+                       &outBegIdx,
+                       &outNbElement,
+                       gBuffer[0].out0 );
+      break;
+
    case TST_ADX:
+      retCode = TA_SetUnstablePeriod( libHandle,
+                                      TA_FUNC_UNST_ADX,
+                                      test->unstablePeriod );
+      if( retCode != TA_SUCCESS )
+         return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
+
+      retCode = TA_ADX( libHandle,
+                        test->startIdx,
+                        test->endIdx,
+                        gBuffer[0].in,
+                        gBuffer[1].in,
+                        gBuffer[2].in,
+                        test->optInTimePeriod_0,
+                        &outBegIdx,
+                        &outNbElement,
+                        gBuffer[0].out0 );
+      break;
+
+   case TST_PLUS_DM:
+      retCode = TA_SetUnstablePeriod( libHandle,
+                                      TA_FUNC_UNST_PLUS_DM,
+                                      test->unstablePeriod );
+      if( retCode != TA_SUCCESS )
+         return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
+
+      retCode = TA_PLUS_DM( libHandle,
+                            test->startIdx,
+                            test->endIdx,
+                            gBuffer[0].in,
+                            gBuffer[1].in,
+                            test->optInTimePeriod_0,
+                            &outBegIdx,
+                            &outNbElement,
+                            gBuffer[0].out0 );
+      break;
+
+   case TST_PLUS_DI:
+      retCode = TA_SetUnstablePeriod( libHandle,
+                                      TA_FUNC_UNST_PLUS_DI,
+                                      test->unstablePeriod );
+      if( retCode != TA_SUCCESS )
+         return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
+
+      retCode = TA_PLUS_DI( libHandle,
+                            test->startIdx,
+                            test->endIdx,
+                            gBuffer[0].in,
+                            gBuffer[1].in,
+                            gBuffer[2].in,
+                            test->optInTimePeriod_0,
+                            &outBegIdx,
+                            &outNbElement,
+                            gBuffer[0].out0 );
+      break;
+
    case TST_ADXR:
       return TA_BAD_PARAM;
    }
 
-   errNb = checkDataSame( gBuffer[0].in, history->high,history->nbBars );
+   /* Verify that the inputs were preserved. */
+   errNb = checkDataSame( gBuffer[0].in, history->high, history->nbBars );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+   errNb = checkDataSame( gBuffer[1].in, history->low, history->nbBars );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+   errNb = checkDataSame( gBuffer[2].in, history->close, history->nbBars );
    if( errNb != TA_TEST_PASS )
       return errNb;
 
@@ -348,20 +463,87 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                              test->endIdx,
                              gBuffer[3].in,
                              gBuffer[1].in,
-                             /*gBuffer[2].in,*/
                              test->optInTimePeriod_0,
-                             /* test->optInCompatibility, */
                              &outBegIdx,
                              &outNbElement,
                              gBuffer[3].in );
       break;
+
    case TST_MINUS_DI:
-   case TST_PLUS_DM:
-   case TST_PLUS_DI:
+      retCode = TA_MINUS_DI( libHandle,
+                             test->startIdx,
+                             test->endIdx,
+                             gBuffer[3].in,
+                             gBuffer[1].in,
+                             gBuffer[2].in,
+                             test->optInTimePeriod_0,
+                             &outBegIdx,
+                             &outNbElement,
+                             gBuffer[3].in );
+      break;
+
+   case TST_DX:
+      retCode = TA_DX( libHandle,
+                       test->startIdx,
+                       test->endIdx,
+                       gBuffer[3].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       test->optInTimePeriod_0,
+                       &outBegIdx,
+                       &outNbElement,
+                       gBuffer[3].in );
+      break;
+
    case TST_ADX:
+      retCode = TA_ADX( libHandle,
+                        test->startIdx,
+                        test->endIdx,
+                        gBuffer[3].in,
+                        gBuffer[1].in,
+                        gBuffer[2].in,
+                        test->optInTimePeriod_0,
+                        &outBegIdx,
+                        &outNbElement,
+                        gBuffer[3].in );
+      break;
+
+   case TST_PLUS_DM:
+      retCode = TA_PLUS_DM( libHandle,
+                            test->startIdx,
+                            test->endIdx,
+                            gBuffer[3].in,
+                            gBuffer[1].in,
+                            test->optInTimePeriod_0,
+                            &outBegIdx,
+                            &outNbElement,
+                            gBuffer[3].in );
+      break;
+
+   case TST_PLUS_DI:
+      retCode = TA_PLUS_DI( libHandle,
+                            test->startIdx,
+                            test->endIdx,
+                            gBuffer[3].in,
+                            gBuffer[1].in,
+                            gBuffer[2].in,
+                            test->optInTimePeriod_0,
+                            &outBegIdx,
+                            &outNbElement,
+                            gBuffer[3].in );
+      break;
+
    case TST_ADXR:
       return TA_BAD_PARAM;
    }
+
+   /* Verify that the inputs were preserved. */
+   errNb = checkDataSame( gBuffer[1].in, history->low, history->nbBars );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+   errNb = checkDataSame( gBuffer[2].in, history->close, history->nbBars );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
 
    /* The previous call should have the same output as this call.
     *
@@ -387,10 +569,54 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( libHandle,
-                           rangeTestFunction, 
-                           TA_FUNC_UNST_MINUS_DM,
-                           (void *)&testParam, 1 );
+      switch( test->id )
+      {
+      case TST_MINUS_DM:
+         errNb = doRangeTest( libHandle,
+                              rangeTestFunction, 
+                              TA_FUNC_UNST_MINUS_DM,
+                              (void *)&testParam, 1, 0 );
+         break;
+
+      case TST_MINUS_DI:
+         errNb = doRangeTest( libHandle,
+                              rangeTestFunction, 
+                              TA_FUNC_UNST_MINUS_DI,
+                              (void *)&testParam, 1, 2 );
+         break;
+
+      case TST_DX:
+         errNb = doRangeTest( libHandle,
+                              rangeTestFunction, 
+                              TA_FUNC_UNST_DX,
+                              (void *)&testParam, 1, 2 );
+         break;
+
+      case TST_ADX:
+         errNb = doRangeTest( libHandle,
+                              rangeTestFunction, 
+                              TA_FUNC_UNST_ADX,
+                              (void *)&testParam, 1, 2 );
+         break;
+
+      case TST_PLUS_DM:
+         errNb = doRangeTest( libHandle,
+                              rangeTestFunction, 
+                              TA_FUNC_UNST_PLUS_DM,
+                              (void *)&testParam, 1, 0 );
+         break;
+
+      case TST_PLUS_DI:
+         errNb = doRangeTest( libHandle,
+                              rangeTestFunction, 
+                              TA_FUNC_UNST_PLUS_DI,
+                              (void *)&testParam, 1, 2 );
+         break;
+
+      case TST_ADXR:
+         break;
+      }
+
       if( errNb != TA_TEST_PASS )
          return errNb;
    }
