@@ -523,7 +523,7 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
 
       if( !queryStr )
       {
-         TA_TRACE_RETURN( TA_ALLOC_ERR );
+         throw TA_ALLOC_ERR;
       }
 
       query << queryStr;
@@ -564,8 +564,11 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
       } 
 
       // verify whether all required columns are present
+      if( (time_required && time_col == UINT_MAX ) )
+      {
+         throw TA_PERIOD_NOT_AVAILABLE;
+      }
       if(  date_col == UINT_MAX
-        || (time_required && time_col == UINT_MAX)
         || (fieldToAlloc & TA_OPEN   && open_col   == UINT_MAX)
         || (fieldToAlloc & TA_HIGH   && high_col   == UINT_MAX)
         || (fieldToAlloc & TA_LOW    && low_col    == UINT_MAX)
@@ -617,8 +620,7 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
       /* When the TA_REPLACE_ZERO_PRICE_BAR flag is set, we must
        * always process the close.
        */
-      if( !(fieldToAlloc & TA_CLOSE) &&
-           (privateHandle->param->flags & TA_REPLACE_ZERO_PRICE_BAR) )
+      if( privateHandle->param->flags & TA_REPLACE_ZERO_PRICE_BAR )
       {   
          fieldToAlloc |= TA_CLOSE;
       }
@@ -703,10 +705,6 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
    {
       retCode = rc;
    }
-   catch (const char *str)
-   {
-      TA_FATAL( str, 0, 0 )
-   }
 
    /* cleanup */
    if ( queryStr      ) TA_Free(queryStr);
@@ -785,10 +783,7 @@ const char *formatISODate(const TA_Timestamp *ts)
 {
    static char str[11];  /* CCYY-MM-DD\0 */
 
-   if (sprintf(str, "%04u-%02u-%02u", TA_GetYear(ts), TA_GetMonth(ts), TA_GetDay(ts)) != 10)
-   {
-      throw "Weird timestamp";
-   }
+   sprintf(str, "%04u-%02u-%02u", TA_GetYear(ts), TA_GetMonth(ts), TA_GetDay(ts));
    return str;
 }
 
@@ -796,9 +791,6 @@ const char *formatISOTime(const TA_Timestamp *ts)
 {
    static char str[9];  /* hh:mm:ss\0 */
 
-   if (sprintf(str, "%02u:%02u:%02u", TA_GetHour(ts), TA_GetMin(ts), TA_GetSec(ts)) != 8)
-   {
-      throw "Weird timestamp";
-   }
+   sprintf(str, "%02u:%02u:%02u", TA_GetHour(ts), TA_GetMin(ts), TA_GetSec(ts));
    return str;
 }
