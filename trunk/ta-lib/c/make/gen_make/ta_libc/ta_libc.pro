@@ -41,6 +41,10 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_data/ta_webfetch.c \
           ../../../../../src/ta_data/ta_source/ta_simulator/ta_simulator.c \
           ../../../../../src/ta_data/ta_source/ta_source.c \
+          ../../../../../src/ta_data/ta_source/ta_sql/ta_sql.c \
+          ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_handle.c \
+          ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_local.c \
+          ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c \
           ../../../../../src/ta_data/ta_token.c \
           ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo.c \
           ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_handle.c \
@@ -192,6 +196,7 @@ INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_fileindex
 INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_ascii
 INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_readop
 INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_yahoo
+INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_sql
 INCLUDEPATH *= ../../../../../src/ta_data/ta_history
 INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_simulator
 INCLUDEPATH *= ../../../../../src/ta_common/imatix/sfl

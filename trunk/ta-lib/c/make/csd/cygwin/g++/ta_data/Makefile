@@ -11,7 +11,7 @@ CC	=	gcc
 CXX	=	g++
 CFLAGS	=	-pipe -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
 CXXFLAGS=	-pipe -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
-INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_data -I../../../../../src/ta_data/ta_source -I../../../../../src/ta_data/ta_source/ta_fileindex -I../../../../../src/ta_data/ta_source/ta_ascii -I../../../../../src/ta_data/ta_source/ta_readop -I../../../../../src/ta_data/ta_source/ta_yahoo -I../../../../../src/ta_data/ta_history -I../../../../../src/ta_data/ta_source/ta_simulator -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include
+INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_data -I../../../../../src/ta_data/ta_source -I../../../../../src/ta_data/ta_source/ta_fileindex -I../../../../../src/ta_data/ta_source/ta_ascii -I../../../../../src/ta_data/ta_source/ta_readop -I../../../../../src/ta_data/ta_source/ta_yahoo -I../../../../../src/ta_data/ta_source/ta_sql -I../../../../../src/ta_data/ta_history -I../../../../../src/ta_data/ta_source/ta_simulator -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include
 AR	=	ar cqs
 RANLIB	=	
 MOC	=	$(QTDIR)/bin/moc
@@ -43,6 +43,10 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_data/ta_webfetch.c \
 		../../../../../src/ta_data/ta_source/ta_simulator/ta_simulator.c \
 		../../../../../src/ta_data/ta_source/ta_source.c \
+		../../../../../src/ta_data/ta_source/ta_sql/ta_sql.c \
+		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_handle.c \
+		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_local.c \
+		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c \
 		../../../../../src/ta_data/ta_token.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_handle.c \
@@ -72,6 +76,10 @@ OBJECTS =	../../../../../temp/csd/ta_ascii.o \
 		../../../../../temp/csd/ta_webfetch.o \
 		../../../../../temp/csd/ta_simulator.o \
 		../../../../../temp/csd/ta_source.o \
+		../../../../../temp/csd/ta_sql.o \
+		../../../../../temp/csd/ta_sql_handle.o \
+		../../../../../temp/csd/ta_sql_local.o \
+		../../../../../temp/csd/ta_sql_minidriver.o \
 		../../../../../temp/csd/ta_token.o \
 		../../../../../temp/csd/ta_yahoo.o \
 		../../../../../temp/csd/ta_yahoo_handle.o \
@@ -193,6 +201,18 @@ clean:
 
 ../../../../../temp/csd/ta_source.o: ../../../../../src/ta_data/ta_source/ta_source.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_source.o ../../../../../src/ta_data/ta_source/ta_source.c
+
+../../../../../temp/csd/ta_sql.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_sql.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql.c
+
+../../../../../temp/csd/ta_sql_handle.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_handle.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_sql_handle.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_handle.c
+
+../../../../../temp/csd/ta_sql_local.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_local.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_sql_local.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_local.c
+
+../../../../../temp/csd/ta_sql_minidriver.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_sql_minidriver.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c
 
 ../../../../../temp/csd/ta_token.o: ../../../../../src/ta_data/ta_token.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_token.o ../../../../../src/ta_data/ta_token.c

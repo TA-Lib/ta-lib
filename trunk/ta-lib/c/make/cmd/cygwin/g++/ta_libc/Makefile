@@ -11,7 +11,7 @@ CC	=	gcc
 CXX	=	g++
 CFLAGS	=	-pipe -Wall -W -g -D_REENTRANT -DTA_DEBUG -D_DEBUG -DQT_THREAD_SUPPORT
 CXXFLAGS=	-pipe -Wall -W -g -D_REENTRANT -DTA_DEBUG -D_DEBUG -DQT_THREAD_SUPPORT
-INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_data -I../../../../../src/ta_data/ta_source -I../../../../../src/ta_data/ta_source/ta_fileindex -I../../../../../src/ta_data/ta_source/ta_ascii -I../../../../../src/ta_data/ta_source/ta_readop -I../../../../../src/ta_data/ta_source/ta_yahoo -I../../../../../src/ta_data/ta_history -I../../../../../src/ta_data/ta_source/ta_simulator -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include -I../../../../../src/ta_common/bzip2 -I../../../../../src/ta_abstract -I../../../../../src/ta_abstract/tables -I../../../../../src/ta_abstract/frames -I../../../../../src/ta_pm -I$(QTDIR)/include
+INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_data -I../../../../../src/ta_data/ta_source -I../../../../../src/ta_data/ta_source/ta_fileindex -I../../../../../src/ta_data/ta_source/ta_ascii -I../../../../../src/ta_data/ta_source/ta_readop -I../../../../../src/ta_data/ta_source/ta_yahoo -I../../../../../src/ta_data/ta_source/ta_sql -I../../../../../src/ta_data/ta_history -I../../../../../src/ta_data/ta_source/ta_simulator -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include -I../../../../../src/ta_common/bzip2 -I../../../../../src/ta_abstract -I../../../../../src/ta_abstract/tables -I../../../../../src/ta_abstract/frames -I../../../../../src/ta_pm -I$(QTDIR)/include
 AR	=	ar cqs
 RANLIB	=	
 MOC	=	$(QTDIR)/bin/moc
@@ -43,6 +43,10 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_data/ta_webfetch.c \
 		../../../../../src/ta_data/ta_source/ta_simulator/ta_simulator.c \
 		../../../../../src/ta_data/ta_source/ta_source.c \
+		../../../../../src/ta_data/ta_source/ta_sql/ta_sql.c \
+		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_handle.c \
+		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_local.c \
+		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c \
 		../../../../../src/ta_data/ta_token.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_handle.c \
@@ -205,6 +209,10 @@ OBJECTS =	../../../../../temp/cmd/ta_ascii.o \
 		../../../../../temp/cmd/ta_webfetch.o \
 		../../../../../temp/cmd/ta_simulator.o \
 		../../../../../temp/cmd/ta_source.o \
+		../../../../../temp/cmd/ta_sql.o \
+		../../../../../temp/cmd/ta_sql_handle.o \
+		../../../../../temp/cmd/ta_sql_local.o \
+		../../../../../temp/cmd/ta_sql_minidriver.o \
 		../../../../../temp/cmd/ta_token.o \
 		../../../../../temp/cmd/ta_yahoo.o \
 		../../../../../temp/cmd/ta_yahoo_handle.o \
@@ -459,6 +467,18 @@ clean:
 
 ../../../../../temp/cmd/ta_source.o: ../../../../../src/ta_data/ta_source/ta_source.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_source.o ../../../../../src/ta_data/ta_source/ta_source.c
+
+../../../../../temp/cmd/ta_sql.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_sql.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql.c
+
+../../../../../temp/cmd/ta_sql_handle.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_handle.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_sql_handle.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_handle.c
+
+../../../../../temp/cmd/ta_sql_local.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_local.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_sql_local.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_local.c
+
+../../../../../temp/cmd/ta_sql_minidriver.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_sql_minidriver.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c
 
 ../../../../../temp/cmd/ta_token.o: ../../../../../src/ta_data/ta_token.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_token.o ../../../../../src/ta_data/ta_token.c

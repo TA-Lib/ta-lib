@@ -11,7 +11,7 @@ CC	=	cl
 CXX	=	cl
 CFLAGS	=	-nologo -W3 -MDd -DTA_DEBUG -D_DEBUG -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT
 CXXFLAGS=	-nologo -W3 -MDd -DTA_DEBUG -D_DEBUG -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT
-INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data\ta_source\ta_fileindex" -I"..\..\..\..\..\src\ta_data\ta_source\ta_ascii" -I"..\..\..\..\..\src\ta_data\ta_source\ta_readop" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\src\ta_data\ta_history" -I"..\..\..\..\..\src\ta_data\ta_source\ta_simulator" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\include"
+INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data\ta_source\ta_fileindex" -I"..\..\..\..\..\src\ta_data\ta_source\ta_ascii" -I"..\..\..\..\..\src\ta_data\ta_source\ta_readop" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\src\ta_data\ta_source\ta_sql" -I"..\..\..\..\..\src\ta_data\ta_history" -I"..\..\..\..\..\src\ta_data\ta_source\ta_simulator" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\include"
 LIB	=	lib /NOLOGO
 MOC	=	moc
 UIC	=	uic
@@ -41,6 +41,10 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_data\ta_webfetch.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_simulator\ta_simulator.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_source.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_handle.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_local.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c \
 		..\..\..\..\..\src\ta_data\ta_token.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_handle.c \
@@ -70,6 +74,10 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\ta_webfetch.obj \
 		..\..\..\..\..\temp\cmd\ta_simulator.obj \
 		..\..\..\..\..\temp\cmd\ta_source.obj \
+		..\..\..\..\..\temp\cmd\ta_sql.obj \
+		..\..\..\..\..\temp\cmd\ta_sql_handle.obj \
+		..\..\..\..\..\temp\cmd\ta_sql_local.obj \
+		..\..\..\..\..\temp\cmd\ta_sql_minidriver.obj \
 		..\..\..\..\..\temp\cmd\ta_token.obj \
 		..\..\..\..\..\temp\cmd\ta_yahoo.obj \
 		..\..\..\..\..\temp\cmd\ta_yahoo_handle.obj \
@@ -144,6 +152,10 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_webfetch.obj
 	-del ..\..\..\..\..\temp\cmd\ta_simulator.obj
 	-del ..\..\..\..\..\temp\cmd\ta_source.obj
+	-del ..\..\..\..\..\temp\cmd\ta_sql.obj
+	-del ..\..\..\..\..\temp\cmd\ta_sql_handle.obj
+	-del ..\..\..\..\..\temp\cmd\ta_sql_local.obj
+	-del ..\..\..\..\..\temp\cmd\ta_sql_minidriver.obj
 	-del ..\..\..\..\..\temp\cmd\ta_token.obj
 	-del ..\..\..\..\..\temp\cmd\ta_yahoo.obj
 	-del ..\..\..\..\..\temp\cmd\ta_yahoo_handle.obj
@@ -231,6 +243,18 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_source.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_source.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_source.obj ..\..\..\..\..\src\ta_data\ta_source\ta_source.c
+
+..\..\..\..\..\temp\cmd\ta_sql.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_sql.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql.c
+
+..\..\..\..\..\temp\cmd\ta_sql_handle.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_handle.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_sql_handle.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_handle.c
+
+..\..\..\..\..\temp\cmd\ta_sql_local.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_local.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_sql_local.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_local.c
+
+..\..\..\..\..\temp\cmd\ta_sql_minidriver.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_sql_minidriver.obj ..\..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c
 
 ..\..\..\..\..\temp\cmd\ta_token.obj: ..\..\..\..\..\src\ta_data\ta_token.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_token.obj ..\..\..\..\..\src\ta_data\ta_token.c
