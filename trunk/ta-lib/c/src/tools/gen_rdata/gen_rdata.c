@@ -73,8 +73,8 @@
 /* None */
 
 /**** Local functions declarations.    ****/
-static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr );
-static int createFile         ( TA_CountryId countryId, const char *fileStr, TA_YahooIdxStrategy strategy );
+static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr, int silent  );
+static int createFile         ( TA_CountryId countryId, const char *fileStr, TA_YahooIdxStrategy strategy, int silent );
 
 static int displayInfo( TA_YahooIdx *idx );
 
@@ -85,6 +85,7 @@ static int displayInfo( TA_YahooIdx *idx );
 int main(int argc, char *argv[] )
 {
    int badParam = 0;
+   int retCode;
    unsigned char option = 0;
    TA_CountryId countryId;
 
@@ -94,7 +95,7 @@ int main(int argc, char *argv[] )
 
    countryId = TA_CountryAbbrevToId( "US" ); /* Default country. */
 
-   if( argc != 4 )
+   if( argc < 2 )
    {  
       badParam = 1;
    }
@@ -117,46 +118,58 @@ int main(int argc, char *argv[] )
       case 'V':
       case 'N':
       case 'C':
+         if( argc != 4 )
+         {  
+            badParam = 1;
+         }
+         else
+         {
+            /* Validate second parameter (the country). */
+            countryId = TA_CountryAbbrevToId( argv[2] );
+            if( !countryId )
+            {
+               printf( "\nBad country ID specified! [%s]\n", argv[2] );
+               badParam = 1;
+            }
+
+            /* The third parameter is the indexFile and this one does not
+             * requires validation.
+             */
+         }
+         break;
       case 'H':
+      case 'U':
       case '?':
-         /* These are the valid options. */
          break; 
       default:
          printf( "\nBad option specified! [%s]\n", argv[1] );
          badParam = 1;
       }
 
-      /* Validate second parameter (the country). */
-      countryId = TA_CountryAbbrevToId( argv[2] );
-      if( !countryId )
-      {
-         printf( "\nBad country ID specified! [%s]\n", argv[2] );
-         badParam = 1;
-      }
-
-      /* The third parameter is the indexFile and this one does not
-       * required validation.
-       */
    }
 
       
    if( badParam || option == 'H' || option == '?' )
    {
-      printf( "  Usage: %s -v|-n|-c <country> <indexFile>\n", argv[0] );
+      printf( "  Usage:  %s -u\n", argv[0] );
+      printf( "          %s -v|-n|-c <country> <indexFile>\n", argv[0] );
+      printf( "\n");
+      printf( "    -u   Update all .dat files (try this first!)\n" );
       printf( "    -v   Verify the integrity of <indexFile>\n" );
-      printf( "    -n   Create new <indexFile> using the Yahoo! web site\n" );
-      printf( "    -c   Retreive <indexFile> from the version on ta-lib.org\n" );
+      printf( "    -n   Create a new <indexFile> from Yahoo!\n" );
+      printf( "    -c   Retreive the <indexFile> from TA-Lib.org\n" );
       printf( "\n" );      
       printf( "  <country>   2 letter abbreviation (CA,US...)\n" );
       printf( "  <indexFile> is a path/filename for this operation.\n" );
       printf( "\n" );
-      printf( "  This tool is used for maintaining a local cache of the\n" );
-      printf( "  index of symbols provided by Yahoo!\n" );
+      printf( "  This tool is used for the maintenance of local cache\n" );
+      printf( "  of the index of symbols provided by Yahoo!\n" );
       printf( "\n" );
       printf( "  This tool is mainly used by ta-lib.org to generate\n" );
       printf( "  the 'y_xx.dat' files.\n" );
       printf( "\n" );
-      printf( "  Example: gen_rdata -n us y_us.dat\n" );
+      printf( "  Example: gen_rdata -u\n" );
+      printf( "           gen_rdata -n us y_us.dat\n" );
       printf( "           gen_rdata -c ca y_ca.dat\n" );
       printf( "           gen_rdata -v ca myLocalCopy.dat\n" );
       exit(-1);
@@ -164,14 +177,37 @@ int main(int argc, char *argv[] )
 
    switch( option )
    {
+   case 'U':
+      /*const char *listCountry[] = {"US","CA","UK","DE","ES","FR","IT","NO","SE","DK",NULL};*/
+      #define GET_INDEX(country)  \
+      { \
+        printf( "Updating index [y_%s.dat]\n", country ); \
+        retCode = createFile( TA_CountryAbbrevToId(country), "y_" country ".dat", TA_USE_YAHOO_AND_REMOTE_MERGE, 1 ); \
+        if( retCode != 0 ) return retCode; \
+        retCode = verifyFileIntegrity( TA_CountryAbbrevToId(country), "y_" country ".dat", 1 ); \
+        if( retCode != 0 ) return retCode; \
+      }
+
+      GET_INDEX("us");
+      GET_INDEX("ca");
+      GET_INDEX("de");
+      GET_INDEX("uk");
+      GET_INDEX("es");
+      GET_INDEX("fr");
+      GET_INDEX("it");
+      GET_INDEX("no");
+      GET_INDEX("se");
+      GET_INDEX("dk");
+      return 0;
+
    case 'V':
-      return verifyFileIntegrity( countryId, argv[3] );
+      return verifyFileIntegrity( countryId, argv[3], 0 );
 
    case 'N':
-      return createFile( countryId, argv[3], TA_USE_YAHOO_SITE );
+      return createFile( countryId, argv[3], TA_USE_YAHOO_SITE, 0 );
 
    case 'C':
-      return createFile( countryId, argv[3], TA_USE_REMOTE_CACHE );
+      return createFile( countryId, argv[3], TA_USE_REMOTE_CACHE, 0 );
    }
 
    return -1;
@@ -179,7 +215,7 @@ int main(int argc, char *argv[] )
 
 
 /**** Local functions definitions.     ****/
-static int createFile( TA_CountryId countryId, const char *fileStr, TA_YahooIdxStrategy strategy )
+static int createFile( TA_CountryId countryId, const char *fileStr, TA_YahooIdxStrategy strategy, int silent )
 {
    FILE *out;
    TA_YahooIdx *idx;
@@ -190,7 +226,8 @@ static int createFile( TA_CountryId countryId, const char *fileStr, TA_YahooIdxS
 
    retValue = -1;
 
-   printf( "Building index [%s]\n", fileStr );
+   if( !silent )
+      printf( "Building index [%s]\n", fileStr );
 
    out = fopen( fileStr, "wb" );
    if( !out )
@@ -260,7 +297,7 @@ static int createFile( TA_CountryId countryId, const char *fileStr, TA_YahooIdxS
     */
    if( retValue == 0 )
    {
-      retValue = verifyFileIntegrity( countryId, fileStr );
+      retValue = verifyFileIntegrity( countryId, fileStr, silent );
       if( retValue != 0 )
          printf( "Verification of file integrity failed [%d]\n", retValue );
    }
@@ -268,7 +305,7 @@ static int createFile( TA_CountryId countryId, const char *fileStr, TA_YahooIdxS
    return retValue;
 }
 
-static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr )
+static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr, int silent )
 {
    FILE *in;
    TA_RetCode retCode;
@@ -277,7 +314,8 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr )
    int retValue = -1;
    TA_InitializeParam initializeParam;
 
-   printf( "\nVerifying index [%s]\n", fileStr );
+   if( !silent )
+      printf( "\nVerifying index [%s]\n", fileStr );
 
    in = fopen( fileStr, "rb" );
    if( !in )
@@ -318,7 +356,7 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr )
          }
       }
 
-      if( idx && (displayInfo( idx ) != 0) )
+      if( !silent && idx && (displayInfo( idx ) != 0) )
       {
          printf( "Accessing index failed.\n" );
          retValue |= 0x10000020;
@@ -353,7 +391,7 @@ static int verifyFileIntegrity( TA_CountryId countryId, const char *fileStr )
       retValue |= 0x10000100;
    }
 
-   if( retValue == 0 )
+   if( retValue == 0 && !silent )
       printf( "No error found - Index file is good.\n" );
 
    return retValue;
