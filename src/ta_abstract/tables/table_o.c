@@ -38,7 +38,7 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
-/* Follow the 4 steps defined below for adding a new TA Function to this
+/* Follow the 3 steps defined below for adding a new TA Function to this
  * file.
  */
 
@@ -74,7 +74,7 @@ DEF_FUNCTION( OBV,                          /* name */
 /* OBV END */
 
 /****************************************************************************
- * Step 2 - Define here the interface to your TA functions with
+ * Step 1 - Define here the interface to your TA functions with
  *          the macro DEF_FUNCTION.
  *
  ****************************************************************************/
@@ -82,7 +82,7 @@ DEF_FUNCTION( OBV,                          /* name */
 /* None */
 
 /****************************************************************************
- * Step 3 - Add your TA function to the table.
+ * Step 2 - Add your TA function to the table.
  *          Order is not important. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableO[] =
@@ -98,7 +98,7 @@ const unsigned int TA_DEF_TableOSize =
 
 
 /****************************************************************************
- * Step 4 - Make sure "gen_code" is executed for generating all other
+ * Step 3 - Make sure "gen_code" is executed for generating all other
  *          source files derived from this one.
  *          You can then re-compile the library as usual and you are done!
  ****************************************************************************/

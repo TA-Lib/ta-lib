@@ -38,23 +38,12 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
-/* Follow the 4 steps defined below for adding a new TA Function to this
+/* Follow the 3 steps defined below for adding a new TA Function to this
  * file.
  */
 
-/***************************************************************************
- * Step 1 - Define user inputs that are particular to your function.
- *          Consider the ones already defined in "ta_def_ui.c".
- ***************************************************************************/
-
-const TA_OutputParameterInfo TA_DEF_UI_Output_Real_AroonUp =
-                               { TA_Output_Real, "outAroonDown", TA_OUT_DASH_LINE };
-
-const TA_OutputParameterInfo TA_DEF_UI_Output_Real_AroonDown =
-                                { TA_Output_Real, "outAroonUp", TA_OUT_LINE };
-
 /****************************************************************************
- * Step 2 - Define here the interface to your TA functions with
+ * Step 1 - Define here the interface to your TA functions with
  *          the macro DEF_FUNCTION.
  *
  ****************************************************************************/
@@ -227,6 +216,12 @@ DEF_FUNCTION( APO,                         /* name */
 /* APO END */
 
 /* AROON BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_AroonUp =
+                               { TA_Output_Real, "outAroonDown", TA_OUT_DASH_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_AroonDown =
+                                { TA_Output_Real, "outAroonUp", TA_OUT_LINE };
+
 static const TA_InputParameterInfo    *TA_AROON_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HL,
@@ -337,7 +332,7 @@ DEF_FUNCTION( AVGPRICE,                   /* name */
 /* AVGPRICE END */
 
 /****************************************************************************
- * Step 3 - Add your TA function to the table.
+ * Step 2 - Add your TA function to the table.
  *          Order is not important. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableA[] =
@@ -361,7 +356,7 @@ const unsigned int TA_DEF_TableASize =
 
 
 /****************************************************************************
- * Step 4 - Make sure "gen_code" is executed for generating all other
+ * Step 3 - Make sure "gen_code" is executed for generating all other
  *          source files derived from this one.
  *          You can then re-compile the library as usual and you are done!
  ****************************************************************************/
