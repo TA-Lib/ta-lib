@@ -2959,6 +2959,36 @@ int TA_CDLHIGHWAVE_Lookback( void );
 
 
 /*
+ * TA_CDLHOMINGPIGEON - Homing Pigeon
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLHOMINGPIGEON( int    startIdx,
+                               int    endIdx,
+                               const double inOpen[],
+                               const double inHigh[],
+                               const double inLow[],
+                               const double inClose[],
+                               int          *outBegIdx,
+                               int          *outNbElement,
+                               int           outInteger[] );
+
+TA_RetCode TA_S_CDLHOMINGPIGEON( int    startIdx,
+                                 int    endIdx,
+                                 const float  inOpen[],
+                                 const float  inHigh[],
+                                 const float  inLow[],
+                                 const float  inClose[],
+                                 int          *outBegIdx,
+                                 int          *outNbElement,
+                                 int           outInteger[] );
+
+int TA_CDLHOMINGPIGEON_Lookback( void );
+
+
+/*
  * TA_CDLIDENTICAL3CROWS - Identical Three Crows
  * 
  * Input  = Open, High, Low, Close
@@ -3109,6 +3139,36 @@ int TA_CDLKICKINGBYLENGTH_Lookback( void );
 
 
 /*
+ * TA_CDLLADDERBOTTOM - Ladder Bottom
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLLADDERBOTTOM( int    startIdx,
+                               int    endIdx,
+                               const double inOpen[],
+                               const double inHigh[],
+                               const double inLow[],
+                               const double inClose[],
+                               int          *outBegIdx,
+                               int          *outNbElement,
+                               int           outInteger[] );
+
+TA_RetCode TA_S_CDLLADDERBOTTOM( int    startIdx,
+                                 int    endIdx,
+                                 const float  inOpen[],
+                                 const float  inHigh[],
+                                 const float  inLow[],
+                                 const float  inClose[],
+                                 int          *outBegIdx,
+                                 int          *outNbElement,
+                                 int           outInteger[] );
+
+int TA_CDLLADDERBOTTOM_Lookback( void );
+
+
+/*
  * TA_CDLLONGLEGGEDDOJI - Long Legged Doji
  * 
  * Input  = Open, High, Low, Close
@@ -3234,6 +3294,36 @@ TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
                             int           outInteger[] );
 
 int TA_CDLMATHOLD_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+
+
+/*
+ * TA_CDLMATCHINGLOW - Matching Low
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLMATCHINGLOW( int    startIdx,
+                              int    endIdx,
+                              const double inOpen[],
+                              const double inHigh[],
+                              const double inLow[],
+                              const double inClose[],
+                              int          *outBegIdx,
+                              int          *outNbElement,
+                              int           outInteger[] );
+
+TA_RetCode TA_S_CDLMATCHINGLOW( int    startIdx,
+                                int    endIdx,
+                                const float  inOpen[],
+                                const float  inHigh[],
+                                const float  inLow[],
+                                const float  inClose[],
+                                int          *outBegIdx,
+                                int          *outNbElement,
+                                int           outInteger[] );
+
+int TA_CDLMATCHINGLOW_Lookback( void );
 
 
 /*
@@ -3580,6 +3670,36 @@ TA_RetCode TA_S_CDLSTALLEDPATTERN( int    startIdx,
                                    int           outInteger[] );
 
 int TA_CDLSTALLEDPATTERN_Lookback( void );
+
+
+/*
+ * TA_CDLSTICKSANDWICH - Stick Sandwich
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLSTICKSANDWICH( int    startIdx,
+                                int    endIdx,
+                                const double inOpen[],
+                                const double inHigh[],
+                                const double inLow[],
+                                const double inClose[],
+                                int          *outBegIdx,
+                                int          *outNbElement,
+                                int           outInteger[] );
+
+TA_RetCode TA_S_CDLSTICKSANDWICH( int    startIdx,
+                                  int    endIdx,
+                                  const float  inOpen[],
+                                  const float  inHigh[],
+                                  const float  inLow[],
+                                  const float  inClose[],
+                                  int          *outBegIdx,
+                                  int          *outNbElement,
+                                  int           outInteger[] );
+
+int TA_CDLSTICKSANDWICH_Lookback( void );
 
 
 /*
