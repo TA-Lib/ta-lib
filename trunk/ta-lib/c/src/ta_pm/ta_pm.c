@@ -36,7 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  SG       Steve Gee
  *
  * Change history:
  *
@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  031202 MF   First version.
  *  030404 MF   Change TA_Transaction timestamp to execTimestamp.
+ *  100704 SG   Fix#1042729 for MAE/FAE short transaction calculation.
  */
 
 /* Description:
@@ -488,8 +489,8 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
              else
              {
                 entryTradeLog->u.trade.profit = (entryPrice-newTransaction->price)*quantity;
-                entryPrice = -entryPrice;
                 CALC_EXCURSION_SHORT;
+                entryPrice = -entryPrice;
              }
              entryTradeLog->u.entry.entryPrice = entryPrice * quantity;
 
@@ -521,8 +522,8 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
              else
              {
                 entryTradeLog->u.trade.profit = (entryPrice-newTransaction->price)*entryTradeQuantity;
-                entryPrice = -entryPrice;
                 CALC_EXCURSION_SHORT;
+                entryPrice = -entryPrice;
              }
              entryTradeLog->u.trade.entryPrice = entryPrice * entryTradeQuantity;
 
@@ -558,8 +559,8 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
             else
             {
                dataLog->u.trade.profit = (entryPrice-newTransaction->price)*quantity;
-               entryPrice = -entryPrice;
                CALC_EXCURSION_SHORT;
+               entryPrice = -entryPrice;
             }
             dataLog->u.trade.entryPrice = entryPrice*quantity;
             dataLog->u.trade.id = id;
