@@ -785,7 +785,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
                               &strval );
          RETURN_ON_ERROR( retCode )
          
-         if ( strval && *strval || timeRequired ) {  
+         if ( strval && *strval ) {  
             if (sscanf(strval, "%2u:%2u:%2u", &u1, &u2, &u3) != 3 )
             {
                if( strval )
