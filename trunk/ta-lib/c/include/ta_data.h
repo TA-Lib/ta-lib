@@ -92,40 +92,28 @@ typedef enum
  * of the data source.
  *
  * Some of these flags allow to enable/disable some functionality
- * of a data source.
+ * for a specific data source.
  *
  * TA_AddDataSource will fail with TA_NOT_SUPPORTED if a flag request a
- * functionality not provided by the data source.
+ * functionality not applicable to the data source.
  *
- * TA_ENABLE_UPDATE_INDEX
- *    Enable the functionality that allows to add, or modify the category and
- *    symbol index.
+ * TA_REPLACE_ZERO_PRICE_BAR
+ *    Some datasource return a price bar with some price to be zero as an
+ *    an indication that there was no change in price. This option allows 
+ *    to replace these "zero" price with the previous close.
  *
- * TA_ENABLE_UPDATE_SYMBOL
- *    Enable the functionality that allows to modify or add price data to a
- *    particular symbol.
+ *    If the zero price are in the initial bars e.g. no previous valid close
+ *    are known, these zero price bar will be ignored.
+ *    
+ *    Without this option, a "zero" detected in a price bar will be considered 
+ *    an error and a call to TA_HistoryAlloc will fail.
  *
- * TA_ENABLE_CALLBACK
- *    Enable the functionality that can provides callback when a new price bar
- *    is available from this data source.
- *
- * TA_SPLIT_INCONSISTENT
- *    A data source is assumed to be completely split adjusted relatively to
- *    its last stored historical value. This will be the case with most of the
- *    data source. In the low probable case where the data source is not
- *    split adjusted, some additional processing by the TA-LIB must be done to
- *    assure consistency (through additional processing from an "inteligent
- *    split adjustment" mechanism).
- *    Note: This flag shall be rarely used.
+ *    A volume of zero is valid.
  */
 
-/* Watch-out... these flags are not yet fully supported. */
 typedef int TA_SourceFlag;
 #define TA_NO_FLAGS  0
-#define TA_ENABLE_UPDATE_INDEX  (1<<0)
-#define TA_ENABLE_UPDATE_SYMBOL (1<<1)
-#define TA_ENABLE_CALLBACK      (1<<2)
-#define TA_SPLIT_INCONSISTENT   (1<<3)
+#define TA_REPLACE_ZERO_PRICE_BAR (1<<0)
 
 typedef struct
 {
@@ -300,20 +288,6 @@ TA_RetCode TA_ForEachSymbol( TA_UDBase *unifiedDatabase,
                              TA_ForEachSymbolFunc functionToCall,
                              void *opaqueData );
 
-/* If a modification have been done to the index of a data source,
- * you may want to refresh the information in the unified database.
- *
- * There is no need to call this funciton if only the financial data
- * did change. Only index changes are meaningful.
- * 
- * Note: This can be time-consuming, particularly if the number or
- *       size of the data source is large.
- */
-
-/* !!!Not yet implemented.
-TA_RetCode TA_RefreshAllDataSource( TA_UDBase *unifiedDatabase );
-*/
-
 /* The following functions allows to access historic data.
  * On success, it becomes the responsibility of the caller to
  * call TA_HistoryFree once the 'history' is no longuer needed.
@@ -377,7 +351,6 @@ typedef int TA_ReportFlag;
 #define TA_REPORT_SOURCE    (1<<2)
 #define TA_REPORT_TOTAL     (1<<3)
 
-
 TA_RetCode TA_Report( TA_UDBase *unifiedDatabase,
                       FILE *out,
                       TA_ReportFlag flags );
@@ -386,124 +359,12 @@ TA_RetCode TA_Report( TA_UDBase *unifiedDatabase,
  * to the provided FILE pointer. This ptr could be "stdout" to
  * display on the console.
  *
- * Example:
+ * Examples:
  *        TA_WebFetch( "www.yahoo.com", stdout );
  *           or
  *        TA_WebFetch( "http://www.yahoo.com//mt", myFile );
  */
 TA_RetCode TA_WebFetch( const char *url, FILE *out );
-
-/* Some data source provides information on the current
- * market.
- *
- * When multiple data source provides market data for the same
- * symbol, TA-LIB will select and return the most recent
- * information. This mechanism allow to have multiple simultaneous
- * data source with a "fall back" if one of the source fails.
- */
-
-#if 0
-
-!!! We are currently putting more effort on
-!!! historical and technical analysis functionality.
-!!! Retreiving market data is interesting, but
-!!! not yet implemented.
-
-typedef struct
-{
-   /* Reflects the market at a certain moment. */
-   TA_Timestamp timestamp;
-
-   TA_Real    lastTrade;
-   TA_Real    bid;
-   TA_Real    ask;
-   TA_Integer volume;
-
-   /* Hidden data for internal use by the TA-LIB. Do not modify. */
-   void *hiddenData;
-} TA_MarketData;
-
-TA_RetCode TA_MarketDataAlloc( TA_UDBase *unifiedDatabase, TA_MarketData **marketData );
-TA_RetCode TA_MarketDataFree( TA_MarketData *data );
-
-#endif
-
-/* Functions for "realtime" feedback.
- *
- * First of all, with TA_AddDataSource, some online data source can
- * be added. Consequently, repetitive call to TA_HistoryAlloc and
- * TA_HistoryFree allows to obtain the "latest" available data if that
- * data source is "real time". This method is functional and is probably
- * the most simple approach.
- *
- * Demanding user may want to consider one of the two more dynamic
- * method:
- *
- *   (Note: The following is in development)
- *
- *  1) Periodical Refresh
- *     TA_HistoryUpdate allows to get the latest data from the data source
- *     added with the flag TA_ENABLE_REALTIME_FEED.
- *
- *     Simplified example:
- *        TA_History data;
- *        TA_RetCode retCode;
- *        TA_Timestamp today;
- *
- *        ...
- *
- *        TA_AddDataSource( TA_ASCII_FILE, ... );
- *        TA_AddDataSource( TA_RT_QUOTE, with TA_ENABLE_REALTIME_FEED );
- *
- *        TA_TimestampNow( &today );
- *
- *        TA_HistoryAlloc( "NASDAQ", "LNUX", TA_15MIN, today, NULL, &data );
- *
- *        while( 1 )
- *        {
- *            ... sleep for a while ...
- *            retCode = TA_HistoryUpdate( &data, 30 );
- *            if( retCode == TA_SUCCESS )
- *               DisplayData( data );
- *         }
- *
- *      In this example, all available intraday 15 Min bars are obtained
- *      with TA_HistoryAlloc (TA_RT_QUOTE and the ASCII files are merged).
- *
- *      Following that, the TA_History can be refreshed. Only the data
- *      coming from data source with TA_ENABLE_REALTIME_FEED are going to
- *      be used for the update.
- *
- *      If there is new data available, TA_SUCCESS is returned and the
- *      new and old data is returned in the provided TA_History pointer (the
- *      TA-LIB will take care of all the possibly needed re-allocation).
- *      TA_NO_NEW_DATA indicates that no new data was available at this time.
- *      For all return code different than TA_SUCCESS, the TA_History pointer
- *      is still pointing on the same old data.
- *
- *      The timeout parameter indicate how longs (in seconds) the caller is
- *      willing to wait for the update. If a timeout occured, TA_TIMEOUT is
- *      returned. If zero is specified, the function return immediatly with
- *      TA_NO_NEW_DATA if no new data is immediatly available.
- *
- *  2) Callback method
- *     With this method, the user can setup a callback function whenever a
- *     change occured for a particular symbol. The design of this functionality
- *     is under development and is not yet available.
- */
-
-
-/**** Functions TA_HistoryUpdate ****/
-/* <<UNDER INITIAL DEVELOPMENT, COME BACK LATER! >> */
-/*TA_RetCode TA_HistoryUpdate( TA_UDBase *unifiedDatabase,
-                             TA_History **history,
-                             unsigned int timeoutInSec ); */
-
-/**** Functions for adding "real time" callback for price bars update. *****/
-/* <<UNDER INITIAL DEVELOPMENT, COME BACK LATER! >> */
-
-/**** Functions for modifying the index and data of a data source.  *****/
-/* <<UNDER INITIAL DEVELOPMENT, COME BACK LATER! >> */
 
 #ifdef __cplusplus
 }
