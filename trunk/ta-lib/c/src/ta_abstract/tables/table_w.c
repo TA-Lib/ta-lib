@@ -46,6 +46,33 @@ DEF_FUNCTION( WCLPRICE,                   /* name */
              );
 /* WCL END */
 
+/* WILLR BEGIN */
+static const TA_InputParameterInfo    *TA_WILLR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_WILLR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_WILLR_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( WILLR,          /* name */
+              TA_GroupId_MomentumIndicators,  /* groupId */
+              "Williams' %R", /* hint */
+              NULL,           /* helpFile */
+              0,              /* flags */
+              NULL            /* analysis function */
+             );
+/* WILLR END */
+
 /* WMA BEGIN */
 static const TA_InputParameterInfo    *TA_WMA_Inputs[]    =
 {
@@ -81,6 +108,7 @@ DEF_FUNCTION( WMA,                        /* name */
 const TA_FuncDef *TA_DEF_TableW[] =
 {
    ADD_TO_TABLE(WCLPRICE),
+   ADD_TO_TABLE(WILLR),
    ADD_TO_TABLE(WMA),
    NULL
 };
