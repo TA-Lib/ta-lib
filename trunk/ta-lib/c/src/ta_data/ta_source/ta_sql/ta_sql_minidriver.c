@@ -125,7 +125,10 @@ TA_FILE_INFO;
 /**** Global functions definitions.   ****/
 TA_SQL_MinidriverID TA_SQL_IdentifyMinidriver(const char scheme[])
 {
+   TA_PROLOG
    unsigned int index;
+
+   TA_TRACE_BEGIN( TA_SQL_IdentifyMinidriver );
 
    TA_ASSERT_RET( TA_gSQLMinidriverTableSize == TA_SQL_NUM_OF_MINIDRIVERS,  TA_SQL_NUM_OF_MINIDRIVERS);
 
@@ -137,7 +140,7 @@ TA_SQL_MinidriverID TA_SQL_IdentifyMinidriver(const char scheme[])
       }
    }
 
-   return (TA_SQL_MinidriverID)index;
+   TA_TRACE_RETURN( (TA_SQL_MinidriverID)index );
 }
 
 /**** Local functions definitions.     ****/
