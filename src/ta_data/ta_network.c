@@ -281,14 +281,14 @@ TA_RetCode TA_WebPageFree( TA_WebPage *webPage )
    {      
       hiddenData = webPage->hiddenData;
       if( !hiddenData )
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(32);
 
       if( hiddenData->magicNb != TA_WEBPAGE_MAGIC_NB )
          return TA_BAD_OBJECT;
 
       libHandle = hiddenData->libHandle;
       if( !libHandle )
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(33);
 
       /* The object is validated, can start to free ressources
        * from this point.

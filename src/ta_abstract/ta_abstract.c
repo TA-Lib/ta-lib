@@ -223,7 +223,7 @@ TA_RetCode TA_GroupTableFree( TA_StringTable *table )
    {
       stringTableHidden = (TA_StringTableGroupHidden *)table->hiddenData;
       if( !stringTableHidden )
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(1);
    
       if( stringTableHidden->magicNb != TA_STRING_TABLE_GROUP_MAGIC_NB )
          return TA_BAD_OBJECT;
@@ -309,7 +309,7 @@ TA_RetCode TA_ForEachFunc( TA_Libc *libHandle, TA_CallForEachFunc functionToCall
    }
    else
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(2) );
    }
 
    TA_TRACE_RETURN( TA_SUCCESS );
@@ -424,7 +424,7 @@ TA_RetCode TA_FuncTableFree( TA_StringTable *table )
    {
       stringTableHidden = (TA_StringTableFuncHidden *)table->hiddenData;
       if( !stringTableHidden )
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(3);
    
       if( stringTableHidden->magicNb != TA_STRING_TABLE_FUNC_MAGIC_NB )
          return TA_BAD_OBJECT;

@@ -119,4 +119,11 @@ void TA_INT_stddev_using_precalc_ma( const TA_Real *inReal,
 
 extern unsigned int TA_UnstablePeriodTable[TA_FUNC_UNST_ALL];
 
+/* Rounding macro for doubles. Works only with positive numbers. */
+#define round_pos(x) (floor((x)+0.5))
+
+/* Rounding macro for doubles. Works only with negative numbers. */
+#define round_neg(x) (ceil((x)-0.5))
+
+
 #endif

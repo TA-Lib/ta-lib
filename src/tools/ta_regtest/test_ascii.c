@@ -401,7 +401,7 @@ ErrorNumber test_ascii( void )
       if( i == nbFileGlobingTest )
       {
          printf( "ta_regtest reference data %d is invalid.\n", startupDatasource );
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(128);
       }
 
       if( testRetValue != TA_TEST_PASS )

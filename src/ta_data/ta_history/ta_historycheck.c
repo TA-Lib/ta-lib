@@ -98,7 +98,7 @@ TA_RetCode TA_HistoryCheckInternal( TA_Libc            *libHandle,
    /* Period shall be always set in the history. */
    if( history->period != expectedPeriod )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(45) );
    }
 
    /* Verify that an empty history is really empty. */
@@ -113,7 +113,7 @@ TA_RetCode TA_HistoryCheckInternal( TA_Libc            *libHandle,
       allFieldNull = 1;
       if( history->nbBars != 0 )
       {
-         TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+         TA_TRACE_RETURN( TA_INTERNAL_ERROR(46) );
       }
    }
    else
@@ -121,7 +121,7 @@ TA_RetCode TA_HistoryCheckInternal( TA_Libc            *libHandle,
 
    if( (history->nbBars == 0) && !allFieldNull )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(47) );
    }
 
    /* !!! Some more runtime verification could be added here... */

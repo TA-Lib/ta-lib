@@ -350,7 +350,7 @@ TA_RetCode TA_INT_MACD( TA_Libc      *libHandle,
       *outNbElement = 0;
       TA_Free( libHandle, fastEMABuffer );
       TA_Free( libHandle, slowEMABuffer );
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(119);
    }
 
 /*

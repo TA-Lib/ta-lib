@@ -93,7 +93,7 @@ TA_RetCode TA_FileIndexMoveToNextToken( TA_FileIndexPriv *data )
    TA_Libc *libHandle;
 
    if( !data )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(86);
 
 
    libHandle = data->libHandle;
@@ -156,7 +156,7 @@ TA_RetCode TA_FileIndexMoveToPrevToken( TA_FileIndexPriv *data )
    TA_RetCode retCode;
 
    if( !data )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(87);
 
    libHandle = data->libHandle;
    TA_TRACE_BEGIN( libHandle, TA_FileIndexMoveToPrevToken );

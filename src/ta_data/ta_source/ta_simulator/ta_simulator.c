@@ -184,7 +184,7 @@ TA_RetCode TA_SIMULATOR_OpenSource( TA_Libc *libHandle,
 
    if( !stringCache )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(91) );
    }
 
    /* Verify that the requested functionality is supported or not. */
@@ -307,7 +307,7 @@ TA_RetCode TA_SIMULATOR_GetFirstCategoryHandle( TA_Libc *libHandle,
 
    if( !privData )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(92) );
    }
 
    categoryHandle->nbSymbol = 2;
@@ -340,7 +340,7 @@ TA_RetCode TA_SIMULATOR_GetNextCategoryHandle( TA_Libc *libHandle,
 
    if( !privData )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(93) );
    }
 
    /* No category left. */
@@ -378,7 +378,7 @@ TA_RetCode TA_SIMULATOR_GetFirstSymbolHandle( TA_Libc *libHandle,
 
    if( !privData || !categoryHandle->string )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(94) );
    }
 
    /* Get the first symbol in this category. */
@@ -395,7 +395,7 @@ TA_RetCode TA_SIMULATOR_GetFirstSymbolHandle( TA_Libc *libHandle,
       symbolHandle->opaqueData = (void *)0;      
       break;
    default:
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(95) );
    }
 
    TA_TRACE_RETURN( TA_SUCCESS );
@@ -423,7 +423,7 @@ TA_RetCode TA_SIMULATOR_GetNextSymbolHandle( TA_Libc *libHandle,
 
    if( !privData )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(96) );
    }
    /* Get the first symbol in this category. */
    switch( (unsigned int)categoryHandle->opaqueData )
@@ -443,7 +443,7 @@ TA_RetCode TA_SIMULATOR_GetNextSymbolHandle( TA_Libc *libHandle,
    case 1: /* This is TA_SIM_MRG */
       TA_TRACE_RETURN( TA_END_OF_INDEX );
    default:
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(97) );
    }
 
    TA_TRACE_RETURN( TA_SUCCESS );
@@ -482,7 +482,7 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_Libc *libHandle,
    TA_ASSERT( libHandle, categoryHandle != NULL );
    TA_ASSERT( libHandle, symbolHandle != NULL );
 
-   retCode = TA_UNKNOWN_ERR;
+   retCode = TA_INTERNAL_ERROR(98);
 
    /* Note: start/end index are currently ignored
     *       in this data source.

@@ -702,7 +702,7 @@ static TA_RetCode processSymbolFieldSubstitution( TA_FileIndexPriv *fileIndexPri
    libHandle = fileIndexPriv->libHandle;
 
    if( !libHandle )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(88);
 
    TA_TRACE_BEGIN( libHandle, processSymbolFieldSubstitution );
 

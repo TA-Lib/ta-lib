@@ -293,7 +293,7 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
       *lookback = TA_ROCR_Lookback(testParam->test->optInTimePeriod_0 );
    }
    else
-      retCode = TA_UNKNOWN_ERR;
+      retCode = TA_INTERNAL_ERROR(130);
 
    return retCode;
 }

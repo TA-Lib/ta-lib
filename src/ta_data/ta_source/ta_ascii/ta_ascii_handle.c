@@ -121,7 +121,7 @@ TA_RetCode TA_ASCII_DataSourceHandleFree( TA_DataSourceHandle *handle )
    TA_Libc *libHandle;
 
    if( !handle )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(60);
 
    privateHandle = (TA_PrivateAsciiHandle *)handle->opaqueData;
    libHandle = privateHandle->libHandle;
@@ -150,7 +150,7 @@ TA_RetCode TA_ASCII_BuildFileIndex( TA_DataSourceHandle *handle )
    TA_Libc *libHandle;
 
    if( !handle )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(61);
 
    privateHandle = (TA_PrivateAsciiHandle *)handle->opaqueData;
    libHandle = privateHandle->libHandle;
@@ -202,7 +202,7 @@ TA_RetCode TA_ASCII_BuildReadOpInfo( TA_DataSourceHandle *handle )
    TA_Libc *libHandle;
 
    if( !handle )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(62);
 
    privateHandle = (TA_PrivateAsciiHandle *)handle->opaqueData;
    libHandle = privateHandle->libHandle;

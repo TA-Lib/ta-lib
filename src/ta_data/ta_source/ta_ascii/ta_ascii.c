@@ -237,21 +237,21 @@ TA_RetCode TA_ASCII_GetFirstCategoryHandle( TA_Libc *libHandle,
 
    if( !privData )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(49) );
    }
 
    fileIndex = privData->theFileIndex;
 
    if( !fileIndex )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(50) );
    }
 
    string = TA_FileIndexFirstCategory( fileIndex );
 
    if( !string )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR ); /* At least one category must exist. */
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(51) ); /* At least one category must exist. */
    }
 
    /* Set the categoryHandle. */
@@ -286,14 +286,14 @@ TA_RetCode TA_ASCII_GetNextCategoryHandle( TA_Libc *libHandle,
 
    if( !privData )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(52) );
    }
 
    fileIndex = privData->theFileIndex;
 
    if( !fileIndex )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(53) );
    }
 
    /* Get the next category from the fileIdnex. */
@@ -334,21 +334,21 @@ TA_RetCode TA_ASCII_GetFirstSymbolHandle( TA_Libc *libHandle,
 
    if( !privData )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(54) );
    }
 
    fileIndex = privData->theFileIndex;
 
    if( !fileIndex || !categoryHandle->string )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(55) );
    }
 
    /* Make sure the current category is the one requested. */
    retCode = TA_FileIndexSelectCategory( fileIndex, categoryHandle->string );
    if( retCode != TA_SUCCESS )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(56) );
    }
 
    /* Get the first symbol in this category. */
@@ -400,21 +400,21 @@ TA_RetCode TA_ASCII_GetNextSymbolHandle( TA_Libc *libHandle,
 
    if( !privData )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(57) );
    }
 
    fileIndex = privData->theFileIndex;
 
    if( !fileIndex || !categoryHandle->string )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(58) );
    }
 
    /* Make sure the current category is the one requested. */
    retCode = TA_FileIndexSelectCategory( fileIndex, categoryHandle->string );
    if( retCode != TA_SUCCESS )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(59) );
    }
 
    /* Get the next symbol in this category. */
@@ -518,11 +518,8 @@ TA_RetCode TA_ASCII_GetHistoryData( TA_Libc *libHandle,
    retCode = TA_ReadOp_Do( libHandle, fileHandle,                           
                            privateHandle->readOpInfo,
                            privateHandle->readOpInfo->period,
-                           start, end, 
-                           200,
-                           fieldToAlloc, paramForAddData,
-                           NULL, NULL );
-                           
+                           start, end, 200,
+                           fieldToAlloc, paramForAddData, NULL );
 
    if( retCode != TA_SUCCESS )
    {

@@ -256,7 +256,7 @@ TA_RetCode TA_FileIndexSelectCategory( TA_FileIndex *fileIndex,
    TA_Libc *libHandle;
 
    if( !fileIndex )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(85);
         
    fileIndexPriv = (TA_FileIndexPriv *)fileIndex;
    libHandle = fileIndexPriv->libHandle; 

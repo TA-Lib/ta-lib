@@ -354,7 +354,7 @@ TA_RetCode TA_ReadOpInfoAlloc( TA_Libc *libHandle,
    if( opIdx != nbField )
    {
       TA_ReadOpInfoFree( newReadOpInfo );
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(89) );
    }
 
    arrayReadOp[opIdx-1] |= TA_CMD_LAST_FLAG;
@@ -574,7 +574,7 @@ static TA_RetCode buildReadOp( TA_Libc *libHandle,
 
    if( !readOp || !intraDayIncrementInSeconds || !tokenId )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(9) );
    }
 
    *intraDayIncrementInSeconds = 0;

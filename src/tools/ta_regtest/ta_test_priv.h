@@ -110,7 +110,7 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
 
 #define CLEAR_EXPECTED_VALUE(id) \
    { \
-      retCode = TA_UNKNOWN_ERR; \
+      retCode = TA_INTERNAL_ERROR(127); \
       outBegIdx = 0;\
       outNbElement = 0;\
    }

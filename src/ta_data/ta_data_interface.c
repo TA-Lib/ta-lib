@@ -527,7 +527,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
          if( driver->closeSource )
             driver->closeSource( libHandle, sourceHandle );
          TA_AddDataSourceParamPrivFree( paramPriv );
-         TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+         TA_TRACE_RETURN( TA_INTERNAL_ERROR(24) );
       }
 
       if( (sourceHandle->nbCategory > 1) && !driver->getNextCategoryHandle )
@@ -535,7 +535,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
          if( driver->closeSource )
             driver->closeSource( libHandle, sourceHandle );
          TA_AddDataSourceParamPrivFree( paramPriv );
-         TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+         TA_TRACE_RETURN( TA_INTERNAL_ERROR(25) );
       }
 
       tmpListCategory = TA_ListAlloc( libHandle );
@@ -657,7 +657,7 @@ TA_RetCode TA_RefreshAllDataSource( TA_UDBase *unifiedDatabase )
 
    /* Re-open the data source. */
 
-   return TA_UNKNOWN_ERR;
+   return TA_INTERNAL_ERROR(26);
 }
 
 TA_RetCode TA_CategoryTableAlloc( TA_UDBase *unifiedDatabase,
@@ -1042,7 +1042,7 @@ TA_RetCode TA_ForEachSymbol( TA_UDBase *unifiedDatabase,
       TA_CategoryTableFree( tableCategory );
    }
    else
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(27);
 
    return TA_SUCCESS;
 }
@@ -1104,7 +1104,7 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
 
    if( !categoryData->dictUDBSymbol )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(28) );
    }
 
    /* Look for the symbol in this category. */
@@ -1149,7 +1149,7 @@ TA_RetCode TA_HistoryFree( TA_History *history )
    hiddenData = (TA_HistoryHiddenData *)history->hiddenData;      
    privUDB = (TA_UDBasePriv *)hiddenData->privUDB;
    if( !privUDB )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(29);
    libHandle = privUDB->libHandle;
    
    TA_TRACE_BEGIN( libHandle, TA_HistoryFree );
@@ -1415,7 +1415,7 @@ static TA_RetCode closeAllUDBase( TA_DataGlobal *global )
 
    /* Attempts to close all UDBase belonging to this library. */
    if( !global )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(30);
 
    listUDB = global->listUDBase;
 
@@ -1743,7 +1743,7 @@ static TA_RetCode processCategoryAndSymbols( TA_UDBasePriv *privUDB,
   
 
    if( !privUDB )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(31);
 
    libHandle = privUDB->libHandle;
 

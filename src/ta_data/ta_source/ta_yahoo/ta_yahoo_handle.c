@@ -118,7 +118,7 @@ TA_RetCode TA_YAHOO_DataSourceHandleFree( TA_DataSourceHandle *handle )
    TA_Libc *libHandle;
 
    if( !handle )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(102);
 
    privateHandle = (TA_PrivateYahooHandle *)handle->opaqueData;
    libHandle = privateHandle->libHandle;

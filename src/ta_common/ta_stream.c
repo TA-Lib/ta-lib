@@ -514,7 +514,7 @@ TA_RetCode TA_StreamAddBuffer( TA_Stream *stream,
    libHandle = firstStreamPriv->libHandle;
 
    if( !libHandle )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(6);
 
    newStreamPriv = (TA_StreamPriv *)TA_Malloc( libHandle, sizeof( TA_StreamPriv ) );
    if( !newStreamPriv )
@@ -1383,7 +1383,7 @@ TA_RetCode TA_StreamDecompress( TA_StreamAccess *streamToDecompress,
         break;
     default:
         TA_StreamFree( stream );
-        return TA_UNKNOWN_ERR;
+        return TA_INTERNAL_ERROR(7);
     }
 
     /* Eat-up bits that could have been added at the end to keep things
@@ -1451,7 +1451,7 @@ TA_RetCode TA_StreamCRC_32( TA_Stream *stream, unsigned int *crc32 )
    {    
       if( streamPriv->magicNb != TA_STREAM_MAGIC_NB )
       {
-          TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+          TA_TRACE_RETURN( TA_INTERNAL_ERROR(8) );
       }
 
       /* How many bytes in this block? */
@@ -1616,7 +1616,7 @@ TA_RetCode TA_StreamEncapsulate( TA_Stream    **ptrToStream,
 
    libHandle = streamPriv->libHandle;
    if( !libHandle )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(9);
 
    /* Stream is completed to a byte boundary. */
    retCode = streamJumpToNextByteBoundary( (TA_StreamPriv *)stream, &nbBitAdded );
@@ -2342,7 +2342,7 @@ static TA_RetCode markByteForSkip( TA_Stream *stream, unsigned int nbByteToSkip 
    }
 
    if( nbByteToSkip != 0 )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(10);
 
    return TA_SUCCESS;
 }

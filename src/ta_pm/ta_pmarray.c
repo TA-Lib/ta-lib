@@ -257,10 +257,10 @@ TA_RetCode TA_PMArrayAlloc( TA_PM        *pm,
       return TA_BAD_PARAM;
    }
 
-   TA_ASSERT_RET( pmPriv->libHandle, pmPriv->arrayTimestamp != NULL, TA_UNKNOWN_ERR );
-   TA_ASSERT_RET( pmPriv->libHandle, pmPriv->equity != NULL, TA_UNKNOWN_ERR );
-   TA_ASSERT_RET( pmPriv->libHandle, finalData != NULL, TA_UNKNOWN_ERR );
-   TA_ASSERT_RET( pmPriv->libHandle, finalTimestamp != NULL, TA_UNKNOWN_ERR );
+   TA_ASSERT_RET( pmPriv->libHandle, pmPriv->arrayTimestamp != NULL, TA_INTERNAL_ERROR(122) );
+   TA_ASSERT_RET( pmPriv->libHandle, pmPriv->equity != NULL, TA_INTERNAL_ERROR(123) );
+   TA_ASSERT_RET( pmPriv->libHandle, finalData != NULL, TA_INTERNAL_ERROR(124) );
+   TA_ASSERT_RET( pmPriv->libHandle, finalTimestamp != NULL, TA_INTERNAL_ERROR(125) );
  
    /* At last, allocate and fill up the TA_PMArray. */
    newPMArray = TA_Malloc( libHandle, sizeof( TA_PMArray ) );
@@ -702,7 +702,7 @@ static TA_RetCode equityPeriodTransform( TA_Libc       *libHandle,
       retCode = TA_TimestampDeltaYear( &old_timestamp[0], &old_timestamp[old_nbBars-1], (unsigned int *)&new_nbBars );
       break;
    default:
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(126) );
    }
 
    if( retCode != TA_SUCCESS )
