@@ -14,11 +14,14 @@ CDL3BLACKCROWS      Three Black Crows
 CDL3INSIDE          Three Inside Up/Down
 CDL3LINESTRIKE      Three-Line Strike 
 CDL3OUTSIDE         Three Outside Up/Down
+CDL3STARSINSOUTH    Three Stars In The South
 CDL3WHITESOLDIERS   Three Advancing White Soldiers
 CDLABANDONEDBABY    Abandoned Baby
 CDLADVANCEBLOCK     Advance Block
 CDLBELTHOLD         Belt-hold
 CDLBREAKAWAY        Breakaway
+CDLCLOSINGMARUBOZU  Closing Marubozu
+CDLCONCEALBABYSWALL Concealing Baby Swallow
 CDLCOUNTERATTACK    Counterattack
 CDLDARKCLOUDCOVER   Dark Cloud Cover
 CDLDOJI             Doji
@@ -27,6 +30,7 @@ CDLDRAGONFLYDOJI    Dragonfly Doji
 CDLENGULFING        Engulfing Pattern
 CDLEVENINGDOJISTAR  Evening Doji Star
 CDLEVENINGSTAR      Evening Star
+CDLGAPSIDESIDEWHITE Up/Down-gap side-by-side white lines
 CDLGRAVESTONEDOJI   Gravestone Doji
 CDLHAMMER           Hammer
 CDLHANGINGMAN       Hanging Man
@@ -41,11 +45,13 @@ CDLKICKINGBYLENGTH  Kicking - bull/bear determined by the longer marubozu
 CDLLONGLEGGEDDOJI   Long Legged Doji
 CDLLONGLINE         Long Line Candle
 CDLMARUBOZU         Marubozu
+CDLMATHOLD          Mat Hold
 CDLMORNINGDOJISTAR  Morning Doji Star
 CDLMORNINGSTAR      Morning Star
 CDLONNECK           On-Neck Pattern
 CDLPIERCING         Piercing Pattern
 CDLRICKSHAWMAN      Rickshaw Man
+CDLRISEFALL3METHODS Rising/Falling Three Methods
 CDLSEPARATINGLINES  Separating Lines
 CDLSHOOTINGSTAR     Shooting Star
 CDLSHORTLINE        Short Line Candle
@@ -55,6 +61,7 @@ CDLTAKURI           Takuri (Dragonfly Doji with very long lower shadow)
 CDLTASUKIGAP        Tasuki Gap
 CDLTHRUSTING        Thrusting Pattern
 CDLTRISTAR          Tristar Pattern
+CDLUNIQUE3RIVER     Unique 3 River
 CDLUPSIDEGAP2CROWS  Upside Gap Two Crows
 CDLXSIDEGAP3METHODS Upside/Downside Gap Three Methods
 CORREL              Pearson's Correlation Coefficient (r)
