@@ -90,7 +90,7 @@
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 /*
- * TA_CDLSPINNINGTOP - Spinning Top Candle
+ * TA_CDLSPINNINGTOP - Spinning Top
  * 
  * Input  = Open, High, Low, Close
  * Output = int
