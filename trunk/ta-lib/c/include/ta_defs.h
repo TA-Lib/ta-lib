@@ -164,6 +164,8 @@ typedef enum
     /*  95 */  TA_YAHOO_IDX_UNAVAILABLE_4, /* Failed to find a Yahoo! index */
     /*  96 */  TA_OBSOLETED_SYMBOL, /* This symbol is no longuer valid */
     /*  97 */  TA_BAD_QUERY,   /* Query could not be executed or syntax error in query */
+    /*  98 */  TA_UNSUPPORTED_DO_NOT_SPLIT_ADJUST, /* TA_DO_NOT_SPLIT_ADJUST flag is not supported by this data source */
+    /*  99 */  TA_UNSUPPORTED_DO_NOT_VALUE_ADJUST, /* TA_DO_NOT_VALUE_ADJUST flag is not supported by this data source */
 
     /****** IP Error Code *****/
     /* 700 */  TA_IP_NOSOCKETS = 700,  /* Sockets not supported      */
