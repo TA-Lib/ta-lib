@@ -37,6 +37,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  ST       Steve Thames (steve@softlife.com)
+ *  AC       Angelo Ciceri
  *
  * Change history:
  *
@@ -50,6 +51,7 @@
  *  020804 MF,ST Fixes to make it work on Linux (Bug#873879).
  *  022904 MF    Add TA_GetLookback
  *  030604 MF    Add generation of "ta_func.swg"
+ *  082004 AC    Add generation of candlestick functions declaration
  */
 
 /* Description:
@@ -3063,5 +3065,34 @@ static void appendToFunc( FILE *out )
    fprintf( out, " */\n" );
    fprintf( out, "TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n" );
    fprintf( out, "TA_Compatibility TA_GetCompatibility( void );\n" );
+   fprintf( out, "\n" );
+   fprintf( out, "/* Candlesticks struct and functions\n" );
+   fprintf( out, " * Because candlestick patterns are subjective, it is necessary \n" );
+   fprintf( out, " * to allow the user to specify what should be the meaning of \n" );
+   fprintf( out, " * 'long body', 'short shadows', etc.\n" );
+   fprintf( out, " */\n" );
+   fprintf( out, "\n" );
+   fprintf( out, "/* TA_CandleSetting is the one setting struct */\n" );
+   fprintf( out, "typedef struct {\n" );
+   fprintf( out, "    TA_CandleSettingType    settingType;\n" );
+   fprintf( out, "    TA_RangeType            rangeType;\n" );
+   fprintf( out, "    int                     avgPeriod;\n" );
+   fprintf( out, "    double                  factor;\n" );
+   fprintf( out, "} TA_CandleSetting;\n" );
+   fprintf( out, "\n" );
+   fprintf( out, "/* Call TA_SetCandleSettings to set that when comparing a candle \n" );
+   fprintf( out, " * basing on settingType it must be compared with the average \n" );
+   fprintf( out, " * of the last avgPeriod candles' rangeType multiplied by factor.\n" );
+   fprintf( out, " * This setting is valid until TA_RestoreCandleDefaultSettings is called\n" );
+   fprintf( out, " */\n" );
+   fprintf( out, "TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType, \n" );
+   fprintf( out, "                                 TA_RangeType rangeType, \n" );
+   fprintf( out, "                                 int avgPeriod, \n" );
+   fprintf( out, "                                 double factor );\n" );
+   fprintf( out, "\n" );
+   fprintf( out, "/* Call TA_RestoreCandleDefaultSettings after using custom settings \n" );
+   fprintf( out, " * to restore the default settings for the specified settingType\n" );
+   fprintf( out, " */\n" );
+   fprintf( out, "TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType );\n" );
 }
 
