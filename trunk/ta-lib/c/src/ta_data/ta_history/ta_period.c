@@ -402,6 +402,7 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
    cur_close        = 0.0;     /* Current new close of new period. */
    cur_volume       = 0;       /* Current new volume of new period. */
    cur_openInterest = 0;       /* Current new openInterest of new period. */
+   periodCompleted  = 0;
 
    if(transformToDailyAndMore)
    {
@@ -436,7 +437,10 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
                break;
             case TA_YEARLY:
                TA_BackToBeginOfYear( &tempLocalTimestamp );
-               break;         
+               break;
+            default:
+               /* Unsupported period. */
+               TA_TRACE_RETURN( TA_INTERNAL_ERROR(169) );
             }
             dayOfTheWeek = TA_GetDayOfTheWeek(&tempLocalTimestamp);
             if( (dayOfTheWeek == TA_SUNDAY) || (dayOfTheWeek == TA_SATURDAY) )
@@ -638,15 +642,46 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
       #undef SET_CUR_IF_NOT_NULL
 
       
-      if( (newPeriod > TA_DAILY) && !(flags & TA_ALLOW_INCOMPLETE_PRICE_BARS)  && (newPriceBar >= 1) )
+      if( (newPeriod > TA_DAILY) && 
+         !(flags & TA_ALLOW_INCOMPLETE_PRICE_BARS) && 
+          (newPriceBar >= 1) )
       {
-         /* Put in tempConstTimestamp the last weekday in the last period. */
+         /* Put in tempLocalTimestamp the last weekday of the last period. */
          tempTimestamp = &dest_timestamp[newPriceBar-1];
          TA_TimestampCopy(&tempLocalTimestamp,tempTimestamp);
 
+         if( newPeriod == TA_WEEKLY )
+            TA_JumpToDayOfWeek( &tempLocalTimestamp, TA_FRIDAY );
+         else
+         {
+            switch( newPeriod )
+            {
+            case TA_MONTHLY:
+               TA_JumpToEndOfMonth( &tempLocalTimestamp );
+               break;
+            case TA_QUARTERLY:
+               TA_JumpToEndOfQuarter( &tempLocalTimestamp );
+               break;
+            case TA_YEARLY:
+               TA_JumpToEndOfYear( &tempLocalTimestamp );
+               break;
+            default:
+               /* Unsupported period. */
+               TA_TRACE_RETURN( TA_INTERNAL_ERROR(170) );
+            }
+            dayOfTheWeek = TA_GetDayOfTheWeek(&tempLocalTimestamp);
+            if( (dayOfTheWeek == TA_SUNDAY) || (dayOfTheWeek == TA_SATURDAY) )
+               TA_PrevWeekday( &tempLocalTimestamp );
+         }
          
-         /* Check if the last price bar is completed. If not, trim it from the output. */
-         if( !periodCompleted && !TA_TimestampEqual(&tempLocalTimestamp,tempTimestamp) )
+         /* Check if the last price bar is completed. If not, trim it from the output. 
+          *
+          * Note: If the oldPriceBar < 1 there is no way the new price bar can be completed.
+          *       (can't use the old_timestamp in that scenario because it might 
+          *       be already overwritten with the new price bar).
+          */
+         if( (oldPriceBar < 1) || 
+             (!periodCompleted && !TA_TimestampDateEqual(&tempLocalTimestamp,&old_timestamp[oldPriceBar-1])) )
          {
             /* Last price bar is incomplete. Remove it. */
             newPriceBar--;
