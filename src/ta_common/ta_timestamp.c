@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  AK       Alexander Kugel
  *
  *
  * Change history:
@@ -45,7 +46,10 @@
  *  110199 MF   First version. Simply encapsulate iMatix.
  *  042003 MF   Fix #724662 for TA_GetTime + code clean-up
  *  082703 MF   Add TA_TimestampCompare
- *  020104 MF   Add TA_TimestampValidateYMD and TA_TimestampValidateHMS
+ *  020104 MF   Add TA_TimestampValidateYMD and TA_TimestampValidateHMS 
+ *  052604 AK   Add TA_TimestampAlign, TA_AddTimeToTimestamp
+ *              and TA_TimestampDeltaIntraday.
+ *
  */
 
 /* Description:
@@ -55,6 +59,7 @@
 
 /**** Headers ****/
 #include <stddef.h>
+#include <time.h>
 #include "ta_common.h"
 #include "sfl.h"
 
@@ -281,6 +286,50 @@ TA_RetCode TA_TimestampValidate( const TA_Timestamp *timestamp )
        return TA_SUCCESS;
 
     return TA_BAD_PARAM;
+}
+
+
+/* Align the timestamp according to bars period. --AK--
+ * Limitations: period<= TA_12HOURS
+ */
+TA_RetCode TA_TimestampAlign( TA_Timestamp *dest, 
+                              const TA_Timestamp *src, 
+                              TA_Period period )
+{
+   time_t seconds;
+   time_t sec1, sec2;
+
+   #ifdef TA_DEBUG
+   {
+      TA_RetCode retCode;
+
+      retCode = TA_TimestampValidate( src );
+      if( retCode != TA_SUCCESS )
+         return retCode;
+   }
+   #endif
+
+
+   if( !src || !dest )
+      return TA_BAD_PARAM;
+
+   /* Calculate the number of seconds from the day's beginning --AK-- */
+   TA_TimestampCopy(dest, src);
+   sec1 = date_to_timer(dest->date, dest->time);
+   sec2 = date_to_timer(dest->date, 0);
+   seconds = sec1 - sec2;
+
+   /* Allign seconds --AK-- */
+   seconds -= seconds % period;
+
+   /* Add the magic 59 seconds if necessary --AK--   */
+   /* This line should be removed after the MF's fix */
+   //seconds += 59;
+
+   /* Put the result into the destination timestamp --AK-- */
+   dest->date = src->date;
+   dest->time = timer_to_time(sec2+seconds);
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_TimestampValidateYMD( const TA_Timestamp *timestamp )
@@ -704,6 +753,53 @@ TA_RetCode TA_TimestampCopy( TA_Timestamp *dest, const TA_Timestamp *src )
    return TA_SUCCESS;
 }
 
+/* Move the timestamp forward/backward by some time "delta"
+ * which is specified in seconds                     --AK--
+ * Approximate limitations: -30 years < delta < 30 years
+ */
+TA_RetCode TA_AddTimeToTimestamp( TA_Timestamp *dest, 
+                                  const TA_Timestamp *src,
+                                  const int delta)
+{
+   long offset;
+   time_t timer;
+   #ifdef TA_DEBUG
+   TA_RetCode retCode;
+   #endif
+
+   if( !src || !dest )
+      return TA_BAD_PARAM;
+
+   #ifdef TA_DEBUG
+   {   
+      retCode = TA_TimestampValidate( src );
+      if( retCode != TA_SUCCESS )
+         return retCode;
+   }
+   #endif
+
+   TA_TimestampCopy(dest, src);
+
+   /* Move the date approximately to the middle of the valid */ 
+   /* time_t range: between 1970 amd 2038 --AK--             */
+   TA_SetDate(2004,1,1,dest);
+
+   /* Store the offset --AK--                                */
+   offset =  date_to_days(src->date) - date_to_days(dest->date);
+   
+   /* Add the delta --AK--                                   */
+   timer = date_to_timer(dest->date, dest->time);
+   timer += delta;
+   dest->date = timer_to_date(timer);
+   dest->time = timer_to_time(timer);
+
+   /* Restore the offset --AK--                               */
+   dest->date = days_to_date(offset + date_to_days(dest->date) );
+
+   return TA_SUCCESS;   
+}
+
+
 TA_RetCode TA_SetDateNow( TA_Timestamp *timestamp )
 {
    if( !timestamp )
@@ -931,6 +1027,44 @@ TA_RetCode TA_TimestampDeltaWeekday( const TA_Timestamp *t1,
    return TA_SUCCESS;
 }
 
+/* This function does not take care about weekends, holidays 
+ * or opening hours of a Exchange Markets. For the simplicity, 
+ * the conversion to the same time period is not allowed  --AK-- 
+ */
+TA_RetCode TA_TimestampDeltaIntraday( const TA_Timestamp *t1,
+                                 const TA_Timestamp *t2,
+                                 unsigned int *delta,
+                                 TA_Period old_period,
+                                 TA_Period new_period)
+{
+   unsigned int nDays;
+   
+   const TA_Timestamp *start, *end;
+
+   if( !t1 || !t2 || !delta || !old_period || !new_period)
+      return TA_BAD_PARAM;
+
+   if( new_period <= old_period)
+      return TA_BAD_PARAM;
+
+   /* Check if the old period can be transfered to the new one.         */
+   /* For example, 10min to 15min bars conversion is not allowed --AK-- */
+   if( (new_period % old_period) != 0 )
+      return TA_BAD_PARAM;
+
+   if( TA_TimestampGreater( t1, t2 ) ){
+       start = t2; end = t1;
+   }else{
+       start = t1; end = t2;
+   }   
+   
+   nDays  = (unsigned int)(date_to_days(end->date)-date_to_days(start->date))+1;
+   *delta = nDays * (2*TA_12HOURS) / new_period + (2*TA_12HOURS) % new_period;
+
+   return TA_SUCCESS;
+}
+
+
 /**** Local functions definitions.     ****/
 static void move_delta_day( long *date, int delta )
 {
@@ -940,3 +1074,4 @@ static void move_delta_day( long *date, int delta )
     days += delta;
     *date = days_to_date( days );
 }
+
