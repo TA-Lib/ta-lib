@@ -7,7 +7,7 @@
 #define TA_SQL_LOCAL_H
 
 
-/* parse location URL */
+/* parse location URL; database[] has to be preallocated */
 TA_RetCode TA_SQL_ParseLocation(const char location[],    /* IN  */
                                 char scheme[],            /* OUT */
                                 char host[],              /* OUT */
