@@ -468,7 +468,7 @@ SOURCE=..\..\..\..\src\ta_func\ta_WMA.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_func\ta_basic_math.h
+SOURCE=..\..\..\..\src\ta_func\ta_utility.h
 # End Source File
 # End Group
 # End Target
