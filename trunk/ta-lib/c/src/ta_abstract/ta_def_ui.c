@@ -124,6 +124,12 @@ const TA_InputParameterInfo TA_DEF_UI_Input_Price_V =
 const TA_InputParameterInfo TA_DEF_UI_Input_Real =
                                   { TA_Input_Real, "inReal", 0 };
 
+const TA_InputParameterInfo TA_DEF_UI_Input_Real0 =
+                                  { TA_Input_Real, "inReal0", 0 };
+
+const TA_InputParameterInfo TA_DEF_UI_Input_Real1 =
+                                  { TA_Input_Real, "inReal1", 0 };
+
 const TA_InputParameterInfo TA_DEF_UI_Input_Integer =
                                   { TA_Input_Integer, "inInteger", 0 };
 
