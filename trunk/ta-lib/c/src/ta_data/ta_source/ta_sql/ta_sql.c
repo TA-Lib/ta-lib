@@ -48,6 +48,7 @@
  *  012504 MF,JS  Fix some memory leaks and perform integer/double cast
  *                for columns that represents a number (Bug #881950)
  *  013104 MF     Revert the TA_TRACE_RETURN/RETURN_ON_ERROR change.
+ *  112704 MF     Add handling of NULL for username and password.
  */
 
 /* Description:
@@ -254,8 +255,8 @@ TA_RetCode TA_SQL_OpenSource( const TA_AddDataSourceParamPriv *param,
       retCode = (*privData->minidriver->openConnection)(
          dbase, 
          host, 
-         TA_StringToChar(param->username), 
-         TA_StringToChar(param->password), 
+         param->username?TA_StringToChar(param->username):NULL, 
+         param->password?TA_StringToChar(param->password):NULL, 
          port,
          &privData->connection);
    }
