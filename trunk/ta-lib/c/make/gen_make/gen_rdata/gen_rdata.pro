@@ -69,6 +69,7 @@ thread:DEFINES -= TA_SINGLE_THREAD
 # Platform dependent options.
 win32:DEFINES         *= WIN32
 win32-msvc:DEFINES    *= _MBCS _LIB
+cygwin-g++:LIBS       -= -ldl
 
 cmd:TEMP_CLEAN_ALL = ../../../../../temp/cmd/*.pch
 cmr:TEMP_CLEAN_ALL = ../../../../../temp/cmr/*.pch
