@@ -310,6 +310,8 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
 
       *lookback = TA_ADXR_Lookback( testParam->test->optInTimePeriod_0 );
       break;
+   default:
+      retCode = TA_BAD_PARAM;
    }
 
    return retCode;
@@ -467,6 +469,8 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                          &outNbElement,
                          gBuffer[0].out0 );
       break;
+   default:
+      retCode = TA_BAD_PARAM;
    }
 
    /* Verify that the inputs were preserved. */
@@ -577,6 +581,8 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                          &outNbElement,
                          gBuffer[3].in );
       break;
+   default:
+      retCode = TA_BAD_PARAM;
    }
 
    /* Verify that the inputs were preserved. */
