@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -90,7 +90,7 @@ static const TA_OutputParameterInfo   *TA_PLUS_DM_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_PLUS_DM_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+{ &TA_DEF_UI_TimePeriod_14,
   NULL
 };
 
