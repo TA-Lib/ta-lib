@@ -161,7 +161,6 @@ DEF_FUNCTION( MAX,                       /* name */
              );
 /* MAX END */
 
-
 /* MEDPRICE BEGIN */
 static const TA_InputParameterInfo    *TA_MEDPRICE_Inputs[]    =
 {
@@ -214,6 +213,62 @@ DEF_FUNCTION( MIN,                       /* name */
              );
 /* MIN END */
 
+/* MINUS_DI BEGIN */
+static const TA_InputParameterInfo    *TA_MINUS_DI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MINUS_DI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MINUS_DI_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( MINUS_DI,                      /* name */
+              TA_GroupId_TrendIndicators,    /* groupId */
+              "Minus Directional Indicator", /* hint */
+              NULL,                          /* helpFile */
+              TA_FUNC_FLG_UNST_PER,          /* flags */
+              NULL                           /* analysis function */
+             );
+
+/* MINUS_DI END */
+
+/* MINUS_DM BEGIN */
+static const TA_InputParameterInfo    *TA_MINUS_DM_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MINUS_DM_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MINUS_DM_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( MINUS_DM,                     /* name */
+              TA_GroupId_TrendIndicators,   /* groupId */
+              "Minus Directional Movement", /* hint */
+              NULL,                         /* helpFile */
+              TA_FUNC_FLG_UNST_PER,         /* flags */
+              NULL                          /* analysis function */
+             );
+
+/* MINUS_DM END */
+
 /* MOM BEGIN */
 static const TA_InputParameterInfo    *TA_MOM_Inputs[]    =
 {
@@ -253,6 +308,8 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MAX),
    ADD_TO_TABLE(MEDPRICE),
    ADD_TO_TABLE(MIN),
+   ADD_TO_TABLE(MINUS_DI),
+   ADD_TO_TABLE(MINUS_DM),
    ADD_TO_TABLE(MOM),
    NULL
 };

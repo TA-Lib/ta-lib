@@ -62,9 +62,14 @@ SOURCES	= ../../../../../src/ta_abstract/ta_abstract.c \
           ../../../../../src/ta_abstract/frames/ta_TEMA_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_WMA_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_APO_frame.c \ 
+          ../../../../../src/ta_abstract/frames/ta_DX_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_MACD_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_MACDFIX_frame.c \ 
+          ../../../../../src/ta_abstract/frames/ta_MINUS_DI_frame.c \ 
+          ../../../../../src/ta_abstract/frames/ta_MINUS_DM_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_PPO_frame.c \ 
+          ../../../../../src/ta_abstract/frames/ta_PLUS_DI_frame.c \ 
+          ../../../../../src/ta_abstract/frames/ta_PLUS_DM_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_RSI_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_ATR_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_TRANGE_frame.c \ 
