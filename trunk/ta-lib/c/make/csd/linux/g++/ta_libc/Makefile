@@ -65,7 +65,6 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_common/imatix/sfl/sfldate.c \
 		../../../../../src/ta_common/imatix/sfl/sflstr.c \
 		../../../../../src/ta_common/imatix/sfl/sfltok.c \
-		../../../../../src/ta_common/imatix/sfl/sflfile.c \
 		../../../../../src/ta_common/imatix/sfl/sfldir.c \
 		../../../../../src/ta_common/trio/trionan.c \
 		../../../../../src/ta_common/ta_country_info.c \
@@ -219,7 +218,6 @@ OBJECTS =	../../../../../temp/csd/ta_ascii.o \
 		../../../../../temp/csd/sfldate.o \
 		../../../../../temp/csd/sflstr.o \
 		../../../../../temp/csd/sfltok.o \
-		../../../../../temp/csd/sflfile.o \
 		../../../../../temp/csd/sfldir.o \
 		../../../../../temp/csd/trionan.o \
 		../../../../../temp/csd/ta_country_info.o \
@@ -509,9 +507,6 @@ clean:
 
 ../../../../../temp/csd/sfltok.o: ../../../../../src/ta_common/imatix/sfl/sfltok.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/sfltok.o ../../../../../src/ta_common/imatix/sfl/sfltok.c
-
-../../../../../temp/csd/sflfile.o: ../../../../../src/ta_common/imatix/sfl/sflfile.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/sflfile.o ../../../../../src/ta_common/imatix/sfl/sflfile.c
 
 ../../../../../temp/csd/sfldir.o: ../../../../../src/ta_common/imatix/sfl/sfldir.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/sfldir.o ../../../../../src/ta_common/imatix/sfl/sfldir.c

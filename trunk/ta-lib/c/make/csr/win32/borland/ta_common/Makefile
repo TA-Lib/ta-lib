@@ -13,8 +13,8 @@ BCB = $(MAKEDIR)\..
 
 CC	=	bcc32
 CXX	=	bcc32
-CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8066 -w-8008 -w-8080 -w-8057 -O2 -DTA_SINGLE_THREAD -DWIN32
-CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8066 -w-8008 -w-8080 -w-8057 -O2 -DTA_SINGLE_THREAD -DWIN32
+CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -O2 -DTA_SINGLE_THREAD -DWIN32
+CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -O2 -DTA_SINGLE_THREAD -DWIN32
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\include"
 LIB	=	tlib /C /P256
 MOC	=	moc
@@ -40,7 +40,6 @@ SOURCES =	..\..\..\..\..\src\ta_common\bzip2\blocksort.c \
 		..\..\..\..\..\src\ta_common\imatix\sfl\sfldate.c \
 		..\..\..\..\..\src\ta_common\imatix\sfl\sflstr.c \
 		..\..\..\..\..\src\ta_common\imatix\sfl\sfltok.c \
-		..\..\..\..\..\src\ta_common\imatix\sfl\sflfile.c \
 		..\..\..\..\..\src\ta_common\imatix\sfl\sfldir.c \
 		..\..\..\..\..\src\ta_common\trio\trionan.c \
 		..\..\..\..\..\src\ta_common\ta_country_info.c \
@@ -68,7 +67,6 @@ OBJECTS =	..\..\..\..\..\temp\csr\blocksort.obj \
 		..\..\..\..\..\temp\csr\sfldate.obj \
 		..\..\..\..\..\temp\csr\sflstr.obj \
 		..\..\..\..\..\temp\csr\sfltok.obj \
-		..\..\..\..\..\temp\csr\sflfile.obj \
 		..\..\..\..\..\temp\csr\sfldir.obj \
 		..\..\..\..\..\temp\csr\trionan.obj \
 		..\..\..\..\..\temp\csr\ta_country_info.obj \
@@ -128,7 +126,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csr\sfldate.obj \
 +..\..\..\..\..\temp\csr\sflstr.obj \
 +..\..\..\..\..\temp\csr\sfltok.obj \
-+..\..\..\..\..\temp\csr\sflfile.obj \
 +..\..\..\..\..\temp\csr\sfldir.obj \
 +..\..\..\..\..\temp\csr\trionan.obj \
 +..\..\..\..\..\temp\csr\ta_country_info.obj \
@@ -170,7 +167,6 @@ clean:
 	-del ..\..\..\..\..\temp\csr\sfldate.obj
 	-del ..\..\..\..\..\temp\csr\sflstr.obj
 	-del ..\..\..\..\..\temp\csr\sfltok.obj
-	-del ..\..\..\..\..\temp\csr\sflfile.obj
 	-del ..\..\..\..\..\temp\csr\sfldir.obj
 	-del ..\..\..\..\..\temp\csr\trionan.obj
 	-del ..\..\..\..\..\temp\csr\ta_country_info.obj
@@ -240,9 +236,6 @@ clean:
 
 ..\..\..\..\..\temp\csr\sfltok.obj: ..\..\..\..\..\src\ta_common\imatix\sfl\sfltok.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\sfltok.obj ..\..\..\..\..\src\ta_common\imatix\sfl\sfltok.c
-
-..\..\..\..\..\temp\csr\sflfile.obj: ..\..\..\..\..\src\ta_common\imatix\sfl\sflfile.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\sflfile.obj ..\..\..\..\..\src\ta_common\imatix\sfl\sflfile.c
 
 ..\..\..\..\..\temp\csr\sfldir.obj: ..\..\..\..\..\src\ta_common\imatix\sfl\sfldir.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\sfldir.obj ..\..\..\..\..\src\ta_common\imatix\sfl\sfldir.c

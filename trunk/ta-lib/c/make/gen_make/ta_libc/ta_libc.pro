@@ -63,7 +63,6 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_common/imatix/sfl/sfldate.c \
           ../../../../../src/ta_common/imatix/sfl/sflstr.c \
           ../../../../../src/ta_common/imatix/sfl/sfltok.c \
-          ../../../../../src/ta_common/imatix/sfl/sflfile.c \
           ../../../../../src/ta_common/imatix/sfl/sfldir.c \
           ../../../../../src/ta_common/trio/trionan.c \
           ../../../../../src/ta_common/ta_country_info.c \

@@ -62,7 +62,6 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_common\imatix\sfl\sfldate.c \
 		..\..\..\..\..\src\ta_common\imatix\sfl\sflstr.c \
 		..\..\..\..\..\src\ta_common\imatix\sfl\sfltok.c \
-		..\..\..\..\..\src\ta_common\imatix\sfl\sflfile.c \
 		..\..\..\..\..\src\ta_common\imatix\sfl\sfldir.c \
 		..\..\..\..\..\src\ta_common\trio\trionan.c \
 		..\..\..\..\..\src\ta_common\ta_country_info.c \
@@ -216,7 +215,6 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\sfldate.obj \
 		..\..\..\..\..\temp\cmd\sflstr.obj \
 		..\..\..\..\..\temp\cmd\sfltok.obj \
-		..\..\..\..\..\temp\cmd\sflfile.obj \
 		..\..\..\..\..\temp\cmd\sfldir.obj \
 		..\..\..\..\..\temp\cmd\trionan.obj \
 		..\..\..\..\..\temp\cmd\ta_country_info.obj \
@@ -397,7 +395,6 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmd\sfldate.obj \
 +..\..\..\..\..\temp\cmd\sflstr.obj \
 +..\..\..\..\..\temp\cmd\sfltok.obj \
-+..\..\..\..\..\temp\cmd\sflfile.obj \
 +..\..\..\..\..\temp\cmd\sfldir.obj \
 +..\..\..\..\..\temp\cmd\trionan.obj \
 +..\..\..\..\..\temp\cmd\ta_country_info.obj \
@@ -564,7 +561,6 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\sfldate.obj
 	-del ..\..\..\..\..\temp\cmd\sflstr.obj
 	-del ..\..\..\..\..\temp\cmd\sfltok.obj
-	-del ..\..\..\..\..\temp\cmd\sflfile.obj
 	-del ..\..\..\..\..\temp\cmd\sfldir.obj
 	-del ..\..\..\..\..\temp\cmd\trionan.obj
 	-del ..\..\..\..\..\temp\cmd\ta_country_info.obj
@@ -812,9 +808,6 @@ clean:
 
 ..\..\..\..\..\temp\cmd\sfltok.obj: ..\..\..\..\..\src\ta_common\imatix\sfl\sfltok.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\sfltok.obj ..\..\..\..\..\src\ta_common\imatix\sfl\sfltok.c
-
-..\..\..\..\..\temp\cmd\sflfile.obj: ..\..\..\..\..\src\ta_common\imatix\sfl\sflfile.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\sflfile.obj ..\..\..\..\..\src\ta_common\imatix\sfl\sflfile.c
 
 ..\..\..\..\..\temp\cmd\sfldir.obj: ..\..\..\..\..\src\ta_common\imatix\sfl\sfldir.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\sfldir.obj ..\..\..\..\..\src\ta_common\imatix\sfl\sfldir.c
