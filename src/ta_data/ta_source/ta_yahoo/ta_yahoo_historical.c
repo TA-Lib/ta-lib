@@ -130,6 +130,7 @@ static unsigned int TA_DateWithinRange( unsigned int year,
 static TA_RetCode doAdjustments( TA_DecodingParam *localDecodingParam,
                                  TA_String *yahooName,
                                  TA_PrivateYahooHandle *yahooHandle,
+                                 const char *overideServerAddr,
                                  TA_ParamForAddData  *paramForAddData );
 
 static TA_RetCode processAdjustmentTable( unsigned int line,
@@ -170,7 +171,8 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
    TA_Timestamp firstBarTimestamp, lastBarTimestamp, prevEndDate;
    TA_InfoFromAddedData infoFromAddedData;
    TA_DayOfWeek dayOfWeek;
-   TA_Timestamp curAdjustYear, lastAdjustYear;   
+   TA_Timestamp curAdjustYear, lastAdjustYear;  
+   const char *overideServerAddr;
 
    int nbEstimateBar;
    int nbField;
@@ -237,6 +239,14 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
       TA_ASSERT( yahooName != NULL );
 
    }
+
+   /* Check if the user did overide the server address in the location parameter. 
+    * (as needed, convert from TA_String to char *)
+    */
+   if( yahooHandle->userSpecifiedServer )
+      overideServerAddr = TA_StringToChar(yahooHandle->userSpecifiedServer);
+   else
+      overideServerAddr = NULL;
 
    /* Get the decoding parameter for the CSV web page. */
    decodingParam = TA_YahooIdxDecodingParam( yahooHandle->index, TA_YAHOOIDX_CSV_PAGE );
@@ -315,6 +325,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
 
       retCode = TA_WebPageAllocFromYahooName( &localDecodingParam,
                                               TA_StringToChar(yahooName),
+                                              overideServerAddr,
                                               &webPage );
            
       if( retCode != TA_SUCCESS )
@@ -616,7 +627,8 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
                          &prevEndDate, &curAdjustYear,
                          (char *)localDecodingParam.uirSuffix );
 
-         retCode = doAdjustments( &localDecodingParam, yahooName, yahooHandle, paramForAddData );
+         retCode = doAdjustments( &localDecodingParam, yahooName,
+                                  yahooHandle, NULL, paramForAddData );
          if( retCode != TA_SUCCESS )
          {
             /* Clean-up and exit */
@@ -643,6 +655,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
 static TA_RetCode doAdjustments( TA_DecodingParam *localDecodingParam,
                                  TA_String *yahooName,
                                  TA_PrivateYahooHandle *yahooHandle,
+                                 const char *overideServerAddr,
                                  TA_ParamForAddData  *paramForAddData )
 {
    TA_RetCode retCode;
@@ -657,6 +670,7 @@ static TA_RetCode doAdjustments( TA_DecodingParam *localDecodingParam,
    /* Get the split/value adjustments from the Yahoo! web site */
    retCode = TA_WebPageAllocFromYahooName( localDecodingParam,
                                            TA_StringToChar(yahooName),
+                                           overideServerAddr,
                                            &webPage );
 
    if( retCode != TA_SUCCESS )

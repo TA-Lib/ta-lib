@@ -97,6 +97,7 @@ static TA_RetCode translateToYahooName( const TA_String *categoryName,
 
 static TA_RetCode internalMarketPageAlloc( const TA_DecodingParam *decodingParam,
                                            const char *yahooName,
+                                           const char *overideServerAddr,
                                            TA_YahooMarketPage **allocatedMarketPage );
 
 static TA_RetCode internalMarketPageFree( TA_YahooMarketPage *marketPage );
@@ -303,6 +304,7 @@ TA_RetCode TA_AllocStringFromYahooName( TA_DecodingParam *marketDecodingParam,
        */
       retCode = internalMarketPageAlloc( marketDecodingParam,
                                          yahooSymbol,
+                                         NULL,
                                          &allocatedMarketPage );
 
       if( retCode != TA_SUCCESS )
@@ -363,6 +365,7 @@ TA_RetCode TA_AllocStringFromYahooName( TA_DecodingParam *marketDecodingParam,
 TA_RetCode TA_YahooMarketPageAlloc( const TA_DecodingParam *decodingParam,
                                     const TA_String *categoryName,
                                     const TA_String *symbolName,
+                                    const char *overideServerAddr,
                                     TA_YahooMarketPage **allocatedMarketPage )
 {
    TA_RetCode retCode;
@@ -377,6 +380,7 @@ TA_RetCode TA_YahooMarketPageAlloc( const TA_DecodingParam *decodingParam,
 
    return internalMarketPageAlloc( decodingParam,
                                    buffer,
+                                   overideServerAddr,
                                    allocatedMarketPage );
 }
 
@@ -388,6 +392,7 @@ TA_RetCode TA_YahooMarketPageFree( TA_YahooMarketPage *marketPage )
 
 TA_RetCode TA_WebPageAllocFromYahooName( const TA_DecodingParam *decodingParam,
                                          const char *yahooName,
+                                         const char *overideServerAddr,
                                          TA_WebPage **allocatedWebPage )
 {
    TA_PROLOG
@@ -407,8 +412,13 @@ TA_RetCode TA_WebPageAllocFromYahooName( const TA_DecodingParam *decodingParam,
       TA_TRACE_RETURN( TA_BAD_PARAM );
    }
 
-   webSiteAddr  = decodingParam->webSiteServer;
-   TA_ASSERT( webSiteAddr != NULL );
+   if( overideServerAddr )
+      webSiteAddr = overideServerAddr;
+   else
+   {
+      webSiteAddr  = decodingParam->webSiteServer;
+      TA_ASSERT( webSiteAddr != NULL );
+   }
 
    uirPrefix = decodingParam->uirPrefix;
    TA_ASSERT( uirPrefix != NULL );
@@ -563,6 +573,7 @@ static TA_RetCode translateToYahooName( const TA_String *categoryName,
                                   
 static TA_RetCode internalMarketPageAlloc( const TA_DecodingParam *decodingParam,
                                            const char *yahooName,
+                                           const char *overideServerAddr,
                                            TA_YahooMarketPage **allocatedMarketPage )
 {
    TA_RetCode retCode;
@@ -572,6 +583,7 @@ static TA_RetCode internalMarketPageAlloc( const TA_DecodingParam *decodingParam
 
    retCode = TA_WebPageAllocFromYahooName( decodingParam,
                                            yahooName,
+                                           overideServerAddr,
                                            &webPage );
                                               
    if( retCode != TA_SUCCESS )

@@ -187,6 +187,7 @@ ENUM_BEGIN(TA_RetCode)
     /* 109 */  TA_LIMIT_OF_ONE_SERVER_EXCEEDED,    /* Only one server is expected for the location parameter. */
     /* 110 */  TA_LIMIT_OF_ONE_COUNTRY_ID_EXCEEDED,/* Only one country id is expected for the location parameter. */
     /* 111 */  TA_INVALID_YAHOO_DIVIDEND,          /* Yahoo! dividend data corrupted. Use unadjusted data for this stock. */
+    /* 112 */  TA_LOCATION_PARAM_INVALID,          /* Error in the location parameter. */
 
 
     /****** IP Error Code *****/

@@ -153,10 +153,9 @@ TA_RetCode TA_YAHOO_OpenSource( const TA_AddDataSourceParamPriv *param,
    const char *locationPtr;
    char locationBuffer[3];
    int timeout_set; /* boolean */
-   int i;
-   unsigned int strLength;
-   char *strTemp;
-   char **tokens;
+   int i, again;
+   unsigned int strLength, strServerLength;
+   const char *strTemp;
 
    *handle = NULL;
 
@@ -193,52 +192,52 @@ TA_RetCode TA_YAHOO_OpenSource( const TA_AddDataSourceParamPriv *param,
    {
       locationPtr = TA_StringToChar(privData->param->location);
 
-      /* Split into token (seperator is ';' or space) */
-      tokens = tok_split_rich( locationPtr, ";" );
-      i = 0;
-      if( tokens )
+      /* Split into token (seperator is ';'). Check for a 2 character country 
+       * string and the optional "server=" modifier.
+       */
+      i = -1; 
+      strTemp = &locationPtr[0];
+      strLength = 0;
+      strServerLength = strlen(TA_SERVER_STR);
+      again = 1;
+      while( (++i < 1024) && again )
       {
-         while( tokens[i] )
+         if( strLength == 0 )
+            strTemp = &locationPtr[i];
+
+         if( locationPtr[i] == '\0' )
+            again = 0;         
+
+         if( locationPtr[i] == ';' || !again )
          {
-            strLength = strlen(tokens[i]); 
             if( strLength == 2 )
             {
-               locationBuffer[0] = tokens[i][0];
-               locationBuffer[1] = tokens[i][1];
+               locationBuffer[0] = locationPtr[i-2];
+               locationBuffer[1] = locationPtr[i-1];
                locationBuffer[2] = '\0';
                countryIdTemp = TA_CountryAbbrevToId(locationBuffer);
                if( countryIdTemp == TA_Country_ID_INVALID )
-               {
-                  tok_free(tokens);
                   TA_TRACE_RETURN( TA_UNSUPPORTED_COUNTRY );
-               }
-
                if( countryId != TA_Country_ID_INVALID )
-               {
-                  tok_free(tokens);
                   TA_TRACE_RETURN( TA_LIMIT_OF_ONE_COUNTRY_ID_EXCEEDED );
-               }
                countryId = countryIdTemp;         
             }
+            else if( strLength>strServerLength && (strncmp(strTemp,TA_SERVER_STR,strServerLength)==0) )
+            {              
+               if( privData->userSpecifiedServer )
+                  TA_TRACE_RETURN( TA_LIMIT_OF_ONE_SERVER_EXCEEDED );
+               privData->userSpecifiedServer = TA_StringAllocN( stringCache, 
+                                                                &strTemp[strServerLength],
+                                                                strLength-strServerLength );
+               TA_ASSERT( privData->userSpecifiedServer != NULL );
+            }
+            else
+               TA_TRACE_RETURN( TA_LOCATION_PARAM_INVALID );
 
-            strTemp = stricstr( tokens[i], TA_SERVER_STR );
-            if( strTemp )
-            {
-               strLength = strlen(TA_SERVER_STR);
-               if( strlen(strTemp) > strLength )
-               {
-                  if( privData->userSpecifiedServer )
-                  {
-                     tok_free(tokens);
-                     TA_TRACE_RETURN( TA_LIMIT_OF_ONE_SERVER_EXCEEDED );
-                  }
-                  privData->userSpecifiedServer = TA_StringAlloc( stringCache, &tokens[i][strLength] );
-                                                     
-               }
-            }         
-            i++;
+            strLength = 0;           
          }
-         tok_free(tokens);
+         else
+            strLength++;
       }
    }
 
