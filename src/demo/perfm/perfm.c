@@ -1,4 +1,4 @@
-/* This file contains example of usage of the
+/* This file contains examples of usage of the
  * Performance Measurements module.
  *
  * The first example shows how to build a TA_PM and 
@@ -8,7 +8,7 @@
  * trade-by-trade reports and shows also how the
  * excursion information (e.g. MAE) is handled.
  *
- * Info: http:\\ta-lib.org
+ * Info: http://ta-lib.org
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,7 +94,10 @@ void doExample1(FILE *out)
 
    /* Create a TA_PM covering a year. */
    TA_SetDate( 2002,  1,  1, &begOfYear );
+   TA_SetTime( 0, 0, 0, &begOfYear );
    TA_SetDate( 2002, 12, 31, &endOfYear );
+   TA_SetTime( 23, 59, 59, &endOfYear );
+
    retCode = TA_PMAlloc( &begOfYear, &endOfYear, 10000, &allocatedPM );
    if( retCode != TA_SUCCESS )
       exit(-5);
@@ -159,7 +162,9 @@ void doExample2(FILE *out)
 
    /* Create a TA_PM covering a year. */
    TA_SetDate( 2002,  1,  1, &begOfYear );
+   TA_SetTime( 0, 0, 0, &begOfYear );
    TA_SetDate( 2002, 12, 31, &endOfYear );
+   TA_SetTime( 23, 59, 59, &endOfYear );
    retCode = TA_PMAlloc( &begOfYear, &endOfYear, 10000, &allocatedPM );
    if( retCode != TA_SUCCESS )
       exit(-5);
