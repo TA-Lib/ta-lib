@@ -216,5 +216,13 @@ SOURCE=..\..\..\..\include\ta_libc.h
 SOURCE=..\..\..\..\include\ta_pm.h
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=..\..\..\..\..\CHANGELOG.TXT
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\..\HISTORY.TXT
+# End Source File
 # End Target
 # End Project
