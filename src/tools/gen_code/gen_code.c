@@ -62,6 +62,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
+
 #include "ta_common.h"
 #include "ta_abstract.h"
 #include "ta_system.h"
@@ -121,13 +123,14 @@ static void printIndent( FILE *out, unsigned int indent );
 static void printFunc( FILE *out,
                        const char *prefix,       /* Can be NULL */
                        const TA_FuncInfo *funcInfo,
-                       unsigned int prototype,         /* Boolean */
-                       unsigned int frame,             /* Boolean */
-                       unsigned int semiColonNeeded,   /* Boolean */
-                       unsigned int validationCode,    /* Boolean */
-                       unsigned int lookbackSignature, /* Boolean */
-                       unsigned int managedCPPCode,    /* Boolean */
-                       unsigned int managedCPPDeclaration /* Boolean */
+                       unsigned int prototype,             /* Boolean */
+                       unsigned int frame,                 /* Boolean */
+                       unsigned int semiColonNeeded,       /* Boolean */
+                       unsigned int validationCode,        /* Boolean */
+                       unsigned int lookbackSignature,     /* Boolean */
+                       unsigned int managedCPPCode,        /* Boolean */
+                       unsigned int managedCPPDeclaration, /* Boolean */
+                       unsigned int inputIsSinglePrecision /* Boolean */
                       );
 
 static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
@@ -183,6 +186,11 @@ static void printFuncHeaderDoc( FILE *out,
 
 static void addFuncEnumeration( FILE *out );
 
+static void extractTALogic( FILE *inFile, FILE *outFile );
+
+/* Return 1 on success */
+static int copyFile( const char *src, const char *dest );
+
 char gToOpen[1024];
 char gTempBuf[2048];
 char gTempBuf2[2048];
@@ -201,6 +209,41 @@ const char *gCurrentGroupName;
 static int genCode(int argc, char* argv[]);
 
 extern const TA_OptInputParameterInfo TA_DEF_UI_MA_Method;
+
+/* Set this variable to 1 whenever you wish to output a
+ * prefix to all generated line.
+ */
+int genPrefix = 0;
+
+void print( FILE *out, const char *text, ... )
+{
+   va_list arglist;
+   char buff[1024];
+   memset(buff,0,sizeof(buff));
+
+   va_start(arglist,text);
+   vsprintf(buff,text,arglist);
+   va_end(arglist);
+
+   if( genPrefix )
+      fprintf( out, "/* Generated */ %s", buff );
+   else
+      fprintf( out, "%s", buff );
+}
+
+static void printIndent( FILE *out, unsigned int indent )
+{
+   unsigned int i;
+   
+   if( genPrefix )
+      fprintf( out, "/* Generated */ " );
+
+   for( i=0; i < indent; i++ )
+   {
+      fprintf( out, " " );
+   }
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -293,24 +336,6 @@ static void init_gToOpen( const char *filePath )
 
    sepChar = TA_SeparatorASCII();
 
-#if 0
-   unsigned int strLen;
-   char oneCharBuf[2];
-
-   oneCharBuf[1] = '\0';
-
-   strcpy( gToOpen, "..\\" );
-   strLen = strlen( gToOpen );
-   if( strLen > 0 )
-   {
-      if( (gToOpen[strLen-1] != '\\') &&
-          (gToOpen[strLen-1] != '/') )
-      {
-         oneCharBuf[0] = (char)sepChar;
-         strcat( gToOpen, oneCharBuf );
-      }
-   }
-#endif
    strcpy( gToOpen, filePath );
 
    /* Replace all directory separator with the
@@ -389,7 +414,7 @@ static void fileClose( FileHandle *handle )
          }
       }
 
-      /* Make sure the last line of th eoutput 
+      /* Make sure the last line of the output 
        * finish with a carriage return. This may
        * avoid warning from some compilers.
        */
@@ -556,6 +581,7 @@ static int genCode(int argc, char* argv[])
    }
 
    /* Create the "ta_group_idx.c" file. */
+   genPrefix = 1;
    gOutGroupIdx_C = fileOpen( "..\\src\\ta_abstract\\ta_group_idx.c",
                               "..\\src\\ta_abstract\\templates\\ta_group_idx.c.template",
                               FILE_WRITE );
@@ -575,18 +601,19 @@ static int genCode(int argc, char* argv[])
 
    nbGroup = forEachGroup( printPerGroupList, NULL );
 
-   fprintf( gOutGroupIdx_C->file, "const TA_FuncDef **TA_PerGroupFuncDef[%d] = {\n", nbGroup );
+   print( gOutGroupIdx_C->file, "const TA_FuncDef **TA_PerGroupFuncDef[%d] = {\n", nbGroup );
    forEachGroup( printGroupListAddress, NULL );
-   fprintf( gOutGroupIdx_C->file, "};\n\n" );
+   print( gOutGroupIdx_C->file, "};\n\n" );
 
-   fprintf( gOutGroupIdx_C->file, "const unsigned int TA_PerGroupSize[%d] = {\n", nbGroup );
+   print( gOutGroupIdx_C->file, "const unsigned int TA_PerGroupSize[%d] = {\n", nbGroup );
    forEachGroup( printGroupSize, NULL );
-   fprintf( gOutGroupIdx_C->file, "};\n\n" );
+   print( gOutGroupIdx_C->file, "};\n\n" );
 
-   fprintf( gOutGroupIdx_C->file, "const unsigned int TA_TotalNbFunction =\n" );
+   print( gOutGroupIdx_C->file, "const unsigned int TA_TotalNbFunction =\n" );
    forEachGroup( printGroupSizeAddition, NULL );
 
    fileClose( gOutGroupIdx_C );
+   genPrefix = 0;
 
    /* Update "ta_defs.h" */
    doDefsFile();
@@ -632,13 +659,14 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    (void)opaqueData; /* Get ride of compiler warning */
 
    /* Add this function to the "func_list.txt" */
+   genPrefix = 0;
    fprintf( gOutFuncList_TXT->file, "%-20s%s\n", funcInfo->name, funcInfo->hint );
   
    fprintf( gOutFunc_H->file, "\n" );
 
    if( (prevGroup == NULL) || (prevGroup != funcInfo->group) )
    {
-      // printf( "Processing Group [%s]\n", funcInfo->group );
+      printf( "Processing Group [%s]\n", funcInfo->group );
       fprintf( gOutFunc_H->file, "\n/******************************************\n" );
       fprintf( gOutFunc_H->file, " * Group: [%s]\n", funcInfo->group );
       fprintf( gOutFunc_H->file, " ******************************************/\n\n" );
@@ -646,7 +674,7 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
       prevGroup = funcInfo->group;
    }
 
-   // printf( "Processing Func  [TA_%s]\n", funcInfo->name );
+   /* printf( "Processing Func  [TA_%s]\n", funcInfo->name ); */
 
    fprintf( gOutFunc_H->file, "/*\n" );
    printFuncHeaderDoc( gOutFunc_H->file, funcInfo, " * " );
@@ -655,17 +683,22 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    /* Generate the defines corresponding to this function. */
    printDefines( gOutFunc_H->file, funcInfo );
 
+
    /* Generate the function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0 );
+   fprintf( gOutFunc_H->file, "\n" );
+
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 1 );
    fprintf( gOutFunc_H->file, "\n" );
 
    /* Generate the corresponding lookback function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0 );
 
    /* Generate the excel glue code */
    printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
 
    /* Create the frame definition (ta_frame.c) and declaration (ta_frame.h) */
+   genPrefix = 1;
    printFrameHeader( gOutFrame_H->file, funcInfo );
    fprintf( gOutFrame_H->file, ";\n\n" );
    printCallFrame( gOutFrame_C->file, funcInfo );
@@ -692,8 +725,9 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    fprintf( gOutProjFile->file, "				</File>\n" );
 
    /* Generate the functions declaration for the .NET interface. */
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1 );
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1 );
    fprintf( gOutDotNet_H->file, "\n" );
    fprintf( gOutDotNet_H->file, "         #define TA_%s Core::%s\n", funcInfo->name, funcInfo->name );
    fprintf( gOutDotNet_H->file, "         #define TA_%s_Lookback Core::%s_Lookback\n\n", funcInfo->name, funcInfo->name );
@@ -713,14 +747,6 @@ static void doForEachUnstableFunction( const TA_FuncInfo *funcInfo,
       fprintf( gOutDefs_H->file, "    /* %03d */  TA_FUNC_UNST_%s,\n", *i, funcInfo->name );
       (*i)++;
    }
-}
-
-static void printIndent( FILE *out, unsigned int indent )
-{
-   unsigned int i;
-
-   for( i=0; i < indent; i++ )
-      fprintf( out, " " );
 }
 
 static void printDefines( FILE *out, const TA_FuncInfo *funcInfo )
@@ -831,7 +857,8 @@ static void printFunc( FILE *out,
                        unsigned int validationCode, /* Boolean */
                        unsigned int lookbackSignature, /* Boolean */
                        unsigned int managedCPPCode, /* Boolean */
-                       unsigned int managedCPPDeclaration /* Boolean */
+                       unsigned int managedCPPDeclaration, /* Boolean */
+                       unsigned int inputIsSinglePrecision
                       )
 {
    TA_RetCode retCode;
@@ -849,16 +876,30 @@ static void printFunc( FILE *out,
    const char *arrayBracket;
    int excludeFromManaged;
 
+   const char *inputPrecisionType;
+   const char *inputPrecisionConstType;
+
+   if( inputIsSinglePrecision )
+   {
+      inputPrecisionType = "float";
+      inputPrecisionConstType = "const float";
+   }
+   else
+   {
+      inputPrecisionType = "double";
+      inputPrecisionConstType = "const double";
+   }
+
    if( managedCPPCode )
    {
-      inputDoubleArrayType  = "double";
+      inputDoubleArrayType  = inputPrecisionType;
       inputIntArrayType     = "int";
       outputIntParam        = "[OutAttribute]Int32";
       arrayBracket          = " __gc []";
    }
    else
    {
-      inputDoubleArrayType  = "const double";
+      inputDoubleArrayType  = inputPrecisionConstType;
       inputIntArrayType     = "const int";
       outputIntParam        = "int";
       arrayBracket          = "[]";
@@ -885,26 +926,32 @@ static void printFunc( FILE *out,
                      prefix? prefix:"",
                      funcInfo->name );
          }
-         fprintf( out, gTempBuf );
+         print( out, gTempBuf );
          indent = strlen(gTempBuf) - 2;
       }
       else
       {
          if( managedCPPCode )
          {
-            sprintf( gTempBuf, "%s%senum TA_RetCode %s%s( int    startIdx,\n",
+            sprintf( gTempBuf, "%s%senum %sTA_RetCode %s%s( int    startIdx,\n",
                      prefix? prefix:"",
                      managedCPPDeclaration? "         static ":"",
+                     managedCPPDeclaration? "":"Core::",
                      managedCPPDeclaration? "":"Core::",
                      funcInfo->name );
          }
          else
          {
-            sprintf( gTempBuf, "%sTA_RetCode TA_%s( int    startIdx,\n",
-                     prefix? prefix:"",
-                     funcInfo->name );
+            if( inputIsSinglePrecision )
+               sprintf( gTempBuf, "%sTA_RetCode TA_S_%s( int    startIdx,\n",
+                        prefix? prefix:"",
+                        funcInfo->name );
+            else  
+               sprintf( gTempBuf, "%sTA_RetCode TA_%s( int    startIdx,\n",
+                        prefix? prefix:"",
+                        funcInfo->name );
          }
-         fprintf( out, gTempBuf );
+         print( out, gTempBuf );
          indent = strlen(gTempBuf) - 17;
          printIndent( out, indent );
          fprintf( out, "int    endIdx,\n" );
@@ -912,8 +959,8 @@ static void printFunc( FILE *out,
    }
    else if( frame )
    {
-      fprintf( out, "%sTA_%s(\n",
-               prefix == NULL? "" : prefix, funcInfo->name );
+      print( out, "%sTA_%s(\n",
+             prefix == NULL? "" : prefix, funcInfo->name );
       indent = 4 + strlen(funcInfo->name);
    }
    else if( validationCode )
@@ -1033,7 +1080,8 @@ static void printFunc( FILE *out,
 
                fprintf( out, "\n" );
                printIndent( out, indent );
-               fprintf( out, "   return TA_BAD_PARAM;\n\n" );
+               fprintf( out, "   return TA_BAD_PARAM;\n" );
+               print( out, "\n" );
             }
             else
             {
@@ -1043,11 +1091,11 @@ static void printFunc( FILE *out,
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.timestamp, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
-                           prototype? 12 : 0,
-                           prototype? "const TA_Timestamp" : "",                           
-                           "inTimestamp",
-                           paramNb,
-                           prototype? arrayBracket : "" );
+                         prototype? 12 : 0,
+                         prototype? "const TA_Timestamp" : "",                           
+                         "inTimestamp",
+                         paramNb,
+                         prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
 
@@ -1057,11 +1105,11 @@ static void printFunc( FILE *out,
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.open, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
-                           prototype? 12 : 0,
-                           prototype? inputDoubleArrayType : "",
-                           "inOpen",
-                           paramNb,
-                           prototype? arrayBracket : "" );
+                         prototype? 12 : 0,
+                         prototype? inputDoubleArrayType : "",
+                         "inOpen",
+                         paramNb,
+                         prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
 
@@ -1071,11 +1119,11 @@ static void printFunc( FILE *out,
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.high, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
-                           prototype? 12 : 0,
-                           prototype? inputDoubleArrayType : "",                           
-                           "inHigh",
-                           paramNb,
-                           prototype? arrayBracket : "" );
+                         prototype? 12 : 0,
+                         prototype? inputDoubleArrayType : "",                           
+                         "inHigh",
+                         paramNb,
+                         prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
 
@@ -1085,11 +1133,11 @@ static void printFunc( FILE *out,
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.low, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
-                           prototype? 12 : 0,
-                           prototype? inputDoubleArrayType : "",
-                           "inLow",
-                           paramNb,
-                           prototype? arrayBracket : "" );
+                         prototype? 12 : 0,
+                         prototype? inputDoubleArrayType : "",
+                         "inLow",
+                         paramNb,
+                         prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
 
@@ -1099,11 +1147,11 @@ static void printFunc( FILE *out,
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.close, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
-                           prototype? 12 : 0,
-                           prototype? inputDoubleArrayType : "",                           
-                           "inClose",
-                           paramNb,
-                           prototype? arrayBracket : "" );
+                         prototype? 12 : 0,
+                         prototype? inputDoubleArrayType : "",                           
+                         "inClose",
+                         paramNb,
+                         prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
 
@@ -1113,11 +1161,11 @@ static void printFunc( FILE *out,
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.volume, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
-                           prototype? 12 : 0,
-                           prototype? inputIntArrayType : "",
-                           "inVolume",
-                           paramNb,
-                           prototype? arrayBracket : "" );
+                         prototype? 12 : 0,
+                         prototype? inputIntArrayType : "",
+                         "inVolume",
+                         paramNb,
+                         prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
 
@@ -1127,11 +1175,11 @@ static void printFunc( FILE *out,
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.openInterest, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
-                           prototype? 12 : 0,
-                           prototype? inputIntArrayType : "",
-                           "inOpenInterest",
-                           paramNb,
-                           prototype? arrayBracket : "" );
+                         prototype? 12 : 0,
+                         prototype? inputIntArrayType : "",
+                         "inOpenInterest",
+                         paramNb,
+                         prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
             }
@@ -1167,10 +1215,10 @@ static void printFunc( FILE *out,
                if( frame )
                   fprintf( out, "params->in[%d].data.%s, /*", paramNb, defaultParamName );
                fprintf( out, "%-*s %s_%d%s",
-                        prototype? 12 : 0,
-                        prototype? typeString : "",                        
-                        inputParamInfo->paramName,
-                        paramNb, prototype? arrayBracket : "" );
+                      prototype? 12 : 0,
+                      prototype? typeString : "",                        
+                      inputParamInfo->paramName,
+                      paramNb, prototype? arrayBracket : "" );
                fprintf( out, "%s\n", frame? " */":"," );
             }
          }
@@ -1259,9 +1307,9 @@ static void printFunc( FILE *out,
          if( frame )
             fprintf( out, "params->optIn[%d].data.%s, /*", paramNb, defaultParamName );
          fprintf( out, "%-*s %s_%d",
-                  prototype? 13 : 0,
-                  prototype? typeString : "",
-                  paramName, paramNb );
+                prototype? 13 : 0,
+                prototype? typeString : "",
+                paramName, paramNb );
          if( frame )
             fprintf( out, " */\n" );
          else            
@@ -1278,17 +1326,17 @@ static void printFunc( FILE *out,
                   fprintf( out, " /* From TA_REAL_MIN" );
                else
                   fprintf( out, " /* From %.*g",
-                           ((TA_RealRange *)(optInputParamInfo->dataSet))->precision,
-                           ((TA_RealRange *)(optInputParamInfo->dataSet))->min );
+                         ((TA_RealRange *)(optInputParamInfo->dataSet))->precision,
+                         ((TA_RealRange *)(optInputParamInfo->dataSet))->min );
 
                if( ((TA_RealRange *)(optInputParamInfo->dataSet))->max == TA_REAL_MAX )
                   fprintf( out, " to TA_REAL_MAX */\n" );
                else
                {
                   fprintf( out, " to %.*g%s */\n", 
-                          ((TA_RealRange *)(optInputParamInfo->dataSet))->precision,
-                          ((TA_RealRange *)(optInputParamInfo->dataSet))->max,
-                          optInputParamInfo->flags & TA_OPTIN_IS_PERCENT? " %":"" );
+                        ((TA_RealRange *)(optInputParamInfo->dataSet))->precision,
+                        ((TA_RealRange *)(optInputParamInfo->dataSet))->max,
+                        optInputParamInfo->flags & TA_OPTIN_IS_PERCENT? " %":"" );
                }
                break;
             case TA_OptInput_IntegerRange:
@@ -1302,7 +1350,7 @@ static void printFunc( FILE *out,
                else
                {
                   fprintf( out, " /* From %d",
-                           ((TA_IntegerRange *)(optInputParamInfo->dataSet))->min );
+                         ((TA_IntegerRange *)(optInputParamInfo->dataSet))->min );
                }
 
                if( ((TA_IntegerRange *)(optInputParamInfo->dataSet))->max == TA_INTEGER_MAX )
@@ -1310,7 +1358,7 @@ static void printFunc( FILE *out,
                else
                {
                   fprintf( out, " to %d */\n", 
-                          ((TA_IntegerRange *)(optInputParamInfo->dataSet))->max );
+                         ((TA_IntegerRange *)(optInputParamInfo->dataSet))->max );
                }
                break;
             default:
@@ -1327,13 +1375,13 @@ static void printFunc( FILE *out,
 
    if( lookbackSignature && (funcInfo->nbOptInput == 0) )
    {
-      fprintf( out, "void )%s\n", semiColonNeeded? ";":"" );
+      print( out, "void )%s\n", semiColonNeeded? ";":"" );
    }
 
    /* Go through all the output */
    if( lookbackSignature )
    {
-      fprintf( out, "\n" );
+      print( out, "\n" );
    }
    else
    {
@@ -1347,9 +1395,9 @@ static void printFunc( FILE *out,
                fprintf( out, "outBegIdx, " );
             else
                fprintf( out, "%-*s %soutBegIdx",
-                        prototype? 12 : 0,
-                        prototype? outputIntParam : "",
-                        prototype? "*" : "" );
+                      prototype? 12 : 0,
+                      prototype? outputIntParam : "",
+                      prototype? "*" : "" );
 
             fprintf( out, "%s\n", frame? "":"," );
 
@@ -1358,9 +1406,9 @@ static void printFunc( FILE *out,
                fprintf( out, "outNbElement, " );
             else
                fprintf( out, "%-*s %soutNbElement",
-                        prototype? 12 : 0,
-                        prototype? outputIntParam : "",
-                        prototype? "*" : "" );
+                      prototype? 12 : 0,
+                      prototype? outputIntParam : "",
+                      prototype? "*" : "" );
             fprintf( out, "%s\n", frame? "":"," );
       }
 
@@ -1404,30 +1452,31 @@ static void printFunc( FILE *out,
 
          if( validationCode )
          {
-            fprintf( out, "   if( %s_%d == NULL )\n", paramName, paramNb );
-            fprintf( out, "      return TA_BAD_PARAM;\n\n" );
+            print( out, "   if( %s_%d == NULL )\n", paramName, paramNb );
+            print( out, "      return TA_BAD_PARAM;\n" );
+            print( out, "\n" );
          }
          else
          {
             printIndent( out, indent );
             if( frame )
                fprintf( out, "params->out[%d].data.%s%s /*",
-                        paramNb, defaultParamName,
-                        lastParam? "":"," );
+                      paramNb, defaultParamName,
+                      lastParam? "":"," );
 
             fprintf( out, "%-*s  %s_%d%s",
-                     prototype? 12 : 0,
-                     prototype? typeString : "",                     
-                     paramName, paramNb,
-                     prototype? arrayBracket : "" );
+                   prototype? 12 : 0,
+                   prototype? typeString : "",                     
+                   paramName, paramNb,
+                   prototype? arrayBracket : "" );
 
             if( !lastParam )
                fprintf( out, "%s\n", frame? " */":"," );
             else
             {
                fprintf( out, "%s )%s\n",
-                        frame? " */":"",
-                        semiColonNeeded? ";":"" );
+                      frame? " */":"",
+                      semiColonNeeded? ";":"" );
             }
          }
 
@@ -1438,20 +1487,22 @@ static void printFunc( FILE *out,
 
 static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
 {
+   genPrefix = 1;
    printFrameHeader( out, funcInfo );
-   fprintf( out, "\n{\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0 );
-   fprintf( out, "}\n" );
+   print( out, "{\n" );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0, 0 );
+   print( out, "}\n" );
+   genPrefix = 0;
 }
 
 
 static void printFrameHeader( FILE *out, const TA_FuncInfo *funcInfo )
 {
-   fprintf( out, "TA_RetCode TA_%s_FramePP( const TA_ParamHolderPriv *params,\n", funcInfo->name );
-   fprintf( out, "                          int            startIdx,\n" );
-   fprintf( out, "                          int            endIdx,\n" );
-   fprintf( out, "                          int           *outBegIdx,\n" );
-   fprintf( out, "                          int           *outNbElement )\n" );
+   print( out, "TA_RetCode TA_%s_FramePP( const TA_ParamHolderPriv *params,\n", funcInfo->name );
+   print( out, "                          int            startIdx,\n" );
+   print( out, "                          int            endIdx,\n" );
+   print( out, "                          int           *outBegIdx,\n" );
+   print( out, "                          int           *outNbElement )\n" );
 }
 
 static void printExternReferenceForEachFunction( const TA_FuncInfo *info,
@@ -1537,20 +1588,24 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
 
    FileHandle *tempFile;
    unsigned int useTempFile;
+   FILE *logicIn;
+   FILE *logicTmp;
+   char localBuf1[500];
+   char localBuf2[500];
 
    /* Check if the file already exist. */
-   sprintf( gTempBuf, "..\\src\\ta_func\\ta_%s.c", funcInfo->name );
+   sprintf( localBuf1, "..\\src\\ta_func\\ta_%s.c", funcInfo->name );
 
-   gOutFunc_C = fileOpen( gTempBuf, NULL, FILE_READ );
+   gOutFunc_C = fileOpen( localBuf1, NULL, FILE_READ );
    if( gOutFunc_C == NULL )
       useTempFile = 0;
    else
    {
       useTempFile = 1;
       /* Create a temporary template using it. */
-      sprintf( gTempBuf, "..\\temp\\ta_%s.tmp", funcInfo->name );
+      sprintf( localBuf1, "..\\temp\\ta_%s.tmp", funcInfo->name );
 
-      tempFile = fileOpen( gTempBuf, NULL, FILE_WRITE );
+      tempFile = fileOpen( localBuf1, NULL, FILE_WRITE );
       if( tempFile == NULL )
       {
          printf( "Cannot create temporary file!\n" );
@@ -1565,21 +1620,94 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
 
    /* Open the file using the template. */
    if( useTempFile )
-      sprintf( gTempBuf2, "..\\temp\\ta_%s.tmp", funcInfo->name );
+      sprintf( localBuf2, "..\\temp\\ta_%s.tmp", funcInfo->name );
    else
-      sprintf( gTempBuf2, "..\\src\\ta_abstract\\templates\\ta_x.c.template" );
+      sprintf( localBuf2, "..\\src\\ta_abstract\\templates\\ta_x.c.template" );
 
-   sprintf( gTempBuf, "..\\src\\ta_func\\ta_%s.c", funcInfo->name );
+   sprintf( localBuf1, "..\\src\\ta_func\\ta_%s.c", funcInfo->name );
 
-   gOutFunc_C = fileOpen( gTempBuf, gTempBuf2, FILE_WRITE );
+   gOutFunc_C = fileOpen( localBuf1, localBuf2, FILE_WRITE );
 
    if( gOutFunc_C == NULL )
    {
-      printf( "Cannot create [%s]\n", gTempBuf );
+      printf( "Cannot create [%s]\n", localBuf1 );
       return;
    }
 
+   /* Generate. 1st Pass */
    writeFuncFile( funcInfo );
+
+   fileClose( gOutFunc_C );
+
+   /* Copy the 1st pass result and make it the template for
+    * the 2nd pass.
+    */
+   sprintf( localBuf2, "..\\temp\\ta_%s.tmp", funcInfo->name );
+   if( !copyFile( localBuf1, localBuf2 ) )
+   {
+      printf( "Cannot copy %s to %s\n", localBuf1, localBuf2 );
+      return;
+   }
+
+   /* Extract the TA function code in a temporary file */
+   logicIn = fopen( localBuf1, "r" );
+   if( !logicIn )
+   {
+      printf( "Cannot open [%s] for extracting TA logic\n", localBuf1 );
+      return;
+   }
+   logicTmp = fopen( "..\\temp\\logic.tmp", "w" );
+   if( !logicTmp )
+   {
+      printf( "Cannot open [%s] for extracting TA logic\n", localBuf2 );
+      return;
+   }
+   extractTALogic( logicIn, logicTmp );
+   fclose(logicIn);
+   fclose(logicTmp);
+
+   /* Insert the TA function code in the single-precision frame 
+    * using the template generated from the first pass.
+    */
+   gOutFunc_C = fileOpen( localBuf1, localBuf2, FILE_WRITE );
+   if( gOutFunc_C == NULL )
+   {
+      printf( "Cannot complete 2nd pass with [%s]\n", localBuf1 );
+      return;
+   }
+
+   /* Duplicate the function, but using float this time */
+   print( gOutFunc_C->file, "\n" );
+   print( gOutFunc_C->file, "#define  USE_SINGLE_PRECISION_INPUT\n" );
+   print( gOutFunc_C->file, "#if !defined( _MANAGED )\n" );
+   print( gOutFunc_C->file, "   #undef   TA_PREFIX\n" );
+   print( gOutFunc_C->file, "   #define  TA_PREFIX(x) TA_S_##x\n" );
+   print( gOutFunc_C->file, "#endif\n" );
+   print( gOutFunc_C->file, "#undef   INPUT_TYPE\n" );
+   print( gOutFunc_C->file, "#define  INPUT_TYPE float\n" );
+   
+   print( gOutFunc_C->file, "#if defined( _MANAGED )\n" );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1 );
+   print( gOutFunc_C->file, "#else\n" );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1 );
+   print( gOutFunc_C->file, "#endif\n" );
+
+   /* Insert the internal logic of the function */
+   logicTmp = fopen( "..\\temp\\logic.tmp", "r" );
+   if( !logicTmp )
+   {
+      printf( "Cannot read open logic.tmp\n" );
+      return;
+   }
+   while( fgets(gTempBuf,2048,logicTmp) )
+      fputs( gTempBuf, gOutFunc_C->file );
+   fclose(logicTmp);
+   print( gOutFunc_C->file, "\n" );
+
+   /* Add the suffix at the end of the file. */
+   print( gOutFunc_C->file, "#if defined( _MANAGED )\n" );
+   print( gOutFunc_C->file, "}} // Close namespace TA.Lib\n" );
+   print( gOutFunc_C->file, "#endif\n" );
 
    fileClose( gOutFunc_C );
 }
@@ -1746,69 +1874,77 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    fprintf( out, " * generated by gen_code. Any modification will be lost\n" );
    fprintf( out, " * next time gen_code is run.\n" );
    fprintf( out, " */\n" );
-   fprintf( out, "\n" );
-   fprintf( out, "#if defined( _MANAGED )\n" );
-   fprintf( out, "   #using <mscorlib.dll>\n" );
-   fprintf( out, "   #include \"Core.h\"\n" );
-   fprintf( out, "   namespace TA { namespace Lib {\n" );
-   fprintf( out, "#else\n" );
-   fprintf( out, "   #include <string.h>\n" );
-   fprintf( out, "   #include <math.h>\n" );
-   fprintf( out, "   #include \"ta_func.h\"\n" );
-   fprintf( out, "#endif\n" );
-   fprintf( out, "\n" );
-   fprintf( out, "#ifndef TA_UTILITY_H\n" );
-   fprintf( out, "   #include \"ta_utility.h\"\n" );
-   fprintf( out, "#endif\n" );
-   fprintf( out, "\n" );
-   fprintf( out, "#ifndef TA_MEMORY_H\n" );
-   fprintf( out, "   #include \"ta_memory.h\"\n" );
-   fprintf( out, "#endif\n" );
-   fprintf( out, "\n" );
-   fprintf( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0 );
-   fprintf( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0 );
-   fprintf( out, "#endif\n" );
+
+   genPrefix = 1;
+   print( out, "\n" );
+   print( out, "#if defined( _MANAGED )\n" );
+   print( out, "   #using <mscorlib.dll>\n" );
+   print( out, "   #include \"Core.h\"\n" );
+   print( out, "   namespace TA { namespace Lib {\n" );
+   print( out, "#else\n" );
+   print( out, "   #include <string.h>\n" );
+   print( out, "   #include <math.h>\n" );
+   print( out, "   #include \"ta_func.h\"\n" );
+   print( out, "#endif\n" );
+   print( out, "\n" );
+   print( out, "#ifndef TA_UTILITY_H\n" );
+   print( out, "   #include \"ta_utility.h\"\n" );
+   print( out, "#endif\n" );
+   print( out, "\n" );
+   print( out, "#ifndef TA_MEMORY_H\n" );
+   print( out, "   #include \"ta_memory.h\"\n" );
+   print( out, "#endif\n" );
+   print( out, "\n" );
+   print( out, "#define TA_PREFIX(x) TA_##x\n" );
+   print( out, "#define INPUT_TYPE   double\n" );
+   print( out, "\n" );
+   print( out, "#if defined( _MANAGED )\n" );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0, 0 );
+   print( out, "#else\n" );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0 );
+   print( out, "#endif\n" );
+
+   genPrefix = 0;
    skipToGenCode( funcInfo->name, gOutFunc_C->file, gOutFunc_C->templateFile );
 
+   genPrefix = 1;
    fprintf( out, "/*\n" );
    printFuncHeaderDoc( out, funcInfo, " * " );
    fprintf( out, " */\n" );
-   fprintf( out, "\n" );
+   print( out, "\n" );
+   print( out, "#if defined( _MANAGED )\n" );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0 );
+   print( out, "#else\n" );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0 );
+   print( out, "#endif\n" );
 
-   fprintf( out, "\n" );
-   fprintf( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0 );
-   fprintf( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0 );
-   fprintf( out, "#endif\n" );
+   genPrefix = 0;
    skipToGenCode( funcInfo->name, gOutFunc_C->file, gOutFunc_C->templateFile );
 
-   fprintf( out, "\n" );
-   fprintf( out, "#ifndef TA_FUNC_NO_RANGE_CHECK\n" );
-   fprintf( out, "\n" );
-   fprintf( out, "   /* Validate the requested output range. */\n" );
-   fprintf( out, "   if( startIdx < 0 )\n" );
-   fprintf( out, "      return TA_OUT_OF_RANGE_START_INDEX;\n" );
-   fprintf( out, "   if( (endIdx < 0) || (endIdx < startIdx))\n" );
-   fprintf( out, "      return TA_OUT_OF_RANGE_END_INDEX;\n" );
-   fprintf( out, "\n" );
+   genPrefix = 1;
+   print( out, "\n" );
+   print( out, "#ifndef TA_FUNC_NO_RANGE_CHECK\n" );
+   print( out, "\n" );
+   print( out, "   /* Validate the requested output range. */\n" );
+   print( out, "   if( startIdx < 0 )\n" );
+   print( out, "      return TA_OUT_OF_RANGE_START_INDEX;\n" );
+   print( out, "   if( (endIdx < 0) || (endIdx < startIdx))\n" );
+   print( out, "      return TA_OUT_OF_RANGE_END_INDEX;\n" );
+   print( out, "\n" );
    /* Generate the code for checking the parameters.
     * Also generates the code for setting up the
     * default values.
     */
-   fprintf( out, "   /* Validate the parameters. */\n" );
-   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0 );
+   print( out, "   /* Validate the parameters. */\n" );
+   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0 );
 
-   fprintf( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
-   fprintf( out, "\n" );
+   print( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
+   print( out, "\n" );
 
-   /* Add the suffix at the end of the file. */
    skipToGenCode( funcInfo->name, gOutFunc_C->file, gOutFunc_C->templateFile );
-   fprintf( out, "#if defined( _MANAGED )\n" );
-   fprintf( out, "   }} // Close namespace TA.Lib\n" );
-   fprintf( out, "#endif\n" );
+
+   /* Put a marker who is going to be used in the second pass */
+   fprintf( out, "%%%%%%GENCODE%%%%%%\n" );
 }
 
 static void printOptInputValidation( FILE *out,
@@ -1867,26 +2003,26 @@ static void printOptInputValidation( FILE *out,
    switch( optInputParamInfo->type )
    {
    case TA_OptInput_RealList:
-      fprintf( out, "   /* min/max are checked for %s_%d. */\n", name, paramNb );
+      print( out, "   /* min/max are checked for %s_%d. */\n", name, paramNb );
    case TA_OptInput_RealRange:
-      fprintf( out, "   if( %s_%d == TA_REAL_DEFAULT )\n", name, paramNb );
-      fprintf( out, "      %s_%d = %s;\n", name, paramNb, doubleToStr(optInputParamInfo->defaultValue) );
-      fprintf( out, "   else if( (%s_%d < %s) ||", name, paramNb, doubleToStr(minReal) );
-      fprintf( out, " (%s_%d > %s) )\n", name, paramNb, doubleToStr(maxReal) );
-              
+      print( out, "   if( %s_%d == TA_REAL_DEFAULT )\n", name, paramNb );
+      print( out, "      %s_%d = %s;\n", name, paramNb, doubleToStr(optInputParamInfo->defaultValue) );
+      print( out, "   else if( (%s_%d < %s) ||", name, paramNb, doubleToStr(minReal) );
+      print( out, " (%s_%d > %s) )\n", name, paramNb, doubleToStr(maxReal) );              
       break;
    case TA_OptInput_IntegerRange:
-      fprintf( out, "   /* min/max are checked for %s_%d. */\n", name, paramNb );
+      print( out, "   /* min/max are checked for %s_%d. */\n", name, paramNb );
    case TA_OptInput_IntegerList:
-      fprintf( out, "   if( (int)%s_%d == TA_INTEGER_DEFAULT )\n", name, paramNb );
-      fprintf( out, "      %s_%d = %d;\n", name, paramNb, (int)optInputParamInfo->defaultValue );
-      fprintf( out, "   else if( ((int)%s_%d < %d) || ((int)%s_%d > %d) )\n",
+      print( out, "   if( (int)%s_%d == TA_INTEGER_DEFAULT )\n", name, paramNb );
+      print( out, "      %s_%d = %d;\n", name, paramNb, (int)optInputParamInfo->defaultValue );
+      print( out, "   else if( ((int)%s_%d < %d) || ((int)%s_%d > %d) )\n",
               name, paramNb, minInt,
               name, paramNb, maxInt );
       break;
    }
 
-   fprintf( out, "      return TA_BAD_PARAM;\n\n" );
+   print( out, "      return TA_BAD_PARAM;\n" );
+   print( out, "\n" );
 }
 
 
@@ -1901,7 +2037,7 @@ static int skipToGenCode( const char *dstName, FILE *out, FILE *templateFile )
          headerWritten = 1;
          break;
       }
-      if( fputs( gTempBuf, out ) == EOF )
+      if( out && (fputs( gTempBuf, out ) == EOF) )
       {
          printf( "Cannot write to [%s]\n", dstName );
          return -1;
@@ -1933,7 +2069,8 @@ static void printFuncHeaderDoc( FILE *out,
    fprintf( out, "%sTA_%s - %s\n", prefix, funcInfo->name, funcInfo->hint );
    fprintf( out, prefix );
 
-   fprintf( out, "\n%sInput  = ", prefix );
+   fprintf( out, "\n" );
+   fprintf( out, "%sInput  = ", prefix );
    for( paramNb=0; paramNb < funcInfo->nbInput; paramNb++ )
    {
       retCode = TA_SetInputParameterInfoPtr( funcInfo->handle,
@@ -2112,7 +2249,7 @@ static int addUnstablePeriodEnum( FILE *out )
    
    fprintf( out, "\n" );
    fprintf( out, "#if defined( _MANAGED )\n");
-   fprintf( out, "public __value enum TA_FuncUnstId\n");
+   fprintf( out, "__value enum TA_FuncUnstId\n");
    fprintf( out, "#else\n");
    fprintf( out, "typedef enum\n");
    fprintf( out, "#endif\n");
@@ -2352,7 +2489,7 @@ static void addFuncEnumeration( FILE *out )
    intList = (TA_IntegerList *)TA_DEF_UI_MA_Method.dataSet;
    fprintf( out, "\n" );
    fprintf( out, "#if defined( _MANAGED )\n" );
-   fprintf( out, "public __value enum TA_MAType\n" );
+   fprintf( out, "__value enum TA_MAType\n" );
    fprintf( out, "#else\n" );
    fprintf( out, "typedef enum\n" );
    fprintf( out, "#endif\n" );
@@ -2372,4 +2509,129 @@ static void addFuncEnumeration( FILE *out )
    fprintf( out, "#else\n" );
    fprintf( out, "} TA_MAType;\n" );
    fprintf( out, "#endif\n" );
+}
+
+static void extractTALogic( FILE *inFile, FILE *outFile )
+{
+   int i, length, nbCodeChar;
+   int commentBlock, commentFirstCharFound, outIdx;
+
+   #define START_DELIMITATOR "/**** END GENCODE SECTION 2"
+   #define STOP_DELIMITATOR  "/**** START GENCODE SECTION 4"
+
+   /* Find the begining of the function */
+   while( fgets( gTempBuf, 2048, inFile ) )
+   {
+      length = strlen(gTempBuf);
+      if( length > 2048 )
+         return;
+
+      if( strncmp( gTempBuf, START_DELIMITATOR, strlen(START_DELIMITATOR) ) == 0)
+         break;
+   }
+
+   /* Copy until the end of the function.
+    * At the same time, eliminate all empty line and
+    * comments to avoid confusion with original code.
+    */
+   commentBlock = 0;
+   commentFirstCharFound = 0;
+   while( fgets( gTempBuf, 2048, inFile ) )
+   {
+      length = strlen(gTempBuf);
+      if( length > 2048 )
+         return;
+
+      if( strncmp( gTempBuf, STOP_DELIMITATOR, strlen(STOP_DELIMITATOR) ) == 0)
+         break;
+
+      /* Process the whole line and put it in gTempBuf2 */
+      outIdx = 0;
+      nbCodeChar = 0;
+      for( i=0; i < length; i++ )
+      {
+         if( !commentBlock )
+         {
+            if( !commentFirstCharFound )
+            {
+               if( gTempBuf[i] == '/' )
+                  commentFirstCharFound = 1;
+               else
+               {
+                  gTempBuf2[outIdx++] = gTempBuf[i];
+                  if( !isspace(gTempBuf[i]) )
+                     nbCodeChar++;
+               }
+            }
+            else
+            {
+               commentFirstCharFound = 0;
+               if( gTempBuf[i] == '*' )
+                  commentBlock = 1;
+               else 
+               {
+                  gTempBuf2[outIdx++] = '/';
+                  nbCodeChar++;
+                  if( gTempBuf[i] == '/' )
+                     commentFirstCharFound = 1;
+                  else
+                  {
+                     gTempBuf2[outIdx++] = gTempBuf[i];
+                     if( !isspace(gTempBuf[i]) )
+                        nbCodeChar++;
+                  }
+               }
+            }            
+         }
+         else
+         {
+            if( !commentFirstCharFound )
+            {
+               if( gTempBuf[i] == '*' )
+                  commentFirstCharFound = 1;
+            }
+            else
+            {
+               commentFirstCharFound = 0;
+               if( gTempBuf[i] == '/' )
+                  commentBlock = 0;
+               else if( gTempBuf[i] == '*' )
+                  commentFirstCharFound = 1;
+            }            
+         }
+      }
+
+      if( nbCodeChar != 0 )
+      {
+         gTempBuf2[outIdx] = '\0';
+         fputs( "/* Generated */ ", outFile );
+         fputs( gTempBuf2, outFile );
+      }
+   }
+}
+
+static int copyFile( const char *src, const char *dest )
+{
+   FILE *in;
+   FILE *out;
+
+   in = fopen( src, "rb" );
+   if( !in )
+      return 0;
+
+   out = fopen( dest, "wb" );
+   if( !out )
+   {
+      fclose( in );
+      return 0;
+   }
+
+   while( fgets( gTempBuf, 2048, in ) )
+   {
+      fputs(gTempBuf,out);
+   }
+
+   fclose(in);
+   fclose(out);
+   return 1;
 }
