@@ -48,6 +48,7 @@
  *  092103 MF    Now touch files only when there is really a change.
  *  101303 MF    Remove underscore from names.
  *  020804 MF,ST Fixes to make it work on Linux (Bug#873879).
+ *  022904 MF    Add TA_GetLookback
  */
 
 /* Description:
@@ -143,18 +144,18 @@ static void printIndent( FILE *out, unsigned int indent );
 static void printFunc( FILE *out,
                        const char *prefix,       /* Can be NULL */
                        const TA_FuncInfo *funcInfo,
-                       unsigned int prototype,             /* Boolean */
-                       unsigned int frame,                 /* Boolean */
-                       unsigned int semiColonNeeded,       /* Boolean */
-                       unsigned int validationCode,        /* Boolean */
-                       unsigned int lookbackSignature,     /* Boolean */
-                       unsigned int managedCPPCode,        /* Boolean */
-                       unsigned int managedCPPDeclaration, /* Boolean */
-                       unsigned int inputIsSinglePrecision /* Boolean */
+                       unsigned int prototype,              /* Boolean */
+                       unsigned int frame,                  /* Boolean */
+                       unsigned int semiColonNeeded,        /* Boolean */
+                       unsigned int validationCode,         /* Boolean */
+                       unsigned int lookbackSignature,      /* Boolean */
+                       unsigned int managedCPPCode,         /* Boolean */
+                       unsigned int managedCPPDeclaration,  /* Boolean */
+                       unsigned int inputIsSinglePrecision  /* Boolean */
                       );
 
 static void printCallFrame  ( FILE *out, const TA_FuncInfo *funcInfo );
-static void printFrameHeader( FILE *out, const TA_FuncInfo *funcInfo );
+static void printFrameHeader( FILE *out, const TA_FuncInfo *funcInfo, unsigned int lookbackSignature );
 
 static void printExternReferenceForEachFunction( const TA_FuncInfo *info,
                                                  void *opaqueData );
@@ -850,7 +851,9 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
 
    /* Create the frame definition (ta_frame.c) and declaration (ta_frame.h) */
    genPrefix = 1;
-   printFrameHeader( gOutFrame_H->file, funcInfo );
+   printFrameHeader( gOutFrame_H->file, funcInfo, 0 );
+   fprintf( gOutFrame_H->file, ";\n" );
+   printFrameHeader( gOutFrame_H->file, funcInfo, 1 );
    fprintf( gOutFrame_H->file, ";\n\n" );
    printCallFrame( gOutFrame_C->file, funcInfo );
 
@@ -1117,9 +1120,18 @@ static void printFunc( FILE *out,
    }
    else if( frame )
    {
-      print( out, "%sTA_%s(\n",
-             prefix == NULL? "" : prefix, funcInfo->name );
-      indent = 4 + strlen(funcInfo->name);
+      indent = strlen(funcInfo->name);
+      if( lookbackSignature )
+      {
+         print( out, "%sTA_%s_Lookback(", prefix == NULL? "" : prefix, funcInfo->name );
+         indent += 12;
+
+      }
+      else
+      {  
+         print( out, "%sTA_%s(\n", prefix == NULL? "" : prefix, funcInfo->name );
+         indent += 4;
+      }
    }
    else if( validationCode )
    {
@@ -1136,7 +1148,7 @@ static void printFunc( FILE *out,
    if( frame )
       indent -= 5;
 
-   if( frame )
+   if( frame && !lookbackSignature )
    {
       printIndent( out, indent );
       fprintf( out, "startIdx,\n" );
@@ -1456,13 +1468,22 @@ static void printFunc( FILE *out,
             printIndent( out, indent );
 
          if( frame )
-            fprintf( out, "params->optIn[%d].data.%s, /*", paramNb, defaultParamName );
+         {
+            fprintf( out, "params->optIn[%d].data.%s%s /*",
+                     paramNb, defaultParamName,
+                     lookbackSignature&&lastParam?"":"," );
+         }
          fprintf( out, "%-*s %s",
                 prototype? 13 : 0,
                 prototype? typeString : "",
                 paramName );
          if( frame )
-            fprintf( out, " */\n" );
+         {
+            if( lookbackSignature && lastParam )
+               fprintf( out, "*/ )%s\n", semiColonNeeded? ";":"" );
+            else
+               fprintf( out, "*/\n" );
+         }
          else            
          {
             switch( optInputParamInfo->type )
@@ -1526,13 +1547,17 @@ static void printFunc( FILE *out,
 
    if( lookbackSignature && (funcInfo->nbOptInput == 0) )
    {
-      print( out, "void )%s\n", semiColonNeeded? ";":"" );
+      if( frame )
+         fprintf( out, " )%s\n", semiColonNeeded? ";":"" );
+      else
+         fprintf( out, "void )%s\n", semiColonNeeded? ";":"" );
    }
 
    /* Go through all the output */
    if( lookbackSignature )
    {
-      print( out, "\n" );
+      if( !frame )
+         print( out, "\n" );
    }
    else
    {
@@ -1639,21 +1664,37 @@ static void printFunc( FILE *out,
 static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
 {
    genPrefix = 1;
-   printFrameHeader( out, funcInfo );
+
+   printFrameHeader( out, funcInfo, 0 );
    print( out, "{\n" );
    printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0, 0 );
    print( out, "}\n" );
+
+   printFrameHeader( out, funcInfo, 1 );
+   print( out, "{\n" );
+   if( funcInfo->nbOptInput == 0 )
+      print( out, "   (void)params;\n" );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 1, 0, 0, 0 );
+   print( out, "}\n" );
+   
    genPrefix = 0;
 }
 
 
-static void printFrameHeader( FILE *out, const TA_FuncInfo *funcInfo )
+static void printFrameHeader( FILE *out, const TA_FuncInfo *funcInfo, unsigned int lookbackSignature )
 {
-   print( out, "TA_RetCode TA_%s_FramePP( const TA_ParamHolderPriv *params,\n", funcInfo->name );
-   print( out, "                          int            startIdx,\n" );
-   print( out, "                          int            endIdx,\n" );
-   print( out, "                          int           *outBegIdx,\n" );
-   print( out, "                          int           *outNbElement )\n" );
+   if( lookbackSignature )
+   {
+      print( out, "unsigned int TA_%s_FramePPLB( const TA_ParamHolderPriv *params )\n", funcInfo->name );
+   }
+   else
+   {
+      print( out, "TA_RetCode TA_%s_FramePP( const TA_ParamHolderPriv *params,\n", funcInfo->name );
+      print( out, "                          int            startIdx,\n" );
+      print( out, "                          int            endIdx,\n" );
+      print( out, "                          int           *outBegIdx,\n" );
+      print( out, "                          int           *outNbElement )\n" );
+   }
 }
 
 static void printExternReferenceForEachFunction( const TA_FuncInfo *info,

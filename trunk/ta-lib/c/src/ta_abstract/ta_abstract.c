@@ -45,7 +45,7 @@
  *  020101 MF   First version.
  *  110302 MF   Re-design the interface related to TA_CallFunc for being
  *              faster and use less memory allocation.
- *
+ *  022904 MF   Add TA_GetLookback
  */
 
 /* Description:
@@ -1174,6 +1174,44 @@ TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *param,
 
    /* This parameter is now initialized, clear the corresponding bit. */
    paramHolderPriv->outBitmap &= ~(1<<paramIndex);
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+TA_RetCode TA_GetLookback( const TA_ParamHolder *param, TA_Integer *lookback )
+{
+   TA_PROLOG
+   TA_RetCode retCode;
+   const TA_ParamHolderPriv *paramHolderPriv;
+
+   const TA_FuncDef *funcDef;
+   const TA_FuncInfo *funcInfo;
+   TA_FrameLookback lookbackFunction;
+
+   TA_TRACE_BEGIN( TA_GetLookback );
+
+   if( (param == NULL) || (lookback == NULL))
+   {
+      TA_TRACE_RETURN( TA_BAD_PARAM );
+   }
+
+   paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
+   if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
+   {
+      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER );
+   }
+
+   /* Get the pointer on the lookback function. */
+   funcInfo = paramHolderPriv->funcInfo;
+   TA_ASSERT_DEBUG( funcInfo != NULL );
+   funcDef = (const TA_FuncDef *)funcInfo->handle;
+   TA_ASSERT_DEBUG( funcDef != NULL );
+   lookbackFunction = funcDef->lookback;
+   TA_ASSERT_DEBUG( lookbackFunction != NULL );
+
+   /* Perform the function call. */
+   *lookback = (*lookbackFunction)( paramHolderPriv );
+   TA_ASSERT_DEBUG( *lookback >= 0 );
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
