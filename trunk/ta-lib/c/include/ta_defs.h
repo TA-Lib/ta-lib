@@ -184,6 +184,8 @@ ENUM_BEGIN(TA_RetCode)
     /* 106 */  TA_UNEXPECTED_SQL_TYPE_FOR_CLOSE,   /* Close price field is not of the expected SQL type. */
     /* 107 */  TA_UNEXPECTED_SQL_TYPE_FOR_VOLUME,  /* Volume field is not of the expected SQL type. */
     /* 108 */  TA_UNEXPECTED_SQL_TYPE_FOR_OI,      /* Open interest field is not of the expected SQL type. */
+    /* 109 */  TA_LIMIT_OF_ONE_SERVER_EXCEEDED,    /* Only one server is expected for the location parameter. */
+    /* 110 */  TA_LIMIT_OF_ONE_COUNTRY_ID_EXCEEDED,/* Only one country id is expected for the location parameter. */
 
     /****** IP Error Code *****/
     /* 700 */  TA_IP_NOSOCKETS = 700,  /* Sockets not supported      */
