@@ -69,6 +69,15 @@ TA_String *TA_StringValueAlloc( TA_StringCache *stringCache,
                                 const char *string,
                                 unsigned int value );
 
+/* Create a TA_String from an unsigned long integer. */
+TA_String *TA_StringAlloc_ULong( TA_StringCache *stringCache,
+                                 unsigned long value );
+
+/* Allocate a "path string": and make the appropriate adaptation depending
+ * of the platform.
+ */
+TA_String *TA_StringAlloc_Path( TA_StringCache *stringCache, const char *string );
+
 /* Free this copy of the 'string'. */
 void TA_StringFree( TA_StringCache *stringCache, TA_String *string );
 
