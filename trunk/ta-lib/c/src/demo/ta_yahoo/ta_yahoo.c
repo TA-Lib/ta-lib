@@ -316,7 +316,7 @@ int main( int argc, char *argv[] )
          return -1;
       }
       break;
-   case DISPLAY_CATEGORIES:
+   default:
       /* Nothing to do. */
       break;
    }
@@ -341,6 +341,9 @@ int main( int argc, char *argv[] )
       break;
    case DISPLAY_CATEGORIES:
       country[0] = '\0';
+   default:
+      /* Nothing to do. */
+      break;
    }
 
    /* Initialize TA-LIB and create an unified database. */

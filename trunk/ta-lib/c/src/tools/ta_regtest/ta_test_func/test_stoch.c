@@ -241,6 +241,8 @@ static TA_RetCode rangeTestFunction(
   TA_RetCode retCode;
   TA_RangeTestParam *testParam;
   TA_Real *dummyOutput;
+
+  retCode = TA_NOT_SUPPORTED;
   
   testParam = (TA_RangeTestParam *)opaqueData;   
 
@@ -290,6 +292,42 @@ static TA_RetCode rangeTestFunction(
                             testParam->test->optInPeriod_2,
                             testParam->test->optInMAType_2 );
       break;
+  case TEST_STOCHF:
+     if( outputNb == 0 )
+     {
+        retCode = TA_STOCHF( startIdx,
+                             endIdx,
+                             testParam->high,
+                             testParam->low,
+                             testParam->close,
+                             testParam->test->optInPeriod_0,
+                             testParam->test->optInPeriod_1,
+                             testParam->test->optInMAType_1,
+                             outBegIdx, outNbElement,
+                             outputBuffer,
+                             dummyOutput );
+
+      }
+      else
+      {
+        retCode = TA_STOCHF( startIdx,
+                             endIdx,
+                             testParam->high,
+                             testParam->low,
+                             testParam->close,
+                             testParam->test->optInPeriod_0,
+                             testParam->test->optInPeriod_1,
+                             testParam->test->optInMAType_1,
+                             outBegIdx, outNbElement,
+                             dummyOutput, 
+                             outputBuffer );
+      }
+
+      *lookback = TA_STOCHF_Lookback( testParam->test->optInPeriod_0,
+                             testParam->test->optInPeriod_1,
+                             testParam->test->optInMAType_1 );
+      break;
+      
    case TEST_STOCHRSI:
      if( outputNb == 0 )
      {
@@ -340,6 +378,8 @@ static ErrorNumber do_test( const TA_History *history,
    TA_Integer outNbElement;
    TA_RangeTestParam testParam;
 
+   retCode = TA_NOT_SUPPORTED;
+
    /* Set to NAN all the elements of the gBuffers.  */
    clearAllBuffers();
 
@@ -381,6 +421,19 @@ static ErrorNumber do_test( const TA_History *history,
                           &outBegIdx, &outNbElement,
                           gBuffer[0].out0, 
                           gBuffer[0].out1 );
+      break;
+   case TEST_STOCHF:
+      retCode = TA_STOCHF( test->startIdx,
+                           test->endIdx,
+                           gBuffer[0].in,
+                           gBuffer[1].in,
+                           gBuffer[2].in,
+                           test->optInPeriod_0,
+                           test->optInPeriod_1,
+                           test->optInMAType_1,
+                           &outBegIdx, &outNbElement,
+                           gBuffer[0].out0, 
+                           gBuffer[0].out1 );
       break;
    case TEST_STOCHRSI:
       retCode = TA_STOCHRSI( test->startIdx,
@@ -480,6 +533,19 @@ static ErrorNumber do_test( const TA_History *history,
                           gBuffer[0].in, 
                           gBuffer[1].in );
       break;
+   case TEST_STOCHF:
+      retCode = TA_STOCHF( test->startIdx,
+                           test->endIdx,
+                           gBuffer[0].in,
+                           gBuffer[1].in,
+                           gBuffer[2].in,
+                           test->optInPeriod_0,
+                           test->optInPeriod_1,
+                           test->optInMAType_1,
+                           &outBegIdx, &outNbElement,
+                           gBuffer[0].in, 
+                           gBuffer[1].in );
+      break;
    case TEST_STOCHRSI:
       retCode = TA_STOCHRSI( test->startIdx,
                              test->endIdx,
@@ -492,6 +558,7 @@ static ErrorNumber do_test( const TA_History *history,
                              gBuffer[0].in, 
                              gBuffer[1].in );
       break;
+   
    }
 
    /* The previous call should have the same output as this call.
@@ -527,6 +594,7 @@ static ErrorNumber do_test( const TA_History *history,
       switch( test->testId )
       {
       case TEST_STOCH:
+      case TEST_STOCHF:
          errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_NONE,
                               (void *)&testParam, 2, 0 );
