@@ -60,6 +60,7 @@ extern const TA_FuncDef TA_DEF_MAMA;
 extern const TA_FuncDef TA_DEF_MIDPRICE;
 extern const TA_FuncDef TA_DEF_MIDPOINT;
 extern const TA_FuncDef TA_DEF_SAR;
+extern const TA_FuncDef TA_DEF_SAREXT;
 extern const TA_FuncDef TA_DEF_SMA;
 extern const TA_FuncDef TA_DEF_T3;
 extern const TA_FuncDef TA_DEF_TEMA;
@@ -134,6 +135,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_MIDPRICE,
 &TA_DEF_MIDPOINT,
 &TA_DEF_SAR,
+&TA_DEF_SAREXT,
 &TA_DEF_SMA,
 &TA_DEF_T3,
 &TA_DEF_TEMA,

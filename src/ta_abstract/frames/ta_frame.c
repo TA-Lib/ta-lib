@@ -246,6 +246,29 @@
 /* Generated */             outNbElement, 
 /* Generated */             params->out[0].data.outReal /*  outReal_0 */ );
 /* Generated */ }
+/* Generated */ TA_RetCode TA_SAREXT_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_SAREXT(
+/* Generated */                startIdx,
+/* Generated */                endIdx,
+/* Generated */                params->in[0].data.inPrice.high, /* inHigh_0 */
+/* Generated */                params->in[0].data.inPrice.low, /* inLow_0 */
+/* Generated */                params->optIn[0].data.optInReal, /* optInStartValue_0 */
+/* Generated */                params->optIn[1].data.optInReal, /* optInOffsetOnReverse_1 */
+/* Generated */                params->optIn[2].data.optInReal, /* optInAccelerationInitLong_2 */
+/* Generated */                params->optIn[3].data.optInReal, /* optInAccelerationLong_3 */
+/* Generated */                params->optIn[4].data.optInReal, /* optInAccelerationMaxLong_4 */
+/* Generated */                params->optIn[5].data.optInReal, /* optInAccelerationInitShort_5 */
+/* Generated */                params->optIn[6].data.optInReal, /* optInAccelerationShort_6 */
+/* Generated */                params->optIn[7].data.optInReal, /* optInAccelerationMaxShort_7 */
+/* Generated */                outBegIdx, 
+/* Generated */                outNbElement, 
+/* Generated */                params->out[0].data.outReal /*  outReal_0 */ );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_SMA_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,

@@ -135,6 +135,13 @@
 /* Generated */                           int           *outNbElement )
 ;
 
+/* Generated */ TA_RetCode TA_SAREXT_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+;
+
 /* Generated */ TA_RetCode TA_SMA_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,

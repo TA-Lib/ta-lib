@@ -452,10 +452,10 @@ int TA_MIDPOINT_Lookback( int           optInTimePeriod_0 );  /* From 2 to 10000
  * Optional Parameters
  * -------------------
  * optInAcceleration_0:(From TA_REAL_MIN to TA_REAL_MAX)
- *    Acceleration Factor used up to the Maximum parameter
+ *    Acceleration Factor used up to the Maximum value
  * 
  * optInMaximum_1:(From TA_REAL_MIN to TA_REAL_MAX)
- *    Maximum value for the acceleration factor
+ *    Acceleration Factor Maximum value
  * 
  * 
  */
@@ -481,6 +481,82 @@ TA_RetCode TA_S_SAR( int    startIdx,
 
 int TA_SAR_Lookback( double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
                    double        optInMaximum_1 );  /* From TA_REAL_MIN to TA_REAL_MAX */
+
+
+/*
+ * TA_SAREXT - Parabolic SAR - Extended
+ * 
+ * Input  = High, Low
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInStartValue_0:(From TA_REAL_MIN to TA_REAL_MAX)
+ *    Start value and direction. 0 for Auto, >0 for Long, <0 for Short
+ * 
+ * optInOffsetOnReverse_1:(From TA_REAL_MIN to TA_REAL_MAX)
+ *    Percent offset added/removed to initial stop on short/long reversal
+ * 
+ * optInAccelerationInitLong_2:(From TA_REAL_MIN to TA_REAL_MAX)
+ *    Acceleration Factor initial value for the Long direction
+ * 
+ * optInAccelerationLong_3:(From TA_REAL_MIN to TA_REAL_MAX)
+ *    Acceleration Factor for the Long direction
+ * 
+ * optInAccelerationMaxLong_4:(From TA_REAL_MIN to TA_REAL_MAX)
+ *    Acceleration Factor maximum value for the Long direction
+ * 
+ * optInAccelerationInitShort_5:(From TA_REAL_MIN to TA_REAL_MAX)
+ *    Acceleration Factor initial value for the Short direction
+ * 
+ * optInAccelerationShort_6:(From TA_REAL_MIN to TA_REAL_MAX)
+ *    Acceleration Factor for the Short direction
+ * 
+ * optInAccelerationMaxShort_7:(From TA_REAL_MIN to TA_REAL_MAX)
+ *    Acceleration Factor maximum value for the Short direction
+ * 
+ * 
+ */
+TA_RetCode TA_SAREXT( int    startIdx,
+                      int    endIdx,
+                      const double inHigh_0[],
+                      const double inLow_0[],
+                      double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInOffsetOnReverse_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInAccelerationInitLong_2, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInAccelerationLong_3, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInAccelerationMaxLong_4, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInAccelerationInitShort_5, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInAccelerationShort_6, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInAccelerationMaxShort_7, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal_0[] );
+
+TA_RetCode TA_S_SAREXT( int    startIdx,
+                        int    endIdx,
+                        const float  inHigh_0[],
+                        const float  inLow_0[],
+                        double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
+                        double        optInOffsetOnReverse_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                        double        optInAccelerationInitLong_2, /* From TA_REAL_MIN to TA_REAL_MAX */
+                        double        optInAccelerationLong_3, /* From TA_REAL_MIN to TA_REAL_MAX */
+                        double        optInAccelerationMaxLong_4, /* From TA_REAL_MIN to TA_REAL_MAX */
+                        double        optInAccelerationInitShort_5, /* From TA_REAL_MIN to TA_REAL_MAX */
+                        double        optInAccelerationShort_6, /* From TA_REAL_MIN to TA_REAL_MAX */
+                        double        optInAccelerationMaxShort_7, /* From TA_REAL_MIN to TA_REAL_MAX */
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double        outReal_0[] );
+
+int TA_SAREXT_Lookback( double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInOffsetOnReverse_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInAccelerationInitLong_2, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInAccelerationLong_3, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInAccelerationMaxLong_4, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInAccelerationInitShort_5, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInAccelerationShort_6, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInAccelerationMaxShort_7 );  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 
 /*
