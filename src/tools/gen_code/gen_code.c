@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -54,18 +54,19 @@
  *  030604 MF    Add generation of "ta_func.swg"
  *  082004 AC    Add generation of candlestick functions declaration
  *  010405 RM    Change createProjTemplate to work with VS03 and VS05
+ *  031805 MF    Add generation of MSVC project file.
+ *
  */
 
 /* Description:
  *       Generates a lot of source code. Run "gen_code ?" for
  *       the list of file.
  *
- *       This utility have no used for an end-user of the TA-LIB.
- *       It is useful only to people integrating new TA functions
- *       in TA-Lib.
- *
+ *       This utility is intended only to people integrating new 
+ *       TA functions in TA-Lib.
+ *       
  * Note: All directory in this code is relative to the 'bin'
- *       directory. So you must run the executable from ta-lib/c/bin.
+ *       directory. You must run "gen_code" from ta-lib/c/bin.
  *       
  */
 #include <stdio.h>
@@ -121,6 +122,7 @@ FileHandle *gOutFunc_SWG;      /* For SWIG */
 
 #ifdef _MSC_VER
 FileHandle *gOutProjFile;      /* For .NET project file */
+FileHandle *gOutMSVCProjFile;  /* For MSVC project file */
 FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
 
 static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
@@ -198,6 +200,7 @@ static int createTemplate( FileHandle *in, FileHandle *out );
 
 #ifdef _MSC_VER
 static int createProjTemplate( FileHandle *in, FileHandle *out );
+static int createMSVCProjTemplate( FileHandle *in, FileHandle *out );
 #endif
 
 static void writeFuncFile( const TA_FuncInfo *funcInfo );
@@ -304,15 +307,13 @@ int main(int argc, char* argv[])
          printf( "\n" );         
          printf( "  No parameter needed.\n" );
          printf( "\n" );         
-         printf( "  This utility is useful only for developers modifying\n" );
-         printf( "  the source code of the TA-Lib.\n" );
+         printf( "  This utility is useful only for developers adding new TA\n" );
+         printf( "  functions to TA-Lib.\n" );
          printf( "\n" );         
-         printf( "  A lots of code is generated from the information\n" );
-         printf( "  provided by the interface definitions found\n" );
-         printf( "  in ta-lib/c/src/ta_abstract/tables.\n" );
+         printf( "  The interface definitions in c/src/ta_abstract/tables\n" );
+         printf( "  are used to generate code, documentation and some more.\n" );
          printf( "\n" );
-         printf( "  From these tables, the following files are\n" );
-         printf( "  updated:\n" );
+         printf( "  The following files are updated or regenerated:\n" );
          printf( "     1) ta-lib/c/include/ta_func.h\n" );
          printf( "     2) ta-lib/c/include/ta_defs.h\n" );
          printf( "     3) ta-lib/c/include/func_list.txt\n" );
@@ -323,9 +324,10 @@ int main(int argc, char* argv[])
          printf( "     8) ta-lib/dotnet/src/Core/TA-Lib-Core.vcproj\n" );
          printf( "     9) ta-lib/dotnet/src/Core/Core.h\n" );
          printf( "    10) ta-lib/swig/src/interface/ta_func.swg\n" );
+         printf( "    11) ta-lib/c/ide/msvc/lib_proj/ta_func/ta_func.dsp\n" );
          printf( "\n" );
-         printf( "  Also, it regenerates the function header, parameters and\n" );
-         printf( "  validation code of all TA Func in c/src/ta_func.\n" );
+         printf( "  The function header, parameters and validation code of all TA\n" );
+         printf( "  function in c/src/ta_func are also updated.\n" );
          printf( "\n" );
          printf( "** Must be directly run from the 'bin' directory.\n" );
          exit(-1);
@@ -614,6 +616,29 @@ static int genCode(int argc, char* argv[])
       }
       fileClose(gOutProjFile);
       fileClose(tempFile);
+
+      /* Create MSVC project files template */
+      #define FILE_MSVC_PROJ     "..\\..\\c\\ide\\msvc\\lib_proj\\ta_func\\ta_func.dsp"
+      #define FILE_MSVC_PROJ_TMP "..\\temp\\ta_func_dsp.tmp"
+      gOutMSVCProjFile = fileOpen( FILE_MSVC_PROJ, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
+      if( gOutMSVCProjFile == NULL )   
+      {
+         printf( "\nCannot access [%s]\n", gToOpen );
+         return -1;
+      }
+      tempFile = fileOpen( FILE_MSVC_PROJ_TMP, NULL, FILE_WRITE|WRITE_ALWAYS );
+      if( tempFile == NULL )
+      {
+         printf( "Cannot create temporary MSVC project file!\n" );
+         return -1;
+      }
+      if( createMSVCProjTemplate( gOutMSVCProjFile, tempFile ) != 0 )
+      {
+         printf( "Failed to parse and write the temporary MSVC project file!\n" );
+         return -1;
+      }
+      fileClose(gOutMSVCProjFile);
+      fileClose(tempFile);
    #endif
 
    /* Create the .NET interface file template */
@@ -721,6 +746,15 @@ static int genCode(int argc, char* argv[])
          printf( "Cannot update [%s]\n", FILE_NET_PROJ );
          return -1;
       }
+
+      /* Re-open the MSVC project template. */
+      gOutMSVCProjFile = fileOpen( FILE_MSVC_PROJ, FILE_MSVC_PROJ_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+      if( gOutMSVCProjFile == NULL )
+      {
+         printf( "Cannot update [%s]\n", FILE_MSVC_PROJ );
+         return -1;
+      }
+
    #endif
 
    /* Re-open the .NET interface template. */
@@ -748,6 +782,7 @@ static int genCode(int argc, char* argv[])
 
    #ifdef _MSC_VER
       fileClose( gOutProjFile );
+      fileClose( gOutMSVCProjFile );
       fileClose( gOutExcelGlue_C );
    #endif
 
@@ -797,7 +832,8 @@ static int genCode(int argc, char* argv[])
 
    /* Remove some temporary files */
    #ifdef _MSC_VER   
-      fileDelete( FILE_NET_PROJ_TMP   );
+      fileDelete( FILE_NET_PROJ_TMP );
+      fileDelete( FILE_MSVC_PROJ_TMP );
    #endif
    fileDelete( FILE_NET_HEADER_TMP );
 
@@ -901,7 +937,7 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
 
    
    #ifdef _MSC_VER
-      /* Add the entry in the .NET project file */
+      /* Add the entry in the .NET project file. */
       fprintf( gOutProjFile->file, "				<File\n" );
       fprintf( gOutProjFile->file, "					RelativePath=\"..\\..\\..\\c\\src\\ta_func\\ta_%s.c\">\n", funcInfo->name );
       fprintf( gOutProjFile->file, "					<FileConfiguration\n" );
@@ -921,6 +957,12 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
       fprintf( gOutProjFile->file, "							CompileAs=\"2\"/>\n" );
       fprintf( gOutProjFile->file, "					</FileConfiguration>\n" );
       fprintf( gOutProjFile->file, "				</File>\n" );
+
+      /* Add the entry in the MSVC project file. */
+      fprintf( gOutMSVCProjFile->file, "# Begin Source File\n" );
+      fprintf( gOutMSVCProjFile->file, "\n" );
+      fprintf( gOutMSVCProjFile->file, "SOURCE=..\\..\\..\\..\\src\\ta_func\\ta_%s.c\n", funcInfo->name );
+      fprintf( gOutMSVCProjFile->file, "# End Source File\n" );
 
       /* Generate the excel glue code */
       printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
@@ -2130,6 +2172,54 @@ static int createProjTemplate( FileHandle *in, FileHandle *out )
 
    return 0;
 }
+
+static int createMSVCProjTemplate( FileHandle *in, FileHandle *out )
+{
+   FILE *inFile;
+   FILE *outFile;
+   unsigned int skipSection;
+
+   inFile = in->file;
+   outFile = out->file;
+
+   skipSection = 0;
+
+   while( !skipSection && fgets( gTempBuf, BUFFER_SIZE, inFile ) )
+   {
+      if( strstr( gTempBuf, "# Begin Source File") )
+         skipSection = 1;
+      else
+         fputs( gTempBuf, outFile );
+   }
+
+   if( !skipSection )
+   {
+      printf( "Unexpected end-of-file\n" );
+      return -1;
+   }
+
+   fputs( "%%%GENCODE%%%\n", outFile );
+
+   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
+   {
+      if( strstr( gTempBuf, "# End Group" ) )
+      {
+         /* Add the "non TA function" source files. */
+         fprintf( outFile, "# Begin Source File\n");
+         fprintf( outFile, "\n");
+         fprintf( outFile, "SOURCE=..\\..\\..\\..\\src\\ta_func\\ta_utility.c\n");
+         fprintf( outFile, "# End Source File\n");
+         fprintf( outFile, "# End Group\n");
+         break;
+      }
+   }
+
+   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
+      fputs( gTempBuf, outFile );
+
+   return 0;
+}
+
 #endif
 
 static int createTemplate( FileHandle *in, FileHandle *out )
