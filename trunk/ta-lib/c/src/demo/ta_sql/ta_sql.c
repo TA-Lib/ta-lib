@@ -209,14 +209,6 @@ int main( int argc, char *argv[] )
 
    int retValue;
 
-   //char location[TA_SOURCELOCATION_MAX_LENGTH+1];
-   //char info[TA_SOURCEINFO_MAX_LENGTH+1];
-   //char country[TA_CAT_COUNTRY_MAX_LENGTH+1];
-   //char exchange[TA_CAT_EXCHANGE_MAX_LENGTH+1];
-   //char type[TA_CAT_TYPE_MAX_LENGTH+1];
-   //char category[TA_CATEGORY_MAX_LENGTH+1];
-   //char symbol[TA_SYMBOL_MAX_LENGTH+1];
-
    /* Verify that there is the minimum required number 
     * of parameters.
     */
