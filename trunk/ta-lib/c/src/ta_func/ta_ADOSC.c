@@ -60,12 +60,23 @@
    #include "ta_utility.h"
 #endif
 
-int TA_ADOSC_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+int TA_ADOSC_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                       TA_Integer    optInSlowPeriod_1 )  /* From 2 to TA_INTEGER_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   return 2;
+
+   /* Use the slowest EMA period to evaluate the total lookback. */
+   TA_Integer slowestPeriod;
+
+   if( optInFastPeriod_0 < optInSlowPeriod_1 )
+      slowestPeriod = optInSlowPeriod_1;
+   else
+      slowestPeriod = optInFastPeriod_0;
+
+   /* Adjust startIdx to account for the lookback period. */
+   return TA_EMA_Lookback( slowestPeriod );
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -77,8 +88,11 @@ int TA_ADOSC_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
- *    Number of period
+ * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
+ *    Number of period for the fast MA
+ * 
+ * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
+ *    Number of period for the slow MA
  * 
  * 
  */
@@ -89,7 +103,8 @@ TA_RetCode TA_ADOSC( TA_Integer    startIdx,
                      const TA_Real inLow_0[],
                      const TA_Real inClose_0[],
                      const TA_Integer inVolume_0[],
-                     TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     TA_Integer    optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
                      TA_Integer   *outBegIdx,
                      TA_Integer   *outNbElement,
                      TA_Real       outReal_0[] )
@@ -97,11 +112,13 @@ TA_RetCode TA_ADOSC( TA_Integer    startIdx,
 {
 	/* insert local variable here */
 
-   CIRCBUF_PROLOG(sma10,TA_Real,10);
-
-   TA_Integer nbBar, today, outIdx;
+   TA_Integer today, outIdx, lookbackTotal;
+   TA_Integer slowestPeriod;
    TA_Real high, low, close, tmp;
-   TA_Real cumulative;
+
+   TA_Real slowEMA, slowk, one_minus_slowk;
+   TA_Real fastEMA, fastk, one_minus_fastk;
+   TA_Real ad;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -118,10 +135,16 @@ TA_RetCode TA_ADOSC( TA_Integer    startIdx,
    if(!inHigh_0||!inLow_0||!inClose_0||!inVolume_0)
       return TA_BAD_PARAM;
 
-   /* min/max are checked for optInTimePeriod_0. */
-   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-      optInTimePeriod_0 = 21;
-   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
+   /* min/max are checked for optInFastPeriod_0. */
+   if( (TA_Integer)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
+      optInFastPeriod_0 = 3;
+   else if( ((TA_Integer)optInFastPeriod_0 < 2) || ((TA_Integer)optInFastPeriod_0 > 2147483647) )
+      return TA_BAD_PARAM;
+
+   /* min/max are checked for optInSlowPeriod_1. */
+   if( (TA_Integer)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
+      optInSlowPeriod_1 = 10;
+   else if( ((TA_Integer)optInSlowPeriod_1 < 2) || ((TA_Integer)optInSlowPeriod_1 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -132,53 +155,107 @@ TA_RetCode TA_ADOSC( TA_Integer    startIdx,
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
-   
-   CIRCBUF_CONSTRUCT( sma10, TA_Real, 10 );
+
+   /* Implementation Note:
+    *     The fastEMA varaible is not neceseraly the
+    *     fastest EMA.
+    *     In the same way, slowEMA is not neceseraly the
+    *     slowest EMA.
+    *
+    *     The ADOSC is always the (fastEMA - slowEMA) regardless
+    *     of the period specified. In other word:
+    * 
+    *     ADOSC(3,10) = EMA(3,AD) - EMA(10,AD)
+    *
+    *        while
+    *
+    *     ADOSC(10,3) = EMA(10,AD)- EMA(3,AD)
+    *
+    *     In the first case the EMA(3) is truly a faster EMA,
+    *     while in the second case, the EMA(10) is still call
+    *     fastEMA in the algorithm, even if it is in fact slower.
+    *
+    *     This gives more flexibility to the user if they want to
+    *     experiment with unusual parameter settings.
+    */
+
+   /* Identify the slowest period. 
+    * This infomration is used soleley to bootstrap
+    * the algorithm (skip the lookback period).
+    */
+   if( optInFastPeriod_0 < optInSlowPeriod_1 )
+      slowestPeriod = optInSlowPeriod_1;
+   else
+      slowestPeriod = optInFastPeriod_0;
 
    /* Adjust startIdx to account for the lookback period. */
-   if( startIdx < 2 )
-      startIdx = 2;
+   lookbackTotal = TA_EMA_Lookback( slowestPeriod );
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
 
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      CIRCBUF_DESTROY(sma10);
+      *outBegIdx = 0;
+      *outNbElement = 0;
       return TA_SUCCESS;
    }
 
-   /* Initialize sma10 */
-
-   /* Initialize sma3 */
-
-   nbBar = endIdx-startIdx+1;
-   *outNbElement = nbBar;
    *outBegIdx = startIdx;
-   outIdx = 0;
-   today  = 0;
-   outIdx = 0;
-   cumulative = 0.0;
+   today  = startIdx-lookbackTotal;
 
-   while( nbBar != 0 )
-   {
-      high  = inHigh_0[today];
-      low   = inLow_0[today];
-      tmp   = high-low;
-      close = inClose_0[today];
-
-      if( tmp > 0.0 )
-      {
-         cumulative += (((close-low)-(high-close))/tmp)*((double)inVolume_0[today]);
-         outReal_0[outIdx++] = cumulative;
-      }
-      else
-      {
-         *outNbElement = 0;
-         return TA_BAD_PARAM;
-      }
-
-      today++;
-      nbBar--;
+   /* The following variables and macro are used to
+    * calculate the "ad".
+    */
+   ad = 0.0;
+   #define CALCULATE_AD \
+   { \
+      high  = inHigh_0[today]; \
+      low   = inLow_0[today]; \
+      tmp   = high-low; \
+      close = inClose_0[today]; \
+      if( tmp > 0.0 ) \
+         ad += (((close-low)-(high-close))/tmp)*((double)inVolume_0[today]); \
+      today++; \
    }
+
+   /* Constants for EMA */
+   fastk = PER_TO_K( optInFastPeriod_0 );
+   one_minus_fastk = 1.0 - fastk;
+
+   slowk = PER_TO_K( optInSlowPeriod_1 );
+   one_minus_slowk = 1.0 - slowk;
+
+   /* Initialize the two EMA
+    *
+    * Use the same range of initialization inputs for
+    * both EMA and simply seed with the first A/D value.
+    *
+    * Note: Metastock do the same.
+    */   
+   CALCULATE_AD;
+   fastEMA = ad;
+   slowEMA = ad;
+
+   /* Initialize the EMA and skip the unstable period. */
+   while( today < startIdx )
+   {
+      CALCULATE_AD;
+      fastEMA = (fastk*ad)+(one_minus_fastk*fastEMA);
+      slowEMA = (slowk*ad)+(one_minus_slowk*slowEMA);
+   }     
+      
+   /* Perform the calculation for the requested range */
+   outIdx = 0;
+   while( today <= endIdx )
+   {
+      CALCULATE_AD;
+      fastEMA = (fastk*ad)+(one_minus_fastk*fastEMA);
+      slowEMA = (slowk*ad)+(one_minus_slowk*slowEMA);
+
+      outReal_0[outIdx++] = fastEMA - slowEMA;
+   }
+   *outNbElement = outIdx;
 
    return TA_SUCCESS;
 }
