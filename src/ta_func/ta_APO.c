@@ -45,7 +45,7 @@
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  062804 MF   Resolve div by zero bug on limit case.
- *  020605 AA   Fix #1117666 Lookback bug.
+ *  020605 AA   Fix #1117666 Lookback & out-of-bound bug.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -254,21 +254,21 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
        optInFastPeriod = tempInteger;
    }
 
-   /* Calculate the slow MA into the temp buffer. */
+   /* Calculate the fast MA into the tempBuffer. */
    retCode = TA_PREFIX(MA)( startIdx, endIdx,
                           inReal,
-                          optInSlowPeriod, /* From 1 to 200 */
+                          optInFastPeriod, /* From 1 to 200 */
                           optInMethod_2,                    
-                          &outBegIdx1, &outNbElement1, tempBuffer );
+                          &outBegIdx2, &outNbElement2, tempBuffer );
 
    if( retCode == TA_SUCCESS )
    {
-      /* Calculate the fast MA into the output. */
+      /* Calculate the slow MA into the output. */
       retCode = TA_PREFIX(MA)( startIdx, endIdx,                       
                              inReal,
-                             optInFastPeriod, /* From 1 to 200 */
+                             optInSlowPeriod, /* From 1 to 200 */
                              optInMethod_2,
-                             &outBegIdx2, &outNbElement2, outReal );
+                             &outBegIdx1, &outNbElement1, outReal );
 
       if( retCode == TA_SUCCESS )
       {
@@ -278,9 +278,9 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
             /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */   
             for( i=0,j=tempInteger; i < outNbElement1; i++, j++ )
             {
-               tempReal = tempBuffer[i];
+               tempReal = outReal[i];
                if( !TA_IS_ZERO(tempReal) )
-                  outReal[i] = ((outReal[j]-tempReal)/tempReal)*100.0;
+                  outReal[i] = ((tempBuffer[j]-tempReal)/tempReal)*100.0;
                else
                   outReal[i] = 0.0;
             }
@@ -289,7 +289,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
          {
             /* Calculate (fast MA)-(slow MA) in the output. */   
             for( i=0,j=tempInteger; i < outNbElement1; i++, j++ )
-               outReal[i] = outReal[j]-tempBuffer[i];
+               outReal[i] = tempBuffer[j]-outReal[i];
          }
 
          *outBegIdx     = outBegIdx1;
@@ -418,16 +418,16 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */    }
 /* Generated */    retCode = TA_PREFIX(MA)( startIdx, endIdx,
 /* Generated */                           inReal,
-/* Generated */                           optInSlowPeriod, 
+/* Generated */                           optInFastPeriod, 
 /* Generated */                           optInMethod_2,                    
-/* Generated */                           &outBegIdx1, &outNbElement1, tempBuffer );
+/* Generated */                           &outBegIdx2, &outNbElement2, tempBuffer );
 /* Generated */    if( retCode == TA_SUCCESS )
 /* Generated */    {
 /* Generated */       retCode = TA_PREFIX(MA)( startIdx, endIdx,                       
 /* Generated */                              inReal,
-/* Generated */                              optInFastPeriod, 
+/* Generated */                              optInSlowPeriod, 
 /* Generated */                              optInMethod_2,
-/* Generated */                              &outBegIdx2, &outNbElement2, outReal );
+/* Generated */                              &outBegIdx1, &outNbElement1, outReal );
 /* Generated */       if( retCode == TA_SUCCESS )
 /* Generated */       {
 /* Generated */          tempInteger = outBegIdx1 - outBegIdx2;
@@ -435,9 +435,9 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */          {
 /* Generated */             for( i=0,j=tempInteger; i < outNbElement1; i++, j++ )
 /* Generated */             {
-/* Generated */                tempReal = tempBuffer[i];
+/* Generated */                tempReal = outReal[i];
 /* Generated */                if( !TA_IS_ZERO(tempReal) )
-/* Generated */                   outReal[i] = ((outReal[j]-tempReal)/tempReal)*100.0;
+/* Generated */                   outReal[i] = ((tempBuffer[j]-tempReal)/tempReal)*100.0;
 /* Generated */                else
 /* Generated */                   outReal[i] = 0.0;
 /* Generated */             }
@@ -445,7 +445,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */          else
 /* Generated */          {
 /* Generated */             for( i=0,j=tempInteger; i < outNbElement1; i++, j++ )
-/* Generated */                outReal[i] = outReal[j]-tempBuffer[i];
+/* Generated */                outReal[i] = tempBuffer[j]-outReal[i];
 /* Generated */          }
 /* Generated */          *outBegIdx     = outBegIdx1;
 /* Generated */          *outNbElement  = outNbElement1;
