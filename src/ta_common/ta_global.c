@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -430,15 +430,15 @@ TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
                                  int avgPeriod, 
                                  double factor )
 {
-    printf("setcdlset:%d  ",settingType);
+    /*printf("setcdlset:%d  ",settingType);*/
     if( settingType >= TA_AllCandleSettings )
         return TA_BAD_PARAM;
     TA_Globals->candleSettings[settingType].settingType = settingType;
     TA_Globals->candleSettings[settingType].rangeType = rangeType;
     TA_Globals->candleSettings[settingType].avgPeriod = avgPeriod;
     TA_Globals->candleSettings[settingType].factor = factor;
-    printf("cdlset: %d %d %d %f\n",TA_Globals->candleSettings[settingType].settingType,TA_Globals->candleSettings[settingType].rangeType,
-        TA_Globals->candleSettings[settingType].avgPeriod,TA_Globals->candleSettings[settingType].factor);
+    /*printf("cdlset: %d %d %d %f\n",TA_Globals->candleSettings[settingType].settingType,TA_Globals->candleSettings[settingType].rangeType,
+        TA_Globals->candleSettings[settingType].avgPeriod,TA_Globals->candleSettings[settingType].factor);*/
     return TA_SUCCESS;
 }
 
