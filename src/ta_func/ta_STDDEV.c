@@ -45,7 +45,7 @@
  *  112400 MF   Template creation.
  *  100502 JV   Speed optimization of the algorithm
  *  052603 MF   Adapt code to compile with .NET Managed C++
- *
+ *  090404 MF   Fix #978056. Trap sqrt with negative zero values.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -136,6 +136,7 @@
    /* Insert local variables here. */
    int i;
    TA_RetCode retCode;
+   double tempReal;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -185,12 +186,24 @@
    if( optInNbDev != 1.0 )
    {
       for( i=0; i < *outNbElement; i++ )
-         outReal[i] = sqrt(outReal[i]) * optInNbDev;
+      {
+         tempReal = outReal[i];
+         if( !TA_IS_ZERO_OR_NEG(tempReal) )
+            outReal[i] = sqrt(tempReal) * optInNbDev;
+         else
+            outReal[i] = (double)0.0;
+      }
    }
    else
    {
       for( i=0; i < *outNbElement; i++ )
-         outReal[i] = sqrt(outReal[i]);
+      {
+         tempReal = outReal[i];
+         if( !TA_IS_ZERO_OR_NEG(tempReal) )
+            outReal[i] = sqrt(tempReal);
+         else
+            outReal[i] = (double)0.0;
+      }
    }
 
    return TA_SUCCESS;
@@ -257,7 +270,12 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 
       tempReal = inMovAvg[outIdx];
       tempReal *= tempReal;
-      output[outIdx] = sqrt( meanValue2-tempReal );
+      meanValue2 -= tempReal;
+      
+      if( !TA_IS_ZERO_OR_NEG(meanValue2) )
+         output[outIdx] = sqrt(meanValue2);
+      else
+         output[outIdx] = (double)0.0;
    }
 }
 
@@ -292,6 +310,7 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */ {
 /* Generated */    int i;
 /* Generated */    TA_RetCode retCode;
+/* Generated */    double tempReal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
@@ -317,12 +336,24 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */    if( optInNbDev != 1.0 )
 /* Generated */    {
 /* Generated */       for( i=0; i < *outNbElement; i++ )
-/* Generated */          outReal[i] = sqrt(outReal[i]) * optInNbDev;
+/* Generated */       {
+/* Generated */          tempReal = outReal[i];
+/* Generated */          if( !TA_IS_ZERO_OR_NEG(tempReal) )
+/* Generated */             outReal[i] = sqrt(tempReal) * optInNbDev;
+/* Generated */          else
+/* Generated */             outReal[i] = (double)0.0;
+/* Generated */       }
 /* Generated */    }
 /* Generated */    else
 /* Generated */    {
 /* Generated */       for( i=0; i < *outNbElement; i++ )
-/* Generated */          outReal[i] = sqrt(outReal[i]);
+/* Generated */       {
+/* Generated */          tempReal = outReal[i];
+/* Generated */          if( !TA_IS_ZERO_OR_NEG(tempReal) )
+/* Generated */             outReal[i] = sqrt(tempReal);
+/* Generated */          else
+/* Generated */             outReal[i] = (double)0.0;
+/* Generated */       }
 /* Generated */    }
 /* Generated */    return TA_SUCCESS;
 /* Generated */ }
@@ -365,7 +396,11 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */       periodTotal2 -= tempReal;
 /* Generated */       tempReal = inMovAvg[outIdx];
 /* Generated */       tempReal *= tempReal;
-/* Generated */       output[outIdx] = sqrt( meanValue2-tempReal );
+/* Generated */       meanValue2 -= tempReal;
+/* Generated */       if( !TA_IS_ZERO_OR_NEG(meanValue2) )
+/* Generated */          output[outIdx] = sqrt(meanValue2);
+/* Generated */       else
+/* Generated */          output[outIdx] = (double)0.0;
 /* Generated */    }
 /* Generated */ }
 /* Generated */ 

@@ -198,7 +198,7 @@
    trailingX = inReal0[trailingIdx];
    trailingY = inReal1[trailingIdx++];
    tempReal = (sumX2-((sumX*sumX)/optInTimePeriod)) * (sumY2-((sumY*sumY)/optInTimePeriod));
-   if( !TA_IS_ZERO(tempReal) )
+   if( !TA_IS_ZERO_OR_NEG(tempReal) )
       outReal[0] = (sumXY-((sumX*sumY)/optInTimePeriod)) / sqrt(tempReal);
    else 
       outReal[0] = 0.0;
@@ -232,7 +232,7 @@
       trailingX = inReal0[trailingIdx];
       trailingY = inReal1[trailingIdx++];
       tempReal = (sumX2-((sumX*sumX)/optInTimePeriod)) * (sumY2-((sumY*sumY)/optInTimePeriod));
-      if( !TA_IS_ZERO(tempReal) )
+      if( !TA_IS_ZERO_OR_NEG(tempReal) )
          outReal[outIdx++] = (sumXY-((sumX*sumY)/optInTimePeriod)) / sqrt(tempReal);
       else
          outReal[outIdx++] = 0.0;
@@ -314,7 +314,7 @@
 /* Generated */    trailingX = inReal0[trailingIdx];
 /* Generated */    trailingY = inReal1[trailingIdx++];
 /* Generated */    tempReal = (sumX2-((sumX*sumX)/optInTimePeriod)) * (sumY2-((sumY*sumY)/optInTimePeriod));
-/* Generated */    if( !TA_IS_ZERO(tempReal) )
+/* Generated */    if( !TA_IS_ZERO_OR_NEG(tempReal) )
 /* Generated */       outReal[0] = (sumXY-((sumX*sumY)/optInTimePeriod)) / sqrt(tempReal);
 /* Generated */    else 
 /* Generated */       outReal[0] = 0.0;
@@ -336,7 +336,7 @@
 /* Generated */       trailingX = inReal0[trailingIdx];
 /* Generated */       trailingY = inReal1[trailingIdx++];
 /* Generated */       tempReal = (sumX2-((sumX*sumX)/optInTimePeriod)) * (sumY2-((sumY*sumY)/optInTimePeriod));
-/* Generated */       if( !TA_IS_ZERO(tempReal) )
+/* Generated */       if( !TA_IS_ZERO_OR_NEG(tempReal) )
 /* Generated */          outReal[outIdx++] = (sumXY-((sumX*sumY)/optInTimePeriod)) / sqrt(tempReal);
 /* Generated */       else
 /* Generated */          outReal[outIdx++] = 0.0;
