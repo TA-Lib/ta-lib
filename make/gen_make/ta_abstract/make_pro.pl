@@ -97,6 +97,8 @@ print "\n";
 print "# Platform dependent options.\n";
 print "win32:DEFINES         *= WIN32\n";
 print "win32-msvc:DEFINES    *= _MBCS _LIB\n";
+print "freebsd-g++:LIBS      -= -ldl\n";
+print "freebsd-g++:INCLUDEPATH += /usr/local/include\n";
 print "\n";
 print "cmd:TEMP_CLEAN_ALL = ../../../../../temp/cmd/*.pch\n";
 print "cmr:TEMP_CLEAN_ALL = ../../../../../temp/cmr/*.pch\n";

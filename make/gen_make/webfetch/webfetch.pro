@@ -62,6 +62,8 @@ thread:DEFINES -= TA_SINGLE_THREAD
 win32:DEFINES         *= WIN32
 win32-msvc:DEFINES    *= _MBCS _LIB
 cygwin-g++:LIBS       -= -ldl
+freebsd-g++:LIBS      -= -ldl
+freebsd-g++:INCLUDEPATH += /usr/local/include
 
 cmd:TEMP_CLEAN_ALL = ../../../../../temp/cmd/*.pch
 cmr:TEMP_CLEAN_ALL = ../../../../../temp/cmr/*.pch
