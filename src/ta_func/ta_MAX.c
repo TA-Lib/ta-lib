@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  101902 JV   Speed optimization of the algorithm
- *
+ *  102202 MF   Speed optimize a bit further
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -98,7 +98,7 @@ TA_RetCode TA_MAX( TA_Libc      *libHandle,
    /* Insert local variables here. */
    TA_Real highest, tmp;
    TA_Integer outIdx, nbInitialElementNeeded;
-   TA_Integer trailingIdx, today, i;
+   TA_Integer trailingIdx, today, i, highestIdx;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -156,24 +156,32 @@ TA_RetCode TA_MAX( TA_Libc      *libHandle,
    outIdx = 0;
    today       = startIdx;
    trailingIdx = startIdx-nbInitialElementNeeded;
-   highest     = inReal_0[today];
+   highestIdx  = -1;
 
    while( today <= endIdx )
    {
       tmp = inReal_0[today];
 
-      if( highest >= tmp )
+      if( highestIdx < trailingIdx )
       {
-        highest = inReal_0[trailingIdx];
-        i = trailingIdx+1;
-        while( i<=today )
+        highestIdx = trailingIdx;
+        highest = inReal_0[highestIdx];
+        i = highestIdx;
+        while( ++i<=today )
         {
-           tmp = inReal_0[i++];
-           if( tmp > highest ) highest = tmp;
+           tmp = inReal_0[i];
+           if( tmp > highest )
+           {
+              highestIdx = i;
+              highest = tmp;
+           }
         }
       }
-      else
+      else if( tmp >= highest )
+      {
+        highestIdx = today;
         highest = tmp;
+      }
 
       outReal_0[outIdx++] = highest;
       trailingIdx++;
