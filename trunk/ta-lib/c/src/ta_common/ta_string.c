@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  110199 MF   First version.
  *  061503 ML   Fix#731857 to stringAllocNInternal (bad memory access).
+ *  032104 MF   Add TA_StringAlloc_ULong & TA_StringAlloc_Path
  */
 
 /* Description:
@@ -66,6 +67,7 @@
 /**** Headers ****/
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include "ta_string.h"
 #include "ta_memory.h"
 #include "ta_trace.h"
@@ -92,7 +94,10 @@ typedef struct
    TA_String *cache[NB_CACHE_ENTRY];
 } TA_StringCachePriv;
 
-typedef enum { NO_CASE, UPPER_CASE } TA_CharCase;
+/* Different way to handle some string abstraction like upper/lower case or
+ * the separator in a path.
+ */
+typedef enum { NO_CASE, UPPER_CASE, PATH } TA_CharCase;
 
 /**** Local functions declarations.    ****/
 static unsigned int calcHash( const char *string, TA_CharCase caseType );
@@ -110,6 +115,8 @@ static TA_String *stringAllocInternal( const char *string,
 
 static TA_String *stringValueAllocInternal( const char *string,
                                             unsigned int value );
+
+static TA_String *valueAllocInternal( unsigned long value );
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
@@ -199,6 +206,10 @@ TA_String *TA_StringAllocN_UC( TA_StringCache *stringCache, const char *string, 
    return stringAllocNInternal( stringCache, string, maxNbChar, UPPER_CASE );
 }
 
+TA_String *TA_StringAlloc_Path( TA_StringCache *stringCache, const char *string )
+{
+   return stringAllocNInternal( stringCache, string, 0, PATH );
+}
 
 TA_String *TA_StringValueAlloc( TA_StringCache *stringCache,
                                 const char *string,
@@ -235,6 +246,41 @@ TA_String *TA_StringValueAlloc( TA_StringCache *stringCache,
 
    return retString; 
 }
+
+TA_String *TA_StringAlloc_ULong( TA_StringCache *stringCache, unsigned long value )
+{
+   TA_StringCachePriv *stringCachePriv;
+   TA_String *retString;
+   #if !defined( TA_SINGLE_THREAD )
+   TA_RetCode retCode;
+   #endif
+
+   if( stringCache == NULL )
+      return NULL;
+
+   stringCachePriv = (TA_StringCachePriv *)stringCache;
+
+   #if !defined( TA_SINGLE_THREAD )
+      /* Get the semaphore for this cache. */
+      retCode = TA_SemaWait( &stringCachePriv->sema );
+
+      if( retCode != TA_SUCCESS )
+         return NULL;
+   #endif
+
+   /* The "value" strings are not stored in the cache.
+    * (Because they are known of not being copied often in
+    *  the context of TA-LIB).
+    */
+   retString = valueAllocInternal( value );
+
+   #if !defined( TA_SINGLE_THREAD )
+      TA_SemaPost( &stringCachePriv->sema );
+   #endif
+
+   return retString; 
+}
+
 
 /* Allocate dyamically a copy of string.
  * Eliminate also all whitespace in the copy.
@@ -382,6 +428,9 @@ static unsigned int calcHash( const char *string, TA_CharCase caseType )
       {
          if( caseType == UPPER_CASE )
             tmp = (unsigned char)toupper( tmp );
+         else if( caseType == PATH && TA_IsSeparatorChar(tmp) )
+            tmp = TA_SeparatorASCII();
+         
          retValue += tmp;
       }
       else
@@ -455,6 +504,16 @@ static TA_String *stringAllocInternal( const char *string,
          for( i=0; i < newStringLength; i++ )
             str[i+1] = (unsigned char)toupper( string[i] );
       }
+      else if( caseType == PATH )
+      {
+         for( i=0; i < newStringLength; i++ )
+         {
+            if( TA_IsSeparatorChar(string[i]) )
+               str[i+1] = TA_SeparatorASCII();
+            else
+               str[i+1] = string[i];
+         }
+      }
       else
       {
          for( i=0; i < newStringLength; i++ )
@@ -488,6 +547,26 @@ static TA_String *stringValueAllocInternal( const char *string,
    return (TA_String *)str;
 }
 
+static TA_String *valueAllocInternal( unsigned long value )
+{
+   unsigned int size;
+   char buffer[100];
+   char *str;
+
+   buffer[0] = '\0';
+   sprintf(buffer, "%u", (unsigned int)value );
+   size = strlen(buffer)+2;
+   str = (char *)TA_Malloc( size );
+   
+   if( str != NULL )
+   {
+      strcpy( &str[1], buffer );
+      str[0] = 1;
+   }
+   
+   return (TA_String *)str;
+}
+
 TA_String *stringAllocNInternal( TA_StringCache *stringCache,
                                  const char *string,
                                  unsigned int maxNbChar,
@@ -498,6 +577,8 @@ TA_String *stringAllocNInternal( TA_StringCache *stringCache,
    char *hashEntry;
    TA_StringCachePriv *stringCachePriv;
    unsigned int newStringLength;
+   int sameString;
+   unsigned int i;
 
    #if !defined( TA_SINGLE_THREAD )
    TA_RetCode retCode;
@@ -535,8 +616,42 @@ TA_String *stringAllocNInternal( TA_StringCache *stringCache,
    if( hashEntry && ((unsigned char)hashEntry[0] < 255) )
    {
       /* Check that this is the same string, same size. */
-      if( (!strncmp( string, &hashEntry[1], newStringLength)) &&
+      if( (caseType == NO_CASE) && 
+          (!strncmp( string, &hashEntry[1], newStringLength)) &&
           (hashEntry[newStringLength+1] == '\0') )
+         sameString = 1;     
+      else if( caseType == PATH )
+      {
+          sameString = 1;
+          for( i=0; i <= newStringLength && (sameString == 1); i++ )
+          {
+             if( hashEntry[i+1] == '\0' )
+                sameString = 0;
+             if( (string[i] != hashEntry[i+1]) && !TA_IsSeparatorChar(string[i]) )
+                sameString = 0;
+          }
+
+          if( sameString && (hashEntry[newStringLength+1] != '\0') )
+            sameString = 0;
+      }
+      else if( caseType == UPPER_CASE )
+      {
+          sameString = 1;
+          for( i=0; i <= newStringLength && (sameString == 1); i++ )
+          {
+             if( hashEntry[i+1] == '\0' )
+                sameString = 0;
+             if( (toupper(string[i]) != hashEntry[i+1]) )
+                sameString = 0;
+          }
+
+          if( sameString && (hashEntry[newStringLength+1] != '\0') )
+            sameString = 0;
+      }
+      else
+         sameString = 0;
+
+      if( sameString )
       {
          tmp = stringDupInternal( (TA_String *)hashEntry );
          #if !defined( TA_SINGLE_THREAD )
