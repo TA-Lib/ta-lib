@@ -350,7 +350,8 @@ typedef struct
 
 FieldDef fieldTable[] =
 {
-   {"[-H][M][D][Y][O][H][L][C][V]"}   
+   {"[-H][M][D][Y][O][H][L][C][V]"},   
+   {"[M][D][Y][HOUR][MIN][L][O][C][H][V]"},
 };
 
 #define TA_NB_FIELD_DEF (sizeof(fieldTable)/sizeof(FieldDef))
@@ -604,6 +605,7 @@ static int test_parsing_equivalence( void )
    char buffer1024[1024];
    char buffer200[200];
    TA_Timestamp ts1, ts2;
+   int period;
 
 
    retValue = allocLib( &udb );
@@ -699,6 +701,10 @@ static int test_parsing_equivalence( void )
             param.location = &buffer1024[0];
             param.info = fieldTable[fieldNb-1].fileInfo;
             param.category = catTable->string[i];
+            
+            /* Test #2 is specifically to test the TA_REPLACE_ZERO_PRICE_BAR flag */
+            if( strcmp( catTable->string[i], "002" ) == 0 )
+               param.flags = TA_REPLACE_ZERO_PRICE_BAR;
 
             retCode = TA_AddDataSource( udbEqv, &param );
             if( retCode != TA_SUCCESS )
@@ -714,9 +720,15 @@ static int test_parsing_equivalence( void )
                return TA_TESTASCII_EQV_ADDDATASOURCE;
             }
 
+            /* Test #2 use minutes data */
+            if( strcmp( catTable->string[i], "002" ) == 0 )
+               period = TA_1MIN;
+            else
+               period = TA_DAILY;
+
             retCode = TA_HistoryAlloc( udbEqv, catTable->string[i],
                                        &buffer200[0],
-                                       TA_DAILY, NULL, NULL, TA_ALL,
+                                       period, NULL, NULL, TA_ALL,
                                        &history );
 
             if( retCode != TA_SUCCESS )
@@ -807,54 +819,59 @@ static int test_parsing_equivalence( void )
                   return TA_TESTASCII_HISTORYFREE_FAILED;
                }
 
-               /* Test start-end */
-               TA_SetDefault(&ts1);
-               TA_SetDefault(&ts2);
-               TA_SetDate( 4567,1,23,&ts1);
-               TA_SetDate( 4568,12,31,&ts2);
-               TA_SetTime( 0, 0, 0, &ts2 );
-               retCode = TA_HistoryAlloc( udbEqv, catTable->string[i],
-                                          &buffer200[0],
-                                          TA_DAILY, &ts1, &ts2, TA_ALL,
-                                          &history );
-
-               if( retCode != TA_SUCCESS )
+               /* Test #1 check ranging with start and end parameter. */
+               if( strcmp( catTable->string[i], "001" ) == 0 )
                {
-                  printf( "TA_HistoryAlloc failed with %d (%s)\n", retCode, symTable->string[j] );
-                  if( refHistory )
-                     TA_HistoryFree( refHistory );
-                  TA_SymbolTableFree( symTable );
-                  TA_CategoryTableFree( catTable );
-                  if( udbEqv )
-                     TA_UDBaseFree( udbEqv );
-                  freeLib( udb );
-                  return TA_TESTASCII_EQV_HISTORYALLOC;
-               }
+                  /* Test start-end */
+                  TA_SetDefault(&ts1);
+                  TA_SetDefault(&ts2);
+                  TA_SetDate( 4567,1,23,&ts1);
+                  TA_SetDate( 4568,12,31,&ts2);
+                  TA_SetTime( 0, 0, 0, &ts2 );
+                  retCode = TA_HistoryAlloc( udbEqv, catTable->string[i],
+                                             &buffer200[0],
+                                             TA_DAILY, &ts1, &ts2, TA_ALL,
+                                             &history );
+   
+                  if( retCode != TA_SUCCESS )
+                  {
+                     printf( "TA_HistoryAlloc failed with %d (%s)\n", retCode, symTable->string[j] );
+                     if( refHistory )
+                        TA_HistoryFree( refHistory );
+                     TA_SymbolTableFree( symTable );
+                     TA_CategoryTableFree( catTable );
+                     if( udbEqv )
+                        TA_UDBaseFree( udbEqv );
+                     freeLib( udb );
+                     return TA_TESTASCII_EQV_HISTORYALLOC;
+                  }
 
-               if( history->nbBars != 3 )
-               {
-                  printf( "Less than 3 price bar read (%d)\n", history->nbBars );
-                  if( refHistory )
-                     TA_HistoryFree( refHistory );
-                  TA_SymbolTableFree( symTable );
-                  TA_CategoryTableFree( catTable );
-                  if( udbEqv )
-                     TA_UDBaseFree( udbEqv );
-                  freeLib( udb );
-                  return TA_TESTASCII_EQV_HISTORYALLOC;
-               }
+                  if( history->nbBars != 3 )
+                  {
+                     printf( "Less than 3 price bar read (%d)\n", history->nbBars );
+                     TA_HistoryFree( history );
+                     if( refHistory )
+                        TA_HistoryFree( refHistory );
+                     TA_SymbolTableFree( symTable );
+                     TA_CategoryTableFree( catTable );
+                     if( udbEqv )
+                        TA_UDBaseFree( udbEqv );
+                     freeLib( udb );
+                     return TA_TESTASCII_EQV_HISTORYALLOC;
+                  }
 
-               retCode = TA_HistoryFree( history );
-               if( retCode != TA_SUCCESS )
-               {
-                  if( refHistory )
-                     TA_HistoryFree( refHistory );
-                  TA_SymbolTableFree( symTable );
-                  TA_CategoryTableFree( catTable );
-                  if( udbEqv )
-                     TA_UDBaseFree( udbEqv );
-                  freeLib( udb );
-                  return TA_TESTASCII_HISTORYFREE_FAILED;
+                  retCode = TA_HistoryFree( history );
+                  if( retCode != TA_SUCCESS )
+                  {
+                     if( refHistory )
+                        TA_HistoryFree( refHistory );
+                     TA_SymbolTableFree( symTable );
+                     TA_CategoryTableFree( catTable );
+                     if( udbEqv )
+                        TA_UDBaseFree( udbEqv );
+                     freeLib( udb );
+                     return TA_TESTASCII_HISTORYFREE_FAILED;
+                  }
                }
             }
          }

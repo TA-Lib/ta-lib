@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  070401 MF   First version.
- *
+ *  062203 MF   Add intra-day tp daily test using the "ES.CSV" file.
  */
 
 /* Description:
@@ -53,6 +53,8 @@
 
 /**** Headers ****/
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "ta_test_priv.h"
 
 /**** External functions declarations. ****/
@@ -67,11 +69,16 @@
 /**** Local declarations.              ****/
 typedef struct
 {
+   const char *symbol;
    TA_Period period;
    unsigned int nbExpectedPriceBar;
    TA_Integer thePriceBarToCheck;
+   unsigned int expected_year;
    unsigned int expected_month;
    unsigned int expected_day;
+   unsigned int expected_hour;
+   unsigned int expected_min;
+   unsigned int expected_sec;
    TA_Real expected_open;
    TA_Real expected_high;
    TA_Real expected_low;
@@ -95,19 +102,30 @@ const char *fail_header = "Fail: test_period,Test #";
 
 static TA_PriceBarCheck checkTable[] = 
 {
-  { TA_WEEKLY,    52,  0,  1,  8,  92.500,  96.375,  90.750,  93.780,  4511420, 0 },
-  { TA_WEEKLY,    52,  1,  1, 15,  94.500,  95.000,  89.440,  92.470,  3973160, 0 },
-  { TA_WEEKLY,    52,  2,  1, 22,  93.875,  99.625,  88.815,  89.875,  9943350, 0 },
-  { TA_WEEKLY,    52, 50, 12, 24, 109.060, 110.440, 107.750, 108.620,  4539425, 0 },
-  { TA_WEEKLY,    52, 51, 12, 31, 109.690, 110.750, 106.620, 107.870,  3363920, 0 },
-  { TA_MONTHLY,   12,  0,  1, 31,  92.500,  99.625,  86.750,  91.625,  6494478, 0 },
-  { TA_MONTHLY,   12,  1,  2, 28,  92.250,  92.250,  80.875,  84.875,  5347410, 0 },
-  { TA_MONTHLY,   12, 11, 12, 31, 102.560, 122.120, 102.250, 107.870,  7213263, 0 },
-  { TA_QUARTERLY,  4,  0,  3, 31,  92.500,  99.625,  80.875,  88.625,  5580475, 0 },
-  { TA_QUARTERLY,  4,  1,  6, 30,  88.655, 132.000,  81.500, 129.250,  6024341, 0 },
-  { TA_QUARTERLY,  4,  2,  9, 30, 130.000, 139.190, 117.560, 121.000,  6397878, 0 },
-  { TA_QUARTERLY,  4,  3, 12, 31, 121.000, 123.250,  89.000, 107.870, 10614132, 0 },
-  { TA_YEARLY,     1,  0, 12, 31,  92.500, 139.190,  80.875, 107.870,  7177425, 0 }
+  { "ES",          TA_5MIN,     482,   0, 2003,  5, 20,   0, 45, 59,  921.50,  922.00,  921.50,  922.00,  12, 0 },
+  { "ES",          TA_5MIN,     482, 257, 2003,  5, 20,  22, 55, 59,  920.50,  920.50,  920.50,  920.50,   1, 0 },
+  { "ES",          TA_5MIN,     482, 258, 2003,  5, 21,   0,  0, 59,  920.75,  920.75,  920.25,  920.50,  44, 0 },
+  { "ES",          TA_5MIN,     482, 481, 2003,  5, 21,  19, 15, 59,  920.25,  920.25,  920.00,  920.00,  19, 0 },
+  { "ES",          TA_DAILY,      2,   0, 2003,  5, 20,  23, 59, 59,  921.50,  925.75,  911.25,  920.50,  713627, 0 },
+  { "ES",          TA_DAILY,      2,   1, 2003,  5, 21,  23, 59, 59,  920.75,  924.25,  913.25,  920.00,  765554, 0 },
+  { "ES",          TA_WEEKLY,     1,   0, 2003,  5, 23,  23, 59, 59,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
+  { "ES",          TA_MONTHLY,    1,   0, 2003,  5, 31,  23, 59, 59,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
+  { "ES",          TA_QUARTERLY,  1,   0, 2003,  6, 30,  23, 59, 59,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
+  { "ES",          TA_YEARLY,     1,   0, 2003, 12, 31,  23, 59, 59,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
+
+  { "DAILY_REF_0", TA_WEEKLY,    52,   0, 1999,  1,  8,  23, 59, 59,  92.500,  96.375,  90.750,  93.780,  4511420, 0 },
+  { "DAILY_REF_0", TA_WEEKLY,    52,   1, 1999,  1, 15,  23, 59, 59,  94.500,  95.000,  89.440,  92.470,  3973160, 0 },
+  { "DAILY_REF_0", TA_WEEKLY,    52,   2, 1999,  1, 22,  23, 59, 59,  93.875,  99.625,  88.815,  89.875,  9943350, 0 },
+  { "DAILY_REF_0", TA_WEEKLY,    52,  50, 1999,  12, 24, 23, 59, 59,  109.060, 110.440, 107.750, 108.620,  4539425, 0 },
+  { "DAILY_REF_0", TA_WEEKLY,    52,  51, 1999,  12, 31, 23, 59, 59,  109.690, 110.750, 106.620, 107.870,  3363920, 0 },
+  { "DAILY_REF_0", TA_MONTHLY,   12,   0, 1999,  1, 31,  23, 59, 59,  92.500,  99.625,  86.750,  91.625,  6494478, 0 },
+  { "DAILY_REF_0", TA_MONTHLY,   12,   1, 1999,  2, 28,  23, 59, 59,  92.250,  92.250,  80.875,  84.875,  5347410, 0 },
+  { "DAILY_REF_0", TA_MONTHLY,   12,  11, 1999,  12, 31, 23, 59, 59,  102.560, 122.120, 102.250, 107.870,  7213263, 0 },
+  { "DAILY_REF_0", TA_QUARTERLY,  4,   0, 1999,  3, 31,  23, 59, 59,  92.500,  99.625,  80.875,  88.625,  5580475, 0 },
+  { "DAILY_REF_0", TA_QUARTERLY,  4,   1, 1999,  6, 30,  23, 59, 59,  88.655, 132.000,  81.500, 129.250,  6024341, 0 },
+  { "DAILY_REF_0", TA_QUARTERLY,  4,   2, 1999,  9, 30,  23, 59, 59,  130.000, 139.190, 117.560, 121.000,  6397878, 0 },
+  { "DAILY_REF_0", TA_QUARTERLY,  4,   3, 1999,  12, 31, 23, 59, 59,  121.000, 123.250,  89.000, 107.870, 10614132, 0 },
+  { "DAILY_REF_0", TA_YEARLY,     1,   0, 1999,  12, 31, 23, 59, 59,  92.500, 139.190,  80.875, 107.870,  7177425, 0 }
 };
 #define CHECK_TABLE_SIZE (sizeof(checkTable)/sizeof(TA_PriceBarCheck))
 
@@ -157,12 +175,26 @@ ErrorNumber test_period( TA_UDBase *unifiedDatabase )
    const TA_Timestamp *timestamp;
    unsigned int i;
    ErrorNumber retValue;
+   TA_AddDataSourceParam addParam;
 
    printf( "Testing period/timeframe conversion\n" );
 
+   /* Add access to some intra-day data. */
+   memset( &addParam, 0, sizeof( TA_AddDataSourceParam) );
+   addParam.id = TA_ASCII_FILE;
+   addParam.location = "..\\src\\tools\\ta_regtest\\sampling\\ES.csv";
+   addParam.info ="[YY][MM][DD][HH][MN=5][O][H][L][C][V]";
+   addParam.category = "TA_SIM_REF";
+   retCode = TA_AddDataSource( unifiedDatabase,&addParam );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Can't access [%s] (%d)\n", addParam.location, retCode );
+      return TA_PERIOD_HISTORYALLOC_FAILED;
+   }
+
    /* Because period transformation are very
     * dependend on the "delta" timestamp functions,
-    * let's indepedently some of these first.
+    * let's indepedently verify some of these.
     */
    retValue = testTimestampDelta();
    if( retValue != TA_TEST_PASS )
@@ -175,7 +207,7 @@ ErrorNumber test_period( TA_UDBase *unifiedDatabase )
        * different timeframe.
        */
       retCode = TA_HistoryAlloc( unifiedDatabase, 
-                                 "TA_SIM_REF", "DAILY_REF_0",
+                                 "TA_SIM_REF", checkTable[i].symbol,
                                  checkTable[i].period, 0, 0, TA_ALL,
                                  &history );
 
@@ -222,7 +254,7 @@ ErrorNumber test_period( TA_UDBase *unifiedDatabase )
       }
 
       timestamp = &history->timestamp[checkTable[i].thePriceBarToCheck];
-      if( TA_GetYear( timestamp ) != 1999 )
+      if( TA_GetYear( timestamp ) != checkTable[i].expected_year )
       {
          printf( "%s%d.9 %d\n", fail_header, i, TA_GetYear(timestamp) );
          TA_HistoryFree( history );
@@ -243,10 +275,31 @@ ErrorNumber test_period( TA_UDBase *unifiedDatabase )
          return TA_PERIOD_TIMESTAMP_DAY_INCORRECT;
       }
 
+      if( TA_GetHour( timestamp ) != checkTable[i].expected_hour )
+      {
+         printf( "%s%d.12 %d\n", fail_header, i, TA_GetHour(timestamp) );
+         TA_HistoryFree( history );
+         return TA_PERIOD_TIMESTAMP_DAY_INCORRECT;
+      }
+
+      if( TA_GetMin( timestamp ) != checkTable[i].expected_min )
+      {
+         printf( "%s%d.13 %d\n", fail_header, i, TA_GetMin(timestamp) );
+         TA_HistoryFree( history );
+         return TA_PERIOD_TIMESTAMP_DAY_INCORRECT;
+      }
+
+      if( TA_GetSec( timestamp ) != checkTable[i].expected_sec )
+      {
+         printf( "%s%d.14 %d\n", fail_header, i, TA_GetSec(timestamp) );
+         TA_HistoryFree( history );
+         return TA_PERIOD_TIMESTAMP_DAY_INCORRECT;
+      }
+
       retCode = TA_HistoryFree( history );
       if( retCode != TA_SUCCESS )
       {
-         printf( "%s%d.12 [%d]\n", fail_header, i, retCode );
+         printf( "%s%d.15 [%d]\n", fail_header, i, retCode );
          return TA_PERIOD_HISTORYFREE_FAILED;
       }
    }
