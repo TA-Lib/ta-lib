@@ -1,4 +1,3 @@
-
 /* Provides common mathematical or analysis functions.
  *
  * These functions are all PRIVATE to ta-lib and should
@@ -75,7 +74,7 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
  *
  * Useful to calculate the 'k' for TA_INT_EMA().
  */
-#define PER_TO_K( per ) ((TA_Real)2.0 / ((TA_Real)per + 1.0))
+#define PER_TO_K( per ) ((TA_Real)2.0 / ((TA_Real)(per + 1)))
 
 /* Internal Price Oscillator function.
  *
