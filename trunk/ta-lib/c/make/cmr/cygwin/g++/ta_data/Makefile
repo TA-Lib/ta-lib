@@ -47,6 +47,7 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_handle.c \
 		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_local.c \
 		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c \
+		../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c \
 		../../../../../src/ta_data/ta_token.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_handle.c \
@@ -80,6 +81,7 @@ OBJECTS =	../../../../../temp/cmr/ta_ascii.o \
 		../../../../../temp/cmr/ta_sql_handle.o \
 		../../../../../temp/cmr/ta_sql_local.o \
 		../../../../../temp/cmr/ta_sql_minidriver.o \
+		../../../../../temp/cmr/ta_sql_odbc.o \
 		../../../../../temp/cmr/ta_token.o \
 		../../../../../temp/cmr/ta_yahoo.o \
 		../../../../../temp/cmr/ta_yahoo_handle.o \
@@ -213,6 +215,9 @@ clean:
 
 ../../../../../temp/cmr/ta_sql_minidriver.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_sql_minidriver.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c
+
+../../../../../temp/cmr/ta_sql_odbc.o: ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_sql_odbc.o ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c
 
 ../../../../../temp/cmr/ta_token.o: ../../../../../src/ta_data/ta_token.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_token.o ../../../../../src/ta_data/ta_token.c
