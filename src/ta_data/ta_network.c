@@ -55,6 +55,8 @@
  *    On all unix platform, libCurl is used.
  */
 
+/* #define DEBUG_PRINTF 1 */
+
 /**** Headers ****/
 #if !defined( USE_WININET ) && !defined( USE_LIBCURL )
    /* If the user does not specify its preference in
@@ -907,6 +909,10 @@ TA_RetCode internalWebPageAlloc( TA_Libc       *libHandle,
    tmpWebPage->hiddenData = webPageHiddenData;
 
    /* From this point, TA_WebPageFree shall be called to clean-up. */
+
+   #ifdef DEBUG_PRINTF
+      printf( "Fetching [%s][%s]", webSiteAddr, webSitePage );
+   #endif
 
    #if defined( USE_WININET )
       retCode = fetchUsingWinInet( libHandle, global, tmpWebPage );
