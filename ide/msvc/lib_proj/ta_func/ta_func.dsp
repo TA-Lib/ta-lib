@@ -265,6 +265,22 @@ SOURCE=..\..\..\..\src\ta_func\ta_CCI.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLLONGLINE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CORREL.c
 # End Source File
 # Begin Source File
