@@ -543,7 +543,7 @@ void      *ptr
       return;
 
 #if defined(TA_MEM_WHERE)
-   if( (ptr == (TA_MEMHDR *)0x0) || (ptr == (TA_MEMHDR *)UINT_MAX) )
+   if( (ptr == (TA_MEMHDR *)0x0) || (ptr == (TA_MEMHDR *)ULONG_MAX) )
    {
       if( TA_IsTraceEnabled() )
       {
