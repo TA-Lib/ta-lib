@@ -49,8 +49,10 @@
 
 /* Description:
  *    This file implements the SQL minidriver using MyQSL++ library
- *
+ *    It is build in the project only when TA_SUPPORT_MYSQL is enabled
  */
+
+#ifdef TA_SUPPORT_MYSQL
 
 /**** Headers ****/
 extern "C" {
@@ -433,4 +435,4 @@ TA_RetCode TA_SQL_MySQL_CloseConnection(void *connection)
 /* None */
 
 
-
+#endif
