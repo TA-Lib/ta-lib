@@ -797,9 +797,10 @@
 /* Generated */                  startIdx,
 /* Generated */                  endIdx,
 /* Generated */                  params->in[0].data.inReal, /* inReal */
-/* Generated */                  params->optIn[0].data.optInInteger, /* optInFastK_Period */
-/* Generated */                  params->optIn[1].data.optInInteger, /* optInFastD_Period */
-/* Generated */                  params->optIn[2].data.optInInteger, /* optInFastD_MAType */
+/* Generated */                  params->optIn[0].data.optInInteger, /* optInTimePeriod */
+/* Generated */                  params->optIn[1].data.optInInteger, /* optInFastK_Period */
+/* Generated */                  params->optIn[2].data.optInInteger, /* optInFastD_Period */
+/* Generated */                  params->optIn[3].data.optInInteger, /* optInFastD_MAType */
 /* Generated */                  outBegIdx, 
 /* Generated */                  outNbElement, 
 /* Generated */                  params->out[0].data.outReal, /*  outFastK */
