@@ -258,9 +258,8 @@ static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
        return; \
 	} \
 }
-
-   CALL( inputZeroData );
    CALL( inputNegData );
+   CALL( inputZeroData );
    CALL( inputRandomData );
    CALL( inputRandFltEpsilon );
    CALL( inputRandDblEpsilon );
@@ -280,9 +279,6 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
    unsigned int i;
    int j;
    int outBegIdx, outNbElement;
-   double nanValue;
-
-   nanValue = trio_nan();
 
    retCode = TA_GetFuncHandle( funcName, &handle );
    if( retCode != TA_SUCCESS )
@@ -330,10 +326,12 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 	  case TA_Output_Real:
 	     TA_SetOutputParamRealPtr(paramHolder,i,&output[i][0]);         
          for( j=0; j < 2000; j++ )
-            output[i][j] = nanValue;
+            output[i][j] = TA_REAL_MIN;
 		 break;
 	  case TA_Output_Integer:
 	     TA_SetOutputParamIntegerPtr(paramHolder,i,&output_int[i][0]);
+         for( j=0; j < 2000; j++ )
+            output_int[i][j] = TA_INTEGER_MIN;
 		 break;
 	  }
    }
