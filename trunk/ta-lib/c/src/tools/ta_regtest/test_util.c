@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -230,7 +230,7 @@ void initGlobalBuffer( void )
  * to detect later if the function is writing
  * out-of-bound (and to make sure the
  * function is writing exactly the number
- * if values it pretends to do).
+ * of values it pretends to do).
  */
 void clearAllBuffers( void )
 {
@@ -598,7 +598,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
    /* Calculate each value ONE by ONE and make sure it is identical
     * to the reference.
     *
-    * Then repeat the test but calcualte TWO by TWO and so on...
+    * Then repeat the test but calculate TWO by TWO and so on...
     */
    for( fixSize=1; fixSize <= MAX_RANGE_SIZE; fixSize++ )
    {
