@@ -17,11 +17,17 @@ CDL3OUTSIDE         Three Outside Up/Down
 CDL3WHITESOLDIERS   Three Advancing White Soldiers
 CDLABANDONEDBABY    Abandoned Baby
 CDLADVANCEBLOCK     Advance Block
+CDLBELTHOLD         Belt-hold
+CDLBREAKAWAY        Breakaway
+CDLCOUNTERATTACK    Counterattack
 CDLDARKCLOUDCOVER   Dark Cloud Cover
+CDLDOJI             Doji
 CDLDOJISTAR         Doji Star
+CDLDRAGONFLYDOJI    Dragonfly Doji
 CDLENGULFING        Engulfing Pattern
 CDLEVENINGDOJISTAR  Evening Doji Star
 CDLEVENINGSTAR      Evening Star
+CDLGRAVESTONEDOJI   Gravestone Doji
 CDLHAMMER           Hammer
 CDLHANGINGMAN       Hanging Man
 CDLHARAMI           Harami Pattern
@@ -30,18 +36,27 @@ CDLHIGHWAVE         High-Wave Candle
 CDLIDENTICAL3CROWS  Identical Three Crows
 CDLINNECK           In-Neck Pattern
 CDLINVERTEDHAMMER   Inverted Hammer
+CDLKICKING          Kicking
+CDLKICKINGbyLength  Kicking - bull/bear determined by the longer marubozu
+CDLLONGLEGGEDDOJI   Long Legged Doji
 CDLLONGLINE         Long Line Candle
+CDLMARUBOZU         Marubozu
 CDLMORNINGDOJISTAR  Morning Doji Star
 CDLMORNINGSTAR      Morning Star
 CDLONNECK           On-Neck Pattern
 CDLPIERCING         Piercing Pattern
+CDLRICKSHAWMAN      Rickshaw Man
+CDLSEPARATINGLINES  Separating Lines
 CDLSHOOTINGSTAR     Shooting Star
 CDLSHORTLINE        Short Line Candle
 CDLSPINNINGTOP      Spinning Top
 CDLSTALLEDPATTERN   Stalled Pattern
+CDLTAKURI           Takuri (Dragonfly Doji with very long lower shadow)
+CDLTASUKIGAP        Tasuki Gap
 CDLTHRUSTING        Thrusting Pattern
 CDLTRISTAR          Tristar Pattern
 CDLUPSIDEGAP2CROWS  Upside Gap Two Crows
+CDLXSIDEGAP3METHODS Upside/Downside Gap Three Methods
 CORREL              Pearson's Correlation Coefficient (r)
 DEMA                Double Exponential Moving Average
 DX                  Directional Movement Index
