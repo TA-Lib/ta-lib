@@ -4,9 +4,9 @@
  */
 #define MAJOR 0
 #define MINOR 0
-#define BUILD 7
+#define BUILD 8
 
-#define VERSION_STRING "0.0.7"
+#define VERSION_STRING "0.0.8"
 
 /* Nothing to modify below this line. */
 
