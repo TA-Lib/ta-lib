@@ -491,7 +491,7 @@ int TA_SAR_Lookback( double        optInAcceleration_0, /* From 0 to TA_REAL_MAX
  * 
  * Optional Parameters
  * -------------------
- * optInStartValue_0:(From 0 to TA_REAL_MAX)
+ * optInStartValue_0:(From TA_REAL_MIN to TA_REAL_MAX)
  *    Start value and direction. 0 for Auto, >0 for Long, <0 for Short
  * 
  * optInOffsetOnReverse_1:(From 0 to TA_REAL_MAX)
@@ -521,7 +521,7 @@ TA_RetCode TA_SAREXT( int    startIdx,
                       int    endIdx,
                       const double inHigh_0[],
                       const double inLow_0[],
-                      double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+                      double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
                       double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
                       double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
                       double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
@@ -537,7 +537,7 @@ TA_RetCode TA_S_SAREXT( int    startIdx,
                         int    endIdx,
                         const float  inHigh_0[],
                         const float  inLow_0[],
-                        double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+                        double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
                         double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
                         double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
                         double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
@@ -549,7 +549,7 @@ TA_RetCode TA_S_SAREXT( int    startIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
 
-int TA_SAREXT_Lookback( double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+int TA_SAREXT_Lookback( double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
                       double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
                       double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
                       double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
