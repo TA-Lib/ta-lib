@@ -921,7 +921,7 @@ static TA_RetCode buildIndexFromRemoteCache( TA_YahooIdx *idx, TA_Timestamp *cac
    sprintf( buffer, "/rdata/y_%c%c.dat",
             tolower(idx->countryAbbrev[0]),
             tolower(idx->countryAbbrev[1]) );
-   retCode = TA_WebPageAlloc( "ta-lib.org",
+   retCode = TA_WebPageAlloc( "ta-lib.sourceforge.net",
                               buffer,
                               NULL, NULL,
                               &webPage, 2 );
