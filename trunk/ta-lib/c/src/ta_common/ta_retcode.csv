@@ -123,6 +123,7 @@
 122,TA_DATA_ERROR_OPEN_BELOW_LOW,A data source returned a price bar with open less than low.
 123,TA_DATA_ERROR_CLOSE_EXCEED_HIGH,A data source returned a price bar with close greater than high.
 124,TA_DATA_ERROR_CLOSE_BELOW_LOW,A data source returned a price bar with close less than low.
+125,TA_INTERNET_NO_CONTENT,No content was found at the specified URL.
 700,TA_IP_NOSOCKETS,Sockets not supported
 701,TA_IP_BADHOST,Host not known
 702,TA_IP_BADSERVICE,Service or port not known

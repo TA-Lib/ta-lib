@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -200,6 +200,7 @@ ENUM_BEGIN(TA_RetCode)
     /* 122 */  TA_DATA_ERROR_OPEN_BELOW_LOW,       /* A data source returned a price bar with open less than low. */
     /* 123 */  TA_DATA_ERROR_CLOSE_EXCEED_HIGH,    /* A data source returned a price bar with close greater than high. */
     /* 124 */  TA_DATA_ERROR_CLOSE_BELOW_LOW,      /* A data source returned a price bar with close less than low. */
+    /* 125 */  TA_INTERNET_NO_CONTENT,             /* No content was found at the specified URL. */
 
     /****** IP Error Code *****/
     /* 700 */  TA_IP_NOSOCKETS = 700,  /* Sockets not supported      */
