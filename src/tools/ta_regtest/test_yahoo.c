@@ -152,6 +152,7 @@ static ErrorNumber test_index( TA_Libc *libHandle, TA_UDBase *udb )
 
    if( history->nbBars < 3000 )
    {
+      printf( "Insufficient nbBars returned for MSFT ticker test (%d < 3000)\n", history->nbBars );
       return TA_YAHOO_VALUE_1_FAILED;
    }
 
