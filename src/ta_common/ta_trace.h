@@ -6,6 +6,10 @@
    #include "ta_dict.h"
 #endif
 
+#ifndef TA_DEFS_H
+   #include "ta_defs.h"
+#endif
+
 /* This module allows to monitor and log internal error.
  * Most of the implementation is done through macro allowing
  * to enable/disable the feature.
@@ -13,6 +17,23 @@
  * More loging and debugging is performed when TA_DEBUG is defined. 
  * TA_DEBUG shall never be defined in the final library.
  */
+
+/* The following macros are used to return internal errors.
+ * The Id can be from 1 to 999 and translate to the user 
+ * as the return code 5000 to 5999.
+ *
+ * Everytime you wish to add a new fatal error code,
+ * use the "NEXT AVAILABLE NUMBER" and increment the
+ * number in this file.
+ *
+ * NEXT AVAILABLE NUMBER: 140
+ */
+#if defined( _MANAGED )
+   /* Sadly, we loose the Id info with Managed C++ */
+   #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+#else
+   #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR+Id)
+#endif
 
 /* Note: TA-LIB is NEVER doing any console I/O (no putchar, printf etc...) unless
  *       it is specifically requested by the library user (like with the TA_FatalReport
