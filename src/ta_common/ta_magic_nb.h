@@ -1,11 +1,11 @@
 #ifndef TA_MAGIC_NB_H
 #define TA_MAGIC_NB_H
 
-/* Some allocated structure cary a magic number. These magic numbers
- * allows to detect internal errors.
- * These numbers are used solely for making sure that when a pointer is
+/* Many allocated structures contains a magic number.
+ *
+ * These numbers are used solely to make sure that when a pointer is
  * provided, it is really pointing on the expected type of data.
- * It help also for the detection of memory corruption.
+ * It helps also for the detection of memory corruption.
  * This mechanism is simple, but add a non-negligeable level of
  * reliability at a very low cost (speed/memory wise).
  */
@@ -25,5 +25,6 @@
 #define TA_TRADELOGPRIV_MAGIC_NB        0xA20EB20E
 #define TA_PMPRIV_MAGIC_NB              0xA20FB20F
 #define TA_PMREPORT_MAGIC_NB            0xA210B210
+#define TA_TRADEREPORT_MAGIC_NB         0xA211B211
 
 #endif
