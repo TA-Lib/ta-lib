@@ -5,10 +5,7 @@
 
 # This script will create all the makefiles for all
 # the plateform using the projects describe in the
-# 'ta-lib/c/make/qt_make' directory.
-#
-# For this script to work, tmake must be installed and
-# TMAKEPATH must be set.
+# 'ta-lib/c/make/gen_make' directory.
 #
 # This script is called with a parameter defining the
 # type of application with which the library is link:
@@ -21,13 +18,14 @@ use File::Path;
 use File::DosGlob 'glob';
 use Env;
 
-$origTMAKEPATH = 'tmake_lib\\win32-msvc';
+$origTMAKEPATH = '.\\template\\win32-msvc';
 $ENV{'TMAKEPATH'} = $origTMAKEPATH;
 
+# print "MAKEPATH[".$TMAKEPATH."]";
 
-$a = 'tmake_lib\\*';
+$a = "\\..\\*";
 
-@platformCompilerPath = glob $a;
+@platformCompilerPath = glob ".\\template\\*";
 
 if( (scalar @ARGV) != 1 )
 {
@@ -117,7 +115,7 @@ foreach $z (@platformCompilerPath) {
    # is the platformcompiler string.
    @splitPath = split( /\\/, $z );
    $platformCompiler = @splitPath[$#splitPath];
-   
+
    ($platform,$compiler) = split( /-/, $platformCompiler );
    
    # Skip the cases causing trouble.
@@ -132,7 +130,7 @@ foreach $z (@platformCompilerPath) {
 
    # Create the directories
    $dirToProcess = "../".@ARGV[0]."/".$platform."/".$compiler;
-   print "Doing ".$platform."-".$compiler."... ";   
+   print "Doing ".$platform."-".$compiler."... ";
    mkpath( $dirToProcess );
 
    # For each .pro file in the ta-lib/c/make/tmake,

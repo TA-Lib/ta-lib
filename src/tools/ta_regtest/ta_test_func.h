@@ -1,4 +1,5 @@
 
+ErrorNumber test_func_adx    ( TA_Libc *libHandle, TA_History *history );
 ErrorNumber test_func_ma     ( TA_Libc *libHandle, TA_History *history );
 ErrorNumber test_func_trange ( TA_Libc *libHandle, TA_History *history );
 ErrorNumber test_func_rsi    ( TA_Libc *libHandle, TA_History *history );

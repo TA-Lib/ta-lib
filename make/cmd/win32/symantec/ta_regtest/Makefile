@@ -24,6 +24,7 @@ ZIP	=	zip -r -9
 HEADERS =	
 SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_ascii.c \
+		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_adx.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_bbands.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_ma.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_macd.c \
@@ -43,6 +44,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 OBJECTS =	..\..\..\..\..\temp\cmd\ta_regtest.obj \
 		..\..\..\..\..\temp\cmd\test_ascii.obj \
+		..\..\..\..\..\temp\cmd\test_adx.obj \
 		..\..\..\..\..\temp\cmd\test_bbands.obj \
 		..\..\..\..\..\temp\cmd\test_ma.obj \
 		..\..\..\..\..\temp\cmd\test_macd.obj \
@@ -101,6 +103,7 @@ dist:
 clean:
 	-del ..\..\..\..\..\temp\cmd\ta_regtest.obj
 	-del ..\..\..\..\..\temp\cmd\test_ascii.obj
+	-del ..\..\..\..\..\temp\cmd\test_adx.obj
 	-del ..\..\..\..\..\temp\cmd\test_bbands.obj
 	-del ..\..\..\..\..\temp\cmd\test_ma.obj
 	-del ..\..\..\..\..\temp\cmd\test_macd.obj
@@ -139,6 +142,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\test_ascii.obj: ..\..\..\..\..\src\tools\ta_regtest\test_ascii.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_ascii.obj ..\..\..\..\..\src\tools\ta_regtest\test_ascii.c
+
+..\..\..\..\..\temp\cmd\test_adx.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_adx.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_adx.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_adx.c
 
 ..\..\..\..\..\temp\cmd\test_bbands.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_bbands.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_bbands.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_bbands.c

@@ -66,7 +66,7 @@ int TA_MINUS_DM_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INT
 {
    /* insert lookback code here. */
    if( optInTimePeriod_0 > 1 )
-      return optInTimePeriod_0 + TA_UnstablePeriodTable[TA_FUNC_UNST_MINUS_DM];
+      return optInTimePeriod_0 + TA_UnstablePeriodTable[TA_FUNC_UNST_MINUS_DM] - 1;
    else
       return 1;
 }
@@ -202,7 +202,7 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
     */
 
    if( optInTimePeriod_0 > 1 )
-      lookbackTotal = optInTimePeriod_0 + TA_UnstablePeriodTable[TA_FUNC_UNST_MINUS_DM];
+      lookbackTotal = optInTimePeriod_0 + TA_UnstablePeriodTable[TA_FUNC_UNST_MINUS_DM] - 1;
    else
       lookbackTotal = 1;
 
@@ -290,14 +290,13 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
       }
    }
 
-   outReal_0[outIdx++] = diffM;
-   prevDM = diffM;
+   prevDM = sumM;
 
    /* Process subsequent DM */
 
    /* Skip the unstable period. */
-   outIdx = TA_UnstablePeriodTable[TA_FUNC_UNST_MINUS_DM];
-   while( outIdx != 0 )
+   i = TA_UnstablePeriodTable[TA_FUNC_UNST_MINUS_DM];
+   while( i-- != 0 )
    {
       today++;
       tempReal = inHigh_0[today];
@@ -306,7 +305,7 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
       tempReal = inLow_0[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if(!((diffM <= 0) && (diffP <= 0)) || (diffP == diffM) && (diffP <= diffM))
+      if((!((diffM <= 0) && (diffP <= 0)) || (diffP == diffM)) && (diffP <= diffM))
       {
          /* NOT case 1,3,5,6 and 7 */
          /* Case 2 and 4: +DM=0,-DM=diffM */
@@ -316,51 +315,34 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
          prevDM = prevDM - (prevDM/optInTimePeriod_0);
    }
 
-   /* Now start to write the final ATR in the caller 
-    * provided outReal_0.
+   /* Now start to write the output in
+    * the caller provided outReal_0.
     */
+   outReal_0[0] = prevDM;
    outIdx = 1;
-/*   outReal_0[0] = prevATR;*/
 
-        
-#if 0
-   /* Subsequent value are smoothed using the
-    * previous ATR value (Wilder's approach).
-    *  1) Multiply the previous ATR by 'period-1'. 
-    *  2) Add today TR value. 
-    *  3) Divide by 'period'.
-    */
-   today = optInTimePeriod_0;
-   outIdx = TA_UnstablePeriodTable[TA_FUNC_UNST_ATR];
-   /* Skip the unstable period. */
-   while( outIdx != 0 )
+   while( today < endIdx )
    {
-      prevATR *= optInTimePeriod_0 - 1;
-      prevATR += tempBuffer[today++];
-      prevATR /= optInTimePeriod_0;
-      outIdx--;
+      today++;
+      tempReal = inHigh_0[today];
+      diffP    = tempReal-prevHigh; /* Plus Delta */
+      prevHigh = tempReal;
+      tempReal = inLow_0[today];
+      diffM    = prevLow-tempReal;   /* Minus Delta */
+      prevLow  = tempReal;
+      if((!((diffM <= 0) && (diffP <= 0)) || (diffP == diffM)) && (diffP <= diffM))
+      {
+         /* NOT case 1,3,5,6 and 7 */
+         /* Case 2 and 4: +DM=0,-DM=diffM */
+         prevDM = prevDM - (prevDM/optInTimePeriod_0) + diffM;
+      }
+      else
+         prevDM = prevDM - (prevDM/optInTimePeriod_0);
+
+      outReal_0[outIdx++] = prevDM;
    }
 
-   /* Now start to write the final ATR in the caller 
-    * provided outReal_0.
-    */
-   outIdx = 1;
-   outReal_0[0] = prevATR;
-
-   /* Now do the number of requested ATR. */
-   nbATR = (endIdx - startIdx)+1;
-
-   while( --nbATR != 0 )
-   {
-      prevATR *= optInTimePeriod_0 - 1;
-      prevATR += tempBuffer[today++];
-      prevATR /= optInTimePeriod_0;
-      outReal_0[outIdx++] = prevATR;
-   }
-
-   *outBegIdx    = startIdx;
-   *outNbElement = outIdx;   
-#endif
+   *outNbElement = outIdx;
 
    return TA_SUCCESS;
 }
