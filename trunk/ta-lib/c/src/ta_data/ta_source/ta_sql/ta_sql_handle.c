@@ -149,7 +149,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    TA_RetCode retCode = TA_SUCCESS;
    TA_PrivateSQLHandle *privateHandle;
    TA_StringCache *stringCache = TA_GetGlobalStringCache();
-   char *strval = NULL;
+   const char *strval = NULL;
 
    if( !handle )
       return (TA_RetCode)TA_INTERNAL_ERROR(61);
@@ -288,18 +288,14 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
                RETURN_ON_ERROR( retCode );
             }
        
-            if( strval ) 
+            if( strval && strval[0] != '\0' )  /* not NULL value */
             {
-               if( strval[0] != '\0' )  /* not NULL value */
-               {
-                  sym_name = TA_StringAlloc( stringCache, strval );
+                sym_name = TA_StringAlloc( stringCache, strval );
 
-                  if( !sym_name )
-                  {
-                     TA_Free( strval );
-                     RETURN_ON_ERROR( TA_ALLOC_ERR );
-                  }
-               }
+                if( !sym_name )
+                {
+                    RETURN_ON_ERROR( TA_ALLOC_ERR );
+                }
             }
          }
 
@@ -534,7 +530,7 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
    TA_PROLOG
    TA_RetCode retCode;
    TA_StringCache *stringCache = TA_GetGlobalStringCache();
-   char *strval = NULL;
+   const char *strval = NULL;
 
    /* is trace allowed through static fuctions? */
    TA_TRACE_BEGIN( registerCategoryAndAllSymbols );
