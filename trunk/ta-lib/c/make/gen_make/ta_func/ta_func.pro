@@ -67,6 +67,7 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_RSI.c \ 
           ../../../../../src/ta_func/ta_STOCH.c \ 
           ../../../../../src/ta_func/ta_STOCHF.c \ 
+          ../../../../../src/ta_func/ta_STOCHRSI.c \ 
           ../../../../../src/ta_func/ta_TRIX.c \ 
           ../../../../../src/ta_func/ta_WILLR.c \ 
           ../../../../../src/ta_func/ta_HT_DCPERIOD.c \ 
