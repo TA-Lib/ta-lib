@@ -320,6 +320,38 @@ int TA_TimestampCompare( const TA_Timestamp *t1, const TA_Timestamp *t2 )
    return t1->time - t2->time;
 }
 
+int TA_TimestampDateLess( const TA_Timestamp *t1, const TA_Timestamp *t2 )
+{
+   if( !t1 || !t2 )
+      return 0;
+
+   return timelt(t1->date,t1->time,t2->date,t1->time);
+}
+
+int TA_TimestampDateGreater( const TA_Timestamp *t1, const TA_Timestamp *t2 )
+{
+   if( !t1 || !t2 )
+      return 0;
+
+   return timegt(t1->date,t1->time,t2->date,t1->time);
+}
+
+int TA_TimestampDateEqual( const TA_Timestamp *t1, const TA_Timestamp *t2 )
+{
+   if( !t1 || !t2 )
+      return 0;
+
+   return timeeq(t1->date,t1->time,t2->date,t1->time);
+}
+
+int TA_TimestampDateCompare( const TA_Timestamp *t1, const TA_Timestamp *t2 )
+{
+   if( !t1 || !t2 )
+      return 0;
+
+   return t1->date - t2->date;
+}
+
 /* Move the timestamp to the next day. Will continue to the next
  * month and/or year if needed.
  * Time component of the timestamp is not modified.
