@@ -134,16 +134,27 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_AVGPRICE.c \
           ../../../../../src/ta_func/ta_BBANDS.c \
           ../../../../../src/ta_func/ta_CCI.c \
+          ../../../../../src/ta_func/ta_CDL3BLACKCROWS.c \
+          ../../../../../src/ta_func/ta_CDLABANDONEDBABY.c \
           ../../../../../src/ta_func/ta_CDLDOJISTAR.c \
+          ../../../../../src/ta_func/ta_CDLENGULFING.c \
           ../../../../../src/ta_func/ta_CDLEVENINGDOJISTAR.c \
           ../../../../../src/ta_func/ta_CDLEVENINGSTAR.c \
+          ../../../../../src/ta_func/ta_CDLHAMMER.c \
+          ../../../../../src/ta_func/ta_CDLHANGINGMAN.c \
+          ../../../../../src/ta_func/ta_CDLHARAMI.c \
+          ../../../../../src/ta_func/ta_CDLHARAMICROSS.c \
           ../../../../../src/ta_func/ta_CDLHIGHWAVE.c \
+          ../../../../../src/ta_func/ta_CDLIDENTICAL3CROWS.c \
+          ../../../../../src/ta_func/ta_CDLINVERTEDHAMMER.c \
           ../../../../../src/ta_func/ta_CDLLONGLINE.c \
           ../../../../../src/ta_func/ta_CDLMORNINGDOJISTAR.c \
           ../../../../../src/ta_func/ta_CDLMORNINGSTAR.c \
+          ../../../../../src/ta_func/ta_CDLSHOOTINGSTAR.c \
           ../../../../../src/ta_func/ta_CDLSHORTLINE.c \
           ../../../../../src/ta_func/ta_CDLSPINNINGTOP.c \
           ../../../../../src/ta_func/ta_CDLTRISTAR.c \
+          ../../../../../src/ta_func/ta_CDLUPSIDEGAP2CROWS.c \
           ../../../../../src/ta_func/ta_CORREL.c \
           ../../../../../src/ta_func/ta_DEMA.c \
           ../../../../../src/ta_func/ta_DX.c \
