@@ -1039,16 +1039,12 @@ TA_RetCode TA_ForEachSymbol( TA_UDBase *unifiedDatabase,
 }
 
 TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
-                            const char          *category,
-                            const char          *symbol,
-                            TA_Period            period,
-                            const TA_Timestamp  *start,
-                            const TA_Timestamp  *end,
-                            TA_Field             fieldToAlloc,
+                            const TA_HistoryAllocParam *param,
                             TA_History         **history )
 {
    TA_PROLOG
    TA_RetCode retCode;
+
    TA_UDB_Category *categoryData;
    TA_UDB_Symbol   *symbolData;
    TA_History      *newHistory;
@@ -1056,16 +1052,20 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
    TA_UDBasePriv   *privUDB;
    TA_StringCache  *stringCache;
 
+   const TA_Timestamp *startLocal;
+   const TA_Timestamp *endLocal;
+   const char *categoryLocal;
+
    privUDB = (TA_UDBasePriv *)unifiedDatabase;
 
    TA_TRACE_BEGIN( TA_HistoryAlloc );
 
-   if( (history == NULL) || (symbol == NULL) )
+   if( (history == NULL) || (param->symbol == NULL) )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
    }
 
-   if( (period == 0) || (period > TA_YEARLY) )
+   if( (param->period == 0) || (param->period > TA_YEARLY) )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
    }
@@ -1073,29 +1073,32 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
    /* Cover for a common potential error (passing -1 as
     * a default parameter!?).
     */
-   if( start == (TA_Timestamp *)-1 )
-      start = (TA_Timestamp *)0;
-   if( end == (TA_Timestamp *)-1 )
-      end = (TA_Timestamp *)0;
+   startLocal = &param->start;
+   endLocal   = &param->end;
+
+   if( (startLocal->date == 0) && (startLocal->time == 0) )
+      startLocal = (const TA_Timestamp *)0;
+   if( (endLocal->date == 0) && (endLocal->time == 0) )
+      endLocal = (const TA_Timestamp *)0;
 
    /* Verify validity of start/end */
-   if( start )
+   if( startLocal )
    {
-      if( period >= TA_DAILY )
-         retCode = TA_TimestampValidateYMD( start );
+      if( param->period >= TA_DAILY )
+         retCode = TA_TimestampValidateYMD( startLocal );
       else
-         retCode = TA_TimestampValidate( start );
+         retCode = TA_TimestampValidate( startLocal );
    
       if( retCode != TA_SUCCESS )
          TA_TRACE_RETURN( TA_BAD_START_DATE );
    }
 
-   if( end )
+   if( endLocal )
    {
-      if( period >= TA_DAILY )
-         retCode = TA_TimestampValidateYMD( end );
+      if( param->period >= TA_DAILY )
+         retCode = TA_TimestampValidateYMD( endLocal );
       else
-         retCode = TA_TimestampValidate( end );
+         retCode = TA_TimestampValidate( endLocal );
 
       if( retCode != TA_SUCCESS )
          TA_TRACE_RETURN( TA_BAD_END_DATE );
@@ -1110,12 +1113,13 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
    }
 
    /* Look for the category. If no category provided, use the default. */
-   if( category == NULL )
-      category = TA_DEFAULT_CATEGORY;
+   categoryLocal = TA_DEFAULT_CATEGORY;
+   if( param->category != NULL )
+      categoryLocal = param->category;
 
    stringCache = TA_GetGlobalStringCache();
 
-   categoryData = TA_DictGetValue_S( privUDB->dictCategory, category );
+   categoryData = TA_DictGetValue_S( privUDB->dictCategory, categoryLocal );
 
    if( !categoryData )
    {
@@ -1130,7 +1134,7 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
    /* Look for the symbol in this category. */
    dictUDBSymbol = categoryData->dictUDBSymbol;
 
-   symbolData = TA_DictGetValue_S( dictUDBSymbol, symbol );
+   symbolData = TA_DictGetValue_S( dictUDBSymbol, param->symbol );
 
    if( !symbolData )
    {
@@ -1139,8 +1143,8 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
 
    /* Leave it to the TA_History sub-module to do the rest. */
    retCode = TA_HistoryBuilder( privUDB, symbolData,
-                                period, start, end,
-                                fieldToAlloc, &newHistory );
+                                param->period, startLocal, endLocal,
+                                param->field, &newHistory );
 
    if( retCode != TA_SUCCESS )
    {

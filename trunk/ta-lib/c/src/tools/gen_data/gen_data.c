@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -247,6 +247,7 @@ static void TA_WriteRefCFile( TA_UDBase *unifiedDatabase,
    TA_History *history;
    unsigned int i;
    const char *tmpStr;
+   TA_HistoryAllocParam histParam;
 
    (void)opaqueData; /* Get ride of compiler warning. */
 
@@ -262,8 +263,12 @@ static void TA_WriteRefCFile( TA_UDBase *unifiedDatabase,
       return;
    }
 
-   retCode = TA_HistoryAlloc( unifiedDatabase, category, symbol,
-                              period, 0, 0, TA_ALL, &history );
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = category;
+   histParam.symbol = symbol;
+   histParam.period = period;
+   histParam.field = TA_ALL;
+   retCode = TA_HistoryAlloc( unifiedDatabase, &histParam, &history );
 
    if( retCode != TA_SUCCESS )
       printf( "Processing of %s failed (%d)\n", symbol, retCode );

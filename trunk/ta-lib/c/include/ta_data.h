@@ -362,14 +362,20 @@ typedef struct
    void *hiddenData;
 } TA_History;
 
-TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
-                            const char          *category,
-                            const char          *symbol,
-                            TA_Period            period,
-                            const TA_Timestamp  *start,
-                            const TA_Timestamp  *end,
-                            TA_Field             fieldToAlloc,
-                            TA_History         **history );
+typedef struct
+{
+   const char   *category;
+   const char   *symbol;
+   const char   *source;
+   TA_Period     period;
+   TA_Timestamp  start;
+   TA_Timestamp  end;
+   TA_Field      field;
+} TA_HistoryAllocParam;
+
+TA_RetCode TA_HistoryAlloc( TA_UDBase *unifiedDatabase,
+                            const TA_HistoryAllocParam *param,
+                            TA_History **history );
 
 TA_RetCode TA_HistoryFree( TA_History *history );
 

@@ -183,6 +183,7 @@ static ErrorNumber test_with_simulator( void )
    TA_AddDataSourceParam param;
    TA_RetCode  retCode;
    ErrorNumber retValue;
+   TA_HistoryAllocParam histParam;
 
    /* Initialize the library. */
    retValue = allocLib( &uDBase );
@@ -217,10 +218,12 @@ static ErrorNumber test_with_simulator( void )
    }
 
    /* Allocate the reference historical data. */
-   retCode = TA_HistoryAlloc( uDBase, 
-                              "TA_SIM_REF", "DAILY_REF_0",
-                              TA_DAILY, 0, 0, TA_ALL,
-                              &history );
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = "TA_SIM_REF";
+   histParam.symbol   = "DAILY_REF_0";
+   histParam.field    = TA_ALL;
+   histParam.period   = TA_DAILY;
+   retCode = TA_HistoryAlloc( uDBase, &histParam, &history );
 
    if( retCode != TA_SUCCESS )
    {
@@ -312,6 +315,7 @@ static ErrorNumber testHistoryAlloc( void )
    TA_RetCode retCode;
    TA_InitializeParam param;
    TA_AddDataSourceParam addParam;
+   TA_HistoryAllocParam histParam;
 
    memset( &param, 0, sizeof( TA_InitializeParam ) );
    param.logOutput = stdout;
@@ -348,14 +352,17 @@ static ErrorNumber testHistoryAlloc( void )
       #pragma warn -rch
    #endif
       
-   #define CHECK_FIELDSUBSET(field) \
-            retCode = TA_HistoryAlloc( unifiedDatabase, \
-                                       "TA_SIM_REF", "DAILY_REF_0", \
-                                       TA_DAILY, 0, 0, \
-                                       field, &data ); \
+   #define CHECK_FIELDSUBSET(field_par) \
+         { \
+            memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) ); \
+            histParam.category = "TA_SIM_REF"; \
+            histParam.symbol   = "DAILY_REF_0"; \
+            histParam.field    = field_par; \
+            histParam.period   = TA_DAILY; \
+            retCode = TA_HistoryAlloc( unifiedDatabase, &histParam, &data ); \
             if( retCode == TA_SUCCESS ) \
             { \
-               if( (field) & TA_OPEN ) \
+               if( (field_par) & TA_OPEN ) \
                { \
                   if( !data->open ) \
                      return TA_REGTEST_HISTORYALLOC_2; \
@@ -367,7 +374,7 @@ static ErrorNumber testHistoryAlloc( void )
                   if( data->open ) \
                      return TA_REGTEST_HISTORYALLOC_4; \
                } \
-               if( (field) & TA_HIGH ) \
+               if( (field_par) & TA_HIGH ) \
                { \
                   if( !data->high ) \
                      return TA_REGTEST_HISTORYALLOC_5; \
@@ -379,7 +386,7 @@ static ErrorNumber testHistoryAlloc( void )
                   if( data->high ) \
                      return TA_REGTEST_HISTORYALLOC_7; \
                } \
-               if( (field) & TA_LOW ) \
+               if( (field_par) & TA_LOW ) \
                { \
                   if( !data->low ) \
                      return TA_REGTEST_HISTORYALLOC_8; \
@@ -391,7 +398,7 @@ static ErrorNumber testHistoryAlloc( void )
                   if( data->low ) \
                      return TA_REGTEST_HISTORYALLOC_10; \
                } \
-               if( (field) & TA_CLOSE ) \
+               if( (field_par) & TA_CLOSE ) \
                { \
                   if( !data->close ) \
                      return TA_REGTEST_HISTORYALLOC_11; \
@@ -403,7 +410,7 @@ static ErrorNumber testHistoryAlloc( void )
                   if( data->close ) \
                      return TA_REGTEST_HISTORYALLOC_13; \
                } \
-               if( (field) & TA_VOLUME ) \
+               if( (field_par) & TA_VOLUME ) \
                { \
                   if( !data->volume ) \
                      return TA_REGTEST_HISTORYALLOC_14; \
@@ -415,7 +422,7 @@ static ErrorNumber testHistoryAlloc( void )
                   if( data->volume ) \
                      return TA_REGTEST_HISTORYALLOC_16; \
                } \
-               if( (field) & TA_TIMESTAMP ) \
+               if( (field_par) & TA_TIMESTAMP ) \
                { \
                   if( !data->timestamp ) \
                      return TA_REGTEST_HISTORYALLOC_17; \
@@ -429,10 +436,10 @@ static ErrorNumber testHistoryAlloc( void )
             } \
             else \
             { \
-               printf( "Cannot TA_HistoryAlloc for TA_SIM_REF (%d)!", retCode ); \
+               printf( "Cannot TA_HistoryAlloc for TA_SIM_REF (%d)!\n", retCode ); \
                return TA_REGTEST_HISTORYALLOC_19; \
-            }
-
+            } \
+         } 
          /* 6 Fields */
          CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_CLOSE|TA_HIGH|TA_LOW|TA_VOLUME)
 

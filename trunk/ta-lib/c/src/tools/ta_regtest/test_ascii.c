@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -608,7 +608,7 @@ static int test_parsing_equivalence( void )
    char buffer200[200];
    TA_Timestamp ts1, ts2;
    int period;
-
+   TA_HistoryAllocParam histParam;
 
    retValue = allocLib( &udb );
    if( retValue != TA_TEST_PASS )
@@ -728,10 +728,12 @@ static int test_parsing_equivalence( void )
             else
                period = TA_DAILY;
 
-            retCode = TA_HistoryAlloc( udbEqv, catTable->string[i],
-                                       &buffer200[0],
-                                       period, NULL, NULL, TA_ALL,
-                                       &history );
+            memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+            histParam.category = catTable->string[i];
+            histParam.symbol   = &buffer200[0];
+            histParam.period   = period;
+            histParam.field    = TA_ALL;
+            retCode = TA_HistoryAlloc( udbEqv, &histParam, &history );
 
             if( retCode != TA_SUCCESS )
             {
@@ -830,10 +832,15 @@ static int test_parsing_equivalence( void )
                   TA_SetDate( 4567,1,23,&ts1);
                   TA_SetDate( 4568,12,31,&ts2);
                   TA_SetTime( 0, 0, 0, &ts2 );
-                  retCode = TA_HistoryAlloc( udbEqv, catTable->string[i],
-                                             &buffer200[0],
-                                             TA_DAILY, &ts1, &ts2, TA_ALL,
-                                             &history );
+
+                  memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+                  histParam.category = catTable->string[i];
+                  histParam.symbol   = &buffer200[0];
+                  histParam.period   = TA_DAILY;
+                  histParam.field    = TA_ALL;
+                  TA_TimestampCopy( &histParam.start, &ts1 );
+                  TA_TimestampCopy( &histParam.end, &ts2 );
+                  retCode = TA_HistoryAlloc( udbEqv, &histParam, &history );
    
                   if( retCode != TA_SUCCESS )
                   {

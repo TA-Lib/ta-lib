@@ -116,6 +116,7 @@ int print_data( TA_UDBase *udb,
    TA_AddDataSourceParam addSourceParam;
    TA_History *history;
    unsigned int i;
+   TA_HistoryAllocParam histParam;
 
    /* Setup Yahoo! datasource. */
    memset( &addSourceParam, 0, sizeof( TA_AddDataSourceParam ) );
@@ -130,9 +131,13 @@ int print_data( TA_UDBase *udb,
    }
 
    /* Get the historical data. */
-   retCode = TA_HistoryAlloc( udb, category, symbol,
-                              period, 0, 0, TA_ALL,
-                              &history );
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = category;
+   histParam.symbol   = symbol;
+   histParam.period   = period;
+   histParam.field    = TA_ALL;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
+
    if( retCode != TA_SUCCESS )
    {
       print_error( retCode );

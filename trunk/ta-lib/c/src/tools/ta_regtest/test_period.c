@@ -176,6 +176,7 @@ ErrorNumber test_period( TA_UDBase *unifiedDatabase )
    unsigned int i;
    ErrorNumber retValue;
    TA_AddDataSourceParam addParam;
+   TA_HistoryAllocParam histParam;
 
    printf( "Testing period/timeframe conversion\n" );
 
@@ -206,10 +207,12 @@ ErrorNumber test_period( TA_UDBase *unifiedDatabase )
       /* Validate by requesting all the data in a
        * different timeframe.
        */
-      retCode = TA_HistoryAlloc( unifiedDatabase, 
-                                 "TA_SIM_REF", checkTable[i].symbol,
-                                 checkTable[i].period, 0, 0, TA_ALL,
-                                 &history );
+      memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+      histParam.category = "TA_SIM_REF";
+      histParam.symbol   = checkTable[i].symbol;
+      histParam.field    = TA_ALL;
+      histParam.period   = checkTable[i].period;
+      retCode = TA_HistoryAlloc( unifiedDatabase, &histParam, &history );
 
       if( retCode != TA_SUCCESS )
       {
