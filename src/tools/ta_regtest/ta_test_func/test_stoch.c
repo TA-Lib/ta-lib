@@ -528,7 +528,7 @@ static ErrorNumber do_test( const TA_History *history,
       {
       case TEST_STOCH:
          errNb = doRangeTest( rangeTestFunction, 
-                              0,
+                              TA_FUNC_UNST_NONE,
                               (void *)&testParam, 2, 0 );
          break;
       case TEST_STOCHRSI:
