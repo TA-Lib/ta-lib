@@ -42,6 +42,10 @@ extern "C" {
 #include <limits.h>
 #include <float.h>
 
+#ifndef TA_DEFS_H
+   #include "ta_defs.h"
+#endif
+
 /* Some functions to get the version of the TA-LIB being link. 
  * The string format is "0.0.0" for "Major.Minor.Build"
  *
@@ -75,26 +79,6 @@ unsigned int TA_GetVersionBuild ( void );
 /* Misc. declaration used throughout the library code. */
 typedef double       TA_Real;
 typedef int          TA_Integer;
-
-/* min/max value for a TA_Integer */
-#define TA_INTEGER_MIN ((TA_Integer)INT_MIN+1)
-#define TA_INTEGER_MAX ((TA_Integer)INT_MAX)
-
-/* min/max value for a TA_Real 
- *
- * Use fix value making sense in the
- * context of TA-Lib (avoid to use DBL_MIN
- * and DBL_MAX standard macro because they
- * are troublesome with some compiler).
- */
-#define TA_REAL_MIN ((TA_Real)-3e+37)
-#define TA_REAL_MAX ((TA_Real)3e+37)
-
-/* A value outside of the min/max range 
- * indicates an undefined or default value.
- */
-#define TA_INTEGER_DEFAULT ((TA_Integer)INT_MIN)
-#define TA_REAL_DEFAULT    ((TA_Real)-4e+37)
 
 typedef struct {
    long date;
@@ -148,136 +132,6 @@ typedef struct
    /* Hidden data for internal use by the TA-LIB. Do not modify. */
    void *hiddenData;
 } TA_StringTable;
-
-typedef enum
-{
-    /****** TA-LIB Error Code *****/
-    /*   0 */  TA_SUCCESS,            /* No error */
-    /*   1 */  TA_LIB_NOT_INITIALIZE, /* TA_Initialize was not sucessfully called */
-    /*   2 */  TA_BAD_PARAM,          /* A parameter is out of range */
-    /*   3 */  TA_ALLOC_ERR,          /* Possibly out-of-memory */
-    /*   4 */  TA_ACCESS_FAILED,      /* File system access failed */
-    /*   5 */  TA_NO_DATA_SOURCE,     /* No data was added */
-    /*   6 */  TA_SYMBOL_NOT_FOUND,   /* Symbol not found in this category */
-    /*   7 */  TA_CATEGORY_NOT_FOUND, /* Category not found in the data base */
-    /*   8 */  TA_KEY_NOT_FOUND,
-    /*   9 */  TA_INDEX_FILE_NOT_ACCESSIBLE,
-    /*  10 */  TA_INDEX_NOT_VALID,
-    /*  11 */  TA_INVALID_FIELD,
-    /*  12 */  TA_INVALID_PATH,
-    /*  13 */  TA_INTERNAL_ERR,
-    /*  14 */  TA_FATAL_ERR,
-    /*  15 */  TA_NO_NEW_DATA,
-    /*  16 */  TA_NOT_SUPPORTED,
-    /*  17 */  TA_END_OF_INDEX,
-    /*  18 */  TA_ENOUGH_DATA,
-    /*  19 */  TA_MISSING_FIELD,
-    /*  20 */  TA_REDUNDANT_FIELD,
-    /*  21 */  TA_INVALID_DATE,
-    /*  22 */  TA_INVALID_PRICE,
-    /*  23 */  TA_GROUP_NOT_FOUND,
-    /*  24 */  TA_FUNC_NOT_FOUND,
-    /*  25 */  TA_INVALID_HANDLE,
-    /*  26 */  TA_INVALID_PARAM_HOLDER,
-    /*  27 */  TA_INVALID_PARAM_HOLDER_TYPE,
-    /*  28 */  TA_INVALID_PARAM_FUNCTION,
-    /*  29 */  TA_INPUT_NOT_ALL_INITIALIZE,
-    /*  30 */  TA_OUTPUT_NOT_ALL_INITIALIZE,
-    /*  31 */  TA_OUT_OF_RANGE_START_INDEX,
-    /*  32 */  TA_OUT_OF_RANGE_END_INDEX,
-    /*  33 */  TA_BAD_OBJECT,
-    /*  34 */  TA_MEM_LEAK,
-    /*  35 */  TA_ADDR_NOT_FOUND,
-    /*  36 */  TA_SOCKET_LIB_INIT_ERR,
-    /*  37 */  TA_END_OF_STREAM,
-    /*  38 */  TA_BAD_STREAM_CRC,
-    /*  39 */  TA_UNSUPPORTED_STREAM_VERSION,
-    /*  40 */  TA_BAD_STREAM_HEADER_CRC,
-    /*  41 */  TA_BAD_STREAM_HEADER,
-    /*  42 */  TA_BAD_STREAM_CONTENT,
-    /*  43 */  TA_BAD_YAHOO_IDX_HDR,
-    /*  44 */  TA_UNSUPORTED_YAHOO_IDX_VERSION,
-    /*  45 */  TA_BAD_YAHOO_IDX_INDICATOR_AF,
-    /*  46 */  TA_BAD_YAHOO_IDX_INDICATOR_EB,
-    /*  47 */  TA_BAD_YAHOO_IDX_INDICATOR_F2,
-    /*  48 */  TA_NO_INTERNET_CONNECTION,
-    /*  49 */  TA_INTERNET_ACCESS_FAILED,
-    /*  50 */  TA_INTERNET_OPEN_FAILED,
-    /*  51 */  TA_INTERNET_NOT_OPEN_TRY_AGAIN,
-    /*  52 */  TA_INTERNET_SERVER_CONNECT_FAILED,
-    /*  53 */  TA_INTERNET_OPEN_REQUEST_FAILED,
-    /*  54 */  TA_INTERNET_SEND_REQUEST_FAILED,
-    /*  55 */  TA_INTERNET_READ_DATA_FAILED,
-    /*  56 */  TA_UNSUPPORTED_COUNTRY,
-    /*  57 */  TA_BAD_HTML_SYNTAX,
-    /*  58 */  TA_PERIOD_NOT_AVAILABLE,
-    /*  59 */  TA_FINISH_TABLE,
-    /*  60 */  TA_INVALID_SECURITY_EXCHANGE,
-    /*  61 */  TA_INVALID_SECURITY_SYMBOL,
-    /*  62 */  TA_INVALID_SECURITY_COUNTRY,
-    /*  63 */  TA_INVALID_SECURITY_TYPE,
-    /*  64 */  TA_MISSING_DATE_OR_TIME_FIELD,
-    /*  65 */  TA_OBJECT_NOT_EQUAL,
-    /*  66 */  TA_INVALID_LIST_TYPE,
-    /*  67 */  TA_YAHOO_IDX_EXPIRED,
-    /*  68 */  TA_YAHOO_IDX_UNAVAILABLE_1, /* Local cache does not have a Yahoo! index */
-    /*  69 */  TA_YAHOO_IDX_FAILED,
-    /*  70 */  TA_LIBCURL_GLOBAL_INIT_FAILED, /* libCurl shared library missing? */
-    /*  71 */  TA_LIBCURL_INIT_FAILED,        /* libCurl shared library missing? */
-    /*  72 */  TA_INSTRUMENT_ID_BAD,          /* TA_Instrument not initialized. */
-    /*  73 */  TA_TRADE_LOG_NOT_INITIALIZED,  /* TA_TradeLog corrupted or not initialized */
-    /*  74 */  TA_BAD_TRADE_TYPE,
-    /*  75 */  TA_BAD_START_DATE,
-    /*  76 */  TA_BAD_END_DATE,
-    /*  77 */  TA_INTERNET_SET_RX_TIMEOUT_FAILED,
-    /*  78 */  TA_NO_TRADE_LOG,
-    /*  79 */  TA_ENTRY_TRANSACTION_MISSING,
-    /*  80 */  TA_INVALID_VALUE_ID,
-    /*  81 */  TA_BAD_STARTING_CAPITAL,
-    /*  82 */  TA_TRADELOG_ALREADY_ADDED, /* TA_TradeLog already added to a TA_PM. When that TA_PM is freed, the TA_TradeLog can be added again. */
-    /*  83 */  TA_YAHOO_IDX_UNAVAILABLE_2, /* Possibly timeout of internet connection */
-    /*  84 */  TA_YAHOO_IDX_UNAVAILABLE_3, /* Failed to find a Yahoo! index */
-    /*  85 */  TA_NO_WEEKDAY_IN_DATE_RANGE,
-    /*  86 */  TA_VALUE_NOT_APPLICABLE,    /* This PM value is not applicable to these trades. */
-    /*  87 */  TA_DATA_GAP, /* Data source returned data with gaps */
-    /*  88 */  TA_NOT_IMPLEMENTED, /* Feature not implemented */
-
-    /****** IP Error Code *****/
-    /* 700 */  TA_IP_NOSOCKETS = 700,  /* Sockets not supported      */
-    /* 701 */  TA_IP_BADHOST,          /* Host not known             */
-    /* 702 */  TA_IP_BADSERVICE,       /* Service or port not known  */
-    /* 703 */  TA_IP_BADPROTOCOL,      /* Invalid protocol specified */
-    /* 704 */  TA_IP_SOCKETERROR,      /* Error creating socket      */
-    /* 705 */  TA_IP_CONNECTERROR,     /* Error making connection    */
-    /* 706 */  TA_IP_BINDERROR,        /* Error binding socket       */
-    /* 707 */  TA_IP_LISTENERROR,      /* Error preparing to listen  */
-    /* 708 */  TA_IP_WRITE_ERROR,      /* Error writing to socket    */
-    /* 709 */  TA_IP_READ_ERROR,       /* Error reading from socket  */
-    /* 710 */  TA_IP_UNKNOWN_ERR,
-
-    /****** HTTP Error Code (RFC1945) *****/
-    /* 800 */  TA_HTTP_NO_HEADER = 800, /* HTTP header not found.     */
-    /* 801 */  TA_HTTP_SC_301,          /* Moved Permanently          */
-    /* 802 */  TA_HTTP_SC_302,          /* Moved Temporarily          */
-    /* 803 */  TA_HTTP_SC_304,          /* Not Modified               */
-    /* 804 */  TA_HTTP_SC_400,          /* Bad Request                */
-    /* 805 */  TA_HTTP_SC_401,          /* Unauthorized               */
-    /* 806 */  TA_HTTP_SC_403,          /* Forbidden                  */
-    /* 807 */  TA_HTTP_SC_404,          /* Not Found                  */
-    /* 808 */  TA_HTTP_SC_500,          /* Internal Server Error      */
-    /* 809 */  TA_HTTP_SC_501,          /* Not Implemented            */
-    /* 810 */  TA_HTTP_SC_502,          /* Bad Gateway                */
-    /* 811 */  TA_HTTP_SC_503,          /* Service Unavailable        */
-    /* 821 */  TA_HTTP_SC_UNKNOWN,      /* Unknown error code.        */ 
-
-    /****** TA-LIB Internal Error Code *****/
-    /* 5000 */ TA_INTERNAL_ERROR = 5000, /* Internal Error - Contact TA-Lib.org */
-
-    TA_UNKNOWN_ERR = 0xFFFF
-} TA_RetCode;
-
-/* Id can be from 1 to 999 */
-#define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR+Id)
 
 /* End-user can get additional information related to a TA_RetCode. 
  *
