@@ -489,8 +489,7 @@ static unsigned int forEachGroup( TA_ForEachGroup forEachGroupFunc,
 
    for( i=0; i < table->size; i++ )
    {
-      forEachGroupFunc(
-                        table->string[i],
+      forEachGroupFunc( table->string[i],
                         i,
                         i==0? 1:0,
                         i==(table->size-1)? 1:0 );
@@ -511,7 +510,7 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    (void)opaqueData; /* Get ride of compiler warning */
 
    /* Add this function to the "func_list.txt" */
-   fprintf( gOutFuncList_TXT->file, "%-12s%s\n", funcInfo->name, funcInfo->hint );
+   fprintf( gOutFuncList_TXT->file, "%-20s%s\n", funcInfo->name, funcInfo->hint );
   
    fprintf( gOutFunc_H->file, "\n" );
 
@@ -1539,9 +1538,9 @@ static void printOptInputValidation( FILE *out,
    case TA_OptInput_IntegerRange:
       fprintf( out, "   /* min/max are checked for %s_%d. */\n", name, paramNb );
    case TA_OptInput_IntegerList:
-      fprintf( out, "   if( %s_%d == TA_INTEGER_DEFAULT )\n", name, paramNb );
+      fprintf( out, "   if( (TA_Integer)%s_%d == TA_INTEGER_DEFAULT )\n", name, paramNb );
       fprintf( out, "      %s_%d = %d;\n", name, paramNb, (int)optInputParamInfo->defaultValue );
-      fprintf( out, "   else if( (%s_%d < %d) || (%s_%d > %d) )\n",
+      fprintf( out, "   else if( ((TA_Integer)%s_%d < %d) || ((TA_Integer)%s_%d > %d) )\n",
               name, paramNb, minInt,
               name, paramNb, maxInt );
       break;
