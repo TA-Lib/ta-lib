@@ -361,7 +361,7 @@ TA_RetCode TA_CSI_GetHistoryData( TA_DataSourceHandle *handle,
    }
    for( i=0; i < nbData; i++ )
    {
-      TA_SetTime( 23, 59, 59, &timestamp[i] );
+      TA_SetTime( 0, 0, 0, &timestamp[i] );
       date   = dataList[i].date;
       day    = date%100;
       tmpInt = date%10000;

@@ -291,8 +291,7 @@ TA_RetCode TA_ReadOp_Do( TA_FileHandle       *fileHandle,
    /* Set default time/date. */
    year  = 1900;
    month = day = 1;
-   hour  = 23;
-   min   = sec = 59;
+   hour  = min = sec = 0;
 
    /* Check if the processing of the time will be needed. */
    timeNeeded = isTimeNeeded( readOpInfo->arrayReadOp);
