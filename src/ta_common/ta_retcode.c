@@ -144,6 +144,8 @@ static TA_InternalRetCodeInfo retCodeInfoTable[] = {
          {92,"TA_UNSUPPORTED_REPLACE_ZERO_PRICE_BAR","TA_REPLACE_ZERO_PRICE_BAR flag is not supported for this data source."},
          {93,"TA_MISSING_INPUT_DIGITS","A digit was missing in one of the price bar field"},
          {94,"TA_DICT_TYPE_MISMATCH","Error with handling of dictionary"},
+         {95,"TA_YAHOO_IDX_UNAVAILABLE_4","Failed to find a Yahoo! index"},
+         {96,"TA_OBSOLETED_SYMBOL","This symbol is no longuer valid"},
          {700,"TA_IP_NOSOCKETS","Sockets not supported"},
          {701,"TA_IP_BADHOST","Host not known"},
          {702,"TA_IP_BADSERVICE","Service or port not known"},
