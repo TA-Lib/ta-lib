@@ -48,6 +48,7 @@
 
 /* Description:
  *    Allows to allocate/de-allocate TA_DataSourceHandle structure.
+ *    Executes SQL queries to build up the index of categories and symbols.
  */
 
 /**** Headers ****/
@@ -74,7 +75,16 @@ extern "C" {
 /* None */
 
 /**** Local declarations.              ****/
-/* None */
+#define TA_MYSQL_CATEGORY_COLUMN_NAME         "category"
+#define TA_MYSQL_SYMBOL_COLUMN_NAME           "symbol"
+
+#define TA_MYSQL_CATEGORY_PLACEHOLDER         "$c"
+#define TA_MYSQL_SYMBOL_PLACEHOLDER           "$s"
+/* placeholders not supported yet
+#define TA_MYSQL_COUNTRY_PLACEHOLDER          "$z"
+#define TA_MYSQL_EXCHANGE_PLACEHOLDER         "$x"
+#define TA_MYSQL_TYPE_PLACEHOLDER             "$t"
+*/
 
 /**** Local functions.    ****/
 static TA_PrivateMySQLHandle *allocPrivateHandle( void );
@@ -83,6 +93,7 @@ static TA_RetCode freeCategoryIndex( void *toBeFreed );
 static TA_RetCode freeSymbolsIndex( void *toBeFreed );
 static TA_RetCode registerCategoryAndSymbol( TA_List *categoryIndex, TA_String *category, TA_String *symbol );
 static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateMySQLHandle *privateHandle, TA_String *category);
+static char * expandPlaceholders( const char *templateStr, const char *holderStr, const char *valueStr );
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
@@ -196,7 +207,7 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
          // find the category column number, if present
          for (unsigned int cat_col = 0; cat_col < res.columns(); cat_col++) 
          { 
-            if( stricmp(res.names(cat_col).c_str(), "category") == 0 )
+            if( stricmp(res.names(cat_col).c_str(), TA_MYSQL_CATEGORY_COLUMN_NAME) == 0 )
                break;
          } 
          if( cat_col == res.columns() )
@@ -207,7 +218,7 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
          // find the symbol column number, if present
          for (unsigned int sym_col = 0; sym_col < res.columns(); sym_col++) 
          { 
-            if( stricmp(res.names(sym_col).c_str(), "symbol") == 0 )
+            if( stricmp(res.names(sym_col).c_str(), TA_MYSQL_SYMBOL_COLUMN_NAME) == 0 )
                break;
          } 
          
@@ -224,6 +235,16 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
                TA_TRACE_RETURN( TA_ALLOC_ERR );
             }
 
+            if( strcmp(TA_StringToChar(cat_name), "") == 0 )  // fall back to default
+            {
+                  TA_StringFree(stringCache, cat_name);
+                  cat_name = TA_StringAlloc( stringCache, TA_DEFAULT_CATEGORY );
+                  if( !cat_name )
+                  {
+                     TA_TRACE_RETURN( TA_ALLOC_ERR );
+                  }
+            }
+
             if( sym_col < res.columns() )
             {
                sym_name = TA_StringAlloc( stringCache, row[sym_col] );
@@ -235,20 +256,18 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
                }
             }
 
-            if( strcmp(TA_StringToChar(cat_name), "") != 0 )  // ignore NULL fields
+            if ( sym_name )
             {
-               if ( sym_name )
-               {
-                  retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
-                                                      cat_name,
-                                                      sym_name);
-               }
-               else
-               {
-                  retCode = registerCategoryAndAllSymbols(privateHandle,
-                                                          cat_name);
-               }
+               retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
+                                                   cat_name,
+                                                   sym_name);
             }
+            else
+            {
+               retCode = registerCategoryAndAllSymbols(privateHandle,
+                                                       cat_name);
+            }
+
             TA_StringFree(stringCache, cat_name);
             if( sym_name )
                TA_StringFree(stringCache, sym_name);
@@ -480,7 +499,15 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateMySQLHandle *privateH
          Query query = privateHandle->con->query();
          // This creates a query object that is bound to con.
 
-         query << TA_StringToChar(privateHandle->param->symbol);
+         char *sym_query = expandPlaceholders(TA_StringToChar(privateHandle->param->symbol),
+                                              TA_MYSQL_CATEGORY_PLACEHOLDER,
+                                              TA_StringToChar(category));
+         if( !sym_query )
+         {
+            TA_TRACE_RETURN( TA_ALLOC_ERR );
+         }
+
+         query << sym_query;;
          // You can write to the query object like you would any other ostrem
 
          Result res = query.store();
@@ -489,7 +516,7 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateMySQLHandle *privateH
          // find the symbol column number, if present
          for (unsigned int sym_col = 0; sym_col < res.columns(); sym_col++) 
          { 
-            if( stricmp(res.names(sym_col).c_str(), "symbol") == 0 )
+            if( stricmp(res.names(sym_col).c_str(), TA_MYSQL_SYMBOL_COLUMN_NAME) == 0 )
                break;
          } 
          if( sym_col == res.columns() )
@@ -547,4 +574,54 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateMySQLHandle *privateH
       
    TA_TRACE_RETURN( retCode );
    
+}
+
+
+/* Copy templateStr to resultStr replacing holderStr by valueStr
+ * Return value of expandPlaceholders is a string allocated by TA_Malloc.
+ * It is the caller's responsibility to TA_Free it.
+ */
+static char * expandPlaceholders(const char *templateStr, 
+                                 const char *holderStr, 
+                                 const char *valueStr)
+{
+   size_t holderLength = strlen(holderStr);
+   size_t valueLength = strlen(valueStr);
+   size_t resSize;
+   const char *pos, *backpos;
+   char *resultStr;
+   
+   /* count all occurencies of placeholders, calculate the size of the result string */
+
+   resSize = strlen(templateStr) + 1;
+   for ( pos = strstr(templateStr, holderStr); 
+         pos;  
+         pos = strstr(pos+holderLength, holderStr) )
+   {
+      resSize -= holderLength;
+      resSize += valueLength;
+   }
+   
+   resultStr = (char*)TA_Malloc(resSize);
+   
+   if( resultStr )
+   {
+      /* do the replacement */
+      resultStr[0] = '\0';
+
+      for ( backpos = templateStr, pos = strstr(templateStr, holderStr); 
+            pos;  
+            backpos = pos+holderLength, pos = strstr(backpos, holderStr) )
+      {
+         /* copy the constant segment of the template */
+         strncat(resultStr, backpos, pos-backpos);
+         /* replace one placeholder */
+         strcat(resultStr, valueStr);
+      }
+      
+      /* remaining segment */
+      strcat(resultStr, backpos);
+   }
+
+   return resultStr;
 }
