@@ -88,6 +88,10 @@
 87,TA_DATA_GAP,Data source returned data with gaps
 88,TA_NOT_IMPLEMENTED,Feature not implemented
 89,TA_PM_REFERENCE_EXIST,Can not free a TA_TradeLog when added to a TA_PM
+90,TA_PRICE_BAR_CONTAINS_ZERO,A price of zero is invalid in a price bar
+91,TA_MISSING_CLOSE_PRICE_FIELD,Close must be provided with TA_REPLACE_ZERO_PRICE_BAR flag.
+92,TA_UNSUPPORTED_REPLACE_ZERO_PRICE_BAR,TA_REPLACE_ZERO_PRICE_BAR flag is not supported for this data source.
+93,TA_MISSING_INPUT_DIGITS,A digit was missing in one of the price bar field
 700,TA_IP_NOSOCKETS,Sockets not supported
 701,TA_IP_BADHOST,Host not known
 702,TA_IP_BADSERVICE,Service or port not known
