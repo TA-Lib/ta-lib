@@ -191,7 +191,10 @@ static void printGroupSizeAddition(  const char *groupName,
 static int addUnstablePeriodEnum( FILE *out );
 
 static int createTemplate( FileHandle *in, FileHandle *out );
+
+#ifdef _MSVC
 static int createProjTemplate( FileHandle *in, FileHandle *out );
+#endif
 
 static void writeFuncFile( const TA_FuncInfo *funcInfo );
 static void doFuncFile( const TA_FuncInfo *funcInfo );
@@ -963,8 +966,8 @@ static void printDefines( FILE *out, const TA_FuncInfo *funcInfo )
    paramNb = 0;
    for( i=0; i < funcInfo->nbOptInput; i++ )
    {
-      retCode = TA_SetOptInputParameterInfoPtr( funcInfo->handle,
-                                                i, &optInputParamInfo );
+      retCode = TA_GetOptInputParameterInfo( funcInfo->handle,
+                                             i, &optInputParamInfo );
 
       if( retCode != TA_SUCCESS )
       {
@@ -1226,8 +1229,8 @@ static void printFunc( FILE *out,
       paramNb = 0;
       for( i=0; i < funcInfo->nbInput; i++ )
       {
-         retCode = TA_SetInputParameterInfoPtr( funcInfo->handle,
-                                                i, &inputParamInfo );
+         retCode = TA_GetInputParameterInfo( funcInfo->handle,
+                                             i, &inputParamInfo );
 
          if( retCode != TA_SUCCESS )
          {
@@ -1478,8 +1481,8 @@ static void printFunc( FILE *out,
       if( (i == (funcInfo->nbOptInput-1)) && lookbackSignature )
          lastParam = 1;
 
-      retCode = TA_SetOptInputParameterInfoPtr( funcInfo->handle,
-                                                i, &optInputParamInfo );
+      retCode = TA_GetOptInputParameterInfo( funcInfo->handle,
+                                             i, &optInputParamInfo );
 
       if( retCode != TA_SUCCESS )
       {
@@ -1681,8 +1684,8 @@ static void printFunc( FILE *out,
          if( i == (funcInfo->nbOutput-1) )
             lastParam = 1;
 
-         retCode = TA_SetOutputParameterInfoPtr( funcInfo->handle,
-                                                 i, &outputParamInfo );
+         retCode = TA_GetOutputParameterInfo( funcInfo->handle,
+                                              i, &outputParamInfo );
 
          if( retCode != TA_SUCCESS )
          {
@@ -2374,8 +2377,8 @@ static void printFuncHeaderDoc( FILE *out,
    fprintf( out, "%sInput  = ", prefix );
    for( paramNb=0; paramNb < funcInfo->nbInput; paramNb++ )
    {
-      retCode = TA_SetInputParameterInfoPtr( funcInfo->handle,
-                                             paramNb, &inputParamInfo );
+      retCode = TA_GetInputParameterInfo( funcInfo->handle,
+                                          paramNb, &inputParamInfo );
 
       if( retCode != TA_SUCCESS )
       {
@@ -2427,8 +2430,8 @@ static void printFuncHeaderDoc( FILE *out,
    fprintf( out, "%sOutput = ", prefix );
    for( paramNb=0; paramNb < funcInfo->nbOutput; paramNb++ )
    {
-      retCode = TA_SetOutputParameterInfoPtr( funcInfo->handle,
-                                              paramNb, &outputParamInfo );
+      retCode = TA_GetOutputParameterInfo( funcInfo->handle,
+                                           paramNb, &outputParamInfo );
 
       if( retCode != TA_SUCCESS )
       {
@@ -2459,7 +2462,7 @@ static void printFuncHeaderDoc( FILE *out,
   
       for( paramNb=0; paramNb < funcInfo->nbOptInput; paramNb++ )
       {
-         retCode = TA_SetOptInputParameterInfoPtr( funcInfo->handle,
+         retCode = TA_GetOptInputParameterInfo( funcInfo->handle,
                                                 paramNb, &optInputParamInfo );
 
          if( retCode != TA_SUCCESS )
@@ -3061,3 +3064,4 @@ static void appendToFunc( FILE *out )
    fprintf( out, "TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n" );
    fprintf( out, "TA_Compatibility TA_GetCompatibility( void );\n" );
 }
+
