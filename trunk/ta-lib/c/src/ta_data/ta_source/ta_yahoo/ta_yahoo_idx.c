@@ -381,9 +381,6 @@ TA_RetCode TA_YahooIdxAlloc( TA_CountryId           countryId,
 
       if( !idxDone && (strategy & TA_USE_LOCAL_CACHE) )
       {
-         /* Try to retreive the index from the 
-          * remote cache (ta-lib.org web site).
-          */
          retCode = buildIndexFromLocalCache( idx, localCacheTimeout );
 
          if( retCode == TA_SUCCESS )
@@ -398,6 +395,9 @@ TA_RetCode TA_YahooIdxAlloc( TA_CountryId           countryId,
 
       if( !idxDone && (strategy & TA_USE_REMOTE_CACHE) )
       {
+         /* Try to retreive the index from the 
+          * remote cache (ta-lib.org web site).
+          */
          retCode = TA_YAHOO_IDX_UNAVAILABLE_2;
          for( i=0; (i < 3) && (retCode != TA_SUCCESS); i++ )
             retCode = buildIndexFromRemoteCache( idx, remoteCacheTimeout );
