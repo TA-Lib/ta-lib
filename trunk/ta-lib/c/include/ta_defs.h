@@ -163,6 +163,7 @@ typedef enum
     /*  94 */  TA_DICT_TYPE_MISMATCH,   /* Error with handling of dictionary */
     /*  95 */  TA_YAHOO_IDX_UNAVAILABLE_4, /* Failed to find a Yahoo! index */
     /*  96 */  TA_OBSOLETED_SYMBOL, /* This symbol is no longuer valid */
+    /*  97 */  TA_BAD_QUERY,   /* Query could not be executed or syntax error in query */
 
     /****** IP Error Code *****/
     /* 700 */  TA_IP_NOSOCKETS = 700,  /* Sockets not supported      */
