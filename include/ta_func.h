@@ -2083,6 +2083,131 @@ int TA_OBV_Lookback( void );
 
 
 /******************************************
+ * Group: [Pattern Recognition]
+ ******************************************/
+
+/*
+ * TA_CDLHIGHWAVE - High-Wave Candle
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLHIGHWAVE( int    startIdx,
+                           int    endIdx,
+                           const double inOpen[],
+                           const double inHigh[],
+                           const double inLow[],
+                           const double inClose[],
+                           int          *outBegIdx,
+                           int          *outNbElement,
+                           int           outInteger[] );
+
+TA_RetCode TA_S_CDLHIGHWAVE( int    startIdx,
+                             int    endIdx,
+                             const float  inOpen[],
+                             const float  inHigh[],
+                             const float  inLow[],
+                             const float  inClose[],
+                             int          *outBegIdx,
+                             int          *outNbElement,
+                             int           outInteger[] );
+
+int TA_CDLHIGHWAVE_Lookback( void );
+
+
+/*
+ * TA_CDLLONGLINE - Long Line Candle
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLLONGLINE( int    startIdx,
+                           int    endIdx,
+                           const double inOpen[],
+                           const double inHigh[],
+                           const double inLow[],
+                           const double inClose[],
+                           int          *outBegIdx,
+                           int          *outNbElement,
+                           int           outInteger[] );
+
+TA_RetCode TA_S_CDLLONGLINE( int    startIdx,
+                             int    endIdx,
+                             const float  inOpen[],
+                             const float  inHigh[],
+                             const float  inLow[],
+                             const float  inClose[],
+                             int          *outBegIdx,
+                             int          *outNbElement,
+                             int           outInteger[] );
+
+int TA_CDLLONGLINE_Lookback( void );
+
+
+/*
+ * TA_CDLSHORTLINE - Short Line Candle
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLSHORTLINE( int    startIdx,
+                            int    endIdx,
+                            const double inOpen[],
+                            const double inHigh[],
+                            const double inLow[],
+                            const double inClose[],
+                            int          *outBegIdx,
+                            int          *outNbElement,
+                            int           outInteger[] );
+
+TA_RetCode TA_S_CDLSHORTLINE( int    startIdx,
+                              int    endIdx,
+                              const float  inOpen[],
+                              const float  inHigh[],
+                              const float  inLow[],
+                              const float  inClose[],
+                              int          *outBegIdx,
+                              int          *outNbElement,
+                              int           outInteger[] );
+
+int TA_CDLSHORTLINE_Lookback( void );
+
+
+/*
+ * TA_CDLSPINNINGTOP - Spinning Top Candle
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLSPINNINGTOP( int    startIdx,
+                              int    endIdx,
+                              const double inOpen[],
+                              const double inHigh[],
+                              const double inLow[],
+                              const double inClose[],
+                              int          *outBegIdx,
+                              int          *outNbElement,
+                              int           outInteger[] );
+
+TA_RetCode TA_S_CDLSPINNINGTOP( int    startIdx,
+                                int    endIdx,
+                                const float  inOpen[],
+                                const float  inHigh[],
+                                const float  inLow[],
+                                const float  inClose[],
+                                int          *outBegIdx,
+                                int          *outNbElement,
+                                int           outInteger[] );
+
+int TA_CDLSPINNINGTOP_Lookback( void );
+
+
+
+/******************************************
  * Group: [Statistic Functions]
  ******************************************/
 
@@ -2507,6 +2632,35 @@ unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );
  */
 TA_RetCode TA_SetCompatibility( TA_Compatibility value );
 TA_Compatibility TA_GetCompatibility( void );
+
+/* Candlesticks struct and functions
+ * Because candlestick patterns are subjective, it is necessary 
+ * to allow the user to specify what should be the meaning of 
+ * 'long body', 'short shadows', etc.
+ */
+
+/* TA_CandleSetting is the one setting struct */
+typedef struct {
+    TA_CandleSettingType    settingType;
+    TA_RangeType            rangeType;
+    int                     avgPeriod;
+    double                  factor;
+} TA_CandleSetting;
+
+/* Call TA_SetCandleSettings to set that when comparing a candle 
+ * basing on settingType it must be compared with the average 
+ * of the last avgPeriod candles' rangeType multiplied by factor.
+ * This setting is valid until TA_RestoreCandleDefaultSettings is called
+ */
+TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType, 
+                                 TA_RangeType rangeType, 
+                                 int avgPeriod, 
+                                 double factor );
+
+/* Call TA_RestoreCandleDefaultSettings after using custom settings 
+ * to restore the default settings for the specified settingType
+ */
+TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType );
 
 #ifdef __cplusplus
 }
