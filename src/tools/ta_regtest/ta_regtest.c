@@ -128,7 +128,7 @@ int main( int argc, char **argv )
       printf( "Failed: Performance Measurements Tests (error number = %d)\n", retValue );
       return retValue;
    }
-      
+
    /* Test history alloc. */
    retValue = testHistoryAlloc();
    if( retValue != TA_TEST_PASS )
