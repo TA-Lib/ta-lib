@@ -109,7 +109,8 @@ TA_RetCode TA_ReadOpInfoFree( TA_ReadOpInfo *readOpInfoToBeFreed )
 }
 
 TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
-                               TA_ReadOpInfo **allocatedInfo )
+                               TA_ReadOpInfo **allocatedInfo,
+                               unsigned int readOpFlags )
 {
    TA_PROLOG
    TA_RetCode retCode;
@@ -263,8 +264,7 @@ TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
 
         /* Identify the field and build the TA_ReadOp. */
         tempInt = 0;
-        retCode = buildReadOp(
-                               newReadOpInfo,
+        retCode = buildReadOp( newReadOpInfo,
                                (const char *)&localBuf[0],
                                &arrayReadOp[opIdx],
                                &tempToken, &tempInt );
@@ -275,7 +275,16 @@ TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
         }
 
         if( arrayReadOp[opIdx] != 0 )
+        {
+           /* Set the replace zero flag as needed */
+           if( TA_IS_REPLACE_ZERO(readOpFlags) && TA_IS_REAL_CMD(arrayReadOp[opIdx]) )
+           {
+              TA_SET_REPLACE_ZERO(arrayReadOp[opIdx]);
+           }
+
+           /* Ooof... this readOp is now all build! */
            opIdx++;
+        }
 
         /* If this is a time token, make sure this
          * is not in contradiction with an already

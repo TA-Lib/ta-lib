@@ -148,7 +148,7 @@ static TA_PrivateYahooHandle *allocPrivateHandle( void )
    /* freePrivateHandle can be safely called from this point. */
 
    retCode = TA_ReadOpInfoAlloc( "[D][MMM][YY][O][H][L][C][V]",                               
-                                 &privateHandle->readOp6Fields );
+                                 &privateHandle->readOp6Fields, 0 );
    if( retCode != TA_SUCCESS )
    {
       freePrivateHandle( privateHandle );
@@ -156,7 +156,7 @@ static TA_PrivateYahooHandle *allocPrivateHandle( void )
    }
 
    retCode = TA_ReadOpInfoAlloc( "[D][MMM][YY][C]",
-                                 &privateHandle->readOp2Fields );
+                                 &privateHandle->readOp2Fields, 0 );
    if( retCode != TA_SUCCESS )
    {
       freePrivateHandle( privateHandle );
@@ -164,7 +164,7 @@ static TA_PrivateYahooHandle *allocPrivateHandle( void )
    }
 
    retCode = TA_ReadOpInfoAlloc( "[D][MMM][YY][O][H][L][C]",
-                                 &privateHandle->readOp5Fields );
+                                 &privateHandle->readOp5Fields, 0 );
    if( retCode != TA_SUCCESS )
    {
       freePrivateHandle( privateHandle );

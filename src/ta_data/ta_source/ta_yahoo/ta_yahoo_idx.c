@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  061201 MF   First version.
- *
+ *  062803 MF   Add printf when failed to add the symbol to index.
  */
 
 /* Description:
@@ -199,22 +199,19 @@ static TA_RetCode addSymbolsFromWebPage( TA_WebPage *webPage,
                                          void *opaqueData );
 
 /* Function for parsing HTML tables. */
-static TA_RetCode processTopIndex( 
-                                   unsigned int line,
+static TA_RetCode processTopIndex( unsigned int line,
                                    unsigned int column,
                                    const char *data,
                                    const char *href,
                                    void *opaqueData);
 
-static TA_RetCode processIndex( 
-                                unsigned int line,
+static TA_RetCode processIndex( unsigned int line,
                                 unsigned int column,
                                 const char *data,
                                 const char *href,
                                 void *opaqueData);
 
-static TA_RetCode addTheSymbolFromWebPage( 
-                                           unsigned int line,
+static TA_RetCode addTheSymbolFromWebPage( unsigned int line,
                                            unsigned int column,
                                            const char *data,
                                            const char *href,
@@ -1791,8 +1788,7 @@ Exit_processTopIndex:
    return retCode;
 }
 
-static TA_RetCode processIndex( 
-                                unsigned int line,
+static TA_RetCode processIndex( unsigned int line,
                                 unsigned int column,
                                 const char *data,
                                 const char *href,
@@ -1837,6 +1833,11 @@ static TA_RetCode processIndex(
          break;
       }
 
+      #if 0
+      /* Temporary just to debug */
+      if( *(&href[3]) != 'i' )
+         goto Exit_processIndex;
+      #endif
 
       printf( "Processing web page [%s]                                 \n", &href[3] );
 
@@ -1919,8 +1920,7 @@ static TA_RetCode addSymbolsFromWebPage( TA_WebPage *webPage, void *opaqueData )
    return retCode;
 }
 
-static TA_RetCode addTheSymbolFromWebPage( 
-                                           unsigned int line,
+static TA_RetCode addTheSymbolFromWebPage( unsigned int line,
                                            unsigned int column,
                                            const char *data,
                                            const char *href,
@@ -1948,26 +1948,29 @@ static TA_RetCode addTheSymbolFromWebPage(
          /* Go online only when processing US stocks. All other
           * country have extension allowing to identify the
           * exchange so there is no need to do additional online
-          * processign to identify the exchange.
+          * processing to identify the exchange.
           */          
          if( tableParseInfo->countryId == TA_Country_ID_US )
             allowOnlineProcessing = 1;
          else
             allowOnlineProcessing = 0;
 
-         retCode = TA_AllocStringFromYahooName(
-                                                &defaultMarketDecoding,
+         retCode = TA_AllocStringFromYahooName( &defaultMarketDecoding,
                                                 data, &category, &symbol,
                                                 allowOnlineProcessing );
 
          if( retCode != TA_SUCCESS && retCode != TA_INVALID_SECURITY_EXCHANGE )
+         {
+            printf( "Warning: Failed to find exchange for [%s] (%d)\n", data, retCode );
             return retCode;
+         }
 
          if( retCode == TA_INVALID_SECURITY_EXCHANGE )
          {
             /* Everything went fine, except it was not possible
              * to identify the exchange. Simply skip this symbol.
              */
+            printf( "Warning: Could not identify exchange for [%s]\n", data );
             return TA_SUCCESS;
          }
 
@@ -1988,7 +1991,10 @@ static TA_RetCode addTheSymbolFromWebPage(
          TA_StringFree( stringCache, symbol );
 
          if( retCode != TA_SUCCESS )
+         {
+            printf( "Warning: Failed to add symbol [%s]\n", data );
             return retCode;
+         }
       }
    }
 

@@ -43,7 +43,8 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
- *
+ *  062803 MF   Make parsing to find exchange/type more adaptive to 
+ *              potential changes from Yahoo! market page format.
  */
 
 /* Description:
@@ -101,12 +102,6 @@ static TA_RetCode internalMarketPageFree( TA_YahooMarketPage *marketPage );
 static TA_RetCode parseMarketPage( const TA_DecodingParam *decodingParam,
                                    TA_StreamAccess *streamAccess,
                                    TA_YahooMarketPage *marketPage );
-
-static TA_RetCode processMarketPageTable( unsigned int line,
-                                          unsigned int column,
-                                          const char *data,
-                                          const char *href,
-                                          void *opaqueData);
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
@@ -546,8 +541,7 @@ static TA_RetCode internalMarketPageAlloc( const TA_DecodingParam *decodingParam
    TA_YahooMarketPage *marketPage;
    TA_StreamAccess *streamAccess;
 
-   retCode = TA_WebPageAllocFromYahooName(
-                                           decodingParam,
+   retCode = TA_WebPageAllocFromYahooName( decodingParam,
                                            yahooName,
                                            &webPage );
                                               
@@ -569,8 +563,7 @@ static TA_RetCode internalMarketPageAlloc( const TA_DecodingParam *decodingParam
     
    /* Extract the data by parsing the Web Page. */
    streamAccess = TA_StreamAccessAlloc( webPage->content );
-   retCode = parseMarketPage(
-                              decodingParam,
+   retCode = parseMarketPage( decodingParam,
                               streamAccess,
                               marketPage );
 
@@ -629,98 +622,43 @@ static TA_RetCode parseMarketPage( const TA_DecodingParam *decodingParam,
                                    TA_YahooMarketPage *marketPage )
 {
    TA_RetCode retCode;
-   TA_MarketPageParseOpaqueData paramData;
+   TA_StreamAccess *searchStartPoint;
+   int i;
+   #define NB_EXCHANGE_STRING 5
+   static const char *exchangeString[NB_EXCHANGE_STRING][3] = 
+   {
+      {"(NASDAQNM", "NASDAQ", "STOCK"},
+      {"(NASDAQSC", "NASDAQ", "FUND" },
+      {"(NASDAQ",   "NASDAQ", "FUND" },
+      {"(NYSE",     "NYSE",   "STOCK"},
+      {"(AMEX",     "AMEX",   "STOCK"},
+   };
 
-   paramData.decodingParam = decodingParam;
-   paramData.marketPage = marketPage;
+   /* This parsing handle only US pages */
+   marketPage->countryId = TA_Country_ID_US;
 
-   retCode = TA_StreamAccessSearch( streamAccess, "Create New View" );
-   if( retCode != TA_SUCCESS )
-      return retCode;
+   /* Identify the exchange and type */
+   searchStartPoint = TA_StreamAccessAllocCopy( streamAccess );
+   for( i=0; i < NB_EXCHANGE_STRING; i++ )
+   {
+      retCode = TA_StreamAccessSearch( searchStartPoint, exchangeString[i][0] );
+      if( retCode == TA_SUCCESS )
+      { 
+         marketPage->exchange  = exchangeString[i][1];
+         marketPage->type      = exchangeString[i][2];
+         break; /* Exchange identified... exit loop */
+      }
+   }
+   TA_StreamAccessFree(searchStartPoint);
 
-   /* Parse the table. */
-   retCode = TA_StreamAccessGetHTMLTable( streamAccess, 100, processMarketPageTable, &paramData );
-   if( retCode != TA_SUCCESS )
-      return retCode;
+   if( i == NB_EXCHANGE_STRING )
+   {
+      /* Default unknown exchange */
+      marketPage->exchange  = "OTHER";
+      marketPage->type      = "OTHER";
+      return TA_INVALID_SECURITY_EXCHANGE;
+   }
    
    return TA_SUCCESS;
 }
 
-static TA_RetCode processMarketPageTable( 
-                                          unsigned int line,
-                                          unsigned int column,
-                                          const char *data,
-                                          const char *href,
-                                          void *opaqueData)
-{
-   TA_MarketPageParseOpaqueData *paramData;
-   TA_YahooMarketPage *marketPage;
-   const char *xchange;
-   unsigned int xchangeLength, i;
-
-   #define NB_EXCHANGE_STRING 5
-   static const char *exchangeString[NB_EXCHANGE_STRING][3] = 
-   {
-      {"NASDAQNM", "NASDAQ", "STOCK"},
-      {"NASDAQSC", "NASDAQ", "FUND" },
-      {"NASDAQ",   "NASDAQ", "FUND" },
-      {"NYSE",     "NYSE",   "STOCK"},
-      {"AMEX",     "AMEX",   "STOCK"},
-   };
-
-   (void)href;
-  
-   paramData = (TA_MarketPageParseOpaqueData *)opaqueData;
-
-   /* Let's see what we get from that table. */
-
-   if( (line == 0) && (column == 0) )
-   {
-      if( !data )
-         return TA_INVALID_SECURITY_EXCHANGE;
-
-      /* printf( "(%d,%d) data=(%s) href=(%s)\n", line, column, data? data:"", href? href:"" ); */
-
-      marketPage = paramData->marketPage;
-
-      /* Identify the start of the exchange string. */
-      xchange = strchr( data, '(' );
-      if( xchange )
-      {
-         xchange++;
-         if( *xchange == '\0' )
-            return TA_INVALID_SECURITY_EXCHANGE;
-      }
-      else
-         return TA_INVALID_SECURITY_EXCHANGE;
-      
-      /* Identify the length of the exchange string. */      
-      xchangeLength = getstrfldlen( xchange, 0, 0, ":" );
-      if( xchangeLength < 2 )
-         return TA_INVALID_SECURITY_EXCHANGE;      
-      xchangeLength--;
-
-      /* Identify the country,exchange and type. */
-      marketPage->countryId = TA_Country_ID_US;
-      for( i=0; i < NB_EXCHANGE_STRING; i++ )
-      {
-         if( lexncmp( exchangeString[i][0], xchange, xchangeLength ) == 0 )
-         { 
-            marketPage->exchange = exchangeString[i][1];
-            marketPage->type     = exchangeString[i][2];
-         }
-      }
-
-      if( marketPage->exchange == NULL )
-      {
-         /* Default unknown exchange */
-         marketPage->exchange = "OTHER";
-         marketPage->type     = "OTHER";
-      }
-
-      /* Skip the rest of the table. */
-      return TA_FINISH_TABLE; 
-   }
-
-   return TA_SUCCESS;
-}

@@ -192,6 +192,7 @@ TA_RetCode TA_ASCII_BuildReadOpInfo( TA_DataSourceHandle *handle )
    TA_PROLOG
    TA_RetCode retCode;
    TA_PrivateAsciiHandle *privateHandle;
+   int readOpFlags;
 
    if( !handle )
       return TA_INTERNAL_ERROR(62);
@@ -204,9 +205,15 @@ TA_RetCode TA_ASCII_BuildReadOpInfo( TA_DataSourceHandle *handle )
    TA_ASSERT( privateHandle->param != NULL );
    TA_ASSERT( privateHandle->param->category != NULL );
    TA_ASSERT( privateHandle->param->location != NULL );
-   
+
+   readOpFlags = 0;
+   if( privateHandle->param->flags & TA_REPLACE_ZERO_PRICE_BAR )
+   {
+      TA_SET_REPLACE_ZERO(readOpFlags);
+   }
+
    retCode = TA_ReadOpInfoAlloc( TA_StringToChar(privateHandle->param->info),
-                                 &privateHandle->readOpInfo );
+                                 &privateHandle->readOpInfo, readOpFlags );
 
    TA_TRACE_RETURN( retCode );
 }

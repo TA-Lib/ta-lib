@@ -152,7 +152,8 @@ static unsigned isTimeNeeded( const TA_ReadOp *readOp );
    }while( --n && (car != NULL) && isdigit(*car) ); \
    if( n != 0 ) \
    { \
-      SKIP_LINE; \
+      retCode = TA_MISSING_INPUT_DIGITS; \
+      goto exit_loops; \
    } \
 }
 
@@ -231,6 +232,8 @@ TA_RetCode TA_ReadOp_Do( TA_FileHandle       *fileHandle,
    unsigned int nbByteRead;
    unsigned int nbLetter;
 
+   TA_Real lastValidClose;
+
    const char *car;
 
    register TA_Real tmpReal;
@@ -238,7 +241,8 @@ TA_RetCode TA_ReadOp_Do( TA_FileHandle       *fileHandle,
    register unsigned int tmpIdx;
    register unsigned int nbCharToRead;
 
-   TA_TRACE_BEGIN(  TA_PriceBarRead );
+   unsigned int lastOpFieldIncremented;
+   TA_TRACE_BEGIN( TA_PriceBarRead );
 
    /* Initialization of local variables. */
    openBeg = highBeg = lowBeg = closeBeg = NULL;
@@ -246,6 +250,7 @@ TA_RetCode TA_ReadOp_Do( TA_FileHandle       *fileHandle,
    volumeBeg = openInterestBeg = NULL;
    timestamp = NULL;
    retCode = TA_SUCCESS;
+   lastValidClose = 0.0;
 
    fieldToProcess = readOpInfo->fieldProvided & fieldToAlloc;
    if( (fieldToProcess & fieldToAlloc) != fieldToAlloc )
@@ -312,7 +317,12 @@ TA_RetCode TA_ReadOp_Do( TA_FileHandle       *fileHandle,
    lineToSkip = readOpInfo->nbHeaderLineToSkip;
    while( lineToSkip-- )
    {
-      SKIP_LINE;
+      while( *car != '\n' )
+      {
+         GET_CHAR;
+         if( car == NULL )
+            goto exit_loops;
+      }
    }
 
 line_loop: /* Always jump here when end-of-line is found (EOL). */
@@ -320,6 +330,7 @@ line_loop: /* Always jump here when end-of-line is found (EOL). */
       /* If curOp != 0, the last operations are canceled. */
       REVERT_OPERATIONS;
       curOp = 0;
+      lastOpFieldIncremented = 0;
 
       /* Start over a new line. */
 
@@ -408,7 +419,6 @@ op_loop: /* Jump here when ready to proceed with the next command. */
       }
       else
       {
-         curOp++;
          cnvtArrayIdx = 0;
 
          if( TA_IS_REAL_CMD(op) )
@@ -429,9 +439,35 @@ op_loop: /* Jump here when ready to proceed with the next command. */
             tmpIdx = TA_GET_IDX(op);
             TA_ASSERT( tmpIdx < TA_REAL_ARRAY_SIZE );
             TA_ASSERT( arrayReal[tmpIdx] != NULL );
-            *(arrayReal[tmpIdx]) = tmpReal;
+            if( tmpReal != 0.0 )
+            {
+               *(arrayReal[tmpIdx]) = tmpReal;
+               if( tmpIdx == TA_CLOSE_IDX )
+                  lastValidClose = tmpReal;
+            }
+            else if( TA_IS_REPLACE_ZERO(op) )
+            {
+               /* Replace this zero value with the last known close.
+                * If there is no previous close, this line is ignored.
+                */
+               if( lastValidClose != 0.0 )
+                  *(arrayReal[tmpIdx]) = lastValidClose;
+               else
+               {
+                  SKIP_LINE;
+               }
+            }
+            else
+            {
+               /* Zero are not expected, consider this as a failure
+                * and ignore all further data from this file.
+                */
+               retCode = TA_PRICE_BAR_CONTAINS_ZERO;
+               goto exit_loops;
+            }
 
             arrayReal[tmpIdx]++;
+            curOp++;
          }
          else
          {
@@ -510,6 +546,7 @@ op_loop: /* Jump here when ready to proceed with the next command. */
 
             if( tmpIdx > TA_YEAR_IDX )
                arrayInteger[tmpIdx]++;
+            curOp++;
 
             if( TA_IS_TIMESTAMP_COMPLETE(op) )
             {

@@ -323,7 +323,7 @@ TA_RetCode TA_UDBaseFree( TA_UDBase *toBeFreed )
    if( retCode != TA_SUCCESS )
       return retCode;
 
-   TA_TRACE_BEGIN(  TA_UDBaseFree );
+   TA_TRACE_BEGIN( TA_UDBaseFree );
 
    /* Will change if an error happen. */
    finalRetCode = TA_SUCCESS;
@@ -413,6 +413,8 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
 
    unsigned int categoryIndex;
 
+   TA_DataSourceParameters dataSourceParams;
+
    tmpListCategory = NULL;
 
    /* Check parameters. */
@@ -426,11 +428,11 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
    if( param->id >= TA_NUM_OF_SOURCE_ID )
       return TA_BAD_PARAM;
 
-   retCode = TA_GetGlobal(  &TA_DataGlobalControl, (void *)&global );
+   retCode = TA_GetGlobal( &TA_DataGlobalControl, (void *)&global );
    if( retCode != TA_SUCCESS )
       return retCode;
 
-   TA_TRACE_BEGIN(   TA_AddDataSource );
+   TA_TRACE_BEGIN( TA_AddDataSource );
 
    /* It is assume there is a one-to-one correspondance
     * between the "TA_SourceId" and the index
@@ -480,8 +482,18 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
       TA_TRACE_RETURN( finalRetCode );
    }
 
-   /* Open the source. */
+   /* Check that if a flag is set that the data source can
+    * actually handle the requested functionality.
+    */
+   driver->getParameters( &dataSourceParams );
+   if( (param->flags           & TA_REPLACE_ZERO_PRICE_BAR) && 
+      !(dataSourceParams.flags & TA_REPLACE_ZERO_PRICE_BAR) )
+   {
+      TA_TRACE_RETURN( TA_UNSUPPORTED_REPLACE_ZERO_PRICE_BAR );
+   }
 
+   /* Open the source. */
+   
    /* Allocate a private copy of the parameters. This function
     * will also set the default values if not provided by the
     * caller. (particularly the category string).
@@ -492,9 +504,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
-   retCode = driver->openSource( paramPriv,
-                                 &sourceHandle );
-
+   retCode = driver->openSource( paramPriv, &sourceHandle );
    if( retCode != TA_SUCCESS )
    {
       TA_AddDataSourceParamPrivFree( paramPriv );
@@ -559,12 +569,10 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
 
          /* Fill the categoryHandle information. */
          if( categoryIndex == 0 )
-            retCode = driver->getFirstCategoryHandle(
-                                                      sourceHandle,
+            retCode = driver->getFirstCategoryHandle( sourceHandle,
                                                       categoryHandle );
          else
-            retCode = driver->getNextCategoryHandle(
-                                                     sourceHandle,
+            retCode = driver->getNextCategoryHandle( sourceHandle,
                                                      categoryHandle,
                                                      categoryIndex );
 
@@ -634,24 +642,6 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
-TA_RetCode TA_RefreshAllDataSource( TA_UDBase *unifiedDatabase )
-{
-   TA_UDBasePriv *privUDB;
-
-   /* !!! To Be Completed. */
-
-   /* Check integrity. */
-   privUDB = (TA_UDBasePriv *)unifiedDatabase;
-   if( privUDB->magicNb != TA_UDBASE_MAGIC_NB )
-      return TA_BAD_OBJECT;
-
-   /* Close all data source. */
-
-   /* Re-open the data source. */
-
-   return TA_INTERNAL_ERROR(26);
-}
-
 TA_RetCode TA_CategoryTableAlloc( TA_UDBase *unifiedDatabase,
                                   TA_StringTable **table )
 {
@@ -713,8 +703,7 @@ TA_RetCode TA_CategoryTableAlloc( TA_UDBase *unifiedDatabase,
    stringTable->size = TA_DictAccessFirst( privUDB->dictCategory );
    if( stringTable->size != 0 )
    {
-      stringTable->string = (const char **)TA_Malloc(
-                                                      (stringTable->size) *
+      stringTable->string = (const char **)TA_Malloc( (stringTable->size) *
                                                       sizeof( const char *) );
 
       if( stringTable->string == NULL )
@@ -882,8 +871,7 @@ TA_RetCode TA_SymbolTableAlloc( TA_UDBase *unifiedDatabase,
    stringTable->size = TA_DictAccessFirst( dictUDBSymbol );
    if( stringTable->size != 0 )
    {
-      stringTable->string = (const char **)TA_Malloc(
-                                                      (stringTable->size) *
+      stringTable->string = (const char **)TA_Malloc( (stringTable->size) *
                                                       sizeof( const char *) );
 
       if( stringTable->string == NULL )
@@ -1091,7 +1079,7 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
       TA_TRACE_RETURN( TA_SYMBOL_NOT_FOUND );
    }
 
-   /* Leave it the the TA_History sub-module to do the rest. */
+   /* Leave it to the TA_History sub-module to do the rest. */
    retCode = TA_HistoryBuilder( privUDB, symbolData,
                                 period, start, end,
                                 fieldToAlloc, &newHistory );
@@ -1147,21 +1135,10 @@ TA_RetCode TA_HistoryFree( TA_History *history )
    if( history->openInterest )
       TA_Free(  (void *)history->openInterest );
 
-   TA_Free(  (void *)hiddenData );
-   TA_Free(  (void *)history );
+   TA_Free( (void *)hiddenData );
+   TA_Free( (void *)history );
 
    TA_TRACE_RETURN( TA_SUCCESS );
-}
-
-TA_RetCode TA_HistoryUpdate( TA_UDBase *unifiedDatabase,
-                             TA_History **history,
-                             unsigned int timeoutInSec )
-{
-   /* Not implemented... */
-   (void)unifiedDatabase;
-   (void)history;
-   (void)timeoutInSec;
-   return TA_NO_NEW_DATA;
 }
 
 int TA_HistoryEqual( const TA_History *history1, const TA_History *history2 )
@@ -1288,60 +1265,6 @@ TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDataSourc
 
    return dst;
 }
-
-#if 0
-!!! needed ?
-TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAllocCopy( TA_AddDataSourceParamPriv *src )
-{
-   TA_AddDataSourceParamPriv *dst;
-   TA_StringCache *stringCache;
-
-   stringCache = TA_GetGlobalStringCache();
-
-   dst = (TA_AddDataSourceParamPriv *)TA_Malloc( sizeof(TA_AddDataSourceParamPriv) );
-   if( !dst )
-      return NULL;
-
-   memset( dst, 0, sizeof( TA_AddDataSourceParamPriv ) );
-
-   /* At this point, TA_AddDataSourceParamPrivFree can be safely called. */
-
-   /* This could be speed optmized by doing reference counting, but
-    * that version right now multi-thread safe.
-    */
-
-   /* Duplicate the strings that are not null. */
-   #define DO(y) \
-      { \
-         if(src->y) \
-         { \
-            dst->y = TA_StringDup( stringCache, src->y ); \
-            if( !dst->y ) \
-            { \
-               TA_AddDataSourceParamPrivFree( dst ); \
-               return NULL; \
-            } \
-         } \
-      } 
-
-      DO( location );
-      DO( info     );
-      DO( username );
-      DO( password );
-      DO( category );
-      DO( country  );
-      DO( exchange );
-      DO( type     );
-      DO( symbol   );
-   #undef DO
-
-   /* Copy the rest. */
-   dst->flags = src->flags;
-   dst->id    = src->id;
-
-   return dst;
-}
-#endif
 
 TA_RetCode TA_AddDataSourceParamPrivFree( TA_AddDataSourceParamPriv *toBeFreed )
 {
