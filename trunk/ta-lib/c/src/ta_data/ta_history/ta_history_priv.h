@@ -220,6 +220,7 @@ TA_RetCode TA_PeriodNormalize( TA_BuilderSupport *builderSupport );
  */
 TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original history. */
                                TA_Period newPeriod,       /* The new desired period. */
+                               TA_HistoryFlag flags,
                                int doAllocateNew,         /* When true, following ptrs are used. */
                                TA_Integer *nbBars,        /* Return the number of price bar */
                                TA_Timestamp **timestamp,  /* Allocate new timestamp. */

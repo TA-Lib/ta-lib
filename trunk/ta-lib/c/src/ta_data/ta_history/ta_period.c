@@ -47,6 +47,7 @@
  *  052604 AK   Added intraday-to-intraday conversion
  *  082304 MF   Change default timestamp to begining of period.
  *              Now allow to transform in pre-allocated buffer.
+ *  103104 MF   Add support for TA_ALLOW_INCOMPLETE_PRICE_BARS
  */
 
 /* Description:
@@ -111,6 +112,7 @@ TA_RetCode TA_PeriodNormalize( TA_BuilderSupport *builderSupport )
  */
 TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original history. */
                                TA_Period newPeriod,       /* The new desired period. */
+                               TA_HistoryFlag flags, 
                                int doAllocateNew,         /* When true, following ptrs are used. */
                                TA_Integer *nbBars,        /* Return the number of price bar allocated. */
                                TA_Timestamp **timestamp,  /* Allocate new timestamp. */
@@ -125,11 +127,16 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
 
    TA_RetCode retCode;
 
-   unsigned int transformToDailyAndMore; /* Boolean */
-   unsigned int transformToIntraday;     /* Boolean */
+   int transformToDailyAndMore;         /* Boolean */
+   int transformToIntraday;             /* Boolean */
+   int mustSkipFirstIncompletePriceBar; /* Boolean */
+
+   TA_DayOfWeek dayOfTheWeek;
 
    /* Temporaries. */
-   const TA_Timestamp *tempTimestamp;
+   const TA_Timestamp *tempConstTimestamp;
+   TA_Timestamp *tempTimestamp;
+   TA_Timestamp tempLocalTimestamp;
    unsigned int tempInt;
    unsigned int day, month, year;
 
@@ -170,7 +177,7 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
    unsigned long cur_openInterest; /* Current new openInterest of new period. */
 
    int oldPriceBar, newPriceBar; /* Array iterators. */
-   unsigned int again, periodCompleted, errorOccured, newDay; /* Boolean */
+   unsigned int periodCompleted, errorOccured, newDay; /* Boolean */
    int nbDayAccumulated, firstIteration;
 
    TA_TRACE_BEGIN( TA_PeriodTransform );
@@ -408,14 +415,45 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
       currentWeek    = TA_GetWeekOfTheYear   ( &old_timestamp[0] );
       currentQuarter = TA_GetQuarterOfTheYear( &old_timestamp[0] );
 
+      /* If first old price bar is not the first weekday for the 
+       * period, then consider this period incomplete.
+       */
+      mustSkipFirstIncompletePriceBar = 0;
+      if( (newPeriod > TA_DAILY) && !(flags & TA_ALLOW_INCOMPLETE_PRICE_BARS) )
+      {
+         TA_TimestampCopy( &tempLocalTimestamp, &old_timestamp[0] );
+         if( newPeriod == TA_WEEKLY )
+            TA_BackToDayOfWeek( &tempLocalTimestamp, TA_MONDAY );
+         else
+         {
+            switch( newPeriod )
+            {
+            case TA_MONTHLY:
+               TA_BackToBeginOfMonth( &tempLocalTimestamp );
+               break;
+            case TA_QUARTERLY:
+               TA_BackToBeginOfQuarter( &tempLocalTimestamp );
+               break;
+            case TA_YEARLY:
+               TA_BackToBeginOfYear( &tempLocalTimestamp );
+               break;         
+            }
+            dayOfTheWeek = TA_GetDayOfTheWeek(&tempLocalTimestamp);
+            if( (dayOfTheWeek == TA_SUNDAY) || (dayOfTheWeek == TA_SATURDAY) )
+               TA_NextWeekday( &tempLocalTimestamp );
+         }
+
+         if( !TA_TimestampDateEqual( &tempLocalTimestamp, &old_timestamp[0] ) )
+            mustSkipFirstIncompletePriceBar = 1;
+      }
+
       /* Iterate through the old price bar. */
       oldPriceBar = 0;
 
       /* Iterate through the new price bar. */
       newPriceBar = 0;
 
-      again = 1; /* Becomes false when all bars are processed. */
-      while( again )
+      while( oldPriceBar < old_nbBars)
       {
          /* Initialize cur_XXXXXX variables with the first bar in old timeframe. */
          SET_CUR_IF_NOT_NULL( timestamp,     old_timestamp   [oldPriceBar] );
@@ -434,12 +472,12 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
          firstIteration = 1;
          while( (oldPriceBar < old_nbBars) && !periodCompleted )
          {
-            tempTimestamp = &old_timestamp[oldPriceBar];
+            tempConstTimestamp = &old_timestamp[oldPriceBar];
 
             /* Check when being a new day */
-            day   = TA_GetDay  ( tempTimestamp );
-            month = TA_GetMonth( tempTimestamp );
-            year  = TA_GetYear ( tempTimestamp );
+            day   = TA_GetDay  ( tempConstTimestamp );
+            month = TA_GetMonth( tempConstTimestamp );
+            year  = TA_GetYear ( tempConstTimestamp );
 
             if( (currentDay   != day )  ||
                 (currentMonth != month) ||
@@ -456,7 +494,7 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
                   periodCompleted = 1;
                break;
             case TA_WEEKLY:
-               tempInt  = TA_GetWeekOfTheYear( tempTimestamp );
+               tempInt  = TA_GetWeekOfTheYear( tempConstTimestamp );
 
                /* Trap weeks on years boundary. */
                if( (currentWeek == 52) && (tempInt == 0) )
@@ -475,7 +513,7 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
                }
                break;
             case TA_QUARTERLY:
-               tempInt = TA_GetQuarterOfTheYear( tempTimestamp );
+               tempInt = TA_GetQuarterOfTheYear( tempConstTimestamp );
                if( (currentQuarter != tempInt) ||
                    (currentYear    != year) )
                {
@@ -522,6 +560,16 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
                /* Move to next bar. */
                oldPriceBar++;
             }
+         }
+
+         /* In the case that the first consolidated period is not 
+          * completed, just skip creating the new price bar and continue 
+          * with the next period.
+          */
+         if( mustSkipFirstIncompletePriceBar )
+         {
+            mustSkipFirstIncompletePriceBar = 0;
+            continue;
          }
 
          /* We got all the info needed in the cur_XXXXX variables for
@@ -585,15 +633,38 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
          #undef SET_DEST_PERIOD_IF_NOT_NULL
                      
          /* This new period bar is completed, move to the next one. */
-         newPriceBar++;
-
-         /* Any more data to process? */
-         if( oldPriceBar >= old_nbBars)
-            again = 0; /* All bars have been processsed. */
+         newPriceBar++;         
       }
-
       #undef SET_CUR_IF_NOT_NULL
-      /* Daily to other timeframe transform is completed. */
+
+      
+      if( (newPeriod > TA_DAILY) && !(flags & TA_ALLOW_INCOMPLETE_PRICE_BARS)  && (newPriceBar >= 1) )
+      {
+         /* Put in tempConstTimestamp the last weekday in the last period. */
+         tempTimestamp = &dest_timestamp[newPriceBar-1];
+         TA_TimestampCopy(&tempLocalTimestamp,tempTimestamp);
+
+         
+         /* Check if the last price bar is completed. If not, trim it from the output. */
+         if( !periodCompleted && !TA_TimestampEqual(&tempLocalTimestamp,tempTimestamp) )
+         {
+            /* Last price bar is incomplete. Remove it. */
+            newPriceBar--;
+            /* To be on the safe side, invalidate the price bar from the output. */
+            #define INVALIDATE_DATA_REAL(x) { if(dest_##x) dest_##x[newPriceBar] = -1.0; }
+            INVALIDATE_DATA_REAL(open);
+            INVALIDATE_DATA_REAL(high);
+            INVALIDATE_DATA_REAL(low);
+            INVALIDATE_DATA_REAL(close);
+            #undef INVALIDATE_DATA_REAL
+            #define INVALIDATE_DATA_INTEGER(x) { if(dest_##x) dest_##x[newPriceBar] = -1; }
+            INVALIDATE_DATA_INTEGER(volume);
+            INVALIDATE_DATA_INTEGER(openInterest);
+            #undef INVALIDATE_DATA_INTEGER
+            TA_SetDate( 0, 0, 0, tempTimestamp );
+            TA_SetTime( 0, 0, 0, tempTimestamp );
+         }
+      }      
    }
    else if( transformToIntraday )
    {
@@ -649,11 +720,11 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
 
             /* Create a new bar --AK-- */
             SET_DEST_FROM_OLD_IF_NOT_NULL( timestamp,     tmp_ts );
-            SET_DEST_FROM_OLD_IF_NOT_NULL( open,          old_open        [oldPriceBar] );
-            SET_DEST_FROM_OLD_IF_NOT_NULL( high,          old_high        [oldPriceBar] );
-            SET_DEST_FROM_OLD_IF_NOT_NULL( low,           old_low         [oldPriceBar] );
-            SET_DEST_FROM_OLD_IF_NOT_NULL( close,         old_close       [oldPriceBar] );
-            SET_DEST_FROM_OLD_IF_NOT_NULL( volume,        old_volume      [oldPriceBar] );
+            SET_DEST_FROM_OLD_IF_NOT_NULL( open,          old_open  [oldPriceBar] );
+            SET_DEST_FROM_OLD_IF_NOT_NULL( high,          old_high  [oldPriceBar] );
+            SET_DEST_FROM_OLD_IF_NOT_NULL( low,           old_low   [oldPriceBar] );
+            SET_DEST_FROM_OLD_IF_NOT_NULL( close,         old_close [oldPriceBar] );
+            SET_DEST_FROM_OLD_IF_NOT_NULL( volume,        old_volume[oldPriceBar] );
 
             /* Find the timestamp of the next new bar --AK-- */
             TA_AddTimeToTimestamp(&next_DEST_ts, &dest_timestamp[newPriceBar], newPeriod);
@@ -675,7 +746,7 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
    }
 
    /* Do re-allocation as needed. */
-   if( newPriceBar < dest_nbBars )
+   if( (newPriceBar != 0) && (newPriceBar < dest_nbBars) )
    {
       #define REALLOC(x,type) { if(dest_##x) dest_##x = TA_Realloc(dest_##x,newPriceBar*sizeof(type)); }
       REALLOC( open,         TA_Real      );
@@ -689,7 +760,23 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
       dest_nbBars = newPriceBar; 
    }
 
+   /* Clean-up if there is no price bar in the new period. */
+   if( newPriceBar == 0 )
+   {
+      #define CLEAN_UP(x) { if(dest_##x){TA_Free(dest_##x); dest_##x=NULL;} }
+      CLEAN_UP( open );
+      CLEAN_UP( high   );
+      CLEAN_UP( low    );
+      CLEAN_UP( close  );
+      CLEAN_UP( volume );
+      CLEAN_UP( openInterest);
+      CLEAN_UP( timestamp );
+      #undef CLEAN_UP
+      dest_nbBars = 0;
+   }
+
    /* All done! Return the final result to the caller. */
+   history->period = newPeriod;
    if( !doAllocateNew )
    {
       /* Update pointers in history. */
@@ -703,7 +790,6 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
       SET_HISTORY_FIELD( openInterest );
       SET_HISTORY_FIELD( timestamp    );
       #undef SET_HISTORY_FIELD
-      history->period = newPeriod;
    }
    else
    {

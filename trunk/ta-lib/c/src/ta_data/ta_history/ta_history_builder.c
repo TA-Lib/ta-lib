@@ -91,6 +91,7 @@ static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
                                 TA_History **history,
                                 TA_Period period,
                                 TA_Field fieldToAlloc,
+                                TA_HistoryFlag flags, 
                                 TA_BuilderSupport *builderSupport );
 
 static TA_RetCode allocHistoryFromOneDataSource( TA_UDBasePriv *privUDB,
@@ -130,8 +131,15 @@ static int equalValueAdjust(const void *a, const void *b);
 
 static TA_RetCode historyAdjustData( TA_BuilderSupport *builderSupport );
 
-static void trimBeforeStart( const TA_Timestamp *start, TA_Period period, TA_History *history );
-static void trimAfterEnd( const TA_Timestamp *end, TA_Period period, TA_History *history );
+static void trimBeforeStart( const TA_Timestamp *start,
+                             TA_Period period, 
+                             TA_History *history,
+                             TA_HistoryFlag flags );
+
+static void trimAfterEnd( const TA_Timestamp *end,
+                          TA_Period period,
+                          TA_History *history, 
+                          TA_HistoryFlag flags );
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -158,7 +166,8 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
    int i;
    const TA_DataSourceDriver *driver;
    TA_HistoryHiddenData *historyHiddenData;
-   TA_Timestamp startLocal, endLocal;
+   TA_Timestamp startRounded, endRounded;
+   TA_Timestamp startForDrivers, endForDrivers;
 
    TA_PAR_VARS;
 
@@ -171,59 +180,45 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
 
    listDriverHandle = &symbolData->listDriverHandle;
 
-   /* Use a copy of end/start since we might modify it. */
-   if( start )
-   {
-      retCode = TA_TimestampCopy( &startLocal, start );
-      TA_ASSERT( retCode == TA_SUCCESS );
-   }
-
-   if( end )
-   {
-      retCode = TA_TimestampCopy( &endLocal, end );
-      TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
-   }
-
    /* Adjust start/end to the upper/lower limit of the requested period. 
     * As an example, if caller wants monthly data, the day and time component
     * of the date is adjusted to the begining and end of the month for
-    * respectively the start and end variables.
-    *
-    * When the user request "complete price bar", add a price bar before
-    * and after the requested period. Later, the first/last price bar
-    * will be considered completed if at least one price bar preceed or follow
-    * the requested date range.
+    * respectively the start and end variables. This adjusted value is
+    * put in startRounded and endRounded.
     */
    if( start )
    {
+      retCode = TA_TimestampCopy( &startRounded, start );
+      TA_ASSERT( retCode == TA_SUCCESS );
+
       switch( period )
       {
       case TA_DAILY:
-         retCode = TA_SetTime( 0, 0, 0, &startLocal );
+         retCode = TA_SetTime( 0, 0, 0, &startRounded );
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          break;
       case TA_WEEKLY:
-         retCode = TA_SetTime( 0, 0, 0, &startLocal );
+         retCode = TA_SetTime( 0, 0, 0, &startRounded );
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
-         retCode = TA_BackToDayOfWeek(&startLocal,TA_MONDAY);
+         retCode = TA_BackToDayOfWeek(&startRounded,TA_MONDAY);
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          break;
       case TA_MONTHLY:
-         retCode = TA_SetTime( 0, 0, 0, &startLocal );
+         retCode = TA_SetTime( 0, 0, 0, &startRounded );
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
-         retCode = TA_BackToBeginOfMonth(&startLocal);
+         retCode = TA_BackToBeginOfMonth(&startRounded);
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          break;
       case TA_QUARTERLY:
-         retCode = TA_SetTime( 0, 0, 0, &startLocal );
+         retCode = TA_SetTime( 0, 0, 0, &startRounded );
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
-         retCode = TA_BackToBeginOfQuarter(&startLocal);
+         retCode = TA_BackToBeginOfQuarter(&startRounded);
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          break;
       case TA_YEARLY:
-         retCode = TA_SetTime( 0, 0, 0, &startLocal );
+         retCode = TA_SetTime( 0, 0, 0, &startRounded );
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
-         retCode = TA_BackToBeginOfYear(&startLocal);
+         retCode = TA_BackToBeginOfYear(&startRounded);
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          break;
       default:
@@ -231,11 +226,29 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
          break;
       }
 
-      if( !(flags & TA_ALLOW_INCOMPLETE_PRICE_BARS) )
+      /* The start pass to the driver might be slightly larger than the
+       * requested start/end range.       
+       */
+      retCode = TA_TimestampCopy( &startForDrivers, &startRounded );
+      TA_ASSERT( retCode == TA_SUCCESS );
+
+      if( (period > TA_DAILY) && !(flags & TA_ALLOW_INCOMPLETE_PRICE_BARS) )
       {
+         /* When the user request "complete price bar", add a few price bar 
+          * before and after the requested start/end range. This will help 
+          * later to confirm that only completed period are used. The logic 
+          * is if you have a few price bar before/after the requested period, 
+          * then it is a fair assumption that this period is complete.
+          *
+          * For now, keep it simple and add 6 days. I might later consider
+          * a logic that would adapt to the requested period.
+          *
+          * Notice that this logic applies only when requesting for a period 
+          * greater than daily.
+          */
          for( i=0; i < 6; i++ )
          {
-            retCode = TA_PrevWeekday( &startLocal );
+            retCode = TA_PrevWeekday( &startForDrivers );
             TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          }
       }
@@ -243,35 +256,38 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
 
    if( end )
    {
+      retCode = TA_TimestampCopy( &endRounded, end );
+      TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+
       switch( period )
       {
       case TA_DAILY:
-         retCode = TA_SetTime( 23, 59, 59, &endLocal );
+         retCode = TA_SetTime( 23, 59, 59, &endRounded );
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          break;
 
       case TA_WEEKLY:
-         retCode = TA_SetTime( 23, 59, 59, &endLocal );
+         retCode = TA_SetTime( 23, 59, 59, &endRounded );
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
-         retCode = TA_JumpToDayOfWeek(&endLocal,TA_SUNDAY);
+         retCode = TA_JumpToDayOfWeek(&endRounded,TA_SUNDAY);
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          break;
       case TA_MONTHLY:
-         retCode = TA_SetTime( 23, 59, 59, &endLocal );
+         retCode = TA_SetTime( 23, 59, 59, &endRounded );
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
-         retCode = TA_JumpToEndOfMonth(&endLocal);
+         retCode = TA_JumpToEndOfMonth(&endRounded);
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          break;
       case TA_QUARTERLY:
-         retCode = TA_SetTime( 23, 59, 59, &endLocal );
+         retCode = TA_SetTime( 23, 59, 59, &endRounded );
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
-         retCode = TA_JumpToEndOfQuarter(&endLocal);
+         retCode = TA_JumpToEndOfQuarter(&endRounded);
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          break;
       case TA_YEARLY:
-         retCode = TA_SetTime( 23, 59, 59, &endLocal );
+         retCode = TA_SetTime( 23, 59, 59, &endRounded );
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
-         retCode = TA_JumpToEndOfYear(&endLocal);
+         retCode = TA_JumpToEndOfYear(&endRounded);
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          break;
       default:
@@ -279,11 +295,18 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
          break;
       }
 
-      if( !(flags & TA_ALLOW_INCOMPLETE_PRICE_BARS) )
+      /* The end pass to the driver might be slightly larger than the
+       * requested start/end range.
+       */
+      retCode = TA_TimestampCopy( &endForDrivers, &endRounded );
+      TA_ASSERT( retCode == TA_SUCCESS );
+
+      if( (period > TA_DAILY) && !(flags & TA_ALLOW_INCOMPLETE_PRICE_BARS) )
       {
+         /* See comment above for the logic to detect incomplete period. */
          for( i=0; i < 6; i++ )
          {
-            retCode = TA_NextWeekday( &endLocal );
+            retCode = TA_NextWeekday( &endForDrivers );
             TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          }
       }
@@ -328,15 +351,14 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
    {
       TA_ASSERT( supportForDataSource != NULL );
 
-
       /* Set-up the parameters. */
       supportForDataSource->addDataSourceParamPriv = driverHandles->addDataSourceParamPriv;
       supportForDataSource->sourceHandle   = driverHandles->sourceHandle;
       supportForDataSource->categoryHandle = driverHandles->categoryHandle;
       supportForDataSource->symbolHandle   = &driverHandles->symbolHandle;
       supportForDataSource->period         = period;
-      supportForDataSource->start          = start?&startLocal:NULL;
-      supportForDataSource->end            = end?&endLocal:NULL;
+      supportForDataSource->start          = start?&startForDrivers:NULL;
+      supportForDataSource->end            = end?&endForDrivers:NULL;
       supportForDataSource->fieldToAlloc   = fieldToAlloc;
       
       driverIndex = driverHandles->addDataSourceParamPriv->id;
@@ -419,7 +441,7 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
    }
 
    /* Finally, allocate and build the TA_History. */
-   retCode = allocHistory( privUDB, history, period, fieldToAlloc, builderSupport );
+   retCode = allocHistory( privUDB, history, period, fieldToAlloc, flags, builderSupport );
    freeBuilderSupport( builderSupport );
 
    if( retCode != TA_SUCCESS )
@@ -438,19 +460,19 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
    historyHiddenData->openInterest = (*history)->openInterest;
    historyHiddenData->timestamp = (*history)->timestamp;
 
-   /* Sometimes, for optimization reason, the builder might returns
-    * more data than requested. In that case, trim the output such
-    * that only the requested range is "visible" to the caller.
+   /* It is possible that for optimization reason the driver(s) did
+    * return more data then requested. In those cases, trim the output
+    * such that only the requested range is "visible" to the caller. 
     */
    if( (*history)->nbBars >= 1 )
    {
       if( start )
       {
-         trimBeforeStart( start, period, *history );
+         trimBeforeStart( &startRounded, period, *history, flags );
       }
       if( end )
       {
-         trimAfterEnd( end, period, *history );
+         trimAfterEnd( &endRounded, period, *history, flags );
       }
    }
 
@@ -458,7 +480,9 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
     * Verify expected consistency like low <= high, dates are 
     * ascending, open >= low etc...
     */
-   retCode = TA_HistoryCheck( period, start, end,
+   retCode = TA_HistoryCheck( period,
+                              start?&startRounded:NULL, 
+                              end?&endRounded:NULL,
                               fieldToAlloc, *history,
                               NULL, NULL );
    if( retCode != TA_SUCCESS )
@@ -1361,6 +1385,7 @@ static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
                                 TA_History **history,
                                 TA_Period period,
                                 TA_Field fieldToAlloc,
+                                TA_HistoryFlag flags, 
                                 TA_BuilderSupport *builderSupport
                                )
 {
@@ -1446,7 +1471,7 @@ static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
 
    if( (*history)->period != period )
    {
-      retCode = TA_PeriodTransform( *history, period, 0, NULL, NULL, NULL,
+      retCode = TA_PeriodTransform( *history, period, flags, 0, NULL, NULL, NULL,
                                     NULL,NULL,NULL,NULL,NULL );
 
       if( retCode != TA_SUCCESS )
@@ -1498,7 +1523,7 @@ static TA_RetCode allocHistoryFromOneDataSource( TA_UDBasePriv *privUDB,
       TA_HistoryFree( newHistory );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
-   sourceName = TA_StringDup(TA_GetGlobalStringCache(), supportForDataSource->addDataSourceParamPriv->name );
+   sourceName = TA_StringDup(TA_GetGlobalStringCache(), supportForDataSource->addDataSourceParamPriv->sourceName );
    TA_ASSERT( sourceName != NULL );
    (newHistory->listOfSource.string)[0] = TA_StringToChar(sourceName);
    newHistory->listOfSource.size = 1;
@@ -2257,11 +2282,16 @@ static void reverseTimestampElement( unsigned int nbElement, TA_Timestamp *table
 { REVERSE_MACRO(TA_Timestamp) }
 #undef REVERSE_MACRO
 
-static void trimBeforeStart( const TA_Timestamp *start, TA_Period period, TA_History *history )
+static void trimBeforeStart( const TA_Timestamp *start,
+                             TA_Period period,
+                             TA_History *history,
+                             TA_HistoryFlag flags )
 {
    /* !!! Could be speed optimized */
    int found;
    unsigned int i;
+
+   (void)flags;
 
    /* Trap special case (nothing to do) */
    if( history->nbBars == 0 )
@@ -2292,7 +2322,7 @@ static void trimBeforeStart( const TA_Timestamp *start, TA_Period period, TA_His
       }
    }
 
-   /* First price bar is at or after "start". Do nothing. */
+   /* First price bar is at or after "start". */
    if( i == 0 )
       return;
 
@@ -2323,11 +2353,16 @@ static void trimBeforeStart( const TA_Timestamp *start, TA_Period period, TA_His
    }
 }
 
-static void trimAfterEnd( const TA_Timestamp *end, TA_Period period, TA_History *history )
+static void trimAfterEnd( const TA_Timestamp *end,
+                          TA_Period period,
+                          TA_History *history,
+                          TA_HistoryFlag flags )
 {
    /* !!! Could be speed optimized */
    int found;
    int i;
+
+   (void)flags;
 
    /* Trap special case (nothing to do) */
    if( history->nbBars == 0 )

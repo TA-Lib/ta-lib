@@ -75,6 +75,7 @@ typedef struct
 {
    const char *symbol;
    TA_Period period;
+   TA_HistoryFlag flags;
    unsigned int nbExpectedPriceBar;
    TA_Integer thePriceBarToCheck;
    unsigned int expected_year;
@@ -107,29 +108,75 @@ const char *fail_header = "Fail: test_period,Test #";
 static TA_PriceBarCheck checkTable[] = 
 {
 
-  { "ES",          TA_WEEKLY,     1,   0, 2003,  5, 18,   0,  0,  0,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
-  { "ES",          TA_5MINS,    482, 258, 2003,  5, 21,   0,  0,  0,  920.75,  920.75,  920.25,  920.50,  44, 0 },
-  { "ES",          TA_5MINS,    482,   0, 2003,  5, 20,   0, 45,  0,  921.50,  922.00,  921.50,  922.00,  12, 0 },
-  { "ES",          TA_5MINS,    482, 257, 2003,  5, 20,  22, 55,  0,  920.50,  920.50,  920.50,  920.50,   1, 0 },
-  { "ES",          TA_5MINS,    482, 481, 2003,  5, 21,  19, 15,  0,  920.25,  920.25,  920.00,  920.00,  19, 0 },
-  { "ES",          TA_DAILY,      2,   1, 2003,  5, 21,   0,  0,  0,  920.75,  924.25,  913.25,  920.00,  765554, 0 },
-  { "ES",          TA_DAILY,      2,   0, 2003,  5, 20,   0,  0,  0,  921.50,  925.75,  911.25,  920.50,  713627, 0 },
-  { "ES",          TA_MONTHLY,    1,   0, 2003,  5,  1,   0,  0,  0,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
-  { "ES",          TA_QUARTERLY,  1,   0, 2003,  4,  1,   0,  0,  0,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
-  { "ES",          TA_YEARLY,     1,   0, 2003,  1,  1,   0,  0,  0,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
+  { "ES", TA_WEEKLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+     1,   0, 2003,  5, 18,   0,  0,  0,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
 
-  { "DAILY_REF_0", TA_WEEKLY,    52,   0, 1999,  1,  3,   0,  0,  0,  92.500,  96.375,  90.750,  93.780,  4511420, 0 },
-  { "DAILY_REF_0", TA_WEEKLY,    52,   1, 1999,  1, 10,   0,  0,  0,  94.500,  95.000,  89.440,  92.470,  3973160, 0 },
-  { "DAILY_REF_0", TA_WEEKLY,    52,  50, 1999, 12, 19,   0,  0,  0,  109.060, 110.440, 107.750, 108.620,  4539425, 0 },
-  { "DAILY_REF_0", TA_WEEKLY,    52,  51, 1999, 12, 26,   0,  0,  0,  109.690, 110.750, 106.620, 107.870,  3363920, 0 },
-  { "DAILY_REF_0", TA_MONTHLY,   12,   0, 1999,  1,  1,   0,  0,  0,  92.500,  99.625,  86.750,  91.625,  6494478, 0 },
-  { "DAILY_REF_0", TA_MONTHLY,   12,   1, 1999,  2,  1,   0,  0,  0,  92.250,  92.250,  80.875,  84.875,  5347410, 0 },
-  { "DAILY_REF_0", TA_MONTHLY,   12,  11, 1999, 12,  1,   0,  0,  0,  102.560, 122.120, 102.250, 107.870,  7213263, 0 },
-  { "DAILY_REF_0", TA_QUARTERLY,  4,   0, 1999,  1,  1,   0,  0,  0,  92.500,  99.625,  80.875,  88.625,  5580475, 0 },
-  { "DAILY_REF_0", TA_QUARTERLY,  4,   1, 1999,  4,  1,   0,  0,  0,  88.655, 132.000,  81.500, 129.250,  6024341, 0 },
-  { "DAILY_REF_0", TA_QUARTERLY,  4,   2, 1999,  7,  1,   0,  0,  0,  130.000, 139.190, 117.560, 121.000,  6397878, 0 },
-  { "DAILY_REF_0", TA_QUARTERLY,  4,   3, 1999, 10,  1,   0,  0,  0,  121.000, 123.250,  89.000, 107.870, 10614132, 0 },
-  { "DAILY_REF_0", TA_YEARLY,     1,   0, 1999,  1,  1,   0,  0,  0,  92.500, 139.190,  80.875, 107.870,  7177425, 0 }
+  { "ES", TA_WEEKLY, 0, 0},
+
+  { "ES", TA_5MINS, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    482, 258, 2003,  5, 21,   0,  0,  0,  920.75,  920.75,  920.25,  920.50,  44, 0 },
+
+  { "ES", TA_5MINS, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    482,   0, 2003,  5, 20,   0, 45,  0,  921.50,  922.00,  921.50,  922.00,  12, 0 },
+
+  { "ES", TA_5MINS, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    482, 257, 2003,  5, 20,  22, 55,  0,  920.50,  920.50,  920.50,  920.50,   1, 0 },
+
+  { "ES", TA_5MINS, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    482, 481, 2003,  5, 21,  19, 15,  0,  920.25,  920.25,  920.00,  920.00,  19, 0 },
+
+  { "ES", TA_DAILY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    2,   1, 2003,  5, 21,   0,  0,  0,  920.75,  924.25,  913.25,  920.00,  765554, 0 },
+
+  { "ES", TA_DAILY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    2,   0, 2003,  5, 20,   0,  0,  0,  921.50,  925.75,  911.25,  920.50,  713627, 0 },
+
+  { "ES", TA_MONTHLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    1,   0, 2003,  5,  1,   0,  0,  0,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
+
+  { "ES", TA_QUARTERLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    1,   0, 2003,  4,  1,   0,  0,  0,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
+ 
+  { "ES", TA_YEARLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    1,   0, 2003,  1,  1,   0,  0,  0,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
+
+
+  { "DAILY_REF_0", TA_WEEKLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    52,   0, 1999,  1,  3,   0,  0,  0,  92.500,  96.375,  90.750,  93.780,  4511420, 0 },
+
+  { "DAILY_REF_0", TA_WEEKLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    52,   1, 1999,  1, 10,   0,  0,  0,  94.500,  95.000,  89.440,  92.470,  3973160, 0 },
+
+  { "DAILY_REF_0", TA_WEEKLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    52,  50, 1999, 12, 19,   0,  0,  0,  109.060, 110.440, 107.750, 108.620,  4539425, 0 },
+
+  { "DAILY_REF_0", TA_WEEKLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    52,  51, 1999, 12, 26,   0,  0,  0,  109.690, 110.750, 106.620, 107.870,  3363920, 0 },
+
+  { "DAILY_REF_0", TA_MONTHLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    12,   0, 1999,  1,  1,   0,  0,  0,  92.500,  99.625,  86.750,  91.625,  6494478, 0 },
+
+  { "DAILY_REF_0", TA_MONTHLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    12,   1, 1999,  2,  1,   0,  0,  0,  92.250,  92.250,  80.875,  84.875,  5347410, 0 },
+
+  { "DAILY_REF_0", TA_MONTHLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    12,  11, 1999, 12,  1,   0,  0,  0,  102.560, 122.120, 102.250, 107.870,  7213263, 0 },
+
+  { "DAILY_REF_0", TA_QUARTERLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    4,   0, 1999,  1,  1,   0,  0,  0,  92.500,  99.625,  80.875,  88.625,  5580475, 0 },
+
+  { "DAILY_REF_0", TA_QUARTERLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    4,   1, 1999,  4,  1,   0,  0,  0,  88.655, 132.000,  81.500, 129.250,  6024341, 0 },
+
+  { "DAILY_REF_0", TA_QUARTERLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    4,   2, 1999,  7,  1,   0,  0,  0,  130.000, 139.190, 117.560, 121.000,  6397878, 0 },
+
+  { "DAILY_REF_0", TA_QUARTERLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    4,   3, 1999, 10,  1,   0,  0,  0,  121.000, 123.250,  89.000, 107.870, 10614132, 0 },
+
+  { "DAILY_REF_0", TA_YEARLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
+    1,   0, 1999,  1,  1,   0,  0,  0,  92.500, 139.190,  80.875, 107.870,  7177425, 0 }
+
 };
 #define CHECK_TABLE_SIZE (sizeof(checkTable)/sizeof(TA_PriceBarCheck))
 
@@ -216,6 +263,7 @@ ErrorNumber test_period( TA_UDBase *unifiedDatabase )
       histParam.symbol   = checkTable[i].symbol;
       histParam.field    = TA_ALL;
       histParam.period   = checkTable[i].period;
+      histParam.flags    = checkTable[i].flags;
       retCode = TA_HistoryAlloc( unifiedDatabase, &histParam, &history );
 
       if( retCode != TA_SUCCESS )
@@ -232,6 +280,18 @@ ErrorNumber test_period( TA_UDBase *unifiedDatabase )
                  checkTable[i].nbExpectedPriceBar );
          TA_HistoryFree( history );
          return TA_PERIOD_NBBAR_INCORRECT;
+      }
+
+      /* If the call is expected to return an empty history, no further check are done. */
+      if( checkTable[i].nbExpectedPriceBar == 0 )
+      {
+         retCode = TA_HistoryFree( history );
+         if( retCode != TA_SUCCESS )
+         {
+           printf( "%s%d.16 [%d]\n", fail_header, i, retCode );
+           return TA_PERIOD_HISTORYFREE_FAILED;
+         }
+         continue;
       }
 
       #define CHECK_VALUE_OK(varName, subtestNo ) \
