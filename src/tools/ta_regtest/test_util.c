@@ -363,12 +363,13 @@ ErrorNumber checkSameContent( TA_Real *buffer1,
    {
       if( (!trio_isnan(theBuffer1[i])) &&
           (!trio_isinf(theBuffer1[i])) &&
-          (!theBuffer1[i] == RESV_PATTERN_SUFFIX) &&
-          (!theBuffer1[i] == RESV_PATTERN_PREFIX) )
+          (theBuffer1[i] != RESV_PATTERN_SUFFIX) &&
+          (theBuffer1[i] != RESV_PATTERN_PREFIX) )
       {
-         if( theBuffer1[i] != theBuffer2[i] )
+         
+         if(!TA_REAL_EQ( theBuffer1[i], theBuffer2[i], 0.000001))
          {
-            printf( "Fail: Difference found between two test expected identical (%f,%f,%d)\n",
+            printf( "Fail: Large difference found between two value expected identical (%f,%f,%d)\n",
                      theBuffer1[i], theBuffer2[i], i );
             return TA_TEST_TFRR_CHECK_SAME_CONTENT;
          }
