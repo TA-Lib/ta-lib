@@ -76,6 +76,63 @@ DEF_FUNCTION( CCI,                           /* name */
 
 /* CCI END */
 
+/* CDL3BLACKCROWS BEGIN */
+static const TA_InputParameterInfo    *TA_CDL3BLACKCROWS_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDL3BLACKCROWS_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDL3BLACKCROWS_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDL3BLACKCROWS,                 /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Three Black Crows",            /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDL3BLACKCROWS END */
+
+/* CDLABANDONEDBABY BEGIN */
+static const TA_InputParameterInfo    *TA_CDLABANDONEDBABY_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLABANDONEDBABY_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLABANDONEDBABY_OptInputs[] =
+{ 
+  &TA_DEF_UI_Penetration_30,
+  NULL
+};
+
+DEF_FUNCTION( CDLABANDONEDBABY,               /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Abandoned Baby",               /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLABANDONEDBABY END */
+
 /* CDLDOJISTAR BEGIN */
 static const TA_InputParameterInfo    *TA_CDLDOJISTAR_Inputs[]    =
 {
@@ -103,6 +160,34 @@ DEF_FUNCTION( CDLDOJISTAR,                    /* name */
              );
 
 /* CDLDOJISTAR END */
+
+/* CDLENGULFING BEGIN */
+static const TA_InputParameterInfo    *TA_CDLENGULFING_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLENGULFING_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLENGULFING_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLENGULFING,                   /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Engulfing Pattern",            /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLENGULFING END */
 
 /* CDLEVENINGDOJISTAR BEGIN */
 static const TA_InputParameterInfo    *TA_CDLEVENINGDOJISTAR_Inputs[]    =
@@ -162,6 +247,118 @@ DEF_FUNCTION( CDLEVENINGSTAR,                 /* name */
 
 /* CDLEVENINGSTAR END */
 
+/* CDLHAMMER BEGIN */
+static const TA_InputParameterInfo    *TA_CDLHAMMER_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLHAMMER_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLHAMMER_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLHAMMER,                      /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Hammer",                       /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLHAMMER END */
+
+/* CDLHANGINGMAN BEGIN */
+static const TA_InputParameterInfo    *TA_CDLHANGINGMAN_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLHANGINGMAN_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLHANGINGMAN_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLHANGINGMAN,                  /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Hanging Man",                  /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLHANGINGMAN END */
+
+/* CDLHARAMI BEGIN */
+static const TA_InputParameterInfo    *TA_CDLHARAMI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLHARAMI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLHARAMI_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLHARAMI,                      /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Harami Pattern",               /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLHARAMI END */
+
+/* CDLHARAMICROSS BEGIN */
+static const TA_InputParameterInfo    *TA_CDLHARAMICROSS_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLHARAMICROSS_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLHARAMICROSS_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLHARAMICROSS,                 /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Harami Cross Pattern",         /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLHARAMICROSS END */
+
 /* CDLHIGHWAVE BEGIN */
 static const TA_InputParameterInfo    *TA_CDLHIGHWAVE_Inputs[]    =
 {
@@ -189,6 +386,62 @@ DEF_FUNCTION( CDLHIGHWAVE,                    /* name */
              );
 
 /* CDLHIGHWAVE END */
+
+/* CDLIDENTICAL3CROWS BEGIN */
+static const TA_InputParameterInfo    *TA_CDLIDENTICAL3CROWS_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLIDENTICAL3CROWS_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLIDENTICAL3CROWS_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLIDENTICAL3CROWS,             /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Identical Three Crows",        /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLIDENTICAL3CROWS END */
+
+/* CDLINVERTEDHAMMER BEGIN */
+static const TA_InputParameterInfo    *TA_CDLINVERTEDHAMMER_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLINVERTEDHAMMER_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLINVERTEDHAMMER_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLINVERTEDHAMMER,              /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Inverted Hammer",              /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLINVERTEDHAMMER END */
 
 /* CDLLONGLINE BEGIN */
 static const TA_InputParameterInfo    *TA_CDLLONGLINE_Inputs[]    =
@@ -276,6 +529,34 @@ DEF_FUNCTION( CDLMORNINGSTAR,                 /* name */
 
 /* CDLMORNINGSTAR END */
 
+/* CDLSHOOTINGSTAR BEGIN */
+static const TA_InputParameterInfo    *TA_CDLSHOOTINGSTAR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLSHOOTINGSTAR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLSHOOTINGSTAR_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLSHOOTINGSTAR,                /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Shooting Star",                /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLSHOOTINGSTAR END */
+
 /* CDLSHORTLINE BEGIN */
 static const TA_InputParameterInfo    *TA_CDLSHORTLINE_Inputs[]    =
 {
@@ -324,7 +605,7 @@ static const TA_OptInputParameterInfo *TA_CDLSPINNINGTOP_OptInputs[] =
 
 DEF_FUNCTION( CDLSPINNINGTOP,                 /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
-              "Spinning Top Candle",          /* hint */
+              "Spinning Top",                 /* hint */
               NULL,                           /* helpFile */
               TA_FUNC_FLG_CANDLESTICK,        /* flags */
               NULL                            /* analysis function */
@@ -352,13 +633,41 @@ static const TA_OptInputParameterInfo *TA_CDLTRISTAR_OptInputs[] =
 
 DEF_FUNCTION( CDLTRISTAR,                     /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
-              "Tristar Candle",               /* hint */
+              "Tristar Pattern",              /* hint */
               NULL,                           /* helpFile */
               TA_FUNC_FLG_CANDLESTICK,        /* flags */
               NULL                            /* analysis function */
              );
 
 /* CDLTRISTAR END */
+
+/* CDLUPSIDEGAP2CROWS BEGIN */
+static const TA_InputParameterInfo    *TA_CDLUPSIDEGAP2CROWS_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLUPSIDEGAP2CROWS_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLUPSIDEGAP2CROWS_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLUPSIDEGAP2CROWS,             /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Upside Gap Two Crows",         /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLUPSIDEGAP2CROWS END */
 
 /* CORREL BEGIN */
 static const TA_InputParameterInfo    *TA_CORREL_Inputs[]    =
@@ -395,16 +704,27 @@ DEF_FUNCTION( CORREL,                      /* name */
 const TA_FuncDef *TA_DEF_TableC[] =
 {
    ADD_TO_TABLE(CCI),
+   ADD_TO_TABLE(CDL3BLACKCROWS),
+   ADD_TO_TABLE(CDLABANDONEDBABY),
    ADD_TO_TABLE(CDLDOJISTAR),
+   ADD_TO_TABLE(CDLENGULFING),
    ADD_TO_TABLE(CDLEVENINGDOJISTAR),
    ADD_TO_TABLE(CDLEVENINGSTAR),
+   ADD_TO_TABLE(CDLHAMMER),
+   ADD_TO_TABLE(CDLHANGINGMAN),
+   ADD_TO_TABLE(CDLHARAMI),
+   ADD_TO_TABLE(CDLHARAMICROSS),
    ADD_TO_TABLE(CDLHIGHWAVE),
+   ADD_TO_TABLE(CDLIDENTICAL3CROWS),
+   ADD_TO_TABLE(CDLINVERTEDHAMMER),
    ADD_TO_TABLE(CDLLONGLINE),
    ADD_TO_TABLE(CDLMORNINGDOJISTAR),
    ADD_TO_TABLE(CDLMORNINGSTAR),
+   ADD_TO_TABLE(CDLSHOOTINGSTAR),
    ADD_TO_TABLE(CDLSHORTLINE),
    ADD_TO_TABLE(CDLSPINNINGTOP),  
    ADD_TO_TABLE(CDLTRISTAR),  
+   ADD_TO_TABLE(CDLUPSIDEGAP2CROWS), 
    ADD_TO_TABLE(CORREL),
    NULL
 };
