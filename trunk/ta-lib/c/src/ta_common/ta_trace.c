@@ -493,10 +493,9 @@ TA_RetCode TA_RegressionTest( TA_RegressionTestId id )
        */
       TA_FATAL("Should have return",TA_REG_TEST_ASSERT_FAIL,id);
       /* break; comment out to eliminate warning of un-reachable code */
-   }
-
-   
-   TA_TRACE_RETURN(TA_BAD_PARAM);
+   default:
+      TA_TRACE_RETURN(TA_BAD_PARAM);
+   }   
 }
 
 /**** Local functions definitions.     ****/
