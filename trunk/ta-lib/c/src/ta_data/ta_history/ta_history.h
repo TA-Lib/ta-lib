@@ -52,8 +52,7 @@ TA_RetCode TA_HistoryCheck( TA_Period           expectedPeriod,
                             const TA_Timestamp *expectedEnd,
                             TA_Field            fieldToCheck,
                             const TA_History   *history,
-                            unsigned int       *faultyIndex,
-                            unsigned int       *faultyField );
+                            TA_HistoryFlag      flags );
 
 /* Allows to allocate an history with a different (longer) timeframe.
  * On success a new allocated history is returned through 'newHistory'.

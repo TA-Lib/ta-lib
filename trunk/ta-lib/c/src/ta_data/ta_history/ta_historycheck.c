@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,15 +36,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  AM       Adrian Michel
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  112400 MF   First version.
- *  120104 MF   Now check start/end boundary.
- *  080804 MF   Add a lot of price bar validation.
+ *  112400 MF    First version.
+ *  120104 MF    Now check start/end boundary.
+ *  080804 MF    Add a lot of price bar validation.
+ *  032005 MF,AM Make optional validation of price. Requested by AM.
  */
 
 /* Description:
@@ -79,8 +80,7 @@ TA_RetCode TA_HistoryCheck( TA_Period           expectedPeriod,
                             const TA_Timestamp *expectedEnd,
                             TA_Field            fieldToCheck,
                             const TA_History   *history,
-                            unsigned int       *faultyIndex,
-                            unsigned int       *faultyField )
+                            TA_HistoryFlag      flags )
 {
    TA_PROLOG
    unsigned int i, defaultLoop;
@@ -88,8 +88,6 @@ TA_RetCode TA_HistoryCheck( TA_Period           expectedPeriod,
    TA_Timestamp *tempTimestamp;
    TA_Real tempRealHigh, tempRealLow, tempRealOpen, tempRealClose;
 
-   (void)faultyField;
-   (void)faultyIndex;
    (void)fieldToCheck;
 
    TA_TRACE_BEGIN( TA_HistoryCheck );
@@ -181,7 +179,7 @@ TA_RetCode TA_HistoryCheck( TA_Period           expectedPeriod,
       CHECK_EXPECTED_FIELD( openInterest, OPENINTEREST, 174 );
       #undef CHECK_EXPECTED_FIELD
    }
-
+   
    /***************************************************************
     * Second section detects issues related to the data returned  *
     * by the data source. These are reported as normal errors to  *
@@ -204,8 +202,6 @@ TA_RetCode TA_HistoryCheck( TA_Period           expectedPeriod,
       * These are the expected most common field combinations, all 
       * other combinations are handled by the "defaultLoop"
       */
-      defaultLoop = 1;
-
       #define CHECK_ASCENDING_TIMESTAMP { \
          tempTimestamp = &history->timestamp[i]; \
          if(TA_TimestampLess( tempTimestamp, prevTimestamp) ) \
@@ -253,87 +249,103 @@ TA_RetCode TA_HistoryCheck( TA_Period           expectedPeriod,
             TA_TRACE_RETURN( TA_DATA_ERROR_CLOSE_BELOW_LOW ); \
       }
 
-      if( history->close )
+      if( flags & TA_DISABLE_PRICE_VALIDATION )
       {
-         if( history->open && history->high && history->low )
+         /* When price validation is disabled, only the
+          * timestamp are left to be check.
+          */
+         prevTimestamp = &history->timestamp[0];
+         for( i=1; i < history->nbBars; i++ )
          {
-            if( history->volume )
+            CHECK_ASCENDING_TIMESTAMP;
+         }
+      }
+      else
+      {
+         defaultLoop = 1;
+   
+         if( history->close )
+         {
+            if( history->open && history->high && history->low )
             {
-               if( history->openInterest )
+               if( history->volume )
                {
-                  /* Loop #1 - Open,High,Low,Close,Volume,OpenInterest */
+                  if( history->openInterest )
+                  {
+                     /* Loop #1 - Open,High,Low,Close,Volume,OpenInterest */
+                     defaultLoop = 0;
+                     prevTimestamp = &history->timestamp[0];
+                     for( i=1; i < history->nbBars; i++ )
+                     {
+                        CHECK_ASCENDING_TIMESTAMP;
+                        CHECK_VOLUME;
+                        CHECK_OPEN_INTEREST;
+                        CHECK_OPEN_HIGH_LOW_CLOSE;
+                     }
+                  }
+                  else
+                  {
+                     /* Loop #2 - Open,High,Low,Close,Volume */
+                     defaultLoop = 0;
+                     prevTimestamp = &history->timestamp[0];
+                     for( i=1; i < history->nbBars; i++ )
+                     {
+                        CHECK_ASCENDING_TIMESTAMP;
+                        CHECK_VOLUME;
+                        CHECK_OPEN_HIGH_LOW_CLOSE;
+                     }
+                  }
+               }
+               else if( !history->openInterest )
+               {
+                  /* Loop #3 - Open,High,Low,Close */
                   defaultLoop = 0;
                   prevTimestamp = &history->timestamp[0];
                   for( i=1; i < history->nbBars; i++ )
                   {
                      CHECK_ASCENDING_TIMESTAMP;
-                     CHECK_VOLUME;
-                     CHECK_OPEN_INTEREST;
                      CHECK_OPEN_HIGH_LOW_CLOSE;
                   }
-               }
-               else
-               {
-                  /* Loop #2 - Open,High,Low,Close,Volume */
-                  defaultLoop = 0;
-                  prevTimestamp = &history->timestamp[0];
-                  for( i=1; i < history->nbBars; i++ )
-                  {
-                     CHECK_ASCENDING_TIMESTAMP;
-                     CHECK_VOLUME;
-                     CHECK_OPEN_HIGH_LOW_CLOSE;
-                  }
-               }
+               }         
             }
-            else if( !history->openInterest )
+            else if( (history->volume) && !(history->openInterest) )
             {
-               /* Loop #3 - Open,High,Low,Close */
+               /* Loop #4 - Close,Volume */
                defaultLoop = 0;
                prevTimestamp = &history->timestamp[0];
                for( i=1; i < history->nbBars; i++ )
                {
                   CHECK_ASCENDING_TIMESTAMP;
-                  CHECK_OPEN_HIGH_LOW_CLOSE;
+                  CHECK_CLOSE_ONLY;
+                  CHECK_VOLUME;
                }
-            }         
+            }
+            else if( !(history->volume) && !(history->openInterest) )
+            {
+               /* Loop #5 - Close */
+               defaultLoop = 0;
+               prevTimestamp = &history->timestamp[0];
+               for( i=1; i < history->nbBars; i++ )
+               {
+                  CHECK_ASCENDING_TIMESTAMP;
+                  CHECK_CLOSE_ONLY;
+               }
+            }
          }
-         else if( (history->volume) && !(history->openInterest) )
+   
+         if( defaultLoop )
          {
-            /* Loop #4 - Close,Volume */
-            defaultLoop = 0;
             prevTimestamp = &history->timestamp[0];
             for( i=1; i < history->nbBars; i++ )
             {
                CHECK_ASCENDING_TIMESTAMP;
-               CHECK_CLOSE_ONLY;
-               CHECK_VOLUME;
+               if( history->volume ) CHECK_VOLUME;
+               if( history->openInterest ) CHECK_OPEN_INTEREST;
+               if( history->close ) CHECK_CLOSE_ONLY;
+               /* !!! More test can be added here */
             }
-         }
-         else if( !(history->volume) && !(history->openInterest) )
-         {
-            /* Loop #5 - Close */
-            defaultLoop = 0;
-            prevTimestamp = &history->timestamp[0];
-            for( i=1; i < history->nbBars; i++ )
-            {
-               CHECK_ASCENDING_TIMESTAMP;
-               CHECK_CLOSE_ONLY;
-            }
-         }
+         }      
       }
-
-      if( defaultLoop )
-      {
-         prevTimestamp = &history->timestamp[0];
-         for( i=1; i < history->nbBars; i++ )
-         {
-            CHECK_ASCENDING_TIMESTAMP;
-            if( history->volume ) CHECK_VOLUME;
-            if( history->openInterest ) CHECK_OPEN_INTEREST;
-            if( history->close ) CHECK_CLOSE_ONLY;
-            /* !!! More test can be added here */
-         }
-      }      
    }
 
    /* All fine! */

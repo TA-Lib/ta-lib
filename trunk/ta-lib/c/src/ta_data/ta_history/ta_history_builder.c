@@ -487,7 +487,7 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
                               start?&startRounded:NULL, 
                               end?&endRounded:NULL,
                               fieldToAlloc, *history,
-                              NULL, NULL );
+                              flags );
    if( retCode != TA_SUCCESS )
    {
       TA_HistoryFree( *history );
