@@ -38,6 +38,7 @@
  *  MF       Mario Fortier
  *  ST       Steve Thames (steve@softlife.com)
  *  AC       Angelo Ciceri
+ *  RM       Robert Meier (talib@meierlim.com)
  *
  * Change history:
  *
@@ -52,6 +53,7 @@
  *  022904 MF    Add TA_GetLookback
  *  030604 MF    Add generation of "ta_func.swg"
  *  082004 AC    Add generation of candlestick functions declaration
+ *  010405 RM    Change createProjTemplate to work with VS03 and VS05
  */
 
 /* Description:
@@ -2112,7 +2114,7 @@ static int createProjTemplate( FileHandle *in, FileHandle *out )
 
          fputs( gTempBuf3, outFile );
 
-         if( !strstr( gTempBuf3, "Filter=\"\">" ) )
+         if( !strstr( gTempBuf3, ">" ) )
             continue;            
 
          skipSection = 1;
