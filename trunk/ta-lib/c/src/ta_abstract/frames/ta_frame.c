@@ -141,6 +141,22 @@ TA_RetCode TA_EMA_FramePP( const TA_ParamHolderPriv *params,
             outNbElement, 
             params->out[0].data.outReal /*  outReal_0 */ );
 }
+TA_RetCode TA_KAMA_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+
+{
+   return TA_KAMA(
+             startIdx,
+             endIdx,
+             params->in[0].data.inReal, /* inReal_0 */
+             params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
+             outBegIdx, 
+             outNbElement, 
+             params->out[0].data.outReal /*  outReal_0 */ );
+}
 TA_RetCode TA_MA_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
                           TA_Integer            endIdx,

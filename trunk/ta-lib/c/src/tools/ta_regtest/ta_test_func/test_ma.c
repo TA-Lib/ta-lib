@@ -105,6 +105,22 @@ static ErrorNumber do_test_ma( const TA_History *history,
 
 static TA_Test tableTest[] =
 {
+   /***************************/
+   /*  KAMA TEST - Classic    */
+   /***************************/
+
+   /* No output value. */
+   { 0, 0, 1, 1,  14, TA_MA_KAMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 0, 0, 0, 0},
+#ifndef TA_FUNC_NO_RANGE_CHECK
+   { 0, 0, 0, 251,  0, TA_MA_KAMA, TA_COMPATIBILITY_DEFAULT, TA_BAD_PARAM, 0, 0, 0, 0 },
+#endif
+
+   /* Test with period 10 */
+   { 1, 0, 0, 251, 10, TA_MA_KAMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  92.6575, 10, 252-10 }, /* First Value */
+   { 0, 0, 0, 251, 10, TA_MA_KAMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,  92.7783, 10, 252-10 },
+   { 0, 0, 0, 251, 10, TA_MA_KAMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-11, 109.294, 10, 252-10 }, /* Last Value */
+
+
    /*****************************************/
    /*   SMA TEST - CLASSIC/METASTOCK        */
    /*****************************************/
@@ -115,11 +131,6 @@ static TA_Test tableTest[] =
 #endif
 
    /* Test suppose to succeed. */
-   { 1, 0, 0, 251,  1, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,   91.50,  0,  252-0 }, /* First Value */
-   { 0, 0, 0, 251,  1, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,   94.81,  0,  252-0 },
-   { 0, 0, 0, 251,  1, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 250,  108.75,  0,  252-0 },
-   { 0, 0, 0, 251,  1, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 251,  107.87,  0,  252-0 }, /* Last Value */
-
    { 1, 0, 0, 251,  2, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,   93.15,  1,  252-1  }, /* First Value */
    { 0, 0, 0, 251,  2, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,   94.59,  1,  252-1  },
    { 0, 0, 0, 251,  2, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   2,   94.73,  1,  252-1  },
@@ -133,17 +144,12 @@ static TA_Test tableTest[] =
    { 0, 0, 0, 251, 30, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 222, 108.42,  29,  252-29 }, /* Last Value */
 
    /* Same test and result as TA_COMPATIBILITY_DEFAULT */
-   { 1, 0, 0, 251,  1, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,   91.50,  0,  252-0 }, /* First Value */
-   { 0, 0, 0, 251,  1, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,   94.81,  0,  252-0 },
-   { 0, 0, 0, 251,  1, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 250,  108.75,  0,  252-0 },
-   { 0, 0, 0, 251,  1, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 251,  107.87,  0,  252-0 }, /* Last Value */
-
    { 1, 0, 0, 251,  2, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,   93.15,  1,  252-1  }, /* First Value */
    { 0, 0, 0, 251,  2, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,   94.59,  1,  252-1  },
    { 0, 0, 0, 251,  2, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   2,   94.73,  1,  252-1  },
    { 0, 0, 0, 251,  2, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 250,  108.31,  1,  252-1  }, /* Last Value */
 
-   { 0, 0, 0, 251, 30, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  90.42,  29,  252-29 }, /* First Value */
+   { 1, 0, 0, 251, 30, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  90.42,  29,  252-29 }, /* First Value */
    { 0, 0, 0, 251, 30, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  90.21,  29,  252-29 },
    { 0, 0, 0, 251, 30, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   2,  89.96,  29,  252-29 },
    { 0, 0, 0, 251, 30, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,  29,  87.12,  29,  252-29 },
@@ -161,17 +167,9 @@ static TA_Test tableTest[] =
 #endif
 
    /* One value tests. */
-   { 0, 0, 0,   0,  1, TA_MA_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  91.50,   0, 1 }, /* First Value */
-
-   { 0, 0, 1,   1,  1, TA_MA_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  94.81,   1, 1 },
-   { 0, 0, 251, 251,  1, TA_MA_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0, 107.87, 251, 1 }, /* Last Value */
    { 0, 0, 2,   2,  2, TA_MA_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  94.52,   2, 1 },
 
-   /* Misc tests: period 1, 2, 30 */
-   { 1, 0, 0, 251,  1, TA_MA_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,   91.50,  0,  252-0 }, /* First Value */
-   { 0, 0, 0, 251,  1, TA_MA_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,   94.81,  0,  252-0 },
-   { 0, 0, 0, 251,  1, TA_MA_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 250,  108.75,  0,  252-0 },
-   { 0, 0, 0, 251,  1, TA_MA_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 251,  107.87,  0,  252-0 }, /* Last Value */
+   /* Misc tests: period 2, 30 */
 
    { 1, 0, 0, 251,  2, TA_MA_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,   93.71,  1,  252-1  }, /* First Value */
    { 0, 0, 0, 251,  2, TA_MA_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,   94.52,  1,  252-1  },
@@ -196,17 +194,9 @@ static TA_Test tableTest[] =
 #endif
 
    /* One value tests. */
-   { 0, 0, 0,   0,  1, TA_MA_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 1 }, /* First Value */
-   { 0, 0, 1,   1,  1, TA_MA_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  94.81,   1, 1 },
-   { 0, 0, 251, 251,  1, TA_MA_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0, 107.87, 251, 1 }, /* Last Value */
    { 0, 0, 2,   2,  2, TA_MA_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  94.52,   2, 1 },
 
-   /* Misc tests: period 1, 2, 30 */
-   { 1, 0, 0, 251,  1, TA_MA_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,   91.50,  0,  252-0 }, /* First Value */
-   { 0, 0, 0, 251,  1, TA_MA_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,   94.81,  0,  252-0 },
-   { 0, 0, 0, 251,  1, TA_MA_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 250,  108.75,  0,  252-0 },
-   { 0, 0, 0, 251,  1, TA_MA_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 251,  107.87,  0,  252-0 }, /* Last Value */
-
+   /* Misc tests: period 2, 30 */
    { 1, 0, 0, 251,  2, TA_MA_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,   93.71,  1,  252-1  }, /* First Value */
    { 0, 0, 0, 251,  2, TA_MA_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,   94.52,  1,  252-1  },
    { 0, 0, 0, 251,  2, TA_MA_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   2,   94.85,  1,  252-1  },
@@ -223,24 +213,13 @@ static TA_Test tableTest[] =
    /*   EMA TEST - Classic        */
    /*******************************/
 
-
    /* No output value. */
    { 0, 0, 1, 1,  14, TA_MA_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 0, 0, 0, 0},
 #ifndef TA_FUNC_NO_RANGE_CHECK
    { 0, 0, 0, 251,  0, TA_MA_EMA, TA_COMPATIBILITY_DEFAULT, TA_BAD_PARAM, 0, 0, 0, 0 },
 #endif
 
-   /* One value tests. */
-   { 0, 0, 0,   0,  1, TA_MA_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  91.50,   0, 1 }, /* First Value */
-   { 0, 0, 1,   1,  1, TA_MA_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  94.81,   1, 1 },
-   { 0, 0, 251, 251,  1, TA_MA_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0, 107.87, 251, 1 }, /* Last Value */
-   { 0, 0, 2,   2,  2, TA_MA_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  94.59,   2, 1 },
-
-   /* Misc tests: period 1, 2, 10 */
-   { 1, 0, 0, 251,  1, TA_MA_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  91.50, 0, 252 }, /* First Value */
-   { 0, 0, 0, 251,  1, TA_MA_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,  94.81, 0, 252 },
-   { 0, 0, 0, 251,  1, TA_MA_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 251, 107.87, 0, 252 }, /* Last Value */
-
+   /* Misc tests: period 2, 10 */
    { 1, 0, 0, 251,  2, TA_MA_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  93.15, 1, 251 }, /* First Value */
    { 0, 0, 0, 251,  2, TA_MA_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,  93.96, 1, 251 },
    { 0, 0, 0, 251,  2, TA_MA_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 250, 108.21, 1, 251 }, /* Last Value */
@@ -261,16 +240,7 @@ static TA_Test tableTest[] =
    { 0, 0, 0, 251,  0, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_BAD_PARAM, 0, 0, 0, 0 },
 #endif
 
-   /* One value tests. */
-   { 0, 0, 0,   0,  1, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 1 }, /* First Value */
-   { 0, 0, 1,   1,  1, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  94.81,   1, 1 },
-   { 0, 0, 251, 251,  1, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0, 107.87, 251, 1 }, /* Last Value */
-
-   /* Test with 1 unstable price bar. Test for period 1, 2, 10 */
-   { 1, 1, 0, 251,  1, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  94.81, 1, 252-1 }, /* First Value */
-   { 0, 1, 0, 251,  1, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  94.37, 1, 252-1 },
-   { 0, 1, 0, 251,  1, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 251-1, 107.87, 1, 252-1 }, /* Last Value */
-
+   /* Test with 1 unstable price bar. Test for period 2, 10 */
    { 1, 1, 0, 251,  2, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  94.15, 1+1, 251-1 }, /* First Value */
    { 0, 1, 0, 251,  2, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  94.78, 1+1, 251-1 },
    { 0, 1, 0, 251,  2, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 250-1, 108.21, 1+1, 251-1 }, /* Last Value */
@@ -280,11 +250,7 @@ static TA_Test tableTest[] =
    { 0, 1, 0, 251,  10, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   20,  86.23,  9+1, 243-1 },
    { 0, 1, 0, 251,  10, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 242-1, 108.97,  9+1, 243-1 }, /* Last Value */
 
-   /* Test with 2 unstable price bar. Test for period 1, 2, 10 */
-   { 0, 2, 0, 251,  1, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  94.37, 0+2, 252-2 }, /* First Value */
-   { 0, 2, 0, 251,  1, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  95.09, 0+2, 252-2 },
-   { 0, 2, 0, 251,  1, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 251-2, 107.87, 0+2, 252-2 }, /* Last Value */
-
+   /* Test with 2 unstable price bar. Test for period 2, 10 */
    { 0, 2, 0, 251,  2, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  94.78, 1+2, 251-2 }, /* First Value */
    { 0, 2, 0, 251,  2, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  94.11, 1+2, 251-2 },
    { 0, 2, 0, 251,  2, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 250-2, 108.21, 1+2, 251-2 }, /* Last Value */
@@ -293,11 +259,6 @@ static TA_Test tableTest[] =
    { 0, 2, 0, 251,  10, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,    1,  94.79,  9+2, 243-2 },
    { 0, 2, 0, 251,  10, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   20,  86.39,  9+2, 243-2 },
    { 0, 2, 0, 251,  10, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,  242-2, 108.97,  9+2, 243-2 }, /* Last Value */
-
-   /* Test some limit case with unstable period. */
-   { 0, 1,   0,   0,  1, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 0 }, /* no data */
-   { 0, 252, 0,   0,  1, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 0 }, /* no data */
-   { 0, 300, 0,   0,  1, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 0 }, /* no data */
 
    /* Last 3 value with 1 unstable, period 10 */
    { 0, 1, 249, 251,  10, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, 109.22, 249, 3 },
@@ -319,21 +280,12 @@ static TA_Test tableTest[] =
    { 0, 0, 0, 251,  0, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_BAD_PARAM, 0, 0, 0, 0 },
 #endif
 
-   /* One value tests. */
-   { 0, 0, 0,   0,  1, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 1 }, /* First Value */
-   { 0, 0, 1,   1,  1, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  94.815,   1, 1 },
-   { 0, 0, 251, 251,  1, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0, 107.87, 251, 1 }, /* Last Value */
-
    /* Test with period 14 */
    { 0, 0, 0, 251, 14, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  83.785, 26, 252-26 }, /* First Value */
    { 0, 0, 0, 251, 14, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  84.768, 26, 252-26 },
    { 0, 0, 0, 251, 14, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-27, 109.467, 26, 252-26 }, /* Last Value */
 
-   /* Test with 1 unstable price bar. Test for period 1, 2, 14 */
-   { 1, 1, 0, 251,  1, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  94.37, 2, 252-2 }, /* First Value */
-   { 0, 1, 0, 251,  1, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  95.095, 2, 252-2 },
-   { 0, 1, 0, 251,  1, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 251-2, 107.87, 2, 252-2 }, /* Last Value */
-
+   /* Test with 1 unstable price bar. Test for period 2, 14 */
    { 1, 1, 0, 251,  2, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  93.960, 4, 252-4 }, /* First Value */
    { 0, 1, 0, 251,  2, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  94.522, 4, 252-4 },
    { 0, 1, 0, 251,  2, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-5, 107.94, 4, 252-4 }, /* Last Value */
@@ -345,11 +297,6 @@ static TA_Test tableTest[] =
    { 0, 1, 0, 251,  14, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   20,  89.83,  (13*2)+2, 252-((13*2)+2) },
    { 0, 1, 0, 251,  14, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-((13*2)+2+1), 109.4676, (13*2)+2, 252-((13*2)+2) }, /* Last Value */
 
-   /* Test some limit case with unstable period. */
-   { 0, 1,   0,   0,  1, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 0 }, /* no data */
-   { 0, 252, 0,   0,  1, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 0 }, /* no data */
-   { 0, 300, 0,   0,  1, TA_MA_DEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 0 }, /* no data */
-
    /*******************************/
    /*  TEMA TEST - Metastock      */
    /*******************************/
@@ -359,21 +306,10 @@ static TA_Test tableTest[] =
    { 0, 0, 0, 251,  0, TA_MA_TEMA, TA_COMPATIBILITY_METASTOCK, TA_BAD_PARAM, 0, 0, 0, 0 },
 #endif
 
-   /* One value tests. */
-   { 0, 0, 0,   0,  1, TA_MA_TEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 1 }, /* First Value */
-   { 0, 0, 1,   1,  1, TA_MA_TEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  94.815,   1, 1 },
-   { 0, 0, 251, 251,  1, TA_MA_TEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0, 107.87, 251, 1 }, /* Last Value */
-
    /* Test with period 14 */
    { 1, 0, 0, 251, 14, TA_MA_TEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  84.721, 39, 252-39 }, /* First Value */
    { 0, 0, 0, 251, 14, TA_MA_TEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  84.089, 39, 252-39 },
    { 0, 0, 0, 251, 14, TA_MA_TEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-40, 108.418, 39, 252-39 }, /* Last Value */
-
-   /* Test with 1 unstable price bar. Test for period 1 */
-   { 1, 1, 0, 251,  1, TA_MA_TEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  95.095, 3, 252-3 }, /* First Value */
-   { 0, 1, 0, 251,  1, TA_MA_TEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  93.78, 3, 252-3 },
-   { 0, 1, 0, 251,  1, TA_MA_TEMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 251-3, 107.87, 3, 252-3 }, /* Last Value */
-
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
@@ -463,6 +399,9 @@ static ErrorNumber do_test_ma( const TA_History *history,
    /* Build the input. */
    setInputBuffer( 0, history->close, history->nbBars );
    setInputBuffer( 1, history->close, history->nbBars );
+
+   /* Re-initialize all the unstable period to zero. */
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
    
    /* Set the unstable period requested for that test. */
    retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, test->unstablePeriod );
@@ -550,6 +489,10 @@ static ErrorNumber do_test_ma( const TA_History *history,
       temp = TA_TEMA_Lookback( test->optInTimePeriod_0 );
       break;
 
+   case TA_MA_KAMA:
+      temp = TA_KAMA_Lookback( test->optInTimePeriod_0 );
+      break;
+
    default:
       return TA_TEST_TFRR_BAD_MA_TYPE;
    }
@@ -574,6 +517,11 @@ static ErrorNumber do_test_ma( const TA_History *history,
       case TA_MA_EMA:
          errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_EMA,
+                              (void *)&testParam, 1, 0 );
+         break;
+      case TA_MA_KAMA:
+         errNb = doRangeTest( rangeTestFunction, 
+                              TA_FUNC_UNST_KAMA,
                               (void *)&testParam, 1, 0 );
          break;
       default:

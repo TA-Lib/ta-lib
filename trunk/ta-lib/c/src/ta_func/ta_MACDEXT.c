@@ -63,9 +63,9 @@
    #include "ta_utility.h"
 #endif
 
-int TA_MACDEXT_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
+int TA_MACDEXT_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
                          TA_Integer    optInFastMAType_1,
-                         TA_Integer    optInSlowPeriod_2, /* From 1 to TA_INTEGER_MAX */
+                         TA_Integer    optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
                          TA_Integer    optInSlowMAType_3,
                          TA_Integer    optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
                          TA_Integer    optInSignalMAType_5 ) 
@@ -94,13 +94,13 @@ int TA_MACDEXT_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInFastPeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
  *    Number of period for the fast MA
  * 
  * optInFastMAType_1:
  *    Type of Moving Average for fast MA
  * 
- * optInSlowPeriod_2:(From 1 to TA_INTEGER_MAX)
+ * optInSlowPeriod_2:(From 2 to TA_INTEGER_MAX)
  *    Number of period for the slow MA
  * 
  * optInSlowMAType_3:
@@ -118,9 +118,9 @@ int TA_MACDEXT_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGE
 TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
                        TA_Integer    endIdx,
                        const TA_Real inReal_0[],
-                       TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MAX */
+                       TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
                        TA_Integer    optInFastMAType_1,
-                       TA_Integer    optInSlowPeriod_2, /* From 1 to TA_INTEGER_MAX */
+                       TA_Integer    optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
                        TA_Integer    optInSlowMAType_3,
                        TA_Integer    optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
                        TA_Integer    optInSignalMAType_5,
@@ -154,23 +154,23 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
    /* min/max are checked for optInFastPeriod_0. */
    if( optInFastPeriod_0 == TA_INTEGER_DEFAULT )
       optInFastPeriod_0 = 12;
-   else if( (optInFastPeriod_0 < 1) || (optInFastPeriod_0 > 2147483647) )
+   else if( (optInFastPeriod_0 < 2) || (optInFastPeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( optInFastMAType_1 == TA_INTEGER_DEFAULT )
       optInFastMAType_1 = 0;
-   else if( (optInFastMAType_1 < 0) || (optInFastMAType_1 > 5) )
+   else if( (optInFastMAType_1 < 0) || (optInFastMAType_1 > 6) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowPeriod_2. */
    if( optInSlowPeriod_2 == TA_INTEGER_DEFAULT )
       optInSlowPeriod_2 = 26;
-   else if( (optInSlowPeriod_2 < 1) || (optInSlowPeriod_2 > 2147483647) )
+   else if( (optInSlowPeriod_2 < 2) || (optInSlowPeriod_2 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( optInSlowMAType_3 == TA_INTEGER_DEFAULT )
       optInSlowMAType_3 = 0;
-   else if( (optInSlowMAType_3 < 0) || (optInSlowMAType_3 > 5) )
+   else if( (optInSlowMAType_3 < 0) || (optInSlowMAType_3 > 6) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSignalPeriod_4. */
@@ -181,7 +181,7 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
 
    if( optInSignalMAType_5 == TA_INTEGER_DEFAULT )
       optInSignalMAType_5 = 0;
-   else if( (optInSignalMAType_5 < 0) || (optInSignalMAType_5 > 5) )
+   else if( (optInSignalMAType_5 < 0) || (optInSignalMAType_5 > 6) )
       return TA_BAD_PARAM;
 
    if( outRealMACD_0 == NULL )

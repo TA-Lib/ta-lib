@@ -28,6 +28,7 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_BBANDS.c \ 
           ../../../../../src/ta_func/ta_DEMA.c \ 
           ../../../../../src/ta_func/ta_EMA.c \ 
+          ../../../../../src/ta_func/ta_KAMA.c \ 
           ../../../../../src/ta_func/ta_MA.c \ 
           ../../../../../src/ta_func/ta_MIDPRICE.c \ 
           ../../../../../src/ta_func/ta_MIDPOINT.c \ 

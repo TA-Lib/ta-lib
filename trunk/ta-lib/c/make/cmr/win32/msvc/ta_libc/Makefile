@@ -114,6 +114,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_BBANDS.c \
 		..\..\..\..\..\src\ta_func\ta_DEMA.c \
 		..\..\..\..\..\src\ta_func\ta_EMA.c \
+		..\..\..\..\..\src\ta_func\ta_KAMA.c \
 		..\..\..\..\..\src\ta_func\ta_MA.c \
 		..\..\..\..\..\src\ta_func\ta_MIDPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_MIDPOINT.c \
@@ -255,6 +256,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_BBANDS.obj \
 		..\..\..\..\..\temp\cmr\ta_DEMA.obj \
 		..\..\..\..\..\temp\cmr\ta_EMA.obj \
+		..\..\..\..\..\temp\cmr\ta_KAMA.obj \
 		..\..\..\..\..\temp\cmr\ta_MA.obj \
 		..\..\..\..\..\temp\cmr\ta_MIDPRICE.obj \
 		..\..\..\..\..\temp\cmr\ta_MIDPOINT.obj \
@@ -441,6 +443,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_BBANDS.obj
 	-del ..\..\..\..\..\temp\cmr\ta_DEMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_EMA.obj
+	-del ..\..\..\..\..\temp\cmr\ta_KAMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MIDPRICE.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MIDPOINT.obj
@@ -778,6 +781,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_EMA.obj: ..\..\..\..\..\src\ta_func\ta_EMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_EMA.obj ..\..\..\..\..\src\ta_func\ta_EMA.c
+
+..\..\..\..\..\temp\cmr\ta_KAMA.obj: ..\..\..\..\..\src\ta_func\ta_KAMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_KAMA.obj ..\..\..\..\..\src\ta_func\ta_KAMA.c
 
 ..\..\..\..\..\temp\cmr\ta_MA.obj: ..\..\..\..\..\src\ta_func\ta_MA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_MA.obj ..\..\..\..\..\src\ta_func\ta_MA.c

@@ -184,8 +184,7 @@ static TA_RetCode rangeTestFunction(
    switch( testParam->test->theFunction )
    {
    case TA_TRIX_TEST:
-      retCode = TA_TRIX(
-                         startIdx,
+      retCode = TA_TRIX( startIdx,
                          endIdx,
                          testParam->close,
                          testParam->test->optInTimePeriod_0,
@@ -225,8 +224,7 @@ static ErrorNumber do_test_per_ema( const TA_History *history,
    switch( test->theFunction )
    {
    case TA_TRIX_TEST:
-      retCode = TA_TRIX(
-                         test->startIdx,
+      retCode = TA_TRIX( test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
                          test->optInTimePeriod_0,
@@ -258,8 +256,7 @@ static ErrorNumber do_test_per_ema( const TA_History *history,
    switch( test->theFunction )
    {
    case TA_TRIX_TEST:
-      retCode = TA_TRIX(
-                         test->startIdx,
+      retCode = TA_TRIX( test->startIdx,
                          test->endIdx,
                          gBuffer[1].in,
                          test->optInTimePeriod_0,
@@ -295,8 +292,7 @@ static ErrorNumber do_test_per_ema( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest(
-                           rangeTestFunction, 
+      errNb = doRangeTest( rangeTestFunction, 
                            TA_FUNC_UNST_EMA,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )

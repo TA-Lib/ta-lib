@@ -271,6 +271,7 @@ static int testTAFunction_ALL( TA_History *history )
       printf( "done.\n" ); \
       }
 
+   DO_TEST( test_func_ma,      "All Moving Averages" );
    DO_TEST( test_func_per_hlcv,"MFI" );
    DO_TEST( test_func_rsi,     "RSI" );
    DO_TEST( test_func_per_ema, "TRIX" );
@@ -281,7 +282,6 @@ static int testTAFunction_ALL( TA_History *history )
    DO_TEST( test_func_mom_roc, "MOM,ROC,ROCP,ROCR,ROCR100" );
    DO_TEST( test_func_sar,     "Parabolic SAR" );
    DO_TEST( test_func_adx,     "ADX,ADXR,DI,DM,DX" );
-   DO_TEST( test_func_ma,      "All Moving Averages" );
    DO_TEST( test_func_trange,  "TRANGE,ATR" );
    DO_TEST( test_func_po,      "PO,APO" );
    DO_TEST( test_func_stddev,  "STDDEV,VAR" );

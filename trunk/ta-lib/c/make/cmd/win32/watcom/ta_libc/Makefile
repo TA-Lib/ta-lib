@@ -114,6 +114,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c &
 		..\..\..\..\..\src\ta_func\ta_BBANDS.c &
 		..\..\..\..\..\src\ta_func\ta_DEMA.c &
 		..\..\..\..\..\src\ta_func\ta_EMA.c &
+		..\..\..\..\..\src\ta_func\ta_KAMA.c &
 		..\..\..\..\..\src\ta_func\ta_MA.c &
 		..\..\..\..\..\src\ta_func\ta_MIDPRICE.c &
 		..\..\..\..\..\src\ta_func\ta_MIDPOINT.c &
@@ -255,6 +256,7 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj &
 		..\..\..\..\..\temp\cmd\ta_BBANDS.obj &
 		..\..\..\..\..\temp\cmd\ta_DEMA.obj &
 		..\..\..\..\..\temp\cmd\ta_EMA.obj &
+		..\..\..\..\..\temp\cmd\ta_KAMA.obj &
 		..\..\..\..\..\temp\cmd\ta_MA.obj &
 		..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj &
 		..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj &
@@ -423,6 +425,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_BBANDS.obj
 	-del ..\..\..\..\..\temp\cmd\ta_DEMA.obj
 	-del ..\..\..\..\..\temp\cmd\ta_EMA.obj
+	-del ..\..\..\..\..\temp\cmd\ta_KAMA.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MA.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj
@@ -760,6 +763,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_EMA.obj: ..\..\..\..\..\src\ta_func\ta_EMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\ta_EMA.obj ..\..\..\..\..\src\ta_func\ta_EMA.c
+
+..\..\..\..\..\temp\cmd\ta_KAMA.obj: ..\..\..\..\..\src\ta_func\ta_KAMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\ta_KAMA.obj ..\..\..\..\..\src\ta_func\ta_KAMA.c
 
 ..\..\..\..\..\temp\cmd\ta_MA.obj: ..\..\..\..\..\src\ta_func\ta_MA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\ta_MA.obj ..\..\..\..\..\src\ta_func\ta_MA.c

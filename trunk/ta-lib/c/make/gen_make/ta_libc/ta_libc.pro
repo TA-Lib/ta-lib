@@ -114,6 +114,7 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_BBANDS.c \
           ../../../../../src/ta_func/ta_DEMA.c \
           ../../../../../src/ta_func/ta_EMA.c \
+          ../../../../../src/ta_func/ta_KAMA.c \
           ../../../../../src/ta_func/ta_MA.c \
           ../../../../../src/ta_func/ta_MIDPRICE.c \
           ../../../../../src/ta_func/ta_MIDPOINT.c \

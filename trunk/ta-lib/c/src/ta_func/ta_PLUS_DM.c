@@ -60,7 +60,7 @@
    #include "ta_utility.h"
 #endif
 
-int TA_PLUS_DM_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+int TA_PLUS_DM_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -80,7 +80,7 @@ int TA_PLUS_DM_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTE
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
  *    Number of period
  * 
  * 
@@ -90,7 +90,7 @@ TA_RetCode TA_PLUS_DM( TA_Integer    startIdx,
                        TA_Integer    endIdx,
                        const TA_Real inHigh_0[],
                        const TA_Real inLow_0[],
-                       TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                       TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
                        TA_Real       outReal_0[] )
@@ -121,7 +121,7 @@ TA_RetCode TA_PLUS_DM( TA_Integer    startIdx,
    /* min/max are checked for optInTimePeriod_0. */
    if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 14;
-   else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
+   else if( (optInTimePeriod_0 < 2) || (optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )

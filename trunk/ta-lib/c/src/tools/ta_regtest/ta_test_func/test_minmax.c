@@ -155,7 +155,7 @@ static TA_Test tableTest[] =
    { 0, TA_MIN_TEST, 20,  21, 14, TA_SUCCESS, 0, 89.345,   20, 2 },
    { 0, TA_MIN_TEST, 20,  21, 14, TA_SUCCESS, 1, 87.94,    20, 2 },
 
-   /* Misc tests: 1, 2 and 14 periods */
+   /* Misc tests: 2 and 14 periods */
    { 1, TA_MIN_TEST, 0, 251, 14, TA_SUCCESS,      0, 91.125,  13,  252-13 }, /* First Value */
    { 0, TA_MIN_TEST, 0, 251, 14, TA_SUCCESS,      1, 91.125,  13,  252-13 },
    { 0, TA_MIN_TEST, 0, 251, 14, TA_SUCCESS,      2, 91.125,  13,  252-13 },
@@ -170,20 +170,9 @@ static TA_Test tableTest[] =
    { 0, TA_MIN_TEST, 0, 251, 2, TA_SUCCESS,      4, 94.5,   1,  252-1 },
    { 0, TA_MIN_TEST, 0, 251, 2, TA_SUCCESS, 252-2, 109.19,  1,  252-1 },  /* Last Value */
 
-   { 0, TA_MIN_TEST, 0, 251, 1, TA_SUCCESS,      0, 92.5,  0,  252 }, /* First Value */
-   { 0, TA_MIN_TEST, 0, 251, 1, TA_SUCCESS,      1, 91.5,  0,  252 },
-   { 0, TA_MIN_TEST, 0, 251, 1, TA_SUCCESS,      2, 95.155,  0,  252 },
-   { 0, TA_MIN_TEST, 0, 251, 1, TA_SUCCESS,      3, 93.97,  0,  252 },
-   { 0, TA_MIN_TEST, 0, 251, 1, TA_SUCCESS,      4, 95.5,   0,  252 },
-   { 0, TA_MIN_TEST, 0, 251, 1, TA_SUCCESS,  252-2, 109.69,  0,  252 },
-   { 0, TA_MIN_TEST, 0, 251, 1, TA_SUCCESS,  252-1, 109.19,  0,  252 },  /* Last Value */
-
    /**********************/
    /*      MAX TEST      */
    /**********************/
-
-   /* No output value. */
-   { 0, TA_MAX_TEST, 1, 1,  14, TA_SUCCESS, 0, 0, 0, 0},
 
    /* One value tests. */
    { 0, TA_MAX_TEST, 14,  14, 14, TA_SUCCESS, 0, 98.815,  14, 1},
@@ -220,14 +209,6 @@ static TA_Test tableTest[] =
    { 0, TA_MAX_TEST, 0, 251, 2, TA_SUCCESS,      5, 95.0,  1,  252-1 },
    { 0, TA_MAX_TEST, 0, 251, 2, TA_SUCCESS, 252-2, 109.69, 1,  252-1 },  /* Last Value */
 
-   { 0, TA_MAX_TEST, 0, 251, 1, TA_SUCCESS,      0, 92.5,   0,  252 }, /* First Value */
-   { 0, TA_MAX_TEST, 0, 251, 1, TA_SUCCESS,      1, 91.5,   0,  252 },
-   { 0, TA_MAX_TEST, 0, 251, 1, TA_SUCCESS,      2, 95.155, 0,  252 },
-   { 0, TA_MAX_TEST, 0, 251, 1, TA_SUCCESS,      3, 93.97,  0,  252 },
-   { 0, TA_MAX_TEST, 0, 251, 1, TA_SUCCESS,      4, 95.5,   0,  252 },
-   { 0, TA_MAX_TEST, 0, 251, 1, TA_SUCCESS,  252-2, 109.69,  0,  252 },
-   { 0, TA_MAX_TEST, 0, 251, 1, TA_SUCCESS,  252-1, 109.19,  0,  252 },  /* Last Value */
-
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
@@ -238,10 +219,10 @@ static TA_Real testSerie3[]  = {0,0,0,1,2,0,0,0};
 static TA_Real testSerie4[]  = {0,0,0,2,1,0,0,0};
 static TA_Real testSerie5[]  = {2,0,0,0,0,0,0,0};
 static TA_Real testSerie6[]  = {0,0,0,0,0,0,0,1};
-static TA_Real testSerie7[]  = {1};
-static TA_Real testSerie8[]  = {2,2};
+static TA_Real testSerie7[]  = {-3,2};
+static TA_Real testSerie8[]  = {2,-2};
 static TA_Real testSerie9[]  = {4,2,3};
-static TA_Real testSerie10[] = {3,3,3,2,1,0,2};
+static TA_Real testSerie10[] = {3,3,-3,2,-1,0,2};
 
 static TA_RefTest tableRefTest[] =
 {
@@ -251,8 +232,8 @@ static TA_RefTest tableRefTest[] =
   {testSerie4, sizeof(testSerie4)/sizeof(TA_Real)},
   {testSerie5, sizeof(testSerie5)/sizeof(TA_Real)},
   {testSerie6, sizeof(testSerie6)/sizeof(TA_Real)},
-  {testSerie7, sizeof(testSerie6)/sizeof(TA_Real)},
-  {testSerie8, sizeof(testSerie6)/sizeof(TA_Real)},
+  {testSerie7, sizeof(testSerie7)/sizeof(TA_Real)},
+  {testSerie8, sizeof(testSerie8)/sizeof(TA_Real)},
   {testSerie9, sizeof(testSerie10)/sizeof(TA_Real)}
 };
 
@@ -320,8 +301,7 @@ static TA_RetCode rangeTestFunction(
 
    if( testParam->test->theFunction == TA_MIN_TEST )
    {
-      retCode = TA_MIN(
-                        startIdx,
+      retCode = TA_MIN( startIdx,
                         endIdx,
                         testParam->close,
                         testParam->test->optInTimePeriod_0,                        
@@ -332,8 +312,7 @@ static TA_RetCode rangeTestFunction(
    }
    else if( testParam->test->theFunction == TA_MAX_TEST )
    {
-      retCode = TA_MAX(
-                        startIdx,
+      retCode = TA_MAX( startIdx,
                         endIdx,
                         testParam->close,
                         testParam->test->optInTimePeriod_0,
@@ -369,8 +348,7 @@ static ErrorNumber do_test( const TA_History *history,
    /* Make a simple first call. */
    if( test->theFunction == TA_MIN_TEST )
    {
-      retCode = TA_MIN(
-                        test->startIdx,
+      retCode = TA_MIN( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
                         test->optInTimePeriod_0,                        
@@ -380,8 +358,7 @@ static ErrorNumber do_test( const TA_History *history,
    }
    else if( test->theFunction == TA_MAX_TEST )
    {
-      retCode = TA_MAX(
-                        test->startIdx,
+      retCode = TA_MAX( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
                         test->optInTimePeriod_0,                        
@@ -404,8 +381,7 @@ static ErrorNumber do_test( const TA_History *history,
    CLEAR_EXPECTED_VALUE(0);
    if( test->theFunction == TA_MIN_TEST )
    {
-      retCode = TA_MIN(
-                        test->startIdx,
+      retCode = TA_MIN( test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
                         test->optInTimePeriod_0,                        
@@ -415,8 +391,7 @@ static ErrorNumber do_test( const TA_History *history,
    }
    else if( test->theFunction == TA_MAX_TEST )
    {
-      retCode = TA_MAX(
-                        test->startIdx,
+      retCode = TA_MAX( test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
                         test->optInTimePeriod_0,
@@ -447,8 +422,7 @@ static ErrorNumber do_test( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest(
-                           rangeTestFunction, 
+      errNb = doRangeTest( rangeTestFunction, 
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )
@@ -654,7 +628,7 @@ static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement )
    /* Do a systematic tests, even for failure cases. */
    for( testNb=0; testNb <= 1; testNb++ ) /* 0=TA_MIN, 1=TA_MAX */
    {      
-      for( period=1; period <= nbElement; period++ )
+      for( period=2; period <= nbElement; period++ )
       {
          for( startIdx=0; startIdx < nbElement; startIdx++ )
          {

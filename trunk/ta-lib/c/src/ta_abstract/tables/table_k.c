@@ -22,7 +22,33 @@
  *
  ****************************************************************************/
 
-/* None */
+/* KAMA BEGIN */
+static const TA_InputParameterInfo    *TA_KAMA_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_KAMA_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_KAMA_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( KAMA,                       /* name */
+              TA_GroupId_OverlapStudies,  /* groupId */
+              "Kaufman Adaptive Moving Average", /* hint */
+              NULL,                       /* helpFile */
+              TA_FUNC_FLG_OVERLAP|TA_FUNC_FLG_UNST_PER,        /* flags */
+              NULL                        /* analysis function */
+             );
+/* KAMA END */
+
 
 /****************************************************************************
  * Step 3 - Add your TA function to the table.
@@ -30,6 +56,7 @@
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableK[] =
 {
+   ADD_TO_TABLE(KAMA),
    NULL
 };
 

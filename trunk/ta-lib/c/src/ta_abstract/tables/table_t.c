@@ -36,7 +36,7 @@ static const TA_OutputParameterInfo   *TA_TEMA_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_TEMA_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_30,
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
   NULL
 };
 
@@ -87,7 +87,7 @@ static const TA_OutputParameterInfo   *TA_TRIMA_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_TRIMA_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_30,
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
   NULL
 };
 

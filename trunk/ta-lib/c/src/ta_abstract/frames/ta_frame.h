@@ -53,6 +53,13 @@ TA_RetCode TA_EMA_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer           *outNbElement )
 ;
 
+TA_RetCode TA_KAMA_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
 TA_RetCode TA_MA_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
                           TA_Integer            endIdx,

@@ -62,7 +62,7 @@
    #include "ta_utility.h"
 #endif
 
-int TA_STDDEV_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+int TA_STDDEV_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                         TA_Real       optInNbDev_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -82,7 +82,7 @@ int TA_STDDEV_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
  *    Number of period
  * 
  * optInNbDev_1:(From TA_REAL_MIN to TA_REAL_MAX)
@@ -94,7 +94,7 @@ int TA_STDDEV_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER
 TA_RetCode TA_STDDEV( TA_Integer    startIdx,
                       TA_Integer    endIdx,
                       const TA_Real inReal_0[],
-                      TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                      TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
                       TA_Real       optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                       TA_Integer   *outBegIdx,
                       TA_Integer   *outNbElement,
@@ -120,7 +120,7 @@ TA_RetCode TA_STDDEV( TA_Integer    startIdx,
    /* min/max are checked for optInTimePeriod_0. */
    if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 5;
-   else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
+   else if( (optInTimePeriod_0 < 2) || (optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( optInNbDev_1 == TA_REAL_DEFAULT )

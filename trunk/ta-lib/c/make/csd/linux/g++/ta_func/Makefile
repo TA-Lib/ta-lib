@@ -29,6 +29,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_BBANDS.c \
 		../../../../../src/ta_func/ta_DEMA.c \
 		../../../../../src/ta_func/ta_EMA.c \
+		../../../../../src/ta_func/ta_KAMA.c \
 		../../../../../src/ta_func/ta_MA.c \
 		../../../../../src/ta_func/ta_MIDPRICE.c \
 		../../../../../src/ta_func/ta_MIDPOINT.c \
@@ -76,6 +77,7 @@ OBJECTS =	../../../../../temp/csd/ta_utility.o \
 		../../../../../temp/csd/ta_BBANDS.o \
 		../../../../../temp/csd/ta_DEMA.o \
 		../../../../../temp/csd/ta_EMA.o \
+		../../../../../temp/csd/ta_KAMA.o \
 		../../../../../temp/csd/ta_MA.o \
 		../../../../../temp/csd/ta_MIDPRICE.o \
 		../../../../../temp/csd/ta_MIDPOINT.o \
@@ -187,6 +189,9 @@ clean:
 
 ../../../../../temp/csd/ta_EMA.o: ../../../../../src/ta_func/ta_EMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_EMA.o ../../../../../src/ta_func/ta_EMA.c
+
+../../../../../temp/csd/ta_KAMA.o: ../../../../../src/ta_func/ta_KAMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_KAMA.o ../../../../../src/ta_func/ta_KAMA.c
 
 ../../../../../temp/csd/ta_MA.o: ../../../../../src/ta_func/ta_MA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_MA.o ../../../../../src/ta_func/ta_MA.c

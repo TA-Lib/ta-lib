@@ -135,10 +135,6 @@ static TA_Test tableTest[] =
    { 0, 2, 0, 251, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0,     46.07,  16,  252-(14+2) },
    { 0, 2, 0, 251, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-(15+2), 49.63,  16,  252-(14+2) },  /* Last Value */
 
-   /* Test some limit case with unstable period. */
-   { 0, 1,   0,   0,  1, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  0,   0, 0 }, /* no data */
-   { 0, 252, 0,   0,  1, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  0,   0, 0 }, /* no data */
-   { 0, 300, 0,   0,  1, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  0,   0, 0 }, /* no data */
 
    /**********************/
    /* RSI Metastock TEST */
@@ -174,12 +170,6 @@ static TA_Test tableTest[] =
    /* Test with 2 unstable price bar. Test for period 1, 2, 14 */
    { 0, 2, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0,     52.32,  15,  252-(13+2) },
    { 0, 2, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-(14+2), 49.63,  15,  252-(13+2) },  /* Last Value */
-
-
-   /* Test some limit case with unstable period. */
-   { 1, 1,   0,   0,  1, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  0,   0, 0 }, /* no data */
-   { 0, 252, 0,   0,  1, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  0,   0, 0 }, /* no data */
-   { 0, 300, 0,   0,  1, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  0,   0, 0 }, /* no data */
 
 };
 
