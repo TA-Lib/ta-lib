@@ -76,6 +76,92 @@ DEF_FUNCTION( CCI,                           /* name */
 
 /* CCI END */
 
+/* CDLDOJISTAR BEGIN */
+static const TA_InputParameterInfo    *TA_CDLDOJISTAR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLDOJISTAR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLDOJISTAR_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLDOJISTAR,                    /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Doji Star",                    /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLDOJISTAR END */
+
+/* CDLEVENINGDOJISTAR BEGIN */
+static const TA_InputParameterInfo    *TA_CDLEVENINGDOJISTAR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLEVENINGDOJISTAR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLEVENINGDOJISTAR_OptInputs[] =
+{ 
+  &TA_DEF_UI_Penetration_30,
+  NULL
+};
+
+DEF_FUNCTION( CDLEVENINGDOJISTAR,             /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Evening Doji Star",            /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLEVENINGDOJISTAR END */
+
+/* CDLEVENINGSTAR BEGIN */
+static const TA_InputParameterInfo    *TA_CDLEVENINGSTAR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLEVENINGSTAR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLEVENINGSTAR_OptInputs[] =
+{ 
+  &TA_DEF_UI_Penetration_30,
+  NULL
+};
+
+DEF_FUNCTION( CDLEVENINGSTAR,                 /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Evening Star",                 /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLEVENINGSTAR END */
+
 /* CDLHIGHWAVE BEGIN */
 static const TA_InputParameterInfo    *TA_CDLHIGHWAVE_Inputs[]    =
 {
@@ -131,6 +217,64 @@ DEF_FUNCTION( CDLLONGLINE,                    /* name */
              );
 
 /* CDLLONGLINE END */
+
+/* CDLMORNINGDOJISTAR BEGIN */
+static const TA_InputParameterInfo    *TA_CDLMORNINGDOJISTAR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLMORNINGDOJISTAR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLMORNINGDOJISTAR_OptInputs[] =
+{ 
+  &TA_DEF_UI_Penetration_30,
+  NULL
+};
+
+DEF_FUNCTION( CDLMORNINGDOJISTAR,             /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Morning Doji Star",            /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLMORNINGDOJISTAR END */
+
+/* CDLMORNINGSTAR BEGIN */
+static const TA_InputParameterInfo    *TA_CDLMORNINGSTAR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLMORNINGSTAR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLMORNINGSTAR_OptInputs[] =
+{ 
+  &TA_DEF_UI_Penetration_30,
+  NULL
+};
+
+DEF_FUNCTION( CDLMORNINGSTAR,                 /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Morning Star",                 /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLMORNINGSTAR END */
 
 /* CDLSHORTLINE BEGIN */
 static const TA_InputParameterInfo    *TA_CDLSHORTLINE_Inputs[]    =
@@ -188,6 +332,34 @@ DEF_FUNCTION( CDLSPINNINGTOP,                 /* name */
 
 /* CDLSPINNINGTOP END */
 
+/* CDLTRISTAR BEGIN */
+static const TA_InputParameterInfo    *TA_CDLTRISTAR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLTRISTAR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLTRISTAR_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLTRISTAR,                     /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Tristar Candle",               /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLTRISTAR END */
+
 /* CORREL BEGIN */
 static const TA_InputParameterInfo    *TA_CORREL_Inputs[]    =
 {
@@ -223,10 +395,16 @@ DEF_FUNCTION( CORREL,                      /* name */
 const TA_FuncDef *TA_DEF_TableC[] =
 {
    ADD_TO_TABLE(CCI),
+   ADD_TO_TABLE(CDLDOJISTAR),
+   ADD_TO_TABLE(CDLEVENINGDOJISTAR),
+   ADD_TO_TABLE(CDLEVENINGSTAR),
    ADD_TO_TABLE(CDLHIGHWAVE),
    ADD_TO_TABLE(CDLLONGLINE),
+   ADD_TO_TABLE(CDLMORNINGDOJISTAR),
+   ADD_TO_TABLE(CDLMORNINGSTAR),
    ADD_TO_TABLE(CDLSHORTLINE),
    ADD_TO_TABLE(CDLSPINNINGTOP),  
+   ADD_TO_TABLE(CDLTRISTAR),  
    ADD_TO_TABLE(CORREL),
    NULL
 };
