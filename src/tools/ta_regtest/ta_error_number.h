@@ -204,6 +204,11 @@ typedef enum
   TA_ABS_TST_FAIL_GETLOOKBACK_CALL_2    = 609,
   TA_ABS_TST_FAIL_GETLOOKBACK_1         = 610,
   TA_ABS_TST_FAIL_GETLOOKBACK_2         = 611,
+  TA_ABS_TST_FAIL_CALLFUNC_1            = 612,
+  TA_ABS_TST_FAIL_CALLFUNC_2            = 613,
+  TA_ABS_TST_FAIL_CALLFUNC_3            = 614,
+  TA_ABS_TST_FAIL_CALLFUNC_4            = 615,
+  TA_ABS_TST_FAIL_INVALID_OUTPUT        = 616,
 
   /* Error code related to internal tests. */
   TA_CIRC_BUFF_FAIL_0 = 700,
