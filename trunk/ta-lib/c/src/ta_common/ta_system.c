@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,6 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  110199 MF   First version.
+ *  032704 MF   Add TA_AdjustPath
  *
  */
 
@@ -221,6 +222,27 @@ int TA_WildCharASCII( void )
 int TA_WildASCII( void )
 {
    return '*';
+}
+
+void TA_AdjustPath( char *path )
+{
+   /* This function might change the 'path' string.
+    * It will not modify the size of the string, only
+    * the content.
+    */
+   char car;
+   char sep;
+
+   /* Replace the separator character in path. */
+   sep = TA_SeparatorASCII();
+   car = *path;
+   while( car != '\0' )
+   {
+      if( TA_IsSeparatorChar( car ) )
+          *path = sep;
+      path++;
+      car = *path;
+   }
 }
 
 TA_RetCode TA_DirectoryAlloc( const char *path,
