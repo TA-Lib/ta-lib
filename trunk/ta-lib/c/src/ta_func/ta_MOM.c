@@ -128,6 +128,38 @@ TA_RetCode TA_MOM( TA_Libc      *libHandle,
 
    /* Insert TA function code here. */
 
+   /* The interpretation of the rate of change varies widely depending
+    * which software and/or books you are refering to.
+    *
+    * The following is the table of Rate-Of-Change implemented in TA-LIB:
+    *       MOM     = (price - prevPrice)         [Momentum]
+    *       ROC     = ((price/prevPrice)-1)*100   [Rate of change]
+    *       ROCP    = (price-prevPrice)/prevPrice [Rate of change Percentage]
+    *       ROCR    = (price/prevPrice)           [Rate of change ratio]
+    *       ROCR100 = (price/prevPrice)*100       [Rate of change ratio 100 Scale]
+    *
+    * Here are the equivalent function in other software:
+    *       TA-Lib  |   Tradestation   |    Metastock         
+    *       =================================================
+    *       MOM     |   Momentum       |    ROC (Point)
+    *       ROC     |   ROC            |    ROC (Percent)
+    *       ROCP    |   PercentChange  |    -     
+    *       ROCR    |   -              |    -
+    *       ROCR100 |   -              |    MO
+    *
+    * The MOM function is the only one who is not normalized, and thus
+    * should be avoided for comparing different time serie of prices.
+    * 
+    * ROC and ROCP are centered at zero and can have positive and negative
+    * value. Here are some equivalence:
+    *    ROC = ROCP/100 
+    *        = ((price-prevPrice)/prevPrice)/100
+    *        = ((price/prevPrice)-1)*100
+    *
+    * ROCR and ROCR100 are ratio respectively centered at 1 and 100 and are
+    * always positive values.
+    */
+
    /* Move up the start index if there is not
     * enough initial data.
     */
