@@ -448,33 +448,9 @@ static TA_RetCode referenceMin( TA_Integer    startIdx,
                                 TA_Integer   *outNbElement,
                                 TA_Real       outReal_0[] )
 {
-   /* Insert local variables here. */
    TA_Real lowest, tmp;
    TA_Integer outIdx, nbInitialElementNeeded;
    TA_Integer trailingIdx, today, i;
-
-#ifndef TA_FUNC_NO_RANGE_CHECK
-
-   /* Validate the requested output range. */
-   if( startIdx < 0 )
-      return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx < startIdx))
-      return TA_OUT_OF_RANGE_END_INDEX;
-
-   /* Validate the parameters. */
-   if( !inReal_0 ) return TA_BAD_PARAM;
-   /* min/max are checked for optInTimePeriod_0. */
-   if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-      optInTimePeriod_0 = 30;
-   else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
-      return TA_BAD_PARAM;
-
-   if( outReal_0 == NULL )
-      return TA_BAD_PARAM;
-
-#endif /* TA_FUNC_NO_RANGE_CHECK */
-
-   /* Insert TA function code here. */
 
    /* Identify the minimum number of price bar needed
     * to identify at least one output over the specified
