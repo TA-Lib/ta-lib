@@ -51,7 +51,7 @@
 /* SAR BEGIN */
 static const TA_RealRange TA_DEF_AccelerationFactor =
 {
-   TA_REAL_MIN,  /* min */
+   0.0,          /* min */
    TA_REAL_MAX,  /* max */
    4,      /* precision */
    0.01,  /* suggested start */
@@ -61,7 +61,7 @@ static const TA_RealRange TA_DEF_AccelerationFactor =
 
 static const TA_RealRange TA_DEF_AccelerationMax =
 {
-   TA_REAL_MIN, /* min */
+   0.0,         /* min */
    TA_REAL_MAX, /* max */
    4,     /* precision */
    0.20,  /* suggested start */
@@ -127,7 +127,7 @@ DEF_FUNCTION( SAR,                        /* name */
 /* SAREXT BEGIN */
 static const TA_RealRange TA_DEF_AccelerationInit =
 {
-   TA_REAL_MIN, /* min */
+   0.0,         /* min */
    TA_REAL_MAX, /* max */
    4,     /* precision */
    0.01,  /* suggested start */
@@ -137,7 +137,7 @@ static const TA_RealRange TA_DEF_AccelerationInit =
 
 static const TA_RealRange TA_DEF_SARStartValue =
 {
-   TA_REAL_MIN, /* min */
+   0.0,         /* min */
    TA_REAL_MAX, /* max */
    4,     /* precision */
    0, /* suggested start */
@@ -147,7 +147,7 @@ static const TA_RealRange TA_DEF_SARStartValue =
 
 static const TA_RealRange TA_DEF_SAROffsetOnReverse =
 {
-   TA_REAL_MIN, /* min */
+   0.0,         /* min */
    TA_REAL_MAX, /* max */
    4,     /* precision */
    0.01,  /* suggested start */
@@ -163,7 +163,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_StartValue =
 
    "Start Value", /* displayName */
    (const void *)&TA_DEF_SARStartValue, /* dataSet */
-   0.20, /* defaultValue */
+   0.0, /* defaultValue */
    "Start value and direction. 0 for Auto, >0 for Long, <0 for Short", /* hint */
 
    NULL /* helpFile */
@@ -177,7 +177,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_OffsetOnReverse =
 
    "Offset on Reverse", /* displayName */
    (const void *)&TA_DEF_SAROffsetOnReverse, /* dataSet */
-   0.20, /* defaultValue */
+   0.0, /* defaultValue */
    "Percent offset added/removed to initial stop on short/long reversal", /* hint */
 
    NULL /* helpFile */
