@@ -9,8 +9,8 @@
 
 CC	=	cl
 CXX	=	cl
-CFLAGS	=	-nologo -W3 -MDd -DTA_GEN_CODE -DTA_DEBUG -D_DEBUG -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT
-CXXFLAGS=	-nologo -W3 -MDd -DTA_GEN_CODE -DTA_DEBUG -D_DEBUG -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT
+CFLAGS	=	-nologo -W3 -MTd -DTA_GEN_CODE -DTA_DEBUG -D_DEBUG -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT
+CXXFLAGS=	-nologo -W3 -MTd -DTA_GEN_CODE -DTA_DEBUG -D_DEBUG -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT
 INCPATH	=	-I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\src\ta_abstract" -I"..\..\..\..\..\src\ta_abstract\tables" -I"..\..\..\..\..\src\ta_abstract\frames"
 LINK	=	link
 LFLAGS	=	/NOLOGO /DEBUG /SUBSYSTEM:console

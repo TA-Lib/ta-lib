@@ -9,8 +9,8 @@
 
 CC	=	cl
 CXX	=	cl
-CFLAGS	=	-nologo -W3 -MD -O1 -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT
-CXXFLAGS=	-nologo -W3 -MD -O1 -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT
+CFLAGS	=	-nologo -W3 -MT -O1 -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT
+CXXFLAGS=	-nologo -W3 -MT -O1 -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"\n" -I"..\..\..\..\..\include"
 LIB	=	lib /NOLOGO
 MOC	=	moc
