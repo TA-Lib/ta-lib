@@ -133,6 +133,35 @@ DEF_FUNCTION( PPO,                        /* name */
              );
 /* PPO END */
 
+
+/* PVI BEGIN */
+static const TA_InputParameterInfo    *TA_PVI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_CV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_PVI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_PVI_OptInputs[] =
+{
+  NULL
+};
+
+DEF_FUNCTION( PVI,                     /* name */
+              TA_GroupId_VolumeIndicators,   /* groupId */
+              "Positive Volume Index", /* hint */
+              NULL,      /* helpFile */
+              0,         /* flags */
+              NULL       /* analysis function */
+             );
+
+/* PVI END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Order is not important. Must be NULL terminated.
@@ -142,6 +171,7 @@ const TA_FuncDef *TA_DEF_TableP[] =
    ADD_TO_TABLE(PPO),
    ADD_TO_TABLE(PLUS_DI),
    ADD_TO_TABLE(PLUS_DM),
+   ADD_TO_TABLE(PVI),
    NULL
 };
 

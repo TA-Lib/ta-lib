@@ -384,6 +384,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_MOM.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_NVI.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_OBV.c
 # End Source File
 # Begin Source File
@@ -397,6 +401,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_PLUS_DM.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_PPO.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_PVI.c
 # End Source File
 # Begin Source File
 

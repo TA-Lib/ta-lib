@@ -48,7 +48,33 @@
  *
  ****************************************************************************/
 
-/* None */
+/* NVI BEGIN */
+static const TA_InputParameterInfo    *TA_NVI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_CV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_NVI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_NVI_OptInputs[] =
+{
+  NULL
+};
+
+DEF_FUNCTION( NVI,                     /* name */
+              TA_GroupId_VolumeIndicators,   /* groupId */
+              "Negative Volume Index", /* hint */
+              NULL,      /* helpFile */
+              0,         /* flags */
+              NULL       /* analysis function */
+             );
+
+/* NVI END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
@@ -56,6 +82,7 @@
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableN[] =
 {
+   ADD_TO_TABLE(NVI),
    NULL
 };
 

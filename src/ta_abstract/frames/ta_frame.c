@@ -945,6 +945,21 @@
 /* Generated */               outNbElement, 
 /* Generated */               params->out[0].data.outReal /*  outReal */ );
 /* Generated */ }
+/* Generated */ TA_RetCode TA_NVI_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_NVI(
+/* Generated */             startIdx,
+/* Generated */             endIdx,
+/* Generated */             params->in[0].data.inPrice.close, /* inClose */
+/* Generated */             params->in[0].data.inPrice.volume, /* inVolume */
+/* Generated */             outBegIdx, 
+/* Generated */             outNbElement, 
+/* Generated */             params->out[0].data.outReal /*  outReal */ );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_OBV_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
@@ -959,6 +974,21 @@
 /* Generated */             outBegIdx, 
 /* Generated */             outNbElement, 
 /* Generated */             params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_PVI_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_PVI(
+/* Generated */             startIdx,
+/* Generated */             endIdx,
+/* Generated */             params->in[0].data.inPrice.close, /* inClose */
+/* Generated */             params->in[0].data.inPrice.volume, /* inVolume */
+/* Generated */             outBegIdx, 
+/* Generated */             outNbElement, 
+/* Generated */             params->out[0].data.outReal /*  outReal */ );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_CORREL_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,

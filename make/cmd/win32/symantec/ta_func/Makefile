@@ -61,10 +61,12 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_MINUS_DI.c \
 		..\..\..\..\..\src\ta_func\ta_MINUS_DM.c \
 		..\..\..\..\..\src\ta_func\ta_MOM.c \
+		..\..\..\..\..\src\ta_func\ta_NVI.c \
 		..\..\..\..\..\src\ta_func\ta_OBV.c \
 		..\..\..\..\..\src\ta_func\ta_PLUS_DI.c \
 		..\..\..\..\..\src\ta_func\ta_PLUS_DM.c \
 		..\..\..\..\..\src\ta_func\ta_PPO.c \
+		..\..\..\..\..\src\ta_func\ta_PVI.c \
 		..\..\..\..\..\src\ta_func\ta_ROC.c \
 		..\..\..\..\..\src\ta_func\ta_ROCP.c \
 		..\..\..\..\..\src\ta_func\ta_ROCR.c \
@@ -129,10 +131,12 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_utility.obj \
 		..\..\..\..\..\temp\cmd\ta_MINUS_DI.obj \
 		..\..\..\..\..\temp\cmd\ta_MINUS_DM.obj \
 		..\..\..\..\..\temp\cmd\ta_MOM.obj \
+		..\..\..\..\..\temp\cmd\ta_NVI.obj \
 		..\..\..\..\..\temp\cmd\ta_OBV.obj \
 		..\..\..\..\..\temp\cmd\ta_PLUS_DI.obj \
 		..\..\..\..\..\temp\cmd\ta_PLUS_DM.obj \
 		..\..\..\..\..\temp\cmd\ta_PPO.obj \
+		..\..\..\..\..\temp\cmd\ta_PVI.obj \
 		..\..\..\..\..\temp\cmd\ta_ROC.obj \
 		..\..\..\..\..\temp\cmd\ta_ROCP.obj \
 		..\..\..\..\..\temp\cmd\ta_ROCR.obj \
@@ -224,10 +228,12 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmd\ta_MINUS_DI.obj \
 +..\..\..\..\..\temp\cmd\ta_MINUS_DM.obj \
 +..\..\..\..\..\temp\cmd\ta_MOM.obj \
++..\..\..\..\..\temp\cmd\ta_NVI.obj \
 +..\..\..\..\..\temp\cmd\ta_OBV.obj \
 +..\..\..\..\..\temp\cmd\ta_PLUS_DI.obj \
 +..\..\..\..\..\temp\cmd\ta_PLUS_DM.obj \
 +..\..\..\..\..\temp\cmd\ta_PPO.obj \
++..\..\..\..\..\temp\cmd\ta_PVI.obj \
 +..\..\..\..\..\temp\cmd\ta_ROC.obj \
 +..\..\..\..\..\temp\cmd\ta_ROCP.obj \
 +..\..\..\..\..\temp\cmd\ta_ROCR.obj \
@@ -305,10 +311,12 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_MINUS_DI.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MINUS_DM.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MOM.obj
+	-del ..\..\..\..\..\temp\cmd\ta_NVI.obj
 	-del ..\..\..\..\..\temp\cmd\ta_OBV.obj
 	-del ..\..\..\..\..\temp\cmd\ta_PLUS_DI.obj
 	-del ..\..\..\..\..\temp\cmd\ta_PLUS_DM.obj
 	-del ..\..\..\..\..\temp\cmd\ta_PPO.obj
+	-del ..\..\..\..\..\temp\cmd\ta_PVI.obj
 	-del ..\..\..\..\..\temp\cmd\ta_ROC.obj
 	-del ..\..\..\..\..\temp\cmd\ta_ROCP.obj
 	-del ..\..\..\..\..\temp\cmd\ta_ROCR.obj
@@ -471,6 +479,9 @@ clean:
 ..\..\..\..\..\temp\cmd\ta_MOM.obj: ..\..\..\..\..\src\ta_func\ta_MOM.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MOM.obj ..\..\..\..\..\src\ta_func\ta_MOM.c
 
+..\..\..\..\..\temp\cmd\ta_NVI.obj: ..\..\..\..\..\src\ta_func\ta_NVI.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_NVI.obj ..\..\..\..\..\src\ta_func\ta_NVI.c
+
 ..\..\..\..\..\temp\cmd\ta_OBV.obj: ..\..\..\..\..\src\ta_func\ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_OBV.obj ..\..\..\..\..\src\ta_func\ta_OBV.c
 
@@ -482,6 +493,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_PPO.obj: ..\..\..\..\..\src\ta_func\ta_PPO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_PPO.obj ..\..\..\..\..\src\ta_func\ta_PPO.c
+
+..\..\..\..\..\temp\cmd\ta_PVI.obj: ..\..\..\..\..\src\ta_func\ta_PVI.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_PVI.obj ..\..\..\..\..\src\ta_func\ta_PVI.c
 
 ..\..\..\..\..\temp\cmd\ta_ROC.obj: ..\..\..\..\..\src\ta_func\ta_ROC.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_ROC.obj ..\..\..\..\..\src\ta_func\ta_ROC.c

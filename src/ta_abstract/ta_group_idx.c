@@ -102,7 +102,9 @@ extern const TA_FuncDef TA_DEF_HT_SINE;
 extern const TA_FuncDef TA_DEF_HT_TRENDMODE;
 extern const TA_FuncDef TA_DEF_AD;
 extern const TA_FuncDef TA_DEF_ADOSC;
+extern const TA_FuncDef TA_DEF_NVI;
 extern const TA_FuncDef TA_DEF_OBV;
+extern const TA_FuncDef TA_DEF_PVI;
 extern const TA_FuncDef TA_DEF_CORREL;
 extern const TA_FuncDef TA_DEF_LINEARREG;
 extern const TA_FuncDef TA_DEF_LINEARREG_SLOPE;
@@ -195,7 +197,9 @@ NULL };
 const TA_FuncDef *TA_PerGroupFunc_6[] = {
 &TA_DEF_AD,
 &TA_DEF_ADOSC,
+&TA_DEF_NVI,
 &TA_DEF_OBV,
+&TA_DEF_PVI,
 NULL };
 #define SIZE_GROUP_6 ((sizeof(TA_PerGroupFunc_6)/sizeof(const TA_FuncDef *))-1)
 
