@@ -2042,6 +2042,11 @@ static TA_RetCode addTheSymbolFromWebPage( unsigned int line,
             allowOnlineProcessing = 0;
          }
 
+         #if 0
+
+         This optimization has been removed in 0.1.2 because problematic
+         with symbols that were changing of category.
+
          /* When online allowed and the remote index is available,
           * cache the US index to quickly identify the category.          
           * For audit purpose, still go online for randomly selected
@@ -2058,24 +2063,24 @@ static TA_RetCode addTheSymbolFromWebPage( unsigned int line,
          
          if( retCode != TA_SUCCESS )
          {
-            retCode = TA_AllocStringFromYahooName( &defaultMarketDecoding,
-                                                   data, &category, &symbol,
-                                                   allowOnlineProcessing );
+         #endif
 
-            if( retCode == TA_OBSOLETED_SYMBOL )
-            {
-               /* Symbol is obsolete, just ignore it with no fatal error. */
-               printf( "Warning: This symbol is no longuer in use [%s]\n", data );
-               return TA_SUCCESS;
-            }
+         retCode = TA_AllocStringFromYahooName( &defaultMarketDecoding,
+                                                data, &category, &symbol,
+                                                allowOnlineProcessing );
 
-            if( retCode != TA_SUCCESS )
-            {
-               /* Just a warning for now... */
-               printf( "Warning. Does not recognize exchange for [%s] (%d)\n", data, retCode );
-               return TA_SUCCESS;
-            }
+         if( retCode == TA_OBSOLETED_SYMBOL )
+         {
+            /* Symbol is obsolete, just ignore it with no fatal error. */
+            printf( "Warning: This symbol is no longuer in use [%s]\n", data );
+            return TA_SUCCESS;
+         }
 
+         if( retCode != TA_SUCCESS )
+         {
+            /* Just a warning for now... */
+            printf( "Warning. Does not recognize exchange for [%s] (%d)\n", data, retCode );
+            return TA_SUCCESS;
          }
 
          stringCache = TA_GetGlobalStringCache();
