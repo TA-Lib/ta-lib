@@ -96,7 +96,11 @@ typedef struct
 /* This structure is the private version for the TA_ParamForAddData type. */
 typedef struct
 {
-  /* Parameter needed to be passed to the thread for parallel execution. */
+  /* An instance of this structure will exist for each data source involve
+   * when a TA_HistoryAlloc call is done.
+   */
+
+  /* Parameters needed to be passed to the data soruce driver. */
   TA_BuilderSupport   *parent;
   TA_DataSourceHandle *sourceHandle;
   TA_CategoryHandle   *categoryHandle;
@@ -165,10 +169,10 @@ typedef struct
    */
   const TA_AddDataSourceParamPriv *addDataSourceParamPriv;
 
-  /* List ist of TA_SplitAdjust structures. */
+  /* List of TA_SplitAdjust structures. */
   TA_List *listOfSplitAdjust;
 
-  /* List ist of TA_ValueAdjust structures. */
+  /* List of TA_ValueAdjust structures. */
   TA_List *listOfValueAdjust;
 
   /* The following variables are used only while doing the merging with
@@ -180,6 +184,11 @@ typedef struct
   const TA_Timestamp *curTimestamp;
   const TA_Timestamp *curLastTimestamp;
   TA_DataBlock       *curDataBlock;
+
+  /* Indicates if that data source has data part of the
+   * final data returned to the caller of TA_HistoryAlloc.
+   */
+  unsigned int contributingDataSource;
 
 } TA_SupportForDataSource;
 
