@@ -194,19 +194,28 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define round_neg_2(x) ((ceil((x*100.0)-0.5))/100.0)
 
 /* In the context of TA-Lib, floating point are often 
- * compared within a precision of +/- 0.000001
+ * compared within an acceptable error range.
  *
- * This allows to work around limit cases where floating
- * point minimal step (EPSILON) cause unexpected cummulative
- * effect.
+ * As an example,a TA oscillator ranging from 0 to 100 can
+ * fairly be considered equal if their difference is less 
+ * than 0.000001.
  *
- * For a float, FLT_EPSILON is defined as 1.192092896e-07 on intel with
- * msvc. double type has a smaller epsilon of 2.2204460492503131e-016. 
+ * Ranging around zero also allows to work around limit 
+ * cases where floating point minimal step (EPSILON) causes 
+ * unexpected cummulative effect (ending with "negative zero" 
+ * being one example).
+ *
+ * FLT_EPSILON == 1.192092896e-07 for float type on intel with msvc. 
+ * DBL_EPSILON == 2.2204460492503131e-016 for the double type.
+ *
+ * Warning: These macro are not intended as "general purpose" floating
+ * point comparison. TA_REAL_EQ is not even transitive. The "ep" parameter
+ * must be carefully choosen to work in the domain of the tested values.  
+ * Do a search on Google for a more generalize algo.
  */
-#define TA_EPSILON 0.000001
-#define TA_IS_EQ(x,v)        (((v-TA_EPSILON)<x)&&(x<(v+TA_EPSILON)))
-#define TA_IS_ZERO(v)        (((-TA_EPSILON)<v)&&(v<TA_EPSILON))
-#define TA_IS_ZERO_OR_NEG(v) (v<TA_EPSILON)
+#define TA_REAL_EQ(x,v,ep)   (((v-ep)<x)&&(x<(v+ep)))
+#define TA_IS_ZERO(v)        (((-0.000001)<v)&&(v<0.000001))
+#define TA_IS_ZERO_OR_NEG(v) (v<0.000001)
 
 /* The following macros are being used to do
  * the Hilbert Transform logic as documented
