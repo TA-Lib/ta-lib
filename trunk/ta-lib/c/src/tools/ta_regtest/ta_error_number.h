@@ -213,7 +213,8 @@ typedef enum
   TA_CIRC_BUFF_FAIL_4 = 704,
   TA_CIRC_BUFF_FAIL_5 = 705,
   TA_CIRC_BUFF_FAIL_6 = 706,
-
+  TA_FATAL_TST_FAIL   = 707,
+  TA_ASSERT_TST_FAIL  = 708,
 
   /* Error code related to CSI data source tests. */
   TA_CSI_ADDDATASOURCE_FAILED    = 800,
