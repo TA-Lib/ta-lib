@@ -45,6 +45,9 @@
  *  010802 MF   Template creation.
  *
  */
+#include <math.h>
+#include "ta_memory.h"
+
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -65,7 +68,10 @@ int TA_ADXR_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   return 0;
+   if( optInTimePeriod_0 > 1 )
+      return optInTimePeriod_0 + TA_ADX_Lookback( optInTimePeriod_0) - 1;
+   else
+      return 3;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -96,6 +102,9 @@ TA_RetCode TA_ADXR( TA_Libc      *libHandle,
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
+   TA_Real *adx;
+   int adxrLookback, i, j, outIdx, nbElement;
+   TA_RetCode retCode;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -129,6 +138,48 @@ TA_RetCode TA_ADXR( TA_Libc      *libHandle,
 
    /* Insert TA function code here. */
 
+   /* Move up the start index if there is not
+    * enough initial data.
+    * Always one price bar gets consumed.
+    */
+   adxrLookback = TA_ADXR_Lookback( optInTimePeriod_0 );
+
+   if( startIdx < adxrLookback )
+      startIdx = adxrLookback;
+
+   /* Make sure there is still something to evaluate. */
+   if( startIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNbElement = 0;
+      return TA_SUCCESS;
+   }
+
+   adx = TA_Malloc( libHandle, sizeof(TA_Real)*(endIdx-startIdx+optInTimePeriod_0) );
+   if( !adx )
+      return TA_ALLOC_ERR;
+
+   retCode = TA_ADX( libHandle, startIdx-(optInTimePeriod_0-1), endIdx,
+                     inHigh_0, inLow_0, inClose_0,
+                     optInTimePeriod_0, outBegIdx, outNbElement, adx );
+
+   if( retCode != TA_SUCCESS )      
+   {
+      TA_Free( libHandle, adx );
+      return retCode;
+   }
+
+   i = optInTimePeriod_0-1;
+   j = 0;
+   outIdx = 0;
+   nbElement = endIdx-startIdx+2;
+   while( --nbElement != 0 )
+      outReal_0[outIdx++] = round_pos( (adx[i++]+adx[j++])/2.0 );
+
+   TA_Free( libHandle, adx );
+
+   *outBegIdx    = startIdx;
+   *outNbElement = outIdx;
+
    return TA_SUCCESS;
 }
-
