@@ -54,41 +54,6 @@ extern "C" {
 
 %%%GENCODE%%%
 
-/* Some TA functions takes a certain amount of input data
- * before stabilizing and outputing meaningful data. This is
- * a behavior pertaining to the algo of some TA functions and
- * is not particular to the TA-Lib implementation.
- * TA-Lib allows you to automatically strip off these unstabl
- * data from your output and from any internal processing.
- * (See documentation for more info)
- *
- * Examples:
- *      TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 30 );
- *           Always strip off 30 price bar for the TA_EMA function.
- *
- *      TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 30 );
- *           Always strip off 30 price bar from ALL functions
- *           having an unstable period.
- *
- * See ta_defs.h for the enumeration TA_FuncUnstId
- */
-
-TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
-                                 unsigned int  unstablePeriod );
-
-unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );
-
-/* You can change slightly the behavior of the TA functions
- * by requesting compatibiliy with some existing software.
- *
- * By default, the behavior is as close as the original 
- * author of the TA functions intend it to be.
- *
- * See ta_defs.h for the enumeration TA_Compatibility.
- */
-TA_RetCode TA_SetCompatibility( TA_Compatibility value );
-TA_Compatibility TA_GetCompatibility( void );
-
 #ifdef __cplusplus
 }
 #endif
