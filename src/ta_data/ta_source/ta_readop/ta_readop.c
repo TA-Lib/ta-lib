@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  110199 MF   First version.
  *  010503 MF   Fix #644512. Problem with [-I] submitted by MS.
- *
+ *  040304 MF   Add support for TA_TOK_SKIP_NON_DIGIT_LINE
  */
 
 /* Description:
@@ -131,6 +131,7 @@ TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
    unsigned int inField;
    unsigned int nbField;
    unsigned int nbCharInField;
+   unsigned int skipNonDigitLine;
    const char *ptrFirstCarInField;
 
    unsigned char localBuf[10];
@@ -178,6 +179,7 @@ TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
 
    inField = 0;
    nbCharInField = 0;
+   skipNonDigitLine = 0;
    ptrFirstCarInField = NULL;
    while( *pos != '\0' )
    {
@@ -201,14 +203,23 @@ TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
          nbField++;
 
          /* Exclude fields not generating a TA_ReadOp.
-          * For the time being that means only the -H field.
+          * For the time being that means only the -H and -NDL field.
           */
          if( nbCharInField >= 2 )
          {
             TA_ASSERT( ptrFirstCarInField != NULL );
-            if( (ptrFirstCarInField[0] == '-') &&
-                (toupper(ptrFirstCarInField[1]) == 'H') )
-               nbField--;
+            if( ptrFirstCarInField[0] == '-' ) 
+            {
+               if( toupper(ptrFirstCarInField[1]) == 'H' )
+                  nbField--;
+               else if( (toupper(ptrFirstCarInField[1]) == 'N') &&
+                        (toupper(ptrFirstCarInField[2]) == 'D') &&
+                        (toupper(ptrFirstCarInField[3]) == 'L') )
+               {
+                  skipNonDigitLine = 1;
+                  nbField--;
+               }               
+             }
          }
 
          inField = 0;
@@ -252,7 +263,7 @@ TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
 
    bufIdx = 0;
    opIdx = 0;
-   while( *pos != '\0' )
+   while( *pos != '\0' && (opIdx < nbField) )
    {
       switch( *pos )
       {
@@ -281,6 +292,12 @@ TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
            if( TA_IS_REPLACE_ZERO(readOpFlags) && TA_IS_REAL_CMD(arrayReadOp[opIdx]) )
            {
               TA_SET_REPLACE_ZERO(arrayReadOp[opIdx]);
+           }
+
+           /* Set the skipNonDigitLine flag as needed. */
+           if( skipNonDigitLine == 1 )
+           {
+              TA_SET_SKIP_NDL_FLAG(arrayReadOp[opIdx]);
            }
 
            /* Ooof... this readOp is now all build! */
@@ -613,6 +630,15 @@ static TA_RetCode buildReadOp( TA_ReadOpInfo *readOpInfo,
       TA_TRACE_RETURN( TA_SUCCESS );
    }
 
+   if( id == TA_TOK_SKIP_NON_DIGIT_LINE )
+   {
+      if( optionalParam != 1 )
+      {
+         TA_TRACE_RETURN( TA_INVALID_FIELD );
+      }
+      TA_TRACE_RETURN( TA_SUCCESS );
+   }
+
    /* Integer or Real operation? */
    switch( id )
    {
@@ -643,6 +669,7 @@ static TA_RetCode buildReadOp( TA_ReadOpInfo *readOpInfo,
       tmpReadOp = TA_CMD_READ_INTEGER;
       break;
    case TA_TOK_SKIP_N_CHAR:
+   case TA_TOK_SKIP_NON_DIGIT_LINE:
       tmpReadOp = 0;
       break;
    default:
@@ -860,6 +887,7 @@ static TA_RetCode findTokenId( const char *str,
    case TA_TOK_SKIP_N_HEADER_LINE:
    case TA_TOK_SKIP_N_REAL:
    case TA_TOK_SKIP_N_INTEGER:
+   case TA_TOK_SKIP_NON_DIGIT_LINE:
       break;
    default:
       TA_TRACE_RETURN( TA_INVALID_FIELD );
