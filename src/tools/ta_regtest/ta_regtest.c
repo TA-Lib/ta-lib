@@ -260,6 +260,30 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    #define PRINTF_TEST_HDR      printf( "%25s: Testing...", TEST_ID );
    #define PRINTF_TEST_SUCCESS  printf( "done.\n" );
 
+   #define TEST_ID "STOCH,STOCHF"
+   PRINTF_TEST_HDR;
+   retValue = test_func_stoch( libHandle, history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+   PRINTF_TEST_SUCCESS;
+   #undef TEST_ID
+
+   #define TEST_ID "MIN,MAX"
+   PRINTF_TEST_HDR;
+   retValue = test_func_minmax( libHandle, history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+   PRINTF_TEST_SUCCESS;
+   #undef TEST_ID
+
+   #define TEST_ID "CCI,WILLR"
+   PRINTF_TEST_HDR;
+   retValue = test_func_per_hlc( libHandle, history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+   PRINTF_TEST_SUCCESS;
+   #undef TEST_ID
+
    #define TEST_ID "MACD,MACDFIX,MACDEXT"
    PRINTF_TEST_HDR;
    retValue = test_func_macd( libHandle, history );
@@ -271,14 +295,6 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    #define TEST_ID "MOM,ROC,ROCP,ROCR,ROCR100"
    PRINTF_TEST_HDR;
    retValue = test_func_mom_roc( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   #define TEST_ID "MIN,MAX"
-   PRINTF_TEST_HDR;
-   retValue = test_func_minmax( libHandle, history );
    if( retValue != TA_TEST_PASS )
       return retValue;
    PRINTF_TEST_SUCCESS;
@@ -312,7 +328,6 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    PRINTF_TEST_HDR;
    retValue = test_func_ma( libHandle, history );
    if( retValue != TA_TEST_PASS )
-
       return retValue;
    PRINTF_TEST_SUCCESS;
    #undef TEST_ID
@@ -350,25 +365,10 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    PRINTF_TEST_SUCCESS;
    #undef TEST_ID
 
-   #define TEST_ID "STOCH"
-   PRINTF_TEST_HDR;
-   retValue = test_func_stoch( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
 
    #define TEST_ID "TRIX"
    PRINTF_TEST_HDR;
    retValue = test_func_per_ema( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   #define TEST_ID "CCI"
-   PRINTF_TEST_HDR;
-   retValue = test_func_per_hlc( libHandle, history );
    if( retValue != TA_TEST_PASS )
       return retValue;
    PRINTF_TEST_SUCCESS;
