@@ -327,8 +327,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
          }
 
          /* Optimize the read op for the requested data. */
-         retCode = TA_ReadOp_Optimize(
-                                       readOpInfo,
+         retCode = TA_ReadOp_Optimize( readOpInfo,
                                        period,
                                        fieldToAlloc );
          if( retCode != TA_SUCCESS )

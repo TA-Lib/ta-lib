@@ -124,18 +124,8 @@ TA_RetCode TA_YAHOO_GetParameters( TA_DataSourceParameters *param )
 
    memset( param, 0, sizeof( TA_DataSourceParameters ) );
 
-   /* The Yahoo! is a read-only source. */
-   param->supportUpdateIndex  = 0;
-   param->supportUpdateSymbol = 0;
-
-    /* No support for realtime feedback. */
-   param->supportCallback = 0;
-
-   /* Will be supported eventually. */
-   param->supportMarketData = 0;
-
    /* Internet access is considered slow. */
-   param->slowAccess = 1;
+   param->flags = TA_SLOW_ACCESS;
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -162,8 +152,7 @@ TA_RetCode TA_YAHOO_OpenSource( const TA_AddDataSourceParamPriv *param,
    stringCache = TA_GetGlobalStringCache();
 
    /* Verify that the requested functionality is supported or not. */
-   if( (param->flags & TA_ENABLE_UPDATE_INDEX) ||
-       (param->flags & TA_ENABLE_UPDATE_SYMBOL))
+   if( param->flags & TA_REPLACE_ZERO_PRICE_BAR )
    {
       TA_TRACE_RETURN( TA_NOT_SUPPORTED );
    }

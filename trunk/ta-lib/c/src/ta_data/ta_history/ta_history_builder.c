@@ -244,7 +244,7 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
        * Except for the last driver which always get executed in the
        * main thread.
        */
-      if( (driverHandles != NULL) && supportForDataSource->param.slowAccess )
+      if( (driverHandles != NULL) && (supportForDataSource->param.flags & TA_SLOW_ACCESS) )
       {
          /* Start a thread for this data source. */
          TA_PAR_EXEC( getDataThread, supportForDataSource );

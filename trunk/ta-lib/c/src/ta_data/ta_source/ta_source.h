@@ -17,38 +17,26 @@
    #include "ta_adddatasourceparam_priv.h"
 #endif
 
-/* Boolean values to indicate which functionality is supported by this data
+/* Variable to indicate which functionality is supported by this data
  * source driver.
  *
- * supportUpdateIndex
- *    Indicates that this data source can be modified for adding, removing
- *    changing the symbols and category information.
- *
- * supportUpdateSymbol
- *    Indicates that this data source can modify the data of a particular
- *    symbol.
- *
- * supportCallback
- *   Indicates that this data source can provides callback functionality when
- *   new data is available.
- *
- * supportMarketData
- *   Indicates that this data source can provide the latest market
- *   data (last trade, bid, ask etc...).
- *
- * slowAccess
+ * TA_REPLACE_ZERO_PRICE_BAR
+ *   Flags to indicate that close price bar CAN be replaced by the last
+ *   known close price. Some datasource does not support such functionality.
+ *   
+ * TA_SLOW_ACCESS
  *   Indicates that the retreival of the data cannot be done as fast as a
  *   locally accessible database. This may result into multithreading when
  *   retreiving data. Any data source relying solely on internet should be
  *   characterize as slow access.
  */
+
+/* Note: for the first 16 bits, see ta_defs.h */
+#define TA_SLOW_ACCESS (1<<16)
+
 typedef struct
 {
-    unsigned int supportUpdateIndex;
-    unsigned int supportUpdateSymbol;
-    unsigned int supportCallback;
-    unsigned int supportMarketData;
-    unsigned int slowAccess;
+   unsigned int flags;
 } TA_DataSourceParameters;
 
 /* The following handles allow the data source to pass some needed
@@ -147,11 +135,14 @@ typedef struct
      */
     TA_RetCode (*initializeSourceDriver)( void );
 
-    /* Free all ressources. */
+    /* Free all ressources. Call only if the initialization
+     * succeed.
+     */
     TA_RetCode (*shutdownSourceDriver)( void );
 
     /* Allows the data source to indicate which capability
-     * are available from it.
+     * are available from it. Can be called before the open
+     * but only after the initialization.
      */
     TA_RetCode (*getParameters)( TA_DataSourceParameters *param );
 
@@ -226,12 +217,6 @@ typedef struct
                                   const TA_Timestamp  *end,
                                   TA_Field             fieldToAlloc,
                                   TA_ParamForAddData  *paramForAddData );
-
-    /* !!! Note: Function to update the database not defined. */
-
-    /* !!! Note: Function to setup a callback for realtime feed not define. */
-
-    /* !!! Note: Function to get market data not define. */
 
 } TA_DataSourceDriver;
 

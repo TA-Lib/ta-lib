@@ -152,16 +152,7 @@ TA_RetCode TA_SIMULATOR_GetParameters( TA_DataSourceParameters *param )
    TA_TRACE_BEGIN(  TA_SIMULATOR_GetParameters );
    memset( param, 0, sizeof( TA_DataSourceParameters ) );
 
-   /* For the time being, the ASCII driver is a read-only source. */
-   param->supportUpdateIndex  = 0;
-   param->supportUpdateSymbol = 0;
-
-   /* No support for realtime feedback with local ASCII database. */
-   param->supportCallback = 0;
-
-   /* Assume it is a fast local data base. */
-   param->slowAccess = 0;
-
+   /* All parameters are zero */
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
@@ -186,8 +177,7 @@ TA_RetCode TA_SIMULATOR_OpenSource( const TA_AddDataSourceParamPriv *param,
    }
 
    /* Verify that the requested functionality is supported or not. */
-   if( (param->flags & TA_ENABLE_UPDATE_INDEX) ||
-       (param->flags & TA_ENABLE_UPDATE_SYMBOL))
+   if( param->flags & TA_REPLACE_ZERO_PRICE_BAR )
    {
       TA_TRACE_RETURN( TA_NOT_SUPPORTED );
    }

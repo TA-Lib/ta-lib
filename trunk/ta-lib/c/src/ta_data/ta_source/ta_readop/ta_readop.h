@@ -48,7 +48,8 @@
 #define TA_TIMESTAMP_COMPLETE_FLAG    0x00001000
 #define TA_CMD_SKIP_FLAG              0x00002000
 #define TA_CMD_READ_STOP_FLAG         0x00004000
-#define TA_CMD_LAST_FLAG             (0x00008000|TA_CMD_READ_STOP_FLAG)
+#define TA_CMD_REPLACE_ZERO           0x00008000
+#define TA_CMD_LAST_FLAG             (0x00080000|TA_CMD_READ_STOP_FLAG)
 
 #define TA_CLOSE_IDX        0x00000000
 #define TA_OPEN_IDX         0x00000001
@@ -69,8 +70,8 @@
 #define TA_GET_IDX(v)        ((v)&0x000000FF)
 #define TA_SET_IDX(v,idx)    {(v)&=0xFFFFFF00; (v)|=(idx&0x000000FF);}
 
-#define TA_GET_NB_NUMERIC(v)     ((((v)&0xFFFF0000)>>16) & 0x0000FFFF)
-#define TA_SET_NB_NUMERIC(v,cmd) {(v)&=0x0000FFFF; (v)|=((cmd<<16)&0xFFFF0000);}
+#define TA_GET_NB_NUMERIC(v)     (((v)>>24) & 0x00000FFF)
+#define TA_SET_NB_NUMERIC(v,cmd) {(v)&=0x000FFFFF; (v)|=((cmd<<24)&0xFFF00000);}
 
 #define TA_SET_SKIP_FLAG(v)  {(v)|=TA_CMD_SKIP_FLAG;}
 #define TA_CLR_SKIP_FLAG(v)  {(v)&=~TA_CMD_SKIP_FLAG;}
@@ -91,6 +92,10 @@
 #define TA_SET_TIMESTAMP_COMPLETE(v) {(v)|=TA_TIMESTAMP_COMPLETE_FLAG;}
 #define TA_CLR_TIMESTAMP_COMPLETE(v) {(v)&=~TA_TIMESTAMP_COMPLETE_FLAG;}
 #define TA_IS_TIMESTAMP_COMPLETE(v)  ((v)&TA_TIMESTAMP_COMPLETE_FLAG)
+
+#define TA_SET_REPLACE_ZERO(v) {(v)|=TA_CMD_REPLACE_ZERO;}
+#define TA_CLR_REPLACE_ZERO(v) {(v)&=~TA_CMD_REPLACE_ZERO;}
+#define TA_IS_REPLACE_ZERO(v)  ((v)&TA_CMD_REPLACE_ZERO)
 
 #define TA_IS_REAL_CMD(v)    ((v)&TA_CMD_READ_REAL)
 #define TA_IS_INTEGER_CMD(v) ((v)&TA_CMD_READ_INTEGER)
@@ -121,7 +126,8 @@ typedef struct
 } TA_ReadOpInfo;
 
 TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
-                               TA_ReadOpInfo **allocatedInfo );
+                               TA_ReadOpInfo **allocatedInfo,
+                               unsigned int readOpFlags );
 
 TA_RetCode TA_ReadOpInfoFree( TA_ReadOpInfo *readOpInfoToBeFreed );
 

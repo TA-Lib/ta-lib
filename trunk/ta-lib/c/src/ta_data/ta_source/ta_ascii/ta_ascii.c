@@ -115,15 +115,7 @@ TA_RetCode TA_ASCII_GetParameters( TA_DataSourceParameters *param )
 
    memset( param, 0, sizeof( TA_DataSourceParameters ) );
 
-   /* For the time being, the ASCII driver is a read-only source. */
-   param->supportUpdateIndex  = 0;
-   param->supportUpdateSymbol = 0;
-
-    /* No support for realtime feedback with local ASCII database. */
-   param->supportCallback = 0;
-
-   /* Assume it is a fast local data base. */
-   param->slowAccess = 0;
+   param->flags = TA_REPLACE_ZERO_PRICE_BAR;
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -140,16 +132,9 @@ TA_RetCode TA_ASCII_OpenSource( const TA_AddDataSourceParamPriv *param,
 
    *handle = NULL;
 
-   TA_TRACE_BEGIN(  TA_ASCII_OpenSource );
+   TA_TRACE_BEGIN( TA_ASCII_OpenSource );
 
    stringCache = TA_GetGlobalStringCache();
-
-   /* Verify that the requested functionality is supported or not. */
-   if( (param->flags & TA_ENABLE_UPDATE_INDEX) ||
-       (param->flags & TA_ENABLE_UPDATE_SYMBOL) )
-   {
-      TA_TRACE_RETURN( TA_NOT_SUPPORTED );
-   }
 
    /* 'info' and 'location' are mandatory. */
    if( (!param->info) || (!param->location) )
@@ -195,6 +180,16 @@ TA_RetCode TA_ASCII_OpenSource( const TA_AddDataSourceParamPriv *param,
    {
       TA_ASCII_DataSourceHandleFree( tmpHandle );
       TA_TRACE_RETURN( retCode );
+   }
+
+   /* Verify that a close field is provided when the flag
+    * to replace zero price bar is set.
+    */
+   if(  (param->flags & TA_REPLACE_ZERO_PRICE_BAR) &&       
+       !(privData->readOpInfo->fieldProvided & TA_CLOSE) )
+   {
+      TA_ASCII_DataSourceHandleFree( tmpHandle );
+      TA_TRACE_RETURN( TA_MISSING_CLOSE_PRICE_FIELD );
    }
 
    *handle = tmpHandle;
@@ -483,6 +478,15 @@ TA_RetCode TA_ASCII_GetHistoryData( TA_DataSourceHandle *handle,
    if( fieldToAlloc == TA_ALL )
       fieldToAlloc = privateHandle->readOpInfo->fieldProvided;
 
+   /* When the TA_REPLACE_ZERO_PRICE_BAR flag is set, we must
+    * always process the close.
+    */
+   if( !(fieldToAlloc & TA_CLOSE) &&
+        (privateHandle->param->flags & TA_REPLACE_ZERO_PRICE_BAR) )
+   {   
+      fieldToAlloc |= TA_CLOSE;
+   }
+
    /* Get the path of the file. */
    path = TA_FileInfoPath( sourceInfo );
 
@@ -499,9 +503,9 @@ TA_RetCode TA_ASCII_GetHistoryData( TA_DataSourceHandle *handle,
    }
 
    /* Optimize the readOp according to the requested field. */
-   retCode = TA_ReadOp_Optimize(
-                                 privateHandle->readOpInfo,
-                                 privateHandle->readOpInfo->period, fieldToAlloc );
+   retCode = TA_ReadOp_Optimize( privateHandle->readOpInfo,
+                                 privateHandle->readOpInfo->period,
+                                 fieldToAlloc );
    if( retCode != TA_SUCCESS )
    {
       TA_TRACE_RETURN( retCode );
