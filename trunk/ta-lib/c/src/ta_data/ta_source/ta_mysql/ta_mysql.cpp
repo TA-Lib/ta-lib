@@ -91,6 +91,7 @@ TA_RetCode TA_MYSQL_ParseLocation(const char location[],
                                   char database[]);
 
 const char *formatISODate(const TA_Timestamp *ts);
+const char *formatISOTime(const TA_Timestamp *ts);
 
 
 /**** Local variables definitions.     ****/
@@ -438,6 +439,9 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
 
    TA_ASSERT( handle != NULL );
 
+   if ( TA_TimestampValidate(start) != TA_SUCCESS || TA_TimestampValidate(end) != TA_SUCCESS)
+       return TA_BAD_PARAM;
+
    privateHandle = (TA_PrivateMySQLHandle *)handle->opaqueData;
    TA_ASSERT( privateHandle != NULL );
 
@@ -490,11 +494,28 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
       else /* default value 0 means no upper bound */
       {
          TA_SetDate(9999,12,31,&true_end);  /* need some high value to substitute in SQL */
+         TA_SetTime(23,59,59,&true_end);
       }
       tempStr = queryStr;
       queryStr = TA_MYSQL_ExpandPlaceholders(tempStr,
                                              TA_MYSQL_END_DATE_PLACEHOLDER,
                                              formatISODate(&true_end));
+
+      if ( tempStr)
+         TA_Free( tempStr );
+
+      tempStr = queryStr;
+      queryStr = TA_MYSQL_ExpandPlaceholders(tempStr,
+                                             TA_MYSQL_START_TIME_PLACEHOLDER,
+                                             formatISOTime(start));
+
+      if ( tempStr)
+         TA_Free( tempStr );
+
+      tempStr = queryStr;
+      queryStr = TA_MYSQL_ExpandPlaceholders(tempStr,
+                                             TA_MYSQL_END_TIME_PLACEHOLDER,
+                                             formatISOTime(&true_end));
 
       if ( tempStr)
          TA_Free( tempStr );
@@ -594,7 +615,7 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
 
       Row row;
       Result::iterator i;
-      unsigned int bar;
+      int bar;
       // The Result class has a read-only Random Access Iterator
       for (i = res.begin(), bar = 0; i != res.end(); i++, bar++) 
       { 
@@ -610,11 +631,19 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
 
          if (time_required)
          {
-            if ( sscanf(row[time_col], "%2u:%2u:%2u", &u1, &u2, &u3) != 3 )
-               throw TA_BAD_PARAM;
+            const char *timestr = row[time_col];
+            
+            if ( timestr && *timestr) {  
+               if (sscanf(row[time_col], "%2u:%2u:%2u", &u1, &u2, &u3) != 3 )
+                  throw TA_BAD_PARAM;
 
-            if ( TA_SetTime(u1, u2, u3, &timestamp_vec[bar]) != TA_SUCCESS )
-               throw TA_BAD_PARAM;
+               if ( TA_SetTime(u1, u2, u3, &timestamp_vec[bar]) != TA_SUCCESS )
+                   throw TA_BAD_PARAM;
+            }
+            else { // ignore NULL fields
+               bar--;
+               continue;
+            }
          }
 
          if (open_vec)   open_vec[bar]   = row[open_col];
@@ -740,3 +769,13 @@ const char *formatISODate(const TA_Timestamp *ts)
    return str;
 }
 
+const char *formatISOTime(const TA_Timestamp *ts)
+{
+   static char str[9];  /* hh:mm:ss\0 */
+
+   if (sprintf(str, "%02u:%02u:%02u", TA_GetHour(ts), TA_GetMin(ts), TA_GetSec(ts)) != 8)
+   {
+      throw "Weird timestamp";
+   }
+   return str;
+}
