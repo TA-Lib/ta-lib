@@ -207,13 +207,20 @@ TA_RetCode TA_PeriodNormalize( TA_BuilderSupport *builderSupport );
 /* Allocate data in a different timeframe from
  * an existing history.
  *
- * If the pointer are initialize with something
- * different than NULL, TA_Free must be called on
- * this pointer to free this data when not needed
- * anymore.
+ * When the parameter doAllocateNew is != 0, the history 
+ * is transformed and the "Allocate new" pointers
+ * will be all NULL.
+ *
+ * When the parameter doAllocateNew == 0, the "history"
+ * is left untouch, and all the new data are returned
+ * through the "Allocate new" pointers. TA_Free must be 
+ * called on these pointers when not needed anymore.
+ *
+ * In both case, you will need to free "history" as usual.
  */
-TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original history. */
+TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original history. */
                                TA_Period newPeriod,       /* The new desired period. */
+                               int doAllocateNew,         /* When true, following ptrs are used. */
                                TA_Integer *nbBars,        /* Return the number of price bar */
                                TA_Timestamp **timestamp,  /* Allocate new timestamp. */
                                TA_Real **open,            /* Allocate new open. */
