@@ -66,6 +66,7 @@
 /**** Headers ****/
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "ta_common.h"
 #include "ta_magic_nb.h"
 #include "ta_system.h"
@@ -227,6 +228,9 @@ TA_RetCode TA_Initialize( const TA_InitializeParam *param )
       TA_Shutdown();
       return retCode;
    }
+
+   /* Seeds random generator */
+   srand( (unsigned)time( NULL ) );
 
    return TA_SUCCESS;
 }
