@@ -9,6 +9,10 @@ ATR                 Average True Range
 AVGPRICE            Average Price
 BBANDS              Bollinger Bands
 CCI                 Commodity Channel Index
+CDLHIGHWAVE         High-Wave Candle
+CDLLONGLINE         Long Line Candle
+CDLSHORTLINE        Short Line Candle
+CDLSPINNINGTOP      Spinning Top Candle
 CORREL              Pearson's Correlation Coefficient (r)
 DEMA                Double Exponential Moving Average
 DX                  Directional Movement Index
