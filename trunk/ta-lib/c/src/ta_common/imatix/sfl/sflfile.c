@@ -45,10 +45,14 @@ TA_FILE_INFO;
 #   error "Cannot compile; FILE_NAME_MAX is too large."
 #endif
 
-static char
-#if (PATHFOLD == TRUE || defined (MSDOS_FILESYSTEM))
-    path_name [PATH_MAX + 1],           /*  Copy of path symbol              */
+#if 0
+  path_name is not used within TA-Lib
+  #if (PATHFOLD == TRUE || defined (MSDOS_FILESYSTEM))
+     static char path_name [PATH_MAX + 1];           /*  Copy of path symbol              */
+  #endif
 #endif
+
+  static char
     work_name [LINE_MAX + 1],           /*  Name plus ext                    */
     full_name [LINE_MAX + 1],           /*  Dir plus name plus ext           */
     exec_name [LINE_MAX + 1];           /*  Executable file name             */
@@ -1307,7 +1311,6 @@ file_cycle (
         return (TRUE);                  /*  Okay, it worked                  */
 }
 
-
 /*  ---------------------------------------------------------------------[<]-
     Function: file_cycle_needed
 
@@ -1762,7 +1765,6 @@ file_is_writeable (
     else
         return ((file_mode (filename) & S_IREAD) != 0);
 }
-
 
 /*  ---------------------------------------------------------------------[<]-
     Function: file_is_executable
