@@ -189,7 +189,8 @@
     * - small real body
     * - long upper and lower shadow
     * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-    * outInteger is 1 when white or -1 when black, but it does not mean bullish or bearish
+    * outInteger is positive (1 to 100) when white or negative (-1 to -100) when black;
+    * it does not mean bullish or bearish
     */
    outIdx = 0;
    do
@@ -197,7 +198,7 @@
         if( TA_REALBODY(i) < TA_CANDLEAVERAGE( TA_BodyShort, BodyPeriodTotal, i ) && 
             TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( TA_ShadowLong, ShadowPeriodTotal, i ) &&
             TA_LOWERSHADOW(i) > TA_CANDLEAVERAGE( TA_ShadowLong, ShadowPeriodTotal, i ) )
-            outInteger[outIdx++] = TA_CANDLECOLOR(i);
+            outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
         else
             outInteger[outIdx++] = 0;
         /* add the current range and subtract the first range: this is done after the pattern recognition 
@@ -289,7 +290,7 @@
 /* Generated */         if( TA_REALBODY(i) < TA_CANDLEAVERAGE( TA_BodyShort, BodyPeriodTotal, i ) && 
 /* Generated */             TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( TA_ShadowLong, ShadowPeriodTotal, i ) &&
 /* Generated */             TA_LOWERSHADOW(i) > TA_CANDLEAVERAGE( TA_ShadowLong, ShadowPeriodTotal, i ) )
-/* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i);
+/* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         BodyPeriodTotal += TA_CANDLERANGE( TA_BodyShort, i ) - TA_CANDLERANGE( TA_BodyShort, BodyTrailingIdx );
