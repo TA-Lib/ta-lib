@@ -61,9 +61,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sql.h>
-#if defined(WIN32)
 #include <sqlext.h>
-#endif
 
 #include "ta_system.h"
 #include "ta_trace.h"
@@ -148,6 +146,9 @@ TA_RetCode TA_SQL_ODBC_OpenConnection(const char database[],
    TA_TRACE_BEGIN( TA_SQL_ODBC_OpenConnection );
 
    TA_ASSERT( connection != NULL );
+   
+   if( !port && host[0] )
+      port = 0; /* dummy use of unused parameters, to get rid of gcc warnings */
 
    privConnection = (TA_SQL_ODBC_Connection*)TA_Malloc( sizeof(TA_SQL_ODBC_Connection) );
    if( privConnection == NULL )
