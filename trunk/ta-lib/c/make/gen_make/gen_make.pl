@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 
 # This perl script is the "mother of all" making
 # all the operations for re-generating all the

@@ -1,4 +1,4 @@
-#! /bin/usr/perl
+#!/usr/bin/perl
 
 # You should not have to call this script directly. Use instead
 # the "gen_make.pl" who effectively do everything.
