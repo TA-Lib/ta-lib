@@ -31,7 +31,7 @@
  * See ta_defs.h for the flags accessible to the TA-Lib user.
  */
 
-/* Note: for the first 16 bits, see ta_defs.h */
+/* Note: for the 16 less significant bits, see ta_defs.h */
 #define TA_SLOW_ACCESS (1<<16)
 
 typedef struct
@@ -79,9 +79,14 @@ typedef struct
 } TA_SymbolHandle;
 
 /* The following function can be called by the driver from the
- * GetHistoryData() function only! (see below)
+ * getHistoryData() function only! (see below)
  * It allows to add the data who is going to be used in the merging
  * mechanism for building the TA_History.
+ *
+ * The added data must have been allocated with TA_Malloc.
+ * Once the pointer is pass to TA_HistoryData, the driver
+ * is not the owner of that data anymore, and it should never
+ * attempt to free it.
  */
 typedef unsigned int TA_ParamForAddData; /* hidden implementation. */
 
@@ -161,21 +166,12 @@ typedef struct
     /* The data cannot be access from the source without
      * opening it.
      *
-     * When a source is open with the access TA_OPEN_READ_ONLY,
-     * no modification are going to be attempted on the data. Only
-     * the following function are going to be used from this point:
-     *      - GetXXXXCategoryHandle
-     *      - GetXXXXSymbolHandle
-     *      - GetHistoryData
-     *      - GetMarketData
-     *      - CloseSource
-     *
      * A driver should allow to open multiple source simultaneouly.
      * The TA_DataSourceHandle allows to differentiate the instances.
      *
      * TA_AddDataSourceParam is a local copy of all the parameters
      * pass by the library user. The data source can safely keep
-     * a pointer on these parameters until CloseSource gets called.
+     * a pointer on these parameters until closeSource gets called.
      */
     TA_RetCode (*openSource)( const TA_AddDataSourceParamPriv *param,
                               TA_DataSourceHandle **handle );
@@ -185,18 +181,18 @@ typedef struct
     /* The followings allows to get the "index" of the category and symbol
      * provided by this data source.
      *
-     * The driver can provides 'opaque' information that can be re-feed
-     * to the driver for getting further information on a certain entity.
-     * This opaque information is hidden in the handles.
+     * The driver can set 'opaque' information to each category/symbol.
      *
      * The categoryHandle and symbolHandle are already allocated, the driver
      * just need to fill up the information.
      *
-     * The caller assume the pointers set in the 'handles' are valid
-     * the source is closed with CloseSource.
-     * The caller will NEVER de-allocate the 'string' found in the handles.
+     * The pointers in the 'handles' must stay valid until the source is 
+     * closed with closeSource.
      *
-     * Must return TA_END_OF_INDEX when no further elements are available.
+     * The driver is responsible to de-allocate the 'string' found
+     * in the handles when closeSource will get called.
+     *
+     * Must return TA_END_OF_INDEX if no further elements are available.
      */
     TA_RetCode (*getFirstCategoryHandle)( TA_DataSourceHandle *handle,
                                           TA_CategoryHandle *categoryHandle );
