@@ -141,6 +141,13 @@ typedef struct
     */
    TA_SourceFlag flags;
 
+   /* Indicates the data period supported by
+    * this data source.  Some data sources may
+    * ignore this value and extract the period 
+    * directly from the data or other parameters.
+    */
+   TA_Period period;
+
    /* The usage of the following two parameter are
     * data source dependent. See documentation.
     */

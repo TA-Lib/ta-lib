@@ -501,6 +501,21 @@ TA_RetCode TA_SQL_GetHistoryData( TA_DataSourceHandle *handle,
    TA_ASSERT( categoryHandle != NULL );
    TA_ASSERT( symbolHandle != NULL );
 
+
+   /* verify whether this source can deliver data usable for the requested period */
+   if( privateHandle->param->period > 0)
+   {
+      /* this check can be done only when a period is known for this source */
+      if( period < privateHandle->param->period )
+         return TA_SUCCESS;  /* no usable data, but also no error */
+
+      period = privateHandle->param->period;  /* to be passed to ta_history */
+   }
+   else
+   {
+      /* just assume that this source has usable data for the requested period */
+   }
+   
    /* we need a valid end timestamp for placeholder expansion;
     * if end not defined, take maximal value
     */
