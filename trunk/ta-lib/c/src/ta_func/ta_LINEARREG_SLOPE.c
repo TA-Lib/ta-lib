@@ -165,12 +165,13 @@
     *
     * For each point, a straight line over the specified
     * previous bar period is determined in terms
-    * of y = a + bx (where x is the period).
+    * of y = b + m*x:
     *
-    * TA_LINEARREG          : Returns 'y'
-    * TA_LINEARREG_SLOPE    : Returns 'b'
-    * TA_LINEARREG_ANGLE    : Returns 'b' in degree.
-    * TA_LINEARREG_INTERCEPT: Returns 'a'
+    * TA_LINEARREG          : Returns b+m*(period-1)
+    * TA_LINEARREG_SLOPE    : Returns 'm'
+    * TA_LINEARREG_ANGLE    : Returns 'm' in degree.
+    * TA_LINEARREG_INTERCEPT: Returns 'b'
+    * TA_TSF                : Returns b+m*(period)
     */
 
    /* Adjust startIdx to account for the lookback period. */
