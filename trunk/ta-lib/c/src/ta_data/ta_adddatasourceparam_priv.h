@@ -24,9 +24,4 @@ typedef struct
   TA_String *name;
 } TA_AddDataSourceParamPriv;
 
-/* Function to alloc/free a TA_AddDataSourceParamPriv. */
-TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDataSourceParam *param );
-
-TA_RetCode TA_AddDataSourceParamPrivFree( TA_AddDataSourceParamPriv *toBeFreed );
-
 #endif
