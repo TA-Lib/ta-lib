@@ -82,12 +82,12 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::SAR_Lookback( double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInMaximum_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */ int Core::SAR_Lookback( double        optInAcceleration_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInMaximum_1 )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_SAR_Lookback( double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                    double        optInMaximum_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */ int TA_SAR_Lookback( double        optInAcceleration_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                    double        optInMaximum_1 )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -111,10 +111,10 @@
  * 
  * Optional Parameters
  * -------------------
- * optInAcceleration_0:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInAcceleration_0:(From 0 to TA_REAL_MAX)
  *    Acceleration Factor used up to the Maximum value
  * 
- * optInMaximum_1:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInMaximum_1:(From 0 to TA_REAL_MAX)
  *    Acceleration Factor Maximum value
  * 
  * 
@@ -125,8 +125,8 @@
 /* Generated */                                  int    endIdx,
 /* Generated */                                  double       inHigh_0 __gc [],
 /* Generated */                                  double       inLow_0 __gc [],
-/* Generated */                                  double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                  double        optInMaximum_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                  double        optInAcceleration_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                                  double        optInMaximum_1, /* From 0 to TA_REAL_MAX */
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
 /* Generated */                                  double        outReal_0 __gc [] )
@@ -135,8 +135,8 @@
 /* Generated */                    int    endIdx,
 /* Generated */                    const double inHigh_0[],
 /* Generated */                    const double inLow_0[],
-/* Generated */                    double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                    double        optInMaximum_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                    double        optInAcceleration_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                    double        optInMaximum_1, /* From 0 to TA_REAL_MAX */
 /* Generated */                    int          *outBegIdx,
 /* Generated */                    int          *outNbElement,
 /* Generated */                    double        outReal_0[] )
@@ -176,12 +176,12 @@
 /* Generated */ 
 /* Generated */    if( optInAcceleration_0 == TA_REAL_DEFAULT )
 /* Generated */       optInAcceleration_0 = 2.000000e-2;
-/* Generated */    else if( (optInAcceleration_0 < -3.000000e+37) ||/* Generated */  (optInAcceleration_0 > 3.000000e+37) )
+/* Generated */    else if( (optInAcceleration_0 < 0.000000e+0) ||/* Generated */  (optInAcceleration_0 > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInMaximum_1 == TA_REAL_DEFAULT )
 /* Generated */       optInMaximum_1 = 2.000000e-1;
-/* Generated */    else if( (optInMaximum_1 < -3.000000e+37) ||/* Generated */  (optInMaximum_1 > 3.000000e+37) )
+/* Generated */    else if( (optInMaximum_1 < 0.000000e+0) ||/* Generated */  (optInMaximum_1 > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( outReal_0 == NULL )
@@ -469,8 +469,8 @@
 /* Generated */                                  int    endIdx,
 /* Generated */                                  float        inHigh_0 __gc [],
 /* Generated */                                  float        inLow_0 __gc [],
-/* Generated */                                  double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                  double        optInMaximum_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                  double        optInAcceleration_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                                  double        optInMaximum_1, /* From 0 to TA_REAL_MAX */
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
 /* Generated */                                  double        outReal_0 __gc [] )
@@ -479,8 +479,8 @@
 /* Generated */                      int    endIdx,
 /* Generated */                      const float  inHigh_0[],
 /* Generated */                      const float  inLow_0[],
-/* Generated */                      double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                      double        optInMaximum_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                      double        optInAcceleration_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                      double        optInMaximum_1, /* From 0 to TA_REAL_MAX */
 /* Generated */                      int          *outBegIdx,
 /* Generated */                      int          *outNbElement,
 /* Generated */                      double        outReal_0[] )
@@ -506,11 +506,11 @@
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( optInAcceleration_0 == TA_REAL_DEFAULT )
 /* Generated */        optInAcceleration_0 = 2.000000e-2;
-/* Generated */     else if( (optInAcceleration_0 < -3.000000e+37) ||  (optInAcceleration_0 > 3.000000e+37) )
+/* Generated */     else if( (optInAcceleration_0 < 0.000000e+0) ||  (optInAcceleration_0 > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( optInMaximum_1 == TA_REAL_DEFAULT )
 /* Generated */        optInMaximum_1 = 2.000000e-1;
-/* Generated */     else if( (optInMaximum_1 < -3.000000e+37) ||  (optInMaximum_1 > 3.000000e+37) )
+/* Generated */     else if( (optInMaximum_1 < 0.000000e+0) ||  (optInMaximum_1 > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( outReal_0 == NULL )
 /* Generated */        return TA_BAD_PARAM;

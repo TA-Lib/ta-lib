@@ -74,24 +74,24 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::SAREXT_Lookback( double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                          double        optInOffsetOnReverse_1, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                          double        optInAccelerationInitLong_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                          double        optInAccelerationLong_3, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                          double        optInAccelerationMaxLong_4, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                          double        optInAccelerationInitShort_5, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                          double        optInAccelerationShort_6, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                          double        optInAccelerationMaxShort_7 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */ int Core::SAREXT_Lookback( double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                          double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
+/* Generated */                          double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
+/* Generated */                          double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
+/* Generated */                          double        optInAccelerationMaxLong_4, /* From 0 to TA_REAL_MAX */
+/* Generated */                          double        optInAccelerationInitShort_5, /* From 0 to TA_REAL_MAX */
+/* Generated */                          double        optInAccelerationShort_6, /* From 0 to TA_REAL_MAX */
+/* Generated */                          double        optInAccelerationMaxShort_7 )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_SAREXT_Lookback( double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInOffsetOnReverse_1, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationInitLong_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationLong_3, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationMaxLong_4, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationInitShort_5, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationShort_6, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationMaxShort_7 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */ int TA_SAREXT_Lookback( double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInAccelerationMaxLong_4, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInAccelerationInitShort_5, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInAccelerationShort_6, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInAccelerationMaxShort_7 )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -109,28 +109,28 @@
  * 
  * Optional Parameters
  * -------------------
- * optInStartValue_0:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInStartValue_0:(From 0 to TA_REAL_MAX)
  *    Start value and direction. 0 for Auto, >0 for Long, <0 for Short
  * 
- * optInOffsetOnReverse_1:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInOffsetOnReverse_1:(From 0 to TA_REAL_MAX)
  *    Percent offset added/removed to initial stop on short/long reversal
  * 
- * optInAccelerationInitLong_2:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInAccelerationInitLong_2:(From 0 to TA_REAL_MAX)
  *    Acceleration Factor initial value for the Long direction
  * 
- * optInAccelerationLong_3:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInAccelerationLong_3:(From 0 to TA_REAL_MAX)
  *    Acceleration Factor for the Long direction
  * 
- * optInAccelerationMaxLong_4:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInAccelerationMaxLong_4:(From 0 to TA_REAL_MAX)
  *    Acceleration Factor maximum value for the Long direction
  * 
- * optInAccelerationInitShort_5:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInAccelerationInitShort_5:(From 0 to TA_REAL_MAX)
  *    Acceleration Factor initial value for the Short direction
  * 
- * optInAccelerationShort_6:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInAccelerationShort_6:(From 0 to TA_REAL_MAX)
  *    Acceleration Factor for the Short direction
  * 
- * optInAccelerationMaxShort_7:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInAccelerationMaxShort_7:(From 0 to TA_REAL_MAX)
  *    Acceleration Factor maximum value for the Short direction
  * 
  * 
@@ -141,14 +141,14 @@
 /* Generated */                                     int    endIdx,
 /* Generated */                                     double       inHigh_0 __gc [],
 /* Generated */                                     double       inLow_0 __gc [],
-/* Generated */                                     double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInOffsetOnReverse_1, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationInitLong_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationLong_3, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationMaxLong_4, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationInitShort_5, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationShort_6, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationMaxShort_7, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                     double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInAccelerationMaxLong_4, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInAccelerationInitShort_5, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInAccelerationShort_6, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInAccelerationMaxShort_7, /* From 0 to TA_REAL_MAX */
 /* Generated */                                     [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                     [OutAttribute]Int32 *outNbElement,
 /* Generated */                                     double        outReal_0 __gc [] )
@@ -157,14 +157,14 @@
 /* Generated */                       int    endIdx,
 /* Generated */                       const double inHigh_0[],
 /* Generated */                       const double inLow_0[],
-/* Generated */                       double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInOffsetOnReverse_1, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationInitLong_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationLong_3, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationMaxLong_4, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationInitShort_5, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationShort_6, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationMaxShort_7, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                       double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInAccelerationMaxLong_4, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInAccelerationInitShort_5, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInAccelerationShort_6, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInAccelerationMaxShort_7, /* From 0 to TA_REAL_MAX */
 /* Generated */                       int          *outBegIdx,
 /* Generated */                       int          *outNbElement,
 /* Generated */                       double        outReal_0[] )
@@ -189,43 +189,43 @@
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInStartValue_0 == TA_REAL_DEFAULT )
-/* Generated */       optInStartValue_0 = 2.000000e-1;
-/* Generated */    else if( (optInStartValue_0 < -3.000000e+37) ||/* Generated */  (optInStartValue_0 > 3.000000e+37) )
+/* Generated */       optInStartValue_0 = 0.000000e+0;
+/* Generated */    else if( (optInStartValue_0 < 0.000000e+0) ||/* Generated */  (optInStartValue_0 > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInOffsetOnReverse_1 == TA_REAL_DEFAULT )
-/* Generated */       optInOffsetOnReverse_1 = 2.000000e-1;
-/* Generated */    else if( (optInOffsetOnReverse_1 < -3.000000e+37) ||/* Generated */  (optInOffsetOnReverse_1 > 3.000000e+37) )
+/* Generated */       optInOffsetOnReverse_1 = 0.000000e+0;
+/* Generated */    else if( (optInOffsetOnReverse_1 < 0.000000e+0) ||/* Generated */  (optInOffsetOnReverse_1 > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInAccelerationInitLong_2 == TA_REAL_DEFAULT )
 /* Generated */       optInAccelerationInitLong_2 = 2.000000e-1;
-/* Generated */    else if( (optInAccelerationInitLong_2 < -3.000000e+37) ||/* Generated */  (optInAccelerationInitLong_2 > 3.000000e+37) )
+/* Generated */    else if( (optInAccelerationInitLong_2 < 0.000000e+0) ||/* Generated */  (optInAccelerationInitLong_2 > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInAccelerationLong_3 == TA_REAL_DEFAULT )
 /* Generated */       optInAccelerationLong_3 = 2.000000e-2;
-/* Generated */    else if( (optInAccelerationLong_3 < -3.000000e+37) ||/* Generated */  (optInAccelerationLong_3 > 3.000000e+37) )
+/* Generated */    else if( (optInAccelerationLong_3 < 0.000000e+0) ||/* Generated */  (optInAccelerationLong_3 > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInAccelerationMaxLong_4 == TA_REAL_DEFAULT )
 /* Generated */       optInAccelerationMaxLong_4 = 2.000000e-1;
-/* Generated */    else if( (optInAccelerationMaxLong_4 < -3.000000e+37) ||/* Generated */  (optInAccelerationMaxLong_4 > 3.000000e+37) )
+/* Generated */    else if( (optInAccelerationMaxLong_4 < 0.000000e+0) ||/* Generated */  (optInAccelerationMaxLong_4 > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInAccelerationInitShort_5 == TA_REAL_DEFAULT )
 /* Generated */       optInAccelerationInitShort_5 = 2.000000e-1;
-/* Generated */    else if( (optInAccelerationInitShort_5 < -3.000000e+37) ||/* Generated */  (optInAccelerationInitShort_5 > 3.000000e+37) )
+/* Generated */    else if( (optInAccelerationInitShort_5 < 0.000000e+0) ||/* Generated */  (optInAccelerationInitShort_5 > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInAccelerationShort_6 == TA_REAL_DEFAULT )
 /* Generated */       optInAccelerationShort_6 = 2.000000e-2;
-/* Generated */    else if( (optInAccelerationShort_6 < -3.000000e+37) ||/* Generated */  (optInAccelerationShort_6 > 3.000000e+37) )
+/* Generated */    else if( (optInAccelerationShort_6 < 0.000000e+0) ||/* Generated */  (optInAccelerationShort_6 > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInAccelerationMaxShort_7 == TA_REAL_DEFAULT )
 /* Generated */       optInAccelerationMaxShort_7 = 2.000000e-1;
-/* Generated */    else if( (optInAccelerationMaxShort_7 < -3.000000e+37) ||/* Generated */  (optInAccelerationMaxShort_7 > 3.000000e+37) )
+/* Generated */    else if( (optInAccelerationMaxShort_7 < 0.000000e+0) ||/* Generated */  (optInAccelerationMaxShort_7 > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( outReal_0 == NULL )
@@ -258,14 +258,14 @@
 /* Generated */                                     int    endIdx,
 /* Generated */                                     float        inHigh_0 __gc [],
 /* Generated */                                     float        inLow_0 __gc [],
-/* Generated */                                     double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInOffsetOnReverse_1, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationInitLong_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationLong_3, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationMaxLong_4, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationInitShort_5, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationShort_6, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationMaxShort_7, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                     double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInAccelerationMaxLong_4, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInAccelerationInitShort_5, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInAccelerationShort_6, /* From 0 to TA_REAL_MAX */
+/* Generated */                                     double        optInAccelerationMaxShort_7, /* From 0 to TA_REAL_MAX */
 /* Generated */                                     [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                     [OutAttribute]Int32 *outNbElement,
 /* Generated */                                     double        outReal_0 __gc [] )
@@ -274,14 +274,14 @@
 /* Generated */                         int    endIdx,
 /* Generated */                         const float  inHigh_0[],
 /* Generated */                         const float  inLow_0[],
-/* Generated */                         double        optInStartValue_0, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                         double        optInOffsetOnReverse_1, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                         double        optInAccelerationInitLong_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                         double        optInAccelerationLong_3, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                         double        optInAccelerationMaxLong_4, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                         double        optInAccelerationInitShort_5, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                         double        optInAccelerationShort_6, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                         double        optInAccelerationMaxShort_7, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                         double        optInStartValue_0, /* From 0 to TA_REAL_MAX */
+/* Generated */                         double        optInOffsetOnReverse_1, /* From 0 to TA_REAL_MAX */
+/* Generated */                         double        optInAccelerationInitLong_2, /* From 0 to TA_REAL_MAX */
+/* Generated */                         double        optInAccelerationLong_3, /* From 0 to TA_REAL_MAX */
+/* Generated */                         double        optInAccelerationMaxLong_4, /* From 0 to TA_REAL_MAX */
+/* Generated */                         double        optInAccelerationInitShort_5, /* From 0 to TA_REAL_MAX */
+/* Generated */                         double        optInAccelerationShort_6, /* From 0 to TA_REAL_MAX */
+/* Generated */                         double        optInAccelerationMaxShort_7, /* From 0 to TA_REAL_MAX */
 /* Generated */                         int          *outBegIdx,
 /* Generated */                         int          *outNbElement,
 /* Generated */                         double        outReal_0[] )
@@ -295,36 +295,36 @@
 /* Generated */     if(!inHigh_0||!inLow_0)
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( optInStartValue_0 == TA_REAL_DEFAULT )
-/* Generated */        optInStartValue_0 = 2.000000e-1;
-/* Generated */     else if( (optInStartValue_0 < -3.000000e+37) ||  (optInStartValue_0 > 3.000000e+37) )
+/* Generated */        optInStartValue_0 = 0.000000e+0;
+/* Generated */     else if( (optInStartValue_0 < 0.000000e+0) ||  (optInStartValue_0 > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( optInOffsetOnReverse_1 == TA_REAL_DEFAULT )
-/* Generated */        optInOffsetOnReverse_1 = 2.000000e-1;
-/* Generated */     else if( (optInOffsetOnReverse_1 < -3.000000e+37) ||  (optInOffsetOnReverse_1 > 3.000000e+37) )
+/* Generated */        optInOffsetOnReverse_1 = 0.000000e+0;
+/* Generated */     else if( (optInOffsetOnReverse_1 < 0.000000e+0) ||  (optInOffsetOnReverse_1 > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( optInAccelerationInitLong_2 == TA_REAL_DEFAULT )
 /* Generated */        optInAccelerationInitLong_2 = 2.000000e-1;
-/* Generated */     else if( (optInAccelerationInitLong_2 < -3.000000e+37) ||  (optInAccelerationInitLong_2 > 3.000000e+37) )
+/* Generated */     else if( (optInAccelerationInitLong_2 < 0.000000e+0) ||  (optInAccelerationInitLong_2 > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( optInAccelerationLong_3 == TA_REAL_DEFAULT )
 /* Generated */        optInAccelerationLong_3 = 2.000000e-2;
-/* Generated */     else if( (optInAccelerationLong_3 < -3.000000e+37) ||  (optInAccelerationLong_3 > 3.000000e+37) )
+/* Generated */     else if( (optInAccelerationLong_3 < 0.000000e+0) ||  (optInAccelerationLong_3 > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( optInAccelerationMaxLong_4 == TA_REAL_DEFAULT )
 /* Generated */        optInAccelerationMaxLong_4 = 2.000000e-1;
-/* Generated */     else if( (optInAccelerationMaxLong_4 < -3.000000e+37) ||  (optInAccelerationMaxLong_4 > 3.000000e+37) )
+/* Generated */     else if( (optInAccelerationMaxLong_4 < 0.000000e+0) ||  (optInAccelerationMaxLong_4 > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( optInAccelerationInitShort_5 == TA_REAL_DEFAULT )
 /* Generated */        optInAccelerationInitShort_5 = 2.000000e-1;
-/* Generated */     else if( (optInAccelerationInitShort_5 < -3.000000e+37) ||  (optInAccelerationInitShort_5 > 3.000000e+37) )
+/* Generated */     else if( (optInAccelerationInitShort_5 < 0.000000e+0) ||  (optInAccelerationInitShort_5 > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( optInAccelerationShort_6 == TA_REAL_DEFAULT )
 /* Generated */        optInAccelerationShort_6 = 2.000000e-2;
-/* Generated */     else if( (optInAccelerationShort_6 < -3.000000e+37) ||  (optInAccelerationShort_6 > 3.000000e+37) )
+/* Generated */     else if( (optInAccelerationShort_6 < 0.000000e+0) ||  (optInAccelerationShort_6 > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( optInAccelerationMaxShort_7 == TA_REAL_DEFAULT )
 /* Generated */        optInAccelerationMaxShort_7 = 2.000000e-1;
-/* Generated */     else if( (optInAccelerationMaxShort_7 < -3.000000e+37) ||  (optInAccelerationMaxShort_7 > 3.000000e+37) )
+/* Generated */     else if( (optInAccelerationMaxShort_7 < 0.000000e+0) ||  (optInAccelerationMaxShort_7 > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( outReal_0 == NULL )
 /* Generated */        return TA_BAD_PARAM;
