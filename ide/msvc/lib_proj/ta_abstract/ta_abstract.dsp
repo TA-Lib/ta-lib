@@ -346,6 +346,10 @@ SOURCE=..\..\..\..\src\ta_abstract\tables\table_z.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_abstract\ta_frame_priv.h
+# End Source File
 # End Group
 # End Target
 # End Project
