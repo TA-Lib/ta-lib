@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2000, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,8 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  110199 MF   First version. Simply encapsulate iMatix.
- *
+ *  042003 MF   Fix #724662 for TA_GetTime + code clean-up
+ *              
  */
 
 /* Description:
@@ -81,7 +82,7 @@ static const int nbDayInMonth[12] = { 31, 28, 31, 30, 31, 30,
 
 unsigned int TA_GetYear( const TA_Timestamp *timestamp )
 {
-   if( timestamp == NULL )
+   if( !timestamp )
       return 0;
 
    return GET_CCYEAR(timestamp->date);
@@ -89,7 +90,7 @@ unsigned int TA_GetYear( const TA_Timestamp *timestamp )
 
 unsigned int TA_GetMonth( const TA_Timestamp *timestamp )
 {
-   if( timestamp == NULL )
+   if( !timestamp )
       return 0;
 
    return GET_MONTH(timestamp->date);
@@ -97,7 +98,7 @@ unsigned int TA_GetMonth( const TA_Timestamp *timestamp )
 
 unsigned int TA_GetDay( const TA_Timestamp *timestamp )
 {
-   if( timestamp == NULL )
+   if( !timestamp )
       return 0;
 
    return GET_DAY(timestamp->date);
@@ -105,7 +106,7 @@ unsigned int TA_GetDay( const TA_Timestamp *timestamp )
 
 unsigned int TA_GetDayOfTheYear( const TA_Timestamp *timestamp )
 {
-   if( timestamp == NULL )
+   if( !timestamp )
       return 0;
 
    return julian_date( timestamp->date )-1;
@@ -113,6 +114,9 @@ unsigned int TA_GetDayOfTheYear( const TA_Timestamp *timestamp )
 
 unsigned int TA_GetWeekOfTheYear( const TA_Timestamp *timestamp )
 {
+   if( !timestamp )
+      return 0;
+
    return week_of_year( timestamp->date );
 }
 
@@ -134,7 +138,7 @@ unsigned int TA_GetQuarterOfTheYear( const TA_Timestamp *timestamp )
 
 unsigned int TA_GetHour( const TA_Timestamp *timestamp )
 {
-    if( timestamp == NULL )
+    if( !timestamp )
        return 0;
 
     return GET_HOUR(timestamp->time);
@@ -142,7 +146,7 @@ unsigned int TA_GetHour( const TA_Timestamp *timestamp )
 
 unsigned int TA_GetMin( const TA_Timestamp *timestamp )
 {
-    if( timestamp == NULL )
+    if( !timestamp )
        return 0;
 
     return GET_MINUTE(timestamp->time);
@@ -150,7 +154,7 @@ unsigned int TA_GetMin( const TA_Timestamp *timestamp )
 
 unsigned int TA_GetSec( const TA_Timestamp *timestamp )
 {
-    if( timestamp == NULL )
+    if( !timestamp )
        return 0;
 
     return GET_SECOND(timestamp->time);
@@ -164,21 +168,26 @@ TA_RetCode TA_GetDate( const TA_Timestamp *timestamp,
    #ifdef TA_DEBUG
       TA_RetCode retCode;
 
-      if( timestamp == NULL )
-         return 0;
+      if( !timestamp )
+         return TA_BAD_PARAM;
 
       retCode = TA_TimestampValidate( timestamp );
 
       if( retCode != TA_SUCCESS )
          return retCode;
    #else
-      if( timestamp == NULL )
-         return 0;
+      if( !timestamp )
+         return TA_BAD_PARAM;
    #endif
 
-   *year  = TA_GetYear ( timestamp );
-   *month = TA_GetMonth( timestamp );
-   *day   = TA_GetDay  ( timestamp );
+   if( year )
+      *year = GET_CCYEAR(timestamp->date);
+
+   if( month )
+      *month = GET_MONTH(timestamp->date);
+
+   if( day )
+      *day = GET_DAY(timestamp->date);
 
    return TA_SUCCESS;
 }
@@ -191,21 +200,26 @@ TA_RetCode TA_GetTime( const TA_Timestamp *timestamp,
    #ifdef TA_DEBUG
       TA_RetCode retCode;
 
-      if( timestamp == NULL )
-         return 0;
+      if( !timestamp )
+         return TA_BAD_PARAM;
 
       retCode = TA_TimestampValidate( timestamp );
 
       if( retCode != TA_SUCCESS )
          return retCode;
    #else
-      if( timestamp != NULL )
+      if( !timestamp )
          return TA_BAD_PARAM;
    #endif
 
-   *hour = TA_GetHour( timestamp );
-   *min  = TA_GetMin ( timestamp );
-   *sec  = TA_GetSec ( timestamp );
+   if( hour )
+      *hour = GET_HOUR(timestamp->time);
+
+   if( min )
+      *min = GET_MINUTE(timestamp->time);
+
+   if( sec )
+      *sec = GET_SECOND(timestamp->time);
 
    return TA_SUCCESS;
 }
@@ -217,7 +231,7 @@ TA_RetCode TA_SetDate( unsigned int year,
 {
    long cc;
 
-   if( timestamp == NULL )
+   if( !timestamp )
       return TA_BAD_PARAM;
 
    if( year <= 99 )
@@ -240,8 +254,8 @@ TA_RetCode TA_SetTime( unsigned int hour,
                        unsigned int sec,
                        TA_Timestamp *timestamp )
 {
-    if( timestamp == NULL )
-       return 0;
+    if( !timestamp )
+       return TA_BAD_PARAM;
 
     if( hour > 23 )
         return TA_BAD_PARAM;
@@ -259,7 +273,7 @@ TA_RetCode TA_SetTime( unsigned int hour,
 
 TA_RetCode TA_TimestampValidate( const TA_Timestamp *timestamp )
 {
-    if( timestamp == NULL )
+    if( !timestamp )
        return TA_BAD_PARAM;
 
     if( valid_date(timestamp->date) && valid_time(timestamp->time) )
@@ -270,7 +284,7 @@ TA_RetCode TA_TimestampValidate( const TA_Timestamp *timestamp )
 
 int TA_TimestampLess( const TA_Timestamp *t1, const TA_Timestamp *t2 )
 {
-   if( (t1 == NULL) || (t2 == NULL) )
+   if( !t1 || !t2 )
       return 0;
 
    return timelt(t1->date,t1->time,t2->date,t2->time);
@@ -278,7 +292,7 @@ int TA_TimestampLess( const TA_Timestamp *t1, const TA_Timestamp *t2 )
 
 int TA_TimestampGreater( const TA_Timestamp *t1, const TA_Timestamp *t2 )
 {
-   if( (t1 == NULL) || (t2 == NULL) )
+   if( !t1 || !t2 )
       return 0;
 
    return timegt(t1->date,t1->time,t2->date,t2->time);
@@ -286,7 +300,7 @@ int TA_TimestampGreater( const TA_Timestamp *t1, const TA_Timestamp *t2 )
 
 int TA_TimestampEqual( const TA_Timestamp *t1, const TA_Timestamp *t2 )
 {
-   if( (t1 == NULL) || (t2 == NULL) )
+   if( !t1 || !t2 )
       return 0;
 
    return timeeq(t1->date,t1->time,t2->date,t2->time);
@@ -589,61 +603,9 @@ TA_RetCode TA_BackToDayOfWeek( TA_Timestamp *timestamp,
    return TA_SUCCESS;
 }
 
-#if 0
-!!! This portion of code needs to be re-written for 
-!!! using the iMatix library.
-TA_RetCode TA_TimestampNextMonth( TA_Timestamp *timeToAdvance )
-{
-   unsigned int year, month, dayOfTheYear;
-
-   if( timeToAdvance == NULL )
-      return TA_BAD_PARAM;
-
-   /* Go to day 1 of the following month.
-    * Year will be adjusted as needed. Time is left unchanged.
-    */
-   month = TA_GetMonth( timeToAdvance );
-
-   if( month == 12 )
-      return TA_TimestampNextYear( timeToAdvance );
-
-    dayOfTheYear = day_offset[month-1]+1;
-    if( month > 1 )
-    {
-      year = TA_GetYear( timeToAdvance );
-      if( isLeapYear( year ) )
-         dayOfTheYear++;
-    }
-
-    setDay( timeToAdvance, dayOfTheYear );
-
-    return TA_SUCCESS;
-}
-
-TA_RetCode TA_TimestampNextYear( TA_Timestamp *timeToAdvance )
-{
-   unsigned int year;
-
-   /* Go to Jan 1 of the following year.
-    * Only date is changed. Time is left untouch.
-    */
-   if( timeToAdvance == NULL )
-      return TA_BAD_PARAM;
-
-   year = TA_GetYear( timeToAdvance );
-   if( year >= TA_MAX_YEAR )
-      return TA_BAD_PARAM;
-
-   setYear( timeToAdvance, year+1 );
-   setDay ( timeToAdvance, 1 );
-
-   return TA_SUCCESS;
-}
-#endif
-
 TA_RetCode TA_SetDefault( TA_Timestamp *timestamp )
 {
-   if( timestamp == NULL )
+   if( !timestamp )
       return TA_BAD_PARAM;
 
    timestamp->date = MAKE_DATE( 19, 0, 1, 1 ); 
@@ -658,7 +620,7 @@ TA_RetCode TA_TimestampCopy( TA_Timestamp *dest, const TA_Timestamp *src )
    TA_RetCode retCode;
    #endif
 
-   if( (src == NULL) || (dest == NULL) )
+   if( !src || !dest )
       return TA_BAD_PARAM;
 
    #ifdef TA_DEBUG
