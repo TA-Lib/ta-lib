@@ -126,10 +126,10 @@ typedef struct
 
 } TA_LibcPriv;
 
-/* The following global is used all over the place and is the entry
- * point for all other globals.
+/* The following global is used all over the place 
+ * and is the entry point for all other globals.
  */
-extern TA_LibcPriv TA_Globals;
+extern TA_LibcPriv *TA_Globals;
 
 #endif
 

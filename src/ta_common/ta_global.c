@@ -84,7 +84,8 @@ extern TA_RetCode TA_TraceInit( void );
 /**** Global variables definitions.    ****/
 
 /* The entry point for all globals */
-TA_LibcPriv TA_Globals;
+TA_LibcPriv theGlobals;
+TA_LibcPriv *TA_Globals = &theGlobals;
 
 /**** Local declarations.              ****/
 /* None */
@@ -102,7 +103,7 @@ int TA_IsTraceEnabled( void )
     *       No tracing, no stdio and no assert.
     */
 
-   return TA_Globals.traceEnabled;
+   return TA_Globals->traceEnabled;
 }
 
 void TA_TraceEnable( void )
@@ -110,7 +111,7 @@ void TA_TraceEnable( void )
    /* Note: Keep that function simple.
     *       No tracing, no stdio and no assert.
     */
-   TA_Globals.traceEnabled = 1;
+   TA_Globals->traceEnabled = 1;
 }
 
 void TA_TraceDisable( void )
@@ -118,7 +119,7 @@ void TA_TraceDisable( void )
    /* Note: Keep that function simple.
     *       No tracing, no stdio and no assert.
     */
-   TA_Globals.traceEnabled = 0;
+   TA_Globals->traceEnabled = 0;
 }
 
 TA_StringCache *TA_GetGlobalStringCache( void )
@@ -126,7 +127,7 @@ TA_StringCache *TA_GetGlobalStringCache( void )
    /* Note: Keep that function simple.
     *       No tracing, no stdio and no assert.
     */
-   return TA_Globals.dfltCache;
+   return TA_Globals->dfltCache;
 }
 
 TA_RetCode TA_Initialize( const TA_InitializeParam *param )
@@ -143,8 +144,8 @@ TA_RetCode TA_Initialize( const TA_InitializeParam *param )
    /* Allocate the "global variable" used to manage the global
     * variables of all other modules...
     */
-   memset( &TA_Globals, 0, sizeof( TA_LibcPriv ) );
-   TA_Globals.magicNb = TA_LIBC_PRIV_MAGIC_NB;
+   memset( TA_Globals, 0, sizeof( TA_LibcPriv ) );
+   TA_Globals->magicNb = TA_LIBC_PRIV_MAGIC_NB;
 
    if( param )
    { 
@@ -152,15 +153,15 @@ TA_RetCode TA_Initialize( const TA_InitializeParam *param )
       {
          /* Override someone intention to use stdin!? */
          if( param->logOutput == stdin )
-            TA_Globals.stdioFile = stdout;
+            TA_Globals->stdioFile = stdout;
          else
-            TA_Globals.stdioFile = param->logOutput;
+            TA_Globals->stdioFile = param->logOutput;
 
-         TA_Globals.stdioEnabled = 1;      
+         TA_Globals->stdioEnabled = 1;      
       }
 
       if( param->userLocalDrive )
-         TA_Globals.localCachePath = param->userLocalDrive;
+         TA_Globals->localCachePath = param->userLocalDrive;
    }
 
    #if !defined( TA_SINGLE_THREAD )
@@ -170,7 +171,7 @@ TA_RetCode TA_Initialize( const TA_InitializeParam *param )
       again = 1;
       for( i=0; i < TA_NB_GLOBAL_ID && again; i++ )
       {
-         retCode = TA_SemaInit( &TA_Globals.moduleControl[i].sema, 1 );
+         retCode = TA_SemaInit( &(TA_Globals->moduleControl[i].sema), 1 );
          if( retCode != TA_SUCCESS )
             again = 0;
       }
@@ -179,9 +180,9 @@ TA_RetCode TA_Initialize( const TA_InitializeParam *param )
       {
          /* Clean-up and exit. */
          for( i=0; i < TA_NB_GLOBAL_ID; i++ )
-            TA_SemaDestroy( &TA_Globals.moduleControl[i].sema );
+            TA_SemaDestroy( &(TA_Globals->moduleControl[i].sema) );
 
-         memset( &TA_Globals, 0, sizeof( TA_LibcPriv ) );
+         memset( TA_Globals, 0, sizeof( TA_LibcPriv ) );
 
          return TA_INTERNAL_ERROR(4);
       }
@@ -202,9 +203,9 @@ TA_RetCode TA_Initialize( const TA_InitializeParam *param )
       /* Clean-up and exit. */
       #if !defined( TA_SINGLE_THREAD )
       for( i=0; i < TA_NB_GLOBAL_ID; i++ )
-         TA_SemaDestroy( &TA_Globals.moduleControl[i].sema );
+         TA_SemaDestroy( &(TA_Globals->moduleControl[i].sema) );
       #endif
-      memset( &TA_Globals, 0, sizeof( TA_LibcPriv ) );
+      memset( TA_Globals, 0, sizeof( TA_LibcPriv ) );
 
       return TA_INTERNAL_ERROR(5);
    }
@@ -212,14 +213,14 @@ TA_RetCode TA_Initialize( const TA_InitializeParam *param )
    /* Tracing can now be safely used by the memory module until
     * shutdown in TA_Shutdown.
     */
-   TA_Globals.traceEnabled = 1;
+   TA_Globals->traceEnabled = 1;
 
 
    /*** At this point, TA_Shutdown can be called to clean-up. ***/
 
 
    /* Allocate the default string cache used throughout the library. */
-   retCode = TA_StringCacheAlloc( &TA_Globals.dfltCache );
+   retCode = TA_StringCacheAlloc( &(TA_Globals->dfltCache) );
 
    if( retCode != TA_SUCCESS )
    {
@@ -239,7 +240,7 @@ TA_RetCode TA_Shutdown( void )
    unsigned int i;
    TA_RetCode retCode, finalRetCode;
 
-   if( TA_Globals.magicNb != TA_LIBC_PRIV_MAGIC_NB )
+   if( TA_Globals->magicNb != TA_LIBC_PRIV_MAGIC_NB )
       return TA_LIB_NOT_INITIALIZE;
 
    /* Will change if an error occured at any point. */
@@ -256,12 +257,12 @@ TA_RetCode TA_Shutdown( void )
 	   * are shutting down the tracing itself!!!
 	   */
 	  if( i == TA_TRACE_GLOBAL_ID )
-         TA_Globals.traceEnabled = 0;
+         TA_Globals->traceEnabled = 0;
 
       #if !defined( TA_SINGLE_THREAD )
-      if( TA_Globals.moduleControl[i].sema.flags & TA_SEMA_INITIALIZED )
+      if( TA_Globals->moduleControl[i].sema.flags & TA_SEMA_INITIALIZED )
       {
-         retCode = TA_SemaWait( &(TA_Globals.moduleControl[i].sema) );
+         retCode = TA_SemaWait( &(TA_Globals->moduleControl[i].sema) );
          if( retCode != TA_SUCCESS )
             finalRetCode = retCode;
       #endif
@@ -269,27 +270,27 @@ TA_RetCode TA_Shutdown( void )
          /* Just before shutting down the ta_memory module,
           * free the global string cache.
           */
-         if( (i == TA_MEMORY_GLOBAL_ID) && (TA_Globals.dfltCache) )
+         if( (i == TA_MEMORY_GLOBAL_ID) && (TA_Globals->dfltCache) )
          {
-            retCode = TA_StringCacheFree( TA_Globals.dfltCache );
+            retCode = TA_StringCacheFree( TA_Globals->dfltCache );
             if( retCode != TA_SUCCESS )
                finalRetCode = retCode;
          }
 
-         if( TA_Globals.moduleControl[i].initialize )
+         if( TA_Globals->moduleControl[i].initialize )
          {
-            control = TA_Globals.moduleControl[i].control;
+            control = TA_Globals->moduleControl[i].control;
             if( control && control->shutdown )
             {
-               retCode = (*control->shutdown)( TA_Globals.moduleControl[i].global );
+               retCode = (*control->shutdown)( TA_Globals->moduleControl[i].global );
                if( retCode != TA_SUCCESS )
                   finalRetCode = retCode;
             }
-            TA_Globals.moduleControl[i].initialize = 0;
+            TA_Globals->moduleControl[i].initialize = 0;
          }
 
       #if !defined( TA_SINGLE_THREAD )
-         retCode = TA_SemaDestroy( &(TA_Globals.moduleControl[i].sema) );
+         retCode = TA_SemaDestroy( &(TA_Globals->moduleControl[i].sema) );
          if( retCode != TA_SUCCESS )
             finalRetCode = retCode;
       }
@@ -297,7 +298,7 @@ TA_RetCode TA_Shutdown( void )
    }
 
    /* Initialize to all zero to make sure we invalidate that object. */
-   memset( &TA_Globals, 0, sizeof( TA_LibcPriv ) );
+   memset( TA_Globals, 0, sizeof( TA_LibcPriv ) );
 
    return finalRetCode;
 }
@@ -328,10 +329,10 @@ TA_RetCode TA_GetGlobal( const TA_GlobalControl * const control,
    if( id >= TA_NB_GLOBAL_ID )
       return TA_FATAL_ERR;
 
-   if( TA_Globals.moduleControl[id].initialize )
+   if( TA_Globals->moduleControl[id].initialize )
    {
       /* This module is already initialized, just return the global. */
-      *global = TA_Globals.moduleControl[id].global;
+      *global = TA_Globals->moduleControl[id].global;
       return TA_SUCCESS;
    }
 
@@ -341,37 +342,37 @@ TA_RetCode TA_GetGlobal( const TA_GlobalControl * const control,
    finalRetCode = TA_SUCCESS;
 
    #if !defined( TA_SINGLE_THREAD )
-   if( !(TA_Globals.moduleControl[id].sema.flags&TA_SEMA_INITIALIZED) )
+   if( !(TA_Globals->moduleControl[id].sema.flags&TA_SEMA_INITIALIZED) )
       return TA_FATAL_ERR;
 
-   retCode = TA_SemaWait( &(TA_Globals.moduleControl[id].sema) );
+   retCode = TA_SemaWait( &(TA_Globals->moduleControl[id].sema) );
    if( retCode != TA_SUCCESS )
       return TA_FATAL_ERR;
 
    /* Check again if initialize AFTER we got the semaphore. */
-   if( !TA_Globals.moduleControl[id].initialize )
+   if( !TA_Globals->moduleControl[id].initialize )
    {
    #endif
 
       /* The module needs to be initialized. Call the corresponding
        * 'init' function.
        */
-      if( !TA_Globals.moduleControl[id].control )
-         TA_Globals.moduleControl[id].control = locControl;         
+      if( !TA_Globals->moduleControl[id].control )
+         TA_Globals->moduleControl[id].control = locControl;         
 
       if( locControl->init )
       {
-         retCode = (*locControl->init)( &TA_Globals.moduleControl[id].global );
+         retCode = (*locControl->init)( &(TA_Globals->moduleControl[id].global) );
 
          if( retCode != TA_SUCCESS )
             finalRetCode = retCode;
          else
-            TA_Globals.moduleControl[id].initialize = 1;
+            TA_Globals->moduleControl[id].initialize = 1;
       }
 
    #if !defined( TA_SINGLE_THREAD )
    }
-   retCode = TA_SemaPost( &(TA_Globals.moduleControl[id].sema) );
+   retCode = TA_SemaPost( &(TA_Globals->moduleControl[id].sema) );
    if( retCode != TA_SUCCESS )
       finalRetCode = TA_FATAL_ERR;
    #endif
@@ -380,12 +381,12 @@ TA_RetCode TA_GetGlobal( const TA_GlobalControl * const control,
    if( finalRetCode != TA_SUCCESS )
       return finalRetCode;
 
-   if( TA_Globals.moduleControl[id].initialize )
+   if( TA_Globals->moduleControl[id].initialize )
    {
       /* Ok, everything is now alloc/initialized at this point, simply
        * return the pointer on the "global variable" for this module.
        */
-      *global = TA_Globals.moduleControl[id].global;
+      *global = TA_Globals->moduleControl[id].global;
    }
    else
       return TA_FATAL_ERR;
@@ -399,8 +400,8 @@ FILE *TA_GetStdioFilePtr( void )
     *       No tracing, no stdio and no assert.
     */
 
-   if( TA_Globals.stdioEnabled )
-      return TA_Globals.stdioFile;
+   if( TA_Globals->stdioEnabled )
+      return TA_Globals->stdioFile;
 
    return NULL;
 }
@@ -410,8 +411,8 @@ const char *TA_GetLocalCachePath( void )
    /* Note: Keep that function simple.
     *       No tracing, no stdio and no assert.
     */
-   if( TA_Globals.localCachePath )
-      return TA_Globals.localCachePath;
+   if( TA_Globals->localCachePath )
+      return TA_Globals->localCachePath;
 
    return NULL;
 }
