@@ -80,6 +80,8 @@
 typedef enum {
 TA_MFI_TEST,
 TA_AD_TEST,
+TA_ADOSC_3_10_TEST,
+TA_ADOSC_5_2_TEST,
 } TA_TestId;
 
 typedef struct
@@ -121,11 +123,23 @@ static TA_Test tableTest[] =
    /*************/
    /* AD TEST   */
    /*************/
-   /* Note: the period field is ignored and set to -1 */
-   { 0, TA_AD_TEST,  0, 251, -1, TA_SUCCESS,      0, -1631000.00,  0,  252 }, /* First Value */
+   /* Note: the period field is ignored. The period is irrelevant */
+   { 1, TA_AD_TEST,  0, 251, -1, TA_SUCCESS,      0, -1631000.00,  0,  252 }, /* First Value */
    { 0, TA_AD_TEST,  0, 251, -1, TA_SUCCESS,      1, 2974412.02,   0,  252 },
    { 0, TA_AD_TEST,  0, 251, -1, TA_SUCCESS,    250, 8707691.07,   0,  252 },
    { 0, TA_AD_TEST,  0, 251, -1, TA_SUCCESS,    251, 8328944.54,   0,  252 }, /* Last Value */
+
+   /****************/
+   /* ADOSC TEST   */
+   /****************/
+   /* Note: the period field is ignored. The periods are always 3 and 10 */
+   { 1, TA_ADOSC_3_10_TEST, 0, 251, -1, TA_SUCCESS,      0,  841238.32,  9,  243 }, /* First Value */
+   { 0, TA_ADOSC_3_10_TEST, 0, 251, -1, TA_SUCCESS,      1,  2255663.07, 9,  243 },
+   { 0, TA_ADOSC_3_10_TEST, 0, 251, -1, TA_SUCCESS,    241,  -526700.32, 9,  243 },
+   { 0, TA_ADOSC_3_10_TEST, 0, 251, -1, TA_SUCCESS,    242, -1139932.729, 9,  243 }, /* Last Value */
+
+   /* Note: the period field is ignored. The periods are always 2 and 5 */
+   { 1, TA_ADOSC_5_2_TEST, 0, 251, -1, TA_SUCCESS,      0, 585361.28,  4,  248 }, /* First Value */
 
    /**************/
    /* MFI TEST   */
@@ -160,11 +174,12 @@ ErrorNumber test_func_per_hlcv( TA_History *history )
    unsigned int i;
    ErrorNumber retValue;
 
-   /* Re-initialize all the unstable period to zero. */
-   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    for( i=0; i < NB_TEST; i++ )
    {
+      /* Re-initialize all the unstable period to zero. */
+      TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+
       if( (int)tableTest[i].expectedNbElement > (int)history->nbBars )
       {
          printf( "Failed Bad Parameter for Test #%d (%d,%d)\n",
@@ -220,6 +235,48 @@ static TA_RetCode rangeTestFunction(
                         outputBuffer );
       *lookback = TA_MFI_Lookback( testParam->test->optInTimePeriod_0 );
       break;
+
+   case TA_AD_TEST:
+      retCode = TA_AD( startIdx,
+                       endIdx,
+                       testParam->high,
+                       testParam->low,
+                       testParam->close,
+                       testParam->volume,
+                       outBegIdx,
+                       outNbElement,
+                       outputBuffer );
+      *lookback = TA_AD_Lookback();
+      break;
+
+   case TA_ADOSC_3_10_TEST:
+      retCode = TA_ADOSC( startIdx,
+                       endIdx,
+                       testParam->high,
+                       testParam->low,
+                       testParam->close,
+                       testParam->volume,
+                       3, 10,
+                       outBegIdx,
+                       outNbElement,
+                       outputBuffer );
+      *lookback = TA_ADOSC_Lookback(3,10);
+      break;
+
+   case TA_ADOSC_5_2_TEST:
+      retCode = TA_ADOSC( startIdx,
+                       endIdx,
+                       testParam->high,
+                       testParam->low,
+                       testParam->close,
+                       testParam->volume,
+                       5, 2,
+                       outBegIdx,
+                       outNbElement,
+                       outputBuffer );
+      *lookback = TA_ADOSC_Lookback(5,2);
+      break;
+
    default:
       retCode = TA_INTERNAL_ERROR(132);
    }
@@ -275,6 +332,32 @@ static ErrorNumber do_test( const TA_History *history,
                        &outNbElement,
                        gBuffer[0].out0 );
       break;
+
+   case TA_ADOSC_3_10_TEST:
+      retCode = TA_ADOSC( test->startIdx,
+                          test->endIdx,
+                          gBuffer[0].in,
+                          gBuffer[1].in,
+                          gBuffer[2].in,
+                          history->volume,
+                          3, 10,
+                          &outBegIdx,
+                          &outNbElement,
+                          gBuffer[0].out0 );
+      break;
+
+   case TA_ADOSC_5_2_TEST:
+      retCode = TA_ADOSC( test->startIdx,
+                          test->endIdx,
+                          gBuffer[0].in,
+                          gBuffer[1].in,
+                          gBuffer[2].in,
+                          history->volume,
+                          5, 2,
+                          &outBegIdx,
+                          &outNbElement,
+                          gBuffer[0].out0 );
+      break;
    default:
       retCode = TA_INTERNAL_ERROR(133);
    }
@@ -318,6 +401,30 @@ static ErrorNumber do_test( const TA_History *history,
                        gBuffer[1].in,
                        gBuffer[2].in,
                        history->volume,
+                       &outBegIdx,
+                       &outNbElement,
+                       gBuffer[0].in );
+      break;
+   case TA_ADOSC_3_10_TEST:
+      retCode = TA_ADOSC( test->startIdx,
+                       test->endIdx,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       history->volume,
+                       3, 10,
+                       &outBegIdx,
+                       &outNbElement,                       
+                       gBuffer[0].in );
+      break;
+   case TA_ADOSC_5_2_TEST:
+      retCode = TA_ADOSC( test->startIdx,
+                       test->endIdx,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       history->volume,
+                       5, 2,
                        &outBegIdx,
                        &outNbElement,
                        gBuffer[0].in );
@@ -370,6 +477,30 @@ static ErrorNumber do_test( const TA_History *history,
                        gBuffer[1].in,
                        gBuffer[2].in,
                        history->volume,
+                       &outBegIdx,
+                       &outNbElement,
+                       gBuffer[1].in );
+      break;
+   case TA_ADOSC_3_10_TEST:
+      retCode = TA_ADOSC( test->startIdx,
+                       test->endIdx,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       history->volume,
+                       3, 10,
+                       &outBegIdx,
+                       &outNbElement,
+                       gBuffer[1].in );
+      break;
+   case TA_ADOSC_5_2_TEST:
+      retCode = TA_ADOSC( test->startIdx,
+                       test->endIdx,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       history->volume,
+                       5, 2,
                        &outBegIdx,
                        &outNbElement,
                        gBuffer[1].in );
@@ -427,6 +558,30 @@ static ErrorNumber do_test( const TA_History *history,
                        &outNbElement,
                        gBuffer[2].in );
       break;
+   case TA_ADOSC_3_10_TEST:
+      retCode = TA_ADOSC( test->startIdx,
+                       test->endIdx,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       history->volume,
+                       3, 10,
+                       &outBegIdx,
+                       &outNbElement,
+                       gBuffer[2].in );
+      break;
+   case TA_ADOSC_5_2_TEST:
+      retCode = TA_ADOSC( test->startIdx,
+                       test->endIdx,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       history->volume,
+                       5, 2,
+                       &outBegIdx,
+                       &outNbElement,
+                       gBuffer[2].in );
+      break;
    default:
       retCode = TA_INTERNAL_ERROR(136);
    }
@@ -469,6 +624,23 @@ static ErrorNumber do_test( const TA_History *history,
          errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_MFI,
                               (void *)&testParam, 1, 0 );
+         if( errNb != TA_TEST_PASS )
+            return errNb;
+         break;
+      case TA_AD_TEST:
+         errNb = doRangeTest( rangeTestFunction, 
+                              TA_FUNC_UNST_NONE,
+                              (void *)&testParam, 1,
+                              TA_DO_NOT_COMPARE );
+         if( errNb != TA_TEST_PASS )
+            return errNb;
+         break;
+      case TA_ADOSC_3_10_TEST:
+      case TA_ADOSC_5_2_TEST:
+         errNb = doRangeTest( rangeTestFunction, 
+                              TA_FUNC_UNST_EMA,
+                              (void *)&testParam, 1,
+                              TA_DO_NOT_COMPARE );
          if( errNb != TA_TEST_PASS )
             return errNb;
          break;
