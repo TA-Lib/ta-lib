@@ -253,6 +253,7 @@
 		};
 		3A34363405E6A317006FF367 = {
 			children = (
+				3AB39B070619DC7C0004828D,
 				3A3685D205F5B25000BC816A,
 				3A3685CB05F5B22700BC816A,
 				3A34363B05E6A318006FF367,
@@ -3584,6 +3585,105 @@
 			settings = {
 			};
 		};
+		3AB39B070619DC7C0004828D = {
+			children = (
+				3AB39B080619DC7C0004828D,
+				3AB39B090619DC7C0004828D,
+				3AB39B0A0619DC7C0004828D,
+				3AB39B0B0619DC7C0004828D,
+				3AB39B0C0619DC7C0004828D,
+				3AB39B0D0619DC7C0004828D,
+			);
+			isa = PBXGroup;
+			name = ta_csi;
+			path = ../../../src/ta_data/ta_source/ta_csi;
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
+		};
+		3AB39B080619DC7C0004828D = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			path = ta_csi.c;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		3AB39B090619DC7C0004828D = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = ta_csi.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		3AB39B0A0619DC7C0004828D = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			path = ta_csi_files.c;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		3AB39B0B0619DC7C0004828D = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = ta_csi_files.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		3AB39B0C0619DC7C0004828D = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			path = ta_csi_handle.c;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		3AB39B0D0619DC7C0004828D = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = ta_csi_handle.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		3AB39B0E0619DC7D0004828D = {
+			fileRef = 3AB39B080619DC7C0004828D;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3AB39B0F0619DC7D0004828D = {
+			fileRef = 3AB39B090619DC7C0004828D;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3AB39B100619DC7D0004828D = {
+			fileRef = 3AB39B0A0619DC7C0004828D;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3AB39B110619DC7D0004828D = {
+			fileRef = 3AB39B0B0619DC7C0004828D;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3AB39B120619DC7D0004828D = {
+			fileRef = 3AB39B0C0619DC7C0004828D;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3AB39B130619DC7D0004828D = {
+			fileRef = 3AB39B0D0619DC7C0004828D;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		3ADA842605E27FEF00162180 = {
 			children = (
 				3ADA864A05E2906700162180,
@@ -4118,7 +4218,7 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
-				GCC_PREPROCESSOR_DEFINITIONS = "__UNIX__ __unix__ TA_SINGLE_THREAD NO_DEBUG";
+				GCC_PREPROCESSOR_DEFINITIONS = "__UNIX__ __unix__ NO_DEBUG USE_NAMED_SEMAPHORES _REENTRANT QT_THREAD_SUPPORT";
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_UNKNOWN_PRAGMAS = NO;
@@ -4204,6 +4304,9 @@
 				3A3685E205F5B25000BC816A,
 				3A3685E405F5B25000BC816A,
 				3A3685E605F5B25000BC816A,
+				3AB39B0F0619DC7D0004828D,
+				3AB39B110619DC7D0004828D,
+				3AB39B130619DC7D0004828D,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -4412,6 +4515,9 @@
 				3AA3F9B905FB91DD0048BF36,
 				3AA3F9BA05FB91DD0048BF36,
 				3AA3F9BB05FB91DD0048BF36,
+				3AB39B0E0619DC7D0004828D,
+				3AB39B100619DC7D0004828D,
+				3AB39B120619DC7D0004828D,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
