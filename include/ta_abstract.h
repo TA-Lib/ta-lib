@@ -191,18 +191,18 @@ typedef struct
     * information found in this structure is guarantee
     * to not change at runtime.
     */
-   const char * const name;
-   const char * const group;
+   const char * name;
+   const char * group;
 
-   const char * const hint;
-   const char * const helpFile;
-   const TA_FuncFlags flags;
+   const char * hint;
+   const char * helpFile;
+   TA_FuncFlags flags;
 
    const unsigned int nbInput;
    const unsigned int nbOptInput;
    const unsigned int nbOutput;
 
-   const TA_FuncHandle * const handle;
+   const TA_FuncHandle *handle;
 } TA_FuncInfo;
 
 TA_RetCode TA_GetFuncInfo( const TA_FuncHandle *handle,
