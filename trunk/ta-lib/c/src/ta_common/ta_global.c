@@ -466,7 +466,10 @@ TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType )
         { TA_Near, TA_RangeType_HighLow, 5, 0.2 },
         /* when measuring distance between parts of candles or width of gaps */
         /* "far" means ">= 60% of the average of the 5 previous candles' high-low range" */
-        { TA_Far, TA_RangeType_HighLow, 5, 0.6 }
+        { TA_Far, TA_RangeType_HighLow, 5, 0.6 },
+        /* when measuring distance between parts of candles or width of gaps */
+        /* "equal" means "<= 5% of the average of the 5 previous candles' high-low range" */
+        { TA_Equal, TA_RangeType_HighLow, 5, 0.05 }
     };
 
     int i;
