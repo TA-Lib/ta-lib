@@ -216,8 +216,7 @@ TA_RetCode TA_YAHOO_OpenSource( const TA_AddDataSourceParamPriv *param,
     * need in the handle.
     * Now build the TA_YahooIdx.
     */
-   retCode = TA_YahooIdxAlloc(
-                               countryId,
+   retCode = TA_YahooIdxAlloc( countryId,
                                &privData->index,
                                TA_USE_LOCAL_CACHE|TA_USE_REMOTE_CACHE,
                                NULL, timeout_set?&now:NULL, NULL );
@@ -253,8 +252,7 @@ TA_RetCode TA_YAHOO_CloseSource( TA_DataSourceHandle *handle )
 TA_RetCode TA_YAHOO_GetFirstCategoryHandle( TA_DataSourceHandle *handle,
                                             TA_CategoryHandle   *categoryHandle )
 {
-   return initCategoryHandle(
-                              handle,
+   return initCategoryHandle( handle,
                               categoryHandle,
                               0 );
 
@@ -264,8 +262,7 @@ TA_RetCode TA_YAHOO_GetNextCategoryHandle( TA_DataSourceHandle *handle,
                                            TA_CategoryHandle   *categoryHandle,
                                            unsigned int index )
 {
-   return initCategoryHandle(
-                              handle,
+   return initCategoryHandle( handle,
                               categoryHandle,
                               index );
 }
@@ -274,8 +271,7 @@ TA_RetCode TA_YAHOO_GetFirstSymbolHandle( TA_DataSourceHandle *handle,
                                           TA_CategoryHandle   *categoryHandle,
                                           TA_SymbolHandle     *symbolHandle )
 {
-    return initSymbolHandle(
-                             handle,
+    return initSymbolHandle( handle,
                              categoryHandle,
                              symbolHandle,
                              0 );
@@ -287,8 +283,7 @@ TA_RetCode TA_YAHOO_GetNextSymbolHandle( TA_DataSourceHandle *handle,
                                          TA_SymbolHandle     *symbolHandle,
                                          unsigned int index )
 {
-    return initSymbolHandle(
-                             handle,
+    return initSymbolHandle( handle,
                              categoryHandle,
                              symbolHandle,
                              index );
