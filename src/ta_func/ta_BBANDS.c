@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  JV       Jesus Viver <324122@cienz.unizar.es>
  *
  *
  * Change history:
@@ -43,6 +44,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  010503 MF   Fix to always use SMA for the STDDEV (Thanks to JV). 
  *
  */
 
@@ -151,7 +153,7 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
 
    if( optInMethod_3 == TA_INTEGER_DEFAULT )
       optInMethod_3 = 0;
-   else if( (optInMethod_3 < 0) || (optInMethod_3 > 4) )
+   else if( (optInMethod_3 < 0) || (optInMethod_3 > 5) )
       return TA_BAD_PARAM;
 
    if( outRealUpperBand_0 == NULL )
@@ -208,8 +210,7 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
     * The other two bands will simply add/substract the
     * standard deviation from this middle band.
     */
-   retCode = TA_MA(
-                    startIdx, endIdx,
+   retCode = TA_MA( startIdx, endIdx,
                     inReal_0,
                     optInTimePeriod_0,
                     optInMethod_3,
@@ -221,31 +222,20 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
       return retCode;
    }
 
-   /* Calculate the standard deviation into the temporary buffer
-    * The result is put in tempBuffer2.
-    */
-   if( TA_Globals.compatibility == TA_COMPATIBILITY_DEFAULT )
+   /* Calculate the standard deviation into tempBuffer2. */
+   if( optInMethod_3 == TA_BBANDS_SIMPLE )
    {
-      /* The classic approach is not always using the true standard
-       * variation.
-       * - in the case that the MA method is a SMA it will
-       *   be a true standard deviation.
-       * - in the case that the MA method is not a SMA, the
-       *   part which is being a SMA in the variance calculation
-       *   is also replaced by the choosen MA method.
-       */            
+      /* A small speed optimization by re-using the
+       * already calculated SMA.
+       */
        TA_INT_stddev_using_precalc_ma( inReal_0,
                                        tempBuffer1, *outBegIdx, *outNbElement,
                                        optInTimePeriod_0, tempBuffer2 );
    }
    else
    {
-      /* Other implementation (Metastock here) always use the SMA
-       * in the variance calculation regardless the MA method
-       * choosen for the middle band.
-       */
-      retCode = TA_STDDEV(
-                           *outBegIdx, endIdx, inReal_0,
+      /* Calculate the Standard Deviation */
+      retCode = TA_STDDEV( *outBegIdx, endIdx, inReal_0,
                            optInTimePeriod_0, 1.0,
                            outBegIdx, outNbElement, tempBuffer2 );
 
