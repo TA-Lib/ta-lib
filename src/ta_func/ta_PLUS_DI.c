@@ -258,6 +258,21 @@
     *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
     */
 
+   /* Original implementation from Wilder's book was doing some integer
+    * rounding in its calculations.
+	*
+    * This was understandable in the context that at the time the book
+	* was written, most user were doing the calculation by hand.
+	* 
+    * For a computer, rounding is un-necessary (and even problematic when inputs
+	* are close to 1).
+	*
+	* TA-Lib does not do the rounding. Still, if you want to repdroduce Wilder's examples,
+	* you need to comment out the following #undef/#define and rebuild the library.
+	*/
+   #undef  round_pos
+   #define round_pos(x) (x)
+
    if( optInTimePeriod_0 > 1 )
       lookbackTotal = optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_PLUS_DI];
    else
@@ -444,6 +459,8 @@
 /* Generated */     if( outReal_0 == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
+/* Generated */    #undef  round_pos
+/* Generated */    #define round_pos(x) (x)
 /* Generated */    if( optInTimePeriod_0 > 1 )
 /* Generated */       lookbackTotal = optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_PLUS_DI];
 /* Generated */    else

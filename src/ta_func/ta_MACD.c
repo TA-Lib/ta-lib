@@ -538,6 +538,12 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */    int outBegIdx2, outNbElement2;
 /* Generated */    int lookbackTotal, lookbackSignal;
 /* Generated */    int i;
+/* Generated */    if( optInSlowPeriod_1 < optInFastPeriod_0 )
+/* Generated */    {
+/* Generated */        tempInteger       = optInSlowPeriod_1;
+/* Generated */        optInSlowPeriod_1 = optInFastPeriod_0;
+/* Generated */        optInFastPeriod_0 = tempInteger;
+/* Generated */    }
 /* Generated */    if( optInSlowPeriod_1 != 0 )
 /* Generated */       k1 = PER_TO_K(optInSlowPeriod_1);
 /* Generated */    else
@@ -551,12 +557,6 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */    {
 /* Generated */       optInFastPeriod_0 = 12;
 /* Generated */       k2 = (double)0.15; 
-/* Generated */    }
-/* Generated */    if( optInSlowPeriod_1 < optInFastPeriod_0 )
-/* Generated */    {
-/* Generated */        tempInteger       = optInSlowPeriod_1;
-/* Generated */        optInSlowPeriod_1 = optInFastPeriod_0;
-/* Generated */        optInFastPeriod_0 = tempInteger;
 /* Generated */    }
 /* Generated */    lookbackSignal = TA_EMA_Lookback( optInSignalPeriod_2 ); 
 /* Generated */    lookbackTotal =  lookbackSignal;
