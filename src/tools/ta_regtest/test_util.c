@@ -167,6 +167,9 @@ ErrorNumber freeLib( TA_UDBase  *uDBase )
 {
    TA_RetCode retCode;
 
+   /* For testing purpose */
+   /* TA_FATAL_RET( "Test again", 100, 200, 0 ); */
+
    retCode = TA_UDBaseFree( uDBase );
    if( retCode != TA_SUCCESS )
    {
@@ -524,9 +527,12 @@ static void myFatalHandler( void )
 
 #if 0
    /* Can be used for testing purpose */
-   char *b = (char *)malloc(10);
-   TA_FatalReportToBuffer( b, 10 );
-   printf( b );
+   char *b = (char *)malloc(TA_FATAL_ERROR_BUF_SIZE);
+   if( b )
+   {
+      TA_FatalReportToBuffer( b, TA_FATAL_ERROR_BUF_SIZE );
+      printf( b );
+   }
 #endif
 }
 
