@@ -339,7 +339,6 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
    TA_Field fieldProvided;
    const TA_Timestamp *lowTimestamp;
    const TA_Timestamp *highTimestamp;
-   const TA_Timestamp *tempTimestamp;
    unsigned int thisBlockGoesAfterTheExistingOnes;
    TA_Libc *libHandle;
 
@@ -480,11 +479,6 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
       if( close        ) reverseRealElement     ( nbBarAdded, close        );
       if( volume       ) reverseIntegerElement  ( nbBarAdded, volume       );
       if( openInterest ) reverseIntegerElement  ( nbBarAdded, openInterest );
-
-      /* Swap low and high timestamp. */
-      tempTimestamp = lowTimestamp;
-      lowTimestamp  = highTimestamp;
-      highTimestamp = tempTimestamp;
    }
 
    /* Find where this block shall be added in the list.
