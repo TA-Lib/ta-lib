@@ -407,6 +407,20 @@ const TA_OptInputParameterInfo TA_DEF_UI_Penetration_30 =
    NULL /* helpFile */
 };
 
+const TA_OptInputParameterInfo TA_DEF_UI_Penetration_50 =
+{
+   TA_OptInput_RealRange,     /* type */
+   "optInPenetration",        /* paramName */
+   0,                         /* flags */
+
+   "Penetration",             /* displayName */
+   (const void *)&TA_DEF_RealPositive, /* dataSet */
+   0.5, /* defaultValue */
+   "Percentage of penetration of a candle within another candle", /* hint */
+
+   NULL /* helpFile */
+};
+
 const TA_OptInputParameterInfo TA_DEF_UI_VerticalShift =
 {
    TA_OptInput_RealRange,  /* type */
