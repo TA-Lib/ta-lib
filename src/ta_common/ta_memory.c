@@ -720,7 +720,8 @@ void internalMemDisplay( TA_MemoryGlobal *global, FILE *fp )
 
    idx = 0 ;
    p = global->memlist ;
-   while (p != NULL)
+   #define MAX_DISPLAY_LINE 200
+   while (p != NULL && (idx < MAX_DISPLAY_LINE) )
    {
       /* Unused? ((const char *)p)+TA_RESERVE_SIZE+(sizeof(unsigned int)*2) */
       fprintf(fp, "%5d%6u %08X", idx++, p->mh_size, (unsigned int)(TA_HDR_2_CLIENT(p)) ) ;
@@ -733,6 +734,11 @@ void internalMemDisplay( TA_MemoryGlobal *global, FILE *fp )
       }
       fprintf(fp, "\n") ;
       p = p->mh_next ;
+   }
+
+   if( (p != NULL) && (idx >= MAX_DISPLAY_LINE) )
+   {
+      fprintf( fp, "Memory dump stopped. Too much alloc to display.\n" );
    }
 }
 #endif
