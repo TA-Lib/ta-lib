@@ -34,6 +34,8 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_SMA.c \
 		../../../../../src/ta_func/ta_TEMA.c \
 		../../../../../src/ta_func/ta_WMA.c \
+		../../../../../src/ta_func/ta_ADX.c \
+		../../../../../src/ta_func/ta_ADXR.c \
 		../../../../../src/ta_func/ta_APO.c \
 		../../../../../src/ta_func/ta_DX.c \
 		../../../../../src/ta_func/ta_MACD.c \
@@ -69,6 +71,8 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_SMA.o \
 		../../../../../temp/cmd/ta_TEMA.o \
 		../../../../../temp/cmd/ta_WMA.o \
+		../../../../../temp/cmd/ta_ADX.o \
+		../../../../../temp/cmd/ta_ADXR.o \
 		../../../../../temp/cmd/ta_APO.o \
 		../../../../../temp/cmd/ta_DX.o \
 		../../../../../temp/cmd/ta_MACD.o \
@@ -178,6 +182,12 @@ clean:
 
 ../../../../../temp/cmd/ta_WMA.o: ../../../../../src/ta_func/ta_WMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_WMA.o ../../../../../src/ta_func/ta_WMA.c
+
+../../../../../temp/cmd/ta_ADX.o: ../../../../../src/ta_func/ta_ADX.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ADX.o ../../../../../src/ta_func/ta_ADX.c
+
+../../../../../temp/cmd/ta_ADXR.o: ../../../../../src/ta_func/ta_ADXR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ADXR.o ../../../../../src/ta_func/ta_ADXR.c
 
 ../../../../../temp/cmd/ta_APO.o: ../../../../../src/ta_func/ta_APO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_APO.o ../../../../../src/ta_func/ta_APO.c

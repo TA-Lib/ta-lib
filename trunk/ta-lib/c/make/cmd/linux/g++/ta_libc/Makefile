@@ -119,6 +119,8 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_abstract/frames/ta_SMA_frame.c \
 		../../../../../src/ta_abstract/frames/ta_TEMA_frame.c \
 		../../../../../src/ta_abstract/frames/ta_WMA_frame.c \
+		../../../../../src/ta_abstract/frames/ta_ADX_frame.c \
+		../../../../../src/ta_abstract/frames/ta_ADXR_frame.c \
 		../../../../../src/ta_abstract/frames/ta_APO_frame.c \
 		../../../../../src/ta_abstract/frames/ta_DX_frame.c \
 		../../../../../src/ta_abstract/frames/ta_MACD_frame.c \
@@ -154,6 +156,8 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_SMA.c \
 		../../../../../src/ta_func/ta_TEMA.c \
 		../../../../../src/ta_func/ta_WMA.c \
+		../../../../../src/ta_func/ta_ADX.c \
+		../../../../../src/ta_func/ta_ADXR.c \
 		../../../../../src/ta_func/ta_APO.c \
 		../../../../../src/ta_func/ta_DX.c \
 		../../../../../src/ta_func/ta_MACD.c \
@@ -281,6 +285,8 @@ OBJECTS =	../../../../../temp/cmd/ta_ascii.o \
 		../../../../../temp/cmd/ta_SMA_frame.o \
 		../../../../../temp/cmd/ta_TEMA_frame.o \
 		../../../../../temp/cmd/ta_WMA_frame.o \
+		../../../../../temp/cmd/ta_ADX_frame.o \
+		../../../../../temp/cmd/ta_ADXR_frame.o \
 		../../../../../temp/cmd/ta_APO_frame.o \
 		../../../../../temp/cmd/ta_DX_frame.o \
 		../../../../../temp/cmd/ta_MACD_frame.o \
@@ -316,6 +322,8 @@ OBJECTS =	../../../../../temp/cmd/ta_ascii.o \
 		../../../../../temp/cmd/ta_SMA.o \
 		../../../../../temp/cmd/ta_TEMA.o \
 		../../../../../temp/cmd/ta_WMA.o \
+		../../../../../temp/cmd/ta_ADX.o \
+		../../../../../temp/cmd/ta_ADXR.o \
 		../../../../../temp/cmd/ta_APO.o \
 		../../../../../temp/cmd/ta_DX.o \
 		../../../../../temp/cmd/ta_MACD.o \
@@ -688,6 +696,12 @@ clean:
 ../../../../../temp/cmd/ta_WMA_frame.o: ../../../../../src/ta_abstract/frames/ta_WMA_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_WMA_frame.o ../../../../../src/ta_abstract/frames/ta_WMA_frame.c
 
+../../../../../temp/cmd/ta_ADX_frame.o: ../../../../../src/ta_abstract/frames/ta_ADX_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ADX_frame.o ../../../../../src/ta_abstract/frames/ta_ADX_frame.c
+
+../../../../../temp/cmd/ta_ADXR_frame.o: ../../../../../src/ta_abstract/frames/ta_ADXR_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ADXR_frame.o ../../../../../src/ta_abstract/frames/ta_ADXR_frame.c
+
 ../../../../../temp/cmd/ta_APO_frame.o: ../../../../../src/ta_abstract/frames/ta_APO_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_APO_frame.o ../../../../../src/ta_abstract/frames/ta_APO_frame.c
 
@@ -792,6 +806,12 @@ clean:
 
 ../../../../../temp/cmd/ta_WMA.o: ../../../../../src/ta_func/ta_WMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_WMA.o ../../../../../src/ta_func/ta_WMA.c
+
+../../../../../temp/cmd/ta_ADX.o: ../../../../../src/ta_func/ta_ADX.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ADX.o ../../../../../src/ta_func/ta_ADX.c
+
+../../../../../temp/cmd/ta_ADXR.o: ../../../../../src/ta_func/ta_ADXR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ADXR.o ../../../../../src/ta_func/ta_ADXR.c
 
 ../../../../../temp/cmd/ta_APO.o: ../../../../../src/ta_func/ta_APO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_APO.o ../../../../../src/ta_func/ta_APO.c

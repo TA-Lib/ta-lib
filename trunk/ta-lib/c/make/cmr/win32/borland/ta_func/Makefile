@@ -38,6 +38,8 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_SMA.c \
 		..\..\..\..\..\src\ta_func\ta_TEMA.c \
 		..\..\..\..\..\src\ta_func\ta_WMA.c \
+		..\..\..\..\..\src\ta_func\ta_ADX.c \
+		..\..\..\..\..\src\ta_func\ta_ADXR.c \
 		..\..\..\..\..\src\ta_func\ta_APO.c \
 		..\..\..\..\..\src\ta_func\ta_DX.c \
 		..\..\..\..\..\src\ta_func\ta_MACD.c \
@@ -73,6 +75,8 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_utility.obj \
 		..\..\..\..\..\temp\cmr\ta_SMA.obj \
 		..\..\..\..\..\temp\cmr\ta_TEMA.obj \
 		..\..\..\..\..\temp\cmr\ta_WMA.obj \
+		..\..\..\..\..\temp\cmr\ta_ADX.obj \
+		..\..\..\..\..\temp\cmr\ta_ADXR.obj \
 		..\..\..\..\..\temp\cmr\ta_APO.obj \
 		..\..\..\..\..\temp\cmr\ta_DX.obj \
 		..\..\..\..\..\temp\cmr\ta_MACD.obj \
@@ -140,6 +144,8 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_SMA.obj \
 +..\..\..\..\..\temp\cmr\ta_TEMA.obj \
 +..\..\..\..\..\temp\cmr\ta_WMA.obj \
++..\..\..\..\..\temp\cmr\ta_ADX.obj \
++..\..\..\..\..\temp\cmr\ta_ADXR.obj \
 +..\..\..\..\..\temp\cmr\ta_APO.obj \
 +..\..\..\..\..\temp\cmr\ta_DX.obj \
 +..\..\..\..\..\temp\cmr\ta_MACD.obj \
@@ -189,6 +195,8 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_SMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_TEMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_WMA.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ADX.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ADXR.obj
 	-del ..\..\..\..\..\temp\cmr\ta_APO.obj
 	-del ..\..\..\..\..\temp\cmr\ta_DX.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MACD.obj
@@ -262,6 +270,12 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_WMA.obj: ..\..\..\..\..\src\ta_func\ta_WMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_WMA.obj ..\..\..\..\..\src\ta_func\ta_WMA.c
+
+..\..\..\..\..\temp\cmr\ta_ADX.obj: ..\..\..\..\..\src\ta_func\ta_ADX.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ADX.obj ..\..\..\..\..\src\ta_func\ta_ADX.c
+
+..\..\..\..\..\temp\cmr\ta_ADXR.obj: ..\..\..\..\..\src\ta_func\ta_ADXR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ADXR.obj ..\..\..\..\..\src\ta_func\ta_ADXR.c
 
 ..\..\..\..\..\temp\cmr\ta_APO.obj: ..\..\..\..\..\src\ta_func\ta_APO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_APO.obj ..\..\..\..\..\src\ta_func\ta_APO.c

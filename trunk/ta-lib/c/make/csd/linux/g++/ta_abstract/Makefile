@@ -62,6 +62,8 @@ SOURCES =	../../../../../src/ta_abstract/ta_abstract.c \
 		../../../../../src/ta_abstract/frames/ta_SMA_frame.c \
 		../../../../../src/ta_abstract/frames/ta_TEMA_frame.c \
 		../../../../../src/ta_abstract/frames/ta_WMA_frame.c \
+		../../../../../src/ta_abstract/frames/ta_ADX_frame.c \
+		../../../../../src/ta_abstract/frames/ta_ADXR_frame.c \
 		../../../../../src/ta_abstract/frames/ta_APO_frame.c \
 		../../../../../src/ta_abstract/frames/ta_DX_frame.c \
 		../../../../../src/ta_abstract/frames/ta_MACD_frame.c \
@@ -125,6 +127,8 @@ OBJECTS =	../../../../../temp/csd/ta_abstract.o \
 		../../../../../temp/csd/ta_SMA_frame.o \
 		../../../../../temp/csd/ta_TEMA_frame.o \
 		../../../../../temp/csd/ta_WMA_frame.o \
+		../../../../../temp/csd/ta_ADX_frame.o \
+		../../../../../temp/csd/ta_ADXR_frame.o \
 		../../../../../temp/csd/ta_APO_frame.o \
 		../../../../../temp/csd/ta_DX_frame.o \
 		../../../../../temp/csd/ta_MACD_frame.o \
@@ -318,6 +322,12 @@ clean:
 
 ../../../../../temp/csd/ta_WMA_frame.o: ../../../../../src/ta_abstract/frames/ta_WMA_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_WMA_frame.o ../../../../../src/ta_abstract/frames/ta_WMA_frame.c
+
+../../../../../temp/csd/ta_ADX_frame.o: ../../../../../src/ta_abstract/frames/ta_ADX_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_ADX_frame.o ../../../../../src/ta_abstract/frames/ta_ADX_frame.c
+
+../../../../../temp/csd/ta_ADXR_frame.o: ../../../../../src/ta_abstract/frames/ta_ADXR_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_ADXR_frame.o ../../../../../src/ta_abstract/frames/ta_ADXR_frame.c
 
 ../../../../../temp/csd/ta_APO_frame.o: ../../../../../src/ta_abstract/frames/ta_APO_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_APO_frame.o ../../../../../src/ta_abstract/frames/ta_APO_frame.c

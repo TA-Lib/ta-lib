@@ -123,6 +123,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_SMA_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_TEMA_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_WMA_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_ADX_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_ADXR_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_APO_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_DX_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_MACD_frame.c \
@@ -158,6 +160,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_SMA.c \
 		..\..\..\..\..\src\ta_func\ta_TEMA.c \
 		..\..\..\..\..\src\ta_func\ta_WMA.c \
+		..\..\..\..\..\src\ta_func\ta_ADX.c \
+		..\..\..\..\..\src\ta_func\ta_ADXR.c \
 		..\..\..\..\..\src\ta_func\ta_APO.c \
 		..\..\..\..\..\src\ta_func\ta_DX.c \
 		..\..\..\..\..\src\ta_func\ta_MACD.c \
@@ -285,6 +289,8 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj \
 		..\..\..\..\..\temp\csd\ta_SMA_frame.obj \
 		..\..\..\..\..\temp\csd\ta_TEMA_frame.obj \
 		..\..\..\..\..\temp\csd\ta_WMA_frame.obj \
+		..\..\..\..\..\temp\csd\ta_ADX_frame.obj \
+		..\..\..\..\..\temp\csd\ta_ADXR_frame.obj \
 		..\..\..\..\..\temp\csd\ta_APO_frame.obj \
 		..\..\..\..\..\temp\csd\ta_DX_frame.obj \
 		..\..\..\..\..\temp\csd\ta_MACD_frame.obj \
@@ -320,6 +326,8 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj \
 		..\..\..\..\..\temp\csd\ta_SMA.obj \
 		..\..\..\..\..\temp\csd\ta_TEMA.obj \
 		..\..\..\..\..\temp\csd\ta_WMA.obj \
+		..\..\..\..\..\temp\csd\ta_ADX.obj \
+		..\..\..\..\..\temp\csd\ta_ADXR.obj \
 		..\..\..\..\..\temp\csd\ta_APO.obj \
 		..\..\..\..\..\temp\csd\ta_DX.obj \
 		..\..\..\..\..\temp\csd\ta_MACD.obj \
@@ -479,6 +487,8 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_SMA_frame.obj \
 +..\..\..\..\..\temp\csd\ta_TEMA_frame.obj \
 +..\..\..\..\..\temp\csd\ta_WMA_frame.obj \
++..\..\..\..\..\temp\csd\ta_ADX_frame.obj \
++..\..\..\..\..\temp\csd\ta_ADXR_frame.obj \
 +..\..\..\..\..\temp\csd\ta_APO_frame.obj \
 +..\..\..\..\..\temp\csd\ta_DX_frame.obj \
 +..\..\..\..\..\temp\csd\ta_MACD_frame.obj \
@@ -514,6 +524,8 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_SMA.obj \
 +..\..\..\..\..\temp\csd\ta_TEMA.obj \
 +..\..\..\..\..\temp\csd\ta_WMA.obj \
++..\..\..\..\..\temp\csd\ta_ADX.obj \
++..\..\..\..\..\temp\csd\ta_ADXR.obj \
 +..\..\..\..\..\temp\csd\ta_APO.obj \
 +..\..\..\..\..\temp\csd\ta_DX.obj \
 +..\..\..\..\..\temp\csd\ta_MACD.obj \
@@ -655,6 +667,8 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_SMA_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_TEMA_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_WMA_frame.obj
+	-del ..\..\..\..\..\temp\csd\ta_ADX_frame.obj
+	-del ..\..\..\..\..\temp\csd\ta_ADXR_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_APO_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_DX_frame.obj
 	-del ..\..\..\..\..\temp\csd\ta_MACD_frame.obj
@@ -690,6 +704,8 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_SMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_TEMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_WMA.obj
+	-del ..\..\..\..\..\temp\csd\ta_ADX.obj
+	-del ..\..\..\..\..\temp\csd\ta_ADXR.obj
 	-del ..\..\..\..\..\temp\csd\ta_APO.obj
 	-del ..\..\..\..\..\temp\csd\ta_DX.obj
 	-del ..\..\..\..\..\temp\csd\ta_MACD.obj
@@ -1021,6 +1037,12 @@ clean:
 ..\..\..\..\..\temp\csd\ta_WMA_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_WMA_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_WMA_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_WMA_frame.c
 
+..\..\..\..\..\temp\csd\ta_ADX_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_ADX_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_ADX_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_ADX_frame.c
+
+..\..\..\..\..\temp\csd\ta_ADXR_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_ADXR_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_ADXR_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_ADXR_frame.c
+
 ..\..\..\..\..\temp\csd\ta_APO_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_APO_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_APO_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_APO_frame.c
 
@@ -1125,6 +1147,12 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_WMA.obj: ..\..\..\..\..\src\ta_func\ta_WMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_WMA.obj ..\..\..\..\..\src\ta_func\ta_WMA.c
+
+..\..\..\..\..\temp\csd\ta_ADX.obj: ..\..\..\..\..\src\ta_func\ta_ADX.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_ADX.obj ..\..\..\..\..\src\ta_func\ta_ADX.c
+
+..\..\..\..\..\temp\csd\ta_ADXR.obj: ..\..\..\..\..\src\ta_func\ta_ADXR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_ADXR.obj ..\..\..\..\..\src\ta_func\ta_ADXR.c
 
 ..\..\..\..\..\temp\csd\ta_APO.obj: ..\..\..\..\..\src\ta_func\ta_APO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_APO.obj ..\..\..\..\..\src\ta_func\ta_APO.c

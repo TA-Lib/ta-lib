@@ -60,6 +60,8 @@ SOURCES =	..\..\..\..\..\src\ta_abstract\ta_abstract.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_SMA_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_TEMA_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_WMA_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_ADX_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_ADXR_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_APO_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_DX_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_MACD_frame.c \
@@ -123,6 +125,8 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_abstract.obj \
 		..\..\..\..\..\temp\cmr\ta_SMA_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_TEMA_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_WMA_frame.obj \
+		..\..\..\..\..\temp\cmr\ta_ADX_frame.obj \
+		..\..\..\..\..\temp\cmr\ta_ADXR_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_APO_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_DX_frame.obj \
 		..\..\..\..\..\temp\cmr\ta_MACD_frame.obj \
@@ -231,6 +235,8 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_SMA_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_TEMA_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_WMA_frame.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ADX_frame.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ADXR_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_APO_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_DX_frame.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MACD_frame.obj
@@ -387,6 +393,12 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_WMA_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_WMA_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_WMA_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_WMA_frame.c
+
+..\..\..\..\..\temp\cmr\ta_ADX_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_ADX_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_ADX_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_ADX_frame.c
+
+..\..\..\..\..\temp\cmr\ta_ADXR_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_ADXR_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_ADXR_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_ADXR_frame.c
 
 ..\..\..\..\..\temp\cmr\ta_APO_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_APO_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_APO_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_APO_frame.c
