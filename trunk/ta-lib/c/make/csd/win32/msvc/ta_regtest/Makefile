@@ -24,6 +24,7 @@ ZIP	=	zip -r -9
 
 HEADERS =	
 SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
+		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_candlestick.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_1out.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_2out.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_ascii.c \
@@ -52,6 +53,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_csi.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 OBJECTS =	..\..\..\..\..\temp\csd\ta_regtest.obj \
+		..\..\..\..\..\temp\csd\test_candlestick.obj \
 		..\..\..\..\..\temp\csd\test_1in_1out.obj \
 		..\..\..\..\..\temp\csd\test_1in_2out.obj \
 		..\..\..\..\..\temp\csd\test_ascii.obj \
@@ -125,6 +127,7 @@ dist:
 
 clean:
         -del ..\..\..\..\..\temp\csd\ta_regtest.obj
+	-del ..\..\..\..\..\temp\csd\test_candlestick.obj
 	-del ..\..\..\..\..\temp\csd\test_1in_1out.obj
 	-del ..\..\..\..\..\temp\csd\test_1in_2out.obj
 	-del ..\..\..\..\..\temp\csd\test_ascii.obj
@@ -173,6 +176,9 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_regtest.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\ta_regtest.obj ..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c
+
+..\..\..\..\..\temp\csd\test_candlestick.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_candlestick.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\test_candlestick.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_candlestick.c
 
 ..\..\..\..\..\temp\csd\test_1in_1out.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_1out.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\test_1in_1out.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_1out.c
