@@ -113,6 +113,30 @@ static ErrorNumber do_test_ma( const TA_History *history,
 
 static TA_Test tableTest[] =
 {
+   /************/
+   /*  T3 TEST */
+   /************/
+   { 1, TA_ANY_MA_TEST, 0, 0, 251, 5, TA_MAType_T3, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0,  85.73, 24,  252-24  }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 5, TA_MAType_T3, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      1,  84.37, 24,  252-24  },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 5, TA_MAType_T3, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-26, 109.03, 24,  252-24  },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 5, TA_MAType_T3, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-25, 108.88, 24,  252-24  }, /* Last Value */
+
+   /***************/
+   /*  TRIMA TEST */
+   /***************/
+   { 1, TA_ANY_MA_TEST, 0, 0, 251, 10, TA_MAType_TRIMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0,  93.6043, 9,  252-9  }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 10, TA_MAType_TRIMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      1,  93.4252, 9,  252-9  },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 10, TA_MAType_TRIMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-11, 109.1850, 9,  252-9  },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 10, TA_MAType_TRIMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-10, 109.1407, 9,  252-9  }, /* Last Value */
+
+   { 1, TA_ANY_MA_TEST, 0, 0, 251,  9, TA_MAType_TRIMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,     0,   93.8176,  8,  252-8  }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 0, 0, 251,  9, TA_MAType_TRIMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-9,  109.1312,  8,  252-8  }, /* Last Value */
+
+   { 1, TA_ANY_MA_TEST, 0, 0, 251, 12, TA_MAType_TRIMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0,  93.5329, 11,  252-11  }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 12, TA_MAType_TRIMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-12, 109.1157, 11,  252-11  }, /* Last Value */
+
+
+
    /*************
     * MAMA TEST *
     *************/
@@ -465,22 +489,23 @@ static ErrorNumber do_test_ma( const TA_History *history,
    case TA_MAType_DEMA:
    case TA_MAType_EMA:
       retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, test->unstablePeriod );
-      if( retCode != TA_SUCCESS )
-         return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
       break;
    case TA_MAType_KAMA:
       retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_KAMA, test->unstablePeriod );
-      if( retCode != TA_SUCCESS )
-         return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
       break;
    case TA_MAType_MAMA:
       retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_MAMA, test->unstablePeriod );
-      if( retCode != TA_SUCCESS )
-         return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
+      break;
+   case TA_MAType_T3:
+      retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_T3, test->unstablePeriod );
       break;
    default:
+      retCode = TA_SUCCESS;
       break;
    }
+
+   if( retCode != TA_SUCCESS )
+      return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
 
    /* Transform the inputs for MAMA (it is an AVGPRICE in John Ehlers book). */
    if( test->optInMAType_1 == TA_MAType_MAMA )
@@ -640,6 +665,14 @@ static ErrorNumber do_test_ma( const TA_History *history,
       temp = TA_MAMA_Lookback( 0.5, 0.05 );
       break;
 
+   case TA_MAType_TRIMA:
+      temp = TA_TRIMA_Lookback( test->optInTimePeriod_0 );
+      break;
+
+   case TA_MAType_T3:
+      temp = TA_T3_Lookback( test->optInTimePeriod_0, 0.7 );
+      break;
+
    default:
       return TA_TEST_TFRR_BAD_MA_TYPE;
    }
@@ -664,6 +697,11 @@ static ErrorNumber do_test_ma( const TA_History *history,
       case TA_MAType_EMA:
          errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_EMA,
+                              (void *)&testParam, 1, 0 );
+         break;
+      case TA_MAType_T3:
+         errNb = doRangeTest( rangeTestFunction, 
+                              TA_FUNC_UNST_T3,
                               (void *)&testParam, 1, 0 );
          break;
       case TA_MAType_KAMA:
