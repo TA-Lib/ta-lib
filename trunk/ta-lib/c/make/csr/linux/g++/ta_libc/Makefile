@@ -164,6 +164,10 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_AD.c \
 		../../../../../src/ta_func/ta_ADOSC.c \
 		../../../../../src/ta_func/ta_OBV.c \
+		../../../../../src/ta_func/ta_LINEARREG.c \
+		../../../../../src/ta_func/ta_LINEARREG_SLOPE.c \
+		../../../../../src/ta_func/ta_LINEARREG_ANGLE.c \
+		../../../../../src/ta_func/ta_LINEARREG_INTERCEPT.c \
 		../../../../../src/ta_func/ta_STDDEV.c \
 		../../../../../src/ta_func/ta_VAR.c \
 		../../../../../src/ta_func/ta_AVGPRICE.c \
@@ -318,6 +322,10 @@ OBJECTS =	../../../../../temp/csr/ta_ascii.o \
 		../../../../../temp/csr/ta_AD.o \
 		../../../../../temp/csr/ta_ADOSC.o \
 		../../../../../temp/csr/ta_OBV.o \
+		../../../../../temp/csr/ta_LINEARREG.o \
+		../../../../../temp/csr/ta_LINEARREG_SLOPE.o \
+		../../../../../temp/csr/ta_LINEARREG_ANGLE.o \
+		../../../../../temp/csr/ta_LINEARREG_INTERCEPT.o \
 		../../../../../temp/csr/ta_STDDEV.o \
 		../../../../../temp/csr/ta_VAR.o \
 		../../../../../temp/csr/ta_AVGPRICE.o \
@@ -806,6 +814,18 @@ clean:
 
 ../../../../../temp/csr/ta_OBV.o: ../../../../../src/ta_func/ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_OBV.o ../../../../../src/ta_func/ta_OBV.c
+
+../../../../../temp/csr/ta_LINEARREG.o: ../../../../../src/ta_func/ta_LINEARREG.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_LINEARREG.o ../../../../../src/ta_func/ta_LINEARREG.c
+
+../../../../../temp/csr/ta_LINEARREG_SLOPE.o: ../../../../../src/ta_func/ta_LINEARREG_SLOPE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_LINEARREG_SLOPE.o ../../../../../src/ta_func/ta_LINEARREG_SLOPE.c
+
+../../../../../temp/csr/ta_LINEARREG_ANGLE.o: ../../../../../src/ta_func/ta_LINEARREG_ANGLE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_LINEARREG_ANGLE.o ../../../../../src/ta_func/ta_LINEARREG_ANGLE.c
+
+../../../../../temp/csr/ta_LINEARREG_INTERCEPT.o: ../../../../../src/ta_func/ta_LINEARREG_INTERCEPT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_LINEARREG_INTERCEPT.o ../../../../../src/ta_func/ta_LINEARREG_INTERCEPT.c
 
 ../../../../../temp/csr/ta_STDDEV.o: ../../../../../src/ta_func/ta_STDDEV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_STDDEV.o ../../../../../src/ta_func/ta_STDDEV.c
