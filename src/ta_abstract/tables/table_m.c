@@ -117,7 +117,7 @@ static const TA_OutputParameterInfo   *TA_MA_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_MA_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
+{ &TA_DEF_UI_TimePeriod_30,
   &TA_DEF_UI_MA_Method,
   NULL
 };
