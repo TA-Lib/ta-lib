@@ -443,9 +443,10 @@ static TA_RetCode translateToYahooName( TA_Libc *libHandle,
                                         unsigned int maxBufferSize )
 {
    TA_CountryId countryId;
-   unsigned int i, symbolLength, xchangeLength, extLength;
+   unsigned int i, symbolLength, xchangeLength, extLength, typeLength;
    const char *symbol;
    const char *xchange;
+   const char *type;
    const char *category;
    const char *ext;
 
@@ -506,12 +507,25 @@ static TA_RetCode translateToYahooName( TA_Libc *libHandle,
       if( *xchange == '\0' )
          return TA_INVALID_SECURITY_EXCHANGE;
 
+      /* Get the length of the third field of the category.
+       * This field must exist, else an error is returned.
+       */
+      type = strchr( xchange, '.' );
+      if( !type || (type == xchange) || (*type == '\0') )
+         return TA_INVALID_SECURITY_TYPE;
+      type++;
+      if( *type == '\0' )
+         return TA_INVALID_SECURITY_TYPE;
+      typeLength = strlen( type );
+
       /* Look for the possible extension corresponding to
        * this exchange. If found, append it to the symbol.
        */
       for( i=0; i < NB_YAHOO_EXCHANGE_EXTENSION; i++ )
       {         
-         if( lexncmp( TA_YahooExtensionTable[i].exchange, xchange, xchangeLength ) == 0 )
+         if( (TA_YahooExtensionTable[i].countryId == countryId) &&
+             (lexncmp( TA_YahooExtensionTable[i].exchange, xchange, xchangeLength ) == 0) &&
+             (lexncmp( TA_YahooExtensionTable[i].type, type, typeLength ) == 0) )
          {
             ext = TA_YahooExtensionTable[i].extension;
             extLength = strlen( ext );
