@@ -48,6 +48,8 @@
  *
  ****************************************************************************/
 
+#if 0
+Will be implemented later
 /* NVI BEGIN */
 static const TA_InputParameterInfo    *TA_NVI_Inputs[]    =
 {
@@ -75,6 +77,7 @@ DEF_FUNCTION( NVI,                     /* name */
              );
 
 /* NVI END */
+#endif
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
@@ -82,7 +85,7 @@ DEF_FUNCTION( NVI,                     /* name */
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableN[] =
 {
-   ADD_TO_TABLE(NVI),
+   /* ADD_TO_TABLE(NVI),*/
    NULL
 };
 

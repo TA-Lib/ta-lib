@@ -133,7 +133,8 @@ DEF_FUNCTION( PPO,                        /* name */
              );
 /* PPO END */
 
-
+#if 0
+Will be implemented later
 /* PVI BEGIN */
 static const TA_InputParameterInfo    *TA_PVI_Inputs[]    =
 {
@@ -161,6 +162,7 @@ DEF_FUNCTION( PVI,                     /* name */
              );
 
 /* PVI END */
+#endif
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
@@ -171,7 +173,7 @@ const TA_FuncDef *TA_DEF_TableP[] =
    ADD_TO_TABLE(PPO),
    ADD_TO_TABLE(PLUS_DI),
    ADD_TO_TABLE(PLUS_DM),
-   ADD_TO_TABLE(PVI),
+   /* ADD_TO_TABLE(PVI),*/
    NULL
 };
 
