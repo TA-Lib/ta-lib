@@ -529,8 +529,6 @@ static TA_RetCode referenceMax( TA_Integer    startIdx,
    /* min/max are checked for optInTimePeriod_0. */
    if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 30;
-   else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
-      return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
       return TA_BAD_PARAM;
