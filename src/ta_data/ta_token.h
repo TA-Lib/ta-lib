@@ -53,6 +53,8 @@ typedef enum
    TA_TOK_SKIP_N_CHAR,
    TA_TOK_SKIP_N_HEADER_LINE,
 
+   TA_TOK_SKIP_NON_DIGIT_LINE,
+
    TA_TOK_END,  /* Indicates no more token available. */
 
    TA_NB_TOKEN_ID,
