@@ -176,6 +176,8 @@ static TA_PrivateYahooHandle *allocPrivateHandle( void )
 
 static TA_RetCode freePrivateHandle( TA_PrivateYahooHandle *privateHandle )
 {
+   TA_StringCache *stringCache;
+
    if( privateHandle )
    {
       if( privateHandle->index )
@@ -189,6 +191,13 @@ static TA_RetCode freePrivateHandle( TA_PrivateYahooHandle *privateHandle )
 
       if( privateHandle->readOp2Fields )
          TA_ReadOpInfoFree( privateHandle->readOp2Fields );
+
+      stringCache = TA_GetGlobalStringCache();
+      if( privateHandle->webSiteSymbol )
+         TA_StringFree( stringCache, privateHandle->webSiteSymbol );
+
+      if( privateHandle->userSpecifiedServer )
+         TA_StringFree( stringCache, privateHandle->userSpecifiedServer );
 
       TA_Free( privateHandle );
    }
