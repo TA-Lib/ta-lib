@@ -284,16 +284,18 @@ int main( int argc, char *argv[] )
    }
 
    /* Daily data by default. */
+   period    = TA_DAILY;
    theAction = UNKNOWN_ACTION;
+   flags     = 0;
 
    /* Check for the switch, and identify what needs to be done. */
    for( i=0; (i < NB_SWITCH) && (theAction == UNKNOWN_ACTION); i++ )
    {
       if( strcmp(tableSwitch[i].string,argv[1]) == 0 )
       {
-         period = tableSwitch[i].period;
+         period    = tableSwitch[i].period;
          theAction = tableSwitch[i].theAction;
-         flags = tableSwitch[i].flags;
+         flags     = tableSwitch[i].flags;
       }
    }
 

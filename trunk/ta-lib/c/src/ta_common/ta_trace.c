@@ -155,6 +155,7 @@ typedef struct
 static void printFatalError( TA_FatalErrorLog *log, TA_PrintfVar *outp );
 static void doFatalReport( TA_PrintfVar *outp );
 
+#ifdef TA_DEBUG
 static void internalCheckpoint( TA_TraceGlobal *global,
                                 TA_String *key,
                                 const char *funcname,
@@ -162,7 +163,6 @@ static void internalCheckpoint( TA_TraceGlobal *global,
                                 unsigned int lineNb,
                                 int value );
 
-#ifdef TA_DEBUG
 static void freeTracePosition( void *dataToBeFreed );
 static TA_TracePosition *newTracePosition( const char *funcname, 
                                            const char *filename,
