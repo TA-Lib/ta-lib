@@ -61,12 +61,10 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c &
 		..\..\..\..\..\src\ta_func\ta_MINUS_DI.c &
 		..\..\..\..\..\src\ta_func\ta_MINUS_DM.c &
 		..\..\..\..\..\src\ta_func\ta_MOM.c &
-		..\..\..\..\..\src\ta_func\ta_NVI.c &
 		..\..\..\..\..\src\ta_func\ta_OBV.c &
 		..\..\..\..\..\src\ta_func\ta_PLUS_DI.c &
 		..\..\..\..\..\src\ta_func\ta_PLUS_DM.c &
 		..\..\..\..\..\src\ta_func\ta_PPO.c &
-		..\..\..\..\..\src\ta_func\ta_PVI.c &
 		..\..\..\..\..\src\ta_func\ta_ROC.c &
 		..\..\..\..\..\src\ta_func\ta_ROCP.c &
 		..\..\..\..\..\src\ta_func\ta_ROCR.c &
@@ -131,12 +129,10 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_utility.obj &
 		..\..\..\..\..\temp\csd\ta_MINUS_DI.obj &
 		..\..\..\..\..\temp\csd\ta_MINUS_DM.obj &
 		..\..\..\..\..\temp\csd\ta_MOM.obj &
-		..\..\..\..\..\temp\csd\ta_NVI.obj &
 		..\..\..\..\..\temp\csd\ta_OBV.obj &
 		..\..\..\..\..\temp\csd\ta_PLUS_DI.obj &
 		..\..\..\..\..\temp\csd\ta_PLUS_DM.obj &
 		..\..\..\..\..\temp\csd\ta_PPO.obj &
-		..\..\..\..\..\temp\csd\ta_PVI.obj &
 		..\..\..\..\..\temp\csd\ta_ROC.obj &
 		..\..\..\..\..\temp\csd\ta_ROCP.obj &
 		..\..\..\..\..\temp\csd\ta_ROCR.obj &
@@ -228,12 +224,10 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_MINUS_DI.obj
 	-del ..\..\..\..\..\temp\csd\ta_MINUS_DM.obj
 	-del ..\..\..\..\..\temp\csd\ta_MOM.obj
-	-del ..\..\..\..\..\temp\csd\ta_NVI.obj
 	-del ..\..\..\..\..\temp\csd\ta_OBV.obj
 	-del ..\..\..\..\..\temp\csd\ta_PLUS_DI.obj
 	-del ..\..\..\..\..\temp\csd\ta_PLUS_DM.obj
 	-del ..\..\..\..\..\temp\csd\ta_PPO.obj
-	-del ..\..\..\..\..\temp\csd\ta_PVI.obj
 	-del ..\..\..\..\..\temp\csd\ta_ROC.obj
 	-del ..\..\..\..\..\temp\csd\ta_ROCP.obj
 	-del ..\..\..\..\..\temp\csd\ta_ROCR.obj
@@ -396,9 +390,6 @@ clean:
 ..\..\..\..\..\temp\csd\ta_MOM.obj: ..\..\..\..\..\src\ta_func\ta_MOM.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_MOM.obj ..\..\..\..\..\src\ta_func\ta_MOM.c
 
-..\..\..\..\..\temp\csd\ta_NVI.obj: ..\..\..\..\..\src\ta_func\ta_NVI.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_NVI.obj ..\..\..\..\..\src\ta_func\ta_NVI.c
-
 ..\..\..\..\..\temp\csd\ta_OBV.obj: ..\..\..\..\..\src\ta_func\ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_OBV.obj ..\..\..\..\..\src\ta_func\ta_OBV.c
 
@@ -410,9 +401,6 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_PPO.obj: ..\..\..\..\..\src\ta_func\ta_PPO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_PPO.obj ..\..\..\..\..\src\ta_func\ta_PPO.c
-
-..\..\..\..\..\temp\csd\ta_PVI.obj: ..\..\..\..\..\src\ta_func\ta_PVI.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_PVI.obj ..\..\..\..\..\src\ta_func\ta_PVI.c
 
 ..\..\..\..\..\temp\csd\ta_ROC.obj: ..\..\..\..\..\src\ta_func\ta_ROC.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_ROC.obj ..\..\..\..\..\src\ta_func\ta_ROC.c
