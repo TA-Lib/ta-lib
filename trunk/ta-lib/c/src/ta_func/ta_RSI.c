@@ -273,7 +273,7 @@ TA_RetCode TA_RSI( TA_Integer    startIdx,
     * The second equation is used here for speed optimization.
     */
    if( today > startIdx )
-      outReal_0[outIdx++] = 100*(prevGain/(prevGain+prevLoss));
+      outReal_0[outIdx++] = 100.0*(prevGain/(prevGain+prevLoss));
    else
    {
       /* Skip the unstable period. Do the processing 
@@ -318,7 +318,7 @@ TA_RetCode TA_RSI( TA_Integer    startIdx,
       prevLoss /= optInTimePeriod_0;
       prevGain /= optInTimePeriod_0;
 
-      outReal_0[outIdx++] = 100*(prevGain/(prevGain+prevLoss));
+      outReal_0[outIdx++] = 100.0*(prevGain/(prevGain+prevLoss));
    }
 
    *outBegIdx = startIdx;

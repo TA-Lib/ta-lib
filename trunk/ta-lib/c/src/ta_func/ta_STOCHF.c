@@ -152,7 +152,7 @@ TA_RetCode TA_STOCHF( TA_Integer    startIdx,
 
    if( optInFastD_MAType_2 == TA_INTEGER_DEFAULT )
       optInFastD_MAType_2 = 0;
-   else if( (optInFastD_MAType_2 < 0) || (optInFastD_MAType_2 > 4) )
+   else if( (optInFastD_MAType_2 < 0) || (optInFastD_MAType_2 > 5) )
       return TA_BAD_PARAM;
 
    if( outFastK_0 == NULL )

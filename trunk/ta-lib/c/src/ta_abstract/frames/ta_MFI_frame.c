@@ -55,17 +55,20 @@
 
 /* NEVER CALL directly this function! Use TA_CallFunc. */
  
-TA_RetCode TA_MOM_FramePP( const TA_ParamHolderPriv *params,
+TA_RetCode TA_MFI_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
                           TA_Integer            endIdx,
                           TA_Integer           *outBegIdx,
                           TA_Integer           *outNbElement )
 
 {
-   return TA_MOM(
+   return TA_MFI(
             startIdx,
             endIdx,
-            params->in[0].data.inReal, /* inReal_0 */
+            params->in[0].data.inPrice.high, /* inHigh_0 */
+            params->in[0].data.inPrice.low, /* inLow_0 */
+            params->in[0].data.inPrice.close, /* inClose_0 */
+            params->in[0].data.inPrice.volume, /* inVolume_0 */
             params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
             outBegIdx, 
             outNbElement, 

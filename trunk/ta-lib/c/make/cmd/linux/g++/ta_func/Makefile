@@ -35,6 +35,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_SAR.c \
 		../../../../../src/ta_func/ta_SMA.c \
 		../../../../../src/ta_func/ta_TEMA.c \
+		../../../../../src/ta_func/ta_TRIMA.c \
 		../../../../../src/ta_func/ta_WMA.c \
 		../../../../../src/ta_func/ta_ATR.c \
 		../../../../../src/ta_func/ta_TRANGE.c \
@@ -46,6 +47,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_MACD.c \
 		../../../../../src/ta_func/ta_MACDEXT.c \
 		../../../../../src/ta_func/ta_MACDFIX.c \
+		../../../../../src/ta_func/ta_MFI.c \
 		../../../../../src/ta_func/ta_MINUS_DI.c \
 		../../../../../src/ta_func/ta_MINUS_DM.c \
 		../../../../../src/ta_func/ta_MOM.c \
@@ -80,6 +82,7 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_SAR.o \
 		../../../../../temp/cmd/ta_SMA.o \
 		../../../../../temp/cmd/ta_TEMA.o \
+		../../../../../temp/cmd/ta_TRIMA.o \
 		../../../../../temp/cmd/ta_WMA.o \
 		../../../../../temp/cmd/ta_ATR.o \
 		../../../../../temp/cmd/ta_TRANGE.o \
@@ -91,6 +94,7 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_MACD.o \
 		../../../../../temp/cmd/ta_MACDEXT.o \
 		../../../../../temp/cmd/ta_MACDFIX.o \
+		../../../../../temp/cmd/ta_MFI.o \
 		../../../../../temp/cmd/ta_MINUS_DI.o \
 		../../../../../temp/cmd/ta_MINUS_DM.o \
 		../../../../../temp/cmd/ta_MOM.o \
@@ -202,6 +206,9 @@ clean:
 ../../../../../temp/cmd/ta_TEMA.o: ../../../../../src/ta_func/ta_TEMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_TEMA.o ../../../../../src/ta_func/ta_TEMA.c
 
+../../../../../temp/cmd/ta_TRIMA.o: ../../../../../src/ta_func/ta_TRIMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_TRIMA.o ../../../../../src/ta_func/ta_TRIMA.c
+
 ../../../../../temp/cmd/ta_WMA.o: ../../../../../src/ta_func/ta_WMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_WMA.o ../../../../../src/ta_func/ta_WMA.c
 
@@ -234,6 +241,9 @@ clean:
 
 ../../../../../temp/cmd/ta_MACDFIX.o: ../../../../../src/ta_func/ta_MACDFIX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MACDFIX.o ../../../../../src/ta_func/ta_MACDFIX.c
+
+../../../../../temp/cmd/ta_MFI.o: ../../../../../src/ta_func/ta_MFI.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MFI.o ../../../../../src/ta_func/ta_MFI.c
 
 ../../../../../temp/cmd/ta_MINUS_DI.o: ../../../../../src/ta_func/ta_MINUS_DI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MINUS_DI.o ../../../../../src/ta_func/ta_MINUS_DI.c

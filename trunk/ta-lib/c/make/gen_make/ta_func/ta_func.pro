@@ -34,6 +34,7 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_SAR.c \ 
           ../../../../../src/ta_func/ta_SMA.c \ 
           ../../../../../src/ta_func/ta_TEMA.c \ 
+          ../../../../../src/ta_func/ta_TRIMA.c \ 
           ../../../../../src/ta_func/ta_WMA.c \ 
           ../../../../../src/ta_func/ta_ATR.c \ 
           ../../../../../src/ta_func/ta_TRANGE.c \ 
@@ -45,6 +46,7 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_MACD.c \ 
           ../../../../../src/ta_func/ta_MACDEXT.c \ 
           ../../../../../src/ta_func/ta_MACDFIX.c \ 
+          ../../../../../src/ta_func/ta_MFI.c \ 
           ../../../../../src/ta_func/ta_MINUS_DI.c \ 
           ../../../../../src/ta_func/ta_MINUS_DM.c \ 
           ../../../../../src/ta_func/ta_MOM.c \ 

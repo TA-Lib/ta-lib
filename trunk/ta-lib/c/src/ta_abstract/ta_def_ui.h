@@ -19,8 +19,6 @@
    #include "ta_frame.h"
 #endif
 
-
-
 typedef enum
 {
   /* If you modify this enum, make sure you update ta_def_ui.c */
@@ -55,6 +53,7 @@ extern const TA_InputParameterInfo TA_DEF_UI_Input_Real;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Integer;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Timestamp;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_OHLCV;
+extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_HLCV;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_OHLC;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_HLC;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_HL;

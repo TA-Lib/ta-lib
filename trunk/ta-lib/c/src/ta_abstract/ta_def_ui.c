@@ -92,6 +92,13 @@ const TA_InputParameterInfo TA_DEF_UI_Input_Price_OHLCV =
                                     TA_IN_PRICE_CLOSE  |
                                     TA_IN_PRICE_VOLUME };
 
+const TA_InputParameterInfo TA_DEF_UI_Input_Price_HLCV =
+                                  { TA_Input_Price, "inPriceHLCV",
+                                    TA_IN_PRICE_HIGH   |
+                                    TA_IN_PRICE_LOW    |
+                                    TA_IN_PRICE_CLOSE  |
+                                    TA_IN_PRICE_VOLUME };
+
 const TA_InputParameterInfo TA_DEF_UI_Input_Price_OHLC =
                                   { TA_Input_Price, "inPriceOHLC",
                                     TA_IN_PRICE_OPEN   |
@@ -130,10 +137,6 @@ const TA_OutputParameterInfo TA_DEF_UI_Output_Real =
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer =
                                   { TA_Output_Integer, "outInteger", TA_OUT_LINE };
-
-const TA_OutputParameterInfo TA_DEF_UI_Output_Draw =
-                                  { TA_Output_Draw, "outDraw", TA_OUT_LINE };
-
 
 /*****************************************************
  * Define from here the TA_Integer ranges
@@ -322,9 +325,9 @@ static const TA_IntegerDataPair TA_MA_TypeDataPair[] =
    {1,"Exponential"},
    {2,"Weighted"},
    {3,"Dema" },
-   {4,"Tema" }
-/* {5,"Triangular"},
-   {6,"Linear Regression"}*/
+   {4,"Tema" },
+   {5,"Triangular"}
+   /*{6,"Linear Regression"}*/
 };
 
 const TA_IntegerList TA_MA_TypeList =

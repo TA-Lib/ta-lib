@@ -258,6 +258,9 @@ static ErrorNumber do_test( const TA_History *history,
    TA_Integer outBegIdx;
    TA_Integer outNbElement;
    TA_RangeTestParam testParam;
+   const TA_FuncHandle *funcHandle;
+   const TA_FuncInfo *funcInfo;
+   TA_ParamHolder *params;
 
    /* Set to NAN all the elements of the gBuffers.  */
    clearAllBuffers();
@@ -311,6 +314,83 @@ static ErrorNumber do_test( const TA_History *history,
       return errNb;
 
    CHECK_EXPECTED_VALUE( gBuffer[1].in, 0 );
+
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+
+   /* Make a call using the abstract interface. */
+   retCode = TA_GetFuncHandle( "RSI", &funcHandle );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Fail: TA_GetFuncHandle with retCode = %d\n", retCode );
+      return TA_ABS_TST_FAIL_GETFUNCHANDLE;
+   }
+
+   retCode = TA_GetFuncInfo( funcHandle, &funcInfo );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Fail: TA_GetFuncInfo with retCode = %d\n", retCode );
+      return TA_ABS_TST_FAIL_GETFUNCINFO;
+   }
+                             
+   retCode = TA_ParamHolderAlloc( funcHandle, &params );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Fail: TA_ParamHolderAlloc with retCode = %d\n", retCode );
+      return TA_ABS_TST_FAIL_PARAMHOLDERALLOC;
+   }
+
+   retCode = TA_SetInputParamRealPtr( params, 0, gBuffer[0].in );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Fail: TA_SetInputParamRealPtr with retCode = %d\n", retCode );
+      return TA_ABS_TST_FAIL_PARAMREALPTR;
+   }
+
+   retCode = TA_SetOptInputParamInteger( params, 0, test->optInTimePeriod_0 );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Fail: TA_SetOptInputParamInteger with retCode = %d\n", retCode );
+      return TA_ABS_TST_FAIL_OPTINPUTPARAMINTEGER;
+   }
+
+   retCode = TA_SetOutputParamRealPtr( params, 0, gBuffer[1].out0 );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Fail: TA_SetOutputParamRealPtr with retCode = %d\n", retCode );
+      return TA_ABS_TST_FAIL_SETOUTPUTPARAMREALPTR;
+   }
+
+   retCode = TA_CallFunc( params,
+                          test->startIdx,
+                          test->endIdx,
+                          &outBegIdx,
+                          &outNbElement );
+
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Fail: TA_CallFunc with retCode = %d\n", retCode );
+      return TA_ABS_TST_FAIL_CALLFUNC;
+   }
+                           
+   retCode = TA_ParamHolderFree( params );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Fail: TA_GetFuncHandle with retCode = %d\n", retCode );
+      return TA_ABS_TST_FAIL_PARAMHOLDERFREE;
+   }
+
+
+   /* The previous call should have the same output as this call.
+    *
+    * checkSameContent verify that all value different than NAN in
+    * the first parameter is identical in the second parameter.
+    */
+   errNb = checkSameContent( gBuffer[0].out0, gBuffer[1].out0 );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+
+   CHECK_EXPECTED_VALUE( gBuffer[1].out0, 0 );
 
    if( errNb != TA_TEST_PASS )
       return errNb;

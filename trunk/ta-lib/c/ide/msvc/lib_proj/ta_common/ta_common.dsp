@@ -4,7 +4,7 @@
 
 # TARGTYPE "Win32 (x86) Static Library" 0x0104
 
-CFG=ta_common - Win32 CSD Single Thread Debug
+CFG=ta_common - Win32 DLL Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
@@ -13,7 +13,7 @@ CFG=ta_common - Win32 CSD Single Thread Debug
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "ta_common.mak" CFG="ta_common - Win32 CSD Single Thread Debug"
+!MESSAGE NMAKE /f "ta_common.mak" CFG="ta_common - Win32 DLL Debug"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
@@ -23,6 +23,7 @@ CFG=ta_common - Win32 CSD Single Thread Debug
 !MESSAGE "ta_common - Win32 CSR Single Thread Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "ta_common - Win32 CMR Multithread Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "ta_common - Win32 Profiling" (based on "Win32 (x86) Static Library")
+!MESSAGE "ta_common - Win32 DLL Debug" (based on "Win32 (x86) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -182,6 +183,31 @@ LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo /out:"..\..\..\..\lib\ta_common_csr.lib"
 # ADD LIB32 /nologo /out:"..\..\..\..\lib\ta_common_csr.lib"
 
+!ELSEIF  "$(CFG)" == "ta_common - Win32 DLL Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "ta_common___Win32_DLL_Debug"
+# PROP BASE Intermediate_Dir "ta_common___Win32_DLL_Debug"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "ta_common___Win32_DLL_Debug"
+# PROP Intermediate_Dir "ta_common___Win32_DLL_Debug"
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /MTd /W3 /Gm /Zi /Od /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_FUNC_NO_RANGE_CHECK" /YX /FD /GZ /c
+# SUBTRACT BASE CPP /Fr
+# ADD CPP /nologo /MDd /W3 /Gm /Zi /Od /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_FUNC_NO_RANGE_CHECK" /YX /FD /GZ /c
+# SUBTRACT CPP /Fr
+# ADD BASE RSC /l 0x409 /d "_DEBUG"
+# ADD RSC /l 0x409 /d "_DEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo /out:"..\..\..\..\lib\ta_common_cmd.lib"
+# ADD LIB32 /nologo /out:"..\..\..\..\lib\ta_common_for_dll_debug.lib"
+
 !ENDIF 
 
 # Begin Target
@@ -192,6 +218,7 @@ LIB32=link.exe -lib
 # Name "ta_common - Win32 CSR Single Thread Release"
 # Name "ta_common - Win32 CMR Multithread Release"
 # Name "ta_common - Win32 Profiling"
+# Name "ta_common - Win32 DLL Debug"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"

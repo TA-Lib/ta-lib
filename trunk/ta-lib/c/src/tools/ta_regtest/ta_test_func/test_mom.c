@@ -142,10 +142,6 @@ static TA_Test tableTest[] =
    /**********************/
    /*      MOM TEST      */
    /**********************/
-   { 1, TA_MOM_TEST, 0, 251, 14, TA_SUCCESS,      0, -0.50,  14,  252-14 }, /* First Value */
-   { 0, TA_MOM_TEST, 0, 251, 14, TA_SUCCESS,      1, -2.00,  14,  252-14 },
-   { 0, TA_MOM_TEST, 0, 251, 14, TA_SUCCESS,      2, -5.22,  14,  252-14 },
-   { 0, TA_MOM_TEST, 0, 251, 14, TA_SUCCESS, 252-15, -1.13,  14,  252-14 },  /* Last Value */
 
 #ifndef TA_FUNC_NO_RANGE_CHECK
    /* Test out of range. */
@@ -153,6 +149,11 @@ static TA_Test tableTest[] =
    { 0, TA_MOM_TEST,  3, -1, 14, TA_OUT_OF_RANGE_END_INDEX,   0, 0, 0, 0},
    { 0, TA_MOM_TEST,  4, 3, 14, TA_OUT_OF_RANGE_END_INDEX,   0, 0, 0, 0},
 #endif
+
+   { 1, TA_MOM_TEST, 0, 251, 14, TA_SUCCESS,      0, -0.50,  14,  252-14 }, /* First Value */
+   { 0, TA_MOM_TEST, 0, 251, 14, TA_SUCCESS,      1, -2.00,  14,  252-14 },
+   { 0, TA_MOM_TEST, 0, 251, 14, TA_SUCCESS,      2, -5.22,  14,  252-14 },
+   { 0, TA_MOM_TEST, 0, 251, 14, TA_SUCCESS, 252-15, -1.13,  14,  252-14 },  /* Last Value */
 
    /* No output value. */
    { 0, TA_MOM_TEST, 1, 1,  14, TA_SUCCESS, 0, 0, 0, 0},

@@ -113,9 +113,29 @@ static TA_Test tableTest[] =
 {
 
    /****************************/
-   /*   BBANDS - CLASSIC - SMA */
+   /*   BBANDS - CLASSIC - EMA */
    /****************************/
 
+   /* No multiplier */
+   /* With upper band multiplier only. */
+   /* With lower band multiplier only. */
+   /* With identical upper/lower multiplier. */
+   { 0, 0,  251, 20, 2.0, 2.0, TA_BBANDS_EXPONENTIAL, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,
+     19, 252-19,
+     13, 93.674,   /* Upper */
+     13, 87.679,   /* Middle */
+     13, 81.685 }, /* Lower */
+
+   { 0, 0,  251, 20, 2.0, 2.0, TA_BBANDS_EXPONENTIAL, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,
+     19, 252-19,
+     0, 98.0734,   /* Upper */
+     0, 92.8910,   /* Middle */
+     0, 87.7086 }, /* Lower */
+   /* With distinctive upper/lower multiplier. */
+
+   /****************************/
+   /*   BBANDS - CLASSIC - SMA */
+   /****************************/
    /* No multiplier */
    /* With upper band multiplier only. */
    /* With lower band multiplier only. */
@@ -127,15 +147,6 @@ static TA_Test tableTest[] =
      0, 87.7086 }, /* Lower */
    /* With distinctive upper/lower multiplier. */
 
-   /****************************/
-   /*   BBANDS - CLASSIC - EMA */
-   /****************************/
-
-   /* No multiplier */
-   /* With upper band multiplier only. */
-   /* With lower band multiplier only. */
-   /* With identical upper/lower multiplier. */
-   /* With distinctive upper/lower multiplier. */
    
    /******************************/
    /*   BBANDS - METASTOCK - SMA */
@@ -497,15 +508,13 @@ static ErrorNumber do_test( const TA_History *history,
    {
       if( test->optInMethod_3 == TA_BBANDS_EXPONENTIAL )
       {
-         errNb = doRangeTest(
-                              rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_EMA,
                               (void *)&testParam, 3, 0 );
       }
       else
       {
-         errNb = doRangeTest(
-                              rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_NONE,
                               (void *)&testParam, 3, 0 );
       }

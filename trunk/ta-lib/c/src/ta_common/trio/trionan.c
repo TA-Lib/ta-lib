@@ -272,13 +272,10 @@ trio_nan(void)
     
 #if defined(TRIO_COMPILER_SUPPORTS_C99)
     result = nan(NULL);
-
 #elif defined(NAN) && defined(__STDC_IEC_559__)
     result = (double)NAN;
-  
 #elif defined(USE_IEEE_754)
     result = trio_make_double(ieee_754_qnan_array);
-
 #else
     /*
      * There are several ways to generate NaN. The one used here is
