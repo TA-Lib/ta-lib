@@ -26,8 +26,10 @@ TA_RetCode TA_SAR_FramePP( TA_Libc            *libHandle,
    return TA_SAR( libHandle,
             startIdx,
             endIdx,
-            in[0].p.in.data.inReal, /* inReal_0 */
-            optIn[0].p.optIn.data.optInInteger, /* optInTimePeriod_0 */
+            in[0].p.in.data.inPrice.high, /* inHigh_0 */
+            in[0].p.in.data.inPrice.low, /* inLow_0 */
+            optIn[0].p.optIn.data.optInReal, /* optInAcceleration_0 */
+            optIn[1].p.optIn.data.optInReal, /* optInMaximum_1 */
             outBegIdx, 
             outNbElement, 
             out[0].p.out.data.outReal /*  outReal_0 */ );
