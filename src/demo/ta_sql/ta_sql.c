@@ -47,9 +47,9 @@ void print_usage( char *str )
    printf( "  Quotes output is \"Date,Open,High,Low,Close,Volume\"\n" );
    printf( "\n" );
    printf( "  Examples:\"\n" );
-   printf( "    ta_sql -c sql://localhost/db guest \"\" \"SELECT * FROM cat\"\n" );
-   printf( "    ta_sql -c sql://localhost/db guest \"\" \"SELECT * FROM cat\" NL.EURONEXT.STOCKS\n" );
-   printf( "    ta_sql -dz sql://localhost/db guest \"\" \"SELECT * FROM cat\" MSFT \"SELECT ...\"\n" );
+   printf( "    ta_sql -c mysql://localhost/db guest \"\" \"SELECT * FROM cat\"\n" );
+   printf( "    ta_sql -s mysql://localhost/db guest \"\" \"SELECT * FROM cat\" NL.EURONEXT.STOCKS\n" );
+   printf( "    ta_sql -dz mysql://localhost/db guest \"\" \"SELECT * FROM cat\" MSFT \"SELECT ...\"\n" );
    printf( "\n" );
    printf( "  Online help: http://www.ta-lib.org\n" );
    printf( "\n" );
