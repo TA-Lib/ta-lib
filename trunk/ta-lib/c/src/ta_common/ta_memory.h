@@ -1,57 +1,80 @@
 #ifndef TA_MEMORY_H
 #define TA_MEMORY_H
 
-#include <stdio.h>
+#if !defined( _MANAGED )
+   #ifndef TA_COMMON_H
+      #include "ta_common.h"
+   #endif
 
-#ifndef TA_COMMON_H
-   #include "ta_common.h"
-#endif
+   /* Compilation options */
+   #ifdef TA_DEBUG
+      #define TA_MEM_LIST    /* Build internal list */
+      #define TA_MEM_WHERE   /* Keep track of memory block source */
+   #else
+      /* Some includes to get malloc,free,realloc */
+      #include <stdlib.h> 
+      #include <malloc.h>
+   #endif
 
-/* Compilation options */
-#ifdef TA_DEBUG
-   #define TA_MEM_LIST    /* Build internal list */
-   #define TA_MEM_WHERE   /* Keep track of memory block source */
+   /* Interface functions */
+   TA_RetCode      TA_MemInit   ( unsigned int memoryAlreadyInUse );
+   unsigned long   TA_MemUsed   ();
+   void            TA_MemDisplay( FILE *fp );
+
+   /* Interface functions (never call these directly. Use the macros instead) */
+   #if defined(TA_MEM_WHERE)
+      void      *TA_PrivAlloc(size_t, char *, int);
+      void      *TA_PrivRealloc(void *, size_t, char *, int);
+      void       TA_PrivFree(void *, char *, int);
+      char      *TA_PrivStrdup(char *, char *, int);
+   #else
+      void      *TA_PrivAlloc(size_t);
+      void      *TA_PrivRealloc(void *, size_t);
+      void       TA_PrivFree(void *);
+      char      *TA_PrivStrdup(char *);
+   #endif
+
+   /* Interface macros */
+   #if defined(TA_MEM_WHERE)
+      #define TA_Malloc(a)       TA_PrivAlloc((a),__FILE__,__LINE__)
+      #define TA_Realloc(a,b)    TA_PrivRealloc((a),(b),__FILE__,__LINE__)
+      #define TA_Free(a)         TA_PrivFree((a),__FILE__,__LINE__)
+      #define TA_Strdup(a)       TA_PrivStrdup((a),__FILE__,__LINE__)
+   #else
+      #define TA_Malloc(a)       malloc(a)
+      #define TA_Realloc(a,b)    realloc((a),(b))
+      #define TA_Free(a)         free(a)
+      #define TA_Strdup(a)       TA_PrivStrdup((a))
+   #endif
+
+   #define FREE_IF_NOT_NULL(x) { if((x)!=NULL) {TA_Free((void *)(x)); (x)=NULL;} }
+
+   /* A Typical function pointer for freeing memory. */
+   typedef TA_RetCode (*TA_FreeFuncPtr)( void *toBeFreed, void *opaqueData);
+#endif /* !defined(_MANAGED) */
+
+/* ARRAY : Macros to manipulate arrays of double.
+ *
+ * Using temporary array of double is often needed for the TA functions
+ * and these macros allow basic operations to alloc/copy/free these.
+ *
+ * The macros offer the advantage to work in C/C++ and managed C++.
+ */
+#if defined( _MANAGED )
+   #define ARRAY_REF(name)             double name __gc []
+   #define ARRAY_ALLOC(name,size)      name = new double __gc [size]
+   #define ARRAY_COPY(dest,src,size)   src->CopyTo(dest,0)
+   #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) Array::Copy( src, srcIdx, dest, destIdx, size )
+   #define ARRAY_FREE(name)
+   #define ARRAY_FREE_COND(cond,name)
 #else
-   /* Some includes to get malloc,free,realloc */
-   #include <stdlib.h> 
-   #include <malloc.h>
+   #define ARRAY_REF(name)             double *name
+   #define ARRAY_ALLOC(name,size)      name = (double *)TA_Malloc( sizeof(double)*(size))
+   #define ARRAY_COPY(dest,src,size)   memcpy(dest,src,sizeof(double)*(size))
+   #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) memmove( &dest[destIdx], &src[srcIdx], (size)*sizeof(double) )
+   #define ARRAY_FREE(name)            TA_Free(name)
+   #define ARRAY_FREE_COND(cond,name)  if( cond ){ TA_Free(name); }
 #endif
-
-/* Interface functions */
-TA_RetCode      TA_MemInit   ( unsigned int memoryAlreadyInUse );
-unsigned long   TA_MemUsed   ();
-void            TA_MemDisplay( FILE *fp );
-
-/* Interface functions (never call these directly. Use the macros instead) */
-#if defined(TA_MEM_WHERE)
-void      *TA_PrivAlloc(size_t, char *, int);
-void      *TA_PrivRealloc(void *, size_t, char *, int);
-void       TA_PrivFree(void *, char *, int);
-char      *TA_PrivStrdup(char *, char *, int);
-#else
-void      *TA_PrivAlloc(size_t);
-void      *TA_PrivRealloc(void *, size_t);
-void       TA_PrivFree(void *);
-char      *TA_PrivStrdup(char *);
-#endif
-
-/* Interface macros */
-#if defined(TA_MEM_WHERE)
-#define TA_Malloc(a)       TA_PrivAlloc((a),__FILE__,__LINE__)
-#define TA_Realloc(a,b)    TA_PrivRealloc((a),(b),__FILE__,__LINE__)
-#define TA_Free(a)         TA_PrivFree((a),__FILE__,__LINE__)
-#define TA_Strdup(a)       TA_PrivStrdup((a),__FILE__,__LINE__)
-#else
-#define TA_Malloc(a)       malloc(a)
-#define TA_Realloc(a,b)    realloc((a),(b))
-#define TA_Free(a)         free(a)
-#define TA_Strdup(a)       TA_PrivStrdup((a))
-#endif
-
-#define FREE_IF_NOT_NULL(x) { if((x)!=NULL) {TA_Free((void *)(x)); (x)=NULL;} }
-
-/* A Typical function pointer for freeing memory. */
-typedef TA_RetCode (*TA_FreeFuncPtr)( void *toBeFreed, void *opaqueData);
 
 /* CBUF : Circular Buffer Macros.
  *
@@ -68,6 +91,8 @@ typedef TA_RetCode (*TA_FreeFuncPtr)( void *toBeFreed, void *opaqueData);
  * Multiple CBUF can be used within the same function. To make that
  * possible the first parameter of the MACRO is an "Id" that can be
  * any string.
+ *
+ * The macros offer the advantage to work in C/C++ and managed C++.
  * 
  * CIRCBUF_PROLOG(Id,Type,Size);
  *          Will declare all the needed variables. 2 variables are
@@ -79,7 +104,7 @@ typedef TA_RetCode (*TA_FreeFuncPtr)( void *toBeFreed, void *opaqueData);
  *          Important: You must consume the oldest data before
  *                     setting the new data!
  *
- *          The Size must be reasonable since it will always allocate
+ *          The Size must be reasonable since it might "allocate"
  *          an array of this size on the stack (each element are 'Type').
  *
  * CIRCBUF_CONSTRUCT(Id,Type,Size);
@@ -152,6 +177,26 @@ typedef TA_RetCode (*TA_FreeFuncPtr)( void *toBeFreed, void *opaqueData);
  * value provided in CIRCBUF_PROLOG, a buffer will
  * be dynamically allocated (and freed).
  */
+#if defined( _MANAGED )
+
+#define CIRCBUF_PROLOG(Id,Type,Size) int Id##_Idx; \
+                                     Type Id __gc []; \
+                                     int maxIdx_##Id
+
+#define CIRCBUF_CONSTRUCT(Id,Type,Size) \
+   { \
+      if( Size <= 0 ) \
+         return TA_ALLOC_ERR; \
+      Id = new Type __gc [Size]; \
+      if( !Id ) \
+         return TA_ALLOC_ERR; \
+      maxIdx_##Id = (Size-1); \
+      Id##_Idx = 0; \
+   }
+
+#define CIRCBUF_DESTROY(Id)
+
+#else
 
 #define CIRCBUF_PROLOG(Id,Type,Size) Type local_##Id[Size]; \
                                   int Id##_Idx; \
@@ -162,7 +207,7 @@ typedef TA_RetCode (*TA_FreeFuncPtr)( void *toBeFreed, void *opaqueData);
    { \
       if( Size <= 0 ) \
          return TA_INTERNAL_ERROR(137); \
-      if( (TA_Integer)Size > (TA_Integer)(sizeof(local_##Id)/sizeof(Type)) ) \
+      if( (int)Size > (int)(sizeof(local_##Id)/sizeof(Type)) ) \
       { \
          Id = TA_Malloc( sizeof(Type)*Size ); \
          if( !Id ) \
@@ -179,6 +224,7 @@ typedef TA_RetCode (*TA_FreeFuncPtr)( void *toBeFreed, void *opaqueData);
       if( Id != &local_##Id[0] ) \
          TA_Free( Id ); \
    }
+#endif
 
 #define CIRCBUF_NEXT(Id) \
    { \
