@@ -17,6 +17,14 @@
    #include "ta_system.h"
 #endif
 
+/* TA_CandleSetting is the one setting struct */
+typedef struct {
+    TA_CandleSettingType    settingType;
+    TA_RangeType            rangeType;
+    int                     avgPeriod;
+    double                  factor;
+} TA_CandleSetting;
+
 /* This interface is used exclusively INTERNALY to the TA-LIB.
  * There is nothing for the end-user here ;->
  */
