@@ -65,16 +65,15 @@ static const TA_OutputParameterInfo   *TA_DX_Outputs[]   =
 
 static const TA_OptInputParameterInfo *TA_DX_OptInputs[] =
 { &TA_DEF_UI_TimePeriod_14,
-  &TA_DEF_UI_Compatibility_CL_MS,
   NULL
 };
 
 DEF_FUNCTION( DX,                           /* name */
               TA_GroupId_TrendIndicators,   /* groupId */
               "Directional Movement Index", /* hint */
-              NULL,                       /* helpFile */
-              0,       /* flags */
-              NULL                        /* analysis function */
+              NULL,                         /* helpFile */
+              TA_FUNC_FLG_UNST_PER,         /* flags */
+              NULL                          /* analysis function */
              );
 /* DX END */
 
