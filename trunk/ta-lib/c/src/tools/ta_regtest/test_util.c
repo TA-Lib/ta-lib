@@ -58,6 +58,7 @@
 #include "trionan.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
+#include "ta_trace.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -66,7 +67,7 @@
 /* None */
 
 /**** Global variables definitions.    ****/
-
+TA_FILE_INFO;
 
 /* Global temporary buffers used while testing. */
 #define RESV_PATTERN_MEMGUARD_1   (2.4789205E-150)
@@ -147,7 +148,7 @@ ErrorNumber allocLib( TA_UDBase **uDBasePtr )
       TA_Shutdown();
       return TA_TESTUTIL_SET_FATAL_ERROR_FAILED;
    }
-   
+      
    /* Create an unified database. */
    retCode = TA_UDBaseAlloc( &uDBase );
    if( retCode != TA_SUCCESS )
@@ -520,6 +521,13 @@ void printRetCode( TA_RetCode retCode )
 static void myFatalHandler( void )
 {
    TA_FatalReport( stdout );
+
+#if 0
+   /* Can be used for testing purpose */
+   char *b = (char *)malloc(10);
+   TA_FatalReportToBuffer( b, 10 );
+   printf( b );
+#endif
 }
 
 static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
