@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
- *
+ *  061904 MF   Add test to detect cummulative errors in CCI algorithm 
+ *              when some values were close to zero (epsilon).
+ *              
  */
 
 /* Description:
@@ -135,6 +137,13 @@ static TA_Test tableTest[] =
    /****************/
    /*   CCI TEST  */
    /****************/
+
+   /* The following two should always be identical. */
+   { 0, TA_CCI_TEST, 186,187,  2, TA_SUCCESS,   1, 0.0, 186,  2 },
+   { 0, TA_CCI_TEST, 187,187,  2, TA_SUCCESS,   0, 0.0, 187,  1 },
+ 
+   /* Test period 2, 5 and 11 */
+   { 0, TA_CCI_TEST, 0, 251,  2, TA_SUCCESS,  0, 66.666, 1,  252-1 },
    { 1, TA_CCI_TEST, 0, 251,  5, TA_SUCCESS,  0, 18.857, 4,  252-4 },
 
    { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  0,   87.927,  10,  252-10 }, /* First Value */
@@ -163,8 +172,6 @@ static TA_Test tableTest[] =
    { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 23,  92.89237535, 10,  252-10 },
    { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 24,  113.4778681, 10,  252-10 },
    { 1, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 252-11,  -169.65514, 10,  252-10 }, /* Last Value */
-
-
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
