@@ -315,7 +315,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
       /* Interpret the CSV data. */
       retCode = TA_ReadOp_Do( libHandle, fileHandle,                           
                               readOpInfo,
-                              period, start, end,
+                              period, &firstBarTimestamp, &lastBarTimestamp,
                               nbEstimateBar, fieldToAlloc,
                               paramForAddData,
                               &nbTotalBarAdded,
@@ -324,7 +324,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_Libc *libHandle,
       TA_FileSeqClose( libHandle, fileHandle );
       TA_WebPageFree( webPage );
 
-      /* printf( "NB TOTAL BAR ADDED=%d\n", nbTotalBarAdded );*/
+      /*printf( "NB TOTAL BAR ADDED=%d\n", nbTotalBarAdded );*/
 
       /* Request the data up to the day BEFORE
        * the last batch of data received.
@@ -505,13 +505,13 @@ static void buildUIRSuffix( const UIRSuffixParsing *parsedString,
                             char *output )
 {  
    int i;
-   /* printf( "buildUIR\n" );*/
+   /*printf( "buildUIR\n" );*/
    strncpy( output, parsedString->part1, parsedString->part1Length );
    i = parsedString->part1Length;
 
    sprintf( output,
             "&a=%02d&b=%02d&c=%04d",
-            TA_GetMonth( startTimestamp ),
+            TA_GetMonth( startTimestamp )-1, /* Yahoo! month is zero base */
             TA_GetDay( startTimestamp ),
             TA_GetYear( startTimestamp ) );
    i += 17;
@@ -521,7 +521,7 @@ static void buildUIRSuffix( const UIRSuffixParsing *parsedString,
 
    sprintf( &output[i],
             "&d=%02d&e=%02d&f=%04d",
-            TA_GetMonth( endTimestamp ),
+            TA_GetMonth( endTimestamp )-1, /* Yahoo! month is zero base */
             TA_GetDay( endTimestamp ),
             TA_GetYear( endTimestamp ) );
    i += 17;
