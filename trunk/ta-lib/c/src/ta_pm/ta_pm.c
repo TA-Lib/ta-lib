@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  031202 MF   First version.
- *
+ *  030404 MF   Change TA_Transaction timestamp to execTimestamp.
  */
 
 /* Description:
@@ -273,7 +273,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
 
    TA_Real highestLow, highestHigh, lowestLow, lowestHigh;
    TA_Real entryPrice, tempReal;
-   int i;
+   unsigned int i;
 
    retCode = TA_INTERNAL_ERROR(120);
 
@@ -288,7 +288,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
    /* Check that the TA_Transaction makes sense. */
    if( (newTransaction->price <= 0.0)  ||
        (newTransaction->quantity <= 0) ||
-       (TA_TimestampValidate(&newTransaction->timestamp) != TA_SUCCESS) ||
+       (TA_TimestampValidate(&newTransaction->execTimestamp) != TA_SUCCESS) ||
        (newTransaction->type >= TA_NB_TRADE_TYPE))
       return TA_BAD_PARAM;
 
@@ -444,7 +444,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
       dataLog->u.entry.quantity  = -(newTransaction->quantity);
       dataLog->u.entry.entryPrice = newTransaction->price;
       TA_TimestampCopy( &dataLog->u.entry.entryTimestamp,
-                        &newTransaction->timestamp );
+                        &newTransaction->execTimestamp );
       TA_ListNodeAddTail( entryListToUse, &dataLog->u.entry.node, dataLog );
       break;
 
@@ -473,7 +473,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
              entryTradeLog->u.trade.quantity = quantity;
              entryTradeLog->u.trade.id = id;
              TA_TimestampCopy( &entryTradeLog->u.trade.exitTimestamp,
-                               &newTransaction->timestamp );
+                               &newTransaction->execTimestamp );
              /* Calculate the profit and make the entryPrice
               * negative if this is a short trade.
               * Both are multiplied by the quantity being
@@ -506,7 +506,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
              quantity -= entryTradeQuantity;
              entryTradeLog->u.trade.id = id;
              TA_TimestampCopy( &entryTradeLog->u.trade.exitTimestamp,
-                               &newTransaction->timestamp );
+                               &newTransaction->execTimestamp );
              /* Calculate the profit and make the entryPrice
               * negative if this is a short trade.
               * Both are multiplied by the quantity being
@@ -547,7 +547,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
             TA_TimestampCopy( &dataLog->u.trade.entryTimestamp,
                               &entryTradeLog->u.trade.entryTimestamp );
             TA_TimestampCopy( &dataLog->u.trade.exitTimestamp,
-                              &newTransaction->timestamp );
+                              &newTransaction->execTimestamp );
             dataLog->u.trade.quantity = quantity;
             entryPrice = entryTradeLog->u.trade.entryPrice;
             if( newTransaction->type == TA_LONG_EXIT )
