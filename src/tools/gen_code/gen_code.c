@@ -45,6 +45,7 @@
  *  112400 MF   First version.
  *  052403 MF   Many modifications related to generate code that works
  *              with the windows .NET Managed C++ compiler.
+ *  210903 MF   Now touch files only when there is really a change.
  */
 
 /* Description:
@@ -1693,12 +1694,17 @@ static void printGroupSizeAddition( const char *groupName,
 static void doFuncFile( const TA_FuncInfo *funcInfo )
 {
 
-   FileHandle *tempFile;
+   FileHandle *tempFile1;
+   FileHandle *tempFile2;
    unsigned int useTempFile;
    FILE *logicIn;
    FILE *logicTmp;
    char localBuf1[500];
-   char localBuf2[500];
+
+   #define TEMPLATE_PASS1   "..\\temp\\pass1.tmp"
+   #define TEMPLATE_PASS2   "..\\temp\\pass2.tmp"
+   #define TEMPLATE_DEFAULT "..\\src\\ta_abstract\\templates\\ta_x.c.template"
+   #define LOGIC_TEMP       "..\\temp\\logic.tmp"
 
    /* Check if the file already exist. */
    sprintf( localBuf1, "..\\src\\ta_func\\ta_%s.c", funcInfo->name );
@@ -1710,32 +1716,26 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    {
       useTempFile = 1;
       /* Create a temporary template using it. */
-      sprintf( localBuf1, "..\\temp\\ta_%s.tmp", funcInfo->name );
-
-      tempFile = fileOpen( localBuf1, NULL, FILE_WRITE, WRITE_ALWAYS );
-      if( tempFile == NULL )
+      tempFile1 = fileOpen( TEMPLATE_PASS1, NULL, FILE_WRITE, WRITE_ALWAYS );
+      if( tempFile1 == NULL )
       {
          printf( "Cannot create temporary file!\n" );
          return;
       }
 
-      createTemplate( gOutFunc_C, tempFile );
+      createTemplate( gOutFunc_C, tempFile1 );
 
-      fileClose( tempFile );
+      fileClose( tempFile1 );
       fileClose( gOutFunc_C );
    }
 
    /* Open the file using the template. */
    if( useTempFile )
-      sprintf( localBuf2, "..\\temp\\ta_%s.tmp", funcInfo->name );
+      tempFile2 = fileOpen( TEMPLATE_PASS2, TEMPLATE_PASS1, FILE_WRITE, WRITE_ALWAYS );
    else
-      sprintf( localBuf2, "..\\src\\ta_abstract\\templates\\ta_x.c.template" );
+      tempFile2 = fileOpen( TEMPLATE_PASS2, TEMPLATE_DEFAULT, FILE_WRITE, WRITE_ALWAYS );
 
-   sprintf( localBuf1, "..\\src\\ta_func\\ta_%s.c", funcInfo->name );
-
-   gOutFunc_C = fileOpen( localBuf1, localBuf2, FILE_WRITE, WRITE_ON_CHANGE_ONLY );
-
-   if( gOutFunc_C == NULL )
+   if( tempFile2 == NULL )
    {
       printf( "Cannot create [%s]\n", localBuf1 );
       return;
@@ -1744,8 +1744,9 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    /* Generate. 1st Pass */
    writeFuncFile( funcInfo );
 
-   fileClose( gOutFunc_C );
+   fileClose( tempFile2 );
 
+#if 0
    /* Copy the 1st pass result and make it the template for
     * the 2nd pass.
     */
@@ -1755,6 +1756,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
       printf( "Cannot copy %s to %s\n", localBuf1, localBuf2 );
       return;
    }
+#endif
 
    /* Extract the TA function code in a temporary file */
    logicIn = fopen( localBuf1, "r" );
@@ -1763,10 +1765,10 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
       printf( "Cannot open [%s] for extracting TA logic\n", localBuf1 );
       return;
    }
-   logicTmp = fopen( "..\\temp\\logic.tmp", "w" );
+   logicTmp = fopen( LOGIC_TEMP, "w" );
    if( !logicTmp )
    {
-      printf( "Cannot open [%s] for extracting TA logic\n", localBuf2 );
+      printf( "Cannot open logic.tmp\n" );
       return;
    }
    extractTALogic( logicIn, logicTmp );
@@ -1776,7 +1778,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    /* Insert the TA function code in the single-precision frame 
     * using the template generated from the first pass.
     */
-   gOutFunc_C = fileOpen( localBuf1, localBuf2, FILE_WRITE, WRITE_ON_CHANGE_ONLY );
+   gOutFunc_C = fileOpen( localBuf1, TEMPLATE_PASS2, FILE_WRITE, WRITE_ON_CHANGE_ONLY );
    if( gOutFunc_C == NULL )
    {
       printf( "Cannot complete 2nd pass with [%s]\n", localBuf1 );
@@ -1800,7 +1802,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    print( gOutFunc_C->file, "#endif\n" );
 
    /* Insert the internal logic of the function */
-   logicTmp = fopen( "..\\temp\\logic.tmp", "r" );
+   logicTmp = fopen( LOGIC_TEMP, "r" );
    if( !logicTmp )
    {
       printf( "Cannot read open logic.tmp\n" );
@@ -1817,8 +1819,9 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    print( gOutFunc_C->file, "#endif\n" );
 
    fileClose( gOutFunc_C );
-   fileDelete( "..\\temp\\logic.tmp" );
-   fileDelete( localBuf2 );
+   fileDelete( LOGIC_TEMP );
+   fileDelete( TEMPLATE_PASS1 );
+   fileDelete( TEMPLATE_PASS2 );
 }
 
 static void doDefsFile( void )
@@ -1831,7 +1834,7 @@ static void doDefsFile( void )
    #define FILE_TA_DEFS_TMP  "..\\temp\\ta_defs.tmp"
 
    /* Check if the file already exist. If not, this is an error. */
-   gOutDefs_H = fileOpen( FILE_TA_DEFS_H, NULL, FILE_READ, WRITE_ALWAYS );
+   gOutDefs_H = fileOpen( FILE_TA_DEFS_H, NULL, FILE_READ, 0 );
    if( gOutDefs_H == NULL )
    {
       printf( "ta_defs.h must exist for being updated!\n" );
@@ -1854,7 +1857,7 @@ static void doDefsFile( void )
    fileClose( gOutDefs_H );
 
    /* Re-open the file using the template. */
-   gOutDefs_H = fileOpen( FILE_TA_DEFS_H, FILE_TA_DEFS_TMP, FILE_WRITE, WRITE_ALWAYS );
+   gOutDefs_H = fileOpen( FILE_TA_DEFS_H, FILE_TA_DEFS_TMP, FILE_WRITE, WRITE_ON_CHANGE_ONLY );
                                                     
    if( gOutDefs_H == NULL )
    {
@@ -2410,7 +2413,7 @@ static int gen_retcode( void )
    /* Create "ta_retcode.csv" */
    gOutRetCode_CSV = fileOpen( "..\\src\\ta_common\\ta_retcode.csv",
                                NULL,
-                               FILE_WRITE, WRITE_ALWAYS );
+                               FILE_WRITE, WRITE_ON_CHANGE_ONLY );
 
    if( gOutRetCode_CSV == NULL )
    {
@@ -2421,7 +2424,7 @@ static int gen_retcode( void )
 
    inHdr = fileOpen( "..\\include\\ta_defs.h",
                      NULL,
-                     FILE_READ, WRITE_ALWAYS );
+                     FILE_READ, 0 );
    if( inHdr == NULL )
    {
       fileClose( gOutRetCode_C );

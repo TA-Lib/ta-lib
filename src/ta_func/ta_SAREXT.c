@@ -45,7 +45,7 @@
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
  *  150903 PP   Reworked TA_SAR to allow customisation of more SAR params.
- *
+ *  210903 MF   Some changes related on first round of tests
  */
 
 /* SAR_ROUNDING is just for test purpose when cross-referencing that
@@ -275,6 +275,13 @@
 
    /* Insert TA function code here. */
 
+   /* This function is the same as TA_SAR, except that the caller has
+    * greater control on the SAR dynamic and initial state.
+    *
+    * In additon, the TA_SAREXT returns negative values when the position
+    * is short. This allow to distinguish when the SAR do actually reverse.
+    */
+
    /* Implementation of the SAR has been a little bit open to interpretation
     * since Wilder (the original author) did not define a precise algorithm
     * on how to bootstrap the algorithm. Take any existing software application
@@ -314,6 +321,16 @@
     * the previous extreme point, except that here the extreme point is
     * derived solely from the first price bar. I found the same approach
     * to be used by Metastock.
+    *
+    *
+    * Can I force the initial SAR?
+    * ============================
+    * Yes. Using the optInStartValue_0 parameter:
+    *  optInStartValue_0 >  0 : SAR is long at optInStartValue_0.
+    *  optInStartValue_0 <  0 : SAR is short at abs(optInStartValue_0).
+    *  
+    * And when optInStartValue_0 == 0, the logic is the same as for TA_SAR
+    * (See previous two sections).
     */
 
    /* Identify the minimum number of price bar needed
@@ -414,15 +431,15 @@
          sar = newHigh;
       }
    }
-   else if ( optInStartValue_0 > 0 ) /* Start Long with ep at specified value. */
+   else if ( optInStartValue_0 > 0 ) /* Start Long at specified value. */
    {
-      ep  = optInStartValue_0;
-      sar = newLow;
+      ep  = inHigh_0[todayIdx];
+      sar = optInStartValue_0;
    }
-   else /* if optInStartValue_0 < 0 => Start Short with ep at specified value. */
+   else /* if optInStartValue_0 < 0 => Start Short at specified value. */
    {
-      ep  = abs(optInStartValue_0);
-      sar = newHigh;  
+      ep  = inLow_0[todayIdx];
+      sar = fabs(optInStartValue_0);
    }
 
 
@@ -464,7 +481,7 @@
 
             /* Output the overide SAR  */
             if( optInOffsetOnReverse_1 )
-               sar -= sar * optInOffsetOnReverse_1; 
+               sar += sar * optInOffsetOnReverse_1; 
             outReal_0[outIdx++] = sar;
 
             /* Adjust afShort and ep */
@@ -490,17 +507,17 @@
             /* Output the SAR (was calculated in the previous iteration) */
             outReal_0[outIdx++] = sar;
  
-            /* Adjust afShort and ep. */
+            /* Adjust afLong and ep. */
             if( newHigh > ep )
             {
                ep = newHigh;
-               afShort += optInAccelerationShort_6;
-               if( afShort > optInAccelerationMaxShort_7 )
-                  afShort = optInAccelerationMaxShort_7;
+               afLong += optInAccelerationLong_3;
+               if( afLong > optInAccelerationMaxLong_4 )
+                  afLong = optInAccelerationMaxLong_4;
             }
 
             /* Calculate the new SAR */
-            sar = sar + afShort * (ep - sar);
+            sar = sar + afLong * (ep - sar);
             SAR_ROUNDING( sar );
 
             /* Make sure the new SAR is within
@@ -531,7 +548,7 @@
 
             /* Output the overide SAR  */
             if( optInOffsetOnReverse_1 )
-               sar += sar * optInOffsetOnReverse_1;
+               sar -= sar * optInOffsetOnReverse_1;
             outReal_0[outIdx++] = sar;
 
             /* Adjust afLong and ep */
@@ -555,19 +572,19 @@
             /* No switch */
 
             /* Output the SAR (was calculated in the previous iteration) */
-            outReal_0[outIdx++] = sar;
+            outReal_0[outIdx++] = -sar;
 
-            /* Adjust afLong and ep. */
+            /* Adjust afShort and ep. */
             if( newLow < ep )
             {
                ep = newLow;
-               afLong += optInAccelerationLong_3;
-               if( afLong > optInAccelerationMaxLong_4 )
-                  afLong = optInAccelerationMaxLong_4;
+               afShort += optInAccelerationShort_6;
+               if( afShort > optInAccelerationMaxShort_7 )
+                  afShort = optInAccelerationMaxShort_7;
             }
 
             /* Calculate the new SAR */
-            sar = sar + afLong * (ep - sar);
+            sar = sar + afShort * (ep - sar);
             SAR_ROUNDING( sar );
 
             /* Make sure the new SAR is within
@@ -745,13 +762,13 @@
 /* Generated */    }
 /* Generated */    else if ( optInStartValue_0 > 0 ) 
 /* Generated */    {
-/* Generated */       ep  = optInStartValue_0;
-/* Generated */       sar = newLow;
+/* Generated */       ep  = inHigh_0[todayIdx];
+/* Generated */       sar = optInStartValue_0;
 /* Generated */    }
 /* Generated */    else 
 /* Generated */    {
-/* Generated */       ep  = abs(optInStartValue_0);
-/* Generated */       sar = newHigh;  
+/* Generated */       ep  = inLow_0[todayIdx];
+/* Generated */       sar = fabs(optInStartValue_0);
 /* Generated */    }
 /* Generated */    SAR_ROUNDING(sar);
 /* Generated */    newLow  = inLow_0[todayIdx];
@@ -776,7 +793,7 @@
 /* Generated */             if( sar < newHigh )
 /* Generated */                sar = newHigh;
 /* Generated */             if( optInOffsetOnReverse_1 )
-/* Generated */                sar -= sar * optInOffsetOnReverse_1; 
+/* Generated */                sar += sar * optInOffsetOnReverse_1; 
 /* Generated */             outReal_0[outIdx++] = sar;
 /* Generated */             afShort = optInAccelerationInitShort_5;
 /* Generated */             ep = newLow;
@@ -793,11 +810,11 @@
 /* Generated */             if( newHigh > ep )
 /* Generated */             {
 /* Generated */                ep = newHigh;
-/* Generated */                afShort += optInAccelerationShort_6;
-/* Generated */                if( afShort > optInAccelerationMaxShort_7 )
-/* Generated */                   afShort = optInAccelerationMaxShort_7;
+/* Generated */                afLong += optInAccelerationLong_3;
+/* Generated */                if( afLong > optInAccelerationMaxLong_4 )
+/* Generated */                   afLong = optInAccelerationMaxLong_4;
 /* Generated */             }
-/* Generated */             sar = sar + afShort * (ep - sar);
+/* Generated */             sar = sar + afLong * (ep - sar);
 /* Generated */             SAR_ROUNDING( sar );
 /* Generated */             if( sar > prevLow )
 /* Generated */                sar = prevLow;            
@@ -816,7 +833,7 @@
 /* Generated */             if( sar > newLow )
 /* Generated */                sar = newLow;
 /* Generated */             if( optInOffsetOnReverse_1 )
-/* Generated */                sar += sar * optInOffsetOnReverse_1;
+/* Generated */                sar -= sar * optInOffsetOnReverse_1;
 /* Generated */             outReal_0[outIdx++] = sar;
 /* Generated */             afLong = optInAccelerationInitLong_2;
 /* Generated */             ep = newHigh;
@@ -829,15 +846,15 @@
 /* Generated */          }
 /* Generated */          else
 /* Generated */          {
-/* Generated */             outReal_0[outIdx++] = sar;
+/* Generated */             outReal_0[outIdx++] = -sar;
 /* Generated */             if( newLow < ep )
 /* Generated */             {
 /* Generated */                ep = newLow;
-/* Generated */                afLong += optInAccelerationLong_3;
-/* Generated */                if( afLong > optInAccelerationMaxLong_4 )
-/* Generated */                   afLong = optInAccelerationMaxLong_4;
+/* Generated */                afShort += optInAccelerationShort_6;
+/* Generated */                if( afShort > optInAccelerationMaxShort_7 )
+/* Generated */                   afShort = optInAccelerationMaxShort_7;
 /* Generated */             }
-/* Generated */             sar = sar + afLong * (ep - sar);
+/* Generated */             sar = sar + afShort * (ep - sar);
 /* Generated */             SAR_ROUNDING( sar );
 /* Generated */             if( sar < prevHigh )
 /* Generated */                sar = prevHigh;            
