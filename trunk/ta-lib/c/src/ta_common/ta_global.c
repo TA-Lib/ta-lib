@@ -49,18 +49,16 @@
 /* Description:
  *   Provides initialization / shutdown functionality for all modules.
  *
- *   It is also responsible for the global variable of all modules.
- *   The globals are going to be allocated only for the modules
- *   link and used at least once.
+ *   Since not all module are used/link in the application,
+ *   the ta_common simply provides the mechanism for the module
+ *   to optionnaly "register" its initialization/shutdown
+ *   function.
  *
- *   This whole mechanism makes sure that there is no "true" global
- *   but only allocated data. The fact of not having "true" global
- *   allows to make the TA-LIB totally re-entrant and easily used
- *   as a shared library.
+ *   This whole mechanism helps the initialization of "module globals"
+ *   while actually not using true globals. The fact of not having "true"
+ *   globals helps to make TA-LIB re-entrant.
  *
- *   Another important advantage to centralize the initialization
- *   of the global is to safely keep track and free all ressources
- *   from one point when TA_Shutdown is called.
+ *   This also allows to clearly define the shutdown sequence.
  */
 
 /**** Headers ****/
@@ -142,7 +140,7 @@ TA_RetCode TA_Initialize( const TA_InitializeParam *param )
    unsigned int i;
    #endif
 
-   /* Allocate the "global variable" used to manage the global
+   /* Initialize the "global variable" used to manage the global
     * variables of all other modules...
     */
    memset( TA_Globals, 0, sizeof( TA_LibcPriv ) );
@@ -238,7 +236,7 @@ TA_RetCode TA_Initialize( const TA_InitializeParam *param )
 TA_RetCode TA_Shutdown( void )
 {
    /* Note: Keep that function simple.
-    *       No tracing, no stdio and no assert.
+    *       No tracing and no assert.
     */
    const TA_GlobalControl *control;
    unsigned int i;
@@ -342,7 +340,7 @@ TA_RetCode TA_GetGlobal( const TA_GlobalControl * const control,
 
    /* This module did not yet get its global initialized. Let's do it. */
 
-   /* Will change if anything happen in the following critical section. */
+   /* Will change if anything goes wrong in the following critical section. */
    finalRetCode = TA_SUCCESS;
 
    #if !defined( TA_SINGLE_THREAD )
