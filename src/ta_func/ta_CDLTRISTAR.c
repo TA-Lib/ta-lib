@@ -90,7 +90,7 @@
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 /*
- * TA_CDLTRISTAR - Tristar Candle
+ * TA_CDLTRISTAR - Tristar Pattern
  * 
  * Input  = Open, High, Low, Close
  * Output = int
