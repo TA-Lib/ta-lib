@@ -105,18 +105,21 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
                                        const TA_Real    *refBuffer,
                                        TA_FuncUnstId unstId,
                                        TA_Integer fixSize,
-                                       unsigned int outputNb );
+                                       unsigned int outputNb,
+                                       unsigned int integerTolerance );
 
 static int dataWithinReasonableRange( TA_Libc *libHandle,
                                       TA_Real val1, TA_Real val2,
                                       unsigned int outputPosition,
-                                      TA_FuncUnstId unstId );
+                                      TA_FuncUnstId unstId,
+                                      unsigned int integerTolerance );
 
 static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
                                             RangeTestFunction testFunction,
                                             TA_FuncUnstId unstId,
                                             void *opaqueData,
-                                            unsigned int outputNb );
+                                            unsigned int outputNb,
+                                            unsigned int integerTolerance );
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -483,7 +486,8 @@ ErrorNumber doRangeTest( TA_Libc *libHandle,
                          RangeTestFunction testFunction,
                          TA_FuncUnstId unstId,
                          void *opaqueData,
-                         unsigned int nbOutput )
+                         unsigned int nbOutput,
+                         unsigned int integerTolerance )
 {
    unsigned int outputNb;
    ErrorNumber errNb;
@@ -495,7 +499,8 @@ ErrorNumber doRangeTest( TA_Libc *libHandle,
                                        testFunction,
                                        unstId,
                                        opaqueData,
-                                       outputNb );
+                                       outputNb,
+                                       integerTolerance );
       if( errNb != TA_TEST_PASS )
       {
          printf( "Failed: For output #%d of %d\n", outputNb+1, nbOutput );
@@ -528,7 +533,8 @@ static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
                                             RangeTestFunction testFunction,
                                             TA_FuncUnstId unstId,
                                             void *opaqueData,
-                                            unsigned int outputNb )
+                                            unsigned int outputNb,
+                                            unsigned int integerTolerance )
 {
    TA_RetCode retCode;
    TA_Integer refOutBeg, refOutNbElement, refLookback;
@@ -599,7 +605,7 @@ static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
                                      testFunction, opaqueData,
                                      refOutBeg, refOutNbElement, refLookback,
                                      refBuffer,
-                                     unstId, fixSize, outputNb );
+                                     unstId, fixSize, outputNb, integerTolerance );
          if( errNb != TA_TEST_PASS)
          {
             TA_Free( libHandle, refBuffer );
@@ -616,7 +622,7 @@ static ErrorNumber doRangeTestForOneOutput( TA_Libc *libHandle,
                                         testFunction, opaqueData,
                                         refOutBeg, refOutNbElement, refLookback,
                                         refBuffer,
-                                        unstId, fixSize, outputNb );
+                                        unstId, fixSize, outputNb, integerTolerance );
             if( errNb != TA_TEST_PASS)
             {
                printf( "Fail: Using unstable period %d\n", unstablePeriod );
@@ -670,7 +676,8 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
                                        const TA_Real *refBuffer,
                                        TA_FuncUnstId unstId,
                                        TA_Integer fixSize,
-                                       unsigned int outputNb )
+                                       unsigned int outputNb,
+                                       unsigned int integerTolerance )
 {
    TA_RetCode retCode;
    TA_Real *outputBuffer;
@@ -781,7 +788,7 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
             {
                val1 = outputBuffer[1+i];
                val2 = refBuffer[relativeIdx+i];
-               if( !dataWithinReasonableRange( libHandle, val1, val2, i, unstId ) )
+               if( !dataWithinReasonableRange( libHandle, val1, val2, i, unstId, integerTolerance ) )
                {
                   printf( "Fail: doRangeTestFixSize diff data for idx=%d (%e,%e)\n", i, val1, val2 );
                   printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
@@ -859,9 +866,11 @@ static ErrorNumber doRangeTestFixSize( TA_Libc *libHandle,
 static int dataWithinReasonableRange( TA_Libc *libHandle,
                                       TA_Real val1, TA_Real val2,
                                       unsigned int outputPosition,
-                                      TA_FuncUnstId unstId )
+                                      TA_FuncUnstId unstId,
+                                      unsigned int integerTolerance )
 {
    TA_Real difference, tolerance, temp;
+   unsigned int val1_int, val2_int, tempInt;
 
    /* If the function does not have an unstable period,
     * the compared value shall be identical.
@@ -872,6 +881,17 @@ static int dataWithinReasonableRange( TA_Libc *libHandle,
     */
    if( unstId == TA_FUNC_UNST_NONE )
       return TA_REAL_EQ( val1, val2, 0.000000001 );
+
+
+   /* In the context of the TA functions, all value
+    * below 0.000001 are considered equal to zero and
+    * are considered to be equal within a reasonable range.
+    * (the percentage difference might be large, but
+    *  unsignificant at that level, so no tolerance
+    *  check is being done).
+    */
+    if( (val1 < 0.000001) && (val2 < 0.000001) )
+      return 1;
 
    /* When the function is unstable, the comparison
     * tolerate at first a large difference.
@@ -895,32 +915,93 @@ static int dataWithinReasonableRange( TA_Libc *libHandle,
     *   ...
     *   100 == 0.5/100 == 0.005 %
     *   ...
+    *
+    * This means that the unstable TA functions
+    * are all being verified to be within a 0.005 %
+    * tolerance when using an unstable period of
+    * at least 100.
+    *
+    * (the logic is sligthly different if the 
+    *  output are rounded integer, but it is
+    *  the same idea).
     */
-    if( val1 > val2 )
-       difference = (val1-val2)/val1;
-    else
-       difference = (val2-val1)/val2;
-       
-    #define PERIOD_TO_IGNORE 40
+
+   #define PERIOD_TO_IGNORE 40
+
+   if( integerTolerance )
+   {
+      /* Check that the integer part of the value
+       * is not different more than the specified
+       * integerTolerance.
+       */
+      val1_int = (unsigned int)val1;
+      val2_int = (unsigned int)val2;
+      if( val1_int > val2_int )
+         tempInt = val1_int - val2_int;
+      else
+         tempInt = val2_int - val1_int;
+
+      temp = outputPosition+TA_GetUnstablePeriod(libHandle,unstId)+1;
+      if( temp <= PERIOD_TO_IGNORE )
+      {
+         /* Pretend it is fine. */
+         return 1;
+      }
+      else if( temp < 100 )
+      {
+         if( tempInt >= 3*integerTolerance )
+         {
+            printf( "\nFail: Value out of 3*tolerance range (%d,%d)\n", tempInt, integerTolerance );
+            return 0; /* Value considered different */
+         }
+      }
+      else if( temp < 150 )
+      {
+         if( tempInt >= 2*integerTolerance )
+         {
+            printf( "\nFail: Value out of 2*tolerance range (%d,%d)\n", tempInt, integerTolerance );
+            return 0; /* Value considered different */
+         }
+      }
+      else if( temp < 200 )
+      {
+         if( tempInt >= integerTolerance )
+         {
+            printf( "\nFail: Value out of tolerance range (%d,%d)\n", tempInt, integerTolerance );
+            return 0; /* Value considered different */
+         }
+      }
+      else if( tempInt >= 1 )
+      {
+         printf( "\nFail: Value not equal (difference is %d)\n", tempInt );
+         return 0; /* Value considered different */
+      } 
+   }
+   else
+   {
+      if( val1 > val2 )
+         difference = (val1-val2)/val1;
+      else
+         difference = (val2-val1)/val2;
      
-    temp = outputPosition+TA_GetUnstablePeriod(libHandle,unstId)+1;
-    if( temp <= PERIOD_TO_IGNORE )
-    {
-       /* Pretend it is fine. */
-       return 1;
-    }
-    else
-    {
-       temp -= PERIOD_TO_IGNORE;
-       tolerance = 0.5/temp;
-    }
+      temp = outputPosition+TA_GetUnstablePeriod(libHandle,unstId)+1;
+      if( temp <= PERIOD_TO_IGNORE )
+      {
+         /* Pretend it is fine. */
+         return 1;
+      }
+      else
+      {
+         temp -= PERIOD_TO_IGNORE;
+         tolerance = 0.5/temp;
+      }
  
-    if( difference > tolerance )
-    {
-       printf( "Fail: Value out of tolerance range (%g,%g)\n", difference, tolerance );
-       return 0; /* Out of tolerance... values are not equal. */
-    }
+      if( difference > tolerance )
+      {
+         printf( "\nFail: Value out of tolerance range (%g,%g)\n", difference, tolerance );
+         return 0; /* Out of tolerance... values are not equal. */
+      }
+   }
 
-    return 1; /* Value equal within tolerance. */
+   return 1; /* Value equal within tolerance. */
 }
-

@@ -432,7 +432,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
          errNb = doRangeTest( libHandle,
                               rangeTestFunction, 
                               TA_FUNC_UNST_EMA,
-                              (void *)&testParam, 1 );
+                              (void *)&testParam, 1, 0 );
          if( errNb != TA_TEST_PASS )
             return errNb;
       }
@@ -441,7 +441,7 @@ static ErrorNumber do_test( TA_Libc *libHandle,
          errNb = doRangeTest( libHandle,
                               rangeTestFunction, 
                               TA_FUNC_UNST_NONE,
-                              (void *)&testParam, 1 );
+                              (void *)&testParam, 1, 0 );
          if( errNb != TA_TEST_PASS )
             return errNb;
       }
