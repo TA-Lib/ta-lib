@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -31,34 +31,47 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stddef.h>
+#include <stdlib.h>
+
 /* Version number controlled manually.
  *
  * Should be modified only by TA-Lib.org
  */
-#define MAJOR 0
-#define MINOR 1
-#define BUILD 1
-
-#define VERSION_STRING "0.1.1"
+#define MAJOR "0"
+#define MINOR "1"
+#define BUILD "2"
 
 /* Nothing to modify below this line. */
 
+#define TA_VERSION_STRING(maj,min,build,date,time) maj"."min"."build" ("date" "time")"
+
 const char  *TA_GetVersionString( void )
 {
-    return VERSION_STRING;
+    return TA_VERSION_STRING(MAJOR,MINOR,BUILD,__DATE__,__TIME__);
 }
 
-unsigned int TA_GetVersionMajor( void )
+const char *TA_GetVersionMajor( void )
 {
    return MAJOR;
 }
 
-unsigned int TA_GetVersionMinor( void )
+const char *TA_GetVersionMinor( void )
 {
    return MINOR;
 }
 
-unsigned int TA_GetVersionBuild( void )
+const char *TA_GetVersionBuild( void )
 {
    return BUILD;
+}
+
+const char *TA_GetVersionDate( void )
+{
+   return __DATE__;
+}
+
+const char *TA_GetVersionTime( void )
+{
+   return __TIME__;
 }
