@@ -111,6 +111,18 @@
 110,TA_LIMIT_OF_ONE_COUNTRY_ID_EXCEEDED,Only one country id is expected for the location parameter.
 111,TA_INVALID_YAHOO_DIVIDEND,Yahoo! dividend data corrupted. Use unadjusted data for this stock.
 112,TA_LOCATION_PARAM_INVALID,Error in the location parameter.
+113,TA_DATA_ERROR_VOLUME_IS_NEGATIVE,A data source returned a price bar with a negative volume.
+114,TA_DATA_ERROR_TIMESTAMP_ORDER,A data source returned a price bar not in chronological order.
+115,TA_DATA_ERROR_OI_IS_NEGATIVE,A data source returned a price bar with a negative open interest .
+116,TA_DATA_ERROR_CLOSE_IS_NEGATIVE,A data source returned a price bar with a negative close.
+117,TA_DATA_ERROR_OPEN_IS_NEGATIVE,A data source returned a price bar with a negative open.
+118,TA_DATA_ERROR_HIGH_IS_NEGATIVE,A data source returned a price bar with a negative high.
+119,TA_DATA_ERROR_LOW_IS_NEGATIVE,A data source returned a price bar with a negative low.
+120,TA_DATA_ERROR_LOW_EXCEED_HIGH,A data source returned a price bar with low greater than high.
+121,TA_DATA_ERROR_OPEN_EXCEED_HIGH,A data source returned a price bar with open greater than high.
+122,TA_DATA_ERROR_OPEN_BELOW_LOW,A data source returned a price bar with open less than low.
+123,TA_DATA_ERROR_CLOSE_EXCEED_HIGH,A data source returned a price bar with close greater than high.
+124,TA_DATA_ERROR_CLOSE_BELOW_LOW,A data source returned a price bar with close less than low.
 700,TA_IP_NOSOCKETS,Sockets not supported
 701,TA_IP_BADHOST,Host not known
 702,TA_IP_BADSERVICE,Service or port not known
