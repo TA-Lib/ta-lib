@@ -9,8 +9,8 @@
 
 CC	=	gcc
 CXX	=	g++
-CFLAGS	=	-pipe -Wall -W -O2 -DTA_GEN_CODE -DTA_SINGLE_THREAD
-CXXFLAGS=	-pipe -Wall -W -O2 -DTA_GEN_CODE -DTA_SINGLE_THREAD
+CFLAGS	=	-pipe -Wall -W -O2 -fno-strict-aliasing -DTA_GEN_CODE -DTA_SINGLE_THREAD
+CXXFLAGS=	-pipe -Wall -W -O2 -fno-strict-aliasing -DTA_GEN_CODE -DTA_SINGLE_THREAD
 INCPATH	=	-I../../../../../include -I../../../../../src/ta_common -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../src/ta_abstract -I../../../../../src/ta_abstract/tables -I../../../../../src/ta_abstract/frames
 LINK	=	g++
 LFLAGS	=	
