@@ -103,10 +103,16 @@ extern const TA_FuncDef TA_DEF_HT_TRENDMODE;
 extern const TA_FuncDef TA_DEF_AD;
 extern const TA_FuncDef TA_DEF_ADOSC;
 extern const TA_FuncDef TA_DEF_OBV;
+extern const TA_FuncDef TA_DEF_CDLDOJISTAR;
+extern const TA_FuncDef TA_DEF_CDLEVENINGDOJISTAR;
+extern const TA_FuncDef TA_DEF_CDLEVENINGSTAR;
 extern const TA_FuncDef TA_DEF_CDLHIGHWAVE;
 extern const TA_FuncDef TA_DEF_CDLLONGLINE;
+extern const TA_FuncDef TA_DEF_CDLMORNINGDOJISTAR;
+extern const TA_FuncDef TA_DEF_CDLMORNINGSTAR;
 extern const TA_FuncDef TA_DEF_CDLSHORTLINE;
 extern const TA_FuncDef TA_DEF_CDLSPINNINGTOP;
+extern const TA_FuncDef TA_DEF_CDLTRISTAR;
 extern const TA_FuncDef TA_DEF_CORREL;
 extern const TA_FuncDef TA_DEF_LINEARREG;
 extern const TA_FuncDef TA_DEF_LINEARREG_SLOPE;
@@ -204,10 +210,16 @@ NULL };
 #define SIZE_GROUP_6 ((sizeof(TA_PerGroupFunc_6)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_7[] = {
+&TA_DEF_CDLDOJISTAR,
+&TA_DEF_CDLEVENINGDOJISTAR,
+&TA_DEF_CDLEVENINGSTAR,
 &TA_DEF_CDLHIGHWAVE,
 &TA_DEF_CDLLONGLINE,
+&TA_DEF_CDLMORNINGDOJISTAR,
+&TA_DEF_CDLMORNINGSTAR,
 &TA_DEF_CDLSHORTLINE,
 &TA_DEF_CDLSPINNINGTOP,
+&TA_DEF_CDLTRISTAR,
 NULL };
 #define SIZE_GROUP_7 ((sizeof(TA_PerGroupFunc_7)/sizeof(const TA_FuncDef *))-1)
 
