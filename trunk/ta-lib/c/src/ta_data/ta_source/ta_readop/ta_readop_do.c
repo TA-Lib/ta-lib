@@ -43,6 +43,8 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
+ *  062203 MF   Ignore "time" component of the start/end range when
+ *              there is no time fields in the file.
  *
  */
 
@@ -282,9 +284,10 @@ TA_RetCode TA_ReadOp_Do( TA_FileHandle       *fileHandle,
    arrayInteger[TA_DAY_IDX]   = (TA_Integer *)&day;
 
    /* Set default time/date. */
-   year = 1900;
+   year  = 1900;
    month = day = 1;
-   hour = min = sec = 0;
+   hour  = 23;
+   min   = sec = 59;
 
    /* Check if the processing of the time will be needed. */
    timeNeeded = isTimeNeeded( readOpInfo->arrayReadOp);
@@ -511,23 +514,44 @@ op_loop: /* Jump here when ready to proceed with the next command. */
             if( TA_IS_TIMESTAMP_COMPLETE(op) )
             {
                /* Build the timestamp. */
-               tmpTimestamp.date = 0;
-               tmpTimestamp.time = 0;
                retCode = TA_SetDate( year, month, day, &tmpTimestamp );
-               if( (retCode == TA_SUCCESS) && timeNeeded )
-                  retCode = TA_SetTime( hour, min, sec, &tmpTimestamp );
+               if( retCode != TA_SUCCESS )
+                  goto exit_loops; /* Invalid date */
 
-               if( (retCode != TA_SUCCESS) || (start&&(TA_TimestampLess(&tmpTimestamp,start))) )
+               if( !timeNeeded )
                {
-                  /* This price bar is not needed, jump to the next line. */
-                  retCode = TA_SUCCESS;
-                  SKIP_LINE;
+                  /* Ignore time in comparison and use default to build the price bar. */
+                  tmpTimestamp.time = 23595900; /* Default EOD time */
+                  if( start && (tmpTimestamp.date < start->date) )
+                  {
+                     /* This price bar is not needed, jump to the next line. */
+                     retCode = TA_SUCCESS;
+                     SKIP_LINE;
+                  }
+
+                  if( end && (tmpTimestamp.date > end->date) )
+                  {
+                     /* This price bar is beyond the upper limit, just exit. */
+                     goto exit_loops;
+                  }
                }
-
-               if( end && TA_TimestampGreater(&tmpTimestamp, end) )
+               else
                {
-                  /* This price bar is beyond the upper limit, just exit. */
-                  goto exit_loops;
+                  retCode = TA_SetTime( hour, min, sec, &tmpTimestamp );
+                  if( retCode != TA_SUCCESS )
+                     goto exit_loops; /* Invalid time */
+                  if( start && TA_TimestampLess(&tmpTimestamp,start) )
+                  {
+                     /* This price bar is not needed, jump to the next line. */
+                     retCode = TA_SUCCESS;
+                     SKIP_LINE;
+                  }
+
+                  if( end && TA_TimestampGreater(&tmpTimestamp, end) )
+                  {
+                     /* This price bar is beyond the upper limit, just exit. */
+                     goto exit_loops;
+                  }
                }
 
                /* Write the timestamp in memory. */
