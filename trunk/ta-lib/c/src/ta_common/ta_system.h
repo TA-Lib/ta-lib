@@ -17,6 +17,9 @@
    #include <process.h>
 #endif
 
+#include <stdio.h>
+#include <stdarg.h>
+
 /* This files defined the interface to functions that must be adapted
  * to the particular OS on which the library is running.
  *
@@ -179,6 +182,40 @@ unsigned int TA_FileSize( TA_FileHandle *handle );
  * few large block).
  */
 TA_RetCode TA_FileSeqOpenFromStream( TA_Stream *stream, TA_FileHandle **handle );
+
+/* Equivalent to printf, but allows to output to a buffer and/or a FILE. 
+ * The function will stop to write in the buffer once fill up.
+ *
+ * Example 1:  output to stdout and a buffer
+ *     TA_PrintfVar outp;
+ *     memset( outp, 0, sizeof(outp) );
+ *     outp.file   = stdio; 
+ *     outp.buffer = buffer; 
+ *     outp.size   = sizeof(buffer); 
+ *     TA_Printf( outp, ... );
+ *
+ * Example 2:  output to a buffer only
+ *     TA_PrintfVar outp;
+ *     memset( outp, 0, sizeof(outp) );
+ *     outp.buffer = buffer; 
+ *     outp.size   = sizeof(buffer); 
+ *     TA_Printf( outp, ... );
+ *
+ * Example 3:  output to a file only
+ *     TA_PrintfVar outp;
+ *     memset( outp, 0, sizeof(outp) );
+ *     outp = fopen( ... );
+ *     TA_Printf( outp, ... );
+ *
+ */
+typedef struct
+{
+   FILE *file;
+   char *buffer;
+   int   size;
+} TA_PrintfVar;
+
+void TA_Printf( TA_PrintfVar *outp, char *format, ... );
 
 #endif
 

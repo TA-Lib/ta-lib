@@ -1154,3 +1154,32 @@ static TA_RetCode TA_SystemGlobalShutdown( void *globalAllocated )
 
    TA_TRACE_RETURN( finalRetCode );
 }
+
+void TA_Printf( TA_PrintfVar *outp, char *format, ... )
+{
+  int retValue;
+  va_list args;
+
+  va_start(args,format);
+  
+  if( outp )
+  {
+     if( outp->file )
+        vfprintf( outp->file, format, args );
+  
+     if( outp->buffer && (outp->size > 1) )
+     {
+        retValue = _vsnprintf( outp->buffer, outp->size-1, format, args );
+        if( retValue >= 0 )
+        {
+           outp->buffer += retValue;
+           outp->size   -= retValue;
+        }
+        else
+        {
+           outp->buffer = NULL;
+           outp->size = 0;
+        }
+     }
+  }
+}
