@@ -383,7 +383,7 @@ TA_RetCode TA_WebPageAllocFromYahooName( TA_Libc *libHandle,
 
    TA_TRACE_BEGIN( libHandle, TA_WebPageAllocFromYahooName );
 
-   retCode = TA_UNKNOWN_ERR;
+   retCode = TA_INTERNAL_ERROR(117);
 
    if( !decodingParam || !yahooName || !allocatedWebPage )
    {

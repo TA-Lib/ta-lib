@@ -293,7 +293,7 @@ TA_RetCode TA_PeriodTransform( TA_Libc *libHandle,
          retCode = TA_TimestampDeltaYear( &old_timestamp[0], &old_timestamp[old_nbBars-1], (unsigned int *)&new_nbBars );
          break;
       default:
-         TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+         TA_TRACE_RETURN( TA_INTERNAL_ERROR(48) );
       }
       new_nbBars += 2;
 

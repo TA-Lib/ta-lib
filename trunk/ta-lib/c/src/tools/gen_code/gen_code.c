@@ -2007,3 +2007,4 @@ const char *doubleToStr( TA_Real value )
 
    return gTempDoubleToStr;
 }
+

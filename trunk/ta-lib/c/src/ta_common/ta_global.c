@@ -255,7 +255,7 @@ TA_RetCode TA_Initialize( TA_Libc **libHandle,
          memset( privLibHandle, 0, sizeof( TA_LibcPriv ) );
 
          free( privLibHandle );
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(4);
       }
 
    #endif
@@ -279,7 +279,7 @@ TA_RetCode TA_Initialize( TA_Libc **libHandle,
       memset( privLibHandle, 0, sizeof( TA_LibcPriv ) );
 
       free( privLibHandle );
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(5);
    }
 
    /* Tracing can now be safely used by the memory module until

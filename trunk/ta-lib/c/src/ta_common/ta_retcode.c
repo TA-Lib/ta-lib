@@ -103,6 +103,7 @@ static TA_InternalRetCodeInfo retCodeInfoTable[] = {
          {84,"TA_YAHOO_IDX_UNAVAILABLE_3","Failed to find a Yahoo! index"},
          {85,"TA_NO_WEEKDAY_IN_DATE_RANGE","No Info"},
          {86,"TA_VALUE_NOT_APPLICABLE","This PM value is not applicable to these trades."},
+         {87,"TA_DATA_GAP","Data source returned data with gaps"},
          {700,"TA_IP_NOSOCKETS","Sockets not supported"},
          {701,"TA_IP_BADHOST","Host not known"},
          {702,"TA_IP_BADSERVICE","Service or port not known"},
@@ -127,6 +128,7 @@ static TA_InternalRetCodeInfo retCodeInfoTable[] = {
          {810,"TA_HTTP_SC_502","Bad Gateway"},
          {811,"TA_HTTP_SC_503","Service Unavailable"},
          {821,"TA_HTTP_SC_UNKNOWN","Unknown error code."},
+         {5000,"TA_INTERNAL_ERROR","Internal Error - Contact TA-Lib.org"},
          {0xFFFF,"TA_UNKNOWN_ERR","Unknown Error"}
 };
 
@@ -136,15 +138,24 @@ void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo )
 {
    unsigned int i;
    
+   /* Trap internal error code */
+   if( (theRetCode >= 5000) && (theRetCode <= 5999) )
+   {
+      retCodeInfo->enumStr = "TA_INTERNAL_ERROR";
+      retCodeInfo->infoStr = "Unexpected Internal Error - Contact TA-Lib.org";
+      return;
+   }
+   
+   /* Check among all the error code defined in ta_common.h */
    for( i=0; i < (NB_RET_CODE_INFO-1); i++ )
    {
       if( theRetCode == retCodeInfoTable[i].retCode )
-	  {
-	     /* Error code found. */
+      {
+         /* Error code found. */
          retCodeInfo->enumStr = retCodeInfoTable[i].enumStr;
          retCodeInfo->infoStr = retCodeInfoTable[i].infoStr;
-		 return;
-	  }
+         return;
+      }
    }
 
    /* Error code not found. */

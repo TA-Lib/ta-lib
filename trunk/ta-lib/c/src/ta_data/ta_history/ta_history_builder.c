@@ -193,7 +193,7 @@ TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
    if( !driverHandles )
    {
       freeBuilderSupport( libHandle, builderSupport );
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR  );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(34)  );
    }
 
    listOfSupportForDataSource = builderSupport->listOfSupportForDataSource;
@@ -233,7 +233,7 @@ TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
       {
          TA_FATAL( libHandle, "Get parameters must be implemented", 0, 0 );
          stopAllGetDataThread( builderSupport );
-         builderSupport->retCode = TA_UNKNOWN_ERR;
+         builderSupport->retCode = TA_INTERNAL_ERROR(35);
          break; /* Exit the loop righ away! */
       }
       else
@@ -320,6 +320,89 @@ TA_RetCode TA_HistoryBuilder( TA_Libc             *libHandle,
    TA_TRACE_RETURN( retCode );
 }
 
+/* A function to provide some info to the data source driver.
+ *
+ * It might have been simple to simply return the TA_SupportForDataSource
+ * pointer to the driver, but I choose not to do this to make 100% sure
+ * that the driver won't modify anything that might break the core
+ * of the TA-Lib logic. So the relevant info is instead copied into
+ * that TA_InfoFromAddedData structure.
+ */
+TA_RetCode TA_GetInfoFromAddedData( TA_ParamForAddData *paramForAddData,
+                                    TA_InfoFromAddedData *info )
+{
+   TA_SupportForDataSource *supportForDataSource;
+
+   if( !paramForAddData || !info )
+      return TA_BAD_PARAM;
+
+   supportForDataSource = (TA_SupportForDataSource *)paramForAddData;
+
+   TA_TimestampCopy( &info->highestTimestamp, supportForDataSource->highestTimestamp );
+   TA_TimestampCopy( &info->lowestTimestamp, supportForDataSource->lowestTimestamp );
+
+   if( supportForDataSource->barAddedSinceLastCall )
+   {
+      info->barAddedSinceLastCall = supportForDataSource->barAddedSinceLastCall;
+      supportForDataSource->barAddedSinceLastCall = 0;
+      TA_TimestampCopy( &info->highestTimestampAddedSinceLastCall,
+                        supportForDataSource->highestTimestampAddedSinceLastCall );
+      TA_TimestampCopy( &info->lowestTimestampAddedSinceLastCall,
+                        supportForDataSource->lowestTimestampAddedSinceLastCall );
+   }
+   else
+   {
+      info->barAddedSinceLastCall = 0;
+      TA_SetDefault( &info->lowestTimestampAddedSinceLastCall );
+      TA_SetDefault( &info->highestTimestampAddedSinceLastCall );
+   }
+   
+   return TA_SUCCESS;
+}
+
+/* Allows the data source driver to cancel all the data
+ * who was added up to now. This might be useful if
+ * the data source driver needs to restart the processing
+ * of adding the data.
+ */
+TA_RetCode TA_HistoryAddDataReset( TA_ParamForAddData *paramForAddData )
+{
+   TA_SupportForDataSource *supportForDataSource;
+   TA_RetCode retCode;
+
+   supportForDataSource = (TA_SupportForDataSource *)paramForAddData;
+
+   if( supportForDataSource )
+   {
+      /* Free all the current data that has been added. */
+      if( supportForDataSource->listOfDataBlock )
+      {
+         retCode = TA_ListFreeAll( supportForDataSource->listOfDataBlock, freeDataBlock );
+         if( retCode != TA_SUCCESS )
+            return retCode;
+      }
+
+      /* Re-alloc the list used to accumulate the series of data. */
+      supportForDataSource->listOfDataBlock = TA_ListAlloc( supportForDataSource->libHandle );
+
+      if( !supportForDataSource->listOfDataBlock )
+         return TA_ALLOC_ERR;
+
+      /* Re-initialize to zero many of the fields used
+       * by TA_HistoryAddData.
+       */
+      supportForDataSource->fieldProvided = 0;
+      supportForDataSource->periodProvided = 0;
+      supportForDataSource->lowestTimestamp = NULL;
+      supportForDataSource->highestTimestamp = NULL;
+      supportForDataSource->barAddedSinceLastCall = 0;
+      supportForDataSource->lowestTimestampAddedSinceLastCall = NULL;
+      supportForDataSource->highestTimestampAddedSinceLastCall = NULL; 
+   }
+
+   return TA_SUCCESS;
+}
+
 TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
                               unsigned int nbBarAdded,
                               TA_Period period,
@@ -349,12 +432,10 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
       return TA_BAD_PARAM;
 
    supportForDataSource = (TA_SupportForDataSource *)paramForAddData;
-   if( !supportForDataSource )
-      return TA_UNKNOWN_ERR;
 
    libHandle = supportForDataSource->libHandle;
    if( !libHandle )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(36);
 
    TA_TRACE_BEGIN( libHandle, TA_HistoryAddData );
 
@@ -404,7 +485,7 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
           * requested fields (plus the timestamp). If the driver cannot
           * provides the requested field, it shall never call TA_HistoryAddData.
           */
-         retCode = TA_UNKNOWN_ERR;
+         retCode = TA_INTERNAL_ERROR(37);
          goto TA_HistoryAddData_EXIT;
       }
 
@@ -433,7 +514,7 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
    else if( fieldProvided != supportForDataSource->fieldProvided )
    {
       /* The driver is not consistent about the fields provided. */
-      retCode = TA_UNKNOWN_ERR;
+      retCode = TA_INTERNAL_ERROR(38);
       goto TA_HistoryAddData_EXIT;
    }
 
@@ -443,7 +524,7 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
    else if( period != supportForDataSource->periodProvided )
    {
       /* The driver is not consistent about the period provided. */
-      retCode = TA_UNKNOWN_ERR;
+      retCode = TA_INTERNAL_ERROR(39);
       goto TA_HistoryAddData_EXIT;
    }
 
@@ -583,6 +664,22 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
    else
       supportForDataSource->lowestTimestamp = lowTimestamp;
 
+   /* Same lowest/highest principle, except that these
+    * are going to be reset everytime the data source
+    * driver will call TA_GetInfoFromAddedData
+    */
+   if( supportForDataSource->barAddedSinceLastCall == 0 )
+   {
+      /* First block added since last call, so initialize the variables.  */
+      supportForDataSource->lowestTimestampAddedSinceLastCall = lowTimestamp;
+      supportForDataSource->highestTimestampAddedSinceLastCall = highTimestamp;
+      supportForDataSource->barAddedSinceLastCall += nbBarAdded;
+   }
+   else if( thisBlockGoesAfterTheExistingOnes )
+      supportForDataSource->highestTimestampAddedSinceLastCall = highTimestamp;
+   else
+      supportForDataSource->lowestTimestampAddedSinceLastCall = lowTimestamp;
+
    retCode = TA_SUCCESS;
 
 TA_HistoryAddData_EXIT:  /* The only point of this function. */
@@ -696,11 +793,11 @@ static TA_BuilderSupport *allocBuilderSupport( TA_Libc *libHandle,
         freeBuilderSupport( libHandle, builderSupport );
         return (TA_BuilderSupport *)NULL;
      }
-
-     supportForDataSource->libHandle = libHandle;
      
      /* Initialize all fields to NULL. */
      memset( supportForDataSource, 0, sizeof( TA_SupportForDataSource ) );
+
+     supportForDataSource->libHandle = libHandle;
 
      /* Make parent the 'builderSupport' */
      supportForDataSource->parent = builderSupport;
@@ -1116,7 +1213,7 @@ static TA_RetCode verifyDataBlockValid( TA_DataBlock *dataBlock,
    /* Timestamp is mandatory. */
    if( !dataBlock->timestamp || !(dataBlock->fieldProvided&TA_TIMESTAMP))
    {
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(40);
    }
 
    if( fieldToAlloc == TA_ALL )
@@ -1129,7 +1226,7 @@ static TA_RetCode verifyDataBlockValid( TA_DataBlock *dataBlock,
           !dataBlock->low &&
           !dataBlock->openInterest )
       {
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(41);
       }
    }
    else
@@ -1146,7 +1243,7 @@ static TA_RetCode verifyDataBlockValid( TA_DataBlock *dataBlock,
           CONSISTENCY_CHECK(VOLUME,volume) ||
           CONSISTENCY_CHECK(OPENINTEREST, openInterest))
       {
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(42);
       }
       #undef CONSISTENCY_CHECK
    }
@@ -1154,7 +1251,7 @@ static TA_RetCode verifyDataBlockValid( TA_DataBlock *dataBlock,
    /* If a datablock was created, that means there is at least one bar! */
    if( dataBlock->nbBars == 0 )
    {
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(43);
    }
 
    /* That datablock looks good. */
@@ -1379,7 +1476,7 @@ static TA_RetCode buildListMergeOp( TA_Libc *libHandle,
 
    if( nbSupportHavingData < 1 )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR  ); /* No data to merge!?!? */
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(44)  ); /* No data to merge!?!? */
    }
 
    /* At this point, all TA_SupportForDataSource are setup to point on their

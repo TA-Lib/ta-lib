@@ -206,7 +206,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
 
    TA_Real tempReal;
 
-   retCode = TA_UNKNOWN_ERR;
+   retCode = TA_INTERNAL_ERROR(120);
 
    /* This function will transform the TA_Transaction into
     * an "entry" or multiple "trades" (because an exit can
@@ -498,7 +498,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
       }
       break;
    default:
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(121);
       break;
    }
 

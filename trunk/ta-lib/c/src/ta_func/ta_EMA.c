@@ -246,7 +246,7 @@ TA_RetCode TA_INT_EMA( TA_Integer    startIdx,
             *outBegIdx_0 = 3; */
 
    default:
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(118);
    }
 
    /* At this point, prevMA is the first EMA (the seed for

@@ -129,6 +129,13 @@ typedef struct
   const TA_Timestamp *lowestTimestamp;
   const TA_Timestamp *highestTimestamp;
 
+  /* The following values are reset everytime the data
+   * source driver calls TA_GetInfoFromAddedData
+   */
+  unsigned int barAddedSinceLastCall; /* boolean */
+  const TA_Timestamp *lowestTimestampAddedSinceLastCall;
+  const TA_Timestamp *highestTimestampAddedSinceLastCall; 
+
   /* Contains some further information about the datasource. */
   TA_DataSourceParameters param;
 

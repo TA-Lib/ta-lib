@@ -285,7 +285,7 @@ static TA_RetCode makePathPattern( TA_FileIndexPriv *fileIndexPriv,
    unsigned int nbChar;
 
    if( !fileIndexPriv )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(63);
 
    libHandle = fileIndexPriv->libHandle;
    TA_TRACE_BEGIN( libHandle, makePathPattern );
@@ -319,7 +319,7 @@ static TA_RetCode makePathPattern( TA_FileIndexPriv *fileIndexPriv,
       if( !currentToken )
       {
          TA_ListFree( listOfValue );
-         TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+         TA_TRACE_RETURN( TA_INTERNAL_ERROR(64) );
       }
 
       /* Add the field. */
@@ -371,10 +371,10 @@ static TA_RetCode fieldToStr( TA_TokenInfo *currentToken,
    const char *strToUse;
 
    if( (!currentToken) || (!str) )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(65);
 
    if( maxStrLength == 0 )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(66);
 
    if( nbCharAdded )
       *nbCharAdded = 0;
@@ -389,11 +389,11 @@ static TA_RetCode fieldToStr( TA_TokenInfo *currentToken,
       if( currentToken->value )
          strToUse  = TA_StringToChar( currentToken->value );
       else
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(67);
       break;
 
    case TA_TOK_END:
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(68);
 
    case TA_TOK_WILD:
    case TA_TOK_WILD_CHAR:
@@ -407,7 +407,7 @@ static TA_RetCode fieldToStr( TA_TokenInfo *currentToken,
          if( currentToken->value )
             strToUse  = TA_StringToChar( currentToken->value );
          else
-            return TA_UNKNOWN_ERR;
+            return TA_INTERNAL_ERROR(69);
       }
       else
       {
@@ -416,7 +416,7 @@ static TA_RetCode fieldToStr( TA_TokenInfo *currentToken,
          else
          {
             if( currentToken->id != TA_TOK_WILD )
-               return TA_UNKNOWN_ERR;
+               return TA_INTERNAL_ERROR(70);
             strToUse = "";
          }
 
@@ -431,7 +431,7 @@ static TA_RetCode fieldToStr( TA_TokenInfo *currentToken,
          if( currentToken->value )
             strToUse  = TA_StringToChar( currentToken->value );
          else
-            return TA_UNKNOWN_ERR;
+            return TA_INTERNAL_ERROR(71);
       }
       else
       {
@@ -445,7 +445,7 @@ static TA_RetCode fieldToStr( TA_TokenInfo *currentToken,
    strLength = strlen( strToUse );
 
    if( strLength >= maxStrLength )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(72);
 
    strcpy( str, strToUse );
    if( nbCharAdded )
@@ -468,7 +468,7 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
    TA_StringCache *stringCache;
 
    if( !fileIndexPriv )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(73);
 
    libHandle = fileIndexPriv->libHandle;
    TA_TRACE_BEGIN( libHandle, processDirectory );
@@ -530,7 +530,7 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
       /* Skip to the next token. */
       TA_FileIndexMoveToNextToken( fileIndexPriv );
       if( !fileIndexPriv->curToken || (fileIndexPriv->curToken->id == TA_TOK_END) )
-         RETURN( TA_UNKNOWN_ERR );
+         RETURN( TA_INTERNAL_ERROR(74) );
    }
 
    /* Remember the token depth for the processing of directory at this level. */
@@ -554,7 +554,7 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
    {
       curDirectoryString = (TA_String *) TA_ListRemoveHead( directory->listOfDirectory );
       if( !curDirectoryString )
-         RETURN( TA_UNKNOWN_ERR );
+         RETURN( TA_INTERNAL_ERROR(75) );
 
       /* For each sub-directory entry, extract potential
        * new token values.
@@ -574,13 +574,13 @@ static TA_RetCode processDirectory( TA_FileIndexPriv *fileIndexPriv, unsigned in
 
       /* Some sanity check. */
       if( !fileIndexPriv->nextToken )
-         RETURN( TA_UNKNOWN_ERR );
+         RETURN( TA_INTERNAL_ERROR(76) );
 
       if( fileIndexPriv->nextToken->id == TA_TOK_END )
       {
          /* End-up here if TA_TOK_END is prematury seen... */
          TA_FATAL( libHandle, NULL, fileIndexPriv->curTokenDepth, fileIndexPriv->nextToken->id );
-         RETURN( TA_UNKNOWN_ERR );
+         RETURN( TA_INTERNAL_ERROR(77) );
       }
 
       /* Trap all internal error from extractTokenValue */
@@ -665,7 +665,7 @@ static TA_RetCode processFiles( TA_FileIndexPriv *fileIndexPriv, unsigned int fi
    (void)fileDepth; /* Get ride of compiler warning. */
 
    if( !fileIndexPriv )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(78);
 
    libHandle = fileIndexPriv->libHandle;
 
@@ -750,7 +750,7 @@ static TA_RetCode processFiles( TA_FileIndexPriv *fileIndexPriv, unsigned int fi
    {
       curFileString = (TA_String *) TA_ListRemoveHead( directory->listOfFile );
       if( !curFileString )
-         RETURN( TA_UNKNOWN_ERR );
+         RETURN( TA_INTERNAL_ERROR(79) );
 
       /* For each files, extract potential new token values.
        *
@@ -851,7 +851,7 @@ static TA_RetCode TA_PatternInit( TA_Libc *libHandle,
    iter->curToken = TA_ListIterHead( &iter->iter );
    if( !iter->curToken )
    {
-      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      TA_TRACE_RETURN( TA_INTERNAL_ERROR(80) );
    }
 
    while( iter->curToken != fileIndexPriv->curToken )
@@ -859,7 +859,7 @@ static TA_RetCode TA_PatternInit( TA_Libc *libHandle,
       iter->curToken = TA_ListIterNext( &iter->iter );
       if( !iter->curToken )
       {
-         TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+         TA_TRACE_RETURN( TA_INTERNAL_ERROR(81) );
       }
    }
 
@@ -1066,7 +1066,7 @@ static TA_RetCode extractTokenValue( TA_Libc *libHandle,
          if( *addedHead == NULL )
          {
             TA_FATAL( libHandle, NULL, *addedHead, 0 );
-            retCode = TA_UNKNOWN_ERR;
+            retCode = TA_INTERNAL_ERROR(82);
             goto extractTokenValue_exit;
          }
 
@@ -1131,7 +1131,7 @@ static TA_RetCode extractTokenValue( TA_Libc *libHandle,
    {
       if( !fileIndexPriv->currentSymbolString )
       {
-         retCode = TA_UNKNOWN_ERR;
+         retCode = TA_INTERNAL_ERROR(83);
          goto extractTokenValue_exit;
       }
 
@@ -1291,7 +1291,7 @@ static TA_RetCode extractTokenValueRecursive( TA_Libc *libHandle,
             /* This special pattern is used for fields like TA_TOK_SYM, TA_TOK_CAT etc... */
             if( firstOfOneOrMore != '\0' )
             {
-               TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+               TA_TRACE_RETURN( TA_INTERNAL_ERROR(84) );
             }
 
             if( stringChar == '\0' )

@@ -465,12 +465,12 @@ TA_RetCode TA_YahooIdxFree( TA_YahooIdx *idxToBeFreed )
       /* Get pointers used to free the rest... */
       idxHidden = (TA_YahooIdxHidden *)idxToBeFreed->hiddenData;
       if( !idxHidden )
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(105);
 
       libHandle = idxHidden->libHandle;
       stringCache = TA_GetGlobalStringCache( libHandle );
       if( !stringCache )
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(106);
 
       /* Identify who owns the category, consequently
        * who should free these (when a dictionary exist
@@ -644,15 +644,15 @@ static TA_RetCode addYahooSymbol( TA_YahooIdx *idx,
 
    idxHidden = (TA_YahooIdxHidden *)idx->hiddenData;
    if( !idxHidden )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(107);
 
    libHandle = idxHidden->libHandle;
    if( !libHandle )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(108);
 
    stringCache = TA_GetGlobalStringCache( libHandle );
    if( !stringCache )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(109);
 
    /* Add the symbol/category to the dictionnary. */
    category = TA_DictGetValue_S( idxHidden->catDict, TA_StringToChar(catString) );
@@ -662,7 +662,7 @@ static TA_RetCode addYahooSymbol( TA_YahooIdx *idx,
       /* The category is already in the dictionnary. */
       categoryHidden = (TA_YahooCategoryHidden *)category->hiddenData;
       if( !categoryHidden )
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(110);
    }
    else
    {
@@ -895,7 +895,7 @@ static TA_RetCode buildIndexFromRemoteCache( TA_YahooIdx *idx, TA_Timestamp *cac
 
    /* Get the cache online from TA-LIB org */
    if( strlen( (const char *)&idx->countryAbbrev[0] ) != 2 )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(111);
 
    sprintf( buffer, "/rdata/y_%c%c.dat",
             tolower(idx->countryAbbrev[0]),
@@ -1035,17 +1035,17 @@ static TA_RetCode convertDictToTables( TA_YahooIdx *idx )
       {
         category = (TA_YahooCategory *)TA_DictAccessValue( idxHidden->catDict );
         if( !category )
-           return TA_UNKNOWN_ERR;
+           return TA_INTERNAL_ERROR(112);
 
         categoryHidden = category->hiddenData;
         if( !categoryHidden )
-           return TA_UNKNOWN_ERR;
+           return TA_INTERNAL_ERROR(113);
 
         /* Iterate through the symbols. */
         symDict = categoryHidden->symDict;
         nbSymbol = TA_DictAccessFirst( symDict );
         if( nbSymbol == 0 )
-           return TA_UNKNOWN_ERR;
+           return TA_INTERNAL_ERROR(114);
         else
         {
            category->symbols = (TA_String **)TA_Malloc( libHandle, sizeof( TA_String *) * nbSymbol );
@@ -1238,7 +1238,7 @@ static TA_RetCode buildIdxStream( const TA_YahooIdx *idx, TA_Stream *stream )
 
       category = idx->categories[i];
       if( !category )
-         return TA_UNKNOWN_ERR;
+         return TA_INTERNAL_ERROR(115);
 
       retCode = TA_StreamAddString( stream, category->name );
       if( retCode != TA_SUCCESS )
@@ -1286,7 +1286,7 @@ static TA_RetCode convertStreamToTables( TA_YahooIdx *idx, TA_StreamAccess *stre
 
    idxHidden = (TA_YahooIdxHidden *)idx->hiddenData;
    if( !idxHidden )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(116);
 
    libHandle = idxHidden->libHandle;
 

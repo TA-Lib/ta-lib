@@ -435,7 +435,7 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
    if( !close_dir(libHandle,&dirHandle) )
    {
       TA_DirectoryFree( libHandle, dir );
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(11);
    }
    #endif
 
@@ -444,7 +444,7 @@ TA_RetCode TA_DirectoryAlloc( TA_Libc *libHandle,
    {
       global->lastError = GetLastError();
       TA_DirectoryFree( libHandle, dir );
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(12);
    }
    #endif
 
@@ -526,12 +526,12 @@ TA_RetCode TA_ThreadExec( TA_ThreadFunction newThreadEntryPoint, void *args )
     unsigned long thread_id;
     thread_id = _beginthread(newThreadEntryPoint,8192*4,(void *)args);
     if( thread_id == (unsigned long)-1 )
-       return TA_UNKNOWN_ERR;
+       return TA_INTERNAL_ERROR(13);
     #else    
     pthread_t thread_id;
 
     if( pthread_create(&thread_id, NULL,newThreadEntryPoint, args) != 0 )
-       return TA_UNKNOWN_ERR;
+       return TA_INTERNAL_ERROR(14);
     #endif
 
     return TA_SUCCESS;
@@ -562,14 +562,14 @@ TA_RetCode TA_SemaInc( TA_Sema *sema, unsigned int *prevCount )
 
    /* Fail if not initialized. */
    if( !(sema->flags & TA_SEMA_INITIALIZED) )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(15);
 
    #if defined( USE_WIN32_API )
    retValue = ReleaseSemaphore( sema->theSema, 1, (LPLONG)prevCount );
    if( retValue != 0 )
       return TA_SUCCESS;
    else
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(16);
    #endif
 
    #if defined( USE_OSLAYER )   
@@ -577,7 +577,7 @@ TA_RetCode TA_SemaInc( TA_Sema *sema, unsigned int *prevCount )
    if( sem_post( &sema->theSema ) != -1 )
       return TA_SUCCESS;
    else
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(17);
    #endif
 }
 #endif
@@ -594,7 +594,7 @@ TA_RetCode TA_SemaDec( TA_Sema *sema )
 
    /* Fail if not initialized. */
    if( !(sema->flags & TA_SEMA_INITIALIZED) )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(18);
 
    #if defined( USE_WIN32_API ) 
    retValue = WaitForSingleObject( sema->theSema, INFINITE );
@@ -602,14 +602,14 @@ TA_RetCode TA_SemaDec( TA_Sema *sema )
    if( retValue == WAIT_OBJECT_0 )
       return TA_SUCCESS;
    else
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(19);
    #endif
 
    #if defined( USE_OSLAYER )
    if( sem_wait( &sema->theSema ) != -1 )
       return TA_SUCCESS;
    else
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(20);
    #endif
 }
 #endif
@@ -645,7 +645,7 @@ TA_RetCode TA_SemaInit( TA_Sema *sema, unsigned int initialValue )
    else
    {
       sema->flags = 0;
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(21);
    }
    #endif
    
@@ -658,7 +658,7 @@ TA_RetCode TA_SemaInit( TA_Sema *sema, unsigned int initialValue )
    else
    {
       sema->flags = 0;
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(22);
    }  
    #endif
 }
@@ -681,7 +681,7 @@ TA_RetCode TA_SemaDestroy( TA_Sema *sema )
    retValue = CloseHandle( sema->theSema );
 
    if( !retValue )
-      return TA_UNKNOWN_ERR;
+      return TA_INTERNAL_ERROR(23);
    else
       return TA_SUCCESS;
    #endif
