@@ -764,7 +764,7 @@ static ErrorNumber testCompareToReference( TA_Libc *libHandle, const TA_Real *in
                   /* checkSameContent verify that all value different than NAN in
                    * the first parameter is identical in the second parameter.
                    */
-                  errNb = checkSameContent( gBuffer[0].in, gBuffer[0].out0 );
+                  errNb = checkSameContent( gBuffer[0].out0, gBuffer[0].in );
                   if( errNb != TA_TEST_PASS )
                      return errNb;
                }
