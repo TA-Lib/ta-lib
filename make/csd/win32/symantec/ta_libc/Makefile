@@ -126,16 +126,27 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_BBANDS.c \
 		..\..\..\..\..\src\ta_func\ta_CCI.c \
+		..\..\..\..\..\src\ta_func\ta_CDL3BLACKCROWS.c \
+		..\..\..\..\..\src\ta_func\ta_CDLABANDONEDBABY.c \
 		..\..\..\..\..\src\ta_func\ta_CDLDOJISTAR.c \
+		..\..\..\..\..\src\ta_func\ta_CDLENGULFING.c \
 		..\..\..\..\..\src\ta_func\ta_CDLEVENINGDOJISTAR.c \
 		..\..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c \
+		..\..\..\..\..\src\ta_func\ta_CDLHAMMER.c \
+		..\..\..\..\..\src\ta_func\ta_CDLHANGINGMAN.c \
+		..\..\..\..\..\src\ta_func\ta_CDLHARAMI.c \
+		..\..\..\..\..\src\ta_func\ta_CDLHARAMICROSS.c \
 		..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c \
+		..\..\..\..\..\src\ta_func\ta_CDLIDENTICAL3CROWS.c \
+		..\..\..\..\..\src\ta_func\ta_CDLINVERTEDHAMMER.c \
 		..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c \
 		..\..\..\..\..\src\ta_func\ta_CDLMORNINGDOJISTAR.c \
 		..\..\..\..\..\src\ta_func\ta_CDLMORNINGSTAR.c \
+		..\..\..\..\..\src\ta_func\ta_CDLSHOOTINGSTAR.c \
 		..\..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c \
 		..\..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c \
 		..\..\..\..\..\src\ta_func\ta_CDLTRISTAR.c \
+		..\..\..\..\..\src\ta_func\ta_CDLUPSIDEGAP2CROWS.c \
 		..\..\..\..\..\src\ta_func\ta_CORREL.c \
 		..\..\..\..\..\src\ta_func\ta_DEMA.c \
 		..\..\..\..\..\src\ta_func\ta_DX.c \
@@ -306,16 +317,27 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj \
 		..\..\..\..\..\temp\csd\ta_AVGPRICE.obj \
 		..\..\..\..\..\temp\csd\ta_BBANDS.obj \
 		..\..\..\..\..\temp\csd\ta_CCI.obj \
+		..\..\..\..\..\temp\csd\ta_CDL3BLACKCROWS.obj \
+		..\..\..\..\..\temp\csd\ta_CDLABANDONEDBABY.obj \
 		..\..\..\..\..\temp\csd\ta_CDLDOJISTAR.obj \
+		..\..\..\..\..\temp\csd\ta_CDLENGULFING.obj \
 		..\..\..\..\..\temp\csd\ta_CDLEVENINGDOJISTAR.obj \
 		..\..\..\..\..\temp\csd\ta_CDLEVENINGSTAR.obj \
+		..\..\..\..\..\temp\csd\ta_CDLHAMMER.obj \
+		..\..\..\..\..\temp\csd\ta_CDLHANGINGMAN.obj \
+		..\..\..\..\..\temp\csd\ta_CDLHARAMI.obj \
+		..\..\..\..\..\temp\csd\ta_CDLHARAMICROSS.obj \
 		..\..\..\..\..\temp\csd\ta_CDLHIGHWAVE.obj \
+		..\..\..\..\..\temp\csd\ta_CDLIDENTICAL3CROWS.obj \
+		..\..\..\..\..\temp\csd\ta_CDLINVERTEDHAMMER.obj \
 		..\..\..\..\..\temp\csd\ta_CDLLONGLINE.obj \
 		..\..\..\..\..\temp\csd\ta_CDLMORNINGDOJISTAR.obj \
 		..\..\..\..\..\temp\csd\ta_CDLMORNINGSTAR.obj \
+		..\..\..\..\..\temp\csd\ta_CDLSHOOTINGSTAR.obj \
 		..\..\..\..\..\temp\csd\ta_CDLSHORTLINE.obj \
 		..\..\..\..\..\temp\csd\ta_CDLSPINNINGTOP.obj \
 		..\..\..\..\..\temp\csd\ta_CDLTRISTAR.obj \
+		..\..\..\..\..\temp\csd\ta_CDLUPSIDEGAP2CROWS.obj \
 		..\..\..\..\..\temp\csd\ta_CORREL.obj \
 		..\..\..\..\..\temp\csd\ta_DEMA.obj \
 		..\..\..\..\..\temp\csd\ta_DX.obj \
@@ -513,16 +535,27 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_AVGPRICE.obj \
 +..\..\..\..\..\temp\csd\ta_BBANDS.obj \
 +..\..\..\..\..\temp\csd\ta_CCI.obj \
++..\..\..\..\..\temp\csd\ta_CDL3BLACKCROWS.obj \
++..\..\..\..\..\temp\csd\ta_CDLABANDONEDBABY.obj \
 +..\..\..\..\..\temp\csd\ta_CDLDOJISTAR.obj \
++..\..\..\..\..\temp\csd\ta_CDLENGULFING.obj \
 +..\..\..\..\..\temp\csd\ta_CDLEVENINGDOJISTAR.obj \
 +..\..\..\..\..\temp\csd\ta_CDLEVENINGSTAR.obj \
++..\..\..\..\..\temp\csd\ta_CDLHAMMER.obj \
++..\..\..\..\..\temp\csd\ta_CDLHANGINGMAN.obj \
++..\..\..\..\..\temp\csd\ta_CDLHARAMI.obj \
++..\..\..\..\..\temp\csd\ta_CDLHARAMICROSS.obj \
 +..\..\..\..\..\temp\csd\ta_CDLHIGHWAVE.obj \
++..\..\..\..\..\temp\csd\ta_CDLIDENTICAL3CROWS.obj \
++..\..\..\..\..\temp\csd\ta_CDLINVERTEDHAMMER.obj \
 +..\..\..\..\..\temp\csd\ta_CDLLONGLINE.obj \
 +..\..\..\..\..\temp\csd\ta_CDLMORNINGDOJISTAR.obj \
 +..\..\..\..\..\temp\csd\ta_CDLMORNINGSTAR.obj \
++..\..\..\..\..\temp\csd\ta_CDLSHOOTINGSTAR.obj \
 +..\..\..\..\..\temp\csd\ta_CDLSHORTLINE.obj \
 +..\..\..\..\..\temp\csd\ta_CDLSPINNINGTOP.obj \
 +..\..\..\..\..\temp\csd\ta_CDLTRISTAR.obj \
++..\..\..\..\..\temp\csd\ta_CDLUPSIDEGAP2CROWS.obj \
 +..\..\..\..\..\temp\csd\ta_CORREL.obj \
 +..\..\..\..\..\temp\csd\ta_DEMA.obj \
 +..\..\..\..\..\temp\csd\ta_DX.obj \
@@ -706,16 +739,27 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_AVGPRICE.obj
 	-del ..\..\..\..\..\temp\csd\ta_BBANDS.obj
 	-del ..\..\..\..\..\temp\csd\ta_CCI.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDL3BLACKCROWS.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLABANDONEDBABY.obj
 	-del ..\..\..\..\..\temp\csd\ta_CDLDOJISTAR.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLENGULFING.obj
 	-del ..\..\..\..\..\temp\csd\ta_CDLEVENINGDOJISTAR.obj
 	-del ..\..\..\..\..\temp\csd\ta_CDLEVENINGSTAR.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLHAMMER.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLHANGINGMAN.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLHARAMI.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLHARAMICROSS.obj
 	-del ..\..\..\..\..\temp\csd\ta_CDLHIGHWAVE.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLIDENTICAL3CROWS.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLINVERTEDHAMMER.obj
 	-del ..\..\..\..\..\temp\csd\ta_CDLLONGLINE.obj
 	-del ..\..\..\..\..\temp\csd\ta_CDLMORNINGDOJISTAR.obj
 	-del ..\..\..\..\..\temp\csd\ta_CDLMORNINGSTAR.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLSHOOTINGSTAR.obj
 	-del ..\..\..\..\..\temp\csd\ta_CDLSHORTLINE.obj
 	-del ..\..\..\..\..\temp\csd\ta_CDLSPINNINGTOP.obj
 	-del ..\..\..\..\..\temp\csd\ta_CDLTRISTAR.obj
+	-del ..\..\..\..\..\temp\csd\ta_CDLUPSIDEGAP2CROWS.obj
 	-del ..\..\..\..\..\temp\csd\ta_CORREL.obj
 	-del ..\..\..\..\..\temp\csd\ta_DEMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_DX.obj
@@ -1109,8 +1153,17 @@ clean:
 ..\..\..\..\..\temp\csd\ta_CCI.obj: ..\..\..\..\..\src\ta_func\ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CCI.obj ..\..\..\..\..\src\ta_func\ta_CCI.c
 
+..\..\..\..\..\temp\csd\ta_CDL3BLACKCROWS.obj: ..\..\..\..\..\src\ta_func\ta_CDL3BLACKCROWS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDL3BLACKCROWS.obj ..\..\..\..\..\src\ta_func\ta_CDL3BLACKCROWS.c
+
+..\..\..\..\..\temp\csd\ta_CDLABANDONEDBABY.obj: ..\..\..\..\..\src\ta_func\ta_CDLABANDONEDBABY.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLABANDONEDBABY.obj ..\..\..\..\..\src\ta_func\ta_CDLABANDONEDBABY.c
+
 ..\..\..\..\..\temp\csd\ta_CDLDOJISTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLDOJISTAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLDOJISTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLDOJISTAR.c
+
+..\..\..\..\..\temp\csd\ta_CDLENGULFING.obj: ..\..\..\..\..\src\ta_func\ta_CDLENGULFING.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLENGULFING.obj ..\..\..\..\..\src\ta_func\ta_CDLENGULFING.c
 
 ..\..\..\..\..\temp\csd\ta_CDLEVENINGDOJISTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLEVENINGDOJISTAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLEVENINGDOJISTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLEVENINGDOJISTAR.c
@@ -1118,8 +1171,26 @@ clean:
 ..\..\..\..\..\temp\csd\ta_CDLEVENINGSTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLEVENINGSTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c
 
+..\..\..\..\..\temp\csd\ta_CDLHAMMER.obj: ..\..\..\..\..\src\ta_func\ta_CDLHAMMER.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLHAMMER.obj ..\..\..\..\..\src\ta_func\ta_CDLHAMMER.c
+
+..\..\..\..\..\temp\csd\ta_CDLHANGINGMAN.obj: ..\..\..\..\..\src\ta_func\ta_CDLHANGINGMAN.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLHANGINGMAN.obj ..\..\..\..\..\src\ta_func\ta_CDLHANGINGMAN.c
+
+..\..\..\..\..\temp\csd\ta_CDLHARAMI.obj: ..\..\..\..\..\src\ta_func\ta_CDLHARAMI.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLHARAMI.obj ..\..\..\..\..\src\ta_func\ta_CDLHARAMI.c
+
+..\..\..\..\..\temp\csd\ta_CDLHARAMICROSS.obj: ..\..\..\..\..\src\ta_func\ta_CDLHARAMICROSS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLHARAMICROSS.obj ..\..\..\..\..\src\ta_func\ta_CDLHARAMICROSS.c
+
 ..\..\..\..\..\temp\csd\ta_CDLHIGHWAVE.obj: ..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLHIGHWAVE.obj ..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
+
+..\..\..\..\..\temp\csd\ta_CDLIDENTICAL3CROWS.obj: ..\..\..\..\..\src\ta_func\ta_CDLIDENTICAL3CROWS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLIDENTICAL3CROWS.obj ..\..\..\..\..\src\ta_func\ta_CDLIDENTICAL3CROWS.c
+
+..\..\..\..\..\temp\csd\ta_CDLINVERTEDHAMMER.obj: ..\..\..\..\..\src\ta_func\ta_CDLINVERTEDHAMMER.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLINVERTEDHAMMER.obj ..\..\..\..\..\src\ta_func\ta_CDLINVERTEDHAMMER.c
 
 ..\..\..\..\..\temp\csd\ta_CDLLONGLINE.obj: ..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLLONGLINE.obj ..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c
@@ -1130,6 +1201,9 @@ clean:
 ..\..\..\..\..\temp\csd\ta_CDLMORNINGSTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLMORNINGSTAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLMORNINGSTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLMORNINGSTAR.c
 
+..\..\..\..\..\temp\csd\ta_CDLSHOOTINGSTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLSHOOTINGSTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLSHOOTINGSTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLSHOOTINGSTAR.c
+
 ..\..\..\..\..\temp\csd\ta_CDLSHORTLINE.obj: ..\..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLSHORTLINE.obj ..\..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c
 
@@ -1138,6 +1212,9 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_CDLTRISTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLTRISTAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLTRISTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLTRISTAR.c
+
+..\..\..\..\..\temp\csd\ta_CDLUPSIDEGAP2CROWS.obj: ..\..\..\..\..\src\ta_func\ta_CDLUPSIDEGAP2CROWS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CDLUPSIDEGAP2CROWS.obj ..\..\..\..\..\src\ta_func\ta_CDLUPSIDEGAP2CROWS.c
 
 ..\..\..\..\..\temp\csd\ta_CORREL.obj: ..\..\..\..\..\src\ta_func\ta_CORREL.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_CORREL.obj ..\..\..\..\..\src\ta_func\ta_CORREL.c
