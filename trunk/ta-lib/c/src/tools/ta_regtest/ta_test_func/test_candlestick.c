@@ -400,6 +400,9 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
 
    TA_RetCode retCode;
 
+   (void)outputBuffer;
+   (void)outputNb;
+
    testParam1 = (const TA_RangeTestParam *)opaqueData;
    testParam2 = (const TA_Test *)testParam1->test;
 

@@ -218,7 +218,8 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    TA_Real *out1;
    TA_Real *out2;
    TA_Real *dummyOutput;
-   (void)outputNb;
+   
+   (void)outputBufferInt;
 
    *isOutputInteger = 0;
   
