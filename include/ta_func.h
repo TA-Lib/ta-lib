@@ -308,7 +308,7 @@ int TA_KAMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod:(From 2 to 100000)
+ * optInTimePeriod:(From 1 to 100000)
  *    Number of period
  * 
  * optInMAType:
@@ -319,7 +319,7 @@ int TA_KAMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 TA_RetCode TA_MA( int    startIdx,
                   int    endIdx,
                   const double inReal[],
-                  int           optInTimePeriod, /* From 2 to 100000 */
+                  int           optInTimePeriod, /* From 1 to 100000 */
                   TA_MAType     optInMAType,
                   int          *outBegIdx,
                   int          *outNbElement,
@@ -328,13 +328,13 @@ TA_RetCode TA_MA( int    startIdx,
 TA_RetCode TA_S_MA( int    startIdx,
                     int    endIdx,
                     const float  inReal[],
-                    int           optInTimePeriod, /* From 2 to 100000 */
+                    int           optInTimePeriod, /* From 1 to 100000 */
                     TA_MAType     optInMAType,
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal[] );
 
-int TA_MA_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+int TA_MA_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
                   TA_MAType     optInMAType ); 
 
 /*
@@ -1736,6 +1736,9 @@ int TA_STOCHF_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
  * 
  * Optional Parameters
  * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Number of period
+ * 
  * optInFastK_Period:(From 1 to 100000)
  *    Time period for building the Fast-K line
  * 
@@ -1750,6 +1753,7 @@ int TA_STOCHF_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
 TA_RetCode TA_STOCHRSI( int    startIdx,
                         int    endIdx,
                         const double inReal[],
+                        int           optInTimePeriod, /* From 2 to 100000 */
                         int           optInFastK_Period, /* From 1 to 100000 */
                         int           optInFastD_Period, /* From 1 to 100000 */
                         TA_MAType     optInFastD_MAType,
@@ -1761,6 +1765,7 @@ TA_RetCode TA_STOCHRSI( int    startIdx,
 TA_RetCode TA_S_STOCHRSI( int    startIdx,
                           int    endIdx,
                           const float  inReal[],
+                          int           optInTimePeriod, /* From 2 to 100000 */
                           int           optInFastK_Period, /* From 1 to 100000 */
                           int           optInFastD_Period, /* From 1 to 100000 */
                           TA_MAType     optInFastD_MAType,
@@ -1769,7 +1774,8 @@ TA_RetCode TA_S_STOCHRSI( int    startIdx,
                           double        outFastK[],
                           double        outFastD[] );
 
-int TA_STOCHRSI_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
+int TA_STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                        int           optInFastK_Period, /* From 1 to 100000 */
                         int           optInFastD_Period, /* From 1 to 100000 */
                         TA_MAType     optInFastD_MAType ); 
 
