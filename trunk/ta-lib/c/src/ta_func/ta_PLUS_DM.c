@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,14 +36,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CF       Christo Fogelberg
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  010802 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  122104 MF,CF  Fix#1089506 for when optInTimePeriod is 1.
  *
  */
 
@@ -77,10 +78,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::PLUS_DM_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
+/* Generated */ int Core::PLUS_DM_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_PLUS_DM_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
+/* Generated */ int TA_PLUS_DM_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -101,7 +102,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod:(From 2 to 100000)
+ * optInTimePeriod:(From 1 to 100000)
  *    Number of period
  * 
  * 
@@ -112,7 +113,7 @@
 /* Generated */                                      int    endIdx,
 /* Generated */                                      double       inHigh __gc [],
 /* Generated */                                      double       inLow __gc [],
-/* Generated */                                      int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                      int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                      [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                      [OutAttribute]Int32 *outNbElement,
 /* Generated */                                      double        outReal __gc [] )
@@ -121,7 +122,7 @@
 /* Generated */                        int    endIdx,
 /* Generated */                        const double inHigh[],
 /* Generated */                        const double inLow[],
-/* Generated */                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                        int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                        int          *outBegIdx,
 /* Generated */                        int          *outNbElement,
 /* Generated */                        double        outReal[] )
@@ -153,7 +154,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( outReal == NULL )
@@ -261,8 +262,8 @@
        */
       *outBegIdx = startIdx;
       today = startIdx-1;
-      prevHigh = inHigh[today-1];
-      prevLow  = inLow[today-1];
+      prevHigh = inHigh[today];
+      prevLow  = inLow[today];
       while( today < endIdx )
       {      
          today++;
@@ -384,7 +385,7 @@
 /* Generated */                                      int    endIdx,
 /* Generated */                                      float        inHigh __gc [],
 /* Generated */                                      float        inLow __gc [],
-/* Generated */                                      int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                      int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                      [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                      [OutAttribute]Int32 *outNbElement,
 /* Generated */                                      double        outReal __gc [] )
@@ -393,7 +394,7 @@
 /* Generated */                          int    endIdx,
 /* Generated */                          const float  inHigh[],
 /* Generated */                          const float  inLow[],
-/* Generated */                          int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                          int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                          int          *outBegIdx,
 /* Generated */                          int          *outNbElement,
 /* Generated */                          double        outReal[] )
@@ -413,7 +414,7 @@
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
-/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
@@ -435,8 +436,8 @@
 /* Generated */    {
 /* Generated */       *outBegIdx = startIdx;
 /* Generated */       today = startIdx-1;
-/* Generated */       prevHigh = inHigh[today-1];
-/* Generated */       prevLow  = inLow[today-1];
+/* Generated */       prevHigh = inHigh[today];
+/* Generated */       prevLow  = inLow[today];
 /* Generated */       while( today < endIdx )
 /* Generated */       {      
 /* Generated */          today++;
