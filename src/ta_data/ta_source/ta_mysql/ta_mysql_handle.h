@@ -50,6 +50,8 @@ extern "C" {
 #define TA_MYSQL_SYMBOL_PLACEHOLDER           "$s"
 #define TA_MYSQL_START_DATE_PLACEHOLDER       "$<"
 #define TA_MYSQL_END_DATE_PLACEHOLDER         "$>"
+#define TA_MYSQL_START_TIME_PLACEHOLDER       "$["
+#define TA_MYSQL_END_TIME_PLACEHOLDER         "$]"
 
 /* placeholders not supported yet
 #define TA_MYSQL_COUNTRY_PLACEHOLDER          "$z"
