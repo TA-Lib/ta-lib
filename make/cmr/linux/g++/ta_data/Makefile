@@ -9,8 +9,8 @@
 
 CC	=	gcc
 CXX	=	g++
-CFLAGS	=	-pipe -Wall -W -O2 -fno-strict-aliasing -D_REENTRANT -DQT_THREAD_SUPPORT
-CXXFLAGS=	-pipe -Wall -W -O2 -fno-strict-aliasing -D_REENTRANT -DQT_THREAD_SUPPORT
+CFLAGS	=	-pipe -fPIC -Wall -W -O2 -fno-strict-aliasing -D_REENTRANT -DQT_THREAD_SUPPORT
+CXXFLAGS=	-pipe -fPIC -Wall -W -O2 -fno-strict-aliasing -D_REENTRANT -DQT_THREAD_SUPPORT
 INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_data -I../../../../../src/ta_data/ta_source -I../../../../../src/ta_data/ta_source/ta_fileindex -I../../../../../src/ta_data/ta_source/ta_ascii -I../../../../../src/ta_data/ta_source/ta_readop -I../../../../../src/ta_data/ta_source/ta_yahoo -I../../../../../src/ta_data/ta_source/ta_sql -I../../../../../src/ta_data/ta_source/ta_csi -I../../../../../src/ta_data/ta_history -I../../../../../src/ta_data/ta_source/ta_simulator -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include
 AR	=	ar cqs
 RANLIB	=	

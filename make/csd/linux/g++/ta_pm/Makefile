@@ -9,8 +9,8 @@
 
 CC	=	gcc
 CXX	=	g++
-CFLAGS	=	-pipe -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
-CXXFLAGS=	-pipe -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
+CFLAGS	=	-pipe -fPIC -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
+CXXFLAGS=	-pipe -fPIC -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
 INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_pm -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include
 AR	=	ar cqs
 RANLIB	=	
