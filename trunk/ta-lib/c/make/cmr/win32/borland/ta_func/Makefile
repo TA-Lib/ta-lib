@@ -83,6 +83,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_AD.c \
 		..\..\..\..\..\src\ta_func\ta_ADOSC.c \
 		..\..\..\..\..\src\ta_func\ta_OBV.c \
+		..\..\..\..\..\src\ta_func\ta_CORREL.c \
 		..\..\..\..\..\src\ta_func\ta_LINEARREG.c \
 		..\..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c \
 		..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c \
@@ -150,6 +151,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_utility.obj \
 		..\..\..\..\..\temp\cmr\ta_AD.obj \
 		..\..\..\..\..\temp\cmr\ta_ADOSC.obj \
 		..\..\..\..\..\temp\cmr\ta_OBV.obj \
+		..\..\..\..\..\temp\cmr\ta_CORREL.obj \
 		..\..\..\..\..\temp\cmr\ta_LINEARREG.obj \
 		..\..\..\..\..\temp\cmr\ta_LINEARREG_SLOPE.obj \
 		..\..\..\..\..\temp\cmr\ta_LINEARREG_ANGLE.obj \
@@ -249,6 +251,7 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_AD.obj \
 +..\..\..\..\..\temp\cmr\ta_ADOSC.obj \
 +..\..\..\..\..\temp\cmr\ta_OBV.obj \
++..\..\..\..\..\temp\cmr\ta_CORREL.obj \
 +..\..\..\..\..\temp\cmr\ta_LINEARREG.obj \
 +..\..\..\..\..\temp\cmr\ta_LINEARREG_SLOPE.obj \
 +..\..\..\..\..\temp\cmr\ta_LINEARREG_ANGLE.obj \
@@ -330,6 +333,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_AD.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ADOSC.obj
 	-del ..\..\..\..\..\temp\cmr\ta_OBV.obj
+	-del ..\..\..\..\..\temp\cmr\ta_CORREL.obj
 	-del ..\..\..\..\..\temp\cmr\ta_LINEARREG.obj
 	-del ..\..\..\..\..\temp\cmr\ta_LINEARREG_SLOPE.obj
 	-del ..\..\..\..\..\temp\cmr\ta_LINEARREG_ANGLE.obj
@@ -525,6 +529,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_OBV.obj: ..\..\..\..\..\src\ta_func\ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_OBV.obj ..\..\..\..\..\src\ta_func\ta_OBV.c
+
+..\..\..\..\..\temp\cmr\ta_CORREL.obj: ..\..\..\..\..\src\ta_func\ta_CORREL.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CORREL.obj ..\..\..\..\..\src\ta_func\ta_CORREL.c
 
 ..\..\..\..\..\temp\cmr\ta_LINEARREG.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_LINEARREG.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG.c

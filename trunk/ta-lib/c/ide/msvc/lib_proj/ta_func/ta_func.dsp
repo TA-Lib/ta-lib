@@ -268,6 +268,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CCI.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CORREL.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_DEMA.c
 # End Source File
 # Begin Source File

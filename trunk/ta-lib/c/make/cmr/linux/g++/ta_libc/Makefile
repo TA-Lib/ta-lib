@@ -166,6 +166,7 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_AD.c \
 		../../../../../src/ta_func/ta_ADOSC.c \
 		../../../../../src/ta_func/ta_OBV.c \
+		../../../../../src/ta_func/ta_CORREL.c \
 		../../../../../src/ta_func/ta_LINEARREG.c \
 		../../../../../src/ta_func/ta_LINEARREG_SLOPE.c \
 		../../../../../src/ta_func/ta_LINEARREG_ANGLE.c \
@@ -327,6 +328,7 @@ OBJECTS =	../../../../../temp/cmr/ta_ascii.o \
 		../../../../../temp/cmr/ta_AD.o \
 		../../../../../temp/cmr/ta_ADOSC.o \
 		../../../../../temp/cmr/ta_OBV.o \
+		../../../../../temp/cmr/ta_CORREL.o \
 		../../../../../temp/cmr/ta_LINEARREG.o \
 		../../../../../temp/cmr/ta_LINEARREG_SLOPE.o \
 		../../../../../temp/cmr/ta_LINEARREG_ANGLE.o \
@@ -826,6 +828,9 @@ clean:
 
 ../../../../../temp/cmr/ta_OBV.o: ../../../../../src/ta_func/ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_OBV.o ../../../../../src/ta_func/ta_OBV.c
+
+../../../../../temp/cmr/ta_CORREL.o: ../../../../../src/ta_func/ta_CORREL.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CORREL.o ../../../../../src/ta_func/ta_CORREL.c
 
 ../../../../../temp/cmr/ta_LINEARREG.o: ../../../../../src/ta_func/ta_LINEARREG.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_LINEARREG.o ../../../../../src/ta_func/ta_LINEARREG.c

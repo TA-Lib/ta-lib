@@ -53,6 +53,7 @@ HT_TRENDMODE        Hilbert Transform - Trend vs Cycle Mode
 AD                  Chaikin A/D Line
 ADOSC               Chaikin A/D Oscillator
 OBV                 On Balance Volume
+CORREL              Pearson's Correlation Coefficient (r)
 LINEARREG           Linear Regression
 LINEARREG_SLOPE     Linear Regression Slope
 LINEARREG_ANGLE     Linear Regression Angle
