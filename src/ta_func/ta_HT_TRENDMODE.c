@@ -83,38 +83,38 @@ int TA_HT_TRENDMODE_Lookback( void )
 /*
  * TA_HT_TRENDMODE - Hilbert Transform - Trend vs Cycle Mode
  * 
- * Input  = TA_Real
- * Output = TA_Integer
+ * Input  = double
+ * Output = int
  * 
  */
 
-TA_RetCode TA_HT_TRENDMODE( TA_Integer    startIdx,
-                            TA_Integer    endIdx,
-                            const TA_Real inReal_0[],
-                            TA_Integer   *outBegIdx,
-                            TA_Integer   *outNbElement,
-                            TA_Integer    outInteger_0[] )
+TA_RetCode TA_HT_TRENDMODE( int    startIdx,
+                            int    endIdx,
+                            const double inReal_0[],
+                            int          *outBegIdx,
+                            int          *outNbElement,
+                            int           outInteger_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
    int outIdx, i;
    int lookbackTotal, today;
-   TA_Real tempReal, tempReal2;
+   double tempReal, tempReal2;
 
-   TA_Real adjustedPrevPeriod, period;
+   double adjustedPrevPeriod, period;
 
    /* Variable used for the price smoother (a weighted moving average). */
    unsigned int trailingWMAIdx;
-   TA_Real periodWMASum, periodWMASub, trailingWMAValue;
-   TA_Real smoothedValue;
+   double periodWMASum, periodWMASub, trailingWMAValue;
+   double smoothedValue;
 
    /* Variable to keep track of the last 3 ITrend */
-   TA_Real iTrend1, iTrend2, iTrend3;
+   double iTrend1, iTrend2, iTrend3;
 
    /* Variables used for the Hilbert Transormation */
    const double a = 0.0962;
    const double b = 0.5769;
-   TA_Real hilbertTempReal;
+   double hilbertTempReal;
    int hilbertIdx;
 
    HILBERT_VARIABLES( detrender );
@@ -122,33 +122,33 @@ TA_RetCode TA_HT_TRENDMODE( TA_Integer    startIdx,
    HILBERT_VARIABLES( jI );
    HILBERT_VARIABLES( jQ );
 
-   TA_Real Q2, I2, prevQ2, prevI2, Re, Im;
+   double Q2, I2, prevQ2, prevI2, Re, Im;
 
-   TA_Real I1ForOddPrev2,  I1ForOddPrev3;
-   TA_Real I1ForEvenPrev2, I1ForEvenPrev3;
+   double I1ForOddPrev2,  I1ForOddPrev3;
+   double I1ForEvenPrev2, I1ForEvenPrev3;
 
-   TA_Real rad2Deg, deg2Rad, constDeg2RadBy360;
+   double rad2Deg, deg2Rad, constDeg2RadBy360;
 
-   TA_Real todayValue, smoothPeriod;
+   double todayValue, smoothPeriod;
 
-   TA_Real iTrend;
+   double iTrend;
 
    /* Variable used to keep track of the previous
     * smooth price. In the case of this algorithm,
     * we will never need more than 50 values.
     */
    #define SMOOTH_PRICE_SIZE 50
-   CIRCBUF_PROLOG(smoothPrice,TA_Real,SMOOTH_PRICE_SIZE);
+   CIRCBUF_PROLOG(smoothPrice,double,SMOOTH_PRICE_SIZE);
    int idx;
 
    /* Variable used to calculate the dominant cycle phase */
    TA_Integer DCPeriodInt;
-   TA_Real DCPhase, DCPeriod, imagPart, realPart;
+   double DCPhase, DCPeriod, imagPart, realPart;
 
    /* Variable used to calculate the trend mode */
    TA_Integer daysInTrend, trend;
-   TA_Real prevDCPhase, trendline;
-   TA_Real prevSine, prevLeadSine, sine, leadSine;
+   double prevDCPhase, trendline;
+   double prevSine, prevLeadSine, sine, leadSine;
    
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -172,7 +172,7 @@ TA_RetCode TA_HT_TRENDMODE( TA_Integer    startIdx,
 
    /* Insert TA function code here. */
 
-   CIRCBUF_CONSTRUCT(smoothPrice,TA_Real,SMOOTH_PRICE_SIZE);
+   CIRCBUF_CONSTRUCT(smoothPrice,double,SMOOTH_PRICE_SIZE);
 
    iTrend1 = iTrend2 = iTrend3 = 0.0;
    daysInTrend  = 0;
@@ -374,7 +374,7 @@ TA_RetCode TA_HT_TRENDMODE( TA_Integer    startIdx,
       idx = smoothPrice_Idx;
       for( i=0; i < DCPeriodInt; i++ )
       {
-         tempReal  = ((TA_Real)i*constDeg2RadBy360)/(TA_Real)DCPeriodInt;
+         tempReal  = ((double)i*constDeg2RadBy360)/(double)DCPeriodInt;
          tempReal2 = smoothPrice[idx];
          realPart += sin(tempReal)*tempReal2;
          imagPart += cos(tempReal)*tempReal2;
@@ -422,7 +422,7 @@ TA_RetCode TA_HT_TRENDMODE( TA_Integer    startIdx,
          tempReal += inReal_0[idx--];
 
       if( DCPeriodInt > 0 )
-         tempReal = tempReal/(TA_Real)DCPeriodInt;
+         tempReal = tempReal/(double)DCPeriodInt;
       
       trendline = (4.0*tempReal + 3.0*iTrend1 + 2.0*iTrend2 + iTrend3) / 10.0;
       iTrend3   = iTrend2;

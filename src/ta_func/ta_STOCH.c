@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -64,10 +64,10 @@
    #include "ta_utility.h"
 #endif
 
-int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+int TA_STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
+                       int           optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
                        TA_MAType     optInSlowK_MAType_2,
-                       TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                       int           optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
                        TA_MAType     optInSlowD_MAType_4 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -92,7 +92,7 @@ int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGE
  * TA_STOCH - Stochastic
  * 
  * Input  = High, Low, Close
- * Output = TA_Real, TA_Real
+ * Output = double, double
  * 
  * Optional Parameters
  * -------------------
@@ -114,26 +114,26 @@ int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGE
  * 
  */
 
-TA_RetCode TA_STOCH( TA_Integer    startIdx,
-                     TA_Integer    endIdx,
-                     const TA_Real inHigh_0[],
-                     const TA_Real inLow_0[],
-                     const TA_Real inClose_0[],
-                     TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+TA_RetCode TA_STOCH( int    startIdx,
+                     int    endIdx,
+                     const double inHigh_0[],
+                     const double inLow_0[],
+                     const double inClose_0[],
+                     int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
+                     int           optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
                      TA_MAType     optInSlowK_MAType_2,
-                     TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                     int           optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
                      TA_MAType     optInSlowD_MAType_4,
-                     TA_Integer   *outBegIdx,
-                     TA_Integer   *outNbElement,
-                     TA_Real       outSlowK_0[],
-                     TA_Real       outSlowD_1[] )
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outSlowK_0[],
+                     double        outSlowD_1[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
    TA_RetCode retCode;
-   TA_Real lowest, highest, tmp, diff;
-   TA_Real *tempBuffer;
+   double lowest, highest, tmp, diff;
+   double *tempBuffer;
    TA_Integer outIdx, lowestIdx, highestIdx;
    TA_Integer lookbackTotal, lookbackK, lookbackKSlow, lookbackDSlow;
    TA_Integer trailingIdx, today, i, bufferIsAllocated;
@@ -154,31 +154,31 @@ TA_RetCode TA_STOCH( TA_Integer    startIdx,
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInFastK_Period_0. */
-   if( (TA_Integer)optInFastK_Period_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInFastK_Period_0 == TA_INTEGER_DEFAULT )
       optInFastK_Period_0 = 5;
-   else if( ((TA_Integer)optInFastK_Period_0 < 1) || ((TA_Integer)optInFastK_Period_0 > 2147483647) )
+   else if( ((int)optInFastK_Period_0 < 1) || ((int)optInFastK_Period_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowK_Period_1. */
-   if( (TA_Integer)optInSlowK_Period_1 == TA_INTEGER_DEFAULT )
+   if( (int)optInSlowK_Period_1 == TA_INTEGER_DEFAULT )
       optInSlowK_Period_1 = 3;
-   else if( ((TA_Integer)optInSlowK_Period_1 < 1) || ((TA_Integer)optInSlowK_Period_1 > 2147483647) )
+   else if( ((int)optInSlowK_Period_1 < 1) || ((int)optInSlowK_Period_1 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( (TA_Integer)optInSlowK_MAType_2 == TA_INTEGER_DEFAULT )
+   if( (int)optInSlowK_MAType_2 == TA_INTEGER_DEFAULT )
       optInSlowK_MAType_2 = 0;
-   else if( ((TA_Integer)optInSlowK_MAType_2 < 0) || ((TA_Integer)optInSlowK_MAType_2 > 8) )
+   else if( ((int)optInSlowK_MAType_2 < 0) || ((int)optInSlowK_MAType_2 > 8) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowD_Period_3. */
-   if( (TA_Integer)optInSlowD_Period_3 == TA_INTEGER_DEFAULT )
+   if( (int)optInSlowD_Period_3 == TA_INTEGER_DEFAULT )
       optInSlowD_Period_3 = 3;
-   else if( ((TA_Integer)optInSlowD_Period_3 < 1) || ((TA_Integer)optInSlowD_Period_3 > 2147483647) )
+   else if( ((int)optInSlowD_Period_3 < 1) || ((int)optInSlowD_Period_3 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( (TA_Integer)optInSlowD_MAType_4 == TA_INTEGER_DEFAULT )
+   if( (int)optInSlowD_MAType_4 == TA_INTEGER_DEFAULT )
       optInSlowD_MAType_4 = 0;
-   else if( ((TA_Integer)optInSlowD_MAType_4 < 0) || ((TA_Integer)optInSlowD_MAType_4 > 8) )
+   else if( ((int)optInSlowD_MAType_4 < 0) || ((int)optInSlowD_MAType_4 > 8) )
       return TA_BAD_PARAM;
 
    if( outSlowK_0 == NULL )
@@ -292,7 +292,7 @@ TA_RetCode TA_STOCH( TA_Integer    startIdx,
    else
    {
       bufferIsAllocated = 1;
-      tempBuffer = TA_Malloc( (endIdx-today+1)*sizeof(TA_Real) );
+      tempBuffer = TA_Malloc( (endIdx-today+1)*sizeof(double) );
    }
 
    /* Do the K calculation */
@@ -392,7 +392,7 @@ TA_RetCode TA_STOCH( TA_Integer    startIdx,
     *  caller buffer because more input data then the
     *  requested range was needed for doing %D).
     */
-   memmove( outSlowK_0, &tempBuffer[lookbackDSlow], (*outNbElement) * sizeof(TA_Real) );
+   memmove( outSlowK_0, &tempBuffer[lookbackDSlow], (*outNbElement) * sizeof(double) );
 
    /* Don't need K anymore, free it if it was allocated here. */
    if( bufferIsAllocated )

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -61,7 +61,7 @@
    #include "ta_utility.h"
 #endif
 
-int TA_MINUS_DI_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+int TA_MINUS_DI_Lookback( int           optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -78,7 +78,7 @@ int TA_MINUS_DI_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INT
  * TA_MINUS_DI - Minus Directional Indicator
  * 
  * Input  = High, Low, Close
- * Output = TA_Real
+ * Output = double
  * 
  * Optional Parameters
  * -------------------
@@ -88,23 +88,23 @@ int TA_MINUS_DI_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 1 to TA_INT
  * 
  */
 
-TA_RetCode TA_MINUS_DI( TA_Integer    startIdx,
-                        TA_Integer    endIdx,
-                        const TA_Real inHigh_0[],
-                        const TA_Real inLow_0[],
-                        const TA_Real inClose_0[],
-                        TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                        TA_Integer   *outBegIdx,
-                        TA_Integer   *outNbElement,
-                        TA_Real       outReal_0[] )
+TA_RetCode TA_MINUS_DI( int    startIdx,
+                        int    endIdx,
+                        const double inHigh_0[],
+                        const double inLow_0[],
+                        const double inClose_0[],
+                        int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
 
    TA_Integer today, lookbackTotal, outIdx;
-   TA_Real prevHigh, prevLow, prevClose;
-   TA_Real prevMinusDM, prevTR;
-   TA_Real tempReal, tempReal2, diffP, diffM;
+   double prevHigh, prevLow, prevClose;
+   double prevMinusDM, prevTR;
+   double tempReal, tempReal2, diffP, diffM;
 
    int i;
 
@@ -134,9 +134,9 @@ TA_RetCode TA_MINUS_DI( TA_Integer    startIdx,
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInTimePeriod_0. */
-   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 14;
-   else if( ((TA_Integer)optInTimePeriod_0 < 1) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 1) || ((int)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -63,7 +63,7 @@
    #include "ta_utility.h"
 #endif
 
-int TA_CCI_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 5 to TA_INTEGER_MAX */
+int TA_CCI_Lookback( int           optInTimePeriod_0 )  /* From 5 to TA_INTEGER_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -76,7 +76,7 @@ int TA_CCI_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 5 to TA_INTEGER_
  * TA_CCI - Commodity Channel Index
  * 
  * Input  = High, Low, Close
- * Output = TA_Real
+ * Output = double
  * 
  * Optional Parameters
  * -------------------
@@ -86,33 +86,33 @@ int TA_CCI_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 5 to TA_INTEGER_
  * 
  */
 
-TA_RetCode TA_CCI( TA_Integer    startIdx,
-                   TA_Integer    endIdx,
-                   const TA_Real inHigh_0[],
-                   const TA_Real inLow_0[],
-                   const TA_Real inClose_0[],
-                   TA_Integer    optInTimePeriod_0, /* From 5 to TA_INTEGER_MAX */
-                   TA_Integer   *outBegIdx,
-                   TA_Integer   *outNbElement,
-                   TA_Real       outReal_0[] )
+TA_RetCode TA_CCI( int    startIdx,
+                   int    endIdx,
+                   const double inHigh_0[],
+                   const double inLow_0[],
+                   const double inClose_0[],
+                   int           optInTimePeriod_0, /* From 5 to TA_INTEGER_MAX */
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 
 	/* insert local variable here */
-   TA_Real periodTotal, tempReal, tempReal2, theAverage, lastValue;
+   double periodTotal, tempReal, tempReal2, theAverage, lastValue;
    int i, j, outIdx, trailingIdx, headingIdx, lookbackTotal;
 
    /* This ptr will points on a circular buffer of
     * at least "optInTimePeriod_0" element.
     */
-   TA_Real *circBuffer;
+   double *circBuffer;
 
    /* To avoid a memory allocation, use a small buffer
     * taken on the stack when the period is smaller
     * or equal to LOCAL_BUFFER_SIZE.
     */
    #define LOCAL_BUFFER_SIZE 30
-   TA_Real localBuffer[LOCAL_BUFFER_SIZE];
+   double localBuffer[LOCAL_BUFFER_SIZE];
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -130,9 +130,9 @@ TA_RetCode TA_CCI( TA_Integer    startIdx,
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInTimePeriod_0. */
-   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 14;
-   else if( ((TA_Integer)optInTimePeriod_0 < 5) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 5) || ((int)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -168,7 +168,7 @@ TA_RetCode TA_CCI( TA_Integer    startIdx,
     */
    if( optInTimePeriod_0 > LOCAL_BUFFER_SIZE )
    {
-      circBuffer = TA_Malloc( optInTimePeriod_0*sizeof(TA_Real) );
+      circBuffer = TA_Malloc( optInTimePeriod_0*sizeof(double) );
       if( !circBuffer )
          return TA_ALLOC_ERR;
    }

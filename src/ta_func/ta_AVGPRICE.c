@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -75,19 +75,19 @@ int TA_AVGPRICE_Lookback( void )
  * TA_AVGPRICE - Average Price
  * 
  * Input  = Open, High, Low, Close
- * Output = TA_Real
+ * Output = double
  * 
  */
 
-TA_RetCode TA_AVGPRICE( TA_Integer    startIdx,
-                        TA_Integer    endIdx,
-                        const TA_Real inOpen_0[],
-                        const TA_Real inHigh_0[],
-                        const TA_Real inLow_0[],
-                        const TA_Real inClose_0[],
-                        TA_Integer   *outBegIdx,
-                        TA_Integer   *outNbElement,
-                        TA_Real       outReal_0[] )
+TA_RetCode TA_AVGPRICE( int    startIdx,
+                        int    endIdx,
+                        const double inOpen_0[],
+                        const double inHigh_0[],
+                        const double inLow_0[],
+                        const double inClose_0[],
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -63,11 +63,11 @@
    #include "ta_utility.h"
 #endif
 
-int TA_MACDEXT_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+int TA_MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
                          TA_MAType     optInFastMAType_1,
-                         TA_Integer    optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
+                         int           optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
                          TA_MAType     optInSlowMAType_3,
-                         TA_Integer    optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
+                         int           optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
                          TA_MAType     optInSignalMAType_5 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -89,8 +89,8 @@ int TA_MACDEXT_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGE
 /*
  * TA_MACDEXT - MACD with controllable MA type
  * 
- * Input  = TA_Real
- * Output = TA_Real, TA_Real, TA_Real
+ * Input  = double
+ * Output = double, double, double
  * 
  * Optional Parameters
  * -------------------
@@ -115,24 +115,24 @@ int TA_MACDEXT_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGE
  * 
  */
 
-TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
-                       TA_Integer    endIdx,
-                       const TA_Real inReal_0[],
-                       TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+TA_RetCode TA_MACDEXT( int    startIdx,
+                       int    endIdx,
+                       const double inReal_0[],
+                       int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
                        TA_MAType     optInFastMAType_1,
-                       TA_Integer    optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
+                       int           optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
                        TA_MAType     optInSlowMAType_3,
-                       TA_Integer    optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
+                       int           optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
                        TA_MAType     optInSignalMAType_5,
-                       TA_Integer   *outBegIdx,
-                       TA_Integer   *outNbElement,
-                       TA_Real       outMACD_0[],
-                       TA_Real       outMACDSignal_1[],
-                       TA_Real       outMACDHist_2[] )
+                       int          *outBegIdx,
+                       int          *outNbElement,
+                       double        outMACD_0[],
+                       double        outMACDSignal_1[],
+                       double        outMACDHist_2[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
-   TA_Real *slowMABuffer, *fastMABuffer;
+   double *slowMABuffer, *fastMABuffer;
    TA_RetCode retCode;
    TA_Integer tempInteger, outBegIdx1, outNbElement1;
    TA_Integer outBegIdx2, outNbElement2;
@@ -152,36 +152,36 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInFastPeriod_0. */
-   if( (TA_Integer)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
       optInFastPeriod_0 = 12;
-   else if( ((TA_Integer)optInFastPeriod_0 < 2) || ((TA_Integer)optInFastPeriod_0 > 2147483647) )
+   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( (TA_Integer)optInFastMAType_1 == TA_INTEGER_DEFAULT )
+   if( (int)optInFastMAType_1 == TA_INTEGER_DEFAULT )
       optInFastMAType_1 = 0;
-   else if( ((TA_Integer)optInFastMAType_1 < 0) || ((TA_Integer)optInFastMAType_1 > 8) )
+   else if( ((int)optInFastMAType_1 < 0) || ((int)optInFastMAType_1 > 8) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowPeriod_2. */
-   if( (TA_Integer)optInSlowPeriod_2 == TA_INTEGER_DEFAULT )
+   if( (int)optInSlowPeriod_2 == TA_INTEGER_DEFAULT )
       optInSlowPeriod_2 = 26;
-   else if( ((TA_Integer)optInSlowPeriod_2 < 2) || ((TA_Integer)optInSlowPeriod_2 > 2147483647) )
+   else if( ((int)optInSlowPeriod_2 < 2) || ((int)optInSlowPeriod_2 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( (TA_Integer)optInSlowMAType_3 == TA_INTEGER_DEFAULT )
+   if( (int)optInSlowMAType_3 == TA_INTEGER_DEFAULT )
       optInSlowMAType_3 = 0;
-   else if( ((TA_Integer)optInSlowMAType_3 < 0) || ((TA_Integer)optInSlowMAType_3 > 8) )
+   else if( ((int)optInSlowMAType_3 < 0) || ((int)optInSlowMAType_3 > 8) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSignalPeriod_4. */
-   if( (TA_Integer)optInSignalPeriod_4 == TA_INTEGER_DEFAULT )
+   if( (int)optInSignalPeriod_4 == TA_INTEGER_DEFAULT )
       optInSignalPeriod_4 = 9;
-   else if( ((TA_Integer)optInSignalPeriod_4 < 1) || ((TA_Integer)optInSignalPeriod_4 > 2147483647) )
+   else if( ((int)optInSignalPeriod_4 < 1) || ((int)optInSignalPeriod_4 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( (TA_Integer)optInSignalMAType_5 == TA_INTEGER_DEFAULT )
+   if( (int)optInSignalMAType_5 == TA_INTEGER_DEFAULT )
       optInSignalMAType_5 = 0;
-   else if( ((TA_Integer)optInSignalMAType_5 < 0) || ((TA_Integer)optInSignalMAType_5 > 8) )
+   else if( ((int)optInSignalMAType_5 < 0) || ((int)optInSignalMAType_5 > 8) )
       return TA_BAD_PARAM;
 
    if( outMACD_0 == NULL )
@@ -240,7 +240,7 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
 
    /* Allocate intermediate buffer for fast/slow MA. */
    tempInteger = (endIdx-startIdx)+1+lookbackSignal;
-   fastMABuffer = TA_Malloc( tempInteger * sizeof( TA_Real ) );
+   fastMABuffer = TA_Malloc( tempInteger * sizeof( double ) );
    if( !fastMABuffer )
    {
       *outBegIdx = 0;
@@ -248,7 +248,7 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
       return TA_ALLOC_ERR;
    }
 
-   slowMABuffer = TA_Malloc( tempInteger * sizeof( TA_Real ) );
+   slowMABuffer = TA_Malloc( tempInteger * sizeof( double ) );
    if( !slowMABuffer )
    {
       *outBegIdx = 0;
@@ -310,7 +310,7 @@ TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
       fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
 
    /* Copy the result into the output for the caller. */
-   memcpy( outMACD_0, &fastMABuffer[lookbackSignal], ((endIdx-startIdx)+1)*sizeof(TA_Real) );
+   memcpy( outMACD_0, &fastMABuffer[lookbackSignal], ((endIdx-startIdx)+1)*sizeof(double) );
 
    /* Calculate the signal/trigger line. */
    retCode = TA_MA( 0, outNbElement1-1,

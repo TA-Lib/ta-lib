@@ -62,7 +62,7 @@
    #include "ta_utility.h"
 #endif
 
-int TA_TRIMA_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+int TA_TRIMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -74,8 +74,8 @@ int TA_TRIMA_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGE
 /*
  * TA_TRIMA - Triangular Moving Average
  * 
- * Input  = TA_Real
- * Output = TA_Real
+ * Input  = double
+ * Output = double
  * 
  * Optional Parameters
  * -------------------
@@ -85,24 +85,24 @@ int TA_TRIMA_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGE
  * 
  */
 
-TA_RetCode TA_TRIMA( TA_Integer    startIdx,
-                     TA_Integer    endIdx,
-                     const TA_Real inReal_0[],
-                     TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                     TA_Integer   *outBegIdx,
-                     TA_Integer   *outNbElement,
-                     TA_Real       outReal_0[] )
+TA_RetCode TA_TRIMA( int    startIdx,
+                     int    endIdx,
+                     const double inReal_0[],
+                     int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
    int lookbackTotal;
 
-   TA_Real numerator;
-   TA_Real numeratorSub;
-   TA_Real numeratorAdd;
+   double numerator;
+   double numeratorSub;
+   double numeratorAdd;
 
    int i, outIdx, todayIdx, trailingIdx, middleIdx;
-   TA_Real factor, tempReal;
+   double factor, tempReal;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -117,9 +117,9 @@ TA_RetCode TA_TRIMA( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
-   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 30;
-   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )

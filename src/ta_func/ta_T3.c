@@ -66,8 +66,8 @@
    #include "ta_utility.h"
 #endif
 
-int TA_T3_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    TA_Real       optInVFactor_1 )  /* From 0 to 1 */
+int TA_T3_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                    double        optInVFactor_1 )  /* From 0 to 1 */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -80,8 +80,8 @@ int TA_T3_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX
 /*
  * TA_T3 - Triple Exponential Moving Average (T3)
  * 
- * Input  = TA_Real
- * Output = TA_Real
+ * Input  = double
+ * Output = double
  * 
  * Optional Parameters
  * -------------------
@@ -94,24 +94,24 @@ int TA_T3_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX
  * 
  */
 
-TA_RetCode TA_T3( TA_Integer    startIdx,
-                  TA_Integer    endIdx,
-                  const TA_Real inReal_0[],
-                  TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                  TA_Real       optInVFactor_1, /* From 0 to 1 */
-                  TA_Integer   *outBegIdx,
-                  TA_Integer   *outNbElement,
-                  TA_Real       outReal_0[] )
+TA_RetCode TA_T3( int    startIdx,
+                  int    endIdx,
+                  const double inReal_0[],
+                  int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                  double        optInVFactor_1, /* From 0 to 1 */
+                  int          *outBegIdx,
+                  int          *outNbElement,
+                  double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
 
    TA_Integer outIdx, lookbackTotal;
    int today, i;
-   TA_Real k, one_minus_k;
-   TA_Real e1, e2, e3, e4, e5, e6;
-   TA_Real c1, c2, c3, c4;
-   TA_Real tempReal;
+   double k, one_minus_k;
+   double e1, e2, e3, e4, e5, e6;
+   double c1, c2, c3, c4;
+   double tempReal;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -126,9 +126,9 @@ TA_RetCode TA_T3( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
-   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 5;
-   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( optInVFactor_1 == TA_REAL_DEFAULT )

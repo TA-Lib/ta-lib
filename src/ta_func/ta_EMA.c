@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -60,7 +60,7 @@
    #include "ta_utility.h"
 #endif
 
-int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+int TA_EMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -72,8 +72,8 @@ int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGER_
 /*
  * TA_EMA - Exponential Moving Average
  * 
- * Input  = TA_Real
- * Output = TA_Real
+ * Input  = double
+ * Output = double
  * 
  * Optional Parameters
  * -------------------
@@ -83,13 +83,13 @@ int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0 )  /* From 2 to TA_INTEGER_
  * 
  */
 
-TA_RetCode TA_EMA( TA_Integer    startIdx,
-                   TA_Integer    endIdx,
-                   const TA_Real inReal_0[],
-                   TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                   TA_Integer   *outBegIdx,
-                   TA_Integer   *outNbElement,
-                   TA_Real       outReal_0[] )
+TA_RetCode TA_EMA( int    startIdx,
+                   int    endIdx,
+                   const double inReal_0[],
+                   int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
@@ -107,9 +107,9 @@ TA_RetCode TA_EMA( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
-   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 30;
-   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -148,14 +148,14 @@ TA_RetCode TA_EMA( TA_Integer    startIdx,
  */
 TA_RetCode TA_INT_EMA( TA_Integer    startIdx,
                        TA_Integer    endIdx,
-                       const TA_Real *inReal_0,
+                       const double *inReal_0,
                        TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
-                       TA_Real       optInK_1,          /* Ratio for calculation of EMA. */
+                       double       optInK_1,          /* Ratio for calculation of EMA. */
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
-                       TA_Real      *outReal_0 )
+                       double      *outReal_0 )
 {
-   TA_Real tempReal, prevMA;
+   double tempReal, prevMA;
    int i, today, outIdx, lookbackTotal;
 
    /* Ususally, optInK_1 = 2 / (optInTimePeriod_0 + 1),

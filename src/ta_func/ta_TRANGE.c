@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -76,24 +76,24 @@ int TA_TRANGE_Lookback( void )
  * TA_TRANGE - True Range
  * 
  * Input  = High, Low, Close
- * Output = TA_Real
+ * Output = double
  * 
  */
 
-TA_RetCode TA_TRANGE( TA_Integer    startIdx,
-                      TA_Integer    endIdx,
-                      const TA_Real inHigh_0[],
-                      const TA_Real inLow_0[],
-                      const TA_Real inClose_0[],
-                      TA_Integer   *outBegIdx,
-                      TA_Integer   *outNbElement,
-                      TA_Real       outReal_0[] )
+TA_RetCode TA_TRANGE( int    startIdx,
+                      int    endIdx,
+                      const double inHigh_0[],
+                      const double inLow_0[],
+                      const double inClose_0[],
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
    int today, outIdx;
-   TA_Real val2, val3, greatest;
-   TA_Real tempCY, tempLT, tempHT;
+   double val2, val3, greatest;
+   double tempCY, tempLT, tempHT;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 

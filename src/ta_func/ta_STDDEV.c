@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -62,8 +62,8 @@
    #include "ta_utility.h"
 #endif
 
-int TA_STDDEV_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                        TA_Real       optInNbDev_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+int TA_STDDEV_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                        double        optInNbDev_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -77,8 +77,8 @@ int TA_STDDEV_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER
 /*
  * TA_STDDEV - Standard Deviation
  * 
- * Input  = TA_Real
- * Output = TA_Real
+ * Input  = double
+ * Output = double
  * 
  * Optional Parameters
  * -------------------
@@ -91,14 +91,14 @@ int TA_STDDEV_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER
  * 
  */
 
-TA_RetCode TA_STDDEV( TA_Integer    startIdx,
-                      TA_Integer    endIdx,
-                      const TA_Real inReal_0[],
-                      TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                      TA_Real       optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
-                      TA_Integer   *outBegIdx,
-                      TA_Integer   *outNbElement,
-                      TA_Real       outReal_0[] )
+TA_RetCode TA_STDDEV( int    startIdx,
+                      int    endIdx,
+                      const double inReal_0[],
+                      int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                      double        optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
@@ -118,9 +118,9 @@ TA_RetCode TA_STDDEV( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
-   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 5;
-   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( optInNbDev_1 == TA_REAL_DEFAULT )
@@ -180,14 +180,14 @@ TA_RetCode TA_STDDEV( TA_Integer    startIdx,
  *       average. Still the function is put here because it is 
  *       closely related.
  */
-void TA_INT_stddev_using_precalc_ma( const TA_Real *inReal,
-                                     const TA_Real *inMovAvg,
+void TA_INT_stddev_using_precalc_ma( const double *inReal,
+                                     const double *inMovAvg,
                                      TA_Integer inMovAvgBegIdx,                                    
                                      TA_Integer inMovAvgNbElement,
                                      TA_Integer timePeriod,
-                                     TA_Real *output )
+                                     double *output )
 {
-   TA_Real tempReal, periodTotal2, meanValue2;
+   double tempReal, periodTotal2, meanValue2;
    int outIdx;
 
    /* Start/end index for sumation. */

@@ -7,13 +7,14 @@
 #ifndef TA_UTILITY_H
 #define TA_UTILITY_H
 
-#ifndef TA_FUNC_H
-   #include "ta_func.h"
-#endif
+#if !defined( _MANAGED )
+   #ifndef TA_FUNC_H
+      #include "ta_func.h"
+   #endif
 
-#ifndef TA_GLOBAL_H
-   #include "ta_global.h"
-#endif
+   #ifndef TA_GLOBAL_H
+      #include "ta_global.h"
+   #endif
 
 /* Calculate a Simple Moving Average.
  * This is an internal version, parameter are assumed validated.
@@ -21,11 +22,11 @@
  */
 TA_RetCode TA_INT_SMA( TA_Integer    startIdx,
                        TA_Integer    endIdx,
-                       const TA_Real *inReal_0,
+                       const double *inReal_0,
                        TA_Integer    optInTimePeriod_0, /* From 1 to 200 */
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
-                       TA_Real      *outReal_0 );
+                       double      *outReal_0 );
 
 /* Calculate a Weighted Moving Average.
  * This is an internal version, parameter are assumed validated.
@@ -33,11 +34,11 @@ TA_RetCode TA_INT_SMA( TA_Integer    startIdx,
  */
 TA_RetCode TA_INT_WMA( TA_Integer    startIdx,
                        TA_Integer    endIdx,
-                       const TA_Real *inReal_0,
+                       const double *inReal_0,
                        TA_Integer    optInTimePeriod_0, /* From 1 to 200 */
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
-                       TA_Real      *outReal_0 );
+                       double      *outReal_0 );
 
 /* Calculate an Exponential Moving Average.
  * This is an internal version, parameter are assumed validated.
@@ -45,12 +46,12 @@ TA_RetCode TA_INT_WMA( TA_Integer    startIdx,
  */
 TA_RetCode TA_INT_EMA( TA_Integer    startIdx,
                        TA_Integer    endIdx,
-                       const TA_Real *inReal_0,
+                       const double *inReal_0,
                        TA_Integer    optInTimePeriod_0, /* From 1 to 200 */
-                       TA_Real       optInK_1,
+                       double       optInK_1,
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
-                       TA_Real      *outReal_0 );
+                       double      *outReal_0 );
 
 /* Calculate a MACD
  * This is an internal version, parameter are assumed validated.
@@ -58,15 +59,15 @@ TA_RetCode TA_INT_EMA( TA_Integer    startIdx,
  */
 TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
                         TA_Integer    endIdx,
-                        const TA_Real inReal_0[],
+                        const double inReal_0[],
                         TA_Integer    optInFastPeriod_0, /* From 1 to 200, 0 is fix 12 */
                         TA_Integer    optInSlowPeriod_1, /* From 1 to 200, 0 is fix 26 */
                         TA_Integer    optInSignalPeriod_2, /* From 1 to 200 */
                         TA_Integer   *outBegIdx,
                         TA_Integer   *outNbElement,
-                        TA_Real       outRealMACD_0[],
-                        TA_Real       outRealMACDSignal_1[],
-                        TA_Real       outRealMACDHist_2[] );
+                        double       outRealMACD_0[],
+                        double       outRealMACDSignal_1[],
+                        double       outRealMACDHist_2[] );
 
 /* Convert a period into the equivalent k:
  *
@@ -74,7 +75,7 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
  *
  * Useful to calculate the 'k' for TA_INT_EMA().
  */
-#define PER_TO_K( per ) ((TA_Real)2.0 / ((TA_Real)(per + 1)))
+#define PER_TO_K( per ) ((double)2.0 / ((double)(per + 1)))
 
 /* Internal Price Oscillator function.
  *
@@ -83,24 +84,24 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
  */
 TA_RetCode TA_INT_PO( TA_Integer    startIdx,
                       TA_Integer    endIdx,
-                      const TA_Real *inReal_0,
+                      const double *inReal_0,
                       TA_Integer    optInFastPeriod_0, /* From 1 to 200 */
                       TA_Integer    optInSlowPeriod_1, /* From 1 to 200 */
                       TA_Integer    optInMethod_2,
                       TA_Integer   *outBegIdx,
                       TA_Integer   *outNbElement,
-                      TA_Real      *outReal_0,
-                      TA_Real      *tempBuffer,
+                      double      *outReal_0,
+                      double      *tempBuffer,
                       unsigned int  doPercentageOutput );
 
 /* Internal variance function. */
 TA_RetCode TA_INT_VAR( TA_Integer    startIdx,
                        TA_Integer    endIdx,
-                       const TA_Real *inReal_0,
+                       const double *inReal_0,
                        TA_Integer    optInTimePeriod_0,                       
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
-                       TA_Real      *outReal_0 );
+                       double      *outReal_0 );
 
 /* A particular standard deviation who has the particularity
  * to work with other moving average than the simple moving average.
@@ -108,13 +109,14 @@ TA_RetCode TA_INT_VAR( TA_Integer    startIdx,
  * To offer the maximum of flexibility, the caller must pre-calculate the
  * moving average of inReal and pass it as a parameter.
  */
-void TA_INT_stddev_using_precalc_ma( const TA_Real *inReal,
-                                     const TA_Real *inMovAvg,
+void TA_INT_stddev_using_precalc_ma( const double *inReal,
+                                     const double *inMovAvg,
                                      TA_Integer inMovAvgBegIdx,                                    
                                      TA_Integer inMovAvgNbElement,
                                      TA_Integer timePeriod,
-                                     TA_Real *output );
+                                     double *output );
 
+#endif
 
 /* Rounding macro for doubles. Works only with positive numbers. */
 #define round_pos(x) (floor((x)+0.5))
@@ -131,13 +133,13 @@ void TA_INT_stddev_using_precalc_ma( const TA_Real *inReal,
  * in John Ehlers books "Rocket Science For Traders".
  */
 #define HILBERT_VARIABLES(varName) \
-      TA_Real varName##_Odd[3]; \
-      TA_Real varName##_Even[3]; \
-      TA_Real varName; \
-      TA_Real prev_##varName##_Odd; \
-      TA_Real prev_##varName##_Even; \
-      TA_Real prev_##varName##_input_Odd; \
-      TA_Real prev_##varName##_input_Even
+      double varName##_Odd[3]; \
+      double varName##_Even[3]; \
+      double varName; \
+      double prev_##varName##_Odd; \
+      double prev_##varName##_Even; \
+      double prev_##varName##_input_Odd; \
+      double prev_##varName##_input_Even
 
 #define INIT_HILBERT_VARIABLES(varName) { \
       varName##_Odd [0] = 0.0; \

@@ -76,36 +76,36 @@ int TA_HT_DCPERIOD_Lookback( void )
 /*
  * TA_HT_DCPERIOD - Hilbert Transform - Dominant Cycle Period
  * 
- * Input  = TA_Real
- * Output = TA_Real
+ * Input  = double
+ * Output = double
  * 
  */
 
-TA_RetCode TA_HT_DCPERIOD( TA_Integer    startIdx,
-                           TA_Integer    endIdx,
-                           const TA_Real inReal_0[],
-                           TA_Integer   *outBegIdx,
-                           TA_Integer   *outNbElement,
-                           TA_Real       outReal_0[] )
+TA_RetCode TA_HT_DCPERIOD( int    startIdx,
+                           int    endIdx,
+                           const double inReal_0[],
+                           int          *outBegIdx,
+                           int          *outNbElement,
+                           double        outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
 
    int outIdx, i;
    int lookbackTotal, today;
-   TA_Real tempReal, tempReal2;
+   double tempReal, tempReal2;
 
-   TA_Real adjustedPrevPeriod, period;
+   double adjustedPrevPeriod, period;
 
    /* Variable used for the price smoother (a weighted moving average). */
    unsigned int trailingWMAIdx;
-   TA_Real periodWMASum, periodWMASub, trailingWMAValue;
-   TA_Real smoothedValue;
+   double periodWMASum, periodWMASub, trailingWMAValue;
+   double smoothedValue;
 
    /* Variables used for the Hilbert Transormation */
    const double a = 0.0962;
    const double b = 0.5769;
-   TA_Real hilbertTempReal;
+   double hilbertTempReal;
    int hilbertIdx;
 
    HILBERT_VARIABLES( detrender );
@@ -113,14 +113,14 @@ TA_RetCode TA_HT_DCPERIOD( TA_Integer    startIdx,
    HILBERT_VARIABLES( jI );
    HILBERT_VARIABLES( jQ );
 
-   TA_Real Q2, I2, prevQ2, prevI2, Re, Im;
+   double Q2, I2, prevQ2, prevI2, Re, Im;
 
-   TA_Real I1ForOddPrev2,  I1ForOddPrev3;
-   TA_Real I1ForEvenPrev2, I1ForEvenPrev3;
+   double I1ForOddPrev2,  I1ForOddPrev3;
+   double I1ForEvenPrev2, I1ForEvenPrev3;
 
-   TA_Real rad2Deg;
+   double rad2Deg;
 
-   TA_Real todayValue, smoothPeriod;
+   double todayValue, smoothPeriod;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
