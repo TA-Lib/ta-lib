@@ -208,8 +208,19 @@ static TA_Test tableTest[] =
    { "CDLSHORTLINE",       1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
    { "CDLSPINNINGTOP",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
    { "CDLUPSIDEGAP2CROWS", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLTRISTAR",         1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }}
-
+   { "CDLTRISTAR",         1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDL2CROWS",          1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDL3INSIDE",         1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDL3LINESTRIKE",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDL3OUTSIDE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDL3WHITESOLDIERS",  1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLADVANCEBLOCK",    1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLDARKCLOUDCOVER",  1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLINNECK",          1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLONNECK",          1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLPIERCING",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLSTALLEDPATTERN",  1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLTHRUSTING",       1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }}
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))

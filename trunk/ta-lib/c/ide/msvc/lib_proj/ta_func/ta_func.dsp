@@ -265,11 +265,39 @@ SOURCE=..\..\..\..\src\ta_func\ta_CCI.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDL2CROWS.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDL3BLACKCROWS.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDL3INSIDE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDL3LINESTRIKE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDL3OUTSIDE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDL3WHITESOLDIERS.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLABANDONEDBABY.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLADVANCEBLOCK.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLDARKCLOUDCOVER.c
 # End Source File
 # Begin Source File
 
@@ -313,6 +341,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLIDENTICAL3CROWS.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLINNECK.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLINVERTEDHAMMER.c
 # End Source File
 # Begin Source File
@@ -329,6 +361,14 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLMORNINGSTAR.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLONNECK.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLPIERCING.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLSHOOTINGSTAR.c
 # End Source File
 # Begin Source File
@@ -338,6 +378,14 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLSTALLEDPATTERN.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLTHRUSTING.c
 # End Source File
 # Begin Source File
 

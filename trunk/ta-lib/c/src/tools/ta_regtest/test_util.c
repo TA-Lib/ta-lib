@@ -81,8 +81,8 @@
 #define RESV_PATTERN_SUFFIX_INT     (TA_INTEGER_DEFAULT)
 #define RESV_PATTERN_IMPROBABLE_INT (TA_INTEGER_DEFAULT)
 
-#define TA_BUF_PREFIX 300
-#define TA_BUF_SUFFIX 300
+#define TA_BUF_PREFIX 100
+#define TA_BUF_SUFFIX 100
 #define TA_BUF_SIZE   (TA_BUF_PREFIX+MAX_NB_TEST_ELEMENT+TA_BUF_SUFFIX)
 
 #define TA_NB_OUT 3
@@ -660,15 +660,15 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
             /* Randomly skip the test of some unstable period (limit case are
              * always tested though).
              */
-            if( (unstablePeriod > 20) && (unstablePeriod < 230) )
+            if( (unstablePeriod > 5) && (unstablePeriod < 240) )
             {
-               /* Randomly skips from 0 to 149 tests. Never
-                * make unstablePeriod exceed 230.
+               /* Randomly skips from 0 to 239 tests. Never
+                * make unstablePeriod exceed 240.
                 */
-               temp = (rand() % 150);
+               temp = (rand() % 240);
                unstablePeriod += temp;
-               if( unstablePeriod > 230 )
-                  unstablePeriod = 230;
+               if( unstablePeriod > 240 )
+                  unstablePeriod = 240;
             }
          }
 
@@ -676,12 +676,12 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
           * and kinda repetitive, skip the test of some fixSize (limit 
           * case are always tested though).
           */
-         if( (fixSize > 30) && (fixSize < 240) )
+         if( (fixSize > 5) && (fixSize < 240) )
          {
-            /* Randomly skips from 0 to 149 tests. Never
+            /* Randomly skips from 0 to 239 tests. Never
              * make fixSize exceed 240.
              */
-            temp = (rand() % 150);
+            temp = (rand() % 239);
             fixSize += temp;
             if( fixSize > 240 )
                fixSize = 240;
@@ -866,15 +866,15 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                /* Randomly skip the verification of some value. Limit
                 * cases are always checked though.
                 */
-               if( outputNbElement > 70 )
+               if( outputNbElement > 30 )
                {
                   temp = outputNbElement-20;
                   if( (i > 20) && (i < temp) )
                   {
-                     /* Randomly skips from 0 to 99 tests. Never
-                      * make i skip the last 20 value.
+                     /* Randomly skips from 0 to 200 verification. 
+                      * Never make it skip the last 20 values.
                       */
-                     i += (rand() % 100);
+                     i += (rand() % 200);
                      if( i > temp )
                         i = temp;
                   }
@@ -897,10 +897,10 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
          /* Skip some startIdx at random. Limit case are still 
           * tested though.
           */
-         if( (startIdx > 40) && ((startIdx+80) <= (MAX_RANGE_SIZE-fixSize)) )             
+         if( (startIdx > 30) && ((startIdx+100) <= (MAX_RANGE_SIZE-fixSize)) )             
          {
-            /* Randomly skips from 10 to 39 tests. */
-            temp = (rand() % 30)+10;
+            /* Randomly skips from 40 to 100 tests. */
+            temp = (rand() % 100)+40;
             startIdx += temp;
          }
       }
