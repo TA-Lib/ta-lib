@@ -22,6 +22,47 @@
  *
  ****************************************************************************/
 
+/* T3 BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_VFactor =
+{
+   TA_OptInput_RealRange, /* type */
+   "optInVFactor", /* paramName */
+   0,                  /* flags */
+
+   "Volume Factor",          /* displayName */
+   (const void *)&TA_DEF_ZeroToOne, /* dataSet */
+   0.7, /* defaultValue */
+   "Volume Factor", /* hint */
+   NULL /* helpFile */
+};
+
+static const TA_InputParameterInfo    *TA_T3_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_T3_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_T3_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_5_MINIMUM2,
+  &TA_DEF_UI_VFactor,
+  NULL
+};
+
+DEF_FUNCTION( T3,                       /* name */
+              TA_GroupId_OverlapStudies,  /* groupId */
+              "Triple Exponential Moving Average (T3)", /* hint */
+              NULL,                       /* helpFile */
+              TA_FUNC_FLG_OVERLAP|TA_FUNC_FLG_UNST_PER, /* flags */
+              NULL                        /* analysis function */
+             );
+/* T3 END */
+
 /* TEMA BEGIN */
 static const TA_InputParameterInfo    *TA_TEMA_Inputs[]    =
 {
@@ -157,6 +198,7 @@ DEF_FUNCTION( TYPPRICE,                   /* name */
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableT[] =
 {
+   ADD_TO_TABLE(T3),
    ADD_TO_TABLE(TEMA),
    ADD_TO_TABLE(TRANGE),
    ADD_TO_TABLE(TRIMA),
