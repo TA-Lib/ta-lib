@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
- *
+ *  020605 MF   Add regression test with inverted slow/fast period.
  */
 
 /* Description:
@@ -111,6 +111,7 @@ static TA_Test tableTest[] =
    /**********************************/
    /*    APO TEST - SIMPLE - CLASSIC */
    /**********************************/
+   { 1, 0, 0, 251, 26, 12, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
    { 1, 0, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
    { 0, 0, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      1, -3.5876, 25,  252-25 },
    { 0, 0, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-26, -0.1667, 25,  252-25 }, /* Last Value */
@@ -174,11 +175,11 @@ static TA_Test tableTest[] =
    { 0, 1, 0, 251, 3, 2, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
 
    { 0, 1, 0,   1, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 1,   1, 3, 2, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 2,   2, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
+   { 1, 1, 1,   1, 3, 2, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 1, 1, 2,   2, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
    { 0, 1, 250, 251, 3, 2, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.21191, 250,  2 }, /* Last  Value */
 
-   { 1, 1, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -3.6393, 25,  252-25 }, /* First Value */
+   { 0, 1, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -3.6393, 25,  252-25 }, /* First Value */
    { 0, 1, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -3.9534, 25,  252-25 },
    { 0, 1, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, -0.15281, 25,  252-25 }, /* Last Value */
 
@@ -195,7 +196,7 @@ static TA_Test tableTest[] =
    /*****************************************/
    /*    PPO TEST - EXPONENTIAL - METASTOCK */
    /*****************************************/
-   { 1, 1, 0, 251, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -2.7083, 25,  252-25 }, /* First Value */
+   { 1, 1, 0, 251, 26, 12, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -2.7083, 25,  252-25 }, /* First Value */
    { 0, 1, 0, 251, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -2.7390, 25,  252-25 },
    { 0, 1, 0, 251, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, 0.83644, 25,  252-25 }, /* Last Value */
 
