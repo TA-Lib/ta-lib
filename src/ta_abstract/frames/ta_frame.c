@@ -950,7 +950,8 @@ TA_RetCode TA_ADOSC_FramePP( const TA_ParamHolderPriv *params,
               params->in[0].data.inPrice.low, /* inLow_0 */
               params->in[0].data.inPrice.close, /* inClose_0 */
               params->in[0].data.inPrice.volume, /* inVolume_0 */
-              params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
+              params->optIn[0].data.optInInteger, /* optInFastPeriod_0 */
+              params->optIn[1].data.optInInteger, /* optInSlowPeriod_1 */
               outBegIdx, 
               outNbElement, 
               params->out[0].data.outReal /*  outReal_0 */ );
