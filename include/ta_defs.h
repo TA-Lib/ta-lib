@@ -160,6 +160,7 @@ typedef enum
     /*  91 */  TA_MISSING_CLOSE_PRICE_FIELD, /* Close must be provided with TA_REPLACE_ZERO_PRICE_BAR flag. */
     /*  92 */  TA_UNSUPPORTED_REPLACE_ZERO_PRICE_BAR, /* TA_REPLACE_ZERO_PRICE_BAR flag is not supported for this data source. */
     /*  93 */  TA_MISSING_INPUT_DIGITS, /* A digit was missing in one of the price bar field */
+    /*  94 */  TA_DICT_TYPE_MISMATCH,   /* Error with handling of dictionary */
 
     /****** IP Error Code *****/
     /* 700 */  TA_IP_NOSOCKETS = 700,  /* Sockets not supported      */
