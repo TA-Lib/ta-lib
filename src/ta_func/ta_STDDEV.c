@@ -36,14 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *  JV       Jesus Virer <324122@cienz.unizar.es>
+ *  VJ       Viver Jesus <324122@cienz.unizar.es>
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
- *  100502 JV   Speed optimization of the algorithm
+ *  100502 VJ   Speed optimization of the algorithm
  */
 
 #include <math.h>
@@ -224,3 +224,4 @@ void TA_INT_stddev_using_precalc_ma( const TA_Real *inReal,
       output[outIdx] = sqrt( meanValue2-tempReal );
    }
 }
+
