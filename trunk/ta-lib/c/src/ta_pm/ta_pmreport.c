@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -93,13 +93,13 @@ typedef struct
 
 /**** Local functions declarations.    ****/
 static unsigned int labelSize( void );
-static TA_RetCode   reportValueIdRange( TA_PM *pm, 
-                                        char *theBuffer,
-                                        int lineSizeInByte,
-                                        int labelSizeInByte,
-                                        TA_PMValueId start, 
-                                        TA_PMValueId end,
-                                        int *callerCurLine );
+static TA_RetCode reportValueIdRange( TA_PM *pm, 
+                                      char *theBuffer,
+                                      int lineSizeInByte,
+                                      int labelSizeInByte,
+                                      unsigned int includeFlag,
+                                      unsigned int excludeFlag, 
+                                      int *callerCurLine );
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -140,11 +140,14 @@ TA_RetCode TA_PMReportAlloc( TA_PM *pm, TA_PMReport **newAllocatedReport )
     * 10/22/2002 10:32:40
     *                                   Long Trades           Short Trades             All Trades
     * ===========================================================================================
-    * <GENERAL MEASUREMENTS>                 x.xx $                 x.xx $                 x.xx $
+    * <GENERAL MEASUREMENTS>               x.xx                   x.xx                   x.xx 
     * ------------------------------------------------------------------------------------------- 
-    * <LOSING MEASUREMENTS>                  x.xx %                 x.xx %                 x.xx %
+    * <WINNING MEASUREMENTS>               x.xx                   x.xx                   x.xx 
     * ------------------------------------------------------------------------------------------- 
-    * <WINNING MEASUREMENTS>                 x.xx                   x.xx                   x.xx 
+    * <LOSING MEASUREMENTS>                x.xx                   x.xx                   x.xx 
+    * ------------------------------------------------------------------------------------------- 
+    * <NOT RECOMMENDED MEASUREMENTS>       x.xx                   x.xx                   x.xx 
+    * ------------------------------------------------------------------------------------------- 
     * 
     * END OF REPORT
     */
@@ -158,7 +161,7 @@ TA_RetCode TA_PMReportAlloc( TA_PM *pm, TA_PMReport **newAllocatedReport )
    /* Add some seperator or header lines. Add also a last line who
     * will starts with a NULL.
     */
-   nbLine = (TA_PM_NB_VALUEID+7);
+   nbLine = (TA_PM_NB_VALUEID+11);
    sizeInByte = lineSizeInByte*nbLine;
 
    theBuffer = TA_Malloc( sizeInByte );
@@ -196,13 +199,17 @@ TA_RetCode TA_PMReportAlloc( TA_PM *pm, TA_PMReport **newAllocatedReport )
       COL0(curLine)[i] = '=';
    curLine++;
 
-   /* Display general measurements */   
+   /* Display general measurements, except losing, winning 
+    * and not recomended measurements.
+    */
    reportValueIdRange( pm, 
                        theBuffer,
                        lineSizeInByte,
                        labelSizeInByte,
-                       0, 
-                       TA_PM_NB_WINNING_TRADE,
+                       TA_PM_VALUE_ID_GENERAL,
+                       TA_PM_VALUE_ID_LOSING_RELATED  |
+                       TA_PM_VALUE_ID_WINNING_RELATED |
+                       TA_PM_VALUE_ID_NOT_RECOMMENDED,
                        &curLine );
 
    /* Add a '-----' seperator. */
@@ -210,27 +217,49 @@ TA_RetCode TA_PMReportAlloc( TA_PM *pm, TA_PMReport **newAllocatedReport )
       COL0(curLine)[i] = '-';
    curLine++;
 
-   /* Display the winning trade measurements */
+   /* Display only measurements winning related.
+    * Exclude the not recommended measurements.
+    */
    reportValueIdRange( pm, 
                        theBuffer,
                        lineSizeInByte,
                        labelSizeInByte,
-                       TA_PM_NB_WINNING_TRADE, 
-                       TA_PM_NB_LOSING_TRADE,
+                       TA_PM_VALUE_ID_WINNING_RELATED,
+                       TA_PM_VALUE_ID_GENERAL         |
+                       TA_PM_VALUE_ID_LOSING_RELATED  |
+                       TA_PM_VALUE_ID_NOT_RECOMMENDED,
                        &curLine );
-
 
    /* Add a '-----' seperator. */
    for( i=0; i < (lineSizeInByte-1); i++ )
       COL0(curLine)[i] = '-';
    curLine++;
 
+   /* Display essential measurements, losing related.
+    * Exclude the not recommended measurements.
+    */
    reportValueIdRange( pm, 
                        theBuffer,
                        lineSizeInByte,
                        labelSizeInByte,
-                       TA_PM_NB_LOSING_TRADE, 
-                       TA_PM_NB_VALUEID,
+                       TA_PM_VALUE_ID_LOSING_RELATED,
+                       TA_PM_VALUE_ID_GENERAL         |
+                       TA_PM_VALUE_ID_WINNING_RELATED |
+                       TA_PM_VALUE_ID_NOT_RECOMMENDED,
+                       &curLine );
+
+   /* Add a '-----' seperator. */
+   for( i=0; i < (lineSizeInByte-1); i++ )
+      COL0(curLine)[i] = '-';
+   curLine++;
+
+   /* Display the list of non-essential measurements */
+   reportValueIdRange( pm, 
+                       theBuffer,
+                       lineSizeInByte,
+                       labelSizeInByte,
+                       TA_PM_VALUE_ID_NOT_RECOMMENDED,
+                       0, /* Exclude none */
                        &curLine );
    
    /* Add the '====' seperator. */
@@ -325,8 +354,8 @@ static TA_RetCode  reportValueIdRange( TA_PM *pm,
                                        char *theBuffer,
                                        int lineSizeInByte,
                                        int labelSizeInByte,
-                                       TA_PMValueId start, 
-                                       TA_PMValueId end,
+                                       unsigned int includeFlag,
+                                       unsigned int excludeFlag,
                                        int *callerCurLine )
 {
    TA_PMValueId  theValueId;
@@ -340,9 +369,18 @@ static TA_RetCode  reportValueIdRange( TA_PM *pm,
 
    curLine = *callerCurLine;
 
-   theValueId = start;
-   while( theValueId <  end )
+   for( theValueId=0; theValueId < TA_PM_NB_VALUEID; theValueId++ )
    {
+      theFlags = TA_PMValueIdFlags( theValueId );
+
+      /* Check if this measurements is excluded */
+      if( excludeFlag && (theFlags & excludeFlag) )
+         continue;
+
+      /* Check if this measurements is included */
+      if( !(theFlags & includeFlag) )
+         continue;
+
       sprintf( COL0(curLine), "%-*s", labelSizeInByte,
                                       TA_PMValueIdString(theValueId) );
 
@@ -357,10 +395,9 @@ static TA_RetCode  reportValueIdRange( TA_PM *pm,
          }
          else
          {
-            theFlags = TA_PMValueIdFlags( theValueId );
-            if( theFlags & TA_PM_VALUE_ID_PERCENT_SYMBOL )
+            if( theFlags & TA_PM_VALUE_ID_IS_PERCENT )
                theSuffix = "%";
-            else if( theFlags & TA_PM_VALUE_ID_CURRENCY_SYMBOL )
+            else if( theFlags & TA_PM_VALUE_ID_IS_CURRENCY )
                theSuffix = "$";
             else
                theSuffix = " ";
@@ -380,8 +417,6 @@ static TA_RetCode  reportValueIdRange( TA_PM *pm,
             }
          }
       }
-
-      theValueId++;
       curLine++;
    }
 

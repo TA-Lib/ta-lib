@@ -126,7 +126,18 @@ typedef struct
    unsigned int        nbWinningTrade;
    unsigned int        nbLosingTrade;
 
-   /* Summation of all profits/loss.
+   /* Note: the "dollar amount" variables must be use
+    *       with care. Keep in mind that a profit of
+    *       200$ 20 years ago is not the same in todays
+    *       dollar value. 
+    *       
+    *       The 'percent' variable are a better way
+    *       to measure the true max/min and are prefered
+    *       in many TA-Lib calculation.
+    */
+
+   /* Summation of all profits/loss in
+    * terms of dollar amount.
     * Profit is positive. Loss is negative.
     */
    TA_Real             sumProfit;
@@ -138,31 +149,29 @@ typedef struct
    TA_Real             sumInvestmentProfit;
    TA_Real             sumInvestmentLoss;
 
-   /* Max/min values.
+   /* Summation of all profits/loss in
+    * terms of percentage.
+    * 
+    * These values make sense only when dividing 
+    * by the number of corresponding trade.
     *
-    * Profit are positive. Loss are negative.
-    *
-    * Note: the first set of variable is in term of 
-    *       amount, but can be meaningless if you
-    *       are not doing a fix investment amount
-    *       strategy.
-    *       
-    *       The 'percent' variable are a better way
-    *       to measure the true max/min.
+    * Profit is positive. Loss is negative.
     */
+   TA_Real             sumProfitPercent;
+   TA_Real             sumLossPercent;
 
-   /* Max/min in terms of amount. */
+   /* Max/min in terms of dollar amount. 
+    * Profit are positive. Loss are negative.
+    */
    TA_Real             largestProfit;
    TA_Real             largestLoss;
-   TA_Real             smallestProfit;
-   TA_Real             smallestLoss;
 
-   /* Max/min in terms of percentage. */
+   /* Max/min in terms of percentage.
+    * Profit are positive. Loss are negative.
+    */
    TA_Real             largestProfitPercent;
    TA_Real             largestLossPercent;
-   TA_Real             smallestProfitPercent;
-   TA_Real             smallestLossPercent;
-
+   
 } TA_PMValueCache;
 
 typedef struct

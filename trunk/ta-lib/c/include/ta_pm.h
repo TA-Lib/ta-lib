@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -280,10 +280,6 @@ typedef enum
    TA_PM_LARGEST_PROFIT, 
    TA_PM_LARGEST_PROFIT_PERCENT,
 
-   /* Trade with the smallest profit. */
-   TA_PM_SMALLEST_PROFIT, 
-   TA_PM_SMALLEST_PROFIT_PERCENT,
-
    /**************************************
     * Losing trade related measurements. *
     **************************************/
@@ -299,10 +295,6 @@ typedef enum
    /* Trade with the largest lost. */
    TA_PM_LARGEST_LOSS,  
    TA_PM_LARGEST_LOSS_PERCENT,
-
-   /* Trade with the smallest lost. */
-   TA_PM_SMALLEST_LOSS, 
-   TA_PM_SMALLEST_LOSS_PERCENT,
 
    TA_PM_NB_VALUEID
 } TA_PMValueId;
@@ -338,9 +330,18 @@ const char *TA_PMValueIdHint( TA_PMValueId valueId );
 /* Return some flags who might help to make
  * the TA_PMValueId more meaningful.
  */
-#define TA_PM_VALUE_ID_CURRENCY_SYMBOL  0x00000001
-#define TA_PM_VALUE_ID_PERCENT_SYMBOL   0x00000002
+#define TA_PM_VALUE_ID_IS_CURRENCY      0x00000001
+#define TA_PM_VALUE_ID_IS_PERCENT       0x00000002
 #define TA_PM_VALUE_ID_IS_INTEGER       0x00000004
+
+/* Each VALUE_ID must be in at least one of the 
+ * following four category.
+ */
+#define TA_PM_VALUE_ID_GENERAL          0x00000100
+#define TA_PM_VALUE_ID_LOSING_RELATED   0x00000200
+#define TA_PM_VALUE_ID_WINNING_RELATED  0x00000400
+#define TA_PM_VALUE_ID_NOT_RECOMMENDED  0x00000800
+
 
 unsigned int TA_PMValueIdFlags( TA_PMValueId valueId );
 

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -78,49 +78,57 @@ typedef struct
 /* None */
 
 /**** Local variables definitions.     ****/
+
 static TA_PMStrings pmStringTable[] =
 {
    { TA_PM_TOTAL_NB_OF_TRADE,
      "Number Of Trades",
      "Number of completed trades within the evaluated period",
+     TA_PM_VALUE_ID_GENERAL |
      TA_PM_VALUE_ID_IS_INTEGER
    },
 
    { TA_PM_STARTING_CAPITAL,
      "Starting Capital",
      "Capital at the beginning of the measured period.",
-     TA_PM_VALUE_ID_CURRENCY_SYMBOL
+     TA_PM_VALUE_ID_IS_CURRENCY     |
+     TA_PM_VALUE_ID_NOT_RECOMMENDED
    },
 
    { TA_PM_ENDING_CAPITAL,
      "Ending Capital",
      "Capital at the end of the measured period.",
-     TA_PM_VALUE_ID_CURRENCY_SYMBOL
+     TA_PM_VALUE_ID_IS_CURRENCY      |
+     TA_PM_VALUE_ID_NOT_RECOMMENDED
    },   
 
    { TA_PM_TOTAL_NET_PROFIT,
-     "Net Profit",
+     "Total Net Profit",
      "Profit minus loss of all trades.",
-     TA_PM_VALUE_ID_CURRENCY_SYMBOL
+     TA_PM_VALUE_ID_IS_CURRENCY     |
+     TA_PM_VALUE_ID_NOT_RECOMMENDED |
+     TA_PM_VALUE_ID_WINNING_RELATED
    },
 
    { TA_PM_PROFIT_FACTOR,
      "Profit Factor",
      "Gross profit divided by gross loss.",
-     TA_NO_FLAGS
+     TA_PM_VALUE_ID_GENERAL
    },
 
    { TA_PM_PERCENT_PROFITABLE,
      "Profitable (%)",
      "Nb winning trade divided by number of trades.",
-     TA_PM_VALUE_ID_PERCENT_SYMBOL
+     TA_PM_VALUE_ID_GENERAL |
+     TA_PM_VALUE_ID_IS_PERCENT
    },
 
    { TA_PM_RATE_OF_RETURN,
      "Rate Of Return",
      "One-period rate of return:\n"
      "  (profit / initialCapital)\n",
-     TA_PM_VALUE_ID_PERCENT_SYMBOL
+     TA_PM_VALUE_ID_IS_PERCENT       |
+     TA_PM_VALUE_ID_NOT_RECOMMENDED
    },
    
    { TA_PM_ANNUALIZED_RETURN,
@@ -133,7 +141,8 @@ static TA_PMStrings pmStringTable[] =
      "\n"
      " Where 'n' is the number of day between the end and\n"
      " start date when the TA_PM was created.\n",
-     TA_PM_VALUE_ID_PERCENT_SYMBOL
+     TA_PM_VALUE_ID_IS_PERCENT       |
+     TA_PM_VALUE_ID_NOT_RECOMMENDED
    },
    
 
@@ -145,108 +154,101 @@ static TA_PMStrings pmStringTable[] =
      "\n"
      " Where 'y' is the number of year between the end\n"
      " and start date when the TA_PM was created.\n",
-     TA_PM_VALUE_ID_PERCENT_SYMBOL
+     TA_PM_VALUE_ID_IS_PERCENT       |
+     TA_PM_VALUE_ID_NOT_RECOMMENDED
    },
-
 
    { TA_PM_NB_WINNING_TRADE,
      "Nb Winning Trade",
      "Number of completed trades resulting in a profit",
-     TA_PM_VALUE_ID_IS_INTEGER
-   },
-
-   { TA_PM_GROSS_PROFIT,
-     "Gross Profit",
-     "Summation of the profit of all winning trades.",
-     TA_PM_VALUE_ID_CURRENCY_SYMBOL
-   },
-
-   { TA_PM_AVG_PROFIT,
-     "Average Profit",
-     "Average net profit of all winning trade.",
-     TA_PM_VALUE_ID_CURRENCY_SYMBOL
-   },
-
-   { TA_PM_AVG_PROFIT_PERCENT,
-     "Average Profit (%)",
-     "Average Profit",
-     TA_PM_VALUE_ID_PERCENT_SYMBOL
-   },
-      
-   { TA_PM_LARGEST_PROFIT, 
-     "Largest Net Profit",
-     "Trade with the largest net profit.",
-     TA_PM_VALUE_ID_CURRENCY_SYMBOL
-   },
-
-
-   { TA_PM_LARGEST_PROFIT_PERCENT,
-     "Largest Profit (%)",
-     "Trade with the largest profit.",
-     TA_PM_VALUE_ID_PERCENT_SYMBOL
-   },
-
-   { TA_PM_SMALLEST_PROFIT, 
-     "Smallest Net Profit",
-     "Trade with the smallest net profit.",
-     TA_PM_VALUE_ID_CURRENCY_SYMBOL
-   },
-
-
-   { TA_PM_SMALLEST_PROFIT_PERCENT,
-     "Smallest Profit (%)",
-     "Trade with the smallest profit.",
-     TA_PM_VALUE_ID_PERCENT_SYMBOL
+     TA_PM_VALUE_ID_IS_INTEGER |
+     TA_PM_VALUE_ID_WINNING_RELATED
    },
 
    { TA_PM_NB_LOSING_TRADE,
      "Nb Losing Trade",
      "Number of completed trades resulting in a loss",
-     TA_PM_VALUE_ID_IS_INTEGER
+     TA_PM_VALUE_ID_IS_INTEGER |
+     TA_PM_VALUE_ID_LOSING_RELATED
    },
 
-   
+   { TA_PM_GROSS_PROFIT,
+     "Gross Profit",
+     "Summation of the profit of all winning trades.",
+     TA_PM_VALUE_ID_IS_CURRENCY     |
+     TA_PM_VALUE_ID_NOT_RECOMMENDED |
+     TA_PM_VALUE_ID_WINNING_RELATED
+   },
+
    { TA_PM_GROSS_LOSS,
      "Gross Loss",
      "Summation of all losing trades.",
-     TA_PM_VALUE_ID_CURRENCY_SYMBOL
+     TA_PM_VALUE_ID_IS_CURRENCY     |
+     TA_PM_VALUE_ID_NOT_RECOMMENDED |
+     TA_PM_VALUE_ID_LOSING_RELATED
    },
 
-   { TA_PM_AVG_LOSS,
-     "Average Loss",
-     "Average net loss of all losing trade.",
-     TA_PM_VALUE_ID_CURRENCY_SYMBOL
-   },
-
-   { TA_PM_AVG_LOSS_PERCENT,
-     "Average Loss (%)",
-     "Average Loss",
-     TA_PM_VALUE_ID_PERCENT_SYMBOL
+   { TA_PM_LARGEST_PROFIT, 
+     "Largest Net Profit",
+     "Trade with the largest net profit.",
+     TA_PM_VALUE_ID_IS_CURRENCY     |
+     TA_PM_VALUE_ID_NOT_RECOMMENDED |
+     TA_PM_VALUE_ID_WINNING_RELATED
    },
 
    { TA_PM_LARGEST_LOSS,
-     "Largest Loss",
+     "Largest Net Loss",
      "Trade with the largest net loss.",
-     TA_PM_VALUE_ID_CURRENCY_SYMBOL
+     TA_PM_VALUE_ID_IS_CURRENCY     |
+     TA_PM_VALUE_ID_NOT_RECOMMENDED |
+     TA_PM_VALUE_ID_LOSING_RELATED
+   },
+
+   { TA_PM_LARGEST_PROFIT_PERCENT,
+     "Largest Profit (%)",
+     "Trade with the largest profit.",
+     TA_PM_VALUE_ID_IS_PERCENT |
+     TA_PM_VALUE_ID_WINNING_RELATED
    },
 
    { TA_PM_LARGEST_LOSS_PERCENT,
      "Largest Loss (%)",
      "Trade with the largest loss.",
-     TA_PM_VALUE_ID_PERCENT_SYMBOL
+     TA_PM_VALUE_ID_IS_PERCENT |
+     TA_PM_VALUE_ID_LOSING_RELATED
+   },
+   
+   { TA_PM_AVG_LOSS,
+     "Average Loss",
+     "Average net loss of all losing trade.",
+     TA_PM_VALUE_ID_IS_CURRENCY     |
+     TA_PM_VALUE_ID_NOT_RECOMMENDED |
+     TA_PM_VALUE_ID_LOSING_RELATED
    },
 
-   { TA_PM_SMALLEST_LOSS,
-     "Smallest Loss",
-     "Trade with the smallest net loss.",
-     TA_PM_VALUE_ID_CURRENCY_SYMBOL
+   { TA_PM_AVG_PROFIT,
+     "Average Profit",
+     "Average net profit of all winning trade.",
+     TA_PM_VALUE_ID_IS_CURRENCY     |
+     TA_PM_VALUE_ID_NOT_RECOMMENDED |
+     TA_PM_VALUE_ID_WINNING_RELATED
    },
 
-   { TA_PM_SMALLEST_LOSS_PERCENT,
-     "Smallest Loss (%)",
-     "Trade with the smallest loss.",
-     TA_PM_VALUE_ID_PERCENT_SYMBOL
-   }
+   { TA_PM_AVG_LOSS_PERCENT,
+     "Average Loss (%)",
+     "Average Loss",
+     TA_PM_VALUE_ID_IS_PERCENT |
+     TA_PM_VALUE_ID_LOSING_RELATED
+   },
+
+
+   { TA_PM_AVG_PROFIT_PERCENT,
+     "Average Profit (%)",
+     "Average Profit",
+     TA_PM_VALUE_ID_IS_PERCENT |
+     TA_PM_VALUE_ID_WINNING_RELATED
+   }     
+
 };
 
 #define NB_VALUEID_STRING (sizeof(pmStringTable)/sizeof(TA_PMStrings))

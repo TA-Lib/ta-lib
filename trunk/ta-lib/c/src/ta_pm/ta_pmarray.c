@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,11 +43,10 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  052302 MF   First version.
- *
  */
 
 /* Description:
- *
+ *    Return measurements that are time series.
  */
 
 /**** Headers ****/
