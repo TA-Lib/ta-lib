@@ -329,6 +329,25 @@ SOURCE=..\..\..\..\src\ta_common\ta_trace.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_common\ta_version.c
+
+!IF  "$(CFG)" == "ta_common - Win32 CDR Multithread DLL Release"
+
+!ELSEIF  "$(CFG)" == "ta_common - Win32 CMD Multithread Debug"
+
+# SUBTRACT CPP /YX
+
+!ELSEIF  "$(CFG)" == "ta_common - Win32 CSD Single Thread Debug"
+
+!ELSEIF  "$(CFG)" == "ta_common - Win32 CSR Single Thread Release"
+
+!ELSEIF  "$(CFG)" == "ta_common - Win32 CMR Multithread Release"
+
+!ELSEIF  "$(CFG)" == "ta_common - Win32 Profiling"
+
+!ELSEIF  "$(CFG)" == "ta_common - Win32 CDD Multithread DLL Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
