@@ -154,6 +154,7 @@ TA_RetCode TA_MAX( TA_Integer    startIdx,
    today       = startIdx;
    trailingIdx = startIdx-nbInitialElementNeeded;
    highestIdx  = -1;
+   highest     = 0.0;
 
    while( today <= endIdx )
    {

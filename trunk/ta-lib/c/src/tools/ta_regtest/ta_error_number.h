@@ -201,6 +201,15 @@ typedef enum
   TA_ABS_TST_FAIL_SETOUTPUTPARAMREALPTR = 606,
   TA_ABS_TST_FAIL_CALLFUNC              = 607,
 
+  /* Error code related to internal tests. */
+  TA_CIRC_BUFF_FAIL_0 = 700,
+  TA_CIRC_BUFF_FAIL_1 = 701,
+  TA_CIRC_BUFF_FAIL_2 = 702,
+  TA_CIRC_BUFF_FAIL_3 = 703,
+  TA_CIRC_BUFF_FAIL_4 = 704,
+  TA_CIRC_BUFF_FAIL_5 = 705,
+  TA_CIRC_BUFF_FAIL_6 = 706,
+
   TA_LAST_VALID_ERROR = 0xFFFF
 } ErrorNumber;
 #endif

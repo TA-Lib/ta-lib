@@ -131,12 +131,12 @@ int TA_MIN_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  */
 
 /* TA_BBANDS: Optional Parameter optInMethod_3 */
-#define TA_BBANDS_SIMPLE 0
-#define TA_BBANDS_EXPONENTIAL 1
-#define TA_BBANDS_WEIGHTED 2
+#define TA_BBANDS_SMA 0
+#define TA_BBANDS_EMA 1
+#define TA_BBANDS_WMA 2
 #define TA_BBANDS_DEMA 3
 #define TA_BBANDS_TEMA 4
-#define TA_BBANDS_TRIANGULAR 5
+#define TA_BBANDS_TRIMA 5
 
 TA_RetCode TA_BBANDS( TA_Integer    startIdx,
                       TA_Integer    endIdx,
@@ -222,12 +222,12 @@ int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  */
 
 /* TA_MA: Optional Parameter optInMethod_1 */
-#define TA_MA_SIMPLE 0
-#define TA_MA_EXPONENTIAL 1
-#define TA_MA_WEIGHTED 2
+#define TA_MA_SMA 0
+#define TA_MA_EMA 1
+#define TA_MA_WMA 2
 #define TA_MA_DEMA 3
 #define TA_MA_TEMA 4
-#define TA_MA_TRIANGULAR 5
+#define TA_MA_TRIMA 5
 
 TA_RetCode TA_MA( TA_Integer    startIdx,
                   TA_Integer    endIdx,
@@ -544,12 +544,12 @@ int TA_ADXR_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGE
  */
 
 /* TA_APO: Optional Parameter optInMethod_2 */
-#define TA_APO_SIMPLE 0
-#define TA_APO_EXPONENTIAL 1
-#define TA_APO_WEIGHTED 2
+#define TA_APO_SMA 0
+#define TA_APO_EMA 1
+#define TA_APO_WMA 2
 #define TA_APO_DEMA 3
 #define TA_APO_TEMA 4
-#define TA_APO_TRIANGULAR 5
+#define TA_APO_TRIMA 5
 
 TA_RetCode TA_APO( TA_Integer    startIdx,
                    TA_Integer    endIdx,
@@ -683,30 +683,30 @@ int TA_MACD_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_M
  */
 
 /* TA_MACDEXT: Optional Parameter optInFastMAType_1 */
-#define TA_MACDEXT_SIMPLE 0
-#define TA_MACDEXT_EXPONENTIAL 1
-#define TA_MACDEXT_WEIGHTED 2
+#define TA_MACDEXT_SMA 0
+#define TA_MACDEXT_EMA 1
+#define TA_MACDEXT_WMA 2
 #define TA_MACDEXT_DEMA 3
 #define TA_MACDEXT_TEMA 4
-#define TA_MACDEXT_TRIANGULAR 5
+#define TA_MACDEXT_TRIMA 5
 
 
 /* TA_MACDEXT: Optional Parameter optInSlowMAType_3 */
-#define TA_MACDEXT_SIMPLE 0
-#define TA_MACDEXT_EXPONENTIAL 1
-#define TA_MACDEXT_WEIGHTED 2
+#define TA_MACDEXT_SMA 0
+#define TA_MACDEXT_EMA 1
+#define TA_MACDEXT_WMA 2
 #define TA_MACDEXT_DEMA 3
 #define TA_MACDEXT_TEMA 4
-#define TA_MACDEXT_TRIANGULAR 5
+#define TA_MACDEXT_TRIMA 5
 
 
 /* TA_MACDEXT: Optional Parameter optInSignalMAType_5 */
-#define TA_MACDEXT_SIMPLE 0
-#define TA_MACDEXT_EXPONENTIAL 1
-#define TA_MACDEXT_WEIGHTED 2
+#define TA_MACDEXT_SMA 0
+#define TA_MACDEXT_EMA 1
+#define TA_MACDEXT_WMA 2
 #define TA_MACDEXT_DEMA 3
 #define TA_MACDEXT_TEMA 4
-#define TA_MACDEXT_TRIANGULAR 5
+#define TA_MACDEXT_TRIMA 5
 
 TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
                        TA_Integer    endIdx,
@@ -879,12 +879,12 @@ int TA_MOM_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  */
 
 /* TA_PPO: Optional Parameter optInMethod_2 */
-#define TA_PPO_SIMPLE 0
-#define TA_PPO_EXPONENTIAL 1
-#define TA_PPO_WEIGHTED 2
+#define TA_PPO_SMA 0
+#define TA_PPO_EMA 1
+#define TA_PPO_WMA 2
 #define TA_PPO_DEMA 3
 #define TA_PPO_TEMA 4
-#define TA_PPO_TRIANGULAR 5
+#define TA_PPO_TRIMA 5
 
 TA_RetCode TA_PPO( TA_Integer    startIdx,
                    TA_Integer    endIdx,
@@ -1098,21 +1098,21 @@ int TA_RSI_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
  */
 
 /* TA_STOCH: Optional Parameter optInSlowK_MAType_2 */
-#define TA_STOCH_SIMPLE 0
-#define TA_STOCH_EXPONENTIAL 1
-#define TA_STOCH_WEIGHTED 2
+#define TA_STOCH_SMA 0
+#define TA_STOCH_EMA 1
+#define TA_STOCH_WMA 2
 #define TA_STOCH_DEMA 3
 #define TA_STOCH_TEMA 4
-#define TA_STOCH_TRIANGULAR 5
+#define TA_STOCH_TRIMA 5
 
 
 /* TA_STOCH: Optional Parameter optInSlowD_MAType_4 */
-#define TA_STOCH_SIMPLE 0
-#define TA_STOCH_EXPONENTIAL 1
-#define TA_STOCH_WEIGHTED 2
+#define TA_STOCH_SMA 0
+#define TA_STOCH_EMA 1
+#define TA_STOCH_WMA 2
 #define TA_STOCH_DEMA 3
 #define TA_STOCH_TEMA 4
-#define TA_STOCH_TRIANGULAR 5
+#define TA_STOCH_TRIMA 5
 
 TA_RetCode TA_STOCH( TA_Integer    startIdx,
                      TA_Integer    endIdx,
@@ -1156,12 +1156,12 @@ int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGE
  */
 
 /* TA_STOCHF: Optional Parameter optInFastD_MAType_2 */
-#define TA_STOCHF_SIMPLE 0
-#define TA_STOCHF_EXPONENTIAL 1
-#define TA_STOCHF_WEIGHTED 2
+#define TA_STOCHF_SMA 0
+#define TA_STOCHF_EMA 1
+#define TA_STOCHF_WMA 2
 #define TA_STOCHF_DEMA 3
 #define TA_STOCHF_TEMA 4
-#define TA_STOCHF_TRIANGULAR 5
+#define TA_STOCHF_TRIMA 5
 
 TA_RetCode TA_STOCHF( TA_Integer    startIdx,
                       TA_Integer    endIdx,

@@ -223,7 +223,7 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
    }
 
    /* Calculate the standard deviation into tempBuffer2. */
-   if( optInMethod_3 == TA_BBANDS_SIMPLE )
+   if( optInMethod_3 == TA_BBANDS_SMA )
    {
       /* A small speed optimization by re-using the
        * already calculated SMA.

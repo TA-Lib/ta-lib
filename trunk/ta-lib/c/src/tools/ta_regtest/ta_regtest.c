@@ -113,6 +113,14 @@ int main( int argc, char **argv )
    /* Some tests are using randomness. */
    srand( (unsigned)time( NULL ) );
 
+   /* Test utility like List/Stack/Dictionary/Memory Allocation etc... */
+   retValue = test_internals();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "Failed internal cricular buffer test with code=%d\n", retValue );
+      return retValue;
+   }
+
    /* Test Performance Measurements. */
    retValue = test_pm();
    if( retValue != TA_TEST_PASS )
@@ -134,23 +142,20 @@ int main( int argc, char **argv )
    if( retValue != TA_TEST_PASS )
       return retValue;
 
-   /* Perform the tests who simply used the TA_SIMULATOR data
-    * to perform their test.
-    */
+   /* Perform all the tests using the TA_SIMULATOR data */
    retValue = test_with_simulator();
    if( retValue != TA_TEST_PASS )
       return retValue;
-
 
    /* Test the Yahoo! data source. */
    retValue = test_yahoo();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
+   /* TEst teh merging of multiple data source */
    retValue = test_datasource_merge();
    if( retValue != TA_TEST_PASS )
       return retValue;
-
 
    printf( "\n* All tests succeed. Enjoy the library. *\n" );
 
@@ -230,7 +235,6 @@ static ErrorNumber test_with_simulator( void )
       return TA_REGTEST_HISTORYFREE_FAILED;
    }
 
-
    retValue = freeLib( uDBase );
    if( retValue != TA_TEST_PASS )
       return retValue;
@@ -267,7 +271,7 @@ static int testTAFunction_ALL( TA_History *history )
       printf( "done.\n" ); \
       }
 
-   DO_TEST( test_func_bbands,  "BBANDS" );
+   DO_TEST( test_func_per_hlcv,"MFI" );
    DO_TEST( test_func_rsi,     "RSI" );
    DO_TEST( test_func_per_ema, "TRIX" );
    DO_TEST( test_func_stoch,   "STOCH,STOCHF" );
@@ -281,6 +285,7 @@ static int testTAFunction_ALL( TA_History *history )
    DO_TEST( test_func_trange,  "TRANGE,ATR" );
    DO_TEST( test_func_po,      "PO,APO" );
    DO_TEST( test_func_stddev,  "STDDEV,VAR" );
+   DO_TEST( test_func_bbands,  "BBANDS" );
 
    return TA_TEST_PASS; /* All test succeed. */
 }
@@ -309,7 +314,6 @@ static ErrorNumber testHistoryAlloc( void )
       TA_Shutdown();
       return TA_REGTEST_HISTORYALLOC_1;
    }
-
    
    /* USE SIMULATOR DATA */
    memset( &addParam, 0, sizeof( TA_AddDataSourceParam ) );

@@ -154,6 +154,7 @@ TA_RetCode TA_MIN( TA_Integer    startIdx,
    today       = startIdx;
    trailingIdx = startIdx-nbInitialElementNeeded;
    lowestIdx   = -1;
+   lowest      = 0.0;
    
    while( today <= endIdx )
    {

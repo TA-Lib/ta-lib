@@ -1549,6 +1549,8 @@ static TA_UDB_Symbol *addSymbol( TA_UDBasePriv *privUDB,
    TA_ASSERT_RET( symbolHandle != NULL, (TA_UDB_Symbol *)NULL );
    TA_ASSERT_RET( symbolHandle->string != NULL, (TA_UDB_Symbol *)NULL );
 
+   stringCache = TA_GetGlobalStringCache();
+
    /* Check if the symbol is already in the dictionary.
     * If yes, use it, else create a new entry in the dictionary.
     */
@@ -1572,7 +1574,6 @@ static TA_UDB_Symbol *addSymbol( TA_UDBasePriv *privUDB,
       }
 
       /* Initialize the TA_UDB_Symbol fields. */
-      stringCache = TA_GetGlobalStringCache();
       data->string = TA_StringDup( stringCache, symbolHandle->string );
 
       if( data->string == NULL )

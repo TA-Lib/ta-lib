@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  112400 MF   First version.
+ *  011103 MF   First version.
  *
  */
 
@@ -52,7 +52,7 @@
  *     characterisic: 
  *      - have one output with the optional 
  *        parameter being a period.
- *      - the input is high,low and close.
+ *      - the input is high,low, close and volume.
  *     
  */
 
@@ -77,8 +77,7 @@
 
 /**** Local declarations.              ****/
 typedef enum {
-TA_CCI_TEST,
-TA_WILLR_TEST,
+TA_MFI_TEST,
 } TA_TestId;
 
 typedef struct
@@ -102,10 +101,11 @@ typedef struct
 
 typedef struct
 {
-   const TA_Test *test;
-   const TA_Real *high;
-   const TA_Real *low;
-   const TA_Real *close;
+   const TA_Test    *test;
+   const TA_Real    *high;
+   const TA_Real    *low;
+   const TA_Real    *close;
+   const TA_Integer *volume;
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
@@ -116,59 +116,35 @@ static ErrorNumber do_test( const TA_History *history,
 
 static TA_Test tableTest[] =
 {
-   /****************/
-   /* WILLR TEST   */
-   /****************/
-   { 0, TA_WILLR_TEST, 13, 251, 14, TA_SUCCESS,   1,   -66.9903,  13,  252-13 }, /* First Value */
-   { 1, TA_WILLR_TEST,  0, 251, 14, TA_SUCCESS,   0,   -90.1943,  13,  252-13 },
-   { 0, TA_WILLR_TEST,  0, 251, 14, TA_SUCCESS, 112,        0.0,  13,  252-13 },
+   /**************/
+   /* MFI TEST   */
+   /**************/
+   { 0, TA_MFI_TEST,  0, 251, 14, TA_SUCCESS,      0,    42.8923,  14,  252-14 }, /* First Value */
+   { 0, TA_MFI_TEST,  0, 251, 14, TA_SUCCESS,      1,    45.6072,  14,  252-14 },
+   { 0, TA_MFI_TEST,  0, 251, 14, TA_SUCCESS, 252-15,    53.1997,  14,  252-14 }, /* Last Value */
 
-   { 0, TA_WILLR_TEST,  24, 24, 14, TA_SUCCESS, 0,    -89.2857,  24,  1 },
-   { 0, TA_WILLR_TEST,  25, 25, 14, TA_SUCCESS, 0,    -97.2602,  25,  1 },
-   { 0, TA_WILLR_TEST,  26, 26, 14, TA_SUCCESS, 0,    -71.5482,  26,  1 },
+   { 1, TA_MFI_TEST,  0, 251, 49, TA_SUCCESS,      0,    44.7902,  49,  252-49 }, /* First Value */
+   { 0, TA_MFI_TEST,  0, 251, 49, TA_SUCCESS,      1,    43.1963,  49,  252-49 },
+   { 0, TA_MFI_TEST,  0, 251, 49, TA_SUCCESS, 252-50,    57.4806,  49,  252-49 }, /* Last Value */
 
-   { 0, TA_WILLR_TEST, 251, 251, 14, TA_SUCCESS,      0,    -59.1515, 251,  1 },
-   { 0, TA_WILLR_TEST,  14,  251, 14, TA_SUCCESS, 252-15,   -59.1515, 14,  252-14 },
+   { 1, TA_MFI_TEST,  0, 251, 50, TA_SUCCESS,      0,    44.2414,  50,  252-50 }, /* First Value */
+   { 0, TA_MFI_TEST,  0, 251, 50, TA_SUCCESS,      1,    42.1108,  50,  252-50 },
+   { 0, TA_MFI_TEST,  0, 251, 50, TA_SUCCESS, 252-51,    50.5905,  50,  252-50 }, /* Last Value */
 
-   /****************/
-   /*   CCI TEST  */
-   /****************/
-   { 1, TA_CCI_TEST, 0, 251,  5, TA_SUCCESS,  0, 18.857, 4,  252-4 },
+   { 1, TA_MFI_TEST,  0, 251, 51, TA_SUCCESS,      0,    43.1496,  51,  252-51 }, /* First Value */
+   { 0, TA_MFI_TEST,  0, 251, 51, TA_SUCCESS,      1,    40.7692,  51,  252-51 },
+   { 0, TA_MFI_TEST,  0, 251, 51, TA_SUCCESS, 252-52,    51.7265,  51,  252-51 }, /* Last Value */
 
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  0,   87.927,  10,  252-10 }, /* First Value */
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  1,   180.005, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  2,  143.5190963, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  3,  -113.8669783, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  4,  -111.064497, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  5,  -26.77393309, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  6,  -70.77933765, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  7,  -83.15662884, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  8,  -41.14421073, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  9,  -49.63059589, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 10,  -86.45142995, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 11,  -105.6275799, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 12,  -157.698269, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 13,  -190.5251436, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 14,  -142.8364298, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 15,  -122.4448056, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 16,  -79.95100041, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 17,  22.03829204, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 18,  7.765575065, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 19,  32.38905945, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 20,  -0.005587727, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 21,  43.84607294, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 22,  40.35152301, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 23,  92.89237535, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 24,  113.4778681, 10,  252-10 },
-   { 1, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 252-11,  -169.65514, 10,  252-10 }, /* Last Value */
-
+   { 1, TA_MFI_TEST,  0, 251, 100, TA_SUCCESS,       0,  50.0166,  100,  252-100 }, /* First Value */
+   { 0, TA_MFI_TEST,  0, 251, 100, TA_SUCCESS,       1,  50.2648,  100,  252-100 },
+   { 0, TA_MFI_TEST,  0, 251, 100, TA_SUCCESS, 252-101,  48.8421,  100,  252-100 }, /* Last Value */
 
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
-ErrorNumber test_func_per_hlc( TA_History *history )
+ErrorNumber test_func_per_hlcv( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
@@ -220,29 +196,18 @@ static TA_RetCode rangeTestFunction(
 
    switch( testParam->test->theFunction )
    {
-   case TA_CCI_TEST:
-      retCode = TA_CCI( startIdx,
+   case TA_MFI_TEST:
+      retCode = TA_MFI( startIdx,
                         endIdx,
                         testParam->high,
                         testParam->low,
                         testParam->close,
+                        testParam->volume,
                         testParam->test->optInTimePeriod_0,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
-      *lookback = TA_CCI_Lookback( testParam->test->optInTimePeriod_0 );
-      break;
-   case TA_WILLR_TEST:
-      retCode = TA_WILLR( startIdx,
-                          endIdx,
-                          testParam->high,
-                          testParam->low,
-                          testParam->close,
-                          testParam->test->optInTimePeriod_0,
-                          outBegIdx,
-                          outNbElement,
-                          outputBuffer );
-      *lookback = TA_WILLR_Lookback( testParam->test->optInTimePeriod_0 );
+      *lookback = TA_MFI_Lookback( testParam->test->optInTimePeriod_0 );
       break;
    default:
       retCode = TA_INTERNAL_ERROR(132);
@@ -271,30 +236,18 @@ static ErrorNumber do_test( const TA_History *history,
    /* Make a simple first call. */
    switch( test->theFunction )
    {
-   case TA_CCI_TEST:
-      retCode = TA_CCI( test->startIdx,
+   case TA_MFI_TEST:
+      retCode = TA_MFI( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
                         gBuffer[1].in,
                         gBuffer[2].in,
+                        history->volume,
                         test->optInTimePeriod_0,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
       break;
-
-   case TA_WILLR_TEST:
-      retCode = TA_WILLR( test->startIdx,
-                          test->endIdx,
-                          gBuffer[0].in,
-                          gBuffer[1].in,
-                          gBuffer[2].in,
-                          test->optInTimePeriod_0,
-                          &outBegIdx,
-                          &outNbElement,
-                          gBuffer[0].out0 );
-      break;
-
    default:
       retCode = TA_INTERNAL_ERROR(133);
    }
@@ -319,27 +272,17 @@ static ErrorNumber do_test( const TA_History *history,
     */
    switch( test->theFunction )
    {
-   case TA_CCI_TEST:
-      retCode = TA_CCI( test->startIdx,
+   case TA_MFI_TEST:
+      retCode = TA_MFI( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
                         gBuffer[1].in,
                         gBuffer[2].in,
+                        history->volume,
                         test->optInTimePeriod_0,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].in );
-      break;
-   case TA_WILLR_TEST:
-      retCode = TA_WILLR( test->startIdx,
-                          test->endIdx,
-                          gBuffer[0].in,
-                          gBuffer[1].in,
-                          gBuffer[2].in,
-                          test->optInTimePeriod_0,
-                          &outBegIdx,
-                          &outNbElement,
-                          gBuffer[0].in );
       break;
    default:
       retCode = TA_INTERNAL_ERROR(134);
@@ -353,8 +296,7 @@ static ErrorNumber do_test( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   /* The previous call to TA_MA should have the same output
-    * as this call.
+   /* The previous call should have the same output as this call.
     *
     * checkSameContent verify that all value different than NAN in
     * the first parameter is identical in the second parameter.
@@ -371,27 +313,17 @@ static ErrorNumber do_test( const TA_History *history,
     */
    switch( test->theFunction )
    {
-   case TA_CCI_TEST:
-      retCode = TA_CCI( test->startIdx,
+   case TA_MFI_TEST:
+      retCode = TA_MFI( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
                         gBuffer[1].in,
                         gBuffer[2].in,
+                        history->volume,
                         test->optInTimePeriod_0,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
-      break;
-   case TA_WILLR_TEST:
-      retCode = TA_WILLR( test->startIdx,
-                          test->endIdx,
-                          gBuffer[0].in,
-                          gBuffer[1].in,
-                          gBuffer[2].in,
-                          test->optInTimePeriod_0,
-                          &outBegIdx,
-                          &outNbElement,
-                          gBuffer[1].in );
       break;
    default:
       retCode = TA_INTERNAL_ERROR(135);
@@ -405,7 +337,8 @@ static ErrorNumber do_test( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   /* The previous call should have the same output as this call.
+   /* The previous call to TA_MA should have the same output
+    * as this call.
     *
     * checkSameContent verify that all value different than NAN in
     * the first parameter is identical in the second parameter.
@@ -422,27 +355,17 @@ static ErrorNumber do_test( const TA_History *history,
     */
    switch( test->theFunction )
    {
-   case TA_CCI_TEST:
-      retCode = TA_CCI( test->startIdx,
+   case TA_MFI_TEST:
+      retCode = TA_MFI( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
                         gBuffer[1].in,
                         gBuffer[2].in,
+                        history->volume,
                         test->optInTimePeriod_0,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[2].in );
-      break;
-   case TA_WILLR_TEST:
-      retCode = TA_WILLR( test->startIdx,
-                          test->endIdx,
-                          gBuffer[0].in,
-                          gBuffer[1].in,
-                          gBuffer[2].in,
-                          test->optInTimePeriod_0,
-                          &outBegIdx,
-                          &outNbElement,
-                          gBuffer[2].in );
       break;
    default:
       retCode = TA_INTERNAL_ERROR(136);
@@ -472,15 +395,15 @@ static ErrorNumber do_test( const TA_History *history,
    /* Do a systematic test of most of the
     * possible startIdx/endIdx range.
     */
-   testParam.test  = test;
-   testParam.high  = history->high;
-   testParam.low   = history->low;
-   testParam.close = history->close;
+   testParam.test   = test;
+   testParam.high   = history->high;
+   testParam.low    = history->low;
+   testParam.close  = history->close;
+   testParam.volume = history->volume;
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest(
-                           rangeTestFunction, 
+      errNb = doRangeTest( rangeTestFunction, 
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )
