@@ -106,6 +106,7 @@ extern const TA_FuncDef TA_DEF_LINEARREG_SLOPE;
 extern const TA_FuncDef TA_DEF_LINEARREG_ANGLE;
 extern const TA_FuncDef TA_DEF_LINEARREG_INTERCEPT;
 extern const TA_FuncDef TA_DEF_STDDEV;
+extern const TA_FuncDef TA_DEF_TSF;
 extern const TA_FuncDef TA_DEF_VAR;
 extern const TA_FuncDef TA_DEF_AVGPRICE;
 extern const TA_FuncDef TA_DEF_MEDPRICE;
@@ -203,6 +204,7 @@ const TA_FuncDef *TA_PerGroupFunc_8[] = {
 &TA_DEF_LINEARREG_ANGLE,
 &TA_DEF_LINEARREG_INTERCEPT,
 &TA_DEF_STDDEV,
+&TA_DEF_TSF,
 &TA_DEF_VAR,
 NULL };
 #define SIZE_GROUP_8 ((sizeof(TA_PerGroupFunc_8)/sizeof(const TA_FuncDef *))-1)
