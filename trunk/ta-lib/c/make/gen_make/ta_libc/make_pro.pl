@@ -76,21 +76,43 @@ chomp $e;
 
 @incpath = ();
 $nbincpath  = 0;
-for $z (split / /, $a ) { @incpath = (@incpath, $z ); $nbincpath += 1}
-for $z (split / /, $b ) { @incpath = (@incpath, $z ); $nbincpath += 1}
-for $z (split / /, $c ) { @incpath = (@incpath, $z ); $nbincpath += 1}
-for $z (split / /, $d ) { @incpath = (@incpath, $z ); $nbincpath += 1}
-for $z (split / /, $e ) { @incpath = (@incpath, $z ); $nbincpath += 1}
+for $z (split / /, $a )
+{ 
+   if( $z ne "\\n" ) { @incpath = (@incpath, $z ); $nbincpath += 1 }
+}
+
+for $z (split / /, $b )
+{ 
+   if( $z ne "\\n" ) { @incpath = (@incpath, $z ); $nbincpath += 1 }
+}
+
+for $z (split / /, $c ) 
+{ 
+   if( $z ne "\\n" ) { @incpath = (@incpath, $z ); $nbincpath += 1 }
+}
+
+for $z (split / /, $d ) 
+{ 
+   if( $z ne "\\n" ) { @incpath = (@incpath, $z ); $nbincpath += 1 }
+}
+
+for $z (split / /, $e )
+{ 
+   if( $z ne "\\n" ) { @incpath = (@incpath, $z ); $nbincpath += 1 }
+}
 
 # Get the version from ta_common.pro
-if( $^O eq "MsWin32" )
-{
-   $libversion = `tmake ..\\ta_common\\ta_common.pro -e Expand("VERSION")`;
-}
-else
-{
-   $libversion = `tmake ../ta_common/ta_common.pro -e "Expand("VERSION")"`;
-}
+#
+# Not used anymore.
+#
+# if( $^O eq "MsWin32" )
+# {
+#   $libversion = `tmake ..\\ta_common\\ta_common.pro -e Expand("VERSION")`;
+# }
+# else
+# {
+#   $libversion = `tmake ../ta_common/ta_common.pro -e "Expand("VERSION")"`;
+# }
 
 chomp( $libversion );
 
