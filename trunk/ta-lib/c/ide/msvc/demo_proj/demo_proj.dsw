@@ -27,7 +27,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "showta"=".\showta\showta.dsp" - Package Owner=<4>
+Project: "ta_sql"=".\ta_sql\ta_sql.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
