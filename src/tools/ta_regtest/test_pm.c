@@ -1145,7 +1145,7 @@ static ErrorNumber test_valueId( TA_PMValueIdTest *test )
     */
    #define TA_SAFETY_NET_LIMIT 100
    i = 0;
-   while( (test->inputs[i].type != -1) && (i<TA_SAFETY_NET_LIMIT) )
+   while( ((int)test->inputs[i].type != -1) && (i<TA_SAFETY_NET_LIMIT) )
    {
       retCode = TA_TradeLogAdd( tradeLog, &test->inputs[i] );
       if( retCode != TA_SUCCESS )
@@ -1289,7 +1289,7 @@ static ErrorNumber test_arrayId( TA_PMArrayIdTest *test )
     */
    #define TA_SAFETY_NET_LIMIT 100
    i = 0;
-   while( (test->inputs[i].type != -1) && (i<TA_SAFETY_NET_LIMIT) )
+   while( ((int)test->inputs[i].type != -1) && (i<TA_SAFETY_NET_LIMIT) )
    {
       retCode = TA_TradeLogAdd( tradeLog, &test->inputs[i] );
       if( retCode != TA_SUCCESS )
