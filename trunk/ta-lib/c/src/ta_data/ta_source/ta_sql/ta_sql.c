@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,15 +36,17 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  PK       Pawel Konieczny
- *
+ *  MF       Mario Fortier
+ *  JS       Jon Sudul
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  101703 PK   First version.
- *  110103 PK   Minidriver architecture
- *
+ *  101703 PK     First version.
+ *  110103 PK     Minidriver architecture
+ *  012504 MF,JS  Fix some memory leaks and perform integer/double cast
+ *                for columns that represents a number (Bug #881950)
  */
 
 /* Description:
@@ -110,9 +112,12 @@ TA_Sema mod_sema;
 TA_RetCode TA_SQL_InitializeSourceDriver( void )
 {
    TA_PROLOG
-   TA_RetCode retCode = TA_SUCCESS;
 
-   TA_TRACE_BEGIN(  TA_SQL_InitializeSourceDriver );
+   #if !defined( TA_SINGLE_THREAD ) || defined( WIN32 )
+   TA_RetCode retCode;
+   #endif
+
+   TA_TRACE_BEGIN( TA_SQL_InitializeSourceDriver );
 
    #if !defined( TA_SINGLE_THREAD )
       retCode = TA_SemaInit( &mod_sema, 1);
@@ -123,9 +128,11 @@ TA_RetCode TA_SQL_InitializeSourceDriver( void )
    #if defined( WIN32 )
       /* ODBC driver is always enabled on WIN32 platform */
       retCode = TA_SQL_ODBC_Initialize();
+      if( retCode != TA_SUCCESS )
+         TA_TRACE_RETURN( retCode );
    #endif
 
-   TA_TRACE_RETURN( retCode );
+   TA_TRACE_RETURN( TA_SUCCESS );
 }
 
 
@@ -133,15 +140,22 @@ TA_RetCode TA_SQL_InitializeSourceDriver( void )
 TA_RetCode TA_SQL_ShutdownSourceDriver( void )
 {
    TA_PROLOG
-   TA_RetCode retCode = TA_SUCCESS;
 
-   TA_TRACE_BEGIN(  TA_SQL_ShutdownSourceDriver );
+   #if !defined( TA_SINGLE_THREAD )
+   TA_RetCode retCode;
+   #endif
 
-#if !defined( TA_SINGLE_THREAD )
-   retCode = TA_SemaDestroy( &mod_sema );
-#endif
+   TA_TRACE_BEGIN( TA_SQL_ShutdownSourceDriver );
 
-   TA_TRACE_RETURN( retCode );
+   TA_SQL_ShutdownMinidriver();
+
+   #if !defined( TA_SINGLE_THREAD )
+      retCode = TA_SemaDestroy( &mod_sema );
+      if( retCode != TA_SUCCESS )
+         TA_TRACE_RETURN( retCode );
+   #endif
+
+   TA_TRACE_RETURN( TA_SUCCESS );
 }
 
 
@@ -150,6 +164,9 @@ TA_RetCode TA_SQL_GetParameters( TA_DataSourceParameters *param )
 {
    TA_PROLOG
    TA_TRACE_BEGIN( TA_SQL_GetParameters );
+
+   if( !param )
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(147) );
 
    memset( param, 0, sizeof( TA_DataSourceParameters ) );
 
@@ -171,9 +188,11 @@ TA_RetCode TA_SQL_OpenSource( const TA_AddDataSourceParamPriv *param,
    unsigned port;
    TA_RetCode retCode;
 
-   *handle = NULL;
-
    TA_TRACE_BEGIN( TA_SQL_OpenSource );
+   TA_ASSERT( handle != NULL );
+   TA_ASSERT( param != NULL );
+
+   *handle = NULL;
 
    /* 'info' and 'location' are mandatory. */
    if( (!param->info) || (!param->location) )
@@ -241,7 +260,7 @@ TA_RetCode TA_SQL_OpenSource( const TA_AddDataSourceParamPriv *param,
    }
    else
    {    /* minidriver not recognized */
-      retCode = TA_NOT_SUPPORTED;
+      retCode = TA_INVALID_DATABASE_TYPE;
    }
 
    if( retCode != TA_SUCCESS )
@@ -287,7 +306,7 @@ TA_RetCode TA_SQL_CloseSource( TA_DataSourceHandle *handle )
 {
    TA_PROLOG
 
-   TA_TRACE_BEGIN(  TA_SQL_CloseSource );
+   TA_TRACE_BEGIN( TA_SQL_CloseSource );
 
    /* Free all ressource used by this handle. */
    if( handle )
@@ -306,7 +325,7 @@ TA_RetCode TA_SQL_GetFirstCategoryHandle( TA_DataSourceHandle *handle,
    TA_List               *categoryIndex;
    TA_SQLCategoryNode  *categoryNode;
 
-   TA_TRACE_BEGIN(  TA_SQL_GetFirstCategoryHandle );
+   TA_TRACE_BEGIN( TA_SQL_GetFirstCategoryHandle );
 
    if( (handle == NULL) || (categoryHandle == NULL) )
    {
@@ -317,14 +336,14 @@ TA_RetCode TA_SQL_GetFirstCategoryHandle( TA_DataSourceHandle *handle,
 
    if( !privData )
    {
-      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(49) );
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(148) );
    }
 
    categoryIndex = privData->theCategoryIndex;
 
    if( !categoryIndex )
    {
-      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(50) );
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(149) );
    }
 
    /* Get the first category from the category index */
@@ -332,7 +351,7 @@ TA_RetCode TA_SQL_GetFirstCategoryHandle( TA_DataSourceHandle *handle,
 
    if( !categoryNode || !categoryNode->category )
    {
-      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(51) ); /* At least one category must exist. */
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(150) ); /* At least one category must exist. */
    }
 
    /* Set the categoryHandle. */
@@ -367,14 +386,14 @@ TA_RetCode TA_SQL_GetNextCategoryHandle( TA_DataSourceHandle *handle,
 
    if( !privData )
    {
-      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(52) );
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(152) );
    }
 
    categoryIndex = privData->theCategoryIndex;
 
    if( !categoryIndex )
    {
-      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(50) );
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(153) );
    }
 
    /* Get the next category from the category index */
@@ -402,7 +421,7 @@ TA_RetCode TA_SQL_GetFirstSymbolHandle( TA_DataSourceHandle *handle,
    TA_List               *symbolsIndex;
    TA_String             *symbol;
 
-   TA_TRACE_BEGIN(  TA_SQL_GetFirstSymbolHandle );
+   TA_TRACE_BEGIN( TA_SQL_GetFirstSymbolHandle );
 
    if( (handle == NULL) || (categoryHandle == NULL) || (symbolHandle == NULL) )
    {
@@ -413,7 +432,7 @@ TA_RetCode TA_SQL_GetFirstSymbolHandle( TA_DataSourceHandle *handle,
 
    if( !privData )
    {
-      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(49) );
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(151) );
    }
 
    symbolsIndex = (TA_List*)categoryHandle->opaqueData;
@@ -445,7 +464,7 @@ TA_RetCode TA_SQL_GetNextSymbolHandle( TA_DataSourceHandle *handle,
    TA_List               *symbolsIndex;
    TA_String             *symbol;
 
-   TA_TRACE_BEGIN(  TA_SQL_GetNextSymbolHandle );
+   TA_TRACE_BEGIN( TA_SQL_GetNextSymbolHandle );
 
    (void)index; /* Get rid of compiler warnings. */
 
@@ -458,7 +477,7 @@ TA_RetCode TA_SQL_GetNextSymbolHandle( TA_DataSourceHandle *handle,
 
    if( !privData )
    {
-      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(57) );
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(154) );
    }
 
    symbolsIndex = (TA_List*)categoryHandle->opaqueData;
@@ -496,14 +515,15 @@ TA_RetCode TA_SQL_GetHistoryData( TA_DataSourceHandle *handle,
    char *queryStr, *tempStr;
    TA_Timestamp trueEnd;
 
-
-   TA_TRACE_BEGIN(  TA_SQL_GetHistoryData );
+   TA_TRACE_BEGIN( TA_SQL_GetHistoryData );
 
    TA_ASSERT( handle != NULL );
 
    if (  (start && TA_TimestampValidate(start) != TA_SUCCESS)
       || (end && TA_TimestampValidate(end) != TA_SUCCESS))
-       return TA_BAD_PARAM;
+   {
+       TA_TRACE_RETURN(TA_BAD_PARAM);
+   }
 
    privateHandle = (TA_PrivateSQLHandle *)handle->opaqueData;
    TA_ASSERT( privateHandle != NULL );
@@ -512,13 +532,14 @@ TA_RetCode TA_SQL_GetHistoryData( TA_DataSourceHandle *handle,
    TA_ASSERT( categoryHandle != NULL );
    TA_ASSERT( symbolHandle != NULL );
 
-
    /* verify whether this source can deliver data usable for the requested period */
    if( privateHandle->param->period > 0)
    {
       /* this check can be done only when a period is known for this source */
       if( period < privateHandle->param->period )
-         return TA_SUCCESS;  /* no usable data, but also no error */
+      {
+         TA_TRACE_RETURN(TA_SUCCESS);  /* no usable data, but also no error */
+      }
 
       period = privateHandle->param->period;  /* to be passed to ta_history */
    }
@@ -623,28 +644,43 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
                                     TA_ParamForAddData  *paramForAddData )
 {
    TA_PROLOG
-   TA_RetCode retCode = TA_SUCCESS;
-   unsigned int timeRequired = (period < TA_DAILY);      /* Boolean */
+   TA_RetCode retCode;
+   unsigned int timeRequired;
 
    /* result vectors */
-   TA_Timestamp *timestampVec = NULL;
-   TA_Real *openVec = NULL;
-   TA_Real *highVec = NULL;
-   TA_Real *lowVec = NULL;
-   TA_Real *closeVec = NULL;
-   TA_Integer *volumeVec = NULL;
-   TA_Integer *oiVec = NULL;
+   TA_Timestamp *timestampVec;
+   TA_Real *openVec;
+   TA_Real *highVec;
+   TA_Real *lowVec;
+   TA_Real *closeVec;
+   TA_Integer *volumeVec;
+   TA_Integer *oiVec;
+   TA_Integer tempInteger;
+   TA_Real    tempReal;
 
    /* recognized columns */
    int dateCol, timeCol, openCol, highCol, lowCol, closeCol, volumeCol, oiCol;
 
    void *queryResult;
-   int resColumns, resRows = -1;
+   int resColumns, resRows;
    int colNum, rowNum, barNum;
-   const char *strval = NULL;
-
+   const char *strval;
 
    TA_TRACE_BEGIN( executeDataQuery );
+
+   /* Initialize the variables. */
+   retCode      = TA_SUCCESS;
+   timeRequired = (period < TA_DAILY);      /* Boolean */
+   timestampVec = NULL;
+   openVec      = NULL;
+   highVec      = NULL;
+   lowVec       = NULL;
+   closeVec     = NULL;
+   volumeVec    = NULL;
+   oiVec        = NULL;
+   resColumns   = -1;
+   resRows      = -1;
+   strval       = NULL;
 
    /* Now the SQL query */
    retCode = (*privateHandle->minidriver->executeQuery)(
@@ -745,7 +781,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    {
       /* we cannot deliver data for the requested period, thus exit gracefully */
       retCode = (*privateHandle->minidriver->releaseQuery)(queryResult);
-      TA_TRACE_RETURN( retCode );
+      RETURN_ON_ERROR( retCode );
    }
    if(  dateCol < 0
      || (fieldToAlloc & TA_OPEN   && openCol   < 0)
@@ -757,7 +793,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    {
       /* required column not found, so cannot deliver data */
       retCode = (*privateHandle->minidriver->releaseQuery)(queryResult);
-      TA_TRACE_RETURN( retCode );
+      RETURN_ON_ERROR( retCode );
    }
       
    /* iterate through the result set */
@@ -840,29 +876,45 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
             continue;
       }
 
-      #define TA_SQL_STORE_VALUE( type, getRow, vec, col, flag )                    \
-         if (vec)                                                                   \
-         {                                                                          \
-            retCode = (*privateHandle->minidriver->getRow )( \
-                                 queryResult,                                       \
-                                 rowNum,                                            \
-                                 col,                                               \
-                                 &vec[barNum] );                                    \
-            RETURN_ON_ERROR( retCode );                                             \
-                                                                                    \
-            if (vec[barNum] == 0 && (privateHandle->param->flags & flag) )          \
-               vec[barNum] = (type) ( (barNum > 0)? closeVec[barNum-1] : 0 );       \
-                                                                                    \
-            if (vec[barNum] == 0)                                                   \
-               continue;                                                            \
-         }
-      
-      TA_SQL_STORE_VALUE(TA_Real,    getRowReal,    openVec,   openCol,   TA_REPLACE_ZERO_PRICE_BAR)
-      TA_SQL_STORE_VALUE(TA_Real,    getRowReal,    highVec,   highCol,   TA_REPLACE_ZERO_PRICE_BAR)
-      TA_SQL_STORE_VALUE(TA_Real,    getRowReal,    lowVec,    lowCol,    TA_REPLACE_ZERO_PRICE_BAR)
-      TA_SQL_STORE_VALUE(TA_Real,    getRowReal,    closeVec,  closeCol,  TA_REPLACE_ZERO_PRICE_BAR)
-      TA_SQL_STORE_VALUE(TA_Integer, getRowInteger, volumeVec, volumeCol, TA_NO_FLAGS)
-      TA_SQL_STORE_VALUE(TA_Integer, getRowInteger, oiVec,     oiCol,     TA_NO_FLAGS)
+      #define TA_SQL_STORE_VALUE( type1, type2, lc_field, uc_field, flag ) \
+      {                                                                  \
+         if (lc_field##Vec)                                              \
+         {                                                               \
+            retCode = (*privateHandle->minidriver->getRow##type1)(       \
+                                 queryResult,                            \
+                                 rowNum,                                 \
+                                 lc_field##Col,                          \
+                                 &lc_field##Vec[barNum] );               \
+                                                                         \
+            if( retCode == TA_UNEXPECTED_SQL_TYPE )                      \
+            {                                                            \
+               retCode = (*privateHandle->minidriver->getRow##type2)(    \
+                                 queryResult,                            \
+                                 rowNum,                                 \
+                                 lc_field##Col,                          \
+                                 &temp##type2);                          \
+               lc_field##Vec[barNum] = (TA_##type1)temp##type2;          \
+               if( retCode == TA_UNEXPECTED_SQL_TYPE )                   \
+               {                                                         \
+                  RETURN_FUNC( TA_UNEXPECTED_SQL_TYPE_FOR_##uc_field );  \
+               }                                                         \
+            }                                                            \
+            RETURN_ON_ERROR( retCode );                                  \
+                                                                         \
+            if (lc_field##Vec[barNum] == 0 && (privateHandle->param->flags & flag) )          \
+               lc_field##Vec[barNum] = (TA_##type1)( (barNum > 0)? closeVec[barNum-1] : 0 );  \
+                                                                         \
+            if (lc_field##Vec[barNum] == 0)                              \
+               continue;                                                 \
+         }                                                               \
+      }
+          
+      TA_SQL_STORE_VALUE( Real,    Integer, open,   OPEN,   TA_REPLACE_ZERO_PRICE_BAR)
+      TA_SQL_STORE_VALUE( Real,    Integer, high,   HIGH,   TA_REPLACE_ZERO_PRICE_BAR)
+      TA_SQL_STORE_VALUE( Real,    Integer, low,    LOW,    TA_REPLACE_ZERO_PRICE_BAR)
+      TA_SQL_STORE_VALUE( Real,    Integer, close,  CLOSE,  TA_REPLACE_ZERO_PRICE_BAR)
+      TA_SQL_STORE_VALUE( Integer, Real,    volume, VOLUME, TA_NO_FLAGS)
+      TA_SQL_STORE_VALUE( Integer, Real,    oi,     OI,     TA_NO_FLAGS)
 
       #undef TA_SQL_STORE_VALUE
 
