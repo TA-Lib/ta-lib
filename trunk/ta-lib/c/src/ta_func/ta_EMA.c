@@ -105,13 +105,13 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::EMA( int    startIdx,
-/* Generated */                                  int    endIdx,
-/* Generated */                                  double       inReal __gc [],
-/* Generated */                                  int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                  [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::EMA( int    startIdx,
+/* Generated */                                          int    endIdx,
+/* Generated */                                          double       inReal __gc [],
+/* Generated */                                          int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                          [OutAttribute]Int32 *outNbElement,
+/* Generated */                                          double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_EMA( int    startIdx,
 /* Generated */                    int    endIdx,
@@ -174,14 +174,14 @@
  * The macro PER_TO_K is equivalent to the above formula.
  */
 #if defined( _MANAGED )
-enum Core::TA_RetCode Core::TA_INT_EMA( int           startIdx,
-                                        int           endIdx,
-                                        INPUT_TYPE    inReal __gc [],
-                                        int           optInTimePeriod,
-                                        double        optInK_1,
-                                        [OutAttribute]Int32 *outBegIdx,
-                                        [OutAttribute]Int32 *outNbElement,
-                                        double        outReal __gc [])
+__value enum Core::TA_RetCode Core::TA_INT_EMA( int           startIdx,
+                                                int           endIdx,
+                                                INPUT_TYPE    inReal __gc [],
+                                                int           optInTimePeriod,
+                                                double        optInK_1,
+                                                [OutAttribute]Int32 *outBegIdx,
+                                                [OutAttribute]Int32 *outNbElement,
+                                                double        outReal __gc [])
 #else
 TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
                                int               endIdx,
@@ -306,13 +306,13 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::EMA( int    startIdx,
-/* Generated */                                  int    endIdx,
-/* Generated */                                  float        inReal __gc [],
-/* Generated */                                  int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                  [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::EMA( int    startIdx,
+/* Generated */                                          int    endIdx,
+/* Generated */                                          float        inReal __gc [],
+/* Generated */                                          int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                          [OutAttribute]Int32 *outNbElement,
+/* Generated */                                          double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_EMA( int    startIdx,
 /* Generated */                      int    endIdx,
@@ -342,14 +342,14 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */                               outBegIdx, outNbElement, outReal );
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::TA_INT_EMA( int           startIdx,
-/* Generated */                                         int           endIdx,
-/* Generated */                                         INPUT_TYPE    inReal __gc [],
-/* Generated */                                         int           optInTimePeriod,
-/* Generated */                                         double        optInK_1,
-/* Generated */                                         [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                         [OutAttribute]Int32 *outNbElement,
-/* Generated */                                         double        outReal __gc [])
+/* Generated */ __value enum Core::TA_RetCode Core::TA_INT_EMA( int           startIdx,
+/* Generated */                                                 int           endIdx,
+/* Generated */                                                 INPUT_TYPE    inReal __gc [],
+/* Generated */                                                 int           optInTimePeriod,
+/* Generated */                                                 double        optInK_1,
+/* Generated */                                                 [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                                 [OutAttribute]Int32 *outNbElement,
+/* Generated */                                                 double        outReal __gc [])
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */                                int               endIdx,

@@ -115,14 +115,14 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::T3( int    startIdx,
-/* Generated */                                 int    endIdx,
-/* Generated */                                 double       inReal __gc [],
-/* Generated */                                 int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                 double        optInVFactor, /* From 0 to 1 */
-/* Generated */                                 [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                 [OutAttribute]Int32 *outNbElement,
-/* Generated */                                 double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::T3( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         double       inReal __gc [],
+/* Generated */                                         int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                         double        optInVFactor, /* From 0 to 1 */
+/* Generated */                                         [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                         [OutAttribute]Int32 *outNbElement,
+/* Generated */                                         double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_T3( int    startIdx,
 /* Generated */                   int    endIdx,
@@ -325,14 +325,14 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::T3( int    startIdx,
-/* Generated */                                 int    endIdx,
-/* Generated */                                 float        inReal __gc [],
-/* Generated */                                 int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                 double        optInVFactor, /* From 0 to 1 */
-/* Generated */                                 [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                 [OutAttribute]Int32 *outNbElement,
-/* Generated */                                 double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::T3( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         float        inReal __gc [],
+/* Generated */                                         int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                         double        optInVFactor, /* From 0 to 1 */
+/* Generated */                                         [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                         [OutAttribute]Int32 *outNbElement,
+/* Generated */                                         double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_T3( int    startIdx,
 /* Generated */                     int    endIdx,

@@ -137,17 +137,17 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::MACD( int    startIdx,
-/* Generated */                                   int    endIdx,
-/* Generated */                                   double       inReal __gc [],
-/* Generated */                                   int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                                   int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                   int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                                   [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double        outMACD __gc [],
-/* Generated */                                   double        outMACDSignal __gc [],
-/* Generated */                                   double        outMACDHist __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::MACD( int    startIdx,
+/* Generated */                                           int    endIdx,
+/* Generated */                                           double       inReal __gc [],
+/* Generated */                                           int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                           int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                           int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                           [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                           [OutAttribute]Int32 *outNbElement,
+/* Generated */                                           double        outMACD __gc [],
+/* Generated */                                           double        outMACDSignal __gc [],
+/* Generated */                                           double        outMACDHist __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MACD( int    startIdx,
 /* Generated */                     int    endIdx,
@@ -222,17 +222,17 @@
 }
 
 #if defined( _MANAGED )
-enum Core::TA_RetCode Core::TA_INT_MACD( int    startIdx,
-                                         int    endIdx,
-                                         INPUT_TYPE inReal __gc [],
-                                         int    optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
-                                         int    optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
-                                         int    optInSignalPeriod_2, /* From 1 to 200 */
-                                         [OutAttribute]Int32 *outBegIdx,
-                                         [OutAttribute]Int32 *outNbElement,
-                                         double outMACD __gc [],
-                                         double outMACDSignal __gc [],
-                                         double outMACDHist __gc [] )
+__value enum Core::TA_RetCode Core::TA_INT_MACD( int    startIdx,
+                                                 int    endIdx,
+                                                 INPUT_TYPE inReal __gc [],
+                                                 int    optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
+                                                 int    optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
+                                                 int    optInSignalPeriod_2, /* From 1 to 200 */
+                                                 [OutAttribute]Int32 *outBegIdx,
+                                                 [OutAttribute]Int32 *outNbElement,
+                                                 double outMACD __gc [],
+                                                 double outMACDSignal __gc [],
+                                                 double outMACDHist __gc [] )
 #else
 TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
                                 int    endIdx,
@@ -442,17 +442,17 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::MACD( int    startIdx,
-/* Generated */                                   int    endIdx,
-/* Generated */                                   float        inReal __gc [],
-/* Generated */                                   int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                                   int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                   int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                                   [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double        outMACD __gc [],
-/* Generated */                                   double        outMACDSignal __gc [],
-/* Generated */                                   double        outMACDHist __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::MACD( int    startIdx,
+/* Generated */                                           int    endIdx,
+/* Generated */                                           float        inReal __gc [],
+/* Generated */                                           int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                           int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                           int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                           [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                           [OutAttribute]Int32 *outNbElement,
+/* Generated */                                           double        outMACD __gc [],
+/* Generated */                                           double        outMACDSignal __gc [],
+/* Generated */                                           double        outMACDHist __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MACD( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -503,17 +503,17 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                outMACDHist );
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::TA_INT_MACD( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          INPUT_TYPE inReal __gc [],
-/* Generated */                                          int    optInFastPeriod, 
-/* Generated */                                          int    optInSlowPeriod, 
-/* Generated */                                          int    optInSignalPeriod_2, 
-/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          double outMACD __gc [],
-/* Generated */                                          double outMACDSignal __gc [],
-/* Generated */                                          double outMACDHist __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::TA_INT_MACD( int    startIdx,
+/* Generated */                                                  int    endIdx,
+/* Generated */                                                  INPUT_TYPE inReal __gc [],
+/* Generated */                                                  int    optInFastPeriod, 
+/* Generated */                                                  int    optInSlowPeriod, 
+/* Generated */                                                  int    optInSignalPeriod_2, 
+/* Generated */                                                  [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                                  [OutAttribute]Int32 *outNbElement,
+/* Generated */                                                  double outMACD __gc [],
+/* Generated */                                                  double outMACDSignal __gc [],
+/* Generated */                                                  double outMACDHist __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                 int    endIdx,

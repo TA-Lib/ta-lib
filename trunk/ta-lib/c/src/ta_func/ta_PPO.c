@@ -116,15 +116,15 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::PPO( int    startIdx,
-/* Generated */                                  int    endIdx,
-/* Generated */                                  double       inReal __gc [],
-/* Generated */                                  int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                                  int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                  TA_MAType     optInMAType,
-/* Generated */                                  [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::PPO( int    startIdx,
+/* Generated */                                          int    endIdx,
+/* Generated */                                          double       inReal __gc [],
+/* Generated */                                          int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                          int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                          TA_MAType     optInMAType,
+/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                          [OutAttribute]Int32 *outNbElement,
+/* Generated */                                          double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PPO( int    startIdx,
 /* Generated */                    int    endIdx,
@@ -212,15 +212,15 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::PPO( int    startIdx,
-/* Generated */                                  int    endIdx,
-/* Generated */                                  float        inReal __gc [],
-/* Generated */                                  int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                                  int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                  TA_MAType     optInMAType,
-/* Generated */                                  [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::PPO( int    startIdx,
+/* Generated */                                          int    endIdx,
+/* Generated */                                          float        inReal __gc [],
+/* Generated */                                          int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                          int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                          TA_MAType     optInMAType,
+/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                          [OutAttribute]Int32 *outNbElement,
+/* Generated */                                          double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_PPO( int    startIdx,
 /* Generated */                      int    endIdx,

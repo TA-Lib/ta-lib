@@ -122,18 +122,18 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::STOCHF( int    startIdx,
-/* Generated */                                     int    endIdx,
-/* Generated */                                     double       inHigh __gc [],
-/* Generated */                                     double       inLow __gc [],
-/* Generated */                                     double       inClose __gc [],
-/* Generated */                                     int           optInFastK_Period, /* From 1 to 100000 */
-/* Generated */                                     int           optInFastD_Period, /* From 1 to 100000 */
-/* Generated */                                     TA_MAType     optInFastD_MAType,
-/* Generated */                                     [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                     [OutAttribute]Int32 *outNbElement,
-/* Generated */                                     double        outFastK __gc [],
-/* Generated */                                     double        outFastD __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::STOCHF( int    startIdx,
+/* Generated */                                             int    endIdx,
+/* Generated */                                             double       inHigh __gc [],
+/* Generated */                                             double       inLow __gc [],
+/* Generated */                                             double       inClose __gc [],
+/* Generated */                                             int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                             int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                                             TA_MAType     optInFastD_MAType,
+/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                             [OutAttribute]Int32 *outNbElement,
+/* Generated */                                             double        outFastK __gc [],
+/* Generated */                                             double        outFastD __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_STOCHF( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -447,18 +447,18 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::STOCHF( int    startIdx,
-/* Generated */                                     int    endIdx,
-/* Generated */                                     float        inHigh __gc [],
-/* Generated */                                     float        inLow __gc [],
-/* Generated */                                     float        inClose __gc [],
-/* Generated */                                     int           optInFastK_Period, /* From 1 to 100000 */
-/* Generated */                                     int           optInFastD_Period, /* From 1 to 100000 */
-/* Generated */                                     TA_MAType     optInFastD_MAType,
-/* Generated */                                     [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                     [OutAttribute]Int32 *outNbElement,
-/* Generated */                                     double        outFastK __gc [],
-/* Generated */                                     double        outFastD __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::STOCHF( int    startIdx,
+/* Generated */                                             int    endIdx,
+/* Generated */                                             float        inHigh __gc [],
+/* Generated */                                             float        inLow __gc [],
+/* Generated */                                             float        inClose __gc [],
+/* Generated */                                             int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                             int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                                             TA_MAType     optInFastD_MAType,
+/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                             [OutAttribute]Int32 *outNbElement,
+/* Generated */                                             double        outFastK __gc [],
+/* Generated */                                             double        outFastD __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STOCHF( int    startIdx,
 /* Generated */                         int    endIdx,

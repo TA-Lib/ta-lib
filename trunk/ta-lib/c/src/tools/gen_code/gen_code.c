@@ -1154,7 +1154,7 @@ static void printFunc( FILE *out,
       {
          if( managedCPPCode )
          {
-            sprintf( gTempBuf, "%s%senum %sTA_RetCode %s%s( int    %s,\n",
+            sprintf( gTempBuf, "%s%s__value enum %sTA_RetCode %s%s( int    %s,\n",
                      prefix? prefix:"",
                      managedCPPDeclaration? "         static ":"",
                      managedCPPDeclaration? "":"Core::",

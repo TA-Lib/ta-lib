@@ -117,15 +117,15 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::APO( int    startIdx,
-/* Generated */                                  int    endIdx,
-/* Generated */                                  double       inReal __gc [],
-/* Generated */                                  int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                                  int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                  TA_MAType     optInMAType,
-/* Generated */                                  [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::APO( int    startIdx,
+/* Generated */                                          int    endIdx,
+/* Generated */                                          double       inReal __gc [],
+/* Generated */                                          int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                          int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                          TA_MAType     optInMAType,
+/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                          [OutAttribute]Int32 *outNbElement,
+/* Generated */                                          double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_APO( int    startIdx,
 /* Generated */                    int    endIdx,
@@ -209,17 +209,17 @@
  * A buffer must be provided for intermediate processing.
  */
 #if defined( _MANAGED )
-enum Core::TA_RetCode Core::TA_INT_PO( int    startIdx,
-                                       int    endIdx,
-                                       INPUT_TYPE inReal __gc [],
-                                       int    optInFastPeriod, /* From 1 to 200 */
-                                       int    optInSlowPeriod, /* From 1 to 200 */
-                                       TA_MAType    optInMethod_2,
-                                       [OutAttribute]Int32 *outBegIdx,
-                                       [OutAttribute]Int32 *outNbElement,
-                                       double  outReal __gc [],
-                                       double  tempBuffer __gc [],
-                                       unsigned int  doPercentageOutput )
+__value enum Core::TA_RetCode Core::TA_INT_PO( int    startIdx,
+                                               int    endIdx,
+                                               INPUT_TYPE inReal __gc [],
+                                               int    optInFastPeriod, /* From 1 to 200 */
+                                               int    optInSlowPeriod, /* From 1 to 200 */
+                                               TA_MAType    optInMethod_2,
+                                               [OutAttribute]Int32 *outBegIdx,
+                                               [OutAttribute]Int32 *outNbElement,
+                                               double  outReal __gc [],
+                                               double  tempBuffer __gc [],
+                                               unsigned int  doPercentageOutput )
 #else
 TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
                               int    endIdx,
@@ -316,15 +316,15 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::APO( int    startIdx,
-/* Generated */                                  int    endIdx,
-/* Generated */                                  float        inReal __gc [],
-/* Generated */                                  int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                                  int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                  TA_MAType     optInMAType,
-/* Generated */                                  [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::APO( int    startIdx,
+/* Generated */                                          int    endIdx,
+/* Generated */                                          float        inReal __gc [],
+/* Generated */                                          int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                          int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                          TA_MAType     optInMAType,
+/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                          [OutAttribute]Int32 *outNbElement,
+/* Generated */                                          double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_APO( int    startIdx,
 /* Generated */                      int    endIdx,
@@ -379,17 +379,17 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */    return retCode;
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::TA_INT_PO( int    startIdx,
-/* Generated */                                        int    endIdx,
-/* Generated */                                        INPUT_TYPE inReal __gc [],
-/* Generated */                                        int    optInFastPeriod, 
-/* Generated */                                        int    optInSlowPeriod, 
-/* Generated */                                        TA_MAType    optInMethod_2,
-/* Generated */                                        [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                        [OutAttribute]Int32 *outNbElement,
-/* Generated */                                        double  outReal __gc [],
-/* Generated */                                        double  tempBuffer __gc [],
-/* Generated */                                        unsigned int  doPercentageOutput )
+/* Generated */ __value enum Core::TA_RetCode Core::TA_INT_PO( int    startIdx,
+/* Generated */                                                int    endIdx,
+/* Generated */                                                INPUT_TYPE inReal __gc [],
+/* Generated */                                                int    optInFastPeriod, 
+/* Generated */                                                int    optInSlowPeriod, 
+/* Generated */                                                TA_MAType    optInMethod_2,
+/* Generated */                                                [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                                [OutAttribute]Int32 *outNbElement,
+/* Generated */                                                double  outReal __gc [],
+/* Generated */                                                double  tempBuffer __gc [],
+/* Generated */                                                unsigned int  doPercentageOutput )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */                               int    endIdx,

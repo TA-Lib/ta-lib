@@ -136,15 +136,15 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::MAMA( int    startIdx,
-/* Generated */                                   int    endIdx,
-/* Generated */                                   double       inReal __gc [],
-/* Generated */                                   double        optInFastLimit, /* From 0.01 to 0.99 */
-/* Generated */                                   double        optInSlowLimit, /* From 0.01 to 0.99 */
-/* Generated */                                   [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double        outMAMA __gc [],
-/* Generated */                                   double        outFAMA __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::MAMA( int    startIdx,
+/* Generated */                                           int    endIdx,
+/* Generated */                                           double       inReal __gc [],
+/* Generated */                                           double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                                           double        optInSlowLimit, /* From 0.01 to 0.99 */
+/* Generated */                                           [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                           [OutAttribute]Int32 *outNbElement,
+/* Generated */                                           double        outMAMA __gc [],
+/* Generated */                                           double        outFAMA __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MAMA( int    startIdx,
 /* Generated */                     int    endIdx,
@@ -454,15 +454,15 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::MAMA( int    startIdx,
-/* Generated */                                   int    endIdx,
-/* Generated */                                   float        inReal __gc [],
-/* Generated */                                   double        optInFastLimit, /* From 0.01 to 0.99 */
-/* Generated */                                   double        optInSlowLimit, /* From 0.01 to 0.99 */
-/* Generated */                                   [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double        outMAMA __gc [],
-/* Generated */                                   double        outFAMA __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::MAMA( int    startIdx,
+/* Generated */                                           int    endIdx,
+/* Generated */                                           float        inReal __gc [],
+/* Generated */                                           double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                                           double        optInSlowLimit, /* From 0.01 to 0.99 */
+/* Generated */                                           [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                           [OutAttribute]Int32 *outNbElement,
+/* Generated */                                           double        outMAMA __gc [],
+/* Generated */                                           double        outFAMA __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MAMA( int    startIdx,
 /* Generated */                       int    endIdx,
