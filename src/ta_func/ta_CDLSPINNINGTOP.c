@@ -85,7 +85,7 @@
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-    return max( TA_CANDLEAVGPERIOD(TA_BodyShort), TA_CANDLEAVGPERIOD(TA_ShadowLong) );
+    return TA_CANDLEAVGPERIOD(TA_BodyShort);
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -121,8 +121,8 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-    double BodyPeriodTotal, ShadowPeriodTotal;
-    int i, outIdx, BodyTrailingIdx, ShadowTrailingIdx, lookbackTotal;
+    double BodyPeriodTotal;
+    int i, outIdx, BodyTrailingIdx, lookbackTotal;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -170,25 +170,18 @@
    /* Add-up the initial period, except for the last value. */
    BodyPeriodTotal = 0;
    BodyTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_BodyShort);
-   ShadowPeriodTotal = 0;
-   ShadowTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_ShadowLong);
    
    i = BodyTrailingIdx;
    while( i < startIdx ) {
         BodyPeriodTotal += TA_CANDLERANGE( TA_BodyShort, i );
         i++;
    }
-   i = ShadowTrailingIdx;
-   while( i < startIdx ) {
-        ShadowPeriodTotal += TA_CANDLERANGE( TA_ShadowLong, i );
-        i++;
-   }
 
    /* Proceed with the calculation for the requested range.
     * Must have:
     * - small real body
-    * - long upper and lower shadow
-    * The meaning of "short" and "long" is specified with TA_SetCandleSettings
+    * - shadows longer than the real body
+    * The meaning of "short" is specified with TA_SetCandleSettings
     * outInteger is positive (1 to 100) when white or negative (-1 to -100) when black;
     * it does not mean bullish or bearish
     */
@@ -196,8 +189,9 @@
    do
    {
         if( TA_REALBODY(i) < TA_CANDLEAVERAGE( TA_BodyShort, BodyPeriodTotal, i ) && 
-            TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( TA_ShadowLong, ShadowPeriodTotal, i ) &&
-            TA_LOWERSHADOW(i) > TA_CANDLEAVERAGE( TA_ShadowLong, ShadowPeriodTotal, i ) )
+            TA_UPPERSHADOW(i) > TA_REALBODY(i) &&
+            TA_LOWERSHADOW(i) > TA_REALBODY(i)
+          )
             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
         else
             outInteger[outIdx++] = 0;
@@ -205,10 +199,8 @@
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyPeriodTotal += TA_CANDLERANGE( TA_BodyShort, i ) - TA_CANDLERANGE( TA_BodyShort, BodyTrailingIdx );
-        ShadowPeriodTotal += TA_CANDLERANGE( TA_ShadowLong, i ) - TA_CANDLERANGE( TA_ShadowLong, ShadowTrailingIdx );
         i++; 
         BodyTrailingIdx++;
-        ShadowTrailingIdx++;
    } while( i <= endIdx );
 
    /* All done. Indicate the output limits and return. */
@@ -249,8 +241,8 @@
 /* Generated */                                 int           outInteger[] )
 /* Generated */ #endif
 /* Generated */ {
-/* Generated */     double BodyPeriodTotal, ShadowPeriodTotal;
-/* Generated */     int i, outIdx, BodyTrailingIdx, ShadowTrailingIdx, lookbackTotal;
+/* Generated */     double BodyPeriodTotal;
+/* Generated */     int i, outIdx, BodyTrailingIdx, lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
@@ -272,32 +264,24 @@
 /* Generated */    }
 /* Generated */    BodyPeriodTotal = 0;
 /* Generated */    BodyTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_BodyShort);
-/* Generated */    ShadowPeriodTotal = 0;
-/* Generated */    ShadowTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_ShadowLong);
 /* Generated */    i = BodyTrailingIdx;
 /* Generated */    while( i < startIdx ) {
 /* Generated */         BodyPeriodTotal += TA_CANDLERANGE( TA_BodyShort, i );
-/* Generated */         i++;
-/* Generated */    }
-/* Generated */    i = ShadowTrailingIdx;
-/* Generated */    while( i < startIdx ) {
-/* Generated */         ShadowPeriodTotal += TA_CANDLERANGE( TA_ShadowLong, i );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( TA_REALBODY(i) < TA_CANDLEAVERAGE( TA_BodyShort, BodyPeriodTotal, i ) && 
-/* Generated */             TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( TA_ShadowLong, ShadowPeriodTotal, i ) &&
-/* Generated */             TA_LOWERSHADOW(i) > TA_CANDLEAVERAGE( TA_ShadowLong, ShadowPeriodTotal, i ) )
+/* Generated */             TA_UPPERSHADOW(i) > TA_REALBODY(i) &&
+/* Generated */             TA_LOWERSHADOW(i) > TA_REALBODY(i)
+/* Generated */           )
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         BodyPeriodTotal += TA_CANDLERANGE( TA_BodyShort, i ) - TA_CANDLERANGE( TA_BodyShort, BodyTrailingIdx );
-/* Generated */         ShadowPeriodTotal += TA_CANDLERANGE( TA_ShadowLong, i ) - TA_CANDLERANGE( TA_ShadowLong, ShadowTrailingIdx );
 /* Generated */         i++; 
 /* Generated */         BodyTrailingIdx++;
-/* Generated */         ShadowTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    *outNbElement = outIdx;
 /* Generated */    *outBegIdx    = startIdx;
