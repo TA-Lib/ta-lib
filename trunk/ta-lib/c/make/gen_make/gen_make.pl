@@ -4,11 +4,16 @@
 # all the operations for re-generating all the
 # makefiles variant.
 
-# Un-comment the following lines if
-# you wish to provide your own TMAKEPATH.
-# use Env qw( TMAKEPATH );
-
-$ENV{'TMAKEPATH'} = '.\\template\\win32-msvc';
+if( $^O eq "MSWin32" )
+{
+   $ENV{'TMAKEPATH'} = '.\\template\\win32-msvc';
+   $MAKEPATH = '.\\\\template\\\\win32-msvc';
+}
+else
+{
+   $ENV{'TMAKEPATH'} = '.\\template\\linux-g++';
+   $MAKEPATH = '.\\\\template\\\\linux-g++';
+}
 
 print "Generating ta_func.pro template...";
 chdir "ta_func";
@@ -28,9 +33,9 @@ system( "perl make_pro.pl >ta_libc.pro" );
 chdir "..";
 print "done.\n";
 
-system( "perl ./make_make.pl cdr .\\template\\win32-msvc .\\template\\* all" );
-system( "perl ./make_make.pl cdd .\\template\\win32-msvc .\\template\\* all" );
-system( "perl ./make_make.pl cmd .\\template\\win32-msvc .\\template\\* all" );
-system( "perl ./make_make.pl cmr .\\template\\win32-msvc .\\template\\* all" );
-system( "perl ./make_make.pl csr .\\template\\win32-msvc .\\template\\* all" );
-system( "perl ./make_make.pl csd .\\template\\win32-msvc .\\template\\* all" );
+system( "perl ./make_make.pl cdr $MAKEPATH template\\\\* all" );
+system( "perl ./make_make.pl cdd $MAKEPATH template\\\\* all" );
+system( "perl ./make_make.pl cmd $MAKEPATH template\\\\* all" );
+system( "perl ./make_make.pl cmr $MAKEPATH template\\\\* all" );
+system( "perl ./make_make.pl csr $MAKEPATH template\\\\* all" );
+system( "perl ./make_make.pl csd $MAKEPATH template\\\\* all" );
