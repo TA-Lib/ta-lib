@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -45,6 +45,8 @@
  *  110199 MF      First version.
  *  011204 MF      Now use addDataSourceParamPriv and check for
  *                 new SPLIT/VALUE adjust flags.
+ *  013104 MF      Add possibility to "name" data sources + add 
+ *                 validation of start/end parameters.
  */
 
 /* Decription:
@@ -89,7 +91,7 @@ typedef struct
 
 typedef struct
 {
-   /* One copy of this structure exist for each added data source. */
+   /* One instance of this struct exists for each added data source. */
 
    /* Keep a copy of the parameters who were used
     * to initialize this data source.
@@ -121,6 +123,8 @@ const TA_GlobalControl TA_DataGlobalControl =
 
 typedef struct
 {
+  /* Only one instance of this structure will exist. */
+
   #if !defined( TA_SINGLE_THREAD )
   TA_Sema sema; /* To protect this structure integrity. */
   #endif
@@ -145,7 +149,7 @@ static TA_UDB_Symbol *addSymbol( TA_UDBasePriv *privUDB,
                                  TA_DataSourceHandle *sourceHandle,
                                  TA_CategoryHandle *categoryHandle,
                                  TA_SymbolHandle *symbolHandle );
-static TA_RetCode stringTableFree( TA_StringTable *table );
+static TA_RetCode stringTableFree( TA_StringTable *table, unsigned int freeInternalStringOnly );
 
 static TA_RetCode closeAllDataSource( TA_UDBasePriv *privUDB );
 
@@ -321,7 +325,7 @@ TA_RetCode TA_UDBaseFree( TA_UDBase *toBeFreed )
    if( privUDB->magicNb != TA_UDBASE_MAGIC_NB )
       return TA_BAD_OBJECT;
 
-   retCode = TA_GetGlobal(  &TA_DataGlobalControl, (void **)&global );
+   retCode = TA_GetGlobal( &TA_DataGlobalControl, (void **)&global );
    if( retCode != TA_SUCCESS )
       return retCode;
 
@@ -386,7 +390,7 @@ TA_RetCode TA_UDBaseFree( TA_UDBase *toBeFreed )
       finalRetCode = retCode;
    #endif
 
-   TA_Free(  privUDB );
+   TA_Free( privUDB );
 
    TA_TRACE_RETURN( finalRetCode );
 }
@@ -680,7 +684,7 @@ TA_RetCode TA_CategoryTableAlloc( TA_UDBase *unifiedDatabase,
    if( privUDB->magicNb != TA_UDBASE_MAGIC_NB )
       return TA_BAD_OBJECT;
 
-   TA_TRACE_BEGIN(  TA_CategoryTableAlloc );
+   TA_TRACE_BEGIN( TA_CategoryTableAlloc );
 
    stringTable = TA_Malloc( sizeof(TA_StringTable) );
 
@@ -706,7 +710,7 @@ TA_RetCode TA_CategoryTableAlloc( TA_UDBase *unifiedDatabase,
 
    if( retCode != TA_SUCCESS )
    {
-      stringTableFree( stringTable );
+      stringTableFree( stringTable, 0 );
       TA_TRACE_RETURN( retCode );
    }
    #endif
@@ -722,7 +726,7 @@ TA_RetCode TA_CategoryTableAlloc( TA_UDBase *unifiedDatabase,
 
       if( stringTable->string == NULL )
       {
-         stringTableFree( stringTable );
+         stringTableFree( stringTable, 0 );
          finalRetCode = TA_ALLOC_ERR;
       }
       else
@@ -743,7 +747,7 @@ TA_RetCode TA_CategoryTableAlloc( TA_UDBase *unifiedDatabase,
 
    if( retCode != TA_SUCCESS )
    {
-      stringTableFree( stringTable );
+      stringTableFree( stringTable, 0 );
       TA_TRACE_RETURN( retCode );
    }
    #endif
@@ -751,7 +755,7 @@ TA_RetCode TA_CategoryTableAlloc( TA_UDBase *unifiedDatabase,
    /* Check if an error occured in the critical section. */
    if( finalRetCode != TA_SUCCESS )
    {
-      stringTableFree( stringTable );
+      stringTableFree( stringTable, 0 );
       TA_TRACE_RETURN( finalRetCode );
    }
 
@@ -759,7 +763,7 @@ TA_RetCode TA_CategoryTableAlloc( TA_UDBase *unifiedDatabase,
    hiddenData = TA_Malloc( sizeof(TA_CategoryTableHiddenData) );
    if( !hiddenData )
    {
-      stringTableFree( stringTable );
+      stringTableFree( stringTable, 0 );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
    hiddenData->privUDB = privUDB;
@@ -799,10 +803,10 @@ TA_RetCode TA_CategoryTableFree( TA_StringTable *table )
 
    /* Free the hidden data. */
    memset( hiddenData, 0, sizeof( TA_CategoryTableHiddenData ) );
-   TA_Free(  hiddenData );
+   TA_Free( hiddenData );
    
    /* Free the strings. */
-   retCode = stringTableFree( table );
+   retCode = stringTableFree( table, 0 );
 
    TA_TRACE_RETURN( retCode );
 }
@@ -862,7 +866,7 @@ TA_RetCode TA_SymbolTableAlloc( TA_UDBase *unifiedDatabase,
 
    if( retCode != TA_SUCCESS )
    {
-      stringTableFree( stringTable );
+      stringTableFree( stringTable, 0 );
       TA_TRACE_RETURN( retCode );
    }
    #endif
@@ -875,7 +879,7 @@ TA_RetCode TA_SymbolTableAlloc( TA_UDBase *unifiedDatabase,
       #if !defined( TA_SINGLE_THREAD )
          TA_SemaPost( &privUDB->sema );
       #endif
-      stringTableFree( stringTable );
+      stringTableFree( stringTable, 0 );
       TA_TRACE_RETURN( TA_CATEGORY_NOT_FOUND );
    }
 
@@ -893,7 +897,7 @@ TA_RetCode TA_SymbolTableAlloc( TA_UDBase *unifiedDatabase,
          #if !defined( TA_SINGLE_THREAD )
             TA_SemaPost( &privUDB->sema );
          #endif
-         stringTableFree( stringTable );
+         stringTableFree( stringTable, 0 );
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
 
@@ -912,7 +916,7 @@ TA_RetCode TA_SymbolTableAlloc( TA_UDBase *unifiedDatabase,
 
    if( retCode != TA_SUCCESS )
    {
-      stringTableFree( stringTable );
+      stringTableFree( stringTable, 0 );
       TA_TRACE_RETURN( retCode );
    }
    #endif
@@ -921,7 +925,7 @@ TA_RetCode TA_SymbolTableAlloc( TA_UDBase *unifiedDatabase,
    hiddenData = TA_Malloc( sizeof(TA_SymbolTableHiddenData) );
    if( !hiddenData )
    {
-      stringTableFree( stringTable );
+      stringTableFree( stringTable, 0 );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
    hiddenData->privUDB = privUDB;
@@ -963,7 +967,7 @@ TA_RetCode TA_SymbolTableFree( TA_StringTable *table )
    memset( hiddenData, 0, sizeof( TA_SymbolTableHiddenData ) );
    TA_Free(  hiddenData );
 
-   retCode = stringTableFree( table );
+   retCode = stringTableFree( table, 0 );
 
    TA_TRACE_RETURN( retCode );
 }
@@ -1057,6 +1061,37 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
       TA_TRACE_RETURN( TA_BAD_PARAM );
    }
 
+   /* Cover for a common potential error (passing -1 as
+    * a default parameter!?).
+    */
+   if( start == (TA_Timestamp *)-1 )
+      start = (TA_Timestamp *)0;
+   if( end == (TA_Timestamp *)-1 )
+      end = (TA_Timestamp *)0;
+
+   /* Verify validity of start/end */
+   if( start )
+   {
+      if( period >= TA_DAILY )
+         retCode = TA_TimestampValidateYMD( start );
+      else
+         retCode = TA_TimestampValidate( start );
+   
+      if( retCode != TA_SUCCESS )
+         TA_TRACE_RETURN( TA_BAD_START_DATE );
+   }
+
+   if( end )
+   {
+      if( period >= TA_DAILY )
+         retCode = TA_TimestampValidateYMD( end );
+      else
+         retCode = TA_TimestampValidate( end );
+
+      if( retCode != TA_SUCCESS )
+         TA_TRACE_RETURN( TA_BAD_END_DATE );
+   }
+
    *history = NULL;
 
    /* Handle special case where there is not even one data source added. */
@@ -1120,14 +1155,20 @@ TA_RetCode TA_HistoryFree( TA_History *history )
    TA_TRACE_BEGIN( TA_HistoryFree );
 
    if( !history || !history->hiddenData )       
-      return TA_BAD_PARAM;
+      TA_TRACE_RETURN(TA_BAD_PARAM);
 
-   hiddenData = (TA_HistoryHiddenData *)history->hiddenData;      
+   hiddenData = (TA_HistoryHiddenData *)history->hiddenData;
+   TA_ASSERT( hiddenData != NULL );
+
+   /* This pointer does not need to be freed, but it is suppose
+    * to be always set. If not, somehting is wrong in the logic.
+    */
    privUDB = (TA_UDBasePriv *)hiddenData->privUDB;
    if( !privUDB )
-      return TA_INTERNAL_ERROR(29);
-   
+      TA_TRACE_RETURN(TA_INTERNAL_ERROR(29));
+
    /* Free all ressources. */
+   
    FREE_IF_NOT_NULL( hiddenData->timestamp );
    FREE_IF_NOT_NULL( hiddenData->close );
    FREE_IF_NOT_NULL( hiddenData->open );
@@ -1135,6 +1176,32 @@ TA_RetCode TA_HistoryFree( TA_History *history )
    FREE_IF_NOT_NULL( hiddenData->low );
    FREE_IF_NOT_NULL( hiddenData->volume );
    FREE_IF_NOT_NULL( hiddenData->openInterest );
+
+   #if 0
+   /* When the hiddenData pointer are set, free with these pointers
+    * instead of the one at the top level in TA_History.
+    */
+   #define FREE_DATA_ARRAY(field) { \
+       if( hiddenData->field ) \
+       { \
+          TA_Free(hiddenData->field); hiddenData->field=NULL; history->field=NULL; \
+       } \
+       else if( history->field ) \
+       { \
+          TA_Free(history->field); history->field=NULL; \
+       } \
+   }
+   FREE_DATA_ARRAY( timestamp );
+   FREE_DATA_ARRAY( close );
+   FREE_DATA_ARRAY( open );
+   FREE_DATA_ARRAY( high );
+   FREE_DATA_ARRAY( low );
+   FREE_DATA_ARRAY( volume );
+   FREE_DATA_ARRAY( openInterest );
+   #undef FREE_DATA_ARRAY
+   #endif
+
+   stringTableFree( &history->listOfSource, 1 );
    TA_Free( (void *)hiddenData );
    TA_Free( (void *)history );
 
@@ -1146,7 +1213,7 @@ int TA_HistoryEqual( const TA_History *history1, const TA_History *history2 )
    unsigned int i;
 
    /* Return 1 if the content of both history is
-    * identical or if both history poitner are NULL.
+    * identical or if both history pointer are NULL.
     */
    if( !history1 && !history2 )
       return 1;
@@ -1232,7 +1299,7 @@ TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDataSourc
             dst->y = NULL; \
       } 
 
-   /* Same as do but provide a default if not specified by the user. */
+   /* Same as DO but provide a default if not specified by the user. */
    #define DO_DFLT(func,y,dflt) \
       { \
          if( param->y ) \
@@ -1247,7 +1314,7 @@ TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDataSourc
       }
 
       DO( TA_StringAlloc,     location );
-      DO( TA_StringAlloc,     info     ); /* !!! Trim needed? Trim will corrupt SQL query! */
+      DO( TA_StringAlloc,     info     );
       DO( TA_StringAlloc,     username );
       DO( TA_StringAlloc,     password );
       DO( TA_StringAlloc,     symbol   );
@@ -1256,6 +1323,7 @@ TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDataSourc
       DO_DFLT( TA_StringAlloc, country,  TA_DEFAULT_CATEGORY_COUNTRY  );
       DO_DFLT( TA_StringAlloc, exchange, TA_DEFAULT_CATEGORY_EXCHANGE );
       DO_DFLT( TA_StringAlloc, type,     TA_DEFAULT_CATEGORY_TYPE     );
+      DO_DFLT( TA_StringAlloc, name,     TA_gDataSourceTable[param->id].defaultName );
    #undef DO
    #undef DO_FLT
 
@@ -1285,6 +1353,7 @@ TA_RetCode TA_AddDataSourceParamPrivFree( TA_AddDataSourceParamPriv *toBeFreed )
          DO( exchange );
          DO( type     );
          DO( symbol   );
+         DO( name     );
       #undef DO
 
       TA_Free( toBeFreed );
@@ -1521,13 +1590,13 @@ static TA_UDB_Symbol *addSymbol( TA_UDBasePriv *privUDB,
    return data;
 }
 
-static TA_RetCode stringTableFree( TA_StringTable *table )
+static TA_RetCode stringTableFree( TA_StringTable *table, unsigned int freeInternalStringOnly )
 {
    TA_PROLOG
    unsigned int size;
    TA_StringCache *stringCache;
 
-   TA_TRACE_BEGIN(  stringTableFree );
+   TA_TRACE_BEGIN( stringTableFree );
 
    if( table == NULL )
    {
@@ -1548,10 +1617,11 @@ static TA_RetCode stringTableFree( TA_StringTable *table )
          size--;
       }
 
-      TA_Free(  (void *)table->string );
+      TA_Free( (void *)table->string );
    }
 
-   TA_Free(  table );
+   if( !freeInternalStringOnly )
+      TA_Free( table );
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -1741,7 +1811,7 @@ static TA_RetCode freeUDBDriverArray( void *toBeFreed )
 static TA_RetCode freeCategoryHandle( void *toBeFreed )
 {
    if( toBeFreed )
-      TA_Free(  (TA_CategoryHandle *)toBeFreed );
+      TA_Free( (TA_CategoryHandle *)toBeFreed );
 
    return TA_SUCCESS;
 }
@@ -1819,8 +1889,8 @@ static TA_RetCode TA_DataGlobalShutdown( void *globalAllocated )
    if( retCode != TA_SUCCESS )
       finalRetCode = retCode;
 
-   TA_Free(  global->dataSourceInitFlag );
-   TA_Free(  globalAllocated );
+   TA_Free( global->dataSourceInitFlag );
+   TA_Free( globalAllocated );
 
    return finalRetCode;
 }
@@ -1854,7 +1924,7 @@ static TA_RetCode TA_DataGlobalInit( void **globalToAlloc )
    global->dataSourceInitFlag = (unsigned char *)TA_Malloc( TA_gDataSourceTableSize * sizeof( unsigned char) );
    if( !global->dataSourceInitFlag )
    {
-      TA_Free(  global );
+      TA_Free( global );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
@@ -1864,8 +1934,8 @@ static TA_RetCode TA_DataGlobalInit( void **globalToAlloc )
    global->listUDBase = TA_ListAlloc( );
    if( !global->listUDBase )
    {
-      TA_Free(  global->dataSourceInitFlag );
-      TA_Free(  global );
+      TA_Free( global->dataSourceInitFlag );
+      TA_Free( global );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
@@ -1874,8 +1944,8 @@ static TA_RetCode TA_DataGlobalInit( void **globalToAlloc )
       if( retCode != TA_SUCCESS )
       {
          TA_ListFree( global->listUDBase );
-         TA_Free(  global->dataSourceInitFlag );
-         TA_Free(  global );
+         TA_Free( global->dataSourceInitFlag );
+         TA_Free( global );
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
    #endif
