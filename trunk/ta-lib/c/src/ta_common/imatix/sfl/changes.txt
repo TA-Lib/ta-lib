@@ -1,0 +1,646 @@
+Changes To Standard Function Library
+'*' marks changes that potentially affect existing client code.
+
+12 Apr 1999
+    SFLDIR
+      * resolve_path() now returns a dynamically-allocated string.
+      * locate_path() now returns a dynamically-allocated string.
+      
+02 Nov 1998
+    SFLTREE
+      - bug in tree handling was fixed.  :)
+
+15 Jun 1998
+    SFLSTR
+      - xstrcpy now permits memory leak debugging through xstrcpy_debug()
+        macro
+
+01 Jun 1998
+    SFLFILE
+      - new function, file_concat().
+
+31 May 1998
+    SFLLANG
+      - new function, timestamp_string().
+
+01 May 1998
+    SFLSTR
+    SFLHTTP
+      - various new functions provided by Scott Beasly
+
+06 Apr 1998
+    SFLXML
+      - new library function that handles XML files
+    SFLMAIL
+      - new library function to send emails (uses sflcbox for now)
+    SFLCBOX
+      - temporary home for various functions used by sflmail.
+
+27 Mar 1998
+    Various
+      - tightened-up use of vsprintf to use vsnprintf where possible
+
+21 Mar 1998
+    SFLTOK
+      - tok_subst () handles symbol substitution
+    SFLINI
+      - ini_dyn_load () calls tok_subst() for all value strings
+
+12 Mar 1998
+    SFLSOCK
+      - connects are now non-blocking unless BLOCKING_CONNECT is defined.
+
+11 Feb 1998
+    SFLCONS
+      - New function, coputc().
+
+26 Dec 1997
+    SFLSOCK
+      - New functions to access DNS information: get_host_file(),
+        get_name_server().
+    SFLEXDR
+      - EXDR format extended to handle 'huge' memory blocks (32-bit size)
+
+26 Nov 1997
+    SFLTREE
+      - New source module handles red-black trees.
+
+09 Nov 1997
+    SFLPROC
+    SFLFILE
+      - OS/2 process support rewritten
+    SFLFILE
+      - new function: strip_file_name()
+
+22 Oct 1997
+    SFLMEM
+      - mem_assert now writes to memtrace.lst instead of stderr.
+
+02 Oct 1997
+    SFLSTR
+      - new function, lexwcmp() does wildcarded lexical comparisons.
+
+29 Sep 1997
+    SFLSOCK
+      - ip_passive allows passive sockets to be created on specific IP
+        address.
+    SFLPROC
+      - Executable scripts starting with #! can now contain arguments
+        after the filename.
+    SFLFIND
+      - txtfind looped if search string contain accented characters.
+
+10 Sep 1997
+    SFLSOCK
+      - get_hostaddr, get_hostaddrs return addresses in network order
+      - new function, get_hostaddrs() returns all host IP address
+      * get_host_name() renamed to get_hostname() for consistency
+
+----------- Released version 1.70
+
+24 Aug 1997
+    SFLSOCK
+      - socket_is_permitted() now accepts a multi-pattern mask
+
+22 Aug 1997
+    PRELUDE.H
+      - Bool changed from int to short int, to match sflexdr.
+
+21 Aug 1997
+    SFLSOCK
+      - passive_TCP() accepts a service "0", if ip_portbase is > 0.
+
+18 Aug 1997
+    SFLFILE
+      - get_file_size() returns -1 on error conditions.
+
+15 Aug 1997
+    SFLINI
+      - ini_dyn_save() did not handle files with no headers.
+
+06 Aug 1997
+    SFLCVSD
+      - Did not reject dates containing only letters
+
+03 Aug 1997
+    SFLFILE
+      - New function: file_lines ()
+
+02 Aug 1997
+    SFLINI
+      - When loading ini file, any line starting with '!' is passed to
+        trace(); this is meant to help debug complex config setups.
+
+23 Jul 1997
+    SFLHTTP
+      - New functions: http_encode_meta() and http_decode_meta()
+
+07 Jul 1997
+    SFLSTR
+      - New function: strprefixed()
+    SFLFILE
+      - file_has_changed() did not work correctly.
+    SFLSYMB
+      - New function: sym_empty_table()
+    SFLINI
+      - New function: ini_dyn_refresh()
+
+06 Jul 1997
+    SFLSTR
+      - New function: strunique()
+
+29 Jun 1997
+    SFLPROC
+      - process_create() failed if workdir was specified, and executable
+        had a relative filename (e.g. ./myfile).
+    SFLSOCK
+      - new function, get_hostaddr() returns first host IP address
+
+22 Jun 1997
+    SFLSYMB
+      * sym_delete_symbol() no longer frees 'data' pointer; this was too
+        dangerous.
+    SFLMEM
+      - error messages sent to sflcons console instead of stderr
+      - if mem_display() argument is NULL, sends to console
+
+20 June 1997
+    SFLSYST
+      - sys_name() reports name of platform.
+
+----------- Released version 1.60
+
+18 Jun 1997
+    SFLFILE
+      - file_slurp() loads an entire file into memory. (Thanks, Larry)
+
+16 Jun 1997
+    SFLSOCK
+      - new function, socket_is_permitted() compares IP address with mask
+
+13 Jun 1997
+    SFLEXDR
+      - exdr_write() failed if "c" or "b" format was used with NULL buffer
+    SFLFILE
+      - minor improvements to file_where()
+    SFLSTR
+      - strhash() had a fatal error which caused it to loop indefinitely.
+
+11 Jun 1997
+    SFLSTR
+      - new function, strdefix() matches prefix in string.
+    SFLSOCK
+      - new function, socket_nodelay() disables Nagle's algorithm
+      - connect_error_value always reset to IP_NOERROR if success
+
+09 Jun 1997
+    SFLINI
+      - ini_dyn_load() searches PATH for its input files.
+
+04 Jun 1997
+    SFLLANG
+      - started work on this new multilanguage facility.
+
+02 Jun 1997
+    SFLPROC
+      - no longer truncates stdout file; must be done by calling process.
+    SFLSOCK
+      - minor corrections
+      - socket_hostaddr() renamed to socket_remoteaddr(); old name still
+        supported through a macro
+      - socket_localaddr() added as new function
+    SFLFILE
+      - is_directory() correctly handles "c:" under MS-DOS/OS2/Windows
+
+----------- Released version 1.50, again...
+
+25 May 1997
+    SFLDATE
+      - date_to_timer() now adjusts for timezone
+
+22 May 1997
+    SFLCONS: new module
+    SFLDATE
+      - corrected handling of year for post-2000 dates
+    SFLDIR
+      - corrected handling of year for post-2000 dates
+    SFLTRON
+      - corrected handling of year for post-2000 dates
+
+18 May 1997
+    SFLEXDR
+      - corrected possible memory corruption in exdr_read(), which sometimes
+        allocated block of zero bytes.
+
+16 May 1997
+    SFLMEM
+      - mem_scavenger() function added
+      - tracing now uses sfltron functions
+      - mem_alloc() handles allocation of zero bytes better
+    * - mem_strfree() returns void
+
+15 May 1997
+    SFLMEM
+      - added mem_checkall() function and macro; checks all allocated blocks
+
+14 May 1997
+    SFLINI
+      - recognises name="" as empty value, as documented.
+
+13 May 1997
+    SFLMEM
+      - Added mem_descr() function: allocates a new DESCR block.
+    SFLINI
+      - ini_dyn_load() also loads section names into symbol table.
+      - ini_dyn_value() slightly improved.
+
+11 May 1997
+    SFLFILE
+      - file_is_readable(), file_is_writable(), file_is_directory() will
+        accept a filename ending in '/' or '\'.
+
+10 May 1997
+    SFLPROC
+      - process_alarm() improved under Windows; ensures only one timer is
+        active at once.  Otherwise timers can pile-up, and finally fail.
+
+09 May 1997
+    SFLSOCK
+      - New function sock_select() implements select() call
+    SFLDATE
+      - Under Win32, get_time() resolution improved from 1s to 1/100s
+
+08 May 1997
+    SFLDATE
+      - added date_is_past(), date_is_present() functions
+
+05 May 1997
+    SFLSOCK
+      - address_end_point() and connection functions now use ip_portbase.
+
+04 May 1997
+    PRELUDE.H
+      - environ was wrongly defined as **environ[] (should be *environ[]).
+    SFLDIR
+      - resolve_path() improved to handle '...' and such.
+
+02 May 1997
+    SFLEXDR
+      - Recorrected change of 16 Feb. which had somehow gotten lost.
+        All stacked arguments are assumed to be at least an 'int' big.
+
+----------- Released version 1.50
+
+27 Apr 1997
+    SFLFILE, SFLPROC
+      - Space optional after #! header in executable scripts.
+
+25 Apr 1997
+    SFLPROC
+      - process_timer() now works in 16-bit Windows programs.
+
+22 Apr 1997
+    SFLPROC
+      - process_create() support for 16-bit programs under 32-bit Windows
+      - process_esc(), process_unesc() support directory names with spaces
+    SFLFILE
+      - New function: file_exec_name()
+
+20 Apr 1997
+    SFLCVNS
+      - conv_number_string() accepts "" as zero value.
+      - flags argument type changed from 'int' to 'word'
+    SFLCVSN
+      - flags argument type changed from 'int' to 'word'
+    SFLCVDS
+      - flags argument type changed from 'int' to 'word'
+    SFLCVSD
+      - flags argument type changed from 'int' to 'word'
+    SFLCVTS
+      - flags argument type changed from 'int' to 'word'
+
+15 Apr 1997
+    SFLDIR
+      - file_matches() added
+    SFLFILE
+      - file_rename(), file_delete() added
+    SFLDATE
+      - future_date() and past_date() accept zero date/time meaning NOW.
+      - bug in timer_to_date() returned incorrect month - fixed.
+
+13 Apr 1997
+    SFLCVSD
+      - conv_string_date() corrected to handle empty dates.
+    SFLSYST
+      - New module: sflsyst.c contains assertion code.
+      - Assertion logic in prelude.h changed a little.
+    SFLFILE
+      - Fixed some problems in file_where().
+
+08 Apr 1997
+    SFLFILE
+      - default_extension() and fixed_extension() return char * instead of int.
+      - file_is_executable() no longer returns TRUE for directories.
+      - file_is_program() searches path for executable program.
+
+07 Apr 1997
+    SFLPROC
+      - process_create() no longer truncates stdout/stderr files..
+
+04 Apr 1997
+    SFLSTR
+      - Added soundexn() function.
+
+01 Apr 1997
+    SFLSYMB
+      - Added sym_sort_table() function.
+
+31 Mar 1997
+    SFLFILE
+      - Fixed error in file_where() which prefixed current directory when
+        locating file.
+
+----------- Released version 1.45
+
+20 Mar 1997
+    SFLFILE
+      - file_where() returns complete pathname for file on input.
+
+18 Mar 1997
+    SFLSOCK
+      - does not reuse server socket addresses under Windows
+
+16 Mar 1997
+    SFLDIR
+      - added get_curdir() and set_curdir () functions.
+
+15 Mar 1997
+    SFLPROC
+      - added process_alarm() function, also for Windows (requires MM)
+      - uses #pragma to include WINMM.LIB automatically
+    SFLSOCK
+      - uses #pragma to include WSOCK32.LIB automatically
+
+14 Mar 1997
+    SFLFILE
+      * file_cycle() extended to do conditional file cycling.
+      - file_cycle_needed () added as new function.
+    SFLCOMP
+      - Fixed bus error problems.
+    SFLINI
+      - ini_dyn_load() and ini_dyn_save() to manage ini files as symbol tables.
+      - ini_dyn_value() to get value of keyword in section as string.
+      - ini_dyn_values() to get value of keyword in section as strt.
+    SFLSYMB
+      - sym_delete_table() allowed on null argument.
+
+13 Mar 1997
+    SFLMEM
+      - tag_error no longer dumps all allocated memory blocks (too verbose).
+    SFLSTR
+      - xstrcpy now allocates a destination buffer if necessary.
+
+12 Mar 1997
+      - SFL functions use 'const' for all constant pointers.
+
+11 Mar 1997
+   *SFLSOCK
+      - init_sockets, term_sockets macros removed.
+    SFLFILE
+      - file_open() calls safe_to_extend for append mode.
+
+08 Mar 1997
+    SFLMEM
+      - New functions, mem_commit() and mem_rollback.
+   *SFLEXDR
+      - exdr_read() returns 0 if okay, -1 if error.
+
+05 Mar 1997
+    SFLFILE
+      - file_is_executable() opens file and looks for #!<space> under
+        WinDOS, OS/2.
+    SFLPROC
+      - process_create adds interpreter name (#! xx) under WinDOS, OS/2
+    SFLTOK
+      - tok_push() function added.
+
+24 Feb 1997
+    SFLPROC, SFLSOCK, PRELUDE, c
+      - Changes for SCO UnixWare and SCO OpenServer R5
+
+18 Feb 1997
+    SFLFIND
+      - Fixed a bug in txtfind(): comparisons did not always work.
+
+----------- Released version 1.42
+
+16 Feb 1997
+    SFLEXDR
+      - Corrected error in sflexdr.c which caused problems on some UNIX
+        systems (much thanks to John Klassa.)
+
+10 Feb 1997
+    SFLSOCK
+      - Listener sockets did not use SO_REUSEADDR correctly; fixed.
+
+20 Jan 1997
+    SFLSYMB
+      - symb2strt(), strs2symb(), symb2descr(), descr2symb() return NULL if
+        input argument is null.
+    SFLENV
+      * symb2env() converts variable names to uppercase, replaces non-
+        alphanumerics by underlines.
+    SFLHTTP
+      * cgi_query_to_symb() renamed cgi_parse_query_vars(), new arguments.
+      * file_cgi_query_to_symb() renamed cgi_parse_file_vars(), new args.
+      - http_query2strt(), http_query2symb(), http_query2descr() functions
+        added.
+
+19 Jan 1997
+    SFLSTR
+      * strescape(), strunescape() removed from this file.
+    SFLHTTP
+      * sflcgi renamed to sflhttp, for general HTTP+CGI functions.
+      * http_escape(), http_escape_size(), http_unescape() functions added.
+    SFLFIND
+      - added txtfind() that does case-insensitive search.
+
+06 Jan 1997
+    SFLDIR
+      - Added resolve_path() function.
+
+02 Jan 1997
+    Various
+      - Ewen McNeill started port of SFL to OS/2.  Main changes in SFLDIR,
+        SFLSOCK, SFLPROC.
+
+13 Dec 1996
+    SFLFILE
+      - New function, file_cycle(), mainly for log files.
+
+23 Nov 1996
+    SFLSERV:
+      * server_init() is gone, replaced by process_server() in SFLPROC.
+
+13 Nov 1996:
+    SFLSOCK:
+      * SOCKET renamed to sock_t; all sflsock functions use sock_t as
+        the type of a socket handle.  This change was provoked by 16-bit
+        Windows, which defines SOCKET as a 16-bit value... :-(
+
+11 Nov 1996
+    SFLFILE:
+      - file_is_executable() checks for MS-DOS executable files.
+
+26 Oct 1996:
+    SFLSTR:
+      - New function strt2desc() converts array of strings to DESCR block.
+      - New function desc2strt() converts DESCR block to array of strings.
+      - New function strtfree() frees memory used by a string table.
+    SFLSYMB:
+      - New function sym_tables_merge() merges two symbol tables.
+      - New function sym2strt() converts symbol table to array of strings.
+      - New function strt2sym() converts array of strings to symbol table.
+      - New function sym2descr() converts symbol table to DESCR block.
+      - New function descr2sym() converts DESCR block to symbol table.
+    SFLENV:
+      - New function env2desc() converts environment to a DESCR block.
+      - New function env2symb() converts environment to symbol table.
+      - New function desc2env() converts a DESCR block to environment.
+        -- identical to desc2strt().
+      - New function symb2env() converts symbol table to environment.
+        -- identical to symb2strt().
+    SFLPROC:
+      - process_create() correctly handles environment under Windows.
+
+25 Oct 1996
+    SFLINI:
+      - Accepts # as well as ; as comment indicator in .ini file lines.
+
+23 Oct 1996
+    SFLPROC:
+      * process_create() will call execve() under UNIX to pass exactly the
+        specified environment block if supplied.  Otherwise (if the envv
+        argument is null) it calls execvp() and passes the parent environment.
+
+15 Oct 1996:
+    SFLPROC:
+      * process_create() returns 0 instead of -1 in case of an error.
+        This is for compatability between various systems.
+
+08 Oct 1996
+    SFLPROC:
+      - Added code to create processes under Windows 95 and NT.
+      - New function, process_close(), should be called when a process
+        has finished normally, unless wait is specified during create.
+
+06 Oct 1996
+    SFLSLOT:
+      - Corrected erroneous assertion in day_slot_filled().
+
+    SFLPROC:
+      - process_create uses a global variable, process_delay, to control
+        its sleep time when creating a child process.  If this is 0, it
+        will not sleep at all.  Its default value is 1000.
+
+30 Sep 1996
+    SFLSLOT:
+      * Range arguments all changed to byte *.
+
+12 Sep 1996
+    SFLFILE:
+      - New function; file_locate(), combines file_where() and file_open()
+        for reading files.
+
+    SFLPROC:
+      - Another new function: process_status() to return status of child
+        process, running / stopped / interrupted.
+
+10 Sep 1996
+
+    SFLTOK:
+      - New functions to break strings into tokens (words): tok_split()
+        returns an array of words for a string; tok_free() frees such an
+        array.
+
+    SFLSOCK:
+      - New function socket_error() returns the last error on a socket,
+        then clears the error status.  Use this if you need to get the
+        status of an asynchronous socket, for instance after a select().
+
+    SFLPROC:
+      - New functions to manage processes: process_create() creates a
+        child process with a specific controlling terminal.  process_kill()
+        kills a specified process.
+
+    c
+      - C command automatically inserts object into library if possible.
+
+08 Sep 1996
+
+    SFLINI:
+      - corrected error in ini_find_section() which would find the wrong
+        section in an .ini file.
+
+    SFLEXDR:
+      - exdr_write() accepts a null buffer address; this then calculates
+        the final size without storing anything.
+
+      * exdr_sizeof() has been killed, since the above call now does the
+        same, and there is therefore less code to maintain.
+
+      - exdr_writed() accepts a DESCR address instead of a plain buffer;
+        the DESCR is length-specified, so if the buffer is too short, you
+        get a nice abort instead of a memory overwrite.
+
+      - exdr_read() accepts NULL as an argument address, meaning 'skip
+        this argument'.  Useful to extract selected fields from a message.
+
+24 Aug 1996
+
+    SFLEXDR:
+      - exdr_write() accepts NULL strings (stores as empty) and null
+        memory descriptors (0, NULL).
+
+    SFLSOCK:
+      - build_sockaddr() builds a socket address structure from binary
+        host and port numbers.
+
+      - connect_socket() accepts an empty string for the service argument,
+        equivalently as NULL, to mean: use the sockaddr_in argument for
+        the connect address.
+
+22 Aug 1996
+
+    SFLEXDR:
+      - exdr_sizeof() lets you precalculate the size of a message
+
+21 Aug 1996
+
+    SFLSOCK:
+    * - connect_socket() has an extra argument, a struct sockaddr_in; if
+        you supply this you connect without translating the host name and
+        service.
+
+        => Change all calls to connect_socket(); add NULL 4th argument.
+
+      - get_peer_info() will return the sockaddr_in for a connected socket.
+
+      - address_end_point() -- and all connect_ calls -- translated a host
+        name specified as a dotted number.  Previously this did not work.
+
+    SFLDIR:
+    * - format_dir() has an extra argument to control addition of special
+        characters such as '/' and '*' against file names.
+
+        => Change all calls to format_dir(); add TRUE 2nd argument.
+
+    SFLEXDR:
+      - fixed error in exdr_read().
+
+19 Aug 1996
+
+    SFLSOCK:
+      - connect_to_peer() lets you connect a socket to a specified address.
+        If you combine create_socket() and connect_to_peer() you get much
+        the same as connect_socket() specified with a struct sockaddr_in.

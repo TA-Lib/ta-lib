@@ -1,0 +1,2022 @@
+/* TA-LIB Copyright (c) 1999-2000, Mario Fortier
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are permitted provided that the following
+ * conditions are met:
+ *
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in
+ *   the documentation and/or other materials provided with the
+ *   distribution.
+ *
+ * - Neither name of author nor the names of its contributors
+ *   may be used to endorse or promote products derived from this
+ *   software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * REGENTS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* List of contributors:
+ *
+ *  Initial  Name/description
+ *  -------------------------------------------------------------------
+ *  MF       Mario Fortier
+ *
+ *
+ * Change history:
+ *
+ *  MMDDYY BY      Description
+ *  -------------------------------------------------------------------
+ *  110199 MF      First version.
+ */
+
+/* Decription:
+ *    Provides all the user entry point for the "unified database".
+ */
+
+/**** Headers ****/
+#include <string.h>
+#include "ta_data.h"
+#include "ta_memory.h"
+#include "ta_trace.h"
+#include "ta_data_udb.h"
+#include "ta_global.h"
+#include "ta_magic_nb.h"
+#include "ta_history.h"
+#include "ta_adddatasourceparam_priv.h"
+
+/**** External functions declarations. ****/
+/* None */
+
+/**** External variables declarations. ****/
+/* None */
+
+/**** Global variables definitions.    ****/
+/* None */
+
+/**** Local declarations.              ****/
+
+/* The hidden data put in a TA_CategoryTable. */
+typedef struct
+{
+   unsigned int magicNb;
+   TA_UDBasePriv *privUDB;
+} TA_CategoryTableHiddenData;
+
+/* The hidden data put in a TA_SymbolTable. */
+typedef struct
+{
+   unsigned int magicNb;
+   TA_UDBasePriv *privUDB;
+} TA_SymbolTableHiddenData;
+
+typedef struct
+{
+   /* One copy of this structure exist for each added data source. */
+
+   /* Keep a copy of the parameters who were used
+    * to initialize this data source.
+    */
+   TA_AddDataSourceParamPriv *param;
+
+   /* Initialize by the data source driver. */
+   TA_DataSourceHandle *sourceHandle;
+
+   /* This list is just a "container" for efficient allocation purpose. The
+    * elements are used directly from the TA_DriverHandle->categoryHandle
+    * pointer, but are owned here.
+    */
+   TA_List *listCategoryHandle;
+
+   /* Allocation Strategy: This structure owns all its sub-elements. */
+} TA_DataSource;
+
+/* The following are for managing the global variables. */
+static TA_RetCode TA_DataGlobalInit    ( TA_Libc *libHandle, void **globalToAlloc );
+static TA_RetCode TA_DataGlobalShutdown( TA_Libc *libHandle, void *globalAllocated );
+
+const TA_GlobalControl TA_DataGlobalControl =
+{
+   TA_DATA_GLOBAL_ID,
+   TA_DataGlobalInit,
+   TA_DataGlobalShutdown
+};
+
+typedef struct
+{
+  #if !defined( TA_SINGLE_THREAD )
+  TA_Sema sema; /* To protect this structure integrity. */
+  #endif
+
+  /* Keep track of which data source has been initialized. */
+  unsigned char *dataSourceInitFlag;
+
+  /* Keep track of the allocated unified database. */
+  TA_List *listUDBase; /* List of TA_UDBasePriv. */
+} TA_DataGlobal;
+
+/**** Local functions declarations.    ****/
+static TA_DataSource *allocDataSourceForGlobal( TA_UDBasePriv *privUDB,
+                                                TA_AddDataSourceParamPriv *param,
+                                                TA_DataSourceHandle *sourceHandle,
+                                                TA_List *listCategoryHandle );
+
+static TA_UDB_Category *addCategory( TA_UDBasePriv *privUDB, TA_String *string );
+static TA_UDB_Symbol *addSymbol( TA_UDBasePriv *privUDB,
+                                 TA_Dict *dictUDBSymbol,
+                                 TA_UDB_Driver *driverHandle,
+                                 TA_DataSourceHandle *sourceHandle,
+                                 TA_CategoryHandle *categoryHandle,
+                                 TA_SymbolHandle *symbolHandle );
+static TA_RetCode stringTableFree( TA_Libc *libHandle, TA_StringTable *table );
+
+static TA_RetCode closeAllDataSource( TA_UDBasePriv *privUDB );
+
+static TA_RetCode closeAllUDBase( TA_DataGlobal *global );
+static TA_RetCode shutdownAllSourceDriver( TA_Libc *libHandle,
+                                           TA_DataGlobal *global );
+
+static void freeSymbolData( TA_Libc *libHandle, void *toBeFreed );
+static void freeCategoryData( TA_Libc *libHandle, void *toBeFreed );
+
+static TA_RetCode processCategoryAndSymbols( TA_UDBasePriv *privUDB,
+                                             const TA_DataSourceDriver *driver,
+                                             TA_SourceId format,
+                                             TA_DataSourceHandle *sourceHandle,
+                                             TA_CategoryHandle   *categoryHandle );
+
+/* Mechanism for easily deleting lists. */
+static TA_RetCode freeListAndElement( TA_Libc *libHandle,
+                                      TA_List *list,
+                                      TA_RetCode (*freeFunc)( TA_Libc *libHandle, void *toBeFreed ));
+
+static TA_RetCode freeUDBDriverArray( TA_Libc *libHandle, void *toBeFreed );
+static TA_RetCode freeCategoryHandle( TA_Libc *libHandle, void *toBeFreed );
+
+/**** Local variables definitions.     ****/
+TA_FILE_INFO;
+
+/**** Global functions definitions.   ****/
+TA_RetCode TA_UDBaseAlloc( TA_Libc *libHandle, TA_UDBase **newUDBase )
+{
+   TA_PROLOG;
+   TA_RetCode retCode;
+   TA_RetCode finalRetCode;
+   TA_DataGlobal *global;
+   TA_UDBasePriv *privUDB;
+   TA_StringCache *stringCache;
+   TA_String *string;
+
+   TA_TRACE_BEGIN(libHandle,TA_UDBaseAlloc);
+
+   /* Verify parameters. */
+   if( !libHandle || !newUDBase )
+   {
+      TA_TRACE_RETURN( TA_BAD_PARAM );
+   }
+
+   *newUDBase = NULL;
+
+   /* Get the pointer on the global variables. */
+   retCode = TA_GetGlobal( libHandle, &TA_DataGlobalControl, (void *)&global );
+   if( retCode != TA_SUCCESS )
+   {
+      TA_TRACE_RETURN( retCode );
+   }
+
+   /* Alloc the hidden implementation of a TA_UDBase */
+   privUDB = (TA_UDBasePriv *) TA_Malloc(libHandle, sizeof( TA_UDBasePriv ));
+
+   if( !privUDB )
+   {
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   memset( privUDB, 0, sizeof( TA_UDBasePriv ) );
+   privUDB->magicNb   = TA_UDBASE_MAGIC_NB;
+   privUDB->libHandle = libHandle;
+
+   #if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaInit( &privUDB->sema, 1 );
+   if( retCode != TA_SUCCESS )
+   {
+      TA_UDBaseFree( (TA_UDBase *)privUDB );
+      TA_TRACE_RETURN( retCode );
+   }
+   #endif
+
+   /* Initialize the list of data source.
+    * Each time a data source is added with TA_AddDataSource, it
+    * is added to this list.
+    */
+   privUDB->listDataSource = TA_ListAlloc( libHandle );
+   if( !privUDB->listDataSource )
+   {
+      TA_UDBaseFree( (TA_UDBase *)privUDB );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   /* Initialize the dictCategory. One entry in the dictionary
+    * will exist for each category.
+    */
+   privUDB->dictCategory = TA_DictAlloc( libHandle, TA_DICT_KEY_ONE_STRING, freeCategoryData );
+
+   if( !privUDB->dictCategory )
+   {
+      TA_UDBaseFree( (TA_UDBase *)privUDB );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   /* Initialize the Default category structure. */
+   stringCache = TA_GetGlobalStringCache( libHandle );
+   if( !stringCache )
+   {
+      TA_UDBaseFree( (TA_UDBase *)privUDB );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   string = TA_StringAlloc( stringCache, TA_DEFAULT_CATEGORY );
+   if( !string )
+   {
+      TA_UDBaseFree( (TA_UDBase *)privUDB );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   /* Add the default category to the dictionary. */
+   privUDB->defaultCategory = addCategory( privUDB, string );
+   TA_StringFree( stringCache, string );
+
+   if( !privUDB->defaultCategory )
+   {
+      TA_UDBaseFree( (TA_UDBase *)privUDB );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   /* Add the UDBase to the global list. */
+   #if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaWait( &global->sema );
+
+   if( retCode != TA_SUCCESS )
+   {
+      TA_UDBaseFree( (TA_UDBase *)privUDB );
+      TA_TRACE_RETURN( retCode );
+   }
+   #endif
+
+   finalRetCode = TA_ListAddTail( global->listUDBase, (void *)privUDB );
+
+   #if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaPost( &global->sema );
+
+   if( retCode != TA_SUCCESS )
+   {
+      TA_UDBaseFree( (TA_UDBase *)privUDB );
+      TA_TRACE_RETURN( retCode );
+   }
+   #endif
+
+   /* Check if an error occured within the critical section. */
+   if( finalRetCode != TA_SUCCESS )
+   {
+      TA_UDBaseFree( (TA_UDBase *)privUDB );
+      TA_TRACE_RETURN( finalRetCode );
+   }
+
+   /* Everything is fine, return the new unified database
+    * to the caller.
+    */
+   *newUDBase = (TA_UDBase *)privUDB;
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+TA_RetCode TA_UDBaseFree( TA_UDBase *toBeFreed )
+{
+   TA_PROLOG;
+   TA_Libc *libHandle;
+   TA_RetCode retCode;
+   TA_RetCode finalRetCode;
+   TA_DataGlobal *global;
+   TA_UDBasePriv *privUDB;
+
+   /* Return immediatly if aparently already freed. */
+   privUDB = (TA_UDBasePriv *)toBeFreed;
+   if( !privUDB )
+      return TA_SUCCESS;
+
+   /* Check integrity. */
+   if( privUDB->magicNb != TA_UDBASE_MAGIC_NB )
+      return TA_BAD_OBJECT;
+
+   libHandle = privUDB->libHandle;
+   retCode = TA_GetGlobal( libHandle, &TA_DataGlobalControl, (void **)&global );
+   if( retCode != TA_SUCCESS )
+      return retCode;
+
+   TA_TRACE_BEGIN( libHandle, TA_UDBaseFree );
+
+   /* Will change if an error happen. */
+   finalRetCode = TA_SUCCESS;
+
+   /* Remove from the global list. */
+   #if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaWait( &global->sema );
+
+   if( retCode != TA_SUCCESS )
+      finalRetCode = retCode;
+   else
+   {
+   #endif
+
+      retCode = TA_ListRemoveEntry( global->listUDBase, (void *)privUDB );
+
+      if( retCode != TA_SUCCESS )
+         finalRetCode = retCode;
+
+   #if !defined( TA_SINGLE_THREAD )
+      retCode = TA_SemaPost( &global->sema );
+
+      if( retCode != TA_SUCCESS )
+         finalRetCode = retCode;
+   }
+   #endif
+
+   #if !defined( TA_SINGLE_THREAD )
+   /* No one else is suppose to access this data at this
+    * point. But just in case... prevent the other to
+    * be able to get the semaphore while we are shutting
+    * down the unified database.
+    */
+   retCode = TA_SemaWait( &privUDB->sema );
+   if( retCode != TA_SUCCESS )
+      finalRetCode = retCode;
+   #endif
+
+   retCode = closeAllDataSource( privUDB );
+   if( retCode != TA_SUCCESS )
+      finalRetCode = retCode;
+   
+   retCode = TA_ListFree( privUDB->listDataSource );
+   if( retCode != TA_SUCCESS )
+      finalRetCode = retCode;
+
+   retCode = TA_DictFree( privUDB->dictCategory );
+   if( retCode != TA_SUCCESS )
+      finalRetCode = retCode;
+
+   #if !defined( TA_SINGLE_THREAD )
+   /* Destroy the semaphore... too bad if someone was wrongly
+    * waiting on it! That other thread will somehow be failed
+    * or hang forever.
+    */
+   retCode = TA_SemaDestroy( &privUDB->sema );
+   if( retCode != TA_SUCCESS )
+      finalRetCode = retCode;
+   #endif
+
+   TA_Free( libHandle, privUDB );
+
+   TA_TRACE_RETURN( finalRetCode );
+}
+
+TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
+                             const TA_AddDataSourceParam *param )
+{
+   TA_PROLOG;
+   TA_RetCode retCode;
+   TA_RetCode finalRetCode;
+   TA_SourceId driverIndex;
+   const TA_DataSourceDriver *driver;
+   TA_List *tmpListCategory;
+   TA_UDBasePriv *privUDB;
+
+   TA_DataSource  *dataSource;
+
+   TA_DataSourceHandle *sourceHandle;
+   TA_CategoryHandle   *categoryHandle;
+
+   TA_Libc *libHandle;
+   TA_DataGlobal *global;
+
+   TA_AddDataSourceParamPriv *paramPriv;
+
+   unsigned int again; /* Boolean */
+
+   unsigned int categoryIndex;
+
+   tmpListCategory = NULL;
+
+   /* Check parameters. */
+   if( unifiedDatabase == NULL )
+      return TA_BAD_PARAM;
+
+   privUDB = (TA_UDBasePriv *)unifiedDatabase;
+   if( privUDB->magicNb != TA_UDBASE_MAGIC_NB )
+      return TA_BAD_OBJECT;
+
+   if( param->id >= TA_NUM_OF_SOURCE_ID )
+      return TA_BAD_PARAM;
+
+   libHandle = privUDB->libHandle;
+   retCode = TA_GetGlobal( libHandle, &TA_DataGlobalControl, (void *)&global );
+   if( retCode != TA_SUCCESS )
+      return retCode;
+
+   TA_TRACE_BEGIN( libHandle,  TA_AddDataSource );
+
+   /* It is assume there is a one-to-one correspondance
+    * between the "TA_SourceId" and the index
+    * in the TA_gDataSourceTable
+    */
+   driverIndex = param->id;
+   driver = &TA_gDataSourceTable[driverIndex];
+
+   /* Initialize the data source (if not already done). */
+   finalRetCode = TA_SUCCESS;
+   if( global->dataSourceInitFlag[driverIndex] == 0 )
+   {
+      #if !defined( TA_SINGLE_THREAD )
+      retCode = TA_SemaWait( &global->sema );
+
+      if( retCode != TA_SUCCESS )
+      {
+         TA_TRACE_RETURN( retCode );
+      }
+
+      /* Check again within the critical section. */
+      if( global->dataSourceInitFlag[driverIndex] == 0 )
+      {
+      #endif
+         if( driver->initializeSourceDriver )
+         {
+            retCode = driver->initializeSourceDriver(libHandle);
+            if( retCode != TA_SUCCESS )
+               finalRetCode = retCode;
+         }
+         global->dataSourceInitFlag[driverIndex] = 1;
+      #if !defined( TA_SINGLE_THREAD )
+      }
+
+      retCode = TA_SemaPost( &global->sema );
+
+      if( retCode != TA_SUCCESS )
+      {
+         TA_TRACE_RETURN( retCode );
+      }
+      #endif
+   }
+
+   /* Check for error that could have happen in the critical section. */
+   if( finalRetCode != TA_SUCCESS )
+   {
+      TA_TRACE_RETURN( finalRetCode );
+   }
+
+   /* Open the source. */
+
+   /* Allocate a private copy of the parameters. This function
+    * will also set the default values if not provided by the
+    * caller. (particularly the category string).
+    */
+   paramPriv = TA_AddDataSourceParamPrivAlloc( libHandle, param );
+   if( !paramPriv )
+   {
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   retCode = driver->openSource( libHandle, 
+                                 paramPriv,
+                                 &sourceHandle );
+
+   if( retCode != TA_SUCCESS )
+   {
+      TA_AddDataSourceParamPrivFree( paramPriv );
+      TA_TRACE_RETURN( retCode );
+   }
+
+   /* Just check the handle to make sure. */
+   if( sourceHandle == NULL )
+   {
+      TA_AddDataSourceParamPrivFree( paramPriv );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   /* Add entries to the Dict of Category.
+    * Also, process symbols for each category.
+    */
+   if( sourceHandle->nbCategory != 0 )
+   {
+      /* Make sure the needed functions are provided by the driver. */
+      if( !driver->getFirstCategoryHandle )
+      {
+         if( driver->closeSource )
+            driver->closeSource( libHandle, sourceHandle );
+         TA_AddDataSourceParamPrivFree( paramPriv );
+         TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      }
+
+      if( (sourceHandle->nbCategory > 1) && !driver->getNextCategoryHandle )
+      {
+         if( driver->closeSource )
+            driver->closeSource( libHandle, sourceHandle );
+         TA_AddDataSourceParamPrivFree( paramPriv );
+         TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+      }
+
+      tmpListCategory = TA_ListAlloc( libHandle );
+      if( !tmpListCategory )
+      {
+         if( driver->closeSource )
+            driver->closeSource( libHandle, sourceHandle );
+         TA_AddDataSourceParamPrivFree( paramPriv );
+         TA_TRACE_RETURN( TA_ALLOC_ERR );
+      }
+
+      categoryIndex = 0;
+      again = 1;
+      while( again )
+      {
+         /* Allocate the categoryHandle. */
+         categoryHandle = (TA_CategoryHandle *)TA_Malloc( libHandle, sizeof(TA_CategoryHandle) );
+         if( !categoryHandle )
+         {
+            freeListAndElement( libHandle, tmpListCategory, freeCategoryHandle );
+            if( driver->closeSource )
+               driver->closeSource( libHandle, sourceHandle );
+            TA_AddDataSourceParamPrivFree( paramPriv );
+            TA_TRACE_RETURN( TA_ALLOC_ERR );
+         }
+
+         /* Default values. */
+         memset( categoryHandle, 0, sizeof( TA_CategoryHandle ) );
+
+         /* Fill the categoryHandle information. */
+         if( categoryIndex == 0 )
+            retCode = driver->getFirstCategoryHandle( libHandle,
+                                                      sourceHandle,
+                                                      categoryHandle );
+         else
+            retCode = driver->getNextCategoryHandle( libHandle,
+                                                     sourceHandle,
+                                                     categoryHandle,
+                                                     categoryIndex );
+
+         categoryIndex++;
+         if( retCode == TA_END_OF_INDEX )
+         {
+            TA_Free( libHandle, categoryHandle );
+            again = 0;
+         }
+         else if( retCode != TA_SUCCESS )
+         {
+            freeListAndElement( libHandle, tmpListCategory, freeCategoryHandle );
+            TA_Free( libHandle, categoryHandle );
+            if( driver->closeSource )
+               driver->closeSource( libHandle, sourceHandle );
+            TA_AddDataSourceParamPrivFree( paramPriv );
+            TA_TRACE_RETURN( retCode );
+         }
+         else
+         {
+            retCode = processCategoryAndSymbols( privUDB,
+                                                 driver, paramPriv->id,
+                                                 sourceHandle,
+                                                 categoryHandle );
+
+            if( retCode != TA_SUCCESS )
+            {
+               freeListAndElement( libHandle, tmpListCategory, freeCategoryHandle );
+               TA_Free( libHandle, categoryHandle );
+               if( driver->closeSource )
+                  driver->closeSource( libHandle, sourceHandle );
+               TA_AddDataSourceParamPrivFree( paramPriv );
+               TA_TRACE_RETURN( retCode );
+            }
+
+            /* Keep that category in a list. Will be assigned
+             * for ownership to the TA_DataSource later.
+             */
+            retCode = TA_ListAddTail( tmpListCategory, categoryHandle );
+            if( retCode != TA_SUCCESS )
+            {
+               freeListAndElement( libHandle, tmpListCategory, freeCategoryHandle );
+               TA_Free( libHandle, categoryHandle );
+               if( driver->closeSource )
+                  driver->closeSource( libHandle, sourceHandle );
+               TA_AddDataSourceParamPrivFree( paramPriv );
+               TA_TRACE_RETURN( retCode );
+            }
+         }
+      }
+   }
+
+   /* Keep track of that source in the listDataSource. */
+   dataSource = allocDataSourceForGlobal( privUDB,
+                                          paramPriv,
+                                          sourceHandle,
+                                          tmpListCategory );
+   if( !dataSource )
+   {
+      freeListAndElement( libHandle, tmpListCategory, freeCategoryHandle );
+      if( driver->closeSource )
+         driver->closeSource( libHandle, sourceHandle );
+      TA_AddDataSourceParamPrivFree( paramPriv );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+TA_RetCode TA_RefreshAllDataSource( TA_UDBase *unifiedDatabase )
+{
+   TA_UDBasePriv *privUDB;
+
+   /* !!! To Be Completed. */
+
+   /* Check integrity. */
+   privUDB = (TA_UDBasePriv *)unifiedDatabase;
+   if( privUDB->magicNb != TA_UDBASE_MAGIC_NB )
+      return TA_BAD_OBJECT;
+
+   /* Close all data source. */
+
+   /* Re-open the data source. */
+
+   return TA_UNKNOWN_ERR;
+}
+
+TA_RetCode TA_CategoryTableAlloc( TA_UDBase *unifiedDatabase,
+                                  TA_StringTable **table )
+{
+   TA_PROLOG;
+   TA_StringTable *stringTable;
+   TA_UDBasePriv *privUDB;
+   TA_Libc *libHandle;
+   TA_StringCache *stringCache;
+   unsigned int i;
+   unsigned int again;
+   TA_RetCode finalRetCode;
+   TA_CategoryTableHiddenData *hiddenData;
+   #if !defined( TA_SINGLE_THREAD )
+   TA_RetCode retCode;
+   #endif
+
+   if( !unifiedDatabase || !table )
+      return TA_BAD_PARAM;
+
+   *table = NULL;
+
+   privUDB = (TA_UDBasePriv *)unifiedDatabase;
+   if( privUDB->magicNb != TA_UDBASE_MAGIC_NB )
+      return TA_BAD_OBJECT;
+
+   libHandle = privUDB->libHandle;
+
+   TA_TRACE_BEGIN( libHandle, TA_CategoryTableAlloc );
+
+   stringTable = TA_Malloc( libHandle, sizeof(TA_StringTable) );
+
+   if( stringTable == NULL )
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+
+   stringTable->size = 0;
+   stringTable->string = NULL;
+
+   /* Handle special case where there is not even one data source added
+    * (of course there is no category in that case).
+    */
+   if( privUDB->dictCategory == NULL )
+   {
+      *table = stringTable;
+      TA_TRACE_RETURN( TA_SUCCESS );
+   }
+
+   stringCache = TA_GetGlobalStringCache( libHandle );
+
+   #if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaWait( &privUDB->sema );
+
+   if( retCode != TA_SUCCESS )
+   {
+      stringTableFree( libHandle, stringTable );
+      TA_TRACE_RETURN( retCode );
+   }
+   #endif
+
+   finalRetCode = TA_SUCCESS;
+
+   /* Extract all 'category' from the category dictionary. */
+   stringTable->size = TA_DictAccessFirst( privUDB->dictCategory );
+   if( stringTable->size != 0 )
+   {
+      stringTable->string = (const char **)TA_Malloc( libHandle,
+                                                      (stringTable->size) *
+                                                      sizeof( const char *) );
+
+      if( stringTable->string == NULL )
+      {
+         stringTableFree( libHandle, stringTable );
+         finalRetCode = TA_ALLOC_ERR;
+      }
+      else
+      {
+         memset( (void *)stringTable->string, 0, (stringTable->size) * sizeof( const char *) );
+
+         again = 1;
+         for( i=0; (i < stringTable->size) && again; i++ )
+         {
+            (stringTable->string)[i] = TA_StringToChar( TA_StringDup( stringCache, TA_DictAccessKey( privUDB->dictCategory ) ) );
+            again = TA_DictAccessNext( privUDB->dictCategory );
+         }
+      }
+   }
+
+   #if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaPost( &privUDB->sema );
+
+   if( retCode != TA_SUCCESS )
+   {
+      stringTableFree( libHandle, stringTable );
+      TA_TRACE_RETURN( retCode );
+   }
+   #endif
+
+   /* Check if an error occured in the critical section. */
+   if( finalRetCode != TA_SUCCESS )
+   {
+      stringTableFree( libHandle, stringTable );
+      TA_TRACE_RETURN( finalRetCode );
+   }
+
+   /* Allocate and initialize the hidden data. */
+   hiddenData = TA_Malloc( libHandle, sizeof(TA_CategoryTableHiddenData) );
+   if( !hiddenData )
+   {
+      stringTableFree( libHandle, stringTable );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+   hiddenData->privUDB = privUDB;
+   hiddenData->magicNb = TA_CATEGORY_TABLE_MAGIC_NB;
+   stringTable->hiddenData = hiddenData;
+
+   /* Return the table to the caller. */
+   *table = stringTable;
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+TA_RetCode TA_CategoryTableFree( TA_StringTable *table )
+{
+   TA_PROLOG;
+   TA_Libc *libHandle;
+   TA_UDBasePriv *privUDB;
+   TA_CategoryTableHiddenData *hiddenData;
+   TA_RetCode retCode;
+
+   /* If it appears to be already freed, just return. */
+   if( !table )
+      return TA_SUCCESS;
+
+   /* Make sure we are dealing with the right object
+    * and identify the libHandle ptr.
+    */
+   hiddenData = (TA_CategoryTableHiddenData *)table->hiddenData;
+   if( !hiddenData )
+      return TA_ALLOC_ERR;
+   if( hiddenData->magicNb != TA_CATEGORY_TABLE_MAGIC_NB )
+      return TA_BAD_OBJECT;
+   privUDB = (TA_UDBasePriv *)hiddenData->privUDB;
+   if( !privUDB )
+      return TA_ALLOC_ERR;
+   if( privUDB->magicNb != TA_UDBASE_MAGIC_NB )
+      return TA_BAD_OBJECT;
+   libHandle = privUDB->libHandle;
+
+   TA_TRACE_BEGIN( libHandle, TA_CategoryTableFree );
+
+   /* Free the hidden data. */
+   memset( hiddenData, 0, sizeof( TA_CategoryTableHiddenData ) );
+   TA_Free( libHandle, hiddenData );
+   
+   /* Free the strings. */
+   retCode = stringTableFree( libHandle, table );
+
+   TA_TRACE_RETURN( retCode );
+}
+
+TA_RetCode TA_SymbolTableAlloc( TA_UDBase *unifiedDatabase,
+                                const char *categoryString,
+                                TA_StringTable **table )
+{
+   TA_PROLOG;
+   TA_StringTable  *stringTable;
+   TA_UDB_Category *categoryData;
+   TA_Dict         *dictUDBSymbol;
+   TA_UDBasePriv   *privUDB;
+   TA_StringCache  *stringCache;
+   TA_Libc         *libHandle;
+   unsigned int     i;
+   unsigned int     again;
+   TA_SymbolTableHiddenData *hiddenData;
+   #if !defined( TA_SINGLE_THREAD )
+   TA_RetCode       retCode;
+   #endif
+
+   if( !table || !unifiedDatabase )
+      return TA_BAD_PARAM;
+
+   *table = NULL;
+
+   privUDB = (TA_UDBasePriv *) unifiedDatabase;
+   libHandle = privUDB->libHandle;
+   TA_TRACE_BEGIN( libHandle, TA_SymbolTableAlloc );
+
+   stringTable = TA_Malloc( libHandle, sizeof(TA_StringTable) );
+
+   if( stringTable == NULL )
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+
+   stringTable->size = 0;
+   stringTable->string = NULL;
+
+   /* Handle special case where there is not even one data source added
+    * (of course there is no symbol in that case).
+    */
+   if( privUDB->dictCategory == NULL )
+   {
+      *table = stringTable;
+      TA_TRACE_RETURN( TA_SUCCESS );
+   }
+
+   /* If categoy is NULL, use the default category. */
+   if( !categoryString )
+      categoryString = TA_DEFAULT_CATEGORY;
+
+   stringCache = TA_GetGlobalStringCache( libHandle );
+
+   /* Find the symbol dictionary. */
+
+   #if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaWait( &privUDB->sema );
+
+   if( retCode != TA_SUCCESS )
+   {
+      stringTableFree( libHandle, stringTable );
+      TA_TRACE_RETURN( retCode );
+   }
+   #endif
+
+   categoryData = TA_DictGetValue_S( privUDB->dictCategory, categoryString );
+
+   if( !categoryData || !(categoryData->dictUDBSymbol))
+   {
+      /* Category not found... */
+      #if !defined( TA_SINGLE_THREAD )
+         TA_SemaPost( &privUDB->sema );
+      #endif
+      stringTableFree( libHandle, stringTable );
+      TA_TRACE_RETURN( TA_CATEGORY_NOT_FOUND );
+   }
+
+   dictUDBSymbol = categoryData->dictUDBSymbol;
+
+   /* Extract all 'symbols' from the symbol dictionary. */
+   stringTable->size = TA_DictAccessFirst( dictUDBSymbol );
+   if( stringTable->size != 0 )
+   {
+      stringTable->string = (const char **)TA_Malloc( libHandle,
+                                                      (stringTable->size) *
+                                                      sizeof( const char *) );
+
+      if( stringTable->string == NULL )
+      {
+         #if !defined( TA_SINGLE_THREAD )
+            TA_SemaPost( &privUDB->sema );
+         #endif
+         stringTableFree( libHandle, stringTable );
+         TA_TRACE_RETURN( TA_ALLOC_ERR );
+      }
+
+      memset( (void *)stringTable->string, 0, (stringTable->size) * sizeof( const char *) );
+
+      again = 1;
+      for( i=0; (i < stringTable->size) && again; i++ )
+      {
+         (stringTable->string)[i] = TA_StringToChar( TA_StringDup( stringCache, TA_DictAccessKey( dictUDBSymbol ) ) );
+         again = TA_DictAccessNext( dictUDBSymbol );
+      }
+   }
+
+   #if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaPost( &privUDB->sema );
+
+   if( retCode != TA_SUCCESS )
+   {
+      stringTableFree( libHandle, stringTable );
+      TA_TRACE_RETURN( retCode );
+   }
+   #endif
+
+   /* Allocate and initialize the hidden data. */
+   hiddenData = TA_Malloc( libHandle, sizeof(TA_SymbolTableHiddenData) );
+   if( !hiddenData )
+   {
+      stringTableFree( libHandle, stringTable );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+   hiddenData->privUDB = privUDB;
+   hiddenData->magicNb = TA_SYMBOL_TABLE_MAGIC_NB;
+   stringTable->hiddenData = hiddenData;
+
+   /* Return the table to the caller. */
+   *table = stringTable;
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+TA_RetCode TA_SymbolTableFree( TA_StringTable *table )
+{
+   TA_PROLOG;
+   TA_RetCode retCode;
+   TA_Libc *libHandle;
+   TA_UDBasePriv *privUDB;
+   TA_SymbolTableHiddenData *hiddenData;
+
+   /* If it appears to be already freed, just return. */
+   if( !table )
+      return TA_SUCCESS;
+
+   /* Make sure we are dealing with the right object
+    * and identify the libHandle ptr.
+    */
+   hiddenData = (TA_SymbolTableHiddenData *)table->hiddenData;
+   if( !hiddenData )
+      return TA_ALLOC_ERR;
+   if( hiddenData->magicNb != TA_SYMBOL_TABLE_MAGIC_NB )
+      return TA_BAD_OBJECT;
+   privUDB = (TA_UDBasePriv *)hiddenData->privUDB;
+   if( !privUDB )
+      return TA_ALLOC_ERR;
+   if( privUDB->magicNb != TA_UDBASE_MAGIC_NB )
+      return TA_BAD_OBJECT;
+   libHandle = privUDB->libHandle; 
+    
+   TA_TRACE_BEGIN( libHandle, TA_SymbolTableFree );
+
+   /* Free the hidden data. */
+   memset( hiddenData, 0, sizeof( TA_SymbolTableHiddenData ) );
+   TA_Free( libHandle, hiddenData );
+
+   retCode = stringTableFree( libHandle, table );
+
+   TA_TRACE_RETURN( retCode );
+}
+
+TA_RetCode TA_ForEachSymbol( TA_UDBase *unifiedDatabase,
+                             TA_ForEachSymbolFunc functionToCall,
+                             void *opaqueData )
+{
+   TA_PROLOG;
+   unsigned int i;
+   unsigned int j;
+   TA_StringTable *tableCategory;
+   TA_StringTable *tableSymbol;
+   TA_RetCode retCode;
+   TA_Libc *libHandle;
+   TA_UDBasePriv *privUDB;
+
+   if( !unifiedDatabase || !functionToCall )
+      return TA_BAD_PARAM;
+
+   privUDB = (TA_UDBasePriv *)unifiedDatabase;
+   if( privUDB->magicNb != TA_UDBASE_MAGIC_NB )
+      return TA_BAD_OBJECT;
+
+   libHandle = privUDB->libHandle;
+
+   TA_TRACE_BEGIN( libHandle, TA_ForEachSymbol );
+
+   /* Get all the category to iterate. */
+   retCode = TA_CategoryTableAlloc( unifiedDatabase, &tableCategory );
+
+   if( retCode == TA_SUCCESS )
+   {
+      for( i=0; i < tableCategory->size; i++ )
+      {
+         TA_ASSERT( libHandle, tableCategory->string[i] != NULL );
+         /* Get all the symbols to iterate for this category. */
+         retCode = TA_SymbolTableAlloc( unifiedDatabase,
+                                        tableCategory->string[i],
+                                        &tableSymbol );
+
+         if( retCode == TA_SUCCESS )
+         {
+            for( j=0; j < tableSymbol->size; j++ )
+            {
+               TA_ASSERT( libHandle, tableSymbol->string[j] != NULL );
+               (*functionToCall)( libHandle, unifiedDatabase,
+                                  tableCategory->string[i],
+                                  tableSymbol->string[j],
+                                  opaqueData );
+            }
+
+            TA_SymbolTableFree( tableSymbol );
+         }
+      }
+
+      TA_CategoryTableFree( tableCategory );
+   }
+   else
+      return TA_UNKNOWN_ERR;
+
+   return TA_SUCCESS;
+}
+
+TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
+                            const char          *category,
+                            const char          *symbol,
+                            TA_Period            period,
+                            const TA_Timestamp  *start,
+                            const TA_Timestamp  *end,
+                            TA_Field             fieldToAlloc,
+                            TA_History         **history )
+{
+   TA_PROLOG;
+   TA_RetCode retCode;
+   TA_UDB_Category *categoryData;
+   TA_UDB_Symbol   *symbolData;
+   TA_History      *newHistory;
+   TA_Dict         *dictUDBSymbol;
+   TA_UDBasePriv   *privUDB;
+   TA_StringCache  *stringCache;
+   TA_Libc         *libHandle;
+
+   privUDB = (TA_UDBasePriv *)unifiedDatabase;
+   libHandle = privUDB->libHandle;
+
+   TA_TRACE_BEGIN( libHandle, TA_HistoryAlloc );
+
+   if( (history == NULL) || (symbol == NULL) )
+   {
+      TA_TRACE_RETURN( TA_BAD_PARAM );
+   }
+
+   if( (period == 0) || (period > TA_YEARLY) )
+   {
+      TA_TRACE_RETURN( TA_BAD_PARAM );
+   }
+
+   *history = NULL;
+
+   /* Handle special case where there is not even one data source added. */
+   if( privUDB->dictCategory == NULL )
+   {
+      TA_TRACE_RETURN( TA_NO_DATA_SOURCE );
+   }
+
+   /* Look for the category. If no category provided, use the default. */
+   if( category == NULL )
+      category = TA_DEFAULT_CATEGORY;
+
+   stringCache = TA_GetGlobalStringCache( libHandle );
+
+   categoryData = TA_DictGetValue_S( privUDB->dictCategory, category );
+
+   if( !categoryData )
+   {
+      TA_TRACE_RETURN( TA_CATEGORY_NOT_FOUND );
+   }
+
+   if( !categoryData->dictUDBSymbol )
+   {
+      TA_TRACE_RETURN( TA_UNKNOWN_ERR );
+   }
+
+   /* Look for the symbol in this category. */
+   dictUDBSymbol = categoryData->dictUDBSymbol;
+
+   symbolData = TA_DictGetValue_S( dictUDBSymbol, symbol );
+
+   if( !symbolData )
+   {
+      TA_TRACE_RETURN( TA_SYMBOL_NOT_FOUND );
+   }
+
+   /* Leave it the the TA_History sub-module to do the rest. */
+   retCode = TA_HistoryBuilder( libHandle, privUDB, symbolData,
+                                period, start, end,
+                                fieldToAlloc, &newHistory );
+
+   if( retCode != TA_SUCCESS )
+   {
+      TA_TRACE_RETURN( retCode );
+   }
+
+   TA_ASSERT( libHandle, newHistory != NULL );
+
+   /* History has been allocated, return this information to the caller. */
+   *history = newHistory;
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+TA_RetCode TA_HistoryFree( TA_History *history )
+{
+   TA_PROLOG;
+   TA_Libc *libHandle;
+   TA_UDBasePriv *privUDB;
+   TA_HistoryHiddenData *hiddenData;
+
+   if( !history || !history->hiddenData )       
+      return TA_BAD_PARAM;
+
+   /* Get the libHandle for this TA_History. */
+   hiddenData = (TA_HistoryHiddenData *)history->hiddenData;      
+   privUDB = (TA_UDBasePriv *)hiddenData->privUDB;
+   if( !privUDB )
+      return TA_UNKNOWN_ERR;
+   libHandle = privUDB->libHandle;
+   
+   TA_TRACE_BEGIN( libHandle, TA_HistoryFree );
+
+   /* Free all ressources. */
+   if( history->timestamp )
+      TA_Free( libHandle, (void *)history->timestamp );
+
+   if( history->open )
+      TA_Free( libHandle, (void *)history->open );
+
+   if( history->high )
+      TA_Free( libHandle, (void *)history->high );
+
+   if( history->low )
+      TA_Free( libHandle, (void *)history->low );
+
+   if( history->close )
+      TA_Free( libHandle, (void *)history->close );
+
+   if( history->volume )
+      TA_Free( libHandle, (void *)history->volume );
+
+   if( history->openInterest )
+      TA_Free( libHandle, (void *)history->openInterest );
+
+   TA_Free( libHandle, (void *)hiddenData );
+   TA_Free( libHandle, (void *)history );
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+TA_RetCode TA_HistoryUpdate( TA_UDBase *unifiedDatabase,
+                             TA_History **history,
+                             unsigned int timeoutInSec )
+{
+   /* Not implemented... */
+   (void)unifiedDatabase;
+   (void)history;
+   (void)timeoutInSec;
+   return TA_NO_NEW_DATA;
+}
+
+int TA_HistoryEqual( const TA_History *history1, const TA_History *history2 )
+{
+   unsigned int i;
+
+   /* Return 1 if the content of both history is
+    * identical or if both history poitner are NULL.
+    */
+   if( !history1 && !history2 )
+      return 1;
+
+   if( !history1 && history2 )
+      return 0;
+
+   if( history1 && !history2 )
+      return 0;
+
+   if( history1->period != history2->period )
+      return 0;
+
+   if( history1->nbBars != history2->nbBars )
+      return 0;
+
+   #define CHECK_MEMBER(param) \
+   { \
+      if( ( history1->param && !history2->param) || \
+          (!history1->param &&  history2->param) ) \
+         return 0; \
+      if( history1->param ) \
+      { \
+         for( i=0; i < history1->nbBars; i++ ) \
+         { \
+            if( history1->param[i] != history2->param[i] ) \
+               return 0; \
+         } \
+      } \
+   }
+
+   CHECK_MEMBER(open);
+   CHECK_MEMBER(high);
+   CHECK_MEMBER(low);
+   CHECK_MEMBER(close);
+   CHECK_MEMBER(volume);
+   CHECK_MEMBER(openInterest);
+   #undef CHECK_MEMBER
+
+   if( ( history1->timestamp && !history2->timestamp) ||
+       (!history1->timestamp &&  history2->timestamp) )
+      return 0;
+   if( history1->timestamp )
+   {
+      for( i=0; i < history1->nbBars; i++ )
+      {
+         if( !TA_TimestampEqual(&history1->timestamp[i],&history2->timestamp[i]) )
+            return 0;
+      }
+   }
+
+   return 1; /* Contents is equivalent. */
+}
+
+TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( TA_Libc *libHandle, 
+                                                           const TA_AddDataSourceParam *param )
+{
+   /* Alloc an internal copy of the TA_AddDataSourceParam . */
+   TA_AddDataSourceParamPriv *dst;
+   TA_StringCache *stringCache;
+
+   stringCache = TA_GetGlobalStringCache( libHandle );
+
+   dst = (TA_AddDataSourceParamPriv *)TA_Malloc( libHandle, sizeof(TA_AddDataSourceParamPriv) );
+   if( !dst )
+      return NULL;
+
+   memset( dst, 0, sizeof( TA_AddDataSourceParamPriv ) );
+   dst->libHandle = libHandle;
+
+   /* At this point, TA_AddDataSourceParamPrivFree can be safely called. */
+
+   #define DO(func,y) \
+      { \
+         if(param->y) \
+         { \
+            dst->y = func( stringCache, param->y ); \
+            if( !dst->y ) \
+            { \
+               TA_AddDataSourceParamPrivFree( dst ); \
+               return NULL; \
+            } \
+         } \
+         else \
+            dst->y = NULL; \
+      } 
+
+   /* Same as do but provide a default if not specified by the user. */
+   #define DO_DFLT(func,y,dflt) \
+      { \
+         if( param->y ) \
+            dst->y = func( stringCache, param->y ); \
+         else \
+            dst->y = func( stringCache, dflt ); \
+         if( !dst->y ) \
+         { \
+            TA_AddDataSourceParamPrivFree( dst ); \
+            return NULL; \
+         } \
+      }
+
+      DO( TA_StringAlloc,     location );
+      DO( TA_StringAllocTrim, info     ); /* !!! Trim needed? */
+      DO( TA_StringAlloc,     username );
+      DO( TA_StringAlloc,     password );
+      DO( TA_StringAlloc,     symbol   );
+
+      DO_DFLT( TA_StringAlloc, category, TA_DEFAULT_CATEGORY          );
+      DO_DFLT( TA_StringAlloc, country,  TA_DEFAULT_CATEGORY_COUNTRY  );
+      DO_DFLT( TA_StringAlloc, exchange, TA_DEFAULT_CATEGORY_EXCHANGE );
+      DO_DFLT( TA_StringAlloc, type,     TA_DEFAULT_CATEGORY_TYPE     );
+   #undef DO
+   #undef DO_FLT
+
+   /* Copy the rest. */
+   dst->flags = param->flags;
+   dst->id    = param->id;
+
+   return dst;
+}
+
+#if 0
+!!! needed ?
+TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAllocCopy( TA_AddDataSourceParamPriv *src )
+{
+   TA_Libc *libHandle;
+   TA_AddDataSourceParamPriv *dst;
+   TA_StringCache *stringCache;
+
+   stringCache = TA_GetGlobalStringCache( libHandle );
+
+   dst = (TA_AddDataSourceParamPriv *)TA_Malloc( libHandle, sizeof(TA_AddDataSourceParamPriv) );
+   if( !dst )
+      return NULL;
+
+   memset( dst, 0, sizeof( TA_AddDataSourceParamPriv ) );
+   dst->libHandle = libHandle;
+
+   /* At this point, TA_AddDataSourceParamPrivFree can be safely called. */
+
+   /* This could be speed optmized by doing reference counting, but
+    * that version right now multi-thread safe.
+    */
+
+   /* Duplicate the strings that are not null. */
+   #define DO(y) \
+      { \
+         if(src->y) \
+         { \
+            dst->y = TA_StringDup( stringCache, src->y ); \
+            if( !dst->y ) \
+            { \
+               TA_AddDataSourceParamPrivFree( dst ); \
+               return NULL; \
+            } \
+         } \
+      } 
+
+      DO( location );
+      DO( info     );
+      DO( username );
+      DO( password );
+      DO( category );
+      DO( country  );
+      DO( exchange );
+      DO( type     );
+      DO( symbol   );
+   #undef DO
+
+   /* Copy the rest. */
+   dst->flags = src->flags;
+   dst->id    = src->id;
+
+   return dst;
+}
+#endif
+
+TA_RetCode TA_AddDataSourceParamPrivFree( TA_AddDataSourceParamPriv *toBeFreed )
+{
+   TA_Libc *libHandle;
+   TA_StringCache *stringCache;
+
+   if( toBeFreed )
+   {
+      libHandle = toBeFreed->libHandle;
+
+      stringCache = TA_GetGlobalStringCache( libHandle );
+
+      /* Free all the strings that are not NULL. */
+      #define DO(y) { if(toBeFreed->y) TA_StringFree( stringCache, toBeFreed->y ); }
+         DO( location );
+         DO( info     );
+         DO( username );
+         DO( password );
+         DO( category );
+         DO( country  );
+         DO( exchange );
+         DO( type     );
+         DO( symbol   );
+      #undef DO
+
+      TA_Free( libHandle, toBeFreed );
+   }
+
+   return TA_SUCCESS;
+}
+
+/**** Local functions definitions.     ****/
+
+static TA_RetCode closeAllUDBase( TA_DataGlobal *global )
+{
+   TA_List *listUDB;
+   TA_UDBase *udBase;
+
+   /* Attempts to close all UDBase belonging to this library. */
+   if( !global )
+      return TA_UNKNOWN_ERR;
+
+   listUDB = global->listUDBase;
+
+   udBase = (TA_UDBase *)TA_ListRemoveTail( listUDB );
+   while( udBase )
+   {
+      TA_UDBaseFree( udBase );
+      udBase = (TA_UDBase *)TA_ListRemoveTail( listUDB );
+   }
+
+   return TA_SUCCESS;
+}
+
+static TA_RetCode closeAllDataSource( TA_UDBasePriv *privUDB )
+{
+   TA_PROLOG;
+   TA_DataSource       *dataSource;
+   TA_Libc             *libHandle;
+   TA_StringCache      *stringCache;
+   TA_List             *listDataSource;
+
+   const TA_DataSourceDriver *driver;
+   
+   libHandle = privUDB->libHandle;
+
+   TA_TRACE_BEGIN( libHandle, closeAllDataSource );
+   stringCache = TA_GetGlobalStringCache( libHandle );
+
+   listDataSource = privUDB->listDataSource;
+
+   dataSource = (TA_DataSource *)TA_ListRemoveTail( listDataSource );
+   while( dataSource )
+   {
+      TA_ASSERT( libHandle, dataSource->param->id < TA_NUM_OF_SOURCE_ID );
+
+      driver = &TA_gDataSourceTable[dataSource->param->id];
+
+      if( driver->closeSource )
+      {
+         if( dataSource->sourceHandle )
+            driver->closeSource( libHandle, dataSource->sourceHandle );
+      }
+
+      if( dataSource->param )
+         TA_AddDataSourceParamPrivFree( dataSource->param );
+
+      if( dataSource->listCategoryHandle )
+         freeListAndElement( libHandle, dataSource->listCategoryHandle, freeCategoryHandle );
+
+      TA_Free( libHandle, dataSource );
+
+      dataSource = (TA_DataSource *)TA_ListRemoveTail( listDataSource );
+   }
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+static TA_RetCode shutdownAllSourceDriver( TA_Libc *libHandle, TA_DataGlobal *global )
+{
+   unsigned int i;
+   const TA_DataSourceDriver *driver;
+
+   for( i=0; i < TA_gDataSourceTableSize; i++)
+   {
+      if( global->dataSourceInitFlag[i] )
+      {
+         driver = &TA_gDataSourceTable[i];
+         if( driver->shutdownSourceDriver )
+            driver->shutdownSourceDriver(libHandle);
+         global->dataSourceInitFlag[i] = 0;
+      }
+   }
+
+   return TA_SUCCESS;
+}
+
+/* Add an entry in the dictCategory for the specified UDBase.
+ * - If an entry is already existing, no entry are added and the existing
+ *   entry is returned.
+ * - If the entry does not exist, it is created and returned.
+ *
+ * On error, NULL is returned.
+ */
+static TA_UDB_Category *addCategory( TA_UDBasePriv *privUDB,
+                                     TA_String *string )
+{
+   TA_UDB_Category *category;
+   TA_RetCode retCode;
+   TA_Dict *dictCategory;
+   TA_Libc *libHandle;
+   TA_StringCache *stringCache;
+
+   if( !privUDB )
+      return NULL;
+
+   /* Validate parameters. */
+   libHandle = privUDB->libHandle;
+   TA_ASSERT_RET( libHandle, string != NULL, (TA_UDB_Category *)NULL );
+
+   dictCategory = privUDB->dictCategory;
+   TA_ASSERT_RET( libHandle, dictCategory != NULL, (TA_UDB_Category *)NULL );
+
+   /* Check if the string already exist in the dictionary.
+    * If yes, do not add it, simply return it.
+    */
+   category = (TA_UDB_Category *)TA_DictGetValue_S( dictCategory, TA_StringToChar(string) );
+
+   if( category )
+      return category;
+
+   /* The entry does not exist, create it and add it to the
+    * dictCategory.
+    */
+   category = (TA_UDB_Category *)TA_Malloc( libHandle, sizeof( TA_UDB_Category ) );
+
+   if( category == NULL )
+      return NULL;
+
+   TA_ListInit( libHandle, &category->listUDBDriverArray );
+
+   retCode = TA_DictAddPair_S( dictCategory, string, category );
+
+   if( retCode != TA_SUCCESS )
+   {
+      TA_Free( libHandle, category );
+      return NULL;
+   }
+
+   /* Initialize the TA_UDB_Category fields. */
+   category->dictUDBSymbol = TA_DictAlloc( libHandle, TA_DICT_KEY_ONE_STRING, freeSymbolData );
+
+   if( !category->dictUDBSymbol )
+   {
+      /* Can not create the symbol dict!? Clean-up and get out of here.... */
+      TA_DictDeletePair_S( dictCategory, TA_StringToChar(string) );
+      TA_Free( libHandle, category );
+      return NULL;
+   }
+
+   stringCache = TA_GetGlobalStringCache( libHandle );
+   category->string = TA_StringDup( stringCache, string );
+
+   if( !category->string )
+   {
+      TA_DictFree( category->dictUDBSymbol );
+      TA_DictDeletePair_S( dictCategory, TA_StringToChar(string) );
+      TA_Free( libHandle, category );
+      return NULL;
+   }
+
+   return category;
+}
+
+static TA_UDB_Symbol *addSymbol( TA_UDBasePriv *privUDB,
+                                 TA_Dict *dictUDBSymbol,
+                                 TA_UDB_Driver *driverHandle,
+                                 TA_DataSourceHandle *sourceHandle,
+                                 TA_CategoryHandle *categoryHandle,
+                                 TA_SymbolHandle *symbolHandle )
+{
+   TA_UDB_Symbol *data;   
+   TA_RetCode retCode;
+   TA_Libc *libHandle;
+   TA_StringCache *stringCache;
+
+   if( !privUDB )
+      return NULL;
+
+   /* Validate parameters. */
+   libHandle = privUDB->libHandle;
+
+   TA_ASSERT_RET( libHandle, dictUDBSymbol != NULL, (TA_UDB_Symbol *)NULL );
+   TA_ASSERT_RET( libHandle, sourceHandle != NULL, (TA_UDB_Symbol *)NULL );
+   TA_ASSERT_RET( libHandle, categoryHandle != NULL, (TA_UDB_Symbol *)NULL );
+   TA_ASSERT_RET( libHandle, symbolHandle != NULL, (TA_UDB_Symbol *)NULL );
+   TA_ASSERT_RET( libHandle, symbolHandle->string != NULL, (TA_UDB_Symbol *)NULL );
+
+   /* Check if the symbol is already in the dictionary.
+    * If yes, use it, else create a new entry in the dictionary.
+    */
+   data = (TA_UDB_Symbol *)TA_DictGetValue_S( dictUDBSymbol, TA_StringToChar(symbolHandle->string) );
+
+   if( data == NULL )
+   {
+      data = (TA_UDB_Symbol *)TA_Malloc( libHandle, sizeof( TA_UDB_Symbol ) );
+
+      if( data == NULL )
+         return NULL;
+
+      TA_ListInit( libHandle, &data->listDriverHandle );
+
+      retCode = TA_DictAddPair_S( dictUDBSymbol, symbolHandle->string, data );
+
+      if( retCode != TA_SUCCESS )
+      {
+         TA_Free( libHandle, data );
+         return NULL;
+      }
+
+      /* Initialize the TA_UDB_Symbol fields. */
+      stringCache = TA_GetGlobalStringCache( libHandle );
+      data->string = TA_StringDup( stringCache, symbolHandle->string );
+
+      if( data->string == NULL )
+      {
+         TA_DictDeletePair_S( dictUDBSymbol, TA_StringToChar(symbolHandle->string) );
+         TA_Free( libHandle, data );
+         return NULL;
+      }
+   }
+
+   /* Add the TA_UDB_Driver to the list for this symbol. */
+   retCode = TA_ListNodeAddTail( &data->listDriverHandle, &driverHandle->node, driverHandle );
+   if( retCode != TA_SUCCESS )
+   {
+      TA_DictDeletePair_S( dictUDBSymbol, TA_StringToChar(symbolHandle->string) );
+      TA_StringFree( libHandle, data->string );
+      TA_Free( libHandle, data );
+      TA_Free( libHandle, driverHandle );
+      return NULL;
+   }
+
+   return data;
+}
+
+static TA_RetCode stringTableFree( TA_Libc *libHandle, TA_StringTable *table )
+{
+   TA_PROLOG;
+   unsigned int size;
+   TA_StringCache *stringCache;
+
+   TA_TRACE_BEGIN( libHandle, stringTableFree );
+
+   if( table == NULL )
+   {
+      TA_TRACE_RETURN( TA_SUCCESS );
+   }
+
+   if( libHandle == NULL )
+   {
+      TA_TRACE_RETURN( TA_BAD_PARAM );
+   }
+
+   stringCache = TA_GetGlobalStringCache( libHandle );
+
+   if( table->string )
+   {
+      size = table->size;
+
+      while( size > 0 )
+      {
+         if( (table->string)[size-1] )
+            TA_StringFree( stringCache, TA_StringFromChar((table->string)[size-1]) );
+
+         size--;
+      }
+
+      TA_Free( libHandle, (void *)table->string );
+   }
+
+   TA_Free( libHandle, table );
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+/* On deletion of dictCategory, this function will get called
+ * for each TA_UDB_Category member of the dictionary.
+ */
+static void freeCategoryData( TA_Libc *libHandle, void *toBeFreed )
+{
+   TA_UDB_Category *categoryData = (TA_UDB_Category *)toBeFreed;
+   TA_StringCache *stringCache;
+
+   if( categoryData->string )
+   {
+      stringCache = TA_GetGlobalStringCache( libHandle );
+      TA_StringFree( stringCache, categoryData->string );
+   }
+
+   /* Delete all symbols under that category. */
+   if( categoryData->dictUDBSymbol )
+      TA_DictFree( categoryData->dictUDBSymbol );
+
+   /* Delete all the TA_UDB_Driver arrays. */
+   freeListAndElement( libHandle, &categoryData->listUDBDriverArray, freeUDBDriverArray );
+
+   TA_Free( libHandle, categoryData );
+}
+
+/* On deletion of a symbol dictionary, this function will get called
+ * for each TA_UDB_Symbol member of the dictionary.
+ */
+static void freeSymbolData( TA_Libc *libHandle, void *toBeFreed )
+{
+   TA_UDB_Symbol *symbolData = (TA_UDB_Symbol *)toBeFreed;
+   TA_StringCache *stringCache;
+
+   /* Free the category/strings handles. */
+   if( symbolData->string )
+   {
+      stringCache = TA_GetGlobalStringCache( libHandle );
+      TA_StringFree( stringCache, symbolData->string );
+   }
+
+   TA_Free( libHandle, symbolData );
+}
+
+static TA_RetCode processCategoryAndSymbols( TA_UDBasePriv *privUDB,
+                                             const TA_DataSourceDriver *driver,
+                                             TA_SourceId format,
+                                             TA_DataSourceHandle *sourceHandle,
+                                             TA_CategoryHandle   *categoryHandle )
+{
+   TA_PROLOG;
+   TA_RetCode retCode;
+   TA_UDB_Category *categoryData;
+   TA_UDB_Symbol   *symbolData;
+   TA_Libc *libHandle;
+   TA_UDB_Driver *theUDBDriverArray;
+   TA_UDB_Driver *currentUDBDriver;
+
+   TA_SymbolHandle *symbolHandle;
+   unsigned int nbSymbol;
+   unsigned int symbolIndex;
+  
+
+   if( !privUDB )
+      return TA_UNKNOWN_ERR;
+
+   libHandle = privUDB->libHandle;
+
+   TA_TRACE_BEGIN( libHandle, processCategoryAndSymbols );
+
+   TA_ASSERT( libHandle, driver != NULL );
+   TA_ASSERT( libHandle, sourceHandle != NULL );
+   TA_ASSERT( libHandle, categoryHandle != NULL );
+   TA_ASSERT( libHandle, categoryHandle->string != NULL );
+
+   categoryData = addCategory( privUDB, categoryHandle->string );
+
+   if( (categoryData == NULL) || (categoryData->dictUDBSymbol == NULL) )
+   {
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+   nbSymbol = categoryHandle->nbSymbol;
+   if( nbSymbol != 0 )
+   {
+      /* In one shot, allocate all the TA_UDB_Driver for all the symbols for
+       * this category. This array will be owned by the corresponding TA_UDB_Category.
+       */
+      theUDBDriverArray = (TA_UDB_Driver *)TA_Malloc( libHandle, sizeof( TA_UDB_Driver ) * nbSymbol );
+      if( !theUDBDriverArray )
+      {
+         TA_TRACE_RETURN( TA_ALLOC_ERR );
+      }
+      memset( theUDBDriverArray, 0, sizeof( TA_UDB_Driver ) * nbSymbol );
+
+      retCode = TA_ListAddTail( &categoryData->listUDBDriverArray, theUDBDriverArray );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_Free( libHandle, theUDBDriverArray );
+         TA_TRACE_RETURN( TA_ALLOC_ERR );
+      }
+
+      /* For the time being, for simplicity, nothing is removed from the
+       * listUDBDriverArray, until the corresponding category is deleted.
+       */
+      for( symbolIndex=0; symbolIndex < nbSymbol; symbolIndex++ )
+      {
+         /* Initialize the TA_UDB_Driver for this symbol. */
+         currentUDBDriver = &theUDBDriverArray[symbolIndex];
+         currentUDBDriver->index = format;
+         currentUDBDriver->sourceHandle  = sourceHandle;
+         currentUDBDriver->categoryHandle = categoryHandle;
+         /* Ask the driver to fill the symbolHandle information. */
+         symbolHandle = &(currentUDBDriver->symbolHandle);
+         if( symbolIndex == 0 )
+            retCode = driver->getFirstSymbolHandle( libHandle,
+                                                    sourceHandle,
+                                                    categoryHandle,
+                                                    symbolHandle );
+         else
+            retCode = driver->getNextSymbolHandle( libHandle,
+                                                   sourceHandle,
+                                                   categoryHandle,
+                                                   symbolHandle,
+                                                   symbolIndex );
+
+         if( retCode != TA_SUCCESS )
+         {
+            TA_TRACE_RETURN( retCode );
+         }
+         else
+         {
+            /* Add the symbol to the unified database */            
+            symbolData = addSymbol( privUDB, categoryData->dictUDBSymbol,
+                                    currentUDBDriver,
+                                    sourceHandle,
+                                    categoryHandle,
+                                    symbolHandle );
+            if( symbolData == NULL )
+            {
+               TA_TRACE_RETURN( TA_ALLOC_ERR );
+            }
+         }
+      }
+   }
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+static TA_RetCode freeListAndElement( TA_Libc *libHandle,
+                                      TA_List *list,
+                                      TA_RetCode (*freeFunc)( TA_Libc *libHandle, void *toBeFreed ))
+{
+   TA_PROLOG;
+   TA_RetCode retCode;
+   void *node;
+
+   TA_TRACE_BEGIN( libHandle, freeListAndElement );
+
+   if( list != NULL )
+   {
+      while( (node = TA_ListRemoveTail( list )) != NULL )
+      {
+         retCode = freeFunc( libHandle, node );
+         if( retCode != TA_SUCCESS )
+         {
+            TA_FATAL( libHandle, NULL, node, retCode );
+         }
+      }
+
+      retCode = TA_ListFree( list );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_FATAL( libHandle, NULL, list, retCode );
+      }
+   }
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+static TA_RetCode freeUDBDriverArray( TA_Libc *libHandle, void *toBeFreed )
+{
+   /* Free all the TA_UDB_Driver of a certain category/datasource
+    * combination in one shot (see TA_UDB_Category->listUDBDriverArray)
+    */
+   if( toBeFreed )
+      TA_Free( libHandle, toBeFreed );
+
+   return TA_SUCCESS;
+}
+
+static TA_RetCode freeCategoryHandle( TA_Libc *libHandle, void *toBeFreed )
+{
+   if( toBeFreed )
+      TA_Free( libHandle, (TA_CategoryHandle *)toBeFreed );
+
+   return TA_SUCCESS;
+}
+
+static TA_DataSource *allocDataSourceForGlobal( TA_UDBasePriv *privUDB,
+                                                TA_AddDataSourceParamPriv *param,
+                                                TA_DataSourceHandle *sourceHandle,
+                                                TA_List *listCategoryHandle )
+{
+   TA_RetCode finalRetCode;
+   TA_DataSource *dataSource;
+   TA_Libc *libHandle;
+   #if !defined( TA_SINGLE_THREAD )
+   TA_RetCode retCode;
+   #endif
+
+   if( !privUDB )
+      return NULL;
+
+   libHandle = privUDB->libHandle;
+
+   dataSource = (TA_DataSource *)TA_Malloc( libHandle, sizeof( TA_DataSource ) );
+
+   memset( dataSource, 0, sizeof( TA_DataSource ) );
+
+   dataSource->param = param;
+   dataSource->sourceHandle = sourceHandle;
+   dataSource->listCategoryHandle = listCategoryHandle;
+
+   #if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaWait( &privUDB->sema );
+   if( retCode != TA_SUCCESS )
+   {
+      TA_Free( libHandle, dataSource );
+      return NULL;
+   }
+   #endif
+
+   finalRetCode = TA_ListAddTail( privUDB->listDataSource, dataSource );
+
+   #if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaPost( &privUDB->sema );
+   if( retCode != TA_SUCCESS )
+      finalRetCode = retCode;
+   #endif
+
+   if( finalRetCode != TA_SUCCESS )
+   {
+      TA_Free( libHandle, dataSource );
+      return NULL;
+   }
+
+   return dataSource;
+}
+
+static TA_RetCode TA_DataGlobalShutdown( TA_Libc *libHandle, void *globalAllocated )
+{
+   TA_RetCode retCode;
+   TA_RetCode finalRetCode;
+   TA_DataGlobal *global;
+
+   /* Will change if an error occured. */
+   finalRetCode = TA_SUCCESS;
+
+   if( !globalAllocated )
+      return TA_BAD_PARAM;
+
+   global = (TA_DataGlobal *)globalAllocated;
+
+   /* Free all the UDBase. */
+   retCode = closeAllUDBase( global );
+   if( retCode != TA_SUCCESS )
+      finalRetCode = retCode;
+   TA_ListFree( global->listUDBase );
+
+   /* Shutdown all the source drivers. */
+   retCode = shutdownAllSourceDriver( libHandle, global );
+   if( retCode != TA_SUCCESS )
+      finalRetCode = retCode;
+
+   TA_Free( libHandle, global->dataSourceInitFlag );
+   TA_Free( libHandle, globalAllocated );
+
+   return finalRetCode;
+}
+
+static TA_RetCode TA_DataGlobalInit( TA_Libc *libHandle, void **globalToAlloc )
+{
+   TA_PROLOG;
+   TA_DataGlobal *global;
+
+   #if !defined( TA_SINGLE_THREAD )
+   TA_RetCode retCode;
+   #endif
+
+   TA_TRACE_BEGIN( libHandle, TA_DataGlobalInit );
+
+   /* Make some "parano" runtime sanity check of the code. */
+   TA_ASSERT( libHandle, TA_gDataSourceTableSize == TA_NUM_OF_SOURCE_ID );
+
+   *globalToAlloc = NULL;
+
+   /* Allocate the global. */
+   global = (TA_DataGlobal *)TA_Malloc( libHandle, sizeof( TA_DataGlobal ) );
+   if( !global )
+   {
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   /* Allocate and initialize flags use to keep track of which data source
+    * driver have been initialized.
+    */
+   global->dataSourceInitFlag = (unsigned char *)TA_Malloc( libHandle, TA_gDataSourceTableSize * sizeof( unsigned char) );
+   if( !global->dataSourceInitFlag )
+   {
+      TA_Free( libHandle, global );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   memset( global->dataSourceInitFlag, 0, TA_gDataSourceTableSize * sizeof( unsigned char) );
+
+   /* Initialize the list keeping track of the UDBase. */
+   global->listUDBase = TA_ListAlloc( libHandle );
+   if( !global->listUDBase )
+   {
+      TA_Free( libHandle, global->dataSourceInitFlag );
+      TA_Free( libHandle, global );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+
+   #if !defined( TA_SINGLE_THREAD )
+      retCode = TA_SemaInit( &global->sema, 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_ListFree( global->listUDBase );
+         TA_Free( libHandle, global->dataSourceInitFlag );
+         TA_Free( libHandle, global );
+         TA_TRACE_RETURN( TA_ALLOC_ERR );
+      }
+   #endif
+
+   /* Success! Return the global to the caller. */
+   *globalToAlloc = global;
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+

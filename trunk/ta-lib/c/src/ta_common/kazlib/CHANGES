@@ -1,0 +1,288 @@
+New in 1.19
+
+    1. Rewrite of broken dict_free.
+    2. Fixed embarassing build breakages that accidentally went into 1.18
+    3. Function hash_scan_delete_free renamed to hash_scan_delfree to be
+       distinct from hash_scan_delete in the first 14 characters.
+    4. To resolve inconsistencies between hash_free and dict_free,
+       and a difference between the actual behavior of hash_free  and
+       the documented behavior, these two functions are marked obsolescent.
+       The functions dict_free_nodes and hash_free_nodes are provided.
+       The obsolescent functions continue to work as before, for now.
+    5. Documentation of hash_free is fixed to say that it also subjects
+       the hash to hash_destroy, which is what the implementation does.
+    6. Documentation states what release it is for.
+
+New in 1.18
+
+    1. Error in assert expression in list_merge fixed.
+    2. Semantics of list_merge extended to allow list to be merged
+       onto itself (which is a noop).
+    3. Clarified interface specification of list_transfer and list_extract;
+       the source and destination list may be the same object.
+    4. New functions:
+       dict_init_like: create a dictionary similar to another one;
+       dict_similar: determine whether two dictionaries are similar;
+       dict_merge: merge contents of one dictionary to another.
+    5. Dictionary test main can juggle multiple dictionaries, and test
+       dict_merge. 
+    6. If a hash node is inserted into some hash, it is a now a constraint
+       violation to insert it again into some hash.
+    7. The hash_scan_delete_free function has been implemented; it is to
+       hash_scan_delete what hash_delete_free is to hash_delete.
+
+New in 1.17
+
+    Carl van Tast <vanTast@netway.at>:
+    1. Removed references to ``safe malloc'' from some comments.
+    2. Swapped ``allowed'' and ``not allowed'' in comment to
+       verify_bintree.
+    3. Fixed comment to list_next: this function never returns the
+       sentinel.
+    4. lnode_pool_init: nodes[i].prev = nodes instead of nodes + 1. This
+       saves one or two CPU cycles :-) and it gives a valid address even
+       if we have a (somewhat pathological) pool with just one element.
+
+    Kaz:
+    5. Dropped extra parameter from tree rotation functions in dict.c. Should
+       shave a few cycles.
+    6. Fixed error in the duplicate key iteration idiom example in the
+       documentation (see the section on dict_upper_bound).
+    7. Forgotten #include <string.h> added to hash.c
+
+New in 1.16
+
+    1. Added an interface for loading the contents of a dictionary from an
+       ordered sequence. This is done in O(n) time by a direct bottom-up
+       construction of the red-black tree, making it much faster than
+       the O(n log n) process of inserting each element.
+    2. Miscellaneous cleanup: missing const qualifiers were added
+       to key pointer parameters, some incorrect comments fixed;
+       spelling errors corrected in documentation.
+
+New in 1.15
+
+    1. Another potential exception handling memory leak fixed. This one
+       has to do with throwing an exception from within a try-catch region
+       in which an exception was just caught. The new exception replaces
+       the old without the old's dynamic memory being disposed of.
+    2. Restrictions added on except_rethrow.
+    3. Exception module must now be explicitly initialized with except_init.
+    4. Structure members in exception header renamed to adhere to documented
+       namespace.
+    5. The exwrap.[ch] source files are gone. There is support for memory
+       allocation with exception handling in except.c, which supports user
+       defined allocators.
+    6. Three bugfixes to sfx parser. First, unary operators take a cast
+       expression, not a unary expression. Secondly, sizeof doesn't throw a syntax
+       error anymore on things that look like casts, but maybe are not.
+       Thirdly, empty parentheses weren't handled right in treatment of
+       ambiguous expressions, e.g. (a)() was declared a syntax error.
+    7. Changed the representation of hash table chains. They are now
+       singly linked lists, which means that the overhead of managing 
+       back pointers is gone. Only deletion is slightly more complicated
+       now because it has to search from the beginning of the chain.
+       [Rationale: this is okay, since chains are supposed to be short
+       in a hash table!]
+    8. Rewritten test main() in list.c. It's now more like the others
+       with a menu. Previously it was essentially a file sorting program.
+    9. New function: list_find. Exhaustively searches the list for a
+       matching entry, returns pointer to node if found.
+
+New in 1.14
+
+    1. Got rid of some overbearing copyright restrictions. There is no need for
+       executables to contain copyright notices. In fact, there are no
+       restrictions on the use, or distribution in executable form.
+    2. Tiny tweak in red-black fixup code of dict_insert.
+    3. Keys in hash and dict are declared const void * now in all functions
+       rather than plain void *.  This means that casts are no longer
+       necessary when calling insert or lookup functions with const
+       data as the key. But casts of the return value of hnode_getkey
+       or dnode_getkey may be required.
+    4. Fixed compile breakage of except.c when posix thread support enabled.
+    5. Side effect assertion interface now performs caching, to avoid
+       parsing the same expressions over and over again.  Thus debugging with
+       KAZLIB_SIDEEFFECT_DEBUG incurs a smaller performance hit.
+    6. Major bugfix to sfx expression parser. The function dealing with 
+       disambiguating casts had to be rewritten to do more sophisticated
+       lookahead and backtracking. It all started with Mark Brady discovered
+       that (a++)+b was being incorrectly diagnosed as a syntax error.
+    7. Added documentation. more examples for uses of dictionaries, and
+       exception handling. Some documentation about the internals
+       of exception handling added. Changed document format for narrower
+       margins, reducing page count and increasing readability.
+    8. Bugfix in except_rethrow. It was freeing the dynamic data of the
+       exception even though it's not handled yet.
+
+New in 1.13
+
+    1. Fixed some potential memory leaks in except.c.
+    2. Finished all interface documentation. All that is left now
+       is to flesh out the implementation notes.
+    3. Fixed a bug in POSIX threaded variant of except.c. Null
+       function pointer dereference in unhandled exception case.
+    4. Macros beginning with E[A-Z] have been renamed to stay out
+       of space reserved for <errno.h>.
+    5. Identifiers in exwrap.[ch] have been renamed from having 
+       ex_ prefixed to having exwrap_ prefixes.
+
+New in 1.12
+
+    1. COOL! New module for detecting side effects in C expressions.
+    2. Serious bugfix in hash_init().  The computation of the initial hash
+       mask was completely botched up. Historically this code has seen little
+       testing because hashing over a user supplied table is not extendible. 
+       Users of hash_create() are not affected.
+    3. Tried to make computation of hash_val_t_bit more threadsafe. It should
+       be okay if writes to int objects are atomic, and concurrent writes of
+       the same int value to a given object are safe.
+    4. Makefile renamed to Makefile.gcc. Makevile.vc added. The rename
+       is retroactive to all prior releases.
+    5. OPAQUE_DEBUG becomes KAZLIB_OPAQUE_DEBUG and TEST_MAIN becomes
+       KAZLIB_TEST_MAIN. In general, macros that affect how the modules
+       build should be confined to a special namespace.
+    6. New KAZLIB_SIDEEFFECT_DEBUG feature to enable diagnosis of side
+       effect expressions being passed to macros that evaluate their arguments
+       more than once.
+
+New in 1.11
+
+    1. Improvements in experimental exception handling module:
+       except_throwf has been added which takes printf-like arguments;
+       except_checked_cleanup_pop has been added to provide a measure
+       of safety; there is now a way to pass arbitrary data from the throw site
+       to the catch.
+    2. Improvements in dict_insert. A redundant call to the comparison function
+       has been eliminated, resulting in one fewer comparisons per insert
+       operation! Also a redundant test has been removed from the controlling
+       expression of the fixup loop, taking advantage of the fact that nil
+       is always black, and hence the root node always has a black parent.
+    3. Small change in dict_delete. A test in the fixup loop has been eliminated
+       by temporarily coloring the root node red. See comment and diff between
+       dict.c revision 1.25 and 1.26.
+    4. Test program blast.pl deletes keys out of order; to get in order
+       delete, initialize $factor_d to 1.
+
+New in 1.10
+
+    1. The dict_init function now correctly initializes allocator-related
+       members of the dict structure.
+    2. Tiny optimization in dict_lookup---less frequent cases tested last.
+    3. Added list_extract, for extracting list slices (more general than
+       list_transfer).
+    4. Incorporated changes from Loic Dachary: hash_free() has been
+       added for deleting all nodes; hash and compare functions
+       from the hash.c test code are now available to the user as
+       defaults if null pointers are given to hash_init() or
+       hash_create(); and hash_set_allocator restores the default
+       allocator routines if null pointers are given to it.
+    5. Changes to dict analogous to hash: dict_free() added, etc.
+    6. New exception handling module added (experimental).
+    7. Much new documentation.
+
+New in 1.9
+
+    1. Third argument of list_transfer may be null, in which case no nodes
+       are transferred. [Rationale: allows empty source list to be treated
+       without special case testing when all nodes are being transferred.]
+    2. Two new functions added to dict: dict_upper_bound and dict_lower_bound.
+       These allow for inexact and range searches.
+
+New in 1.8
+
+    1. New improved hashing function in the hash.c test code. It turns out that
+       when I changed the hash table algorithm, the blast.pl testcase was
+       hashing all to a single chain due to the pathologically bad hashing
+       function.  The new hashing function should be good enough for general use.
+       It uses each nybble of the key to index a table of 16 random 32 bit integers.
+       These integers are XOR-ed into the hash value which is rotated after each
+       XOR.
+    2. Spurious semicolon removed from the #define of HASH_VAL_T_BIT.
+    3. I fixed some incorrect comments in hash.c which still talked about the
+       old algorithm from release 1.5 and older.
+    4. The smalloc.c module is no longer supported. It's still in RCS but it's not
+       tagged as being part of release 1.8, and is not used by any of the other
+       sources. The standard library memory allocation functions are now used
+       directly. [Rationale: smalloc.c is overkill and interferes with
+       integration of the other source files into projects. Conscientious programmer
+       already ahve their own tools for debugging allocator corruption, anyway.]
+
+New in 1.7
+
+    1. Missing #include <stdlib.h> added to smalloc.h
+    2. The dict_delete() functions internals have been changed to make it much
+       more sane. This function no longer has the potential to return a node
+       other than the one that is passed to it.
+    3. The changes to dict_delete() also fix a serious bug in dict_process().
+       The dict_process computes a pointer to a node's successor before
+       invoking the user callback to process a node. If the user callback calls
+       dict_delete() on the node, under the old dict_delete() semantics it was
+       possible for the successor to get deleted instead. Thus dict_process()
+       could end up with an invalid pointer.
+    4. The changes to dict_delete() also mean that key and value information will
+       never be relocated from one node to another. User code can now rely on this
+       convenient assumption.
+
+New in 1.6
+
+    1. The extendible hashing algorithm internals have changed. This
+       has a potential impact on the behavior with respect to hashing functions
+       which were written to work well specifically with the old hashing
+       scheme. For a silly reason, in the old hashing scheme, the top N bits
+       were always taken from the results of a hashing function, for a hash
+       table size of 2^N chains. In the new scheme, the bottom N bits are taken
+       instead. [Rationale: This is change makes it easier to write portable
+       hashing functions and simplifies the functions that expand or contract
+       the table, making them more efficient.]
+    2. Added const qualifiers to the rcsid[] and right[] char arrays,
+       which shuts up the GCC compiler from complaining that these are
+       unused statics.
+
+New in 1.5
+
+    1. First two arguments to list_prune_graft() are reversed. The leftmost
+       argument is now the destination list. Moreover, the function has been
+       renamed list_transfer(). [Rationale: this ordering of parameters is
+       consistent with list_merge(), and the standard C <string.h> functions
+       also pass destination pointers on the left.  Renaming the function
+       protects against incorrect use.]
+
+    2. Red-Black tree dictionaries now support duplicate keys.  [Rationale:
+       duplicate keys could be useful in some applications.] When a dictionary
+       is created or initialized, it does not allow duplicate keys. The
+       function dict_allow_dupes() is used to set a flag in a dictionary to
+       henceforth allow duplicates.  Once made, the decision to allow
+       duplicates cannot be reversed.  [Rationale: toggling between allowing
+       and disallowing duplicates does not seem useful. Once duplicates are
+       admitted, there is no point in disallowing duplicates.] When a key is
+       sought in tree that currently allows duplicates, the leftmost node
+       containing that key is chosen from among the nodes that contain
+       duplicates of the key.  Then dict_next() can be used to fetch the
+       remaining duplicates one by one.  No particular order among the
+       duplicates may be assumed.  However, for what it may be worth, the order
+       between any two duplicates is preserved for as long as they both remain
+       in the dictionary.
+
+    3. The function prototypes in the header files have been modified to eliminate
+       parameter names.  [Rationale: parameter names in prototypes have only
+       documentary value, and may clash with macro identifiers defined in other
+       headers.]
+
+    4. Dictionary and hash table now has support for automatic allocation of
+       nodes in the insert and delete operations, which means that the user
+       can add items in one operation instead of the two operations of
+       allocating a node and inserting it. [Rationale: ease of use.] There is
+       support for user-defined allocators; the default allocators use the
+       smalloc.c routines. For any instance of a dict_t or hash_t object, the
+       user can override the allocator functions by supplying his or her
+       own pointers to suitable functions, and a context pointer that 
+       will be passed to these functions when they are called through that
+       particular dict_t or hash_t instance. [Rationale: flexibility, ease of
+       use, promotes good design.] The funtion pointers can only be set when
+       the data structure is empty. [Rationale: it is undesirable to switch to
+       a different allocator when there are nodes in the dictionary; it might
+       lead to the error of freeing a node with an incorrect allocator.]
+
+$Id$
+$Name$
