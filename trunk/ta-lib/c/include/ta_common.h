@@ -429,7 +429,7 @@ void TA_FatalReport( FILE *out );
  * The output will be NULL terminated. No character more than
  * bufferSize will be written.
  */
-#define TA_FATAL_ERROR_BUF_SIZE 1024
+#define TA_FATAL_ERROR_BUF_SIZE 2048
 void TA_FatalReportToBuffer( char *buffer, unsigned int bufferSize );
 
 /* You can provide your own handler to intercept fatal error. 
