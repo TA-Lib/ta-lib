@@ -42,8 +42,15 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_AVGPRICE.c \ 
           ../../../../../src/ta_func/ta_BBANDS.c \ 
           ../../../../../src/ta_func/ta_CCI.c \ 
+          ../../../../../src/ta_func/ta_CDL2CROWS.c \ 
           ../../../../../src/ta_func/ta_CDL3BLACKCROWS.c \ 
+          ../../../../../src/ta_func/ta_CDL3INSIDE.c \ 
+          ../../../../../src/ta_func/ta_CDL3LINESTRIKE.c \ 
+          ../../../../../src/ta_func/ta_CDL3OUTSIDE.c \ 
+          ../../../../../src/ta_func/ta_CDL3WHITESOLDIERS.c \ 
           ../../../../../src/ta_func/ta_CDLABANDONEDBABY.c \ 
+          ../../../../../src/ta_func/ta_CDLADVANCEBLOCK.c \ 
+          ../../../../../src/ta_func/ta_CDLDARKCLOUDCOVER.c \ 
           ../../../../../src/ta_func/ta_CDLDOJISTAR.c \ 
           ../../../../../src/ta_func/ta_CDLENGULFING.c \ 
           ../../../../../src/ta_func/ta_CDLEVENINGDOJISTAR.c \ 
@@ -54,13 +61,18 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_CDLHARAMICROSS.c \ 
           ../../../../../src/ta_func/ta_CDLHIGHWAVE.c \ 
           ../../../../../src/ta_func/ta_CDLIDENTICAL3CROWS.c \ 
+          ../../../../../src/ta_func/ta_CDLINNECK.c \ 
           ../../../../../src/ta_func/ta_CDLINVERTEDHAMMER.c \ 
           ../../../../../src/ta_func/ta_CDLLONGLINE.c \ 
           ../../../../../src/ta_func/ta_CDLMORNINGDOJISTAR.c \ 
           ../../../../../src/ta_func/ta_CDLMORNINGSTAR.c \ 
+          ../../../../../src/ta_func/ta_CDLONNECK.c \ 
+          ../../../../../src/ta_func/ta_CDLPIERCING.c \ 
           ../../../../../src/ta_func/ta_CDLSHOOTINGSTAR.c \ 
           ../../../../../src/ta_func/ta_CDLSHORTLINE.c \ 
           ../../../../../src/ta_func/ta_CDLSPINNINGTOP.c \ 
+          ../../../../../src/ta_func/ta_CDLSTALLEDPATTERN.c \ 
+          ../../../../../src/ta_func/ta_CDLTHRUSTING.c \ 
           ../../../../../src/ta_func/ta_CDLTRISTAR.c \ 
           ../../../../../src/ta_func/ta_CDLUPSIDEGAP2CROWS.c \ 
           ../../../../../src/ta_func/ta_CORREL.c \ 
