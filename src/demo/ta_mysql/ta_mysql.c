@@ -1,20 +1,17 @@
-/* Simple application for accessing Yahoo! Web Site using TA-LIB. */
-
-/* To see how data is fetched from Yahoo! see print_data(). */
+/* Simple application for accessing an SQL database using TA-LIB. */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "ta_libc.h"
+#include "ta_mysql.h"
 
 /*
 #if defined (_MSC_VER)
 #include <windows.h>
 #endif
 */
-#undef TA_CATEGORY_MAX_LENGTH
-#define TA_CATEGORY_MAX_LENGTH 200
 
 typedef enum
 {
@@ -26,6 +23,7 @@ typedef enum
 void fatal_error_handler(void)
 {
 #if defined (_MSC_VER) && 0  /* disabled for now since TA_FatalReportToBuffer is missing */
+   /* Update: TA_FatalReportToBuffer is now implemented - Mario */
    char buffer[TA_FATAL_ERROR_BUF_SIZE];
    TA_FatalReportToBuffer( buffer, TA_FATAL_ERROR_BUF_SIZE);
    OutputDebugString(buffer);
@@ -37,7 +35,7 @@ void fatal_error_handler(void)
 void print_usage( char *str ) 
 {
    printf( "\n" );
-   printf( "ta_mysql V%s - Query stock market data MySQL database!\n", TA_GetVersionString() );
+   printf( "ta_mysql V%s - Query stock market data MySQL database\n", TA_GetVersionString() );
    printf( "\n" );
    printf( "Usage: ta_mysql -c <location> <user> <pass> <category (query)>\n" );
    printf( "       ta_mysql -s <location> <user> <pass> <category (query)> <given category> [<symbol (query)>]\n" );
@@ -46,13 +44,14 @@ void print_usage( char *str )
    printf( "  -c  Display all supported categories\n" );
    printf( "  -s  Display all symbols for a given category\n" );
    printf( "  -d  Query and display quotes data\n" );
+   printf( "  Add 'z' to use TA_REPLACE_ZERO_PRICE_BAR flag\n" );
    printf( "\n" );
    printf( "  Quotes output is \"Date,Open,High,Low,Close,Volume\"\n" );
    printf( "\n" );
    printf( "  Examples:\"\n" );
    printf( "    ta_mysql -c mysql://localhost/db guest \"\" \"SELECT * FROM cat\"\n" );
-   printf( "    ta_mysql -c mysql://localhost/db guest \"\" \"SELECT * FROM cat\" NL.EURONEXT.STOCKS\n" );
-   printf( "    ta_mysql -d mysql://localhost/db guest \"\" \"SELECT * FROM cat\" MSFT \"SELECT ...\"\n" );
+   printf( "    ta_mysql -s mysql://localhost/db guest \"\" \"SELECT * FROM cat\" NL.EURONEXT.STOCKS\n" );
+   printf( "    ta_mysql -dz mysql://localhost/db guest \"\" \"SELECT * FROM cat\" MSFT \"SELECT ...\"\n" );
    printf( "\n" );
    printf( "  Online help: http://www.ta-lib.org\n" );
    printf( "\n" );
@@ -77,7 +76,6 @@ int print_data( TA_UDBase *udb,
    TA_History *history = NULL;
    unsigned int i;
 
-   /* Setup Yahoo! datasource. */
    retCode = TA_AddDataSource( udb, &dsParam );
    if( retCode != TA_SUCCESS )
    {
@@ -85,11 +83,12 @@ int print_data( TA_UDBase *udb,
       return -1;
    }
 
-   /* Get the historical data. 
-   retCode = TA_HistoryAlloc( udb, category, symbol,
+   /* Get the historical data. */
+   retCode = TA_HistoryAlloc( udb, 
+                              dsParam.category, 
+                              dsParam.symbol,
                               period, 0, 0, TA_ALL,
                               &history );
-   */
    if( retCode != TA_SUCCESS )
    {
       print_error( retCode );
@@ -98,15 +97,15 @@ int print_data( TA_UDBase *udb,
 
    if( !history || history->nbBars == 0 )
    {
-      printf( "No data available" );
+      printf( "No data available\n" );
    }
    else
    {
       for( i=0; i < history->nbBars; i++ )
       {
-         printf( "%d-%d-%d", TA_GetMonth(&history->timestamp[i]),
-                             TA_GetDay(&history->timestamp[i]),
-                             TA_GetYear(&history->timestamp[i]) );
+         printf( "%04u-%02u-%02u", TA_GetYear(&history->timestamp[i]),
+                                   TA_GetMonth(&history->timestamp[i]),
+                                   TA_GetDay(&history->timestamp[i]) );
          if( history->open )
             printf( ",%.2f", history->open[i] );
          if( history->high )
@@ -121,7 +120,7 @@ int print_data( TA_UDBase *udb,
       }
    }
 
-   /* Get ride of the historical data and return. */
+   /* Get rid of the historical data and return. */
    TA_HistoryFree( history );
 
    return 0;
@@ -137,7 +136,6 @@ int print_categories( TA_UDBase *udb,
 
    /* info not needed for getting just categories, but the driver insists on it */
    dsParam.info = "";  
-   dsParam.symbol = "XYZ";
    retCode = TA_AddDataSource( udb, &dsParam );
    if( retCode != TA_SUCCESS )
    {
@@ -207,17 +205,9 @@ int main( int argc, char *argv[] )
    TA_RetCode retCode;
    TA_Period period;
    TA_AddDataSourceParam dsParam;
+   TA_SourceFlag flags;
 
    int retValue;
-   unsigned int i, stringSize;
-
-   //char location[TA_SOURCELOCATION_MAX_LENGTH+1];
-   //char info[TA_SOURCEINFO_MAX_LENGTH+1];
-   //char country[TA_CAT_COUNTRY_MAX_LENGTH+1];
-   //char exchange[TA_CAT_EXCHANGE_MAX_LENGTH+1];
-   //char type[TA_CAT_TYPE_MAX_LENGTH+1];
-   char category[TA_CATEGORY_MAX_LENGTH+1];
-   char symbol[TA_SYMBOL_MAX_LENGTH+1];
 
    /* Verify that there is the minimum required number 
     * of parameters.
@@ -237,32 +227,36 @@ int main( int argc, char *argv[] )
 
    /* Daily data by default. */
    period = TA_DAILY;
+   flags = TA_NO_FLAGS;
 
    /* Check for the switch, and identify what needs to be done. */
+   if ( strlen(argv[1]) > 1 && argv[1][strlen(argv[1])-1] == 'z') {
+      flags |= TA_REPLACE_ZERO_PRICE_BAR;
+   }
    if( strcmp( "-c", argv[1] ) == 0 )
       theAction = DISPLAY_CATEGORIES;
    else if( strcmp( "-s", argv[1] ) == 0 )
       theAction = DISPLAY_SYMBOLS;
-   else if( strcmp( "-d", argv[1] ) == 0 )
+   else if( strncmp( "-d", argv[1], 2 ) == 0 )
       theAction = DISPLAY_HISTORIC_DATA;
-   else if( strcmp( "-dd", argv[1] ) == 0 )
+   else if( strncmp( "-dd", argv[1], 3 ) == 0 )
       theAction = DISPLAY_HISTORIC_DATA;
-   else if( strcmp( "-dw", argv[1] ) == 0 )
+   else if( strncmp( "-dw", argv[1], 3 ) == 0 )
    {
       theAction = DISPLAY_HISTORIC_DATA;
       period = TA_WEEKLY;
    }
-   else if( strcmp( "-dm", argv[1] ) == 0 )
+   else if( strncmp( "-dm", argv[1], 3 ) == 0 )
    {
       theAction = DISPLAY_HISTORIC_DATA;
       period = TA_MONTHLY;
    }
-   else if( strcmp( "-dq", argv[1] ) == 0 )
+   else if( strncmp( "-dq", argv[1], 3 ) == 0 )
    {
       theAction = DISPLAY_HISTORIC_DATA;
       period = TA_QUARTERLY;
    }
-   else if( strcmp( "-dy", argv[1] ) == 0 )
+   else if( strncmp( "-dy", argv[1], 3 ) == 0 )
    {
       theAction = DISPLAY_HISTORIC_DATA;
       period = TA_YEARLY;
@@ -308,6 +302,13 @@ int main( int argc, char *argv[] )
       return -1;
    }
 
+   retCode = TA_MYSQL_Initialize();
+   if( retCode != TA_SUCCESS )
+   {
+      print_error( retCode );
+      return -1;
+   }
+
    retCode = TA_SetFatalErrorHandler(fatal_error_handler);
    retCode = TA_UDBaseAlloc( &udb );
    if( retCode != TA_SUCCESS )
@@ -318,8 +319,9 @@ int main( int argc, char *argv[] )
    }
 
    memset( &dsParam, 0, sizeof( TA_AddDataSourceParam ) );
-   dsParam.id = TA_MYSQL;
+   dsParam.id = TA_SQL;
 
+   dsParam.flags = flags;
    dsParam.location = argv[2];
    dsParam.username = argv[3];
    dsParam.password = argv[4];
@@ -331,20 +333,8 @@ int main( int argc, char *argv[] )
    switch( theAction )
    {
    case DISPLAY_HISTORIC_DATA:       
-       stringSize = strlen(argv[2]);
-       if( stringSize > TA_CATEGORY_MAX_LENGTH )
-          stringSize = TA_CATEGORY_MAX_LENGTH;
-       for( i=0; i < stringSize; i++ )
-          category[i] = toupper(argv[2][i]);
-       category[stringSize] = '\0';
-
-       stringSize = strlen(argv[3]);
-       if( stringSize > TA_SYMBOL_MAX_LENGTH )
-          stringSize = TA_SYMBOL_MAX_LENGTH;
-       for( i=0; i < stringSize; i++ )
-          symbol[i] = toupper(argv[3][i]);
-       symbol[stringSize] = '\0';
-
+       dsParam.symbol = argv[6];
+       dsParam.info = argv[7];
        retValue = print_data(udb, dsParam, period);
        break;
 
