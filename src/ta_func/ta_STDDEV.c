@@ -113,14 +113,14 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::STDDEV( int    startIdx,
-/* Generated */                                     int    endIdx,
-/* Generated */                                     double       inReal __gc [],
-/* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                     double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                     [OutAttribute]Int32 *outNbElement,
-/* Generated */                                     double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::STDDEV( int    startIdx,
+/* Generated */                                             int    endIdx,
+/* Generated */                                             double       inReal __gc [],
+/* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                             double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                             [OutAttribute]Int32 *outNbElement,
+/* Generated */                                             double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_STDDEV( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -289,14 +289,14 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::STDDEV( int    startIdx,
-/* Generated */                                     int    endIdx,
-/* Generated */                                     float        inReal __gc [],
-/* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                     double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                     [OutAttribute]Int32 *outNbElement,
-/* Generated */                                     double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::STDDEV( int    startIdx,
+/* Generated */                                             int    endIdx,
+/* Generated */                                             float        inReal __gc [],
+/* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                             double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                             [OutAttribute]Int32 *outNbElement,
+/* Generated */                                             double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STDDEV( int    startIdx,
 /* Generated */                         int    endIdx,

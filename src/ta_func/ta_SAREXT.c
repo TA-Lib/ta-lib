@@ -165,21 +165,21 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::SAREXT( int    startIdx,
-/* Generated */                                     int    endIdx,
-/* Generated */                                     double       inHigh __gc [],
-/* Generated */                                     double       inLow __gc [],
-/* Generated */                                     double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                     [OutAttribute]Int32 *outNbElement,
-/* Generated */                                     double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::SAREXT( int    startIdx,
+/* Generated */                                             int    endIdx,
+/* Generated */                                             double       inHigh __gc [],
+/* Generated */                                             double       inLow __gc [],
+/* Generated */                                             double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                             [OutAttribute]Int32 *outNbElement,
+/* Generated */                                             double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_SAREXT( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -618,21 +618,21 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::SAREXT( int    startIdx,
-/* Generated */                                     int    endIdx,
-/* Generated */                                     float        inHigh __gc [],
-/* Generated */                                     float        inLow __gc [],
-/* Generated */                                     double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                                     [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                     [OutAttribute]Int32 *outNbElement,
-/* Generated */                                     double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::SAREXT( int    startIdx,
+/* Generated */                                             int    endIdx,
+/* Generated */                                             float        inHigh __gc [],
+/* Generated */                                             float        inLow __gc [],
+/* Generated */                                             double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                             [OutAttribute]Int32 *outNbElement,
+/* Generated */                                             double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_SAREXT( int    startIdx,
 /* Generated */                         int    endIdx,

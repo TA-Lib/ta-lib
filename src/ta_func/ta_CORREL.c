@@ -106,14 +106,14 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::CORREL( int    startIdx,
-/* Generated */                                     int    endIdx,
-/* Generated */                                     double       inReal0 __gc [],
-/* Generated */                                     double       inReal1 __gc [],
-/* Generated */                                     int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                     [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                     [OutAttribute]Int32 *outNbElement,
-/* Generated */                                     double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::CORREL( int    startIdx,
+/* Generated */                                             int    endIdx,
+/* Generated */                                             double       inReal0 __gc [],
+/* Generated */                                             double       inReal1 __gc [],
+/* Generated */                                             int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                             [OutAttribute]Int32 *outNbElement,
+/* Generated */                                             double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CORREL( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -253,14 +253,14 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::CORREL( int    startIdx,
-/* Generated */                                     int    endIdx,
-/* Generated */                                     float        inReal0 __gc [],
-/* Generated */                                     float        inReal1 __gc [],
-/* Generated */                                     int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                     [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                     [OutAttribute]Int32 *outNbElement,
-/* Generated */                                     double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::CORREL( int    startIdx,
+/* Generated */                                             int    endIdx,
+/* Generated */                                             float        inReal0 __gc [],
+/* Generated */                                             float        inReal1 __gc [],
+/* Generated */                                             int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                             [OutAttribute]Int32 *outNbElement,
+/* Generated */                                             double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CORREL( int    startIdx,
 /* Generated */                         int    endIdx,

@@ -101,13 +101,13 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::HT_PHASOR( int    startIdx,
-/* Generated */                                        int    endIdx,
-/* Generated */                                        double       inReal __gc [],
-/* Generated */                                        [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                        [OutAttribute]Int32 *outNbElement,
-/* Generated */                                        double        outInPhase __gc [],
-/* Generated */                                        double        outQuadrature __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::HT_PHASOR( int    startIdx,
+/* Generated */                                                int    endIdx,
+/* Generated */                                                double       inReal __gc [],
+/* Generated */                                                [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                                [OutAttribute]Int32 *outNbElement,
+/* Generated */                                                double        outInPhase __gc [],
+/* Generated */                                                double        outQuadrature __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_HT_PHASOR( int    startIdx,
 /* Generated */                          int    endIdx,
@@ -373,13 +373,13 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::HT_PHASOR( int    startIdx,
-/* Generated */                                        int    endIdx,
-/* Generated */                                        float        inReal __gc [],
-/* Generated */                                        [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                        [OutAttribute]Int32 *outNbElement,
-/* Generated */                                        double        outInPhase __gc [],
-/* Generated */                                        double        outQuadrature __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::HT_PHASOR( int    startIdx,
+/* Generated */                                                int    endIdx,
+/* Generated */                                                float        inReal __gc [],
+/* Generated */                                                [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                                [OutAttribute]Int32 *outNbElement,
+/* Generated */                                                double        outInPhase __gc [],
+/* Generated */                                                double        outQuadrature __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_PHASOR( int    startIdx,
 /* Generated */                            int    endIdx,

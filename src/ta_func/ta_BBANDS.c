@@ -124,18 +124,18 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::BBANDS( int    startIdx,
-/* Generated */                                     int    endIdx,
-/* Generated */                                     double       inReal __gc [],
-/* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                     double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     TA_MAType     optInMAType,
-/* Generated */                                     [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                     [OutAttribute]Int32 *outNbElement,
-/* Generated */                                     double        outRealUpperBand __gc [],
-/* Generated */                                     double        outRealMiddleBand __gc [],
-/* Generated */                                     double        outRealLowerBand __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::BBANDS( int    startIdx,
+/* Generated */                                             int    endIdx,
+/* Generated */                                             double       inReal __gc [],
+/* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                             double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             TA_MAType     optInMAType,
+/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                             [OutAttribute]Int32 *outNbElement,
+/* Generated */                                             double        outRealUpperBand __gc [],
+/* Generated */                                             double        outRealMiddleBand __gc [],
+/* Generated */                                             double        outRealLowerBand __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_BBANDS( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -376,18 +376,18 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::BBANDS( int    startIdx,
-/* Generated */                                     int    endIdx,
-/* Generated */                                     float        inReal __gc [],
-/* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                     double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                     TA_MAType     optInMAType,
-/* Generated */                                     [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                     [OutAttribute]Int32 *outNbElement,
-/* Generated */                                     double        outRealUpperBand __gc [],
-/* Generated */                                     double        outRealMiddleBand __gc [],
-/* Generated */                                     double        outRealLowerBand __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::BBANDS( int    startIdx,
+/* Generated */                                             int    endIdx,
+/* Generated */                                             float        inReal __gc [],
+/* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                             double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             TA_MAType     optInMAType,
+/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                             [OutAttribute]Int32 *outNbElement,
+/* Generated */                                             double        outRealUpperBand __gc [],
+/* Generated */                                             double        outRealMiddleBand __gc [],
+/* Generated */                                             double        outRealLowerBand __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_BBANDS( int    startIdx,
 /* Generated */                         int    endIdx,

@@ -102,14 +102,14 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::TYPPRICE( int    startIdx,
-/* Generated */                                       int    endIdx,
-/* Generated */                                       double       inHigh __gc [],
-/* Generated */                                       double       inLow __gc [],
-/* Generated */                                       double       inClose __gc [],
-/* Generated */                                       [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                       [OutAttribute]Int32 *outNbElement,
-/* Generated */                                       double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::TYPPRICE( int    startIdx,
+/* Generated */                                               int    endIdx,
+/* Generated */                                               double       inHigh __gc [],
+/* Generated */                                               double       inLow __gc [],
+/* Generated */                                               double       inClose __gc [],
+/* Generated */                                               [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                               [OutAttribute]Int32 *outNbElement,
+/* Generated */                                               double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_TYPPRICE( int    startIdx,
 /* Generated */                         int    endIdx,
@@ -176,14 +176,14 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum Core::TA_RetCode Core::TYPPRICE( int    startIdx,
-/* Generated */                                       int    endIdx,
-/* Generated */                                       float        inHigh __gc [],
-/* Generated */                                       float        inLow __gc [],
-/* Generated */                                       float        inClose __gc [],
-/* Generated */                                       [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                       [OutAttribute]Int32 *outNbElement,
-/* Generated */                                       double        outReal __gc [] )
+/* Generated */ __value enum Core::TA_RetCode Core::TYPPRICE( int    startIdx,
+/* Generated */                                               int    endIdx,
+/* Generated */                                               float        inHigh __gc [],
+/* Generated */                                               float        inLow __gc [],
+/* Generated */                                               float        inClose __gc [],
+/* Generated */                                               [OutAttribute]Int32 *outBegIdx,
+/* Generated */                                               [OutAttribute]Int32 *outNbElement,
+/* Generated */                                               double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_TYPPRICE( int    startIdx,
 /* Generated */                           int    endIdx,
