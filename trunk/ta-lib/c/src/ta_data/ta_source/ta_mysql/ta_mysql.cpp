@@ -260,7 +260,9 @@ TA_RetCode TA_MYSQL_GetFirstCategoryHandle( TA_DataSourceHandle *handle,
       TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(50) );
    }
 
+   /* Get the first category from the category index */
    categoryNode = (TA_MySQLCategoryNode*)TA_ListAccessHead(categoryIndex);
+
    if( !categoryNode || !categoryNode->category )
    {
       TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(51) ); /* At least one category must exist. */
@@ -269,7 +271,7 @@ TA_RetCode TA_MYSQL_GetFirstCategoryHandle( TA_DataSourceHandle *handle,
    /* Set the categoryHandle. */
    categoryHandle->string = categoryNode->category;
    categoryHandle->nbSymbol = 0;
-   categoryHandle->opaqueData = categoryHandle;
+   categoryHandle->opaqueData = NULL; /* Not needed... */
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -279,51 +281,47 @@ TA_RetCode TA_MYSQL_GetNextCategoryHandle( TA_DataSourceHandle *handle,
                                            unsigned int index )
 {
    TA_PROLOG
-
-   //TA_PrivateAsciiHandle *privData;
-   //TA_FileIndex     *fileIndex;
-   //TA_String        *string;
+   TA_PrivateMySQLHandle *privData;
+   TA_List               *categoryIndex;
+   TA_MySQLCategoryNode  *categoryNode;
 
    TA_TRACE_BEGIN(  TA_MYSQL_GetNextCategoryHandle );
 
-#if 0
-   (void)index; /* Get ride of compiler warnings. */
+   (void)index; /* Get rid of compiler warnings. */
 
    if( (handle == NULL) || (categoryHandle == NULL) )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
    }
 
-   privData = (TA_PrivateAsciiHandle *)(handle->opaqueData);
+   privData = (TA_PrivateMySQLHandle *)(handle->opaqueData);
 
    if( !privData )
    {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(52) );
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(52) );
    }
 
-   fileIndex = privData->theFileIndex;
+   categoryIndex = privData->theCategoryIndex;
 
-   if( !fileIndex )
+   if( !categoryIndex )
    {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(53) );
+      TA_TRACE_RETURN( (TA_RetCode)TA_INTERNAL_ERROR(50) );
    }
 
-   /* Get the next category from the fileIdnex. */
-   string = TA_FileIndexNextCategory( fileIndex );
+   /* Get the next category from the category index */
+   categoryNode = (TA_MySQLCategoryNode*)TA_ListAccessNext(categoryIndex);
 
-   if( !string )
+   if( !categoryNode )
    {
       TA_TRACE_RETURN( TA_END_OF_INDEX );
    }
 
    /* Set the categoryHandle. */
-   categoryHandle->string = string;
-   categoryHandle->nbSymbol = TA_FileIndexNbSymbol( fileIndex );
+   categoryHandle->string = categoryNode->category;
+   categoryHandle->nbSymbol = 0;
    categoryHandle->opaqueData = NULL; /* Not needed... */
 
    TA_TRACE_RETURN( TA_SUCCESS );
-#endif
-   TA_TRACE_RETURN( TA_END_OF_INDEX );
 }
 
 TA_RetCode TA_MYSQL_GetFirstSymbolHandle( TA_DataSourceHandle *handle,
