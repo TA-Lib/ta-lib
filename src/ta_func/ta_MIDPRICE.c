@@ -175,7 +175,7 @@ TA_RetCode TA_MIDPRICE( TA_Integer    startIdx,
          if( tmp > highest) highest = tmp;
       }
 
-      outReal_0[outIdx++] = (highest+lowest)/2;
+      outReal_0[outIdx++] = (highest+lowest)/2.0;
       today++;
    }
 

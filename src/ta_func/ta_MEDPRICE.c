@@ -126,8 +126,7 @@ TA_RetCode TA_MEDPRICE( TA_Integer    startIdx,
 
    for( i=startIdx; i <= endIdx; i++ )
    {
-      outReal_0[outIdx++] = ( inHigh_0 [i] +
-                              inLow_0  [i] ) / 2;
+      outReal_0[outIdx++] = (inHigh_0[i]+inLow_0[i])/2.0;
    }
 
    *outNbElement = outIdx;
