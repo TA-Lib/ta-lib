@@ -152,20 +152,30 @@ $firstline = 1;
 for $z (@sources) {
    $iter += 1;
    chomp($z);
+   
+   # Skip files that are platform specific
+   next if( $z =~ "ta_sql_odbc.c" );
+   
    if( $firstline ) {   
       print "SOURCES = ";
       $firstline = 0;
    }
    else {
       print "          ";
-   }
+   }   
+   
    if( $iter == $nbSources )
       { print $z; }
    else
       { print $z," \\", "\n"; }
 }
 
-print "\n\n\# Compiler Options\n";
+# Files that are on win32 only
+print "\n\n";
+print "\# Platform specific files\n";
+print "win32:SOURCES *= ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c\n";
+
+print "\n\# Compiler Options\n";
 
 # Output the include path of all sub-library.
 # We leave it to tmake to eliminate redundancy.
