@@ -111,7 +111,8 @@ static TA_PriceBarCheck checkTable[] =
   { "ES", TA_WEEKLY, TA_ALLOW_INCOMPLETE_PRICE_BARS,
      1,   0, 2003,  5, 18,   0,  0,  0,  921.50,  925.75,  911.25,  920.00,  (713627+765554)/2, 0 },
 
-  { "ES", TA_WEEKLY, 0, 0},
+  { "ES", TA_WEEKLY, 0,
+    0, 0, 0,  0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0 },
 
   { "ES", TA_5MINS, TA_ALLOW_INCOMPLETE_PRICE_BARS,
     482, 258, 2003,  5, 21,   0,  0,  0,  920.75,  920.75,  920.25,  920.50,  44, 0 },

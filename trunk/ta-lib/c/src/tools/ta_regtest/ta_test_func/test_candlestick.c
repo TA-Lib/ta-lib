@@ -72,7 +72,7 @@
 
 /**** Local declarations.              ****/
 #define MAX_OPTIN_PARAM    5
-#define MAX_TESTED_OUTPUT 10
+#define MAX_TESTED_OUTPUT  3
 
 TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType, 
                                  TA_RangeType rangeType, 
@@ -182,20 +182,17 @@ static ErrorNumber callCandlestick( const char   *name,
 /* List of test to perform. */
 static TA_Test tableTest[] =
 {
-   /******************/
-   /* TA_CDLHIGHWAVE */
-   /******************/
-   { "CDLHIGHWAVE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLDOJISTAR",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLEVENINGDOJISTAR", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLEVENINGSTAR",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLHIGHWAVE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLLONGLINE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLMORNINGDOJISTAR", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLMORNINGSTAR",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLSHORTLINE",       1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLSPINNINGTOP",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLTRISTAR",         1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }}
+   { "CDLHIGHWAVE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
+   { "CDLDOJISTAR",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
+   { "CDLEVENINGDOJISTAR", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
+   { "CDLEVENINGSTAR",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
+   { "CDLHIGHWAVE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
+   { "CDLLONGLINE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
+   { "CDLMORNINGDOJISTAR", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
+   { "CDLMORNINGSTAR",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
+   { "CDLSHORTLINE",       1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
+   { "CDLSPINNINGTOP",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }},
+   { "CDLTRISTAR",         1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1}, {1,1} }}
 
 };
 
