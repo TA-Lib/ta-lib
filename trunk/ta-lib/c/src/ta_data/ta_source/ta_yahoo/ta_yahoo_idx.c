@@ -1595,6 +1595,8 @@ static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_CountryId countryId
 
    TA_TableParseOpaqueData opaqueData;
 
+   access = NULL;
+
    stringCache = TA_GetGlobalStringCache();
    catString = NULL;
    symString = NULL;
