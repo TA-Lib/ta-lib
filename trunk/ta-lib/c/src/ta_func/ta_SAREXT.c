@@ -46,6 +46,8 @@
  *  120802 MF   Template creation.
  *  150903 PP   Reworked TA_SAR to allow customisation of more SAR params.
  *  210903 MF   Some changes related on first round of tests
+ *  230903 PP   Minor bug fixes.
+ *
  */
 
 /* SAR_ROUNDING is just for test purpose when cross-referencing that
@@ -327,7 +329,7 @@
     * ============================
     * Yes. Using the optInStartValue_0 parameter:
     *  optInStartValue_0 >  0 : SAR is long at optInStartValue_0.
-    *  optInStartValue_0 <  0 : SAR is short at abs(optInStartValue_0).
+    *  optInStartValue_0 <  0 : SAR is short at fabs(optInStartValue_0).
     *  
     * And when optInStartValue_0 == 0, the logic is the same as for TA_SAR
     * (See previous two sections).
@@ -482,7 +484,7 @@
             /* Output the overide SAR  */
             if( optInOffsetOnReverse_1 )
                sar += sar * optInOffsetOnReverse_1; 
-            outReal_0[outIdx++] = sar;
+            outReal_0[outIdx++] = -sar;
 
             /* Adjust afShort and ep */
             afShort = optInAccelerationInitShort_5;
