@@ -54,6 +54,34 @@ DEF_FUNCTION( AD,                         /* name */
 /* AD END */
 
 /* ADOSC BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_FastADOSC_Period =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInFastPeriod",        /* paramName */
+   0,                        /* flags */
+
+   "Fast Period",            /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2, /* dataSet */
+   3, /* defaultValue */
+   "Number of period for the fast MA", /* hint */
+
+   NULL /* helpFile */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_SlowADOSC_Period =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInSlowPeriod",        /* paramName */
+   0,                        /* flags */
+
+   "Slow Period",            /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2, /* dataSet */
+   10, /* defaultValue */
+   "Number of period for the slow MA", /* hint */
+
+   NULL /* helpFile */
+};
+
 static const TA_InputParameterInfo    *TA_ADOSC_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLCV,
@@ -67,8 +95,9 @@ static const TA_OutputParameterInfo   *TA_ADOSC_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_ADOSC_OptInputs[] =
-{
-  &TA_DEF_UI_TimePeriod_21_MINIMUM2,
+{  
+  &TA_DEF_UI_FastADOSC_Period,
+  &TA_DEF_UI_SlowADOSC_Period,
   NULL
 };
 
