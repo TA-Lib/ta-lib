@@ -265,8 +265,7 @@ TA_RetCode ReadCSIMaster(const char *DirectoryName, struct MasterListRecordType 
 
   struct Qmast2RecType rec2;
 
-  *outMasterList = NULL;
-  *outNRec = 0;
+  *outMasterList = NULL; *outNRec = 0; List = NULL;
   QmasterVersion = -1; 
 
   {
@@ -426,9 +425,10 @@ TA_RetCode ReadCSIMaster(const char *DirectoryName, struct MasterListRecordType 
   fclose(fp);
   return TA_SUCCESS;
 ErrorReturn:
-  TA_Free(outMasterList); outMasterList = NULL;
-  *outNRec = 0;
   fclose(fp);
+  *outMasterList = NULL; *outNRec = 0;
+  if( List )
+     TA_Free(List);
   return rc;
 }
 
@@ -451,7 +451,7 @@ TA_RetCode ReadCSIData(const char *DirectoryName, int Index, short cvf, SingleCo
   (void)cvf;
 
   FileNumber = Index+1; 
-  *outDataList = NULL; *outNRec = 0;
+  *outDataList = NULL; *outNRec = 0; List = NULL;
   QmasterVersion= -1;
 
   {
@@ -553,7 +553,8 @@ TA_RetCode ReadCSIData(const char *DirectoryName, int Index, short cvf, SingleCo
 ErrorReturn:
   fclose(fp);
   *outDataList = NULL; *outNRec = 0;
-  TA_Free(List);
+  if( List )
+     TA_Free(List);
   return rc;
 }
 
@@ -568,7 +569,7 @@ TA_RetCode ReadCSIMMaster(const char *DirectoryName, struct MasterListRecordType
   FILE *fp;
   int i;
   
-  *outMasterList = NULL; *outNRec = 0;
+  *outMasterList = NULL; *outNRec = 0; List = NULL;
 
   {
     strcpy(FileName,DirectoryName);
@@ -614,9 +615,10 @@ TA_RetCode ReadCSIMMaster(const char *DirectoryName, struct MasterListRecordType
   fclose(fp);
   return TA_SUCCESS;
 ErrorReturn:
-  TA_Free(outMasterList); outMasterList = NULL;
-  *outNRec = 0;
   fclose(fp);
+  *outMasterList = NULL; *outNRec = 0;
+  if( List  )
+     TA_Free(List);
   return rc;
 }
 
@@ -632,7 +634,8 @@ TA_RetCode ReadCSIMData(const char *DirectoryName, int Index, short cvf, SingleC
   DatRecordType dart;
   int i;
   
-  *outDataList = NULL; *outNRec = 0;
+  *outDataList = NULL; *outNRec = 0; List = NULL;
+
   FileNumber = Index+1;
 
   {
@@ -676,7 +679,8 @@ TA_RetCode ReadCSIMData(const char *DirectoryName, int Index, short cvf, SingleC
 ErrorReturn:
   fclose(fp);
   *outDataList = NULL; *outNRec = 0;
-  TA_Free(List);
+  if( List )
+     TA_Free(List);
   return rc;
 }
 
