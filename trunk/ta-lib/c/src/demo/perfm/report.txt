@@ -1,0 +1,29 @@
+Date Range [01/01/2002..12/31/2002]
+                                 Long Trades    Short Trades      All Trades
+============================================================================
+Number Of Trades                         2               1               3
+Profit Factor                         0.04             N/A            0.12
+Profitable (%)                       50.00 %        100.00 %         66.67 %
+----------------------------------------------------------------------------
+Nb Winning Trade                         1               1               2
+Average Profit (%)                    2.00 %          1.96 %          1.98 %
+Largest Profit (%)                    2.00 %          1.96 %          2.00 %
+----------------------------------------------------------------------------
+Nb Losing Trade                          1               0               1
+Average Loss (%)                    -50.00 %           N/A          -50.00 %
+Largest Loss (%)                    -50.00 %           N/A          -50.00 %
+----------------------------------------------------------------------------
+Starting Capital                       N/A             N/A        10000.00 $
+Ending Capital                         N/A             N/A         8900.00 $
+Total Net Profit                  -1200.00 $        100.00 $      -1100.00 $
+Rate Of Return                      -12.00 %          1.00 %        -11.00 %
+Annualized Return                   -12.00 %          1.00 %        -11.00 %
+Annualized Compounded Return        -12.00 %          1.00 %        -11.00 %
+Gross Profit                         50.00 $        100.00 $        150.00 $
+Average Profit                       50.00 $        100.00 $         75.00 $
+Largest Net Profit                   50.00 $        100.00 $        100.00 $
+Gross Loss                        -1250.00 $           N/A        -1250.00 $
+Average Loss                      -1250.00 $           N/A        -1250.00 $
+Largest Net Loss                  -1250.00 $           N/A        -1250.00 $
+============================================================================
+End Of Report
