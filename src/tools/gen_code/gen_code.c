@@ -186,8 +186,7 @@ static int createProjTemplate( FileHandle *in, FileHandle *out );
 static void writeFuncFile( const TA_FuncInfo *funcInfo );
 static void doFuncFile( const TA_FuncInfo *funcInfo );
 static void printOptInputValidation( FILE *out,
-                                     const char *name,
-                                     unsigned int paramNb,
+                                     const char *name,                                     
                                      const TA_OptInputParameterInfo *optInputParamInfo );
 static int skipToGenCode( const char *dstName, FILE *out, FILE *templateFile );
 static void printDefines( FILE *out, const TA_FuncInfo *funcInfo );
@@ -1402,7 +1401,7 @@ static void printFunc( FILE *out,
              fprintf( out, "#if !defined(_MANAGED)\n" );
          }
 
-         printOptInputValidation( out, paramName, paramNb, optInputParamInfo );
+         printOptInputValidation( out, paramName, optInputParamInfo );
 
          if( excludeFromManaged )
          {
@@ -2067,8 +2066,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
 }
 
 static void printOptInputValidation( FILE *out,
-                                     const char *name,
-                                     unsigned int paramNb,
+                                     const char *name,                                     
                                      const TA_OptInputParameterInfo *optInputParamInfo )
 {
    int minInt, maxInt;
@@ -2776,7 +2774,7 @@ static int copyFile( const char *src, const char *dest )
 static int areFileSame( const char *file1, const char *file2 )
 {
    /* Text comparison of both files */
-   int i;
+   unsigned int i;
 
    FILE *f1;
    FILE *f2;
@@ -2812,7 +2810,7 @@ static int areFileSame( const char *file1, const char *file2 )
             fclose(f2);
             return 0;
          }          
-         if( gTempBuf[i] == 0 )
+         if( gTempBuf[i] == '\0' )
             i = sizeof(gTempBuf);
       }
 
