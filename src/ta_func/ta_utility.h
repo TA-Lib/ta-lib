@@ -273,7 +273,40 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
  */
 #define PER_TO_K( per ) ((double)2.0 / ((double)(per + 1)))
 
-/* Math Constants */
+/* Math Constants and Functions */
 #define PI 3.14159265358979323846
+
+#ifndef min
+   #define min(a, b)  (((a) < (b)) ? (a) : (b))
+#endif
+
+#ifndef max
+   #define max(a, b)  (((a) > (b)) ? (a) : (b))
+#endif 
+
+/* Candlestick macros (used by candlestick functions, where the parameters are always called inClose, inOpen, etc.
+ * Don't use i++ or func(i) with these macros !
+ */
+
+#define TA_REALBODY(IDX)        ( fabs( inClose[IDX] - inOpen[IDX] ) )
+#define TA_UPPERSHADOW(IDX)     ( inHigh[IDX] - ( inClose[IDX] >= inOpen[IDX] ? inClose[IDX] : inOpen[IDX] ) )
+#define TA_LOWERSHADOW(IDX)     ( ( inClose[IDX] >= inOpen[IDX] ? inOpen[IDX] : inClose[IDX] ) - inLow[IDX] )
+#define TA_HIGHLOWRANGE(IDX)    ( inHigh[IDX] - inLow[IDX] )
+#define TA_CANDLECOLOR(IDX)     ( inClose[IDX] >= inOpen[IDX] ? 1 : -1 )
+
+#define TA_CANDLERANGETYPE(SET) TA_Globals->candleSettings[SET].rangeType
+#define TA_CANDLEAVGPERIOD(SET) TA_Globals->candleSettings[SET].avgPeriod
+#define TA_CANDLEFACTOR(SET)    TA_Globals->candleSettings[SET].factor
+
+#define TA_CANDLERANGE(SET,IDX) \
+    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_RealBody ? TA_REALBODY(IDX) : \
+    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_HighLow  ? TA_HIGHLOWRANGE(IDX) : \
+    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_Shadows  ? TA_UPPERSHADOW(IDX) + TA_LOWERSHADOW(IDX) : \
+      0 ) ) )
+#define TA_CANDLEAVERAGE(SET,SUM,IDX) \
+    ( TA_CANDLEFACTOR(SET) \
+        * ( TA_CANDLEAVGPERIOD(SET) ? SUM / TA_CANDLEAVGPERIOD(SET) : TA_CANDLERANGE(SET,IDX) ) \
+        / ( TA_CANDLERANGETYPE(SET) == TA_RangeType_Shadows ? 2 : 1 ) \
+    )
 
 #endif
