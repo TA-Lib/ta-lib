@@ -152,6 +152,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_RSI.c \
 		..\..\..\..\..\src\ta_func\ta_STOCH.c \
 		..\..\..\..\..\src\ta_func\ta_STOCHF.c \
+		..\..\..\..\..\src\ta_func\ta_STOCHRSI.c \
 		..\..\..\..\..\src\ta_func\ta_TRIX.c \
 		..\..\..\..\..\src\ta_func\ta_WILLR.c \
 		..\..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c \
@@ -312,6 +313,7 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj \
 		..\..\..\..\..\temp\csd\ta_RSI.obj \
 		..\..\..\..\..\temp\csd\ta_STOCH.obj \
 		..\..\..\..\..\temp\csd\ta_STOCHF.obj \
+		..\..\..\..\..\temp\csd\ta_STOCHRSI.obj \
 		..\..\..\..\..\temp\csd\ta_TRIX.obj \
 		..\..\..\..\..\temp\csd\ta_WILLR.obj \
 		..\..\..\..\..\temp\csd\ta_HT_DCPERIOD.obj \
@@ -499,6 +501,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_RSI.obj \
 +..\..\..\..\..\temp\csd\ta_STOCH.obj \
 +..\..\..\..\..\temp\csd\ta_STOCHF.obj \
++..\..\..\..\..\temp\csd\ta_STOCHRSI.obj \
 +..\..\..\..\..\temp\csd\ta_TRIX.obj \
 +..\..\..\..\..\temp\csd\ta_WILLR.obj \
 +..\..\..\..\..\temp\csd\ta_HT_DCPERIOD.obj \
@@ -672,6 +675,7 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_RSI.obj
 	-del ..\..\..\..\..\temp\csd\ta_STOCH.obj
 	-del ..\..\..\..\..\temp\csd\ta_STOCHF.obj
+	-del ..\..\..\..\..\temp\csd\ta_STOCHRSI.obj
 	-del ..\..\..\..\..\temp\csd\ta_TRIX.obj
 	-del ..\..\..\..\..\temp\csd\ta_WILLR.obj
 	-del ..\..\..\..\..\temp\csd\ta_HT_DCPERIOD.obj
@@ -1106,6 +1110,9 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_STOCHF.obj: ..\..\..\..\..\src\ta_func\ta_STOCHF.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_STOCHF.obj ..\..\..\..\..\src\ta_func\ta_STOCHF.c
+
+..\..\..\..\..\temp\csd\ta_STOCHRSI.obj: ..\..\..\..\..\src\ta_func\ta_STOCHRSI.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_STOCHRSI.obj ..\..\..\..\..\src\ta_func\ta_STOCHRSI.c
 
 ..\..\..\..\..\temp\csd\ta_TRIX.obj: ..\..\..\..\..\src\ta_func\ta_TRIX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_TRIX.obj ..\..\..\..\..\src\ta_func\ta_TRIX.c

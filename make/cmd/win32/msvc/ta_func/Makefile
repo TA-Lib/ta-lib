@@ -66,6 +66,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_RSI.c \
 		..\..\..\..\..\src\ta_func\ta_STOCH.c \
 		..\..\..\..\..\src\ta_func\ta_STOCHF.c \
+		..\..\..\..\..\src\ta_func\ta_STOCHRSI.c \
 		..\..\..\..\..\src\ta_func\ta_TRIX.c \
 		..\..\..\..\..\src\ta_func\ta_WILLR.c \
 		..\..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c \
@@ -132,6 +133,7 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_utility.obj \
 		..\..\..\..\..\temp\cmd\ta_RSI.obj \
 		..\..\..\..\..\temp\cmd\ta_STOCH.obj \
 		..\..\..\..\..\temp\cmd\ta_STOCHF.obj \
+		..\..\..\..\..\temp\cmd\ta_STOCHRSI.obj \
 		..\..\..\..\..\temp\cmd\ta_TRIX.obj \
 		..\..\..\..\..\temp\cmd\ta_WILLR.obj \
 		..\..\..\..\..\temp\cmd\ta_HT_DCPERIOD.obj \
@@ -243,6 +245,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_RSI.obj
 	-del ..\..\..\..\..\temp\cmd\ta_STOCH.obj
 	-del ..\..\..\..\..\temp\cmd\ta_STOCHF.obj
+	-del ..\..\..\..\..\temp\cmd\ta_STOCHRSI.obj
 	-del ..\..\..\..\..\temp\cmd\ta_TRIX.obj
 	-del ..\..\..\..\..\temp\cmd\ta_WILLR.obj
 	-del ..\..\..\..\..\temp\cmd\ta_HT_DCPERIOD.obj
@@ -417,6 +420,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_STOCHF.obj: ..\..\..\..\..\src\ta_func\ta_STOCHF.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_STOCHF.obj ..\..\..\..\..\src\ta_func\ta_STOCHF.c
+
+..\..\..\..\..\temp\cmd\ta_STOCHRSI.obj: ..\..\..\..\..\src\ta_func\ta_STOCHRSI.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_STOCHRSI.obj ..\..\..\..\..\src\ta_func\ta_STOCHRSI.c
 
 ..\..\..\..\..\temp\cmd\ta_TRIX.obj: ..\..\..\..\..\src\ta_func\ta_TRIX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_TRIX.obj ..\..\..\..\..\src\ta_func\ta_TRIX.c
