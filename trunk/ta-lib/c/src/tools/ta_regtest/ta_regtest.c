@@ -261,6 +261,15 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    #define PRINTF_TEST_HDR      printf( "    %22s: Testing...", TEST_ID );
    #define PRINTF_TEST_SUCCESS  printf( "done.\n" );
 
+   /* Test Directional Movement related functions */
+   #define TEST_ID "DI,DM,ADX,ADXR"
+   PRINTF_TEST_HDR;
+   retValue = test_func_adx( libHandle, history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+   PRINTF_TEST_SUCCESS;
+   #undef TEST_ID
+
    /* Test MOM and ROC function */
    #define TEST_ID "MOM,ROC,ROCR"
    PRINTF_TEST_HDR;

@@ -157,6 +157,10 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_regtest.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_adx.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\tools\ta_regtest\test_ascii.c
 # End Source File
 # Begin Source File
