@@ -37,14 +37,17 @@ CDLHANGINGMAN       Hanging Man
 CDLHARAMI           Harami Pattern
 CDLHARAMICROSS      Harami Cross Pattern
 CDLHIGHWAVE         High-Wave Candle
+CDLHOMINGPIGEON     Homing Pigeon
 CDLIDENTICAL3CROWS  Identical Three Crows
 CDLINNECK           In-Neck Pattern
 CDLINVERTEDHAMMER   Inverted Hammer
 CDLKICKING          Kicking
 CDLKICKINGBYLENGTH  Kicking - bull/bear determined by the longer marubozu
+CDLLADDERBOTTOM     Ladder Bottom
 CDLLONGLEGGEDDOJI   Long Legged Doji
 CDLLONGLINE         Long Line Candle
 CDLMARUBOZU         Marubozu
+CDLMATCHINGLOW      Matching Low
 CDLMATHOLD          Mat Hold
 CDLMORNINGDOJISTAR  Morning Doji Star
 CDLMORNINGSTAR      Morning Star
@@ -57,6 +60,7 @@ CDLSHOOTINGSTAR     Shooting Star
 CDLSHORTLINE        Short Line Candle
 CDLSPINNINGTOP      Spinning Top
 CDLSTALLEDPATTERN   Stalled Pattern
+CDLSTICKSANDWICH    Stick Sandwich
 CDLTAKURI           Takuri (Dragonfly Doji with very long lower shadow)
 CDLTASUKIGAP        Tasuki Gap
 CDLTHRUSTING        Thrusting Pattern
