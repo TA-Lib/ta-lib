@@ -83,7 +83,7 @@ typedef struct
    TA_Integer startIdx;
    TA_Integer endIdx;
 
-   TA_Integer optInTimePeriod_0;
+   TA_Integer optInTimePeriod;
  
    TA_RetCode expectedRetCode;
 
@@ -112,19 +112,19 @@ static ErrorNumber do_test( const TA_History *history,
 
 static TA_RetCode referenceMin( TA_Integer    startIdx,
                                 TA_Integer    endIdx,
-                                const TA_Real inReal_0[],
-                                TA_Integer    optInTimePeriod_0,
+                                const TA_Real inReal[],
+                                TA_Integer    optInTimePeriod,
                                 TA_Integer   *outBegIdx,
                                 TA_Integer   *outNbElement,
-                                TA_Real       outReal_0[] );
+                                TA_Real       outReal[] );
 
 static TA_RetCode referenceMax( TA_Integer    startIdx,
                                 TA_Integer    endIdx,
-                                const TA_Real inReal_0[],
-                                TA_Integer    optInTimePeriod_0,
+                                const TA_Real inReal[],
+                                TA_Integer    optInTimePeriod,
                                 TA_Integer   *outBegIdx,
                                 TA_Integer   *outNbElement,
-                                TA_Real       outReal_0[] );
+                                TA_Real       outReal[] );
 
 static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement );
 
@@ -304,22 +304,22 @@ static TA_RetCode rangeTestFunction(
       retCode = TA_MIN( startIdx,
                         endIdx,
                         testParam->close,
-                        testParam->test->optInTimePeriod_0,                        
+                        testParam->test->optInTimePeriod,                        
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
-      *lookback  = TA_MIN_Lookback( testParam->test->optInTimePeriod_0 );
+      *lookback  = TA_MIN_Lookback( testParam->test->optInTimePeriod );
    }
    else if( testParam->test->theFunction == TA_MAX_TEST )
    {
       retCode = TA_MAX( startIdx,
                         endIdx,
                         testParam->close,
-                        testParam->test->optInTimePeriod_0,
+                        testParam->test->optInTimePeriod,
                         outBegIdx,
                         outNbElement,                        
                         outputBuffer );
-      *lookback = TA_MAX_Lookback( testParam->test->optInTimePeriod_0 );
+      *lookback = TA_MAX_Lookback( testParam->test->optInTimePeriod );
    }
    else
       retCode = TA_INTERNAL_ERROR(129);
@@ -351,7 +351,7 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_MIN( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInTimePeriod_0,                        
+                        test->optInTimePeriod,                        
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -361,7 +361,7 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_MAX( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInTimePeriod_0,                        
+                        test->optInTimePeriod,                        
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -384,7 +384,7 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_MIN( test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
-                        test->optInTimePeriod_0,                        
+                        test->optInTimePeriod,                        
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -394,7 +394,7 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_MAX( test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
-                        test->optInTimePeriod_0,
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -442,11 +442,11 @@ static ErrorNumber do_test( const TA_History *history,
  */
 static TA_RetCode referenceMin( TA_Integer    startIdx,
                                 TA_Integer    endIdx,
-                                const TA_Real inReal_0[],
-                                TA_Integer    optInTimePeriod_0,
+                                const TA_Real inReal[],
+                                TA_Integer    optInTimePeriod,
                                 TA_Integer   *outBegIdx,
                                 TA_Integer   *outNbElement,
-                                TA_Real       outReal_0[] )
+                                TA_Real       outReal[] )
 {
    TA_Real lowest, tmp;
    TA_Integer outIdx, nbInitialElementNeeded;
@@ -456,7 +456,7 @@ static TA_RetCode referenceMin( TA_Integer    startIdx,
     * to identify at least one output over the specified
     * period.
     */
-   nbInitialElementNeeded = (optInTimePeriod_0-1);
+   nbInitialElementNeeded = (optInTimePeriod-1);
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -482,14 +482,14 @@ static TA_RetCode referenceMin( TA_Integer    startIdx,
    
    while( today <= endIdx )
    {
-      lowest = inReal_0[trailingIdx++];
+      lowest = inReal[trailingIdx++];
       for( i=trailingIdx; i <= today; i++ )
       {
-         tmp = inReal_0[i];
+         tmp = inReal[i];
          if( tmp < lowest) lowest= tmp;
       }
 
-      outReal_0[outIdx++] = lowest;
+      outReal[outIdx++] = lowest;
       today++;
    }
 
@@ -504,11 +504,11 @@ static TA_RetCode referenceMin( TA_Integer    startIdx,
 
 static TA_RetCode referenceMax( TA_Integer    startIdx,
                                 TA_Integer    endIdx,
-                                const TA_Real inReal_0[],
-                                TA_Integer    optInTimePeriod_0,
+                                const TA_Real inReal[],
+                                TA_Integer    optInTimePeriod,
                                 TA_Integer   *outBegIdx,
                                 TA_Integer   *outNbElement,
-                                TA_Real       outReal_0[] )
+                                TA_Real       outReal[] )
 {
    /* Insert local variables here. */
    TA_Real highest, tmp;
@@ -525,12 +525,12 @@ static TA_RetCode referenceMax( TA_Integer    startIdx,
       return TA_OUT_OF_RANGE_END_INDEX;
 
    /* Validate the parameters. */
-   if( !inReal_0 ) return TA_BAD_PARAM;
-   /* min/max are checked for optInTimePeriod_0. */
-   if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-      optInTimePeriod_0 = 30;
+   if( !inReal ) return TA_BAD_PARAM;
+   /* min/max are checked for optInTimePeriod. */
+   if( optInTimePeriod == TA_INTEGER_DEFAULT )
+      optInTimePeriod = 30;
 
-   if( outReal_0 == NULL )
+   if( outReal == NULL )
       return TA_BAD_PARAM;
 
 #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -541,7 +541,7 @@ static TA_RetCode referenceMax( TA_Integer    startIdx,
     * to identify at least one output over the specified
     * period.
     */
-   nbInitialElementNeeded = (optInTimePeriod_0-1);
+   nbInitialElementNeeded = (optInTimePeriod-1);
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -567,14 +567,14 @@ static TA_RetCode referenceMax( TA_Integer    startIdx,
    
    while( today <= endIdx )
    {
-      highest = inReal_0[trailingIdx++];
+      highest = inReal[trailingIdx++];
       for( i=trailingIdx; i <= today; i++ )
       {
-         tmp = inReal_0[i];
+         tmp = inReal[i];
          if( tmp > highest ) highest = tmp;
       }
 
-      outReal_0[outIdx++] = highest;
+      outReal[outIdx++] = highest;
       today++;
    }
 

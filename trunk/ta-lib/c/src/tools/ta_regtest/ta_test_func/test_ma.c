@@ -86,7 +86,7 @@ typedef struct
 
    TA_Integer startIdx;
    TA_Integer endIdx;
-   TA_Integer optInTimePeriod_0;
+   TA_Integer optInTimePeriod;
    TA_Integer optInMAType_1;
    TA_Integer compatibility;
 
@@ -445,13 +445,13 @@ static TA_RetCode rangeTestFunction(
      retCode = TA_MA( startIdx,
                       endIdx,
                       testParam->close,
-                      testParam->test->optInTimePeriod_0,
+                      testParam->test->optInTimePeriod,
                       testParam->test->optInMAType_1,
                       outBegIdx,
                       outNbElement,
                       outputBuffer );
 
-     *lookback = TA_MA_Lookback( testParam->test->optInTimePeriod_0,
+     *lookback = TA_MA_Lookback( testParam->test->optInTimePeriod,
                                  testParam->test->optInMAType_1 );
      break;
   }
@@ -531,7 +531,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
       retCode = TA_MA( test->startIdx,
                        test->endIdx,
                        gBuffer[0].in,
-                       test->optInTimePeriod_0,
+                       test->optInTimePeriod,
                        test->optInMAType_1,
                        &outBegIdx,
                        &outNbElement,
@@ -585,7 +585,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
       retCode = TA_MA( test->startIdx,
                        test->endIdx,
                        gBuffer[1].in,
-                       test->optInTimePeriod_0,
+                       test->optInTimePeriod,
                        test->optInMAType_1,
                        &outBegIdx,
                        &outNbElement,
@@ -638,27 +638,27 @@ static ErrorNumber do_test_ma( const TA_History *history,
    switch( test->optInMAType_1 )
    {
    case TA_MAType_WMA:
-      temp = TA_WMA_Lookback( test->optInTimePeriod_0 );
+      temp = TA_WMA_Lookback( test->optInTimePeriod );
       break;
 
    case TA_MAType_SMA:
-      temp = TA_SMA_Lookback( test->optInTimePeriod_0 );
+      temp = TA_SMA_Lookback( test->optInTimePeriod );
       break;
 
    case TA_MAType_EMA:
-      temp = TA_EMA_Lookback( test->optInTimePeriod_0 );
+      temp = TA_EMA_Lookback( test->optInTimePeriod );
       break;
 
    case TA_MAType_DEMA:
-      temp = TA_DEMA_Lookback( test->optInTimePeriod_0 );
+      temp = TA_DEMA_Lookback( test->optInTimePeriod );
       break;
 
    case TA_MAType_TEMA:
-      temp = TA_TEMA_Lookback( test->optInTimePeriod_0 );
+      temp = TA_TEMA_Lookback( test->optInTimePeriod );
       break;
 
    case TA_MAType_KAMA:
-      temp = TA_KAMA_Lookback( test->optInTimePeriod_0 );
+      temp = TA_KAMA_Lookback( test->optInTimePeriod );
       break;
 
    case TA_MAType_MAMA:
@@ -666,18 +666,18 @@ static ErrorNumber do_test_ma( const TA_History *history,
       break;
 
    case TA_MAType_TRIMA:
-      temp = TA_TRIMA_Lookback( test->optInTimePeriod_0 );
+      temp = TA_TRIMA_Lookback( test->optInTimePeriod );
       break;
 
    case TA_MAType_T3:
-      temp = TA_T3_Lookback( test->optInTimePeriod_0, 0.7 );
+      temp = TA_T3_Lookback( test->optInTimePeriod, 0.7 );
       break;
 
    default:
       return TA_TEST_TFRR_BAD_MA_TYPE;
    }
 
-   temp2 = TA_MA_Lookback( test->optInTimePeriod_0, test->optInMAType_1 );
+   temp2 = TA_MA_Lookback( test->optInTimePeriod, test->optInMAType_1 );
 
    if( temp != temp2 )
       return TA_TEST_TFFR_BAD_MA_LOOKBACK;

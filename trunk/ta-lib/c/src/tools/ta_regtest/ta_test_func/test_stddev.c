@@ -75,7 +75,7 @@ typedef struct
    TA_Integer startIdx;
    TA_Integer endIdx;
 
-   TA_Integer optInTimePeriod_0;
+   TA_Integer optInTimePeriod;
    TA_Real    optInNbDeviation_1;
 
    TA_RetCode expectedRetCode;
@@ -165,14 +165,14 @@ static TA_RetCode rangeTestFunction(
                         startIdx,
                         endIdx,
                         testParam->close,
-                        testParam->test->optInTimePeriod_0,
+                        testParam->test->optInTimePeriod,
                         testParam->test->optInNbDeviation_1,                        
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
 
 
-   *lookback = TA_STDDEV_Lookback( testParam->test->optInTimePeriod_0,
+   *lookback = TA_STDDEV_Lookback( testParam->test->optInTimePeriod,
                        testParam->test->optInNbDeviation_1 );
 
    return retCode;
@@ -199,7 +199,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInTimePeriod_0,
+                        test->optInTimePeriod,
                         test->optInNbDeviation_1,                        
                         &outBegIdx,
                         &outNbElement,
@@ -220,7 +220,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
-                        test->optInTimePeriod_0,
+                        test->optInTimePeriod,
                         test->optInNbDeviation_1,                        
                         &outBegIdx,
                         &outNbElement,

@@ -92,7 +92,7 @@ typedef struct
 
    TA_Integer startIdx;
    TA_Integer endIdx;
-   TA_Integer optInTimePeriod_0;
+   TA_Integer optInTimePeriod;
    
    TA_RetCode expectedRetCode;
 
@@ -229,11 +229,11 @@ static TA_RetCode rangeTestFunction(
                         testParam->low,
                         testParam->close,
                         testParam->volume,
-                        testParam->test->optInTimePeriod_0,
+                        testParam->test->optInTimePeriod,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
-      *lookback = TA_MFI_Lookback( testParam->test->optInTimePeriod_0 );
+      *lookback = TA_MFI_Lookback( testParam->test->optInTimePeriod );
       break;
 
    case TA_AD_TEST:
@@ -316,7 +316,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[1].in,
                         gBuffer[2].in,
                         history->volume,
-                        test->optInTimePeriod_0,
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -389,7 +389,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[1].in,
                         gBuffer[2].in,
                         history->volume,
-                        test->optInTimePeriod_0,
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].in );
@@ -465,7 +465,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[1].in,
                         gBuffer[2].in,
                         history->volume,
-                        test->optInTimePeriod_0,
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -542,7 +542,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[1].in,
                         gBuffer[2].in,
                         history->volume,
-                        test->optInTimePeriod_0,
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[2].in );

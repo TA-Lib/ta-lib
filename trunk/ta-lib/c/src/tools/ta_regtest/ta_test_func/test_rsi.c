@@ -77,7 +77,7 @@ typedef struct
    TA_Integer startIdx;
    TA_Integer endIdx;
 
-   TA_Integer optInTimePeriod_0;
+   TA_Integer optInTimePeriod;
    TA_Integer compatibility;
 
    TA_RetCode expectedRetCode;
@@ -230,12 +230,12 @@ static TA_RetCode rangeTestFunction(
    retCode = TA_RSI( startIdx,
                      endIdx,
                      testParam->close,
-                     testParam->test->optInTimePeriod_0,
+                     testParam->test->optInTimePeriod,
                      outBegIdx,
                      outNbElement,
                      outputBuffer );
 
-   *lookback = TA_RSI_Lookback( testParam->test->optInTimePeriod_0);
+   *lookback = TA_RSI_Lookback( testParam->test->optInTimePeriod);
 
    return retCode;
 }
@@ -270,7 +270,7 @@ static ErrorNumber do_test( const TA_History *history,
    retCode = TA_RSI( test->startIdx,
                      test->endIdx,
                      gBuffer[0].in,
-                     test->optInTimePeriod_0,
+                     test->optInTimePeriod,
                      &outBegIdx,
                      &outNbElement,
                      gBuffer[0].out0 );
@@ -289,7 +289,7 @@ static ErrorNumber do_test( const TA_History *history,
    retCode = TA_RSI( test->startIdx,
                      test->endIdx,
                      gBuffer[1].in,
-                     test->optInTimePeriod_0,
+                     test->optInTimePeriod,
                      &outBegIdx,
                      &outNbElement,
                      gBuffer[1].in );
@@ -337,7 +337,7 @@ static ErrorNumber do_test( const TA_History *history,
       return TA_ABS_TST_FAIL_PARAMREALPTR;
    }
 
-   retCode = TA_SetOptInputParamInteger( params, 0, test->optInTimePeriod_0 );
+   retCode = TA_SetOptInputParamInteger( params, 0, test->optInTimePeriod );
    if( retCode != TA_SUCCESS )
    {
       printf( "Fail: TA_SetOptInputParamInteger with retCode = %d\n", retCode );

@@ -79,8 +79,8 @@ DEF_FUNCTION( CCI,                           /* name */
 /* CORREL BEGIN */
 static const TA_InputParameterInfo    *TA_CORREL_Inputs[]    =
 {
-  &TA_DEF_UI_Input_Real,
-  &TA_DEF_UI_Input_Real,
+  &TA_DEF_UI_Input_Real0,
+  &TA_DEF_UI_Input_Real1,
   NULL
 };
 

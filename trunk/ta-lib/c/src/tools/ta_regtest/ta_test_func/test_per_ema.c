@@ -85,7 +85,7 @@ typedef struct
 
    TA_Integer startIdx;
    TA_Integer endIdx;
-   TA_Integer optInTimePeriod_0;
+   TA_Integer optInTimePeriod;
    
    TA_RetCode expectedRetCode;
 
@@ -187,11 +187,11 @@ static TA_RetCode rangeTestFunction(
       retCode = TA_TRIX( startIdx,
                          endIdx,
                          testParam->close,
-                         testParam->test->optInTimePeriod_0,
+                         testParam->test->optInTimePeriod,
                          outBegIdx,
                          outNbElement,
                          outputBuffer );
-      *lookback = TA_TRIX_Lookback( testParam->test->optInTimePeriod_0 );
+      *lookback = TA_TRIX_Lookback( testParam->test->optInTimePeriod );
    default:
       retCode = TA_INTERNAL_ERROR(131);
    } 
@@ -227,7 +227,7 @@ static ErrorNumber do_test_per_ema( const TA_History *history,
       retCode = TA_TRIX( test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
-                         test->optInTimePeriod_0,
+                         test->optInTimePeriod,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[0].out0 );
@@ -259,7 +259,7 @@ static ErrorNumber do_test_per_ema( const TA_History *history,
       retCode = TA_TRIX( test->startIdx,
                          test->endIdx,
                          gBuffer[1].in,
-                         test->optInTimePeriod_0,
+                         test->optInTimePeriod,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[1].in );
