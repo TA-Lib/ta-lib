@@ -348,6 +348,14 @@ SOURCE=..\..\..\..\src\ta_abstract\tables\table_z.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_abstract\ta_def_ui.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_frame.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_abstract\ta_frame_priv.h
 # End Source File
 # End Group

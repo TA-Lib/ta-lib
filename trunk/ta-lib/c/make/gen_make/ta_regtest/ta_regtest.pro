@@ -44,6 +44,7 @@ SOURCES	= ../../../../../src/tools/ta_regtest/ta_regtest.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_trange.c \
           ../../../../../src/tools/ta_regtest/test_util.c \
           ../../../../../src/tools/ta_regtest/test_abstract.c \
+          ../../../../../src/tools/ta_regtest/test_csi.c \
           ../../../../../src/tools/ta_regtest/test_yahoo.c
 
 # Additional libraries

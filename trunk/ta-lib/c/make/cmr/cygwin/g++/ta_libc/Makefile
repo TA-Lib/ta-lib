@@ -11,7 +11,7 @@ CC	=	gcc
 CXX	=	g++
 CFLAGS	=	-pipe -Wall -W -O2 -fno-strict-aliasing -D_REENTRANT -DQT_THREAD_SUPPORT -DNO_DEBUG
 CXXFLAGS=	-pipe -Wall -W -O2 -fno-strict-aliasing -D_REENTRANT -DQT_THREAD_SUPPORT -DNO_DEBUG
-INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_data -I../../../../../src/ta_data/ta_source -I../../../../../src/ta_data/ta_source/ta_fileindex -I../../../../../src/ta_data/ta_source/ta_ascii -I../../../../../src/ta_data/ta_source/ta_readop -I../../../../../src/ta_data/ta_source/ta_yahoo -I../../../../../src/ta_data/ta_source/ta_sql -I../../../../../src/ta_data/ta_history -I../../../../../src/ta_data/ta_source/ta_simulator -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include -I../../../../../src/ta_common/bzip2 -I../../../../../src/ta_abstract -I../../../../../src/ta_abstract/tables -I../../../../../src/ta_abstract/frames -I../../../../../src/ta_pm -I$(QTDIR)/include
+INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_data -I../../../../../src/ta_data/ta_source -I../../../../../src/ta_data/ta_source/ta_fileindex -I../../../../../src/ta_data/ta_source/ta_ascii -I../../../../../src/ta_data/ta_source/ta_readop -I../../../../../src/ta_data/ta_source/ta_yahoo -I../../../../../src/ta_data/ta_source/ta_sql -I../../../../../src/ta_data/ta_source/ta_csi -I../../../../../src/ta_data/ta_history -I../../../../../src/ta_data/ta_source/ta_simulator -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include -I../../../../../src/ta_common/bzip2 -I../../../../../src/ta_abstract -I../../../../../src/ta_abstract/tables -I../../../../../src/ta_abstract/frames -I../../../../../src/ta_pm -I$(QTDIR)/include
 AR	=	ar cqs
 RANLIB	=	
 MOC	=	$(QTDIR)/bin/moc
@@ -53,6 +53,9 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_historical.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_market.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_idx.c \
+		../../../../../src/ta_data/ta_source/ta_csi/ta_csi.c \
+		../../../../../src/ta_data/ta_source/ta_csi/ta_csi_handle.c \
+		../../../../../src/ta_data/ta_source/ta_csi/ta_csi_files.c \
 		../../../../../src/tools/gen_data/ta_daily_ref_0.c \
 		../../../../../src/tools/gen_data/ta_intra_ref_0.c \
 		../../../../../src/tools/gen_data/ta_mrg_0.c \
@@ -219,6 +222,9 @@ OBJECTS =	../../../../../temp/cmr/ta_ascii.o \
 		../../../../../temp/cmr/ta_yahoo_historical.o \
 		../../../../../temp/cmr/ta_yahoo_market.o \
 		../../../../../temp/cmr/ta_yahoo_idx.o \
+		../../../../../temp/cmr/ta_csi.o \
+		../../../../../temp/cmr/ta_csi_handle.o \
+		../../../../../temp/cmr/ta_csi_files.o \
 		../../../../../temp/cmr/ta_daily_ref_0.o \
 		../../../../../temp/cmr/ta_intra_ref_0.o \
 		../../../../../temp/cmr/ta_mrg_0.o \
@@ -497,6 +503,15 @@ clean:
 
 ../../../../../temp/cmr/ta_yahoo_idx.o: ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_idx.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_yahoo_idx.o ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_idx.c
+
+../../../../../temp/cmr/ta_csi.o: ../../../../../src/ta_data/ta_source/ta_csi/ta_csi.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_csi.o ../../../../../src/ta_data/ta_source/ta_csi/ta_csi.c
+
+../../../../../temp/cmr/ta_csi_handle.o: ../../../../../src/ta_data/ta_source/ta_csi/ta_csi_handle.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_csi_handle.o ../../../../../src/ta_data/ta_source/ta_csi/ta_csi_handle.c
+
+../../../../../temp/cmr/ta_csi_files.o: ../../../../../src/ta_data/ta_source/ta_csi/ta_csi_files.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_csi_files.o ../../../../../src/ta_data/ta_source/ta_csi/ta_csi_files.c
 
 ../../../../../temp/cmr/ta_daily_ref_0.o: ../../../../../src/tools/gen_data/ta_daily_ref_0.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_daily_ref_0.o ../../../../../src/tools/gen_data/ta_daily_ref_0.c

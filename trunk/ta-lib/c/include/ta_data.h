@@ -85,6 +85,8 @@ typedef enum
    TA_SIMULATOR,
    TA_YAHOO_WEB,
    TA_SQL,
+   TA_CSI,
+   TA_CSIM,
    TA_NUM_OF_SOURCE_ID
 } TA_SourceId;
 
@@ -356,7 +358,7 @@ typedef struct
    /* Enumerate all the data source that did contribute. */
    TA_StringTable listOfSource;
 
-   /* Hidden data for internal use by the TA-LIB. Do not modify. */
+   /* Hidden data for internal use by TA-Lib. Do not modify. */
    void *hiddenData;
 } TA_History;
 

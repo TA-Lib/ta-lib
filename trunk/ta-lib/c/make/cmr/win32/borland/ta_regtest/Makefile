@@ -55,6 +55,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_trange.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_util.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_abstract.c \
+		..\..\..\..\..\src\tools\ta_regtest\test_csi.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 OBJECTS =	..\..\..\..\..\temp\cmr\ta_regtest.obj \
 		..\..\..\..\..\temp\cmr\test_1in_1out.obj \
@@ -82,6 +83,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_regtest.obj \
 		..\..\..\..\..\temp\cmr\test_trange.obj \
 		..\..\..\..\..\temp\cmr\test_util.obj \
 		..\..\..\..\..\temp\cmr\test_abstract.obj \
+		..\..\..\..\..\temp\cmr\test_csi.obj \
 		..\..\..\..\..\temp\cmr\test_yahoo.obj
 INTERFACES =	
 UICDECLS =	
@@ -154,6 +156,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\test_trange.obj
 	-del ..\..\..\..\..\temp\cmr\test_util.obj
 	-del ..\..\..\..\..\temp\cmr\test_abstract.obj
+	-del ..\..\..\..\..\temp\cmr\test_csi.obj
 	-del ..\..\..\..\..\temp\cmr\test_yahoo.obj
 	-del $(TARGET)
 	-del ta_regtest.tds
@@ -249,6 +252,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\test_abstract.obj: ..\..\..\..\..\src\tools\ta_regtest\test_abstract.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\test_abstract.obj ..\..\..\..\..\src\tools\ta_regtest\test_abstract.c
+
+..\..\..\..\..\temp\cmr\test_csi.obj: ..\..\..\..\..\src\tools\ta_regtest\test_csi.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\test_csi.obj ..\..\..\..\..\src\tools\ta_regtest\test_csi.c
 
 ..\..\..\..\..\temp\cmr\test_yahoo.obj: ..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\test_yahoo.obj ..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c

@@ -224,6 +224,10 @@ SOURCE=..\..\..\..\include\ta_common.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\ta_csi_priv.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\include\ta_data.h
 # End Source File
 # Begin Source File

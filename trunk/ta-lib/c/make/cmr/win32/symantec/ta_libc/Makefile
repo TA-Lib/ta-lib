@@ -11,7 +11,7 @@ CC	=	sc
 CXX	=	sc
 CFLAGS	=	-mn -w2 -o -DWIN32 -DNO_DEBUG
 CXXFLAGS=	-mn -w2 -o -DWIN32 -DNO_DEBUG
-INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data\ta_source\ta_fileindex" -I"..\..\..\..\..\src\ta_data\ta_source\ta_ascii" -I"..\..\..\..\..\src\ta_data\ta_source\ta_readop" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\src\ta_data\ta_source\ta_sql" -I"..\..\..\..\..\src\ta_data\ta_history" -I"..\..\..\..\..\src\ta_data\ta_source\ta_simulator" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_abstract" -I"..\..\..\..\..\src\ta_abstract\tables" -I"..\..\..\..\..\src\ta_abstract\frames" -I"..\..\..\..\..\src\ta_pm" -I"$(QTDIR)\include"
+INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data\ta_source\ta_fileindex" -I"..\..\..\..\..\src\ta_data\ta_source\ta_ascii" -I"..\..\..\..\..\src\ta_data\ta_source\ta_readop" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\src\ta_data\ta_source\ta_sql" -I"..\..\..\..\..\src\ta_data\ta_source\ta_csi" -I"..\..\..\..\..\src\ta_data\ta_history" -I"..\..\..\..\..\src\ta_data\ta_source\ta_simulator" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_abstract" -I"..\..\..\..\..\src\ta_abstract\tables" -I"..\..\..\..\..\src\ta_abstract\frames" -I"..\..\..\..\..\src\ta_pm" -I"$(QTDIR)\include"
 LIB	=	lib /C /N /NOI /P:32
 MOC	=	moc
 
@@ -50,6 +50,9 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_historical.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_market.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_idx.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi_handle.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi_files.c \
 		..\..\..\..\..\src\tools\gen_data\ta_daily_ref_0.c \
 		..\..\..\..\..\src\tools\gen_data\ta_intra_ref_0.c \
 		..\..\..\..\..\src\tools\gen_data\ta_mrg_0.c \
@@ -217,6 +220,9 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_yahoo_historical.obj \
 		..\..\..\..\..\temp\cmr\ta_yahoo_market.obj \
 		..\..\..\..\..\temp\cmr\ta_yahoo_idx.obj \
+		..\..\..\..\..\temp\cmr\ta_csi.obj \
+		..\..\..\..\..\temp\cmr\ta_csi_handle.obj \
+		..\..\..\..\..\temp\cmr\ta_csi_files.obj \
 		..\..\..\..\..\temp\cmr\ta_daily_ref_0.obj \
 		..\..\..\..\..\temp\cmr\ta_intra_ref_0.obj \
 		..\..\..\..\..\temp\cmr\ta_mrg_0.obj \
@@ -411,6 +417,9 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_yahoo_historical.obj \
 +..\..\..\..\..\temp\cmr\ta_yahoo_market.obj \
 +..\..\..\..\..\temp\cmr\ta_yahoo_idx.obj \
++..\..\..\..\..\temp\cmr\ta_csi.obj \
++..\..\..\..\..\temp\cmr\ta_csi_handle.obj \
++..\..\..\..\..\temp\cmr\ta_csi_files.obj \
 +..\..\..\..\..\temp\cmr\ta_daily_ref_0.obj \
 +..\..\..\..\..\temp\cmr\ta_intra_ref_0.obj \
 +..\..\..\..\..\temp\cmr\ta_mrg_0.obj \
@@ -591,6 +600,9 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_yahoo_historical.obj
 	-del ..\..\..\..\..\temp\cmr\ta_yahoo_market.obj
 	-del ..\..\..\..\..\temp\cmr\ta_yahoo_idx.obj
+	-del ..\..\..\..\..\temp\cmr\ta_csi.obj
+	-del ..\..\..\..\..\temp\cmr\ta_csi_handle.obj
+	-del ..\..\..\..\..\temp\cmr\ta_csi_files.obj
 	-del ..\..\..\..\..\temp\cmr\ta_daily_ref_0.obj
 	-del ..\..\..\..\..\temp\cmr\ta_intra_ref_0.obj
 	-del ..\..\..\..\..\temp\cmr\ta_mrg_0.obj
@@ -828,6 +840,15 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_yahoo_idx.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_idx.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_yahoo_idx.obj ..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_idx.c
+
+..\..\..\..\..\temp\cmr\ta_csi.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_csi.obj ..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi.c
+
+..\..\..\..\..\temp\cmr\ta_csi_handle.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi_handle.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_csi_handle.obj ..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi_handle.c
+
+..\..\..\..\..\temp\cmr\ta_csi_files.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi_files.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_csi_files.obj ..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi_files.c
 
 ..\..\..\..\..\temp\cmr\ta_daily_ref_0.obj: ..\..\..\..\..\src\tools\gen_data\ta_daily_ref_0.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_daily_ref_0.obj ..\..\..\..\..\src\tools\gen_data\ta_daily_ref_0.c
