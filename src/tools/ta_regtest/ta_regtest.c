@@ -281,6 +281,7 @@ static int testTAFunction_ALL( TA_History *history )
    #define DO_TEST(func,str) \
       { \
       printf( "%30s: Testing....", str ); \
+      fflush(stdout); \
       showFeedback(); \
       TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT ); \
       retValue = func( history ); \
@@ -288,6 +289,7 @@ static int testTAFunction_ALL( TA_History *history )
          return retValue; \
       hideFeedback(); \
       printf( "done.\n" ); \
+      fflush(stdout); \
       }
    DO_TEST( test_func_adx,      "ADX,ADXR,DI,DM,DX" );
    DO_TEST( test_func_sar,      "Parabolic SAR" );
