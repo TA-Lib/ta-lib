@@ -225,8 +225,8 @@ static TA_RetCode rangeTestFunction(
        * is comparing real, so a translation is done
        * here.
        */
-      #define PRE_SENTINEL  0xABABABAB
-      #define POST_SENTINEL 0xCDCDCDCD
+      #define PRE_SENTINEL  ((TA_Integer)0xABABFEDC)
+      #define POST_SENTINEL ((TA_Integer)0xEFABCDFF)
       #define ALLOC_INT_BUFFER(varSize)  \
       { \
          intBuffer = TA_Malloc(sizeof(TA_Integer)*(varSize+2)); \
