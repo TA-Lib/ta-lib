@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -37,13 +37,15 @@
  *  -------------------------------------------------------------------
  *  PK       Pawel Konieczny
  *  MF       Mario Fortier
+ *  JS       Jon Sudul
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  110103 PK   First version.
- *  112203 MF   Allows dynamic addition of mini drivers.
+ *  110103 PK    First version.
+ *  112203 MF    Allows dynamic addition of mini drivers.
+ *  012504 MF,JS Fix memory leak for Bug #881950.
  */
 
 /* Description:
@@ -104,6 +106,7 @@ TA_RetCode TA_SQL_AddMinidriver( const char scheme[], const TA_SQL_Minidriver *m
    schemeStr = TA_StringAlloc( cache, scheme );
    if( !schemeStr )
    {
+      TA_DictFree(minidriverDict);
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
 
@@ -118,6 +121,13 @@ const TA_SQL_Minidriver *TA_SQL_GetMinidriver( const char scheme[] )
 {
    /* Return NULL if scheme not found, or dictionary not initialized. */
    return (TA_SQL_Minidriver *)TA_DictGetValue_S( minidriverDict, scheme);
+}
+
+/* Clean-up function called on TA_Shutdown */
+void TA_SQL_ShutdownMinidriver( void )
+{
+   if( minidriverDict )
+      TA_DictFree( minidriverDict );
 }
 
 /**** Local functions definitions.     ****/
