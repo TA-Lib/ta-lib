@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,7 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  SD       Scott Deerwester
  *
  * Change history:
  *
@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  061201 MF   First version.
  *  062803 MF   Add printf when failed to add the symbol to index.
+ *  031604 SD   Fix #917085 - Unprotected fclose was causing segfault.
  */
 
 /* Description:
@@ -975,15 +976,14 @@ static TA_RetCode buildIndexFromRemoteCache( TA_YahooIdx *idx, TA_Timestamp *cac
                   tolower(idx->countryAbbrev[1]) );
       }
 
-
       out = fopen( pathBuffer, "wb" );
       if( out )
       {
          /* printf( "Saving local [%s]\n", pathBuffer ); */
          TA_StreamToFile( stream, out );
+         fclose(out);
       }
-      TA_Free(  pathBuffer );
-      fclose(out);
+      TA_Free( pathBuffer );
    }
 
    /* Call buildIndexFromStream to build the tables. */
@@ -993,7 +993,6 @@ static TA_RetCode buildIndexFromRemoteCache( TA_YahooIdx *idx, TA_Timestamp *cac
       TA_WebPageFree( webPage );
       return retCode;
    }
-
       
    retCode = TA_WebPageFree( webPage );
    if( retCode != TA_SUCCESS )
