@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,11 +43,13 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  042002 MF   First version.
+ *  051103 MF   Remove some useless measurements, make AVG LOSS and
+ *              the AVG WIN to be percent base instead of point base.
  *
  */
 
 /* Description:
- *
+ *   Return measurements that are only ONE value.
  */
 
 /**** Headers ****/
@@ -445,29 +447,29 @@ TA_RetCode TA_PMValue( TA_PM *pm,
       switch( grp )
       {
       case TA_PM_ALL_TRADES:
-         tempReal   = pmPriv->shortValueCache.sumProfit;
-         tempReal  += pmPriv->longValueCache.sumProfit;
-         tempReal2  = pmPriv->shortValueCache.sumInvestmentProfit;
-         tempReal2 += pmPriv->longValueCache.sumInvestmentProfit;
+         tempInt   = pmPriv->shortValueCache.nbWinningTrade;
+         tempInt  += pmPriv->longValueCache.nbWinningTrade;
+         tempReal  = pmPriv->shortValueCache.sumProfitPercent;
+         tempReal += pmPriv->longValueCache.sumProfitPercent;
          break;
       case TA_PM_LONG_TRADES:
-         tempReal  = pmPriv->longValueCache.sumProfit;
-         tempReal2 = pmPriv->longValueCache.sumInvestmentProfit;
+         tempInt   = pmPriv->longValueCache.nbWinningTrade;
+         tempReal  = pmPriv->longValueCache.sumProfitPercent;
          break;
       case TA_PM_SHORT_TRADES:
-         tempReal  = pmPriv->shortValueCache.sumProfit;
-         tempReal2  = pmPriv->shortValueCache.sumInvestmentProfit;
+         tempInt   = pmPriv->shortValueCache.nbWinningTrade;
+         tempReal  = pmPriv->shortValueCache.sumProfitPercent;
          break;
       default:
          return TA_BAD_PARAM;
       }
-      if( tempReal2 == 0.0 )
+      if( tempInt <= 0 )
       {
          *value = 0.0;
          return TA_VALUE_NOT_APPLICABLE;
       }
       else
-         *value = (tempReal/tempReal2)*100.0;
+         *value = (tempReal*100.0)/((TA_Real)tempInt);
       break;
 
    case TA_PM_AVG_LOSS:
@@ -503,29 +505,29 @@ TA_RetCode TA_PMValue( TA_PM *pm,
       switch( grp )
       {
       case TA_PM_ALL_TRADES:
-         tempReal   = pmPriv->shortValueCache.sumLoss;
-         tempReal  += pmPriv->longValueCache.sumLoss;
-         tempReal2  = pmPriv->shortValueCache.sumInvestmentLoss;
-         tempReal2 += pmPriv->longValueCache.sumInvestmentLoss;
+         tempInt   = pmPriv->shortValueCache.nbLosingTrade;
+         tempInt  += pmPriv->longValueCache.nbLosingTrade;
+         tempReal  = pmPriv->shortValueCache.sumLossPercent;
+         tempReal += pmPriv->longValueCache.sumLossPercent;
          break;
       case TA_PM_LONG_TRADES:
-         tempReal  = pmPriv->longValueCache.sumLoss;
-         tempReal2 = pmPriv->longValueCache.sumInvestmentLoss;
+         tempInt   = pmPriv->longValueCache.nbLosingTrade;
+         tempReal  = pmPriv->longValueCache.sumLossPercent;
          break;
       case TA_PM_SHORT_TRADES:
-         tempReal  = pmPriv->shortValueCache.sumLoss;
-         tempReal2 = pmPriv->shortValueCache.sumInvestmentLoss;
+         tempInt   = pmPriv->shortValueCache.nbLosingTrade;
+         tempReal  = pmPriv->shortValueCache.sumLossPercent;
          break;
       default:
          return TA_BAD_PARAM;
       }
-      if( tempReal2 == 0.0 )
+      if( tempInt <= 0 )
       {
          *value = 0.0;
          return TA_VALUE_NOT_APPLICABLE;
       }
       else
-         *value = (tempReal/tempReal2)*100.0;
+         *value = (tempReal*100.0)/((TA_Real)tempInt);
       break;
 
    case TA_PM_LARGEST_PROFIT:
@@ -579,56 +581,6 @@ TA_RetCode TA_PMValue( TA_PM *pm,
          *value = tempReal;
       break;
 
-   case TA_PM_SMALLEST_PROFIT:
-      switch( grp )
-      {
-      case TA_PM_ALL_TRADES:
-         tempReal = MIN( pmPriv->shortValueCache.smallestProfit, 
-                         pmPriv->longValueCache.smallestProfit );
-         break;
-      case TA_PM_LONG_TRADES:
-         tempReal = pmPriv->longValueCache.smallestProfit;
-         break;
-      case TA_PM_SHORT_TRADES:
-         tempReal = pmPriv->shortValueCache.smallestProfit;
-         break;
-      default:
-         return TA_BAD_PARAM;
-      }
-      if( tempReal == TA_REAL_MAX )
-      {
-         *value = 0.0;     
-         return TA_VALUE_NOT_APPLICABLE;
-      }
-      else
-         *value = tempReal;
-      break;
-
-   case TA_PM_SMALLEST_LOSS:
-      switch( grp )
-      {
-      case TA_PM_ALL_TRADES:
-         tempReal = MAX( pmPriv->shortValueCache.smallestLoss, 
-                         pmPriv->longValueCache.smallestLoss );
-         break;
-      case TA_PM_LONG_TRADES:
-         tempReal = pmPriv->longValueCache.smallestLoss;
-         break;
-      case TA_PM_SHORT_TRADES:
-         tempReal = pmPriv->shortValueCache.smallestLoss;
-         break;
-      default:
-         return TA_BAD_PARAM;
-      }
-      if( tempReal == TA_REAL_MIN )
-      {
-         *value = 0.0;     
-         return TA_VALUE_NOT_APPLICABLE;
-      }
-      else
-         *value = tempReal;
-      break;
-
    case TA_PM_LARGEST_PROFIT_PERCENT:
       switch( grp )
       {
@@ -672,56 +624,6 @@ TA_RetCode TA_PMValue( TA_PM *pm,
       }
 
       if( tempReal == TA_REAL_MAX )
-      {
-         *value = 0.0;     
-         return TA_VALUE_NOT_APPLICABLE;
-      }
-      else
-         *value = tempReal*100.0;      
-      break;
-
-   case TA_PM_SMALLEST_PROFIT_PERCENT:
-      switch( grp )
-      {
-      case TA_PM_ALL_TRADES:
-         tempReal = MIN( pmPriv->shortValueCache.smallestProfitPercent, 
-                         pmPriv->longValueCache.smallestProfitPercent );
-         break;
-      case TA_PM_LONG_TRADES:
-         tempReal = pmPriv->longValueCache.smallestProfitPercent;
-         break;
-      case TA_PM_SHORT_TRADES:
-         tempReal = pmPriv->shortValueCache.smallestProfitPercent;
-         break;
-      default:
-         return TA_BAD_PARAM;
-      }
-      if( tempReal == TA_REAL_MAX )
-      {
-         *value = 0.0;     
-         return TA_VALUE_NOT_APPLICABLE;
-      }
-      else
-         *value = tempReal*100.0;      
-      break;
-
-   case TA_PM_SMALLEST_LOSS_PERCENT:
-      switch( grp )
-      {
-      case TA_PM_ALL_TRADES:
-         tempReal = MAX( pmPriv->shortValueCache.smallestLossPercent, 
-                         pmPriv->longValueCache.smallestLossPercent );
-         break;
-      case TA_PM_LONG_TRADES:
-         tempReal = pmPriv->longValueCache.smallestLossPercent;
-         break;
-      case TA_PM_SHORT_TRADES:
-         tempReal = pmPriv->shortValueCache.smallestLossPercent;
-         break;
-      default:
-         return TA_BAD_PARAM;
-      }
-      if( tempReal == TA_REAL_MIN )
       {
          *value = 0.0;     
          return TA_VALUE_NOT_APPLICABLE;
@@ -914,7 +816,7 @@ static TA_RetCode processTradeLog_BasicCalculation( TA_TradeLogPriv *tradeLog )
    register TA_Real tempReal1, tempReal2, tempReal3;
    register int tempInt1;
 
-   /* The following varaiables are all the
+   /* The following variables are all the
     * accumulators.
     *
     * Some are suggested to be kept in
@@ -929,7 +831,6 @@ static TA_RetCode processTradeLog_BasicCalculation( TA_TradeLogPriv *tradeLog )
    register int     long_nbWinningTrade;
    register int     short_nbWinningTrade;   
    TA_PMValueCache  shortV, longV;
-
 
    /* Initialize all accumulators. */
    initValueCache( &shortV );
@@ -979,10 +880,9 @@ static TA_RetCode processTradeLog_BasicCalculation( TA_TradeLogPriv *tradeLog )
                         longV.sumInvestmentProfit += tempReal1;
                         longV.sumProfit += tempReal2;
                         TA_SET_MAX(longV.largestProfit, tempReal2 );
-                        TA_SET_MIN(longV.smallestProfit, tempReal2 );
                         tempReal1 = tempReal2/tempReal1;
                         TA_SET_MAX(longV.largestProfitPercent, tempReal1 );
-                        TA_SET_MIN(longV.smallestProfitPercent, tempReal1 );
+                        longV.sumProfitPercent += tempReal1;
                         long_nbWinningTrade++;
                      }
                      else
@@ -991,10 +891,9 @@ static TA_RetCode processTradeLog_BasicCalculation( TA_TradeLogPriv *tradeLog )
                         longV.sumInvestmentLoss += tempReal1;
                         longV.sumLoss += tempReal2;
                         TA_SET_MIN(longV.largestLoss, tempReal2 );
-                        TA_SET_MAX(longV.smallestLoss, tempReal2 );
                         tempReal1 = tempReal2/tempReal1;
                         TA_SET_MIN(longV.largestLossPercent, tempReal1 );
-                        TA_SET_MAX(longV.smallestLossPercent, tempReal1 );
+                        longV.sumLossPercent += tempReal1;
                         long_nbLosingTrade++;
                      }
                   }
@@ -1008,10 +907,9 @@ static TA_RetCode processTradeLog_BasicCalculation( TA_TradeLogPriv *tradeLog )
                         shortV.sumInvestmentProfit += tempReal1;
                         shortV.sumProfit += tempReal2;
                         TA_SET_MAX(shortV.largestProfit, tempReal2 );
-                        TA_SET_MIN(shortV.smallestProfit, tempReal2 );
                         tempReal1 = tempReal2/tempReal1;
                         TA_SET_MAX(shortV.largestProfitPercent, tempReal1 );
-                        TA_SET_MIN(shortV.smallestProfitPercent, tempReal1 );
+                        shortV.sumProfitPercent += tempReal1;
                         short_nbWinningTrade++;
                      }
                      else
@@ -1021,10 +919,9 @@ static TA_RetCode processTradeLog_BasicCalculation( TA_TradeLogPriv *tradeLog )
                         shortV.sumInvestmentLoss += tempReal1;
                         shortV.sumLoss += tempReal2;
                         TA_SET_MIN(shortV.largestLoss, tempReal2 );
-                        TA_SET_MAX(shortV.smallestLoss, tempReal2 );
                         tempReal1 = tempReal2/tempReal1;
                         TA_SET_MIN(shortV.largestLossPercent, tempReal1 );
-                        TA_SET_MAX(shortV.smallestLossPercent, tempReal1 );
+                        shortV.sumLossPercent += tempReal1;
                         short_nbLosingTrade++;
                      }
                   }
@@ -1047,7 +944,9 @@ static TA_RetCode processTradeLog_BasicCalculation( TA_TradeLogPriv *tradeLog )
    longValueCache->nbLosingTrade = long_nbLosingTrade;
    longValueCache->nbWinningTrade = long_nbWinningTrade;
 
-   /* Indicate that the value caches are now calculated. */
+   /* Indicate that the value are now calculated and set 
+    * in the "cache".
+    */
    tradeLog->flags |= TA_PMVALUECACHE_CALCULATED;
    return TA_SUCCESS;
 }
@@ -1062,20 +961,17 @@ static void mergeValueCache( TA_PMValueCache *dest, const TA_PMValueCache *src )
    dest->sumProfit      += src->sumProfit;
    dest->sumLoss        += src->sumLoss;
 
+   dest->sumProfitPercent += src->sumProfitPercent;
+   dest->sumLossPercent   += src->sumLossPercent;
+
    dest->sumInvestmentLoss   += src->sumInvestmentLoss;
    dest->sumInvestmentProfit += src->sumInvestmentProfit;
 
    TA_SET_MAX( dest->largestProfit, src->largestProfit );
-   TA_SET_MAX( dest->smallestLoss, src->smallestLoss );
-
    TA_SET_MAX( dest->largestProfitPercent, src->largestProfitPercent );
-   TA_SET_MAX( dest->smallestLossPercent, src->smallestLossPercent );
 
    TA_SET_MIN( dest->largestLoss, src->largestLoss );
-   TA_SET_MIN( dest->smallestProfit, src->smallestProfit );
-
    TA_SET_MIN( dest->largestLossPercent, src->largestLossPercent );
-   TA_SET_MIN( dest->smallestProfitPercent, src->smallestProfitPercent );
 
 }
 
@@ -1085,11 +981,7 @@ static void initValueCache( TA_PMValueCache *dest )
 
    dest->largestProfit  = TA_REAL_MIN;
    dest->largestLoss    = TA_REAL_MAX;
-   dest->smallestProfit = TA_REAL_MAX;
-   dest->smallestLoss   = TA_REAL_MIN;
 
    dest->largestProfitPercent  = TA_REAL_MIN;
    dest->largestLossPercent    = TA_REAL_MAX;
-   dest->smallestProfitPercent = TA_REAL_MAX;
-   dest->smallestLossPercent   = TA_REAL_MIN;
 }
