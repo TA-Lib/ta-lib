@@ -82,6 +82,7 @@ static TA_RetCode freePrivateHandle( TA_PrivateMySQLHandle *privateHandle );
 static TA_RetCode freeCategoryIndex( void *toBeFreed );
 static TA_RetCode freeSymbolsIndex( void *toBeFreed );
 static TA_RetCode registerCategoryAndSymbol( TA_List *categoryIndex, TA_String *category, TA_String *symbol );
+static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateMySQLHandle *privateHandle, TA_String *category);
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
@@ -195,7 +196,7 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
          // find the category column number, if present
          for (unsigned int cat_col = 0; cat_col < res.columns(); cat_col++) 
          { 
-            if( strcmp(res.names(cat_col).c_str(), "category") == 0 )
+            if( stricmp(res.names(cat_col).c_str(), "category") == 0 )
                break;
          } 
          if( cat_col == res.columns() )
@@ -206,7 +207,7 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
          // find the symbol column number, if present
          for (unsigned int sym_col = 0; sym_col < res.columns(); sym_col++) 
          { 
-            if( strcmp(res.names(sym_col).c_str(), "symbol") == 0 )
+            if( stricmp(res.names(sym_col).c_str(), "symbol") == 0 )
                break;
          } 
          
@@ -236,9 +237,17 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
 
             if( strcmp(TA_StringToChar(cat_name), "") != 0 )  // ignore NULL fields
             {
-               retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
-                                                   cat_name,
-                                                   sym_name);
+               if ( sym_name )
+               {
+                  retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
+                                                      cat_name,
+                                                      sym_name);
+               }
+               else
+               {
+                  retCode = registerCategoryAndAllSymbols(privateHandle,
+                                                          cat_name);
+               }
             }
             TA_StringFree(stringCache, cat_name);
             if( sym_name )
@@ -259,10 +268,8 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    else
    {
       /* Create one category, taking the category sting literally */
-      // TODO: support SQL query here
-      retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
-                                          privateHandle->param->category,
-                                          privateHandle->param->symbol);
+      retCode = registerCategoryAndAllSymbols(privateHandle, 
+                                              privateHandle->param->category);
    }
    
    TA_TRACE_RETURN( retCode );
@@ -432,4 +439,112 @@ static TA_RetCode registerCategoryAndSymbol( TA_List *categoryIndex,
    }
 
    return TA_SUCCESS;
+}
+
+/* registerCategoryAndAllSymbols executes SQL query for the symbol and
+ * registers all symbols in the same category
+ */
+static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateMySQLHandle *privateHandle,
+                                                 TA_String *category)
+{
+   TA_PROLOG
+   TA_RetCode retCode;
+   TA_StringCache *stringCache = TA_GetGlobalStringCache();
+
+   /* is trace allowed through static fuctions? */
+   TA_TRACE_BEGIN( registerCategoryAndAllSymbols );
+
+   if( !category )
+   {
+      TA_TRACE_RETURN(TA_BAD_PARAM);
+   }
+
+   if( privateHandle->param->symbol 
+       && strnicmp("SELECT ", TA_StringToChar(privateHandle->param->symbol), 7) == 0)
+   {
+      /* This is an SQL query; execute it to obtain the list of symbols */
+   
+      /* Because the query may return no results, we must make sure that
+       * at leas the category will be registered.
+       */
+      retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
+                                          category,
+                                          NULL);
+      if( retCode != TA_SUCCESS )
+      {
+         TA_TRACE_RETURN(retCode);
+      }
+
+      // Now the MySQL query
+      try {
+         Query query = privateHandle->con->query();
+         // This creates a query object that is bound to con.
+
+         query << TA_StringToChar(privateHandle->param->symbol);
+         // You can write to the query object like you would any other ostrem
+
+         Result res = query.store();
+         // Query::store() executes the query and returns the results
+
+         // find the symbol column number, if present
+         for (unsigned int sym_col = 0; sym_col < res.columns(); sym_col++) 
+         { 
+            if( stricmp(res.names(sym_col).c_str(), "symbol") == 0 )
+               break;
+         } 
+         if( sym_col == res.columns() )
+         {
+            throw BadQuery("Column 'symbol' not found");
+         }
+         
+         Row row;
+         Result::iterator i;
+         // The Result class has a read-only Random Access Iterator
+         for (i = res.begin(); i != res.end(); i++) {
+  	        row = *i;
+            TA_String *sym_name = TA_StringAlloc( stringCache, row[sym_col] );
+
+            if( !sym_name )
+            {
+               TA_TRACE_RETURN( TA_ALLOC_ERR );
+            }
+
+            if( strcmp(TA_StringToChar(sym_name), "") != 0 )  // ignore NULL fields
+            {
+               retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
+                                                   category,
+                                                   sym_name);
+            }
+            TA_StringFree(stringCache, sym_name);
+
+            if( retCode != TA_SUCCESS )
+            {
+               break;
+            }
+         }
+      } 
+      catch (BadQuery er)
+      {                    
+         // handle any connection or query errors that may come up
+         retCode = TA_BAD_PARAM;  // I would prefer: TA_BAD_SQL_QUERY...
+      } 
+   }
+   else if ( privateHandle->param->symbol
+             && *TA_StringToChar(privateHandle->param->symbol) != '\0' )
+   {
+      /* Create one symbol, taking the symbol sting literally */
+      retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
+                                          category,
+                                          privateHandle->param->symbol);
+   }
+   else
+   {
+      /* Create one symbol, falling back to the database name */
+      retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
+                                          category,
+                                          privateHandle->database);
+   }
+      
+   TA_TRACE_RETURN( retCode );
+   
 }

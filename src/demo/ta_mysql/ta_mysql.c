@@ -40,8 +40,8 @@ void print_usage( char *str )
    printf( "ta_mysql V%s - Query stock market data MySQL database!\n", TA_GetVersionString() );
    printf( "\n" );
    printf( "Usage: ta_mysql -c <location> <user> <pass> <category (query)>\n" );
-   printf( "       ta_mysql -s <location> <user> <pass> <category (query)> <given category>\n" );
-   printf( "       ta_mysql -d <location> <user> <pass> <category> <stock> <info>\n" );
+   printf( "       ta_mysql -s <location> <user> <pass> <category (query)> <given category> [<symbol (query)>]\n" );
+   printf( "       ta_mysql -d <location> <user> <pass> <category> <symbol> <info>\n" );
    printf( "\n" );
    printf( "  -c  Display all supported categories\n" );
    printf( "  -s  Display all symbols for a given category\n" );
@@ -165,7 +165,8 @@ int print_categories( TA_UDBase *udb,
 
 int print_symbols( TA_UDBase *udb,
                    TA_AddDataSourceParam dsParam,
-                   const char *category)
+                   const char *category,
+                   const char *symbol)
 {
    TA_RetCode retCode;
    unsigned int i;
@@ -173,6 +174,7 @@ int print_symbols( TA_UDBase *udb,
 
    /* info not needed for getting just categories, but the driver insists on it */
    dsParam.info = "";  
+   dsParam.symbol = symbol;
    retCode = TA_AddDataSource( udb, &dsParam );
    if( retCode != TA_SUCCESS )
    {
@@ -347,7 +349,7 @@ int main( int argc, char *argv[] )
        break;
 
    case DISPLAY_SYMBOLS:
-       retValue = print_symbols(udb, dsParam, argv[6]);
+      retValue = print_symbols(udb, dsParam, argv[6], (argc>7? argv[7] : NULL));
        break;
 
    case DISPLAY_CATEGORIES:
