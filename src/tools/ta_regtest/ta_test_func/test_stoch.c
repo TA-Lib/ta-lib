@@ -130,20 +130,20 @@ static TA_Test tableTest[] =
    /**********************/
    /*      STOCH TEST    */
    /**********************/
-   { 1, 0, 9, 9, 5, 3, TA_MA_SIMPLE, 4, TA_MA_SIMPLE, TA_SUCCESS,  9,  1,
+   { 1, 0, 9, 9, 5, 3, TA_MA_SMA, 4, TA_MA_SMA, TA_SUCCESS,  9,  1,
                                                         0, 38.139,  
                                                         0, 36.725  }, /* First Value */
 
 
-   { 0, 0, 0, 251, 5, 3, TA_MA_SIMPLE, 4, TA_MA_SIMPLE, TA_SUCCESS,  9,  252-9,
+   { 0, 0, 0, 251, 5, 3, TA_MA_SMA, 4, TA_MA_SMA, TA_SUCCESS,  9,  252-9,
                                                           252-10, 30.194, 
                                                           252-10, 46.641,   }, /* Last Value */
 
-   { 1, 0, 0, 251, 5, 3, TA_MA_SIMPLE, 3, TA_MA_SIMPLE, TA_SUCCESS,  8,  252-8,
+   { 1, 0, 0, 251, 5, 3, TA_MA_SMA, 3, TA_MA_SMA, TA_SUCCESS,  8,  252-8,
                                                           0, 24.0128,  
                                                           0, 36.254,   }, /* First Value */
 
-   { 0, 0, 0, 251, 5, 3, TA_MA_SIMPLE, 3, TA_MA_SIMPLE, TA_SUCCESS,  8,  252-8,
+   { 0, 0, 0, 251, 5, 3, TA_MA_SMA, 3, TA_MA_SMA, TA_SUCCESS,  8,  252-8,
                                                           252-9, 30.194, 
                                                           252-9, 43.69,   } /* Last Value */
 
@@ -273,7 +273,7 @@ static ErrorNumber do_test( const TA_History *history,
    /* Set the unstable period requested for that test. */
    switch( test->optInSlowK_MAType_2 )
    {
-   case TA_STOCH_EXPONENTIAL:
+   case TA_STOCH_EMA:
       retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, test->unstablePeriod );
       if( retCode != TA_SUCCESS )
          return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
@@ -284,8 +284,7 @@ static ErrorNumber do_test( const TA_History *history,
    }
 
    /* Make a simple first call. */
-   retCode = TA_STOCH(
-                       test->startIdx,
+   retCode = TA_STOCH( test->startIdx,
                        test->endIdx,
                        gBuffer[0].in,
                        gBuffer[1].in,

@@ -321,12 +321,12 @@ const TA_OptInputParameterInfo TA_DEF_UI_HorizontalShift =
  */
 static const TA_IntegerDataPair TA_MA_TypeDataPair[] =
 {
-   {0,"Simple"},
-   {1,"Exponential"},
-   {2,"Weighted"},
-   {3,"Dema" },
-   {4,"Tema" },
-   {5,"Triangular"}
+   {0,"SMA"},
+   {1,"EMA"},
+   {2,"WMA"},
+   {3,"DEMA" },
+   {4,"TEMA" },
+   {5,"TRIMA"}
    /*{6,"Linear Regression"}*/
 };
 

@@ -284,6 +284,8 @@ TA_DecodingParam *TA_YahooIdxDecodingParam( TA_YahooIdx *idx, TA_DecodeType type
 {
    TA_YahooIdxHidden *idxHidden;
 
+   TA_ASSERT_RET( idx != NULL, NULL );
+
    idxHidden = (TA_YahooIdxHidden *)idx->hiddenData;
    if( !idxHidden )
       return NULL;
@@ -326,7 +328,7 @@ TA_RetCode TA_YahooIdxAlloc( TA_CountryId           countryId,
 
    *yahooIdxAllocated = NULL;
 
-   TA_TRACE_BEGIN(  TA_YahooIdxAlloc );
+   TA_TRACE_BEGIN( TA_YahooIdxAlloc );
 
    /* Allocate the basic infrastructure for building the index. */
    idx = (TA_YahooIdx *)TA_Malloc( sizeof( TA_YahooIdx ) );

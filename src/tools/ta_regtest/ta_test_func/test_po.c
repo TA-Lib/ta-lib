@@ -111,26 +111,26 @@ static TA_Test tableTest[] =
    /**********************************/
    /*    APO TEST - SIMPLE - CLASSIC */
    /**********************************/
-   { 1, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
-   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      1, -3.5876, 25,  252-25 },
-   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-26, -0.1667, 25,  252-25 }, /* Last Value */
+   { 1, 0, 0, 251, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
+   { 0, 0, 0, 251, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      1, -3.5876, 25,  252-25 },
+   { 0, 0, 0, 251, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-26, -0.1667, 25,  252-25 }, /* Last Value */
 
-   { 0, 0, 0,   1, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 1,   1, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 25,  25, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  -3.3124,   25,  1 }, /* First/Last Value */
-   { 0, 0, 250, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,  -0.1667,  250,  2 }, /* Last  Value */
+   { 0, 0, 0,   1, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 1,   1, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 25,  25, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  -3.3124,   25,  1 }, /* First/Last Value */
+   { 0, 0, 250, 251, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,  -0.1667,  250,  2 }, /* Last  Value */
 
    /************************************/
    /*    APO TEST - SIMPLE - METASTOCK */
    /************************************/
-   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
-   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -3.5876, 25,  252-25 },
-   { 0, 0, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, -0.1667, 25,  252-25 }, /* Last Value */
+   { 0, 0, 0, 251, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
+   { 0, 0, 0, 251, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -3.5876, 25,  252-25 },
+   { 0, 0, 0, 251, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, -0.1667, 25,  252-25 }, /* Last Value */
 
-   { 0, 0, 0,   1, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 1,   1, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 25,  25, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -3.3124,   25,  1 }, /* First/Last Value */
-   { 0, 0, 250, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  -0.1667,  250,  2 }, /* Last  Value */
+   { 0, 0, 0,   1, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 1,   1, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 25,  25, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -3.3124,   25,  1 }, /* First/Last Value */
+   { 0, 0, 250, 251, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  -0.1667,  250,  2 }, /* Last  Value */
 
 
    /***************************************/
@@ -141,51 +141,51 @@ static TA_Test tableTest[] =
    /*****************************************/
    /*    APO TEST - EXPONENTIAL - METASTOCK */
    /*****************************************/
-   { 1, 0, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -2.4193, 25,  252-25 }, /* First Value */
-   { 0, 0, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -2.4367, 25,  252-25 },
-   { 0, 0, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, 0.90401, 25,  252-25 }, /* Last Value */
+   { 1, 0, 0, 251, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -2.4193, 25,  252-25 }, /* First Value */
+   { 0, 0, 0, 251, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -2.4367, 25,  252-25 },
+   { 0, 0, 0, 251, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, 0.90401, 25,  252-25 }, /* Last Value */
 
-   { 0, 0, 0,   1, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 1,   1, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 25,  25, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.4193,   25,  1 },
-   { 0, 0, 250, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  0.90401,  250,  2 }, /* Last  Value */
+   { 0, 0, 0,   1, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 1,   1, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 25,  25, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.4193,   25,  1 },
+   { 0, 0, 250, 251, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  0.90401,  250,  2 }, /* Last  Value */
 
-   { 0, 0, 251, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  0.90401,  251,  1 },  /* Last  Value */
-   { 0, 0, 25,  25, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.4193,   25,  1 },  /* Just enough to calculate first. */
-   { 0, 0, 26,  26, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.4367,   26,  1 },  /* Just enough to calculate second. */
+   { 0, 0, 251, 251, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  0.90401,  251,  1 },  /* Last  Value */
+   { 0, 0, 25,  25, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.4193,   25,  1 },  /* Just enough to calculate first. */
+   { 0, 0, 26,  26, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.4367,   26,  1 },  /* Just enough to calculate second. */
 
    /**********************************/
    /*    PPO TEST - SIMPLE - CLASSIC */
    /**********************************/
-   { 1, 1, 0, 251, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  1.10264, 2,  252-2 }, /* First Value */
-   { 0, 1, 0, 251, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1, -0.02813, 2,  252-2 },
-   { 0, 1, 0, 251, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
+   { 1, 1, 0, 251, 2, 3, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  1.10264, 2,  252-2 }, /* First Value */
+   { 0, 1, 0, 251, 2, 3, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1, -0.02813, 2,  252-2 },
+   { 0, 1, 0, 251, 2, 3, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
 
-   { 0, 1, 0,   1, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 1,   1, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 2,   2, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
-   { 0, 1, 250, 251, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1, -0.21191, 250,  2 }, /* Last  Value */
+   { 0, 1, 0,   1, 2, 3, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 1,   1, 2, 3, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 2,   2, 2, 3, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
+   { 0, 1, 250, 251, 2, 3, TA_MA_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1, -0.21191, 250,  2 }, /* Last  Value */
 
    /************************************/
    /*    PPO TEST - SIMPLE - METASTOCK */
    /************************************/
-   { 0, 1, 0, 251, 3, 2, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  1.10264, 2,  252-2 }, /* First Value */
-   { 0, 1, 0, 251, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.02813, 2,  252-2 },
-   { 0, 1, 0, 251, 3, 2, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
+   { 0, 1, 0, 251, 3, 2, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  1.10264, 2,  252-2 }, /* First Value */
+   { 0, 1, 0, 251, 2, 3, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.02813, 2,  252-2 },
+   { 0, 1, 0, 251, 3, 2, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
 
-   { 0, 1, 0,   1, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 1,   1, 3, 2, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 2,   2, 2, 3, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
-   { 0, 1, 250, 251, 3, 2, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.21191, 250,  2 }, /* Last  Value */
+   { 0, 1, 0,   1, 2, 3, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 1,   1, 3, 2, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 2,   2, 2, 3, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
+   { 0, 1, 250, 251, 3, 2, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.21191, 250,  2 }, /* Last  Value */
 
-   { 1, 1, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -3.6393, 25,  252-25 }, /* First Value */
-   { 0, 1, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -3.9534, 25,  252-25 },
-   { 0, 1, 0, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, -0.15281, 25,  252-25 }, /* Last Value */
+   { 1, 1, 0, 251, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -3.6393, 25,  252-25 }, /* First Value */
+   { 0, 1, 0, 251, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -3.9534, 25,  252-25 },
+   { 0, 1, 0, 251, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, -0.15281, 25,  252-25 }, /* Last Value */
 
-   { 0, 1, 0,   1, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 1,   1, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 25,  25, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0, -3.6393,   25,  1 }, /* First/Last Value */
-   { 0, 1, 250, 251, 12, 26, TA_MA_SIMPLE, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.15281, 250,  2 }, /* Last  Value */
+   { 0, 1, 0,   1, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 1,   1, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 25,  25, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0, -3.6393,   25,  1 }, /* First/Last Value */
+   { 0, 1, 250, 251, 12, 26, TA_MA_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.15281, 250,  2 }, /* Last  Value */
 
    /***************************************/
    /*    PPO TEST - EXPONENTIAL - CLASSIC */
@@ -195,18 +195,18 @@ static TA_Test tableTest[] =
    /*****************************************/
    /*    PPO TEST - EXPONENTIAL - METASTOCK */
    /*****************************************/
-   { 1, 1, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -2.7083, 25,  252-25 }, /* First Value */
-   { 0, 1, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -2.7390, 25,  252-25 },
-   { 0, 1, 0, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, 0.83644, 25,  252-25 }, /* Last Value */
+   { 1, 1, 0, 251, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -2.7083, 25,  252-25 }, /* First Value */
+   { 0, 1, 0, 251, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -2.7390, 25,  252-25 },
+   { 0, 1, 0, 251, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, 0.83644, 25,  252-25 }, /* Last Value */
 
-   { 0, 1, 0,   1, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 1, 1,   1, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 1, 25,  25, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,   -2.7083,   25,  1 },
-   { 0, 1, 250, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,   0.83644,  250,  2 }, /* Last  Value */
+   { 0, 1, 0,   1, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 1, 1,   1, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 1, 25,  25, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,   -2.7083,   25,  1 },
+   { 0, 1, 250, 251, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,   0.83644,  250,  2 }, /* Last  Value */
 
-   { 0, 1, 251, 251, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  0.83644,  251,  1 },  /* Last  Value */
-   { 0, 1, 25,  25, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.7083,   25,  1 },  /* Just enough to calculate first. */
-   { 0, 1, 26,  26, 12, 26, TA_MA_EXPONENTIAL, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.7390,   26,  1 },  /* Just enough to calculate second. */
+   { 0, 1, 251, 251, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  0.83644,  251,  1 },  /* Last  Value */
+   { 0, 1, 25,  25, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.7083,   25,  1 },  /* Just enough to calculate first. */
+   { 0, 1, 26,  26, 12, 26, TA_MA_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.7390,   26,  1 },  /* Just enough to calculate second. */
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
@@ -413,7 +413,7 @@ static ErrorNumber do_test( const TA_History *history,
    if( test->doRangeTestFlag )
    {
 
-      if( test->optInMethod_2 == TA_MA_EXPONENTIAL )
+      if( test->optInMethod_2 == TA_MA_EMA )
       {
          errNb = doRangeTest( rangeTestFunction, 
                               TA_FUNC_UNST_EMA,

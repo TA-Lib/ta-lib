@@ -68,15 +68,15 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX
 
    switch( optInMethod_1 )
    {
-   case TA_MA_SIMPLE:
+   case TA_MA_SMA:
       return TA_SMA_Lookback( optInTimePeriod_0 );
       break;
 
-   case TA_MA_EXPONENTIAL:
+   case TA_MA_EMA:
       return TA_EMA_Lookback( optInTimePeriod_0 );
       break;
 
-   case TA_MA_WEIGHTED:
+   case TA_MA_WMA:
       return TA_WMA_Lookback( optInTimePeriod_0 );
       break;
 
@@ -88,7 +88,7 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX
       return TA_TEMA_Lookback( optInTimePeriod_0 );
       break;
 
-   case TA_MA_TRIANGULAR:
+   case TA_MA_TRIMA:
       return TA_TRIMA_Lookback( optInTimePeriod_0 );
       break;
    }
@@ -161,18 +161,18 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
     */
    switch( optInMethod_1 )
    {
-   case TA_MA_SIMPLE:
+   case TA_MA_SMA:
       return TA_INT_SMA( startIdx, endIdx,                         
                          inReal_0, optInTimePeriod_0,                         
                          outBegIdx, outNbElement, outReal_0 );
       break;
-   case TA_MA_EXPONENTIAL:
+   case TA_MA_EMA:
       return TA_INT_EMA( startIdx, endIdx,
                          inReal_0,
                          optInTimePeriod_0, PER_TO_K(optInTimePeriod_0),
                          outBegIdx, outNbElement, outReal_0 );
       break;
-   case TA_MA_WEIGHTED:
+   case TA_MA_WMA:
       return TA_INT_WMA( startIdx, endIdx,
                          inReal_0, optInTimePeriod_0,
                          outBegIdx, outNbElement, outReal_0 );
@@ -187,7 +187,7 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
                       inReal_0, optInTimePeriod_0,
                       outBegIdx, outNbElement, outReal_0 );
       break;
-   case TA_MA_TRIANGULAR:
+   case TA_MA_TRIMA:
       return TA_TRIMA( startIdx, endIdx,
                        inReal_0, optInTimePeriod_0,
                        outBegIdx, outNbElement, outReal_0 );

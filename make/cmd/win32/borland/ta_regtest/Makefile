@@ -31,6 +31,7 @@ RES_FILE =
 HEADERS =	
 SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_ascii.c \
+		..\..\..\..\..\src\tools\ta_regtest\test_internals.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_adx.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_bbands.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_ma.c \
@@ -40,6 +41,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_mom.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c \
+		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_period.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_pm.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_po.c \
@@ -52,6 +54,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 OBJECTS =	..\..\..\..\..\temp\cmd\ta_regtest.obj \
 		..\..\..\..\..\temp\cmd\test_ascii.obj \
+		..\..\..\..\..\temp\cmd\test_internals.obj \
 		..\..\..\..\..\temp\cmd\test_adx.obj \
 		..\..\..\..\..\temp\cmd\test_bbands.obj \
 		..\..\..\..\..\temp\cmd\test_ma.obj \
@@ -61,6 +64,7 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_regtest.obj \
 		..\..\..\..\..\temp\cmd\test_mom.obj \
 		..\..\..\..\..\temp\cmd\test_per_ema.obj \
 		..\..\..\..\..\temp\cmd\test_per_hlc.obj \
+		..\..\..\..\..\temp\cmd\test_per_hlcv.obj \
 		..\..\..\..\..\temp\cmd\test_period.obj \
 		..\..\..\..\..\temp\cmd\test_pm.obj \
 		..\..\..\..\..\temp\cmd\test_po.obj \
@@ -118,6 +122,7 @@ dist:
 clean:
 	-del ..\..\..\..\..\temp\cmd\ta_regtest.obj
 	-del ..\..\..\..\..\temp\cmd\test_ascii.obj
+	-del ..\..\..\..\..\temp\cmd\test_internals.obj
 	-del ..\..\..\..\..\temp\cmd\test_adx.obj
 	-del ..\..\..\..\..\temp\cmd\test_bbands.obj
 	-del ..\..\..\..\..\temp\cmd\test_ma.obj
@@ -127,6 +132,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\test_mom.obj
 	-del ..\..\..\..\..\temp\cmd\test_per_ema.obj
 	-del ..\..\..\..\..\temp\cmd\test_per_hlc.obj
+	-del ..\..\..\..\..\temp\cmd\test_per_hlcv.obj
 	-del ..\..\..\..\..\temp\cmd\test_period.obj
 	-del ..\..\..\..\..\temp\cmd\test_pm.obj
 	-del ..\..\..\..\..\temp\cmd\test_po.obj
@@ -160,6 +166,9 @@ clean:
 ..\..\..\..\..\temp\cmd\test_ascii.obj: ..\..\..\..\..\src\tools\ta_regtest\test_ascii.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_ascii.obj ..\..\..\..\..\src\tools\ta_regtest\test_ascii.c
 
+..\..\..\..\..\temp\cmd\test_internals.obj: ..\..\..\..\..\src\tools\ta_regtest\test_internals.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_internals.obj ..\..\..\..\..\src\tools\ta_regtest\test_internals.c
+
 ..\..\..\..\..\temp\cmd\test_adx.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_adx.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_adx.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_adx.c
 
@@ -186,6 +195,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\test_per_hlc.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_per_hlc.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c
+
+..\..\..\..\..\temp\cmd\test_per_hlcv.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_per_hlcv.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c
 
 ..\..\..\..\..\temp\cmd\test_period.obj: ..\..\..\..\..\src\tools\ta_regtest\test_period.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_period.obj ..\..\..\..\..\src\tools\ta_regtest\test_period.c

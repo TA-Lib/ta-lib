@@ -18,6 +18,7 @@ DESTDIR     = ../../../../../bin
 # Files to process
 SOURCES	= ../../../../../src/tools/ta_regtest/ta_regtest.c \
           ../../../../../src/tools/ta_regtest/test_ascii.c \
+          ../../../../../src/tools/ta_regtest/test_internals.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_adx.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_bbands.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_ma.c \
@@ -27,6 +28,7 @@ SOURCES	= ../../../../../src/tools/ta_regtest/ta_regtest.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_mom.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_per_ema.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlc.c \
+          ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlcv.c \
           ../../../../../src/tools/ta_regtest/test_period.c \
           ../../../../../src/tools/ta_regtest/test_pm.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_po.c \

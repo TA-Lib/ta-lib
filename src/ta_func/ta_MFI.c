@@ -74,138 +74,6 @@ typedef struct
    TA_Real negative;
 } MoneyFlow;
 
-/* CBUF : Circular Buffer Macros.
- *
- * The CBUF is like a FIFO buffer (First In - First Out), except
- * that the rate of data coming out is the same as the rate of
- * data coming in (for simplification and speed optimization).
- * In other word, when you add one new value, you must also consume
- * one value.
- *
- * The CBUF size is unlimited, so it will automatically allocate and
- * de-allocate memory as needed. When small enough, CBUF will instead
- * use a buffer allocated on the stack (automatic variable).
- * 
- * Multiple CBUF can be used within the same function. To make that
- * possible the first parameter of the MACRO is an "Id" that can be
- * any string.
- * 
- * CIRCBUF_PROLOG(Id,Type,Size);
- *          Will declare all the needed variables. 3 variables are
- *          important to the CBUF user: 
- *                 1) 'Id' will be a ptr of the specified Type.
- *                 2) 'AddIdx_Id' indicates where to add the data.
- *                 3) 'GetIdx_Id' indicates where to get the data.
- *          The Size must be reasonable since it will allocate an array
- *          of this size on the stack (each element are 'Type').
- *
- * CIRCBUF_CONSTRUCT(Id,Size);
- *         Must be called prior to use the remaining macros. Must be
- *         followed by CIRCBUF_DESTROY when leaving the function.
- *         The Size here can be very large. If the static Size specified
- *         with CIRCBUF_PROLOG is not sufficient, this MACRO will allocate
- *         a new buffer from the Heap.
- *
- * CIRCBUF_DESTROY(Id,Size);
- *         Must be call prior to leave the function.
- *
- * CIRCBUF_NEXT(Id);
- *         Move forward the indexes.
- *
- * 
- * Example:
- *     TA_RetCode MyFunc( int size )
- *     {
- *        CIRCBUF_PROLOG(MyBuf,int,4);
- *        int i, value;
- *        ...
- *        CIRCBUF_CONSTRUCT(MyBuf,size);
- *        ...
- *        // 1st Loop: Fill MyBuf with initial values
- *        //           (must be done).
- *        value = 0;
- *        for( i=0; i < size; i++ )
- *        {
- *           MyBuf[AddIdx_MyBuf] = value++;
- *           CIRCBUF_NEXT(MyBuf);
- *        }
- *
- *        // 2nd Loop: Get and Add subsequent values
- *        //           in MyBuf (optional)
- *        for( i=0; i < 3; i++ )
- *        {
- *           printf( "%d ", MyBuf[GetIdx_MyBuf] );
- *           MyBuf[AddIdx_MyBuf] = value++;
- *           CIRCBUF_NEXT(MyBuf);
- *        }
- *
- *        // 3rd Loop: Empty MyBuf (optional)
- *        for( i=0; i < size; i++ )
- *        {
- *           printf( "%d ", MyBuf[GetIdx_MyBuf] );
- *           CIRCBUF_NEXT(MyBuf);
- *        }
- *
- *        CIRCBUF_DESTROY(MyBuf);
- *     }
- *
- *
- * A call to MyFunc(5) will output:
- *    0 1 2 3 4 5 6 7
- *
- * The value 0 to 4 are added by the 1st loop.
- * The value 5 to 7 are added by the 2nd loop.
- *
- * The value 0 to 2 are displayed by the 2nd loop.
- * The value 3 to 7 are displayed by the 3rd loop.
- *
- * Because the size 5 is greater than the 
- * value provided in CIRCBUF_PROLOG, a buffer will
- * be dynamically allocated (and freed).
- */
-
-#define CIRCBUF_PROLOG(Id,Type,Size) Type Id[Size]; \
-                                  int addIdx_##Id; \
-                                  int getIdx_##Id; \
-                                  Type *alloc_##Id; \
-                                  int maxIdx_##Id;
-
-#define CIRCBUF_CONSTRUCT(Id,Type,Size) \
-   { \
-      if( (TA_Integer)Size > (TA_Integer)(sizeof(Id)/sizeof(Type)) ) \
-      { \
-         alloc_##Id = TA_Malloc( sizeof(Type)*Size ); \
-         return TA_ALLOC_ERR; \
-      } \
-      else \
-         alloc_##Id = &Id[0]; \
-      maxIdx_##Id = (Size-1); \
-      getIdx_##Id = maxIdx_##Id; \
-      addIdx_##Id = 0; \
-   }
-
-#define CIRCBUF_DESTROY(Id) \
-   { \
-      if( alloc_##Id != &Id[0] ) \
-         TA_Free( alloc_##Id ); \
-   }
-
-#define CIRCBUF_NEXT(Id) \
-   { \
-      if( addIdx_##Id < maxIdx_##Id ) \
-      { \
-         addIdx_##Id++; \
-         if( getIdx_##Id < maxIdx_##Id ) \
-            getIdx_##Id++; \
-         else \
-            getIdx_##Id = 0; \
-      } \
-      else  \
-      { \
-         addIdx_##Id = 0; \
-         getIdx_##Id++; \
-      } \
-   }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 /*
@@ -284,7 +152,10 @@ TA_RetCode TA_MFI( TA_Integer    startIdx,
 
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
+   {
+      CIRCBUF_DESTROY(mflow);
       return TA_SUCCESS;
+   }
 
    outIdx = 0; /* Index into the output. */
 
@@ -305,15 +176,15 @@ TA_RetCode TA_MFI( TA_Integer    startIdx,
       tempValue1 *= inVolume_0[today++];
       if( tempValue2 < 0 )
       {
-         mflow[addIdx_mflow].negative = tempValue1;
+         mflow[mflow_Idx].negative = tempValue1;
          negSumMF += tempValue1;
-         mflow[addIdx_mflow].positive = 0.0;
+         mflow[mflow_Idx].positive = 0.0;
       }
       else
       {
-         mflow[addIdx_mflow].positive = tempValue1;
+         mflow[mflow_Idx].positive = tempValue1;
          posSumMF += tempValue1;
-         mflow[addIdx_mflow].negative = 0.0;
+         mflow[mflow_Idx].negative = 0.0;
       }
 
       CIRCBUF_NEXT(mflow);
@@ -333,8 +204,8 @@ TA_RetCode TA_MFI( TA_Integer    startIdx,
        */   
       while( today < startIdx )
       {
-         posSumMF -= mflow[getIdx_mflow].positive;
-         negSumMF -= mflow[getIdx_mflow].negative;
+         posSumMF -= mflow[mflow_Idx].positive;
+         negSumMF -= mflow[mflow_Idx].negative;
 
          tempValue1 = (inHigh_0[today]+inLow_0[today]+inClose_0[today])/3.0;
          tempValue2 = tempValue1 - prevValue;
@@ -342,15 +213,15 @@ TA_RetCode TA_MFI( TA_Integer    startIdx,
          tempValue1 *= inVolume_0[today++];
          if( tempValue2 < 0 )
          {
-            mflow[addIdx_mflow].negative = tempValue1;
+            mflow[mflow_Idx].negative = tempValue1;
             negSumMF += tempValue1;
-            mflow[addIdx_mflow].positive = 0.0;
+            mflow[mflow_Idx].positive = 0.0;
          }
          else
          {
-            mflow[addIdx_mflow].positive = tempValue1;
+            mflow[mflow_Idx].positive = tempValue1;
             posSumMF += tempValue1;
-            mflow[addIdx_mflow].negative = 0.0;
+            mflow[mflow_Idx].negative = 0.0;
          }
 
          CIRCBUF_NEXT(mflow);
@@ -362,8 +233,8 @@ TA_RetCode TA_MFI( TA_Integer    startIdx,
     */
    while( today <= endIdx )
    {
-      posSumMF -= mflow[getIdx_mflow].positive;
-      negSumMF -= mflow[getIdx_mflow].negative;
+      posSumMF -= mflow[mflow_Idx].positive;
+      negSumMF -= mflow[mflow_Idx].negative;
 
       tempValue1 = (inHigh_0[today]+inLow_0[today]+inClose_0[today])/3.0;
       tempValue2 = tempValue1 - prevValue;
@@ -371,19 +242,18 @@ TA_RetCode TA_MFI( TA_Integer    startIdx,
       tempValue1 *= inVolume_0[today++];
       if( tempValue2 < 0 )
       {
-         mflow[addIdx_mflow].negative = tempValue1;
+         mflow[mflow_Idx].negative = tempValue1;
          negSumMF += tempValue1;
-         mflow[addIdx_mflow].positive = 0.0;
-         outReal_0[outIdx++] = tempValue1;
+         mflow[mflow_Idx].positive = 0.0;
       }
       else
       {
-         mflow[addIdx_mflow].positive = tempValue1;
+         mflow[mflow_Idx].positive = tempValue1;
          posSumMF += tempValue1;
-         mflow[addIdx_mflow].negative = 0.0;
+         mflow[mflow_Idx].negative = 0.0;
       }
 
-      //outReal_0[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
+      outReal_0[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
 
       CIRCBUF_NEXT(mflow);
    }

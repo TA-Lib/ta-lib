@@ -198,6 +198,10 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_bbands.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\tools\ta_regtest\test_internals.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_ma.c
 # End Source File
 # Begin Source File
@@ -223,6 +227,10 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c
 # End Source File
 # Begin Source File
 

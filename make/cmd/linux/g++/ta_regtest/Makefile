@@ -26,6 +26,7 @@ GZIP	=	gzip -9f
 HEADERS =	
 SOURCES =	../../../../../src/tools/ta_regtest/ta_regtest.c \
 		../../../../../src/tools/ta_regtest/test_ascii.c \
+		../../../../../src/tools/ta_regtest/test_internals.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_adx.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_bbands.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_ma.c \
@@ -35,6 +36,7 @@ SOURCES =	../../../../../src/tools/ta_regtest/ta_regtest.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_mom.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_per_ema.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlc.c \
+		../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlcv.c \
 		../../../../../src/tools/ta_regtest/test_period.c \
 		../../../../../src/tools/ta_regtest/test_pm.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_po.c \
@@ -47,6 +49,7 @@ SOURCES =	../../../../../src/tools/ta_regtest/ta_regtest.c \
 		../../../../../src/tools/ta_regtest/test_yahoo.c
 OBJECTS =	../../../../../temp/cmd/ta_regtest.o \
 		../../../../../temp/cmd/test_ascii.o \
+		../../../../../temp/cmd/test_internals.o \
 		../../../../../temp/cmd/test_adx.o \
 		../../../../../temp/cmd/test_bbands.o \
 		../../../../../temp/cmd/test_ma.o \
@@ -56,6 +59,7 @@ OBJECTS =	../../../../../temp/cmd/ta_regtest.o \
 		../../../../../temp/cmd/test_mom.o \
 		../../../../../temp/cmd/test_per_ema.o \
 		../../../../../temp/cmd/test_per_hlc.o \
+		../../../../../temp/cmd/test_per_hlcv.o \
 		../../../../../temp/cmd/test_period.o \
 		../../../../../temp/cmd/test_pm.o \
 		../../../../../temp/cmd/test_po.o \
@@ -122,6 +126,9 @@ clean:
 ../../../../../temp/cmd/test_ascii.o: ../../../../../src/tools/ta_regtest/test_ascii.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/test_ascii.o ../../../../../src/tools/ta_regtest/test_ascii.c
 
+../../../../../temp/cmd/test_internals.o: ../../../../../src/tools/ta_regtest/test_internals.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/test_internals.o ../../../../../src/tools/ta_regtest/test_internals.c
+
 ../../../../../temp/cmd/test_adx.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_adx.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/test_adx.o ../../../../../src/tools/ta_regtest/ta_test_func/test_adx.c
 
@@ -148,6 +155,9 @@ clean:
 
 ../../../../../temp/cmd/test_per_hlc.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlc.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/test_per_hlc.o ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlc.c
+
+../../../../../temp/cmd/test_per_hlcv.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlcv.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/test_per_hlcv.o ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlcv.c
 
 ../../../../../temp/cmd/test_period.o: ../../../../../src/tools/ta_regtest/test_period.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/test_period.o ../../../../../src/tools/ta_regtest/test_period.c
