@@ -9,8 +9,8 @@
 
 CC	=	gcc
 CXX	=	g++
-CFLAGS	=	-pipe -Wall -W -g -D_REENTRANT -DTA_GEN_CODE -DTA_DEBUG -D_DEBUG -DQT_THREAD_SUPPORT
-CXXFLAGS=	-pipe -Wall -W -g -D_REENTRANT -DTA_GEN_CODE -DTA_DEBUG -D_DEBUG -DQT_THREAD_SUPPORT
+CFLAGS	=	-pipe -fPIC -Wall -W -g -D_REENTRANT -DTA_GEN_CODE -DTA_DEBUG -D_DEBUG -DQT_THREAD_SUPPORT
+CXXFLAGS=	-pipe -fPIC -Wall -W -g -D_REENTRANT -DTA_GEN_CODE -DTA_DEBUG -D_DEBUG -DQT_THREAD_SUPPORT
 INCPATH	=	-I../../../../../include -I../../../../../src/ta_common -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../src/ta_abstract -I../../../../../src/ta_abstract/tables -I../../../../../src/ta_abstract/frames
 LINK	=	g++
 LFLAGS	=	

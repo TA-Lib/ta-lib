@@ -9,8 +9,8 @@
 
 CC	=	gcc
 CXX	=	g++
-CFLAGS	=	-pipe -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
-CXXFLAGS=	-pipe -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
+CFLAGS	=	-pipe -fPIC -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
+CXXFLAGS=	-pipe -fPIC -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
 INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_data -I../../../../../src/ta_data/ta_source -I../../../../../src/ta_data/ta_source/ta_fileindex -I../../../../../src/ta_data/ta_source/ta_ascii -I../../../../../src/ta_data/ta_source/ta_readop -I../../../../../src/ta_data/ta_source/ta_yahoo -I../../../../../src/ta_data/ta_source/ta_sql -I../../../../../src/ta_data/ta_source/ta_csi -I../../../../../src/ta_data/ta_history -I../../../../../src/ta_data/ta_source/ta_simulator -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include
 AR	=	ar cqs
 RANLIB	=	

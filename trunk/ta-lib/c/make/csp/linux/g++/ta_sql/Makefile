@@ -9,8 +9,8 @@
 
 CC	=	gcc
 CXX	=	g++
-CFLAGS	=	-pipe -Wall -W -g -O -pg -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
-CXXFLAGS=	-pipe -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
+CFLAGS	=	-pipe -fPIC -Wall -W -g -O -pg -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
+CXXFLAGS=	-pipe -fPIC -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
 INCPATH	=	-I../../../../../src/ta_common -I../../../../../include -I../../../../../src/ta_common/imatix/sfl
 LINK	=	g++
 LFLAGS	=	-pg

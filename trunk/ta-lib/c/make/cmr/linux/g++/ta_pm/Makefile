@@ -9,8 +9,8 @@
 
 CC	=	gcc
 CXX	=	g++
-CFLAGS	=	-pipe -Wall -W -O2 -fno-strict-aliasing -D_REENTRANT -DQT_THREAD_SUPPORT
-CXXFLAGS=	-pipe -Wall -W -O2 -fno-strict-aliasing -D_REENTRANT -DQT_THREAD_SUPPORT
+CFLAGS	=	-pipe -fPIC -Wall -W -O2 -fno-strict-aliasing -D_REENTRANT -DQT_THREAD_SUPPORT
+CXXFLAGS=	-pipe -fPIC -Wall -W -O2 -fno-strict-aliasing -D_REENTRANT -DQT_THREAD_SUPPORT
 INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_pm -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include
 AR	=	ar cqs
 RANLIB	=	
