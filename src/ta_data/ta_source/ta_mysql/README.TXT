@@ -1,6 +1,5 @@
 ﻿===============================================================================
 MySQL Source Driver for TA-Lib
-Copyright 2003 (C) Paweł A. Konieczny
 ===============================================================================
 vim: textwidth=77 fileencoding=utf-8
 
@@ -106,6 +105,8 @@ To Do:
 Increase TA_CATEGORY_MAX_LENGTH to 200 (to accomodate longer SQL queries).
 Implement handling of country, exchange, and type.
 Replace MySQL++ by libMYSQL and switch to plain C.
+Validate timestamps in history procedure (to avoid buffer overflows during
+date conversion).
 
 To do for Mario:
 Implement TA_FatalReportToBuffer().

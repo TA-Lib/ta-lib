@@ -1,4 +1,4 @@
-/* TA-LIB MySQL Data Source Driver Copyright (c) 2003, Pawel A. Konieczny
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
