@@ -384,6 +384,10 @@ SOURCE=..\..\..\..\src\ta_common\ta_parallel.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\include\ta_pm.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_common\ta_stream.h
 # End Source File
 # Begin Source File
