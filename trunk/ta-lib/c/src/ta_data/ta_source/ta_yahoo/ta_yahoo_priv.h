@@ -107,6 +107,7 @@ typedef struct
 TA_RetCode TA_YahooMarketPageAlloc( const TA_DecodingParam *marketDecodingParam,
                                     const TA_String *categoryName,
                                     const TA_String *symbolName,
+                                    const char *overideServerAddr,
                                     TA_YahooMarketPage **allocatedMarketPage );
 
 TA_RetCode TA_YahooMarketPageFree( TA_YahooMarketPage *quotePage );
@@ -173,6 +174,7 @@ TA_RetCode TA_AllocStringFromLibName( const TA_String *category,
  */
 TA_RetCode TA_WebPageAllocFromYahooName( const TA_DecodingParam *info,
                                          const char *yahooName,
+                                         const char *overideServerAddr,
                                          TA_WebPage **allocatedWebPage );
 
 
