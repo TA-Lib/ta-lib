@@ -121,14 +121,15 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
 
    TA_RetCode retCode;
 
-   unsigned int transformFromDaily; /* Boolean */
+   unsigned int transformToDailyAndMore; /* Boolean */
 
    /* Temporaries. */
    const TA_Timestamp *tempTimestamp;
-   unsigned int tempInt, tempInt2;
+   unsigned int tempInt;
+   unsigned int day, month, year;
 
    /* Variable used to identify period crossing. */
-   unsigned int currentWeek, currentMonth, currentYear, currentQuarter;
+   unsigned int currentDay, currentWeek, currentMonth, currentYear, currentQuarter;
 
    /* Pointer on the history being transformed. */
    const TA_Timestamp *old_timestamp;    /* Old timestamp. */
@@ -159,8 +160,8 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
    unsigned long cur_openInterest; /* Current new openInterest of new period. */
 
    int oldPriceBar, newPriceBar; /* Array iterators. */
-   unsigned int again, periodCompleted, errorOccured; /* Boolean */
-   int periodBarAccumulated, firstIteration;
+   unsigned int again, periodCompleted, errorOccured, newDay; /* Boolean */
+   int nbDayAccumulated, firstIteration;
 
    TA_TRACE_BEGIN(  TA_PeriodTransform );
 
@@ -207,11 +208,43 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
     * are currently not supported. 
     * Identify also the major steps
     * needed to perform the transformation.
-    * (only transformFromDaily is implemented).
     */
-   transformFromDaily = 0;
+   transformToDailyAndMore = 0;
+
    switch( history->period )
    {
+   case TA_1MIN:
+   case TA_5MIN:
+   case TA_10MIN:
+   case TA_15MIN:
+   case TA_30MIN:
+   case TA_HOURLY:
+      switch( newPeriod )
+      {
+      case TA_DAILY:
+      case TA_WEEKLY:
+      case TA_MONTHLY:
+      case TA_QUARTERLY:
+      case TA_YEARLY:
+         transformToDailyAndMore = 1;
+         break;
+      case TA_1MIN:
+      case TA_5MIN:
+      case TA_10MIN:
+      case TA_15MIN:
+      case TA_30MIN:
+      case TA_HOURLY:
+         if( newPeriod <= history->period )
+         {
+            TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );
+         }
+         break;
+
+      default:
+         TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );
+      }
+      break;
+
    case TA_DAILY:
       switch( newPeriod )
       {
@@ -220,14 +253,14 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
       case TA_QUARTERLY:
       case TA_YEARLY:
          /* These are supported. */
-         transformFromDaily = 1;
+         transformToDailyAndMore = 1;
          break; 
       default:
          TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );
       }
       break;
 
-   /* All these are not implemented yet. */
+   /* All other are not implemented yet. */
    default:      
       TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );
    }
@@ -260,22 +293,11 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
    cur_close        = 0.0;     /* Current new close of new period. */
    cur_volume       = 0;       /* Current new volume of new period. */
    cur_openInterest = 0;       /* Current new openInterest of new period. */
-   
-   /* If needed, we will proceed with intra-day
-    * to intra-day transform... not implemented
-    * yet.
-    */
 
-   /* If not intra-day, we may need to proceed with
-    * intra day to daily transform... not implemented yet.
-    */
-
-   /* If needed, proceed with the transform from
-    * daily to other period.
-    */
-   if( transformFromDaily )
+   /* If needed, proceed with transformation to daily and more... */
+   if( transformToDailyAndMore )
    {
-      /* Overestimate the number of required new price bar. */
+      /* Calculate the number of required new price bar. */
       switch( newPeriod )
       {
       case TA_WEEKLY:
@@ -290,15 +312,20 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
       case TA_YEARLY:
          retCode = TA_TimestampDeltaYear( &old_timestamp[0], &old_timestamp[old_nbBars-1], (unsigned int *)&new_nbBars );
          break;
+      case TA_DAILY:
+         retCode = TA_TimestampDeltaDay( &old_timestamp[0], &old_timestamp[old_nbBars-1], (unsigned int *)&new_nbBars );
+         break;
       default:
          TA_TRACE_RETURN( TA_INTERNAL_ERROR(48) );
       }
-      new_nbBars += 2;
 
       if( retCode != TA_SUCCESS )
       {
          TA_TRACE_RETURN( retCode );
       }
+
+      /* Slightly over-estimate to avoid limit cases */
+      new_nbBars += 2;
 
       /* Allocate the new data. */      
       errorOccured = 0;
@@ -321,6 +348,13 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
 
       if( errorOccured )
       {
+         FREE_IF_NOT_NULL( new_timestamp );
+         FREE_IF_NOT_NULL( new_open );
+         FREE_IF_NOT_NULL( new_high);
+         FREE_IF_NOT_NULL( new_low );
+         FREE_IF_NOT_NULL( new_close )
+         FREE_IF_NOT_NULL( new_volume );
+         FREE_IF_NOT_NULL( new_openInterest );
          TA_TRACE_RETURN( TA_ALLOC_ERR );
       }
 
@@ -330,7 +364,8 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
       /* Allows to detect crossing of the new period. */
       currentYear    = TA_GetYear ( &old_timestamp[0] );
       currentMonth   = TA_GetMonth( &old_timestamp[0] );
-      currentWeek    = TA_GetWeekOfTheYear( &old_timestamp[0] );
+      currentDay     = TA_GetDay  ( &old_timestamp[0] );
+      currentWeek    = TA_GetWeekOfTheYear   ( &old_timestamp[0] );
       currentQuarter = TA_GetQuarterOfTheYear( &old_timestamp[0] );
 
       /* Iterate through the old price bar. */
@@ -355,15 +390,31 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
           * until the end of the requested period is reach.
           */
          periodCompleted = 0;
-         periodBarAccumulated = 1;
+         nbDayAccumulated = 1;
          firstIteration = 1;
          while( (oldPriceBar < old_nbBars) && !periodCompleted )
          {
             tempTimestamp = &old_timestamp[oldPriceBar];
 
+            /* Check when being a new day */
+            day   = TA_GetDay  ( tempTimestamp );
+            month = TA_GetMonth( tempTimestamp );
+            year  = TA_GetYear ( tempTimestamp );
+
+            if( (currentDay   != day )  ||
+                (currentMonth != month) ||
+                (currentYear  != year) )
+               newDay = 1;
+            else
+               newDay = 0;               
+
             /* Check if we reached an end of period. */
             switch( newPeriod )
             {
+            case TA_DAILY:
+               if( newDay )
+                  periodCompleted = 1;
+               break;
             case TA_WEEKLY:
                tempInt  = TA_GetWeekOfTheYear( tempTimestamp );
 
@@ -377,40 +428,33 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
                }
                break;
             case TA_MONTHLY:
-               tempInt  = TA_GetMonth( tempTimestamp );
-               tempInt2 = TA_GetYear(tempTimestamp);
-               if( (currentMonth != tempInt) ||
-                   (currentYear  != tempInt2) )
+               if( (currentMonth != month) ||
+                   (currentYear  != year) )
                {
                   periodCompleted = 1;
-                  currentMonth    = tempInt;
-                  currentYear     = tempInt2;
                }
                break;
             case TA_QUARTERLY:
                tempInt = TA_GetQuarterOfTheYear( tempTimestamp );
-               tempInt2 = TA_GetYear(tempTimestamp);
-
                if( (currentQuarter != tempInt) ||
-                   (currentYear    != tempInt2) )
+                   (currentYear    != year) )
                {
                   periodCompleted = 1;
                   currentQuarter  = tempInt;
-                  currentYear     = tempInt2;
                }
                break;
             case TA_YEARLY:
-               tempInt = TA_GetYear( tempTimestamp );
-               if( currentYear != tempInt )
-               {
+               if( currentYear != year )
                   periodCompleted = 1;
-                  currentYear = tempInt;
-               }
                break;
             default:
                /* Do nothing */
                break;
             }
+
+            currentDay   = day;
+            currentMonth = month;
+            currentYear  = year;
 
             /* If this is not the end of a period (in the new timeframe)
              * just accumulate the data. If this is the end of the period
@@ -423,13 +467,14 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
                if( !firstIteration )
                {
                   /* Adjust the new price bar. */
-                  SET_CUR_IF_NOT_NULL( timestamp, old_timestamp[oldPriceBar] );
                   SET_CUR_IF_NOT_NULL( high, max( cur_high, old_high[oldPriceBar]) );
                   SET_CUR_IF_NOT_NULL( low,  min( cur_low,  old_low [oldPriceBar]) );
-                  SET_CUR_IF_NOT_NULL( close, old_close[oldPriceBar] );
                   SET_CUR_IF_NOT_NULL( volume, cur_volume+old_volume[oldPriceBar] );
                   SET_CUR_IF_NOT_NULL( openInterest, cur_openInterest+old_openInterest[oldPriceBar] );
-                  periodBarAccumulated++;
+                  SET_CUR_IF_NOT_NULL( close, old_close[oldPriceBar] );
+                  SET_CUR_IF_NOT_NULL( timestamp, old_timestamp[oldPriceBar] );
+                  if( newDay )
+                     nbDayAccumulated++;
                }
                else
                   firstIteration = 0;
@@ -439,16 +484,17 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
             }
          }
 
+
          /* We got all the info needed in the cur_XXXXX variables for
           * proceeding with the initialization of the new period price bar.
           */
          TA_DEBUG_ASSERT( newPriceBar < new_nbBars );
-
+         
          /* Volume and Open interest are changed to daily average. */
          if( old_volume )
-            cur_volume = cur_volume / periodBarAccumulated;
+            cur_volume = cur_volume / nbDayAccumulated;
          if( old_openInterest )
-            cur_openInterest = cur_openInterest / periodBarAccumulated;
+            cur_openInterest = cur_openInterest / nbDayAccumulated;
 
          /* If the timestamp is requested, some adjustment could be
           * needed to cur_timestamp.
@@ -494,8 +540,12 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
          }
 
          /* The new price bar is initialized here. */
+         if(new_timestamp)
+         {
+            new_timestamp[newPriceBar].date = cur_timestamp.date;
+            new_timestamp[newPriceBar].time = 23595900; /* All price bar are EOD */
+         }
          #define SET_NEW_PERIOD_IF_NOT_NULL(var) { if( new_##var ) { new_##var[newPriceBar] = cur_##var; } }
-         SET_NEW_PERIOD_IF_NOT_NULL( timestamp );
          SET_NEW_PERIOD_IF_NOT_NULL( open );
          SET_NEW_PERIOD_IF_NOT_NULL( high );
          SET_NEW_PERIOD_IF_NOT_NULL( low  );
