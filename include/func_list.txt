@@ -9,10 +9,16 @@ ATR                 Average True Range
 AVGPRICE            Average Price
 BBANDS              Bollinger Bands
 CCI                 Commodity Channel Index
+CDLDOJISTAR         Doji Star
+CDLEVENINGDOJISTAR  Evening Doji Star
+CDLEVENINGSTAR      Evening Star
 CDLHIGHWAVE         High-Wave Candle
 CDLLONGLINE         Long Line Candle
+CDLMORNINGDOJISTAR  Morning Doji Star
+CDLMORNINGSTAR      Morning Star
 CDLSHORTLINE        Short Line Candle
 CDLSPINNINGTOP      Spinning Top Candle
+CDLTRISTAR          Tristar Candle
 CORREL              Pearson's Correlation Coefficient (r)
 DEMA                Double Exponential Moving Average
 DX                  Directional Movement Index
