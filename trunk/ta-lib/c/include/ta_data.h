@@ -352,13 +352,13 @@ typedef struct
    TA_Period period;    /* Amount of time between each bar. */
 
    /* The arrays containing data. Unused array are set to NULL. */
-   const TA_Timestamp *timestamp;
-   const TA_Real      *open;
-   const TA_Real      *high;
-   const TA_Real      *low;
-   const TA_Real      *close;
-   const TA_Integer   *volume;
-   const TA_Integer   *openInterest;
+   TA_Timestamp *timestamp;
+   TA_Real      *open;
+   TA_Real      *high;
+   TA_Real      *low;
+   TA_Real      *close;
+   TA_Integer   *volume;
+   TA_Integer   *openInterest;
 
    /* Enumerate all the data source that did contribute. */
    TA_StringTable listOfSource;
@@ -370,7 +370,7 @@ typedef struct
 
 /* Flags that can be specified when allocating a TA_History.
  *
- * TA_ALLOW_INCOMPLETE_BARS
+ * TA_ALLOW_INCOMPLETE_PRICE_BARS
  *    Allows to build price bar for which not all the data is 
  *    yet available. As an example, requesting historical monthly
  *    data will not return a month that is not yet finish.
