@@ -966,6 +966,9 @@ static TA_RetCode processAdjustmentTable( unsigned int line,
    int cnvtDate;
    double value;
 
+   (void)href;
+   (void)line;
+
    adjustData = (TA_AdjustDataParse *)opaqueData;
 
    if( column == 0 )

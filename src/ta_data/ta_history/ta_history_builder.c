@@ -934,6 +934,7 @@ static TA_RetCode historyAdjustData( TA_BuilderSupport *builderSupport )
                       else if( curDataBlock->open ) temp = curDataBlock->open[i];
                       else if( curDataBlock->high ) temp = curDataBlock->high[i];
                       else if( curDataBlock->low) temp = curDataBlock->low[i];
+                      else return TA_MISSING_PRICE_FOR_ADJUSTMENT;
                       factor *= 1.0-(curValueAdjust->amount/temp);
                       curValueAdjust = TA_ListAccessNext(supportForDataSource->listOfValueAdjust);
                    }
@@ -2217,7 +2218,7 @@ static void trimAfterEnd( const TA_Timestamp *end, TA_Period period, TA_History 
 {
    /* !!! Could be speed optimized */
    int found;
-   unsigned int i;
+   int i;
 
    /* Trap special case (nothing to do) */
    if( history->nbBars == 0 )
@@ -2249,7 +2250,7 @@ static void trimAfterEnd( const TA_Timestamp *end, TA_Period period, TA_History 
       }
    }
 
-   if( !found  )
+   if( !found  || (i < 0) )
    {
       history->nbBars = 0;
       history->open         = NULL;
