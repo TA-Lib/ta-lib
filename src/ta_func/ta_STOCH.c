@@ -66,9 +66,9 @@
 
 int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
                        TA_Integer    optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInSlowK_MAType_2,
+                       TA_MAType     optInSlowK_MAType_2,
                        TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
-                       TA_Integer    optInSlowD_MAType_4 ) 
+                       TA_MAType     optInSlowD_MAType_4 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -121,9 +121,9 @@ TA_RetCode TA_STOCH( TA_Integer    startIdx,
                      const TA_Real inClose_0[],
                      TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
                      TA_Integer    optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInSlowK_MAType_2,
+                     TA_MAType     optInSlowK_MAType_2,
                      TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInSlowD_MAType_4,
+                     TA_MAType     optInSlowD_MAType_4,
                      TA_Integer   *outBegIdx,
                      TA_Integer   *outNbElement,
                      TA_Real       outSlowK_0[],
@@ -167,7 +167,7 @@ TA_RetCode TA_STOCH( TA_Integer    startIdx,
 
    if( optInSlowK_MAType_2 == TA_INTEGER_DEFAULT )
       optInSlowK_MAType_2 = 0;
-   else if( (optInSlowK_MAType_2 < 0) || (optInSlowK_MAType_2 > 6) )
+   else if( (optInSlowK_MAType_2 < 0) || (optInSlowK_MAType_2 > 7) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowD_Period_3. */
@@ -178,7 +178,7 @@ TA_RetCode TA_STOCH( TA_Integer    startIdx,
 
    if( optInSlowD_MAType_4 == TA_INTEGER_DEFAULT )
       optInSlowD_MAType_4 = 0;
-   else if( (optInSlowD_MAType_4 < 0) || (optInSlowD_MAType_4 > 6) )
+   else if( (optInSlowD_MAType_4 < 0) || (optInSlowD_MAType_4 > 7) )
       return TA_BAD_PARAM;
 
    if( outSlowK_0 == NULL )

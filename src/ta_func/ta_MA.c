@@ -43,6 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  022203 MF   Add MAMA
  *
  */
 
@@ -61,39 +62,42 @@
 #endif
 
 int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    TA_Integer    optInMethod_1 ) 
+                    TA_MAType     optInMAType_1 ) 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
 
-   switch( optInMethod_1 )
+   switch( optInMAType_1 )
    {
-   case TA_MA_SMA:
+   case TA_MAType_SMA:
       return TA_SMA_Lookback( optInTimePeriod_0 );
       break;
 
-   case TA_MA_EMA:
+   case TA_MAType_EMA:
       return TA_EMA_Lookback( optInTimePeriod_0 );
       break;
 
-   case TA_MA_WMA:
+   case TA_MAType_WMA:
       return TA_WMA_Lookback( optInTimePeriod_0 );
       break;
 
-   case TA_MA_DEMA:
+   case TA_MAType_DEMA:
       return TA_DEMA_Lookback( optInTimePeriod_0 );
       break;
 
-   case TA_MA_TEMA:
+   case TA_MAType_TEMA:
       return TA_TEMA_Lookback( optInTimePeriod_0 );
       break;
 
-   case TA_MA_TRIMA:
+   case TA_MAType_TRIMA:
       return TA_TRIMA_Lookback( optInTimePeriod_0 );
       break;
 
-   case TA_MA_KAMA:
+   case TA_MAType_KAMA:
       return TA_KAMA_Lookback( optInTimePeriod_0 );
+      break;
+   case TA_MAType_MAMA:
+      return TA_MAMA_Lookback( 0.5, 0.05 );
       break;
    }
 
@@ -112,7 +116,7 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX
  * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
  *    Number of period
  * 
- * optInMethod_1:
+ * optInMAType_1:
  *    Type of Moving Average
  * 
  * 
@@ -122,13 +126,15 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
                   TA_Integer    endIdx,
                   const TA_Real inReal_0[],
                   TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                  TA_Integer    optInMethod_1,
+                  TA_MAType     optInMAType_1,
                   TA_Integer   *outBegIdx,
                   TA_Integer   *outNbElement,
                   TA_Real       outReal_0[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
+   TA_Real *dummyBuffer;
+   TA_RetCode retCode;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -148,9 +154,9 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
    else if( (optInTimePeriod_0 < 2) || (optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( optInMethod_1 == TA_INTEGER_DEFAULT )
-      optInMethod_1 = 0;
-   else if( (optInMethod_1 < 0) || (optInMethod_1 > 6) )
+   if( optInMAType_1 == TA_INTEGER_DEFAULT )
+      optInMAType_1 = 0;
+   else if( (optInMAType_1 < 0) || (optInMAType_1 > 7) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -163,44 +169,58 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
    /* Simply call the internal implementation of the
     * requested moving average.
     */
-   switch( optInMethod_1 )
+   switch( optInMAType_1 )
    {
-   case TA_MA_SMA:
+   case TA_MAType_SMA:
       return TA_INT_SMA( startIdx, endIdx,                         
                          inReal_0, optInTimePeriod_0,                         
                          outBegIdx, outNbElement, outReal_0 );
       break;
-   case TA_MA_EMA:
+   case TA_MAType_EMA:
       return TA_INT_EMA( startIdx, endIdx,
                          inReal_0,
                          optInTimePeriod_0, PER_TO_K(optInTimePeriod_0),
                          outBegIdx, outNbElement, outReal_0 );
       break;
-   case TA_MA_WMA:
+   case TA_MAType_WMA:
       return TA_INT_WMA( startIdx, endIdx,
                          inReal_0, optInTimePeriod_0,
                          outBegIdx, outNbElement, outReal_0 );
       break;
-   case TA_MA_DEMA:
+   case TA_MAType_DEMA:
       return TA_DEMA( startIdx, endIdx,
                       inReal_0, optInTimePeriod_0,
                       outBegIdx, outNbElement, outReal_0 );
       break;
-   case TA_MA_TEMA:
+   case TA_MAType_TEMA:
       return TA_TEMA( startIdx, endIdx,
                       inReal_0, optInTimePeriod_0,
                       outBegIdx, outNbElement, outReal_0 );
       break;
-   case TA_MA_TRIMA:
+   case TA_MAType_TRIMA:
       return TA_TRIMA( startIdx, endIdx,
                        inReal_0, optInTimePeriod_0,
                        outBegIdx, outNbElement, outReal_0 );
       break;
-   case TA_MA_KAMA:
+   case TA_MAType_KAMA:
       return TA_KAMA( startIdx, endIdx,
                       inReal_0, optInTimePeriod_0,
                       outBegIdx, outNbElement, outReal_0 );
       break;
+   case TA_MAType_MAMA:
+      /* The optInTimePeriod_0 is ignored and the FAMA output of the MAMA
+       * is ignored.
+       */
+      dummyBuffer = TA_Malloc( sizeof(TA_Real)*(endIdx-startIdx+1) );
+      if( !dummyBuffer )
+         return TA_ALLOC_ERR;
+
+      retCode = TA_MAMA( startIdx, endIdx,
+                         inReal_0, 0.5, 0.05,
+                         outBegIdx, outNbElement,
+                         outReal_0, dummyBuffer );
+      TA_Free( dummyBuffer );
+      return retCode;
    }
 
    *outBegIdx    = 0;

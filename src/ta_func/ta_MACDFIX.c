@@ -96,9 +96,9 @@ TA_RetCode TA_MACDFIX( TA_Integer    startIdx,
                        TA_Integer    optInSignalPeriod_0, /* From 1 to TA_INTEGER_MAX */
                        TA_Integer   *outBegIdx,
                        TA_Integer   *outNbElement,
-                       TA_Real       outRealMACD_0[],
-                       TA_Real       outRealMACDSignal_1[],
-                       TA_Real       outRealMACDHist_2[] )
+                       TA_Real       outMACD_0[],
+                       TA_Real       outMACDSignal_1[],
+                       TA_Real       outMACDHist_2[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
@@ -121,13 +121,13 @@ TA_RetCode TA_MACDFIX( TA_Integer    startIdx,
    else if( (optInSignalPeriod_0 < 1) || (optInSignalPeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( outRealMACD_0 == NULL )
+   if( outMACD_0 == NULL )
       return TA_BAD_PARAM;
 
-   if( outRealMACDSignal_1 == NULL )
+   if( outMACDSignal_1 == NULL )
       return TA_BAD_PARAM;
 
-   if( outRealMACDHist_2 == NULL )
+   if( outMACDHist_2 == NULL )
       return TA_BAD_PARAM;
 
 #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -143,8 +143,8 @@ TA_RetCode TA_MACDFIX( TA_Integer    startIdx,
                        optInSignalPeriod_0,
                        outBegIdx,
                        outNbElement,
-                       outRealMACD_0,
-                       outRealMACDSignal_1,
-                       outRealMACDHist_2 );
+                       outMACD_0,
+                       outMACDSignal_1,
+                       outMACDHist_2 );
 }
 

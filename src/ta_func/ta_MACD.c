@@ -122,9 +122,9 @@ TA_RetCode TA_MACD( TA_Integer    startIdx,
                     TA_Integer    optInSignalPeriod_2, /* From 1 to TA_INTEGER_MAX */
                     TA_Integer   *outBegIdx,
                     TA_Integer   *outNbElement,
-                    TA_Real       outRealMACD_0[],
-                    TA_Real       outRealMACDSignal_1[],
-                    TA_Real       outRealMACDHist_2[] )
+                    TA_Real       outMACD_0[],
+                    TA_Real       outMACDSignal_1[],
+                    TA_Real       outMACDHist_2[] )
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
@@ -159,13 +159,13 @@ TA_RetCode TA_MACD( TA_Integer    startIdx,
    else if( (optInSignalPeriod_2 < 1) || (optInSignalPeriod_2 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( outRealMACD_0 == NULL )
+   if( outMACD_0 == NULL )
       return TA_BAD_PARAM;
 
-   if( outRealMACDSignal_1 == NULL )
+   if( outMACDSignal_1 == NULL )
       return TA_BAD_PARAM;
 
-   if( outRealMACDHist_2 == NULL )
+   if( outMACDHist_2 == NULL )
       return TA_BAD_PARAM;
 
 #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -181,9 +181,9 @@ TA_RetCode TA_MACD( TA_Integer    startIdx,
                        optInSignalPeriod_2,
                        outBegIdx,
                        outNbElement,
-                       outRealMACD_0,
-                       outRealMACDSignal_1,
-                       outRealMACDHist_2 );
+                       outMACD_0,
+                       outMACDSignal_1,
+                       outMACDHist_2 );
 }
 
 TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
@@ -194,9 +194,9 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
                         TA_Integer    optInSignalPeriod_2, /* From 1 to 200 */
                         TA_Integer   *outBegIdx,
                         TA_Integer   *outNbElement,
-                        TA_Real       outRealMACD_0[],
-                        TA_Real       outRealMACDSignal_1[],
-                        TA_Real       outRealMACDHist_2[] )
+                        TA_Real       outMACD_0[],
+                        TA_Real       outMACDSignal_1[],
+                        TA_Real       outMACDHist_2[] )
 {
    TA_Real *slowEMABuffer, *fastEMABuffer;
    TA_Real k1, k2;
@@ -351,12 +351,12 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
 
 
    /* Copy the result into the output for the caller. */
-   memcpy( outRealMACD_0, &fastEMABuffer[lookbackSignal], ((endIdx-startIdx)+1)*sizeof(TA_Real) );
+   memcpy( outMACD_0, &fastEMABuffer[lookbackSignal], ((endIdx-startIdx)+1)*sizeof(TA_Real) );
 
    /* Calculate the signal/trigger line. */
    retCode = TA_INT_EMA( 0, outNbElement1-1,
                          fastEMABuffer, optInSignalPeriod_2, PER_TO_K(optInSignalPeriod_2), 
-                         &outBegIdx2, &outNbElement2, outRealMACDSignal_1 );
+                         &outBegIdx2, &outNbElement2, outMACDSignal_1 );
 
 
    TA_Free( fastEMABuffer );
@@ -371,7 +371,7 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
 
    /* Calculate the histogram. */
    for( i=0; i < outNbElement2; i++ )
-      outRealMACDHist_2[i] = outRealMACD_0[i]-outRealMACDSignal_1[i];
+      outMACDHist_2[i] = outMACD_0[i]-outMACDSignal_1[i];
 
    /* !!! To be done.
     * !!! Should adjust the histogram for being scale adjusted
