@@ -107,4 +107,4 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle );
 
 
 #endif
-   
+
