@@ -1732,33 +1732,46 @@ int TA_STOCHF_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 *
  * TA_STOCHRSI - Stochastic Relative Strength Index
  * 
  * Input  = double
- * Output = double
+ * Output = double, double
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to 100000)
- *    Number of period
+ * optInFastK_Period_0:(From 1 to 100000)
+ *    Time period for building the Fast-K line
+ * 
+ * optInFastD_Period_1:(From 1 to 100000)
+ *    Smoothing for making the Fast-D line. Usually set to 3
+ * 
+ * optInFastD_MAType_2:
+ *    Type of Moving Average for Fast-D
  * 
  * 
  */
 TA_RetCode TA_STOCHRSI( int    startIdx,
                         int    endIdx,
                         const double inReal_0[],
-                        int           optInTimePeriod_0, /* From 2 to 100000 */
+                        int           optInFastK_Period_0, /* From 1 to 100000 */
+                        int           optInFastD_Period_1, /* From 1 to 100000 */
+                        TA_MAType     optInFastD_MAType_2,
                         int          *outBegIdx,
                         int          *outNbElement,
-                        double        outReal_0[] );
+                        double        outFastK_0[],
+                        double        outFastD_1[] );
 
 TA_RetCode TA_S_STOCHRSI( int    startIdx,
                           int    endIdx,
                           const float  inReal_0[],
-                          int           optInTimePeriod_0, /* From 2 to 100000 */
+                          int           optInFastK_Period_0, /* From 1 to 100000 */
+                          int           optInFastD_Period_1, /* From 1 to 100000 */
+                          TA_MAType     optInFastD_MAType_2,
                           int          *outBegIdx,
                           int          *outNbElement,
-                          double        outReal_0[] );
+                          double        outFastK_0[],
+                          double        outFastD_1[] );
 
-int TA_STOCHRSI_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
-
+int TA_STOCHRSI_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
+                        int           optInFastD_Period_1, /* From 1 to 100000 */
+                        TA_MAType     optInFastD_MAType_2 ); 
 
 /*
  * TA_TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA

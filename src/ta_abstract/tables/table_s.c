@@ -528,7 +528,6 @@ DEF_FUNCTION( STOCHF,                   /* name */
 /* STOCHF END */
 
 /* STOCHRSI BEGIN */
-
 static const TA_InputParameterInfo    *TA_STOCHRSI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -537,13 +536,16 @@ static const TA_InputParameterInfo    *TA_STOCHRSI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_STOCHRSI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_FastK,
+  &TA_DEF_UI_Output_FastD,
   NULL
 };
 
 static const TA_OptInputParameterInfo *TA_STOCHRSI_OptInputs[] =
 {
-  &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  &TA_DEF_UI_FastK_Period,
+  &TA_DEF_UI_FastD_Period,
+  &TA_DEF_UI_FastD_MAType,
   NULL
 };
 
