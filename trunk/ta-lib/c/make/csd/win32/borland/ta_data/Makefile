@@ -13,8 +13,8 @@ BCB = $(MAKEDIR)\..
 
 CC	=	bcc32
 CXX	=	bcc32
-CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -v -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD -DWIN32
-CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -v -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD -DWIN32
+CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -w-8080 -v -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD -DWIN32
+CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -w-8080 -v -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD -DWIN32
 INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data\ta_source\ta_fileindex" -I"..\..\..\..\..\src\ta_data\ta_source\ta_ascii" -I"..\..\..\..\..\src\ta_data\ta_source\ta_readop" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\src\ta_data\ta_history" -I"..\..\..\..\..\src\ta_data\ta_source\ta_simulator" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\include"
 LIB	=	tlib /C /P256
 MOC	=	moc
