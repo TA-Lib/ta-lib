@@ -34,6 +34,7 @@ SOURCES	= ../../../../../src/ta_common/bzip2/blocksort.c \
           ../../../../../src/ta_common/imatix/sfl/sflstr.c \
           ../../../../../src/ta_common/imatix/sfl/sfltok.c \
           ../../../../../src/ta_common/imatix/sfl/sfldir.c \
+          ../../../../../src/ta_common/imatix/sfl/sflfile.c \
           ../../../../../src/ta_common/trio/trionan.c \
           ../../../../../src/ta_common/ta_country_info.c \
           ../../../../../src/ta_common/ta_dict.c \
