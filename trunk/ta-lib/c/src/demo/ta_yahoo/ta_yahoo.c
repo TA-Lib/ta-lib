@@ -61,10 +61,8 @@ void print_usage( char *str )
    printf( "\n" );
    printf( "Usage: ta_yahoo -c\n" );
    printf( "       ta_yahoo -s <category>\n" );
-   printf( "       ta_yahoo -d{d,w,m,q,y} <category> <symbol>\n" );
-   printf( "       ta_yahoo -u{d,w,m,q,y} <category> <symbol>\n" );
-   printf( "       ta_yahoo -i{d,w,m,q,y} <category> <symbol>\n" );
-   printf( "       ta_yahoo -z{d,w,m,q,y} <category> <symbol>\n" );
+   printf( "       ta_yahoo -{c,s,d,u,i,z}{d,w,m,q,y} <category> <symbol>\n" );
+   printf( "       ta_yahoo -{c,s,d,u,i,z}{d,w,m,q,y} DIRECT=US <Yahoo! symbol>\n" );
    printf( "\n" );
    printf( "  -c Display all supported categories\n" );
    printf( "  -s Display all symbols for a given category\n" );
@@ -73,7 +71,10 @@ void print_usage( char *str )
    printf( "  -i Fetch dividend-only adjusted data.\n" );
    printf( "  -z Fetch split-only adjusted data.\n" );
    printf( "\n" );
-   printf( "  {d,w,m,q,y} = \"daily,weekly,monthly,quarterly,yearly\"" );
+   printf( "  {d,w,m,q,y} = \"daily,weekly,monthly,quarterly,yearly\"\n" );
+   printf( "\n" );
+   printf( "  Specify \"DIRECT=US\" to use Yahoo! names directly with the US\n" );
+   printf( "  web site of Yahoo! instead of the TA-Lib category/symbol index.\n" );
    printf( "\n" );
    printf( "  Stock output is \"Date,Open,High,Low,Close,Volume\"\n" );
    printf( "  Funds output is \"Date,Close\". Date are \"mm-dd-yyyy\"\n" );
@@ -82,8 +83,9 @@ void print_usage( char *str )
    printf( "            ta_yahoo -dd US.NASDAQ.STOCK MSFT\n" );
    printf( "            ta_yahoo -ud US.NASDAQ.STOCK MSFT\n" );
    printf( "            ta_yahoo -zw US.NASDAQ.STOCK MSFT\n" );
+   printf( "            ta_yahoo -dd DIRECT=US 2812.TW\n" );
    printf( "\n" );
-   printf( "  This utility may create files \"y_xx.dat\" to speed\n" );
+   printf( "  This utility may creates files \"y_xx.dat\" to speed\n" );
    printf( "  up subsequent remote access. These are automatically\n" );
    printf( "  re-generated and can be safely deleted.\n" );
    printf( "\n" );
@@ -118,9 +120,18 @@ int print_data( TA_UDBase *udb,
    unsigned int i;
    TA_HistoryAllocParam histParam;
 
-   /* Setup Yahoo! datasource. */
+   /* Setup the datasource. */
    memset( &addSourceParam, 0, sizeof( TA_AddDataSourceParam ) );
-   addSourceParam.id = TA_YAHOO_WEB;
+   if( strcmp(category,"DIRECT=US") == 0 )
+   {
+     addSourceParam.id       = TA_YAHOO_ONE_SYMBOL;
+     addSourceParam.info     = symbol;
+     addSourceParam.category = category;
+     addSourceParam.symbol   = symbol;
+   }
+   else
+     addSourceParam.id = TA_YAHOO_WEB;
+
    addSourceParam.location = country;
    addSourceParam.flags = flags;
    retCode = TA_AddDataSource( udb, &addSourceParam );
@@ -337,13 +348,31 @@ int main( int argc, char *argv[] )
       }
    }
 
+   /* Trap case where the user prefer the "DIRECT" approach
+    * instead of the category/symbol index of TA-Lib.
+    */
+   {
+
+   }
+   
    /* Identify country when needed. */
    switch( theAction )
    {
    case DISPLAY_HISTORIC_DATA:
    case DISPLAY_SYMBOLS:
-      country[0] = argv[2][0];
-      country[1] = argv[2][1];
+      if( strncmp( &argv[2][0], "DIRECT=", 7 ) == 0 )
+      {
+         if( strlen(&argv[2][0]) != 9 )
+         {
+           print_usage( "Do \"DIRECT=US\" to use the United State Yahoo! web site." );
+           return -1;
+         }
+         i = 7;
+      }
+      else 
+         i = 0;
+      country[0] = argv[2][i];
+      country[1] = argv[2][i+1];
       country[2] = '\0';
       break;
    case DISPLAY_CATEGORIES:
