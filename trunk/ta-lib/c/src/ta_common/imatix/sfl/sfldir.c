@@ -133,6 +133,7 @@ open_dir ( DIRST *dir, const char *dir_name)
     if (findfirst (dir_spec, &dir-> _dir_entry, 255 - FA_LABEL) == -1)
 #endif
       {
+        TA_Free(dir_spec);
         return (FALSE);                 /*  Could not open directory         */
       }
 
@@ -372,15 +373,20 @@ close_dir ( DIRST *dir)
 
     TA_ASSERT_RET (dir != NULL,FALSE);
 
-    TA_Free ( dir-> dir_name);          /*  Free dynamically-allocated name  */
+    if( dir->dir_name)
+       TA_Free( dir->dir_name ); /*  Free dynamically-allocated name  */
+
 #if (defined (__UNIX__) || defined (__VMS_XOPEN) || defined (__OS2__))
-    if( !dir-> _dir_handle )
+    if( dir-> _dir_handle == NULL )
        rc = TRUE;
     else
        rc = (closedir (dir-> _dir_handle) == 0);
 
 #elif (defined (WIN32))
-    rc = (Bool)FindClose (dir-> _dir_handle);
+    if( dir-> _dir_handle == INVALID_HANDLE_VALUE )
+       rc = TRUE;
+    else
+       rc = (Bool)FindClose (dir-> _dir_handle);
 
 #elif (defined (_MSC_VER))
     rc = TRUE;                          /*  No function to close a dir       */
