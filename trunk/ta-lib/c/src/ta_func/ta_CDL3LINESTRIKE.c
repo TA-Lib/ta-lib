@@ -218,7 +218,7 @@
                 )
             )
           )
-            outInteger[outIdx++] = TA_CANDLECOLOR(i-1);
+            outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;
         else
             outInteger[outIdx++] = 0;
         /* add the current range and subtract the first range: this is done after the pattern recognition 
@@ -327,7 +327,7 @@
 /* Generated */                 )
 /* Generated */             )
 /* Generated */           )
-/* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i-1);
+/* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         for (totIdx = 3; totIdx >= 2; --totIdx)
