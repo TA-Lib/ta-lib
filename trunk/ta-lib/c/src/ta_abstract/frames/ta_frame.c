@@ -175,7 +175,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_HT_TRENDLINE_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_HT_TRENDLINE_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_HT_TRENDLINE_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_KAMA_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -470,7 +471,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_TRANGE_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_TRANGE_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_TRANGE_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_ADX_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1076,7 +1078,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_HT_DCPERIOD_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_HT_DCPERIOD_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_HT_DCPERIOD_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_HT_DCPHASE_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1094,7 +1097,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_HT_DCPHASE_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_HT_DCPHASE_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_HT_DCPHASE_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_HT_PHASOR_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1113,7 +1117,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_HT_PHASOR_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_HT_PHASOR_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_HT_PHASOR_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_HT_SINE_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1132,7 +1137,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_HT_SINE_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_HT_SINE_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_HT_SINE_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_HT_TRENDMODE_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1150,7 +1156,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_HT_TRENDMODE_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_HT_TRENDMODE_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_HT_TRENDMODE_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_AD_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1171,7 +1178,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_AD_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_AD_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_AD_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_ADOSC_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1214,7 +1222,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_OBV_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_OBV_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_OBV_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_CORREL_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1392,7 +1401,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_AVGPRICE_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_AVGPRICE_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_AVGPRICE_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_MEDPRICE_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1411,7 +1421,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_MEDPRICE_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_MEDPRICE_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_MEDPRICE_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_TYPPRICE_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1431,7 +1442,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_TYPPRICE_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_TYPPRICE_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_TYPPRICE_Lookback( );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_WCLPRICE_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
@@ -1451,7 +1463,8 @@
 /* Generated */ }
 /* Generated */ unsigned int TA_WCLPRICE_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;/* Generated */    return TA_WCLPRICE_Lookback( );
+/* Generated */    (void)params;
+/* Generated */    return TA_WCLPRICE_Lookback( );
 /* Generated */ }
 
 /***************/
