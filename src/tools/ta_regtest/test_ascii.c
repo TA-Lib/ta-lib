@@ -733,6 +733,7 @@ static int test_parsing_equivalence( void )
             histParam.symbol   = &buffer200[0];
             histParam.period   = period;
             histParam.field    = TA_ALL;
+            histParam.flags    = TA_DISABLE_PRICE_VALIDATION; /* This flag should not make a difference. */
             retCode = TA_HistoryAlloc( udbEqv, &histParam, &history );
 
             if( retCode != TA_SUCCESS )
