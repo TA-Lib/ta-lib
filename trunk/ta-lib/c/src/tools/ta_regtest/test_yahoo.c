@@ -207,7 +207,7 @@ static ErrorNumber test_index( TA_UDBase *udb )
    /* Get something from canadian market. 
     * Also test stock using 200 price bar slice.
     */   
-   retCode = TA_HistoryAlloc( udb, "CA.CDNX.STOCK", "MRY",
+   retCode = TA_HistoryAlloc( udb, "CA.TSE.STOCK", "NT",
                               TA_DAILY, 0, 0, TA_ALL,
                               &history );
    if( retCode != TA_SUCCESS )
@@ -294,12 +294,6 @@ static ErrorNumber checkRangeSame( TA_UDBase          *udb,
    unsigned int i;
    TA_RetCode retCode;
 
-   #if 1
-      /* Do not retry... no forgiveness! */
-      retCode = TA_HistoryAlloc( udb, "CA.CDNX.STOCK", "MRY",
-                                 TA_DAILY, start, end, TA_ALL,
-                                 &history );
-   #else
    int retry, again;
    /* Try up to 10 times to get the requested number of 
     * price bar (sometimes Yahoo! or the Web do fail to
@@ -308,7 +302,7 @@ static ErrorNumber checkRangeSame( TA_UDBase          *udb,
    again = 1;
    for( retry=0; (retry < 10) && again; retry++ )
    {
-      retCode = TA_HistoryAlloc( udb, "CA.CDNX.STOCK", "MRY",
+      retCode = TA_HistoryAlloc( udb, "CA.TSE.STOCK", "NT",
                                  TA_DAILY, start, end, TA_ALL,
                                  &history );
 
@@ -324,7 +318,6 @@ static ErrorNumber checkRangeSame( TA_UDBase          *udb,
          TA_Sleep( 10 /* seconds */ );
       }
    }
-   #endif
 
    if( retCode != TA_SUCCESS )
    {

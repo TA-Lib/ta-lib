@@ -17,18 +17,32 @@
    #endif
 #endif
 
+#if defined( _MANAGED )
+   #ifndef NULL
+      #define NULL 0
+   #endif
+#endif
+
 /* Calculate a Simple Moving Average.
  * This is an internal version, parameter are assumed validated.
  * (startIdx and endIdx cannot be -1).
  */
 #if !defined( _MANAGED )
-TA_RetCode TA_INT_SMA( int    startIdx,
-                       int    endIdx,
+TA_RetCode TA_INT_SMA( int           startIdx,
+                       int           endIdx,
                        const double *inReal_0,
-                       int    optInTimePeriod_0, /* From 1 to 200 */
-                       int   *outBegIdx,
-                       int   *outNbElement,
-                       double      *outReal_0 );
+                       int           optInTimePeriod_0, /* From 1 to 200 */
+                       int          *outBegIdx,
+                       int          *outNbElement,
+                       double       *outReal_0 );
+
+TA_RetCode TA_S_INT_SMA( int          startIdx,
+                         int          endIdx,
+                         const float *inReal_0,
+                         int          optInTimePeriod_0, /* From 1 to 200 */
+                         int         *outBegIdx,
+                         int         *outNbElement,
+                         double      *outReal_0 );
 #endif
 
 /* Calculate an Exponential Moving Average.
@@ -44,6 +58,15 @@ TA_RetCode TA_INT_EMA( int           startIdx,
                        int          *outBegIdx,
                        int          *outNbElement,
                        double       *outReal_0 );
+
+TA_RetCode TA_S_INT_EMA( int          startIdx,
+                         int          endIdx,
+                         const float *inReal_0,
+                         int          optInTimePeriod_0, /* From 1 to 200 */
+                         double       optInK_1,
+                         int         *outBegIdx,
+                         int         *outNbElement,
+                         double      *outReal_0 );
 #endif
 
 /* Calculate a MACD
@@ -51,17 +74,29 @@ TA_RetCode TA_INT_EMA( int           startIdx,
  * (startIdx and endIdx cannot be -1).
  */
 #if !defined( _MANAGED )
-TA_RetCode TA_INT_MACD( int    startIdx,
-                        int    endIdx,
-                        const double inReal_0[],
-                        int    optInFastPeriod_0, /* From 1 to 200, 0 is fix 12 */
-                        int    optInSlowPeriod_1, /* From 1 to 200, 0 is fix 26 */
-                        int    optInSignalPeriod_2, /* From 1 to 200 */
-                        int   *outBegIdx,
-                        int   *outNbElement,
-                        double       outRealMACD_0[],
-                        double       outRealMACDSignal_1[],
-                        double       outRealMACDHist_2[] );
+TA_RetCode TA_INT_MACD( int           startIdx,
+                        int           endIdx,
+                        const double  inReal_0[],
+                        int           optInFastPeriod_0, /* From 1 to 200, 0 is fix 12 */
+                        int           optInSlowPeriod_1, /* From 1 to 200, 0 is fix 26 */
+                        int           optInSignalPeriod_2, /* From 1 to 200 */
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double        outRealMACD_0[],
+                        double        outRealMACDSignal_1[],
+                        double        outRealMACDHist_2[] );
+
+TA_RetCode TA_S_INT_MACD( int          startIdx,
+                          int          endIdx,
+                          const float  inReal_0[],
+                          int          optInFastPeriod_0, /* From 1 to 200, 0 is fix 12 */
+                          int          optInSlowPeriod_1, /* From 1 to 200, 0 is fix 26 */
+                          int          optInSignalPeriod_2, /* From 1 to 200 */
+                          int         *outBegIdx,
+                          int         *outNbElement,
+                          double       outRealMACD_0[],
+                          double       outRealMACDSignal_1[],
+                          double       outRealMACDHist_2[] );
 #endif
 
 /* Internal Price Oscillator function.
@@ -70,28 +105,48 @@ TA_RetCode TA_INT_MACD( int    startIdx,
  * 'tempBuffer' must be of at least (endIdx-startIdx+1)
  */
 #if !defined( _MANAGED )
-TA_RetCode TA_INT_PO( int    startIdx,
-                      int    endIdx,
+TA_RetCode TA_INT_PO( int           startIdx,
+                      int           endIdx,
                       const double *inReal_0,
-                      int    optInFastPeriod_0, /* From 1 to 200 */
-                      int    optInSlowPeriod_1, /* From 1 to 200 */
-                      TA_MAType optInMethod_2,
-                      int   *outBegIdx,
-                      int   *outNbElement,
-                      double      *outReal_0,
-                      double      *tempBuffer,
+                      int           optInFastPeriod_0, /* From 1 to 200 */
+                      int           optInSlowPeriod_1, /* From 1 to 200 */
+                      TA_MAType     optInMethod_2,
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double       *outReal_0,
+                      double       *tempBuffer,
                       unsigned int  doPercentageOutput );
+
+TA_RetCode TA_S_INT_PO( int           startIdx,
+                        int           endIdx,
+                        const float  *inReal_0,
+                        int           optInFastPeriod_0, /* From 1 to 200 */
+                        int           optInSlowPeriod_1, /* From 1 to 200 */
+                        TA_MAType     optInMethod_2,
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double       *outReal_0,
+                        double       *tempBuffer,
+                        unsigned int  doPercentageOutput );
 #endif
 
 /* Internal variance function. */
 #if !defined( _MANAGED )
-TA_RetCode TA_INT_VAR( int    startIdx,
-                       int    endIdx,
+TA_RetCode TA_INT_VAR( int           startIdx,
+                       int           endIdx,
                        const double *inReal_0,
-                       int    optInTimePeriod_0,                       
-                       int   *outBegIdx,
-                       int   *outNbElement,
-                       double      *outReal_0 );
+                       int           optInTimePeriod_0,                       
+                       int          *outBegIdx,
+                       int          *outNbElement,
+                       double       *outReal_0 );
+
+TA_RetCode TA_S_INT_VAR( int           startIdx,
+                         int           endIdx,
+                         const float  *inReal_0,
+                         int           optInTimePeriod_0,                       
+                         int          *outBegIdx,
+                         int          *outNbElement,
+                         double       *outReal_0 );
 #endif
 
 /* A function to calculate a standard deviation.
@@ -102,10 +157,17 @@ TA_RetCode TA_INT_VAR( int    startIdx,
 #if !defined( _MANAGED )
 void TA_INT_stddev_using_precalc_ma( const double *inReal,
                                      const double *inMovAvg,
-                                     int inMovAvgBegIdx,
-                                     int inMovAvgNbElement,
-                                     int timePeriod,
-                                     double *output );
+                                     int           inMovAvgBegIdx,
+                                     int           inMovAvgNbElement,
+                                     int           timePeriod,
+                                     double       *output );
+
+void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
+                                       const double *inMovAvg,
+                                       int           inMovAvgBegIdx,
+                                       int           inMovAvgNbElement,
+                                       int           timePeriod,
+                                       double       *output );
 #endif
 
 #if defined( _MANAGED )
