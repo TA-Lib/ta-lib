@@ -2087,6 +2087,112 @@ int TA_OBV_Lookback( void );
  ******************************************/
 
 /*
+ * TA_CDLDOJISTAR - Doji Star
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLDOJISTAR( int    startIdx,
+                           int    endIdx,
+                           const double inOpen[],
+                           const double inHigh[],
+                           const double inLow[],
+                           const double inClose[],
+                           int          *outBegIdx,
+                           int          *outNbElement,
+                           int           outInteger[] );
+
+TA_RetCode TA_S_CDLDOJISTAR( int    startIdx,
+                             int    endIdx,
+                             const float  inOpen[],
+                             const float  inHigh[],
+                             const float  inLow[],
+                             const float  inClose[],
+                             int          *outBegIdx,
+                             int          *outNbElement,
+                             int           outInteger[] );
+
+int TA_CDLDOJISTAR_Lookback( void );
+
+
+/*
+ * TA_CDLEVENINGDOJISTAR - Evening Doji Star
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInPenetration:(From 0 to TA_REAL_MAX)
+ *    Percentage of penetration of a candle within another candle
+ * 
+ * 
+ */
+TA_RetCode TA_CDLEVENINGDOJISTAR( int    startIdx,
+                                  int    endIdx,
+                                  const double inOpen[],
+                                  const double inHigh[],
+                                  const double inLow[],
+                                  const double inClose[],
+                                  double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                  int          *outBegIdx,
+                                  int          *outNbElement,
+                                  int           outInteger[] );
+
+TA_RetCode TA_S_CDLEVENINGDOJISTAR( int    startIdx,
+                                    int    endIdx,
+                                    const float  inOpen[],
+                                    const float  inHigh[],
+                                    const float  inLow[],
+                                    const float  inClose[],
+                                    double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                    int          *outBegIdx,
+                                    int          *outNbElement,
+                                    int           outInteger[] );
+
+int TA_CDLEVENINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+
+
+/*
+ * TA_CDLEVENINGSTAR - Evening Star
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInPenetration:(From 0 to TA_REAL_MAX)
+ *    Percentage of penetration of a candle within another candle
+ * 
+ * 
+ */
+TA_RetCode TA_CDLEVENINGSTAR( int    startIdx,
+                              int    endIdx,
+                              const double inOpen[],
+                              const double inHigh[],
+                              const double inLow[],
+                              const double inClose[],
+                              double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                              int          *outBegIdx,
+                              int          *outNbElement,
+                              int           outInteger[] );
+
+TA_RetCode TA_S_CDLEVENINGSTAR( int    startIdx,
+                                int    endIdx,
+                                const float  inOpen[],
+                                const float  inHigh[],
+                                const float  inLow[],
+                                const float  inClose[],
+                                double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                int          *outBegIdx,
+                                int          *outNbElement,
+                                int           outInteger[] );
+
+int TA_CDLEVENINGSTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+
+
+/*
  * TA_CDLHIGHWAVE - High-Wave Candle
  * 
  * Input  = Open, High, Low, Close
@@ -2147,6 +2253,82 @@ int TA_CDLLONGLINE_Lookback( void );
 
 
 /*
+ * TA_CDLMORNINGDOJISTAR - Morning Doji Star
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInPenetration:(From 0 to TA_REAL_MAX)
+ *    Percentage of penetration of a candle within another candle
+ * 
+ * 
+ */
+TA_RetCode TA_CDLMORNINGDOJISTAR( int    startIdx,
+                                  int    endIdx,
+                                  const double inOpen[],
+                                  const double inHigh[],
+                                  const double inLow[],
+                                  const double inClose[],
+                                  double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                  int          *outBegIdx,
+                                  int          *outNbElement,
+                                  int           outInteger[] );
+
+TA_RetCode TA_S_CDLMORNINGDOJISTAR( int    startIdx,
+                                    int    endIdx,
+                                    const float  inOpen[],
+                                    const float  inHigh[],
+                                    const float  inLow[],
+                                    const float  inClose[],
+                                    double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                    int          *outBegIdx,
+                                    int          *outNbElement,
+                                    int           outInteger[] );
+
+int TA_CDLMORNINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+
+
+/*
+ * TA_CDLMORNINGSTAR - Morning Star
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInPenetration:(From 0 to TA_REAL_MAX)
+ *    Percentage of penetration of a candle within another candle
+ * 
+ * 
+ */
+TA_RetCode TA_CDLMORNINGSTAR( int    startIdx,
+                              int    endIdx,
+                              const double inOpen[],
+                              const double inHigh[],
+                              const double inLow[],
+                              const double inClose[],
+                              double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                              int          *outBegIdx,
+                              int          *outNbElement,
+                              int           outInteger[] );
+
+TA_RetCode TA_S_CDLMORNINGSTAR( int    startIdx,
+                                int    endIdx,
+                                const float  inOpen[],
+                                const float  inHigh[],
+                                const float  inLow[],
+                                const float  inClose[],
+                                double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                int          *outBegIdx,
+                                int          *outNbElement,
+                                int           outInteger[] );
+
+int TA_CDLMORNINGSTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+
+
+/*
  * TA_CDLSHORTLINE - Short Line Candle
  * 
  * Input  = Open, High, Low, Close
@@ -2204,6 +2386,36 @@ TA_RetCode TA_S_CDLSPINNINGTOP( int    startIdx,
                                 int           outInteger[] );
 
 int TA_CDLSPINNINGTOP_Lookback( void );
+
+
+/*
+ * TA_CDLTRISTAR - Tristar Candle
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLTRISTAR( int    startIdx,
+                          int    endIdx,
+                          const double inOpen[],
+                          const double inHigh[],
+                          const double inLow[],
+                          const double inClose[],
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          int           outInteger[] );
+
+TA_RetCode TA_S_CDLTRISTAR( int    startIdx,
+                            int    endIdx,
+                            const float  inOpen[],
+                            const float  inHigh[],
+                            const float  inLow[],
+                            const float  inClose[],
+                            int          *outBegIdx,
+                            int          *outNbElement,
+                            int           outInteger[] );
+
+int TA_CDLTRISTAR_Lookback( void );
 
 
 
