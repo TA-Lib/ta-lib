@@ -154,10 +154,10 @@ int main(int argc, char *argv[] )
       printf( "  index of symbols provided by Yahoo!\n" );
       printf( "\n" );
       printf( "  This tool is mainly used by ta-lib.org to generate\n" );
-      printf( "  the 'y_xxx.dat' files.\n" );
+      printf( "  the 'y_xx.dat' files.\n" );
       printf( "\n" );
       printf( "  Example: gen_rdata -n us y_us.dat\n" );
-      printf( "           gen_rdata -c ca myLocalCopy.dat\n" );
+      printf( "           gen_rdata -c ca y_ca.dat\n" );
       printf( "           gen_rdata -v ca myLocalCopy.dat\n" );
       exit(-1);
    }
