@@ -21,6 +21,7 @@ CFG=gen_rdata - Win32 CSD Single Thread Debug
 !MESSAGE "gen_rdata - Win32 CSD Single Thread Debug" (based on "Win32 (x86) Console Application")
 !MESSAGE "gen_rdata - Win32 CSR Single Thread Release" (based on "Win32 (x86) Console Application")
 !MESSAGE "gen_rdata - Win32 CMR Multithread Release" (based on "Win32 (x86) Console Application")
+!MESSAGE "gen_rdata - Win32 Profiling" (based on "Win32 (x86) Console Application")
 !MESSAGE 
 
 # Begin Project
@@ -140,6 +141,33 @@ LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wininet.lib /nologo /subsystem:console /machine:I386
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wininet.lib /nologo /subsystem:console /machine:I386
 
+!ELSEIF  "$(CFG)" == "gen_rdata - Win32 Profiling"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "gen_rdata___Win32_Profiling"
+# PROP BASE Intermediate_Dir "gen_rdata___Win32_Profiling"
+# PROP BASE Ignore_Export_Lib 0
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "gen_rdata___Win32_Profiling"
+# PROP Intermediate_Dir "gen_rdata___Win32_Profiling"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /W3 /O2 /I "../../../../include" /I "../../../../src/ta_data/ta_source/ta_yahoo" /I "../../../../src/ta_data/ta_source" /I "../../../../src/ta_data" /I "../../../../src/ta_common" /D "_CONSOLE" /D "TA_SINGLE_THREAD" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# SUBTRACT BASE CPP /Fr
+# ADD CPP /nologo /W3 /O2 /I "../../../../include" /I "../../../../src/ta_data/ta_source/ta_yahoo" /I "../../../../src/ta_data/ta_source" /I "../../../../src/ta_data" /I "../../../../src/ta_common" /D "_CONSOLE" /D "TA_SINGLE_THREAD" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# SUBTRACT CPP /Fr
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wininet.lib /nologo /subsystem:console /machine:I386
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wininet.lib /nologo /subsystem:console /profile /machine:I386
+
 !ENDIF 
 
 # Begin Target
@@ -148,6 +176,7 @@ LINK32=link.exe
 # Name "gen_rdata - Win32 CSD Single Thread Debug"
 # Name "gen_rdata - Win32 CSR Single Thread Release"
 # Name "gen_rdata - Win32 CMR Multithread Release"
+# Name "gen_rdata - Win32 Profiling"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"

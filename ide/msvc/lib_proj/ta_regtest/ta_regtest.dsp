@@ -21,6 +21,7 @@ CFG=ta_regtest - Win32 CSD Single Thread Debug
 !MESSAGE "ta_regtest - Win32 CSD Single Thread Debug" (based on "Win32 (x86) Console Application")
 !MESSAGE "ta_regtest - Win32 CSR Single Thread Release" (based on "Win32 (x86) Console Application")
 !MESSAGE "ta_regtest - Win32 CMR Multithread Release" (based on "Win32 (x86) Console Application")
+!MESSAGE "ta_regtest - Win32 Profiling" (based on "Win32 (x86) Console Application")
 !MESSAGE 
 
 # Begin Project
@@ -140,6 +141,33 @@ LINK32=link.exe
 # ADD BASE LINK32 ta_libc_cmr.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wininet.lib /nologo /subsystem:console /machine:I386 /libpath:"..\..\..\..\lib"
 # ADD LINK32 ta_libc_cmr.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wininet.lib /nologo /subsystem:console /machine:I386 /libpath:"..\..\..\..\lib"
 
+!ELSEIF  "$(CFG)" == "ta_regtest - Win32 Profiling"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "ta_regtest___Win32_Profiling"
+# PROP BASE Intermediate_Dir "ta_regtest___Win32_Profiling"
+# PROP BASE Ignore_Export_Lib 0
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "ta_regtest___Win32_Profiling"
+# PROP Intermediate_Dir "ta_regtest___Win32_Profiling"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /W3 /O2 /I "..\..\..\..\src\ta_common" /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\trio" /I "..\..\..\..\src\tools\ta_regtest" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_func" /I "..\..\..\..\src\ta_data\ta_source\ta_readop" /D "_CONSOLE" /D "TA_SINGLE_THREAD" /D "WIN32" /D "NDEBUG" /D "_MBCS" /FD /c
+# SUBTRACT BASE CPP /Fr /YX
+# ADD CPP /nologo /W3 /O2 /I "..\..\..\..\src\ta_common" /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\trio" /I "..\..\..\..\src\tools\ta_regtest" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_func" /I "..\..\..\..\src\ta_data\ta_source\ta_readop" /D "_CONSOLE" /D "TA_SINGLE_THREAD" /D "WIN32" /D "NDEBUG" /D "_MBCS" /FD /c
+# SUBTRACT CPP /Fr /YX
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 ta_libc_csr.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wininet.lib /nologo /subsystem:console /machine:I386 /libpath:"..\..\..\..\lib"
+# ADD LINK32 ta_libc_csr.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wininet.lib /nologo /subsystem:console /profile /machine:I386 /libpath:"..\..\..\..\lib"
+
 !ENDIF 
 
 # Begin Target
@@ -148,6 +176,7 @@ LINK32=link.exe
 # Name "ta_regtest - Win32 CSD Single Thread Debug"
 # Name "ta_regtest - Win32 CSR Single Thread Release"
 # Name "ta_regtest - Win32 CMR Multithread Release"
+# Name "ta_regtest - Win32 Profiling"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
