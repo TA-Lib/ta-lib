@@ -124,8 +124,8 @@ TA_RetCode TA_MYSQL_GetParameters( TA_DataSourceParameters *param )
 
    memset( param, 0, sizeof( TA_DataSourceParameters ) );
 
-   // No additional parameters supported yet. TODO
-   param->flags = TA_NO_FLAGS;
+   // Parameters supported by TA_MYSQL
+   param->flags = TA_REPLACE_ZERO_PRICE_BAR;
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -439,7 +439,8 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
 
    TA_ASSERT( handle != NULL );
 
-   if ( TA_TimestampValidate(start) != TA_SUCCESS || TA_TimestampValidate(end) != TA_SUCCESS)
+   if (  (start && TA_TimestampValidate(start) != TA_SUCCESS)
+      || (end && TA_TimestampValidate(end) != TA_SUCCESS))
        return TA_BAD_PARAM;
 
    privateHandle = (TA_PrivateMySQLHandle *)handle->opaqueData;
@@ -613,6 +614,15 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
       if (fieldToAlloc != TA_ALL)
          fieldToAlloc |= TA_TIMESTAMP;   /* timestamp is always needed */
 
+      /* When the TA_REPLACE_ZERO_PRICE_BAR flag is set, we must
+       * always process the close.
+       */
+      if( !(fieldToAlloc & TA_CLOSE) &&
+           (privateHandle->param->flags & TA_REPLACE_ZERO_PRICE_BAR) )
+      {   
+         fieldToAlloc |= TA_CLOSE;
+      }
+
       Row row;
       Result::iterator i;
       int bar;
@@ -646,12 +656,25 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
             }
          }
 
-         if (open_vec)   open_vec[bar]   = row[open_col];
-         if (high_vec)   high_vec[bar]   = row[high_col];
-         if (low_vec)    low_vec[bar]    = row[low_col];
-         if (close_vec)  close_vec[bar]  = row[close_col];
-         if (volume_vec) volume_vec[bar] = row[volume_col];
-         if (oi_vec)     oi_vec[bar]     = row[oi_col];
+         #define TA_SQL_STORE_VALUE(type,vec,col,flag)              \
+            if (vec) {                                         \
+               vec[bar]   = row[col];                          \
+               if (vec[bar] == 0 && (privateHandle->param->flags & flag) ) \
+                  vec[bar] = (type) ( (bar > 0)? close_vec[bar-1] : 0 ); \
+               if (vec[bar] == 0) {                            \
+                  bar--;                                       \
+                  continue;                                    \
+               }                                               \
+            }
+         
+         TA_SQL_STORE_VALUE(TA_Real, open_vec, open_col, TA_REPLACE_ZERO_PRICE_BAR)
+         TA_SQL_STORE_VALUE(TA_Real, high_vec, high_col, TA_REPLACE_ZERO_PRICE_BAR)
+         TA_SQL_STORE_VALUE(TA_Real, low_vec, low_col, TA_REPLACE_ZERO_PRICE_BAR)
+         TA_SQL_STORE_VALUE(TA_Real, close_vec, close_col, TA_REPLACE_ZERO_PRICE_BAR)
+         TA_SQL_STORE_VALUE(TA_Integer, volume_vec, volume_col, TA_NO_FLAGS)
+         TA_SQL_STORE_VALUE(TA_Integer, oi_vec, oi_col, TA_NO_FLAGS)
+
+         #undef TA_SQL_STORE_VALUE
       }
       // uff... done! 
       // now pass collected data to history module
