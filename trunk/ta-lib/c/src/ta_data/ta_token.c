@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  010301 MF   First version.
- *
+ *  040304 MF   Add TA_TOK_SKIP_NON_DIGIT_LINE
  */
 
 /* Description:
@@ -132,7 +132,7 @@ unsigned int TA_TokenMaxSize( TA_TokenId id )
       0,   /* TA_TOK_SKIP_INTEGER */
       0,   /* TA_TOK_SKIP_N_CHAR */
       0,   /* TA_TOK_SKIP_N_HEADER_LINE */
-
+      0,   /* TA_TOK_SKIP_NON_DIGIT_LINE */
 
       0, /* TA_END */
    };
@@ -196,6 +196,7 @@ const char *TA_TokenDebugString( TA_TokenId id )
       "SKIP INTEGER",
       "SKIP CHAR",
       "SKIP HEADER_LINE",
+      "SKIP NON-DIGIT LINE",
 
       "END"
    };
@@ -250,10 +251,11 @@ const char *TA_TokenString( TA_TokenId id )
       "MN",
       "SS",
 
-      "-R", /* TA_TOK_SKIP_N_REAL */
-      "-I", /* TA_TOK_SKIP_N_INTEGER */
-      "-C", /* TA_TOK_SKIP_N_CHAR */
-      "-H", /* TA_TOK_SKIP_N_HEADER_LINE */
+      "-R",   /* TA_TOK_SKIP_N_REAL */
+      "-I",   /* TA_TOK_SKIP_N_INTEGER */
+      "-C",   /* TA_TOK_SKIP_N_CHAR */
+      "-H",   /* TA_TOK_SKIP_N_HEADER_LINE */
+      "-NDL", /* TA_TOK_SKIP_NON_DIGIT_LINE */
 
       NULL  /* TA_TOK_END */
    };
