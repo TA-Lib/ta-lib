@@ -192,4 +192,7 @@ void TA_INT_stddev_using_precalc_ma( const double *inReal,
  */
 #define PER_TO_K( per ) ((double)2.0 / ((double)(per + 1)))
 
+/* Math Constants */
+#define PI 3.14159265358979323846
+
 #endif

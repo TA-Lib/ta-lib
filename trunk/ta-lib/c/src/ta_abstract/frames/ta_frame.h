@@ -422,6 +422,34 @@ TA_RetCode TA_OBV_FramePP( const TA_ParamHolderPriv *params,
                           int           *outNbElement )
 ;
 
+TA_RetCode TA_LINEARREG_FramePP( const TA_ParamHolderPriv *params,
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
+;
+
+TA_RetCode TA_LINEARREG_SLOPE_FramePP( const TA_ParamHolderPriv *params,
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
+;
+
+TA_RetCode TA_LINEARREG_ANGLE_FramePP( const TA_ParamHolderPriv *params,
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
+;
+
+TA_RetCode TA_LINEARREG_INTERCEPT_FramePP( const TA_ParamHolderPriv *params,
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
+;
+
 TA_RetCode TA_STDDEV_FramePP( const TA_ParamHolderPriv *params,
                           int            startIdx,
                           int            endIdx,

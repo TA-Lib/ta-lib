@@ -101,6 +101,10 @@ extern const TA_FuncDef TA_DEF_HT_TRENDMODE;
 extern const TA_FuncDef TA_DEF_AD;
 extern const TA_FuncDef TA_DEF_ADOSC;
 extern const TA_FuncDef TA_DEF_OBV;
+extern const TA_FuncDef TA_DEF_LINEARREG;
+extern const TA_FuncDef TA_DEF_LINEARREG_SLOPE;
+extern const TA_FuncDef TA_DEF_LINEARREG_ANGLE;
+extern const TA_FuncDef TA_DEF_LINEARREG_INTERCEPT;
 extern const TA_FuncDef TA_DEF_STDDEV;
 extern const TA_FuncDef TA_DEF_VAR;
 extern const TA_FuncDef TA_DEF_AVGPRICE;
@@ -194,6 +198,10 @@ NULL };
 #define SIZE_GROUP_7 ((sizeof(TA_PerGroupFunc_7)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_8[] = {
+&TA_DEF_LINEARREG,
+&TA_DEF_LINEARREG_SLOPE,
+&TA_DEF_LINEARREG_ANGLE,
+&TA_DEF_LINEARREG_INTERCEPT,
 &TA_DEF_STDDEV,
 &TA_DEF_VAR,
 NULL };

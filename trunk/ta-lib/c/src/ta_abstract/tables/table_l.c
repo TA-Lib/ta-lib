@@ -49,13 +49,120 @@
 
 /* None */
 
+
 /****************************************************************************
  * Step 2 - Define here the interface to your TA functions with
  *          the macro DEF_FUNCTION.
  *
  ****************************************************************************/
 
-/* None */
+/* LINEARREG BEGIN */
+static const TA_InputParameterInfo    *TA_LINEARREG_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo *TA_LINEARREG_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_LINEARREG_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( LINEARREG,           /* name */
+              TA_GroupId_Statistic,/* groupId */
+              "Linear Regression", /* hint */
+              NULL,                /* helpFile */
+              TA_FUNC_FLG_OVERLAP, /* flags */
+              NULL                 /* analysis function */
+             );
+/* LINEARREG END */
+
+/* LINEARREG_SLOPE BEGIN */
+static const TA_InputParameterInfo    *TA_LINEARREG_SLOPE_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo *TA_LINEARREG_SLOPE_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_LINEARREG_SLOPE_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( LINEARREG_SLOPE,     /* name */
+              TA_GroupId_Statistic,/* groupId */
+              "Linear Regression Slope", /* hint */
+              NULL,                /* helpFile */
+              0,                   /* flags */
+              NULL                 /* analysis function */
+             );
+/* LINEARREG_SLOPE END */
+
+/* LINEARREG_ANGLE BEGIN */
+static const TA_InputParameterInfo    *TA_LINEARREG_ANGLE_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo *TA_LINEARREG_ANGLE_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_LINEARREG_ANGLE_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( LINEARREG_ANGLE,           /* name */
+              TA_GroupId_Statistic,/* groupId */
+              "Linear Regression Angle", /* hint */
+              NULL,                /* helpFile */
+              0,                   /* flags */
+              NULL                 /* analysis function */
+             );
+/* LINEARREG_ANGLE END */
+
+/* LINEARREG_INTERCEPT BEGIN */
+static const TA_InputParameterInfo    *TA_LINEARREG_INTERCEPT_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo *TA_LINEARREG_INTERCEPT_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_LINEARREG_INTERCEPT_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( LINEARREG_INTERCEPT,           /* name */
+              TA_GroupId_Statistic,/* groupId */
+              "Linear Regression Intercept", /* hint */
+              NULL,                /* helpFile */
+              TA_FUNC_FLG_OVERLAP, /* flags */
+              NULL                 /* analysis function */
+             );
+/* LINEARREG_INTERCEPT END */
 
 /****************************************************************************
  * Step 3 - Add your TA function to the table.
@@ -63,6 +170,10 @@
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableL[] =
 {
+   ADD_TO_TABLE(LINEARREG),
+   ADD_TO_TABLE(LINEARREG_SLOPE),
+   ADD_TO_TABLE(LINEARREG_ANGLE),
+   ADD_TO_TABLE(LINEARREG_INTERCEPT),
    NULL
 };
 
