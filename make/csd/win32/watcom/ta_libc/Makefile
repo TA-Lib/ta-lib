@@ -128,6 +128,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c &
 		..\..\..\..\..\src\ta_func\ta_ADX.c &
 		..\..\..\..\..\src\ta_func\ta_ADXR.c &
 		..\..\..\..\..\src\ta_func\ta_APO.c &
+		..\..\..\..\..\src\ta_func\ta_AROON.c &
+		..\..\..\..\..\src\ta_func\ta_AROONOSC.c &
 		..\..\..\..\..\src\ta_func\ta_CCI.c &
 		..\..\..\..\..\src\ta_func\ta_DX.c &
 		..\..\..\..\..\src\ta_func\ta_MACD.c &
@@ -270,6 +272,8 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj &
 		..\..\..\..\..\temp\csd\ta_ADX.obj &
 		..\..\..\..\..\temp\csd\ta_ADXR.obj &
 		..\..\..\..\..\temp\csd\ta_APO.obj &
+		..\..\..\..\..\temp\csd\ta_AROON.obj &
+		..\..\..\..\..\temp\csd\ta_AROONOSC.obj &
 		..\..\..\..\..\temp\csd\ta_CCI.obj &
 		..\..\..\..\..\temp\csd\ta_DX.obj &
 		..\..\..\..\..\temp\csd\ta_MACD.obj &
@@ -439,6 +443,8 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_ADX.obj
 	-del ..\..\..\..\..\temp\csd\ta_ADXR.obj
 	-del ..\..\..\..\..\temp\csd\ta_APO.obj
+	-del ..\..\..\..\..\temp\csd\ta_AROON.obj
+	-del ..\..\..\..\..\temp\csd\ta_AROONOSC.obj
 	-del ..\..\..\..\..\temp\csd\ta_CCI.obj
 	-del ..\..\..\..\..\temp\csd\ta_DX.obj
 	-del ..\..\..\..\..\temp\csd\ta_MACD.obj
@@ -805,6 +811,12 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_APO.obj: ..\..\..\..\..\src\ta_func\ta_APO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_APO.obj ..\..\..\..\..\src\ta_func\ta_APO.c
+
+..\..\..\..\..\temp\csd\ta_AROON.obj: ..\..\..\..\..\src\ta_func\ta_AROON.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_AROON.obj ..\..\..\..\..\src\ta_func\ta_AROON.c
+
+..\..\..\..\..\temp\csd\ta_AROONOSC.obj: ..\..\..\..\..\src\ta_func\ta_AROONOSC.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_AROONOSC.obj ..\..\..\..\..\src\ta_func\ta_AROONOSC.c
 
 ..\..\..\..\..\temp\csd\ta_CCI.obj: ..\..\..\..\..\src\ta_func\ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_CCI.obj ..\..\..\..\..\src\ta_func\ta_CCI.c

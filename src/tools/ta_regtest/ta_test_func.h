@@ -11,6 +11,7 @@ ErrorNumber test_func_mom_roc ( TA_History *history );
 ErrorNumber test_func_stoch   ( TA_History *history );
 ErrorNumber test_func_minmax  ( TA_History *history );
 ErrorNumber test_func_per_ema ( TA_History *history );
+ErrorNumber test_func_per_hl  ( TA_History *history );
 ErrorNumber test_func_per_hlc ( TA_History *history );
 ErrorNumber test_func_per_hlcv( TA_History *history );
 ErrorNumber test_func_per     ( TA_History *history );

@@ -378,6 +378,41 @@ TA_RetCode TA_APO_FramePP( const TA_ParamHolderPriv *params,
             outNbElement, 
             params->out[0].data.outReal /*  outReal_0 */ );
 }
+TA_RetCode TA_AROON_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+
+{
+   return TA_AROON(
+              startIdx,
+              endIdx,
+              params->in[0].data.inPrice.high, /* inHigh_0 */
+              params->in[0].data.inPrice.low, /* inLow_0 */
+              params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
+              outBegIdx, 
+              outNbElement, 
+              params->out[0].data.outReal, /*  outAroonDown_0 */
+              params->out[1].data.outReal /*  outAroonUp_1 */ );
+}
+TA_RetCode TA_AROONOSC_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+
+{
+   return TA_AROONOSC(
+                 startIdx,
+                 endIdx,
+                 params->in[0].data.inPrice.high, /* inHigh_0 */
+                 params->in[0].data.inPrice.low, /* inLow_0 */
+                 params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
+                 outBegIdx, 
+                 outNbElement, 
+                 params->out[0].data.outReal /*  outReal_0 */ );
+}
 TA_RetCode TA_CCI_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
                           TA_Integer            endIdx,

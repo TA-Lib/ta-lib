@@ -271,6 +271,7 @@ static int testTAFunction_ALL( TA_History *history )
       printf( "done.\n" ); \
       }
 
+   DO_TEST( test_func_per_hl,  "AROON" );
    DO_TEST( test_func_ma,      "All Moving Averages" );
    DO_TEST( test_func_per_hlcv,"MFI" );
    DO_TEST( test_func_rsi,     "RSI" );

@@ -42,6 +42,8 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_ADX.c \ 
           ../../../../../src/ta_func/ta_ADXR.c \ 
           ../../../../../src/ta_func/ta_APO.c \ 
+          ../../../../../src/ta_func/ta_AROON.c \ 
+          ../../../../../src/ta_func/ta_AROONOSC.c \ 
           ../../../../../src/ta_func/ta_CCI.c \ 
           ../../../../../src/ta_func/ta_DX.c \ 
           ../../../../../src/ta_func/ta_MACD.c \ 

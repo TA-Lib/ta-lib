@@ -35,6 +35,7 @@ SOURCES =	../../../../../src/tools/ta_regtest/ta_regtest.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_minmax.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_mom.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_per_ema.c \
+		../../../../../src/tools/ta_regtest/ta_test_func/test_per_hl.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlc.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlcv.c \
 		../../../../../src/tools/ta_regtest/test_period.c \
@@ -58,6 +59,7 @@ OBJECTS =	../../../../../temp/csd/ta_regtest.o \
 		../../../../../temp/csd/test_minmax.o \
 		../../../../../temp/csd/test_mom.o \
 		../../../../../temp/csd/test_per_ema.o \
+		../../../../../temp/csd/test_per_hl.o \
 		../../../../../temp/csd/test_per_hlc.o \
 		../../../../../temp/csd/test_per_hlcv.o \
 		../../../../../temp/csd/test_period.o \
@@ -152,6 +154,9 @@ clean:
 
 ../../../../../temp/csd/test_per_ema.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_per_ema.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/test_per_ema.o ../../../../../src/tools/ta_regtest/ta_test_func/test_per_ema.c
+
+../../../../../temp/csd/test_per_hl.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hl.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/test_per_hl.o ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hl.c
 
 ../../../../../temp/csd/test_per_hlc.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlc.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/test_per_hlc.o ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlc.c

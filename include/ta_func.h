@@ -593,6 +593,57 @@ int TA_APO_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MA
                      TA_Integer    optInMethod_2 ); 
 
 /*
+ * TA_AROON - Aroon
+ * 
+ * Input  = High, Low
+ * Output = TA_Real, TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_AROON( TA_Integer    startIdx,
+                     TA_Integer    endIdx,
+                     const TA_Real inHigh_0[],
+                     const TA_Real inLow_0[],
+                     TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     TA_Integer   *outBegIdx,
+                     TA_Integer   *outNbElement,
+                     TA_Real       outAroonDown_0[],
+                     TA_Real       outAroonUp_1[] );
+
+int TA_AROON_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+
+
+/*
+ * TA_AROONOSC - Aroon Oscillator
+ * 
+ * Input  = High, Low
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_AROONOSC( TA_Integer    startIdx,
+                        TA_Integer    endIdx,
+                        const TA_Real inHigh_0[],
+                        const TA_Real inLow_0[],
+                        TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                        TA_Integer   *outBegIdx,
+                        TA_Integer   *outNbElement,
+                        TA_Real       outReal_0[] );
+
+int TA_AROONOSC_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+
+
+/*
  * TA_CCI - Commodity Channel Index
  * 
  * Input  = High, Low, Close

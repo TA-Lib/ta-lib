@@ -151,6 +151,20 @@ TA_RetCode TA_APO_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer           *outNbElement )
 ;
 
+TA_RetCode TA_AROON_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
+TA_RetCode TA_AROONOSC_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
 TA_RetCode TA_CCI_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
                           TA_Integer            endIdx,

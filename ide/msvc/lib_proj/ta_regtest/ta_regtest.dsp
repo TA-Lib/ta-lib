@@ -226,6 +226,10 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c
 # End Source File
 # Begin Source File

@@ -130,6 +130,8 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_ADX.c \
 		../../../../../src/ta_func/ta_ADXR.c \
 		../../../../../src/ta_func/ta_APO.c \
+		../../../../../src/ta_func/ta_AROON.c \
+		../../../../../src/ta_func/ta_AROONOSC.c \
 		../../../../../src/ta_func/ta_CCI.c \
 		../../../../../src/ta_func/ta_DX.c \
 		../../../../../src/ta_func/ta_MACD.c \
@@ -272,6 +274,8 @@ OBJECTS =	../../../../../temp/csr/ta_ascii.o \
 		../../../../../temp/csr/ta_ADX.o \
 		../../../../../temp/csr/ta_ADXR.o \
 		../../../../../temp/csr/ta_APO.o \
+		../../../../../temp/csr/ta_AROON.o \
+		../../../../../temp/csr/ta_AROONOSC.o \
 		../../../../../temp/csr/ta_CCI.o \
 		../../../../../temp/csr/ta_DX.o \
 		../../../../../temp/csr/ta_MACD.o \
@@ -680,6 +684,12 @@ clean:
 
 ../../../../../temp/csr/ta_APO.o: ../../../../../src/ta_func/ta_APO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_APO.o ../../../../../src/ta_func/ta_APO.c
+
+../../../../../temp/csr/ta_AROON.o: ../../../../../src/ta_func/ta_AROON.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_AROON.o ../../../../../src/ta_func/ta_AROON.c
+
+../../../../../temp/csr/ta_AROONOSC.o: ../../../../../src/ta_func/ta_AROONOSC.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_AROONOSC.o ../../../../../src/ta_func/ta_AROONOSC.c
 
 ../../../../../temp/csr/ta_CCI.o: ../../../../../src/ta_func/ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_CCI.o ../../../../../src/ta_func/ta_CCI.c
