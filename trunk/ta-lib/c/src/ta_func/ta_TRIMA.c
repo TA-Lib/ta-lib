@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2002, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,14 +36,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CR       Chris (crokusek@hotmail.com)
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  031703 MF   Initial Coding
- *
+ *  010503 MF   Initial Coding
+ *  031703 MF   Fix #701060. Correct logic when using a range with
+ *              startIdx/endIdx. Thanks to Chris for reporting this.
+ *              
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -115,9 +117,9 @@ TA_RetCode TA_TRIMA( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
-   if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 30;
-   else if( (optInTimePeriod_0 < 2) || (optInTimePeriod_0 > 2147483647) )
+   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -215,7 +217,7 @@ TA_RetCode TA_TRIMA( TA_Integer    startIdx,
     *       2) 'd' is added to the numerator.
     *       3) 'e' is added to the numerator.
     *       4) Calculate TRIMA by doing numerator / 6
-    *       5) Repeat pattern for next output
+    *       5) Repeat sequence for next output
     *
     * These operations are the same steps done by TA-LIB:
     *       1) is done by numeratorSub

@@ -116,9 +116,9 @@ TA_RetCode TA_MACDFIX( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInSignalPeriod_0. */
-   if( optInSignalPeriod_0 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInSignalPeriod_0 == TA_INTEGER_DEFAULT )
       optInSignalPeriod_0 = 9;
-   else if( (optInSignalPeriod_0 < 1) || (optInSignalPeriod_0 > 2147483647) )
+   else if( ((TA_Integer)optInSignalPeriod_0 < 1) || ((TA_Integer)optInSignalPeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outMACD_0 == NULL )

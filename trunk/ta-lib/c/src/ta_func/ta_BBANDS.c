@@ -136,9 +136,9 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
-   if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 5;
-   else if( (optInTimePeriod_0 < 2) || (optInTimePeriod_0 > 2147483647) )
+   else if( ((TA_Integer)optInTimePeriod_0 < 2) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( optInNbDevUp_1 == TA_REAL_DEFAULT )
@@ -151,9 +151,9 @@ TA_RetCode TA_BBANDS( TA_Integer    startIdx,
    else if( (optInNbDevDn_2 < -3.000000e+37) || (optInNbDevDn_2 > 3.000000e+37) )
       return TA_BAD_PARAM;
 
-   if( optInMAType_3 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInMAType_3 == TA_INTEGER_DEFAULT )
       optInMAType_3 = 0;
-   else if( (optInMAType_3 < 0) || (optInMAType_3 > 7) )
+   else if( ((TA_Integer)optInMAType_3 < 0) || ((TA_Integer)optInMAType_3 > 8) )
       return TA_BAD_PARAM;
 
    if( outRealUpperBand_0 == NULL )

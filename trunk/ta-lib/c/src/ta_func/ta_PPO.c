@@ -122,20 +122,20 @@ TA_RetCode TA_PPO( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInFastPeriod_0. */
-   if( optInFastPeriod_0 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
       optInFastPeriod_0 = 12;
-   else if( (optInFastPeriod_0 < 2) || (optInFastPeriod_0 > 2147483647) )
+   else if( ((TA_Integer)optInFastPeriod_0 < 2) || ((TA_Integer)optInFastPeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowPeriod_1. */
-   if( optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
       optInSlowPeriod_1 = 26;
-   else if( (optInSlowPeriod_1 < 2) || (optInSlowPeriod_1 > 2147483647) )
+   else if( ((TA_Integer)optInSlowPeriod_1 < 2) || ((TA_Integer)optInSlowPeriod_1 > 2147483647) )
       return TA_BAD_PARAM;
 
-   if( optInMAType_2 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInMAType_2 == TA_INTEGER_DEFAULT )
       optInMAType_2 = 0;
-   else if( (optInMAType_2 < 0) || (optInMAType_2 > 7) )
+   else if( ((TA_Integer)optInMAType_2 < 0) || ((TA_Integer)optInMAType_2 > 8) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )

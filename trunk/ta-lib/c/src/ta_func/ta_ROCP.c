@@ -110,9 +110,9 @@ TA_RetCode TA_ROCP( TA_Integer    startIdx,
    /* Validate the parameters. */
    if( !inReal_0 ) return TA_BAD_PARAM;
    /* min/max are checked for optInTimePeriod_0. */
-   if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+   if( (TA_Integer)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 10;
-   else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
+   else if( ((TA_Integer)optInTimePeriod_0 < 1) || ((TA_Integer)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
