@@ -40,10 +40,12 @@
  *
  * Change history:
  *
- *  MMDDYY BY    Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  070800 MF    First version.
- *  012504 MF,JS Fix mem leak in TA_HistoryAddData (Bug#881950).
+ *  070800 MF     First version.
+ *  012504 MF,JS  Fix mem leak in TA_HistoryAddData (Bug#881950).
+ *  013104 MF     TA_History now contains names of sources + adjust
+ *                timestamp to cover the requested period (Bug#888470)
  */
 
 /* Description:
@@ -154,6 +156,7 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
    unsigned int driverIndex;
    const TA_DataSourceDriver *driver;
    TA_HistoryHiddenData *historyHiddenData;
+   TA_Timestamp startLocal, endLocal;
 
    TA_PAR_VARS;
 
@@ -166,13 +169,89 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
 
    listDriverHandle = &symbolData->listDriverHandle;
 
-   /* Cover for a common potential error (passing -1 as
-    * a default parameter!?).
+   /* From now, use a copy of end/start since we might modify it. */
+   if( start )
+   {
+      retCode = TA_TimestampCopy( &startLocal, start );
+      TA_ASSERT( retCode == TA_SUCCESS );
+      start = &startLocal;
+   }
+
+   if( end )
+   {
+      retCode = TA_TimestampCopy( &endLocal, end );
+      TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+      end = &endLocal;
+   }
+
+   /* Adjust start/end to the upper/lower limit of the requested period. 
+    * As an example, if someone ask monthly data, the day and time component
+    * of the date is adjusted to the begining and end of the month for
+    * respectively the start and end variables.
     */
-   if( start == (TA_Timestamp *)-1 )
-      start = (TA_Timestamp *)0;
-   if( end == (TA_Timestamp *)-1 )
-      end = (TA_Timestamp *)0;
+   if( start )
+   {
+      switch( period )
+      {
+      case TA_DAILY:
+         retCode = TA_SetTime( 0, 0, 0, &startLocal );
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         break;
+      case TA_MONTHLY:
+         retCode = TA_SetTime( 0, 0, 0, &startLocal );
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         retCode = TA_BackToBeginOfMonth(&startLocal);
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         break;
+      case TA_QUARTERLY:
+         retCode = TA_SetTime( 0, 0, 0, &startLocal );
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         retCode = TA_BackToBeginOfQuarter(&startLocal);
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         break;
+      case TA_YEARLY:
+         retCode = TA_SetTime( 0, 0, 0, &startLocal );
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         retCode = TA_BackToBeginOfYear(&startLocal);
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         break;
+      default:
+         /* Do nothing */
+         break;
+      }
+   }
+
+   if( end )
+   {
+      switch( period )
+      {
+      case TA_DAILY:
+         retCode = TA_SetTime( 23, 59, 59, &endLocal );
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         break;
+      case TA_MONTHLY:
+         retCode = TA_SetTime( 23, 59, 59, &endLocal );
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         retCode = TA_JumpToEndOfMonth(&endLocal);
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         break;
+      case TA_QUARTERLY:
+         retCode = TA_SetTime( 23, 59, 59, &endLocal );
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         retCode = TA_JumpToEndOfQuarter(&endLocal);
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         break;
+      case TA_YEARLY:
+         retCode = TA_SetTime( 23, 59, 59, &endLocal );
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         retCode = TA_JumpToEndOfYear(&endLocal);
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         break;
+      default:
+         /* Do nothing */
+         break;
+      }
+   }
 
    /* Allocate the builder support. Everything allocated from this
     * point will be referred one way or another from this structure.
@@ -322,8 +401,6 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
    historyHiddenData->volume = (*history)->volume;
    historyHiddenData->openInterest = (*history)->openInterest;
    historyHiddenData->timestamp = (*history)->timestamp;
-
-   /* From this point, TA_HistoryFree can be safely called. */
 
    /* Sometimes, for optimization reason, the builder might returns
     * more data than requested. In that case, trim the output such
@@ -504,17 +581,17 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
 
    newBlock = NULL;
 
+   supportForDataSource = (TA_SupportForDataSource *)paramForAddData;
+
+   builderSupport = supportForDataSource->parent;
+   TA_ASSERT( builderSupport != NULL );
+
    /* Check the parameters, and identify the context of this data. */
    if( paramForAddData == NULL )
    {
       retCode = TA_BAD_PARAM;
       goto TA_HistoryAddData_EXIT;
    }
-
-   supportForDataSource = (TA_SupportForDataSource *)paramForAddData;
-
-   builderSupport = supportForDataSource->parent;
-   TA_ASSERT( builderSupport != NULL );
 
    if( (period == 0) || !timestamp )
    {
@@ -1389,6 +1466,7 @@ static TA_RetCode allocHistoryFromOneDataSource( TA_UDBasePriv *privUDB,
    TA_DataBlock *curDataBlock;
    TA_MergeOp *mergeOp;
    unsigned int nbPriceBar;
+   TA_String *sourceName;
 
    TA_TRACE_BEGIN( allocHistoryFromOneDataSource );
 
@@ -1405,6 +1483,18 @@ static TA_RetCode allocHistoryFromOneDataSource( TA_UDBasePriv *privUDB,
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
+
+   /* Indicate the contributing data source. */
+   newHistory->listOfSource.string = (const char **)TA_Malloc( sizeof( const char *) );
+   if( !newHistory->listOfSource.string )
+   {
+      TA_HistoryFree( newHistory );
+      TA_TRACE_RETURN( TA_ALLOC_ERR );
+   }
+   sourceName = TA_StringDup(TA_GetGlobalStringCache(), supportForDataSource->addDataSourceParamPriv->name );
+   TA_ASSERT( sourceName != NULL );
+   (newHistory->listOfSource.string)[0] = TA_StringToChar(sourceName);
+   newHistory->listOfSource.size = 1;
 
    /* Transfer the data into the TA_History. */
    curDataBlock = (TA_DataBlock *)TA_ListAccessHead(supportForDataSource->listOfDataBlock);
@@ -1605,7 +1695,7 @@ static TA_RetCode buildHistoryFromMergeOp( TA_History *newHistory,
 
    TA_Field fieldToAlloc;
 
-   TA_TRACE_BEGIN(  buildHistoryFromMergeOp );
+   TA_TRACE_BEGIN( buildHistoryFromMergeOp );
 
    TA_ASSERT( builderSupport != NULL );
 
