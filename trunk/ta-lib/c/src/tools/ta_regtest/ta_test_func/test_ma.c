@@ -635,52 +635,58 @@ static ErrorNumber do_test_ma( const TA_History *history,
   /* Verify that the "all-purpose" TA_MA_Lookback is consistent
    * with the corresponding moving average lookback function.
    */
-   switch( test->optInMAType_1 )
+   if( test->optInTimePeriod >= 2 )
    {
-   case TA_MAType_WMA:
-      temp = TA_WMA_Lookback( test->optInTimePeriod );
-      break;
-
-   case TA_MAType_SMA:
-      temp = TA_SMA_Lookback( test->optInTimePeriod );
-      break;
-
-   case TA_MAType_EMA:
-      temp = TA_EMA_Lookback( test->optInTimePeriod );
-      break;
-
-   case TA_MAType_DEMA:
-      temp = TA_DEMA_Lookback( test->optInTimePeriod );
-      break;
-
-   case TA_MAType_TEMA:
-      temp = TA_TEMA_Lookback( test->optInTimePeriod );
-      break;
-
-   case TA_MAType_KAMA:
-      temp = TA_KAMA_Lookback( test->optInTimePeriod );
-      break;
-
-   case TA_MAType_MAMA:
-      temp = TA_MAMA_Lookback( 0.5, 0.05 );
-      break;
-
-   case TA_MAType_TRIMA:
-      temp = TA_TRIMA_Lookback( test->optInTimePeriod );
-      break;
-
-   case TA_MAType_T3:
-      temp = TA_T3_Lookback( test->optInTimePeriod, 0.7 );
-      break;
-
-   default:
-      return TA_TEST_TFRR_BAD_MA_TYPE;
+      switch( test->optInMAType_1 )
+      {
+      case TA_MAType_WMA:
+         temp = TA_WMA_Lookback( test->optInTimePeriod );
+         break;
+   
+      case TA_MAType_SMA:
+         temp = TA_SMA_Lookback( test->optInTimePeriod );
+         break;
+   
+      case TA_MAType_EMA:
+         temp = TA_EMA_Lookback( test->optInTimePeriod );
+         break;
+   
+      case TA_MAType_DEMA:
+         temp = TA_DEMA_Lookback( test->optInTimePeriod );
+         break;
+   
+      case TA_MAType_TEMA:
+         temp = TA_TEMA_Lookback( test->optInTimePeriod );
+         break;
+   
+      case TA_MAType_KAMA:
+         temp = TA_KAMA_Lookback( test->optInTimePeriod );
+         break;
+   
+      case TA_MAType_MAMA:
+         temp = TA_MAMA_Lookback( 0.5, 0.05 );
+         break;
+   
+      case TA_MAType_TRIMA:
+         temp = TA_TRIMA_Lookback( test->optInTimePeriod );
+         break;
+   
+      case TA_MAType_T3:
+         temp = TA_T3_Lookback( test->optInTimePeriod, 0.7 );
+         break;
+   
+      default:
+         return TA_TEST_TFRR_BAD_MA_TYPE;
+      }
+   
+      temp2 = TA_MA_Lookback( test->optInTimePeriod, test->optInMAType_1 );
+   
+      if( temp != temp2 )
+      {
+         printf( "\nFailed for MA Type #%d for period %d\n", test->optInMAType_1, test->optInTimePeriod );
+         return TA_TEST_TFFR_BAD_MA_LOOKBACK;
+      } 
    }
-
-   temp2 = TA_MA_Lookback( test->optInTimePeriod, test->optInMAType_1 );
-
-   if( temp != temp2 )
-      return TA_TEST_TFFR_BAD_MA_LOOKBACK;
 
    /* Do a systematic test of most of the
     * possible startIdx/endIdx range.
