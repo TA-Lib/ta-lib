@@ -27,7 +27,7 @@ TA_RetCode TA_SQL_ODBC_ExecuteQuery(void *connection,
 TA_RetCode TA_SQL_ODBC_GetNumColumns(void *query_result, int *num);
 TA_RetCode TA_SQL_ODBC_GetNumRows(void *query_result, int *num);
 TA_RetCode TA_SQL_ODBC_GetColumnName(void *query_result, int column, const char **name);
-TA_RetCode TA_SQL_ODBC_GetRowString(void *query_reslut, int row, int column, char **value);
+TA_RetCode TA_SQL_ODBC_GetRowString(void *query_reslut, int row, int column, const char **value);
 TA_RetCode TA_SQL_ODBC_GetRowReal(void *query_reslut, int row, int column, TA_Real *value);
 TA_RetCode TA_SQL_ODBC_GetRowInteger(void *query_reslut, int row, int column, TA_Integer *value);
 TA_RetCode TA_SQL_ODBC_ReleaseQuery(void *query_result);
