@@ -80,8 +80,8 @@ typedef struct
    TA_Integer startIdx;
    TA_Integer endIdx;
 
-   TA_Integer optInFastPeriod_0; /* From 1 to 200 */
-   TA_Integer optInSlowPeriod_1; /* From 1 to 200 */
+   TA_Integer optInFastPeriod; /* From 1 to 200 */
+   TA_Integer optInSlowPeriod; /* From 1 to 200 */
    TA_Integer optInMethod_2;
    TA_Integer compatibility;
 
@@ -262,15 +262,15 @@ static TA_RetCode rangeTestFunction(
       retCode = TA_PPO( startIdx,
                         endIdx,
                         testParam->close,
-                        testParam->test->optInFastPeriod_0,
-                        testParam->test->optInSlowPeriod_1,
+                        testParam->test->optInFastPeriod,
+                        testParam->test->optInSlowPeriod,
                         testParam->test->optInMethod_2,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
 
-     *lookback = TA_PPO_Lookback( testParam->test->optInFastPeriod_0,
-                      testParam->test->optInSlowPeriod_1,
+     *lookback = TA_PPO_Lookback( testParam->test->optInFastPeriod,
+                      testParam->test->optInSlowPeriod,
                       testParam->test->optInMethod_2 );                      
    }
    else
@@ -278,16 +278,16 @@ static TA_RetCode rangeTestFunction(
       retCode = TA_APO( startIdx,
                         endIdx,
                         testParam->close,
-                        testParam->test->optInFastPeriod_0,
-                        testParam->test->optInSlowPeriod_1,
+                        testParam->test->optInFastPeriod,
+                        testParam->test->optInSlowPeriod,
                         testParam->test->optInMethod_2,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
 
 
-     *lookback = TA_APO_Lookback( testParam->test->optInFastPeriod_0,
-                      testParam->test->optInSlowPeriod_1,
+     *lookback = TA_APO_Lookback( testParam->test->optInFastPeriod,
+                      testParam->test->optInSlowPeriod,
                       testParam->test->optInMethod_2 );
    }
 
@@ -322,8 +322,8 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_PPO( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInFastPeriod_0,
-                        test->optInSlowPeriod_1,
+                        test->optInFastPeriod,
+                        test->optInSlowPeriod,
                         test->optInMethod_2,
                         &outBegIdx,
                         &outNbElement,
@@ -334,8 +334,8 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_APO( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInFastPeriod_0,
-                        test->optInSlowPeriod_1,
+                        test->optInFastPeriod,
+                        test->optInSlowPeriod,
                         test->optInMethod_2,
                         &outBegIdx,
                         &outNbElement,
@@ -365,8 +365,8 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_PPO( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInFastPeriod_0,
-                        test->optInSlowPeriod_1,
+                        test->optInFastPeriod,
+                        test->optInSlowPeriod,
                         test->optInMethod_2,
                         &outBegIdx,
                         &outNbElement,
@@ -377,8 +377,8 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_APO( test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
-                        test->optInFastPeriod_0,
-                        test->optInSlowPeriod_1,
+                        test->optInFastPeriod,
+                        test->optInSlowPeriod,
                         test->optInMethod_2,
                         &outBegIdx,
                         &outNbElement,

@@ -79,7 +79,7 @@ typedef struct
    TA_Integer endIdx;
 
    TA_Integer    optInFastK_Period_0;
-   TA_Integer    optInSlowK_Period_1;
+   TA_Integer    optInSlowK_Period;
    TA_Integer    optInSlowK_MAType_2;
    TA_Integer    optInSlowD_Period_3;
    TA_Integer    optInSlowD_MAType_4;
@@ -110,11 +110,11 @@ static ErrorNumber do_test( const TA_History *history,
 
 static TA_RetCode referenceStoch( TA_Integer    startIdx,
                                   TA_Integer    endIdx,
-                                  const TA_Real inHigh_0[],
-                                  const TA_Real inLow_0[],
-                                  const TA_Real inClose_0[],
+                                  const TA_Real inHigh[],
+                                  const TA_Real inLow[],
+                                  const TA_Real inClose[],
                                   TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                                  TA_Integer    optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+                                  TA_Integer    optInSlowK_Period, /* From 1 to TA_INTEGER_MAX */
                                   TA_Integer    optInSlowK_MAType_2,
                                   TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
                                   TA_Integer    optInSlowD_MAType_4,
@@ -215,7 +215,7 @@ static TA_RetCode rangeTestFunction(
                          testParam->low,
                          testParam->close,
                          testParam->test->optInFastK_Period_0,
-                         testParam->test->optInSlowK_Period_1,
+                         testParam->test->optInSlowK_Period,
                          testParam->test->optInSlowK_MAType_2,
                          testParam->test->optInSlowD_Period_3,
                          testParam->test->optInSlowD_MAType_4,
@@ -233,7 +233,7 @@ static TA_RetCode rangeTestFunction(
                          testParam->low,
                          testParam->close,
                          testParam->test->optInFastK_Period_0,
-                         testParam->test->optInSlowK_Period_1,
+                         testParam->test->optInSlowK_Period,
                          testParam->test->optInSlowK_MAType_2,
                          testParam->test->optInSlowD_Period_3,
                          testParam->test->optInSlowD_MAType_4,
@@ -245,7 +245,7 @@ static TA_RetCode rangeTestFunction(
    TA_Free(  dummyOutput );
 
    *lookback = TA_STOCH_Lookback( testParam->test->optInFastK_Period_0,
-                         testParam->test->optInSlowK_Period_1,
+                         testParam->test->optInSlowK_Period,
                          testParam->test->optInSlowK_MAType_2,
                          testParam->test->optInSlowD_Period_3,
                          testParam->test->optInSlowD_MAType_4 );
@@ -290,7 +290,7 @@ static ErrorNumber do_test( const TA_History *history,
                        gBuffer[1].in,
                        gBuffer[2].in,
                        test->optInFastK_Period_0,
-                       test->optInSlowK_Period_1,
+                       test->optInSlowK_Period,
                        test->optInSlowK_MAType_2,
                        test->optInSlowD_Period_3,
                        test->optInSlowD_MAType_4,
@@ -321,7 +321,7 @@ static ErrorNumber do_test( const TA_History *history,
                        gBuffer[1].in,
                        gBuffer[2].in,
                        test->optInFastK_Period_0,
-                       test->optInSlowK_Period_1,
+                       test->optInSlowK_Period,
                        test->optInSlowK_MAType_2,
                        test->optInSlowD_Period_3,
                        test->optInSlowD_MAType_4,
@@ -366,7 +366,7 @@ static ErrorNumber do_test( const TA_History *history,
                        gBuffer[1].in,
                        gBuffer[2].in,
                        test->optInFastK_Period_0,
-                       test->optInSlowK_Period_1,
+                       test->optInSlowK_Period,
                        test->optInSlowK_MAType_2,
                        test->optInSlowD_Period_3,
                        test->optInSlowD_MAType_4,
@@ -424,11 +424,11 @@ static ErrorNumber do_test( const TA_History *history,
 /* This is an un-optimized version of the STOCH function */
 static TA_RetCode referenceStoch( TA_Integer    startIdx,
                      TA_Integer    endIdx,
-                     const TA_Real inHigh_0[],
-                     const TA_Real inLow_0[],
-                     const TA_Real inClose_0[],
+                     const TA_Real inHigh[],
+                     const TA_Real inLow[],
+                     const TA_Real inClose[],
                      TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                     TA_Integer    optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer    optInSlowK_Period, /* From 1 to TA_INTEGER_MAX */
                      TA_Integer    optInSlowK_MAType_2,
                      TA_Integer    optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
                      TA_Integer    optInSlowD_MAType_4,
@@ -445,7 +445,7 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
 
    /* Identify the lookback needed. */
    lookbackK      = optInFastK_Period_0-1;
-   lookbackKSlow  = TA_MA_Lookback( optInSlowK_Period_1, optInSlowK_MAType_2 );
+   lookbackKSlow  = TA_MA_Lookback( optInSlowK_Period, optInSlowK_MAType_2 );
    lookbackDSlow  = TA_MA_Lookback( optInSlowD_Period_3, optInSlowD_MAType_4 );
    lookbackTotal  = lookbackK + lookbackDSlow + lookbackKSlow;
 
@@ -494,15 +494,15 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
     * we just save ourself one memory allocation.
     */
    bufferIsAllocated = 0;
-   if( (outSlowK_0 == inHigh_0) || 
-       (outSlowK_0 == inLow_0)  || 
-       (outSlowK_0 == inClose_0) )
+   if( (outSlowK_0 == inHigh) || 
+       (outSlowK_0 == inLow)  || 
+       (outSlowK_0 == inClose) )
    {
       tempBuffer = outSlowK_0;
    }
-   else if( (outSlowD_1 == inHigh_0) ||
-            (outSlowD_1 == inLow_0)  ||
-            (outSlowD_1 == inClose_0) )
+   else if( (outSlowD_1 == inHigh) ||
+            (outSlowD_1 == inLow)  ||
+            (outSlowD_1 == inClose) )
    {
       tempBuffer = outSlowD_1;
    }
@@ -516,21 +516,21 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
    while( today <= endIdx )
    {
       /* Find Lt and Ht for the requested K period. */
-      Lt = inLow_0 [trailingIdx];
-      Ht = inHigh_0[trailingIdx];
+      Lt = inLow [trailingIdx];
+      Ht = inHigh[trailingIdx];
       trailingIdx++;
       for( i=trailingIdx; i <= today; i++ )
       {
-         tmp = inLow_0[i];
+         tmp = inLow[i];
          if( tmp < Lt ) Lt = tmp;
-         tmp = inHigh_0[i];
+         tmp = inHigh[i];
          if( tmp > Ht ) Ht = tmp;
       }
 
       /* Calculate stochastic. */
       tmp = Ht-Lt;
       if( tmp > 0.0 )
-        tempBuffer[outIdx++] = 100.0*((inClose_0[today]-Lt)/tmp);
+        tempBuffer[outIdx++] = 100.0*((inClose[today]-Lt)/tmp);
       else
         tempBuffer[outIdx++] = 100.0;
 
@@ -543,7 +543,7 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
     * "K-Slow", but often this end up to be shorten to "K".
     */
    retCode = TA_MA( 0, outIdx-1,
-                    tempBuffer, optInSlowK_Period_1,
+                    tempBuffer, optInSlowK_Period,
                     optInSlowK_MAType_2,
                     outBegIdx, outNbElement, tempBuffer );
 

@@ -114,7 +114,7 @@ typedef struct
    TA_Integer startIdx;
    TA_Integer endIdx;
 
-   TA_Integer optInTimePeriod_0;
+   TA_Integer optInTimePeriod;
  
    TA_RetCode expectedRetCode;
 
@@ -312,56 +312,56 @@ static TA_RetCode rangeTestFunction(
                         startIdx,
                         endIdx,
                         testParam->close,
-                        testParam->test->optInTimePeriod_0,                        
+                        testParam->test->optInTimePeriod,                        
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
 
-      *lookback = TA_MOM_Lookback(testParam->test->optInTimePeriod_0 );
+      *lookback = TA_MOM_Lookback(testParam->test->optInTimePeriod );
       break;
    case TA_ROC_TEST:
       retCode = TA_ROC(
                         startIdx,
                         endIdx,
                         testParam->close,
-                        testParam->test->optInTimePeriod_0,                        
+                        testParam->test->optInTimePeriod,                        
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
-      *lookback = TA_ROC_Lookback(testParam->test->optInTimePeriod_0 );
+      *lookback = TA_ROC_Lookback(testParam->test->optInTimePeriod );
       break;
    case TA_ROCR_TEST:
       retCode = TA_ROCR(
                          startIdx,
                          endIdx,
                          testParam->close,
-                         testParam->test->optInTimePeriod_0,                         
+                         testParam->test->optInTimePeriod,                         
                          outBegIdx,
                          outNbElement,
                          outputBuffer );
-      *lookback = TA_ROCR_Lookback(testParam->test->optInTimePeriod_0 );
+      *lookback = TA_ROCR_Lookback(testParam->test->optInTimePeriod );
       break;
    case TA_ROCR100_TEST:
       retCode = TA_ROCR100(
                             startIdx,
                             endIdx,
                             testParam->close,
-                            testParam->test->optInTimePeriod_0,                         
+                            testParam->test->optInTimePeriod,                         
                             outBegIdx,
                             outNbElement,
                             outputBuffer );
-      *lookback = TA_ROCR100_Lookback(testParam->test->optInTimePeriod_0 );
+      *lookback = TA_ROCR100_Lookback(testParam->test->optInTimePeriod );
       break;
    case TA_ROCP_TEST:
       retCode = TA_ROCP(
                          startIdx,
                          endIdx,
                          testParam->close,
-                         testParam->test->optInTimePeriod_0,                         
+                         testParam->test->optInTimePeriod,                         
                          outBegIdx,
                          outNbElement,
                          outputBuffer );
-      *lookback = TA_ROCP_Lookback(testParam->test->optInTimePeriod_0 );
+      *lookback = TA_ROCP_Lookback(testParam->test->optInTimePeriod );
       break;
    default:
       retCode = TA_INTERNAL_ERROR(130);
@@ -396,7 +396,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInTimePeriod_0,                        
+                        test->optInTimePeriod,                        
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -407,7 +407,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInTimePeriod_0,                        
+                        test->optInTimePeriod,                        
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -417,7 +417,7 @@ static ErrorNumber do_test( const TA_History *history,
                          test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
-                         test->optInTimePeriod_0,                         
+                         test->optInTimePeriod,                         
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[0].out0 );
@@ -427,7 +427,7 @@ static ErrorNumber do_test( const TA_History *history,
                             test->startIdx,
                             test->endIdx,
                             gBuffer[0].in,
-                            test->optInTimePeriod_0,                         
+                            test->optInTimePeriod,                         
                             &outBegIdx,
                             &outNbElement,
                             gBuffer[0].out0 );
@@ -438,7 +438,7 @@ static ErrorNumber do_test( const TA_History *history,
                          test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
-                         test->optInTimePeriod_0,                         
+                         test->optInTimePeriod,                         
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[0].out0 );
@@ -467,7 +467,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
-                        test->optInTimePeriod_0,                        
+                        test->optInTimePeriod,                        
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -477,7 +477,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
-                        test->optInTimePeriod_0,                        
+                        test->optInTimePeriod,                        
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -487,7 +487,7 @@ static ErrorNumber do_test( const TA_History *history,
                          test->startIdx,
                          test->endIdx,
                          gBuffer[1].in,
-                         test->optInTimePeriod_0,                         
+                         test->optInTimePeriod,                         
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[1].in );
@@ -497,7 +497,7 @@ static ErrorNumber do_test( const TA_History *history,
                             test->startIdx,
                             test->endIdx,
                             gBuffer[1].in,
-                            test->optInTimePeriod_0,                         
+                            test->optInTimePeriod,                         
                             &outBegIdx,
                             &outNbElement,
                             gBuffer[1].in );
@@ -507,7 +507,7 @@ static ErrorNumber do_test( const TA_History *history,
                          test->startIdx,
                          test->endIdx,
                          gBuffer[1].in,
-                         test->optInTimePeriod_0,                         
+                         test->optInTimePeriod,                         
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[1].in );

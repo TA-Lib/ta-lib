@@ -78,7 +78,7 @@ typedef struct
    TA_Integer endIdx;
 
    TA_Integer doAverage;          /* 1 indicate ATR, else TRANGE. */
-   TA_Integer optInTimePeriod_0;  /* Meaningful only for ATR. */
+   TA_Integer optInTimePeriod;  /* Meaningful only for ATR. */
 
    TA_RetCode expectedRetCode;
 
@@ -190,11 +190,11 @@ static TA_RetCode rangeTestFunction(
                         testParam->high,
                         testParam->low,
                         testParam->close,
-                        testParam->test->optInTimePeriod_0,                        
+                        testParam->test->optInTimePeriod,                        
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
-     *lookback = TA_ATR_Lookback( testParam->test->optInTimePeriod_0 );
+     *lookback = TA_ATR_Lookback( testParam->test->optInTimePeriod );
    }
    else
    {
@@ -239,7 +239,7 @@ static ErrorNumber do_test( const TA_History *history,
                            gBuffer[0].in,
                            gBuffer[1].in,
                            gBuffer[2].in,
-                           test->optInTimePeriod_0,                           
+                           test->optInTimePeriod,                           
                            &outBegIdx,
                            &outNbElement,
                            gBuffer[0].out0 );
@@ -288,7 +288,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[0].in,
                         gBuffer[1].in,
                         gBuffer[2].in,
-                        test->optInTimePeriod_0,                           
+                        test->optInTimePeriod,                           
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].in );
