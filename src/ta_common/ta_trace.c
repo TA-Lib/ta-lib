@@ -234,10 +234,10 @@ void TA_PrivTraceCheckpoint( const char *funcname,
 #endif
 
 #ifdef TA_DEBUG
-int TA_PrivTraceReturn( const char *funcname,
-                        const char *filename,
-                        unsigned int lineNb,
-                        int retCode )
+TA_RetCode TA_PrivTraceReturn( const char *funcname,
+                               const char *filename,
+                               unsigned int lineNb,
+                               TA_RetCode retCode )
 {
    #if defined( TA_SINGLE_THREAD )
    TA_TracePosition *tracePosition;

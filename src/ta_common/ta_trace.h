@@ -162,10 +162,10 @@ void TA_PrivTraceCheckpoint( const char *funcname,
 						     unsigned int lineNb,
                              int value );
    
-int TA_PrivTraceReturn( const char *funcname,
-						const char *filename,
-						unsigned int lineNb,
-						int retCode );
+TA_RetCode TA_PrivTraceReturn( const char *funcname,
+						       const char *filename,
+						       unsigned int lineNb,
+						       TA_RetCode retCode );
 
 void TA_PrivTraceBegin( const char *funcname,
 						const char *filename, 
