@@ -47,8 +47,7 @@ RSC=rc.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /Zi /Od /I "../../../../include" /I "../../../../src/ta_data/ta_source/ta_yahoo" /I "../../../../src/ta_data/ta_source" /I "../../../../src/ta_data" /I "../../../../src/ta_common" /D "_CONSOLE" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /YX /FD /GZ /c
 # SUBTRACT BASE CPP /Fr
-# ADD CPP /nologo /MTd /W3 /WX /Gm /Zi /Od /I "../../../../include" /I "../../../../src/ta_data/ta_source/ta_yahoo" /I "../../../../src/ta_data/ta_source" /I "../../../../src/ta_data" /I "../../../../src/ta_common" /D "_CONSOLE" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_FUNC_NO_RANGE_CHECK" /YX /FD /GZ /c
-# SUBTRACT CPP /Fr
+# ADD CPP /nologo /MTd /W3 /WX /Gm /Zi /Od /I "../../../../include" /I "../../../../src/ta_data/ta_source/ta_yahoo" /I "../../../../src/ta_data/ta_source" /I "../../../../src/ta_data" /I "../../../../src/ta_common" /D "_CONSOLE" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_FUNC_NO_RANGE_CHECK" /Fr /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -76,8 +75,7 @@ LINK32=link.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /Zi /Od /I "../../../../include" /I "../../../../src/ta_data/ta_source/ta_yahoo" /I "../../../../src/ta_data/ta_source" /I "../../../../src/ta_data" /I "../../../../src/ta_common" /D "_CONSOLE" /D "TA_DEBUG" /D "TA_SINGLE_THREAD" /D "WIN32" /D "_DEBUG" /D "_MBCS" /YX /FD /GZ /c
 # SUBTRACT BASE CPP /Fr
-# ADD CPP /nologo /W3 /WX /Gm /Zi /Od /I "../../../../include" /I "../../../../src/ta_data/ta_source/ta_yahoo" /I "../../../../src/ta_data/ta_source" /I "../../../../src/ta_data" /I "../../../../src/ta_common" /D "_CONSOLE" /D "TA_DEBUG" /D "TA_SINGLE_THREAD" /D "WIN32" /D "_DEBUG" /D "_MBCS" /YX /FD /GZ /c
-# SUBTRACT CPP /Fr
+# ADD CPP /nologo /W3 /WX /Gm /Zi /Od /I "../../../../include" /I "../../../../src/ta_data/ta_source/ta_yahoo" /I "../../../../src/ta_data/ta_source" /I "../../../../src/ta_data" /I "../../../../src/ta_common" /D "_CONSOLE" /D "TA_DEBUG" /D "TA_SINGLE_THREAD" /D "WIN32" /D "_DEBUG" /D "_MBCS" /Fr /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
