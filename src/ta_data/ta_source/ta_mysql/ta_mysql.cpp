@@ -97,23 +97,37 @@ const char *formatISOTime(const TA_Timestamp *ts);
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
 
+#if !defined( TA_SINGLE_THREAD )
+TA_Sema mod_sema;
+#endif
+
 /**** Global functions definitions.   ****/
 TA_RetCode TA_MYSQL_InitializeSourceDriver( void )
 {
    TA_PROLOG
-   TA_TRACE_BEGIN(  TA_MYSQL_InitializeSourceDriver );
+   TA_RetCode retCode = TA_SUCCESS;
 
-    /* Nothing to do for the time being. */
-   TA_TRACE_RETURN( TA_SUCCESS );
+   TA_TRACE_BEGIN(  TA_SQL_InitializeSourceDriver );
+
+#if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaInit( &mod_sema, 1);
+#endif
+
+   TA_TRACE_RETURN( retCode );
 }
 
 TA_RetCode TA_MYSQL_ShutdownSourceDriver( void )
 {
    TA_PROLOG
-   TA_TRACE_BEGIN(  TA_MYSQL_ShutdownSourceDriver );
+   TA_RetCode retCode = TA_SUCCESS;
 
-    /* Nothing to do for the time being. */
-   TA_TRACE_RETURN( TA_SUCCESS );
+   TA_TRACE_BEGIN(  TA_SQL_ShutdownSourceDriver );
+
+#if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaDestroy( &mod_sema );
+#endif
+
+   TA_TRACE_RETURN( retCode );
 }
 
 TA_RetCode TA_MYSQL_GetParameters( TA_DataSourceParameters *param )
@@ -459,6 +473,14 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
    TA_Integer *volume_vec = NULL;
    TA_Integer *oi_vec = NULL;
 
+#if !defined( TA_SINGLE_THREAD )
+   retCode = TA_SemaWait( &mod_sema );
+   if( retCode != TA_SUCCESS )
+   {
+      TA_TRACE_RETURN(retCode);
+   }
+#endif
+
    // Now the MySQL query
    char *queryStr = NULL;
    try 
@@ -705,6 +727,17 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
    {
       retCode = rc;
    }
+
+#if !defined( TA_SINGLE_THREAD )
+   if( retCode != TA_SUCCESS )
+   {
+      TA_SemaPost( &mod_sema );
+   }
+   else
+   {
+      retCode = TA_SemaPost( &mod_sema );
+   }
+#endif
 
    /* cleanup */
    if ( queryStr      ) TA_Free(queryStr);
