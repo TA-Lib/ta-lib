@@ -109,6 +109,7 @@ static ErrorNumber testFatalErrors( void )
    TA_RetCode retCode;
    TA_UDBase *uDBase;
    ErrorNumber retValue;
+   char *b;
 
    /* Initialize the library. */
    retValue = allocLib( &uDBase );
@@ -123,6 +124,27 @@ static ErrorNumber testFatalErrors( void )
    retCode = TA_RegressionTest(TA_REG_TEST_FATAL_ERROR);
    if( retCode != TA_FATAL_ERR )
       return TA_FATAL_TST_FAIL;
+
+   /* After a function returns a TA_FATAL_ERR, further
+    * information can be obtained with TA_FatalReportToBuffer()
+    * and/or TA_FatalReport().
+    *
+    * These functions returns the info only about the LAST
+    * recorded fatal error. To more easily record all the fatal
+    * error, you should install a fatal error handler and call
+    * the TA_FatalReportXXXX() function from the handler.
+    *
+    * You can monitor what is getting in the buffer by 
+    * un-commenting the printf.
+    *      
+    */
+   b = (char *)TA_Malloc(TA_FATAL_ERROR_BUF_SIZE);
+   if( b )
+   {
+      TA_FatalReportToBuffer( b, TA_FATAL_ERROR_BUF_SIZE );
+      /* printf( b ); */
+   }
+   TA_Free(b);
 
    retValue = freeLib( uDBase );
    if( retValue != TA_TEST_PASS )
