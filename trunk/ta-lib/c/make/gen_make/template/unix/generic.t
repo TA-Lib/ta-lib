@@ -225,6 +225,16 @@ UIC	=	#$ Expand("TMAKE_UIC");
 TAR	=	#$ Expand("TMAKE_TAR");
 GZIP	=	#$ Expand("TMAKE_GZIP");
 
+####### Support for 64-bit systems
+ifeq ($(shell uname -m), x86_64)
+     CFLAGS   += -march=x86-64 -m64 -D__64BIT__
+     CXXFLAGS += -march=x86-64 -m64 -D__64BIT__
+endif
+
+####### Apply additional overruling user flags, if any
+CFLAGS   += $(CUSERFLAGS))
+CXXFLAGS += $(CUSERFLAGS))
+
 ####### Files
 
 HEADERS =	#$ ExpandList("HEADERS");
