@@ -118,6 +118,11 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
 static TA_Test tableTest[] =
 {
+   { TST_ADXR,1, 0, 0, 251, 14, TA_SUCCESS, 0,   19.0,   40,  252-40 }, /* First Value */
+   { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 1,   18.0,   40,  252-40 },
+   { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 210, 22.0,   40,  252-40 },
+   { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 211, 21.0,   40,  252-40 }, /* Last Value */
+
    { TST_PLUS_DM, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   10.28,  13,  252-13 }, /* First Value */
    { TST_PLUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 10.317, 13,  252-13 },
    { TST_PLUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 238,  9.58,  13,  252-13 }, /* Last Value */
@@ -292,7 +297,19 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
       break;
 
    case TST_ADXR:
-      return TA_BAD_PARAM;
+      retCode = TA_ADXR( libHandle,
+                         startIdx,
+                         endIdx,
+                         testParam->high,
+                         testParam->low,
+                         testParam->close,
+                         testParam->test->optInTimePeriod_0,
+                         outBegIdx,
+                         outNbElement,
+                         outputBuffer );
+
+      *lookback = TA_ADXR_Lookback( testParam->test->optInTimePeriod_0 );
+      break;
    }
 
    return retCode;
@@ -316,7 +333,6 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    setInputBuffer( 1, history->low,   history->nbBars );
    setInputBuffer( 2, history->close, history->nbBars );
    setInputBuffer( 3, history->high,  history->nbBars );
-   
 
    /* Make a simple first call. */
    switch( test->id )
@@ -434,7 +450,23 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_ADXR:
-      return TA_BAD_PARAM;
+      retCode = TA_SetUnstablePeriod( libHandle,
+                                      TA_FUNC_UNST_ADX,
+                                      test->unstablePeriod );
+      if( retCode != TA_SUCCESS )
+         return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
+
+      retCode = TA_ADXR( libHandle,
+                         test->startIdx,
+                         test->endIdx,
+                         gBuffer[0].in,
+                         gBuffer[1].in,
+                         gBuffer[2].in,
+                         test->optInTimePeriod_0,
+                         &outBegIdx,
+                         &outNbElement,
+                         gBuffer[0].out0 );
+      break;
    }
 
    /* Verify that the inputs were preserved. */
@@ -534,7 +566,17 @@ static ErrorNumber do_test( TA_Libc *libHandle,
       break;
 
    case TST_ADXR:
-      return TA_BAD_PARAM;
+      retCode = TA_ADXR( libHandle,
+                         test->startIdx,
+                         test->endIdx,
+                         gBuffer[3].in,
+                         gBuffer[1].in,
+                         gBuffer[2].in,
+                         test->optInTimePeriod_0,
+                         &outBegIdx,
+                         &outNbElement,
+                         gBuffer[3].in );
+      break;
    }
 
    /* Verify that the inputs were preserved. */
@@ -614,6 +656,10 @@ static ErrorNumber do_test( TA_Libc *libHandle,
          break;
 
       case TST_ADXR:
+         errNb = doRangeTest( libHandle,
+                              rangeTestFunction, 
+                              TA_FUNC_UNST_ADX,
+                              (void *)&testParam, 1, 2 );
          break;
       }
 
@@ -623,4 +669,3 @@ static ErrorNumber do_test( TA_Libc *libHandle,
 
    return TA_TEST_PASS;
 }
-
