@@ -212,6 +212,16 @@ const TA_RealRange TA_DEF_ZeroToOne =
    0.05   /* suggested increment */
 };
 
+const TA_RealRange TA_DEF_RealPositive =
+{
+   0.00,  /* min */
+   TA_REAL_MAX,  /* max */
+   0,    /* precision */
+   0.0,  /* suggested start */
+   0.0,  /* suggested end   */
+   0.0   /* suggested increment */
+};
+
 /*****************************************************
  * Define from here the TA_OptInputParameterInfo.
  ****************************************************/
@@ -399,6 +409,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_HorizontalShift =
 
    NULL /* helpFile */
 };
+
 
 /* Define the values available for the MA function. 
  * 
