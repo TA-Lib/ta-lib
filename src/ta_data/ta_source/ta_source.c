@@ -81,6 +81,7 @@
 const TA_DataSourceDriver TA_gDataSourceTable[] =
 {
     {   /* TA_ASCII_FILE format. */
+        "ASCII",
         TA_ASCII_InitializeSourceDriver,
         TA_ASCII_ShutdownSourceDriver,
         TA_ASCII_GetParameters,
@@ -94,6 +95,7 @@ const TA_DataSourceDriver TA_gDataSourceTable[] =
     },
 
     {   /* TA_SIMULATOR data source. */
+        "SIMULATOR",
         TA_SIMULATOR_InitializeSourceDriver,
         TA_SIMULATOR_ShutdownSourceDriver,
         TA_SIMULATOR_GetParameters,
@@ -107,6 +109,7 @@ const TA_DataSourceDriver TA_gDataSourceTable[] =
     },
 
     {   /* TA_YAHOO_WEB data source. */
+        "YAHOO_WEB",
         TA_YAHOO_InitializeSourceDriver,
         TA_YAHOO_ShutdownSourceDriver,
         TA_YAHOO_GetParameters,
@@ -120,6 +123,7 @@ const TA_DataSourceDriver TA_gDataSourceTable[] =
     },
 
     {   /* TA_SQL data source. */
+        "SQL",
         TA_SQL_InitializeSourceDriver,
         TA_SQL_ShutdownSourceDriver,
         TA_SQL_GetParameters,
