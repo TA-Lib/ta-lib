@@ -81,6 +81,8 @@ static void freeBuilderSupport( TA_BuilderSupport *builderSupport );
 
 static TA_RetCode freeSupportForDataSource( void *toBeFreed );
 static TA_RetCode freeDataBlock( void *toBeFreed );
+static TA_RetCode freeSplitAdjust( void *toBeFreed );
+static TA_RetCode freeValueAdjust( void *toBeFreed );
 static TA_RetCode freeMergeOp( void *toBeFreed );
 
 static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
@@ -119,6 +121,15 @@ static TA_History *allocEmptyHistory( TA_UDBasePriv *privUDB,
 static void reverseRealElement( unsigned int nbElement,  TA_Real *table );
 static void reverseIntegerElement( unsigned int nbElement,  TA_Integer *table );
 static void reverseTimestampElement( unsigned int nbElement, TA_Timestamp *table );
+static int sortSplitAdjust(const void *a, const void *b);
+static int sortValueAdjust(const void *a, const void *b);
+static int equalSplitAdjust(const void *a, const void *b);
+static int equalValueAdjust(const void *a, const void *b);
+
+static TA_RetCode historyAdjustData( TA_BuilderSupport *builderSupport );
+
+static void trimBeforeStart( const TA_Timestamp *start, TA_Period period, TA_History *history );
+static void trimAfterEnd( const TA_Timestamp *end, TA_Period period, TA_History *history );
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -142,6 +153,7 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
    unsigned int nbDataSource;
    unsigned int driverIndex;
    const TA_DataSourceDriver *driver;
+   TA_HistoryHiddenData *historyHiddenData;
 
    TA_PAR_VARS;
 
@@ -201,8 +213,9 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
    {
       TA_ASSERT( supportForDataSource != NULL );
 
+
       /* Set-up the parameters. */
-      supportForDataSource->index          = driverHandles->index;
+      supportForDataSource->addDataSourceParamPriv = driverHandles->addDataSourceParamPriv;
       supportForDataSource->sourceHandle   = driverHandles->sourceHandle;
       supportForDataSource->categoryHandle = driverHandles->categoryHandle;
       supportForDataSource->symbolHandle   = &driverHandles->symbolHandle;
@@ -210,8 +223,8 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
       supportForDataSource->start          = start;
       supportForDataSource->end            = end;
       supportForDataSource->fieldToAlloc   = fieldToAlloc;
-
-      driverIndex = supportForDataSource->index;
+      
+      driverIndex = driverHandles->addDataSourceParamPriv->id;
       TA_ASSERT( driverIndex < TA_gDataSourceTableSize );
 
       driver = &TA_gDataSourceTable[ driverIndex ];
@@ -224,13 +237,30 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
       }
       else
       {
-         retCode = (*(driver->getParameters))( &supportForDataSource->param );
+         retCode = (*(driver->getParameters))( &supportForDataSource->supportedParameter );
          if( retCode != TA_SUCCESS )
          {
             stopAllGetDataThread( builderSupport );
             builderSupport->retCode = retCode;
             break; /* Exit the loop righ away! */
          }
+      }
+
+      /* When a data source needs to do split/value adjustment,
+       * it requires to do it up to the latest available data.
+       * To keep that simple, force the driver to provide up to
+       * the most recent data. The exceeding data will be trim later.
+       */
+      if( supportForDataSource->supportedParameter.flags & TA_DO_NOT_SPLIT_ADJUST )
+      {
+         if( !(supportForDataSource->addDataSourceParamPriv->flags & TA_DO_NOT_SPLIT_ADJUST) )
+            supportForDataSource->end = 0;
+      }
+
+      if( supportForDataSource->supportedParameter.flags & TA_DO_NOT_VALUE_ADJUST )
+      {
+         if( !(supportForDataSource->addDataSourceParamPriv->flags & TA_DO_NOT_VALUE_ADJUST) )
+            supportForDataSource->end = 0;
       }
 
       /* Check immediatly for the next driver handles. */
@@ -240,7 +270,7 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
        * Except for the last driver which always get executed in the
        * main thread.
        */
-      if( (driverHandles != NULL) && (supportForDataSource->param.flags & TA_SLOW_ACCESS) )
+      if( (driverHandles != NULL) && (supportForDataSource->supportedParameter.flags & TA_SLOW_ACCESS) )
       {
          /* Start a thread for this data source. */
          TA_PAR_EXEC( getDataThread, supportForDataSource );
@@ -283,6 +313,34 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
       TA_TRACE_RETURN( retCode );
    }
 
+   /* Save in the hidden data a pointer on the data that will need to be freed. */
+   historyHiddenData = (TA_HistoryHiddenData *)((*history)->hiddenData);
+   historyHiddenData->open   = (*history)->open;
+   historyHiddenData->high   = (*history)->high;
+   historyHiddenData->low    = (*history)->low;
+   historyHiddenData->close  = (*history)->close;
+   historyHiddenData->volume = (*history)->volume;
+   historyHiddenData->openInterest = (*history)->openInterest;
+   historyHiddenData->timestamp = (*history)->timestamp;
+
+   /* From this point, TA_HistoryFree can be safely called. */
+
+   /* Sometimes, for optimization reason, the builder might returns
+    * more data than requested. In that case, trim the output such
+    * that only the requested range is "visible" to the caller.
+    */
+   if( (*history)->nbBars >= 1 )
+   {
+      if( start )
+      {
+         trimBeforeStart( start, period, *history );
+      }
+      if( end )
+      {
+         trimAfterEnd( end, period, *history );
+      }
+   }
+
    /* Until the library is very stable, we will make a double check
     * of the integrity of the "almost final" TA_History.
     */
@@ -299,7 +357,8 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
    /* Free the timestamps if it is not requested by the caller. */
    if( (fieldToAlloc != TA_ALL) && !(fieldToAlloc & TA_TIMESTAMP) )
    {
-      FREE_IF_NOT_NULL( (*history)->timestamp );
+      FREE_IF_NOT_NULL( historyHiddenData->timestamp );
+      historyHiddenData->timestamp = NULL;
       (*history)->timestamp = NULL;
    }
 
@@ -368,11 +427,42 @@ TA_RetCode TA_HistoryAddDataReset( TA_ParamForAddData *paramForAddData )
             return retCode;
       }
 
+      if( supportForDataSource->listOfSplitAdjust )
+      {
+         retCode = TA_ListFreeAll( supportForDataSource->listOfSplitAdjust, freeSplitAdjust );
+         if( retCode != TA_SUCCESS )
+            return retCode;
+      }
+
+      if( supportForDataSource->listOfValueAdjust )
+      {
+         retCode = TA_ListFreeAll( supportForDataSource->listOfValueAdjust, freeValueAdjust );
+         if( retCode != TA_SUCCESS )
+            return retCode;
+      }
+
       /* Re-alloc the list used to accumulate the series of data. */
       supportForDataSource->listOfDataBlock = TA_ListAlloc();
-
       if( !supportForDataSource->listOfDataBlock )
          return TA_ALLOC_ERR;
+
+      supportForDataSource->listOfSplitAdjust = TA_ListAlloc();
+      if( !supportForDataSource->listOfSplitAdjust )
+      {
+         TA_ListFree( supportForDataSource->listOfDataBlock );
+         supportForDataSource->listOfDataBlock = NULL;
+         return TA_ALLOC_ERR;
+      }
+
+      supportForDataSource->listOfValueAdjust = TA_ListAlloc();
+      if( !supportForDataSource->listOfValueAdjust )
+      {
+         TA_ListFree( supportForDataSource->listOfValueAdjust );
+         supportForDataSource->listOfDataBlock = NULL;
+         TA_ListFree(supportForDataSource->listOfSplitAdjust);
+         supportForDataSource->listOfSplitAdjust = NULL;
+         return TA_ALLOC_ERR;
+      }
 
       /* Re-initialize to zero many of the fields used
        * by TA_HistoryAddData.
@@ -418,7 +508,7 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
 
    supportForDataSource = (TA_SupportForDataSource *)paramForAddData;
 
-   TA_TRACE_BEGIN(  TA_HistoryAddData );
+   TA_TRACE_BEGIN( TA_HistoryAddData );
 
    builderSupport = supportForDataSource->parent;
    TA_ASSERT( builderSupport != NULL );
@@ -686,7 +776,216 @@ TA_HistoryAddData_EXIT:  /* The only point of this function. */
    TA_TRACE_RETURN( retCode );
 }
 
+TA_RetCode TA_HistoryAddSplitAdjust( TA_ParamForAddData *paramForAddData, TA_Timestamp *when, double factor )
+{
+   TA_SupportForDataSource *supportForDataSource;
+   TA_SplitAdjust *splitAdjust;
+   TA_RetCode retCode;
+
+   if( !paramForAddData || !when || factor <= 0.0 )
+      return TA_BAD_PARAM;
+
+   supportForDataSource = (TA_SupportForDataSource *)paramForAddData;
+
+   if( !supportForDataSource->listOfSplitAdjust )
+   {
+      supportForDataSource->listOfSplitAdjust = TA_ListAlloc();
+      if( !supportForDataSource->listOfSplitAdjust )
+          return TA_ALLOC_ERR;
+   }
+
+   /* Allocate the event and keep it in a list. */
+   splitAdjust = TA_Malloc( sizeof(TA_SplitAdjust) );
+   if( !splitAdjust )
+      return TA_ALLOC_ERR;
+   memset( splitAdjust, 0, sizeof(TA_SplitAdjust) );
+   TA_TimestampCopy( &splitAdjust->timestamp, when );
+   splitAdjust->factor = factor;
+   retCode = TA_ListAddTail( supportForDataSource->listOfSplitAdjust, splitAdjust );
+   if( retCode != TA_SUCCESS )
+   {
+      TA_Free( splitAdjust );
+      return retCode;
+   }
+
+   return TA_SUCCESS;
+}
+
+TA_RetCode TA_HistoryAddValueAdjust( TA_ParamForAddData *paramForAddData, TA_Timestamp *when, double amount )
+{
+   TA_SupportForDataSource *supportForDataSource;
+   TA_ValueAdjust *valueAdjust;
+   TA_RetCode retCode;
+
+   if( !paramForAddData || !when || amount <= 0.0 )
+      return TA_BAD_PARAM;
+
+   supportForDataSource = (TA_SupportForDataSource *)paramForAddData;
+
+   if( !supportForDataSource->listOfValueAdjust )  
+   {
+      supportForDataSource->listOfValueAdjust = TA_ListAlloc();
+      if( !supportForDataSource->listOfValueAdjust )
+         return TA_ALLOC_ERR;
+   }
+
+   /* Allocate the event and keep it in a list. */
+   valueAdjust = TA_Malloc( sizeof(TA_ValueAdjust) );
+   if( !valueAdjust )
+      return TA_ALLOC_ERR;
+   memset( valueAdjust, 0, sizeof(TA_ValueAdjust) );
+   TA_TimestampCopy( &valueAdjust->timestamp, when );
+   valueAdjust->amount = amount;
+   retCode = TA_ListAddTail( supportForDataSource->listOfValueAdjust, valueAdjust );
+   if( retCode != TA_SUCCESS )
+   {
+      TA_Free( valueAdjust );
+      return retCode;
+   }
+
+   return TA_SUCCESS;
+}
+
 /**** Local functions definitions.     ****/
+static TA_RetCode historyAdjustData( TA_BuilderSupport *builderSupport )
+{
+   TA_RetCode retCode;
+   TA_ListIter iterSource;
+   TA_ListIter blockIter;
+   TA_DataBlock *curDataBlock;
+   TA_SupportForDataSource *supportForDataSource;
+   TA_ValueAdjust *curValueAdjust;
+   TA_SplitAdjust *curSplitAdjust;
+   double factor, temp;
+   int i;
+
+   if( !builderSupport )
+      return TA_BAD_PARAM;
+
+   /* Iterate through all the data sources. */
+   TA_ListIterInit( &iterSource, builderSupport->listOfSupportForDataSource );
+
+   supportForDataSource = (TA_SupportForDataSource *)TA_ListIterHead(&iterSource);
+
+   while( supportForDataSource )
+   {
+      curValueAdjust = NULL;
+      curSplitAdjust = NULL;
+
+      /* Sort all adjustments and eliminate redundant entries. */  
+      if( supportForDataSource->listOfSplitAdjust && !(supportForDataSource->addDataSourceParamPriv->flags&TA_DO_NOT_SPLIT_ADJUST) )
+      {
+         if( TA_ListSize(supportForDataSource->listOfSplitAdjust) > 0 )
+         {
+            retCode = TA_ListRemoveDuplicate( supportForDataSource->listOfSplitAdjust, equalSplitAdjust, freeSplitAdjust );
+            if( retCode != TA_SUCCESS )
+               return retCode;
+
+            retCode = TA_ListSort( supportForDataSource->listOfSplitAdjust, sortSplitAdjust );
+            if( retCode != TA_SUCCESS )
+               return retCode;
+            curSplitAdjust = TA_ListAccessHead( supportForDataSource->listOfSplitAdjust);
+         }
+      }
+      if( supportForDataSource->listOfValueAdjust && !(supportForDataSource->addDataSourceParamPriv->flags&TA_DO_NOT_VALUE_ADJUST) )
+      {
+         if( TA_ListSize( supportForDataSource->listOfValueAdjust ) )
+         {
+            retCode = TA_ListRemoveDuplicate( supportForDataSource->listOfValueAdjust, equalValueAdjust, freeValueAdjust );
+            if( retCode != TA_SUCCESS )
+               return retCode;
+
+            retCode = TA_ListSort( supportForDataSource->listOfValueAdjust, sortValueAdjust );
+            if( retCode != TA_SUCCESS )
+               return retCode;
+            curValueAdjust = TA_ListAccessHead(supportForDataSource->listOfValueAdjust);
+         }
+      }
+
+      if( curSplitAdjust || curValueAdjust )
+      {
+         factor = 1.0;
+
+         /* Iterate throught the price bar starting with the most recent going backward. */
+         TA_ListIterInit( &blockIter, supportForDataSource->listOfDataBlock );
+         curDataBlock = TA_ListIterTail(&blockIter);
+         while( curDataBlock )
+         {
+             for( i=curDataBlock->nbBars-1; i >= 0; i-- )
+             {
+                /* Change the factor? */
+                if( curSplitAdjust )
+                {
+                   if( TA_TimestampGreater(&curSplitAdjust->timestamp,&curDataBlock->timestamp[i]) )
+                   {
+                      factor *= curSplitAdjust->factor;
+                      curSplitAdjust = TA_ListAccessNext(supportForDataSource->listOfSplitAdjust);
+                   }
+                }
+
+                if( curValueAdjust )
+                {
+                   if( TA_TimestampGreater(&curValueAdjust->timestamp,&curDataBlock->timestamp[i]) )
+                   {
+                      /* Find one of the price value to build a proportional factor. 
+                       * close is the first choice for this calculation.
+                       */
+                      if( curDataBlock->close ) temp = curDataBlock->close[i];
+                      else if( curDataBlock->open ) temp = curDataBlock->open[i];
+                      else if( curDataBlock->high ) temp = curDataBlock->high[i];
+                      else if( curDataBlock->low) temp = curDataBlock->low[i];
+                      factor *= 1.0-(curValueAdjust->amount/temp);
+                      curValueAdjust = TA_ListAccessNext(supportForDataSource->listOfValueAdjust);
+                   }
+                }
+
+                #define ADJUST_PRICE(a) \
+                { \
+                   if( curDataBlock->a ) \
+                    curDataBlock->a[i] *= factor; \
+                }
+                ADJUST_PRICE(open);
+                ADJUST_PRICE(high);
+                ADJUST_PRICE(low);
+                ADJUST_PRICE(close);
+                #undef ADJUST_PRICE
+             }         
+
+             curDataBlock = TA_ListIterPrev(&blockIter);
+         }
+      }
+
+      /* Check for handling the next data source. */
+      supportForDataSource = (TA_SupportForDataSource *)TA_ListIterNext(&iterSource);
+   }
+
+   return TA_SUCCESS;
+}
+
+static int equalSplitAdjust(const void *a, const void *b)
+{
+   return TA_TimestampEqual( &((TA_SplitAdjust *)a)->timestamp, &((TA_SplitAdjust *)b)->timestamp ) &&
+          (((TA_SplitAdjust *)a)->factor == ((TA_SplitAdjust *)b)->factor );
+}
+
+static int equalValueAdjust(const void *a, const void *b)
+{
+   return TA_TimestampEqual( &((TA_ValueAdjust *)a)->timestamp, &((TA_ValueAdjust *)b)->timestamp ) &&
+          (((TA_ValueAdjust *)a)->amount == ((TA_ValueAdjust *)b)->amount );
+}
+
+static int sortSplitAdjust(const void *a, const void *b)
+{
+   /* Will be sorted with most recent first */
+   return TA_TimestampCompare( &((TA_SplitAdjust *)b)->timestamp, &((TA_SplitAdjust *)a)->timestamp );
+}
+
+static int sortValueAdjust(const void *a, const void *b)
+{
+   /* Will be sorted with most recent first */
+   return TA_TimestampCompare( &((TA_ValueAdjust *)b)->timestamp, &((TA_ValueAdjust *)a)->timestamp );
+}
+
 void getDataThread( void *args  )
 {
    TA_RetCode retCode;
@@ -699,7 +998,7 @@ void getDataThread( void *args  )
    if( !args )
       return;
 
-   driverIndex = supportForDataSource->index;
+   driverIndex = supportForDataSource->addDataSourceParamPriv->id;
    TA_ASSERT_NO_RET( driverIndex < TA_gDataSourceTableSize );
 
    driver = &TA_gDataSourceTable[ driverIndex ];
@@ -840,8 +1139,15 @@ static TA_RetCode freeSupportForDataSource( void *toBeFreed )
    {
       if( supportForDataSource->listOfDataBlock )
          TA_ListFreeAll( supportForDataSource->listOfDataBlock, freeDataBlock );
-
       supportForDataSource->listOfDataBlock = NULL;
+
+      if( supportForDataSource->listOfSplitAdjust )
+         TA_ListFreeAll( supportForDataSource->listOfSplitAdjust, freeSplitAdjust );
+      supportForDataSource->listOfSplitAdjust = NULL;
+
+      if( supportForDataSource->listOfValueAdjust )
+         TA_ListFreeAll( supportForDataSource->listOfValueAdjust, freeValueAdjust );
+      supportForDataSource->listOfValueAdjust = NULL;
 
       TA_Free( supportForDataSource );
    }
@@ -874,11 +1180,33 @@ static TA_RetCode freeDataBlock( void *toBeFreed )
    TA_TRACE_RETURN( TA_SUCCESS );
 }
 
+static TA_RetCode freeSplitAdjust( void *toBeFreed )
+{
+   TA_PROLOG
+
+   TA_TRACE_BEGIN( freeSplitAdjust );
+
+   FREE_IF_NOT_NULL( toBeFreed );
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
+static TA_RetCode freeValueAdjust( void *toBeFreed )
+{
+   TA_PROLOG
+
+   TA_TRACE_BEGIN( freeValueAdjust );
+
+   FREE_IF_NOT_NULL( toBeFreed );
+
+   TA_TRACE_RETURN( TA_SUCCESS );
+}
+
 static TA_RetCode freeMergeOp( void *toBeFreed )
 {
    TA_PROLOG
 
-   TA_TRACE_BEGIN(  freeMergeOp );
+   TA_TRACE_BEGIN( freeMergeOp );
     
    FREE_IF_NOT_NULL( toBeFreed );
 
@@ -921,7 +1249,7 @@ static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
    TA_Integer *volume, *openInterest, nbBars;
    TA_Timestamp *timestamp;
 
-   TA_TRACE_BEGIN(  allocHistory );
+   TA_TRACE_BEGIN( allocHistory );
 
    TA_ASSERT( builderSupport != NULL );
    TA_ASSERT( history != NULL );
@@ -936,6 +1264,19 @@ static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
    curSupportForDataSource = (TA_SupportForDataSource *)TA_ListAccessHead( listOfSupportForDataSource );
    TA_ASSERT( curSupportForDataSource != NULL );
 
+   /* Do "Normalization" of each data source. Normalization will bring all the
+    * data source to the same common period so that the merge can take place.
+    */
+   retCode = TA_PeriodNormalize( builderSupport );
+   if( retCode != TA_SUCCESS )
+      return retCode;
+
+   /* Check for split/value adjustment for all data sources. */
+   retCode = historyAdjustData( builderSupport );
+   if( retCode != TA_SUCCESS )
+      return retCode;
+
+   /* Merge the data from the multiple data sources. */
    if( nbDataSource == 1 )
    {
       /* Handle seperatly the simplified case where there is only one data source.
@@ -975,8 +1316,8 @@ static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
        }
    }
 
-   /* At this point the "normalized" history is allocated but
-    * not necesseraly at the requested period. Adjust the
+   /* At this point the history merge is completed but not 
+    * necesseraly at the requested period. Adjust the
     * timeframe as needed.
     */
    TA_ASSERT( *history != NULL );
@@ -1057,8 +1398,8 @@ static TA_RetCode allocHistoryFromOneDataSource( TA_UDBasePriv *privUDB,
 
    if( curDataBlock == NULL )
    {
-      /* No data provided! Return success though since it could
-       * be possible if the requested start/end period is not available.
+      /* No data provided! Return success since it could be possible
+       * to be normal when the requested start/end period is not available.
        */
       *history = newHistory;
       TA_TRACE_RETURN( TA_SUCCESS );
@@ -1074,6 +1415,9 @@ static TA_RetCode allocHistoryFromOneDataSource( TA_UDBasePriv *privUDB,
       /* Optimization if there is only one data block. In that case, the
        * ownership of the data is simply blindly passed to the newHistory.
        */
+
+      /* Find the range of data between start/end */
+      
       newHistory->timestamp = curDataBlock->timestamp;
       newHistory->nbBars    = curDataBlock->nbBars;
       newHistory->period    = curDataBlock->period;
@@ -1770,9 +2114,10 @@ static TA_History *allocEmptyHistory( TA_UDBasePriv *privUDB, TA_Period period )
 
    /* Alloc and initialize the hidden data. */
    hiddenData = (TA_HistoryHiddenData *)TA_Malloc( sizeof( TA_HistoryHiddenData ) );
+   memset( hiddenData,0,sizeof(TA_HistoryHiddenData));
    if( !hiddenData )
    {
-      TA_Free(  newHistory );
+      TA_Free( newHistory );
       return NULL;
    }
 
@@ -1801,3 +2146,122 @@ static void reverseIntegerElement( unsigned int nbElement,  TA_Integer *table )
 static void reverseTimestampElement( unsigned int nbElement, TA_Timestamp *table )
 { REVERSE_MACRO(TA_Timestamp) }
 #undef REVERSE_MACRO
+
+static void trimBeforeStart( const TA_Timestamp *start, TA_Period period, TA_History *history )
+{
+   /* !!! Could be speed optimized */
+   int found;
+   unsigned int i;
+
+   /* Trap special case (nothing to do) */
+   if( history->nbBars == 0 )
+      return;
+
+   /* Find the first time timestamp[i] >= start */
+   found = 0;
+   i = 0;
+
+   if( period < TA_DAILY )
+   {
+      while( !found && (i < history->nbBars) )
+      {
+         if( !TA_TimestampLess( &history->timestamp[i], start ) )
+            found = 1;
+         else
+            i++;
+      }
+   }
+   else
+   { 
+      while( !found && (i < history->nbBars) )
+      {
+         if( !TA_TimestampDateLess( &history->timestamp[i], start ) )
+            found = 1;
+         else
+            i++;
+      }
+   }
+
+   /* First price bar is at or after "start". Do nothing. */
+   if( i == 0 )
+      return;
+
+   /* Adjust the history */
+   history->nbBars -= i;
+
+   if( history->nbBars == 0 )
+   {
+      history->open         = NULL;
+      history->high         = NULL;
+      history->low          = NULL;
+      history->close        = NULL;
+      history->volume       = NULL;
+      history->openInterest = NULL;      
+      history->timestamp    = NULL;
+   }
+   else
+   {
+      #define ADJUST_START(a) {if(history->a) history->a=&history->a[i];}
+      ADJUST_START(open);
+      ADJUST_START(high);
+      ADJUST_START(low);
+      ADJUST_START(close);
+      ADJUST_START(volume);
+      ADJUST_START(openInterest);
+      ADJUST_START(timestamp);
+      #undef ADJUST_START
+   }
+}
+
+static void trimAfterEnd( const TA_Timestamp *end, TA_Period period, TA_History *history )
+{
+   /* !!! Could be speed optimized */
+   int found;
+   unsigned int i;
+
+   /* Trap special case (nothing to do) */
+   if( history->nbBars == 0 )
+      return;
+   
+   /* Find the first time timestamp[i] <= end 
+    * (starting from the end).
+    */
+   found = 0;
+   i = history->nbBars-1;
+   if( period < TA_DAILY )
+   {
+      while( !found && (i >= 0) )
+      {
+         if( !TA_TimestampGreater( &history->timestamp[i], end ) )
+            found = 1;
+         else
+            i--;
+      }
+   }
+   else
+   {
+      while( !found && (i >= 0) )
+      {
+         if( !TA_TimestampDateGreater( &history->timestamp[i], end ) )
+            found = 1;
+         else
+            i--;
+      }
+   }
+
+   if( !found  )
+   {
+      history->nbBars = 0;
+      history->open         = NULL;
+      history->high         = NULL;
+      history->low          = NULL;
+      history->close        = NULL;
+      history->volume       = NULL;
+      history->openInterest = NULL;      
+      history->timestamp    = NULL;
+   }
+   else
+   {
+      history->nbBars -= (history->nbBars-1)-i;
+   }
+}
