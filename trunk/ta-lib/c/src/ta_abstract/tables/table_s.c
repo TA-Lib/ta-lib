@@ -14,7 +14,7 @@
  *          Consider the ones already defined in "ta_def_ui.c".
  ***************************************************************************/
 
-const TA_OptInputParameterInfo TA_DEF_UI_K_Period =
+static const TA_OptInputParameterInfo TA_DEF_UI_K_Period =
 {
    TA_OptInput_IntegerRange, /* type */
    "optInKPeriod",           /* paramName */
@@ -28,7 +28,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_K_Period =
    NULL /* helpFile */
 };
 
-const TA_OptInputParameterInfo TA_DEF_UI_K_SlowPeriod =
+static const TA_OptInputParameterInfo TA_DEF_UI_K_SlowPeriod =
 {
    TA_OptInput_IntegerRange, /* type */
    "optInKSlowPeriod",       /* paramName */
@@ -42,7 +42,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_K_SlowPeriod =
    NULL /* helpFile */
 };
 
-const TA_OptInputParameterInfo TA_DEF_UI_D_SlowPeriod =
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SlowPeriod =
 {
    TA_OptInput_IntegerRange, /* type */
    "optInDSlowPeriod",           /* paramName */
@@ -52,6 +52,53 @@ const TA_OptInputParameterInfo TA_DEF_UI_D_SlowPeriod =
    (const void *)&TA_DEF_TimePeriod_Positive, /* dataSet */
    3, /* defaultValue */
    "Time periods for the moving average of the %K line. That average is the %D line", /* hint */
+
+   NULL /* helpFile */
+};
+
+static const TA_RealRange TA_DEF_AccelerationFactor =
+{
+   TA_REAL_MIN,  /* min */
+   TA_REAL_MAX,  /* max */
+   4,      /* precision */
+   0.01,  /* suggested start */
+   0.20,  /* suggested end   */
+   0.01   /* suggested increment */
+};
+
+static const TA_RealRange TA_DEF_AccelerationMax =
+{
+   TA_REAL_MIN, /* min */
+   TA_REAL_MAX, /* max */
+   4,     /* precision */
+   0.1,  /* suggested start */
+   1.0,  /* suggested end   */
+   0.1   /* suggested increment */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationFactor =
+{
+   TA_OptInput_RealRange, /* type */
+   "optInAcceleration",  /* paramName */
+   0,          /* flags */
+
+   "Acceleration Factor", /* displayName */
+   (const void *)&TA_DEF_AccelerationFactor, /* dataSet */
+   0.02, /* defaultValue */
+   "Acceleration Factor used up to the Maximum parameter", /* hint */
+   NULL /* helpFile */
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationMaximum =
+{
+   TA_OptInput_RealRange, /* type */
+   "optInMaximum",        /* paramName */
+   0,                     /* flags */
+
+   "Acceleration Maximum", /* displayName */
+   (const void *)&TA_DEF_AccelerationMax, /* dataSet */
+   0.20, /* defaultValue */
+   "Maximum value for the acceleration factor", /* hint */
 
    NULL /* helpFile */
 };
@@ -72,7 +119,7 @@ const TA_OutputParameterInfo TA_DEF_UI_Output_Real_D_Line  =
 /* SAR BEGIN */
 static const TA_InputParameterInfo    *TA_SAR_Inputs[]    =
 {
-  &TA_DEF_UI_Input_Real,
+  &TA_DEF_UI_Input_Price_HL,
   NULL
 };
 
@@ -83,7 +130,8 @@ static const TA_OutputParameterInfo   *TA_SAR_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_SAR_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_30,
+{ &TA_DEF_UI_D_AccelerationFactor,
+  &TA_DEF_UI_D_AccelerationMaximum,
   NULL
 };
 
