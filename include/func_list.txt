@@ -5,6 +5,7 @@ DEMA        Double Exponential Moving Average
 EMA         Exponential Moving Average
 KAMA        Kaufman Adaptive Moving Average
 MA          All Moving Average
+MAMA        MESA Adaptive Moving Average
 MIDPRICE    Midpoint Price over period
 MIDPOINT    MidPoint over period
 SAR         Parabolic SAR
@@ -40,6 +41,8 @@ STOCH       Stochastic
 STOCHF      Stochastic Fast
 TRIX        1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 WILLR       Williams' %R
+AD          Chaikin A/D Line
+ADOSC       Chaikin A/D Oscillator
 OBV         On Balance Volume
 STDDEV      Standard Deviation
 VAR         Variance
