@@ -420,3 +420,4 @@ TA_RetCode TA_SAR( TA_Libc      *libHandle,
 
    return TA_SUCCESS;
 }
+
