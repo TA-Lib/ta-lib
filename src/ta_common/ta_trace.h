@@ -26,7 +26,7 @@
  * use the "NEXT AVAILABLE NUMBER" and increment the
  * number in this file.
  *
- * NEXT AVAILABLE NUMBER: 147
+ * NEXT AVAILABLE NUMBER: 161
  */
 #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR+Id)
 
@@ -60,26 +60,33 @@
  *
  * An application can also monitor for fatal error by providing a callback
  * using TA_SetFatalErrorHandler.
+ *
+ * TA_ASSERT        : Must be in a function AFTER a TA_TRACE_BEGIN.
+ * TA_ASSERT_RET    : Only for functions without a TA_PROLOG/TA_TRACE_BEGIN.
+ * TA_ASSERT_NO_RET : Only for functions without a TA_PROLOG/TA_TRACE_BEGIN returning void.
+ *
+ * TA_FATAL         : Must be in a function AFTER a TA_TRACE_BEGIN.
+ * TA_FATAL_RET     : Only for functions without a TA_PROLOG/TA_TRACE_BEGIN
+ * TA_FATAL_NO_RET  : Only for functions without a TA_PROLOG/TA_TRACE_BEGIN returning void.
+ *
  */
 #define TA_ASSERT(b) {if(!(b)) {TA_PrivError(1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); TA_TRACE_RETURN(TA_FATAL_ERR);}}
-/* Same as TA_ASSERT, but return the specified value on failure. */
 #define TA_ASSERT_RET(b,ret) {if(!(b)) {TA_PrivError(1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); return ret;}}
-/* Same as TA_ASSERT, but for function returning void. */
 #define TA_ASSERT_NO_RET(b) {if(!(b)) {TA_PrivError(1,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,0,0); return;}}
 
 #define TA_FATAL(str,param1,param2) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); TA_TRACE_RETURN( TA_FATAL_ERR );}
-/* Same as TA_FATAL, but return the specified value on failure. */
 #define TA_FATAL_RET(str,param1,param2,ret) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); return ret;}
-/* Same as TA_FATAL, but for function returning void. */
 #define TA_FATAL_NO_RET(str,param1,param2) {TA_PrivError(0,str,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,(unsigned int)param1,(unsigned int)param2); return;}
 
 /* When TA_DEBUG is defined, additional "paranoiac" testing can be performed
  * for checking the integrity of the software.
  *
  * This assert mechanism will NOT be enabled in the final library.
+ *
+ * TA_DEBUG_ASSERT : Must be in a function AFTER a TA_TRACE_BEGIN.
  */
 #ifdef TA_DEBUG
-   #define TA_DEBUG_ASSERT(b){if(!(b)){TA_PrivError(2,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,1,1); return TA_FATAL_ERR;}}
+   #define TA_DEBUG_ASSERT(b){if(!(b)){TA_PrivError(2,#b,theFileNamePtr,theFileDatePtr,theFileTimePtr,__LINE__,1,1); TA_TRACE_RETURN(TA_FATAL_ERR);}}
 #else
    #define TA_DEBUG_ASSERT(b)
 #endif
@@ -137,6 +144,9 @@
  *
  *       TA_TRACE_RETURN( TA_SUCCESS );
  *    }
+ *
+ * TA_ASSERT and TA_ASSERT_DEBUG are safe to be used after a TA_TRACE_BEGIN,
+ *
  */
 
 #ifdef TA_DEBUG
