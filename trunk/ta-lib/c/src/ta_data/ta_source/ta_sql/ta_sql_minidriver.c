@@ -100,6 +100,7 @@ TA_RetCode TA_SQL_AddMinidriver( const char scheme[], const TA_SQL_Minidriver *m
    }
 
    cache = TA_GetGlobalStringCache();
+   TA_ASSERT( cache != NULL );
    schemeStr = TA_StringAlloc( cache, scheme );
    if( !schemeStr )
    {
