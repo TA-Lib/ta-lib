@@ -136,6 +136,7 @@ int TA_MIN_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
 #define TA_BBANDS_WEIGHTED 2
 #define TA_BBANDS_DEMA 3
 #define TA_BBANDS_TEMA 4
+#define TA_BBANDS_TRIANGULAR 5
 
 TA_RetCode TA_BBANDS( TA_Integer    startIdx,
                       TA_Integer    endIdx,
@@ -226,6 +227,7 @@ int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
 #define TA_MA_WEIGHTED 2
 #define TA_MA_DEMA 3
 #define TA_MA_TEMA 4
+#define TA_MA_TRIANGULAR 5
 
 TA_RetCode TA_MA( TA_Integer    startIdx,
                   TA_Integer    endIdx,
@@ -364,6 +366,30 @@ TA_RetCode TA_TEMA( TA_Integer    startIdx,
                     TA_Real       outReal_0[] );
 
 int TA_TEMA_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
+
+/*
+ * TA_TRIMA - Triangular Moving Average
+ * 
+ * Input  = TA_Real
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_TRIMA( TA_Integer    startIdx,
+                     TA_Integer    endIdx,
+                     const TA_Real inReal_0[],
+                     TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                     TA_Integer   *outBegIdx,
+                     TA_Integer   *outNbElement,
+                     TA_Real       outReal_0[] );
+
+int TA_TRIMA_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
 
 
 /*
@@ -523,6 +549,7 @@ int TA_ADXR_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGE
 #define TA_APO_WEIGHTED 2
 #define TA_APO_DEMA 3
 #define TA_APO_TEMA 4
+#define TA_APO_TRIANGULAR 5
 
 TA_RetCode TA_APO( TA_Integer    startIdx,
                    TA_Integer    endIdx,
@@ -661,6 +688,7 @@ int TA_MACD_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_M
 #define TA_MACDEXT_WEIGHTED 2
 #define TA_MACDEXT_DEMA 3
 #define TA_MACDEXT_TEMA 4
+#define TA_MACDEXT_TRIANGULAR 5
 
 
 /* TA_MACDEXT: Optional Parameter optInSlowMAType_3 */
@@ -669,6 +697,7 @@ int TA_MACD_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_M
 #define TA_MACDEXT_WEIGHTED 2
 #define TA_MACDEXT_DEMA 3
 #define TA_MACDEXT_TEMA 4
+#define TA_MACDEXT_TRIANGULAR 5
 
 
 /* TA_MACDEXT: Optional Parameter optInSignalMAType_5 */
@@ -677,6 +706,7 @@ int TA_MACD_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_M
 #define TA_MACDEXT_WEIGHTED 2
 #define TA_MACDEXT_DEMA 3
 #define TA_MACDEXT_TEMA 4
+#define TA_MACDEXT_TRIANGULAR 5
 
 TA_RetCode TA_MACDEXT( TA_Integer    startIdx,
                        TA_Integer    endIdx,
@@ -724,6 +754,33 @@ TA_RetCode TA_MACDFIX( TA_Integer    startIdx,
                        TA_Real       outRealMACDHist_2[] );
 
 int TA_MACDFIX_Lookback( TA_Integer    optInSignalPeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
+
+/*
+ * TA_MFI - Money Flow Index
+ * 
+ * Input  = High, Low, Close, Volume
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_MFI( TA_Integer    startIdx,
+                   TA_Integer    endIdx,
+                   const TA_Real inHigh_0[],
+                   const TA_Real inLow_0[],
+                   const TA_Real inClose_0[],
+                   const TA_Integer inVolume_0[],
+                   TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                   TA_Integer   *outBegIdx,
+                   TA_Integer   *outNbElement,
+                   TA_Real       outReal_0[] );
+
+int TA_MFI_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
 
 
 /*
@@ -827,6 +884,7 @@ int TA_MOM_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
 #define TA_PPO_WEIGHTED 2
 #define TA_PPO_DEMA 3
 #define TA_PPO_TEMA 4
+#define TA_PPO_TRIANGULAR 5
 
 TA_RetCode TA_PPO( TA_Integer    startIdx,
                    TA_Integer    endIdx,
@@ -1045,6 +1103,7 @@ int TA_RSI_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
 #define TA_STOCH_WEIGHTED 2
 #define TA_STOCH_DEMA 3
 #define TA_STOCH_TEMA 4
+#define TA_STOCH_TRIANGULAR 5
 
 
 /* TA_STOCH: Optional Parameter optInSlowD_MAType_4 */
@@ -1053,6 +1112,7 @@ int TA_RSI_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER
 #define TA_STOCH_WEIGHTED 2
 #define TA_STOCH_DEMA 3
 #define TA_STOCH_TEMA 4
+#define TA_STOCH_TRIANGULAR 5
 
 TA_RetCode TA_STOCH( TA_Integer    startIdx,
                      TA_Integer    endIdx,
@@ -1101,6 +1161,7 @@ int TA_STOCH_Lookback( TA_Integer    optInFastK_Period_0, /* From 1 to TA_INTEGE
 #define TA_STOCHF_WEIGHTED 2
 #define TA_STOCHF_DEMA 3
 #define TA_STOCHF_TEMA 4
+#define TA_STOCHF_TRIANGULAR 5
 
 TA_RetCode TA_STOCHF( TA_Integer    startIdx,
                       TA_Integer    endIdx,
@@ -1359,11 +1420,12 @@ typedef enum {
     /* 003 */  TA_FUNC_UNST_ADX,
     /* 004 */  TA_FUNC_UNST_ADXR,
     /* 005 */  TA_FUNC_UNST_DX,
-    /* 006 */  TA_FUNC_UNST_MINUS_DI,
-    /* 007 */  TA_FUNC_UNST_MINUS_DM,
-    /* 008 */  TA_FUNC_UNST_PLUS_DI,
-    /* 009 */  TA_FUNC_UNST_PLUS_DM,
-    /* 010 */  TA_FUNC_UNST_RSI,
+    /* 006 */  TA_FUNC_UNST_MFI,
+    /* 007 */  TA_FUNC_UNST_MINUS_DI,
+    /* 008 */  TA_FUNC_UNST_MINUS_DM,
+    /* 009 */  TA_FUNC_UNST_PLUS_DI,
+    /* 010 */  TA_FUNC_UNST_PLUS_DM,
+    /* 011 */  TA_FUNC_UNST_RSI,
                TA_FUNC_UNST_ALL,
                TA_FUNC_UNST_NONE=-1 } TA_FuncUnstId;
 

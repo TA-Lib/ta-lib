@@ -9,6 +9,7 @@ MIDPOINT    MidPoint over period
 SAR         Parabolic SAR
 SMA         Simple Moving Average
 TEMA        Triple Exponential Moving Average
+TRIMA       Triangular Moving Average
 WMA         Weighted Moving Average
 ATR         Average True Range
 TRANGE      True Range
@@ -20,6 +21,7 @@ DX          Directional Movement Index
 MACD        Moving Average Convergence/Divergence
 MACDEXT     MACD with controllable MA type
 MACDFIX     Moving Average Convergence/Divergence Fix 12/26
+MFI         Money Flow Index
 MINUS_DI    Minus Directional Indicator
 MINUS_DM    Minus Directional Movement
 MOM         Momentum
