@@ -1,11 +1,59 @@
-/* 
- * This utility may need some clean-up. It has been quickly written for
- * helping to the automatisation of repetitive task for the TA-LIB
- * developpers. 
+/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+ * All rights reserved.
  *
- * This utility have no used for an end-user of the TA-LIB.
- * It is useful only to people integrating TA function in
- * TA-Lib.
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are permitted provided that the following
+ * conditions are met:
+ *
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in
+ *   the documentation and/or other materials provided with the
+ *   distribution.
+ *
+ * - Neither name of author nor the names of its contributors
+ *   may be used to endorse or promote products derived from this
+ *   software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * REGENTS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* List of contributors:
+ *
+ *  Initial  Name/description
+ *  -------------------------------------------------------------------
+ *  MF       Mario Fortier
+ *
+ *
+ * Change history:
+ *
+ *  MMDDYY BY   Description
+ *  -------------------------------------------------------------------
+ *  112400 MF   First version.
+ *  052403 MF   Many modifications related to generate code that works
+ *              with the windows .NET Managed C++ compiler.
+ */
+
+/* Description:
+ *       Generates a lot of source code. Run "gen_code ?" for
+ *       the list of file.
+ *
+ *       This utility have no used for an end-user of the TA-LIB.
+ *       It is useful only to people integrating new TA functions
+ *       in TA-Lib.
  *
  * Note: All directory in this code is relative to the 'bin'
  *       directory. So you must run the executable from ta-lib/c/bin.
@@ -45,7 +93,9 @@ FileHandle *gOutRetCode_C;     /* For "ta_retcode.c" */
 FileHandle *gOutRetCode_CSV;   /* For "ta_retcode.csv" */
 FileHandle *gOutFuncList_TXT;  /* For "func_list.txt" */
 FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
-FileHandle *gOutDefs_H;        /* for "ta_defs.h" */
+FileHandle *gOutDefs_H;        /* For "ta_defs.h" */
+FileHandle *gOutProjFile;      /* For .NET project file */
+FileHandle *gOutDotNet_H;      /* For .NET interface file */
 
 typedef void (*TA_ForEachGroup)( const char *groupName,
                                  unsigned int index,
@@ -76,7 +126,8 @@ static void printFunc( FILE *out,
                        unsigned int semiColonNeeded,   /* Boolean */
                        unsigned int validationCode,    /* Boolean */
                        unsigned int lookbackSignature, /* Boolean */
-                       unsigned int managedCPPCode
+                       unsigned int managedCPPCode,    /* Boolean */
+                       unsigned int managedCPPDeclaration /* Boolean */
                       );
 
 static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
@@ -114,6 +165,8 @@ static void printGroupSizeAddition(  const char *groupName,
 static int addUnstablePeriodEnum( FILE *out );
 
 static int createTemplate( FileHandle *in, FileHandle *out );
+static int createProjTemplate( FileHandle *in, FileHandle *out );
+
 static void writeFuncFile( const TA_FuncInfo *funcInfo );
 static void doFuncFile( const TA_FuncInfo *funcInfo );
 static void printOptInputValidation( FILE *out,
@@ -181,6 +234,9 @@ int main(int argc, char* argv[])
          printf( "     5) ta-lib/c/src/ta_abstract/ta_group_idx.c\n");     
          printf( "     6) ta-lib/c/src/ta_abstract/frames/*.*\n");
          printf( "     7) ta-lib/c/src/ta_abstract/excel_glue.c\n" );
+         printf( "     8) ta-lib/dotnet/src/Core/Core.vcproj\n" );
+         printf( "     9) ta-lib/dotnet/src/Core/Core.h\n" );
+
          printf( "\n" );
          printf( "  Also, it regenerates the function header, parameters and\n" );
          printf( "  validation code of all TA Func in c/src/ta_func.\n" );
@@ -203,6 +259,7 @@ int main(int argc, char* argv[])
    printf( "Now updating source code...\n" );
 
    retValue = genCode( argc, argv );
+
    TA_Shutdown();
 
    return retValue;
@@ -350,9 +407,56 @@ static int genCode(int argc, char* argv[])
 {
    TA_RetCode retCode;
    unsigned int nbGroup;
+   FileHandle *tempFile;
 
    (void)argc; /* Get ride of compiler warning */
    (void)argv; /* Get ride of compiler warning */
+
+   /* Create .NET project files template */
+   #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\Core\\Core.vcproj"
+   #define FILE_NET_PROJ_TMP "..\\temp\\dotnetproj.tmp"
+   gOutProjFile = fileOpen( FILE_NET_PROJ, NULL, FILE_READ );
+   if( gOutProjFile == NULL )   
+   {
+      printf( "\nCannot access [%s]\n", gToOpen );
+      return -1;
+   }
+   tempFile = fileOpen( FILE_NET_PROJ_TMP, NULL, FILE_WRITE );
+   if( tempFile == NULL )
+   {
+      printf( "Cannot create temporary .NET project file!\n" );
+      return -1;
+   }
+   if( createProjTemplate( gOutProjFile, tempFile ) != 0 )
+   {
+      printf( "Failed to parse and write the temporary .NET project file!\n" );
+      return -1;
+   }
+   fileClose(gOutProjFile);
+   fileClose(tempFile);
+
+   /* Create the .NET interface file template */
+   #define FILE_NET_HEADER     "..\\..\\dotnet\\src\\Core\\Core.h"
+   #define FILE_NET_HEADER_TMP "..\\temp\\dotneth.tmp"
+   gOutDotNet_H = fileOpen( FILE_NET_HEADER, NULL, FILE_READ );
+   if( gOutDotNet_H == NULL )   
+   {
+      printf( "\nCannot access [%s]\n", gToOpen );
+      return -1;
+   }
+   tempFile = fileOpen( FILE_NET_HEADER_TMP, NULL, FILE_WRITE );
+   if( tempFile == NULL )
+   {
+      printf( "Cannot create temporary .NET header file!\n" );
+      return -1;
+   }
+   if( createTemplate( gOutDotNet_H, tempFile ) != 0 )
+   {
+      printf( "Failed to parse and write the temporary .NET header file!\n" );
+      return -1;
+   }
+   fileClose(gOutDotNet_H);
+   fileClose(tempFile);
 
    /* Create ta_retcode.c */
    if( gen_retcode() != 0 )
@@ -417,15 +521,28 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
+   /* Re-open the .NET project template. */
+   gOutProjFile = fileOpen( FILE_NET_PROJ, FILE_NET_PROJ_TMP, FILE_WRITE );                                                    
+   if( gOutProjFile == NULL )
+   {
+      printf( "Cannot update [%s]\n", FILE_NET_PROJ );
+      return -1;
+   }
+
+   /* Re-open the .NET interface template. */
+   gOutDotNet_H = fileOpen( FILE_NET_HEADER, FILE_NET_HEADER_TMP, FILE_WRITE );                                                    
+   if( gOutDotNet_H == NULL )
+   {
+      printf( "Cannot update [%s]\n", FILE_NET_HEADER );
+      return -1;
+   }
+
    /* Process each function. */
    retCode = TA_ForEachFunc( doForEachFunction, NULL );
 
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "Failed [%d]\n", retCode );
-      return -1;
-   }
-         
+   /* Close all files who were updated with the list of TA functions. */
+   fileClose( gOutDotNet_H );
+   fileClose( gOutProjFile );
    fileClose( gOutFuncList_TXT );
    fileClose( gOutFunc_H );
    fileClose( gOutFrame_H );
@@ -437,7 +554,6 @@ static int genCode(int argc, char* argv[])
       printf( "Failed [%d]\n", retCode );
       return -1;
    }
-
 
    /* Create the "ta_group_idx.c" file. */
    gOutGroupIdx_C = fileOpen( "..\\src\\ta_abstract\\ta_group_idx.c",
@@ -540,11 +656,11 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    printDefines( gOutFunc_H->file, funcInfo );
 
    /* Generate the function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0 );
    fprintf( gOutFunc_H->file, "\n" );
 
    /* Generate the corresponding lookback function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0 );
 
    /* Generate the excel glue code */
    printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
@@ -553,6 +669,32 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    printFrameHeader( gOutFrame_H->file, funcInfo );
    fprintf( gOutFrame_H->file, ";\n\n" );
    printCallFrame( gOutFrame_C->file, funcInfo );
+
+   /* Add the entry in the .NET project file */
+   fprintf( gOutProjFile->file, "				<File\n" );
+   fprintf( gOutProjFile->file, "					RelativePath=\"..\\..\\..\\c\\src\\ta_func\\ta_%s.c\">\n", funcInfo->name );
+   fprintf( gOutProjFile->file, "					<FileConfiguration\n" );
+   fprintf( gOutProjFile->file, "						Name=\"Debug|Win32\">\n" );
+   fprintf( gOutProjFile->file, "						<Tool\n" );
+   fprintf( gOutProjFile->file, "							Name=\"VCCLCompilerTool\"\n" );
+   fprintf( gOutProjFile->file, "							AdditionalIncludeDirectories=\"\"\n" );
+   fprintf( gOutProjFile->file, "							UsePrecompiledHeader=\"0\"\n" );
+   fprintf( gOutProjFile->file, "							CompileAs=\"2\"/>\n" );
+   fprintf( gOutProjFile->file, "					</FileConfiguration>\n" );
+   fprintf( gOutProjFile->file, "					<FileConfiguration\n" );
+   fprintf( gOutProjFile->file, "						Name=\"Release|Win32\">\n" );
+   fprintf( gOutProjFile->file, "						<Tool\n" );
+   fprintf( gOutProjFile->file, "							Name=\"VCCLCompilerTool\"\n" );
+   fprintf( gOutProjFile->file, "							AdditionalIncludeDirectories=\"\"\n" );
+   fprintf( gOutProjFile->file, "							UsePrecompiledHeader=\"0\"\n" );
+   fprintf( gOutProjFile->file, "							CompileAs=\"2\"/>\n" );
+   fprintf( gOutProjFile->file, "					</FileConfiguration>\n" );
+   fprintf( gOutProjFile->file, "				</File>\n" );
+
+   /* Generate the functions declaration for the .NET interface. */
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1 );
+   fprintf( gOutDotNet_H->file, "\n" );
 
    doFuncFile( funcInfo );
 }
@@ -686,7 +828,8 @@ static void printFunc( FILE *out,
                        unsigned int semiColonNeeded, /* Boolean */
                        unsigned int validationCode, /* Boolean */
                        unsigned int lookbackSignature, /* Boolean */
-                       unsigned int managedCPPCode
+                       unsigned int managedCPPCode, /* Boolean */
+                       unsigned int managedCPPDeclaration /* Boolean */
                       )
 {
    TA_RetCode retCode;
@@ -724,20 +867,40 @@ static void printFunc( FILE *out,
    if( prototype )
    {
       if( lookbackSignature )
-      {         
-         sprintf( gTempBuf, "%sint %s%s_Lookback( ",
-                  prefix? prefix:"",
-                  managedCPPCode? "Core::":"TA_",
-                  funcInfo->name );
+      {  
+         if( managedCPPCode )
+         {       
+            sprintf( gTempBuf, "%s%sint %s%s_Lookback( ",
+                     prefix? prefix:"",
+                     managedCPPDeclaration? "         static ":"",
+                     managedCPPDeclaration? "":"Core::",
+                     funcInfo->name );
+         }
+         else
+         {
+            sprintf( gTempBuf, "%sint TA_%s_Lookback( ",
+                     prefix? prefix:"",
+                     funcInfo->name );
+         }
          fprintf( out, gTempBuf );
          indent = strlen(gTempBuf) - 2;
       }
       else
       {
-         sprintf( gTempBuf, "%s%s%s( int    startIdx,\n",
-                  prefix? prefix:"",
-                  managedCPPCode? "enum TA_RetCode Core::":"TA_RetCode TA_",
-                  funcInfo->name );
+         if( managedCPPCode )
+         {
+            sprintf( gTempBuf, "%s%senum TA_RetCode %s%s( int    startIdx,\n",
+                     prefix? prefix:"",
+                     managedCPPDeclaration? "         static ":"",
+                     managedCPPDeclaration? "":"Core::",
+                     funcInfo->name );
+         }
+         else
+         {
+            sprintf( gTempBuf, "%sTA_RetCode TA_%s( int    startIdx,\n",
+                     prefix? prefix:"",
+                     funcInfo->name );
+         }
          fprintf( out, gTempBuf );
          indent = strlen(gTempBuf) - 17;
          printIndent( out, indent );
@@ -1257,7 +1420,7 @@ static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
 {
    printFrameHeader( out, funcInfo );
    fprintf( out, "\n{\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0 );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0 );
    fprintf( out, "}\n" );
 }
 
@@ -1453,6 +1616,64 @@ static void doDefsFile( void )
    #undef FILE_TA_DEFS_TMP
 }
 
+static int createProjTemplate( FileHandle *in, FileHandle *out )
+{
+   FILE *inFile;
+   FILE *outFile;
+   unsigned int skipSection;
+   unsigned int sectionDone;
+   unsigned int step;
+
+   inFile = in->file;
+   outFile = out->file;
+
+   skipSection = 0;
+   sectionDone = 0;
+   step        = 0;
+
+   while( fgets( gTempBuf, 2048, inFile ) )
+   {
+      if( !skipSection )
+      {
+         fputs( gTempBuf, outFile );
+         if( !strstr( gTempBuf, "<Filter" ) )
+            continue;
+
+         if( !fgets( gTempBuf2, 2048, inFile ) )
+         {
+            printf( "Unexpected end-of-file\n" );
+            return -1;
+         }
+         fputs( gTempBuf2, outFile );
+
+         if( !strstr( gTempBuf2, "Name=\"ta_func\"" ) )
+            continue;            
+
+         if( !fgets( gTempBuf3, 2048, inFile ) )
+         {
+            printf( "Unexpected end-of-file\n" );
+            return -1;
+         }
+
+         fputs( gTempBuf3, outFile );
+
+         if( !strstr( gTempBuf3, "Filter=\"\">" ) )
+            continue;            
+
+         skipSection = 1;
+         fputs( "%%%GENCODE%%%\n", outFile );
+      }
+      else if( strstr( gTempBuf, "</Filter>" ) )
+      {
+         skipSection = 0;
+         fputs( gTempBuf, outFile );
+         sectionDone++;
+      }
+   }
+
+   return 0;
+}
+
 static int createTemplate( FileHandle *in, FileHandle *out )
 {
    FILE *inFile;
@@ -1519,9 +1740,9 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    fprintf( out, "#endif\n" );
    fprintf( out, "\n" );
    fprintf( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0 );
    fprintf( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0 );
    fprintf( out, "#endif\n" );
    skipToGenCode( funcInfo->name, gOutFunc_C->file, gOutFunc_C->templateFile );
 
@@ -1532,9 +1753,9 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
 
    fprintf( out, "\n" );
    fprintf( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0 );
    fprintf( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0 );
    fprintf( out, "#endif\n" );
    skipToGenCode( funcInfo->name, gOutFunc_C->file, gOutFunc_C->templateFile );
 
@@ -1552,7 +1773,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
     * default values.
     */
    fprintf( out, "   /* Validate the parameters. */\n" );
-   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0 );
+   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0 );
 
    fprintf( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
    fprintf( out, "\n" );
