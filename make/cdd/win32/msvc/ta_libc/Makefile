@@ -132,11 +132,14 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_CDL3INSIDE.c \
 		..\..\..\..\..\src\ta_func\ta_CDL3LINESTRIKE.c \
 		..\..\..\..\..\src\ta_func\ta_CDL3OUTSIDE.c \
+		..\..\..\..\..\src\ta_func\ta_CDL3STARSINSOUTH.c \
 		..\..\..\..\..\src\ta_func\ta_CDL3WHITESOLDIERS.c \
 		..\..\..\..\..\src\ta_func\ta_CDLABANDONEDBABY.c \
 		..\..\..\..\..\src\ta_func\ta_CDLADVANCEBLOCK.c \
 		..\..\..\..\..\src\ta_func\ta_CDLBELTHOLD.c \
 		..\..\..\..\..\src\ta_func\ta_CDLBREAKAWAY.c \
+		..\..\..\..\..\src\ta_func\ta_CDLCLOSINGMARUBOZU.c \
+		..\..\..\..\..\src\ta_func\ta_CDLCONCEALBABYSWALL.c \
 		..\..\..\..\..\src\ta_func\ta_CDLCOUNTERATTACK.c \
 		..\..\..\..\..\src\ta_func\ta_CDLDARKCLOUDCOVER.c \
 		..\..\..\..\..\src\ta_func\ta_CDLDOJI.c \
@@ -145,6 +148,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_CDLENGULFING.c \
 		..\..\..\..\..\src\ta_func\ta_CDLEVENINGDOJISTAR.c \
 		..\..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c \
+		..\..\..\..\..\src\ta_func\ta_CDLGAPSIDESIDEWHITE.c \
 		..\..\..\..\..\src\ta_func\ta_CDLGRAVESTONEDOJI.c \
 		..\..\..\..\..\src\ta_func\ta_CDLHAMMER.c \
 		..\..\..\..\..\src\ta_func\ta_CDLHANGINGMAN.c \
@@ -159,11 +163,13 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c \
 		..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c \
 		..\..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c \
+		..\..\..\..\..\src\ta_func\ta_CDLMATHOLD.c \
 		..\..\..\..\..\src\ta_func\ta_CDLMORNINGDOJISTAR.c \
 		..\..\..\..\..\src\ta_func\ta_CDLMORNINGSTAR.c \
 		..\..\..\..\..\src\ta_func\ta_CDLONNECK.c \
 		..\..\..\..\..\src\ta_func\ta_CDLPIERCING.c \
 		..\..\..\..\..\src\ta_func\ta_CDLRICKSHAWMAN.c \
+		..\..\..\..\..\src\ta_func\ta_CDLRISEFALL3METHODS.c \
 		..\..\..\..\..\src\ta_func\ta_CDLSEPARATINGLINES.c \
 		..\..\..\..\..\src\ta_func\ta_CDLSHOOTINGSTAR.c \
 		..\..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c \
@@ -173,6 +179,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_CDLTASUKIGAP.c \
 		..\..\..\..\..\src\ta_func\ta_CDLTHRUSTING.c \
 		..\..\..\..\..\src\ta_func\ta_CDLTRISTAR.c \
+		..\..\..\..\..\src\ta_func\ta_CDLUNIQUE3RIVER.c \
 		..\..\..\..\..\src\ta_func\ta_CDLUPSIDEGAP2CROWS.c \
 		..\..\..\..\..\src\ta_func\ta_CDLXSIDEGAP3METHODS.c \
 		..\..\..\..\..\src\ta_func\ta_CORREL.c \
@@ -350,11 +357,14 @@ OBJECTS =	..\..\..\..\..\temp\cdd\ta_ascii.obj \
 		..\..\..\..\..\temp\cdd\ta_CDL3INSIDE.obj \
 		..\..\..\..\..\temp\cdd\ta_CDL3LINESTRIKE.obj \
 		..\..\..\..\..\temp\cdd\ta_CDL3OUTSIDE.obj \
+		..\..\..\..\..\temp\cdd\ta_CDL3STARSINSOUTH.obj \
 		..\..\..\..\..\temp\cdd\ta_CDL3WHITESOLDIERS.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLABANDONEDBABY.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLADVANCEBLOCK.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLBELTHOLD.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLBREAKAWAY.obj \
+		..\..\..\..\..\temp\cdd\ta_CDLCLOSINGMARUBOZU.obj \
+		..\..\..\..\..\temp\cdd\ta_CDLCONCEALBABYSWALL.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLCOUNTERATTACK.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLDARKCLOUDCOVER.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLDOJI.obj \
@@ -363,6 +373,7 @@ OBJECTS =	..\..\..\..\..\temp\cdd\ta_ascii.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLENGULFING.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLEVENINGDOJISTAR.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLEVENINGSTAR.obj \
+		..\..\..\..\..\temp\cdd\ta_CDLGAPSIDESIDEWHITE.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLGRAVESTONEDOJI.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLHAMMER.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLHANGINGMAN.obj \
@@ -377,11 +388,13 @@ OBJECTS =	..\..\..\..\..\temp\cdd\ta_ascii.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLLONGLEGGEDDOJI.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLLONGLINE.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLMARUBOZU.obj \
+		..\..\..\..\..\temp\cdd\ta_CDLMATHOLD.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLMORNINGDOJISTAR.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLMORNINGSTAR.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLONNECK.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLPIERCING.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLRICKSHAWMAN.obj \
+		..\..\..\..\..\temp\cdd\ta_CDLRISEFALL3METHODS.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLSEPARATINGLINES.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLSHOOTINGSTAR.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLSHORTLINE.obj \
@@ -391,6 +404,7 @@ OBJECTS =	..\..\..\..\..\temp\cdd\ta_ascii.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLTASUKIGAP.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLTHRUSTING.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLTRISTAR.obj \
+		..\..\..\..\..\temp\cdd\ta_CDLUNIQUE3RIVER.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLUPSIDEGAP2CROWS.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLXSIDEGAP3METHODS.obj \
 		..\..\..\..\..\temp\cdd\ta_CORREL.obj \
@@ -613,11 +627,14 @@ clean:
 	-del ..\..\..\..\..\temp\cdd\ta_CDL3INSIDE.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDL3LINESTRIKE.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDL3OUTSIDE.obj
+	-del ..\..\..\..\..\temp\cdd\ta_CDL3STARSINSOUTH.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDL3WHITESOLDIERS.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLABANDONEDBABY.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLADVANCEBLOCK.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLBELTHOLD.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLBREAKAWAY.obj
+	-del ..\..\..\..\..\temp\cdd\ta_CDLCLOSINGMARUBOZU.obj
+	-del ..\..\..\..\..\temp\cdd\ta_CDLCONCEALBABYSWALL.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLCOUNTERATTACK.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLDARKCLOUDCOVER.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLDOJI.obj
@@ -626,6 +643,7 @@ clean:
 	-del ..\..\..\..\..\temp\cdd\ta_CDLENGULFING.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLEVENINGDOJISTAR.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLEVENINGSTAR.obj
+	-del ..\..\..\..\..\temp\cdd\ta_CDLGAPSIDESIDEWHITE.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLGRAVESTONEDOJI.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLHAMMER.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLHANGINGMAN.obj
@@ -640,11 +658,13 @@ clean:
 	-del ..\..\..\..\..\temp\cdd\ta_CDLLONGLEGGEDDOJI.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLLONGLINE.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLMARUBOZU.obj
+	-del ..\..\..\..\..\temp\cdd\ta_CDLMATHOLD.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLMORNINGDOJISTAR.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLMORNINGSTAR.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLONNECK.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLPIERCING.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLRICKSHAWMAN.obj
+	-del ..\..\..\..\..\temp\cdd\ta_CDLRISEFALL3METHODS.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLSEPARATINGLINES.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLSHOOTINGSTAR.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLSHORTLINE.obj
@@ -654,6 +674,7 @@ clean:
 	-del ..\..\..\..\..\temp\cdd\ta_CDLTASUKIGAP.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLTHRUSTING.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLTRISTAR.obj
+	-del ..\..\..\..\..\temp\cdd\ta_CDLUNIQUE3RIVER.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLUPSIDEGAP2CROWS.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLXSIDEGAP3METHODS.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CORREL.obj
@@ -1067,6 +1088,9 @@ clean:
 ..\..\..\..\..\temp\cdd\ta_CDL3OUTSIDE.obj: ..\..\..\..\..\src\ta_func\ta_CDL3OUTSIDE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDL3OUTSIDE.obj ..\..\..\..\..\src\ta_func\ta_CDL3OUTSIDE.c
 
+..\..\..\..\..\temp\cdd\ta_CDL3STARSINSOUTH.obj: ..\..\..\..\..\src\ta_func\ta_CDL3STARSINSOUTH.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDL3STARSINSOUTH.obj ..\..\..\..\..\src\ta_func\ta_CDL3STARSINSOUTH.c
+
 ..\..\..\..\..\temp\cdd\ta_CDL3WHITESOLDIERS.obj: ..\..\..\..\..\src\ta_func\ta_CDL3WHITESOLDIERS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDL3WHITESOLDIERS.obj ..\..\..\..\..\src\ta_func\ta_CDL3WHITESOLDIERS.c
 
@@ -1081,6 +1105,12 @@ clean:
 
 ..\..\..\..\..\temp\cdd\ta_CDLBREAKAWAY.obj: ..\..\..\..\..\src\ta_func\ta_CDLBREAKAWAY.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLBREAKAWAY.obj ..\..\..\..\..\src\ta_func\ta_CDLBREAKAWAY.c
+
+..\..\..\..\..\temp\cdd\ta_CDLCLOSINGMARUBOZU.obj: ..\..\..\..\..\src\ta_func\ta_CDLCLOSINGMARUBOZU.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLCLOSINGMARUBOZU.obj ..\..\..\..\..\src\ta_func\ta_CDLCLOSINGMARUBOZU.c
+
+..\..\..\..\..\temp\cdd\ta_CDLCONCEALBABYSWALL.obj: ..\..\..\..\..\src\ta_func\ta_CDLCONCEALBABYSWALL.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLCONCEALBABYSWALL.obj ..\..\..\..\..\src\ta_func\ta_CDLCONCEALBABYSWALL.c
 
 ..\..\..\..\..\temp\cdd\ta_CDLCOUNTERATTACK.obj: ..\..\..\..\..\src\ta_func\ta_CDLCOUNTERATTACK.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLCOUNTERATTACK.obj ..\..\..\..\..\src\ta_func\ta_CDLCOUNTERATTACK.c
@@ -1105,6 +1135,9 @@ clean:
 
 ..\..\..\..\..\temp\cdd\ta_CDLEVENINGSTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLEVENINGSTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c
+
+..\..\..\..\..\temp\cdd\ta_CDLGAPSIDESIDEWHITE.obj: ..\..\..\..\..\src\ta_func\ta_CDLGAPSIDESIDEWHITE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLGAPSIDESIDEWHITE.obj ..\..\..\..\..\src\ta_func\ta_CDLGAPSIDESIDEWHITE.c
 
 ..\..\..\..\..\temp\cdd\ta_CDLGRAVESTONEDOJI.obj: ..\..\..\..\..\src\ta_func\ta_CDLGRAVESTONEDOJI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLGRAVESTONEDOJI.obj ..\..\..\..\..\src\ta_func\ta_CDLGRAVESTONEDOJI.c
@@ -1148,6 +1181,9 @@ clean:
 ..\..\..\..\..\temp\cdd\ta_CDLMARUBOZU.obj: ..\..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLMARUBOZU.obj ..\..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c
 
+..\..\..\..\..\temp\cdd\ta_CDLMATHOLD.obj: ..\..\..\..\..\src\ta_func\ta_CDLMATHOLD.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLMATHOLD.obj ..\..\..\..\..\src\ta_func\ta_CDLMATHOLD.c
+
 ..\..\..\..\..\temp\cdd\ta_CDLMORNINGDOJISTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLMORNINGDOJISTAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLMORNINGDOJISTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLMORNINGDOJISTAR.c
 
@@ -1162,6 +1198,9 @@ clean:
 
 ..\..\..\..\..\temp\cdd\ta_CDLRICKSHAWMAN.obj: ..\..\..\..\..\src\ta_func\ta_CDLRICKSHAWMAN.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLRICKSHAWMAN.obj ..\..\..\..\..\src\ta_func\ta_CDLRICKSHAWMAN.c
+
+..\..\..\..\..\temp\cdd\ta_CDLRISEFALL3METHODS.obj: ..\..\..\..\..\src\ta_func\ta_CDLRISEFALL3METHODS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLRISEFALL3METHODS.obj ..\..\..\..\..\src\ta_func\ta_CDLRISEFALL3METHODS.c
 
 ..\..\..\..\..\temp\cdd\ta_CDLSEPARATINGLINES.obj: ..\..\..\..\..\src\ta_func\ta_CDLSEPARATINGLINES.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLSEPARATINGLINES.obj ..\..\..\..\..\src\ta_func\ta_CDLSEPARATINGLINES.c
@@ -1189,6 +1228,9 @@ clean:
 
 ..\..\..\..\..\temp\cdd\ta_CDLTRISTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLTRISTAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLTRISTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLTRISTAR.c
+
+..\..\..\..\..\temp\cdd\ta_CDLUNIQUE3RIVER.obj: ..\..\..\..\..\src\ta_func\ta_CDLUNIQUE3RIVER.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLUNIQUE3RIVER.obj ..\..\..\..\..\src\ta_func\ta_CDLUNIQUE3RIVER.c
 
 ..\..\..\..\..\temp\cdd\ta_CDLUPSIDEGAP2CROWS.obj: ..\..\..\..\..\src\ta_func\ta_CDLUPSIDEGAP2CROWS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLUPSIDEGAP2CROWS.obj ..\..\..\..\..\src\ta_func\ta_CDLUPSIDEGAP2CROWS.c

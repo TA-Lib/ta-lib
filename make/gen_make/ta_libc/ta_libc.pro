@@ -139,11 +139,14 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_CDL3INSIDE.c \
           ../../../../../src/ta_func/ta_CDL3LINESTRIKE.c \
           ../../../../../src/ta_func/ta_CDL3OUTSIDE.c \
+          ../../../../../src/ta_func/ta_CDL3STARSINSOUTH.c \
           ../../../../../src/ta_func/ta_CDL3WHITESOLDIERS.c \
           ../../../../../src/ta_func/ta_CDLABANDONEDBABY.c \
           ../../../../../src/ta_func/ta_CDLADVANCEBLOCK.c \
           ../../../../../src/ta_func/ta_CDLBELTHOLD.c \
           ../../../../../src/ta_func/ta_CDLBREAKAWAY.c \
+          ../../../../../src/ta_func/ta_CDLCLOSINGMARUBOZU.c \
+          ../../../../../src/ta_func/ta_CDLCONCEALBABYSWALL.c \
           ../../../../../src/ta_func/ta_CDLCOUNTERATTACK.c \
           ../../../../../src/ta_func/ta_CDLDARKCLOUDCOVER.c \
           ../../../../../src/ta_func/ta_CDLDOJI.c \
@@ -152,6 +155,7 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_CDLENGULFING.c \
           ../../../../../src/ta_func/ta_CDLEVENINGDOJISTAR.c \
           ../../../../../src/ta_func/ta_CDLEVENINGSTAR.c \
+          ../../../../../src/ta_func/ta_CDLGAPSIDESIDEWHITE.c \
           ../../../../../src/ta_func/ta_CDLGRAVESTONEDOJI.c \
           ../../../../../src/ta_func/ta_CDLHAMMER.c \
           ../../../../../src/ta_func/ta_CDLHANGINGMAN.c \
@@ -166,11 +170,13 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_CDLLONGLEGGEDDOJI.c \
           ../../../../../src/ta_func/ta_CDLLONGLINE.c \
           ../../../../../src/ta_func/ta_CDLMARUBOZU.c \
+          ../../../../../src/ta_func/ta_CDLMATHOLD.c \
           ../../../../../src/ta_func/ta_CDLMORNINGDOJISTAR.c \
           ../../../../../src/ta_func/ta_CDLMORNINGSTAR.c \
           ../../../../../src/ta_func/ta_CDLONNECK.c \
           ../../../../../src/ta_func/ta_CDLPIERCING.c \
           ../../../../../src/ta_func/ta_CDLRICKSHAWMAN.c \
+          ../../../../../src/ta_func/ta_CDLRISEFALL3METHODS.c \
           ../../../../../src/ta_func/ta_CDLSEPARATINGLINES.c \
           ../../../../../src/ta_func/ta_CDLSHOOTINGSTAR.c \
           ../../../../../src/ta_func/ta_CDLSHORTLINE.c \
@@ -180,6 +186,7 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_CDLTASUKIGAP.c \
           ../../../../../src/ta_func/ta_CDLTHRUSTING.c \
           ../../../../../src/ta_func/ta_CDLTRISTAR.c \
+          ../../../../../src/ta_func/ta_CDLUNIQUE3RIVER.c \
           ../../../../../src/ta_func/ta_CDLUPSIDEGAP2CROWS.c \
           ../../../../../src/ta_func/ta_CDLXSIDEGAP3METHODS.c \
           ../../../../../src/ta_func/ta_CORREL.c \
