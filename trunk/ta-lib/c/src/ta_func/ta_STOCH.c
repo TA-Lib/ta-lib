@@ -105,7 +105,7 @@ int TA_STOCH_Lookback( TA_Integer    optInKPeriod_0, /* From 1 to TA_INTEGER_MAX
  *    Time periods for the moving average of the %K line. That average is the %D line
  * 
  * optInMethod_3:
- *    Define technique used for calculation
+ *    Type of Moving Average
  * 
  * 
  */

@@ -91,7 +91,7 @@ int TA_APO_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MA
  *    Number of period for the slow MA
  * 
  * optInMethod_2:
- *    Define technique used for calculation
+ *    Type of Moving Average
  * 
  * optInCompatibility_3:
  *    Make function compatible to some software

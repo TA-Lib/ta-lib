@@ -106,7 +106,7 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX
  *    Number of period
  * 
  * optInMethod_1:
- *    Define technique used for calculation
+ *    Type of Moving Average
  * 
  * optInCompatibility_2:
  *    Make function compatible to some software

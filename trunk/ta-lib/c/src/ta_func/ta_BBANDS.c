@@ -98,7 +98,7 @@ int TA_BBANDS_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER
  *    Deviation multiplier for lower band
  * 
  * optInMethod_3:
- *    Define technique used for calculation
+ *    Type of Moving Average
  * 
  * optInCompatibility_4:
  *    Make function compatible to some software
