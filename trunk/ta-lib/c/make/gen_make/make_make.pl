@@ -215,8 +215,7 @@ foreach $z (@platformCompilerPath) {
      
       $toRun = $toRun." ".$proPath."/".$proFile;
       $toRun = $toRun." -o "."../".@ARGV[0]."/".$platform."/".$compiler."/".$proPath."/"."Makefile";
-      # print "$ENV{TMAKEPATH}\n";
-      # print "to run = $toRun\n";
+      $ENV{'TMAKEPATH'} = $origTMAKEPATH."\\..\\".$platformCompiler;
       system $toRun;
    }
 
