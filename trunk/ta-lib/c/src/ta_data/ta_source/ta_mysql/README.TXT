@@ -2,6 +2,7 @@
 MySQL Source Driver for TA-Lib
 Copyright 2003 (C) Paweł A. Konieczny
 ===============================================================================
+vim: textwidth=77
 
 This file describes how TA_MYSQL source data driver interprets 
 the TA_AddDataSourceParam struct:
@@ -89,9 +90,16 @@ To do for Mario:
 Implement TA_FatalReportToBuffer().
 Implement automatic conversion from PERIOD_1SEC to PERIOD_1MIN and higher.
 Complete strings for error codes.
-Allow for null-drivers (drivers with function pointers set to null), to simplify development.
+Allow for null-drivers (drivers with function pointers set to null), 
+to simplify development (actually, I have done it already, but regressionn
+testing must be performed).
 
 Questions for Mario:
 Are driver functions protected for multithread access, or do they have to build a protection on their own?
 What error codes to use for specific cases in my driver.
 
+TA_XXX_GetNextCategoryHandle has an index parameter. In 
+TA_MYSQL_GetNextCategoryHandle I use TA_List which allows for iterating
+through the list but not random element access.  Can I ignore the index and
+assume always seqiential access?  Can I use the internal list iterator and
+assume only one thread will be accessing it?
