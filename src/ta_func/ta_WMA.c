@@ -43,10 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include <string.h>
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -54,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -62,8 +67,17 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::WMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+
+#else
 int TA_WMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -85,6 +99,16 @@ int TA_WMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::WMA( int    startIdx,
+                           int    endIdx,
+                           double       inReal_0 __gc [],
+                           int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                           [OutAttribute]Int32 *outBegIdx,
+                           [OutAttribute]Int32 *outNbElement,
+                           double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_WMA( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
@@ -92,9 +116,13 @@ TA_RetCode TA_WMA( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
+   unsigned int inIdx, outIdx, i, trailingIdx, divider;
+   double periodSum, periodSub, tempReal, trailingValue;
+   unsigned int lookbackTotal;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -122,28 +150,6 @@ TA_RetCode TA_WMA( int    startIdx,
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
-
-   return TA_INT_WMA( startIdx, endIdx,
-                      inReal_0, optInTimePeriod_0,
-                      outBegIdx, outNbElement, outReal_0 );
-}
-
-/* Calculate a Weighted Moving Average.
- * This is an internal version, parameters are assumed validated.
- * (startIdx and endIdx cannot be -1).
- */
-TA_RetCode TA_INT_WMA( TA_Integer    startIdx,
-                       TA_Integer    endIdx,
-                       const double *inReal_0,
-                       TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */                       
-                       TA_Integer   *outBegIdx,
-                       TA_Integer   *outNbElement,
-                       double      *outReal_0 )
-{
-   unsigned int inIdx, outIdx, i, trailingIdx, divider;
-   double periodSum, periodSub, tempReal, trailingValue;
-   unsigned int lookbackTotal;
-
    lookbackTotal = optInTimePeriod_0-1;
 
    /* Move up the start index if there is not
@@ -169,7 +175,7 @@ TA_RetCode TA_INT_WMA( TA_Integer    startIdx,
    {      
       *outBegIdx    = startIdx;
       *outNbElement = endIdx-startIdx+1;
-      memcpy( outReal_0, &inReal_0[startIdx], sizeof( double ) * (*outNbElement) );
+      ARRAY_MEMMOVE( outReal_0, 0, inReal_0, startIdx, *outNbElement );
       return TA_SUCCESS;
    }
 
@@ -253,4 +259,10 @@ TA_RetCode TA_INT_WMA( TA_Integer    startIdx,
 
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

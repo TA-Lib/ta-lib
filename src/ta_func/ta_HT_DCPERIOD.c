@@ -43,10 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-#include <math.h>
-#include "ta_memory.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -54,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -62,14 +67,23 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::HT_DCPERIOD_Lookback( void )
+
+#else
 int TA_HT_DCPERIOD_Lookback( void )
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
 
    /* See TA_MAMA_Lookback for an explanation of these */
-   return 32 + TA_Globals.unstablePeriod[TA_FUNC_UNST_HT_DCPERIOD];
+   return 32 + TA_Globals->unstablePeriod[TA_FUNC_UNST_HT_DCPERIOD];
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -81,12 +95,22 @@ int TA_HT_DCPERIOD_Lookback( void )
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::HT_DCPERIOD( int    startIdx,
+                                   int    endIdx,
+                                   double       inReal_0 __gc [],
+                                   [OutAttribute]Int32 *outBegIdx,
+                                   [OutAttribute]Int32 *outNbElement,
+                                   double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_HT_DCPERIOD( int    startIdx,
                            int    endIdx,
                            const double inReal_0[],
                            int          *outBegIdx,
                            int          *outNbElement,
                            double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
@@ -149,7 +173,7 @@ TA_RetCode TA_HT_DCPERIOD( int    startIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 32 + TA_Globals.unstablePeriod[TA_FUNC_UNST_HT_DCPERIOD];
+   lookbackTotal = 32 + TA_Globals->unstablePeriod[TA_FUNC_UNST_HT_DCPERIOD];
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -284,7 +308,7 @@ TA_RetCode TA_HT_DCPERIOD( int    startIdx,
           * 3 price bars. 
           *
           * Save the current detrender value for being
-          * used by the "odd" logic later.
+          * used by the "even" logic later.
           */
          I1ForEvenPrev3 = I1ForEvenPrev2;
          I1ForEvenPrev2 = detrender;
@@ -325,4 +349,10 @@ TA_RetCode TA_HT_DCPERIOD( int    startIdx,
  
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

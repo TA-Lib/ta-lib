@@ -43,12 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include <string.h>
-#include "ta_memory.h"
-
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -56,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -64,11 +67,23 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
+                        int           optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+                        TA_MAType     optInSlowK_MAType_2,
+                        int           optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                        TA_MAType     optInSlowD_MAType_4 ) 
+#else
 int TA_STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                       int           optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
-                       TA_MAType     optInSlowK_MAType_2,
-                       int           optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
-                       TA_MAType     optInSlowD_MAType_4 ) 
+                     int           optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+                     TA_MAType     optInSlowK_MAType_2,
+                     int           optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                     TA_MAType     optInSlowD_MAType_4 ) 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -114,6 +129,23 @@ int TA_STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEGE
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::STOCH( int    startIdx,
+                             int    endIdx,
+                             double       inHigh_0 __gc [],
+                             double       inLow_0 __gc [],
+                             double       inClose_0 __gc [],
+                             int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
+                             int           optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+                             TA_MAType     optInSlowK_MAType_2,
+                             int           optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                             TA_MAType     optInSlowD_MAType_4,
+                             [OutAttribute]Int32 *outBegIdx,
+                             [OutAttribute]Int32 *outNbElement,
+                             double        outSlowK_0 __gc [],
+                             double        outSlowD_1 __gc [] )
+#else
 TA_RetCode TA_STOCH( int    startIdx,
                      int    endIdx,
                      const double inHigh_0[],
@@ -128,15 +160,19 @@ TA_RetCode TA_STOCH( int    startIdx,
                      int          *outNbElement,
                      double        outSlowK_0[],
                      double        outSlowD_1[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
    TA_RetCode retCode;
    double lowest, highest, tmp, diff;
-   double *tempBuffer;
-   TA_Integer outIdx, lowestIdx, highestIdx;
-   TA_Integer lookbackTotal, lookbackK, lookbackKSlow, lookbackDSlow;
-   TA_Integer trailingIdx, today, i, bufferIsAllocated;
+   ARRAY_REF( tempBuffer );
+   int outIdx, lowestIdx, highestIdx;
+   int lookbackTotal, lookbackK, lookbackKSlow, lookbackDSlow;
+   int trailingIdx, today, i;
+   #if !defined( _MANAGED )
+   int bufferIsAllocated;
+   #endif
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -165,22 +201,26 @@ TA_RetCode TA_STOCH( int    startIdx,
    else if( ((int)optInSlowK_Period_1 < 1) || ((int)optInSlowK_Period_1 > 2147483647) )
       return TA_BAD_PARAM;
 
+   #if !defined(_MANAGED)
    if( (int)optInSlowK_MAType_2 == TA_INTEGER_DEFAULT )
       optInSlowK_MAType_2 = 0;
    else if( ((int)optInSlowK_MAType_2 < 0) || ((int)optInSlowK_MAType_2 > 8) )
       return TA_BAD_PARAM;
 
+   #endif /* !defined(_MANAGED) */
    /* min/max are checked for optInSlowD_Period_3. */
    if( (int)optInSlowD_Period_3 == TA_INTEGER_DEFAULT )
       optInSlowD_Period_3 = 3;
    else if( ((int)optInSlowD_Period_3 < 1) || ((int)optInSlowD_Period_3 > 2147483647) )
       return TA_BAD_PARAM;
 
+   #if !defined(_MANAGED)
    if( (int)optInSlowD_MAType_4 == TA_INTEGER_DEFAULT )
       optInSlowD_MAType_4 = 0;
    else if( ((int)optInSlowD_MAType_4 < 0) || ((int)optInSlowD_MAType_4 > 8) )
       return TA_BAD_PARAM;
 
+   #endif /* !defined(_MANAGED) */
    if( outSlowK_0 == NULL )
       return TA_BAD_PARAM;
 
@@ -276,7 +316,10 @@ TA_RetCode TA_STOCH( int    startIdx,
     * If the output is the same as the input, great
     * we just save ourself one memory allocation.
     */
-   bufferIsAllocated = 0;
+   #if !defined( _MANAGED )
+      bufferIsAllocated = 0;
+   #endif
+
    if( (outSlowK_0 == inHigh_0) || 
        (outSlowK_0 == inLow_0)  || 
        (outSlowK_0 == inClose_0) )
@@ -291,8 +334,10 @@ TA_RetCode TA_STOCH( int    startIdx,
    }
    else
    {
+      #if !defined( _MANAGED )
       bufferIsAllocated = 1;
-      tempBuffer = TA_Malloc( (endIdx-today+1)*sizeof(double) );
+      #endif
+      ARRAY_ALLOC( tempBuffer, endIdx-today+1 );
    }
 
    /* Do the K calculation */
@@ -371,8 +416,7 @@ TA_RetCode TA_STOCH( int    startIdx,
 
    if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
    {
-      if( bufferIsAllocated )
-        TA_Free(  tempBuffer ); 
+      ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
       /* Something wrong happen? No further data? */
       *outBegIdx    = 0;
       *outNbElement = 0;
@@ -392,11 +436,10 @@ TA_RetCode TA_STOCH( int    startIdx,
     *  caller buffer because more input data then the
     *  requested range was needed for doing %D).
     */
-   memmove( outSlowK_0, &tempBuffer[lookbackDSlow], (*outNbElement) * sizeof(double) );
+   ARRAY_MEMMOVE( outSlowK_0,0,tempBuffer,lookbackDSlow,*outNbElement);
 
    /* Don't need K anymore, free it if it was allocated here. */
-   if( bufferIsAllocated )
-      TA_Free(  tempBuffer ); 
+   ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
 
    if( retCode != TA_SUCCESS )
    {
@@ -414,4 +457,10 @@ TA_RetCode TA_STOCH( int    startIdx,
    return TA_SUCCESS;
 }
 
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

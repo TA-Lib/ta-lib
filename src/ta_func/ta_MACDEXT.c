@@ -43,11 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  010802 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include <string.h>
-#include "ta_memory.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -55,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -63,17 +67,30 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                          TA_MAType     optInFastMAType_1,
+                          int           optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
+                          TA_MAType     optInSlowMAType_3,
+                          int           optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
+                          TA_MAType     optInSignalMAType_5 ) 
+#else
 int TA_MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                         TA_MAType     optInFastMAType_1,
-                         int           optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
-                         TA_MAType     optInSlowMAType_3,
-                         int           optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
-                         TA_MAType     optInSignalMAType_5 ) 
+                       TA_MAType     optInFastMAType_1,
+                       int           optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
+                       TA_MAType     optInSlowMAType_3,
+                       int           optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
+                       TA_MAType     optInSignalMAType_5 ) 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
 
-   TA_Integer tempInteger, lookbackLargest;
+   int tempInteger, lookbackLargest;
 
    /* Find the MA with the largest lookback */
    lookbackLargest = TA_MA_Lookback( optInFastPeriod_0, optInFastMAType_1 );
@@ -115,6 +132,23 @@ int TA_MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGE
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::MACDEXT( int    startIdx,
+                               int    endIdx,
+                               double       inReal_0 __gc [],
+                               int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                               TA_MAType     optInFastMAType_1,
+                               int           optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
+                               TA_MAType     optInSlowMAType_3,
+                               int           optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
+                               TA_MAType     optInSignalMAType_5,
+                               [OutAttribute]Int32 *outBegIdx,
+                               [OutAttribute]Int32 *outNbElement,
+                               double        outMACD_0 __gc [],
+                               double        outMACDSignal_1 __gc [],
+                               double        outMACDHist_2 __gc [] )
+#else
 TA_RetCode TA_MACDEXT( int    startIdx,
                        int    endIdx,
                        const double inReal_0[],
@@ -129,15 +163,18 @@ TA_RetCode TA_MACDEXT( int    startIdx,
                        double        outMACD_0[],
                        double        outMACDSignal_1[],
                        double        outMACDHist_2[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
-   double *slowMABuffer, *fastMABuffer;
+   ARRAY_REF( slowMABuffer );
+   ARRAY_REF( fastMABuffer );
    TA_RetCode retCode;
-   TA_Integer tempInteger, outBegIdx1, outNbElement1;
-   TA_Integer outBegIdx2, outNbElement2;
-   TA_Integer lookbackTotal, lookbackSignal, lookbackLargest;
+   int tempInteger, outBegIdx1, outNbElement1;
+   int outBegIdx2, outNbElement2;
+   int lookbackTotal, lookbackSignal, lookbackLargest;
    int i;
+   TA_MAType tempMAType;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -157,33 +194,39 @@ TA_RetCode TA_MACDEXT( int    startIdx,
    else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
+   #if !defined(_MANAGED)
    if( (int)optInFastMAType_1 == TA_INTEGER_DEFAULT )
       optInFastMAType_1 = 0;
    else if( ((int)optInFastMAType_1 < 0) || ((int)optInFastMAType_1 > 8) )
       return TA_BAD_PARAM;
 
+   #endif /* !defined(_MANAGED) */
    /* min/max are checked for optInSlowPeriod_2. */
    if( (int)optInSlowPeriod_2 == TA_INTEGER_DEFAULT )
       optInSlowPeriod_2 = 26;
    else if( ((int)optInSlowPeriod_2 < 2) || ((int)optInSlowPeriod_2 > 2147483647) )
       return TA_BAD_PARAM;
 
+   #if !defined(_MANAGED)
    if( (int)optInSlowMAType_3 == TA_INTEGER_DEFAULT )
       optInSlowMAType_3 = 0;
    else if( ((int)optInSlowMAType_3 < 0) || ((int)optInSlowMAType_3 > 8) )
       return TA_BAD_PARAM;
 
+   #endif /* !defined(_MANAGED) */
    /* min/max are checked for optInSignalPeriod_4. */
    if( (int)optInSignalPeriod_4 == TA_INTEGER_DEFAULT )
       optInSignalPeriod_4 = 9;
    else if( ((int)optInSignalPeriod_4 < 1) || ((int)optInSignalPeriod_4 > 2147483647) )
       return TA_BAD_PARAM;
 
+   #if !defined(_MANAGED)
    if( (int)optInSignalMAType_5 == TA_INTEGER_DEFAULT )
       optInSignalMAType_5 = 0;
    else if( ((int)optInSignalMAType_5 < 0) || ((int)optInSignalMAType_5 > 8) )
       return TA_BAD_PARAM;
 
+   #endif /* !defined(_MANAGED) */
    if( outMACD_0 == NULL )
       return TA_BAD_PARAM;
 
@@ -209,9 +252,9 @@ TA_RetCode TA_MACDEXT( int    startIdx,
        optInSlowPeriod_2 = optInFastPeriod_0;
        optInFastPeriod_0 = tempInteger;
        /* swap type */
-       tempInteger       = optInSlowMAType_3;
+       tempMAType        = optInSlowMAType_3;
        optInSlowMAType_3 = optInFastMAType_1;
-       optInFastMAType_1 = tempInteger;
+       optInFastMAType_1 = tempMAType;
    }
 
    /* Find the MA with the largest lookback */
@@ -240,7 +283,7 @@ TA_RetCode TA_MACDEXT( int    startIdx,
 
    /* Allocate intermediate buffer for fast/slow MA. */
    tempInteger = (endIdx-startIdx)+1+lookbackSignal;
-   fastMABuffer = TA_Malloc( tempInteger * sizeof( double ) );
+   ARRAY_ALLOC( fastMABuffer, tempInteger );
    if( !fastMABuffer )
    {
       *outBegIdx = 0;
@@ -248,12 +291,12 @@ TA_RetCode TA_MACDEXT( int    startIdx,
       return TA_ALLOC_ERR;
    }
 
-   slowMABuffer = TA_Malloc( tempInteger * sizeof( double ) );
+   ARRAY_ALLOC( slowMABuffer, tempInteger );
    if( !slowMABuffer )
    {
       *outBegIdx = 0;
       *outNbElement = 0;
-      TA_Free(  fastMABuffer );
+      ARRAY_FREE( fastMABuffer );
       return TA_ALLOC_ERR;
    }
 
@@ -273,8 +316,8 @@ TA_RetCode TA_MACDEXT( int    startIdx,
    {
       *outBegIdx = 0;
       *outNbElement = 0;
-      TA_Free(  fastMABuffer );
-      TA_Free(  slowMABuffer );
+      ARRAY_FREE( fastMABuffer );
+      ARRAY_FREE( slowMABuffer );
       return retCode;
    }
 
@@ -287,8 +330,8 @@ TA_RetCode TA_MACDEXT( int    startIdx,
    {
       *outBegIdx = 0;
       *outNbElement = 0;
-      TA_Free(  fastMABuffer );
-      TA_Free(  slowMABuffer );
+      ARRAY_FREE( fastMABuffer );
+      ARRAY_FREE( slowMABuffer );
       return retCode;
    }
 
@@ -300,8 +343,8 @@ TA_RetCode TA_MACDEXT( int    startIdx,
    {
       *outBegIdx = 0;
       *outNbElement = 0;
-      TA_Free(  fastMABuffer );
-      TA_Free(  slowMABuffer );
+      ARRAY_FREE( fastMABuffer );
+      ARRAY_FREE( slowMABuffer );
       return TA_INTERNAL_ERROR(119);
    }
 
@@ -310,15 +353,15 @@ TA_RetCode TA_MACDEXT( int    startIdx,
       fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
 
    /* Copy the result into the output for the caller. */
-   memcpy( outMACD_0, &fastMABuffer[lookbackSignal], ((endIdx-startIdx)+1)*sizeof(double) );
+   ARRAY_MEMMOVE( outMACD_0, 0, fastMABuffer, lookbackSignal, (endIdx-startIdx)+1 );
 
    /* Calculate the signal/trigger line. */
    retCode = TA_MA( 0, outNbElement1-1,
                     fastMABuffer, optInSignalPeriod_4, optInSignalMAType_5,
                     &outBegIdx2, &outNbElement2, outMACDSignal_1 );
 
-   TA_Free( fastMABuffer );
-   TA_Free( slowMABuffer );
+   ARRAY_FREE( fastMABuffer );
+   ARRAY_FREE( slowMABuffer );
 
    if( retCode != TA_SUCCESS )
    {
@@ -338,4 +381,10 @@ TA_RetCode TA_MACDEXT( int    startIdx,
    return TA_SUCCESS;
 }
 
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

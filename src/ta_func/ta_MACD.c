@@ -43,11 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-#include <string.h>
-#include "ta_memory.h"
-
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -55,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -63,10 +67,21 @@
    #include "ta_utility.h"
 #endif
 
-int TA_MACD_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                      int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                      int           optInSignalPeriod_2 )  /* From 1 to TA_INTEGER_MAX */
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
 
+#if defined( _MANAGED )
+int Core::MACD_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                       int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                       int           optInSignalPeriod_2 )  /* From 1 to TA_INTEGER_MAX */
+
+#else
+int TA_MACD_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                    int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                    int           optInSignalPeriod_2 )  /* From 1 to TA_INTEGER_MAX */
+
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -76,7 +91,7 @@ int TA_MACD_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_M
     * (must also account for the initial data consume 
     *  by the slow period).
     */
-   TA_Integer tempInteger;
+   int tempInteger;
 
    /* Make sure slow is really slower than
     * the fast period! if not, swap...
@@ -93,117 +108,39 @@ int TA_MACD_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_M
           + TA_EMA_Lookback( optInSignalPeriod_2 );
 }
 
-/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
-/*
- * TA_MACD - Moving Average Convergence/Divergence
- * 
- * Input  = double
- * Output = double, double, double
- * 
- * Optional Parameters
- * -------------------
- * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
- *    Number of period for the fast MA
- * 
- * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
- *    Number of period for the slow MA
- * 
- * optInSignalPeriod_2:(From 1 to TA_INTEGER_MAX)
- *    Smoothing for the signal line (nb of period)
- * 
- * 
- */
-
-TA_RetCode TA_MACD( int    startIdx,
-                    int    endIdx,
-                    const double inReal_0[],
-                    int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                    int           optInSignalPeriod_2, /* From 1 to TA_INTEGER_MAX */
-                    int          *outBegIdx,
-                    int          *outNbElement,
-                    double        outMACD_0[],
-                    double        outMACDSignal_1[],
-                    double        outMACDHist_2[] )
-/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
-{
-   /* Insert local variables here. */
-
-/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-#ifndef TA_FUNC_NO_RANGE_CHECK
-
-   /* Validate the requested output range. */
-   if( startIdx < 0 )
-      return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx < startIdx))
-      return TA_OUT_OF_RANGE_END_INDEX;
-
-   /* Validate the parameters. */
-   if( !inReal_0 ) return TA_BAD_PARAM;
-   /* min/max are checked for optInFastPeriod_0. */
-   if( (int)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
-      optInFastPeriod_0 = 12;
-   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 2147483647) )
-      return TA_BAD_PARAM;
-
-   /* min/max are checked for optInSlowPeriod_1. */
-   if( (int)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
-      optInSlowPeriod_1 = 26;
-   else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 2147483647) )
-      return TA_BAD_PARAM;
-
-   /* min/max are checked for optInSignalPeriod_2. */
-   if( (int)optInSignalPeriod_2 == TA_INTEGER_DEFAULT )
-      optInSignalPeriod_2 = 9;
-   else if( ((int)optInSignalPeriod_2 < 1) || ((int)optInSignalPeriod_2 > 2147483647) )
-      return TA_BAD_PARAM;
-
-   if( outMACD_0 == NULL )
-      return TA_BAD_PARAM;
-
-   if( outMACDSignal_1 == NULL )
-      return TA_BAD_PARAM;
-
-   if( outMACDHist_2 == NULL )
-      return TA_BAD_PARAM;
-
-#endif /* TA_FUNC_NO_RANGE_CHECK */
-
-/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   /* Insert TA function code here. */  
-
-   return TA_INT_MACD( startIdx, endIdx,                       
-                       inReal_0,
-                       optInFastPeriod_0,
-                       optInSlowPeriod_1,
-                       optInSignalPeriod_2,
-                       outBegIdx,
-                       outNbElement,
-                       outMACD_0,
-                       outMACDSignal_1,
-                       outMACDHist_2 );
-}
-
-TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
-                        TA_Integer    endIdx,
+#if defined( _MANAGED )
+enum TA_RetCode Core::TA_INT_MACD( int    startIdx,
+                                 int    endIdx,
+                                 double inReal_0 __gc [],
+                                 int    optInFastPeriod_0, /* From 1 to 200, 0 is fix 12 */
+                                 int    optInSlowPeriod_1, /* From 1 to 200, 0 is fix 26 */
+                                 int    optInSignalPeriod_2, /* From 1 to 200 */
+                                 [OutAttribute]Int32 *outBegIdx,
+                                 [OutAttribute]Int32 *outNbElement,
+                                 double outMACD_0 __gc [],
+                                 double outMACDSignal_1 __gc [],
+                                 double outMACDHist_2 __gc [] )
+#else
+TA_RetCode TA_INT_MACD( int    startIdx,
+                        int    endIdx,
                         const double inReal_0[],
-                        TA_Integer    optInFastPeriod_0, /* From 1 to 200, 0 is fix 12 */
-                        TA_Integer    optInSlowPeriod_1, /* From 1 to 200, 0 is fix 26 */
-                        TA_Integer    optInSignalPeriod_2, /* From 1 to 200 */
-                        TA_Integer   *outBegIdx,
-                        TA_Integer   *outNbElement,
+                        int    optInFastPeriod_0, /* From 1 to 200, 0 is fix 12 */
+                        int    optInSlowPeriod_1, /* From 1 to 200, 0 is fix 26 */
+                        int    optInSignalPeriod_2, /* From 1 to 200 */
+                        int   *outBegIdx,
+                        int   *outNbElement,
                         double       outMACD_0[],
                         double       outMACDSignal_1[],
                         double       outMACDHist_2[] )
+#endif
 {
-   double *slowEMABuffer, *fastEMABuffer;
+   ARRAY_REF(slowEMABuffer);
+   ARRAY_REF(fastEMABuffer);
    double k1, k2;
    TA_RetCode retCode;
-   TA_Integer tempInteger, outBegIdx1, outNbElement1;
-   TA_Integer outBegIdx2, outNbElement2;
-   TA_Integer lookbackTotal, lookbackSignal;
+   int tempInteger, outBegIdx1, outNbElement1;
+   int outBegIdx2, outNbElement2;
+   int lookbackTotal, lookbackSignal;
    int i;
 
    /* !!! A lot of speed optimization could be done
@@ -280,7 +217,7 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
 
    /* Allocate intermediate buffer for fast/slow EMA. */
    tempInteger = (endIdx-startIdx)+1+lookbackSignal;
-   fastEMABuffer = TA_Malloc( tempInteger * sizeof( double ) );
+   ARRAY_ALLOC( fastEMABuffer, tempInteger );
    if( !fastEMABuffer )
    {
       *outBegIdx = 0;
@@ -288,12 +225,12 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
       return TA_ALLOC_ERR;
    }
 
-   slowEMABuffer = TA_Malloc( tempInteger * sizeof( double ) );
+   ARRAY_ALLOC( slowEMABuffer, tempInteger );
    if( !slowEMABuffer )
    {
       *outBegIdx = 0;
       *outNbElement = 0;
-      TA_Free(  fastEMABuffer );
+      ARRAY_FREE( fastEMABuffer );
       return TA_ALLOC_ERR;
    }
 
@@ -313,8 +250,8 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
    {
       *outBegIdx = 0;
       *outNbElement = 0;
-      TA_Free(  fastEMABuffer );
-      TA_Free(  slowEMABuffer );
+      ARRAY_FREE( fastEMABuffer );
+      ARRAY_FREE( slowEMABuffer );
       return retCode;
    }
 
@@ -327,8 +264,8 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
    {
       *outBegIdx = 0;
       *outNbElement = 0;
-      TA_Free(  fastEMABuffer );
-      TA_Free(  slowEMABuffer );
+      ARRAY_FREE( fastEMABuffer );
+      ARRAY_FREE( slowEMABuffer );
       return retCode;
    }
 
@@ -340,8 +277,8 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
    {
       *outBegIdx = 0;
       *outNbElement = 0;
-      TA_Free(  fastEMABuffer );
-      TA_Free(  slowEMABuffer );
+      ARRAY_FREE( fastEMABuffer );
+      ARRAY_FREE( slowEMABuffer );
       return TA_INTERNAL_ERROR(119);
    }
 
@@ -351,7 +288,7 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
 
 
    /* Copy the result into the output for the caller. */
-   memcpy( outMACD_0, &fastEMABuffer[lookbackSignal], ((endIdx-startIdx)+1)*sizeof(double) );
+   ARRAY_MEMMOVE( outMACD_0, 0, fastEMABuffer, lookbackSignal, (endIdx-startIdx)+1 );
 
    /* Calculate the signal/trigger line. */
    retCode = TA_INT_EMA( 0, outNbElement1-1,
@@ -359,8 +296,8 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
                          &outBegIdx2, &outNbElement2, outMACDSignal_1 );
 
 
-   TA_Free( fastEMABuffer );
-   TA_Free( slowEMABuffer );
+   ARRAY_FREE( fastEMABuffer );
+   ARRAY_FREE( slowEMABuffer );
 
    if( retCode != TA_SUCCESS )
    {
@@ -384,4 +321,120 @@ TA_RetCode TA_INT_MACD( TA_Integer    startIdx,
 
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/*
+ * TA_MACD - Moving Average Convergence/Divergence
+ * 
+ * Input  = double
+ * Output = double, double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
+ *    Number of period for the fast MA
+ * 
+ * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
+ *    Number of period for the slow MA
+ * 
+ * optInSignalPeriod_2:(From 1 to TA_INTEGER_MAX)
+ *    Smoothing for the signal line (nb of period)
+ * 
+ * 
+ */
+
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::MACD( int    startIdx,
+                            int    endIdx,
+                            double       inReal_0 __gc [],
+                            int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                            int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                            int           optInSignalPeriod_2, /* From 1 to TA_INTEGER_MAX */
+                            [OutAttribute]Int32 *outBegIdx,
+                            [OutAttribute]Int32 *outNbElement,
+                            double        outMACD_0 __gc [],
+                            double        outMACDSignal_1 __gc [],
+                            double        outMACDHist_2 __gc [] )
+#else
+TA_RetCode TA_MACD( int    startIdx,
+                    int    endIdx,
+                    const double inReal_0[],
+                    int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                    int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                    int           optInSignalPeriod_2, /* From 1 to TA_INTEGER_MAX */
+                    int          *outBegIdx,
+                    int          *outNbElement,
+                    double        outMACD_0[],
+                    double        outMACDSignal_1[],
+                    double        outMACDHist_2[] )
+#endif
+/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+{
+   /* Insert local variables here. */
+
+/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+
+#ifndef TA_FUNC_NO_RANGE_CHECK
+
+   /* Validate the requested output range. */
+   if( startIdx < 0 )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx < startIdx))
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   /* Validate the parameters. */
+   if( !inReal_0 ) return TA_BAD_PARAM;
+   /* min/max are checked for optInFastPeriod_0. */
+   if( (int)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
+      optInFastPeriod_0 = 12;
+   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 2147483647) )
+      return TA_BAD_PARAM;
+
+   /* min/max are checked for optInSlowPeriod_1. */
+   if( (int)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
+      optInSlowPeriod_1 = 26;
+   else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 2147483647) )
+      return TA_BAD_PARAM;
+
+   /* min/max are checked for optInSignalPeriod_2. */
+   if( (int)optInSignalPeriod_2 == TA_INTEGER_DEFAULT )
+      optInSignalPeriod_2 = 9;
+   else if( ((int)optInSignalPeriod_2 < 1) || ((int)optInSignalPeriod_2 > 2147483647) )
+      return TA_BAD_PARAM;
+
+   if( outMACD_0 == NULL )
+      return TA_BAD_PARAM;
+
+   if( outMACDSignal_1 == NULL )
+      return TA_BAD_PARAM;
+
+   if( outMACDHist_2 == NULL )
+      return TA_BAD_PARAM;
+
+#endif /* TA_FUNC_NO_RANGE_CHECK */
+
+/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+
+   /* Insert TA function code here. */  
+
+   return TA_INT_MACD( startIdx, endIdx,                       
+                       inReal_0,
+                       optInFastPeriod_0,
+                       optInSlowPeriod_1,
+                       optInSignalPeriod_2,
+                       outBegIdx,
+                       outNbElement,
+                       outMACD_0,
+                       outMACDSignal_1,
+                       outMACDHist_2 );
+}
+
+
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

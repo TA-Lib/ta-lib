@@ -43,11 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  010802 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-#include <math.h>
-#include "ta_memory.h"
-
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -55,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -63,8 +67,17 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::ADXR_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+
+#else
 int TA_ADXR_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -89,6 +102,18 @@ int TA_ADXR_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::ADXR( int    startIdx,
+                            int    endIdx,
+                            double       inHigh_0 __gc [],
+                            double       inLow_0 __gc [],
+                            double       inClose_0 __gc [],
+                            int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                            [OutAttribute]Int32 *outBegIdx,
+                            [OutAttribute]Int32 *outNbElement,
+                            double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_ADXR( int    startIdx,
                     int    endIdx,
                     const double inHigh_0[],
@@ -98,10 +123,11 @@ TA_RetCode TA_ADXR( int    startIdx,
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
-   double *adx;
+   ARRAY_REF( adx );
    int adxrLookback, i, j, outIdx, nbElement;
    TA_RetCode retCode;
 
@@ -152,7 +178,7 @@ TA_RetCode TA_ADXR( int    startIdx,
       return TA_SUCCESS;
    }
 
-   adx = TA_Malloc( sizeof(double)*(endIdx-startIdx+optInTimePeriod_0) );
+   ARRAY_ALLOC( adx, endIdx-startIdx+optInTimePeriod_0 );
    if( !adx )
       return TA_ALLOC_ERR;
 
@@ -162,7 +188,7 @@ TA_RetCode TA_ADXR( int    startIdx,
 
    if( retCode != TA_SUCCESS )      
    {
-      TA_Free(  adx );
+      ARRAY_FREE( adx );
       return retCode;
    }
 
@@ -173,11 +199,17 @@ TA_RetCode TA_ADXR( int    startIdx,
    while( --nbElement != 0 )
       outReal_0[outIdx++] = round_pos( (adx[i++]+adx[j++])/2.0 );
 
-   TA_Free(  adx );
+   ARRAY_FREE( adx );
 
    *outBegIdx    = startIdx;
    *outNbElement = outIdx;
 
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

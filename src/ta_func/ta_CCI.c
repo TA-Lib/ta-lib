@@ -43,11 +43,8 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  031202 MF   Template creation.
- *
+ *  052603 MF   Port to managed C++. Change to use CIRCBUF macros.
  */
-
-#include <math.h>
-#include "ta_memory.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -55,7 +52,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -63,8 +66,17 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::CCI_Lookback( int           optInTimePeriod_0 )  /* From 5 to TA_INTEGER_MAX */
+
+#else
 int TA_CCI_Lookback( int           optInTimePeriod_0 )  /* From 5 to TA_INTEGER_MAX */
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -86,6 +98,18 @@ int TA_CCI_Lookback( int           optInTimePeriod_0 )  /* From 5 to TA_INTEGER_
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::CCI( int    startIdx,
+                           int    endIdx,
+                           double       inHigh_0 __gc [],
+                           double       inLow_0 __gc [],
+                           double       inClose_0 __gc [],
+                           int           optInTimePeriod_0, /* From 5 to TA_INTEGER_MAX */
+                           [OutAttribute]Int32 *outBegIdx,
+                           [OutAttribute]Int32 *outNbElement,
+                           double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_CCI( int    startIdx,
                    int    endIdx,
                    const double inHigh_0[],
@@ -95,24 +119,18 @@ TA_RetCode TA_CCI( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 
 	/* insert local variable here */
    double periodTotal, tempReal, tempReal2, theAverage, lastValue;
-   int i, j, outIdx, trailingIdx, headingIdx, lookbackTotal;
+   int i, j, outIdx, lookbackTotal;
 
    /* This ptr will points on a circular buffer of
     * at least "optInTimePeriod_0" element.
     */
-   double *circBuffer;
-
-   /* To avoid a memory allocation, use a small buffer
-    * taken on the stack when the period is smaller
-    * or equal to LOCAL_BUFFER_SIZE.
-    */
-   #define LOCAL_BUFFER_SIZE 30
-   double localBuffer[LOCAL_BUFFER_SIZE];
+   CIRCBUF_PROLOG(circBuffer,double,30);
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -143,7 +161,7 @@ TA_RetCode TA_CCI( int    startIdx,
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
-
+   
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
@@ -166,17 +184,8 @@ TA_RetCode TA_CCI( int    startIdx,
    /* Allocate a circular buffer equal to the requested
     * period.
     */
-   if( optInTimePeriod_0 > LOCAL_BUFFER_SIZE )
-   {
-      circBuffer = TA_Malloc( optInTimePeriod_0*sizeof(double) );
-      if( !circBuffer )
-         return TA_ALLOC_ERR;
-   }
-   else
-      circBuffer = localBuffer;
+   CIRCBUF_CONSTRUCT( circBuffer, double, optInTimePeriod_0 );
   
-   headingIdx = trailingIdx = 0;
-
    /* Do the MA calculation using tight loops. */
 
    /* Add-up the initial period, except for the last value. 
@@ -191,7 +200,8 @@ TA_RetCode TA_CCI( int    startIdx,
          lastValue = (inHigh_0[i]+inLow_0[i]+inClose_0[i])/3;
          i++;
          periodTotal += lastValue;
-         circBuffer[headingIdx++] = lastValue; 
+         circBuffer[circBuffer_Idx] = lastValue; 
+         CIRCBUF_NEXT(circBuffer);
       }
    }
 
@@ -204,10 +214,13 @@ TA_RetCode TA_CCI( int    startIdx,
    {
       /* Calculate the average for the whole period. */
       lastValue = (inHigh_0[i]+inLow_0[i]+inClose_0[i])/3;
-      circBuffer[headingIdx] = lastValue;
+      circBuffer[circBuffer_Idx] = lastValue;
       periodTotal += lastValue;
       tempReal  = periodTotal;
-      periodTotal -= circBuffer[trailingIdx];
+      if( circBuffer_Idx == (optInTimePeriod_0-1) )
+         periodTotal -= circBuffer[0];
+      else
+         periodTotal -= circBuffer[circBuffer_Idx+1];
       theAverage = tempReal / optInTimePeriod_0;
 
       /* Do the summation of the ABS(TypePrice-average)
@@ -228,15 +241,7 @@ TA_RetCode TA_CCI( int    startIdx,
          outReal_0[outIdx++] = 0.0;
       
       /* Move forward the circular buffer indexes. */
-      trailingIdx++;
-      if( trailingIdx == 1 )
-         headingIdx = 0;
-      else 
-      {
-         if( trailingIdx == optInTimePeriod_0 )
-            trailingIdx = 0;
-         headingIdx++;
-      }
+      CIRCBUF_NEXT(circBuffer);
 
       i++;
    } while( i <= endIdx );
@@ -246,9 +251,14 @@ TA_RetCode TA_CCI( int    startIdx,
    *outBegIdx    = startIdx;
 
    /* Free the circular buffer if it was dynamically allocated. */
-   if( circBuffer != localBuffer )
-      TA_Free(  circBuffer );
+   CIRCBUF_DESTROY(circBuffer);
 
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

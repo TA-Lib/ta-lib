@@ -43,6 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
 
@@ -52,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -60,8 +67,17 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::SMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+
+#else
 int TA_SMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -69,73 +85,23 @@ int TA_SMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_
    return optInTimePeriod_0 - 1;
 }
 
-/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
-/*
- * TA_SMA - Simple Moving Average
- * 
- * Input  = double
- * Output = double
- * 
- * Optional Parameters
- * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
- *    Number of period
- * 
- * 
- */
-
-TA_RetCode TA_SMA( int    startIdx,
-                   int    endIdx,
-                   const double inReal_0[],
-                   int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                   int          *outBegIdx,
-                   int          *outNbElement,
-                   double        outReal_0[] )
-/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
-{
-   /* Insert local variables here. */
-
-/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-#ifndef TA_FUNC_NO_RANGE_CHECK
-
-   /* Validate the requested output range. */
-   if( startIdx < 0 )
-      return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx < startIdx))
-      return TA_OUT_OF_RANGE_END_INDEX;
-
-   /* Validate the parameters. */
-   if( !inReal_0 ) return TA_BAD_PARAM;
-   /* min/max are checked for optInTimePeriod_0. */
-   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-      optInTimePeriod_0 = 30;
-   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
-      return TA_BAD_PARAM;
-
-   if( outReal_0 == NULL )
-      return TA_BAD_PARAM;
-
-#endif /* TA_FUNC_NO_RANGE_CHECK */
-
-/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
-
-   /* Insert TA function code here. */
-
-   return TA_INT_SMA( startIdx,
-                      endIdx,
-                      inReal_0,
-                      optInTimePeriod_0,
-                      outBegIdx, outNbElement, outReal_0 );
-}
-
-TA_RetCode TA_INT_SMA( TA_Integer    startIdx,
-                       TA_Integer    endIdx,
+#if defined( _MANAGED )
+enum TA_RetCode Core::TA_INT_SMA( int     startIdx,
+                                  int     endIdx,
+                                  double  inReal_0 __gc [],
+                                  int     optInTimePeriod_0, /* From 1 to 200 */
+                                  [OutAttribute]Int32 *outBegIdx,
+                                  [OutAttribute]Int32 *outNbElement,
+                                  double  outReal_0 __gc [] )
+#else
+TA_RetCode TA_INT_SMA( int    startIdx,
+                       int    endIdx,
                        const double *inReal_0,
-                       TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */                       
-                       TA_Integer   *outBegIdx,
-                       TA_Integer   *outNbElement,
+                       int    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */                       
+                       int   *outBegIdx,
+                       int   *outNbElement,
                        double      *outReal_0 )
+#endif
 {
    double periodTotal, tempReal;
    int i, outIdx, trailingIdx, lookbackTotal;
@@ -191,4 +157,80 @@ TA_RetCode TA_INT_SMA( TA_Integer    startIdx,
    return TA_SUCCESS;
 }
 
+/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/*
+ * TA_SMA - Simple Moving Average
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::SMA( int    startIdx,
+                           int    endIdx,
+                           double       inReal_0 __gc [],
+                           int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                           [OutAttribute]Int32 *outBegIdx,
+                           [OutAttribute]Int32 *outNbElement,
+                           double        outReal_0 __gc [] )
+#else
+TA_RetCode TA_SMA( int    startIdx,
+                   int    endIdx,
+                   const double inReal_0[],
+                   int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   double        outReal_0[] )
+#endif
+/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+{
+   /* Insert local variables here. */
+
+/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+
+#ifndef TA_FUNC_NO_RANGE_CHECK
+
+   /* Validate the requested output range. */
+   if( startIdx < 0 )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx < startIdx))
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   /* Validate the parameters. */
+   if( !inReal_0 ) return TA_BAD_PARAM;
+   /* min/max are checked for optInTimePeriod_0. */
+   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+      optInTimePeriod_0 = 30;
+   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
+      return TA_BAD_PARAM;
+
+   if( outReal_0 == NULL )
+      return TA_BAD_PARAM;
+
+#endif /* TA_FUNC_NO_RANGE_CHECK */
+
+/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+
+   /* Insert TA function code here. */
+
+   return TA_INT_SMA( startIdx,
+                      endIdx,
+                      inReal_0,
+                      optInTimePeriod_0,
+                      outBegIdx, outNbElement, outReal_0 );
+}
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

@@ -44,11 +44,10 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
- *  010503 MF   Fix to always use SMA for the STDDEV (Thanks to JV). 
+ *  010503 MF   Fix to always use SMA for the STDDEV (Thanks to JV).
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include <string.h>
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -56,7 +55,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -64,10 +69,21 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::BBANDS_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                         double        optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                         double        optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
+                         TA_MAType     optInMAType_3 ) 
+#else
 int TA_BBANDS_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                        double        optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        double        optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        TA_MAType     optInMAType_3 ) 
+                      double        optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      double        optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
+                      TA_MAType     optInMAType_3 ) 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -102,6 +118,21 @@ int TA_BBANDS_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::BBANDS( int    startIdx,
+                              int    endIdx,
+                              double       inReal_0 __gc [],
+                              int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                              double        optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                              double        optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
+                              TA_MAType     optInMAType_3,
+                              [OutAttribute]Int32 *outBegIdx,
+                              [OutAttribute]Int32 *outNbElement,
+                              double        outRealUpperBand_0 __gc [],
+                              double        outRealMiddleBand_1 __gc [],
+                              double        outRealLowerBand_2 __gc [] )
+#else
 TA_RetCode TA_BBANDS( int    startIdx,
                       int    endIdx,
                       const double inReal_0[],
@@ -114,14 +145,15 @@ TA_RetCode TA_BBANDS( int    startIdx,
                       double        outRealUpperBand_0[],
                       double        outRealMiddleBand_1[],
                       double        outRealLowerBand_2[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
    TA_RetCode retCode;
    int i;
-   double tempReal;
-   double *tempBuffer1, *tempBuffer2;
-   register double tempReal2;
+   double tempReal, tempReal2;
+   ARRAY_REF(tempBuffer1);
+   ARRAY_REF(tempBuffer2);
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -151,11 +183,13 @@ TA_RetCode TA_BBANDS( int    startIdx,
    else if( (optInNbDevDn_2 < -3.000000e+37) || (optInNbDevDn_2 > 3.000000e+37) )
       return TA_BAD_PARAM;
 
+   #if !defined(_MANAGED)
    if( (int)optInMAType_3 == TA_INTEGER_DEFAULT )
       optInMAType_3 = 0;
    else if( ((int)optInMAType_3 < 0) || ((int)optInMAType_3 > 8) )
       return TA_BAD_PARAM;
 
+   #endif /* !defined(_MANAGED) */
    if( outRealUpperBand_0 == NULL )
       return TA_BAD_PARAM;
 
@@ -250,7 +284,9 @@ TA_RetCode TA_BBANDS( int    startIdx,
     * the calculation was done into it already!
     */
    if( tempBuffer1 != outRealMiddleBand_1 )
-      memcpy( outRealMiddleBand_1, tempBuffer1, sizeof(double)*(*outNbElement) );
+   {
+      ARRAY_COPY( outRealMiddleBand_1, tempBuffer1, *outNbElement );
+   }
    
    /* Now do a tight loop to calculate the upper/lower band at
     * the same time. 
@@ -320,4 +356,10 @@ TA_RetCode TA_BBANDS( int    startIdx,
    
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

@@ -43,10 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include "ta_memory.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -54,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -62,8 +67,17 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::ATR_Lookback( int           optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+
+#else
 int TA_ATR_Lookback( int           optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -75,7 +89,7 @@ int TA_ATR_Lookback( int           optInTimePeriod_0 )  /* From 1 to TA_INTEGER_
     * (optInTimePeriod_0-1) is for the simple
     * moving average.
     */
-   return optInTimePeriod_0 + TA_Globals.unstablePeriod[TA_FUNC_UNST_ATR];
+   return optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_ATR];
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -93,6 +107,18 @@ int TA_ATR_Lookback( int           optInTimePeriod_0 )  /* From 1 to TA_INTEGER_
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::ATR( int    startIdx,
+                           int    endIdx,
+                           double       inHigh_0 __gc [],
+                           double       inLow_0 __gc [],
+                           double       inClose_0 __gc [],
+                           int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                           [OutAttribute]Int32 *outBegIdx,
+                           [OutAttribute]Int32 *outNbElement,
+                           double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_ATR( int    startIdx,
                    int    endIdx,
                    const double inHigh_0[],
@@ -102,14 +128,22 @@ TA_RetCode TA_ATR( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
    TA_RetCode retCode;
-   TA_Integer outIdx, today, lookbackTotal;
-   TA_Integer outBegIdxTmp, outNbElementTmp, nbATR;
-   TA_Integer outBegIdx_MA, outNbElement_MA;
-   double prevATR, *tempBuffer;
+   int outIdx, today, lookbackTotal;
+   int outBegIdxTmp, outNbElementTmp, nbATR;
+   int outBegIdx_MA, outNbElement_MA;
+   double prevATR;
+   ARRAY_REF( tempBuffer );
+
+   #if defined( _MANAGED )
+      double prevATRTemp __gc [] = new double __gc [1];
+   #else
+      double prevATRTemp [1];
+   #endif
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -166,24 +200,22 @@ TA_RetCode TA_ATR( int    startIdx,
    if( optInTimePeriod_0 <= 1 )
    {
       /* No smoothing needed. Just do a TRANGE. */
-      return TA_TRANGE(
-                        startIdx, endIdx,
+      return TA_TRANGE( startIdx, endIdx,
                         inHigh_0, inLow_0, inClose_0,
                         outBegIdx, outNbElement, outReal_0 );
    }
 
    /* Allocate an intermediate buffer for TRANGE. */
-   tempBuffer = (double *)TA_Malloc( (lookbackTotal+(endIdx-startIdx)+1) * sizeof( double ) );
+   ARRAY_ALLOC(tempBuffer, lookbackTotal+(endIdx-startIdx)+1 );
 
    /* Do TRANGE in the intermediate buffer. */
-   retCode = TA_TRANGE(
-                        (startIdx-lookbackTotal+1), endIdx,
+   retCode = TA_TRANGE( (startIdx-lookbackTotal+1), endIdx,
                         inHigh_0, inLow_0, inClose_0,
                         &outBegIdxTmp, &outNbElementTmp, tempBuffer );
 
    if( retCode != TA_SUCCESS )
    {
-      TA_Free( tempBuffer );
+      ARRAY_FREE( tempBuffer );
       return retCode;
    }
 
@@ -194,13 +226,14 @@ TA_RetCode TA_ATR( int    startIdx,
                          optInTimePeriod_0-1,
                          tempBuffer,
                          optInTimePeriod_0,
-                         &outBegIdx_MA, &outNbElement_MA, &prevATR );
+                         &outBegIdx_MA, &outNbElement_MA, prevATRTemp );
 
    if( retCode != TA_SUCCESS )
    {
-      TA_Free( tempBuffer );
+      ARRAY_FREE( tempBuffer );
       return retCode;    
    }
+   prevATR = prevATRTemp[0];
 
    /* Subsequent value are smoothed using the
     * previous ATR value (Wilder's approach).
@@ -209,7 +242,7 @@ TA_RetCode TA_ATR( int    startIdx,
     *  3) Divide by 'period'.
     */
    today = optInTimePeriod_0;
-   outIdx = TA_Globals.unstablePeriod[TA_FUNC_UNST_ATR];
+   outIdx = TA_Globals->unstablePeriod[TA_FUNC_UNST_ATR];
    /* Skip the unstable period. */
    while( outIdx != 0 )
    {
@@ -239,8 +272,14 @@ TA_RetCode TA_ATR( int    startIdx,
    *outBegIdx    = startIdx;
    *outNbElement = outIdx;
    
-   TA_Free( tempBuffer );
+   ARRAY_FREE( tempBuffer );
     
    return retCode;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

@@ -43,10 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  010102 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include "ta_memory.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -54,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -62,8 +67,17 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::DEMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+
+#else
 int TA_DEMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -89,6 +103,16 @@ int TA_DEMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::DEMA( int    startIdx,
+                            int    endIdx,
+                            double       inReal_0 __gc [],
+                            int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                            [OutAttribute]Int32 *outBegIdx,
+                            [OutAttribute]Int32 *outNbElement,
+                            double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_DEMA( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
@@ -96,14 +120,16 @@ TA_RetCode TA_DEMA( int    startIdx,
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   double *firstEMA, *secondEMA;
+   ARRAY_REF(firstEMA);
+   ARRAY_REF(secondEMA);
    double k;
-   TA_Integer firstEMABegIdx, firstEMANbElement;
-   TA_Integer secondEMABegIdx, secondEMANbElement;
-   TA_Integer tempInt, outIdx, firstEMAIdx, lookbackTotal, lookbackEMA;
+   int firstEMABegIdx, firstEMANbElement;
+   int secondEMABegIdx, secondEMANbElement;
+   int tempInt, outIdx, firstEMAIdx, lookbackTotal, lookbackEMA;
    TA_RetCode retCode;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -183,9 +209,9 @@ TA_RetCode TA_DEMA( int    startIdx,
    else
    {
       tempInt = lookbackTotal+(endIdx-startIdx)+1;
-      firstEMA = (double *)TA_Malloc( tempInt * sizeof( double) );
+      ARRAY_ALLOC(firstEMA, tempInt );
       if( !firstEMA )
-          return TA_ALLOC_ERR;
+         return TA_ALLOC_ERR;
    }
 
    /* Calculate the first EMA */   
@@ -199,20 +225,16 @@ TA_RetCode TA_DEMA( int    startIdx,
     */
    if( (retCode != TA_SUCCESS) || (firstEMANbElement == 0) )
    {
-      if( firstEMA != outReal_0 )
-         TA_Free(  firstEMA );
-
+      ARRAY_FREE_COND( firstEMA != outReal_0, firstEMA );
       return retCode;
    }
 
    /* Allocate a temporary buffer for storing the EMA of the EMA. */
-   secondEMA = (double *)TA_Malloc( firstEMANbElement * sizeof( double) );
+   ARRAY_ALLOC(secondEMA,firstEMANbElement);
 
    if( !secondEMA )
    {
-      if( firstEMA != outReal_0 )
-         TA_Free(  firstEMA );
-
+      ARRAY_FREE_COND( firstEMA != outReal_0, firstEMA );
       return TA_ALLOC_ERR;
    }
 
@@ -225,10 +247,8 @@ TA_RetCode TA_DEMA( int    startIdx,
     */
    if( (retCode != TA_SUCCESS) || (secondEMANbElement == 0) )      
    {
-      if( firstEMA != outReal_0 )
-         TA_Free(  firstEMA );
-
-      TA_Free(  secondEMA );
+      ARRAY_FREE_COND( firstEMA != outReal_0, firstEMA );
+      ARRAY_FREE( secondEMA );
       return retCode;
    }
 
@@ -243,10 +263,8 @@ TA_RetCode TA_DEMA( int    startIdx,
       outIdx++;
    }
 
-   if( firstEMA != outReal_0 )
-      TA_Free(  firstEMA );
-
-   TA_Free(  secondEMA );
+   ARRAY_FREE_COND( firstEMA != outReal_0, firstEMA );
+   ARRAY_FREE( secondEMA );
 
    /* Succeed. Indicate where the output starts relative to
     * the caller input.
@@ -257,4 +275,10 @@ TA_RetCode TA_DEMA( int    startIdx,
    return TA_SUCCESS;
 }
 
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

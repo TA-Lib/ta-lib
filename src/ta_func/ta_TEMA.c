@@ -43,10 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include "ta_memory.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -54,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -62,8 +67,17 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::TEMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+
+#else
 int TA_TEMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -89,6 +103,16 @@ int TA_TEMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::TEMA( int    startIdx,
+                            int    endIdx,
+                            double       inReal_0 __gc [],
+                            int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                            [OutAttribute]Int32 *outBegIdx,
+                            [OutAttribute]Int32 *outNbElement,
+                            double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_TEMA( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
@@ -96,17 +120,19 @@ TA_RetCode TA_TEMA( int    startIdx,
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   double *firstEMA, *secondEMA;
+   ARRAY_REF(firstEMA);
+   ARRAY_REF(secondEMA);
    double k;
 
-   TA_Integer firstEMABegIdx, firstEMANbElement;
-   TA_Integer secondEMABegIdx, secondEMANbElement;
-   TA_Integer thirdEMABegIdx, thirdEMANbElement;
-   TA_Integer tempInt, outIdx, lookbackTotal, lookbackEMA;
-   TA_Integer firstEMAIdx, secondEMAIdx;
+   int firstEMABegIdx, firstEMANbElement;
+   int secondEMABegIdx, secondEMANbElement;
+   int thirdEMABegIdx, thirdEMANbElement;
+   int tempInt, outIdx, lookbackTotal, lookbackEMA;
+   int firstEMAIdx, secondEMAIdx;
 
    TA_RetCode retCode;
 
@@ -178,7 +204,7 @@ TA_RetCode TA_TEMA( int    startIdx,
 
    /* Allocate a temporary buffer for the firstEMA. */
    tempInt = lookbackTotal+(endIdx-startIdx)+1;
-   firstEMA = (double *)TA_Malloc( tempInt * sizeof( double) );
+   ARRAY_ALLOC(firstEMA,tempInt);
    if( !firstEMA )
       return TA_ALLOC_ERR;
 
@@ -193,16 +219,15 @@ TA_RetCode TA_TEMA( int    startIdx,
     */
    if( (retCode != TA_SUCCESS) || (firstEMANbElement == 0) )
    {
-      TA_Free(  firstEMA );
+      ARRAY_FREE( firstEMA );
       return retCode;
    }
 
    /* Allocate a temporary buffer for storing the EMA2 */
-   secondEMA = (double *)TA_Malloc( firstEMANbElement * sizeof( double) );
-
+   ARRAY_ALLOC(secondEMA,firstEMANbElement);
    if( !secondEMA )
    {
-      TA_Free(  firstEMA );
+      ARRAY_FREE( firstEMA );
       return TA_ALLOC_ERR;
    }
 
@@ -215,8 +240,8 @@ TA_RetCode TA_TEMA( int    startIdx,
     */
    if( (retCode != TA_SUCCESS) || (secondEMANbElement == 0) )      
    {
-      TA_Free(  firstEMA );
-      TA_Free(  secondEMA );
+      ARRAY_FREE( firstEMA );
+      ARRAY_FREE( secondEMA );
       return retCode;
    }
 
@@ -231,18 +256,17 @@ TA_RetCode TA_TEMA( int    startIdx,
     */
    if( (retCode != TA_SUCCESS) || (thirdEMANbElement == 0) )
    {
-      TA_Free(  firstEMA );
-      TA_Free(  secondEMA );
+      ARRAY_FREE( firstEMA );
+      ARRAY_FREE( secondEMA );
       return retCode;
    }
-
 
    /* Indicate where the output starts relative to
     * the caller input.
     */
    firstEMAIdx  = thirdEMABegIdx + secondEMABegIdx;
    secondEMAIdx = thirdEMABegIdx;
-   *outBegIdx    = firstEMAIdx + firstEMABegIdx;
+   *outBegIdx   = firstEMAIdx + firstEMABegIdx;
 
    /* Do the TEMA:
     *  Iterate through the EMA3 (output buffer) and adjust
@@ -255,8 +279,8 @@ TA_RetCode TA_TEMA( int    startIdx,
       outIdx++;
    }
 
-   TA_Free(  firstEMA );
-   TA_Free(  secondEMA );
+   ARRAY_FREE( firstEMA );
+   ARRAY_FREE( secondEMA );
 
    /* Indicates to the caller the number of output
     * successfully calculated.
@@ -266,4 +290,10 @@ TA_RetCode TA_TEMA( int    startIdx,
    return TA_SUCCESS;
 }
 
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

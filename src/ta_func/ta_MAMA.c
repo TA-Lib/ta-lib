@@ -44,11 +44,9 @@
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
  *  023003 MF   Initial Coding of MAMA.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include <math.h>
-#include "ta_memory.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -56,7 +54,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -64,9 +68,19 @@
    #include "ta_utility.h"
 #endif
 
-int TA_MAMA_Lookback( double        optInFastLimit_0, /* From 0.01 to 0.99 */
-                      double        optInSlowLimit_1 )  /* From 0.01 to 0.99 */
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
 
+#if defined( _MANAGED )
+int Core::MAMA_Lookback( double        optInFastLimit_0, /* From 0.01 to 0.99 */
+                       double        optInSlowLimit_1 )  /* From 0.01 to 0.99 */
+
+#else
+int TA_MAMA_Lookback( double        optInFastLimit_0, /* From 0.01 to 0.99 */
+                    double        optInSlowLimit_1 )  /* From 0.01 to 0.99 */
+
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -95,7 +109,7 @@ int TA_MAMA_Lookback( double        optInFastLimit_0, /* From 0.01 to 0.99 */
     *         32 Total
     */
 
-   return 32 + TA_Globals.unstablePeriod[TA_FUNC_UNST_MAMA];
+   return 32 + TA_Globals->unstablePeriod[TA_FUNC_UNST_MAMA];
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -116,6 +130,18 @@ int TA_MAMA_Lookback( double        optInFastLimit_0, /* From 0.01 to 0.99 */
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::MAMA( int    startIdx,
+                            int    endIdx,
+                            double       inReal_0 __gc [],
+                            double        optInFastLimit_0, /* From 0.01 to 0.99 */
+                            double        optInSlowLimit_1, /* From 0.01 to 0.99 */
+                            [OutAttribute]Int32 *outBegIdx,
+                            [OutAttribute]Int32 *outNbElement,
+                            double        outMAMA_0 __gc [],
+                            double        outFAMA_1 __gc [] )
+#else
 TA_RetCode TA_MAMA( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
@@ -125,6 +151,7 @@ TA_RetCode TA_MAMA( int    startIdx,
                     int          *outNbElement,
                     double        outMAMA_0[],
                     double        outFAMA_1[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
@@ -200,7 +227,7 @@ TA_RetCode TA_MAMA( int    startIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 32 + TA_Globals.unstablePeriod[TA_FUNC_UNST_MAMA];
+   lookbackTotal = 32 + TA_Globals->unstablePeriod[TA_FUNC_UNST_MAMA];
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -412,4 +439,10 @@ TA_RetCode TA_MAMA( int    startIdx,
 
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

@@ -43,6 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
 
@@ -52,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -60,15 +67,25 @@
    #include "ta_utility.h"
 #endif
 
-int TA_ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                       int           optInSlowPeriod_1 )  /* From 2 to TA_INTEGER_MAX */
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
 
+#if defined( _MANAGED )
+int Core::ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                        int           optInSlowPeriod_1 )  /* From 2 to TA_INTEGER_MAX */
+
+#else
+int TA_ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     int           optInSlowPeriod_1 )  /* From 2 to TA_INTEGER_MAX */
+
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
 
    /* Use the slowest EMA period to evaluate the total lookback. */
-   TA_Integer slowestPeriod;
+   int slowestPeriod;
 
    if( optInFastPeriod_0 < optInSlowPeriod_1 )
       slowestPeriod = optInSlowPeriod_1;
@@ -97,6 +114,20 @@ int TA_ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::ADOSC( int    startIdx,
+                             int    endIdx,
+                             double       inHigh_0 __gc [],
+                             double       inLow_0 __gc [],
+                             double       inClose_0 __gc [],
+                             int          inVolume_0 __gc [],
+                             int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                             int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                             [OutAttribute]Int32 *outBegIdx,
+                             [OutAttribute]Int32 *outNbElement,
+                             double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_ADOSC( int    startIdx,
                      int    endIdx,
                      const double inHigh_0[],
@@ -108,12 +139,13 @@ TA_RetCode TA_ADOSC( int    startIdx,
                      int          *outBegIdx,
                      int          *outNbElement,
                      double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
 
-   TA_Integer today, outIdx, lookbackTotal;
-   TA_Integer slowestPeriod;
+   int today, outIdx, lookbackTotal;
+   int slowestPeriod;
    double high, low, close, tmp;
 
    double slowEMA, slowk, one_minus_slowk;
@@ -259,4 +291,10 @@ TA_RetCode TA_ADOSC( int    startIdx,
 
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

@@ -43,10 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include "ta_memory.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -54,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -62,9 +67,19 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::APO_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                      int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                      TA_MAType     optInMAType_2 ) 
+#else
 int TA_APO_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                     int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                     TA_MAType     optInMAType_2 ) 
+                   int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                   TA_MAType     optInMAType_2 ) 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -95,6 +110,18 @@ int TA_APO_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MA
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::APO( int    startIdx,
+                           int    endIdx,
+                           double       inReal_0 __gc [],
+                           int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                           int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                           TA_MAType     optInMAType_2,
+                           [OutAttribute]Int32 *outBegIdx,
+                           [OutAttribute]Int32 *outNbElement,
+                           double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_APO( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
@@ -104,10 +131,11 @@ TA_RetCode TA_APO( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   double *tempBuffer;
+   ARRAY_REF(tempBuffer);
    TA_RetCode retCode;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -134,11 +162,13 @@ TA_RetCode TA_APO( int    startIdx,
    else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 2147483647) )
       return TA_BAD_PARAM;
 
+   #if !defined(_MANAGED)
    if( (int)optInMAType_2 == TA_INTEGER_DEFAULT )
       optInMAType_2 = 0;
    else if( ((int)optInMAType_2 < 0) || ((int)optInMAType_2 > 8) )
       return TA_BAD_PARAM;
 
+   #endif /* !defined(_MANAGED) */
    if( outReal_0 == NULL )
       return TA_BAD_PARAM;
 
@@ -149,7 +179,7 @@ TA_RetCode TA_APO( int    startIdx,
    /* Insert TA function code here. */
 
    /* Allocate an intermediate buffer. */
-   tempBuffer = TA_Malloc( (endIdx-startIdx+1)*sizeof(double) );
+   ARRAY_ALLOC(tempBuffer, (endIdx-startIdx+1) );
    if( !tempBuffer )
       return TA_ALLOC_ERR;
 
@@ -164,7 +194,7 @@ TA_RetCode TA_APO( int    startIdx,
                         tempBuffer,
                         0 /* No percentage. */ );
 
-   TA_Free(  tempBuffer );
+   ARRAY_FREE( tempBuffer );
 
    return retCode;
 }
@@ -174,25 +204,39 @@ TA_RetCode TA_APO( int    startIdx,
  *
  * A buffer must be provided for intermediate processing.
  */
-TA_RetCode TA_INT_PO( TA_Integer    startIdx,
-                      TA_Integer    endIdx,
+#if defined( _MANAGED )
+enum TA_RetCode Core::TA_INT_PO( int    startIdx,
+                                 int    endIdx,
+                                 double inReal_0 __gc [],
+                                 int    optInFastPeriod_0, /* From 1 to 200 */
+                                 int    optInSlowPeriod_1, /* From 1 to 200 */
+                                 TA_MAType    optInMethod_2,
+                                 [OutAttribute]Int32 *outBegIdx,
+                                 [OutAttribute]Int32 *outNbElement,
+                                 double  outReal_0 __gc [],
+                                 double  tempBuffer __gc [],
+                                 unsigned int  doPercentageOutput )
+#else
+TA_RetCode TA_INT_PO( int    startIdx,
+                      int    endIdx,
                       const double *inReal_0,
-                      TA_Integer    optInFastPeriod_0, /* From 1 to 200 */
-                      TA_Integer    optInSlowPeriod_1, /* From 1 to 200 */
-                      TA_Integer    optInMethod_2,
-                      TA_Integer   *outBegIdx,
-                      TA_Integer   *outNbElement,
+                      int    optInFastPeriod_0, /* From 1 to 200 */
+                      int    optInSlowPeriod_1, /* From 1 to 200 */
+                      TA_MAType optInMethod_2,
+                      int   *outBegIdx,
+                      int   *outNbElement,
                       double      *outReal_0,
                       double      *tempBuffer,
                       unsigned int  doPercentageOutput )
+#endif
 {
    TA_RetCode retCode;
 
-   TA_Integer tempInteger;
-   TA_Integer outBegIdx1, outNbElement1;
-   TA_Integer outBegIdx2, outNbElement2;
+   int tempInteger;
+   int outBegIdx1, outNbElement1;
+   int outBegIdx2, outNbElement2;
 
-   TA_Integer i, j;
+   int i, j;
 
    /* Make sure slow is really slower than
     * the fast period! if not, swap...
@@ -253,4 +297,10 @@ TA_RetCode TA_INT_PO( TA_Integer    startIdx,
 }
 
 
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

@@ -45,7 +45,7 @@
  *  112400 MF   Template creation.
  *  022203 MF   Add MAMA
  *  040503 Mf   Add T3
- *
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -54,7 +54,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -62,8 +68,17 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::MA_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     TA_MAType     optInMAType_1 ) 
+#else
 int TA_MA_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    TA_MAType     optInMAType_1 ) 
+                  TA_MAType     optInMAType_1 ) 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -128,6 +143,17 @@ int TA_MA_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::MA( int    startIdx,
+                          int    endIdx,
+                          double       inReal_0 __gc [],
+                          int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                          TA_MAType     optInMAType_1,
+                          [OutAttribute]Int32 *outBegIdx,
+                          [OutAttribute]Int32 *outNbElement,
+                          double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_MA( int    startIdx,
                   int    endIdx,
                   const double inReal_0[],
@@ -136,10 +162,11 @@ TA_RetCode TA_MA( int    startIdx,
                   int          *outBegIdx,
                   int          *outNbElement,
                   double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   double *dummyBuffer;
+   ARRAY_REF(dummyBuffer);
    TA_RetCode retCode;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -160,11 +187,13 @@ TA_RetCode TA_MA( int    startIdx,
    else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
       return TA_BAD_PARAM;
 
+   #if !defined(_MANAGED)
    if( (int)optInMAType_1 == TA_INTEGER_DEFAULT )
       optInMAType_1 = 0;
    else if( ((int)optInMAType_1 < 0) || ((int)optInMAType_1 > 8) )
       return TA_BAD_PARAM;
 
+   #endif /* !defined(_MANAGED) */
    if( outReal_0 == NULL )
       return TA_BAD_PARAM;
 
@@ -189,9 +218,9 @@ TA_RetCode TA_MA( int    startIdx,
                          outBegIdx, outNbElement, outReal_0 );
       break;
    case TA_MAType_WMA:
-      return TA_INT_WMA( startIdx, endIdx,
-                         inReal_0, optInTimePeriod_0,
-                         outBegIdx, outNbElement, outReal_0 );
+      return TA_WMA( startIdx, endIdx,
+                     inReal_0, optInTimePeriod_0,
+                     outBegIdx, outNbElement, outReal_0 );
       break;
    case TA_MAType_DEMA:
       return TA_DEMA( startIdx, endIdx,
@@ -217,7 +246,7 @@ TA_RetCode TA_MA( int    startIdx,
       /* The optInTimePeriod_0 is ignored and the FAMA output of the MAMA
        * is ignored.
        */
-      dummyBuffer = TA_Malloc( sizeof(double)*(endIdx-startIdx+1) );
+      ARRAY_ALLOC(dummyBuffer, (endIdx-startIdx+1) );
       if( !dummyBuffer )
          return TA_ALLOC_ERR;
 
@@ -225,7 +254,7 @@ TA_RetCode TA_MA( int    startIdx,
                          inReal_0, 0.5, 0.05,
                          outBegIdx, outNbElement,
                          outReal_0, dummyBuffer );
-      TA_Free( dummyBuffer );
+      ARRAY_FREE( dummyBuffer );
       return retCode;
       break;
    case TA_MAType_T3:
@@ -240,4 +269,10 @@ TA_RetCode TA_MA( int    startIdx,
 
    return TA_BAD_PARAM;                        
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

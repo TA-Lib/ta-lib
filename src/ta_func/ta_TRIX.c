@@ -43,10 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include "ta_memory.h"
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -54,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -62,8 +67,17 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::TRIX_Lookback( int           optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+
+#else
 int TA_TRIX_Lookback( int           optInTimePeriod_0 )  /* From 1 to TA_INTEGER_MAX */
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
@@ -86,6 +100,16 @@ int TA_TRIX_Lookback( int           optInTimePeriod_0 )  /* From 1 to TA_INTEGER
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::TRIX( int    startIdx,
+                            int    endIdx,
+                            double       inReal_0 __gc [],
+                            int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                            [OutAttribute]Int32 *outBegIdx,
+                            [OutAttribute]Int32 *outNbElement,
+                            double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_TRIX( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
@@ -93,15 +117,17 @@ TA_RetCode TA_TRIX( int    startIdx,
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   double *tempBuffer, k;
-   TA_Integer totalLookback;
-   TA_Integer emaLookback, rocLookback;
-   TA_Integer nbElement, begIdx;
+   double k;
+   ARRAY_REF(tempBuffer);
+   int totalLookback;
+   int emaLookback, rocLookback;
+   int nbElement, begIdx;
    TA_RetCode retCode;
-   TA_Integer nbElementToOutput;
+   int nbElementToOutput;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
@@ -153,7 +179,7 @@ TA_RetCode TA_TRIX( int    startIdx,
    /* Allocate a temporary buffer for performing
     * the calculation.
     */
-   tempBuffer = TA_Malloc( nbElementToOutput * sizeof(double) );
+   ARRAY_ALLOC(tempBuffer, nbElementToOutput );
    if( !tempBuffer )
    {
       *outNbElement = 0;
@@ -174,7 +200,7 @@ TA_RetCode TA_TRIX( int    startIdx,
    {
       *outNbElement = 0;
       *outBegIdx = 0;
-      TA_Free(  tempBuffer );
+      ARRAY_FREE( tempBuffer );
       return retCode;
    }
 
@@ -193,7 +219,7 @@ TA_RetCode TA_TRIX( int    startIdx,
    {
       *outNbElement = 0;
       *outBegIdx = 0;
-      TA_Free(  tempBuffer );
+      ARRAY_FREE( tempBuffer );
       return retCode;
    }
 
@@ -210,7 +236,7 @@ TA_RetCode TA_TRIX( int    startIdx,
    {
       *outNbElement = 0;
       *outBegIdx = 0;
-      TA_Free(  tempBuffer );
+      ARRAY_FREE( tempBuffer );
       return retCode;
    }
 
@@ -221,7 +247,7 @@ TA_RetCode TA_TRIX( int    startIdx,
                       1,  &begIdx, outNbElement,
                       outReal_0 );
 
-   TA_Free(  tempBuffer );
+   ARRAY_FREE( tempBuffer );
    /* Verify for failure or if not enough data after
     * calculating the rate-of-change.
     */
@@ -234,4 +260,10 @@ TA_RetCode TA_TRIX( int    startIdx,
 
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 

@@ -43,10 +43,9 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
+ *  052603 MF   Adapt code to compile with .NET Managed C++
  *
  */
-
-#include <math.h>
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* All code within this section is automatically
@@ -54,7 +53,13 @@
  * next time gen_code is run.
  */
 
-#ifndef TA_FUNC_H
+#if defined( _MANAGED )
+   #using <mscorlib.dll>
+   #include "Core.h"
+   namespace TA { namespace Lib {
+#else
+   #include <string.h>
+   #include <math.h>
    #include "ta_func.h"
 #endif
 
@@ -62,12 +67,21 @@
    #include "ta_utility.h"
 #endif
 
+#ifndef TA_MEMORY_H
+   #include "ta_memory.h"
+#endif
+
+#if defined( _MANAGED )
+int Core::KAMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+
+#else
 int TA_KAMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
 
+#endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   return optInTimePeriod_0 + TA_Globals.unstablePeriod[TA_FUNC_UNST_KAMA];
+   return optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_KAMA];
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -85,6 +99,16 @@ int TA_KAMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER
  * 
  */
 
+
+#if defined( _MANAGED )
+enum TA_RetCode Core::KAMA( int    startIdx,
+                            int    endIdx,
+                            double       inReal_0 __gc [],
+                            int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                            [OutAttribute]Int32 *outBegIdx,
+                            [OutAttribute]Int32 *outNbElement,
+                            double        outReal_0 __gc [] )
+#else
 TA_RetCode TA_KAMA( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
@@ -92,6 +116,7 @@ TA_RetCode TA_KAMA( int    startIdx,
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] )
+#endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
@@ -139,7 +164,7 @@ TA_RetCode TA_KAMA( int    startIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = optInTimePeriod_0 + TA_Globals.unstablePeriod[TA_FUNC_UNST_KAMA];
+   lookbackTotal = optInTimePeriod_0 + TA_Globals->unstablePeriod[TA_FUNC_UNST_KAMA];
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -280,4 +305,10 @@ TA_RetCode TA_KAMA( int    startIdx,
 
    return TA_SUCCESS;
 }
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+#if defined( _MANAGED )
+   }} // Close namespace TA.Lib
+#endif
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
