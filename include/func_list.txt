@@ -9,16 +9,27 @@ ATR                 Average True Range
 AVGPRICE            Average Price
 BBANDS              Bollinger Bands
 CCI                 Commodity Channel Index
+CDL3BLACKCROWS      Three Black Crows
+CDLABANDONEDBABY    Abandoned Baby
 CDLDOJISTAR         Doji Star
+CDLENGULFING        Engulfing Pattern
 CDLEVENINGDOJISTAR  Evening Doji Star
 CDLEVENINGSTAR      Evening Star
+CDLHAMMER           Hammer
+CDLHANGINGMAN       Hanging Man
+CDLHARAMI           Harami Pattern
+CDLHARAMICROSS      Harami Cross Pattern
 CDLHIGHWAVE         High-Wave Candle
+CDLIDENTICAL3CROWS  Identical Three Crows
+CDLINVERTEDHAMMER   Inverted Hammer
 CDLLONGLINE         Long Line Candle
 CDLMORNINGDOJISTAR  Morning Doji Star
 CDLMORNINGSTAR      Morning Star
+CDLSHOOTINGSTAR     Shooting Star
 CDLSHORTLINE        Short Line Candle
-CDLSPINNINGTOP      Spinning Top Candle
-CDLTRISTAR          Tristar Candle
+CDLSPINNINGTOP      Spinning Top
+CDLTRISTAR          Tristar Pattern
+CDLUPSIDEGAP2CROWS  Upside Gap Two Crows
 CORREL              Pearson's Correlation Coefficient (r)
 DEMA                Double Exponential Moving Average
 DX                  Directional Movement Index

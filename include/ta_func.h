@@ -2087,6 +2087,74 @@ int TA_OBV_Lookback( void );
  ******************************************/
 
 /*
+ * TA_CDL3BLACKCROWS - Three Black Crows
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDL3BLACKCROWS( int    startIdx,
+                              int    endIdx,
+                              const double inOpen[],
+                              const double inHigh[],
+                              const double inLow[],
+                              const double inClose[],
+                              int          *outBegIdx,
+                              int          *outNbElement,
+                              int           outInteger[] );
+
+TA_RetCode TA_S_CDL3BLACKCROWS( int    startIdx,
+                                int    endIdx,
+                                const float  inOpen[],
+                                const float  inHigh[],
+                                const float  inLow[],
+                                const float  inClose[],
+                                int          *outBegIdx,
+                                int          *outNbElement,
+                                int           outInteger[] );
+
+int TA_CDL3BLACKCROWS_Lookback( void );
+
+
+/*
+ * TA_CDLABANDONEDBABY - Abandoned Baby
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInPenetration:(From 0 to TA_REAL_MAX)
+ *    Percentage of penetration of a candle within another candle
+ * 
+ * 
+ */
+TA_RetCode TA_CDLABANDONEDBABY( int    startIdx,
+                                int    endIdx,
+                                const double inOpen[],
+                                const double inHigh[],
+                                const double inLow[],
+                                const double inClose[],
+                                double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                int          *outBegIdx,
+                                int          *outNbElement,
+                                int           outInteger[] );
+
+TA_RetCode TA_S_CDLABANDONEDBABY( int    startIdx,
+                                  int    endIdx,
+                                  const float  inOpen[],
+                                  const float  inHigh[],
+                                  const float  inLow[],
+                                  const float  inClose[],
+                                  double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                  int          *outBegIdx,
+                                  int          *outNbElement,
+                                  int           outInteger[] );
+
+int TA_CDLABANDONEDBABY_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+
+
+/*
  * TA_CDLDOJISTAR - Doji Star
  * 
  * Input  = Open, High, Low, Close
@@ -2114,6 +2182,36 @@ TA_RetCode TA_S_CDLDOJISTAR( int    startIdx,
                              int           outInteger[] );
 
 int TA_CDLDOJISTAR_Lookback( void );
+
+
+/*
+ * TA_CDLENGULFING - Engulfing Pattern
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLENGULFING( int    startIdx,
+                            int    endIdx,
+                            const double inOpen[],
+                            const double inHigh[],
+                            const double inLow[],
+                            const double inClose[],
+                            int          *outBegIdx,
+                            int          *outNbElement,
+                            int           outInteger[] );
+
+TA_RetCode TA_S_CDLENGULFING( int    startIdx,
+                              int    endIdx,
+                              const float  inOpen[],
+                              const float  inHigh[],
+                              const float  inLow[],
+                              const float  inClose[],
+                              int          *outBegIdx,
+                              int          *outNbElement,
+                              int           outInteger[] );
+
+int TA_CDLENGULFING_Lookback( void );
 
 
 /*
@@ -2193,6 +2291,126 @@ int TA_CDLEVENINGSTAR_Lookback( double        optInPenetration );  /* From 0 to 
 
 
 /*
+ * TA_CDLHAMMER - Hammer
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLHAMMER( int    startIdx,
+                         int    endIdx,
+                         const double inOpen[],
+                         const double inHigh[],
+                         const double inLow[],
+                         const double inClose[],
+                         int          *outBegIdx,
+                         int          *outNbElement,
+                         int           outInteger[] );
+
+TA_RetCode TA_S_CDLHAMMER( int    startIdx,
+                           int    endIdx,
+                           const float  inOpen[],
+                           const float  inHigh[],
+                           const float  inLow[],
+                           const float  inClose[],
+                           int          *outBegIdx,
+                           int          *outNbElement,
+                           int           outInteger[] );
+
+int TA_CDLHAMMER_Lookback( void );
+
+
+/*
+ * TA_CDLHANGINGMAN - Hanging Man
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLHANGINGMAN( int    startIdx,
+                             int    endIdx,
+                             const double inOpen[],
+                             const double inHigh[],
+                             const double inLow[],
+                             const double inClose[],
+                             int          *outBegIdx,
+                             int          *outNbElement,
+                             int           outInteger[] );
+
+TA_RetCode TA_S_CDLHANGINGMAN( int    startIdx,
+                               int    endIdx,
+                               const float  inOpen[],
+                               const float  inHigh[],
+                               const float  inLow[],
+                               const float  inClose[],
+                               int          *outBegIdx,
+                               int          *outNbElement,
+                               int           outInteger[] );
+
+int TA_CDLHANGINGMAN_Lookback( void );
+
+
+/*
+ * TA_CDLHARAMI - Harami Pattern
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLHARAMI( int    startIdx,
+                         int    endIdx,
+                         const double inOpen[],
+                         const double inHigh[],
+                         const double inLow[],
+                         const double inClose[],
+                         int          *outBegIdx,
+                         int          *outNbElement,
+                         int           outInteger[] );
+
+TA_RetCode TA_S_CDLHARAMI( int    startIdx,
+                           int    endIdx,
+                           const float  inOpen[],
+                           const float  inHigh[],
+                           const float  inLow[],
+                           const float  inClose[],
+                           int          *outBegIdx,
+                           int          *outNbElement,
+                           int           outInteger[] );
+
+int TA_CDLHARAMI_Lookback( void );
+
+
+/*
+ * TA_CDLHARAMICROSS - Harami Cross Pattern
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLHARAMICROSS( int    startIdx,
+                              int    endIdx,
+                              const double inOpen[],
+                              const double inHigh[],
+                              const double inLow[],
+                              const double inClose[],
+                              int          *outBegIdx,
+                              int          *outNbElement,
+                              int           outInteger[] );
+
+TA_RetCode TA_S_CDLHARAMICROSS( int    startIdx,
+                                int    endIdx,
+                                const float  inOpen[],
+                                const float  inHigh[],
+                                const float  inLow[],
+                                const float  inClose[],
+                                int          *outBegIdx,
+                                int          *outNbElement,
+                                int           outInteger[] );
+
+int TA_CDLHARAMICROSS_Lookback( void );
+
+
+/*
  * TA_CDLHIGHWAVE - High-Wave Candle
  * 
  * Input  = Open, High, Low, Close
@@ -2220,6 +2438,66 @@ TA_RetCode TA_S_CDLHIGHWAVE( int    startIdx,
                              int           outInteger[] );
 
 int TA_CDLHIGHWAVE_Lookback( void );
+
+
+/*
+ * TA_CDLIDENTICAL3CROWS - Identical Three Crows
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLIDENTICAL3CROWS( int    startIdx,
+                                  int    endIdx,
+                                  const double inOpen[],
+                                  const double inHigh[],
+                                  const double inLow[],
+                                  const double inClose[],
+                                  int          *outBegIdx,
+                                  int          *outNbElement,
+                                  int           outInteger[] );
+
+TA_RetCode TA_S_CDLIDENTICAL3CROWS( int    startIdx,
+                                    int    endIdx,
+                                    const float  inOpen[],
+                                    const float  inHigh[],
+                                    const float  inLow[],
+                                    const float  inClose[],
+                                    int          *outBegIdx,
+                                    int          *outNbElement,
+                                    int           outInteger[] );
+
+int TA_CDLIDENTICAL3CROWS_Lookback( void );
+
+
+/*
+ * TA_CDLINVERTEDHAMMER - Inverted Hammer
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLINVERTEDHAMMER( int    startIdx,
+                                 int    endIdx,
+                                 const double inOpen[],
+                                 const double inHigh[],
+                                 const double inLow[],
+                                 const double inClose[],
+                                 int          *outBegIdx,
+                                 int          *outNbElement,
+                                 int           outInteger[] );
+
+TA_RetCode TA_S_CDLINVERTEDHAMMER( int    startIdx,
+                                   int    endIdx,
+                                   const float  inOpen[],
+                                   const float  inHigh[],
+                                   const float  inLow[],
+                                   const float  inClose[],
+                                   int          *outBegIdx,
+                                   int          *outNbElement,
+                                   int           outInteger[] );
+
+int TA_CDLINVERTEDHAMMER_Lookback( void );
 
 
 /*
@@ -2329,6 +2607,36 @@ int TA_CDLMORNINGSTAR_Lookback( double        optInPenetration );  /* From 0 to 
 
 
 /*
+ * TA_CDLSHOOTINGSTAR - Shooting Star
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLSHOOTINGSTAR( int    startIdx,
+                               int    endIdx,
+                               const double inOpen[],
+                               const double inHigh[],
+                               const double inLow[],
+                               const double inClose[],
+                               int          *outBegIdx,
+                               int          *outNbElement,
+                               int           outInteger[] );
+
+TA_RetCode TA_S_CDLSHOOTINGSTAR( int    startIdx,
+                                 int    endIdx,
+                                 const float  inOpen[],
+                                 const float  inHigh[],
+                                 const float  inLow[],
+                                 const float  inClose[],
+                                 int          *outBegIdx,
+                                 int          *outNbElement,
+                                 int           outInteger[] );
+
+int TA_CDLSHOOTINGSTAR_Lookback( void );
+
+
+/*
  * TA_CDLSHORTLINE - Short Line Candle
  * 
  * Input  = Open, High, Low, Close
@@ -2359,7 +2667,7 @@ int TA_CDLSHORTLINE_Lookback( void );
 
 
 /*
- * TA_CDLSPINNINGTOP - Spinning Top Candle
+ * TA_CDLSPINNINGTOP - Spinning Top
  * 
  * Input  = Open, High, Low, Close
  * Output = int
@@ -2389,7 +2697,7 @@ int TA_CDLSPINNINGTOP_Lookback( void );
 
 
 /*
- * TA_CDLTRISTAR - Tristar Candle
+ * TA_CDLTRISTAR - Tristar Pattern
  * 
  * Input  = Open, High, Low, Close
  * Output = int
@@ -2416,6 +2724,36 @@ TA_RetCode TA_S_CDLTRISTAR( int    startIdx,
                             int           outInteger[] );
 
 int TA_CDLTRISTAR_Lookback( void );
+
+
+/*
+ * TA_CDLUPSIDEGAP2CROWS - Upside Gap Two Crows
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLUPSIDEGAP2CROWS( int    startIdx,
+                                  int    endIdx,
+                                  const double inOpen[],
+                                  const double inHigh[],
+                                  const double inLow[],
+                                  const double inClose[],
+                                  int          *outBegIdx,
+                                  int          *outNbElement,
+                                  int           outInteger[] );
+
+TA_RetCode TA_S_CDLUPSIDEGAP2CROWS( int    startIdx,
+                                    int    endIdx,
+                                    const float  inOpen[],
+                                    const float  inHigh[],
+                                    const float  inLow[],
+                                    const float  inClose[],
+                                    int          *outBegIdx,
+                                    int          *outNbElement,
+                                    int           outInteger[] );
+
+int TA_CDLUPSIDEGAP2CROWS_Lookback( void );
 
 
 
