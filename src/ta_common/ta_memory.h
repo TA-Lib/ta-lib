@@ -95,7 +95,6 @@ typedef TA_RetCode (*TA_FreeFuncPtr)( void *toBeFreed, void *opaqueData);
  * CIRCBUF_NEXT(Id);
  *         Move forward the indexes.
  *
- * 
  * Example:
  *     TA_RetCode MyFunc( int size )
  *     {
@@ -187,6 +186,7 @@ typedef TA_RetCode (*TA_FreeFuncPtr)( void *toBeFreed, void *opaqueData);
       if( Id##_Idx > maxIdx_##Id ) \
          Id##_Idx = 0; \
    }
+
 
 #endif
 

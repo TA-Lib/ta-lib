@@ -21,6 +21,7 @@ extern const TA_FuncDef TA_DEF_DEMA;
 extern const TA_FuncDef TA_DEF_EMA;
 extern const TA_FuncDef TA_DEF_KAMA;
 extern const TA_FuncDef TA_DEF_MA;
+extern const TA_FuncDef TA_DEF_MAMA;
 extern const TA_FuncDef TA_DEF_MIDPRICE;
 extern const TA_FuncDef TA_DEF_MIDPOINT;
 extern const TA_FuncDef TA_DEF_SAR;
@@ -56,6 +57,8 @@ extern const TA_FuncDef TA_DEF_STOCH;
 extern const TA_FuncDef TA_DEF_STOCHF;
 extern const TA_FuncDef TA_DEF_TRIX;
 extern const TA_FuncDef TA_DEF_WILLR;
+extern const TA_FuncDef TA_DEF_AD;
+extern const TA_FuncDef TA_DEF_ADOSC;
 extern const TA_FuncDef TA_DEF_OBV;
 extern const TA_FuncDef TA_DEF_STDDEV;
 extern const TA_FuncDef TA_DEF_VAR;
@@ -80,6 +83,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_EMA,
 &TA_DEF_KAMA,
 &TA_DEF_MA,
+&TA_DEF_MAMA,
 &TA_DEF_MIDPRICE,
 &TA_DEF_MIDPOINT,
 &TA_DEF_SAR,
@@ -131,6 +135,8 @@ NULL };
 #define SIZE_GROUP_5 ((sizeof(TA_PerGroupFunc_5)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_6[] = {
+&TA_DEF_AD,
+&TA_DEF_ADOSC,
 &TA_DEF_OBV,
 NULL };
 #define SIZE_GROUP_6 ((sizeof(TA_PerGroupFunc_6)/sizeof(const TA_FuncDef *))-1)
