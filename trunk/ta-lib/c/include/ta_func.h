@@ -1429,8 +1429,11 @@ int TA_AD_Lookback( void );
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
- *    Number of period
+ * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
+ *    Number of period for the fast MA
+ * 
+ * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
+ *    Number of period for the slow MA
  * 
  * 
  */
@@ -1440,12 +1443,14 @@ TA_RetCode TA_ADOSC( TA_Integer    startIdx,
                      const TA_Real inLow_0[],
                      const TA_Real inClose_0[],
                      const TA_Integer inVolume_0[],
-                     TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                     TA_Integer    optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
                      TA_Integer   *outBegIdx,
                      TA_Integer   *outNbElement,
                      TA_Real       outReal_0[] );
 
-int TA_ADOSC_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+int TA_ADOSC_Lookback( TA_Integer    optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                       TA_Integer    optInSlowPeriod_1 );  /* From 2 to TA_INTEGER_MAX */
 
 
 /*
