@@ -7,8 +7,10 @@ CONFIG   += staticlib
 # Identify the temp dir
 cmd:OBJECTS_DIR = ../../../../../temp/cmd
 cmr:OBJECTS_DIR = ../../../../../temp/cmr
+cmp:OBJECTS_DIR = ../../../../../temp/cmp
 csd:OBJECTS_DIR = ../../../../../temp/csd
 csr:OBJECTS_DIR = ../../../../../temp/csr
+csp:OBJECTS_DIR = ../../../../../temp/csp
 cdr:OBJECTS_DIR = ../../../../../temp/cdr
 cdd:OBJECTS_DIR = ../../../../../temp/cdd
 
@@ -16,8 +18,10 @@ cdd:OBJECTS_DIR = ../../../../../temp/cdd
 LIBTARGET = ta_libc
 cmd:TARGET = ta_libc_cmd
 cmr:TARGET = ta_libc_cmr
+cmp:TARGET = ta_libc_cmp
 csd:TARGET = ta_libc_csd
 csr:TARGET = ta_libc_csr
+csp:TARGET = ta_libc_csp
 cdr:TARGET = ta_libc_cdr
 cdd:TARGET = ta_libc_cdd
 

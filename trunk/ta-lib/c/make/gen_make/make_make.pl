@@ -21,7 +21,7 @@ use Env;
 if( (scalar @ARGV) != 4 )
 {
    print( "Missing parameter\n" );
-   print( "Usage: make_make <cmr|cmd|csr|csd|cdr|cdd> TMAKEPATH destPath platform\n" );
+   print( "Usage: make_make <cmr|cmd|cmp|csr|csd|csp|cdr|cdd> TMAKEPATH destPath platform\n" );
    print( "\n" );
    print( "       platform = {all|linux_only|msvc_only}\n" );
    die;
@@ -39,6 +39,12 @@ elsif( @ARGV[0] eq "cmd" ) {
    $makeDebug = 1;
    $makeDLL = 0;
 }
+elsif( @ARGV[0] eq "cmp" ) {
+   $makeConsole = 1;
+   $makeThread = 1;
+   $makeDebug = 2;
+   $makeDLL = 0;
+}
 elsif( @ARGV[0] eq "csr" ) {
    $makeConsole = 1;
    $makeThread = 0;
@@ -49,6 +55,12 @@ elsif( @ARGV[0] eq "csd" ) {
    $makeConsole = 1;
    $makeThread = 0;
    $makeDebug = 1;
+   $makeDLL = 0;
+}
+elsif( @ARGV[0] eq "csp" ) {
+   $makeConsole = 1;
+   $makeThread = 0;
+   $makeDebug = 2;
    $makeDLL = 0;
 }
 elsif( @ARGV[0] eq "cdr" ) {
@@ -103,6 +115,9 @@ if( $makeDLL == 1 )
 if( $makeDebug == 1 ) {
    print "DEBUG ";
 }
+elsif ($makeDebug == 2){
+   print "PROFILE ";
+}
 else {
    print "RELEASE ";
 }
@@ -153,6 +168,9 @@ foreach $z (@platformCompilerPath) {
    {
       next if($platform eq "win32");
       next if($platform eq "cygwin" );
+      next if($platform eq "borland" );
+      next if($platform eq "watcom" );
+      next if($platform eq "symantec" );
    }
 
    if( @ARGV[3] eq "msvc_only" )
@@ -160,10 +178,16 @@ foreach $z (@platformCompilerPath) {
       next if($compiler ne "msvc");
    }
 
-   # cdr and cdb are generated with msvc only
+   # cdr and cdd are generated for msvc only
    if( $compiler ne "msvc" )
    {
       next if($makeDLL eq 1);
+   }
+
+   # For now, csp and cmp are generated for g++ only
+   if( $compiler ne "g++" )
+   {
+      next if($makeDebug eq 2);
    }
 
    # Create the directories
@@ -191,6 +215,15 @@ foreach $z (@platformCompilerPath) {
 
       if( $makeDebug == 1 ) {
          $toRun = $toRun." "."\"CONFIG+=debug\"";
+      }
+      #Set the profiler options here --AK--
+      elsif ( $makeDebug == 2 ) {
+         $toRun = $toRun." "."\"CONFIG+=debug\"";
+         if( $compiler eq "g++" ) {
+            $toRun = $toRun." "."\"TMAKE_CFLAGS_DEBUG+=-O\"";
+            $toRun = $toRun." "."\"TMAKE_CFLAGS_DEBUG+=-pg\"";
+            $toRun = $toRun." "."\"TMAKE_LFLAGS+=-pg\"";
+         }
       }
       else {
          $toRun = $toRun." "."\"CONFIG+=release\"";
