@@ -2422,7 +2422,7 @@ static int addUnstablePeriodEnum( FILE *out )
    /* Enumerate the function having an "unstable period". Give
     * to each an unique identifier.
     */
-   id = 1;
+   id = 0;
    retCode = TA_ForEachFunc( doForEachUnstableFunction, &id );
 
    fprintf( out, "               TA_FUNC_UNST_ALL,\n");
