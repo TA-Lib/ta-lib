@@ -71,8 +71,8 @@
 /* None */
 
 /**** Local declarations.              ****/
-#define MAX_OPTIN_PARAM     5
-#define MAX_EXPECTED_OUTPUT 3
+#define MAX_OPTIN_PARAM    5
+#define MAX_TESTED_OUTPUT 10
 
 TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType, 
                                  TA_RangeType rangeType, 
@@ -119,6 +119,11 @@ typedef struct
    /* Indicate which function will be called */
    const char *name;
 
+   /* Indicate if ranging test should be done. 
+    * (These tests are very time consuming).
+    */
+   int doRangeTestFlag;
+
    /* Range for the function call. 
     * When both value are -1 a series of automated range 
     * tests are performed.
@@ -137,7 +142,7 @@ typedef struct
    /* When return code is TA_SUCCESS, the following output's
     * element are verified.
     */
-   TA_ExpectedOutput output[MAX_EXPECTED_OUTPUT];
+   TA_ExpectedOutput output[MAX_TESTED_OUTPUT];
 } TA_Test;
 
 
@@ -164,7 +169,7 @@ static ErrorNumber callCandlestick( const char   *name,
                                     const double *inHigh,
                                     const double *inLow,
                                     const double *inClose,
-                                    double        optInArray[],
+                                    const double  optInArray[],
                                     int          *outBegIdx,
                                     int          *outNbElement,                                    
                                     int           outInteger[],
@@ -180,7 +185,18 @@ static TA_Test tableTest[] =
    /******************/
    /* TA_CDLHIGHWAVE */
    /******************/
-   { "TA_CDLHIGHWAVE", 0, 12, {0.0,1.0}, TA_SUCCESS, { {0,1}, {1,1} } }
+   { "CDLHIGHWAVE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLDOJISTAR",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLEVENINGDOJISTAR", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLEVENINGSTAR",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLHIGHWAVE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLLONGLINE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLMORNINGDOJISTAR", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLMORNINGSTAR",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLSHORTLINE",       1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLSPINNINGTOP",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLTRISTAR",         1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }}
+
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
@@ -192,7 +208,8 @@ ErrorNumber test_candlestick( TA_History *history )
    ErrorNumber retValue;
 
    /* Initialize all the unstable period with a large number that would
-    * break the logic if a candlestick unexpectably use an unstable period.
+    * break the logic if a candlestick unexpectably use a function affected
+    * by an unstable period.
     */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 20000 );
 
@@ -226,7 +243,7 @@ ErrorNumber test_candlestick( TA_History *history )
  * All outputs are returned in the remaining parameters.
  *
  * 'lookback' is the return value of the corresponding Lookback function.
- * retCode is the return code from the call of the TA function.
+ * taFuncRetCode is the return code from the call of the TA function.
  *
  */
 static ErrorNumber callCandlestick( const char   *name,
@@ -236,7 +253,7 @@ static ErrorNumber callCandlestick( const char   *name,
                                     const double *inHigh,
                                     const double *inLow,
                                     const double *inClose,
-                                    double        optInArray[],
+                                    const double  optInArray[],
                                     int          *outBegIdx,
                                     int          *outNbElement,                                    
                                     int           outInteger[],
@@ -251,8 +268,6 @@ static ErrorNumber callCandlestick( const char   *name,
    const TA_InputParameterInfo *inputInfo;
    const TA_OutputParameterInfo *outputInfo;
 
-//   unsigned int i;
-//   int j;
    TA_RetCode retCode;
 
    (void)optInArray;
@@ -318,7 +333,10 @@ static ErrorNumber callCandlestick( const char   *name,
    TA_SetOutputParamIntegerPtr(paramHolder,0,outInteger);
 
    /* Set the optional inputs. */
-//   TBD
+   
+   /* !!!!!!!!!!!!! TO BE DONE !!!!!!!!!!!!!!!!!! 
+    * For now all candlestick functions will be called with default optional parameter.
+    */
 
    /* Do the function call. */
    *taFuncRetCode = TA_CallFunc(paramHolder,startIdx,endIdx,outBegIdx,outNbElement);
@@ -352,84 +370,70 @@ static ErrorNumber callCandlestick( const char   *name,
 /* rangeTestFunction is a different way to call any of 
  * the TA function.
  *
- * This is needed by the doRangeTest found in test_util.c
+ * This is called by doRangeTest found in test_util.c
  *
- * The doRangTest verifies behavior that should be common
- * for ALL TA functions. It checks also limit cases by
- * testing a wide range of startIdx,endIdx combinations.
+ * The doRangeTest verifies behavior that should be common
+ * for ALL TA functions. It detects bugs like:
+ *   - outBegIdx, outNbElement and lookback inconsistency.
+ *   - off-by-one writes to output.
+ *   - output inconsistency for different start/end index.
+ *   - ... many other limit cases...
+ *
+ * In the case of candlestick, the output is integer and 
+ * should be put in outputBufferInt, and outputBuffer is
+ * ignored.
  */
-static TA_RetCode rangeTestFunction( 
-                              TA_Integer startIdx,
-                              TA_Integer endIdx,
-                              TA_Real *outputBuffer,
-                              TA_Integer *outBegIdx,
-                              TA_Integer *outNbElement,
-                              TA_Integer *lookback,
-                              void *opaqueData,
-                              unsigned int outputNb )
+static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
+                                     TA_Integer   endIdx,
+                                     TA_Real     *outputBuffer,
+                                     TA_Integer  *outputBufferInt,
+                                     TA_Integer  *outBegIdx,
+                                     TA_Integer  *outNbElement,
+                                     TA_Integer  *lookback,
+                                     void        *opaqueData,
+                                     unsigned int outputNb,
+                                     unsigned int *isOutputInteger )
 {
-(void)startIdx;
-(void)endIdx;
-(void)outputBuffer;
-(void)outBegIdx;
-(void)outNbElement;
-(void)lookback;
-(void)opaqueData;
-(void)outputNb;
+   const TA_RangeTestParam *testParam1;
+   const TA_Test *testParam2;
+   ErrorNumber errNb;
 
-#if 0
    TA_RetCode retCode;
-   TA_RangeTestParam *testParam;
 
-   (void)outputNb;
-  
-   testParam = (TA_RangeTestParam *)opaqueData;   
+   testParam1 = (const TA_RangeTestParam *)opaqueData;
+   testParam2 = (const TA_Test *)testParam1->test;
 
-   switch( testParam->test->theFunction )
-   {
-   case TA_CCI_TEST:
-      retCode = TA_CCI( startIdx,
-                        endIdx,
-                        testParam->high,
-                        testParam->low,
-                        testParam->close,
-                        testParam->test->optInTimePeriod,
-                        outBegIdx,
-                        outNbElement,
-                        outputBuffer );
-      *lookback = TA_CCI_Lookback( testParam->test->optInTimePeriod );
-      break;
-   case TA_WILLR_TEST:
-      retCode = TA_WILLR( startIdx,
-                          endIdx,
-                          testParam->high,
-                          testParam->low,
-                          testParam->close,
-                          testParam->test->optInTimePeriod,
-                          outBegIdx,
-                          outNbElement,
-                          outputBuffer );
-      *lookback = TA_WILLR_Lookback( testParam->test->optInTimePeriod );
-      break;
-   default:
-      retCode = TA_INTERNAL_ERROR(132);
-   }
+   *isOutputInteger = 1; /* Must be != 0 */
+
+   retCode = TA_INTERNAL_ERROR(166);
+
+   /* Call the TA function by name */
+   errNb = callCandlestick( testParam2->name,
+                            startIdx, endIdx,
+                            testParam1->open,
+                            testParam1->high,
+                            testParam1->low,
+                            testParam1->close,
+                            testParam2->params,
+                            outBegIdx,
+                            outNbElement,                                    
+                            outputBufferInt,
+                            lookback,
+                            &retCode );
+ 
+   if( errNb != TA_TEST_PASS )
+      retCode = TA_INTERNAL_ERROR(168);
 
    return retCode;
-#endif
-   return TA_SUCCESS;
 }
 
 static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test )
 {
-  (void)test;
+   TA_RangeTestParam testParam;
+   ErrorNumber errNb;
 
-//   TA_RetCode retCode;
-//   ErrorNumber errNb;
- //  TA_Integer outBegIdx;
-//   TA_Integer outNbElement;
-//   TA_RangeTestParam testParam;
+   (void)test;
 
    /* Set to NAN all the elements of the gBuffers.  */
    clearAllBuffers();
@@ -440,9 +444,12 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 2, history->low,   history->nbBars );
    setInputBuffer( 3, history->close, history->nbBars );
       
-   /* Make a simple first call. */
    
 #if 0
+   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+   /* Test for specific value not yet implemented */
+
+   /* Make a simple first call. */
    switch( test->theFunction )
    {
    case TA_CCI_TEST:
@@ -642,26 +649,25 @@ static ErrorNumber do_test( const TA_History *history,
 
    CHECK_EXPECTED_VALUE( gBuffer[2].in, 0 );
    setInputBuffer( 2, history->close, history->nbBars );
+#endif
 
    /* Do a systematic test of most of the
     * possible startIdx/endIdx range.
     */
    testParam.test  = test;
+   testParam.open  = history->open;
    testParam.high  = history->high;
    testParam.low   = history->low;
    testParam.close = history->close;
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest(
-                           rangeTestFunction, 
+      errNb = doRangeTest( rangeTestFunction, 
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )
          return errNb;
    }
-#endif
 
    return TA_TEST_PASS;
 }
-

@@ -72,9 +72,14 @@
 /* Global temporary buffers used while testing. */
 #define RESV_PATTERN_MEMGUARD_1   (2.4789205E-150)
 #define RESV_PATTERN_MEMGUARD_2   (4.2302468E-165)
+
 #define RESV_PATTERN_PREFIX       (9.1349043E-200)
 #define RESV_PATTERN_SUFFIX       (8.1489031E-158)
 #define RESV_PATTERN_IMPROBABLE   (-2.849284E-199)
+
+#define RESV_PATTERN_PREFIX_INT     (TA_INTEGER_DEFAULT)
+#define RESV_PATTERN_SUFFIX_INT     (TA_INTEGER_DEFAULT)
+#define RESV_PATTERN_IMPROBABLE_INT (TA_INTEGER_DEFAULT)
 
 #define TA_BUF_PREFIX 300
 #define TA_BUF_SUFFIX 300
@@ -103,6 +108,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                                        TA_Integer refOutNbElement,
                                        TA_Integer refLookback,
                                        const TA_Real    *refBuffer,
+                                       const TA_Integer *refBufferInt,
                                        TA_FuncUnstId unstId,
                                        TA_Integer fixSize,
                                        unsigned int outputNb,
@@ -546,16 +552,26 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
    TA_Integer refOutBeg, refOutNbElement, refLookback;
    TA_Integer fixSize;
    TA_Real *refBuffer;
+   TA_Integer *refBufferInt;
    ErrorNumber errNb;
    TA_Integer unstablePeriod, temp;
+   unsigned int outputIsInteger;
 
    /* Caculate the whole range. This is going
     * to be the reference for all subsequent test.
     */
-   refBuffer = TA_Malloc( MAX_RANGE_SIZE * sizeof( TA_Real ) );
+   refBuffer = (TA_Real *)TA_Malloc( MAX_RANGE_SIZE * sizeof( TA_Real ) );
 
    if( !refBuffer )
       return TA_TESTUTIL_DRT_ALLOC_ERR;
+
+   refBufferInt = (TA_Integer *)TA_Malloc( MAX_RANGE_SIZE * sizeof( TA_Integer ) );
+
+   if( !refBufferInt )
+   {
+      TA_Free( refBuffer );
+      return TA_TESTUTIL_DRT_ALLOC_ERR;
+   }
   
    if( unstId != TA_FUNC_UNST_NONE )
    {
@@ -567,13 +583,16 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
       TA_SetUnstablePeriod( unstId, 0 );
    }
 
-   retCode = testFunction( 0, MAX_RANGE_END, refBuffer,                           
+   outputIsInteger = 0;   
+   retCode = testFunction( 0, MAX_RANGE_END, refBuffer, refBufferInt,
                            &refOutBeg, &refOutNbElement, &refLookback,
-                           opaqueData, outputNb );
+                           opaqueData, outputNb, &outputIsInteger );
+
    if( retCode != TA_SUCCESS )
    {
       printf( "Fail: doRangeTest whole range failed (%d)\n", retCode );
-      TA_Free(  refBuffer );
+      TA_Free( refBuffer );
+      TA_Free( refBufferInt );
       return TA_TESTUTIL_DRT_REF_FAILED;
    }
 
@@ -583,7 +602,8 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
    if( refLookback != refOutBeg )
    {
       printf( "Fail: doRangeTest refLookback != refOutBeg (%d != %d)\n", refLookback, refOutBeg );
-      TA_Free(  refBuffer );
+      TA_Free( refBuffer );
+      TA_Free( refBufferInt );
       return TA_TESTUTIL_DRT_LOOKBACK_INCORRECT;
    }
    
@@ -591,7 +611,8 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
    if( temp != refOutNbElement )
    {
       printf( "Fail: doRangeTest either refOutNbElement or refLookback bad (%d,%d)\n", temp, refOutNbElement );
-      TA_Free(  refBuffer );
+      TA_Free( refBuffer );
+      TA_Free( refBufferInt );
       return TA_TESTUTIL_DRT_REF_OUTPUT_INCORRECT;
    }
 
@@ -609,11 +630,12 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
       {
          errNb = doRangeTestFixSize( testFunction, opaqueData,
                                      refOutBeg, refOutNbElement, refLookback,
-                                     refBuffer,
+                                     refBuffer, refBufferInt,
                                      unstId, fixSize, outputNb, integerTolerance );
          if( errNb != TA_TEST_PASS)
          {
-            TA_Free(  refBuffer );
+            TA_Free( refBuffer );
+            TA_Free( refBufferInt );
             return errNb;
          }
       }
@@ -625,12 +647,13 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
 
             errNb = doRangeTestFixSize( testFunction, opaqueData,
                                         refOutBeg, refOutNbElement, refLookback,
-                                        refBuffer,
+                                        refBuffer, refBufferInt,
                                         unstId, fixSize, outputNb, integerTolerance );
             if( errNb != TA_TEST_PASS)
             {
                printf( "Fail: Using unstable period %d\n", unstablePeriod );
-               TA_Free(  refBuffer );
+               TA_Free( refBuffer );
+               TA_Free( refBufferInt );
                return errNb;
             }
 
@@ -667,7 +690,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
    }
 
    TA_Free( refBuffer );
-
+   TA_Free( refBufferInt );
    return TA_TEST_PASS;
 }
 
@@ -677,6 +700,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                                        TA_Integer refOutNbElement,
                                        TA_Integer refLookback,
                                        const TA_Real *refBuffer,
+                                       const TA_Integer *refBufferInt,
                                        TA_FuncUnstId unstId,
                                        TA_Integer fixSize,
                                        unsigned int outputNb,
@@ -688,6 +712,8 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
    TA_Integer i, temp;
    TA_Integer outputBegIdx, outputNbElement, lookback;
    TA_Integer startIdx, endIdx, relativeIdx;
+   TA_Integer *outputBufferInt;
+   unsigned int outputIsInteger;
 
    (void)refLookback;
 
@@ -697,12 +723,26 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
    if( !outputBuffer )
       return TA_TESTUTIL_DRT_ALLOC_ERR;
 
+   outputBufferInt = (TA_Integer *)TA_Malloc( (fixSize+2) * sizeof( TA_Integer ) );
+
+   if( !refBufferInt )
+   {
+      TA_Free( outputBuffer );
+      return TA_TESTUTIL_DRT_ALLOC_ERR;
+   }
+
    outputBuffer[0] = RESV_PATTERN_PREFIX;
    outputBuffer[fixSize+1] = RESV_PATTERN_SUFFIX;
 
-   /* Initialize the output with an improbable value. */
+   outputBufferInt[0] = RESV_PATTERN_PREFIX_INT;
+   outputBufferInt[fixSize+1] = RESV_PATTERN_SUFFIX_INT;
+
+   /* Initialize the outputs with improbable values. */
    for( i=1; i <= fixSize; i++ )
+   {
       outputBuffer[i] = RESV_PATTERN_IMPROBABLE;
+      outputBufferInt[i] = RESV_PATTERN_IMPROBABLE_INT;
+   }
 
    /* Test for a large number of possible startIdx */
    for( startIdx=0; startIdx <= (MAX_RANGE_SIZE-fixSize); startIdx++ )
@@ -710,9 +750,9 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
       /* Call the TA function. */
       endIdx = startIdx+fixSize-1;
       retCode = testFunction( startIdx, endIdx,
-                              &outputBuffer[1], 
+                              &outputBuffer[1], &outputBufferInt[1],
                               &outputBegIdx, &outputNbElement, &lookback,
-                              opaqueData, outputNb );
+                              opaqueData, outputNb, &outputIsInteger );
 
       if( retCode != TA_SUCCESS ) 
       {
@@ -721,7 +761,8 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
            * TA_SUCCESS with the outNbElement equal to zero.
            */
          printf( "Fail: doRangeTestFixSize testFunction return error=(%d) (%d,%d)\n", retCode, fixSize, startIdx );
-         TA_Free(  outputBuffer );
+         TA_Free( outputBuffer );
+         TA_Free( outputBufferInt );
          return TA_TESTUTIL_DRT_RETCODE_ERR;
       }
       else
@@ -750,7 +791,8 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                 */
                printf( "Fail: doRangeTestFixSize data missing (%d,%d,%d)\n", startIdx, endIdx, lookback );
                                                                                 
-               TA_Free(  outputBuffer );
+               TA_Free( outputBuffer );
+               TA_Free( outputBufferInt );
                return TA_TESTUTIL_DRT_MISSING_DATA;
             }
          }
@@ -762,7 +804,8 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                printf( "Fail: doRangeTestFixSize bad outBegIdx\n" );
                printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
                printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-               TA_Free(  outputBuffer );
+               TA_Free( outputBuffer );
+               TA_Free( outputBufferInt );
                return TA_TESTUTIL_DRT_BAD_OUTBEGIDX;
             }
 
@@ -781,7 +824,8 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                printf( "Fail: doRangeTestFixSize Lookback calculation too high? (%d)\n", lookback );
                printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
                printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-               TA_Free(  outputBuffer );
+               TA_Free( outputBuffer );
+               TA_Free( outputBufferInt );
                return TA_TESTUTIL_DRT_LOOKBACK_TOO_HIGH;
             }
 
@@ -789,17 +833,34 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
             relativeIdx = outputBegIdx-refOutBeg;
             for( i=0; i < outputNbElement; i++ )
             {
-               val1 = outputBuffer[1+i];
-               val2 = refBuffer[relativeIdx+i];
-               if( !dataWithinReasonableRange( val1, val2, i, unstId, integerTolerance ) )
+               if( outputIsInteger )
                {
-                  printf( "Fail: doRangeTestFixSize diff data for idx=%d (%e,%e)\n", i, val1, val2 );
-                  printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
-                  printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-                  if( val1 != 0.0 )
-                     printf( "Fail: Diff %g %%\n", ((val2-val1)/val1)*100.0 );
-                  TA_Free(  outputBuffer );
-                  return TA_TESTUTIL_DRT_BAD_OUTNBLEMENT;
+                  if( outputBufferInt[1+i] != refBufferInt[relativeIdx+i] )
+                  {
+                     printf( "Fail: doRangeTestFixSize diff data for idx=%d (%d,%d)\n", i, 
+                              outputBufferInt[1+i], refBufferInt[relativeIdx+i] );
+                     printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
+                     printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
+                     TA_Free( outputBuffer );
+                     TA_Free( outputBufferInt );
+                     return TA_TESTUTIL_DRT_DATA_DIFF_INT;
+                  }
+               }
+               else
+               {
+                  val1 = outputBuffer[1+i];
+                  val2 = refBuffer[relativeIdx+i];
+                  if( !dataWithinReasonableRange( val1, val2, i, unstId, integerTolerance ) )
+                  {
+                     printf( "Fail: doRangeTestFixSize diff data for idx=%d (%e,%e)\n", i, val1, val2 );
+                     printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
+                     printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
+                     if( val1 != 0.0 )
+                        printf( "Fail: Diff %g %%\n", ((val2-val1)/val1)*100.0 );
+                     TA_Free( outputBuffer );
+                     TA_Free( outputBufferInt );
+                     return TA_TESTUTIL_DRT_DATA_DIFF;
+                  }
                }
 
                /* Randomly skip the verification of some value. Limit
@@ -821,8 +882,16 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
             }
 
             /* Clean-up for next test. */
-            for( i=1; i <= fixSize; i++ )
-               outputBuffer[i] = RESV_PATTERN_IMPROBABLE;
+            if( outputIsInteger )
+            {
+               for( i=1; i <= fixSize; i++ )
+                  outputBufferInt[i] = RESV_PATTERN_IMPROBABLE_INT;
+            }
+            else
+            {
+               for( i=1; i <= fixSize; i++ )
+                  outputBuffer[i] = RESV_PATTERN_IMPROBABLE;
+            }
          }
 
          /* Skip some startIdx at random. Limit case are still 
@@ -842,7 +911,18 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
          printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_PREFIX (%e)\n", outputBuffer[0] );
          printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
          printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-         TA_Free(  outputBuffer );
+         TA_Free( outputBuffer );
+         TA_Free( outputBufferInt );
+         return TA_TESTUTIL_DRT_BAD_PREFIX;
+      }
+
+      if( outputBufferInt[0] != RESV_PATTERN_PREFIX_INT )
+      {
+         printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_PREFIX_INT (%d)\n", outputBufferInt[0] );
+         printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
+         printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
+         TA_Free( outputBuffer );
+         TA_Free( outputBufferInt );
          return TA_TESTUTIL_DRT_BAD_PREFIX;
       }
 
@@ -851,14 +931,26 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
          printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_SUFFIX (%e)\n", outputBuffer[fixSize+1] );
          printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
          printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-         TA_Free(  outputBuffer );
+         TA_Free( outputBuffer );
+         TA_Free( outputBufferInt );
+         return TA_TESTUTIL_DRT_BAD_SUFFIX;
+      }
+
+      if( outputBufferInt[fixSize+1] != RESV_PATTERN_SUFFIX_INT )
+      {
+         printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_SUFFIX_INT (%d)\n", outputBufferInt[fixSize+1] );
+         printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
+         printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
+         TA_Free( outputBuffer );
+         TA_Free( outputBufferInt );
          return TA_TESTUTIL_DRT_BAD_SUFFIX;
       }
 
       /* Loop and move forward for the next startIdx to test. */
    }
 
-   TA_Free(  outputBuffer );
+   TA_Free( outputBuffer );
+   TA_Free( outputBufferInt );
    return TA_TEST_PASS;
 }
 

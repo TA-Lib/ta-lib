@@ -142,7 +142,7 @@ static ErrorNumber test_web( TA_UDBase *udb )
    /* Add the Yaho! data source. */
    memset( &param, 0, sizeof( param ) );
    param.id = TA_YAHOO_WEB;
-   param.location = "us";
+   param.location = "us;server=ichart7.finance.dcn.yahoo.com"; /* ichart7.finance.dcn.yahoo.com */
 
    retCode = TA_AddDataSource( udb, &param );
    if( retCode != TA_SUCCESS )
