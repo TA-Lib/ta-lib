@@ -141,6 +141,21 @@ TA_RetCode TA_EMA_FramePP( const TA_ParamHolderPriv *params,
             outNbElement, 
             params->out[0].data.outReal /*  outReal_0 */ );
 }
+TA_RetCode TA_HT_TRENDLINE_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+
+{
+   return TA_HT_TRENDLINE(
+                     startIdx,
+                     endIdx,
+                     params->in[0].data.inReal, /* inReal_0 */
+                     outBegIdx, 
+                     outNbElement, 
+                     params->out[0].data.outReal /*  outReal_0 */ );
+}
 TA_RetCode TA_KAMA_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
                           TA_Integer            endIdx,
@@ -258,6 +273,23 @@ TA_RetCode TA_SMA_FramePP( const TA_ParamHolderPriv *params,
             outBegIdx, 
             outNbElement, 
             params->out[0].data.outReal /*  outReal_0 */ );
+}
+TA_RetCode TA_T3_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+
+{
+   return TA_T3(
+           startIdx,
+           endIdx,
+           params->in[0].data.inReal, /* inReal_0 */
+           params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
+           params->optIn[1].data.optInReal, /* optInVFactor_1 */
+           outBegIdx, 
+           outNbElement, 
+           params->out[0].data.outReal /*  outReal_0 */ );
 }
 TA_RetCode TA_TEMA_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
@@ -808,6 +840,83 @@ TA_RetCode TA_WILLR_FramePP( const TA_ParamHolderPriv *params,
               outBegIdx, 
               outNbElement, 
               params->out[0].data.outReal /*  outReal_0 */ );
+}
+TA_RetCode TA_HT_DCPERIOD_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+
+{
+   return TA_HT_DCPERIOD(
+                    startIdx,
+                    endIdx,
+                    params->in[0].data.inReal, /* inReal_0 */
+                    outBegIdx, 
+                    outNbElement, 
+                    params->out[0].data.outReal /*  outReal_0 */ );
+}
+TA_RetCode TA_HT_DCPHASE_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+
+{
+   return TA_HT_DCPHASE(
+                   startIdx,
+                   endIdx,
+                   params->in[0].data.inReal, /* inReal_0 */
+                   outBegIdx, 
+                   outNbElement, 
+                   params->out[0].data.outReal /*  outReal_0 */ );
+}
+TA_RetCode TA_HT_PHASOR_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+
+{
+   return TA_HT_PHASOR(
+                  startIdx,
+                  endIdx,
+                  params->in[0].data.inReal, /* inReal_0 */
+                  outBegIdx, 
+                  outNbElement, 
+                  params->out[0].data.outReal, /*  outInPhase_0 */
+                  params->out[1].data.outReal /*  outQuadrature_1 */ );
+}
+TA_RetCode TA_HT_SINE_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+
+{
+   return TA_HT_SINE(
+                startIdx,
+                endIdx,
+                params->in[0].data.inReal, /* inReal_0 */
+                outBegIdx, 
+                outNbElement, 
+                params->out[0].data.outReal, /*  outSine_0 */
+                params->out[1].data.outReal /*  outLeadSine_1 */ );
+}
+TA_RetCode TA_HT_TRENDMODE_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+
+{
+   return TA_HT_TRENDMODE(
+                     startIdx,
+                     endIdx,
+                     params->in[0].data.inReal, /* inReal_0 */
+                     outBegIdx, 
+                     outNbElement, 
+                     params->out[0].data.outInteger /*  outInteger_0 */ );
 }
 TA_RetCode TA_AD_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,

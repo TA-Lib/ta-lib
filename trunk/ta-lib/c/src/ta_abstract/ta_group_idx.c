@@ -19,6 +19,7 @@ extern const TA_FuncDef TA_DEF_MIN;
 extern const TA_FuncDef TA_DEF_BBANDS;
 extern const TA_FuncDef TA_DEF_DEMA;
 extern const TA_FuncDef TA_DEF_EMA;
+extern const TA_FuncDef TA_DEF_HT_TRENDLINE;
 extern const TA_FuncDef TA_DEF_KAMA;
 extern const TA_FuncDef TA_DEF_MA;
 extern const TA_FuncDef TA_DEF_MAMA;
@@ -26,6 +27,7 @@ extern const TA_FuncDef TA_DEF_MIDPRICE;
 extern const TA_FuncDef TA_DEF_MIDPOINT;
 extern const TA_FuncDef TA_DEF_SAR;
 extern const TA_FuncDef TA_DEF_SMA;
+extern const TA_FuncDef TA_DEF_T3;
 extern const TA_FuncDef TA_DEF_TEMA;
 extern const TA_FuncDef TA_DEF_TRIMA;
 extern const TA_FuncDef TA_DEF_WMA;
@@ -57,6 +59,11 @@ extern const TA_FuncDef TA_DEF_STOCH;
 extern const TA_FuncDef TA_DEF_STOCHF;
 extern const TA_FuncDef TA_DEF_TRIX;
 extern const TA_FuncDef TA_DEF_WILLR;
+extern const TA_FuncDef TA_DEF_HT_DCPERIOD;
+extern const TA_FuncDef TA_DEF_HT_DCPHASE;
+extern const TA_FuncDef TA_DEF_HT_PHASOR;
+extern const TA_FuncDef TA_DEF_HT_SINE;
+extern const TA_FuncDef TA_DEF_HT_TRENDMODE;
 extern const TA_FuncDef TA_DEF_AD;
 extern const TA_FuncDef TA_DEF_ADOSC;
 extern const TA_FuncDef TA_DEF_OBV;
@@ -81,6 +88,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_BBANDS,
 &TA_DEF_DEMA,
 &TA_DEF_EMA,
+&TA_DEF_HT_TRENDLINE,
 &TA_DEF_KAMA,
 &TA_DEF_MA,
 &TA_DEF_MAMA,
@@ -88,6 +96,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_MIDPOINT,
 &TA_DEF_SAR,
 &TA_DEF_SMA,
+&TA_DEF_T3,
 &TA_DEF_TEMA,
 &TA_DEF_TRIMA,
 &TA_DEF_WMA,
@@ -131,6 +140,11 @@ NULL };
 #define SIZE_GROUP_4 ((sizeof(TA_PerGroupFunc_4)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_5[] = {
+&TA_DEF_HT_DCPERIOD,
+&TA_DEF_HT_DCPHASE,
+&TA_DEF_HT_PHASOR,
+&TA_DEF_HT_SINE,
+&TA_DEF_HT_TRENDMODE,
 NULL };
 #define SIZE_GROUP_5 ((sizeof(TA_PerGroupFunc_5)/sizeof(const TA_FuncDef *))-1)
 

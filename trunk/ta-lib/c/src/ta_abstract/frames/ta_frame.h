@@ -53,6 +53,13 @@ TA_RetCode TA_EMA_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer           *outNbElement )
 ;
 
+TA_RetCode TA_HT_TRENDLINE_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
 TA_RetCode TA_KAMA_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
                           TA_Integer            endIdx,
@@ -96,6 +103,13 @@ TA_RetCode TA_SAR_FramePP( const TA_ParamHolderPriv *params,
 ;
 
 TA_RetCode TA_SMA_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
+TA_RetCode TA_T3_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
                           TA_Integer            endIdx,
                           TA_Integer           *outBegIdx,
@@ -313,6 +327,41 @@ TA_RetCode TA_TRIX_FramePP( const TA_ParamHolderPriv *params,
 ;
 
 TA_RetCode TA_WILLR_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
+TA_RetCode TA_HT_DCPERIOD_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
+TA_RetCode TA_HT_DCPHASE_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
+TA_RetCode TA_HT_PHASOR_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
+TA_RetCode TA_HT_SINE_FramePP( const TA_ParamHolderPriv *params,
+                          TA_Integer            startIdx,
+                          TA_Integer            endIdx,
+                          TA_Integer           *outBegIdx,
+                          TA_Integer           *outNbElement )
+;
+
+TA_RetCode TA_HT_TRENDMODE_FramePP( const TA_ParamHolderPriv *params,
                           TA_Integer            startIdx,
                           TA_Integer            endIdx,
                           TA_Integer           *outBegIdx,
