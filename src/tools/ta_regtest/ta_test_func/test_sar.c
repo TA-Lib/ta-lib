@@ -47,7 +47,8 @@
  */
 
 /* Description:
- *     Test RSI function.
+ *     Test Parabolic SAR function using the example given
+ *     in Wilder's book.
  */
 
 /**** Headers ****/
@@ -201,8 +202,7 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 1, lowPtr,   nbPriceBar );
 
    /* Make a simple first call. */
-   retCode = TA_SAR(
-                     test->startIdx,
+   retCode = TA_SAR( test->startIdx,
                      test->endIdx,
                      gBuffer[0].in,
                      gBuffer[1].in,
@@ -226,8 +226,7 @@ static ErrorNumber do_test( const TA_History *history,
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   retCode = TA_SAR(
-                     test->startIdx,
+   retCode = TA_SAR( test->startIdx,
                      test->endIdx,
                      gBuffer[0].in,
                      gBuffer[1].in,
@@ -268,8 +267,7 @@ static ErrorNumber do_test( const TA_History *history,
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   retCode = TA_SAR(
-                     test->startIdx,
+   retCode = TA_SAR( test->startIdx,
                      test->endIdx,
                      gBuffer[0].in,
                      gBuffer[1].in,
