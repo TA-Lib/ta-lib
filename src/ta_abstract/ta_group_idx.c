@@ -24,6 +24,8 @@ extern const TA_FuncDef TA_DEF_SAR;
 extern const TA_FuncDef TA_DEF_SMA;
 extern const TA_FuncDef TA_DEF_TEMA;
 extern const TA_FuncDef TA_DEF_WMA;
+extern const TA_FuncDef TA_DEF_ADX;
+extern const TA_FuncDef TA_DEF_ADXR;
 extern const TA_FuncDef TA_DEF_APO;
 extern const TA_FuncDef TA_DEF_DX;
 extern const TA_FuncDef TA_DEF_MACD;
@@ -72,6 +74,8 @@ NULL };
 #define SIZE_GROUP_2 ((sizeof(TA_PerGroupFunc_2)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_3[] = {
+&TA_DEF_ADX,
+&TA_DEF_ADXR,
 &TA_DEF_APO,
 &TA_DEF_DX,
 &TA_DEF_MACD,
