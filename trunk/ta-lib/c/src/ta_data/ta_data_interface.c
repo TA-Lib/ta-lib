@@ -1190,30 +1190,6 @@ TA_RetCode TA_HistoryFree( TA_History *history )
    FREE_IF_NOT_NULL( hiddenData->volume );
    FREE_IF_NOT_NULL( hiddenData->openInterest );
 
-   #if 0
-   /* When the hiddenData pointer are set, free with these pointers
-    * instead of the one at the top level in TA_History.
-    */
-   #define FREE_DATA_ARRAY(field) { \
-       if( hiddenData->field ) \
-       { \
-          TA_Free(hiddenData->field); hiddenData->field=NULL; history->field=NULL; \
-       } \
-       else if( history->field ) \
-       { \
-          TA_Free(history->field); history->field=NULL; \
-       } \
-   }
-   FREE_DATA_ARRAY( timestamp );
-   FREE_DATA_ARRAY( close );
-   FREE_DATA_ARRAY( open );
-   FREE_DATA_ARRAY( high );
-   FREE_DATA_ARRAY( low );
-   FREE_DATA_ARRAY( volume );
-   FREE_DATA_ARRAY( openInterest );
-   #undef FREE_DATA_ARRAY
-   #endif
-
    stringTableFree( &history->listOfSource, 1 );
    TA_Free( (void *)hiddenData );
    TA_Free( (void *)history );
@@ -1340,11 +1316,11 @@ static TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDa
       DO( TA_StringAlloc,     password );
       DO( TA_StringAlloc,     symbol   );
 
-      DO_DFLT( TA_StringAlloc, category, TA_DEFAULT_CATEGORY          );
-      DO_DFLT( TA_StringAlloc, country,  TA_DEFAULT_CATEGORY_COUNTRY  );
-      DO_DFLT( TA_StringAlloc, exchange, TA_DEFAULT_CATEGORY_EXCHANGE );
-      DO_DFLT( TA_StringAlloc, type,     TA_DEFAULT_CATEGORY_TYPE     );
-      DO_DFLT( TA_StringAlloc, name,     TA_gDataSourceTable[param->id].defaultName );
+      DO_DFLT( TA_StringAlloc, category,   TA_DEFAULT_CATEGORY          );
+      DO_DFLT( TA_StringAlloc, country,    TA_DEFAULT_CATEGORY_COUNTRY  );
+      DO_DFLT( TA_StringAlloc, exchange,   TA_DEFAULT_CATEGORY_EXCHANGE );
+      DO_DFLT( TA_StringAlloc, type,       TA_DEFAULT_CATEGORY_TYPE     );
+      DO_DFLT( TA_StringAlloc, sourceName, TA_gDataSourceTable[param->id].defaultName );
    #undef DO
    #undef DO_FLT
 
@@ -1365,16 +1341,16 @@ static TA_RetCode TA_AddDataSourceParamPrivFree( TA_AddDataSourceParamPriv *toBe
 
       /* Free all the strings that are not NULL. */
       #define DO(y) { if(toBeFreed->y) TA_StringFree( stringCache, toBeFreed->y ); }
-         DO( location );
-         DO( info     );
-         DO( username );
-         DO( password );
-         DO( category );
-         DO( country  );
-         DO( exchange );
-         DO( type     );
-         DO( symbol   );
-         DO( name     );
+         DO( location   );
+         DO( info       );
+         DO( username   );
+         DO( password   );
+         DO( category   );
+         DO( country    );
+         DO( exchange   );
+         DO( type       );
+         DO( symbol     );
+         DO( sourceName );
       #undef DO
 
       TA_Free( toBeFreed );
