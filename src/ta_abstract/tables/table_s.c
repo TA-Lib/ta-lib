@@ -191,7 +191,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationInitLong =
 
    "AF Init Long", /* displayName */
    (const void *)&TA_DEF_AccelerationInit, /* dataSet */
-   0.20, /* defaultValue */
+   0.02, /* defaultValue */
    "Acceleration Factor initial value for the Long direction", /* hint */
 
    NULL /* helpFile */
@@ -232,7 +232,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationInitShort =
 
    "AF Init Short", /* displayName */
    (const void *)&TA_DEF_AccelerationInit, /* dataSet */
-   0.20, /* defaultValue */
+   0.02, /* defaultValue */
    "Acceleration Factor initial value for the Short direction", /* hint */
 
    NULL /* helpFile */
