@@ -47,6 +47,7 @@
  *  110103 PK     Minidriver architecture
  *  012504 MF,JS  Fix some memory leaks and perform integer/double cast
  *                for columns that represents a number (Bug #881950)
+ *  013104 MF     Revert the TA_TRACE_RETURN/RETURN_ON_ERROR change.
  */
 
 /* Description:
@@ -781,7 +782,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    {
       /* we cannot deliver data for the requested period, thus exit gracefully */
       retCode = (*privateHandle->minidriver->releaseQuery)(queryResult);
-      RETURN_ON_ERROR( retCode );
+      TA_TRACE_RETURN( retCode );
    }
    if(  dateCol < 0
      || (fieldToAlloc & TA_OPEN   && openCol   < 0)
@@ -793,7 +794,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    {
       /* required column not found, so cannot deliver data */
       retCode = (*privateHandle->minidriver->releaseQuery)(queryResult);
-      RETURN_ON_ERROR( retCode );
+      TA_TRACE_RETURN( retCode );
    }
       
    /* iterate through the result set */
