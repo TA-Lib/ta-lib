@@ -69,10 +69,16 @@
 /* None */
 
 /**** Local declarations.              ****/
+typedef enum {
+TA_MACD_TEST,
+TA_MACDFIX_TEST,
+TA_MACDEXT_TEST
+} TA_TestId;
+
 typedef struct
 { 
    TA_Integer doRangeTestFlag;
-   TA_Integer doMACD_FIX;
+   TA_TestId  testId;
 
    TA_Integer startIdx;
    TA_Integer endIdx;
@@ -116,10 +122,22 @@ static TA_Test tableTest[] =
    /*********************/
    /*   MACD - CLASSIC  */
    /*********************/
+   { 0, TA_MACD_TEST, 0, 251, 12, 26, 9, TA_MA_CLASSIC, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/  
+                                                          0, -1.9738,  /* MACD */
+                                                          0, -2.7071,  /* Signal */
+                                                          0, (-1.9738)-(-2.7071) }, /* Histogram */
 
    /***********************/
    /*   MACD - METASTOCK  */
    /***********************/
+
+   /*******************************/
+   /*   MACDEXT - MIMIC CLASSIC   */
+   /*******************************/
+   { 0, TA_MACDEXT_TEST, 0, 251, 12, 26, 9, TA_MA_CLASSIC, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/  
+                                                          0, -1.9738,  /* MACD */
+                                                          0, -2.7071,  /* Signal */
+                                                          0, (-1.9738)-(-2.7071)}, /* Histogram */
 
    /***************************/
    /*   MACD FIX - CLASSIC    */
@@ -128,12 +146,12 @@ static TA_Test tableTest[] =
    /***************************/
    /*   MACD FIX - METASTOCK  */
    /***************************/
-   { 1, 1, 0, 251, 12, 26, 9, TA_MA_METASTOCK, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/  
+   { 1, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_MA_METASTOCK, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/  
                                                           0, -1.2185,  /* MACD */
                                                           0, -1.7119,  /* Signal */
                                                           0, (-1.2185)-(-1.7119) }, /* Histogram */
 
-   { 0, 1, 0, 251, 12, 26, 9, TA_MA_METASTOCK, TA_SUCCESS, 33, 252-33, 
+   { 0, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_MA_METASTOCK, TA_SUCCESS, 33, 252-33, 
                                                         252-34,  0.8764, /* MACD */
                                                         252-34,  1.3533,   /* Signal */
                                                         252-34,  (0.8764)-(1.3533)} /* Histogram */
@@ -183,49 +201,50 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
                                      void *opaqueData,
                                      unsigned int outputNb )
 {
-  TA_RetCode retCode;
-  TA_RangeTestParam *testParam;
-  TA_Real *dummyBuffer1, *dummyBuffer2;
-  TA_Real *out1, *out2, *out3;
+   TA_RetCode retCode;
+   TA_RangeTestParam *testParam;
+   TA_Real *dummyBuffer1, *dummyBuffer2;
+   TA_Real *out1, *out2, *out3;
 
-  testParam = (TA_RangeTestParam *)opaqueData;   
+   testParam = (TA_RangeTestParam *)opaqueData;   
 
-  dummyBuffer1 = TA_Malloc( libHandle, ((endIdx-startIdx)+1)*sizeof(TA_Real));
-  if( !dummyBuffer1 )
-     return TA_ALLOC_ERR;
+   dummyBuffer1 = TA_Malloc( libHandle, ((endIdx-startIdx)+1)*sizeof(TA_Real));
+   if( !dummyBuffer1 )
+      return TA_ALLOC_ERR;
 
-  dummyBuffer2 = TA_Malloc( libHandle, ((endIdx-startIdx)+1)*sizeof(TA_Real));
-  if( !dummyBuffer2 )
-  {
-     TA_Free( libHandle, dummyBuffer1 );
-     return TA_ALLOC_ERR;
-  }
-
-  switch( outputNb )
-  {
-  case 0:
-     out1 = outputBuffer;
-     out2 = dummyBuffer1;
-     out3 = dummyBuffer2;
-     break;
-  case 1:
-     out2 = outputBuffer;
-     out1 = dummyBuffer1;
-     out3 = dummyBuffer2;
-     break;
-  case 2:
-     out3 = outputBuffer;
-     out2 = dummyBuffer1;
-     out1 = dummyBuffer2;
-     break;
-  default:
-     TA_Free( libHandle, dummyBuffer1 );
-     TA_Free( libHandle, dummyBuffer2 );
-     return TA_BAD_PARAM;
-  }
-
-   if( testParam->test->doMACD_FIX )
+   dummyBuffer2 = TA_Malloc( libHandle, ((endIdx-startIdx)+1)*sizeof(TA_Real));
+   if( !dummyBuffer2 )
    {
+      TA_Free( libHandle, dummyBuffer1 );
+      return TA_ALLOC_ERR;
+   }
+
+   switch( outputNb )
+   {
+   case 0:
+      out1 = outputBuffer;
+      out2 = dummyBuffer1;
+      out3 = dummyBuffer2;
+      break;
+   case 1:
+      out2 = outputBuffer;
+      out1 = dummyBuffer1;
+      out3 = dummyBuffer2;
+      break;
+   case 2:
+      out3 = outputBuffer;
+      out2 = dummyBuffer1;
+      out1 = dummyBuffer2;
+      break;
+   default:
+      TA_Free( libHandle, dummyBuffer1 );
+      TA_Free( libHandle, dummyBuffer2 );
+      return TA_BAD_PARAM;
+   }
+
+   switch( testParam->test->testId )
+   {
+   case TA_MACDFIX_TEST:
       retCode = TA_MACDFIX( libHandle,
                             startIdx,
                             endIdx,
@@ -236,9 +255,8 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
                             out1, out2, out3 );
      *lookback = TA_MACDFIX_Lookback( testParam->test->optInSignalPeriod_2,
                                       testParam->test->optInCompatibility_3 );
-   }
-   else
-   {
+     break;
+   case TA_MACD_TEST:
       retCode = TA_MACD( libHandle,
                             startIdx,
                             endIdx,
@@ -250,10 +268,32 @@ static TA_RetCode rangeTestFunction( TA_Libc *libHandle,
                             outBegIdx, outNbElement,
                             out1, out2, out3 );
 
-     *lookback = TA_MACD_Lookback( testParam->test->optInFastPeriod_0,
-                                   testParam->test->optInSlowPeriod_1,
-                                   testParam->test->optInSignalPeriod_2,
-                                   testParam->test->optInCompatibility_3 );
+      *lookback = TA_MACD_Lookback( testParam->test->optInFastPeriod_0,
+                                    testParam->test->optInSlowPeriod_1,
+                                    testParam->test->optInSignalPeriod_2,
+                                    testParam->test->optInCompatibility_3 );
+      break;
+   case TA_MACDEXT_TEST:
+      retCode = TA_MACDEXT( libHandle,
+                            startIdx,
+                            endIdx,
+                            testParam->close,
+                            testParam->test->optInFastPeriod_0,
+                            TA_MA_EXPONENTIAL,
+                            testParam->test->optInSlowPeriod_1,
+                            TA_MA_EXPONENTIAL,
+                            testParam->test->optInSignalPeriod_2,
+                            TA_MA_EXPONENTIAL,
+                            outBegIdx, outNbElement,
+                            out1, out2, out3 );
+
+      *lookback = TA_MACDEXT_Lookback( testParam->test->optInFastPeriod_0,
+                                       TA_MA_EXPONENTIAL,
+                                       testParam->test->optInSlowPeriod_1,
+                                       TA_MA_EXPONENTIAL,
+                                       testParam->test->optInSignalPeriod_2,
+                                       TA_MA_EXPONENTIAL );
+      break;
    }
 
    TA_Free( libHandle, dummyBuffer1 );
@@ -290,8 +330,9 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    CLEAR_EXPECTED_VALUE(2);
 
    /* Make a simple first call. */
-   if( test->doMACD_FIX )
+   switch( test->testId )
    {
+   case TA_MACDFIX_TEST:
       retCode = TA_MACDFIX( libHandle,
                         test->startIdx,
                         test->endIdx,
@@ -302,9 +343,8 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                         gBuffer[0].out0, 
                         gBuffer[0].out1,
                         gBuffer[0].out2 );
-   }
-   else
-   {
+      break;
+   case TA_MACD_TEST:
       retCode = TA_MACD( libHandle,
                         test->startIdx,
                         test->endIdx,
@@ -317,6 +357,23 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                         gBuffer[0].out0, 
                         gBuffer[0].out1,
                         gBuffer[0].out2 );
+      break;
+   case TA_MACDEXT_TEST:
+      retCode = TA_MACDEXT( libHandle,
+                            test->startIdx,
+                            test->endIdx,
+                            gBuffer[0].in,
+                            test->optInFastPeriod_0,
+                            TA_MA_EXPONENTIAL,
+                            test->optInSlowPeriod_1,
+                            TA_MA_EXPONENTIAL,
+                            test->optInSignalPeriod_2,
+                            TA_MA_EXPONENTIAL,
+                            &outBegIdx, &outNbElement,
+                            gBuffer[0].out0, 
+                            gBuffer[0].out1,
+                            gBuffer[0].out2 );
+      break;
    }
 
 
@@ -333,8 +390,9 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   if( test->doMACD_FIX )
+   switch( test->testId )
    {
+   case TA_MACDFIX_TEST:
       retCode = TA_MACDFIX( libHandle,
                         test->startIdx,
                         test->endIdx,
@@ -345,9 +403,8 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                         gBuffer[1].in,   
                         gBuffer[1].out1,
                         gBuffer[1].out2 );
-   }
-   else
-   {
+      break;
+   case TA_MACD_TEST:
       retCode = TA_MACD( libHandle,
                         test->startIdx,
                         test->endIdx,
@@ -360,6 +417,23 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                         gBuffer[1].in,   
                         gBuffer[1].out1,
                         gBuffer[1].out2 );
+      break;
+   case TA_MACDEXT_TEST:
+      retCode = TA_MACDEXT( libHandle,
+                            test->startIdx,
+                            test->endIdx,
+                            gBuffer[1].in,
+                            test->optInFastPeriod_0,
+                            TA_MA_EXPONENTIAL,
+                            test->optInSlowPeriod_1,
+                            TA_MA_EXPONENTIAL,
+                            test->optInSignalPeriod_2,
+                            TA_MA_EXPONENTIAL,
+                            &outBegIdx, &outNbElement,
+                            gBuffer[1].in,   
+                            gBuffer[1].out1,
+                            gBuffer[1].out2 );
+      break;   
    }
 
    /* The previous call should have the same output
@@ -385,8 +459,9 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   if( test->doMACD_FIX )
+   switch( test->testId )
    {
+   case TA_MACDFIX_TEST:
       retCode = TA_MACDFIX( libHandle,
                         test->startIdx,
                         test->endIdx,
@@ -397,9 +472,9 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                         gBuffer[2].out1,
                         gBuffer[2].in,
                         gBuffer[2].out2 );
-   }
-   else
-   {
+      break;
+
+   case TA_MACD_TEST:
       retCode = TA_MACD( libHandle,
                         test->startIdx,
                         test->endIdx,
@@ -412,6 +487,23 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                         gBuffer[2].out1,
                         gBuffer[2].in,
                         gBuffer[2].out2 );
+      break;
+   case TA_MACDEXT_TEST:
+      retCode = TA_MACDEXT( libHandle,
+                            test->startIdx,
+                            test->endIdx,
+                            gBuffer[2].in,
+                            test->optInFastPeriod_0,
+                            TA_MA_EXPONENTIAL,
+                            test->optInSlowPeriod_1,
+                            TA_MA_EXPONENTIAL,
+                            test->optInSignalPeriod_2,
+                            TA_MA_EXPONENTIAL,
+                            &outBegIdx, &outNbElement,
+                            gBuffer[2].out1,
+                            gBuffer[2].in,
+                            gBuffer[2].out2 );
+      break;
    }
 
    /* The previous call should have the same output
@@ -437,8 +529,9 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   if( test->doMACD_FIX )
+   switch( test->testId )
    {
+   case TA_MACDFIX_TEST:
       retCode = TA_MACDFIX( libHandle,
                         test->startIdx,
                         test->endIdx,
@@ -449,9 +542,8 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                         gBuffer[3].out1, 
                         gBuffer[3].out2,
                         gBuffer[3].in );
-   }
-   else
-   {
+      break;
+   case TA_MACD_TEST:
       retCode = TA_MACD( libHandle,
                         test->startIdx,
                         test->endIdx,
@@ -464,6 +556,23 @@ static ErrorNumber do_test( TA_Libc *libHandle,
                         gBuffer[3].out1, 
                         gBuffer[3].out2,
                         gBuffer[3].in );
+      break;
+   case TA_MACDEXT_TEST:
+      retCode = TA_MACDEXT( libHandle,
+                            test->startIdx,
+                            test->endIdx,
+                            gBuffer[3].in,
+                            test->optInFastPeriod_0,
+                            TA_MA_EXPONENTIAL,
+                            test->optInSlowPeriod_1,
+                            TA_MA_EXPONENTIAL,
+                            test->optInSignalPeriod_2,
+                            TA_MA_EXPONENTIAL,
+                            &outBegIdx, &outNbElement,
+                            gBuffer[3].out1, 
+                            gBuffer[3].out2,
+                            gBuffer[3].in );
+      break;
    }
 
    /* The previous call should have the same output

@@ -41,7 +41,7 @@ static const TA_OptInputParameterInfo *TA_PLUS_DI_OptInputs[] =
 };
 
 DEF_FUNCTION( PLUS_DI,                     /* name */
-              TA_GroupId_TrendIndicators,   /* groupId */
+              TA_GroupId_MomentumIndicators,   /* groupId */
               "Plus Directional Indicator", /* hint */
               NULL,                         /* helpFile */
               TA_FUNC_FLG_UNST_PER,         /* flags */
@@ -69,7 +69,7 @@ static const TA_OptInputParameterInfo *TA_PLUS_DM_OptInputs[] =
 };
 
 DEF_FUNCTION( PLUS_DM,                     /* name */
-              TA_GroupId_TrendIndicators,   /* groupId */
+              TA_GroupId_MomentumIndicators,   /* groupId */
               "Plus Directional Movement", /* hint */
               NULL,                         /* helpFile */
               TA_FUNC_FLG_UNST_PER,         /* flags */
@@ -100,7 +100,7 @@ static const TA_OptInputParameterInfo *TA_PPO_OptInputs[] =
 };
 
 DEF_FUNCTION( PPO,                        /* name */
-              TA_GroupId_TrendIndicators,  /* groupId */
+              TA_GroupId_MomentumIndicators,  /* groupId */
               "Percentage Price Oscillator", /* hint */
               NULL,                       /* helpFile */
               0,                          /* flags */

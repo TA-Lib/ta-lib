@@ -69,7 +69,7 @@ static const TA_OptInputParameterInfo *TA_DX_OptInputs[] =
 };
 
 DEF_FUNCTION( DX,                           /* name */
-              TA_GroupId_TrendIndicators,   /* groupId */
+              TA_GroupId_MomentumIndicators,   /* groupId */
               "Directional Movement Index", /* hint */
               NULL,                         /* helpFile */
               TA_FUNC_FLG_UNST_PER,         /* flags */

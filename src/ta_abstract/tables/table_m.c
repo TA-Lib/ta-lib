@@ -28,6 +28,48 @@ const TA_OptInputParameterInfo TA_DEF_UI_Signal_Period =
    NULL /* helpFile */
 };
 
+const TA_OptInputParameterInfo TA_DEF_UI_Slow_MA_Type =
+{
+   TA_OptInput_IntegerList, /* type */
+   "optInSlowMAType",       /* paramName */
+   0,                       /* flags */
+
+   "Slow MA",                /* displayName */
+   (const void *)&TA_MA_TypeList, /* dataSet */
+   0, /* defaultValue = simple average */
+   "Type of Moving Average for slow MA", /* hint */
+
+   NULL /* helpFile */
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_Fast_MA_Type =
+{
+   TA_OptInput_IntegerList, /* type */
+   "optInFastMAType",       /* paramName */
+   0,                       /* flags */
+
+   "Fast MA",                /* displayName */
+   (const void *)&TA_MA_TypeList, /* dataSet */
+   0, /* defaultValue = simple average */
+   "Type of Moving Average for fast MA", /* hint */
+
+   NULL /* helpFile */
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_Signal_MA_Type =
+{
+   TA_OptInput_IntegerList, /* type */
+   "optInSignalMAType",     /* paramName */
+   0,                       /* flags */
+
+   "Signal MA",             /* displayName */
+   (const void *)&TA_MA_TypeList, /* dataSet */
+   0, /* defaultValue = simple average */
+   "Type of Moving Average for signal line", /* hint */
+
+   NULL /* helpFile */
+};
+
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACD =
                                { TA_Output_Real, "outRealMACD", TA_OUT_LINE };
 
@@ -96,13 +138,47 @@ static const TA_OptInputParameterInfo *TA_MACD_OptInputs[] =
 };
 
 DEF_FUNCTION( MACD,                       /* name */
-              TA_GroupId_TrendIndicators,  /* groupId */
+              TA_GroupId_MomentumIndicators,  /* groupId */
               "Moving Average Convergence/Divergence", /* hint */
               NULL,                       /* helpFile */
               0,                          /* flags */
               NULL                        /* analysis function */
              );
 /* MACD END */
+
+/* MACDEXT BEGIN */
+static const TA_InputParameterInfo    *TA_MACDEXT_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo *TA_MACDEXT_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_MACD,
+  &TA_DEF_UI_Output_Real_MACDSignal,
+  &TA_DEF_UI_Output_Real_MACDHist,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MACDEXT_OptInputs[] =
+{ &TA_DEF_UI_Fast_Period,
+  &TA_DEF_UI_Fast_MA_Type,
+  &TA_DEF_UI_Slow_Period,
+  &TA_DEF_UI_Slow_MA_Type,
+  &TA_DEF_UI_Signal_Period,
+  &TA_DEF_UI_Signal_MA_Type,
+  NULL
+};
+
+DEF_FUNCTION( MACDEXT,                     /* name */
+              TA_GroupId_MomentumIndicators,  /* groupId */
+              "MACD with controllable MA type", /* hint */
+              NULL,                       /* helpFile */
+              0,                          /* flags */
+              NULL                        /* analysis function */
+             );
+/* MACDEXT END */
 
 /* MACDFIX BEGIN */
 static const TA_InputParameterInfo    *TA_MACDFIX_Inputs[]    =
@@ -126,7 +202,7 @@ static const TA_OptInputParameterInfo *TA_MACDFIX_OptInputs[] =
 };
 
 DEF_FUNCTION( MACDFIX,                    /* name */
-              TA_GroupId_TrendIndicators,  /* groupId */
+              TA_GroupId_MomentumIndicators,  /* groupId */
               "Moving Average Convergence/Divergence Fix 12/26", /* hint */
               NULL,                       /* helpFile */
               0,                          /* flags */
@@ -287,7 +363,7 @@ static const TA_OptInputParameterInfo *TA_MINUS_DI_OptInputs[] =
 };
 
 DEF_FUNCTION( MINUS_DI,                      /* name */
-              TA_GroupId_TrendIndicators,    /* groupId */
+              TA_GroupId_MomentumIndicators,    /* groupId */
               "Minus Directional Indicator", /* hint */
               NULL,                          /* helpFile */
               TA_FUNC_FLG_UNST_PER,          /* flags */
@@ -315,7 +391,7 @@ static const TA_OptInputParameterInfo *TA_MINUS_DM_OptInputs[] =
 };
 
 DEF_FUNCTION( MINUS_DM,                     /* name */
-              TA_GroupId_TrendIndicators,   /* groupId */
+              TA_GroupId_MomentumIndicators,   /* groupId */
               "Minus Directional Movement", /* hint */
               NULL,                         /* helpFile */
               TA_FUNC_FLG_UNST_PER,         /* flags */
@@ -359,6 +435,7 @@ const TA_FuncDef *TA_DEF_TableM[] =
 {
    ADD_TO_TABLE(MA),
    ADD_TO_TABLE(MACD),
+   ADD_TO_TABLE(MACDEXT),
    ADD_TO_TABLE(MACDFIX),
    ADD_TO_TABLE(MAX),
    ADD_TO_TABLE(MEDPRICE),

@@ -10,24 +10,27 @@ SAR         Parabolic SAR
 SMA         Simple Moving Average
 TEMA        Triple Exponential Moving Average
 WMA         Weighted Moving Average
+ATR         Average True Range
+TRANGE      True Range
 ADX         Average Directional Movement Index
 ADXR        Average Directional Movement Index Rating
 APO         Absolute Price Oscillator
+CCI         Commodity Channel Index
 DX          Directional Movement Index
 MACD        Moving Average Convergence/Divergence
+MACDEXT     MACD with controllable MA type
 MACDFIX     Moving Average Convergence/Divergence Fix 12/26
 MINUS_DI    Minus Directional Indicator
 MINUS_DM    Minus Directional Movement
+MOM         Momentum
 PPO         Percentage Price Oscillator
 PLUS_DI     Plus Directional Indicator
 PLUS_DM     Plus Directional Movement
-RSI         Relative Strength Index
-ATR         Average True Range
-TRANGE      True Range
-CCI         Commodity Channel Index
-MOM         Momentum
 ROC         Rate of change : ((price/prevPrice)-1)*100
-ROCR        Rate of change ratio: (price/prevPrice)*100
+ROCP        Rate of change Percentage: (price-prevPrice)/prevPrice
+ROCR        Rate of change ratio: (price/prevPrice)
+ROCR100     Rate of change ratio 100 scale: (price/prevPrice)*100
+RSI         Relative Strength Index
 STOCH       Stochastic
 TRIX        1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 OBV         On Balance Volume

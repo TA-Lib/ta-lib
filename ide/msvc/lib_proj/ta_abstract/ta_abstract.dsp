@@ -71,7 +71,7 @@ LIB32=link.exe -lib
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /Zi /Od /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common" /I "..\..\..\..\src\ta_abstract\frames" /I "..\..\..\..\src\ta_abstract" /D "_LIB" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /YX /FD /GZ /c
 # SUBTRACT BASE CPP /Fr
-# ADD CPP /nologo /MTd /W3 /Gm /Zi /Od /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common" /I "..\..\..\..\src\ta_abstract\frames" /I "..\..\..\..\src\ta_abstract" /D "_LIB" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /Zi /Od /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common" /I "..\..\..\..\src\ta_abstract\frames" /I "..\..\..\..\src\ta_abstract" /D "_LIB" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_FUNC_NO_RANGE_CHECK" /YX /FD /GZ /c
 # SUBTRACT CPP /Fr
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
@@ -257,6 +257,10 @@ SOURCE=..\..\..\..\src\ta_abstract\frames\ta_MACD_frame.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_MACDEXT_frame.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_abstract\frames\ta_MACDFIX_frame.c
 # End Source File
 # Begin Source File
@@ -310,6 +314,14 @@ SOURCE=..\..\..\..\src\ta_abstract\frames\ta_PPO_frame.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_abstract\frames\ta_ROC_frame.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_ROCP_frame.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_ROCR100_frame.c
 # End Source File
 # Begin Source File
 

@@ -41,7 +41,7 @@ static const TA_OptInputParameterInfo *TA_ADX_OptInputs[] =
 };
 
 DEF_FUNCTION( ADX,                          /* name */
-              TA_GroupId_TrendIndicators,   /* groupId */
+              TA_GroupId_MomentumIndicators,   /* groupId */
               "Average Directional Movement Index", /* hint */
               NULL,                         /* helpFile */
               TA_FUNC_FLG_UNST_PER,         /* flags */
@@ -68,7 +68,7 @@ static const TA_OptInputParameterInfo *TA_ADXR_OptInputs[] =
 };
 
 DEF_FUNCTION( ADXR,                         /* name */
-              TA_GroupId_TrendIndicators,   /* groupId */
+              TA_GroupId_MomentumIndicators,   /* groupId */
               "Average Directional Movement Index Rating", /* hint */
               NULL,                         /* helpFile */
               TA_FUNC_FLG_UNST_PER,         /* flags */
@@ -125,7 +125,7 @@ static const TA_OptInputParameterInfo *TA_APO_OptInputs[] =
 };
 
 DEF_FUNCTION( APO,                         /* name */
-              TA_GroupId_TrendIndicators,  /* groupId */
+              TA_GroupId_MomentumIndicators,  /* groupId */
               "Absolute Price Oscillator", /* hint */
               NULL,                        /* helpFile */
               0,                           /* flags */
