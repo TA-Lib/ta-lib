@@ -100,4 +100,7 @@ const TA_SQL_Minidriver *TA_SQL_GetMinidriver( const char scheme[] );
 /* Allows to dynamically add a mini-driver. */
 TA_RetCode TA_SQL_AddMinidriver( const char scheme[], const TA_SQL_Minidriver * );
 
+/* Clean-up done on TA_Shutdown */
+void TA_SQL_ShutdownMinidriver( void );
+
 #endif
