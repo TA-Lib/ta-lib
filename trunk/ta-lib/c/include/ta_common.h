@@ -1,5 +1,5 @@
 
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -46,39 +46,34 @@ extern "C" {
    #include "ta_defs.h"
 #endif
 
-/* Some functions to get the version of the TA-LIB being link. 
- * The string format is "0.0.0" for "Major.Minor.Build"
+/* Some functions to get the version of the TA-Lib.
  *
- * Major increments indicates an "Highly Recommended" update
+ * Format is "Major.Minor.Build (Month Day Year Hour:Min:Sec)"
+ * 
+ * Example: "0.1.2 (Jan 17 2004 23:59:59)"
  *
+ * Major increments indicates an "Highly Recommended" update.
+ * 
  * Minor increments indicates arbitrary milestones in the
  * development of the next major version or bug fixes
- * that an end-user should consider.
+ * that an end-user should seriously consider.
  *
  * Build increments is for minor bug fixes and transitional
  * development. Only contributors should care about these
  * builds.
- * 
- * A stable release will have a format "x.y.0" where the
- * build number is zero.
- *
- * Stable means:
- *   - All functions to which you can link are suppose to
- *     work as documented.
- *   - This version did pass the regression tests (ta_regtest)
- *     on all supported platform.
- *
- * It is strongly suggested that end-user use only stable version.
  */
-const char  *TA_GetVersionString( void );
+const char *TA_GetVersionString( void );
 
-unsigned int TA_GetVersionMajor ( void );
-unsigned int TA_GetVersionMinor ( void );
-unsigned int TA_GetVersionBuild ( void );
+/* Get individual component of the Version string */
+const char *TA_GetVersionMajor ( void );
+const char *TA_GetVersionMinor ( void );
+const char *TA_GetVersionBuild ( void );
+const char *TA_GetVersionDate  ( void );
+const char *TA_GetVersionTime  ( void );
 
 /* Misc. declaration used throughout the library code. */
-typedef double       TA_Real;
-typedef int          TA_Integer;
+typedef double TA_Real;
+typedef int    TA_Integer;
 
 typedef struct {
    long date;
@@ -130,25 +125,17 @@ typedef enum
 
 } TA_Period;
 
-typedef struct
-{
-   unsigned int nbBars; /* Nb of element into the following arrays. */
-   TA_Period period;    /* Amount of time between each bar. */
-
-   /* The arrays containing data. Unused array are set to NULL. */
-   const TA_Timestamp *timestamp;
-   const TA_Real      *open;
-   const TA_Real      *high;
-   const TA_Real      *low;
-   const TA_Real      *close;
-   const TA_Integer   *volume;
-   const TA_Integer   *openInterest;
-
-   /* Hidden data for internal use by the TA-LIB. Do not modify. */
-   void *hiddenData;
-} TA_History;
-
-/* General purpose structure giving access to tables/index by name. */
+/* General purpose structure containing an array of string. 
+ *
+ * Example of usage:
+ *    void printStringTable( TA_StringTable *table )
+ *    {
+ *       int i;
+ *       for( i=0; i < table->size; i++ )
+ *          cout << table->string[i] << endl;
+ *    }
+ *
+ */
 typedef struct
 {
     unsigned int size;    /* Number of string. */
@@ -260,6 +247,12 @@ TA_RetCode TA_SetTimeNow( TA_Timestamp *timestamp );
  * In case of doubt, the following function allows to validate a timestamp.
  */
 TA_RetCode TA_TimestampValidate( const TA_Timestamp *timestamp );
+
+/* Validate only the year/month/day */
+TA_RetCode TA_TimestampValidateYMD( const TA_Timestamp *timestamp );
+
+/* Validate only the hour/min/sec */
+TA_RetCode TA_TimestampValidateHMS( const TA_Timestamp *timestamp );
 
 /* Some comparison functions. */
 int TA_TimestampEqual  ( const TA_Timestamp *t1, const TA_Timestamp *t2 );
