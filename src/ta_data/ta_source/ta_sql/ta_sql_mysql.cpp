@@ -35,7 +35,7 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
- *  MF       Pawel Konieczny
+ *  PK       Pawel Konieczny
  *
  *
  * Change history:
@@ -48,7 +48,7 @@
  */
 
 /* Description:
- *    This file implements the SQL minidriver using MyQSL++ library
+ *    This file implements the SQL minidriver using the MyQSL++ library
  *    It is build in the project only when TA_SUPPORT_MYSQL is enabled
  */
 
@@ -176,6 +176,7 @@ TA_RetCode TA_SQL_MySQL_ExecuteQuery(void *connection,
    TA_TRACE_BEGIN( TA_SQL_MySQL_ExecuteQuery );
    
    TA_ASSERT( connection != NULL );
+   TA_ASSERT( query_result != NULL );
 
    privConnection = (TA_SQL_MySQL_Connection*)connection;
 

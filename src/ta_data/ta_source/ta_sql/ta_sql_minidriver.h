@@ -34,23 +34,23 @@ typedef struct
                                 void **connection);
 
    /* Function for running an SQL query
-    * sql_query holds a string with the quely statement
+    * sql_query holds a string with the query statement
     * query_result is the output parameter
     * It is opaque value, the minidriver can initialise it to any value it wants
+    * This function is multithread-safe, i.e. multiple threads can execute queries
+    * in parallel on the same connection
     */
    TA_RetCode (*executeQuery)(void *connection, 
                               const char sql_query[], 
                               void **query_result);
    
-   /* Functions for optaining information about the query result set
+   /* Functions for obtaining information about the query result set
     * Last parameter is output
-    * This function is multithread-safe, i.e. multiple threads can execute queries
-    * in parallel on the same connection
     */
    TA_RetCode (*getNumColumns)(void *query_result, int *num);
    TA_RetCode (*getNumRows)(void *query_result, int *num);
 
-   /* Get the name of the column at the given number (index zero-based)
+   /* Get the name of the column at the given position (index zero-based)
     * Last parameter is output, string valid as long as query_result is not released
     */
    TA_RetCode (*getColumnName)(void *query_result, int column, const char **name);
@@ -61,7 +61,7 @@ typedef struct
     *       TA_SQL_SYMBOL_COLUMN
     *       TA_SQL_DATE_COLUMN
     *       TA_SQL_TIME_COLUMN
-    * Last parameter is output, string valid as long as no nex row accessed 
+    * Last parameter is output, string valid as long as no next row accessed 
     * or query_result is not released
     * Rows have to be accessed sequentially
     */

@@ -35,7 +35,7 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
- *  MF       Pawel Konieczny
+ *  PK       Pawel Konieczny
  *
  *
  * Change history:

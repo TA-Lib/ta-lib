@@ -250,7 +250,7 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
                      &res_rows );
       RETURN_ON_ERROR( retCode )
 
-      if( res_rows == 0 )
+      if( res_rows <= 0 )
       {                    
          RETURN_ON_ERROR( TA_CATEGORY_NOT_FOUND )
       } 
