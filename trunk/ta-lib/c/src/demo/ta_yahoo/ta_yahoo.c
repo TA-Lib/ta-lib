@@ -130,7 +130,7 @@ int print_categories( TA_UDBase *udb )
    TA_AddDataSourceParam addYahooParam;
    unsigned int i;
    TA_StringTable *table;
-   const char *listCountry[] = {"US","CA","UK","DE","ES","FR","IT","NO","SE",NULL};
+   const char *listCountry[] = {"US","CA","UK","DE","ES","FR","IT","NO","SE","DK",NULL};
 
    memset( &addYahooParam, 0, sizeof( TA_AddDataSourceParam ) );
    addYahooParam.id = TA_YAHOO_WEB;
