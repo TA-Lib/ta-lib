@@ -36,13 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  JV       Jesus Viver <324122@cienz.unizar.es>
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
+ *  101902 JV   Speed optimization of the algorithm
  *
  */
 
@@ -155,18 +156,28 @@ TA_RetCode TA_MAX( TA_Libc      *libHandle,
    outIdx = 0;
    today       = startIdx;
    trailingIdx = startIdx-nbInitialElementNeeded;
-   
+   highest     = inReal_0[today];
+
    while( today <= endIdx )
    {
-      highest = inReal_0[trailingIdx++];
-      for( i=trailingIdx; i <= today; i++ )
+      tmp = inReal_0[today];
+
+      if( highest >= tmp )
       {
-         tmp = inReal_0[i];
-         if( tmp > highest ) highest = tmp;
+        highest = inReal_0[trailingIdx];
+        i = trailingIdx+1;
+        while( i<=today )
+        {
+           tmp = inReal_0[i++];
+           if( tmp > highest ) highest = tmp;
+        }
       }
+      else
+        highest = tmp;
 
       outReal_0[outIdx++] = highest;
-      today++;
+      trailingIdx++;
+      today++;  
    }
 
    /* Keep the outBegIdx relative to the

@@ -36,14 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  JV       Jesus Viver <324122@cienz.unizar.es>
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
- *
+ *  101902 JV   Speed optimization of the algorithm
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -155,18 +155,28 @@ TA_RetCode TA_MIN( TA_Libc      *libHandle,
    outIdx = 0;
    today       = startIdx;
    trailingIdx = startIdx-nbInitialElementNeeded;
+   lowest      = inReal_0[today];
    
    while( today <= endIdx )
    {
-      lowest = inReal_0[trailingIdx++];
-      for( i=trailingIdx; i <= today; i++ )
+      tmp = inReal_0[today];
+
+      if( lowest <= tmp )
       {
-         tmp = inReal_0[i];
-         if( tmp < lowest) lowest= tmp;
+        lowest = inReal_0[trailingIdx];
+        i = trailingIdx+1;
+        while( i<=today )
+        {
+           tmp = inReal_0[i++];
+           if( tmp < lowest ) lowest = tmp;
+        }
       }
+      else
+        lowest = tmp;
 
       outReal_0[outIdx++] = lowest;
-      today++;
+      trailingIdx++;
+      today++;  
    }
 
    /* Keep the outBegIdx relative to the
