@@ -38,15 +38,17 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
-/* Follow the 4 steps defined below for adding a new TA Function to this
+/* Follow the 3 steps defined below for adding a new TA Function to this
  * file.
  */
 
-/***************************************************************************
- * Step 1 - Define user inputs that are particular to your function.
- *          Consider the ones already defined in "ta_def_ui.c".
- ***************************************************************************/
+/****************************************************************************
+ * Step 1 - Define here the interface to your TA functions with
+ *          the macro DEF_FUNCTION.
+ *
+ ****************************************************************************/
 
+/* MA BEGIN */
 const TA_OptInputParameterInfo TA_DEF_UI_Signal_Period =
 {
    TA_OptInput_IntegerRange, /* type */
@@ -102,23 +104,6 @@ const TA_OptInputParameterInfo TA_DEF_UI_Signal_MA_Type =
    NULL /* helpFile */
 };
 
-const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACD =
-                               { TA_Output_Real, "outMACD", TA_OUT_LINE };
-
-const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDSignal =
-                               { TA_Output_Real, "outMACDSignal", TA_OUT_DASH_LINE };
-
-const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDHist =
-                                { TA_Output_Real, "outMACDHist", TA_OUT_HISTO };
-
-
-/****************************************************************************
- * Step 2 - Define here the interface to your TA functions with
- *          the macro DEF_FUNCTION.
- *
- ****************************************************************************/
-
-/* MA BEGIN */
 static const TA_InputParameterInfo    *TA_MA_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -147,6 +132,15 @@ DEF_FUNCTION( MA,                         /* name */
 /* MA END */
 
 /* MACD BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACD =
+                               { TA_Output_Real, "outMACD", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDSignal =
+                               { TA_Output_Real, "outMACDSignal", TA_OUT_DASH_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDHist =
+                                { TA_Output_Real, "outMACDHist", TA_OUT_HISTO };
+
 static const TA_InputParameterInfo    *TA_MACD_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -566,7 +560,7 @@ DEF_FUNCTION( MOM,                     /* name */
 /* MOM END */
 
 /****************************************************************************
- * Step 3 - Add your TA function to the table.
+ * Step 2 - Add your TA function to the table.
  *          Order is not important. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableM[] =
@@ -595,7 +589,7 @@ const unsigned int TA_DEF_TableMSize =
 
 
 /****************************************************************************
- * Step 4 - Make sure "gen_code" is executed for generating all other
+ * Step 3 - Make sure "gen_code" is executed for generating all other
  *          source files derived from this one.
  *          You can then re-compile the library as usual and you are done!
  ****************************************************************************/
