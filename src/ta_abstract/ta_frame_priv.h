@@ -89,4 +89,7 @@ typedef TA_RetCode (*TA_FrameFunction)( const TA_ParamHolderPriv *params,
                                         TA_Integer  endIdx,
                                         TA_Integer *outBegIdx,
                                         TA_Integer *outNbElement );
+
+typedef TA_RetCode (*TA_FrameLookback)( const TA_ParamHolderPriv *params );
+
 #endif
