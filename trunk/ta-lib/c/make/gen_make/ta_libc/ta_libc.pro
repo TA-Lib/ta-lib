@@ -134,10 +134,16 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_AVGPRICE.c \
           ../../../../../src/ta_func/ta_BBANDS.c \
           ../../../../../src/ta_func/ta_CCI.c \
+          ../../../../../src/ta_func/ta_CDLDOJISTAR.c \
+          ../../../../../src/ta_func/ta_CDLEVENINGDOJISTAR.c \
+          ../../../../../src/ta_func/ta_CDLEVENINGSTAR.c \
           ../../../../../src/ta_func/ta_CDLHIGHWAVE.c \
           ../../../../../src/ta_func/ta_CDLLONGLINE.c \
+          ../../../../../src/ta_func/ta_CDLMORNINGDOJISTAR.c \
+          ../../../../../src/ta_func/ta_CDLMORNINGSTAR.c \
           ../../../../../src/ta_func/ta_CDLSHORTLINE.c \
           ../../../../../src/ta_func/ta_CDLSPINNINGTOP.c \
+          ../../../../../src/ta_func/ta_CDLTRISTAR.c \
           ../../../../../src/ta_func/ta_CORREL.c \
           ../../../../../src/ta_func/ta_DEMA.c \
           ../../../../../src/ta_func/ta_DX.c \

@@ -126,10 +126,16 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_BBANDS.c \
 		..\..\..\..\..\src\ta_func\ta_CCI.c \
+		..\..\..\..\..\src\ta_func\ta_CDLDOJISTAR.c \
+		..\..\..\..\..\src\ta_func\ta_CDLEVENINGDOJISTAR.c \
+		..\..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c \
 		..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c \
 		..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c \
+		..\..\..\..\..\src\ta_func\ta_CDLMORNINGDOJISTAR.c \
+		..\..\..\..\..\src\ta_func\ta_CDLMORNINGSTAR.c \
 		..\..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c \
 		..\..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c \
+		..\..\..\..\..\src\ta_func\ta_CDLTRISTAR.c \
 		..\..\..\..\..\src\ta_func\ta_CORREL.c \
 		..\..\..\..\..\src\ta_func\ta_DEMA.c \
 		..\..\..\..\..\src\ta_func\ta_DX.c \
@@ -300,10 +306,16 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj \
 		..\..\..\..\..\temp\cmd\ta_BBANDS.obj \
 		..\..\..\..\..\temp\cmd\ta_CCI.obj \
+		..\..\..\..\..\temp\cmd\ta_CDLDOJISTAR.obj \
+		..\..\..\..\..\temp\cmd\ta_CDLEVENINGDOJISTAR.obj \
+		..\..\..\..\..\temp\cmd\ta_CDLEVENINGSTAR.obj \
 		..\..\..\..\..\temp\cmd\ta_CDLHIGHWAVE.obj \
 		..\..\..\..\..\temp\cmd\ta_CDLLONGLINE.obj \
+		..\..\..\..\..\temp\cmd\ta_CDLMORNINGDOJISTAR.obj \
+		..\..\..\..\..\temp\cmd\ta_CDLMORNINGSTAR.obj \
 		..\..\..\..\..\temp\cmd\ta_CDLSHORTLINE.obj \
 		..\..\..\..\..\temp\cmd\ta_CDLSPINNINGTOP.obj \
+		..\..\..\..\..\temp\cmd\ta_CDLTRISTAR.obj \
 		..\..\..\..\..\temp\cmd\ta_CORREL.obj \
 		..\..\..\..\..\temp\cmd\ta_DEMA.obj \
 		..\..\..\..\..\temp\cmd\ta_DX.obj \
@@ -501,10 +513,16 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj \
 +..\..\..\..\..\temp\cmd\ta_BBANDS.obj \
 +..\..\..\..\..\temp\cmd\ta_CCI.obj \
++..\..\..\..\..\temp\cmd\ta_CDLDOJISTAR.obj \
++..\..\..\..\..\temp\cmd\ta_CDLEVENINGDOJISTAR.obj \
++..\..\..\..\..\temp\cmd\ta_CDLEVENINGSTAR.obj \
 +..\..\..\..\..\temp\cmd\ta_CDLHIGHWAVE.obj \
 +..\..\..\..\..\temp\cmd\ta_CDLLONGLINE.obj \
++..\..\..\..\..\temp\cmd\ta_CDLMORNINGDOJISTAR.obj \
++..\..\..\..\..\temp\cmd\ta_CDLMORNINGSTAR.obj \
 +..\..\..\..\..\temp\cmd\ta_CDLSHORTLINE.obj \
 +..\..\..\..\..\temp\cmd\ta_CDLSPINNINGTOP.obj \
++..\..\..\..\..\temp\cmd\ta_CDLTRISTAR.obj \
 +..\..\..\..\..\temp\cmd\ta_CORREL.obj \
 +..\..\..\..\..\temp\cmd\ta_DEMA.obj \
 +..\..\..\..\..\temp\cmd\ta_DX.obj \
@@ -688,10 +706,16 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj
 	-del ..\..\..\..\..\temp\cmd\ta_BBANDS.obj
 	-del ..\..\..\..\..\temp\cmd\ta_CCI.obj
+	-del ..\..\..\..\..\temp\cmd\ta_CDLDOJISTAR.obj
+	-del ..\..\..\..\..\temp\cmd\ta_CDLEVENINGDOJISTAR.obj
+	-del ..\..\..\..\..\temp\cmd\ta_CDLEVENINGSTAR.obj
 	-del ..\..\..\..\..\temp\cmd\ta_CDLHIGHWAVE.obj
 	-del ..\..\..\..\..\temp\cmd\ta_CDLLONGLINE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_CDLMORNINGDOJISTAR.obj
+	-del ..\..\..\..\..\temp\cmd\ta_CDLMORNINGSTAR.obj
 	-del ..\..\..\..\..\temp\cmd\ta_CDLSHORTLINE.obj
 	-del ..\..\..\..\..\temp\cmd\ta_CDLSPINNINGTOP.obj
+	-del ..\..\..\..\..\temp\cmd\ta_CDLTRISTAR.obj
 	-del ..\..\..\..\..\temp\cmd\ta_CORREL.obj
 	-del ..\..\..\..\..\temp\cmd\ta_DEMA.obj
 	-del ..\..\..\..\..\temp\cmd\ta_DX.obj
@@ -1085,17 +1109,35 @@ clean:
 ..\..\..\..\..\temp\cmd\ta_CCI.obj: ..\..\..\..\..\src\ta_func\ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CCI.obj ..\..\..\..\..\src\ta_func\ta_CCI.c
 
+..\..\..\..\..\temp\cmd\ta_CDLDOJISTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLDOJISTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CDLDOJISTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLDOJISTAR.c
+
+..\..\..\..\..\temp\cmd\ta_CDLEVENINGDOJISTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLEVENINGDOJISTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CDLEVENINGDOJISTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLEVENINGDOJISTAR.c
+
+..\..\..\..\..\temp\cmd\ta_CDLEVENINGSTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CDLEVENINGSTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c
+
 ..\..\..\..\..\temp\cmd\ta_CDLHIGHWAVE.obj: ..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CDLHIGHWAVE.obj ..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
 
 ..\..\..\..\..\temp\cmd\ta_CDLLONGLINE.obj: ..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CDLLONGLINE.obj ..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c
 
+..\..\..\..\..\temp\cmd\ta_CDLMORNINGDOJISTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLMORNINGDOJISTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CDLMORNINGDOJISTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLMORNINGDOJISTAR.c
+
+..\..\..\..\..\temp\cmd\ta_CDLMORNINGSTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLMORNINGSTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CDLMORNINGSTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLMORNINGSTAR.c
+
 ..\..\..\..\..\temp\cmd\ta_CDLSHORTLINE.obj: ..\..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CDLSHORTLINE.obj ..\..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c
 
 ..\..\..\..\..\temp\cmd\ta_CDLSPINNINGTOP.obj: ..\..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CDLSPINNINGTOP.obj ..\..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c
+
+..\..\..\..\..\temp\cmd\ta_CDLTRISTAR.obj: ..\..\..\..\..\src\ta_func\ta_CDLTRISTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CDLTRISTAR.obj ..\..\..\..\..\src\ta_func\ta_CDLTRISTAR.c
 
 ..\..\..\..\..\temp\cmd\ta_CORREL.obj: ..\..\..\..\..\src\ta_func\ta_CORREL.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CORREL.obj ..\..\..\..\..\src\ta_func\ta_CORREL.c

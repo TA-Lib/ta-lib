@@ -35,10 +35,16 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_AVGPRICE.c \
 		../../../../../src/ta_func/ta_BBANDS.c \
 		../../../../../src/ta_func/ta_CCI.c \
+		../../../../../src/ta_func/ta_CDLDOJISTAR.c \
+		../../../../../src/ta_func/ta_CDLEVENINGDOJISTAR.c \
+		../../../../../src/ta_func/ta_CDLEVENINGSTAR.c \
 		../../../../../src/ta_func/ta_CDLHIGHWAVE.c \
 		../../../../../src/ta_func/ta_CDLLONGLINE.c \
+		../../../../../src/ta_func/ta_CDLMORNINGDOJISTAR.c \
+		../../../../../src/ta_func/ta_CDLMORNINGSTAR.c \
 		../../../../../src/ta_func/ta_CDLSHORTLINE.c \
 		../../../../../src/ta_func/ta_CDLSPINNINGTOP.c \
+		../../../../../src/ta_func/ta_CDLTRISTAR.c \
 		../../../../../src/ta_func/ta_CORREL.c \
 		../../../../../src/ta_func/ta_DEMA.c \
 		../../../../../src/ta_func/ta_DX.c \
@@ -107,10 +113,16 @@ OBJECTS =	../../../../../temp/cmp/ta_utility.o \
 		../../../../../temp/cmp/ta_AVGPRICE.o \
 		../../../../../temp/cmp/ta_BBANDS.o \
 		../../../../../temp/cmp/ta_CCI.o \
+		../../../../../temp/cmp/ta_CDLDOJISTAR.o \
+		../../../../../temp/cmp/ta_CDLEVENINGDOJISTAR.o \
+		../../../../../temp/cmp/ta_CDLEVENINGSTAR.o \
 		../../../../../temp/cmp/ta_CDLHIGHWAVE.o \
 		../../../../../temp/cmp/ta_CDLLONGLINE.o \
+		../../../../../temp/cmp/ta_CDLMORNINGDOJISTAR.o \
+		../../../../../temp/cmp/ta_CDLMORNINGSTAR.o \
 		../../../../../temp/cmp/ta_CDLSHORTLINE.o \
 		../../../../../temp/cmp/ta_CDLSPINNINGTOP.o \
+		../../../../../temp/cmp/ta_CDLTRISTAR.o \
 		../../../../../temp/cmp/ta_CORREL.o \
 		../../../../../temp/cmp/ta_DEMA.o \
 		../../../../../temp/cmp/ta_DX.o \
@@ -256,17 +268,35 @@ clean:
 ../../../../../temp/cmp/ta_CCI.o: ../../../../../src/ta_func/ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CCI.o ../../../../../src/ta_func/ta_CCI.c
 
+../../../../../temp/cmp/ta_CDLDOJISTAR.o: ../../../../../src/ta_func/ta_CDLDOJISTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLDOJISTAR.o ../../../../../src/ta_func/ta_CDLDOJISTAR.c
+
+../../../../../temp/cmp/ta_CDLEVENINGDOJISTAR.o: ../../../../../src/ta_func/ta_CDLEVENINGDOJISTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLEVENINGDOJISTAR.o ../../../../../src/ta_func/ta_CDLEVENINGDOJISTAR.c
+
+../../../../../temp/cmp/ta_CDLEVENINGSTAR.o: ../../../../../src/ta_func/ta_CDLEVENINGSTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLEVENINGSTAR.o ../../../../../src/ta_func/ta_CDLEVENINGSTAR.c
+
 ../../../../../temp/cmp/ta_CDLHIGHWAVE.o: ../../../../../src/ta_func/ta_CDLHIGHWAVE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLHIGHWAVE.o ../../../../../src/ta_func/ta_CDLHIGHWAVE.c
 
 ../../../../../temp/cmp/ta_CDLLONGLINE.o: ../../../../../src/ta_func/ta_CDLLONGLINE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLLONGLINE.o ../../../../../src/ta_func/ta_CDLLONGLINE.c
 
+../../../../../temp/cmp/ta_CDLMORNINGDOJISTAR.o: ../../../../../src/ta_func/ta_CDLMORNINGDOJISTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLMORNINGDOJISTAR.o ../../../../../src/ta_func/ta_CDLMORNINGDOJISTAR.c
+
+../../../../../temp/cmp/ta_CDLMORNINGSTAR.o: ../../../../../src/ta_func/ta_CDLMORNINGSTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLMORNINGSTAR.o ../../../../../src/ta_func/ta_CDLMORNINGSTAR.c
+
 ../../../../../temp/cmp/ta_CDLSHORTLINE.o: ../../../../../src/ta_func/ta_CDLSHORTLINE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLSHORTLINE.o ../../../../../src/ta_func/ta_CDLSHORTLINE.c
 
 ../../../../../temp/cmp/ta_CDLSPINNINGTOP.o: ../../../../../src/ta_func/ta_CDLSPINNINGTOP.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLSPINNINGTOP.o ../../../../../src/ta_func/ta_CDLSPINNINGTOP.c
+
+../../../../../temp/cmp/ta_CDLTRISTAR.o: ../../../../../src/ta_func/ta_CDLTRISTAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLTRISTAR.o ../../../../../src/ta_func/ta_CDLTRISTAR.c
 
 ../../../../../temp/cmp/ta_CORREL.o: ../../../../../src/ta_func/ta_CORREL.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CORREL.o ../../../../../src/ta_func/ta_CORREL.c
