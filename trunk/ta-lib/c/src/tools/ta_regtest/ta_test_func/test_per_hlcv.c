@@ -50,9 +50,10 @@
  *
  *     Test functions which have the following
  *     characterisic: 
- *      - have one output with the optional 
- *        parameter being a period.
- *      - the input is high,low, close and volume.
+ *      - the inputs are high,low, close and volume.
+ *      - have one output of type real.
+ *      - might have an optional parameter.
+ *        
  *     
  */
 
@@ -78,6 +79,7 @@
 /**** Local declarations.              ****/
 typedef enum {
 TA_MFI_TEST,
+TA_AD_TEST,
 } TA_TestId;
 
 typedef struct
@@ -116,6 +118,15 @@ static ErrorNumber do_test( const TA_History *history,
 
 static TA_Test tableTest[] =
 {
+   /*************/
+   /* AD TEST   */
+   /*************/
+   /* Note: the period field is ignored and set to -1 */
+   { 0, TA_AD_TEST,  0, 251, -1, TA_SUCCESS,      0, -1631000.00,  0,  252 }, /* First Value */
+   { 0, TA_AD_TEST,  0, 251, -1, TA_SUCCESS,      1, 2974412.02,   0,  252 },
+   { 0, TA_AD_TEST,  0, 251, -1, TA_SUCCESS,    250, 8707691.07,   0,  252 },
+   { 0, TA_AD_TEST,  0, 251, -1, TA_SUCCESS,    251, 8328944.54,   0,  252 }, /* Last Value */
+
    /**************/
    /* MFI TEST   */
    /**************/
@@ -137,7 +148,7 @@ static TA_Test tableTest[] =
 
    { 1, TA_MFI_TEST,  0, 251, 100, TA_SUCCESS,       0,  50.0166,  100,  252-100 }, /* First Value */
    { 0, TA_MFI_TEST,  0, 251, 100, TA_SUCCESS,       1,  50.2648,  100,  252-100 },
-   { 0, TA_MFI_TEST,  0, 251, 100, TA_SUCCESS, 252-101,  48.8421,  100,  252-100 }, /* Last Value */
+   { 0, TA_MFI_TEST,  0, 251, 100, TA_SUCCESS, 252-101,  48.8421,  100,  252-100 } /* Last Value */
 
 };
 
@@ -253,6 +264,17 @@ static ErrorNumber do_test( const TA_History *history,
                         &outNbElement,
                         gBuffer[0].out0 );
       break;
+   case TA_AD_TEST:
+      retCode = TA_AD( test->startIdx,
+                       test->endIdx,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       history->volume,
+                       &outBegIdx,
+                       &outNbElement,
+                       gBuffer[0].out0 );
+      break;
    default:
       retCode = TA_INTERNAL_ERROR(133);
    }
@@ -288,6 +310,17 @@ static ErrorNumber do_test( const TA_History *history,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].in );
+      break;
+   case TA_AD_TEST:
+      retCode = TA_AD( test->startIdx,
+                       test->endIdx,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       history->volume,
+                       &outBegIdx,
+                       &outNbElement,
+                       gBuffer[0].in );
       break;
    default:
       retCode = TA_INTERNAL_ERROR(134);
@@ -330,6 +363,17 @@ static ErrorNumber do_test( const TA_History *history,
                         &outNbElement,
                         gBuffer[1].in );
       break;
+   case TA_AD_TEST:
+      retCode = TA_AD( test->startIdx,
+                       test->endIdx,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       history->volume,
+                       &outBegIdx,
+                       &outNbElement,
+                       gBuffer[1].in );
+      break;
    default:
       retCode = TA_INTERNAL_ERROR(135);
    }
@@ -371,6 +415,17 @@ static ErrorNumber do_test( const TA_History *history,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[2].in );
+      break;
+   case TA_AD_TEST:
+      retCode = TA_AD( test->startIdx,
+                       test->endIdx,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       history->volume,
+                       &outBegIdx,
+                       &outNbElement,
+                       gBuffer[2].in );
       break;
    default:
       retCode = TA_INTERNAL_ERROR(136);
