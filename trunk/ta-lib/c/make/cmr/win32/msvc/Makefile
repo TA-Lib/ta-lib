@@ -25,62 +25,62 @@ all: $(SUBDIRS)
 
 ta_common: FORCE
 	cd ta_common
-	$(MAKE)
+	$(MAKE) /nologo
 	@cd ..
 
 ta_data: FORCE
 	cd ta_data
-	$(MAKE)
+	$(MAKE) /nologo
 	@cd ..
 
 ta_func: FORCE
 	cd ta_func
-	$(MAKE)
+	$(MAKE) /nologo
 	@cd ..
 
 ta_abstract: FORCE
 	cd ta_abstract
-	$(MAKE)
+	$(MAKE) /nologo
 	@cd ..
 
 ta_pm: FORCE
 	cd ta_pm
-	$(MAKE)
+	$(MAKE) /nologo
 	@cd ..
 
 ta_libc: FORCE
 	cd ta_libc
-	$(MAKE)
+	$(MAKE) /nologo
 	@cd ..
 
 gen_rdata: FORCE
 	cd gen_rdata
-	$(MAKE)
+	$(MAKE) /nologo
 	@cd ..
 
 gen_code: FORCE
 	cd gen_code
-	$(MAKE)
+	$(MAKE) /nologo
 	@cd ..
 
 gen_data: FORCE
 	cd gen_data
-	$(MAKE)
+	$(MAKE) /nologo
 	@cd ..
 
 ta_regtest: FORCE
 	cd ta_regtest
-	$(MAKE)
+	$(MAKE) /nologo
 	@cd ..
 
 ta_yahoo: FORCE
 	cd ta_yahoo
-	$(MAKE)
+	$(MAKE) /nologo
 	@cd ..
 
 webfetch: FORCE
 	cd webfetch
-	$(MAKE)
+	$(MAKE) /nologo
 	@cd ..
 
 

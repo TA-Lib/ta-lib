@@ -38,6 +38,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_pm.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_po.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_rsi.c \
+		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_sar.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_stddev.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_stoch.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_trange.c \
@@ -58,6 +59,7 @@ OBJECTS =	..\..\..\..\..\temp\csr\ta_regtest.obj \
 		..\..\..\..\..\temp\csr\test_pm.obj \
 		..\..\..\..\..\temp\csr\test_po.obj \
 		..\..\..\..\..\temp\csr\test_rsi.obj \
+		..\..\..\..\..\temp\csr\test_sar.obj \
 		..\..\..\..\..\temp\csr\test_stddev.obj \
 		..\..\..\..\..\temp\csr\test_stoch.obj \
 		..\..\..\..\..\temp\csr\test_trange.obj \
@@ -123,6 +125,7 @@ clean:
 	-del ..\..\..\..\..\temp\csr\test_pm.obj
 	-del ..\..\..\..\..\temp\csr\test_po.obj
 	-del ..\..\..\..\..\temp\csr\test_rsi.obj
+	-del ..\..\..\..\..\temp\csr\test_sar.obj
 	-del ..\..\..\..\..\temp\csr\test_stddev.obj
 	-del ..\..\..\..\..\temp\csr\test_stoch.obj
 	-del ..\..\..\..\..\temp\csr\test_trange.obj
@@ -188,6 +191,9 @@ clean:
 
 ..\..\..\..\..\temp\csr\test_rsi.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_rsi.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\test_rsi.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_rsi.c
+
+..\..\..\..\..\temp\csr\test_sar.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_sar.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\test_sar.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_sar.c
 
 ..\..\..\..\..\temp\csr\test_stddev.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_stddev.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\test_stddev.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_stddev.c
