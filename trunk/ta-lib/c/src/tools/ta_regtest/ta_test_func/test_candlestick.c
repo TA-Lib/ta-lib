@@ -378,7 +378,7 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
 
    if( *taFuncRetCode != TA_SUCCESS )
    {
-      printf( "TA_CallFunc() failed [%d]\n", retCode );
+      printf( "TA_CallFunc() failed [%d]\n", *taFuncRetCode );
       TA_ParamHolderFree( paramHolder );
       return TA_TSTCDL_CALLFUNC_FAIL;
    }      
