@@ -35,8 +35,15 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_AVGPRICE.c \
 		../../../../../src/ta_func/ta_BBANDS.c \
 		../../../../../src/ta_func/ta_CCI.c \
+		../../../../../src/ta_func/ta_CDL2CROWS.c \
 		../../../../../src/ta_func/ta_CDL3BLACKCROWS.c \
+		../../../../../src/ta_func/ta_CDL3INSIDE.c \
+		../../../../../src/ta_func/ta_CDL3LINESTRIKE.c \
+		../../../../../src/ta_func/ta_CDL3OUTSIDE.c \
+		../../../../../src/ta_func/ta_CDL3WHITESOLDIERS.c \
 		../../../../../src/ta_func/ta_CDLABANDONEDBABY.c \
+		../../../../../src/ta_func/ta_CDLADVANCEBLOCK.c \
+		../../../../../src/ta_func/ta_CDLDARKCLOUDCOVER.c \
 		../../../../../src/ta_func/ta_CDLDOJISTAR.c \
 		../../../../../src/ta_func/ta_CDLENGULFING.c \
 		../../../../../src/ta_func/ta_CDLEVENINGDOJISTAR.c \
@@ -47,13 +54,18 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_CDLHARAMICROSS.c \
 		../../../../../src/ta_func/ta_CDLHIGHWAVE.c \
 		../../../../../src/ta_func/ta_CDLIDENTICAL3CROWS.c \
+		../../../../../src/ta_func/ta_CDLINNECK.c \
 		../../../../../src/ta_func/ta_CDLINVERTEDHAMMER.c \
 		../../../../../src/ta_func/ta_CDLLONGLINE.c \
 		../../../../../src/ta_func/ta_CDLMORNINGDOJISTAR.c \
 		../../../../../src/ta_func/ta_CDLMORNINGSTAR.c \
+		../../../../../src/ta_func/ta_CDLONNECK.c \
+		../../../../../src/ta_func/ta_CDLPIERCING.c \
 		../../../../../src/ta_func/ta_CDLSHOOTINGSTAR.c \
 		../../../../../src/ta_func/ta_CDLSHORTLINE.c \
 		../../../../../src/ta_func/ta_CDLSPINNINGTOP.c \
+		../../../../../src/ta_func/ta_CDLSTALLEDPATTERN.c \
+		../../../../../src/ta_func/ta_CDLTHRUSTING.c \
 		../../../../../src/ta_func/ta_CDLTRISTAR.c \
 		../../../../../src/ta_func/ta_CDLUPSIDEGAP2CROWS.c \
 		../../../../../src/ta_func/ta_CORREL.c \
@@ -124,8 +136,15 @@ OBJECTS =	../../../../../temp/cmr/ta_utility.o \
 		../../../../../temp/cmr/ta_AVGPRICE.o \
 		../../../../../temp/cmr/ta_BBANDS.o \
 		../../../../../temp/cmr/ta_CCI.o \
+		../../../../../temp/cmr/ta_CDL2CROWS.o \
 		../../../../../temp/cmr/ta_CDL3BLACKCROWS.o \
+		../../../../../temp/cmr/ta_CDL3INSIDE.o \
+		../../../../../temp/cmr/ta_CDL3LINESTRIKE.o \
+		../../../../../temp/cmr/ta_CDL3OUTSIDE.o \
+		../../../../../temp/cmr/ta_CDL3WHITESOLDIERS.o \
 		../../../../../temp/cmr/ta_CDLABANDONEDBABY.o \
+		../../../../../temp/cmr/ta_CDLADVANCEBLOCK.o \
+		../../../../../temp/cmr/ta_CDLDARKCLOUDCOVER.o \
 		../../../../../temp/cmr/ta_CDLDOJISTAR.o \
 		../../../../../temp/cmr/ta_CDLENGULFING.o \
 		../../../../../temp/cmr/ta_CDLEVENINGDOJISTAR.o \
@@ -136,13 +155,18 @@ OBJECTS =	../../../../../temp/cmr/ta_utility.o \
 		../../../../../temp/cmr/ta_CDLHARAMICROSS.o \
 		../../../../../temp/cmr/ta_CDLHIGHWAVE.o \
 		../../../../../temp/cmr/ta_CDLIDENTICAL3CROWS.o \
+		../../../../../temp/cmr/ta_CDLINNECK.o \
 		../../../../../temp/cmr/ta_CDLINVERTEDHAMMER.o \
 		../../../../../temp/cmr/ta_CDLLONGLINE.o \
 		../../../../../temp/cmr/ta_CDLMORNINGDOJISTAR.o \
 		../../../../../temp/cmr/ta_CDLMORNINGSTAR.o \
+		../../../../../temp/cmr/ta_CDLONNECK.o \
+		../../../../../temp/cmr/ta_CDLPIERCING.o \
 		../../../../../temp/cmr/ta_CDLSHOOTINGSTAR.o \
 		../../../../../temp/cmr/ta_CDLSHORTLINE.o \
 		../../../../../temp/cmr/ta_CDLSPINNINGTOP.o \
+		../../../../../temp/cmr/ta_CDLSTALLEDPATTERN.o \
+		../../../../../temp/cmr/ta_CDLTHRUSTING.o \
 		../../../../../temp/cmr/ta_CDLTRISTAR.o \
 		../../../../../temp/cmr/ta_CDLUPSIDEGAP2CROWS.o \
 		../../../../../temp/cmr/ta_CORREL.o \
@@ -290,11 +314,32 @@ clean:
 ../../../../../temp/cmr/ta_CCI.o: ../../../../../src/ta_func/ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CCI.o ../../../../../src/ta_func/ta_CCI.c
 
+../../../../../temp/cmr/ta_CDL2CROWS.o: ../../../../../src/ta_func/ta_CDL2CROWS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDL2CROWS.o ../../../../../src/ta_func/ta_CDL2CROWS.c
+
 ../../../../../temp/cmr/ta_CDL3BLACKCROWS.o: ../../../../../src/ta_func/ta_CDL3BLACKCROWS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDL3BLACKCROWS.o ../../../../../src/ta_func/ta_CDL3BLACKCROWS.c
 
+../../../../../temp/cmr/ta_CDL3INSIDE.o: ../../../../../src/ta_func/ta_CDL3INSIDE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDL3INSIDE.o ../../../../../src/ta_func/ta_CDL3INSIDE.c
+
+../../../../../temp/cmr/ta_CDL3LINESTRIKE.o: ../../../../../src/ta_func/ta_CDL3LINESTRIKE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDL3LINESTRIKE.o ../../../../../src/ta_func/ta_CDL3LINESTRIKE.c
+
+../../../../../temp/cmr/ta_CDL3OUTSIDE.o: ../../../../../src/ta_func/ta_CDL3OUTSIDE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDL3OUTSIDE.o ../../../../../src/ta_func/ta_CDL3OUTSIDE.c
+
+../../../../../temp/cmr/ta_CDL3WHITESOLDIERS.o: ../../../../../src/ta_func/ta_CDL3WHITESOLDIERS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDL3WHITESOLDIERS.o ../../../../../src/ta_func/ta_CDL3WHITESOLDIERS.c
+
 ../../../../../temp/cmr/ta_CDLABANDONEDBABY.o: ../../../../../src/ta_func/ta_CDLABANDONEDBABY.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLABANDONEDBABY.o ../../../../../src/ta_func/ta_CDLABANDONEDBABY.c
+
+../../../../../temp/cmr/ta_CDLADVANCEBLOCK.o: ../../../../../src/ta_func/ta_CDLADVANCEBLOCK.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLADVANCEBLOCK.o ../../../../../src/ta_func/ta_CDLADVANCEBLOCK.c
+
+../../../../../temp/cmr/ta_CDLDARKCLOUDCOVER.o: ../../../../../src/ta_func/ta_CDLDARKCLOUDCOVER.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLDARKCLOUDCOVER.o ../../../../../src/ta_func/ta_CDLDARKCLOUDCOVER.c
 
 ../../../../../temp/cmr/ta_CDLDOJISTAR.o: ../../../../../src/ta_func/ta_CDLDOJISTAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLDOJISTAR.o ../../../../../src/ta_func/ta_CDLDOJISTAR.c
@@ -326,6 +371,9 @@ clean:
 ../../../../../temp/cmr/ta_CDLIDENTICAL3CROWS.o: ../../../../../src/ta_func/ta_CDLIDENTICAL3CROWS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLIDENTICAL3CROWS.o ../../../../../src/ta_func/ta_CDLIDENTICAL3CROWS.c
 
+../../../../../temp/cmr/ta_CDLINNECK.o: ../../../../../src/ta_func/ta_CDLINNECK.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLINNECK.o ../../../../../src/ta_func/ta_CDLINNECK.c
+
 ../../../../../temp/cmr/ta_CDLINVERTEDHAMMER.o: ../../../../../src/ta_func/ta_CDLINVERTEDHAMMER.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLINVERTEDHAMMER.o ../../../../../src/ta_func/ta_CDLINVERTEDHAMMER.c
 
@@ -338,6 +386,12 @@ clean:
 ../../../../../temp/cmr/ta_CDLMORNINGSTAR.o: ../../../../../src/ta_func/ta_CDLMORNINGSTAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLMORNINGSTAR.o ../../../../../src/ta_func/ta_CDLMORNINGSTAR.c
 
+../../../../../temp/cmr/ta_CDLONNECK.o: ../../../../../src/ta_func/ta_CDLONNECK.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLONNECK.o ../../../../../src/ta_func/ta_CDLONNECK.c
+
+../../../../../temp/cmr/ta_CDLPIERCING.o: ../../../../../src/ta_func/ta_CDLPIERCING.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLPIERCING.o ../../../../../src/ta_func/ta_CDLPIERCING.c
+
 ../../../../../temp/cmr/ta_CDLSHOOTINGSTAR.o: ../../../../../src/ta_func/ta_CDLSHOOTINGSTAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLSHOOTINGSTAR.o ../../../../../src/ta_func/ta_CDLSHOOTINGSTAR.c
 
@@ -346,6 +400,12 @@ clean:
 
 ../../../../../temp/cmr/ta_CDLSPINNINGTOP.o: ../../../../../src/ta_func/ta_CDLSPINNINGTOP.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLSPINNINGTOP.o ../../../../../src/ta_func/ta_CDLSPINNINGTOP.c
+
+../../../../../temp/cmr/ta_CDLSTALLEDPATTERN.o: ../../../../../src/ta_func/ta_CDLSTALLEDPATTERN.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLSTALLEDPATTERN.o ../../../../../src/ta_func/ta_CDLSTALLEDPATTERN.c
+
+../../../../../temp/cmr/ta_CDLTHRUSTING.o: ../../../../../src/ta_func/ta_CDLTHRUSTING.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLTHRUSTING.o ../../../../../src/ta_func/ta_CDLTHRUSTING.c
 
 ../../../../../temp/cmr/ta_CDLTRISTAR.o: ../../../../../src/ta_func/ta_CDLTRISTAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLTRISTAR.o ../../../../../src/ta_func/ta_CDLTRISTAR.c
