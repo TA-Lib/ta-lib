@@ -1070,8 +1070,8 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
       TA_TRACE_RETURN( TA_BAD_PARAM );
    }
 
-   /* Cover for a common potential error (passing -1 as
-    * a default parameter!?).
+   /* startLocal and endLocal must end up NULL if the
+    * start and end are not specified.
     */
    startLocal = &param->start;
    endLocal   = &param->end;
