@@ -36,13 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  MS       Marcel Schaible <marcel@schaible-consulting.de>
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  110199 MF   First version.
+ *  010503 MF   Fix #644512. Problem with [-I] submitted by MS.
  *
  */
 
@@ -415,7 +416,10 @@ TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
       ptrReadOp = &arrayReadOp[opIdx-1];
       readOp = *ptrReadOp;
 
-      if( !flagSet && TA_IS_INTEGER_CMD(readOp) && (TA_GET_IDX(readOp)<=TA_YEAR_IDX) )
+      if( !flagSet                          && 
+          TA_IS_INTEGER_CMD(readOp)         && 
+          (TA_GET_IDX(readOp)<=TA_YEAR_IDX) && 
+          !TA_IS_PERMANENT_SKIP_SET(readOp) )
       {
          TA_SET_TIMESTAMP_COMPLETE(*ptrReadOp);
          flagSet = 1;
