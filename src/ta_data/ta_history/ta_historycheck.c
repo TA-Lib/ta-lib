@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
  *  120104 MF   Now check start/end boundary.
+ *  080804 MF   Add a lot of price bar validation.
  */
 
 /* Description:
@@ -73,14 +74,13 @@
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_HistoryCheckInternal(
-                                    TA_Period           expectedPeriod,
-                                    const TA_Timestamp *expectedStart,
-                                    const TA_Timestamp *expectedEnd,
-                                    TA_Field            fieldToCheck,
-                                    const TA_History   *history,
-                                    unsigned int       *faultyIndex,
-                                    unsigned int       *faultyField )
+TA_RetCode TA_HistoryCheck( TA_Period           expectedPeriod,
+                            const TA_Timestamp *expectedStart,
+                            const TA_Timestamp *expectedEnd,
+                            TA_Field            fieldToCheck,
+                            const TA_History   *history,
+                            unsigned int       *faultyIndex,
+                            unsigned int       *faultyField )
 {
    TA_PROLOG
    unsigned int allFieldNull;
