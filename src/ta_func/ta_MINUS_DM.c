@@ -230,11 +230,13 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
       /* No smoothing needed. Just do a simple DM1
        * for each price bar.
        */
-      *outBegIdx = today = startIdx+1;
-      prevHigh = inHigh_0[today-1];
-      prevLow  = inLow_0[today-1];
-      while( ++today <= endIdx )
+      *outBegIdx = startIdx;
+      today = startIdx-1;
+      prevHigh = inHigh_0[today];
+      prevLow  = inLow_0[today];
+      while( today < endIdx )
       {      
+         today++;
          tempReal = inHigh_0[today];
          diffP    = tempReal-prevHigh; /* Plus Delta */
          prevHigh = tempReal;
@@ -246,6 +248,8 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
             /* Case 2 and 4: +DM=0,-DM=diffM */
             outReal_0[outIdx++] = diffM;
          }
+         else
+            outReal_0[outIdx++] = 0;
       }
 
       *outNbElement = outIdx;
@@ -253,7 +257,7 @@ TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
    }
 
    /* Process the initial DM */
-   *outBegIdx = today = startIdx;
+   *outBegIdx = startIdx;
 
    prevMinusDM = 0.0;
    today       = startIdx - lookbackTotal;
