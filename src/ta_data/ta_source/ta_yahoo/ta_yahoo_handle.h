@@ -29,6 +29,14 @@ typedef struct
    /* Represent all the categories and symbols available. */
    TA_YahooIdx *index;
 
+   /* When 'index' is NULL, it means it is only one symbol.
+    * In that case the info to reach the Yahoo! web site 
+    * and the proper symbol is in the following "webSite"
+    * variables.
+    */
+   TA_CountryId webSiteCountry;
+   TA_String *webSiteSymbol;
+
    /* The read operations for interpreting the Yahoo! CSV format. */
    TA_ReadOpInfo *readOp6Fields;
    TA_ReadOpInfo *readOp5Fields;

@@ -87,6 +87,7 @@ typedef enum
    TA_SQL,
    TA_CSI,
    TA_CSIM,
+   TA_YAHOO_ONE_SYMBOL,
    TA_NUM_OF_SOURCE_ID
 } TA_SourceId;
 
@@ -134,7 +135,7 @@ typedef struct
     *    TA_AddDataSourceParam param;
     *    memset( &param, 0, sizeof( TA_AddDataSourceParam ) );
     *    ... set only the parameter you need...
-    *    retCode = TA_AddDataSource( &param ); 
+    *    retCode = TA_AddDataSource( udb, &param ); 
     *
     * Initializing the whole structure to zero assure
     * that the actual (or future) unused parameters
@@ -307,6 +308,18 @@ TA_RetCode TA_ForEachSymbol( TA_UDBase *unifiedDatabase,
                              TA_ForEachSymbolFunc functionToCall,
                              void *opaqueData );
 
+typedef struct
+{
+   const char    *source;
+   const char    *category;
+   const char    *symbol;   
+   TA_Period      period;
+   TA_Timestamp   start;
+   TA_Timestamp   end;
+   TA_Field       field;
+   TA_HistoryFlag flags;
+} TA_HistoryAllocParam;
+
 /* The following functions allows to access historic data.
  * On success, it becomes the responsibility of the caller to
  * call TA_HistoryFree once the 'history' is no longuer needed.
@@ -317,12 +330,15 @@ TA_RetCode TA_ForEachSymbol( TA_UDBase *unifiedDatabase,
  *   the unified database under the "US.NASDAQ.STOCK" category.
  *
  *   TA_History *history;
+ *   TA_HistoryAllocParam param;
  *   TA_RetCode retCode;
  *   int i;
  *
- *   retCode = TA_HistoryAlloc( udBase, "US.NASDAQ.STOCK", 
- *                              "LNUX", TA_DAILY, NULL, NULL,
- *                              TA_ALL, &history );
+ *   memset( param, 0, sizeof(TA_HistoryAllocParam) );
+ *   param.category = "US.NASDAQ.STOCK";
+ *   param.symbol   = "LNUX";
+ *   param.period   = TA_DAILY;
+ *   retCode = TA_HistoryAlloc( udBase, &param, &history );
  *
  *   if( retCode == TA_SUCCESS )
  *   {
