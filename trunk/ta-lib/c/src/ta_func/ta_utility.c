@@ -56,8 +56,8 @@
 #endif
 
 #if defined( _MANAGED )
-enum Core::TA_RetCode Core::SetUnstablePeriod( enum TA_FuncUnstId id,
-                                               unsigned int  unstablePeriod )
+__value enum Core::TA_RetCode Core::SetUnstablePeriod( __value enum TA_FuncUnstId id,
+                                                       unsigned int  unstablePeriod )
 #else
 TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
                                  unsigned int  unstablePeriod )
@@ -82,7 +82,7 @@ TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
 }
 
 #if defined( _MANAGED )
-unsigned int Core::GetUnstablePeriod( enum TA_FuncUnstId id )
+unsigned int Core::GetUnstablePeriod( __value enum TA_FuncUnstId id )
 #else
 unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id )
 #endif
@@ -94,7 +94,7 @@ unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id )
 }
 
 #if defined( _MANAGED )
-enum Core::TA_RetCode Core::SetCompatibility( enum TA_Compatibility value )
+__value enum Core::TA_RetCode Core::SetCompatibility( __value enum TA_Compatibility value )
 #else
 TA_RetCode TA_SetCompatibility( TA_Compatibility value )
 #endif
@@ -104,7 +104,7 @@ TA_RetCode TA_SetCompatibility( TA_Compatibility value )
 }
 
 #if defined( _MANAGED )
-enum Core::TA_Compatibility Core::GetCompatibility( void )
+__value enum Core::TA_Compatibility Core::GetCompatibility( void )
 #else
 TA_Compatibility TA_GetCompatibility( void )
 #endif
