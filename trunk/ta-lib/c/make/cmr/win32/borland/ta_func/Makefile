@@ -67,7 +67,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_CDLINNECK.c \
 		..\..\..\..\..\src\ta_func\ta_CDLINVERTEDHAMMER.c \
 		..\..\..\..\..\src\ta_func\ta_CDLKICKING.c \
-		..\..\..\..\..\src\ta_func\ta_CDLKICKINGbyLength.c \
+		..\..\..\..\..\src\ta_func\ta_CDLKICKINGBYLENGTH.c \
 		..\..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c \
 		..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c \
 		..\..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c \
@@ -183,7 +183,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_utility.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLINNECK.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLINVERTEDHAMMER.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLKICKING.obj \
-		..\..\..\..\..\temp\cmr\ta_CDLKICKINGbyLength.obj \
+		..\..\..\..\..\temp\cmr\ta_CDLKICKINGBYLENGTH.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLLONGLEGGEDDOJI.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLLONGLINE.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLMARUBOZU.obj \
@@ -331,7 +331,7 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_CDLINNECK.obj \
 +..\..\..\..\..\temp\cmr\ta_CDLINVERTEDHAMMER.obj \
 +..\..\..\..\..\temp\cmr\ta_CDLKICKING.obj \
-+..\..\..\..\..\temp\cmr\ta_CDLKICKINGbyLength.obj \
++..\..\..\..\..\temp\cmr\ta_CDLKICKINGBYLENGTH.obj \
 +..\..\..\..\..\temp\cmr\ta_CDLLONGLEGGEDDOJI.obj \
 +..\..\..\..\..\temp\cmr\ta_CDLLONGLINE.obj \
 +..\..\..\..\..\temp\cmr\ta_CDLMARUBOZU.obj \
@@ -461,7 +461,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_CDLINNECK.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLINVERTEDHAMMER.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLKICKING.obj
-	-del ..\..\..\..\..\temp\cmr\ta_CDLKICKINGbyLength.obj
+	-del ..\..\..\..\..\temp\cmr\ta_CDLKICKINGBYLENGTH.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLLONGLEGGEDDOJI.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLLONGLINE.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLMARUBOZU.obj
@@ -674,8 +674,8 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_CDLKICKING.obj: ..\..\..\..\..\src\ta_func\ta_CDLKICKING.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CDLKICKING.obj ..\..\..\..\..\src\ta_func\ta_CDLKICKING.c
 
-..\..\..\..\..\temp\cmr\ta_CDLKICKINGbyLength.obj: ..\..\..\..\..\src\ta_func\ta_CDLKICKINGbyLength.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CDLKICKINGbyLength.obj ..\..\..\..\..\src\ta_func\ta_CDLKICKINGbyLength.c
+..\..\..\..\..\temp\cmr\ta_CDLKICKINGBYLENGTH.obj: ..\..\..\..\..\src\ta_func\ta_CDLKICKINGBYLENGTH.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CDLKICKINGBYLENGTH.obj ..\..\..\..\..\src\ta_func\ta_CDLKICKINGBYLENGTH.c
 
 ..\..\..\..\..\temp\cmr\ta_CDLLONGLEGGEDDOJI.obj: ..\..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CDLLONGLEGGEDDOJI.obj ..\..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c

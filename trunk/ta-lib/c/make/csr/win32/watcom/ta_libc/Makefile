@@ -155,7 +155,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c &
 		..\..\..\..\..\src\ta_func\ta_CDLINNECK.c &
 		..\..\..\..\..\src\ta_func\ta_CDLINVERTEDHAMMER.c &
 		..\..\..\..\..\src\ta_func\ta_CDLKICKING.c &
-		..\..\..\..\..\src\ta_func\ta_CDLKICKINGbyLength.c &
+		..\..\..\..\..\src\ta_func\ta_CDLKICKINGBYLENGTH.c &
 		..\..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c &
 		..\..\..\..\..\src\ta_func\ta_CDLLONGLINE.c &
 		..\..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c &
@@ -373,7 +373,7 @@ OBJECTS =	..\..\..\..\..\temp\csr\ta_ascii.obj &
 		..\..\..\..\..\temp\csr\ta_CDLINNECK.obj &
 		..\..\..\..\..\temp\csr\ta_CDLINVERTEDHAMMER.obj &
 		..\..\..\..\..\temp\csr\ta_CDLKICKING.obj &
-		..\..\..\..\..\temp\csr\ta_CDLKICKINGbyLength.obj &
+		..\..\..\..\..\temp\csr\ta_CDLKICKINGBYLENGTH.obj &
 		..\..\..\..\..\temp\csr\ta_CDLLONGLEGGEDDOJI.obj &
 		..\..\..\..\..\temp\csr\ta_CDLLONGLINE.obj &
 		..\..\..\..\..\temp\csr\ta_CDLMARUBOZU.obj &
@@ -618,7 +618,7 @@ clean:
 	-del ..\..\..\..\..\temp\csr\ta_CDLINNECK.obj
 	-del ..\..\..\..\..\temp\csr\ta_CDLINVERTEDHAMMER.obj
 	-del ..\..\..\..\..\temp\csr\ta_CDLKICKING.obj
-	-del ..\..\..\..\..\temp\csr\ta_CDLKICKINGbyLength.obj
+	-del ..\..\..\..\..\temp\csr\ta_CDLKICKINGBYLENGTH.obj
 	-del ..\..\..\..\..\temp\csr\ta_CDLLONGLEGGEDDOJI.obj
 	-del ..\..\..\..\..\temp\csr\ta_CDLLONGLINE.obj
 	-del ..\..\..\..\..\temp\csr\ta_CDLMARUBOZU.obj
@@ -1115,8 +1115,8 @@ clean:
 ..\..\..\..\..\temp\csr\ta_CDLKICKING.obj: ..\..\..\..\..\src\ta_func\ta_CDLKICKING.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csr\ta_CDLKICKING.obj ..\..\..\..\..\src\ta_func\ta_CDLKICKING.c
 
-..\..\..\..\..\temp\csr\ta_CDLKICKINGbyLength.obj: ..\..\..\..\..\src\ta_func\ta_CDLKICKINGbyLength.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csr\ta_CDLKICKINGbyLength.obj ..\..\..\..\..\src\ta_func\ta_CDLKICKINGbyLength.c
+..\..\..\..\..\temp\csr\ta_CDLKICKINGBYLENGTH.obj: ..\..\..\..\..\src\ta_func\ta_CDLKICKINGBYLENGTH.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csr\ta_CDLKICKINGBYLENGTH.obj ..\..\..\..\..\src\ta_func\ta_CDLKICKINGBYLENGTH.c
 
 ..\..\..\..\..\temp\csr\ta_CDLLONGLEGGEDDOJI.obj: ..\..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csr\ta_CDLLONGLEGGEDDOJI.obj ..\..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c

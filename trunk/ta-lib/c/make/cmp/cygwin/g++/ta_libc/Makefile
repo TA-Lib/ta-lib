@@ -157,7 +157,7 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_CDLINNECK.c \
 		../../../../../src/ta_func/ta_CDLINVERTEDHAMMER.c \
 		../../../../../src/ta_func/ta_CDLKICKING.c \
-		../../../../../src/ta_func/ta_CDLKICKINGbyLength.c \
+		../../../../../src/ta_func/ta_CDLKICKINGBYLENGTH.c \
 		../../../../../src/ta_func/ta_CDLLONGLEGGEDDOJI.c \
 		../../../../../src/ta_func/ta_CDLLONGLINE.c \
 		../../../../../src/ta_func/ta_CDLMARUBOZU.c \
@@ -374,7 +374,7 @@ OBJECTS =	../../../../../temp/cmp/ta_ascii.o \
 		../../../../../temp/cmp/ta_CDLINNECK.o \
 		../../../../../temp/cmp/ta_CDLINVERTEDHAMMER.o \
 		../../../../../temp/cmp/ta_CDLKICKING.o \
-		../../../../../temp/cmp/ta_CDLKICKINGbyLength.o \
+		../../../../../temp/cmp/ta_CDLKICKINGBYLENGTH.o \
 		../../../../../temp/cmp/ta_CDLLONGLEGGEDDOJI.o \
 		../../../../../temp/cmp/ta_CDLLONGLINE.o \
 		../../../../../temp/cmp/ta_CDLMARUBOZU.o \
@@ -912,8 +912,8 @@ clean:
 ../../../../../temp/cmp/ta_CDLKICKING.o: ../../../../../src/ta_func/ta_CDLKICKING.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLKICKING.o ../../../../../src/ta_func/ta_CDLKICKING.c
 
-../../../../../temp/cmp/ta_CDLKICKINGbyLength.o: ../../../../../src/ta_func/ta_CDLKICKINGbyLength.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLKICKINGbyLength.o ../../../../../src/ta_func/ta_CDLKICKINGbyLength.c
+../../../../../temp/cmp/ta_CDLKICKINGBYLENGTH.o: ../../../../../src/ta_func/ta_CDLKICKINGBYLENGTH.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLKICKINGBYLENGTH.o ../../../../../src/ta_func/ta_CDLKICKINGBYLENGTH.c
 
 ../../../../../temp/cmp/ta_CDLLONGLEGGEDDOJI.o: ../../../../../src/ta_func/ta_CDLLONGLEGGEDDOJI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_CDLLONGLEGGEDDOJI.o ../../../../../src/ta_func/ta_CDLLONGLEGGEDDOJI.c

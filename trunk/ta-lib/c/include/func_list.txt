@@ -37,7 +37,7 @@ CDLIDENTICAL3CROWS  Identical Three Crows
 CDLINNECK           In-Neck Pattern
 CDLINVERTEDHAMMER   Inverted Hammer
 CDLKICKING          Kicking
-CDLKICKINGbyLength  Kicking - bull/bear determined by the longer marubozu
+CDLKICKINGBYLENGTH  Kicking - bull/bear determined by the longer marubozu
 CDLLONGLEGGEDDOJI   Long Legged Doji
 CDLLONGLINE         Long Line Candle
 CDLMARUBOZU         Marubozu

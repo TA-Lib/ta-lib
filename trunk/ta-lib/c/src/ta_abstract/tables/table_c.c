@@ -864,25 +864,25 @@ DEF_FUNCTION( CDLKICKING,                     /* name */
 
 /* CDLKICKING END */
 
-/* CDLKICKINGbyLength BEGIN */
-static const TA_InputParameterInfo    *TA_CDLKICKINGbyLength_Inputs[]    =
+/* CDLKICKINGBYLENGTH BEGIN */
+static const TA_InputParameterInfo    *TA_CDLKICKINGBYLENGTH_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
   NULL
 };
 
-static const TA_OutputParameterInfo   *TA_CDLKICKINGbyLength_Outputs[]   =
+static const TA_OutputParameterInfo   *TA_CDLKICKINGBYLENGTH_Outputs[]   =
 {
   &TA_DEF_UI_Output_Integer,
   NULL
 };
 
-static const TA_OptInputParameterInfo *TA_CDLKICKINGbyLength_OptInputs[] =
+static const TA_OptInputParameterInfo *TA_CDLKICKINGBYLENGTH_OptInputs[] =
 { 
   NULL
 };
 
-DEF_FUNCTION( CDLKICKINGbyLength,             /* name */
+DEF_FUNCTION( CDLKICKINGBYLENGTH,             /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Kicking - bull/bear determined by the longer marubozu",              /* hint */
               NULL,                           /* helpFile */
@@ -890,7 +890,7 @@ DEF_FUNCTION( CDLKICKINGbyLength,             /* name */
               NULL                            /* analysis function */
              );
 
-/* CDLKICKINGbyLength END */
+/* CDLKICKINGBYLENGTH END */
 
 /* CDLLONGLEGGEDDOJI BEGIN */
 static const TA_InputParameterInfo    *TA_CDLLONGLEGGEDDOJI_Inputs[]    =
@@ -1489,7 +1489,7 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLINNECK),
    ADD_TO_TABLE(CDLINVERTEDHAMMER),
    ADD_TO_TABLE(CDLKICKING),
-   ADD_TO_TABLE(CDLKICKINGbyLength),
+   ADD_TO_TABLE(CDLKICKINGBYLENGTH),
    ADD_TO_TABLE(CDLLONGLEGGEDDOJI),
    ADD_TO_TABLE(CDLLONGLINE),
    ADD_TO_TABLE(CDLMARUBOZU),
