@@ -349,6 +349,10 @@ SOURCE=..\..\..\..\src\ta_abstract\frames\ta_STOCH_frame.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_STOCHF_frame.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_abstract\frames\ta_TEMA_frame.c
 # End Source File
 # Begin Source File
@@ -370,6 +374,10 @@ SOURCE=..\..\..\..\src\ta_abstract\frames\ta_VAR_frame.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_abstract\frames\ta_WCLPRICE_frame.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_WILLR_frame.c
 # End Source File
 # Begin Source File
 

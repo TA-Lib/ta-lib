@@ -32,7 +32,9 @@ ROCR        Rate of change ratio: (price/prevPrice)
 ROCR100     Rate of change ratio 100 scale: (price/prevPrice)*100
 RSI         Relative Strength Index
 STOCH       Stochastic
+STOCHF      Stochastic Fast
 TRIX        1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
+WILLR       Williams' %R
 OBV         On Balance Volume
 STDDEV      Standard Deviation
 VAR         Variance

@@ -86,7 +86,9 @@ SOURCES =	../../../../../src/ta_abstract/ta_abstract.c \
 		../../../../../src/ta_abstract/frames/ta_ROCR100_frame.c \
 		../../../../../src/ta_abstract/frames/ta_RSI_frame.c \
 		../../../../../src/ta_abstract/frames/ta_STOCH_frame.c \
+		../../../../../src/ta_abstract/frames/ta_STOCHF_frame.c \
 		../../../../../src/ta_abstract/frames/ta_TRIX_frame.c \
+		../../../../../src/ta_abstract/frames/ta_WILLR_frame.c \
 		../../../../../src/ta_abstract/frames/ta_OBV_frame.c \
 		../../../../../src/ta_abstract/frames/ta_STDDEV_frame.c \
 		../../../../../src/ta_abstract/frames/ta_VAR_frame.c \
@@ -157,7 +159,9 @@ OBJECTS =	../../../../../temp/csd/ta_abstract.o \
 		../../../../../temp/csd/ta_ROCR100_frame.o \
 		../../../../../temp/csd/ta_RSI_frame.o \
 		../../../../../temp/csd/ta_STOCH_frame.o \
+		../../../../../temp/csd/ta_STOCHF_frame.o \
 		../../../../../temp/csd/ta_TRIX_frame.o \
+		../../../../../temp/csd/ta_WILLR_frame.o \
 		../../../../../temp/csd/ta_OBV_frame.o \
 		../../../../../temp/csd/ta_STDDEV_frame.o \
 		../../../../../temp/csd/ta_VAR_frame.o \
@@ -407,8 +411,14 @@ clean:
 ../../../../../temp/csd/ta_STOCH_frame.o: ../../../../../src/ta_abstract/frames/ta_STOCH_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_STOCH_frame.o ../../../../../src/ta_abstract/frames/ta_STOCH_frame.c
 
+../../../../../temp/csd/ta_STOCHF_frame.o: ../../../../../src/ta_abstract/frames/ta_STOCHF_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_STOCHF_frame.o ../../../../../src/ta_abstract/frames/ta_STOCHF_frame.c
+
 ../../../../../temp/csd/ta_TRIX_frame.o: ../../../../../src/ta_abstract/frames/ta_TRIX_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_TRIX_frame.o ../../../../../src/ta_abstract/frames/ta_TRIX_frame.c
+
+../../../../../temp/csd/ta_WILLR_frame.o: ../../../../../src/ta_abstract/frames/ta_WILLR_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_WILLR_frame.o ../../../../../src/ta_abstract/frames/ta_WILLR_frame.c
 
 ../../../../../temp/csd/ta_OBV_frame.o: ../../../../../src/ta_abstract/frames/ta_OBV_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_OBV_frame.o ../../../../../src/ta_abstract/frames/ta_OBV_frame.c

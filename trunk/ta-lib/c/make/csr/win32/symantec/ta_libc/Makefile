@@ -140,7 +140,9 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_ROCR100_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_RSI_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_STOCH_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_STOCHF_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_TRIX_frame.c \
+		..\..\..\..\..\src\ta_abstract\frames\ta_WILLR_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_OBV_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_STDDEV_frame.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_VAR_frame.c \
@@ -183,7 +185,9 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_ROCR100.c \
 		..\..\..\..\..\src\ta_func\ta_RSI.c \
 		..\..\..\..\..\src\ta_func\ta_STOCH.c \
+		..\..\..\..\..\src\ta_func\ta_STOCHF.c \
 		..\..\..\..\..\src\ta_func\ta_TRIX.c \
+		..\..\..\..\..\src\ta_func\ta_WILLR.c \
 		..\..\..\..\..\src\ta_func\ta_OBV.c \
 		..\..\..\..\..\src\ta_func\ta_STDDEV.c \
 		..\..\..\..\..\src\ta_func\ta_VAR.c \
@@ -318,7 +322,9 @@ OBJECTS =	..\..\..\..\..\temp\csr\ta_ascii.obj \
 		..\..\..\..\..\temp\csr\ta_ROCR100_frame.obj \
 		..\..\..\..\..\temp\csr\ta_RSI_frame.obj \
 		..\..\..\..\..\temp\csr\ta_STOCH_frame.obj \
+		..\..\..\..\..\temp\csr\ta_STOCHF_frame.obj \
 		..\..\..\..\..\temp\csr\ta_TRIX_frame.obj \
+		..\..\..\..\..\temp\csr\ta_WILLR_frame.obj \
 		..\..\..\..\..\temp\csr\ta_OBV_frame.obj \
 		..\..\..\..\..\temp\csr\ta_STDDEV_frame.obj \
 		..\..\..\..\..\temp\csr\ta_VAR_frame.obj \
@@ -361,7 +367,9 @@ OBJECTS =	..\..\..\..\..\temp\csr\ta_ascii.obj \
 		..\..\..\..\..\temp\csr\ta_ROCR100.obj \
 		..\..\..\..\..\temp\csr\ta_RSI.obj \
 		..\..\..\..\..\temp\csr\ta_STOCH.obj \
+		..\..\..\..\..\temp\csr\ta_STOCHF.obj \
 		..\..\..\..\..\temp\csr\ta_TRIX.obj \
+		..\..\..\..\..\temp\csr\ta_WILLR.obj \
 		..\..\..\..\..\temp\csr\ta_OBV.obj \
 		..\..\..\..\..\temp\csr\ta_STDDEV.obj \
 		..\..\..\..\..\temp\csr\ta_VAR.obj \
@@ -523,7 +531,9 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csr\ta_ROCR100_frame.obj \
 +..\..\..\..\..\temp\csr\ta_RSI_frame.obj \
 +..\..\..\..\..\temp\csr\ta_STOCH_frame.obj \
++..\..\..\..\..\temp\csr\ta_STOCHF_frame.obj \
 +..\..\..\..\..\temp\csr\ta_TRIX_frame.obj \
++..\..\..\..\..\temp\csr\ta_WILLR_frame.obj \
 +..\..\..\..\..\temp\csr\ta_OBV_frame.obj \
 +..\..\..\..\..\temp\csr\ta_STDDEV_frame.obj \
 +..\..\..\..\..\temp\csr\ta_VAR_frame.obj \
@@ -566,7 +576,9 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csr\ta_ROCR100.obj \
 +..\..\..\..\..\temp\csr\ta_RSI.obj \
 +..\..\..\..\..\temp\csr\ta_STOCH.obj \
++..\..\..\..\..\temp\csr\ta_STOCHF.obj \
 +..\..\..\..\..\temp\csr\ta_TRIX.obj \
++..\..\..\..\..\temp\csr\ta_WILLR.obj \
 +..\..\..\..\..\temp\csr\ta_OBV.obj \
 +..\..\..\..\..\temp\csr\ta_STDDEV.obj \
 +..\..\..\..\..\temp\csr\ta_VAR.obj \
@@ -714,7 +726,9 @@ clean:
 	-del ..\..\..\..\..\temp\csr\ta_ROCR100_frame.obj
 	-del ..\..\..\..\..\temp\csr\ta_RSI_frame.obj
 	-del ..\..\..\..\..\temp\csr\ta_STOCH_frame.obj
+	-del ..\..\..\..\..\temp\csr\ta_STOCHF_frame.obj
 	-del ..\..\..\..\..\temp\csr\ta_TRIX_frame.obj
+	-del ..\..\..\..\..\temp\csr\ta_WILLR_frame.obj
 	-del ..\..\..\..\..\temp\csr\ta_OBV_frame.obj
 	-del ..\..\..\..\..\temp\csr\ta_STDDEV_frame.obj
 	-del ..\..\..\..\..\temp\csr\ta_VAR_frame.obj
@@ -757,7 +771,9 @@ clean:
 	-del ..\..\..\..\..\temp\csr\ta_ROCR100.obj
 	-del ..\..\..\..\..\temp\csr\ta_RSI.obj
 	-del ..\..\..\..\..\temp\csr\ta_STOCH.obj
+	-del ..\..\..\..\..\temp\csr\ta_STOCHF.obj
 	-del ..\..\..\..\..\temp\csr\ta_TRIX.obj
+	-del ..\..\..\..\..\temp\csr\ta_WILLR.obj
 	-del ..\..\..\..\..\temp\csr\ta_OBV.obj
 	-del ..\..\..\..\..\temp\csr\ta_STDDEV.obj
 	-del ..\..\..\..\..\temp\csr\ta_VAR.obj
@@ -1143,8 +1159,14 @@ clean:
 ..\..\..\..\..\temp\csr\ta_STOCH_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_STOCH_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_STOCH_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_STOCH_frame.c
 
+..\..\..\..\..\temp\csr\ta_STOCHF_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_STOCHF_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_STOCHF_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_STOCHF_frame.c
+
 ..\..\..\..\..\temp\csr\ta_TRIX_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_TRIX_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_TRIX_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_TRIX_frame.c
+
+..\..\..\..\..\temp\csr\ta_WILLR_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_WILLR_frame.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_WILLR_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_WILLR_frame.c
 
 ..\..\..\..\..\temp\csr\ta_OBV_frame.obj: ..\..\..\..\..\src\ta_abstract\frames\ta_OBV_frame.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_OBV_frame.obj ..\..\..\..\..\src\ta_abstract\frames\ta_OBV_frame.c
@@ -1272,8 +1294,14 @@ clean:
 ..\..\..\..\..\temp\csr\ta_STOCH.obj: ..\..\..\..\..\src\ta_func\ta_STOCH.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_STOCH.obj ..\..\..\..\..\src\ta_func\ta_STOCH.c
 
+..\..\..\..\..\temp\csr\ta_STOCHF.obj: ..\..\..\..\..\src\ta_func\ta_STOCHF.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_STOCHF.obj ..\..\..\..\..\src\ta_func\ta_STOCHF.c
+
 ..\..\..\..\..\temp\csr\ta_TRIX.obj: ..\..\..\..\..\src\ta_func\ta_TRIX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_TRIX.obj ..\..\..\..\..\src\ta_func\ta_TRIX.c
+
+..\..\..\..\..\temp\csr\ta_WILLR.obj: ..\..\..\..\..\src\ta_func\ta_WILLR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_WILLR.obj ..\..\..\..\..\src\ta_func\ta_WILLR.c
 
 ..\..\..\..\..\temp\csr\ta_OBV.obj: ..\..\..\..\..\src\ta_func\ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_OBV.obj ..\..\..\..\..\src\ta_func\ta_OBV.c

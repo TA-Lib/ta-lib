@@ -56,7 +56,9 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_ROCR100.c \
 		..\..\..\..\..\src\ta_func\ta_RSI.c \
 		..\..\..\..\..\src\ta_func\ta_STOCH.c \
+		..\..\..\..\..\src\ta_func\ta_STOCHF.c \
 		..\..\..\..\..\src\ta_func\ta_TRIX.c \
+		..\..\..\..\..\src\ta_func\ta_WILLR.c \
 		..\..\..\..\..\src\ta_func\ta_OBV.c \
 		..\..\..\..\..\src\ta_func\ta_STDDEV.c \
 		..\..\..\..\..\src\ta_func\ta_VAR.c \
@@ -99,7 +101,9 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_utility.obj \
 		..\..\..\..\..\temp\csd\ta_ROCR100.obj \
 		..\..\..\..\..\temp\csd\ta_RSI.obj \
 		..\..\..\..\..\temp\csd\ta_STOCH.obj \
+		..\..\..\..\..\temp\csd\ta_STOCHF.obj \
 		..\..\..\..\..\temp\csd\ta_TRIX.obj \
+		..\..\..\..\..\temp\csd\ta_WILLR.obj \
 		..\..\..\..\..\temp\csd\ta_OBV.obj \
 		..\..\..\..\..\temp\csd\ta_STDDEV.obj \
 		..\..\..\..\..\temp\csd\ta_VAR.obj \
@@ -187,7 +191,9 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_ROCR100.obj
 	-del ..\..\..\..\..\temp\csd\ta_RSI.obj
 	-del ..\..\..\..\..\temp\csd\ta_STOCH.obj
+	-del ..\..\..\..\..\temp\csd\ta_STOCHF.obj
 	-del ..\..\..\..\..\temp\csd\ta_TRIX.obj
+	-del ..\..\..\..\..\temp\csd\ta_WILLR.obj
 	-del ..\..\..\..\..\temp\csd\ta_OBV.obj
 	-del ..\..\..\..\..\temp\csd\ta_STDDEV.obj
 	-del ..\..\..\..\..\temp\csd\ta_VAR.obj
@@ -319,8 +325,14 @@ clean:
 ..\..\..\..\..\temp\csd\ta_STOCH.obj: ..\..\..\..\..\src\ta_func\ta_STOCH.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\ta_STOCH.obj ..\..\..\..\..\src\ta_func\ta_STOCH.c
 
+..\..\..\..\..\temp\csd\ta_STOCHF.obj: ..\..\..\..\..\src\ta_func\ta_STOCHF.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\ta_STOCHF.obj ..\..\..\..\..\src\ta_func\ta_STOCHF.c
+
 ..\..\..\..\..\temp\csd\ta_TRIX.obj: ..\..\..\..\..\src\ta_func\ta_TRIX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\ta_TRIX.obj ..\..\..\..\..\src\ta_func\ta_TRIX.c
+
+..\..\..\..\..\temp\csd\ta_WILLR.obj: ..\..\..\..\..\src\ta_func\ta_WILLR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\ta_WILLR.obj ..\..\..\..\..\src\ta_func\ta_WILLR.c
 
 ..\..\..\..\..\temp\csd\ta_OBV.obj: ..\..\..\..\..\src\ta_func\ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\ta_OBV.obj ..\..\..\..\..\src\ta_func\ta_OBV.c
