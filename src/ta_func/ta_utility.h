@@ -127,4 +127,46 @@ void TA_INT_stddev_using_precalc_ma( const TA_Real *inReal,
 #define round_pos_2(x) ((floor((x*100.0)+0.5))/100.0)
 #define round_neg_2(x) ((ceil((x*100.0)-0.5))/100.0)
 
+/* The following macros are being used to do
+ * the Hilbert Transform logic as documented
+ * in John Ehlers books "Rocket Science For Traders".
+ */
+#define HILBERT_VARIABLES(varName) \
+      TA_Real varName##_Odd[3]; \
+      TA_Real varName##_Even[3]; \
+      TA_Real varName; \
+      TA_Real prev_##varName##_Odd; \
+      TA_Real prev_##varName##_Even; \
+      TA_Real prev_##varName##_input_Odd; \
+      TA_Real prev_##varName##_input_Even
+
+#define INIT_HILBERT_VARIABLES(varName) { \
+      varName##_Odd [0] = 0.0; \
+      varName##_Odd [1] = 0.0; \
+      varName##_Odd [2] = 0.0; \
+      varName##_Even[0] = 0.0; \
+      varName##_Even[1] = 0.0; \
+      varName##_Even[2] = 0.0; \
+      varName = 0.0; \
+      prev_##varName##_Odd        = 0.0; \
+      prev_##varName##_Even       = 0.0; \
+      prev_##varName##_input_Odd  = 0.0; \
+      prev_##varName##_input_Even = 0.0; \
+      }
+
+#define DO_HILBERT_TRANSFORM(varName,input,OddOrEvenId) {\
+         hilbertTempReal = a * input; \
+         varName = -varName##_##OddOrEvenId[hilbertIdx]; \
+         varName##_##OddOrEvenId[hilbertIdx] = hilbertTempReal; \
+         varName += hilbertTempReal; \
+         varName -= prev_##varName##_##OddOrEvenId; \
+         prev_##varName##_##OddOrEvenId = b * prev_##varName##_input_##OddOrEvenId; \
+         varName += prev_##varName##_##OddOrEvenId; \
+         prev_##varName##_input_##OddOrEvenId = input; \
+         varName *= adjustedPrevPeriod; \
+         }
+
+#define DO_HILBERT_ODD(varName,input)  DO_HILBERT_TRANSFORM(varName,input,Odd)
+#define DO_HILBERT_EVEN(varName,input) DO_HILBERT_TRANSFORM(varName,input,Even)
+
 #endif
