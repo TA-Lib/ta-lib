@@ -113,4 +113,3 @@ EXCEL_GLUE_CODE_WITH_3_PARAM(WCLPRICE)
 /***************
  * End of File *
  ***************/
-
