@@ -425,17 +425,17 @@ TA_RetCode TA_Shutdown( void );
  */
 void TA_FatalReport( FILE *out );
 
-/* You can also output the log into a provided buffer.
- * TA_FATAL_ERROR_BUF_SIZE is the recommended size in byte.
- * The returned buffer will be NULL terminated.
+/* You can choose to output the log into a provided buffer.
+ * The output will be NULL terminated. No character more than
+ * bufferSize will be written.
  */
 #define TA_FATAL_ERROR_BUF_SIZE 1024
-void TA_FatalReportToBuffer( char *buffer, unsigned int buffferSize );
+void TA_FatalReportToBuffer( char *buffer, unsigned int bufferSize );
 
 /* You can provide your own handler to intercept fatal error. 
  * You can use printf or whatever you want in the handler, but
- * no TA-LIB function other than TA_FatalReport can be called
- * within this handler (to avoid recursive call if the failure
+ * no TA-LIB function other than TA_FatalReport and TA_FatalReportToBuffer
+ * can be called within this handler (to avoid recursive call if the failure
  * persist!). 
  *
  * Example:
