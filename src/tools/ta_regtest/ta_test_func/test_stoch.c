@@ -588,9 +588,11 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
       /* Calculate stochastic. */
       tmp = Ht-Lt;
       if( tmp > 0.0 )
-        tempBuffer[outIdx++] = 100.0*((inClose_0[today++]-Lt)/tmp);
+        tempBuffer[outIdx++] = 100.0*((inClose_0[today]-Lt)/tmp);
       else
         tempBuffer[outIdx++] = 100.0;
+
+      today++;
    }
 
    /* Un-smoothed K calculation completed. This K calculation is not returned
