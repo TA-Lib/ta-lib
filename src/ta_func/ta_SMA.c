@@ -157,6 +157,78 @@ TA_RetCode TA_INT_SMA( int    startIdx,
    return TA_SUCCESS;
 }
 
+#if defined( _MANAGED )
+enum TA_RetCode Core::TA_S_INT_SMA( int     startIdx,
+                                  int     endIdx,
+                                  float  inReal_0 __gc [],
+                                  int     optInTimePeriod_0, /* From 1 to 200 */
+                                  [OutAttribute]Int32 *outBegIdx,
+                                  [OutAttribute]Int32 *outNbElement,
+                                  double  outReal_0 __gc [] )
+#else
+TA_RetCode TA_S_INT_SMA( int    startIdx,
+                       int    endIdx,
+                       const float *inReal_0,
+                       int    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */                       
+                       int   *outBegIdx,
+                       int   *outNbElement,
+                       double      *outReal_0 )
+#endif
+{
+   double periodTotal, tempReal;
+   int i, outIdx, trailingIdx, lookbackTotal;
+
+   /* Identify the minimum number of price bar needed
+    * to calculate at least one output.
+    */
+   lookbackTotal = (optInTimePeriod_0-1);
+
+   /* Move up the start index if there is not
+    * enough initial data.
+    */
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
+
+   /* Make sure there is still something to evaluate. */
+   if( startIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNbElement = 0;
+      return TA_SUCCESS;
+   }
+
+   /* Do the MA calculation using tight loops. */
+   /* Add-up the initial period, except for the last value. */
+   periodTotal = 0;
+   trailingIdx = startIdx-lookbackTotal;
+   
+   i=trailingIdx;
+   if( optInTimePeriod_0 > 1 )
+   {
+      while( i < startIdx )
+         periodTotal += inReal_0[i++];
+   }
+
+   /* Proceed with the calculation for the requested range.
+    * Note that this algorithm allows the inReal_0 and
+    * outReal_0 to be the same buffer.
+    */
+   outIdx = 0;
+   do
+   {
+      periodTotal += inReal_0[i++];
+      tempReal = periodTotal;
+      periodTotal -= inReal_0[trailingIdx++];
+      outReal_0[outIdx++] = tempReal / optInTimePeriod_0;
+   } while( i <= endIdx );
+
+   /* All done. Indicate the output limits and return. */
+   *outNbElement = outIdx;
+   *outBegIdx    = startIdx;
+
+   return TA_SUCCESS;
+}
+
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 /*
  * TA_SMA - Simple Moving Average
@@ -229,6 +301,47 @@ TA_RetCode TA_SMA( int    startIdx,
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/* Code in this section is entirely generated and updated
+ * whenever gen_code is executed.
+ */
+#if defined( _MANAGED )
+enum TA_RetCode Core::SMA( int    startIdx,
+                           int    endIdx,
+                           float         inReal_0 __gc [],
+                           int           optInTimePeriod_0, /* From 2 to 100000 */
+                           [OutAttribute]Int32 *outBegIdx,
+                           [OutAttribute]Int32 *outNbElement,
+                           double        outReal_0 __gc [] )
+#else
+TA_RetCode TA_S_SMA( int    startIdx,
+                   int      endIdx,
+                   const float inReal_0[],
+                   int           optInTimePeriod_0, /* From 2 to 100000 */
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   double        outReal_0[] )
+#endif
+{
+#ifndef TA_FUNC_NO_RANGE_CHECK
+   if( startIdx < 0 )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx < startIdx))
+      return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inReal_0 ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+      optInTimePeriod_0 = 30;
+   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+      return TA_BAD_PARAM;
+   if( outReal_0 == NULL )
+      return TA_BAD_PARAM;
+#endif
+   return TA_S_INT_SMA( startIdx,
+                      endIdx,
+                      inReal_0,
+                      optInTimePeriod_0,
+                      outBegIdx, outNbElement, outReal_0 );
+}
+
 #if defined( _MANAGED )
    }} // Close namespace TA.Lib
 #endif
