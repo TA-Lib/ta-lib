@@ -108,6 +108,37 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
                               TA_Integer *volume,
                               TA_Integer *openInterest );
 
+/* Allows the data source driver to cancel all the data
+ * who was added up to now. This might be useful if
+ * the data source driver needs to restart the processing
+ * of adding the data.
+ */
+TA_RetCode TA_HistoryAddDataReset( TA_ParamForAddData *paramForAddData );
+
+/* The source driver can get some info who is derived from all
+ * the added data up to now.
+ */
+typedef struct
+{
+   /* These reflect the cummulation of ALL bar added up to now */    
+   TA_Timestamp highestTimestamp;
+   TA_Timestamp lowestTimestamp;
+
+   /* These are reset EVERYTIME TA_GetInfoFromAddedData is called.
+    * In other word, these reflect the cummulation of what
+    * happen since the las TA_GetInfoFromAddedData was called.
+    * Take note that this function is reserved exclusively
+    * for being called by the data source driver.
+    */
+   unsigned int barAddedSinceLastCall; /* boolean */
+   TA_Timestamp lowestTimestampAddedSinceLastCall;
+   TA_Timestamp highestTimestampAddedSinceLastCall; 
+} TA_InfoFromAddedData;
+
+TA_RetCode TA_GetInfoFromAddedData( TA_ParamForAddData *paramForAddData,
+                                    TA_InfoFromAddedData *info );
+
+
 typedef struct
 {
     /* The driver initialization is the VERY first
