@@ -333,6 +333,10 @@ ErrorNumber test_pm( void )
     *   way to verify for any potential memory leak.
     */
 
+   errorNumber = allocLib( &udb );
+   if( errorNumber != TA_TEST_PASS )
+      return errorNumber;    
+
    /* Initialize some globals used throughout these tests. */
    TA_SetTimeNow( &timestampNow );
    TA_SetDateNow( &timestampNow );
@@ -369,15 +373,13 @@ ErrorNumber test_pm( void )
    id4_2.symString = "B";
 
    /* Test limit cases with empty TA_TradeLog */
-   errorNumber = allocLib( &udb );
-   if( errorNumber != TA_TEST_PASS )
-      return errorNumber;    
    errorNumber = test_emptytradelog();
    if( errorNumber != TA_TEST_PASS )
    {
       printf( "Failed: Empty trade log cases\n" );   
       return errorNumber;
    }
+
    errorNumber = freeLib( udb );
    if( errorNumber != TA_TEST_PASS )
       return errorNumber;
