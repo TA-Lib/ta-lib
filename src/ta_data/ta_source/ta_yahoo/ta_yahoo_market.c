@@ -117,10 +117,28 @@ TA_FILE_INFO;
 
 static TA_YahooExtension TA_YahooExtensionTable[] = 
 {
-   { "TO", TA_Country_ID_CA, "TSE",   "STOCK" }, /* Toronto Stock Exchange */
-   { "V",  TA_Country_ID_CA, "CDNX",  "STOCK" }, /* Canadian Venture Exchange (Vancouver) */
-   { "M",  TA_Country_ID_CA, "MSE",   "STOCK" }, /* Montreal Stock Exchange */
-   { "OB", TA_Country_ID_US, "OTCBB", "STOCK" }  /* Over-the-counter, Bulletin Board */
+   { "TO", TA_Country_ID_CA, "TSE",   "STOCK"  },  /* Toronto Stock Exchange */
+   { "V",  TA_Country_ID_CA, "CDNX",  "STOCK"  },  /* Canadian Venture Exchange (Vancouver) */
+   { "M",  TA_Country_ID_CA, "MSE",   "STOCK"  },  /* Montreal Stock Exchange */
+   { "OB", TA_Country_ID_US, "OTCBB", "STOCK"  },  /* Over-the-counter, Bulletin Board */
+   { "PK", TA_Country_ID_US, "OTC",   "STOCK"  },  /* Over-the-counter, Pink Sheet */
+   { "L",  TA_Country_ID_UK, "LSE",   "STOCK"  },  /* London Stock Exchange */
+   { "CO", TA_Country_ID_DK, "XCSE",  "STOCK"  },  /* Copenhagen Stock Exchange */
+   { "PA", TA_Country_ID_FR, "SBF",   "STOCK"  },  /* Bourse De Paris */
+   { "BE", TA_Country_ID_DE, "BSE",   "STOCK"  },  /* Berlin Stock Exchange */
+   { "BM", TA_Country_ID_DE, "BWB",   "STOCK"  },  /* Bremen Stock Exchange */
+   { "D",  TA_Country_ID_DE, "RWB",   "STOCK"  },  /* Dusseldorf Stock Exchange */
+   { "DE", TA_Country_ID_DE, "XETRA", "STOCK"  },  /* XETRA Stock Exchange */
+   { "MI", TA_Country_ID_IT, "BI",    "STOCK"  },  /* Borsa Italia - Milan Stock Exchange */
+   { "VI", TA_Country_ID_AT, "WBAG",  "STOCK"  },  /* Austria - Vienna Stock Exchange */
+   { "NL", TA_Country_ID_AT, "AEX",   "STOCK"  },  /* Amsterdam Stock Exchange */
+   { "OL", TA_Country_ID_NO, "OSE",   "STOCK"  },  /* Oslo Stock Exchange */
+   { "BC", TA_Country_ID_ES, "BSE",   "STOCK"  },  /* Barcelona Stock Exchange */
+   { "BI", TA_Country_ID_ES, "BIL",   "STOCK"  },  /* Bilbao Stock Exchange */
+   { "MF", TA_Country_ID_ES, "MEFF",  "FUTURE" },  /* Madrid Fixed Income and Derivative Market */
+   { "MC", TA_Country_ID_ES, "MEFF",  "STOCK"  },  /* Madrid Fixed Income and Derivative Market */
+   { "MA", TA_Country_ID_ES, "BDM",   "STOCK"  },  /* Madrid Stock Exchange */
+   { "ST", TA_Country_ID_SE, "OMX",   "STOCK"  }   /* Stockholm Stock Exchange */
 };
 
 #define NB_YAHOO_EXCHANGE_EXTENSION (sizeof(TA_YahooExtensionTable)/sizeof(TA_YahooExtension))
@@ -161,7 +179,8 @@ TA_RetCode TA_AllocStringFromYahooName( TA_Libc *libHandle,
                                         TA_DecodingParam *marketDecodingParam,
                                         const char *yahooSymbol,
                                         TA_String **allocatedCategoryName,
-                                        TA_String **allocatedSymbolName )
+                                        TA_String **allocatedSymbolName,
+                                        unsigned int allowOnlineProcessing )
 {
    TA_PROLOG;
 
@@ -248,6 +267,17 @@ TA_RetCode TA_AllocStringFromYahooName( TA_Libc *libHandle,
 
    if( !exchangeString )
    {
+      /* If online access is not allowed, and the 
+       * symbol does not have a known extension, it
+       * is not possible to identify the exchange.
+       *
+       * With online access, the exchange can be
+       * found by doing further investigation on the
+       * Yahoo! web sites.
+       */
+      if( !allowOnlineProcessing )
+         return TA_INVALID_SECURITY_EXCHANGE;
+
       /* OK, we need to proceed by extracting the info
        * from Yahoo! web sites.
        */
@@ -387,9 +417,6 @@ TA_RetCode TA_WebPageAllocFromYahooName( TA_Libc *libHandle,
                                  webSitePage,
                                  NULL, NULL, &webPage, 10 );
 
-      /* Let's be polite and not overload Yahoo! */
-      TA_Sleep( 1 );
-
       if( retCode == TA_SUCCESS )
          break;
       else
@@ -456,8 +483,16 @@ static TA_RetCode translateToYahooName( TA_Libc *libHandle,
    countryId = TA_CountryAbbrevToId( TA_StringToChar(categoryName) );
    switch( countryId )
    {
-   case TA_Country_ID_CA:
-   case TA_Country_ID_US:
+   case TA_Country_ID_CA: /* Canada */
+   case TA_Country_ID_US: /* United States */
+   case TA_Country_ID_UK: /* United Kingdom */
+   case TA_Country_ID_DE: /* Germany */
+   case TA_Country_ID_DK: /* Denmark */
+   case TA_Country_ID_ES: /* Spain */
+   case TA_Country_ID_FR: /* France */
+   case TA_Country_ID_IT: /* Italy */
+   case TA_Country_ID_SE: /* Sweden */
+   case TA_Country_ID_NO: /* Norway */
       /* Get the length of the second field of the category.
        * This field must exist, else an error is returned.
        */
