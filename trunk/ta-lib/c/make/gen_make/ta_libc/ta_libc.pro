@@ -117,6 +117,8 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_abstract/frames/ta_SMA_frame.c \
           ../../../../../src/ta_abstract/frames/ta_TEMA_frame.c \
           ../../../../../src/ta_abstract/frames/ta_WMA_frame.c \
+          ../../../../../src/ta_abstract/frames/ta_ADX_frame.c \
+          ../../../../../src/ta_abstract/frames/ta_ADXR_frame.c \
           ../../../../../src/ta_abstract/frames/ta_APO_frame.c \
           ../../../../../src/ta_abstract/frames/ta_DX_frame.c \
           ../../../../../src/ta_abstract/frames/ta_MACD_frame.c \
@@ -152,6 +154,8 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_SMA.c \
           ../../../../../src/ta_func/ta_TEMA.c \
           ../../../../../src/ta_func/ta_WMA.c \
+          ../../../../../src/ta_func/ta_ADX.c \
+          ../../../../../src/ta_func/ta_ADXR.c \
           ../../../../../src/ta_func/ta_APO.c \
           ../../../../../src/ta_func/ta_DX.c \
           ../../../../../src/ta_func/ta_MACD.c \

@@ -61,6 +61,8 @@ SOURCES	= ../../../../../src/ta_abstract/ta_abstract.c \
           ../../../../../src/ta_abstract/frames/ta_SMA_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_TEMA_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_WMA_frame.c \ 
+          ../../../../../src/ta_abstract/frames/ta_ADX_frame.c \ 
+          ../../../../../src/ta_abstract/frames/ta_ADXR_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_APO_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_DX_frame.c \ 
           ../../../../../src/ta_abstract/frames/ta_MACD_frame.c \ 

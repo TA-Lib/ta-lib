@@ -22,6 +22,60 @@
  *
  ****************************************************************************/
 
+/* ADX BEGIN */
+static const TA_InputParameterInfo    *TA_ADX_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ADX_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ADX_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( ADX,                          /* name */
+              TA_GroupId_TrendIndicators,   /* groupId */
+              "Average Directional Movement Index", /* hint */
+              NULL,                         /* helpFile */
+              TA_FUNC_FLG_UNST_PER,         /* flags */
+              NULL                          /* analysis function */
+             );
+/* ADX END */
+
+/* ADXR BEGIN */
+static const TA_InputParameterInfo    *TA_ADXR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ADXR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ADXR_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( ADXR,                         /* name */
+              TA_GroupId_TrendIndicators,   /* groupId */
+              "Average Directional Movement Index Rating", /* hint */
+              NULL,                         /* helpFile */
+              TA_FUNC_FLG_UNST_PER,         /* flags */
+              NULL                          /* analysis function */
+             );
+/* ADXR END */
+
 /* ATR BEGIN */
 static const TA_InputParameterInfo    *TA_ATR_Inputs[]    =
 {
@@ -85,6 +139,8 @@ DEF_FUNCTION( APO,                         /* name */
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableA[] =
 {
+   ADD_TO_TABLE(ADX),
+   ADD_TO_TABLE(ADXR),
    ADD_TO_TABLE(APO),
    ADD_TO_TABLE(ATR),
    NULL
