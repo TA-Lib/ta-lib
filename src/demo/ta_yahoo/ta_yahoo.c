@@ -12,8 +12,47 @@ typedef enum
 {
    DISPLAY_SYMBOLS,
    DISPLAY_CATEGORIES,
-   DISPLAY_HISTORIC_DATA
+   DISPLAY_HISTORIC_DATA,
+   UNKNOWN_ACTION
 } Action;
+
+typedef struct
+{
+  const char *string;
+  Action theAction;
+  TA_Period period;
+  int flags;
+} CommandLineSwitch;
+
+static const CommandLineSwitch tableSwitch[] = 
+{ {"-c", DISPLAY_CATEGORIES,    TA_DAILY,    0},
+  {"-s", DISPLAY_SYMBOLS,       TA_DAILY,    0},
+  {"-d", DISPLAY_HISTORIC_DATA, TA_DAILY,    0},
+  {"-dd",DISPLAY_HISTORIC_DATA, TA_DAILY,    0},
+  {"-dw",DISPLAY_HISTORIC_DATA, TA_WEEKLY,   0},
+  {"-dm",DISPLAY_HISTORIC_DATA, TA_MONTHLY,  0},
+  {"-dq",DISPLAY_HISTORIC_DATA, TA_QUARTERLY,0},
+  {"-dy",DISPLAY_HISTORIC_DATA, TA_YEARLY,   0},
+  {"-u", DISPLAY_HISTORIC_DATA, TA_DAILY,    TA_DO_NOT_SPLIT_ADJUST|TA_DO_NOT_VALUE_ADJUST},
+  {"-ud",DISPLAY_HISTORIC_DATA, TA_DAILY,    TA_DO_NOT_SPLIT_ADJUST|TA_DO_NOT_VALUE_ADJUST},
+  {"-uw",DISPLAY_HISTORIC_DATA, TA_WEEKLY,   TA_DO_NOT_SPLIT_ADJUST|TA_DO_NOT_VALUE_ADJUST},
+  {"-um",DISPLAY_HISTORIC_DATA, TA_MONTHLY,  TA_DO_NOT_SPLIT_ADJUST|TA_DO_NOT_VALUE_ADJUST},
+  {"-uq",DISPLAY_HISTORIC_DATA, TA_QUARTERLY,TA_DO_NOT_SPLIT_ADJUST|TA_DO_NOT_VALUE_ADJUST},
+  {"-uy",DISPLAY_HISTORIC_DATA, TA_YEARLY,   TA_DO_NOT_SPLIT_ADJUST|TA_DO_NOT_VALUE_ADJUST},
+  {"-i", DISPLAY_HISTORIC_DATA, TA_DAILY,    TA_DO_NOT_SPLIT_ADJUST},
+  {"-id",DISPLAY_HISTORIC_DATA, TA_DAILY,    TA_DO_NOT_SPLIT_ADJUST},
+  {"-iw",DISPLAY_HISTORIC_DATA, TA_WEEKLY,   TA_DO_NOT_SPLIT_ADJUST},
+  {"-im",DISPLAY_HISTORIC_DATA, TA_MONTHLY,  TA_DO_NOT_SPLIT_ADJUST},
+  {"-iq",DISPLAY_HISTORIC_DATA, TA_QUARTERLY,TA_DO_NOT_SPLIT_ADJUST},
+  {"-iy",DISPLAY_HISTORIC_DATA, TA_YEARLY,   TA_DO_NOT_SPLIT_ADJUST},
+  {"-z", DISPLAY_HISTORIC_DATA, TA_DAILY,    TA_DO_NOT_VALUE_ADJUST},
+  {"-zd",DISPLAY_HISTORIC_DATA, TA_DAILY,    TA_DO_NOT_VALUE_ADJUST},
+  {"-zw",DISPLAY_HISTORIC_DATA, TA_WEEKLY,   TA_DO_NOT_VALUE_ADJUST},
+  {"-zm",DISPLAY_HISTORIC_DATA, TA_MONTHLY,  TA_DO_NOT_VALUE_ADJUST},
+  {"-zq",DISPLAY_HISTORIC_DATA, TA_QUARTERLY,TA_DO_NOT_VALUE_ADJUST},
+  {"-zy",DISPLAY_HISTORIC_DATA, TA_YEARLY,   TA_DO_NOT_VALUE_ADJUST}
+};
+#define NB_SWITCH (sizeof(tableSwitch)/sizeof(CommandLineSwitch))
 
 void print_usage( char *str ) 
 {
@@ -23,20 +62,26 @@ void print_usage( char *str )
    printf( "Usage: ta_yahoo -c\n" );
    printf( "       ta_yahoo -s <category>\n" );
    printf( "       ta_yahoo -d{d,w,m,q,y} <category> <symbol>\n" );
+   printf( "       ta_yahoo -u{d,w,m,q,y} <category> <symbol>\n" );
+   printf( "       ta_yahoo -i{d,w,m,q,y} <category> <symbol>\n" );
+   printf( "       ta_yahoo -z{d,w,m,q,y} <category> <symbol>\n" );
    printf( "\n" );
-   printf( "  -c  Display all supported categories\n" );
-   printf( "  -s  Display all symbols for a given category\n" );
-   printf( "  -dd Fetch and display daily data\n" );
-   printf( "  -dw Fetch and display weekly data\n" );
-   printf( "  -dm Fetch and display monthly data\n" );
-   printf( "  -dq Fetch and display quarterly data\n" );
-   printf( "  -dy Fetch and display yearly data\n" );
+   printf( "  -c Display all supported categories\n" );
+   printf( "  -s Display all symbols for a given category\n" );
+   printf( "  -d Fetch split and dividend adjusted data.\n" );
+   printf( "  -u Fetch non adjusted data.\n" );
+   printf( "  -i Fetch dividend-only adjusted data.\n" );
+   printf( "  -z Fetch split-only adjusted data.\n" );
+   printf( "\n" );
+   printf( "  {d,w,m,q,y} = \"daily,weekly,monthly,quarterly,yearly\"" );
    printf( "\n" );
    printf( "  Stock output is \"Date,Open,High,Low,Close,Volume\"\n" );
    printf( "  Funds output is \"Date,Close\". Date are \"mm-dd-yyyy\"\n" );
    printf( "\n" );
-   printf( "  Examples: ta_yahoo -s US.NASDAQ.FUND\n" );
+   printf( "  Examples: ta_yahoo -s  US.NASDAQ.FUND\n" );
    printf( "            ta_yahoo -dd US.NASDAQ.STOCK MSFT\n" );
+   printf( "            ta_yahoo -ud US.NASDAQ.STOCK MSFT\n" );
+   printf( "            ta_yahoo -zw US.NASDAQ.STOCK MSFT\n" );
    printf( "\n" );
    printf( "  This utility may create files \"y_xx.dat\" to speed\n" );
    printf( "  up subsequent remote access. These are automatically\n" );
@@ -64,7 +109,8 @@ int print_data( TA_UDBase *udb,
                 const char *country,
                 const char *category,
                 const char *symbol,
-                TA_Period period )
+                TA_Period period,
+                int flags )
 {
    TA_RetCode retCode;
    TA_AddDataSourceParam addSourceParam;
@@ -75,6 +121,7 @@ int print_data( TA_UDBase *udb,
    memset( &addSourceParam, 0, sizeof( TA_AddDataSourceParam ) );
    addSourceParam.id = TA_YAHOO_WEB;
    addSourceParam.location = country;
+   addSourceParam.flags = flags;
    retCode = TA_AddDataSource( udb, &addSourceParam );
    if( retCode != TA_SUCCESS )
    {
@@ -211,6 +258,7 @@ int main( int argc, char *argv[] )
    TA_UDBase *udb;
    TA_RetCode retCode;
    TA_Period period;
+   int flags;
 
    int retValue;
    unsigned int i, stringSize;
@@ -236,38 +284,20 @@ int main( int argc, char *argv[] )
    }
 
    /* Daily data by default. */
-   period = TA_DAILY;
+   theAction = UNKNOWN_ACTION;
 
    /* Check for the switch, and identify what needs to be done. */
-   if( strcmp( "-c", argv[1] ) == 0 )
-      theAction = DISPLAY_CATEGORIES;
-   else if( strcmp( "-s", argv[1] ) == 0 )
-      theAction = DISPLAY_SYMBOLS;
-   else if( strcmp( "-d", argv[1] ) == 0 )
-      theAction = DISPLAY_HISTORIC_DATA;
-   else if( strcmp( "-dd", argv[1] ) == 0 )
-      theAction = DISPLAY_HISTORIC_DATA;
-   else if( strcmp( "-dw", argv[1] ) == 0 )
+   for( i=0; (i < NB_SWITCH) && (theAction == UNKNOWN_ACTION); i++ )
    {
-      theAction = DISPLAY_HISTORIC_DATA;
-      period = TA_WEEKLY;
+      if( strcmp(tableSwitch[i].string,argv[1]) == 0 )
+      {
+         period = tableSwitch[i].period;
+         theAction = tableSwitch[i].theAction;
+         flags = tableSwitch[i].flags;
+      }
    }
-   else if( strcmp( "-dm", argv[1] ) == 0 )
-   {
-      theAction = DISPLAY_HISTORIC_DATA;
-      period = TA_MONTHLY;
-   }
-   else if( strcmp( "-dq", argv[1] ) == 0 )
-   {
-      theAction = DISPLAY_HISTORIC_DATA;
-      period = TA_QUARTERLY;
-   }
-   else if( strcmp( "-dy", argv[1] ) == 0 )
-   {
-      theAction = DISPLAY_HISTORIC_DATA;
-      period = TA_YEARLY;
-   }
-   else
+
+   if( theAction == UNKNOWN_ACTION )
    {
       print_usage( "Switch not recognized" );
       return -1;
@@ -352,7 +382,7 @@ int main( int argc, char *argv[] )
           symbol[i] = toupper(argv[3][i]);
        symbol[stringSize] = '\0';
 
-       retValue = print_data(udb,country,category,symbol,period);
+       retValue = print_data(udb,country,category,symbol,period,flags);
        break;
 
    case DISPLAY_SYMBOLS:
