@@ -401,9 +401,27 @@ typedef struct
  *       (3) Requesting historical yearly data will not return the starting
  *           year if the first week day of the year is not available AND 
  *           no data is found for the previous year in the database.
+ *
+ * TA_USE_TOTAL_VOLUME
+ * ===================
+ *    This option makes TA-Lib to sum the daily volume when doing price bar
+ *    consolidation e.g. when converting daily data to period equal or greater 
+ *    to weekly.Without this flag, the default behavior is to return the daily 
+ *    average volume.
+ *    
+ *
+ * TA_USE_TOTAL_OPENINTEREST
+ * =========================
+ *    This option makes TA-Lib to sum the daily open interest when doing price 
+ *    bar consolidation e.g. when converting daily data to period equal or  
+ *    greater to weekly.Without this flag, the default behavior is to return 
+ *    the daily average open interest.
+ *
  */
 typedef int TA_HistoryFlag;
 #define TA_ALLOW_INCOMPLETE_PRICE_BARS (1<<0)
+#define TA_USE_TOTAL_VOLUME            (1<<1)
+#define TA_USE_TOTAL_OPENINTEREST      (1<<2)
 
 typedef struct
 {
