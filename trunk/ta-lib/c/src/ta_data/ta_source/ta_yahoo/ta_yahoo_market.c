@@ -99,8 +99,7 @@ static TA_RetCode internalMarketPageAlloc( const TA_DecodingParam *decodingParam
 
 static TA_RetCode internalMarketPageFree( TA_YahooMarketPage *marketPage );
 
-static TA_RetCode parseMarketPage( const TA_DecodingParam *decodingParam,
-                                   TA_StreamAccess *streamAccess,
+static TA_RetCode parseMarketPage( TA_StreamAccess *streamAccess,
                                    TA_YahooMarketPage *marketPage );
 
 /**** Local variables definitions.     ****/
@@ -563,9 +562,7 @@ static TA_RetCode internalMarketPageAlloc( const TA_DecodingParam *decodingParam
     
    /* Extract the data by parsing the Web Page. */
    streamAccess = TA_StreamAccessAlloc( webPage->content );
-   retCode = parseMarketPage( decodingParam,
-                              streamAccess,
-                              marketPage );
+   retCode = parseMarketPage( streamAccess, marketPage );
 
    if( retCode != TA_SUCCESS )
    {
@@ -617,8 +614,7 @@ static TA_RetCode internalMarketPageFree( TA_YahooMarketPage *marketPage )
    return TA_SUCCESS;
 }
 
-static TA_RetCode parseMarketPage( const TA_DecodingParam *decodingParam,
-                                   TA_StreamAccess *streamAccess,
+static TA_RetCode parseMarketPage( TA_StreamAccess *streamAccess,
                                    TA_YahooMarketPage *marketPage )
 {
    TA_RetCode retCode;

@@ -268,6 +268,10 @@
                              optInTimePeriod_0, 0.7,
                              outBegIdx, outNbElement, outReal_0 );
       break;
+
+   default:
+      retCode = TA_BAD_PARAM;
+      break;
    }
 
    return retCode;
@@ -367,6 +371,9 @@
 /* Generated */       retCode = TA_PREFIX(T3)( startIdx, endIdx, inReal_0,
 /* Generated */                              optInTimePeriod_0, 0.7,
 /* Generated */                              outBegIdx, outNbElement, outReal_0 );
+/* Generated */       break;
+/* Generated */    default:
+/* Generated */       retCode = TA_BAD_PARAM;
 /* Generated */       break;
 /* Generated */    }
 /* Generated */    return retCode;
