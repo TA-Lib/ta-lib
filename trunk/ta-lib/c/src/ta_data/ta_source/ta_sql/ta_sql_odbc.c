@@ -387,7 +387,7 @@ TA_RetCode TA_SQL_ODBC_GetColumnName(void *query_result, int column, const char 
 
 
 
-TA_RetCode TA_SQL_ODBC_GetRowString(void *query_result, int row, int column, char **value)
+TA_RetCode TA_SQL_ODBC_GetRowString(void *query_result, int row, int column, const char **value)
 {
    TA_PROLOG
    TA_SQL_ODBC_Statement *privStatement;
