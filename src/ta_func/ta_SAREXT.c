@@ -668,7 +668,7 @@
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( optInStartValue_0 == TA_REAL_DEFAULT )
 /* Generated */        optInStartValue_0 = 0.000000e+0;
-/* Generated */     else if( (optInStartValue_0 < 0.000000e+0) ||  (optInStartValue_0 > 3.000000e+37) )
+/* Generated */     else if( (optInStartValue_0 < -3.000000e+37) ||  (optInStartValue_0 > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     if( optInOffsetOnReverse_1 == TA_REAL_DEFAULT )
 /* Generated */        optInOffsetOnReverse_1 = 0.000000e+0;
@@ -796,7 +796,7 @@
 /* Generated */                sar = newHigh;
 /* Generated */             if( optInOffsetOnReverse_1 )
 /* Generated */                sar += sar * optInOffsetOnReverse_1; 
-/* Generated */             outReal_0[outIdx++] = sar;
+/* Generated */             outReal_0[outIdx++] = -sar;
 /* Generated */             afShort = optInAccelerationInitShort_5;
 /* Generated */             ep = newLow;
 /* Generated */             sar = sar + afShort * (ep - sar);
