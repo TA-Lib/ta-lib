@@ -83,7 +83,7 @@
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   return 0;
+   return optInTimePeriod_0-1;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
