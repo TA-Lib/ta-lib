@@ -19,8 +19,8 @@ extern "C" {
    #include "ta_source.h"
 #endif
 
-#ifndef TA_FILEINDEX_H
-   #include "ta_fileindex.h"
+#ifndef TA_LIST_H
+   #include "ta_list.h"
 #endif
 
 #ifndef TA_DATA_UDB_H
@@ -32,18 +32,30 @@ extern "C" {
 /* disable some C++ warnings in MySQL++ for Microsoft compiler */
 #pragma warning( disable: 4800 4355 )
 #endif
-
 #include <mysql++.h>
+
+typedef struct
+{
+   /* the name of the category */
+   TA_String *category;
+
+   /* List of symbols in this category.
+    * Elements on this list are of TA_String type.
+    */
+   TA_List *theSymbols;
+
+} TA_MySQLCategoryNode;
 
 typedef struct
 {  
    /* Keep a ptr on the user TA_AddDataSource parameters. */
    const TA_AddDataSourceParamPriv *param;
 
-   /* The TA_FileIndex represent all the categories and symbols
+   /* theSymbolsIndex represent all the categories and symbols
     * extracted from the provided data source parameters.
+    * Elements on this list are of TA_MySQLCategoryNode type.
     */
-   TA_FileIndex *theFileIndex;
+   TA_List *theCategoryIndex;
 
    /* Contains MySQL Connection object */
    Connection *con;
@@ -59,7 +71,7 @@ TA_DataSourceHandle *TA_MYSQL_DataSourceHandleAlloc( const TA_AddDataSourceParam
 
 TA_RetCode TA_MYSQL_DataSourceHandleFree( TA_DataSourceHandle *handle );
 
-/* Build (or re-build) the TA_FileIndex for this handle. */
-TA_RetCode TA_MYSQL_BuildFileIndex( TA_DataSourceHandle *handle );
+/* Build (or re-build) the categories and symbols index for this handle. */
+TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle );
 
 #endif
