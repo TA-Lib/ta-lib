@@ -86,6 +86,7 @@
 85,TA_NO_WEEKDAY_IN_DATE_RANGE,No Info
 86,TA_VALUE_NOT_APPLICABLE,This PM value is not applicable to these trades.
 87,TA_DATA_GAP,Data source returned data with gaps
+88,TA_NOT_IMPLEMENTED,Feature not implemented
 700,TA_IP_NOSOCKETS,Sockets not supported
 701,TA_IP_BADHOST,Host not known
 702,TA_IP_BADSERVICE,Service or port not known
