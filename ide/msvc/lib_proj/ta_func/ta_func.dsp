@@ -190,6 +190,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_DEMA.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_DX.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_EMA.c
 # End Source File
 # Begin Source File
@@ -218,11 +222,27 @@ SOURCE=..\..\..\..\src\ta_func\ta_MIN.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_MINUS_DI.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MINUS_DM.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_MOM.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_OBV.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_PLUS_DI.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_PLUS_DM.c
 # End Source File
 # Begin Source File
 

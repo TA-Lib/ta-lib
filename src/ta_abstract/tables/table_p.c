@@ -22,6 +22,62 @@
  *
  ****************************************************************************/
 
+/* PLUS_DI BEGIN */
+static const TA_InputParameterInfo    *TA_PLUS_DI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_PLUS_DI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_PLUS_DI_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( PLUS_DI,                     /* name */
+              TA_GroupId_TrendIndicators,   /* groupId */
+              "Plus Directional Indicator", /* hint */
+              NULL,                         /* helpFile */
+              TA_FUNC_FLG_UNST_PER,         /* flags */
+              NULL                          /* analysis function */
+             );
+
+/* PLUS_DI END */
+
+/* PLUS_DM BEGIN */
+static const TA_InputParameterInfo    *TA_PLUS_DM_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_PLUS_DM_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_PLUS_DM_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( PLUS_DM,                     /* name */
+              TA_GroupId_TrendIndicators,   /* groupId */
+              "Plus Directional Movement", /* hint */
+              NULL,                         /* helpFile */
+              TA_FUNC_FLG_UNST_PER,         /* flags */
+              NULL                          /* analysis function */
+             );
+
+/* PLUS_DM END */
+
 /* PPO BEGIN */
 static const TA_InputParameterInfo *TA_PPO_Inputs[] =
 {
@@ -59,6 +115,8 @@ DEF_FUNCTION( PPO,                        /* name */
 const TA_FuncDef *TA_DEF_TableP[] =
 {
    ADD_TO_TABLE(PPO),
+   ADD_TO_TABLE(PLUS_DI),
+   ADD_TO_TABLE(PLUS_DM),
    NULL
 };
 

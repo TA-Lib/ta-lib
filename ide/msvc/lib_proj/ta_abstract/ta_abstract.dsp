@@ -198,6 +198,10 @@ SOURCE=..\..\..\..\src\ta_abstract\frames\ta_DEMA_frame.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_DX_frame.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_abstract\frames\ta_EMA_frame.c
 # End Source File
 # Begin Source File
@@ -230,11 +234,27 @@ SOURCE=..\..\..\..\src\ta_abstract\frames\ta_MIN_frame.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_MINUS_DI_frame.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_MINUS_DM_frame.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_abstract\frames\ta_MOM_frame.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_abstract\frames\ta_OBV_frame.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_PLUS_DI_frame.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_PLUS_DM_frame.c
 # End Source File
 # Begin Source File
 

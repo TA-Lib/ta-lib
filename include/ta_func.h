@@ -450,6 +450,42 @@ int TA_APO_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MA
                      TA_Integer    optInCompatibility_3 ); 
 
 /*
+ * TA_DX - Directional Movement Index
+ * 
+ * Input  = High, Low, Close
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * optInCompatibility_1:
+ *    Make function compatible to some software
+ * 
+ * 
+ */
+
+/* TA_DX: Optional Parameter optInCompatibility_1 */
+#define TA_DX_CLASSIC 0
+#define TA_DX_METASTOCK 1
+
+TA_RetCode TA_DX( TA_Libc      *libHandle,
+                  TA_Integer    startIdx,
+                  TA_Integer    endIdx,
+                  const TA_Real inHigh_0[],
+                  const TA_Real inLow_0[],
+                  const TA_Real inClose_0[],
+                  TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                  TA_Integer    optInCompatibility_1,
+                  TA_Integer   *outBegIdx,
+                  TA_Integer   *outNbElement,
+                  TA_Real       outReal_0[] );
+
+int TA_DX_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                    TA_Integer    optInCompatibility_1 ); 
+
+/*
  * TA_MACD - Moving Average Convergence/Divergence
  * 
  * Input  = TA_Real
@@ -532,6 +568,58 @@ int TA_MACDFIX_Lookback( TA_Integer    optInSignalPeriod_0, /* From 1 to TA_INTE
                          TA_Integer    optInCompatibility_1 ); 
 
 /*
+ * TA_MINUS_DI - Minus Directional Indicator
+ * 
+ * Input  = High, Low
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_MINUS_DI( TA_Libc      *libHandle,
+                        TA_Integer    startIdx,
+                        TA_Integer    endIdx,
+                        const TA_Real inHigh_0[],
+                        const TA_Real inLow_0[],
+                        TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                        TA_Integer   *outBegIdx,
+                        TA_Integer   *outNbElement,
+                        TA_Real       outReal_0[] );
+
+int TA_MINUS_DI_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
+
+/*
+ * TA_MINUS_DM - Minus Directional Movement
+ * 
+ * Input  = High, Low
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_MINUS_DM( TA_Libc      *libHandle,
+                        TA_Integer    startIdx,
+                        TA_Integer    endIdx,
+                        const TA_Real inHigh_0[],
+                        const TA_Real inLow_0[],
+                        TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                        TA_Integer   *outBegIdx,
+                        TA_Integer   *outNbElement,
+                        TA_Real       outReal_0[] );
+
+int TA_MINUS_DM_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
+
+/*
  * TA_PPO - Percentage Price Oscillator
  * 
  * Input  = TA_Real
@@ -582,6 +670,58 @@ int TA_PPO_Lookback( TA_Integer    optInFastPeriod_0, /* From 1 to TA_INTEGER_MA
                      TA_Integer    optInSlowPeriod_1, /* From 1 to TA_INTEGER_MAX */
                      TA_Integer    optInMethod_2,
                      TA_Integer    optInCompatibility_3 ); 
+
+/*
+ * TA_PLUS_DI - Plus Directional Indicator
+ * 
+ * Input  = High, Low
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_PLUS_DI( TA_Libc      *libHandle,
+                       TA_Integer    startIdx,
+                       TA_Integer    endIdx,
+                       const TA_Real inHigh_0[],
+                       const TA_Real inLow_0[],
+                       TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                       TA_Integer   *outBegIdx,
+                       TA_Integer   *outNbElement,
+                       TA_Real       outReal_0[] );
+
+int TA_PLUS_DI_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
+
+/*
+ * TA_PLUS_DM - Plus Directional Movement
+ * 
+ * Input  = High, Low
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_PLUS_DM( TA_Libc      *libHandle,
+                       TA_Integer    startIdx,
+                       TA_Integer    endIdx,
+                       const TA_Real inHigh_0[],
+                       const TA_Real inLow_0[],
+                       TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                       TA_Integer   *outBegIdx,
+                       TA_Integer   *outNbElement,
+                       TA_Real       outReal_0[] );
+
+int TA_PLUS_DM_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+
 
 
 /******************************************
@@ -1028,8 +1168,12 @@ int TA_WCLPRICE_Lookback( void );
  */
 typedef enum {
     /* 001 */  TA_FUNC_UNST_EMA,
-    /* 002 */  TA_FUNC_UNST_RSI,
-    /* 003 */  TA_FUNC_UNST_ATR,
+    /* 002 */  TA_FUNC_UNST_MINUS_DI,
+    /* 003 */  TA_FUNC_UNST_MINUS_DM,
+    /* 004 */  TA_FUNC_UNST_PLUS_DI,
+    /* 005 */  TA_FUNC_UNST_PLUS_DM,
+    /* 006 */  TA_FUNC_UNST_RSI,
+    /* 007 */  TA_FUNC_UNST_ATR,
                TA_FUNC_UNST_ALL,
                TA_FUNC_UNST_NONE=-1 } TA_FuncUnstId;
 

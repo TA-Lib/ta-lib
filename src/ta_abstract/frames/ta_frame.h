@@ -117,6 +117,15 @@ TA_RetCode TA_APO_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
+TA_RetCode TA_DX_FramePP( TA_Libc            *libHandle,
+                          TA_Integer          startIdx,
+                          TA_Integer          endIdx,
+                          TA_Integer         *outBegIdx,
+                          TA_Integer         *outNbElement,
+                          TA_ParamHolderPriv  in[],
+                          TA_ParamHolderPriv  optIn[],
+                          TA_ParamHolderPriv  out[] );
+
 TA_RetCode TA_MACD_FramePP( TA_Libc            *libHandle,
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
@@ -135,7 +144,43 @@ TA_RetCode TA_MACDFIX_FramePP( TA_Libc            *libHandle,
                           TA_ParamHolderPriv  optIn[],
                           TA_ParamHolderPriv  out[] );
 
+TA_RetCode TA_MINUS_DI_FramePP( TA_Libc            *libHandle,
+                          TA_Integer          startIdx,
+                          TA_Integer          endIdx,
+                          TA_Integer         *outBegIdx,
+                          TA_Integer         *outNbElement,
+                          TA_ParamHolderPriv  in[],
+                          TA_ParamHolderPriv  optIn[],
+                          TA_ParamHolderPriv  out[] );
+
+TA_RetCode TA_MINUS_DM_FramePP( TA_Libc            *libHandle,
+                          TA_Integer          startIdx,
+                          TA_Integer          endIdx,
+                          TA_Integer         *outBegIdx,
+                          TA_Integer         *outNbElement,
+                          TA_ParamHolderPriv  in[],
+                          TA_ParamHolderPriv  optIn[],
+                          TA_ParamHolderPriv  out[] );
+
 TA_RetCode TA_PPO_FramePP( TA_Libc            *libHandle,
+                          TA_Integer          startIdx,
+                          TA_Integer          endIdx,
+                          TA_Integer         *outBegIdx,
+                          TA_Integer         *outNbElement,
+                          TA_ParamHolderPriv  in[],
+                          TA_ParamHolderPriv  optIn[],
+                          TA_ParamHolderPriv  out[] );
+
+TA_RetCode TA_PLUS_DI_FramePP( TA_Libc            *libHandle,
+                          TA_Integer          startIdx,
+                          TA_Integer          endIdx,
+                          TA_Integer         *outBegIdx,
+                          TA_Integer         *outNbElement,
+                          TA_ParamHolderPriv  in[],
+                          TA_ParamHolderPriv  optIn[],
+                          TA_ParamHolderPriv  out[] );
+
+TA_RetCode TA_PLUS_DM_FramePP( TA_Libc            *libHandle,
                           TA_Integer          startIdx,
                           TA_Integer          endIdx,
                           TA_Integer         *outBegIdx,
