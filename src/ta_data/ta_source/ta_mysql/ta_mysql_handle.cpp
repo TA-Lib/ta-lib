@@ -75,16 +75,7 @@ extern "C" {
 /* None */
 
 /**** Local declarations.              ****/
-#define TA_MYSQL_CATEGORY_COLUMN_NAME         "category"
-#define TA_MYSQL_SYMBOL_COLUMN_NAME           "symbol"
-
-#define TA_MYSQL_CATEGORY_PLACEHOLDER         "$c"
-#define TA_MYSQL_SYMBOL_PLACEHOLDER           "$s"
-/* placeholders not supported yet
-#define TA_MYSQL_COUNTRY_PLACEHOLDER          "$z"
-#define TA_MYSQL_EXCHANGE_PLACEHOLDER         "$x"
-#define TA_MYSQL_TYPE_PLACEHOLDER             "$t"
-*/
+/* None */
 
 /**** Local functions.    ****/
 static TA_PrivateMySQLHandle *allocPrivateHandle( void );
@@ -93,7 +84,6 @@ static TA_RetCode freeCategoryIndex( void *toBeFreed );
 static TA_RetCode freeSymbolsIndex( void *toBeFreed );
 static TA_RetCode registerCategoryAndSymbol( TA_List *categoryIndex, TA_String *category, TA_String *symbol );
 static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateMySQLHandle *privateHandle, TA_String *category);
-static char * expandPlaceholders( const char *templateStr, const char *holderStr, const char *valueStr );
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
@@ -292,6 +282,59 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    }
    
    TA_TRACE_RETURN( retCode );
+}
+
+
+/* Copy templateStr to resultStr replacing holderStr by valueStr
+ * Return value of expandPlaceholders is a string allocated by TA_Malloc.
+ * It is the caller's responsibility to TA_Free it.
+ */
+char * TA_MYSQL_ExpandPlaceholders(const char *templateStr, 
+                                 const char *holderStr, 
+                                 const char *valueStr)
+{
+   size_t holderLength = strlen(holderStr);
+   size_t valueLength = strlen(valueStr);
+   size_t resSize;
+   const char *pos, *backpos;
+   char *resultStr;
+   
+   if ( !templateStr )
+      return NULL;
+
+   /* count all occurencies of placeholders, calculate the size of the result string */
+
+   resSize = strlen(templateStr) + 1;
+   for ( pos = strstr(templateStr, holderStr); 
+         pos;  
+         pos = strstr(pos+holderLength, holderStr) )
+   {
+      resSize -= holderLength;
+      resSize += valueLength;
+   }
+   
+   resultStr = (char*)TA_Malloc(resSize);
+   
+   if( resultStr )
+   {
+      /* do the replacement */
+      resultStr[0] = '\0';
+
+      for ( backpos = templateStr, pos = strstr(templateStr, holderStr); 
+            pos;  
+            backpos = pos+holderLength, pos = strstr(backpos, holderStr) )
+      {
+         /* copy the constant segment of the template */
+         strncat(resultStr, backpos, pos-backpos);
+         /* replace one placeholder */
+         strcat(resultStr, valueStr);
+      }
+      
+      /* remaining segment */
+      strcat(resultStr, backpos);
+   }
+
+   return resultStr;
 }
 
 
@@ -495,19 +538,20 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateMySQLHandle *privateH
       }
 
       // Now the MySQL query
+      char *sym_query = NULL;
       try {
          Query query = privateHandle->con->query();
          // This creates a query object that is bound to con.
 
-         char *sym_query = expandPlaceholders(TA_StringToChar(privateHandle->param->symbol),
-                                              TA_MYSQL_CATEGORY_PLACEHOLDER,
-                                              TA_StringToChar(category));
+         sym_query = TA_MYSQL_ExpandPlaceholders(TA_StringToChar(privateHandle->param->symbol),
+                                                 TA_MYSQL_CATEGORY_PLACEHOLDER,
+                                                 TA_StringToChar(category));
          if( !sym_query )
          {
             TA_TRACE_RETURN( TA_ALLOC_ERR );
          }
 
-         query << sym_query;;
+         query << sym_query;
          // You can write to the query object like you would any other ostrem
 
          Result res = query.store();
@@ -554,7 +598,9 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateMySQLHandle *privateH
       {                    
          // handle any connection or query errors that may come up
          retCode = TA_BAD_PARAM;  // I would prefer: TA_BAD_SQL_QUERY...
-      } 
+      }
+      if ( sym_query )
+         TA_Free(sym_query);
    }
    else if ( privateHandle->param->symbol
              && *TA_StringToChar(privateHandle->param->symbol) != '\0' )
@@ -577,51 +623,3 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateMySQLHandle *privateH
 }
 
 
-/* Copy templateStr to resultStr replacing holderStr by valueStr
- * Return value of expandPlaceholders is a string allocated by TA_Malloc.
- * It is the caller's responsibility to TA_Free it.
- */
-static char * expandPlaceholders(const char *templateStr, 
-                                 const char *holderStr, 
-                                 const char *valueStr)
-{
-   size_t holderLength = strlen(holderStr);
-   size_t valueLength = strlen(valueStr);
-   size_t resSize;
-   const char *pos, *backpos;
-   char *resultStr;
-   
-   /* count all occurencies of placeholders, calculate the size of the result string */
-
-   resSize = strlen(templateStr) + 1;
-   for ( pos = strstr(templateStr, holderStr); 
-         pos;  
-         pos = strstr(pos+holderLength, holderStr) )
-   {
-      resSize -= holderLength;
-      resSize += valueLength;
-   }
-   
-   resultStr = (char*)TA_Malloc(resSize);
-   
-   if( resultStr )
-   {
-      /* do the replacement */
-      resultStr[0] = '\0';
-
-      for ( backpos = templateStr, pos = strstr(templateStr, holderStr); 
-            pos;  
-            backpos = pos+holderLength, pos = strstr(backpos, holderStr) )
-      {
-         /* copy the constant segment of the template */
-         strncat(resultStr, backpos, pos-backpos);
-         /* replace one placeholder */
-         strcat(resultStr, valueStr);
-      }
-      
-      /* remaining segment */
-      strcat(resultStr, backpos);
-   }
-
-   return resultStr;
-}

@@ -1,4 +1,4 @@
-===============================================================================
+﻿===============================================================================
 MySQL Source Driver for TA-Lib
 Copyright 2003 (C) Paweł A. Konieczny
 ===============================================================================
@@ -84,6 +84,21 @@ TA_AddDataSourceParam.info:         $c $z $x $t $s expanded
 
 Example:
 TA_AddDataSourceParam.exchange = "SELECT exchange FROM exchange_data WHERE country = '$z'";
+
+Timestamp placeholders:
+To optimize the execution of the data query, the TA_AddDataSourceParam.info 
+parameter is subject of expansion of the following placeholders:
+$<      expanded with the begin date
+$>      expanded with the end date
+(mnemonic: think of $< and $> as opening and closing angle brackets defining
+a timespan).
+
+Example:
+TA_AddDataSourceParam.info = "SELECT * FROM stock_data WHERE '$<' <= date AND '$'> >= date ORDER BY date"
+TA_AddDataSourceParam.info = "SELECT * FROM stock_data WHERE date BETWEEN '$<' AND '$>' ORDER BY date"
+
+Note that the order of the data is important! TA-Lib cannot process unordered 
+historical data.
 
 ========================================================================
 To Do:

@@ -34,6 +34,30 @@ extern "C" {
 #endif
 #include <mysql++.h>
 
+
+#define TA_MYSQL_CATEGORY_COLUMN_NAME         "category"
+#define TA_MYSQL_SYMBOL_COLUMN_NAME           "symbol"
+#define TA_MYSQL_DATE_COLUMN_NAME             "date"
+#define TA_MYSQL_TIME_COLUMN_NAME             "time"
+#define TA_MYSQL_OPEN_COLUMN_NAME             "open"
+#define TA_MYSQL_HIGH_COLUMN_NAME             "high"
+#define TA_MYSQL_LOW_COLUMN_NAME              "low"
+#define TA_MYSQL_CLOSE_COLUMN_NAME            "close"
+#define TA_MYSQL_VOLUME_COLUMN_NAME           "volume"
+#define TA_MYSQL_OI_COLUMN_NAME               "oi"
+
+#define TA_MYSQL_CATEGORY_PLACEHOLDER         "$c"
+#define TA_MYSQL_SYMBOL_PLACEHOLDER           "$s"
+#define TA_MYSQL_START_DATE_PLACEHOLDER       "$<"
+#define TA_MYSQL_END_DATE_PLACEHOLDER         "$>"
+
+/* placeholders not supported yet
+#define TA_MYSQL_COUNTRY_PLACEHOLDER          "$z"
+#define TA_MYSQL_EXCHANGE_PLACEHOLDER         "$x"
+#define TA_MYSQL_TYPE_PLACEHOLDER             "$t"
+*/
+
+
 typedef struct
 {
    /* the name of the category */
@@ -76,5 +100,8 @@ TA_RetCode TA_MYSQL_DataSourceHandleFree( TA_DataSourceHandle *handle );
 
 /* Build (or re-build) the categories and symbols index for this handle. */
 TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle );
+
+/* Copy templateStr to resultStr replacing holderStr by valueStr */
+char * TA_MYSQL_ExpandPlaceholders( const char *templateStr, const char *holderStr, const char *valueStr );
 
 #endif
