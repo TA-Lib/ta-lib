@@ -157,7 +157,7 @@ typedef struct
 #else
    /* This definition is used only when compiling for gencode.
     * Because some pointers may not be defined before gencode
-    * is runned, some value are set to NULL.
+    * is run at least once, some value are set to NULL.
     */
    #define DEF_FUNCTION( name, \
                          groupId, \
