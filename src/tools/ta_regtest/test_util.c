@@ -477,8 +477,7 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
 }
 
 
-ErrorNumber doRangeTest( 
-                         RangeTestFunction testFunction,
+ErrorNumber doRangeTest( RangeTestFunction testFunction,
                          TA_FuncUnstId unstId,
                          void *opaqueData,
                          unsigned int nbOutput,
@@ -490,8 +489,7 @@ ErrorNumber doRangeTest(
    /* Test all the outputs individually. */
    for( outputNb=0; outputNb < nbOutput; outputNb++ )
    {
-      errNb = doRangeTestForOneOutput(
-                                       testFunction,
+      errNb = doRangeTestForOneOutput( testFunction,
                                        unstId,
                                        opaqueData,
                                        outputNb,
@@ -595,8 +593,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
        */
       if( unstId == TA_FUNC_UNST_NONE )
       {
-         errNb = doRangeTestFixSize(
-                                     testFunction, opaqueData,
+         errNb = doRangeTestFixSize( testFunction, opaqueData,
                                      refOutBeg, refOutNbElement, refLookback,
                                      refBuffer,
                                      unstId, fixSize, outputNb, integerTolerance );
@@ -612,8 +609,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
          {
             TA_SetUnstablePeriod( unstId, unstablePeriod );
 
-            errNb = doRangeTestFixSize(
-                                        testFunction, opaqueData,
+            errNb = doRangeTestFixSize( testFunction, opaqueData,
                                         refOutBeg, refOutNbElement, refLookback,
                                         refBuffer,
                                         unstId, fixSize, outputNb, integerTolerance );
@@ -656,7 +652,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
       }
    }
 
-   TA_Free(  refBuffer );
+   TA_Free( refBuffer );
 
    return TA_TEST_PASS;
 }
@@ -710,7 +706,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
            * is "out-of-range" the function shall still return
            * TA_SUCCESS with the outNbElement equal to zero.
            */
-         printf( "Fail: doRangeTestFixSize return error code=(%d) (%d,%d)\n", retCode, fixSize, startIdx );
+         printf( "Fail: doRangeTestFixSize testFunction return error=(%d) (%d,%d)\n", retCode, fixSize, startIdx );
          TA_Free(  outputBuffer );
          return TA_TESTUTIL_DRT_RETCODE_ERR;
       }
@@ -862,7 +858,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
                                       unsigned int integerTolerance )
 {
    TA_Real difference, tolerance, temp;
-   unsigned int val1_int, val2_int, tempInt;
+   unsigned int val1_int, val2_int, tempInt, periodToIgnore;
 
    /* If the function does not have an unstable period,
     * the compared value shall be identical.
@@ -873,7 +869,6 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
     */
    if( unstId == TA_FUNC_UNST_NONE )
       return TA_REAL_EQ( val1, val2, 0.000000001 );
-
 
    /* In the context of the TA functions, all value
     * below 0.000001 are considered equal to zero and
@@ -897,9 +892,9 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
     * difference).
     *
     * When dealing with an unstable period, the
-    * first 40 values are ignored.
+    * first 100 values are ignored.
     *
-    * Following 40, the tolerance is 
+    * Following 100, the tolerance is 
     * progressively reduced as follow:
     *
     *   1   == 0.5/1   == 50  %
@@ -908,19 +903,147 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
     *   100 == 0.5/100 == 0.005 %
     *   ...
     *
-    * This means that the unstable TA functions
-    * are all being verified to be within a 0.005 %
-    * tolerance when using an unstable period of
-    * at least 100.
+    * Overall, the following is a fair estimation:
+    *  When using a unstable period of 200, you
+    *  can expect the output to not vary more
+    *  than 0.005 %
     *
-    * (the logic is sligthly different if the 
-    *  output are rounded integer, but it is
-    *  the same idea).
+    * The logic is sligthly different if the 
+    * output are rounded integer, but it is
+    * the same idea.
+    *
+    * The following describe the special meaning of
+    * the integerTolerance:
+    *
+    * Value 10   -> A tolerance of 1/10  is used.
+    *
+    * Value 100  -> A tolerance of 1/100 is used.
+    *
+    * Value 1000 -> A tolerance of 1/1000 is used.
+    * 
+    * Value 360  -> Useful when the output are
+    *               degrees. In that case, a fix
+    *               tolerance of 1 degree is used.
     */
 
-   #define PERIOD_TO_IGNORE 40
+   /* Some functions requires a longuer unstable period.
+    * These are trap here.
+    */
+   switch( unstId )
+   {
+   case TA_FUNC_UNST_T3:
+      periodToIgnore = 200;
+      break;
+   default:
+      periodToIgnore = 100;
+      break;
+   }
 
-   if( integerTolerance )
+   if( integerTolerance == 1000 )
+   {
+      /* Check for no difference of more
+       * than 1/1000
+       */
+      if( val1 > val2 )
+         difference = (val1-val2);
+      else
+         difference = (val2-val1);
+
+      difference *= 1000.0;
+
+      temp = outputPosition+TA_GetUnstablePeriod(unstId)+1;
+      if( temp <= periodToIgnore )
+      {
+         /* Pretend it is fine. */
+         return 1;
+      }
+      else if( (int)difference > 1 )
+      {
+         printf( "\nFail: Value diffferent by more than 1/1000 (%f)\n", difference );
+         return 0;
+      }
+   }
+   else if( integerTolerance == 100 )
+   {
+      /* Check for no difference of more
+       * than 1/1000
+       */
+      if( val1 > val2 )
+         difference = (val1-val2);
+      else
+         difference = (val2-val1);
+
+      difference *= 100.0;
+
+      temp = outputPosition+TA_GetUnstablePeriod(unstId)+1;
+      if( temp <= periodToIgnore )
+      {
+         /* Pretend it is fine. */
+         return 1;
+      }
+      else if( (int)difference > 1 )
+      {
+         printf( "\nFail: Value diffferent by more than 1/100 (%f)\n", difference );
+         return 0;
+      }
+   }
+   else if( integerTolerance == 10 )
+   {
+      /* Check for no difference of more
+       * than 1/1000
+       */
+      if( val1 > val2 )
+         difference = (val1-val2);
+      else
+         difference = (val2-val1);
+
+      difference *= 10.0;
+
+      temp = outputPosition+TA_GetUnstablePeriod(unstId)+1;
+      if( temp <= periodToIgnore )
+      {
+         /* Pretend it is fine. */
+         return 1;
+      }
+      else if( (int)difference > 1 )
+      {
+         printf( "\nFail: Value diffferent by more than 1/10 (%f)\n", difference );
+         return 0;
+      }
+   }
+   else if( integerTolerance == 360 )
+   {
+      /* Check for no difference of no more
+       * than 10% when the value is higher than
+       * 1 degree.
+       *
+       * Difference of less than 1 degree are not significant.
+       */
+      val1_int = (unsigned int)val1;
+      val2_int = (unsigned int)val2;
+      if( val1_int > val2_int )
+         tempInt = val1_int - val2_int;
+      else
+         tempInt = val2_int - val1_int;
+
+      if( val1 > val2 )
+         difference = (val1-val2)/val1;
+      else
+         difference = (val2-val1)/val2;
+
+      temp = outputPosition+TA_GetUnstablePeriod(unstId)+1;
+      if( temp <= periodToIgnore )
+      {
+         /* Pretend it is fine. */
+         return 1;
+      }
+      else if( (tempInt > 1) && (difference > 0.10) )
+      {
+         printf( "\nFail: Value diffferent by more than 10 percent over 1 degree (%d)\n", tempInt );
+         return 0;
+      }       
+   }
+   else if( integerTolerance )
    {
       /* Check that the integer part of the value
        * is not different more than the specified
@@ -934,7 +1057,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
          tempInt = val2_int - val1_int;
 
       temp = outputPosition+TA_GetUnstablePeriod(unstId)+1;
-      if( temp <= PERIOD_TO_IGNORE )
+      if( temp <= periodToIgnore )
       {
          /* Pretend it is fine. */
          return 1;
@@ -977,14 +1100,14 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
          difference = (val2-val1)/val2;
      
       temp = outputPosition+TA_GetUnstablePeriod(unstId)+1;
-      if( temp <= PERIOD_TO_IGNORE )
+      if( temp <= periodToIgnore )
       {
          /* Pretend it is fine. */
          return 1;
       }
       else
       {
-         temp -= PERIOD_TO_IGNORE;
+         temp -= periodToIgnore;
          tolerance = 0.5/temp;
       }
  
