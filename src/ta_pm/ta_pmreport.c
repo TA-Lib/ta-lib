@@ -281,22 +281,23 @@ TA_RetCode TA_PMReportAlloc( TA_PM *pm, TA_PMReport **newAllocatedReport )
    return TA_SUCCESS;
 }
 
-TA_RetCode TA_PMReportFree ( TA_PMReport *reportToBeFreed )
+TA_RetCode TA_PMReportFree ( TA_PMReport *toBeFreed )
 {
    TA_PMReportPriv  *reportPriv;
 
-   if( reportToBeFreed )
+   if( toBeFreed )
    {
-      reportPriv = (TA_PMReportPriv  *)reportToBeFreed->hiddenData;
+      reportPriv = (TA_PMReportPriv *)toBeFreed->hiddenData;
       if( reportPriv )
       {
          if( reportPriv->magicNb != TA_PMREPORT_MAGIC_NB )
             return TA_BAD_OBJECT;
+         reportPriv->magicNb = 0;
 
-         if( reportToBeFreed->buffer )
-            TA_Free(  (void *)reportToBeFreed->buffer );
+         if( toBeFreed->buffer )
+            TA_Free( (void *)toBeFreed->buffer );
 
-         TA_Free(  reportToBeFreed );
+         TA_Free( toBeFreed );
       }
    }
 

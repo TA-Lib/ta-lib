@@ -152,7 +152,7 @@ TA_RetCode TA_TradeLogFree( TA_TradeLog *toBeFreed )
    {
       /* Make sure this is a valid object. */
       tradeLogPriv = (TA_TradeLogPriv *)toBeFreed->hiddenData;
-      if( tradeLogPriv->magicNb != TA_TRADELOGPRIV_MAGIC_NB )
+      if( !tradeLogPriv || (tradeLogPriv->magicNb != TA_TRADELOGPRIV_MAGIC_NB) )
          return TA_BAD_OBJECT;
 
       /* If it currently belong to a TA_PM, prevent the de-allocation. */       
@@ -219,7 +219,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
    tradeLogPriv = (TA_TradeLogPriv *)tradeLog->hiddenData;
 
    /* Make sure this is a valid object. */
-   if( tradeLogPriv->magicNb != TA_TRADELOGPRIV_MAGIC_NB )
+   if( !tradeLogPriv || (tradeLogPriv->magicNb != TA_TRADELOGPRIV_MAGIC_NB) )
       return TA_BAD_OBJECT;
 
    /* Find the TA_TradeDictEntry corresponding to
@@ -483,7 +483,6 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
       break;
    default:
       return TA_INTERNAL_ERROR(121);
-      break;
    }
 
    return TA_SUCCESS;
@@ -526,10 +525,7 @@ TA_RetCode TA_PMAlloc( const TA_Timestamp  *startDate,
    /* Allocate the public and private structure. */
    pm = TA_Malloc( sizeof( TA_PM ) + sizeof( TA_PMPriv ) );
    if( !pm )
-   {
-      *allocatedPM = NULL;
       return TA_ALLOC_ERR;
-   }
 
    memset( pm, 0, sizeof( TA_PM ) + sizeof( TA_PMPriv ) );
    pmPriv = (TA_PMPriv *)(((char *)pm)+sizeof(TA_PM));
@@ -562,7 +558,7 @@ TA_RetCode TA_PMFree( TA_PM *toBeFreed )
    {      
       /* Make sure this is a valid object */
       pmPriv = (TA_PMPriv *)toBeFreed->hiddenData; 
-      if( pmPriv->magicNb != TA_PMPRIV_MAGIC_NB )
+      if( !pmPriv || (pmPriv->magicNb != TA_PMPRIV_MAGIC_NB) )
          return TA_BAD_OBJECT;
 
       /* Clearly mark this object as being unusable. */
@@ -611,12 +607,12 @@ TA_RetCode TA_PMAddTradeLog( TA_PM *pm, TA_TradeLog *tradeLogToAdd )
 
    /* Make sure this TA_PM is a valid object */
    pmPriv = (TA_PMPriv *)pm->hiddenData; 
-   if( pmPriv->magicNb != TA_PMPRIV_MAGIC_NB )
+   if( !pmPriv || (pmPriv->magicNb != TA_PMPRIV_MAGIC_NB) )
       return TA_BAD_OBJECT;
 
    /* Make sure this TA_TradeLog is a valid object. */
    tradeLogPriv = (TA_TradeLogPriv *)tradeLogToAdd->hiddenData;
-   if( tradeLogPriv->magicNb != TA_TRADELOGPRIV_MAGIC_NB )
+   if( !tradeLogPriv || (tradeLogPriv->magicNb != TA_TRADELOGPRIV_MAGIC_NB) )
       return TA_BAD_OBJECT;
    
    /* Make sure it was not already added */
@@ -637,6 +633,147 @@ TA_RetCode TA_PMAddTradeLog( TA_PM *pm, TA_TradeLog *tradeLogToAdd )
 
    /* Invalidate cached calculation. */
    pmPriv->flags &= ~TA_PMVALUECACHE_CALCULATED;
+
+   return TA_SUCCESS;
+}
+
+
+TA_RetCode TA_TradeReportAlloc( TA_PM *pm, TA_TradeReport **tradeReportAllocated )
+{
+   TA_PMPriv          *pmPriv;
+   TA_TradeReport     *tradeReport;
+   TA_TradeReportPriv *tradeReportPriv;
+   TA_List            *tradeLogList;
+   TA_TradeLogPriv    *tradeLogPriv;
+   TA_AllocatorForDataLog *allocator;
+   TA_DataLogBlock    *block;
+   TA_List            *listOfBlock;
+   TA_DataLog         *invalidDataLog;
+   TA_DataLog         *curDataLog;
+
+   TA_RetCode retCode;
+   TA_Real tempReal;
+   int nbTrade, nbTradeAdded, i;
+
+   if( !tradeReportAllocated )
+	   return TA_BAD_PARAM;
+
+   *tradeReportAllocated = NULL;
+
+   if( !pm )
+      return TA_BAD_PARAM;
+
+   /* Make sure this TA_PM is a valid object */
+   pmPriv = (TA_PMPriv *)pm->hiddenData; 
+   if( !pmPriv || (pmPriv->magicNb != TA_PMPRIV_MAGIC_NB) )
+      return TA_BAD_OBJECT;
+
+   tradeReport = TA_Malloc( sizeof( TA_TradeReport ) + sizeof( TA_TradeReportPriv ) );
+   if( !tradeReport )
+      return TA_ALLOC_ERR;
+
+   memset( tradeReport, 0, sizeof( TA_TradeReport ) + sizeof( TA_TradeReportPriv ) );
+   tradeReportPriv = (TA_TradeReportPriv *)(((char *)tradeReport)+sizeof(TA_TradeReport));
+   tradeReportPriv->magicNb = TA_TRADEREPORT_MAGIC_NB;
+   tradeReport->hiddenData  = tradeReportPriv;
+
+   /* TA_TradeReportFree can be safely called from this point. */
+   
+   /* Get the number of closed trades */
+   tempReal = 0;
+   retCode = TA_PMValue( pm, TA_PM_TOTAL_NB_OF_TRADE, TA_PM_ALL_TRADES, &tempReal );
+   if( retCode != TA_SUCCESS )
+   {
+      TA_TradeReportFree( tradeReport );
+      return retCode;
+   }
+   nbTrade = (unsigned int)tempReal;
+   tradeReport->nbTrades = nbTrade;
+
+   if( nbTrade != 0 )
+   {      
+      tradeReport->trades = (const TA_Trade **)TA_Malloc( nbTrade*sizeof(const TA_Trade *));
+
+      if( !tradeReport->trades )
+      {
+         TA_TradeReportFree( tradeReport );
+         return TA_ALLOC_ERR;
+      }
+
+	  /* Iterate through all the closed trades. */
+	  nbTradeAdded = 0;
+      tradeLogList = &pmPriv->tradeLogList;
+      tradeLogPriv = TA_ListAccessHead( tradeLogList );
+      if( !tradeLogPriv )
+	  {
+         TA_TradeReportFree( tradeReport );
+         return TA_NO_TRADE_LOG;
+	  }
+
+      do
+      {   
+         allocator = &tradeLogPriv->allocator;
+         listOfBlock = &allocator->listOfDataLogBlock;
+         block = TA_ListAccessHead( listOfBlock );
+         while( block )
+		 {
+            /* Process each blocks. */
+            invalidDataLog = allocator->nextAvailableTrade;
+            curDataLog = block->array;
+            for( i=0; i < TA_TRADE_BLOCK_SIZE; i++ )
+            {
+               if( curDataLog == invalidDataLog )
+               {
+                  break;
+               }
+               else
+               {
+                  /* Process each TA_DataLog being a trade (not an entry)
+                   * An entry have a negative 'quantity'.
+                   */
+                  if( curDataLog->u.trade.quantity > 0 )
+                  {
+                     /* Make sure not to exceed array size */
+					 if( nbTradeAdded >= nbTrade )
+					 {
+					    TA_TradeReportFree( tradeReport );
+					    return TA_ALLOC_ERR;
+					 }
+					 tradeReport->trades[nbTradeAdded++] = &curDataLog->u.trade;
+			      }
+			   }
+			}
+
+            block = TA_ListAccessNext( listOfBlock );
+		 }
+
+         tradeLogPriv = TA_ListAccessNext( tradeLogList );
+      } while( tradeLogPriv );
+   }
+
+   /* All succeed. Return pointer to caller. */
+   *tradeReportAllocated = tradeReport;
+   return TA_SUCCESS;
+}
+
+TA_RetCode TA_TradeReportFree( TA_TradeReport *toBeFreed )
+{
+   TA_TradeReportPriv *tradeReportPriv;
+   if( toBeFreed )
+   {
+      /* Make sure this TA_TradeReport is a valid object */
+      tradeReportPriv = (TA_TradeReportPriv *)toBeFreed->hiddenData; 
+      if( !tradeReportPriv || (tradeReportPriv->magicNb != TA_TRADEREPORT_MAGIC_NB) )
+         return TA_BAD_OBJECT;
+
+      /* Clearly mark this object as being unusable. */
+      tradeReportPriv->magicNb = 0;
+
+      FREE_IF_NOT_NULL( toBeFreed->trades );
+
+      /* Last thing that must be freed... */
+      TA_Free( toBeFreed );
+   }
 
    return TA_SUCCESS;
 }

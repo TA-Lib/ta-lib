@@ -117,7 +117,7 @@ TA_RetCode TA_PMValue( TA_PM *pm,
 
    /* Make sure 'pm' is a ptr on a valid object */
    pmPriv = (TA_PMPriv *)pm->hiddenData; 
-   if( pmPriv->magicNb != TA_PMPRIV_MAGIC_NB )
+   if( !pmPriv || (pmPriv->magicNb != TA_PMPRIV_MAGIC_NB) )
       return TA_BAD_OBJECT;
    
    /* Process ALL the basic calculation if not already done. */
