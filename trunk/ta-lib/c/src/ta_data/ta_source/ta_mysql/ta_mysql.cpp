@@ -585,10 +585,23 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
             oi_col = col;
       } 
 
+      if (fieldToAlloc != TA_ALL)
+         fieldToAlloc |= TA_TIMESTAMP;   /* timestamp is always needed */
+
+      /* When the TA_REPLACE_ZERO_PRICE_BAR flag is set, we must
+       * always process the close.
+       */
+      if( privateHandle->param->flags & TA_REPLACE_ZERO_PRICE_BAR )
+      {   
+         fieldToAlloc |= TA_CLOSE;
+      }
+
       // verify whether all required columns are present
       if( (time_required && time_col == UINT_MAX ) )
       {
-         throw TA_PERIOD_NOT_AVAILABLE;
+         // user requested a period that we cannot provide
+         // just don't do anything
+         throw TA_SUCCESS;
       }
       if(  date_col == UINT_MAX
         || (fieldToAlloc & TA_OPEN   && open_col   == UINT_MAX)
@@ -598,7 +611,9 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
         || (fieldToAlloc & TA_VOLUME && volume_col == UINT_MAX)
         || (fieldToAlloc & TA_OPENINTEREST && oi_col == UINT_MAX) )
       {
-         throw BadQuery("Required column not found");
+         // user requested some columns that we cannot provide
+         // just don't do anything
+         throw TA_SUCCESS;
       }
       
       // Preallocate vectors memory
@@ -636,17 +651,6 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
          && !(oi_vec = (TA_Integer*)TA_Malloc( res.rows() * sizeof(TA_Integer) )))
             throw TA_ALLOC_ERR;
 
-      if (fieldToAlloc != TA_ALL)
-         fieldToAlloc |= TA_TIMESTAMP;   /* timestamp is always needed */
-
-      /* When the TA_REPLACE_ZERO_PRICE_BAR flag is set, we must
-       * always process the close.
-       */
-      if( privateHandle->param->flags & TA_REPLACE_ZERO_PRICE_BAR )
-      {   
-         fieldToAlloc |= TA_CLOSE;
-      }
-
       Row row;
       Result::iterator i;
       int bar;
@@ -663,7 +667,7 @@ TA_RetCode TA_MYSQL_GetHistoryData( TA_DataSourceHandle *handle,
          if ( TA_SetDate(u1, u2, u3, &timestamp_vec[bar]) != TA_SUCCESS )
             throw TA_BAD_PARAM;
 
-         if (time_required)
+         if (time_col != UINT_MAX)
          {
             const char *timestr = row[time_col];
             
