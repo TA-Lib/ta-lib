@@ -72,12 +72,12 @@
 #endif
 
 #if defined( _MANAGED )
-int Core::APO_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                      int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+int Core::APO_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
+                      int           optInSlowPeriod_1, /* From 2 to 100000 */
                       TA_MAType     optInMAType_2 ) 
 #else
-int TA_APO_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                   int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+int TA_APO_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
+                   int           optInSlowPeriod_1, /* From 2 to 100000 */
                    TA_MAType     optInMAType_2 ) 
 #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -98,10 +98,10 @@ int TA_APO_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MA
  * 
  * Optional Parameters
  * -------------------
- * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInFastPeriod_0:(From 2 to 100000)
  *    Number of period for the fast MA
  * 
- * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
+ * optInSlowPeriod_1:(From 2 to 100000)
  *    Number of period for the slow MA
  * 
  * optInMAType_2:
@@ -115,8 +115,8 @@ int TA_APO_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MA
 enum TA_RetCode Core::APO( int    startIdx,
                            int    endIdx,
                            double       inReal_0 __gc [],
-                           int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                           int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                           int           optInFastPeriod_0, /* From 2 to 100000 */
+                           int           optInSlowPeriod_1, /* From 2 to 100000 */
                            TA_MAType     optInMAType_2,
                            [OutAttribute]Int32 *outBegIdx,
                            [OutAttribute]Int32 *outNbElement,
@@ -125,8 +125,8 @@ enum TA_RetCode Core::APO( int    startIdx,
 TA_RetCode TA_APO( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                   int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                   int           optInFastPeriod_0, /* From 2 to 100000 */
+                   int           optInSlowPeriod_1, /* From 2 to 100000 */
                    TA_MAType     optInMAType_2,
                    int          *outBegIdx,
                    int          *outNbElement,
@@ -153,13 +153,13 @@ TA_RetCode TA_APO( int    startIdx,
    /* min/max are checked for optInFastPeriod_0. */
    if( (int)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
       optInFastPeriod_0 = 12;
-   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 2147483647) )
+   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 100000) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowPeriod_1. */
    if( (int)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
       optInSlowPeriod_1 = 26;
-   else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 2147483647) )
+   else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 100000) )
       return TA_BAD_PARAM;
 
    #if !defined(_MANAGED)

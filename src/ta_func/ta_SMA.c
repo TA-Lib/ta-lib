@@ -72,10 +72,10 @@
 #endif
 
 #if defined( _MANAGED )
-int Core::SMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+int Core::SMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
 
 #else
-int TA_SMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to TA_INTEGER_MAX */
+int TA_SMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
 
 #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -166,7 +166,7 @@ TA_RetCode TA_INT_SMA( int    startIdx,
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -177,7 +177,7 @@ TA_RetCode TA_INT_SMA( int    startIdx,
 enum TA_RetCode Core::SMA( int    startIdx,
                            int    endIdx,
                            double       inReal_0 __gc [],
-                           int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                           int           optInTimePeriod_0, /* From 2 to 100000 */
                            [OutAttribute]Int32 *outBegIdx,
                            [OutAttribute]Int32 *outNbElement,
                            double        outReal_0 __gc [] )
@@ -185,7 +185,7 @@ enum TA_RetCode Core::SMA( int    startIdx,
 TA_RetCode TA_SMA( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 2 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] )
@@ -209,7 +209,7 @@ TA_RetCode TA_SMA( int    startIdx,
    /* min/max are checked for optInTimePeriod_0. */
    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 30;
-   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )

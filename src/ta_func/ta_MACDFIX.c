@@ -72,10 +72,10 @@
 #endif
 
 #if defined( _MANAGED )
-int Core::MACDFIX_Lookback( int           optInSignalPeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+int Core::MACDFIX_Lookback( int           optInSignalPeriod_0 )  /* From 1 to 100000 */
 
 #else
-int TA_MACDFIX_Lookback( int           optInSignalPeriod_0 )  /* From 1 to TA_INTEGER_MAX */
+int TA_MACDFIX_Lookback( int           optInSignalPeriod_0 )  /* From 1 to 100000 */
 
 #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -100,7 +100,7 @@ int TA_MACDFIX_Lookback( int           optInSignalPeriod_0 )  /* From 1 to TA_IN
  * 
  * Optional Parameters
  * -------------------
- * optInSignalPeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInSignalPeriod_0:(From 1 to 100000)
  *    Smoothing for the signal line (nb of period)
  * 
  * 
@@ -111,7 +111,7 @@ int TA_MACDFIX_Lookback( int           optInSignalPeriod_0 )  /* From 1 to TA_IN
 enum TA_RetCode Core::MACDFIX( int    startIdx,
                                int    endIdx,
                                double       inReal_0 __gc [],
-                               int           optInSignalPeriod_0, /* From 1 to TA_INTEGER_MAX */
+                               int           optInSignalPeriod_0, /* From 1 to 100000 */
                                [OutAttribute]Int32 *outBegIdx,
                                [OutAttribute]Int32 *outNbElement,
                                double        outMACD_0 __gc [],
@@ -121,7 +121,7 @@ enum TA_RetCode Core::MACDFIX( int    startIdx,
 TA_RetCode TA_MACDFIX( int    startIdx,
                        int    endIdx,
                        const double inReal_0[],
-                       int           optInSignalPeriod_0, /* From 1 to TA_INTEGER_MAX */
+                       int           optInSignalPeriod_0, /* From 1 to 100000 */
                        int          *outBegIdx,
                        int          *outNbElement,
                        double        outMACD_0[],
@@ -147,7 +147,7 @@ TA_RetCode TA_MACDFIX( int    startIdx,
    /* min/max are checked for optInSignalPeriod_0. */
    if( (int)optInSignalPeriod_0 == TA_INTEGER_DEFAULT )
       optInSignalPeriod_0 = 9;
-   else if( ((int)optInSignalPeriod_0 < 1) || ((int)optInSignalPeriod_0 > 2147483647) )
+   else if( ((int)optInSignalPeriod_0 < 1) || ((int)optInSignalPeriod_0 > 100000) )
       return TA_BAD_PARAM;
 
    if( outMACD_0 == NULL )

@@ -190,7 +190,7 @@ TA_RetCode TA_HT_SINE( int    startIdx,
 
    /* Insert TA function code here. */
 
-   CIRCBUF_CONSTRUCT(smoothPrice,double,SMOOTH_PRICE_SIZE);
+   CIRCBUF_INIT_LOCAL_ONLY(smoothPrice,double);
 
    /* The following could be replaced by constant eventually. */
    tempReal = atan(1);

@@ -72,16 +72,16 @@
 #endif
 
 #if defined( _MANAGED )
-int Core::STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                        int           optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+int Core::STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
+                        int           optInSlowK_Period_1, /* From 1 to 100000 */
                         TA_MAType     optInSlowK_MAType_2,
-                        int           optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                        int           optInSlowD_Period_3, /* From 1 to 100000 */
                         TA_MAType     optInSlowD_MAType_4 ) 
 #else
-int TA_STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                     int           optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+int TA_STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
+                     int           optInSlowK_Period_1, /* From 1 to 100000 */
                      TA_MAType     optInSlowK_MAType_2,
-                     int           optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                     int           optInSlowD_Period_3, /* From 1 to 100000 */
                      TA_MAType     optInSlowD_MAType_4 ) 
 #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -111,16 +111,16 @@ int TA_STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInFastK_Period_0:(From 1 to TA_INTEGER_MAX)
+ * optInFastK_Period_0:(From 1 to 100000)
  *    Time period for building the Fast-K line
  * 
- * optInSlowK_Period_1:(From 1 to TA_INTEGER_MAX)
+ * optInSlowK_Period_1:(From 1 to 100000)
  *    Smoothing for making the Slow-K line. Usually set to 3
  * 
  * optInSlowK_MAType_2:
  *    Type of Moving Average for Slow-K
  * 
- * optInSlowD_Period_3:(From 1 to TA_INTEGER_MAX)
+ * optInSlowD_Period_3:(From 1 to 100000)
  *    Smoothing for making the Slow-D line
  * 
  * optInSlowD_MAType_4:
@@ -136,10 +136,10 @@ enum TA_RetCode Core::STOCH( int    startIdx,
                              double       inHigh_0 __gc [],
                              double       inLow_0 __gc [],
                              double       inClose_0 __gc [],
-                             int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                             int           optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+                             int           optInFastK_Period_0, /* From 1 to 100000 */
+                             int           optInSlowK_Period_1, /* From 1 to 100000 */
                              TA_MAType     optInSlowK_MAType_2,
-                             int           optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                             int           optInSlowD_Period_3, /* From 1 to 100000 */
                              TA_MAType     optInSlowD_MAType_4,
                              [OutAttribute]Int32 *outBegIdx,
                              [OutAttribute]Int32 *outNbElement,
@@ -151,10 +151,10 @@ TA_RetCode TA_STOCH( int    startIdx,
                      const double inHigh_0[],
                      const double inLow_0[],
                      const double inClose_0[],
-                     int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                     int           optInSlowK_Period_1, /* From 1 to TA_INTEGER_MAX */
+                     int           optInFastK_Period_0, /* From 1 to 100000 */
+                     int           optInSlowK_Period_1, /* From 1 to 100000 */
                      TA_MAType     optInSlowK_MAType_2,
-                     int           optInSlowD_Period_3, /* From 1 to TA_INTEGER_MAX */
+                     int           optInSlowD_Period_3, /* From 1 to 100000 */
                      TA_MAType     optInSlowD_MAType_4,
                      int          *outBegIdx,
                      int          *outNbElement,
@@ -192,13 +192,13 @@ TA_RetCode TA_STOCH( int    startIdx,
    /* min/max are checked for optInFastK_Period_0. */
    if( (int)optInFastK_Period_0 == TA_INTEGER_DEFAULT )
       optInFastK_Period_0 = 5;
-   else if( ((int)optInFastK_Period_0 < 1) || ((int)optInFastK_Period_0 > 2147483647) )
+   else if( ((int)optInFastK_Period_0 < 1) || ((int)optInFastK_Period_0 > 100000) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowK_Period_1. */
    if( (int)optInSlowK_Period_1 == TA_INTEGER_DEFAULT )
       optInSlowK_Period_1 = 3;
-   else if( ((int)optInSlowK_Period_1 < 1) || ((int)optInSlowK_Period_1 > 2147483647) )
+   else if( ((int)optInSlowK_Period_1 < 1) || ((int)optInSlowK_Period_1 > 100000) )
       return TA_BAD_PARAM;
 
    #if !defined(_MANAGED)
@@ -211,7 +211,7 @@ TA_RetCode TA_STOCH( int    startIdx,
    /* min/max are checked for optInSlowD_Period_3. */
    if( (int)optInSlowD_Period_3 == TA_INTEGER_DEFAULT )
       optInSlowD_Period_3 = 3;
-   else if( ((int)optInSlowD_Period_3 < 1) || ((int)optInSlowD_Period_3 > 2147483647) )
+   else if( ((int)optInSlowD_Period_3 < 1) || ((int)optInSlowD_Period_3 > 100000) )
       return TA_BAD_PARAM;
 
    #if !defined(_MANAGED)

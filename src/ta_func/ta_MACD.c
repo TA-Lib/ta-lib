@@ -72,14 +72,14 @@
 #endif
 
 #if defined( _MANAGED )
-int Core::MACD_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                       int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                       int           optInSignalPeriod_2 )  /* From 1 to TA_INTEGER_MAX */
+int Core::MACD_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
+                       int           optInSlowPeriod_1, /* From 2 to 100000 */
+                       int           optInSignalPeriod_2 )  /* From 1 to 100000 */
 
 #else
-int TA_MACD_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                    int           optInSignalPeriod_2 )  /* From 1 to TA_INTEGER_MAX */
+int TA_MACD_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
+                    int           optInSlowPeriod_1, /* From 2 to 100000 */
+                    int           optInSignalPeriod_2 )  /* From 1 to 100000 */
 
 #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -331,13 +331,13 @@ TA_RetCode TA_INT_MACD( int    startIdx,
  * 
  * Optional Parameters
  * -------------------
- * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInFastPeriod_0:(From 2 to 100000)
  *    Number of period for the fast MA
  * 
- * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
+ * optInSlowPeriod_1:(From 2 to 100000)
  *    Number of period for the slow MA
  * 
- * optInSignalPeriod_2:(From 1 to TA_INTEGER_MAX)
+ * optInSignalPeriod_2:(From 1 to 100000)
  *    Smoothing for the signal line (nb of period)
  * 
  * 
@@ -348,9 +348,9 @@ TA_RetCode TA_INT_MACD( int    startIdx,
 enum TA_RetCode Core::MACD( int    startIdx,
                             int    endIdx,
                             double       inReal_0 __gc [],
-                            int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                            int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                            int           optInSignalPeriod_2, /* From 1 to TA_INTEGER_MAX */
+                            int           optInFastPeriod_0, /* From 2 to 100000 */
+                            int           optInSlowPeriod_1, /* From 2 to 100000 */
+                            int           optInSignalPeriod_2, /* From 1 to 100000 */
                             [OutAttribute]Int32 *outBegIdx,
                             [OutAttribute]Int32 *outNbElement,
                             double        outMACD_0 __gc [],
@@ -360,9 +360,9 @@ enum TA_RetCode Core::MACD( int    startIdx,
 TA_RetCode TA_MACD( int    startIdx,
                     int    endIdx,
                     const double inReal_0[],
-                    int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                    int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
-                    int           optInSignalPeriod_2, /* From 1 to TA_INTEGER_MAX */
+                    int           optInFastPeriod_0, /* From 2 to 100000 */
+                    int           optInSlowPeriod_1, /* From 2 to 100000 */
+                    int           optInSignalPeriod_2, /* From 1 to 100000 */
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outMACD_0[],
@@ -388,19 +388,19 @@ TA_RetCode TA_MACD( int    startIdx,
    /* min/max are checked for optInFastPeriod_0. */
    if( (int)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
       optInFastPeriod_0 = 12;
-   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 2147483647) )
+   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 100000) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowPeriod_1. */
    if( (int)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
       optInSlowPeriod_1 = 26;
-   else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 2147483647) )
+   else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 100000) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSignalPeriod_2. */
    if( (int)optInSignalPeriod_2 == TA_INTEGER_DEFAULT )
       optInSignalPeriod_2 = 9;
-   else if( ((int)optInSignalPeriod_2 < 1) || ((int)optInSignalPeriod_2 > 2147483647) )
+   else if( ((int)optInSignalPeriod_2 < 1) || ((int)optInSignalPeriod_2 > 100000) )
       return TA_BAD_PARAM;
 
    if( outMACD_0 == NULL )

@@ -72,18 +72,18 @@
 #endif
 
 #if defined( _MANAGED )
-int Core::MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+int Core::MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
                           TA_MAType     optInFastMAType_1,
-                          int           optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
+                          int           optInSlowPeriod_2, /* From 2 to 100000 */
                           TA_MAType     optInSlowMAType_3,
-                          int           optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
+                          int           optInSignalPeriod_4, /* From 1 to 100000 */
                           TA_MAType     optInSignalMAType_5 ) 
 #else
-int TA_MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+int TA_MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
                        TA_MAType     optInFastMAType_1,
-                       int           optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
+                       int           optInSlowPeriod_2, /* From 2 to 100000 */
                        TA_MAType     optInSlowMAType_3,
-                       int           optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
+                       int           optInSignalPeriod_4, /* From 1 to 100000 */
                        TA_MAType     optInSignalMAType_5 ) 
 #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -111,19 +111,19 @@ int TA_MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGE
  * 
  * Optional Parameters
  * -------------------
- * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInFastPeriod_0:(From 2 to 100000)
  *    Number of period for the fast MA
  * 
  * optInFastMAType_1:
  *    Type of Moving Average for fast MA
  * 
- * optInSlowPeriod_2:(From 2 to TA_INTEGER_MAX)
+ * optInSlowPeriod_2:(From 2 to 100000)
  *    Number of period for the slow MA
  * 
  * optInSlowMAType_3:
  *    Type of Moving Average for slow MA
  * 
- * optInSignalPeriod_4:(From 1 to TA_INTEGER_MAX)
+ * optInSignalPeriod_4:(From 1 to 100000)
  *    Smoothing for the signal line (nb of period)
  * 
  * optInSignalMAType_5:
@@ -137,11 +137,11 @@ int TA_MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGE
 enum TA_RetCode Core::MACDEXT( int    startIdx,
                                int    endIdx,
                                double       inReal_0 __gc [],
-                               int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                               int           optInFastPeriod_0, /* From 2 to 100000 */
                                TA_MAType     optInFastMAType_1,
-                               int           optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
+                               int           optInSlowPeriod_2, /* From 2 to 100000 */
                                TA_MAType     optInSlowMAType_3,
-                               int           optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
+                               int           optInSignalPeriod_4, /* From 1 to 100000 */
                                TA_MAType     optInSignalMAType_5,
                                [OutAttribute]Int32 *outBegIdx,
                                [OutAttribute]Int32 *outNbElement,
@@ -152,11 +152,11 @@ enum TA_RetCode Core::MACDEXT( int    startIdx,
 TA_RetCode TA_MACDEXT( int    startIdx,
                        int    endIdx,
                        const double inReal_0[],
-                       int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
+                       int           optInFastPeriod_0, /* From 2 to 100000 */
                        TA_MAType     optInFastMAType_1,
-                       int           optInSlowPeriod_2, /* From 2 to TA_INTEGER_MAX */
+                       int           optInSlowPeriod_2, /* From 2 to 100000 */
                        TA_MAType     optInSlowMAType_3,
-                       int           optInSignalPeriod_4, /* From 1 to TA_INTEGER_MAX */
+                       int           optInSignalPeriod_4, /* From 1 to 100000 */
                        TA_MAType     optInSignalMAType_5,
                        int          *outBegIdx,
                        int          *outNbElement,
@@ -191,7 +191,7 @@ TA_RetCode TA_MACDEXT( int    startIdx,
    /* min/max are checked for optInFastPeriod_0. */
    if( (int)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
       optInFastPeriod_0 = 12;
-   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 2147483647) )
+   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 100000) )
       return TA_BAD_PARAM;
 
    #if !defined(_MANAGED)
@@ -204,7 +204,7 @@ TA_RetCode TA_MACDEXT( int    startIdx,
    /* min/max are checked for optInSlowPeriod_2. */
    if( (int)optInSlowPeriod_2 == TA_INTEGER_DEFAULT )
       optInSlowPeriod_2 = 26;
-   else if( ((int)optInSlowPeriod_2 < 2) || ((int)optInSlowPeriod_2 > 2147483647) )
+   else if( ((int)optInSlowPeriod_2 < 2) || ((int)optInSlowPeriod_2 > 100000) )
       return TA_BAD_PARAM;
 
    #if !defined(_MANAGED)
@@ -217,7 +217,7 @@ TA_RetCode TA_MACDEXT( int    startIdx,
    /* min/max are checked for optInSignalPeriod_4. */
    if( (int)optInSignalPeriod_4 == TA_INTEGER_DEFAULT )
       optInSignalPeriod_4 = 9;
-   else if( ((int)optInSignalPeriod_4 < 1) || ((int)optInSignalPeriod_4 > 2147483647) )
+   else if( ((int)optInSignalPeriod_4 < 1) || ((int)optInSignalPeriod_4 > 100000) )
       return TA_BAD_PARAM;
 
    #if !defined(_MANAGED)

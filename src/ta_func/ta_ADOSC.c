@@ -72,12 +72,12 @@
 #endif
 
 #if defined( _MANAGED )
-int Core::ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                        int           optInSlowPeriod_1 )  /* From 2 to TA_INTEGER_MAX */
+int Core::ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
+                        int           optInSlowPeriod_1 )  /* From 2 to 100000 */
 
 #else
-int TA_ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                     int           optInSlowPeriod_1 )  /* From 2 to TA_INTEGER_MAX */
+int TA_ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
+                     int           optInSlowPeriod_1 )  /* From 2 to 100000 */
 
 #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -105,10 +105,10 @@ int TA_ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to TA_INTEGER_
  * 
  * Optional Parameters
  * -------------------
- * optInFastPeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInFastPeriod_0:(From 2 to 100000)
  *    Number of period for the fast MA
  * 
- * optInSlowPeriod_1:(From 2 to TA_INTEGER_MAX)
+ * optInSlowPeriod_1:(From 2 to 100000)
  *    Number of period for the slow MA
  * 
  * 
@@ -122,8 +122,8 @@ enum TA_RetCode Core::ADOSC( int    startIdx,
                              double       inLow_0 __gc [],
                              double       inClose_0 __gc [],
                              int          inVolume_0 __gc [],
-                             int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                             int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                             int           optInFastPeriod_0, /* From 2 to 100000 */
+                             int           optInSlowPeriod_1, /* From 2 to 100000 */
                              [OutAttribute]Int32 *outBegIdx,
                              [OutAttribute]Int32 *outNbElement,
                              double        outReal_0 __gc [] )
@@ -134,8 +134,8 @@ TA_RetCode TA_ADOSC( int    startIdx,
                      const double inLow_0[],
                      const double inClose_0[],
                      const int    inVolume_0[],
-                     int           optInFastPeriod_0, /* From 2 to TA_INTEGER_MAX */
-                     int           optInSlowPeriod_1, /* From 2 to TA_INTEGER_MAX */
+                     int           optInFastPeriod_0, /* From 2 to 100000 */
+                     int           optInSlowPeriod_1, /* From 2 to 100000 */
                      int          *outBegIdx,
                      int          *outNbElement,
                      double        outReal_0[] )
@@ -170,13 +170,13 @@ TA_RetCode TA_ADOSC( int    startIdx,
    /* min/max are checked for optInFastPeriod_0. */
    if( (int)optInFastPeriod_0 == TA_INTEGER_DEFAULT )
       optInFastPeriod_0 = 3;
-   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 2147483647) )
+   else if( ((int)optInFastPeriod_0 < 2) || ((int)optInFastPeriod_0 > 100000) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInSlowPeriod_1. */
    if( (int)optInSlowPeriod_1 == TA_INTEGER_DEFAULT )
       optInSlowPeriod_1 = 10;
-   else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 2147483647) )
+   else if( ((int)optInSlowPeriod_1 < 2) || ((int)optInSlowPeriod_1 > 100000) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
