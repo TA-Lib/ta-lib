@@ -45,6 +45,7 @@ FileHandle *gOutRetCode_C;     /* For "ta_retcode.c" */
 FileHandle *gOutRetCode_CSV;   /* For "ta_retcode.csv" */
 FileHandle *gOutFuncList_TXT;  /* For "func_list.txt" */
 FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
+FileHandle *gOutDefs_H;        /* for "ta_defs.h" */
 
 typedef void (*TA_ForEachGroup)( const char *groupName,
                                  unsigned int index,
@@ -61,17 +62,21 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
 static void doForEachUnstableFunction( const TA_FuncInfo *funcInfo,
                                        void *opaqueData );
 
+static void doDefsFile( void );
+
 static int gen_retcode( void );
 
 static void printIndent( FILE *out, unsigned int indent );
+
 static void printFunc( FILE *out,
-                       const char *importInfo, /* Can be NULL */
+                       const char *importInfo,       /* Can be NULL */
                        const TA_FuncInfo *funcInfo,
-                       unsigned int prototype, /* Boolean */
-                       unsigned int frame,     /* Boolean */
-                       unsigned int semiColonNeeded, /* Boolean */
-                       unsigned int validationCode,   /* Boolean */
-                       unsigned int lookbackPrototype /* Boolean */
+                       unsigned int prototype,         /* Boolean */
+                       unsigned int frame,             /* Boolean */
+                       unsigned int semiColonNeeded,   /* Boolean */
+                       unsigned int validationCode,    /* Boolean */
+                       unsigned int lookbackPrototype, /* Boolean */
+                       unsigned int managedCPPCode
                       );
 
 static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
@@ -105,9 +110,10 @@ static void printGroupSizeAddition(  const char *groupName,
                                      unsigned int isFirst,
                                      unsigned int isLast
                                   );
-static int printUnstablePeriodCode( void );
 
-static int createTemplate( const char *name, FileHandle *in, FileHandle *out );
+static int addUnstablePeriodEnum( FILE *out );
+
+static int createTemplate( FileHandle *in, FileHandle *out );
 static void writeFuncFile( const TA_FuncInfo *funcInfo );
 static void doFuncFile( const TA_FuncInfo *funcInfo );
 static void printOptInputValidation( FILE *out,
@@ -135,7 +141,7 @@ char gTempDoubleToStr[50];
  * function attempts to eliminate difference. This
  * is done to avoid annoying difference with CVS. 
  */
-const char *doubleToStr( TA_Real value );
+const char *doubleToStr( double value );
 
 const char *gCurrentGroupName;
 
@@ -153,7 +159,7 @@ int main(int argc, char* argv[])
    {
          /* There is no parameter needed for this tool. */
          printf( "\n" );
-         printf( "gen_code V%s - Generates many TA-LIB source files\n", TA_GetVersionString() );
+         printf( "gen_code V%s - Updates many TA-LIB source files\n", TA_GetVersionString() );
          printf( "\n" );
          printf( "Usage: gen_code\n");
          printf( "\n" );         
@@ -167,13 +173,14 @@ int main(int argc, char* argv[])
          printf( "  in ta-lib/c/src/ta_abstract/tables.\n" );
          printf( "\n" );
          printf( "  From these tables, the following files are\n" );
-         printf( "  produced:\n" );
+         printf( "  updated:\n" );
          printf( "     1) ta-lib/c/include/ta_func.h\n" );
-         printf( "     2) ta-lib/c/include/func_list.txt\n" );
-         printf( "     3) ta-lib/c/src/ta_common/ta_retcode.*\n" );
-         printf( "     4) ta-lib/c/src/ta_abstract/ta_group_idx.c\n");     
-         printf( "     5) ta-lib/c/src/ta_abstract/frames/*.*\n");
-         printf( "     6) ta-lib/c/src/ta_abstract/excel_glue.c\n" );
+         printf( "     2) ta-lib/c/include/ta_defs.h\n" );
+         printf( "     3) ta-lib/c/include/func_list.txt\n" );
+         printf( "     4) ta-lib/c/src/ta_common/ta_retcode.*\n" );
+         printf( "     5) ta-lib/c/src/ta_abstract/ta_group_idx.c\n");     
+         printf( "     6) ta-lib/c/src/ta_abstract/frames/*.*\n");
+         printf( "     7) ta-lib/c/src/ta_abstract/excel_glue.c\n" );
          printf( "\n" );
          printf( "  Also, it regenerates the function header, parameters and\n" );
          printf( "  validation code of all TA Func in c/src/ta_func.\n" );
@@ -182,7 +189,7 @@ int main(int argc, char* argv[])
          exit(-1);
    }
 
-   printf( "Generating and refreshing TA functions..." );
+   printf( "gen_code V%s\n", TA_GetVersionString() );
 
    memset( &param, 0, sizeof( TA_InitializeParam ) );
    param.logOutput = stdout;
@@ -192,6 +199,8 @@ int main(int argc, char* argv[])
       printf( "\nCannot initialize the library\n");
       return -1;
    }
+
+   printf( "Now updating source code...\n" );
 
    retValue = genCode( argc, argv );
    TA_Shutdown();
@@ -345,15 +354,12 @@ static int genCode(int argc, char* argv[])
    (void)argc; /* Get ride of compiler warning */
    (void)argv; /* Get ride of compiler warning */
 
-   printf( "\n" );
-
    /* Create ta_retcode.c */
    if( gen_retcode() != 0 )
    {
       printf( "\nCannot generate src/ta_common/ta_retcode.c\n" );
       return -1;
    }
-
 
    /* Create "ta_func.h" */
    gOutFunc_H = fileOpen( "..\\include\\ta_func.h",
@@ -365,9 +371,6 @@ static int genCode(int argc, char* argv[])
       printf( "\nCannot access [%s]\n", gToOpen );
       return -1;
    }
-
-   /* Generate some enumeration in ta_func.h */
-   addFuncEnumeration( gOutFunc_H->file );
 
    /* Create the "func_list.txt" */
    gOutFuncList_TXT = fileOpen( "..\\include\\func_list.txt",
@@ -422,8 +425,6 @@ static int genCode(int argc, char* argv[])
       printf( "Failed [%d]\n", retCode );
       return -1;
    }
-
-   printUnstablePeriodCode();
          
    fileClose( gOutFuncList_TXT );
    fileClose( gOutFunc_H );
@@ -471,6 +472,11 @@ static int genCode(int argc, char* argv[])
 
    fileClose( gOutGroupIdx_C );
 
+   /* Update "ta_defs.h" */
+   doDefsFile();
+
+   printf( "\n** Update completed with success **\n");
+
    return 0;
 }
 
@@ -516,7 +522,7 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
 
    if( (prevGroup == NULL) || (prevGroup != funcInfo->group) )
    {
-      printf( "Processing Group [%s]\n", funcInfo->group );
+      // printf( "Processing Group [%s]\n", funcInfo->group );
       fprintf( gOutFunc_H->file, "\n/******************************************\n" );
       fprintf( gOutFunc_H->file, " * Group: [%s]\n", funcInfo->group );
       fprintf( gOutFunc_H->file, " ******************************************/\n\n" );
@@ -524,7 +530,7 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
       prevGroup = funcInfo->group;
    }
 
-   printf( "Processing Func  [TA_%s]\n", funcInfo->name );
+   // printf( "Processing Func  [TA_%s]\n", funcInfo->name );
 
    fprintf( gOutFunc_H->file, "/*\n" );
    printFuncHeaderDoc( gOutFunc_H->file, funcInfo, " * " );
@@ -534,11 +540,11 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    printDefines( gOutFunc_H->file, funcInfo );
 
    /* Generate the function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0 );
    fprintf( gOutFunc_H->file, "\n" );
 
    /* Generate the corresponding lookback function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0 );
 
    /* Generate the excel glue code */
    printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
@@ -560,7 +566,7 @@ static void doForEachUnstableFunction( const TA_FuncInfo *funcInfo,
 
    if( funcInfo->flags & TA_FUNC_FLG_UNST_PER )
    {
-      fprintf( gOutFunc_H->file, "    /* %03d */  TA_FUNC_UNST_%s,\n", *i, funcInfo->name );
+      fprintf( gOutDefs_H->file, "    /* %03d */  TA_FUNC_UNST_%s,\n", *i, funcInfo->name );
       (*i)++;
    }
 }
@@ -679,7 +685,8 @@ static void printFunc( FILE *out,
                        unsigned int frame,     /* Boolean */
                        unsigned int semiColonNeeded, /* Boolean */
                        unsigned int validationCode, /* Boolean */
-                       unsigned int lookbackPrototype /* Boolean */
+                       unsigned int lookbackPrototype, /* Boolean */
+                       unsigned int managedCPPCode
                       )
 {
    TA_RetCode retCode;
@@ -706,11 +713,11 @@ static void printFunc( FILE *out,
       else
       {
 
-         fprintf( out, "%sTA_RetCode TA_%s( TA_Integer    startIdx,\n",
+         fprintf( out, "%sTA_RetCode TA_%s( int    startIdx,\n",
                   importInfo == NULL? "" : importInfo, funcInfo->name );
          indent = 13 + strlen(funcInfo->name) + 3;
          printIndent( out, indent );
-         fprintf( out, "TA_Integer    endIdx,\n" );
+         fprintf( out, "int    endIdx,\n" );
       }
    }
    else if( frame )
@@ -861,7 +868,7 @@ static void printFunc( FILE *out,
                      fprintf( out, "params->in[%d].data.inPrice.open, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
-                           prototype? "const TA_Real" : "",                           
+                           prototype? "const double" : "",
                            "inOpen",
                            paramNb,
                            prototype? "[]" : "" );
@@ -875,7 +882,7 @@ static void printFunc( FILE *out,
                      fprintf( out, "params->in[%d].data.inPrice.high, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
-                           prototype? "const TA_Real" : "",                           
+                           prototype? "const double" : "",                           
                            "inHigh",
                            paramNb,
                            prototype? "[]" : "" );
@@ -889,7 +896,7 @@ static void printFunc( FILE *out,
                      fprintf( out, "params->in[%d].data.inPrice.low, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
-                           prototype? "const TA_Real" : "",
+                           prototype? "const double" : "",
                            "inLow",
                            paramNb,
                            prototype? "[]" : "" );
@@ -903,7 +910,7 @@ static void printFunc( FILE *out,
                      fprintf( out, "params->in[%d].data.inPrice.close, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
-                           prototype? "const TA_Real" : "",                           
+                           prototype? "const double" : "",                           
                            "inClose",
                            paramNb,
                            prototype? "[]" : "" );
@@ -917,7 +924,7 @@ static void printFunc( FILE *out,
                      fprintf( out, "params->in[%d].data.inPrice.volume, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
-                           prototype? "const TA_Integer" : "",
+                           prototype? "const int" : "",
                            "inVolume",
                            paramNb,
                            prototype? "[]" : "" );
@@ -931,7 +938,7 @@ static void printFunc( FILE *out,
                      fprintf( out, "params->in[%d].data.inPrice.openInterest, /*", paramNb );
                   fprintf( out, "%-*s %s_%d%s",
                            prototype? 12 : 0,
-                           prototype? "const TA_Integer" : "",
+                           prototype? "const int" : "",
                            "inOpenInterest",
                            paramNb,
                            prototype? "[]" : "" );
@@ -940,11 +947,11 @@ static void printFunc( FILE *out,
             }
             break;
          case TA_Input_Real:
-            typeString = "const TA_Real";
+            typeString = "const double";
             defaultParamName = "inReal";
             break;
          case TA_Input_Integer:
-            typeString = "const TA_Integer";
+            typeString = "const int";
             defaultParamName = "inInteger";
             break;
          /*case TA_Input_Timestamp:
@@ -1004,11 +1011,11 @@ static void printFunc( FILE *out,
       {
       case TA_OptInput_RealRange:
       case TA_OptInput_RealList:
-         typeString = "TA_Real";
+         typeString = "double";
          defaultParamName = "optInReal";
          break;
       case TA_OptInput_IntegerRange:
-         typeString = "TA_Integer";
+         typeString = "int";
          defaultParamName = "optInInteger";
          break;
       case TA_OptInput_IntegerList:
@@ -1019,7 +1026,7 @@ static void printFunc( FILE *out,
          }
          else
          {
-            typeString = "TA_Integer";
+            typeString = "int";
             defaultParamName = "optInInteger";
          }
          break;
@@ -1134,7 +1141,7 @@ static void printFunc( FILE *out,
             else
                fprintf( out, "%-*s %soutBegIdx",
                         prototype? 12 : 0,
-                        prototype? "TA_Integer" : "",
+                        prototype? "int" : "",
                         prototype? "*" : "" );
 
             fprintf( out, "%s\n", frame? "":"," );
@@ -1145,7 +1152,7 @@ static void printFunc( FILE *out,
             else
                fprintf( out, "%-*s %soutNbElement",
                         prototype? 12 : 0,
-                        prototype? "TA_Integer" : "",
+                        prototype? "int" : "",
                         prototype? "*" : "" );
             fprintf( out, "%s\n", frame? "":"," );
       }
@@ -1169,11 +1176,11 @@ static void printFunc( FILE *out,
          switch( outputParamInfo->type )
          {
          case TA_Output_Real:
-            typeString = "TA_Real";
+            typeString = "double";
             defaultParamName = "outReal";
             break;
          case TA_Output_Integer:
-            typeString = "TA_Integer";
+            typeString = "int";
             defaultParamName = "outInteger";
             break;
          default:
@@ -1226,7 +1233,7 @@ static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
 {
    printFrameHeader( out, funcInfo );
    fprintf( out, "\n{\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0 );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0 );
    fprintf( out, "}\n" );
 }
 
@@ -1234,10 +1241,10 @@ static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
 static void printFrameHeader( FILE *out, const TA_FuncInfo *funcInfo )
 {
    fprintf( out, "TA_RetCode TA_%s_FramePP( const TA_ParamHolderPriv *params,\n", funcInfo->name );
-   fprintf( out, "                          TA_Integer            startIdx,\n" );
-   fprintf( out, "                          TA_Integer            endIdx,\n" );
-   fprintf( out, "                          TA_Integer           *outBegIdx,\n" );
-   fprintf( out, "                          TA_Integer           *outNbElement )\n" );
+   fprintf( out, "                          int            startIdx,\n" );
+   fprintf( out, "                          int            endIdx,\n" );
+   fprintf( out, "                          int           *outBegIdx,\n" );
+   fprintf( out, "                          int           *outNbElement )\n" );
 }
 
 static void printExternReferenceForEachFunction( const TA_FuncInfo *info,
@@ -1343,7 +1350,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
          return;
       }
 
-      createTemplate( funcInfo->name, gOutFunc_C, tempFile );
+      createTemplate( gOutFunc_C, tempFile );
 
       fileClose( tempFile );
       fileClose( gOutFunc_C );
@@ -1370,14 +1377,64 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    fileClose( gOutFunc_C );
 }
 
-static int createTemplate( const char *name, FileHandle *in, FileHandle *out )
+static void doDefsFile( void )
+{
+
+   FileHandle *tempFile;
+   FILE *out;
+   
+   #define FILE_TA_DEFS_H    "..\\include\\ta_defs.h"
+   #define FILE_TA_DEFS_TMP  "..\\temp\\ta_defs.tmp"
+
+   /* Check if the file already exist. If not, this is an error. */
+   gOutDefs_H = fileOpen( FILE_TA_DEFS_H, NULL, FILE_READ );
+   if( gOutDefs_H == NULL )
+   {
+      printf( "ta_defs.h must exist for being updated!\n" );
+      exit(-1);
+   }
+
+   /* Create the template. The template is just the original file content
+    * with the GENCODE SECTION emptied (so they can be re-generated)
+    */
+   tempFile = fileOpen( FILE_TA_DEFS_TMP, NULL, FILE_WRITE );
+   if( tempFile == NULL )
+   {
+      printf( "Cannot create temporary file!\n" );
+      exit(-1);
+   }
+
+   createTemplate( gOutDefs_H, tempFile );
+
+   fileClose( tempFile );
+   fileClose( gOutDefs_H );
+
+   /* Re-open the file using the template. */
+   gOutDefs_H = fileOpen( FILE_TA_DEFS_H, FILE_TA_DEFS_TMP, FILE_WRITE );
+                                                    
+   if( gOutDefs_H == NULL )
+   {
+      printf( "Cannot create ta_defs.h\n" );
+      exit(-1);
+   }
+
+   /* Generate the GENCODE SECTION */
+   out = gOutDefs_H->file;
+   
+   addFuncEnumeration( out );
+   addUnstablePeriodEnum( out );
+
+   fileClose( gOutDefs_H );
+   #undef FILE_TA_DEFS_H
+   #undef FILE_TA_DEFS_TMP
+}
+
+static int createTemplate( FileHandle *in, FileHandle *out )
 {
    FILE *inFile;
    FILE *outFile;
    unsigned int skipSection;
    unsigned int sectionDone;
-
-   (void)name;
 
    inFile = in->file;
    outFile = out->file;
@@ -1412,14 +1469,6 @@ static int createTemplate( const char *name, FileHandle *in, FileHandle *out )
       }
    }
 
-#if 0
-   if( sectionDone != 2 )
-   {
-      printf( "Missing Section in file [%s]\n", name );
-      return -1;
-   }
-#endif
-
    return 0;
 }
 
@@ -1441,14 +1490,14 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    fprintf( out, "   #include \"ta_utility.h\"\n" );
    fprintf( out, "#endif\n" );
    fprintf( out, "\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0 );
    skipToGenCode( funcInfo->name, gOutFunc_C->file, gOutFunc_C->templateFile );
 
    fprintf( out, "/*\n" );
    printFuncHeaderDoc( out, funcInfo, " * " );
    fprintf( out, " */\n" );
    fprintf( out, "\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0 );
    skipToGenCode( funcInfo->name, gOutFunc_C->file, gOutFunc_C->templateFile );
 
    fprintf( out, "\n" );
@@ -1465,7 +1514,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
     * default values.
     */
    fprintf( out, "   /* Validate the parameters. */\n" );
-   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0 );
+   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0 );
 
    fprintf( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
    fprintf( out, "\n" );
@@ -1476,8 +1525,8 @@ static void printOptInputValidation( FILE *out,
                                      unsigned int paramNb,
                                      const TA_OptInputParameterInfo *optInputParamInfo )
 {
-   TA_Integer minInt, maxInt;
-   TA_Real minReal, maxReal;
+   int minInt, maxInt;
+   double minReal, maxReal;
    unsigned int i;
 
    const TA_RealList     *realList;
@@ -1485,8 +1534,8 @@ static void printOptInputValidation( FILE *out,
    const TA_RealRange *realRange;
    const TA_IntegerRange *integerRange;
 
-   minInt  = maxInt  = (TA_Integer)0;
-   minReal = maxReal = (TA_Real)0.0;
+   minInt  = maxInt  = (int)0;
+   minReal = maxReal = (double)0.0;
 
    switch( optInputParamInfo->type )
    {
@@ -1538,9 +1587,9 @@ static void printOptInputValidation( FILE *out,
    case TA_OptInput_IntegerRange:
       fprintf( out, "   /* min/max are checked for %s_%d. */\n", name, paramNb );
    case TA_OptInput_IntegerList:
-      fprintf( out, "   if( (TA_Integer)%s_%d == TA_INTEGER_DEFAULT )\n", name, paramNb );
+      fprintf( out, "   if( (int)%s_%d == TA_INTEGER_DEFAULT )\n", name, paramNb );
       fprintf( out, "      %s_%d = %d;\n", name, paramNb, (int)optInputParamInfo->defaultValue );
-      fprintf( out, "   else if( ((TA_Integer)%s_%d < %d) || ((TA_Integer)%s_%d > %d) )\n",
+      fprintf( out, "   else if( ((int)%s_%d < %d) || ((int)%s_%d > %d) )\n",
               name, paramNb, minInt,
               name, paramNb, maxInt );
       break;
@@ -1631,10 +1680,10 @@ static void printFuncHeaderDoc( FILE *out,
 
          break;
       case TA_Input_Integer:
-         fprintf( out, "TA_Integer" );
+         fprintf( out, "int" );
          break;
       case TA_Input_Real:
-         fprintf( out, "TA_Real" );
+         fprintf( out, "double" );
          break;
 /*      case TA_Input_Timestamp:
          fprintf( out, "TA_Timestamp" );
@@ -1661,10 +1710,10 @@ static void printFuncHeaderDoc( FILE *out,
       switch( outputParamInfo->type )
       {
       case TA_Output_Real:
-         fprintf( out, "TA_Real" );
+         fprintf( out, "double" );
          break;
       case TA_Output_Integer:
-         fprintf( out, "TA_Integer" );
+         fprintf( out, "int" );
          break;
       }
       if( paramNb+1 == funcInfo->nbOutput )
@@ -1765,31 +1814,18 @@ static void printFuncHeaderDoc( FILE *out,
    fprintf( out, "%s\n", prefix );
 }
 
-static int printUnstablePeriodCode( void )
+static int addUnstablePeriodEnum( FILE *out )
 {
    TA_RetCode retCode;
    unsigned int id;
-
-   fprintf( gOutFunc_H->file, "\n" );
-   fprintf( gOutFunc_H->file, "/* Some TA functions takes a certain amount of input data\n" );
-   fprintf( gOutFunc_H->file, " * before stabilizing and outputing meaningful data. This is\n" );
-   fprintf( gOutFunc_H->file, " * a behavior pertaining to the algo of some TA functions and\n" );
-   fprintf( gOutFunc_H->file, " * is not particular to the TA-Lib implementation.\n" );
-   fprintf( gOutFunc_H->file, " * TA-Lib allows you to automatically strip off these unstable\n");
-   fprintf( gOutFunc_H->file, " * data from your output and from any internal processing.\n" );
-   fprintf( gOutFunc_H->file, " * (See documentation for more info)\n" );
-   fprintf( gOutFunc_H->file, " *\n" );
-   fprintf( gOutFunc_H->file, " * Examples:\n" );
-   fprintf( gOutFunc_H->file, " *      TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 30 );\n" );
-   fprintf( gOutFunc_H->file, " *           Always strip off 30 price bar for the TA_EMA function.\n" );
-   fprintf( gOutFunc_H->file, " *\n" );
-   fprintf( gOutFunc_H->file, " *      TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 30 );\n" );
-   fprintf( gOutFunc_H->file, " *           Always strip off 30 price bar from ALL functions\n" );
-   fprintf( gOutFunc_H->file, " *           having an unstable period.\n" );
-   fprintf( gOutFunc_H->file, " *\n" );
-   fprintf( gOutFunc_H->file, " */\n" );
    
-   fprintf( gOutFunc_H->file, "typedef enum {\n" );
+   fprintf( out, "\n" );
+   fprintf( out, "#if defined( _MANAGED )\n");
+   fprintf( out, "public __value enum TA_FuncUnstId\n");
+   fprintf( out, "#else\n");
+   fprintf( out, "typedef enum\n");
+   fprintf( out, "#endif\n");
+   fprintf( out, "{\n");
 
    /* Enumerate the function having an "unstable period". Give
     * to each an unique identifier.
@@ -1797,22 +1833,19 @@ static int printUnstablePeriodCode( void )
    id = 1;
    retCode = TA_ForEachFunc( doForEachUnstableFunction, &id );
 
-   fprintf( gOutFunc_H->file, "               TA_FUNC_UNST_ALL,\n");
-   fprintf( gOutFunc_H->file, "               TA_FUNC_UNST_NONE=-1 } TA_FuncUnstId;\n" );
+   fprintf( out, "               TA_FUNC_UNST_ALL,\n");
+   fprintf( out, "               TA_FUNC_UNST_NONE=-1\n" );
+   fprintf( out, "#if defined( _MANAGED )\n");
+   fprintf( out, "};\n");
+   fprintf( out, "#else\n");
+   fprintf( out, "} TA_FuncUnstId;\n");
+   fprintf( out, "#endif\n");
 
    if( retCode != TA_SUCCESS )
       return -1;
 
-   fprintf( gOutFunc_H->file, "\n" );
-   fprintf( gOutFunc_H->file, "TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,\n" );
-   fprintf( gOutFunc_H->file, "                                 unsigned int  unstablePeriod );\n" );
-   fprintf( gOutFunc_H->file, "\n" );
-   fprintf( gOutFunc_H->file, "unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );\n" );
-   fprintf( gOutFunc_H->file, "\n" );
-
    return 0;
 }
-
 
 static int gen_retcode( void )
 {
@@ -1846,7 +1879,7 @@ static int gen_retcode( void )
       return -1;
    }
 
-   inHdr = fileOpen( "..\\include\\ta_common.h", NULL, FILE_READ );
+   inHdr = fileOpen( "..\\include\\ta_defs.h", NULL, FILE_READ );
    if( inHdr == NULL )
    {
       fileClose( gOutRetCode_C );
@@ -1879,7 +1912,10 @@ static int gen_retcode( void )
             retCodeValue = atoi(ptr1);
             ptr1 = stricstr( ptr1, "TA_" );
             if( !ptr1 )
+            {
+               printf( "Can't find TA_" );
                goto gen_retcode_exit;
+            }
             retCodeEnum = ptr1;
 
             retCodeInfo = NULL;
@@ -1926,7 +1962,7 @@ gen_retcode_exit:
    return retValue; /* Success. */
 }
 
-const char *doubleToStr( TA_Real value )
+const char *doubleToStr( double value )
 {
    int length;
    int i, outIdx;
@@ -2023,7 +2059,12 @@ static void addFuncEnumeration( FILE *out )
 
    /* Add the TA_MAType enumeration */
    intList = (TA_IntegerList *)TA_DEF_UI_MA_Method.dataSet;
+   fprintf( out, "\n" );
+   fprintf( out, "#if defined( _MANAGED )\n" );
+   fprintf( out, "public __value enum TA_MAType\n" );
+   fprintf( out, "#else\n" );
    fprintf( out, "typedef enum\n" );
+   fprintf( out, "#endif\n" );
    fprintf( out, "{\n" );
    for( j=0; j < intList->nbElement; j++ )
    {
@@ -2035,5 +2076,9 @@ static void addFuncEnumeration( FILE *out )
                      j < (intList->nbElement)-1?",\n":"\n");
    }
 
-   fprintf( out, "} TA_MAType;\n\n" );
+   fprintf( out, "#if defined( _MANAGED )\n" );
+   fprintf( out, "};\n" );
+   fprintf( out, "#else\n" );
+   fprintf( out, "} TA_MAType;\n" );
+   fprintf( out, "#endif\n" );
 }
