@@ -1260,9 +1260,9 @@ TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDataSourc
    #undef DO_FLT
 
    /* Copy the rest. */
-   dst->flags = param->flags;
-   dst->id    = param->id;
-
+   dst->flags  = param->flags;
+   dst->id     = param->id;
+   dst->period = param->period;
    return dst;
 }
 

@@ -10,6 +10,7 @@ typedef struct
 {
   TA_SourceId   id;
   TA_SourceFlag flags;
+  TA_Period     period;
 
   TA_String *location;
   TA_String *info;

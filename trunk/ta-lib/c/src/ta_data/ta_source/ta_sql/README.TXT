@@ -21,6 +21,9 @@ Later some additional flags will be supported (discussion pending):
     zero). TA_INTERPOLATE_PRICE_BAR: in case some price bars are missing,
     interpolate values between previous and next valid close.
 
+TA_AddDataSourceParam.period: set to the period value that is used 
+    by this source (eg. TA_DAILY for sources delivering daily data).
+
 TA_AddDataSourceParam.location: URL descibing the access to the SQL database, 
 in the form:
 
@@ -55,7 +58,8 @@ volume, oi: INTEGER
 
 Example: 
 "SELECT date, time, quote AS close FROM quotes_intraday_AEX WHERE date = 20031014" 
-Fields date and time (if present) will be interpreted as ISO formats (SQL default).
+Fields date and time (if present) will be interpreted as ISO formats 
+(SQL default).
 
 TA_AddDataSourceParam.username and
 TA_AddDataSourceParam.password are used to log in to the server. 
@@ -188,6 +192,8 @@ driver compiled in your ta-lib build, you need to do the following:
 1. Define preprocessor symbol TA_SUPPORT_ODBC in the top-level makefile of 
    ta_data (or Visual C++ project settings).
 2. Rebuild ta-lib.
+3. Add library odbc32.lib (Windows) or -lodbc (Unix) to link libs 
+   of your application.
 
 
 
