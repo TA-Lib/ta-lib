@@ -23,73 +23,73 @@ DESTDIR     = ../../../../../lib
 
 # Files to process
 SOURCES	= ../../../../../src/ta_func/ta_utility.c \ 
-          ../../../../../src/ta_func/ta_MAX.c \ 
-          ../../../../../src/ta_func/ta_MIN.c \ 
-          ../../../../../src/ta_func/ta_BBANDS.c \ 
-          ../../../../../src/ta_func/ta_DEMA.c \ 
-          ../../../../../src/ta_func/ta_EMA.c \ 
-          ../../../../../src/ta_func/ta_HT_TRENDLINE.c \ 
-          ../../../../../src/ta_func/ta_KAMA.c \ 
-          ../../../../../src/ta_func/ta_MA.c \ 
-          ../../../../../src/ta_func/ta_MAMA.c \ 
-          ../../../../../src/ta_func/ta_MIDPRICE.c \ 
-          ../../../../../src/ta_func/ta_MIDPOINT.c \ 
-          ../../../../../src/ta_func/ta_SAR.c \ 
-          ../../../../../src/ta_func/ta_SAREXT.c \ 
-          ../../../../../src/ta_func/ta_SMA.c \ 
-          ../../../../../src/ta_func/ta_T3.c \ 
-          ../../../../../src/ta_func/ta_TEMA.c \ 
-          ../../../../../src/ta_func/ta_TRIMA.c \ 
-          ../../../../../src/ta_func/ta_WMA.c \ 
-          ../../../../../src/ta_func/ta_ATR.c \ 
-          ../../../../../src/ta_func/ta_TRANGE.c \ 
+          ../../../../../src/ta_func/ta_AD.c \ 
+          ../../../../../src/ta_func/ta_ADOSC.c \ 
           ../../../../../src/ta_func/ta_ADX.c \ 
           ../../../../../src/ta_func/ta_ADXR.c \ 
           ../../../../../src/ta_func/ta_APO.c \ 
           ../../../../../src/ta_func/ta_AROON.c \ 
           ../../../../../src/ta_func/ta_AROONOSC.c \ 
+          ../../../../../src/ta_func/ta_ATR.c \ 
+          ../../../../../src/ta_func/ta_AVGPRICE.c \ 
+          ../../../../../src/ta_func/ta_BBANDS.c \ 
           ../../../../../src/ta_func/ta_CCI.c \ 
+          ../../../../../src/ta_func/ta_CORREL.c \ 
+          ../../../../../src/ta_func/ta_DEMA.c \ 
           ../../../../../src/ta_func/ta_DX.c \ 
+          ../../../../../src/ta_func/ta_EMA.c \ 
+          ../../../../../src/ta_func/ta_HT_DCPERIOD.c \ 
+          ../../../../../src/ta_func/ta_HT_DCPHASE.c \ 
+          ../../../../../src/ta_func/ta_HT_PHASOR.c \ 
+          ../../../../../src/ta_func/ta_HT_SINE.c \ 
+          ../../../../../src/ta_func/ta_HT_TRENDLINE.c \ 
+          ../../../../../src/ta_func/ta_HT_TRENDMODE.c \ 
+          ../../../../../src/ta_func/ta_KAMA.c \ 
+          ../../../../../src/ta_func/ta_LINEARREG.c \ 
+          ../../../../../src/ta_func/ta_LINEARREG_ANGLE.c \ 
+          ../../../../../src/ta_func/ta_LINEARREG_INTERCEPT.c \ 
+          ../../../../../src/ta_func/ta_LINEARREG_SLOPE.c \ 
+          ../../../../../src/ta_func/ta_MA.c \ 
           ../../../../../src/ta_func/ta_MACD.c \ 
           ../../../../../src/ta_func/ta_MACDEXT.c \ 
           ../../../../../src/ta_func/ta_MACDFIX.c \ 
+          ../../../../../src/ta_func/ta_MAMA.c \ 
+          ../../../../../src/ta_func/ta_MAX.c \ 
+          ../../../../../src/ta_func/ta_MEDPRICE.c \ 
           ../../../../../src/ta_func/ta_MFI.c \ 
+          ../../../../../src/ta_func/ta_MIDPOINT.c \ 
+          ../../../../../src/ta_func/ta_MIDPRICE.c \ 
+          ../../../../../src/ta_func/ta_MIN.c \ 
           ../../../../../src/ta_func/ta_MINUS_DI.c \ 
           ../../../../../src/ta_func/ta_MINUS_DM.c \ 
           ../../../../../src/ta_func/ta_MOM.c \ 
-          ../../../../../src/ta_func/ta_PPO.c \ 
+          ../../../../../src/ta_func/ta_OBV.c \ 
           ../../../../../src/ta_func/ta_PLUS_DI.c \ 
           ../../../../../src/ta_func/ta_PLUS_DM.c \ 
+          ../../../../../src/ta_func/ta_PPO.c \ 
           ../../../../../src/ta_func/ta_ROC.c \ 
           ../../../../../src/ta_func/ta_ROCP.c \ 
           ../../../../../src/ta_func/ta_ROCR.c \ 
           ../../../../../src/ta_func/ta_ROCR100.c \ 
           ../../../../../src/ta_func/ta_RSI.c \ 
+          ../../../../../src/ta_func/ta_SAR.c \ 
+          ../../../../../src/ta_func/ta_SAREXT.c \ 
+          ../../../../../src/ta_func/ta_SMA.c \ 
+          ../../../../../src/ta_func/ta_STDDEV.c \ 
           ../../../../../src/ta_func/ta_STOCH.c \ 
           ../../../../../src/ta_func/ta_STOCHF.c \ 
           ../../../../../src/ta_func/ta_STOCHRSI.c \ 
+          ../../../../../src/ta_func/ta_T3.c \ 
+          ../../../../../src/ta_func/ta_TEMA.c \ 
+          ../../../../../src/ta_func/ta_TRANGE.c \ 
+          ../../../../../src/ta_func/ta_TRIMA.c \ 
           ../../../../../src/ta_func/ta_TRIX.c \ 
-          ../../../../../src/ta_func/ta_WILLR.c \ 
-          ../../../../../src/ta_func/ta_HT_DCPERIOD.c \ 
-          ../../../../../src/ta_func/ta_HT_DCPHASE.c \ 
-          ../../../../../src/ta_func/ta_HT_PHASOR.c \ 
-          ../../../../../src/ta_func/ta_HT_SINE.c \ 
-          ../../../../../src/ta_func/ta_HT_TRENDMODE.c \ 
-          ../../../../../src/ta_func/ta_AD.c \ 
-          ../../../../../src/ta_func/ta_ADOSC.c \ 
-          ../../../../../src/ta_func/ta_OBV.c \ 
-          ../../../../../src/ta_func/ta_CORREL.c \ 
-          ../../../../../src/ta_func/ta_LINEARREG.c \ 
-          ../../../../../src/ta_func/ta_LINEARREG_SLOPE.c \ 
-          ../../../../../src/ta_func/ta_LINEARREG_ANGLE.c \ 
-          ../../../../../src/ta_func/ta_LINEARREG_INTERCEPT.c \ 
-          ../../../../../src/ta_func/ta_STDDEV.c \ 
           ../../../../../src/ta_func/ta_TSF.c \ 
-          ../../../../../src/ta_func/ta_VAR.c \ 
-          ../../../../../src/ta_func/ta_AVGPRICE.c \ 
-          ../../../../../src/ta_func/ta_MEDPRICE.c \ 
           ../../../../../src/ta_func/ta_TYPPRICE.c \ 
-          ../../../../../src/ta_func/ta_WCLPRICE.c 
+          ../../../../../src/ta_func/ta_VAR.c \ 
+          ../../../../../src/ta_func/ta_WCLPRICE.c \ 
+          ../../../../../src/ta_func/ta_WILLR.c \ 
+          ../../../../../src/ta_func/ta_WMA.c 
 
 # Compiler Options
 INCLUDEPATH = ../../../../../src/ta_common \n              ../../../../../include 

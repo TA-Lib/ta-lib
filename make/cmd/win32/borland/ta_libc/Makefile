@@ -115,73 +115,73 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_abstract\tables\table_y.c \
 		..\..\..\..\..\src\ta_abstract\tables\table_z.c \
 		..\..\..\..\..\src\ta_func\ta_utility.c \
-		..\..\..\..\..\src\ta_func\ta_MAX.c \
-		..\..\..\..\..\src\ta_func\ta_MIN.c \
-		..\..\..\..\..\src\ta_func\ta_BBANDS.c \
-		..\..\..\..\..\src\ta_func\ta_DEMA.c \
-		..\..\..\..\..\src\ta_func\ta_EMA.c \
-		..\..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c \
-		..\..\..\..\..\src\ta_func\ta_KAMA.c \
-		..\..\..\..\..\src\ta_func\ta_MA.c \
-		..\..\..\..\..\src\ta_func\ta_MAMA.c \
-		..\..\..\..\..\src\ta_func\ta_MIDPRICE.c \
-		..\..\..\..\..\src\ta_func\ta_MIDPOINT.c \
-		..\..\..\..\..\src\ta_func\ta_SAR.c \
-		..\..\..\..\..\src\ta_func\ta_SAREXT.c \
-		..\..\..\..\..\src\ta_func\ta_SMA.c \
-		..\..\..\..\..\src\ta_func\ta_T3.c \
-		..\..\..\..\..\src\ta_func\ta_TEMA.c \
-		..\..\..\..\..\src\ta_func\ta_TRIMA.c \
-		..\..\..\..\..\src\ta_func\ta_WMA.c \
-		..\..\..\..\..\src\ta_func\ta_ATR.c \
-		..\..\..\..\..\src\ta_func\ta_TRANGE.c \
+		..\..\..\..\..\src\ta_func\ta_AD.c \
+		..\..\..\..\..\src\ta_func\ta_ADOSC.c \
 		..\..\..\..\..\src\ta_func\ta_ADX.c \
 		..\..\..\..\..\src\ta_func\ta_ADXR.c \
 		..\..\..\..\..\src\ta_func\ta_APO.c \
 		..\..\..\..\..\src\ta_func\ta_AROON.c \
 		..\..\..\..\..\src\ta_func\ta_AROONOSC.c \
+		..\..\..\..\..\src\ta_func\ta_ATR.c \
+		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c \
+		..\..\..\..\..\src\ta_func\ta_BBANDS.c \
 		..\..\..\..\..\src\ta_func\ta_CCI.c \
+		..\..\..\..\..\src\ta_func\ta_CORREL.c \
+		..\..\..\..\..\src\ta_func\ta_DEMA.c \
 		..\..\..\..\..\src\ta_func\ta_DX.c \
+		..\..\..\..\..\src\ta_func\ta_EMA.c \
+		..\..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c \
+		..\..\..\..\..\src\ta_func\ta_HT_DCPHASE.c \
+		..\..\..\..\..\src\ta_func\ta_HT_PHASOR.c \
+		..\..\..\..\..\src\ta_func\ta_HT_SINE.c \
+		..\..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c \
+		..\..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c \
+		..\..\..\..\..\src\ta_func\ta_KAMA.c \
+		..\..\..\..\..\src\ta_func\ta_LINEARREG.c \
+		..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c \
+		..\..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c \
+		..\..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c \
+		..\..\..\..\..\src\ta_func\ta_MA.c \
 		..\..\..\..\..\src\ta_func\ta_MACD.c \
 		..\..\..\..\..\src\ta_func\ta_MACDEXT.c \
 		..\..\..\..\..\src\ta_func\ta_MACDFIX.c \
+		..\..\..\..\..\src\ta_func\ta_MAMA.c \
+		..\..\..\..\..\src\ta_func\ta_MAX.c \
+		..\..\..\..\..\src\ta_func\ta_MEDPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_MFI.c \
+		..\..\..\..\..\src\ta_func\ta_MIDPOINT.c \
+		..\..\..\..\..\src\ta_func\ta_MIDPRICE.c \
+		..\..\..\..\..\src\ta_func\ta_MIN.c \
 		..\..\..\..\..\src\ta_func\ta_MINUS_DI.c \
 		..\..\..\..\..\src\ta_func\ta_MINUS_DM.c \
 		..\..\..\..\..\src\ta_func\ta_MOM.c \
-		..\..\..\..\..\src\ta_func\ta_PPO.c \
+		..\..\..\..\..\src\ta_func\ta_OBV.c \
 		..\..\..\..\..\src\ta_func\ta_PLUS_DI.c \
 		..\..\..\..\..\src\ta_func\ta_PLUS_DM.c \
+		..\..\..\..\..\src\ta_func\ta_PPO.c \
 		..\..\..\..\..\src\ta_func\ta_ROC.c \
 		..\..\..\..\..\src\ta_func\ta_ROCP.c \
 		..\..\..\..\..\src\ta_func\ta_ROCR.c \
 		..\..\..\..\..\src\ta_func\ta_ROCR100.c \
 		..\..\..\..\..\src\ta_func\ta_RSI.c \
+		..\..\..\..\..\src\ta_func\ta_SAR.c \
+		..\..\..\..\..\src\ta_func\ta_SAREXT.c \
+		..\..\..\..\..\src\ta_func\ta_SMA.c \
+		..\..\..\..\..\src\ta_func\ta_STDDEV.c \
 		..\..\..\..\..\src\ta_func\ta_STOCH.c \
 		..\..\..\..\..\src\ta_func\ta_STOCHF.c \
 		..\..\..\..\..\src\ta_func\ta_STOCHRSI.c \
+		..\..\..\..\..\src\ta_func\ta_T3.c \
+		..\..\..\..\..\src\ta_func\ta_TEMA.c \
+		..\..\..\..\..\src\ta_func\ta_TRANGE.c \
+		..\..\..\..\..\src\ta_func\ta_TRIMA.c \
 		..\..\..\..\..\src\ta_func\ta_TRIX.c \
-		..\..\..\..\..\src\ta_func\ta_WILLR.c \
-		..\..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c \
-		..\..\..\..\..\src\ta_func\ta_HT_DCPHASE.c \
-		..\..\..\..\..\src\ta_func\ta_HT_PHASOR.c \
-		..\..\..\..\..\src\ta_func\ta_HT_SINE.c \
-		..\..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c \
-		..\..\..\..\..\src\ta_func\ta_AD.c \
-		..\..\..\..\..\src\ta_func\ta_ADOSC.c \
-		..\..\..\..\..\src\ta_func\ta_OBV.c \
-		..\..\..\..\..\src\ta_func\ta_CORREL.c \
-		..\..\..\..\..\src\ta_func\ta_LINEARREG.c \
-		..\..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c \
-		..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c \
-		..\..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c \
-		..\..\..\..\..\src\ta_func\ta_STDDEV.c \
 		..\..\..\..\..\src\ta_func\ta_TSF.c \
-		..\..\..\..\..\src\ta_func\ta_VAR.c \
-		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c \
-		..\..\..\..\..\src\ta_func\ta_MEDPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_TYPPRICE.c \
+		..\..\..\..\..\src\ta_func\ta_VAR.c \
 		..\..\..\..\..\src\ta_func\ta_WCLPRICE.c \
+		..\..\..\..\..\src\ta_func\ta_WILLR.c \
+		..\..\..\..\..\src\ta_func\ta_WMA.c \
 		..\..\..\..\..\src\ta_pm\ta_pm.c \
 		..\..\..\..\..\src\ta_pm\ta_pmvalue.c \
 		..\..\..\..\..\src\ta_pm\ta_pmarray.c \
@@ -277,73 +277,73 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\table_y.obj \
 		..\..\..\..\..\temp\cmd\table_z.obj \
 		..\..\..\..\..\temp\cmd\ta_utility.obj \
-		..\..\..\..\..\temp\cmd\ta_MAX.obj \
-		..\..\..\..\..\temp\cmd\ta_MIN.obj \
-		..\..\..\..\..\temp\cmd\ta_BBANDS.obj \
-		..\..\..\..\..\temp\cmd\ta_DEMA.obj \
-		..\..\..\..\..\temp\cmd\ta_EMA.obj \
-		..\..\..\..\..\temp\cmd\ta_HT_TRENDLINE.obj \
-		..\..\..\..\..\temp\cmd\ta_KAMA.obj \
-		..\..\..\..\..\temp\cmd\ta_MA.obj \
-		..\..\..\..\..\temp\cmd\ta_MAMA.obj \
-		..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj \
-		..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj \
-		..\..\..\..\..\temp\cmd\ta_SAR.obj \
-		..\..\..\..\..\temp\cmd\ta_SAREXT.obj \
-		..\..\..\..\..\temp\cmd\ta_SMA.obj \
-		..\..\..\..\..\temp\cmd\ta_T3.obj \
-		..\..\..\..\..\temp\cmd\ta_TEMA.obj \
-		..\..\..\..\..\temp\cmd\ta_TRIMA.obj \
-		..\..\..\..\..\temp\cmd\ta_WMA.obj \
-		..\..\..\..\..\temp\cmd\ta_ATR.obj \
-		..\..\..\..\..\temp\cmd\ta_TRANGE.obj \
+		..\..\..\..\..\temp\cmd\ta_AD.obj \
+		..\..\..\..\..\temp\cmd\ta_ADOSC.obj \
 		..\..\..\..\..\temp\cmd\ta_ADX.obj \
 		..\..\..\..\..\temp\cmd\ta_ADXR.obj \
 		..\..\..\..\..\temp\cmd\ta_APO.obj \
 		..\..\..\..\..\temp\cmd\ta_AROON.obj \
 		..\..\..\..\..\temp\cmd\ta_AROONOSC.obj \
+		..\..\..\..\..\temp\cmd\ta_ATR.obj \
+		..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj \
+		..\..\..\..\..\temp\cmd\ta_BBANDS.obj \
 		..\..\..\..\..\temp\cmd\ta_CCI.obj \
+		..\..\..\..\..\temp\cmd\ta_CORREL.obj \
+		..\..\..\..\..\temp\cmd\ta_DEMA.obj \
 		..\..\..\..\..\temp\cmd\ta_DX.obj \
+		..\..\..\..\..\temp\cmd\ta_EMA.obj \
+		..\..\..\..\..\temp\cmd\ta_HT_DCPERIOD.obj \
+		..\..\..\..\..\temp\cmd\ta_HT_DCPHASE.obj \
+		..\..\..\..\..\temp\cmd\ta_HT_PHASOR.obj \
+		..\..\..\..\..\temp\cmd\ta_HT_SINE.obj \
+		..\..\..\..\..\temp\cmd\ta_HT_TRENDLINE.obj \
+		..\..\..\..\..\temp\cmd\ta_HT_TRENDMODE.obj \
+		..\..\..\..\..\temp\cmd\ta_KAMA.obj \
+		..\..\..\..\..\temp\cmd\ta_LINEARREG.obj \
+		..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj \
+		..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj \
+		..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj \
+		..\..\..\..\..\temp\cmd\ta_MA.obj \
 		..\..\..\..\..\temp\cmd\ta_MACD.obj \
 		..\..\..\..\..\temp\cmd\ta_MACDEXT.obj \
 		..\..\..\..\..\temp\cmd\ta_MACDFIX.obj \
+		..\..\..\..\..\temp\cmd\ta_MAMA.obj \
+		..\..\..\..\..\temp\cmd\ta_MAX.obj \
+		..\..\..\..\..\temp\cmd\ta_MEDPRICE.obj \
 		..\..\..\..\..\temp\cmd\ta_MFI.obj \
+		..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj \
+		..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj \
+		..\..\..\..\..\temp\cmd\ta_MIN.obj \
 		..\..\..\..\..\temp\cmd\ta_MINUS_DI.obj \
 		..\..\..\..\..\temp\cmd\ta_MINUS_DM.obj \
 		..\..\..\..\..\temp\cmd\ta_MOM.obj \
-		..\..\..\..\..\temp\cmd\ta_PPO.obj \
+		..\..\..\..\..\temp\cmd\ta_OBV.obj \
 		..\..\..\..\..\temp\cmd\ta_PLUS_DI.obj \
 		..\..\..\..\..\temp\cmd\ta_PLUS_DM.obj \
+		..\..\..\..\..\temp\cmd\ta_PPO.obj \
 		..\..\..\..\..\temp\cmd\ta_ROC.obj \
 		..\..\..\..\..\temp\cmd\ta_ROCP.obj \
 		..\..\..\..\..\temp\cmd\ta_ROCR.obj \
 		..\..\..\..\..\temp\cmd\ta_ROCR100.obj \
 		..\..\..\..\..\temp\cmd\ta_RSI.obj \
+		..\..\..\..\..\temp\cmd\ta_SAR.obj \
+		..\..\..\..\..\temp\cmd\ta_SAREXT.obj \
+		..\..\..\..\..\temp\cmd\ta_SMA.obj \
+		..\..\..\..\..\temp\cmd\ta_STDDEV.obj \
 		..\..\..\..\..\temp\cmd\ta_STOCH.obj \
 		..\..\..\..\..\temp\cmd\ta_STOCHF.obj \
 		..\..\..\..\..\temp\cmd\ta_STOCHRSI.obj \
+		..\..\..\..\..\temp\cmd\ta_T3.obj \
+		..\..\..\..\..\temp\cmd\ta_TEMA.obj \
+		..\..\..\..\..\temp\cmd\ta_TRANGE.obj \
+		..\..\..\..\..\temp\cmd\ta_TRIMA.obj \
 		..\..\..\..\..\temp\cmd\ta_TRIX.obj \
-		..\..\..\..\..\temp\cmd\ta_WILLR.obj \
-		..\..\..\..\..\temp\cmd\ta_HT_DCPERIOD.obj \
-		..\..\..\..\..\temp\cmd\ta_HT_DCPHASE.obj \
-		..\..\..\..\..\temp\cmd\ta_HT_PHASOR.obj \
-		..\..\..\..\..\temp\cmd\ta_HT_SINE.obj \
-		..\..\..\..\..\temp\cmd\ta_HT_TRENDMODE.obj \
-		..\..\..\..\..\temp\cmd\ta_AD.obj \
-		..\..\..\..\..\temp\cmd\ta_ADOSC.obj \
-		..\..\..\..\..\temp\cmd\ta_OBV.obj \
-		..\..\..\..\..\temp\cmd\ta_CORREL.obj \
-		..\..\..\..\..\temp\cmd\ta_LINEARREG.obj \
-		..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj \
-		..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj \
-		..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj \
-		..\..\..\..\..\temp\cmd\ta_STDDEV.obj \
 		..\..\..\..\..\temp\cmd\ta_TSF.obj \
-		..\..\..\..\..\temp\cmd\ta_VAR.obj \
-		..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj \
-		..\..\..\..\..\temp\cmd\ta_MEDPRICE.obj \
 		..\..\..\..\..\temp\cmd\ta_TYPPRICE.obj \
+		..\..\..\..\..\temp\cmd\ta_VAR.obj \
 		..\..\..\..\..\temp\cmd\ta_WCLPRICE.obj \
+		..\..\..\..\..\temp\cmd\ta_WILLR.obj \
+		..\..\..\..\..\temp\cmd\ta_WMA.obj \
 		..\..\..\..\..\temp\cmd\ta_pm.obj \
 		..\..\..\..\..\temp\cmd\ta_pmvalue.obj \
 		..\..\..\..\..\temp\cmd\ta_pmarray.obj \
@@ -471,73 +471,73 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmd\table_y.obj \
 +..\..\..\..\..\temp\cmd\table_z.obj \
 +..\..\..\..\..\temp\cmd\ta_utility.obj \
-+..\..\..\..\..\temp\cmd\ta_MAX.obj \
-+..\..\..\..\..\temp\cmd\ta_MIN.obj \
-+..\..\..\..\..\temp\cmd\ta_BBANDS.obj \
-+..\..\..\..\..\temp\cmd\ta_DEMA.obj \
-+..\..\..\..\..\temp\cmd\ta_EMA.obj \
-+..\..\..\..\..\temp\cmd\ta_HT_TRENDLINE.obj \
-+..\..\..\..\..\temp\cmd\ta_KAMA.obj \
-+..\..\..\..\..\temp\cmd\ta_MA.obj \
-+..\..\..\..\..\temp\cmd\ta_MAMA.obj \
-+..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj \
-+..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj \
-+..\..\..\..\..\temp\cmd\ta_SAR.obj \
-+..\..\..\..\..\temp\cmd\ta_SAREXT.obj \
-+..\..\..\..\..\temp\cmd\ta_SMA.obj \
-+..\..\..\..\..\temp\cmd\ta_T3.obj \
-+..\..\..\..\..\temp\cmd\ta_TEMA.obj \
-+..\..\..\..\..\temp\cmd\ta_TRIMA.obj \
-+..\..\..\..\..\temp\cmd\ta_WMA.obj \
-+..\..\..\..\..\temp\cmd\ta_ATR.obj \
-+..\..\..\..\..\temp\cmd\ta_TRANGE.obj \
++..\..\..\..\..\temp\cmd\ta_AD.obj \
++..\..\..\..\..\temp\cmd\ta_ADOSC.obj \
 +..\..\..\..\..\temp\cmd\ta_ADX.obj \
 +..\..\..\..\..\temp\cmd\ta_ADXR.obj \
 +..\..\..\..\..\temp\cmd\ta_APO.obj \
 +..\..\..\..\..\temp\cmd\ta_AROON.obj \
 +..\..\..\..\..\temp\cmd\ta_AROONOSC.obj \
++..\..\..\..\..\temp\cmd\ta_ATR.obj \
++..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj \
++..\..\..\..\..\temp\cmd\ta_BBANDS.obj \
 +..\..\..\..\..\temp\cmd\ta_CCI.obj \
++..\..\..\..\..\temp\cmd\ta_CORREL.obj \
++..\..\..\..\..\temp\cmd\ta_DEMA.obj \
 +..\..\..\..\..\temp\cmd\ta_DX.obj \
++..\..\..\..\..\temp\cmd\ta_EMA.obj \
++..\..\..\..\..\temp\cmd\ta_HT_DCPERIOD.obj \
++..\..\..\..\..\temp\cmd\ta_HT_DCPHASE.obj \
++..\..\..\..\..\temp\cmd\ta_HT_PHASOR.obj \
++..\..\..\..\..\temp\cmd\ta_HT_SINE.obj \
++..\..\..\..\..\temp\cmd\ta_HT_TRENDLINE.obj \
++..\..\..\..\..\temp\cmd\ta_HT_TRENDMODE.obj \
++..\..\..\..\..\temp\cmd\ta_KAMA.obj \
++..\..\..\..\..\temp\cmd\ta_LINEARREG.obj \
++..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj \
++..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj \
++..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj \
++..\..\..\..\..\temp\cmd\ta_MA.obj \
 +..\..\..\..\..\temp\cmd\ta_MACD.obj \
 +..\..\..\..\..\temp\cmd\ta_MACDEXT.obj \
 +..\..\..\..\..\temp\cmd\ta_MACDFIX.obj \
++..\..\..\..\..\temp\cmd\ta_MAMA.obj \
++..\..\..\..\..\temp\cmd\ta_MAX.obj \
++..\..\..\..\..\temp\cmd\ta_MEDPRICE.obj \
 +..\..\..\..\..\temp\cmd\ta_MFI.obj \
++..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj \
++..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj \
++..\..\..\..\..\temp\cmd\ta_MIN.obj \
 +..\..\..\..\..\temp\cmd\ta_MINUS_DI.obj \
 +..\..\..\..\..\temp\cmd\ta_MINUS_DM.obj \
 +..\..\..\..\..\temp\cmd\ta_MOM.obj \
-+..\..\..\..\..\temp\cmd\ta_PPO.obj \
++..\..\..\..\..\temp\cmd\ta_OBV.obj \
 +..\..\..\..\..\temp\cmd\ta_PLUS_DI.obj \
 +..\..\..\..\..\temp\cmd\ta_PLUS_DM.obj \
++..\..\..\..\..\temp\cmd\ta_PPO.obj \
 +..\..\..\..\..\temp\cmd\ta_ROC.obj \
 +..\..\..\..\..\temp\cmd\ta_ROCP.obj \
 +..\..\..\..\..\temp\cmd\ta_ROCR.obj \
 +..\..\..\..\..\temp\cmd\ta_ROCR100.obj \
 +..\..\..\..\..\temp\cmd\ta_RSI.obj \
++..\..\..\..\..\temp\cmd\ta_SAR.obj \
++..\..\..\..\..\temp\cmd\ta_SAREXT.obj \
++..\..\..\..\..\temp\cmd\ta_SMA.obj \
++..\..\..\..\..\temp\cmd\ta_STDDEV.obj \
 +..\..\..\..\..\temp\cmd\ta_STOCH.obj \
 +..\..\..\..\..\temp\cmd\ta_STOCHF.obj \
 +..\..\..\..\..\temp\cmd\ta_STOCHRSI.obj \
++..\..\..\..\..\temp\cmd\ta_T3.obj \
++..\..\..\..\..\temp\cmd\ta_TEMA.obj \
++..\..\..\..\..\temp\cmd\ta_TRANGE.obj \
++..\..\..\..\..\temp\cmd\ta_TRIMA.obj \
 +..\..\..\..\..\temp\cmd\ta_TRIX.obj \
-+..\..\..\..\..\temp\cmd\ta_WILLR.obj \
-+..\..\..\..\..\temp\cmd\ta_HT_DCPERIOD.obj \
-+..\..\..\..\..\temp\cmd\ta_HT_DCPHASE.obj \
-+..\..\..\..\..\temp\cmd\ta_HT_PHASOR.obj \
-+..\..\..\..\..\temp\cmd\ta_HT_SINE.obj \
-+..\..\..\..\..\temp\cmd\ta_HT_TRENDMODE.obj \
-+..\..\..\..\..\temp\cmd\ta_AD.obj \
-+..\..\..\..\..\temp\cmd\ta_ADOSC.obj \
-+..\..\..\..\..\temp\cmd\ta_OBV.obj \
-+..\..\..\..\..\temp\cmd\ta_CORREL.obj \
-+..\..\..\..\..\temp\cmd\ta_LINEARREG.obj \
-+..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj \
-+..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj \
-+..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj \
-+..\..\..\..\..\temp\cmd\ta_STDDEV.obj \
 +..\..\..\..\..\temp\cmd\ta_TSF.obj \
-+..\..\..\..\..\temp\cmd\ta_VAR.obj \
-+..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj \
-+..\..\..\..\..\temp\cmd\ta_MEDPRICE.obj \
 +..\..\..\..\..\temp\cmd\ta_TYPPRICE.obj \
++..\..\..\..\..\temp\cmd\ta_VAR.obj \
 +..\..\..\..\..\temp\cmd\ta_WCLPRICE.obj \
++..\..\..\..\..\temp\cmd\ta_WILLR.obj \
++..\..\..\..\..\temp\cmd\ta_WMA.obj \
 +..\..\..\..\..\temp\cmd\ta_pm.obj \
 +..\..\..\..\..\temp\cmd\ta_pmvalue.obj \
 +..\..\..\..\..\temp\cmd\ta_pmarray.obj \
@@ -647,73 +647,73 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\table_y.obj
 	-del ..\..\..\..\..\temp\cmd\table_z.obj
 	-del ..\..\..\..\..\temp\cmd\ta_utility.obj
-	-del ..\..\..\..\..\temp\cmd\ta_MAX.obj
-	-del ..\..\..\..\..\temp\cmd\ta_MIN.obj
-	-del ..\..\..\..\..\temp\cmd\ta_BBANDS.obj
-	-del ..\..\..\..\..\temp\cmd\ta_DEMA.obj
-	-del ..\..\..\..\..\temp\cmd\ta_EMA.obj
-	-del ..\..\..\..\..\temp\cmd\ta_HT_TRENDLINE.obj
-	-del ..\..\..\..\..\temp\cmd\ta_KAMA.obj
-	-del ..\..\..\..\..\temp\cmd\ta_MA.obj
-	-del ..\..\..\..\..\temp\cmd\ta_MAMA.obj
-	-del ..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj
-	-del ..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj
-	-del ..\..\..\..\..\temp\cmd\ta_SAR.obj
-	-del ..\..\..\..\..\temp\cmd\ta_SAREXT.obj
-	-del ..\..\..\..\..\temp\cmd\ta_SMA.obj
-	-del ..\..\..\..\..\temp\cmd\ta_T3.obj
-	-del ..\..\..\..\..\temp\cmd\ta_TEMA.obj
-	-del ..\..\..\..\..\temp\cmd\ta_TRIMA.obj
-	-del ..\..\..\..\..\temp\cmd\ta_WMA.obj
-	-del ..\..\..\..\..\temp\cmd\ta_ATR.obj
-	-del ..\..\..\..\..\temp\cmd\ta_TRANGE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_AD.obj
+	-del ..\..\..\..\..\temp\cmd\ta_ADOSC.obj
 	-del ..\..\..\..\..\temp\cmd\ta_ADX.obj
 	-del ..\..\..\..\..\temp\cmd\ta_ADXR.obj
 	-del ..\..\..\..\..\temp\cmd\ta_APO.obj
 	-del ..\..\..\..\..\temp\cmd\ta_AROON.obj
 	-del ..\..\..\..\..\temp\cmd\ta_AROONOSC.obj
+	-del ..\..\..\..\..\temp\cmd\ta_ATR.obj
+	-del ..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_BBANDS.obj
 	-del ..\..\..\..\..\temp\cmd\ta_CCI.obj
+	-del ..\..\..\..\..\temp\cmd\ta_CORREL.obj
+	-del ..\..\..\..\..\temp\cmd\ta_DEMA.obj
 	-del ..\..\..\..\..\temp\cmd\ta_DX.obj
+	-del ..\..\..\..\..\temp\cmd\ta_EMA.obj
+	-del ..\..\..\..\..\temp\cmd\ta_HT_DCPERIOD.obj
+	-del ..\..\..\..\..\temp\cmd\ta_HT_DCPHASE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_HT_PHASOR.obj
+	-del ..\..\..\..\..\temp\cmd\ta_HT_SINE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_HT_TRENDLINE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_HT_TRENDMODE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_KAMA.obj
+	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG.obj
+	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj
+	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_MA.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MACD.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MACDEXT.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MACDFIX.obj
+	-del ..\..\..\..\..\temp\cmd\ta_MAMA.obj
+	-del ..\..\..\..\..\temp\cmd\ta_MAX.obj
+	-del ..\..\..\..\..\temp\cmd\ta_MEDPRICE.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MFI.obj
+	-del ..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj
+	-del ..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_MIN.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MINUS_DI.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MINUS_DM.obj
 	-del ..\..\..\..\..\temp\cmd\ta_MOM.obj
-	-del ..\..\..\..\..\temp\cmd\ta_PPO.obj
+	-del ..\..\..\..\..\temp\cmd\ta_OBV.obj
 	-del ..\..\..\..\..\temp\cmd\ta_PLUS_DI.obj
 	-del ..\..\..\..\..\temp\cmd\ta_PLUS_DM.obj
+	-del ..\..\..\..\..\temp\cmd\ta_PPO.obj
 	-del ..\..\..\..\..\temp\cmd\ta_ROC.obj
 	-del ..\..\..\..\..\temp\cmd\ta_ROCP.obj
 	-del ..\..\..\..\..\temp\cmd\ta_ROCR.obj
 	-del ..\..\..\..\..\temp\cmd\ta_ROCR100.obj
 	-del ..\..\..\..\..\temp\cmd\ta_RSI.obj
+	-del ..\..\..\..\..\temp\cmd\ta_SAR.obj
+	-del ..\..\..\..\..\temp\cmd\ta_SAREXT.obj
+	-del ..\..\..\..\..\temp\cmd\ta_SMA.obj
+	-del ..\..\..\..\..\temp\cmd\ta_STDDEV.obj
 	-del ..\..\..\..\..\temp\cmd\ta_STOCH.obj
 	-del ..\..\..\..\..\temp\cmd\ta_STOCHF.obj
 	-del ..\..\..\..\..\temp\cmd\ta_STOCHRSI.obj
+	-del ..\..\..\..\..\temp\cmd\ta_T3.obj
+	-del ..\..\..\..\..\temp\cmd\ta_TEMA.obj
+	-del ..\..\..\..\..\temp\cmd\ta_TRANGE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_TRIMA.obj
 	-del ..\..\..\..\..\temp\cmd\ta_TRIX.obj
-	-del ..\..\..\..\..\temp\cmd\ta_WILLR.obj
-	-del ..\..\..\..\..\temp\cmd\ta_HT_DCPERIOD.obj
-	-del ..\..\..\..\..\temp\cmd\ta_HT_DCPHASE.obj
-	-del ..\..\..\..\..\temp\cmd\ta_HT_PHASOR.obj
-	-del ..\..\..\..\..\temp\cmd\ta_HT_SINE.obj
-	-del ..\..\..\..\..\temp\cmd\ta_HT_TRENDMODE.obj
-	-del ..\..\..\..\..\temp\cmd\ta_AD.obj
-	-del ..\..\..\..\..\temp\cmd\ta_ADOSC.obj
-	-del ..\..\..\..\..\temp\cmd\ta_OBV.obj
-	-del ..\..\..\..\..\temp\cmd\ta_CORREL.obj
-	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG.obj
-	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj
-	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj
-	-del ..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj
-	-del ..\..\..\..\..\temp\cmd\ta_STDDEV.obj
 	-del ..\..\..\..\..\temp\cmd\ta_TSF.obj
-	-del ..\..\..\..\..\temp\cmd\ta_VAR.obj
-	-del ..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj
-	-del ..\..\..\..\..\temp\cmd\ta_MEDPRICE.obj
 	-del ..\..\..\..\..\temp\cmd\ta_TYPPRICE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_VAR.obj
 	-del ..\..\..\..\..\temp\cmd\ta_WCLPRICE.obj
+	-del ..\..\..\..\..\temp\cmd\ta_WILLR.obj
+	-del ..\..\..\..\..\temp\cmd\ta_WMA.obj
 	-del ..\..\..\..\..\temp\cmd\ta_pm.obj
 	-del ..\..\..\..\..\temp\cmd\ta_pmvalue.obj
 	-del ..\..\..\..\..\temp\cmd\ta_pmarray.obj
@@ -997,65 +997,11 @@ clean:
 ..\..\..\..\..\temp\cmd\ta_utility.obj: ..\..\..\..\..\src\ta_func\ta_utility.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_utility.obj ..\..\..\..\..\src\ta_func\ta_utility.c
 
-..\..\..\..\..\temp\cmd\ta_MAX.obj: ..\..\..\..\..\src\ta_func\ta_MAX.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MAX.obj ..\..\..\..\..\src\ta_func\ta_MAX.c
+..\..\..\..\..\temp\cmd\ta_AD.obj: ..\..\..\..\..\src\ta_func\ta_AD.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_AD.obj ..\..\..\..\..\src\ta_func\ta_AD.c
 
-..\..\..\..\..\temp\cmd\ta_MIN.obj: ..\..\..\..\..\src\ta_func\ta_MIN.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MIN.obj ..\..\..\..\..\src\ta_func\ta_MIN.c
-
-..\..\..\..\..\temp\cmd\ta_BBANDS.obj: ..\..\..\..\..\src\ta_func\ta_BBANDS.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_BBANDS.obj ..\..\..\..\..\src\ta_func\ta_BBANDS.c
-
-..\..\..\..\..\temp\cmd\ta_DEMA.obj: ..\..\..\..\..\src\ta_func\ta_DEMA.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_DEMA.obj ..\..\..\..\..\src\ta_func\ta_DEMA.c
-
-..\..\..\..\..\temp\cmd\ta_EMA.obj: ..\..\..\..\..\src\ta_func\ta_EMA.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_EMA.obj ..\..\..\..\..\src\ta_func\ta_EMA.c
-
-..\..\..\..\..\temp\cmd\ta_HT_TRENDLINE.obj: ..\..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_HT_TRENDLINE.obj ..\..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c
-
-..\..\..\..\..\temp\cmd\ta_KAMA.obj: ..\..\..\..\..\src\ta_func\ta_KAMA.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_KAMA.obj ..\..\..\..\..\src\ta_func\ta_KAMA.c
-
-..\..\..\..\..\temp\cmd\ta_MA.obj: ..\..\..\..\..\src\ta_func\ta_MA.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MA.obj ..\..\..\..\..\src\ta_func\ta_MA.c
-
-..\..\..\..\..\temp\cmd\ta_MAMA.obj: ..\..\..\..\..\src\ta_func\ta_MAMA.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MAMA.obj ..\..\..\..\..\src\ta_func\ta_MAMA.c
-
-..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj: ..\..\..\..\..\src\ta_func\ta_MIDPRICE.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj ..\..\..\..\..\src\ta_func\ta_MIDPRICE.c
-
-..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj: ..\..\..\..\..\src\ta_func\ta_MIDPOINT.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj ..\..\..\..\..\src\ta_func\ta_MIDPOINT.c
-
-..\..\..\..\..\temp\cmd\ta_SAR.obj: ..\..\..\..\..\src\ta_func\ta_SAR.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_SAR.obj ..\..\..\..\..\src\ta_func\ta_SAR.c
-
-..\..\..\..\..\temp\cmd\ta_SAREXT.obj: ..\..\..\..\..\src\ta_func\ta_SAREXT.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_SAREXT.obj ..\..\..\..\..\src\ta_func\ta_SAREXT.c
-
-..\..\..\..\..\temp\cmd\ta_SMA.obj: ..\..\..\..\..\src\ta_func\ta_SMA.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_SMA.obj ..\..\..\..\..\src\ta_func\ta_SMA.c
-
-..\..\..\..\..\temp\cmd\ta_T3.obj: ..\..\..\..\..\src\ta_func\ta_T3.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_T3.obj ..\..\..\..\..\src\ta_func\ta_T3.c
-
-..\..\..\..\..\temp\cmd\ta_TEMA.obj: ..\..\..\..\..\src\ta_func\ta_TEMA.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_TEMA.obj ..\..\..\..\..\src\ta_func\ta_TEMA.c
-
-..\..\..\..\..\temp\cmd\ta_TRIMA.obj: ..\..\..\..\..\src\ta_func\ta_TRIMA.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_TRIMA.obj ..\..\..\..\..\src\ta_func\ta_TRIMA.c
-
-..\..\..\..\..\temp\cmd\ta_WMA.obj: ..\..\..\..\..\src\ta_func\ta_WMA.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_WMA.obj ..\..\..\..\..\src\ta_func\ta_WMA.c
-
-..\..\..\..\..\temp\cmd\ta_ATR.obj: ..\..\..\..\..\src\ta_func\ta_ATR.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_ATR.obj ..\..\..\..\..\src\ta_func\ta_ATR.c
-
-..\..\..\..\..\temp\cmd\ta_TRANGE.obj: ..\..\..\..\..\src\ta_func\ta_TRANGE.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_TRANGE.obj ..\..\..\..\..\src\ta_func\ta_TRANGE.c
+..\..\..\..\..\temp\cmd\ta_ADOSC.obj: ..\..\..\..\..\src\ta_func\ta_ADOSC.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_ADOSC.obj ..\..\..\..\..\src\ta_func\ta_ADOSC.c
 
 ..\..\..\..\..\temp\cmd\ta_ADX.obj: ..\..\..\..\..\src\ta_func\ta_ADX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_ADX.obj ..\..\..\..\..\src\ta_func\ta_ADX.c
@@ -1072,11 +1018,65 @@ clean:
 ..\..\..\..\..\temp\cmd\ta_AROONOSC.obj: ..\..\..\..\..\src\ta_func\ta_AROONOSC.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_AROONOSC.obj ..\..\..\..\..\src\ta_func\ta_AROONOSC.c
 
+..\..\..\..\..\temp\cmd\ta_ATR.obj: ..\..\..\..\..\src\ta_func\ta_ATR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_ATR.obj ..\..\..\..\..\src\ta_func\ta_ATR.c
+
+..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj: ..\..\..\..\..\src\ta_func\ta_AVGPRICE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj ..\..\..\..\..\src\ta_func\ta_AVGPRICE.c
+
+..\..\..\..\..\temp\cmd\ta_BBANDS.obj: ..\..\..\..\..\src\ta_func\ta_BBANDS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_BBANDS.obj ..\..\..\..\..\src\ta_func\ta_BBANDS.c
+
 ..\..\..\..\..\temp\cmd\ta_CCI.obj: ..\..\..\..\..\src\ta_func\ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CCI.obj ..\..\..\..\..\src\ta_func\ta_CCI.c
 
+..\..\..\..\..\temp\cmd\ta_CORREL.obj: ..\..\..\..\..\src\ta_func\ta_CORREL.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CORREL.obj ..\..\..\..\..\src\ta_func\ta_CORREL.c
+
+..\..\..\..\..\temp\cmd\ta_DEMA.obj: ..\..\..\..\..\src\ta_func\ta_DEMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_DEMA.obj ..\..\..\..\..\src\ta_func\ta_DEMA.c
+
 ..\..\..\..\..\temp\cmd\ta_DX.obj: ..\..\..\..\..\src\ta_func\ta_DX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_DX.obj ..\..\..\..\..\src\ta_func\ta_DX.c
+
+..\..\..\..\..\temp\cmd\ta_EMA.obj: ..\..\..\..\..\src\ta_func\ta_EMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_EMA.obj ..\..\..\..\..\src\ta_func\ta_EMA.c
+
+..\..\..\..\..\temp\cmd\ta_HT_DCPERIOD.obj: ..\..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_HT_DCPERIOD.obj ..\..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c
+
+..\..\..\..\..\temp\cmd\ta_HT_DCPHASE.obj: ..\..\..\..\..\src\ta_func\ta_HT_DCPHASE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_HT_DCPHASE.obj ..\..\..\..\..\src\ta_func\ta_HT_DCPHASE.c
+
+..\..\..\..\..\temp\cmd\ta_HT_PHASOR.obj: ..\..\..\..\..\src\ta_func\ta_HT_PHASOR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_HT_PHASOR.obj ..\..\..\..\..\src\ta_func\ta_HT_PHASOR.c
+
+..\..\..\..\..\temp\cmd\ta_HT_SINE.obj: ..\..\..\..\..\src\ta_func\ta_HT_SINE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_HT_SINE.obj ..\..\..\..\..\src\ta_func\ta_HT_SINE.c
+
+..\..\..\..\..\temp\cmd\ta_HT_TRENDLINE.obj: ..\..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_HT_TRENDLINE.obj ..\..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c
+
+..\..\..\..\..\temp\cmd\ta_HT_TRENDMODE.obj: ..\..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_HT_TRENDMODE.obj ..\..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c
+
+..\..\..\..\..\temp\cmd\ta_KAMA.obj: ..\..\..\..\..\src\ta_func\ta_KAMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_KAMA.obj ..\..\..\..\..\src\ta_func\ta_KAMA.c
+
+..\..\..\..\..\temp\cmd\ta_LINEARREG.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_LINEARREG.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG.c
+
+..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c
+
+..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c
+
+..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c
+
+..\..\..\..\..\temp\cmd\ta_MA.obj: ..\..\..\..\..\src\ta_func\ta_MA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MA.obj ..\..\..\..\..\src\ta_func\ta_MA.c
 
 ..\..\..\..\..\temp\cmd\ta_MACD.obj: ..\..\..\..\..\src\ta_func\ta_MACD.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MACD.obj ..\..\..\..\..\src\ta_func\ta_MACD.c
@@ -1087,8 +1087,26 @@ clean:
 ..\..\..\..\..\temp\cmd\ta_MACDFIX.obj: ..\..\..\..\..\src\ta_func\ta_MACDFIX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MACDFIX.obj ..\..\..\..\..\src\ta_func\ta_MACDFIX.c
 
+..\..\..\..\..\temp\cmd\ta_MAMA.obj: ..\..\..\..\..\src\ta_func\ta_MAMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MAMA.obj ..\..\..\..\..\src\ta_func\ta_MAMA.c
+
+..\..\..\..\..\temp\cmd\ta_MAX.obj: ..\..\..\..\..\src\ta_func\ta_MAX.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MAX.obj ..\..\..\..\..\src\ta_func\ta_MAX.c
+
+..\..\..\..\..\temp\cmd\ta_MEDPRICE.obj: ..\..\..\..\..\src\ta_func\ta_MEDPRICE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MEDPRICE.obj ..\..\..\..\..\src\ta_func\ta_MEDPRICE.c
+
 ..\..\..\..\..\temp\cmd\ta_MFI.obj: ..\..\..\..\..\src\ta_func\ta_MFI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MFI.obj ..\..\..\..\..\src\ta_func\ta_MFI.c
+
+..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj: ..\..\..\..\..\src\ta_func\ta_MIDPOINT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MIDPOINT.obj ..\..\..\..\..\src\ta_func\ta_MIDPOINT.c
+
+..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj: ..\..\..\..\..\src\ta_func\ta_MIDPRICE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MIDPRICE.obj ..\..\..\..\..\src\ta_func\ta_MIDPRICE.c
+
+..\..\..\..\..\temp\cmd\ta_MIN.obj: ..\..\..\..\..\src\ta_func\ta_MIN.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MIN.obj ..\..\..\..\..\src\ta_func\ta_MIN.c
 
 ..\..\..\..\..\temp\cmd\ta_MINUS_DI.obj: ..\..\..\..\..\src\ta_func\ta_MINUS_DI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MINUS_DI.obj ..\..\..\..\..\src\ta_func\ta_MINUS_DI.c
@@ -1099,14 +1117,17 @@ clean:
 ..\..\..\..\..\temp\cmd\ta_MOM.obj: ..\..\..\..\..\src\ta_func\ta_MOM.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MOM.obj ..\..\..\..\..\src\ta_func\ta_MOM.c
 
-..\..\..\..\..\temp\cmd\ta_PPO.obj: ..\..\..\..\..\src\ta_func\ta_PPO.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_PPO.obj ..\..\..\..\..\src\ta_func\ta_PPO.c
+..\..\..\..\..\temp\cmd\ta_OBV.obj: ..\..\..\..\..\src\ta_func\ta_OBV.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_OBV.obj ..\..\..\..\..\src\ta_func\ta_OBV.c
 
 ..\..\..\..\..\temp\cmd\ta_PLUS_DI.obj: ..\..\..\..\..\src\ta_func\ta_PLUS_DI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_PLUS_DI.obj ..\..\..\..\..\src\ta_func\ta_PLUS_DI.c
 
 ..\..\..\..\..\temp\cmd\ta_PLUS_DM.obj: ..\..\..\..\..\src\ta_func\ta_PLUS_DM.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_PLUS_DM.obj ..\..\..\..\..\src\ta_func\ta_PLUS_DM.c
+
+..\..\..\..\..\temp\cmd\ta_PPO.obj: ..\..\..\..\..\src\ta_func\ta_PPO.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_PPO.obj ..\..\..\..\..\src\ta_func\ta_PPO.c
 
 ..\..\..\..\..\temp\cmd\ta_ROC.obj: ..\..\..\..\..\src\ta_func\ta_ROC.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_ROC.obj ..\..\..\..\..\src\ta_func\ta_ROC.c
@@ -1123,6 +1144,18 @@ clean:
 ..\..\..\..\..\temp\cmd\ta_RSI.obj: ..\..\..\..\..\src\ta_func\ta_RSI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_RSI.obj ..\..\..\..\..\src\ta_func\ta_RSI.c
 
+..\..\..\..\..\temp\cmd\ta_SAR.obj: ..\..\..\..\..\src\ta_func\ta_SAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_SAR.obj ..\..\..\..\..\src\ta_func\ta_SAR.c
+
+..\..\..\..\..\temp\cmd\ta_SAREXT.obj: ..\..\..\..\..\src\ta_func\ta_SAREXT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_SAREXT.obj ..\..\..\..\..\src\ta_func\ta_SAREXT.c
+
+..\..\..\..\..\temp\cmd\ta_SMA.obj: ..\..\..\..\..\src\ta_func\ta_SMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_SMA.obj ..\..\..\..\..\src\ta_func\ta_SMA.c
+
+..\..\..\..\..\temp\cmd\ta_STDDEV.obj: ..\..\..\..\..\src\ta_func\ta_STDDEV.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_STDDEV.obj ..\..\..\..\..\src\ta_func\ta_STDDEV.c
+
 ..\..\..\..\..\temp\cmd\ta_STOCH.obj: ..\..\..\..\..\src\ta_func\ta_STOCH.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_STOCH.obj ..\..\..\..\..\src\ta_func\ta_STOCH.c
 
@@ -1132,71 +1165,38 @@ clean:
 ..\..\..\..\..\temp\cmd\ta_STOCHRSI.obj: ..\..\..\..\..\src\ta_func\ta_STOCHRSI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_STOCHRSI.obj ..\..\..\..\..\src\ta_func\ta_STOCHRSI.c
 
+..\..\..\..\..\temp\cmd\ta_T3.obj: ..\..\..\..\..\src\ta_func\ta_T3.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_T3.obj ..\..\..\..\..\src\ta_func\ta_T3.c
+
+..\..\..\..\..\temp\cmd\ta_TEMA.obj: ..\..\..\..\..\src\ta_func\ta_TEMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_TEMA.obj ..\..\..\..\..\src\ta_func\ta_TEMA.c
+
+..\..\..\..\..\temp\cmd\ta_TRANGE.obj: ..\..\..\..\..\src\ta_func\ta_TRANGE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_TRANGE.obj ..\..\..\..\..\src\ta_func\ta_TRANGE.c
+
+..\..\..\..\..\temp\cmd\ta_TRIMA.obj: ..\..\..\..\..\src\ta_func\ta_TRIMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_TRIMA.obj ..\..\..\..\..\src\ta_func\ta_TRIMA.c
+
 ..\..\..\..\..\temp\cmd\ta_TRIX.obj: ..\..\..\..\..\src\ta_func\ta_TRIX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_TRIX.obj ..\..\..\..\..\src\ta_func\ta_TRIX.c
-
-..\..\..\..\..\temp\cmd\ta_WILLR.obj: ..\..\..\..\..\src\ta_func\ta_WILLR.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_WILLR.obj ..\..\..\..\..\src\ta_func\ta_WILLR.c
-
-..\..\..\..\..\temp\cmd\ta_HT_DCPERIOD.obj: ..\..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_HT_DCPERIOD.obj ..\..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c
-
-..\..\..\..\..\temp\cmd\ta_HT_DCPHASE.obj: ..\..\..\..\..\src\ta_func\ta_HT_DCPHASE.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_HT_DCPHASE.obj ..\..\..\..\..\src\ta_func\ta_HT_DCPHASE.c
-
-..\..\..\..\..\temp\cmd\ta_HT_PHASOR.obj: ..\..\..\..\..\src\ta_func\ta_HT_PHASOR.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_HT_PHASOR.obj ..\..\..\..\..\src\ta_func\ta_HT_PHASOR.c
-
-..\..\..\..\..\temp\cmd\ta_HT_SINE.obj: ..\..\..\..\..\src\ta_func\ta_HT_SINE.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_HT_SINE.obj ..\..\..\..\..\src\ta_func\ta_HT_SINE.c
-
-..\..\..\..\..\temp\cmd\ta_HT_TRENDMODE.obj: ..\..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_HT_TRENDMODE.obj ..\..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c
-
-..\..\..\..\..\temp\cmd\ta_AD.obj: ..\..\..\..\..\src\ta_func\ta_AD.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_AD.obj ..\..\..\..\..\src\ta_func\ta_AD.c
-
-..\..\..\..\..\temp\cmd\ta_ADOSC.obj: ..\..\..\..\..\src\ta_func\ta_ADOSC.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_ADOSC.obj ..\..\..\..\..\src\ta_func\ta_ADOSC.c
-
-..\..\..\..\..\temp\cmd\ta_OBV.obj: ..\..\..\..\..\src\ta_func\ta_OBV.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_OBV.obj ..\..\..\..\..\src\ta_func\ta_OBV.c
-
-..\..\..\..\..\temp\cmd\ta_CORREL.obj: ..\..\..\..\..\src\ta_func\ta_CORREL.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_CORREL.obj ..\..\..\..\..\src\ta_func\ta_CORREL.c
-
-..\..\..\..\..\temp\cmd\ta_LINEARREG.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_LINEARREG.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG.c
-
-..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_LINEARREG_SLOPE.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c
-
-..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_LINEARREG_ANGLE.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c
-
-..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj: ..\..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_LINEARREG_INTERCEPT.obj ..\..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c
-
-..\..\..\..\..\temp\cmd\ta_STDDEV.obj: ..\..\..\..\..\src\ta_func\ta_STDDEV.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_STDDEV.obj ..\..\..\..\..\src\ta_func\ta_STDDEV.c
 
 ..\..\..\..\..\temp\cmd\ta_TSF.obj: ..\..\..\..\..\src\ta_func\ta_TSF.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_TSF.obj ..\..\..\..\..\src\ta_func\ta_TSF.c
 
-..\..\..\..\..\temp\cmd\ta_VAR.obj: ..\..\..\..\..\src\ta_func\ta_VAR.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_VAR.obj ..\..\..\..\..\src\ta_func\ta_VAR.c
-
-..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj: ..\..\..\..\..\src\ta_func\ta_AVGPRICE.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj ..\..\..\..\..\src\ta_func\ta_AVGPRICE.c
-
-..\..\..\..\..\temp\cmd\ta_MEDPRICE.obj: ..\..\..\..\..\src\ta_func\ta_MEDPRICE.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_MEDPRICE.obj ..\..\..\..\..\src\ta_func\ta_MEDPRICE.c
-
 ..\..\..\..\..\temp\cmd\ta_TYPPRICE.obj: ..\..\..\..\..\src\ta_func\ta_TYPPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_TYPPRICE.obj ..\..\..\..\..\src\ta_func\ta_TYPPRICE.c
 
+..\..\..\..\..\temp\cmd\ta_VAR.obj: ..\..\..\..\..\src\ta_func\ta_VAR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_VAR.obj ..\..\..\..\..\src\ta_func\ta_VAR.c
+
 ..\..\..\..\..\temp\cmd\ta_WCLPRICE.obj: ..\..\..\..\..\src\ta_func\ta_WCLPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_WCLPRICE.obj ..\..\..\..\..\src\ta_func\ta_WCLPRICE.c
+
+..\..\..\..\..\temp\cmd\ta_WILLR.obj: ..\..\..\..\..\src\ta_func\ta_WILLR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_WILLR.obj ..\..\..\..\..\src\ta_func\ta_WILLR.c
+
+..\..\..\..\..\temp\cmd\ta_WMA.obj: ..\..\..\..\..\src\ta_func\ta_WMA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_WMA.obj ..\..\..\..\..\src\ta_func\ta_WMA.c
 
 ..\..\..\..\..\temp\cmd\ta_pm.obj: ..\..\..\..\..\src\ta_pm\ta_pm.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_pm.obj ..\..\..\..\..\src\ta_pm\ta_pm.c
