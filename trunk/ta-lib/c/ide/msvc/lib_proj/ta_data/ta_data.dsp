@@ -312,6 +312,26 @@ SOURCE=..\..\..\..\src\ta_data\ta_source\ta_source.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_handle.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_local.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_minidriver.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_data\ta_source\ta_sql\ta_sql_mysql.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_data\ta_token.c
 # End Source File
 # Begin Source File
