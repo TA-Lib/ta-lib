@@ -49,6 +49,7 @@
  *  101303 MF    Remove underscore from names.
  *  020804 MF,ST Fixes to make it work on Linux (Bug#873879).
  *  022904 MF    Add TA_GetLookback
+ *  030604 MF    Add generation of "ta_func.swg"
  */
 
 /* Description:
@@ -112,6 +113,7 @@ FileHandle *gOutRetCode_CSV;   /* For "ta_retcode.csv" */
 FileHandle *gOutFuncList_TXT;  /* For "func_list.txt" */
 FileHandle *gOutDefs_H;        /* For "ta_defs.h" */
 FileHandle *gOutDotNet_H;      /* For .NET interface file */
+FileHandle *gOutFunc_SWG;      /* For SWIG */
 
 #ifdef _MSVC
 FileHandle *gOutProjFile;      /* For .NET project file */
@@ -151,8 +153,9 @@ static void printFunc( FILE *out,
                        unsigned int lookbackSignature,      /* Boolean */
                        unsigned int managedCPPCode,         /* Boolean */
                        unsigned int managedCPPDeclaration,  /* Boolean */
-                       unsigned int inputIsSinglePrecision  /* Boolean */
-                      );
+                       unsigned int inputIsSinglePrecision, /* Boolean */
+                       unsigned int outputForSWIG           /* Boolean */
+                     );
 
 static void printCallFrame  ( FILE *out, const TA_FuncInfo *funcInfo );
 static void printFrameHeader( FILE *out, const TA_FuncInfo *funcInfo, unsigned int lookbackSignature );
@@ -214,6 +217,8 @@ static int copyFile( const char *src, const char *dest );
 
 /* Return 1 when identical */
 static int areFileSame( const char *file1, const char *file2 );
+
+static void appendToFunc( FILE *out );
 
 char gToOpen[BUFFER_SIZE];
 char gTempBuf[BUFFER_SIZE];
@@ -310,7 +315,7 @@ int main(int argc, char* argv[])
          printf( "     7) ta-lib/c/src/ta_abstract/excel_glue.c\n" );
          printf( "     8) ta-lib/dotnet/src/Core/TA-Lib-Core.vcproj\n" );
          printf( "     9) ta-lib/dotnet/src/Core/Core.h\n" );
-
+         printf( "    10) ta-lib/swig/src/interface/ta_func.swg\n" );
          printf( "\n" );
          printf( "  Also, it regenerates the function header, parameters and\n" );
          printf( "  validation code of all TA Func in c/src/ta_func.\n" );
@@ -645,6 +650,17 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
+   /* Create "ta_func.swg" */
+   gOutFunc_SWG = fileOpen( "..\\..\\swig\\src\\interface\\ta_func.swg",
+                          "..\\src\\ta_abstract\\templates\\ta_func.swg.template",
+                          FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+
+   if( gOutFunc_SWG == NULL )
+   {
+      printf( "\nCannot access [%s]\n", gToOpen );
+      return -1;
+   }
+
    /* Create the "func_list.txt" */
    gOutFuncList_TXT = fileOpen( "..\\include\\func_list.txt",
                                 NULL,
@@ -711,10 +727,15 @@ static int genCode(int argc, char* argv[])
    /* Process each function. */
    retCode = TA_ForEachFunc( doForEachFunction, NULL );
 
+   /* Append some "hard coded" prototype for ta_func */
+   appendToFunc( gOutFunc_H->file );
+   appendToFunc( gOutFunc_SWG->file );
+
    /* Close all files who were updated with the list of TA functions. */
    fileClose( gOutDotNet_H );
    fileClose( gOutFuncList_TXT );
    fileClose( gOutFunc_H );
+   fileClose( gOutFunc_SWG );
    fileClose( gOutFrame_H );
    fileClose( gOutFrame_C );
 
@@ -818,6 +839,7 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    fprintf( gOutFuncList_TXT->file, "%-20s%s\n", funcInfo->name, funcInfo->hint );
   
    fprintf( gOutFunc_H->file, "\n" );
+   fprintf( gOutFunc_SWG->file, "\n" );
 
    if( (prevGroup == NULL) || (prevGroup != funcInfo->group) )
    {
@@ -825,6 +847,10 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
       fprintf( gOutFunc_H->file, "\n/******************************************\n" );
       fprintf( gOutFunc_H->file, " * Group: [%s]\n", funcInfo->group );
       fprintf( gOutFunc_H->file, " ******************************************/\n\n" );
+
+      fprintf( gOutFunc_SWG->file, "\n/******************************************\n" );
+      fprintf( gOutFunc_SWG->file, " * Group: [%s]\n", funcInfo->group );
+      fprintf( gOutFunc_SWG->file, " ******************************************/\n\n" );
 
       prevGroup = funcInfo->group;
    }
@@ -835,19 +861,28 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    printFuncHeaderDoc( gOutFunc_H->file, funcInfo, " * " );
    fprintf( gOutFunc_H->file, " */\n" );
 
+   fprintf( gOutFunc_SWG->file, "/*\n" );
+   printFuncHeaderDoc( gOutFunc_SWG->file, funcInfo, " * " );
+   fprintf( gOutFunc_SWG->file, " */\n" );
+
    /* Generate the defines corresponding to this function. */
    printDefines( gOutFunc_H->file, funcInfo );
-
+   printDefines( gOutFunc_SWG->file, funcInfo );
 
    /* Generate the function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 0 );
    fprintf( gOutFunc_H->file, "\n" );
 
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 1 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 1, 0 );
    fprintf( gOutFunc_H->file, "\n" );
+
+   /* Generate the SWIG interface. */
+   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 1 );
+   fprintf( gOutFunc_SWG->file, "\n" );
 
    /* Generate the corresponding lookback function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0 );
+   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0 );
 
    /* Create the frame definition (ta_frame.c) and declaration (ta_frame.h) */
    genPrefix = 1;
@@ -886,9 +921,9 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    #endif
 
    /* Generate the functions declaration for the .NET interface. */
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0 );
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0 );
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0 );
    fprintf( gOutDotNet_H->file, "\n" );
    fprintf( gOutDotNet_H->file, "         #define TA_%s Core::%s\n", funcInfo->name, funcInfo->name );
    fprintf( gOutDotNet_H->file, "         #define TA_%s_Lookback Core::%s_Lookback\n\n", funcInfo->name, funcInfo->name );
@@ -1019,7 +1054,8 @@ static void printFunc( FILE *out,
                        unsigned int lookbackSignature, /* Boolean */
                        unsigned int managedCPPCode, /* Boolean */
                        unsigned int managedCPPDeclaration, /* Boolean */
-                       unsigned int inputIsSinglePrecision
+                       unsigned int inputIsSinglePrecision, /* Boolean */
+                       unsigned int outputForSWIG /* Boolean */
                       )
 {
    TA_RetCode retCode;
@@ -1037,33 +1073,52 @@ static void printFunc( FILE *out,
    const char *arrayBracket;
    int excludeFromManaged;
 
-   const char *inputPrecisionType;
-   const char *inputPrecisionConstType;
-
-   if( inputIsSinglePrecision )
-   {
-      inputPrecisionType = "float";
-      inputPrecisionConstType = "const float";
-   }
-   else
-   {
-      inputPrecisionType = "double";
-      inputPrecisionConstType = "const double";
-   }
+   const char *startIdxString;
+   const char *endIdxString;
+   const char *outNbElementString;
+   const char *outBegIdxString;
 
    if( managedCPPCode )
    {
-      inputDoubleArrayType  = inputPrecisionType;
+      if( inputIsSinglePrecision )
+         inputDoubleArrayType  = "float";
+      else
+         inputDoubleArrayType  = "double";
       inputIntArrayType     = "int";
       outputIntParam        = "[OutAttribute]Int32";
       arrayBracket          = " __gc []";
+      startIdxString        = "startIdx";
+      endIdxString          = "endIdx";
+      outNbElementString    = "outNbElement";
+      outBegIdxString       = "outBegIdx";
+   }
+   else if( outputForSWIG )
+   {
+      if( inputIsSinglePrecision )
+         inputDoubleArrayType  = "const float  *";
+      else
+         inputDoubleArrayType  = "const double *";
+      inputIntArrayType     = "const int    *";
+      outputIntParam        = "int";
+      arrayBracket          = "";
+      startIdxString        = "       START_IDX";
+      endIdxString          = "       END_IDX";
+      outNbElementString    = "OUT_SIZE";
+      outBegIdxString       = "BEG_IDX";
    }
    else
    {
-      inputDoubleArrayType  = inputPrecisionConstType;
+      if( inputIsSinglePrecision )
+         inputDoubleArrayType  = "const float";
+      else
+         inputDoubleArrayType  = "const double";
       inputIntArrayType     = "const int";
       outputIntParam        = "int";
       arrayBracket          = "[]";
+      startIdxString        = "startIdx";
+      endIdxString          = "endIdx";
+      outNbElementString    = "outNbElement";
+      outBegIdxString       = "outBegIdx";
    }
 
    typeString = "";
@@ -1094,28 +1149,37 @@ static void printFunc( FILE *out,
       {
          if( managedCPPCode )
          {
-            sprintf( gTempBuf, "%s%senum %sTA_RetCode %s%s( int    startIdx,\n",
+            sprintf( gTempBuf, "%s%senum %sTA_RetCode %s%s( int    %s,\n",
                      prefix? prefix:"",
                      managedCPPDeclaration? "         static ":"",
                      managedCPPDeclaration? "":"Core::",
                      managedCPPDeclaration? "":"Core::",
-                     funcInfo->name );
+                     funcInfo->name,
+                     startIdxString );
          }
          else
          {
             if( inputIsSinglePrecision )
-               sprintf( gTempBuf, "%sTA_RetCode TA_S_%s( int    startIdx,\n",
+               sprintf( gTempBuf, "%sTA_RetCode TA_S_%s( int    %s,\n",
                         prefix? prefix:"",
-                        funcInfo->name );
+                        funcInfo->name,
+                        startIdxString );
             else  
-               sprintf( gTempBuf, "%sTA_RetCode TA_%s( int    startIdx,\n",
-                        prefix? prefix:"",
-                        funcInfo->name );
+               sprintf( gTempBuf, "%sTA_RetCode TA_%s( int    %s,\n",
+                        prefix? prefix:"",                        
+                        funcInfo->name,
+                        startIdxString );
          }
          print( out, gTempBuf );
-         indent = strlen(gTempBuf) - 17;
+         indent = strlen(gTempBuf);
+         
+         if( outputForSWIG ) 
+            indent -= 25;
+         else
+            indent -= 17;
+
          printIndent( out, indent );
-         fprintf( out, "int    endIdx,\n" );
+         fprintf( out, "int    %s,\n", endIdxString );
       }
    }
    else if( frame )
@@ -1151,9 +1215,9 @@ static void printFunc( FILE *out,
    if( frame && !lookbackSignature )
    {
       printIndent( out, indent );
-      fprintf( out, "startIdx,\n" );
+      fprintf( out, "%s,\n", startIdxString );
       printIndent( out, indent );
-      fprintf( out, "endIdx,\n" );
+      fprintf( out, "%s,\n", endIdxString );
    }
 
    /* Go through all the input. */
@@ -1260,8 +1324,9 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.timestamp, /*", paramNb );
-                  fprintf( out, "%-*s %s%s",
+                  fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
+                         outputForSWIG?"":" ",
                          prototype? "const TA_Timestamp" : "",                           
                          "inTimestamp",
                          prototype? arrayBracket : "" );
@@ -1273,10 +1338,11 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.open, /*", paramNb );
-                  fprintf( out, "%-*s %s%s",
+                  fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",
-                         "inOpen",
+                         outputForSWIG?"":" ",
+                         outputForSWIG? "IN_ARRAY /* inOpen */":"inOpen",
                          prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
@@ -1286,10 +1352,11 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.high, /*", paramNb );
-                  fprintf( out, "%-*s %s%s",
+                  fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",                           
-                         "inHigh",
+                         outputForSWIG?"":" ",
+                         outputForSWIG? "IN_ARRAY /* inHigh */":"inHigh",
                          prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
@@ -1299,10 +1366,11 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.low, /*", paramNb );
-                  fprintf( out, "%-*s %s%s",
+                  fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",
-                         "inLow",
+                         outputForSWIG?"":" ",
+                         outputForSWIG? "IN_ARRAY /* inLow */":"inLow",
                          prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
@@ -1312,10 +1380,11 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.close, /*", paramNb );
-                  fprintf( out, "%-*s %s%s",
+                  fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",                           
-                         "inClose",
+                         outputForSWIG?"":" ",
+                         outputForSWIG? "IN_ARRAY /* inClose */":"inClose",
                          prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
@@ -1325,10 +1394,11 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.volume, /*", paramNb );
-                  fprintf( out, "%-*s %s%s",
+                  fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
                          prototype? inputIntArrayType : "",
-                         "inVolume",
+                         outputForSWIG?"":" ",
+                         outputForSWIG? "IN_ARRAY /* inVolume */":"inVolume",
                          prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
@@ -1338,22 +1408,23 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.openInterest, /*", paramNb );
-                  fprintf( out, "%-*s %s%s",
+                  fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
                          prototype? inputIntArrayType : "",
-                         "inOpenInterest",
+                         outputForSWIG?"":" ",
+                         outputForSWIG? "IN_ARRAY /* inOpenInterest */":"inOpenInterest",
                          prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
             }
             break;
          case TA_Input_Real:
-            typeString = inputDoubleArrayType;
-            defaultParamName = "inReal";
+            typeString = inputDoubleArrayType;                         
+            defaultParamName = outputForSWIG? "IN_ARRAY":"inReal";
             break;
          case TA_Input_Integer:
             typeString = inputIntArrayType;
-            defaultParamName = "inInteger";
+            defaultParamName = outputForSWIG? "IN_ARRAY":"inInteger";
             break;
          /*case TA_Input_Timestamp:
             typeString = "const TA_Timestamp";
@@ -1377,11 +1448,19 @@ static void printFunc( FILE *out,
             {
                if( frame )
                   fprintf( out, "params->in[%d].data.%s, /*", paramNb, defaultParamName );
-               fprintf( out, "%-*s %s%s",
-                      prototype? 12 : 0,
-                      prototype? typeString : "",                        
-                      inputParamInfo->paramName,
-                      prototype? arrayBracket : "" );
+               if( outputForSWIG )
+                  fprintf( out, "%-*s%s%s /* %s */",
+                           prototype? 12 : 0,
+                           prototype? typeString : "",
+                           defaultParamName,
+                           prototype? arrayBracket : "",
+                           inputParamInfo->paramName );
+               else
+                  fprintf( out, "%-*s %s%s",
+                           prototype? 12 : 0,
+                           prototype? typeString : "",
+                           inputParamInfo->paramName,
+                           prototype? arrayBracket : "" );
                fprintf( out, "%s\n", frame? " */":"," );
             }
          }
@@ -1415,23 +1494,23 @@ static void printFunc( FILE *out,
       case TA_OptInput_RealRange:
       case TA_OptInput_RealList:
          typeString = "double";
-         defaultParamName = "optInReal";
+         defaultParamName = outputForSWIG? "OPT_REAL":"optInReal";
          break;
       case TA_OptInput_IntegerRange:
          typeString = "int";
-         defaultParamName = "optInInteger";
+         defaultParamName = outputForSWIG? "OPT_INT":"optInInteger";
          break;
       case TA_OptInput_IntegerList:
          if( (optInputParamInfo->dataSet == TA_DEF_UI_MA_Method.dataSet) && !frame )
          {
             typeString = "TA_MAType";
-            defaultParamName = "optInMAType";
+            defaultParamName = outputForSWIG? "OPT_MATYPE":"optInMAType";
             excludeFromManaged = 1;
          }
          else
          {
             typeString = "int";
-            defaultParamName = "optInInteger";
+            defaultParamName = outputForSWIG? "OPT_INT":"optInInteger";
          }
          break;
       default:
@@ -1445,7 +1524,7 @@ static void printFunc( FILE *out,
 
       if( !paramName )
          paramName = defaultParamName;
-
+      
       if( validationCode )
       {
          if( excludeFromManaged )
@@ -1473,10 +1552,17 @@ static void printFunc( FILE *out,
                      paramNb, defaultParamName,
                      lookbackSignature&&lastParam?"":"," );
          }
-         fprintf( out, "%-*s %s",
-                prototype? 13 : 0,
-                prototype? typeString : "",
-                paramName );
+         if( outputForSWIG )
+            fprintf( out, "%-*s %s /* %s */",
+                     prototype? 13 : 0,
+                     prototype? typeString : "",
+                     defaultParamName, paramName );
+         else
+            fprintf( out, "%-*s %s",
+                     prototype? 13 : 0,
+                     prototype? typeString : "",
+                     paramName );
+                
          if( frame )
          {
             if( lookbackSignature && lastParam )
@@ -1568,23 +1654,25 @@ static void printFunc( FILE *out,
       {
             printIndent( out, indent );
             if( frame )
-               fprintf( out, "outBegIdx, " );
+               fprintf( out, "%s, ", outBegIdxString );
             else
-               fprintf( out, "%-*s %soutBegIdx",
+               fprintf( out, "%-*s %s%s",
                       prototype? 12 : 0,
                       prototype? outputIntParam : "",
-                      prototype? "*" : "" );
+                      prototype? "*" : "",
+                      outBegIdxString );
 
             fprintf( out, "%s\n", frame? "":"," );
 
             printIndent( out, indent );
             if( frame )
-               fprintf( out, "outNbElement, " );
+               fprintf( out, "%s, ", outNbElementString );
             else
-               fprintf( out, "%-*s %soutNbElement",
+               fprintf( out, "%-*s %s%s",
                       prototype? 12 : 0,
                       prototype? outputIntParam : "",
-                      prototype? "*" : "" );
+                      prototype? "*" : "",
+                      outNbElementString );
             fprintf( out, "%s\n", frame? "":"," );
       }
 
@@ -1608,11 +1696,11 @@ static void printFunc( FILE *out,
          {
          case TA_Output_Real:
             typeString = "double";
-            defaultParamName = "outReal";
+            defaultParamName = outputForSWIG? "OUT_ARRAY":"outReal";
             break;
          case TA_Output_Integer:
             typeString = "int";
-            defaultParamName = "outInteger";
+            defaultParamName = outputForSWIG? "OUT_ARRAY":"outInteger";
             break;
          default:
             if( !paramName )
@@ -1640,11 +1728,19 @@ static void printFunc( FILE *out,
                       paramNb, defaultParamName,
                       lastParam? "":"," );
 
-            fprintf( out, "%-*s  %s%s",
-                   prototype? 12 : 0,
-                   prototype? typeString : "",                     
-                   paramName,
-                   prototype? arrayBracket : "" );
+            if( outputForSWIG )
+               fprintf( out, "%-*s *%s%s /* %s */",
+                        prototype? 12 : 0,
+                        prototype? typeString : "",                     
+                        defaultParamName,
+                        prototype? arrayBracket : "",
+                        paramName );
+            else
+               fprintf( out, "%-*s  %s%s",
+                        prototype? 12 : 0,
+                        prototype? typeString : "",                     
+                        paramName,
+                        prototype? arrayBracket : "" );
 
             if( !lastParam )
                fprintf( out, "%s\n", frame? " */":"," );
@@ -1667,14 +1763,14 @@ static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
 
    printFrameHeader( out, funcInfo, 0 );
    print( out, "{\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0, 0 );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
    print( out, "}\n" );
 
    printFrameHeader( out, funcInfo, 1 );
    print( out, "{\n" );
    if( funcInfo->nbOptInput == 0 )
       print( out, "   (void)params;\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 1, 0, 0, 0 );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 1, 0, 0, 0, 0 );
    print( out, "}\n" );
    
    genPrefix = 0;
@@ -1883,9 +1979,9 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    print( gOutFunc_C->file, "#define  INPUT_TYPE float\n" );
    
    print( gOutFunc_C->file, "#if defined( _MANAGED )\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0 );
    print( gOutFunc_C->file, "#else\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0 );
    print( gOutFunc_C->file, "#endif\n" );
 
    /* Insert the internal logic of the function */
@@ -2105,9 +2201,9 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "#define INPUT_TYPE   double\n" );
    print( out, "\n" );
    print( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0, 0, 0 );
    print( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0 );
    print( out, "#endif\n" );
 
    genPrefix = 0;
@@ -2119,9 +2215,9 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    fprintf( out, " */\n" );
    print( out, "\n" );
    print( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0 );
    print( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "#endif\n" );
 
    genPrefix = 0;
@@ -2142,7 +2238,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
     * default values.
     */
    print( out, "   /* Validate the parameters. */\n" );
-   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
 
    print( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
    print( out, "\n" );
@@ -2924,4 +3020,44 @@ static int areFileSame( const char *file1, const char *file2 )
    fclose(f1);
    fclose(f2);
    return 1;
+}
+
+
+static void appendToFunc( FILE *out )
+{
+   fprintf( out, "\n" );
+   fprintf( out, "/* Some TA functions takes a certain amount of input data\n" );
+   fprintf( out, " * before stabilizing and outputing meaningful data. This is\n" );
+   fprintf( out, " * a behavior pertaining to the algo of some TA functions and\n" );
+   fprintf( out, " * is not particular to the TA-Lib implementation.\n" );
+   fprintf( out, " * TA-Lib allows you to automatically strip off these unstabl\n" );
+   fprintf( out, " * data from your output and from any internal processing.\n" );
+   fprintf( out, " * (See documentation for more info)\n" );
+   fprintf( out, " *\n" );
+   fprintf( out, " * Examples:\n" );
+   fprintf( out, " *      TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 30 );\n" );
+   fprintf( out, " *           Always strip off 30 price bar for the TA_EMA function.\n" );
+   fprintf( out, " *\n" );
+   fprintf( out, " *      TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 30 );\n" );
+   fprintf( out, " *           Always strip off 30 price bar from ALL functions\n" );
+   fprintf( out, " *           having an unstable period.\n" );
+   fprintf( out, " *\n" );
+   fprintf( out, " * See ta_defs.h for the enumeration TA_FuncUnstId\n" );
+   fprintf( out, " */\n" );
+   fprintf( out, "\n" );
+   fprintf( out, "TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,\n" );
+   fprintf( out, "                                 unsigned int  unstablePeriod );\n" );
+   fprintf( out, "\n" );
+   fprintf( out, "unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );\n" );
+   fprintf( out, "\n" );
+   fprintf( out, "/* You can change slightly the behavior of the TA functions\n" );
+   fprintf( out, " * by requesting compatibiliy with some existing software.\n" );
+   fprintf( out, " *\n" );
+   fprintf( out, " * By default, the behavior is as close as the original \n" );
+   fprintf( out, " * author of the TA functions intend it to be.\n" );
+   fprintf( out, " *\n" );
+   fprintf( out, " * See ta_defs.h for the enumeration TA_Compatibility.\n" );
+   fprintf( out, " */\n" );
+   fprintf( out, "TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n" );
+   fprintf( out, "TA_Compatibility TA_GetCompatibility( void );\n" );
 }
