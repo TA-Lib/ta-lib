@@ -125,6 +125,11 @@ void TA_Sleep( unsigned int seconds );
 /* Bitmap for TA_Sema flags */
 #define TA_SEMA_INITIALIZED 0x00000001
 
+/* If named semaphores are used, set the maximum name length */
+#if defined( USE_NAMED_SEMAPHORES )
+#define TA_MAX_SEMAPHORE_NAME_LENGTH 256
+#endif
+
 #if defined( WIN32 )
    #include <windows.h>
    typedef struct {
@@ -135,7 +140,12 @@ void TA_Sleep( unsigned int seconds );
    #include <pthread.h>
    #include <semaphore.h>
    typedef struct {
+      #if defined( USE_NAMED_SEMAPHORES )
+      char name[TA_MAX_SEMAPHORE_NAME_LENGTH];
+      sem_t *theSema;
+      #else
       sem_t theSema;
+      #endif
       unsigned int flags; /* 1 when initialized. */
    } TA_Sema;
 #endif
