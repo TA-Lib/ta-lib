@@ -40,7 +40,6 @@
  *       file.
  *
  * The modifications from the original are mainly:
- *   - 'assert' have been replaced by TA_ASSERT.
  *   - 'malloc' and 'free' have been replaced by TA_Malloc() and TA_Free().
  *   - Some modif eliminates warnings.
  *   - Search for the string 'TA_' for all the changes.
@@ -356,7 +355,7 @@ void dict_free_nodes( dict_t *dict)
 void dict_free( dict_t *dict)
 {
 #ifdef KAZLIB_OBSOLESCENT_DEBUG
-    TA_ASSERT(  "call to obsolescent function dict_free()" && 0);
+    TA_ASSERT_NO_RET(  "call to obsolescent function dict_free()" && 0);
 #endif
     dict_free_nodes( dict);
 }
@@ -1131,10 +1130,6 @@ void dict_load_end( dict_load_t *load)
     dictcount_t fullcount = DICTCOUNT_T_MAX, nodecount = dict->nodecount;
     dictcount_t botrowcount;
     unsigned baselevel = 0, level = 0, i;
-
-    /* TA_ Code Removed = Condition is always false.
-    TA_ASSERT(  dnode_red == 0 && dnode_black == 1);
-    */
     
     while (fullcount >= nodecount && fullcount)
 	fullcount >>= 1;
