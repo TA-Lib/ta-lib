@@ -85,9 +85,14 @@ ErrorNumber test_abstract( void )
    TA_RetCode retCode;
    TA_ParamHolder *paramHolder;
    const TA_FuncHandle *handle;
+   TA_UDBase *udb;
 
    printf( "Testing Abstract interface\n" );
    
+   retValue = allocLib( &udb );
+   if( retValue != TA_TEST_PASS )
+      return retValue;    
+
    /* Verify TA_GetLookback. */
    retCode = TA_GetFuncHandle( "STOCH", &handle );
    if( retCode != TA_SUCCESS )
@@ -117,6 +122,10 @@ ErrorNumber test_abstract( void )
       printf( "TA_ParamHolderFree failed [%d]\n", retCode );
       return TA_ABS_TST_FAIL_PARAMHOLDERFREE;
    }
+
+   retValue = freeLib( udb );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
 
    return TA_TEST_PASS; /* Succcess. */
 }
