@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -45,7 +45,7 @@
  *  112400 MF   First version.
  *  062203 MF   Ignore "time" component of the start/end range when
  *              there is no time fields in the file.
- *
+ *  040304 MF   Allows skipping lines not starting with a digit.
  */
 
 /* Description:
@@ -326,6 +326,27 @@ TA_RetCode TA_ReadOp_Do( TA_FileHandle       *fileHandle,
    }
 
 line_loop: /* Always jump here when end-of-line is found (EOL). */
+
+      /* Absorb empty lines. */
+      while( *car == '\n' )
+      {
+         GET_CHAR;
+         CHECK_EOL_EOF;
+      }
+
+      /* Skip lines not starting with a digit (if format wants such skip). */
+      if( !isdigit(*car) )
+      {
+         op = readOpInfo->arrayReadOp[0];
+         if( TA_IS_SKIP_NDL_FLAG(op) )
+         {
+           while(1)
+           {
+              GET_CHAR;
+              CHECK_EOL_EOF;
+           }
+         }
+      }
 
       /* If curOp != 0, the last operations are canceled. */
       REVERT_OPERATIONS;

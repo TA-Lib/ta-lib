@@ -40,6 +40,7 @@
  *  - Is this the VERY last read operation? (TA_CMD_LAST_FLAG).
  *  - After that read operation, did we get everything needed
  *    to build and validate the timestamp? (TA_TIMESTAMP_COMPLETE_FLAG).
+ *  - Shall lines not starting with a digit be skipped? (TA_CMD_SKIP_NDL_FLAG).
  */
 #define TA_CMD_READ_REAL              0x00000100
 #define TA_CMD_READ_INTEGER           0x00000200
@@ -49,6 +50,7 @@
 #define TA_CMD_SKIP_FLAG              0x00002000
 #define TA_CMD_READ_STOP_FLAG         0x00004000
 #define TA_CMD_REPLACE_ZERO           0x00008000
+#define TA_CMD_SKIP_NDL_FLAG          0x00010000
 #define TA_CMD_LAST_FLAG             (0x00080000|TA_CMD_READ_STOP_FLAG)
 
 #define TA_CLOSE_IDX        0x00000000
@@ -99,6 +101,11 @@
 
 #define TA_IS_REAL_CMD(v)    ((v)&TA_CMD_READ_REAL)
 #define TA_IS_INTEGER_CMD(v) ((v)&TA_CMD_READ_INTEGER)
+
+#define TA_SET_SKIP_NDL_FLAG(v) {(v)|=TA_CMD_SKIP_NDL_FLAG;}
+#define TA_CLR_SKIP_NDL_FLAG(v) {(v)&=~TA_CMD_SKIP_NDL_FLAG;}
+#define TA_IS_SKIP_NDL_FLAG(v)  ((v)&TA_CMD_SKIP_NDL_FLAG)
+
 
 typedef unsigned int TA_ReadOp;
 
