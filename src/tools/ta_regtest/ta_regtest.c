@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  063001 MF   First version (initial framework only).
- *
+ *  090404 MF   Add test_candlestick
  */
 
 /* Description:
@@ -160,13 +160,13 @@ int main( int argc, char **argv )
    if( retValue != TA_TEST_PASS )
       return retValue;
 
-   /* Test the merging of multiple data source */
-   retValue = test_datasource_merge();
+   /* Test the Yahoo! data source. */
+   retValue = test_yahoo();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
-   /* Test the Yahoo! data source. */
-   retValue = test_yahoo();
+   /* Test the merging of multiple data source */
+   retValue = test_datasource_merge();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -286,6 +286,7 @@ static int testTAFunction_ALL( TA_History *history )
          return retValue; \
       printf( "done.\n" ); \
       }
+   DO_TEST( test_candlestick,   "Candlesticks" );
    DO_TEST( test_func_ma,       "All Moving Averages" );
    DO_TEST( test_func_stoch,    "STOCH,STOCHF,STOCHRSI" );
    DO_TEST( test_func_per_hl,   "AROON,CORREL" );

@@ -278,7 +278,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
    TA_RetCode retCode;
    unsigned int i;
    int j;
-   int outBegIdx, outNbElement;
+   int outBegIdx, outNbElement, lookback;
 
    retCode = TA_GetFuncHandle( funcName, &handle );
    if( retCode != TA_SUCCESS )
@@ -336,6 +336,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 	  }
    }
 
+   /* Do the function call. */
    retCode = TA_CallFunc(paramHolder,0,size-1,&outBegIdx,&outNbElement);
    if( retCode != TA_SUCCESS )
    {
@@ -343,6 +344,22 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
       TA_ParamHolderFree( paramHolder );
       return TA_ABS_TST_FAIL_CALLFUNC_1;
    }      
+
+   /* Verify consistency with Lookback */
+   retCode = TA_GetLookback( paramHolder, &lookback );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "TA_GetLookback() failed zero data test [%d]\n", retCode );
+      TA_ParamHolderFree( paramHolder );
+      return TA_ABS_TST_FAIL_CALLFUNC_2;
+   }
+   
+   if( outBegIdx != lookback )
+   {
+      printf( "TA_GetLookback() != outBegIdx [%d != %d]\n", lookback, outBegIdx );
+      TA_ParamHolderFree( paramHolder );
+      return TA_ABS_TST_FAIL_CALLFUNC_3;
+   }                       
 
    for( i=0; i < funcInfo->nbOutput; i++ )
    {
@@ -352,7 +369,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 		for( j=0; j < outNbElement; j++ )
 		{
 			if( trio_isnan(output[i][j]) ||
-                trio_isinf(output[i][j]) )
+                trio_isinf(output[i][j]))
 			{
 				printf( "Failed for output[%d][%d] = %e\n", i, j, output[i][j] );
 				return TA_ABS_TST_FAIL_INVALID_OUTPUT;
@@ -363,6 +380,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 		break;
 	  }
    }
+
 
    retCode = TA_ParamHolderFree( paramHolder );
    if( retCode != TA_SUCCESS )
@@ -397,14 +415,14 @@ static ErrorNumber test_default_calls(void)
    for( i=0; i < sizeof(inputRandomData)/sizeof(double); i++ )
    {
       inputRandomData[i] = (double)rand()/97.234;
-	  inputRandomData_int[i] = (int)inputRandomData[i];
+      inputRandomData_int[i] = (int)inputRandomData[i];
    }
 
    for( i=0; i < sizeof(inputRandFltEpsilon)/sizeof(double); i++ )
    {
        sign= (unsigned int)rand()%2;
        inputRandFltEpsilon[i] = (sign?1.0:-1.0)*(FLT_EPSILON);
-       inputRandFltEpsilon_int[i] = sign?1:0;
+       inputRandFltEpsilon_int[i] = sign?TA_INTEGER_MIN:TA_INTEGER_MAX;
    }
 
    for( i=0; i < sizeof(inputRandFltEpsilon)/sizeof(double); i++ )
