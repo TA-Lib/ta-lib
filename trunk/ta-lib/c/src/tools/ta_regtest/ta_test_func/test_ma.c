@@ -148,8 +148,10 @@ static TA_Test tableTest[] =
    /*   WMA TEST  - CLASSIC       */
    /*******************************/
 
+#ifndef TA_FUNC_NO_RANGE_CHECK
    /* No output value. */
    { 0, 0, 0, 251,  0, TA_MA_WEIGHTED, TA_MA_CLASSIC, TA_BAD_PARAM, 0, 0, 0, 0 },
+#endif
 
    /* One value tests. */
    { 0, 0, 0,   0,  1, TA_MA_WEIGHTED, TA_MA_CLASSIC, TA_SUCCESS,   0,  91.50,   0, 1 }, /* First Value */
@@ -182,7 +184,9 @@ static TA_Test tableTest[] =
 
    /* No output value. */
    { 0, 0, 1, 1,  14, TA_MA_WEIGHTED, TA_MA_METASTOCK, TA_SUCCESS, 0, 0, 0, 0},
+#ifndef TA_FUNC_NO_RANGE_CHECK
    { 0, 0, 0, 251,  0, TA_MA_WEIGHTED, TA_MA_METASTOCK, TA_BAD_PARAM, 0, 0, 0, 0 },
+#endif
 
    /* One value tests. */
    { 0, 0, 0,   0,  1, TA_MA_WEIGHTED, TA_MA_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 1 }, /* First Value */
@@ -215,7 +219,9 @@ static TA_Test tableTest[] =
 
    /* No output value. */
    { 0, 0, 1, 1,  14, TA_MA_EXPONENTIAL, TA_MA_CLASSIC, TA_SUCCESS, 0, 0, 0, 0},
+#ifndef TA_FUNC_NO_RANGE_CHECK
    { 0, 0, 0, 251,  0, TA_MA_EXPONENTIAL, TA_MA_CLASSIC, TA_BAD_PARAM, 0, 0, 0, 0 },
+#endif
 
    /* One value tests. */
    { 0, 0, 0,   0,  1, TA_MA_EXPONENTIAL, TA_MA_CLASSIC, TA_SUCCESS,   0,  91.50,   0, 1 }, /* First Value */
@@ -244,7 +250,9 @@ static TA_Test tableTest[] =
 
    /* No output value. */
    { 0, 0, 1, 1,  14, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS, 0, 0, 0, 0},
+#ifndef TA_FUNC_NO_RANGE_CHECK
    { 0, 0, 0, 251,  0, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_BAD_PARAM, 0, 0, 0, 0 },
+#endif
 
    /* One value tests. */
    { 0, 0, 0,   0,  1, TA_MA_EXPONENTIAL, TA_MA_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 1 }, /* First Value */
@@ -300,7 +308,9 @@ static TA_Test tableTest[] =
 
    /* No output value. */
    { 0, 0, 1, 1,  14, TA_MA_DEMA, TA_MA_METASTOCK, TA_SUCCESS, 0, 0, 0, 0},
+#ifndef TA_FUNC_NO_RANGE_CHECK
    { 0, 0, 0, 251,  0, TA_MA_DEMA, TA_MA_METASTOCK, TA_BAD_PARAM, 0, 0, 0, 0 },
+#endif
 
    /* One value tests. */
    { 0, 0, 0,   0,  1, TA_MA_DEMA, TA_MA_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 1 }, /* First Value */
@@ -338,7 +348,9 @@ static TA_Test tableTest[] =
    /*******************************/
    /* No output value. */
    { 0, 0, 1, 1,  14, TA_MA_TEMA, TA_MA_METASTOCK, TA_SUCCESS, 0, 0, 0, 0},
+#ifndef TA_FUNC_NO_RANGE_CHECK
    { 0, 0, 0, 251,  0, TA_MA_TEMA, TA_MA_METASTOCK, TA_BAD_PARAM, 0, 0, 0, 0 },
+#endif
 
    /* One value tests. */
    { 0, 0, 0,   0,  1, TA_MA_TEMA, TA_MA_METASTOCK, TA_SUCCESS,   0,  91.50,   0, 1 }, /* First Value */

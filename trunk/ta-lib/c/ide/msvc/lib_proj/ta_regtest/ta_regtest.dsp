@@ -47,7 +47,7 @@ RSC=rc.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /Zi /Od /I "..\..\..\..\src\ta_common" /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\trio" /I "..\..\..\..\src\tools\ta_regtest" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_func" /I "..\..\..\..\src\ta_data\ta_source\ta_readop" /D "_CONSOLE" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /FD /GZ /c
 # SUBTRACT BASE CPP /Fr /YX
-# ADD CPP /nologo /MTd /W3 /Gm /Zi /Od /I "..\..\..\..\src\ta_common" /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\trio" /I "..\..\..\..\src\tools\ta_regtest" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_func" /I "..\..\..\..\src\ta_data\ta_source\ta_readop" /D "_CONSOLE" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /Zi /Od /I "..\..\..\..\src\ta_common" /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\trio" /I "..\..\..\..\src\tools\ta_regtest" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_func" /I "..\..\..\..\src\ta_data\ta_source\ta_readop" /D "_CONSOLE" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_FUNC_NO_RANGE_CHECK" /FD /GZ /c
 # SUBTRACT CPP /Fr /YX
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"

@@ -96,6 +96,12 @@ typedef struct
 
 typedef struct
 {
+   const TA_Real *input;
+   unsigned int nbElement;
+} TA_RefTest;
+
+typedef struct
+{
    const TA_Test *test;
    const TA_Real *close;
 } TA_RangeTestParam;
@@ -104,6 +110,26 @@ typedef struct
 static ErrorNumber do_test( TA_Libc *libHandle,
                             const TA_History *history,
                             const TA_Test *test );
+
+static TA_RetCode referenceMin( TA_Libc      *libHandle,
+                                TA_Integer    startIdx,
+                                TA_Integer    endIdx,
+                                const TA_Real inReal_0[],
+                                TA_Integer    optInTimePeriod_0,
+                                TA_Integer   *outBegIdx,
+                                TA_Integer   *outNbElement,
+                                TA_Real       outReal_0[] );
+
+static TA_RetCode referenceMax( TA_Libc      *libHandle,
+                                TA_Integer    startIdx,
+                                TA_Integer    endIdx,
+                                const TA_Real inReal_0[],
+                                TA_Integer    optInTimePeriod_0,
+                                TA_Integer   *outBegIdx,
+                                TA_Integer   *outNbElement,
+                                TA_Real       outReal_0[] );
+
+static ErrorNumber testCompareToReference( TA_Libc *libHandle, const TA_Real *input, int nbElement );
 
 /**** Local variables definitions.     ****/
 
@@ -133,14 +159,14 @@ static TA_Test tableTest[] =
    { 0, TA_MIN_TEST, 20,  21, 14, TA_SUCCESS, 1, 87.94,    20, 2 },
 
    /* Misc tests: 1, 2 and 14 periods */
-   { 0, TA_MIN_TEST, 0, 251, 14, TA_SUCCESS,      0, 91.125,  13,  252-13 }, /* First Value */
+   { 1, TA_MIN_TEST, 0, 251, 14, TA_SUCCESS,      0, 91.125,  13,  252-13 }, /* First Value */
    { 0, TA_MIN_TEST, 0, 251, 14, TA_SUCCESS,      1, 91.125,  13,  252-13 },
    { 0, TA_MIN_TEST, 0, 251, 14, TA_SUCCESS,      2, 91.125,  13,  252-13 },
    { 0, TA_MIN_TEST, 0, 251, 14, TA_SUCCESS,      3, 91.125,  13,  252-13 },
    { 0, TA_MIN_TEST, 0, 251, 14, TA_SUCCESS,      4, 89.75,   13,  252-13 },
    { 0, TA_MIN_TEST, 0, 251, 14, TA_SUCCESS, 252-14, 107.75,  13,  252-13 },  /* Last Value */
 
-   { 0, TA_MIN_TEST, 0, 251, 2, TA_SUCCESS,      0, 91.5,  1,  252-1 }, /* First Value */
+   { 1, TA_MIN_TEST, 0, 251, 2, TA_SUCCESS,      0, 91.5,  1,  252-1 }, /* First Value */
    { 0, TA_MIN_TEST, 0, 251, 2, TA_SUCCESS,      1, 91.5,  1,  252-1 },
    { 0, TA_MIN_TEST, 0, 251, 2, TA_SUCCESS,      2, 93.97,  1,  252-1 },
    { 0, TA_MIN_TEST, 0, 251, 2, TA_SUCCESS,      3, 93.97,  1,  252-1 },
@@ -182,14 +208,14 @@ static TA_Test tableTest[] =
    { 0, TA_MAX_TEST, 20,  99, 14, TA_SUCCESS, 13, 89.78,    20, 80 },
 
    /* Misc tests: 1, 2 and 14 periods */
-   { 0, TA_MAX_TEST, 0, 251, 14, TA_SUCCESS,      0, 98.815,  13,  252-13 }, /* First Value */
+   { 1, TA_MAX_TEST, 0, 251, 14, TA_SUCCESS,      0, 98.815,  13,  252-13 }, /* First Value */
    { 0, TA_MAX_TEST, 0, 251, 14, TA_SUCCESS,      1, 98.815,  13,  252-13 },
    { 0, TA_MAX_TEST, 0, 251, 14, TA_SUCCESS,      2, 98.815,  13,  252-13 },
    { 0, TA_MAX_TEST, 0, 251, 14, TA_SUCCESS,      3, 98.815,  13,  252-13 },
    { 0, TA_MAX_TEST, 0, 251, 14, TA_SUCCESS,      4, 98.815,  13,  252-13 },
    { 0, TA_MAX_TEST, 0, 251, 14, TA_SUCCESS, 252-14, 110.69,  13,  252-13 },  /* Last Value */
 
-   { 0, TA_MAX_TEST, 0, 251, 2, TA_SUCCESS,      0, 92.5,  1,  252-1 }, /* First Value */
+   { 1, TA_MAX_TEST, 0, 251, 2, TA_SUCCESS,      0, 92.5,  1,  252-1 }, /* First Value */
    { 0, TA_MAX_TEST, 0, 251, 2, TA_SUCCESS,      1, 95.155,  1,  252-1 },
    { 0, TA_MAX_TEST, 0, 251, 2, TA_SUCCESS,      2, 95.155, 1,  252-1 },
    { 0, TA_MAX_TEST, 0, 251, 2, TA_SUCCESS,      3, 95.5, 1,  252-1 },
@@ -208,6 +234,32 @@ static TA_Test tableTest[] =
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
+
+static TA_Real testSerie1[]  = {9,8,7,6,5};
+static TA_Real testSerie2[]  = {3,7,9,10,15,33,50};
+static TA_Real testSerie3[]  = {0,0,0,1,2,0,0,0};
+static TA_Real testSerie4[]  = {0,0,0,2,1,0,0,0};
+static TA_Real testSerie5[]  = {2,0,0,0,0,0,0,0};
+static TA_Real testSerie6[]  = {0,0,0,0,0,0,0,1};
+static TA_Real testSerie7[]  = {1};
+static TA_Real testSerie8[]  = {2,2};
+static TA_Real testSerie9[]  = {4,2,3};
+static TA_Real testSerie10[] = {3,3,3,2,1,0,2};
+
+static TA_RefTest tableRefTest[] =
+{
+  {testSerie1, sizeof(testSerie1)/sizeof(TA_Real)},
+  {testSerie2, sizeof(testSerie2)/sizeof(TA_Real)},
+  {testSerie3, sizeof(testSerie3)/sizeof(TA_Real)},
+  {testSerie4, sizeof(testSerie4)/sizeof(TA_Real)},
+  {testSerie5, sizeof(testSerie5)/sizeof(TA_Real)},
+  {testSerie6, sizeof(testSerie6)/sizeof(TA_Real)},
+  {testSerie7, sizeof(testSerie6)/sizeof(TA_Real)},
+  {testSerie8, sizeof(testSerie6)/sizeof(TA_Real)},
+  {testSerie9, sizeof(testSerie10)/sizeof(TA_Real)}
+};
+
+#define NB_TEST_REF (sizeof(tableRefTest)/sizeof(TA_RefTest))
 
 /**** Global functions definitions.   ****/
 ErrorNumber test_func_minmax( TA_Libc *libHandle, TA_History *history )
@@ -228,6 +280,20 @@ ErrorNumber test_func_minmax( TA_Libc *libHandle, TA_History *history )
       if( retValue != 0 )
       {
          printf( "%s Failed Test #%d (Code=%d)\n", __FILE__,
+                 i, retValue );
+         return retValue;
+      }
+   }
+
+   /* Do tests against a local reference which is the non-optimized implementation */
+   for( i=0; i < NB_TEST_REF; i++ )
+   {
+      retValue = testCompareToReference( libHandle,
+                                         tableRefTest[i].input,
+                                         tableRefTest[i].nbElement );
+      if( retValue != 0 )
+      {
+         printf( "%s Failed Ref Test #%d (Code=%d)\n", __FILE__,
                  i, retValue );
          return retValue;
       }
@@ -396,3 +462,316 @@ static ErrorNumber do_test( TA_Libc *libHandle,
    return TA_TEST_PASS;
 }
 
+
+/* These reference functions were the original non-optimized
+ * version of TA_MIN and TA_MAX.
+ *
+ * TA-Lib might implement a faster algorithm, at the cost
+ * of complexity. Consequently, it is important to verify the
+ * equivalence between the optimize and non-optimized version.
+ */
+static TA_RetCode referenceMin( TA_Libc      *libHandle,
+                                TA_Integer    startIdx,
+                                TA_Integer    endIdx,
+                                const TA_Real inReal_0[],
+                                TA_Integer    optInTimePeriod_0,
+                                TA_Integer   *outBegIdx,
+                                TA_Integer   *outNbElement,
+                                TA_Real       outReal_0[] )
+{
+   /* Insert local variables here. */
+   TA_Real lowest, tmp;
+   TA_Integer outIdx, nbInitialElementNeeded;
+   TA_Integer trailingIdx, today, i;
+
+   (void)libHandle; /* Get ride of warning if unused. */
+
+#ifndef TA_FUNC_NO_RANGE_CHECK
+
+   /* Validate the requested output range. */
+   if( startIdx < 0 )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx < startIdx))
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   /* Validate the parameters. */
+   if( !inReal_0 ) return TA_BAD_PARAM;
+   /* min/max are checked for optInTimePeriod_0. */
+   if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+      optInTimePeriod_0 = 30;
+   else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
+      return TA_BAD_PARAM;
+
+   if( outReal_0 == NULL )
+      return TA_BAD_PARAM;
+
+#endif /* TA_FUNC_NO_RANGE_CHECK */
+
+   /* Insert TA function code here. */
+
+   /* Identify the minimum number of price bar needed
+    * to identify at least one output over the specified
+    * period.
+    */
+   nbInitialElementNeeded = (optInTimePeriod_0-1);
+
+   /* Move up the start index if there is not
+    * enough initial data.
+    */
+   if( startIdx < nbInitialElementNeeded )
+      startIdx = nbInitialElementNeeded;
+
+   /* Make sure there is still something to evaluate. */
+   if( startIdx > endIdx )
+   {
+      *outBegIdx    = 0;
+      *outNbElement = 0;
+      return TA_SUCCESS;
+   }
+
+   /* Proceed with the calculation for the requested range.
+    * Note that this algorithm allows the input and
+    * output to be the same buffer.
+    */
+   outIdx = 0;
+   today       = startIdx;
+   trailingIdx = startIdx-nbInitialElementNeeded;
+   
+   while( today <= endIdx )
+   {
+      lowest = inReal_0[trailingIdx++];
+      for( i=trailingIdx; i <= today; i++ )
+      {
+         tmp = inReal_0[i];
+         if( tmp < lowest) lowest= tmp;
+      }
+
+      outReal_0[outIdx++] = lowest;
+      today++;
+   }
+
+   /* Keep the outBegIdx relative to the
+    * caller input before returning.
+    */
+   *outBegIdx    = startIdx;
+   *outNbElement = outIdx;
+
+   return TA_SUCCESS;
+}
+
+static TA_RetCode referenceMax( TA_Libc      *libHandle,
+                                TA_Integer    startIdx,
+                                TA_Integer    endIdx,
+                                const TA_Real inReal_0[],
+                                TA_Integer    optInTimePeriod_0,
+                                TA_Integer   *outBegIdx,
+                                TA_Integer   *outNbElement,
+                                TA_Real       outReal_0[] )
+{
+   /* Insert local variables here. */
+   TA_Real highest, tmp;
+   TA_Integer outIdx, nbInitialElementNeeded;
+   TA_Integer trailingIdx, today, i;
+
+   (void)libHandle; /* Get ride of warning if unused. */
+
+#ifndef TA_FUNC_NO_RANGE_CHECK
+
+   /* Validate the requested output range. */
+   if( startIdx < 0 )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx < startIdx))
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   /* Validate the parameters. */
+   if( !inReal_0 ) return TA_BAD_PARAM;
+   /* min/max are checked for optInTimePeriod_0. */
+   if( optInTimePeriod_0 == TA_INTEGER_DEFAULT )
+      optInTimePeriod_0 = 30;
+   else if( (optInTimePeriod_0 < 1) || (optInTimePeriod_0 > 2147483647) )
+      return TA_BAD_PARAM;
+
+   if( outReal_0 == NULL )
+      return TA_BAD_PARAM;
+
+#endif /* TA_FUNC_NO_RANGE_CHECK */
+
+   /* Insert TA function code here. */
+
+   /* Identify the minimum number of price bar needed
+    * to identify at least one output over the specified
+    * period.
+    */
+   nbInitialElementNeeded = (optInTimePeriod_0-1);
+
+   /* Move up the start index if there is not
+    * enough initial data.
+    */
+   if( startIdx < nbInitialElementNeeded )
+      startIdx = nbInitialElementNeeded;
+
+   /* Make sure there is still something to evaluate. */
+   if( startIdx > endIdx )
+   {
+      *outBegIdx    = 0;
+      *outNbElement = 0;
+      return TA_SUCCESS;
+   }
+
+   /* Proceed with the calculation for the requested range.
+    * Note that this algorithm allows the input and
+    * output to be the same buffer.
+    */
+   outIdx = 0;
+   today       = startIdx;
+   trailingIdx = startIdx-nbInitialElementNeeded;
+   
+   while( today <= endIdx )
+   {
+      highest = inReal_0[trailingIdx++];
+      for( i=trailingIdx; i <= today; i++ )
+      {
+         tmp = inReal_0[i];
+         if( tmp > highest ) highest = tmp;
+      }
+
+      outReal_0[outIdx++] = highest;
+      today++;
+   }
+
+   /* Keep the outBegIdx relative to the
+    * caller input before returning.
+    */
+   *outBegIdx    = startIdx;
+   *outNbElement = outIdx;
+
+   return TA_SUCCESS;
+}
+
+static ErrorNumber testCompareToReference( TA_Libc *libHandle, const TA_Real *input, int nbElement )
+{
+   TA_Integer outBegIdx, outNbElement;
+   TA_RetCode retCode;
+
+   TA_Integer outBegIdxRef, outNbElementRef;
+   TA_RetCode retCodeRef;
+
+   int period, startIdx, endIdx, testNb;
+
+   ErrorNumber errNb;
+
+   /* Do a systematic tests, even for failure cases. */
+   for( testNb=0; testNb <= 1; testNb++ ) /* 0=TA_MIN, 1=TA_MAX */
+   {      
+      for( period=1; period <= nbElement; period++ )
+      {
+         for( startIdx=0; startIdx < nbElement; startIdx++ )
+         {
+            for( endIdx=0; (endIdx < nbElement) && (startIdx <= endIdx); endIdx++ )
+            {            
+               /* Set to NAN all the elements of the gBuffers.
+                * Note: These buffer are used as an attempt to detect
+                *       out-of-bound writing in the output.
+                */
+               clearAllBuffers();
+
+               /* Build the input. */
+               setInputBuffer( 0, input, nbElement );
+
+               /* Get the reference output. */
+               if( testNb == 0 )
+                  retCodeRef = referenceMin( libHandle, startIdx, endIdx, input, period, 
+                                             &outBegIdxRef, &outNbElementRef, gBuffer[0].out0 );
+               else
+                  retCodeRef = referenceMax( libHandle, startIdx, endIdx, input, period, 
+                                             &outBegIdxRef, &outNbElementRef, gBuffer[0].out0 );
+
+               /* Verify that the input was preserved */
+               errNb = checkDataSame( gBuffer[0].in, input, nbElement );
+               if( errNb != TA_TEST_PASS )
+                  return errNb;
+
+               /* Get the TA-Lib implementation output. */
+               if( testNb == 0 )
+                  retCode = TA_MIN( libHandle, startIdx, endIdx, input, period, 
+                                    &outBegIdx, &outNbElement, gBuffer[1].out0 );
+               else
+                  retCode = TA_MAX( libHandle, startIdx, endIdx, input, period, 
+                                    &outBegIdx, &outNbElement, gBuffer[1].out0 );
+
+               /* Verify that the input was preserved */
+               errNb = checkDataSame( gBuffer[0].in, input, nbElement );
+               if( errNb != TA_TEST_PASS )
+                  return errNb;
+
+               /* The reference and TA-LIB should have the same output. */
+               if( retCode != retCodeRef )
+               {
+                  printf( "Failure: retCode != retCodeRef\n" );
+                  return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+               }
+
+               if( outBegIdx != outBegIdxRef )
+               {
+                  printf( "Failure: outBegIdx != outBegIdxRef\n" );
+                  return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+               }
+
+               if( outNbElement != outNbElementRef )
+               {
+                  printf( "Failure: outNbElement != outNbElementRef\n" );
+                  return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+               }
+
+               /* checkSameContent verify that all value different than NAN in
+                * the first parameter is identical in the second parameter.
+                */
+               errNb = checkSameContent( gBuffer[0].out0, gBuffer[1].out0 );
+               if( errNb != TA_TEST_PASS )
+                  return errNb;
+
+               if( retCode == TA_SUCCESS )
+               {
+                  /* Make another test using the same input/output buffer.
+                   * The output should still be the same.
+                   */
+                  if( testNb == 0 )
+                     retCode = TA_MIN( libHandle, startIdx, endIdx, gBuffer[0].in, period, 
+                                       &outBegIdx, &outNbElement, gBuffer[0].in );
+                  else
+                     retCode = TA_MAX( libHandle, startIdx, endIdx, gBuffer[0].in, period, 
+                                       &outBegIdx, &outNbElement, gBuffer[0].in );
+
+                  /* The reference and TA-LIB should have the same output. */
+                  if( retCode != retCodeRef )
+                  {
+                     printf( "Failure: retCode != retCodeRef (2)\n" );
+                     return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+                  }
+
+                  if( outBegIdx != outBegIdxRef )
+                  {
+                     printf( "Failure: outBegIdx != outBegIdxRef (2)\n" );
+                     return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+                  }
+
+                  if( outNbElement != outNbElementRef )
+                  {
+                     printf( "Failure: outNbElement != outNbElementRef (2)\n" );
+                     return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+                  }
+
+                  /* checkSameContent verify that all value different than NAN in
+                   * the first parameter is identical in the second parameter.
+                   */
+                  errNb = checkSameContent( gBuffer[0].in, gBuffer[0].out0 );
+                  if( errNb != TA_TEST_PASS )
+                     return errNb;
+               }
+            }
+         }
+      }  
+   }
+
+   return TA_SUCCESS;
+}

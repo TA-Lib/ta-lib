@@ -257,8 +257,32 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    }
 
    /* Make tests for each TA functions. */
-   #define PRINTF_TEST_HDR      printf( "    %22s: Testing...", TEST_ID );
+   #define PRINTF_TEST_HDR      printf( "%25s: Testing...", TEST_ID );
    #define PRINTF_TEST_SUCCESS  printf( "done.\n" );
+
+   #define TEST_ID "MACD,MACDFIX,MACDEXT"
+   PRINTF_TEST_HDR;
+   retValue = test_func_macd( libHandle, history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+   PRINTF_TEST_SUCCESS;
+   #undef TEST_ID
+
+   #define TEST_ID "MOM,ROC,ROCP,ROCR,ROCR100"
+   PRINTF_TEST_HDR;
+   retValue = test_func_mom_roc( libHandle, history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+   PRINTF_TEST_SUCCESS;
+   #undef TEST_ID
+
+   #define TEST_ID "MIN,MAX"
+   PRINTF_TEST_HDR;
+   retValue = test_func_minmax( libHandle, history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+   PRINTF_TEST_SUCCESS;
+   #undef TEST_ID
 
    #define TEST_ID "Parabolic SAR"
    PRINTF_TEST_HDR;
@@ -268,7 +292,6 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    PRINTF_TEST_SUCCESS;
    #undef TEST_ID
 
-   /* Test Directional Movement related functions */
    #define TEST_ID "ADX,ADXR,DI,DM,DX"
    PRINTF_TEST_HDR;
    retValue = test_func_adx( libHandle, history );
@@ -277,16 +300,6 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    PRINTF_TEST_SUCCESS;
    #undef TEST_ID
 
-   /* Test MOM and ROC function */
-   #define TEST_ID "MOM,ROC,ROCR"
-   PRINTF_TEST_HDR;
-   retValue = test_func_mom_roc( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   /* Test RSI */
    #define TEST_ID "RSI"
    PRINTF_TEST_HDR;
    retValue = test_func_rsi( libHandle, history );
@@ -295,25 +308,15 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    PRINTF_TEST_SUCCESS;
    #undef TEST_ID
 
-   /* Test min/max functions. */
-   #define TEST_ID "MIN,MAX"
-   PRINTF_TEST_HDR;
-   retValue = test_func_minmax( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
-
-   /* Test all moving averages functions. */
    #define TEST_ID "All Moving Averages"
    PRINTF_TEST_HDR;
    retValue = test_func_ma( libHandle, history );
    if( retValue != TA_TEST_PASS )
+
       return retValue;
    PRINTF_TEST_SUCCESS;
    #undef TEST_ID
 
-   /* Test TRANGE and ATR functions. */
    #define TEST_ID "TRANGE,ATR"
    PRINTF_TEST_HDR;   
    retValue = test_func_trange( libHandle, history );
@@ -322,7 +325,6 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    PRINTF_TEST_SUCCESS;
    #undef TEST_ID
 
-   /* Test Price Oscillator */
    #define TEST_ID "PO,APO"
    PRINTF_TEST_HDR;
    retValue = test_func_po( libHandle, history );
@@ -331,16 +333,7 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    PRINTF_TEST_SUCCESS;
    #undef TEST_ID
 
-   /* Test MACD and MACDFIX functions */
-   #define TEST_ID "MACD,MACDFIX"
-   PRINTF_TEST_HDR;
-   retValue = test_func_macd( libHandle, history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-   PRINTF_TEST_SUCCESS;
-   #undef TEST_ID
 
-   /* Test STDDEV and VAR functions */
    #define TEST_ID "STDDEV,VAR"
    PRINTF_TEST_HDR;
    retValue = test_func_stddev( libHandle, history );
@@ -349,7 +342,6 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    PRINTF_TEST_SUCCESS;
    #undef TEST_ID
 
-   /* Test BBANDS function */
    #define TEST_ID "BBANDS"
    PRINTF_TEST_HDR;
    retValue = test_func_bbands( libHandle, history );
@@ -358,7 +350,6 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    PRINTF_TEST_SUCCESS;
    #undef TEST_ID
 
-   /* Test stochastic */
    #define TEST_ID "STOCH"
    PRINTF_TEST_HDR;
    retValue = test_func_stoch( libHandle, history );
@@ -367,7 +358,6 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    PRINTF_TEST_SUCCESS;
    #undef TEST_ID
 
-   /* Test TRIX */
    #define TEST_ID "TRIX"
    PRINTF_TEST_HDR;
    retValue = test_func_per_ema( libHandle, history );
@@ -376,7 +366,6 @@ static int testTAFunction_ALL( TA_Libc *libHandle, TA_History *history )
    PRINTF_TEST_SUCCESS;
    #undef TEST_ID
 
-   /* Test a group of simple functions just taking a "period" as parameter. */
    #define TEST_ID "CCI"
    PRINTF_TEST_HDR;
    retValue = test_func_per_hlc( libHandle, history );
