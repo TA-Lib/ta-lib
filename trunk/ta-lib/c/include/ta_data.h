@@ -101,19 +101,22 @@ typedef enum
  * functionality not applicable to the data source.
  *
  * TA_REPLACE_ZERO_PRICE_BAR
+ * =========================
  *    Some datasource return a price bar with some price to be zero as an
  *    an indication that there was no change in price. This option allows 
  *    to replace these "zero" price with the previous close.
  *    If the zero price are in the initial bars e.g. no previous valid close
  *    are known, these zero price bar will be ignored.
  *    Without this option, a "zero" detected in a price bar will be considered 
- *    an error and a call to TA_HistoryAlloc will fail.
+ *    an error and a call to TA_HistoryAlloc will fail. 
  *    A volume of zero is valid.
  *
  * TA_DO_NOT_SPLIT_ADJUST
+ * ======================
  *    Return data that is not split adjusted.
  *
  * TA_DO_NOT_VALUE_ADJUST
+ * ======================
  *    Return data that is not dividend adjusted.
  *
  */
@@ -123,7 +126,6 @@ typedef int TA_SourceFlag;
 #define TA_REPLACE_ZERO_PRICE_BAR (1<<0)
 #define TA_DO_NOT_SPLIT_ADJUST    (1<<1)
 #define TA_DO_NOT_VALUE_ADJUST    (1<<2)
-#define TA_ALLOW_INCOMPLETE_BARS  (1<<3)
 
 typedef struct
 {
@@ -139,25 +141,25 @@ typedef struct
     *
     * Initializing the whole structure to zero assure
     * that the actual (or future) unused parameters
-    * won't interfere.
+    * will not interfere.
     */
 
    /* Identify the data source. */
    TA_SourceId   id;
 
    /* Indicates the type of functionality that
-    * must be enabled from this data source.
+    * must be enabled for this data source.
     */
    TA_SourceFlag flags;
 
-   /* Indicates the data period supported by
-    * this data source.  Some data sources may
+   /* Indicates the period requested to be return 
+    * for this data source.  Some data sources may
     * ignore this value and extract the period 
     * directly from the data or other parameters.
     */
    TA_Period period;
 
-   /* The usage of the following two parameter are
+   /* The usage of the following two parameters are
     * data source dependent. See documentation.
     */
    const char *location;
@@ -171,7 +173,7 @@ typedef struct
     *
     * By setting "category" or by setting
     * individual category component following
-    * the TA-LIB guideline.
+    * the TA-Lib guideline.
     * Example:
     *    param.category = "My Category";
     *
@@ -189,14 +191,13 @@ typedef struct
    const char *exchange;
    const char *type;
 
-   /* The following should be set when requesting to add
-    * one and only one specific symbol.
-    * May fail if the data source does not contain the symbol.
+   /* The following is sometimes used for data source
+    * that return only one symbol.
     */
    const char *symbol;
 
    /* The user can optionaly name this data source. */
-   const char *name;
+   const char *sourceName;
 
 } TA_AddDataSourceParam;
 
@@ -371,25 +372,85 @@ typedef struct
 /* Flags that can be specified when allocating a TA_History.
  *
  * TA_ALLOW_INCOMPLETE_PRICE_BARS
- *    Allows to build price bar for which not all the data is 
- *    yet available. As an example, requesting historical monthly
- *    data will not return a month that is not yet finish.
- *    The default behavior is to not include incomplete
- *    price bar, this flag allows to do the contrary.
+ * ==============================
+ *    When TA-Lib does data consolidation to weekly, monthly, quarterly 
+ *    and yearly period, the default behavior is to not return incomplete
+ *    starting/ending price bars. This flag disable this filtering.
  *
+ *    A starting price bar period is determine completed when one of 
+ *    the following is true:
+ *     - The end-of-day price bar for the first weekday of the target 
+ *       period is available.
+ *     - Some data is found for the previous price bar.
+ *
+ *    A ending price bar period is determine completed when one of 
+ *    the following is true:
+ *     - The end-of-day price bar for the last weekday of the target 
+ *       period is available.
+ *     - Some data is found for the next price bar.
+ *
+ *    Examples:
+ *       (1) Requesting historical monthly data will not return the
+ *           ending month until at least the last week day is available OR
+ *           a price bar in the following month is found in the database.
+ *
+ *       (2) Requesting historical weekly data will not return the starting
+ *           week if it was an incomplete week AND no data is found for 
+ *           the previous week in the database.
+ *
+ *       (3) Requesting historical yearly data will not return the starting
+ *           year if the first week day of the year is not available AND 
+ *           no data is found for the previous year in the database.
  */
 typedef int TA_HistoryFlag;
 #define TA_ALLOW_INCOMPLETE_PRICE_BARS (1<<0)
 
 typedef struct
 {
-   const char    *source;
+   /* The whole structure should be first initialize
+    * with zero, and only the relevant parameter
+    * to your application needs to be set.
+    *
+    * The safest way is to ALWAYS do something like:
+    *    TA_HistoryAllocParam param;
+    *    TA_History *history;
+    *    memset( &param, 0, sizeof( TA_HistoryAllocParam ) );
+    *    ... set only the parameter you need...
+    *    retCode = TA_HistoryAlloc( udb, &param, &history ); 
+    *
+    * Initializing the whole structure to zero assure
+    * that the actual (or future) unused parameters
+    * will not interfere.
+    */
+
+   /* You can request the data from a particular source. Use the optional 
+    * name who was provided with TA_AddDataSource. Leave to zero to 
+    * let TA-Lib choose a data source or perform data merging.    
+    */    
+   const char    *sourceName;
+
+   /* Identify the instrument for which you want historical data. */
    const char    *category;
    const char    *symbol;   
+
+   /* Amount of time for each price bar. TA-Lib will consolidate the
+    * data as needed.
+    */
    TA_Period      period;
+
+   /* Inclusive starting and ending date. Only the granularity specify
+    * by period is consider from these timestamps. Example, requesting
+    * with period equal TA_MONTHLY means that only the Year and Month 
+    * component of start/end will be used and the day and time will be
+    * ignored.
+    */
    TA_Timestamp   start;
    TA_Timestamp   end;
+   
+   /* List of field to allocate. */
    TA_Field       field;
+
+   /* Optional flags. */
    TA_HistoryFlag flags;
 } TA_HistoryAllocParam;
 
@@ -420,7 +481,7 @@ TA_RetCode TA_Report( TA_UDBase *unifiedDatabase,
                       FILE *out,
                       TA_ReportFlag flags );
 
-/* A little utility to fetch a web page and send the raw data
+/* A utility function to fetch a web page and send the raw data
  * to the provided FILE pointer. This ptr could be "stdout" to
  * display on the console.
  *
