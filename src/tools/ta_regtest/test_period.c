@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  070401 MF   First version.
- *  062203 MF   Add intra-day tp daily test using the "ES.CSV" file.
+ *  062203 MF   Add intra-day to daily test using the "ES.CSV" file.
  */
 
 /* Description:
