@@ -240,6 +240,7 @@ static ErrorNumber test_source( TA_UDBase *udb, TA_SourceId id, const char *symb
    histParam.symbol   = symbol;
    histParam.field    = TA_ALL;
    histParam.period   = TA_MONTHLY;
+   histParam.flags    = TA_ALLOW_INCOMPLETE_PRICE_BARS;
    retCode = TA_HistoryAlloc( udb, &histParam, &history );
 
    if( retCode != TA_SUCCESS )
@@ -283,6 +284,33 @@ static ErrorNumber test_source( TA_UDBase *udb, TA_SourceId id, const char *symb
       return TA_CSI_HISTORYFREE_FAILED;
    }
 
+   /* Check that incomplete month are not return. */
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = "CSI_ID";
+   histParam.symbol   = symbol;
+   histParam.field    = TA_ALL;
+   histParam.period   = TA_MONTHLY;
+   retCode = TA_HistoryAlloc( udb, &histParam, &history );
+
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_HistoryAlloc for complete Monthly data", retCode );
+      return TA_CSI_HISTORYALLOC_4_FAILED;
+   }
+
+   if( history->nbBars != 1 )
+   {
+      printf( "Incomplete month wrongly returned (%d != 1)\n", history->nbBars );
+      return TA_CSI_HISTORYALLOC_5_FAILED;
+   }
+
+   retCode = TA_HistoryFree( history );
+   if( retCode != TA_SUCCESS )
+   {
+      reportError( "TA_HistoryFree", retCode );
+      return TA_CSI_HISTORYFREE_FAILED;
+   }
+
    return TA_TEST_PASS;
 }
 
@@ -307,6 +335,7 @@ static ErrorNumber checkRangeSame( TA_UDBase          *udb,
    histParam.period   = period;
    histParam.start    = *start;
    histParam.end      = *end;
+   histParam.flags    = TA_ALLOW_INCOMPLETE_PRICE_BARS;
    retCode = TA_HistoryAlloc( udb, &histParam, &history );
 
    if( retCode != TA_SUCCESS )
