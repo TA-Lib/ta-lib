@@ -50,6 +50,8 @@ extern const char *TA_GroupString[TA_NB_GROUP_ID];
 
 /* Inputs */
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Real;
+extern const TA_InputParameterInfo TA_DEF_UI_Input_Real0;
+extern const TA_InputParameterInfo TA_DEF_UI_Input_Real1;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Integer;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Timestamp;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_OHLCV;
