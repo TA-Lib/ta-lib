@@ -76,10 +76,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::CDLKICKINGbyLength_Lookback( void )
+/* Generated */ int Core::CDLKICKINGBYLENGTH_Lookback( void )
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_CDLKICKINGbyLength_Lookback( void )
+/* Generated */ int TA_CDLKICKINGBYLENGTH_Lookback( void )
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -91,7 +91,7 @@
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 /*
- * TA_CDLKICKINGbyLength - Kicking - bull/bear determined by the longer marubozu
+ * TA_CDLKICKINGBYLENGTH - Kicking - bull/bear determined by the longer marubozu
  * 
  * Input  = Open, High, Low, Close
  * Output = int
@@ -99,7 +99,7 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::CDLKICKINGbyLength( int    startIdx,
+/* Generated */ __value enum Core::TA_RetCode Core::CDLKICKINGBYLENGTH( int    startIdx,
 /* Generated */                                                         int    endIdx,
 /* Generated */                                                         double       inOpen __gc [],
 /* Generated */                                                         double       inHigh __gc [],
@@ -109,7 +109,7 @@
 /* Generated */                                                         [OutAttribute]Int32 *outNbElement,
 /* Generated */                                                         int           outInteger __gc [] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_CDLKICKINGbyLength( int    startIdx,
+/* Generated */ TA_RetCode TA_CDLKICKINGBYLENGTH( int    startIdx,
 /* Generated */                                   int    endIdx,
 /* Generated */                                   const double inOpen[],
 /* Generated */                                   const double inHigh[],
@@ -151,7 +151,7 @@
     * to calculate at least one output.
     */
 
-   lookbackTotal = TA_CDLKICKINGbyLength_Lookback();
+   lookbackTotal = TA_CDLKICKINGBYLENGTH_Lookback();
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -252,7 +252,7 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::CDLKICKINGbyLength( int    startIdx,
+/* Generated */ __value enum Core::TA_RetCode Core::CDLKICKINGBYLENGTH( int    startIdx,
 /* Generated */                                                         int    endIdx,
 /* Generated */                                                         float        inOpen __gc [],
 /* Generated */                                                         float        inHigh __gc [],
@@ -262,7 +262,7 @@
 /* Generated */                                                         [OutAttribute]Int32 *outNbElement,
 /* Generated */                                                         int           outInteger __gc [] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_S_CDLKICKINGbyLength( int    startIdx,
+/* Generated */ TA_RetCode TA_S_CDLKICKINGBYLENGTH( int    startIdx,
 /* Generated */                                     int    endIdx,
 /* Generated */                                     const float  inOpen[],
 /* Generated */                                     const float  inHigh[],
@@ -285,7 +285,7 @@
 /* Generated */     if( outInteger == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    lookbackTotal = TA_CDLKICKINGbyLength_Lookback();
+/* Generated */    lookbackTotal = TA_CDLKICKINGBYLENGTH_Lookback();
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
