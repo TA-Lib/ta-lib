@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  022203 MF   Add MAMA
- *  040503 Mf   Add T3
+ *  040503 MF   Add T3
  *  052603 MF   Adapt code to compile with .NET Managed C++
  */
 
@@ -73,56 +73,60 @@
 #endif
 
 #if defined( _MANAGED )
-int Core::MA_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+int Core::MA_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
                      TA_MAType     optInMAType_1 ) 
 #else
-int TA_MA_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+int TA_MA_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
                   TA_MAType     optInMAType_1 ) 
 #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
+   int retValue;
 
    switch( optInMAType_1 )
    {
    case TA_MAType_SMA:
-      return TA_SMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_SMA_Lookback( optInTimePeriod_0 );
       break;
 
    case TA_MAType_EMA:
-      return TA_EMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_EMA_Lookback( optInTimePeriod_0 );
       break;
 
    case TA_MAType_WMA:
-      return TA_WMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_WMA_Lookback( optInTimePeriod_0 );
       break;
 
    case TA_MAType_DEMA:
-      return TA_DEMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_DEMA_Lookback( optInTimePeriod_0 );
       break;
 
    case TA_MAType_TEMA:
-      return TA_TEMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_TEMA_Lookback( optInTimePeriod_0 );
       break;
 
    case TA_MAType_TRIMA:
-      return TA_TRIMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_TRIMA_Lookback( optInTimePeriod_0 );
       break;
 
    case TA_MAType_KAMA:
-      return TA_KAMA_Lookback( optInTimePeriod_0 );
+      retValue = TA_KAMA_Lookback( optInTimePeriod_0 );
       break;
 
    case TA_MAType_MAMA:
-      return TA_MAMA_Lookback( 0.5, 0.05 );
+      retValue = TA_MAMA_Lookback( 0.5, 0.05 );
       break;
 
    case TA_MAType_T3:
-      return TA_T3_Lookback( optInTimePeriod_0, 0.7 );
+      retValue = TA_T3_Lookback( optInTimePeriod_0, 0.7 );
       break;
+
+   default:
+      retValue = 0;
    }
 
-   return 0;
+   return retValue;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -134,7 +138,7 @@ int TA_MA_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 2 to 100000)
  *    Number of period
  * 
  * optInMAType_1:
@@ -148,7 +152,7 @@ int TA_MA_Lookback( int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX
 enum TA_RetCode Core::MA( int    startIdx,
                           int    endIdx,
                           double       inReal_0 __gc [],
-                          int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                          int           optInTimePeriod_0, /* From 2 to 100000 */
                           TA_MAType     optInMAType_1,
                           [OutAttribute]Int32 *outBegIdx,
                           [OutAttribute]Int32 *outNbElement,
@@ -157,7 +161,7 @@ enum TA_RetCode Core::MA( int    startIdx,
 TA_RetCode TA_MA( int    startIdx,
                   int    endIdx,
                   const double inReal_0[],
-                  int           optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                  int           optInTimePeriod_0, /* From 2 to 100000 */
                   TA_MAType     optInMAType_1,
                   int          *outBegIdx,
                   int          *outNbElement,
@@ -184,7 +188,7 @@ TA_RetCode TA_MA( int    startIdx,
    /* min/max are checked for optInTimePeriod_0. */
    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 30;
-   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
       return TA_BAD_PARAM;
 
    #if !defined(_MANAGED)
@@ -204,44 +208,52 @@ TA_RetCode TA_MA( int    startIdx,
    /* Simply call the internal implementation of the
     * requested moving average.
     */
+
    switch( optInMAType_1 )
    {
    case TA_MAType_SMA:
-      return TA_INT_SMA( startIdx, endIdx,                         
-                         inReal_0, optInTimePeriod_0,                         
-                         outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_INT_SMA( startIdx, endIdx,                         
+                            inReal_0, optInTimePeriod_0,                         
+                            outBegIdx, outNbElement, outReal_0 );
       break;
+
    case TA_MAType_EMA:
-      return TA_INT_EMA( startIdx, endIdx,
-                         inReal_0,
-                         optInTimePeriod_0, PER_TO_K(optInTimePeriod_0),
+      retCode = TA_INT_EMA( startIdx, endIdx,
+                            inReal_0,
+                            optInTimePeriod_0, PER_TO_K(optInTimePeriod_0),
+                            outBegIdx, outNbElement, outReal_0 );
+      break;
+
+   case TA_MAType_WMA:
+      retCode = TA_WMA( startIdx, endIdx,
+                        inReal_0, optInTimePeriod_0,
+                        outBegIdx, outNbElement, outReal_0 );
+      break;
+
+   case TA_MAType_DEMA:
+      retCode = TA_DEMA( startIdx, endIdx,
+                         inReal_0, optInTimePeriod_0,
                          outBegIdx, outNbElement, outReal_0 );
       break;
-   case TA_MAType_WMA:
-      return TA_WMA( startIdx, endIdx,
-                     inReal_0, optInTimePeriod_0,
-                     outBegIdx, outNbElement, outReal_0 );
-      break;
-   case TA_MAType_DEMA:
-      return TA_DEMA( startIdx, endIdx,
-                      inReal_0, optInTimePeriod_0,
-                      outBegIdx, outNbElement, outReal_0 );
-      break;
+
    case TA_MAType_TEMA:
-      return TA_TEMA( startIdx, endIdx,
-                      inReal_0, optInTimePeriod_0,
-                      outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_TEMA( startIdx, endIdx,
+                         inReal_0, optInTimePeriod_0,
+                         outBegIdx, outNbElement, outReal_0 );
       break;
+
    case TA_MAType_TRIMA:
-      return TA_TRIMA( startIdx, endIdx,
-                       inReal_0, optInTimePeriod_0,
-                       outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_TRIMA( startIdx, endIdx,
+                          inReal_0, optInTimePeriod_0,
+                          outBegIdx, outNbElement, outReal_0 );
       break;
+
    case TA_MAType_KAMA:
-      return TA_KAMA( startIdx, endIdx,
-                      inReal_0, optInTimePeriod_0,
-                      outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_KAMA( startIdx, endIdx,
+                         inReal_0, optInTimePeriod_0,
+                         outBegIdx, outNbElement, outReal_0 );
       break;
+
    case TA_MAType_MAMA:
       /* The optInTimePeriod_0 is ignored and the FAMA output of the MAMA
        * is ignored.
@@ -255,19 +267,16 @@ TA_RetCode TA_MA( int    startIdx,
                          outBegIdx, outNbElement,
                          outReal_0, dummyBuffer );
       ARRAY_FREE( dummyBuffer );
-      return retCode;
       break;
+
    case TA_MAType_T3:
-      return TA_T3( startIdx, endIdx,
-                    inReal_0, optInTimePeriod_0, 0.7,
-                    outBegIdx, outNbElement, outReal_0 );
+      retCode = TA_T3( startIdx, endIdx,
+                       inReal_0, optInTimePeriod_0, 0.7,
+                       outBegIdx, outNbElement, outReal_0 );
       break;
    }
 
-   *outBegIdx    = 0;
-   *outNbElement = 0;
-
-   return TA_BAD_PARAM;                        
+   return retCode;
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/

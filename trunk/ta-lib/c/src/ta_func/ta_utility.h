@@ -75,7 +75,7 @@ TA_RetCode TA_INT_PO( int    startIdx,
                       const double *inReal_0,
                       int    optInFastPeriod_0, /* From 1 to 200 */
                       int    optInSlowPeriod_1, /* From 1 to 200 */
-                      int    optInMethod_2,
+                      TA_MAType optInMethod_2,
                       int   *outBegIdx,
                       int   *outNbElement,
                       double      *outReal_0,
@@ -115,6 +115,10 @@ void TA_INT_stddev_using_precalc_ma( const double *inReal,
    #define floor Math::Floor
    #define ceil  Math::Ceil
    #define fabs  Math::Abs
+   #define atan  Math::Atan
+   #define cos   Math::Cos
+   #define sin   Math::Sin
+   #define sqrt  Math::Sqrt
 #endif
 
 /* Rounding macro for doubles. Works only with positive numbers. */

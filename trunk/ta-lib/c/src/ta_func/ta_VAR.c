@@ -72,11 +72,11 @@
 #endif
 
 #if defined( _MANAGED )
-int Core::VAR_Lookback( int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+int Core::VAR_Lookback( int           optInTimePeriod_0, /* From 1 to 100000 */
                       double        optInNbDev_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 #else
-int TA_VAR_Lookback( int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+int TA_VAR_Lookback( int           optInTimePeriod_0, /* From 1 to 100000 */
                    double        optInNbDev_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 #endif
@@ -97,7 +97,7 @@ int TA_VAR_Lookback( int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MA
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
+ * optInTimePeriod_0:(From 1 to 100000)
  *    Number of period
  * 
  * optInNbDev_1:(From TA_REAL_MIN to TA_REAL_MAX)
@@ -111,7 +111,7 @@ int TA_VAR_Lookback( int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MA
 enum TA_RetCode Core::VAR( int    startIdx,
                            int    endIdx,
                            double       inReal_0 __gc [],
-                           int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                           int           optInTimePeriod_0, /* From 1 to 100000 */
                            double        optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                            [OutAttribute]Int32 *outBegIdx,
                            [OutAttribute]Int32 *outNbElement,
@@ -120,7 +120,7 @@ enum TA_RetCode Core::VAR( int    startIdx,
 TA_RetCode TA_VAR( int    startIdx,
                    int    endIdx,
                    const double inReal_0[],
-                   int           optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                   int           optInTimePeriod_0, /* From 1 to 100000 */
                    double        optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                    int          *outBegIdx,
                    int          *outNbElement,
@@ -145,7 +145,7 @@ TA_RetCode TA_VAR( int    startIdx,
    /* min/max are checked for optInTimePeriod_0. */
    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
       optInTimePeriod_0 = 5;
-   else if( ((int)optInTimePeriod_0 < 1) || ((int)optInTimePeriod_0 > 2147483647) )
+   else if( ((int)optInTimePeriod_0 < 1) || ((int)optInTimePeriod_0 > 100000) )
       return TA_BAD_PARAM;
 
    if( optInNbDev_1 == TA_REAL_DEFAULT )

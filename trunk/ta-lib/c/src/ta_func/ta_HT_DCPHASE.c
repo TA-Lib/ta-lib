@@ -185,7 +185,7 @@ TA_RetCode TA_HT_DCPHASE( int    startIdx,
 
    /* Insert TA function code here. */
 
-   CIRCBUF_CONSTRUCT(smoothPrice,double,SMOOTH_PRICE_SIZE);
+   CIRCBUF_INIT_LOCAL_ONLY(smoothPrice,double);
 
    /* Constant */
    tempReal = atan(1);

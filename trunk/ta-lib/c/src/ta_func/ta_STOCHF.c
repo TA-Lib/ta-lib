@@ -73,12 +73,12 @@
 #endif
 
 #if defined( _MANAGED )
-int Core::STOCHF_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                         int           optInFastD_Period_1, /* From 1 to TA_INTEGER_MAX */
+int Core::STOCHF_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
+                         int           optInFastD_Period_1, /* From 1 to 100000 */
                          TA_MAType     optInFastD_MAType_2 ) 
 #else
-int TA_STOCHF_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                      int           optInFastD_Period_1, /* From 1 to TA_INTEGER_MAX */
+int TA_STOCHF_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
+                      int           optInFastD_Period_1, /* From 1 to 100000 */
                       TA_MAType     optInFastD_MAType_2 ) 
 #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -104,10 +104,10 @@ int TA_STOCHF_Lookback( int           optInFastK_Period_0, /* From 1 to TA_INTEG
  * 
  * Optional Parameters
  * -------------------
- * optInFastK_Period_0:(From 1 to TA_INTEGER_MAX)
+ * optInFastK_Period_0:(From 1 to 100000)
  *    Time period for building the Fast-K line
  * 
- * optInFastD_Period_1:(From 1 to TA_INTEGER_MAX)
+ * optInFastD_Period_1:(From 1 to 100000)
  *    Smoothing for making the Fast-D line. Usually set to 3
  * 
  * optInFastD_MAType_2:
@@ -123,8 +123,8 @@ enum TA_RetCode Core::STOCHF( int    startIdx,
                               double       inHigh_0 __gc [],
                               double       inLow_0 __gc [],
                               double       inClose_0 __gc [],
-                              int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                              int           optInFastD_Period_1, /* From 1 to TA_INTEGER_MAX */
+                              int           optInFastK_Period_0, /* From 1 to 100000 */
+                              int           optInFastD_Period_1, /* From 1 to 100000 */
                               TA_MAType     optInFastD_MAType_2,
                               [OutAttribute]Int32 *outBegIdx,
                               [OutAttribute]Int32 *outNbElement,
@@ -136,8 +136,8 @@ TA_RetCode TA_STOCHF( int    startIdx,
                       const double inHigh_0[],
                       const double inLow_0[],
                       const double inClose_0[],
-                      int           optInFastK_Period_0, /* From 1 to TA_INTEGER_MAX */
-                      int           optInFastD_Period_1, /* From 1 to TA_INTEGER_MAX */
+                      int           optInFastK_Period_0, /* From 1 to 100000 */
+                      int           optInFastD_Period_1, /* From 1 to 100000 */
                       TA_MAType     optInFastD_MAType_2,
                       int          *outBegIdx,
                       int          *outNbElement,
@@ -176,13 +176,13 @@ TA_RetCode TA_STOCHF( int    startIdx,
    /* min/max are checked for optInFastK_Period_0. */
    if( (int)optInFastK_Period_0 == TA_INTEGER_DEFAULT )
       optInFastK_Period_0 = 5;
-   else if( ((int)optInFastK_Period_0 < 1) || ((int)optInFastK_Period_0 > 2147483647) )
+   else if( ((int)optInFastK_Period_0 < 1) || ((int)optInFastK_Period_0 > 100000) )
       return TA_BAD_PARAM;
 
    /* min/max are checked for optInFastD_Period_1. */
    if( (int)optInFastD_Period_1 == TA_INTEGER_DEFAULT )
       optInFastD_Period_1 = 3;
-   else if( ((int)optInFastD_Period_1 < 1) || ((int)optInFastD_Period_1 > 2147483647) )
+   else if( ((int)optInFastD_Period_1 < 1) || ((int)optInFastD_Period_1 > 100000) )
       return TA_BAD_PARAM;
 
    #if !defined(_MANAGED)

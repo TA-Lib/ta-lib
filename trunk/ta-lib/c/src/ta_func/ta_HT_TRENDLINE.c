@@ -190,7 +190,7 @@ TA_RetCode TA_HT_TRENDLINE( int    startIdx,
 
    /* Insert TA function code here. */
 
-   CIRCBUF_CONSTRUCT(smoothPrice,double,SMOOTH_PRICE_SIZE);
+   CIRCBUF_INIT_LOCAL_ONLY(smoothPrice,double);
 
    iTrend1 = iTrend2 = iTrend3 = 0.0;
 
