@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,14 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  JS       Jon Sudul
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  070800 MF   First version.
- *
+ *  070800 MF    First version.
+ *  012504 MF,JS Fix mem leak in TA_HistoryAddData (Bug#881950).
  */
 
 /* Description:
@@ -500,15 +500,18 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
    const TA_Timestamp *highTimestamp;
    unsigned int thisBlockGoesAfterTheExistingOnes;
 
+   TA_TRACE_BEGIN( TA_HistoryAddData );
+
    newBlock = NULL;
 
    /* Check the parameters, and identify the context of this data. */
    if( paramForAddData == NULL )
-      return TA_BAD_PARAM;
+   {
+      retCode = TA_BAD_PARAM;
+      goto TA_HistoryAddData_EXIT;
+   }
 
    supportForDataSource = (TA_SupportForDataSource *)paramForAddData;
-
-   TA_TRACE_BEGIN( TA_HistoryAddData );
 
    builderSupport = supportForDataSource->parent;
    TA_ASSERT( builderSupport != NULL );
@@ -565,7 +568,7 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
       { \
          if( lowerc && !(fieldProvided&TA_##upperc) ) \
          { \
-            TA_Free(  lowerc ); \
+            TA_Free( lowerc ); \
             lowerc = NULL; \
             fieldProvided &= ~TA_##upperc; \
          } \
@@ -690,15 +693,15 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
 
    memset( newBlock, 0, sizeof( TA_DataBlock ) );
 
-   #define TRANSFER_OWNERSHIP_TO_NEWBLOCK(par) newBlock->par=par; par=NULL;
-   TRANSFER_OWNERSHIP_TO_NEWBLOCK(timestamp);
-   TRANSFER_OWNERSHIP_TO_NEWBLOCK(open);
-   TRANSFER_OWNERSHIP_TO_NEWBLOCK(high);
-   TRANSFER_OWNERSHIP_TO_NEWBLOCK(low);
-   TRANSFER_OWNERSHIP_TO_NEWBLOCK(close);
-   TRANSFER_OWNERSHIP_TO_NEWBLOCK(volume);
-   TRANSFER_OWNERSHIP_TO_NEWBLOCK(openInterest);
-   #undef TRANSFER_OWNERSHIP_TO_NEWBLOCK
+   #define SET_NEWBLOCK(par) newBlock->par=par;
+   SET_NEWBLOCK(timestamp);
+   SET_NEWBLOCK(open);
+   SET_NEWBLOCK(high);
+   SET_NEWBLOCK(low);
+   SET_NEWBLOCK(close);
+   SET_NEWBLOCK(volume);
+   SET_NEWBLOCK(openInterest);
+   #undef SET_NEWBLOCK
    newBlock->period = period;
    newBlock->nbBars = nbBarAdded;
    newBlock->fieldProvided = fieldProvided;
@@ -720,8 +723,15 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
    if( retCode != TA_SUCCESS )
       goto TA_HistoryAddData_EXIT;
 
-   /* The 'listOfDataBlock' now owns the newBlock. */
-   newBlock = NULL;
+   /* The 'listOfDataBlock' now owns the newBlock and the vectors of data. */
+   newBlock     = NULL;
+   timestamp    = NULL;
+   open         = NULL;
+   high         = NULL;
+   low          = NULL;
+   close        = NULL;
+   volume       = NULL;
+   openInterest = NULL;
 
    /* On success, adjust the lowest/highest information. */
    if( supportForDataSource->highestTimestamp == NULL )
@@ -770,8 +780,10 @@ TA_HistoryAddData_EXIT:  /* The only point of this function. */
    /* Any major error will fail the entire read operation
     * (including all other data source, even if they did succeed).
     */
-   if( (retCode != TA_SUCCESS) && (retCode != TA_ENOUGH_DATA) )
+   if( builderSupport && (retCode != TA_SUCCESS) && (retCode != TA_ENOUGH_DATA) )
+   {
       builderSupport->retCode = retCode;
+   }
 
    TA_TRACE_RETURN( retCode );
 }
