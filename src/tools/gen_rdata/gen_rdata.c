@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  060201 MF   First version.
- *
+ *  060304 MF   Option -u updates only invalid or 2 days old indexes.
  */
 
 /* Description:
@@ -179,9 +179,10 @@ int main(int argc, char *argv[] )
    switch( option )
    {
    case 'U':
-      /* Will regenerate the file only if broken or more than 1 day old. */
+      /* Will regenerate the file only if broken or more than 2 days old. */
       TA_SetTimeNow(&expirationDate);
       TA_SetDateNow(&expirationDate);
+      TA_PrevDay(&expirationDate);
       TA_PrevDay(&expirationDate);
 
       #define GET_INDEX(country)  \
