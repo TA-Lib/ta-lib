@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,13 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  RM       Robert Meier (talib@meierlim.com http://www.meierlim.com)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  123004 RM,MF  Adapt code to work with Visual Studio 2005
  *
  */
 
