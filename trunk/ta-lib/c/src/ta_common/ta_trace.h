@@ -28,12 +28,8 @@
  *
  * NEXT AVAILABLE NUMBER: 140
  */
-#if defined( _MANAGED )
-   /* Sadly, we loose the Id info with Managed C++ */
-   #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
-#else
-   #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR+Id)
-#endif
+#define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR+Id)
+
 
 /* Note: TA-LIB is NEVER doing any console I/O (no putchar, printf etc...) unless
  *       it is specifically requested by the library user (like with the TA_FatalReport
