@@ -486,12 +486,17 @@ TA_RetCode TA_RegressionTest( TA_RegressionTestId id )
        * If the user did provide an handler, it will get called.
        */ 
       TA_FATAL("Test",0x01234567,0x89ABCDEF);
-      break;
-   default:
-      TA_TRACE_RETURN(TA_BAD_PARAM);
+      /* break; comment out to eliminate warning of un-reachable code */
+   case TA_REG_TEST_ASSERT_FAIL:
+      /* Should never happen since the assert above
+       * should return from this function.
+       */
+      TA_FATAL("Should have return",TA_REG_TEST_ASSERT_FAIL,id);
+      /* break; comment out to eliminate warning of un-reachable code */
    }
 
-   TA_TRACE_RETURN(TA_SUCCESS); 
+   
+   TA_TRACE_RETURN(TA_BAD_PARAM);
 }
 
 /**** Local functions definitions.     ****/
