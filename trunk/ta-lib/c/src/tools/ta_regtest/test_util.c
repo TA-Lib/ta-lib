@@ -732,7 +732,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
    TA_Real val1, val2;
    TA_Integer i, temp;
    TA_Integer outputBegIdx, outputNbElement, lookback;
-   TA_Integer startIdx, endIdx, relativeIdx;
+   TA_Integer startIdx, endIdx, relativeIdx, outputSizeByOptimalLogic;
    TA_Integer *outputBufferInt;
    unsigned int outputIsInteger;
 
@@ -774,7 +774,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                               &outputBuffer[1], &outputBufferInt[1],
                               &outputBegIdx, &outputNbElement, &lookback,
                               opaqueData, outputNb, &outputIsInteger );
-
+      
       if( retCode != TA_SUCCESS ) 
       {
           /* No call shall never fail here. When the range
@@ -902,6 +902,74 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                }
             }
 
+            /* Verify out-of-bound writing in the output buffer. */
+            outputSizeByOptimalLogic = max(lookback,startIdx);
+            if( outputSizeByOptimalLogic > endIdx )
+               outputSizeByOptimalLogic = 0;
+            else
+               outputSizeByOptimalLogic = endIdx-outputSizeByOptimalLogic+1;
+
+            if( (fixSize != outputNbElement) && (outputBuffer[1+outputSizeByOptimalLogic] != RESV_PATTERN_IMPROBABLE) )
+            {
+               printf( "Fail: doRangeTestFixSize out-of-bound output (%e)\n", outputBuffer[1+outputSizeByOptimalLogic] );
+               printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
+               printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
+               TA_Free( outputBuffer );
+               TA_Free( outputBufferInt );
+               return TA_TESTUTIL_DRT_OUT_OF_BOUND_OUT;
+            }
+
+            if( (fixSize != outputNbElement) && (outputBufferInt[1+outputSizeByOptimalLogic] != RESV_PATTERN_IMPROBABLE_INT) )
+            {
+               printf( "Fail: doRangeTestFixSize out-of-bound output  (%d)\n", outputBufferInt[1+outputSizeByOptimalLogic] );
+               printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
+               printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
+               TA_Free( outputBuffer );
+               TA_Free( outputBufferInt );
+               return TA_TESTUTIL_DRT_OUT_OF_BOUND_OUT_INT;
+            }
+
+            /* Verify that the memory guard were preserved. */
+            if( outputBuffer[0] != RESV_PATTERN_PREFIX )
+            {
+               printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_PREFIX (%e)\n", outputBuffer[0] );
+               printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
+               printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
+               TA_Free( outputBuffer );
+               TA_Free( outputBufferInt );
+               return TA_TESTUTIL_DRT_BAD_PREFIX;
+            }
+
+            if( outputBufferInt[0] != RESV_PATTERN_PREFIX_INT )
+            {
+               printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_PREFIX_INT (%d)\n", outputBufferInt[0] );
+               printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
+               printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
+               TA_Free( outputBuffer );
+               TA_Free( outputBufferInt );
+               return TA_TESTUTIL_DRT_BAD_PREFIX;
+            }
+
+            if( outputBuffer[fixSize+1] != RESV_PATTERN_SUFFIX )
+            {
+               printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_SUFFIX (%e)\n", outputBuffer[fixSize+1] );
+               printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
+               printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
+               TA_Free( outputBuffer );
+               TA_Free( outputBufferInt );
+               return TA_TESTUTIL_DRT_BAD_SUFFIX;
+            }
+
+            if( outputBufferInt[fixSize+1] != RESV_PATTERN_SUFFIX_INT )
+            {
+               printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_SUFFIX_INT (%d)\n", outputBufferInt[fixSize+1] );
+               printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
+               printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
+               TA_Free( outputBuffer );
+               TA_Free( outputBufferInt );
+               return TA_TESTUTIL_DRT_BAD_SUFFIX;
+            }
+
             /* Clean-up for next test. */
             if( outputIsInteger )
             {
@@ -924,47 +992,6 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
             temp = (rand() % 100)+40;
             startIdx += temp;
          }
-      }
-
-      /* Verify that the memory guard were preserved. */
-      if( outputBuffer[0] != RESV_PATTERN_PREFIX )
-      {
-         printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_PREFIX (%e)\n", outputBuffer[0] );
-         printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
-         printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-         TA_Free( outputBuffer );
-         TA_Free( outputBufferInt );
-         return TA_TESTUTIL_DRT_BAD_PREFIX;
-      }
-
-      if( outputBufferInt[0] != RESV_PATTERN_PREFIX_INT )
-      {
-         printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_PREFIX_INT (%d)\n", outputBufferInt[0] );
-         printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
-         printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-         TA_Free( outputBuffer );
-         TA_Free( outputBufferInt );
-         return TA_TESTUTIL_DRT_BAD_PREFIX;
-      }
-
-      if( outputBuffer[fixSize+1] != RESV_PATTERN_SUFFIX )
-      {
-         printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_SUFFIX (%e)\n", outputBuffer[fixSize+1] );
-         printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
-         printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-         TA_Free( outputBuffer );
-         TA_Free( outputBufferInt );
-         return TA_TESTUTIL_DRT_BAD_SUFFIX;
-      }
-
-      if( outputBufferInt[fixSize+1] != RESV_PATTERN_SUFFIX_INT )
-      {
-         printf( "Fail: doRangeTestFixSize bad RESV_PATTERN_SUFFIX_INT (%d)\n", outputBufferInt[fixSize+1] );
-         printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
-         printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
-         TA_Free( outputBuffer );
-         TA_Free( outputBufferInt );
-         return TA_TESTUTIL_DRT_BAD_SUFFIX;
       }
 
       /* Loop and move forward for the next startIdx to test. */
