@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
- *
+ *  120104 MF   Now check start/end boundary.
  */
 
 /* Description:
@@ -122,6 +122,39 @@ TA_RetCode TA_HistoryCheckInternal(
    if( (history->nbBars == 0) && !allFieldNull )
    {
       TA_TRACE_RETURN( TA_INTERNAL_ERROR(47) );
+   }
+
+   if( history->nbBars > 0 )
+   {
+      /* Verify that the data is not older than "start". */
+      if( expectedStart )
+      {
+         if( expectedPeriod < TA_DAILY )
+         {
+            if( TA_TimestampLess( &history->timestamp[0], expectedStart ) )
+               TA_TRACE_RETURN( TA_INTERNAL_ERROR(142) );
+         }
+         else
+         {
+            if( TA_TimestampDateLess( &history->timestamp[0], expectedStart ) )
+               TA_TRACE_RETURN( TA_INTERNAL_ERROR(144) );
+         }
+      }
+
+      /* Verify that the data is not more recent than "end". */
+      if( expectedEnd ) 
+      {
+         if( expectedPeriod < TA_DAILY )
+         {
+            if( TA_TimestampGreater( &history->timestamp[history->nbBars-1], expectedEnd) )
+               TA_TRACE_RETURN( TA_INTERNAL_ERROR(143) );
+         }
+         else
+         {
+            if( TA_TimestampDateGreater( &history->timestamp[history->nbBars-1], expectedEnd) )
+               TA_TRACE_RETURN( TA_INTERNAL_ERROR(145) );
+         }
+      }
    }
 
    /* !!! Some more runtime verification could be added here... */
