@@ -364,9 +364,9 @@ typedef struct
 
 typedef struct
 {
-   const char   *category;
-   const char   *symbol;
    const char   *source;
+   const char   *category;
+   const char   *symbol;   
    TA_Period     period;
    TA_Timestamp  start;
    TA_Timestamp  end;
