@@ -654,12 +654,12 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getNumColumns)(
                   queryResult,
                   &resColumns );
-   RETURN_ON_ERROR( retCode )
+   RETURN_ON_ERROR( retCode );
 
    retCode = (*TA_gSQLMinidriverTable[privateHandle->minidriver].getNumRows)(
                   queryResult,
                   &resRows );
-   RETURN_ON_ERROR( retCode )
+   RETURN_ON_ERROR( retCode );
 
    for( colNum = 0; colNum < resColumns; colNum++ ) 
    { 
@@ -668,7 +668,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
                            queryResult,
                            colNum,
                            &name );
-      RETURN_ON_ERROR( retCode )
+      RETURN_ON_ERROR( retCode );
 
       if( stricmp(name, TA_SQL_DATE_COLUMN) == 0 )
          date_col = colNum;
@@ -702,7 +702,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    /* When the TA_REPLACE_ZERO_PRICE_BAR flag is set, we must
     * always process the close.
     */
-   if( privateHandle->param->flags & TA_REPLACE_ZERO_PRICE_BAR )
+   if( fieldToAlloc != TA_ALL && privateHandle->param->flags & TA_REPLACE_ZERO_PRICE_BAR )
    {   
       fieldToAlloc |= TA_CLOSE;
    }
@@ -729,7 +729,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
       
    // Preallocate vectors memory
    if ( !(timestampVec = (TA_Timestamp*)TA_Malloc( resRows * sizeof(TA_Timestamp))))
-         RETURN_ON_ERROR( TA_ALLOC_ERR )
+         RETURN_ON_ERROR( TA_ALLOC_ERR );
    memset(timestampVec, 0, resRows * sizeof(TA_Timestamp));
 
    #define TA_SQL_ALLOC_VEC( col_num, field_flag, type, vec )           \
@@ -737,7 +737,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
             && (fieldToAlloc & field_flag || fieldToAlloc == TA_ALL)    \
             && !(vec = (type*)TA_Malloc( resRows * sizeof(type) )))     \
          {                                                              \
-               RETURN_ON_ERROR( TA_ALLOC_ERR)                           \
+               RETURN_ON_ERROR( TA_ALLOC_ERR);                          \
          }
 
    TA_SQL_ALLOC_VEC( open_col,   TA_OPEN,         TA_Real,    openVec   )
@@ -760,12 +760,12 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
                            rowNum, 
                            date_col,
                            &strval );
-      RETURN_ON_ERROR( retCode )
+      RETURN_ON_ERROR( retCode );
 
       /* date must be always present */
       if ( sscanf(strval, "%4u-%2u-%2u", &u1, &u2, &u3) != 3 )
       {
-         RETURN_ON_ERROR( TA_BAD_PARAM )  /* other error code? */
+         RETURN_ON_ERROR( TA_BAD_QUERY );  /* other error code? */
       }
 
       retCode = TA_SetDate(u1, u2, u3, &timestampVec[barNum]);
@@ -779,16 +779,16 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
                               rowNum, 
                               time_col,
                               &strval );
-         RETURN_ON_ERROR( retCode )
+         RETURN_ON_ERROR( retCode );
          
          if ( strval && *strval ) {  
             if (sscanf(strval, "%2u:%2u:%2u", &u1, &u2, &u3) != 3 )
             {
-               RETURN_ON_ERROR( TA_BAD_PARAM )
+               RETURN_ON_ERROR( TA_BAD_QUERY );
             }
 
             retCode = TA_SetTime(u1, u2, u3, &timestampVec[barNum]);
-            RETURN_ON_ERROR( retCode )
+            RETURN_ON_ERROR( retCode );
          }
          else { // ignore NULL fields
             barNum--;
@@ -803,7 +803,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
                                  rowNum,                                            \
                                  col,                                               \
                                  &vec[barNum] );                                    \
-            RETURN_ON_ERROR( retCode )                                              \
+            RETURN_ON_ERROR( retCode );                                             \
             if (vec[barNum] == 0 && (privateHandle->param->flags & flag) )          \
                vec[barNum] = (type) ( (barNum > 0)? closeVec[barNum-1] : 0 );       \
             if (vec[barNum] == 0) {                                                 \
