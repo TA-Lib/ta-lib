@@ -81,6 +81,7 @@ static TA_PrivateMySQLHandle *allocPrivateHandle( void );
 static TA_RetCode freePrivateHandle( TA_PrivateMySQLHandle *privateHandle );
 static TA_RetCode freeCategoryIndex( void *toBeFreed );
 static TA_RetCode freeSymbolsIndex( void *toBeFreed );
+static TA_RetCode registerCategoryAndSymbol( TA_List *categoryIndex, TA_String *category, TA_String *symbol );
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
@@ -145,7 +146,6 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    TA_PROLOG
    TA_RetCode retCode = TA_SUCCESS;
    TA_PrivateMySQLHandle *privateHandle;
-   TA_MySQLCategoryNode *categoryNode;
    TA_StringCache *stringCache = TA_GetGlobalStringCache();
 
    if( !handle )
@@ -192,12 +192,6 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
          Result res = query.store();
          // Query::store() executes the query and returns the results
 
-         // cout << "Query: " << query.preview() << endl;
-         // Query::preview() simply returns a string with the current query
-         // string in it.
-
-         // cout << "Records Found: " << res.size() << endl << endl;
-
          // find the category column number, if present
          for (unsigned int col = 0; col < res.columns(); col++) 
          { 
@@ -221,23 +215,16 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
                TA_TRACE_RETURN( TA_ALLOC_ERR );
             }
 
-            if( strcmp(TA_StringToChar(cat_name), "") == 0)  // ignore NULL fields
-               continue;
-
-            categoryNode = (TA_MySQLCategoryNode*)TA_Malloc(sizeof( TA_MySQLCategoryNode ));
-            if( !categoryNode )
+            if( strcmp(TA_StringToChar(cat_name), "") != 0)  // ignore NULL fields
             {
-               TA_StringFree(stringCache, cat_name);
-               TA_TRACE_RETURN( TA_ALLOC_ERR );
+               retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
+                                                   cat_name,
+                                                   NULL);
             }
-            memset(categoryNode, 0, sizeof( TA_MySQLCategoryNode ));
+            TA_StringFree(stringCache, cat_name);
 
-            categoryNode->category = cat_name;
-            retCode = TA_ListAddTail( privateHandle->theCategoryIndex, categoryNode );
             if( retCode != TA_SUCCESS )
             {
-               TA_StringFree(stringCache, categoryNode->category);
-               TA_Free(categoryNode);
                break;
             }
          }
@@ -251,20 +238,9 @@ TA_RetCode TA_MYSQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    else
    {
       /* Create one category, taking the category sting literally */
-      categoryNode = (TA_MySQLCategoryNode*)TA_Malloc(sizeof( TA_MySQLCategoryNode ));
-      if( !categoryNode )
-      {
-         TA_TRACE_RETURN( TA_ALLOC_ERR );
-      }
-      memset(categoryNode, 0, sizeof( TA_MySQLCategoryNode ));
-
-      categoryNode->category = TA_StringDup( stringCache, privateHandle->param->category);
-      retCode = TA_ListAddTail(privateHandle->theCategoryIndex, categoryNode);
-      if( retCode != TA_SUCCESS )
-      {
-         TA_StringFree(stringCache, categoryNode->category);
-         TA_Free(categoryNode);
-      }
+      retCode = registerCategoryAndSymbol(privateHandle->theCategoryIndex, 
+                                          privateHandle->param->category,
+                                          NULL);
    }
    
    TA_TRACE_RETURN( retCode );
@@ -356,4 +332,53 @@ static TA_RetCode freeSymbolsIndex( void *toBeFreed )
    }
 
    return retCode;
+}
+
+/* registerCategoryAndSymbol takes care of avoiding duplicates
+ * The caller keeps ownership to passed parameters.
+ * We will do dup here if needed.
+ */
+static TA_RetCode registerCategoryAndSymbol( TA_List *categoryIndex,
+                                             TA_String *category, 
+                                             TA_String *symbol )
+{
+   TA_MySQLCategoryNode *categoryNode;
+   TA_RetCode retCode;
+
+   if( !category )
+      return TA_BAD_PARAM;
+
+   /* Find out if the category is already registered */
+   categoryNode = (TA_MySQLCategoryNode*)TA_ListAccessHead(categoryIndex);
+   while ( categoryNode 
+        && strcmp(TA_StringToChar(categoryNode->category), TA_StringToChar(category)) != 0)
+   {
+      categoryNode = (TA_MySQLCategoryNode*)TA_ListAccessNext(categoryIndex);
+   }
+ 
+   if( !categoryNode )
+   {
+      /* New category, allocate node for it */
+      categoryNode = (TA_MySQLCategoryNode*)TA_Malloc(sizeof( TA_MySQLCategoryNode ));
+      if( !categoryNode )
+      {
+         return TA_ALLOC_ERR;
+      }
+      memset(categoryNode, 0, sizeof( TA_MySQLCategoryNode ));
+      retCode = TA_ListAddTail( categoryIndex, categoryNode );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_Free(categoryNode);
+         return retCode;
+      }
+      categoryNode->category = TA_StringDup(TA_GetGlobalStringCache(), category);
+   }
+
+   /* Register symbol, if not yet registered */
+   if( symbol )
+   {
+      // NOT IMPLEMENTED
+   }
+
+   return TA_SUCCESS;
 }
