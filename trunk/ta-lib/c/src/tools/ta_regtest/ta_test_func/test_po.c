@@ -36,7 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  AA       Andrew Atkinson
  *
  * Change history:
  *
@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
  *  020605 MF   Add regression test with inverted slow/fast period.
+ *  020805 AA   Fix one of the TA_PPO call (wrong buffer was pass).
  */
 
 /* Description:
@@ -369,7 +370,7 @@ static ErrorNumber do_test( const TA_History *history,
    {
       retCode = TA_PPO( test->startIdx,
                         test->endIdx,
-                        gBuffer[0].in,
+                        gBuffer[1].in,
                         test->optInFastPeriod,
                         test->optInSlowPeriod,
                         test->optInMethod_2,
