@@ -87,6 +87,10 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX
    case TA_MA_TEMA:
       return TA_TEMA_Lookback( optInTimePeriod_0 );
       break;
+
+   case TA_MA_TRIANGULAR:
+      return TA_TRIMA_Lookback( optInTimePeriod_0 );
+      break;
    }
 
    return 0;
@@ -142,7 +146,7 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
 
    if( optInMethod_1 == TA_INTEGER_DEFAULT )
       optInMethod_1 = 0;
-   else if( (optInMethod_1 < 0) || (optInMethod_1 > 4) )
+   else if( (optInMethod_1 < 0) || (optInMethod_1 > 5) )
       return TA_BAD_PARAM;
 
    if( outReal_0 == NULL )
@@ -174,17 +178,21 @@ TA_RetCode TA_MA( TA_Integer    startIdx,
                          outBegIdx, outNbElement, outReal_0 );
       break;
    case TA_MA_DEMA:
-      return TA_DEMA(
-                      startIdx, endIdx,
+      return TA_DEMA( startIdx, endIdx,
                       inReal_0, optInTimePeriod_0,
                       outBegIdx, outNbElement, outReal_0 );
       break;
    case TA_MA_TEMA:
-      return TA_TEMA(
-                      startIdx, endIdx,
+      return TA_TEMA( startIdx, endIdx,
                       inReal_0, optInTimePeriod_0,
                       outBegIdx, outNbElement, outReal_0 );
       break;
+   case TA_MA_TRIANGULAR:
+      return TA_TRIMA( startIdx, endIdx,
+                       inReal_0, optInTimePeriod_0,
+                       outBegIdx, outNbElement, outReal_0 );
+      break;
+
    }
 
    *outBegIdx    = 0;
