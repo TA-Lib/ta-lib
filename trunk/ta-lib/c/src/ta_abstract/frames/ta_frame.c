@@ -1225,6 +1225,94 @@
 /* Generated */    (void)params;
 /* Generated */    return TA_OBV_Lookback( );
 /* Generated */ }
+/* Generated */ TA_RetCode TA_CDLHIGHWAVE_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_CDLHIGHWAVE(
+/* Generated */                     startIdx,
+/* Generated */                     endIdx,
+/* Generated */                     params->in[0].data.inPrice.open, /* inOpen */
+/* Generated */                     params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                     params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                     params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                     outBegIdx, 
+/* Generated */                     outNbElement, 
+/* Generated */                     params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_CDLHIGHWAVE_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    (void)params;
+/* Generated */    return TA_CDLHIGHWAVE_Lookback( );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_CDLLONGLINE_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_CDLLONGLINE(
+/* Generated */                     startIdx,
+/* Generated */                     endIdx,
+/* Generated */                     params->in[0].data.inPrice.open, /* inOpen */
+/* Generated */                     params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                     params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                     params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                     outBegIdx, 
+/* Generated */                     outNbElement, 
+/* Generated */                     params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_CDLLONGLINE_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    (void)params;
+/* Generated */    return TA_CDLLONGLINE_Lookback( );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_CDLSHORTLINE_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_CDLSHORTLINE(
+/* Generated */                      startIdx,
+/* Generated */                      endIdx,
+/* Generated */                      params->in[0].data.inPrice.open, /* inOpen */
+/* Generated */                      params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                      params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                      params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                      outBegIdx, 
+/* Generated */                      outNbElement, 
+/* Generated */                      params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_CDLSHORTLINE_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    (void)params;
+/* Generated */    return TA_CDLSHORTLINE_Lookback( );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_CDLSPINNINGTOP_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_CDLSPINNINGTOP(
+/* Generated */                        startIdx,
+/* Generated */                        endIdx,
+/* Generated */                        params->in[0].data.inPrice.open, /* inOpen */
+/* Generated */                        params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                        params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                        params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                        outBegIdx, 
+/* Generated */                        outNbElement, 
+/* Generated */                        params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_CDLSPINNINGTOP_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    (void)params;
+/* Generated */    return TA_CDLSPINNINGTOP_Lookback( );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_CORREL_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
