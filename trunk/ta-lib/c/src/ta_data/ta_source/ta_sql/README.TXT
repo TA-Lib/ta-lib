@@ -160,7 +160,8 @@ then mysql++ should be in
 4. Copy C:\src\mysql++\mysql\lib\libmySQL.dll to Windows directory.
 5. Define preprocessor symbol TA_SUPPORT_MYSQL in the top-level makefile 
    of ta_data (or Visual C++ project settings).
-6. Add C:\src\mysql++\include to include search path for ta-lib
+6. Add C:\src\mysql++\include and C:\src\mysql++\mysql\include 
+   to include search path for ta-lib
 7. Add C:\src\lib\mysql++.lib to link libs.
 8. Rebuild ta-lib.
 Note that the resulting ta_libc_???.lib will be GPL, not BSD, because mysql++
