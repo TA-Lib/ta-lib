@@ -36,13 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  EKO      echo999@ifrance.com
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  010802 MF   Template creation.
+ *  051103 EKO  Found bug and fix related to outFastD_1.
  *
  */
 
@@ -337,7 +338,7 @@ TA_RetCode TA_STOCHF( TA_Integer    startIdx,
    retCode = TA_MA( 0, outIdx-1,
                     tempBuffer, optInFastD_Period_1,
                     optInFastD_MAType_2, 
-                    outBegIdx, outNbElement, tempBuffer );
+                    outBegIdx, outNbElement, outFastD_1 );
 
 
    if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
