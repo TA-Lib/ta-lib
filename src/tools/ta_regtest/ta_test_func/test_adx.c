@@ -117,23 +117,52 @@ static ErrorNumber do_test( const TA_History *history,
 
 static TA_Test tableTest[] =
 {
-   { TST_ADXR,1, 0, 0, 251, 14, TA_SUCCESS, 0,   19.0,   40,  252-40 }, /* First Value */
-   { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 1,   18.0,   40,  252-40 },
-   { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 210, 22.0,   40,  252-40 },
-   { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 211, 21.0,   40,  252-40 }, /* Last Value */
+   { TST_ADXR,1, 0, 0, 251, 14, TA_SUCCESS, 0,   19.8666,   40,  252-40 }, /* First Value */
+   { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 1,   18.9092,   40,  252-40 },
+
+   { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 210, 21.5972,   40,  252-40 },
+   { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 211, 20.4920,   40,  252-40 }, /* Last Value */
 
    { TST_PLUS_DM, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   10.28,  13,  252-13 }, /* First Value */
    { TST_PLUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 10.317, 13,  252-13 },
    { TST_PLUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 238,  9.58,  13,  252-13 }, /* Last Value */
 
-   { TST_PLUS_DI, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   20.0,   14,  252-14 }, /* First Value */
-   { TST_PLUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 13,  22.0,   14,  252-14 },
-   { TST_PLUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 14,  20.0,   14,  252-14 },
-   { TST_PLUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 21.0,   14,  252-14 }, /* Last Value */
+   { TST_PLUS_DI, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   20.3781,   14,  252-14 }, /* First Value */
+
+   { TST_PLUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 13,  22.1073,   14,  252-14 },
+   { TST_PLUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 14,  20.3746,   14,  252-14 },
+   { TST_PLUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 21.0000,   14,  252-14 }, /* Last Value */
 
    { TST_MINUS_DM, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   12.995,  13,  252-13 }, /* First Value */
    { TST_MINUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 237,  8.33,   13,  252-13 },
    { TST_MINUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 238,  9.672,  13,  252-13 }, /* Last Value */
+
+   { TST_MINUS_DI, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   30.1684,   14,  252-14 }, /* First Value */
+   { TST_MINUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 14,  24.969182,   14,  252-14 },
+   { TST_MINUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 21.1988,   14,  252-14 }, /* Last Value */
+
+   { TST_DX, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   19.3689,   14,  252-14 }, /* First Value */
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 1,    9.7131,   14,  252-14 }, 
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 2,   17.2905,   14,  252-14 }, 
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 236, 10.6731,   14,  252-14 },
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 237,  0.4722,   14,  252-14 }, /* Last Value */
+
+   { TST_ADX, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   23.0000,   27,  252-27 }, /* First Value */
+   { TST_ADX, 0, 0, 0, 251, 14, TA_SUCCESS, 1,   22.0802,   27,  252-27 },
+   { TST_ADX, 0, 0, 0, 251, 14, TA_SUCCESS, 223, 16.6840,   27,  252-27 },
+   { TST_ADX, 0, 0, 0, 251, 14, TA_SUCCESS, 224, 15.5260,   27,  252-27 }  /* Last Value */
+
+#if 0
+   /*These were the values when using integer rounding in the logic */
+   { TST_ADXR,1, 0, 0, 251, 14, TA_SUCCESS, 0,   19.0,   40,  252-40 }, /* First Value */
+   { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 1,   18.0,   40,  252-40 },
+   { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 210, 22.0,   40,  252-40 },
+   { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 211, 21.0,   40,  252-40 }, /* Last Value */
+
+   { TST_PLUS_DI, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   20.0,   14,  252-14 }, /* First Value */
+   { TST_PLUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 13,  22.0,   14,  252-14 },
+   { TST_PLUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 14,  20.0,   14,  252-14 },
+   { TST_PLUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 21.0,   14,  252-14 }, /* Last Value */
 
    { TST_MINUS_DI, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   30.0,   14,  252-14 }, /* First Value */
    { TST_MINUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 14,  25.0,   14,  252-14 },
@@ -149,6 +178,7 @@ static TA_Test tableTest[] =
    { TST_ADX, 0, 0, 0, 251, 14, TA_SUCCESS, 1,   22.0,   27,  252-27 },
    { TST_ADX, 0, 0, 0, 251, 14, TA_SUCCESS, 223, 17.0,   27,  252-27 },
    { TST_ADX, 0, 0, 0, 251, 14, TA_SUCCESS, 224, 16.0,   27,  252-27 }  /* Last Value */
+#endif
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
