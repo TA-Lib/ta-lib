@@ -262,62 +262,45 @@ ENUM_BEGIN( TA_Compatibility )
 ENUM_END( TA_Compatibility )
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
-
-#if defined( _MANAGED )
-__value enum TA_MAType
-#else
-typedef enum
-#endif
-{
-   TA_MAType_SMA       =0,
-   TA_MAType_EMA       =1,
-   TA_MAType_WMA       =2,
-   TA_MAType_DEMA      =3,
-   TA_MAType_TEMA      =4,
-   TA_MAType_TRIMA     =5,
-   TA_MAType_KAMA      =6,
-   TA_MAType_MAMA      =7,
-   TA_MAType_T3        =8
-#if defined( _MANAGED )
-};
-#else
-} TA_MAType;
-#endif
-
-#if defined( _MANAGED )
-__value enum TA_FuncUnstId
-#else
-typedef enum
-#endif
-{
-    /* 000 */  TA_FUNC_UNST_EMA,
-    /* 001 */  TA_FUNC_UNST_HT_TRENDLINE,
-    /* 002 */  TA_FUNC_UNST_KAMA,
-    /* 003 */  TA_FUNC_UNST_MAMA,
-    /* 004 */  TA_FUNC_UNST_T3,
-    /* 005 */  TA_FUNC_UNST_ATR,
-    /* 006 */  TA_FUNC_UNST_ADX,
-    /* 007 */  TA_FUNC_UNST_ADXR,
-    /* 008 */  TA_FUNC_UNST_DX,
-    /* 009 */  TA_FUNC_UNST_MFI,
-    /* 010 */  TA_FUNC_UNST_MINUS_DI,
-    /* 011 */  TA_FUNC_UNST_MINUS_DM,
-    /* 012 */  TA_FUNC_UNST_PLUS_DI,
-    /* 013 */  TA_FUNC_UNST_PLUS_DM,
-    /* 014 */  TA_FUNC_UNST_RSI,
-    /* 015 */  TA_FUNC_UNST_STOCHRSI,
-    /* 016 */  TA_FUNC_UNST_HT_DCPERIOD,
-    /* 017 */  TA_FUNC_UNST_HT_DCPHASE,
-    /* 018 */  TA_FUNC_UNST_HT_PHASOR,
-    /* 019 */  TA_FUNC_UNST_HT_SINE,
-    /* 020 */  TA_FUNC_UNST_HT_TRENDMODE,
-               TA_FUNC_UNST_ALL,
-               TA_FUNC_UNST_NONE=-1
-#if defined( _MANAGED )
-};
-#else
-} TA_FuncUnstId;
-#endif
+/* Generated */ 
+/* Generated */ ENUM_BEGIN( TA_MAType )
+/* Generated */    TA_MAType_SMA       =0,
+/* Generated */    TA_MAType_EMA       =1,
+/* Generated */    TA_MAType_WMA       =2,
+/* Generated */    TA_MAType_DEMA      =3,
+/* Generated */    TA_MAType_TEMA      =4,
+/* Generated */    TA_MAType_TRIMA     =5,
+/* Generated */    TA_MAType_KAMA      =6,
+/* Generated */    TA_MAType_MAMA      =7,
+/* Generated */    TA_MAType_T3        =8
+/* Generated */ ENUM_END( TA_MAType )
+/* Generated */ 
+/* Generated */ ENUM_BEGIN( TA_FuncUnstId )
+/* Generated */     /* 000 */  TA_FUNC_UNST_EMA,
+/* Generated */     /* 001 */  TA_FUNC_UNST_HT_TRENDLINE,
+/* Generated */     /* 002 */  TA_FUNC_UNST_KAMA,
+/* Generated */     /* 003 */  TA_FUNC_UNST_MAMA,
+/* Generated */     /* 004 */  TA_FUNC_UNST_T3,
+/* Generated */     /* 005 */  TA_FUNC_UNST_ATR,
+/* Generated */     /* 006 */  TA_FUNC_UNST_ADX,
+/* Generated */     /* 007 */  TA_FUNC_UNST_ADXR,
+/* Generated */     /* 008 */  TA_FUNC_UNST_DX,
+/* Generated */     /* 009 */  TA_FUNC_UNST_MFI,
+/* Generated */     /* 010 */  TA_FUNC_UNST_MINUS_DI,
+/* Generated */     /* 011 */  TA_FUNC_UNST_MINUS_DM,
+/* Generated */     /* 012 */  TA_FUNC_UNST_PLUS_DI,
+/* Generated */     /* 013 */  TA_FUNC_UNST_PLUS_DM,
+/* Generated */     /* 014 */  TA_FUNC_UNST_RSI,
+/* Generated */     /* 015 */  TA_FUNC_UNST_STOCHRSI,
+/* Generated */     /* 016 */  TA_FUNC_UNST_HT_DCPERIOD,
+/* Generated */     /* 017 */  TA_FUNC_UNST_HT_DCPHASE,
+/* Generated */     /* 018 */  TA_FUNC_UNST_HT_PHASOR,
+/* Generated */     /* 019 */  TA_FUNC_UNST_HT_SINE,
+/* Generated */     /* 020 */  TA_FUNC_UNST_HT_TRENDMODE,
+/* Generated */                TA_FUNC_UNST_ALL,
+/* Generated */                TA_FUNC_UNST_NONE=-1
+/* Generated */ ENUM_END( TA_FuncUnstId )
+/* Generated */ 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 
 /* The TA_RangeType enum specifies the types of range that can be considered 
