@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -37,16 +37,17 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  PP       Peter Pudaite
- *
+ *  CF       Christo Fogelberg
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  120802 MF   Template creation.
- *  150903 PP   Reworked TA_SAR to allow customisation of more SAR params.
- *  210903 MF   Some changes related on first round of tests
- *  230903 PP   Minor bug fixes.
+ *  120802 MF    Template creation.
+ *  150903 PP    Reworked TA_SAR to allow customisation of more SAR params.
+ *  210903 MF    Some changes related on first round of tests
+ *  230903 PP    Minor bug fixes.
+ *  122104 MF,CF Fix#1089506 for out-of-bound access to ep_temp.
  *
  */
 
@@ -386,7 +387,7 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = TA_PREFIX(MINUS_DM)( startIdx-1, startIdx, inHigh, inLow,
+      retCode = TA_PREFIX(MINUS_DM)( startIdx, startIdx, inHigh, inLow,
                                   1, &tempInt, &tempInt, ep_temp );
       if( ep_temp[0] > 0 )
          isLong = 0;
@@ -723,7 +724,7 @@
 /* Generated */       optInAccelerationShort = optInAccelerationMaxShort;
 /* Generated */    if(optInStartValue == 0) 
 /* Generated */    {
-/* Generated */       retCode = TA_PREFIX(MINUS_DM)( startIdx-1, startIdx, inHigh, inLow,
+/* Generated */       retCode = TA_PREFIX(MINUS_DM)( startIdx, startIdx, inHigh, inLow,
 /* Generated */                                   1, &tempInt, &tempInt, ep_temp );
 /* Generated */       if( ep_temp[0] > 0 )
 /* Generated */          isLong = 0;

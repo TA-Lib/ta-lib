@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,15 +36,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CF       Christo Fogelberg
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *
+ *  010802 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  122104 MF,CF  Fix#1089506 for out-of-bound access to ep_temp.
  */
 
 /* SAR_ROUNDING is just for test purpose when cross-referencing that
@@ -264,7 +264,7 @@
     * (ep is just used as a temp buffer here, the name
     *  of the parameter is not significant).
     */
-   retCode = TA_PREFIX(MINUS_DM)( startIdx-1, startIdx, inHigh, inLow,
+   retCode = TA_PREFIX(MINUS_DM)( startIdx, startIdx, inHigh, inLow,
                                   1, &tempInt, &tempInt, ep_temp );
    if( ep_temp[0] > 0 )
       isLong = 0;
@@ -528,7 +528,7 @@
 /* Generated */    af = optInAcceleration;
 /* Generated */    if( af > optInMaximum )
 /* Generated */       af = optInAcceleration = optInMaximum;
-/* Generated */    retCode = TA_PREFIX(MINUS_DM)( startIdx-1, startIdx, inHigh, inLow,
+/* Generated */    retCode = TA_PREFIX(MINUS_DM)( startIdx, startIdx, inHigh, inLow,
 /* Generated */                                   1, &tempInt, &tempInt, ep_temp );
 /* Generated */    if( ep_temp[0] > 0 )
 /* Generated */       isLong = 0;
