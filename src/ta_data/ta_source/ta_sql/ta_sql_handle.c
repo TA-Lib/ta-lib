@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  PK       Pawel Konieczny
+ *  MF       Mario Fortier
  *
  * Change history:
  *
@@ -43,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  101703 PK   First version.
  *  110103 PK   Minidriver architecture
- *
+ *  012504 MF   Add some TA_ASSERT + minor changes to be more C vs C++.
  */
 
 /* Description:
@@ -120,10 +121,9 @@ TA_RetCode TA_SQL_DataSourceHandleFree( TA_DataSourceHandle *handle )
    TA_PROLOG
    TA_PrivateSQLHandle *privateHandle;
 
-   if( !handle )
-      return (TA_RetCode)TA_INTERNAL_ERROR(60);
-
    TA_TRACE_BEGIN(  TA_SQL_DataSourceHandleFree );
+
+   TA_ASSERT( handle != NULL );
 
    privateHandle = (TA_PrivateSQLHandle *)handle->opaqueData;
 
@@ -145,16 +145,21 @@ TA_RetCode TA_SQL_DataSourceHandleFree( TA_DataSourceHandle *handle )
 TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
 {
    TA_PROLOG
-   TA_RetCode retCode = TA_SUCCESS;
+   TA_RetCode retCode;
    TA_PrivateSQLHandle *privateHandle;
-   TA_StringCache *stringCache = TA_GetGlobalStringCache();
-   const char *strval = NULL;
+   TA_StringCache *stringCache;
+   const char *strval;
+   void *queryResult;
+   int resColumns;
+   int catCol, symCol;
+   int rowNum;
+   TA_String *cat_name;
+   TA_String *sym_name;
+   const char *name;
 
-   if( !handle )
-      return (TA_RetCode)TA_INTERNAL_ERROR(61);
-
-   TA_TRACE_BEGIN(  TA_SQL_BuildSymbolsIndex );
-
+   TA_TRACE_BEGIN( TA_SQL_BuildSymbolsIndex );
+  
+   TA_ASSERT(handle != NULL );
    privateHandle = (TA_PrivateSQLHandle *)handle->opaqueData;
 
    TA_ASSERT( privateHandle != NULL );
@@ -163,6 +168,11 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    TA_ASSERT( privateHandle->param->location != NULL );
    TA_ASSERT( privateHandle->connection != NULL );
    TA_ASSERT( privateHandle->minidriver->executeQuery != NULL );
+
+   /* Initialize variables. */
+   retCode = TA_SUCCESS;
+   stringCache = TA_GetGlobalStringCache();
+   strval = NULL;
 
    /* De-allocate potentialy already existing category index. */
    if( privateHandle->theCategoryIndex != NULL )
@@ -185,11 +195,6 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
    if( strnicmp("SELECT ", TA_StringToChar(privateHandle->param->category), 7) == 0)
    {
       /* This is an SQL query; execute it to obtain the list of categories */
-
-      void *queryResult;
-      int resColumns;
-      int catCol, symCol;
-      int rowNum,
 
       retCode = (*privateHandle->minidriver->executeQuery)(
                   privateHandle->connection,
@@ -224,7 +229,6 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
       
       for ( catCol = 0; catCol < resColumns; catCol++) 
       { 
-         const char *name;
          retCode = (*privateHandle->minidriver->getColumnName)(
                               queryResult,
                               catCol,
@@ -241,7 +245,6 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
       /* find the symbol column number, if present */
       for ( symCol = 0; symCol < resColumns; symCol++) 
       { 
-         const char *name;
          retCode = (*privateHandle->minidriver->getColumnName)(
                               queryResult,
                               symCol,
@@ -262,8 +265,8 @@ TA_RetCode TA_SQL_BuildSymbolsIndex( TA_DataSourceHandle *handle )
            ) != TA_END_OF_INDEX;
            rowNum++) 
       {
-         TA_String *cat_name = NULL;
-         TA_String *sym_name = NULL;
+         cat_name = NULL;
+         sym_name = NULL;
 
          RETURN_ON_ERROR( retCode );  /* retCode from the for-condition */
 
@@ -366,8 +369,10 @@ static TA_PrivateSQLHandle *allocPrivateHandle( void  )
 
 static TA_RetCode freePrivateHandle( TA_PrivateSQLHandle *privateHandle )
 {
-   TA_RetCode retCode = TA_SUCCESS;
+   TA_RetCode retCode;
+   TA_RetCode retCode2;
 
+   retCode = TA_SUCCESS;
    if( privateHandle )
    {
       if( privateHandle->database )
@@ -385,8 +390,7 @@ static TA_RetCode freePrivateHandle( TA_PrivateSQLHandle *privateHandle )
       {
          if( privateHandle->minidriver->closeConnection )
          {
-            TA_RetCode retCode2 = 
-               (*privateHandle->minidriver->closeConnection)( privateHandle->connection );
+            retCode2 = (*privateHandle->minidriver->closeConnection)( privateHandle->connection );               
             if( retCode2 != TA_SUCCESS )
             {
                retCode = retCode2;
@@ -409,8 +413,11 @@ static TA_RetCode freePrivateHandle( TA_PrivateSQLHandle *privateHandle )
 
 static TA_RetCode freeCategoryIndex( void *toBeFreed )
 {
-   TA_SQLCategoryNode *node = (TA_SQLCategoryNode*)toBeFreed;
-   TA_RetCode retCode = TA_SUCCESS;
+   TA_SQLCategoryNode *node;
+   TA_RetCode retCode;
+
+   node = (TA_SQLCategoryNode*)toBeFreed;
+   retCode = TA_SUCCESS;
 
    if( !node )
       return TA_SUCCESS;
@@ -439,8 +446,11 @@ static TA_RetCode freeCategoryIndex( void *toBeFreed )
 
 static TA_RetCode freeSymbolsIndex( void *toBeFreed )
 {
-   TA_String *symbol = (TA_String*)toBeFreed;
-   TA_RetCode retCode = TA_SUCCESS;
+   TA_String *symbol;
+   TA_RetCode retCode;
+
+   symbol = (TA_String*)toBeFreed;
+   retCode = TA_SUCCESS;
 
    if( symbol )
    {
@@ -461,6 +471,7 @@ static TA_RetCode registerCategoryAndSymbol( TA_List *categoryIndex,
                                              TA_String *category, 
                                              TA_String *symbol )
 {
+   TA_String *known_symbol;
    TA_SQLCategoryNode *categoryNode;
    TA_RetCode retCode;
 
@@ -497,7 +508,7 @@ static TA_RetCode registerCategoryAndSymbol( TA_List *categoryIndex,
    if( symbol )
    {
       /* Find out if the symbol is already registered */
-      TA_String *known_symbol = (TA_String*)TA_ListAccessHead(categoryNode->theSymbols);
+      known_symbol = (TA_String*)TA_ListAccessHead(categoryNode->theSymbols);
       while ( known_symbol 
            && strcmp(TA_StringToChar(known_symbol), TA_StringToChar(symbol)) != 0)
       {
@@ -536,11 +547,21 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
 {
    TA_PROLOG
    TA_RetCode retCode;
-   TA_StringCache *stringCache = TA_GetGlobalStringCache();
-   const char *strval = NULL;
+   TA_StringCache *stringCache;
+   const char *strval;
+   void *queryResult;
+   int resColumns;
+   int symCol;
+   int rowNum;
+   char *symQuery;
+   TA_String *sym_name;
+   const char *name;
 
    /* is trace allowed through static fuctions? */
    TA_TRACE_BEGIN( registerCategoryAndAllSymbols );
+
+   stringCache = TA_GetGlobalStringCache();
+   strval = NULL;
 
    if( !category )
    {
@@ -551,11 +572,6 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
        && strnicmp("SELECT ", TA_StringToChar(privateHandle->param->symbol), 7) == 0)
    {
       /* This is an SQL query; execute it to obtain the list of symbols */
-      void *queryResult;
-      int resColumns;
-      int symCol;
-      int rowNum;
-      char *symQuery;
    
       /* Because the query may return no results, we must make sure that
        * at leas the category will be registered.
@@ -610,7 +626,7 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
 
       for ( symCol = 0; symCol < resColumns; symCol++) 
       { 
-         const char *name = NULL;
+         name = NULL;
 
          retCode = (*privateHandle->minidriver->getColumnName)(
                               queryResult,
@@ -639,7 +655,7 @@ static TA_RetCode registerCategoryAndAllSymbols( TA_PrivateSQLHandle *privateHan
            ) != TA_END_OF_INDEX;
            rowNum++) 
       {
-         TA_String *sym_name = NULL;
+         sym_name = NULL;
 
          RETURN_ON_ERROR( retCode );  /* retCode from the for-condition */
 
