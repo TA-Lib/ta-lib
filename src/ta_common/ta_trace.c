@@ -265,7 +265,7 @@ TA_RetCode TA_PrivTraceReturn( const char *funcname,
          {
             --tracePosition->repetition;
             if( tracePosition->repetition == 0 )
-               TA_Free(  tracePosition );
+               TA_Free( tracePosition );
             else
                TA_ListAddTail( global->callStack, tracePosition );
          }
@@ -700,7 +700,7 @@ static TA_TracePosition *newTracePosition( const char *funcname,
 
 static void freeTracePosition( void *dataToBeFreed )
 {
-   TA_Free(  dataToBeFreed );
+   TA_Free( dataToBeFreed );
 }
 
 static void printTracePosition( TA_TracePosition *tracePosition, TA_PrintfVar *outp )

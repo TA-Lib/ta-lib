@@ -88,7 +88,10 @@ TA_FILE_INFO;
 /**** Global functions definitions.   ****/
 TA_RetCode TA_BarrierSyncInit( TA_BarrierSync *bs )
 {
+   TA_PROLOG
    TA_RetCode retCode;
+
+   TA_TRACE_BEGIN(TA_BarrierSyncInit);
 
    TA_ASSERT( bs != NULL );
 
@@ -98,27 +101,29 @@ TA_RetCode TA_BarrierSyncInit( TA_BarrierSync *bs )
    retCode = TA_SemaInit( &(bs->barrierSema), 1 );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL(  NULL, retCode, bs );
-      return retCode;
+      TA_FATAL( NULL, retCode, bs );
    }
-
-   /* Initialize mutex (unblock state). */
-   retCode = TA_SemaInit( &(bs->mutexSema), 1 );
-   if( retCode != TA_SUCCESS )
+   else
    {
-      TA_FATAL(  NULL, retCode, bs );
-      return retCode;
+      /* Initialize mutex (unblock state). */
+      retCode = TA_SemaInit( &(bs->mutexSema), 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_FATAL( NULL, retCode, bs );
+      }
    }
 
-   return TA_SUCCESS;
+   TA_TRACE_RETURN(retCode);
 }
 
 TA_RetCode TA_BarrierSyncDestroy( TA_BarrierSync *bs )
 {
+   TA_PROLOG
    TA_RetCode retCode;
 
-   if( bs != NULL )
-      return TA_BAD_PARAM;
+   TA_TRACE_BEGIN(TA_BarrierSyncDestroy);
+
+   TA_ASSERT( bs != NULL );
 
    /* Just to be on the safe side, make sure there is no
     * thread left to be joined.
@@ -128,8 +133,7 @@ TA_RetCode TA_BarrierSyncDestroy( TA_BarrierSync *bs )
       retCode = TA_BarrierSyncWaitAllDone( bs );
       if( retCode != TA_SUCCESS )
       {
-         TA_FATAL(  NULL, retCode, TA_GetLastError() );
-         return retCode;
+         TA_FATAL( NULL, retCode, TA_GetLastError() );
       }
    }
 
@@ -137,47 +141,44 @@ TA_RetCode TA_BarrierSyncDestroy( TA_BarrierSync *bs )
    retCode = TA_SemaWait( &(bs->mutexSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL(  NULL, retCode, TA_GetLastError() );
-      return retCode;
+      TA_FATAL( NULL, retCode, TA_GetLastError() );
    }
    retCode = TA_SemaPost( &(bs->mutexSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL(  NULL, retCode, TA_GetLastError() );
-      return retCode;
+      TA_FATAL( NULL, retCode, TA_GetLastError() );
    }
 
    /* At this point it is safe to destroy all the 'bs' semaphores. */
    retCode = TA_SemaDestroy( &(bs->mutexSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL(  NULL, retCode, TA_GetLastError() );
-      return retCode;
+      TA_FATAL( NULL, retCode, TA_GetLastError() );
    }
 
    retCode = TA_SemaDestroy( &(bs->barrierSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL(  NULL, retCode, TA_GetLastError() );
-      return retCode;
+      TA_FATAL( NULL, retCode, TA_GetLastError() );
    }
 
-   return TA_SUCCESS;
+   TA_TRACE_RETURN(TA_SUCCESS);
 }
 
 TA_RetCode TA_BarrierSyncThreadAdd( TA_BarrierSync *bs )
 {
+   TA_PROLOG
    TA_RetCode retCode;
    unsigned int temp;
 
-   if( bs != NULL )
-      return TA_BAD_PARAM;
+   TA_TRACE_BEGIN(TA_BarrierSyncThreadAdd);
+
+   TA_ASSERT( bs != NULL );
 
    retCode = TA_SemaWait( &(bs->mutexSema) );
    if( retCode != TA_SUCCESS )
    {
       TA_FATAL(  NULL, retCode, TA_GetLastError() );
-      return retCode;
    }
 
    /*** Begin critical section. ***/
@@ -189,8 +190,7 @@ TA_RetCode TA_BarrierSyncThreadAdd( TA_BarrierSync *bs )
       if( retCode != TA_SUCCESS )
       {
          TA_SemaPost( &(bs->mutexSema) );
-         TA_FATAL(  NULL, retCode, TA_GetLastError() );
-         return retCode;
+         TA_FATAL( NULL, retCode, TA_GetLastError() );
       }
    }
    /*** End critical section. ***/
@@ -199,25 +199,25 @@ TA_RetCode TA_BarrierSyncThreadAdd( TA_BarrierSync *bs )
    if( retCode != TA_SUCCESS )
    {
       TA_FATAL(  NULL, retCode, TA_GetLastError() );
-      return retCode;
    }
 
-   return TA_SUCCESS;
+   TA_TRACE_RETURN(TA_SUCCESS);
 }
 
 TA_RetCode TA_BarrierSyncThreadDone( TA_BarrierSync *bs )
 {
+   TA_PROLOG
    TA_RetCode retCode;
    unsigned int temp;
 
-   if( bs != NULL )
-      return TA_BAD_PARAM;
+   TA_TRACE_BEGIN(TA_BarrierSyncThreadDone);
+
+   TA_ASSERT( bs != NULL );
 
    retCode = TA_SemaWait( &(bs->mutexSema) );
    if( retCode != TA_SUCCESS )
    {
-      TA_FATAL(  NULL, retCode, TA_GetLastError() );
-      return retCode;
+      TA_FATAL( NULL, retCode, TA_GetLastError() );
    }
 
    /*** Begin critical section. ***/
@@ -229,8 +229,8 @@ TA_RetCode TA_BarrierSyncThreadDone( TA_BarrierSync *bs )
       retCode = TA_SemaInc( &(bs->barrierSema), NULL );
       if( retCode != TA_SUCCESS )
       {
-         TA_FATAL(  NULL, retCode, TA_GetLastError() );
-         return retCode;
+         TA_SemaPost( &(bs->mutexSema) );
+         TA_FATAL( NULL, retCode, TA_GetLastError() );
       }
    }
 
@@ -240,28 +240,28 @@ TA_RetCode TA_BarrierSyncThreadDone( TA_BarrierSync *bs )
    if( retCode != TA_SUCCESS )
    {
       TA_FATAL(  NULL, retCode, TA_GetLastError() );
-      return retCode;
    }
 
-   return TA_SUCCESS;
+   TA_TRACE_RETURN(TA_SUCCESS);
 }
 
 
 TA_RetCode TA_BarrierSyncWaitAllDone( TA_BarrierSync *bs )
 {
+   TA_PROLOG
    TA_RetCode retCode;
    
-   if( bs != NULL )
-      return TA_BAD_PARAM;
+   TA_TRACE_BEGIN(TA_BarrierSyncWaitAllDone);
+
+   TA_ASSERT( bs != NULL );
 
    retCode = TA_SemaDec( &(bs->barrierSema) );
    if( retCode != TA_SUCCESS )
    {
       TA_FATAL(  NULL, retCode, TA_GetLastError() );
-      return retCode;
    }
 
-   return TA_SUCCESS;
+   TA_TRACE_RETURN(TA_SUCCESS);
 }
 
 
