@@ -96,6 +96,8 @@ TA_RetCode TA_SQL_ParseLocation(const char location[],
 
    TA_TRACE_BEGIN( TA_SQL_ParseLocation );
 
+   TA_ASSERT( port != NULL );
+
    /* extract scheme */
    b = strchr(location, ':');
    if (!b)  /* no scheme */
