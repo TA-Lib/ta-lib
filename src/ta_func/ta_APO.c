@@ -405,6 +405,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    TA_RetCode retCode;
+/* Generated */    double tempReal;
 /* Generated */    int tempInteger;
 /* Generated */    int outBegIdx1, outNbElement1;
 /* Generated */    int outBegIdx2, outNbElement2;
@@ -433,7 +434,13 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */          if( doPercentageOutput )
 /* Generated */          {
 /* Generated */             for( i=0,j=tempInteger; i < outNbElement1; i++, j++ )
-/* Generated */                outReal[i] = ((outReal[j]-tempBuffer[i])/tempBuffer[i])*100;
+/* Generated */             {
+/* Generated */                tempReal = tempBuffer[i];
+/* Generated */                if( !TA_IS_ZERO(tempReal) )
+/* Generated */                   outReal[i] = ((outReal[j]-tempReal)/tempReal)*100.0;
+/* Generated */                else
+/* Generated */                   outReal[i] = 0.0;
+/* Generated */             }
 /* Generated */          }
 /* Generated */          else
 /* Generated */          {

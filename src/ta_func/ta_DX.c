@@ -577,12 +577,12 @@
 /* Generated */       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
 /* Generated */       prevClose = inClose[today];
 /* Generated */    }
-/* Generated */    if( prevTR != 0.0 )
+/* Generated */    if( !TA_IS_ZERO(prevTR) )
 /* Generated */    {
 /* Generated */       minusDI = round_pos(100.0*(prevMinusDM/prevTR));
 /* Generated */       plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
 /* Generated */       tempReal = minusDI+plusDI;
-/* Generated */       if( tempReal != 0.0 )
+/* Generated */       if( !TA_IS_ZERO(tempReal) )
 /* Generated */          outReal[0] = round_pos( 100.0 * (fabs(minusDI-plusDI)/tempReal) );
 /* Generated */       else
 /* Generated */          outReal[0] = 0.0;
@@ -612,12 +612,12 @@
 /* Generated */       TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
 /* Generated */       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
 /* Generated */       prevClose = inClose[today];
-/* Generated */       if( prevTR != 0.0 )
+/* Generated */       if( !TA_IS_ZERO(prevTR))
 /* Generated */       {
 /* Generated */          minusDI = round_pos(100.0*(prevMinusDM/prevTR));
 /* Generated */          plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
 /* Generated */          tempReal = minusDI+plusDI;
-/* Generated */          if( tempReal != 0.0 )         
+/* Generated */          if( !TA_IS_ZERO(tempReal))         
 /* Generated */             outReal[outIdx] = round_pos( 100.0 * (fabs(minusDI-plusDI)/tempReal) );
 /* Generated */          else
 /* Generated */             outReal[outIdx] = outReal[outIdx-1];

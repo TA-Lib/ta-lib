@@ -451,7 +451,11 @@
 /* Generated */       }
 /* Generated */       tempValue1 = prevLoss/optInTimePeriod;
 /* Generated */       tempValue2 = prevGain/optInTimePeriod;
-/* Generated */       outReal[outIdx++] = 100*(tempValue2/(tempValue2+tempValue1));
+/* Generated */       tempValue1 = tempValue2+tempValue1;
+/* Generated */       if( !TA_IS_ZERO(tempValue1) )
+/* Generated */          outReal[outIdx++] = 100*(tempValue2/tempValue1);
+/* Generated */       else
+/* Generated */          outReal[outIdx++] = 0.0;
 /* Generated */       if( today > endIdx )
 /* Generated */       {
 /* Generated */          *outBegIdx    = startIdx;
@@ -477,7 +481,13 @@
 /* Generated */    prevLoss /= optInTimePeriod;
 /* Generated */    prevGain /= optInTimePeriod;
 /* Generated */    if( today > startIdx )
-/* Generated */       outReal[outIdx++] = 100.0*(prevGain/(prevGain+prevLoss));
+/* Generated */    {
+/* Generated */       tempValue1 = prevGain+prevLoss;
+/* Generated */       if( !TA_IS_ZERO(tempValue1) )
+/* Generated */          outReal[outIdx++] = 100.0*(prevGain/tempValue1);
+/* Generated */       else
+/* Generated */          outReal[outIdx++] = 0.0;
+/* Generated */    }
 /* Generated */    else
 /* Generated */    {
 /* Generated */       while( today < startIdx )
@@ -509,7 +519,11 @@
 /* Generated */          prevGain += tempValue2;
 /* Generated */       prevLoss /= optInTimePeriod;
 /* Generated */       prevGain /= optInTimePeriod;
-/* Generated */       outReal[outIdx++] = 100.0*(prevGain/(prevGain+prevLoss));
+/* Generated */       tempValue1 = prevGain+prevLoss;
+/* Generated */       if( !TA_IS_ZERO(tempValue1) )
+/* Generated */          outReal[outIdx++] = 100.0*(prevGain/tempValue1);
+/* Generated */       else
+/* Generated */          outReal[outIdx++] = 0.0;
 /* Generated */    }
 /* Generated */    *outBegIdx = startIdx;
 /* Generated */    *outNbElement = outIdx;

@@ -272,7 +272,8 @@
 /* Generated */                         double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
-/* Generated */     double sumXY, sumX, sumY, sumX2, sumY2, n, x, y, trailingX, trailingY;
+/* Generated */     double sumXY, sumX, sumY, sumX2, sumY2, x, y, trailingX, trailingY;
+/* Generated */     double tempReal;
 /* Generated */     int lookbackTotal, today, trailingIdx, outIdx;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
@@ -312,8 +313,11 @@
 /* Generated */    }
 /* Generated */    trailingX = inReal0[trailingIdx];
 /* Generated */    trailingY = inReal1[trailingIdx++];
-/* Generated */    n = optInTimePeriod;
-/* Generated */    outReal[0] = (sumXY-((sumX*sumY)/n)) / sqrt( (sumX2-((sumX*sumX)/n)) * (sumY2-((sumY*sumY)/n)));
+/* Generated */    tempReal = (sumX2-((sumX*sumX)/optInTimePeriod)) * (sumY2-((sumY*sumY)/optInTimePeriod));
+/* Generated */    if( !TA_IS_ZERO(tempReal) )
+/* Generated */       outReal[0] = (sumXY-((sumX*sumY)/optInTimePeriod)) / sqrt(tempReal);
+/* Generated */    else 
+/* Generated */       outReal[0] = 0.0;
 /* Generated */    outIdx = 1;
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
@@ -331,7 +335,11 @@
 /* Generated */       sumY2 += y*y;
 /* Generated */       trailingX = inReal0[trailingIdx];
 /* Generated */       trailingY = inReal1[trailingIdx++];
-/* Generated */       outReal[outIdx++] = (sumXY-((sumX*sumY)/n)) / sqrt( (sumX2-((sumX*sumX)/n)) * (sumY2-((sumY*sumY)/n)));
+/* Generated */       tempReal = (sumX2-((sumX*sumX)/optInTimePeriod)) * (sumY2-((sumY*sumY)/optInTimePeriod));
+/* Generated */       if( !TA_IS_ZERO(tempReal) )
+/* Generated */          outReal[outIdx++] = (sumXY-((sumX*sumY)/optInTimePeriod)) / sqrt(tempReal);
+/* Generated */       else
+/* Generated */          outReal[outIdx++] = 0.0;
 /* Generated */    }  
 /* Generated */    *outNbElement = outIdx;
 /* Generated */    return TA_SUCCESS;

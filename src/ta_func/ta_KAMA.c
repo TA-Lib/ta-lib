@@ -394,7 +394,7 @@
 /* Generated */    tempReal2 = inReal[trailingIdx++];
 /* Generated */    periodROC = tempReal-tempReal2;
 /* Generated */    trailingValue = tempReal2;
-/* Generated */    if( (sumROC1 <= periodROC) || (sumROC1 == 0.0) )
+/* Generated */    if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1))
 /* Generated */       tempReal = 1.0;
 /* Generated */    else
 /* Generated */       tempReal = fabs(periodROC/sumROC1);
@@ -409,7 +409,7 @@
 /* Generated */       sumROC1 -= fabs(trailingValue-tempReal2);
 /* Generated */       sumROC1 += fabs(tempReal-inReal[today-1]);
 /* Generated */       trailingValue = tempReal2;
-/* Generated */       if( (sumROC1 <= periodROC) || (sumROC1 == 0.0) )
+/* Generated */       if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
 /* Generated */          tempReal = 1.0;
 /* Generated */       else
 /* Generated */          tempReal = fabs(periodROC/sumROC1);
@@ -428,7 +428,7 @@
 /* Generated */       sumROC1 -= fabs(trailingValue-tempReal2);
 /* Generated */       sumROC1 += fabs(tempReal-inReal[today-1]);
 /* Generated */       trailingValue = tempReal2;
-/* Generated */       if( (sumROC1 <= periodROC) || (sumROC1 == 0.0) )
+/* Generated */       if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
 /* Generated */          tempReal = 1.0;
 /* Generated */       else
 /* Generated */          tempReal = fabs(periodROC / sumROC1);
