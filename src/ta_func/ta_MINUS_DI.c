@@ -38,15 +38,17 @@
  *  MF       Mario Fortier
  *  AM       Adrian Michel
  *  MIF      Mirek Fontan (mira@fontan.cz)
+ *  CF       Christo Fogelberg
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
- *  062704 MF   Fix #965557. Div by zero bug reported by MIF.
+ *  010802 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  082303 MF    Fix #792298. Remove rounding. Bug reported by AM.
+ *  062704 MF    Fix #965557. Div by zero bug reported by MIF.
+ *  122204 MF,CF Fix #1090231. Issues when period is 1.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -92,7 +94,7 @@
    if( optInTimePeriod > 1 )
       return optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_MINUS_DI];
    else
-      return 2;
+      return 1;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -220,8 +222,8 @@
     * 
     *    C|
     * A|  |
-    *  |  | +DM=0
-    * B|  | -DM=0
+    *  |  | +DM1=0
+    * B|  | -DM1=0
     *    D|
     *
     * In case 3 and 4, the rule is that the smallest delta between
@@ -281,7 +283,7 @@
    if( optInTimePeriod > 1 )
       lookbackTotal = optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_MINUS_DI];
    else
-      lookbackTotal = 2;
+      lookbackTotal = 1;
 
    /* Adjust startIdx to account for the lookback period. */
    if( startIdx < lookbackTotal )
@@ -299,6 +301,47 @@
     * in the outReal.
     */
    outIdx = 0;
+
+   /* Trap the case where no smoothing is needed. */
+   if( optInTimePeriod <= 1 )
+   {
+      /* No smoothing needed. Just do the following:
+       * for each price bar.
+       *          -DM1
+       *   -DI1 = ----
+       *           TR1
+       */
+      *outBegIdx = startIdx;
+      today = startIdx-1;
+      prevHigh  = inHigh[today];
+      prevLow   = inLow[today];
+      prevClose = inClose[today];
+      while( today < endIdx )
+      {      
+         today++;
+         tempReal = inHigh[today];
+         diffP    = tempReal-prevHigh; /* Plus Delta */
+         prevHigh = tempReal;
+         tempReal = inLow[today];
+         diffM    = prevLow-tempReal;   /* Minus Delta */
+         prevLow  = tempReal;
+         if( (diffM > 0) && (diffP < diffM) )
+         {
+            /* Case 2 and 4: +DM=0,-DM=diffM */            
+            TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
+            if( TA_IS_ZERO(tempReal) )
+               outReal[outIdx++] = (double)0.0;
+            else
+               outReal[outIdx++] = diffM/tempReal;
+         }
+         else
+            outReal[outIdx++] = (double)0.0;
+         prevClose = inClose[today];
+      }
+
+      *outNbElement = outIdx;
+      return TA_SUCCESS;
+   }
 
    /* Process the initial DM and TR */
    *outBegIdx = today = startIdx;
@@ -476,7 +519,7 @@
 /* Generated */    if( optInTimePeriod > 1 )
 /* Generated */       lookbackTotal = optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_MINUS_DI];
 /* Generated */    else
-/* Generated */       lookbackTotal = 2;
+/* Generated */       lookbackTotal = 1;
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
@@ -486,6 +529,37 @@
 /* Generated */       return TA_SUCCESS;
 /* Generated */    }
 /* Generated */    outIdx = 0;
+/* Generated */    if( optInTimePeriod <= 1 )
+/* Generated */    {
+/* Generated */       *outBegIdx = startIdx;
+/* Generated */       today = startIdx-1;
+/* Generated */       prevHigh  = inHigh[today];
+/* Generated */       prevLow   = inLow[today];
+/* Generated */       prevClose = inClose[today];
+/* Generated */       while( today < endIdx )
+/* Generated */       {      
+/* Generated */          today++;
+/* Generated */          tempReal = inHigh[today];
+/* Generated */          diffP    = tempReal-prevHigh; 
+/* Generated */          prevHigh = tempReal;
+/* Generated */          tempReal = inLow[today];
+/* Generated */          diffM    = prevLow-tempReal;   
+/* Generated */          prevLow  = tempReal;
+/* Generated */          if( (diffM > 0) && (diffP < diffM) )
+/* Generated */          {
+/* Generated */             TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
+/* Generated */             if( TA_IS_ZERO(tempReal) )
+/* Generated */                outReal[outIdx++] = (double)0.0;
+/* Generated */             else
+/* Generated */                outReal[outIdx++] = diffM/tempReal;
+/* Generated */          }
+/* Generated */          else
+/* Generated */             outReal[outIdx++] = (double)0.0;
+/* Generated */          prevClose = inClose[today];
+/* Generated */       }
+/* Generated */       *outNbElement = outIdx;
+/* Generated */       return TA_SUCCESS;
+/* Generated */    }
 /* Generated */    *outBegIdx = today = startIdx;
 /* Generated */    prevMinusDM = 0.0;
 /* Generated */    prevTR      = 0.0;
