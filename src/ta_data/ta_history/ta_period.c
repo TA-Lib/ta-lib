@@ -48,6 +48,7 @@
  *  082304 MF   Change default timestamp to begining of period.
  *              Now allow to transform in pre-allocated buffer.
  *  103104 MF   Add support for TA_ALLOW_INCOMPLETE_PRICE_BARS
+ *  111804 MF   Add support for TA_USE_TOTAL_VOLUME/OPENINTEREST
  */
 
 /* Description:
@@ -581,10 +582,11 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
           */
          TA_ASSERT_DEBUG( newPriceBar < dest_nbBars );
          
-         /* Volume and Open interest are changed to daily average. */
-         if( old_volume )
+         /* By default, Volume and Open interest are changed to daily average. */
+         if( old_volume && !(flags & TA_USE_TOTAL_VOLUME))
             cur_volume = cur_volume / nbDayAccumulated;
-         if( old_openInterest )
+
+         if( old_openInterest && !(flags & TA_USE_TOTAL_OPENINTEREST))
             cur_openInterest = cur_openInterest / nbDayAccumulated;
 
          /* The new price bar is initialized here. */
