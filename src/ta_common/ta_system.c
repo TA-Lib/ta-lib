@@ -586,12 +586,20 @@ TA_RetCode TA_SemaInc( TA_Sema *sema, unsigned int *prevCount )
       return TA_INTERNAL_ERROR(16);
    #endif
 
-   #if defined( USE_OSLAYER )   
+   #if defined( USE_OSLAYER )  
+   #if defined( USE_NAMED_SEMAPHORES )
+   (void)prevCount;
+   if( sem_post( sema->theSema ) != -1 )
+      return TA_SUCCESS;
+   else
+      return TA_INTERNAL_ERROR(17);
+   #else
    (void)prevCount;
    if( sem_post( &sema->theSema ) != -1 )
       return TA_SUCCESS;
    else
       return TA_INTERNAL_ERROR(17);
+   #endif
    #endif
 }
 #endif
@@ -620,10 +628,17 @@ TA_RetCode TA_SemaDec( TA_Sema *sema )
    #endif
 
    #if defined( USE_OSLAYER )
+   #if defined( USE_NAMED_SEMAPHORES )
+   if( sem_wait( sema->theSema ) != -1 )
+      return TA_SUCCESS;
+   else
+      return TA_INTERNAL_ERROR(20);
+   #else
    if( sem_wait( &sema->theSema ) != -1 )
       return TA_SUCCESS;
    else
       return TA_INTERNAL_ERROR(20);
+   #endif
    #endif
 }
 #endif
@@ -664,7 +679,10 @@ TA_RetCode TA_SemaInit( TA_Sema *sema, unsigned int initialValue )
    #endif
    
    #if defined( USE_OSLAYER )
-   if( sem_init( &sema->theSema, 0, initialValue ) != -1 )
+   #if defined( USE_NAMED_SEMAPHORES )
+   sprintf(sema->name, "ta-lib_sema_%i_%p", getpid(), sema);
+   sema->theSema = sem_open( sema->name, O_CREAT | O_EXCL, 0644, initialValue );
+   if ( sema->theSema != (void *)-1 )
    {
       sema->flags = TA_SEMA_INITIALIZED;
       return TA_SUCCESS;
@@ -674,6 +692,18 @@ TA_RetCode TA_SemaInit( TA_Sema *sema, unsigned int initialValue )
       sema->flags = 0;
       return TA_INTERNAL_ERROR(22);
    }  
+   #else
+   if ( sem_init( &sema->theSema, 0, initialValue ) != -1 )
+   {
+      sema->flags = TA_SEMA_INITIALIZED;
+      return TA_SUCCESS;
+   }
+   else
+   {
+      sema->flags = 0;
+      return TA_INTERNAL_ERROR(22);
+   }  
+   #endif
    #endif
 }
 #endif
@@ -701,8 +731,14 @@ TA_RetCode TA_SemaDestroy( TA_Sema *sema )
    #endif
    
    #if defined( USE_OSLAYER )
+   #if defined( USE_NAMED_SEMAPHORES )
+   sem_close( sema->theSema );
+   sem_unlink( sema->name );
+   return TA_SUCCESS;
+   #else
    sem_destroy( &sema->theSema );
    return TA_SUCCESS;
+   #endif
    #endif
 }
 #endif
