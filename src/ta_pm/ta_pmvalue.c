@@ -89,7 +89,9 @@
 static void initValueCache( TA_PMValueCache *dest );
 static void mergeValueCache( TA_PMValueCache *dest, const TA_PMValueCache *src );
 
-static TA_RetCode processTradeLog_BasicCalculation( TA_TradeLogPriv *tradeLog );
+static TA_RetCode processTradeLog_BasicCalculation( TA_Timestamp *startDate, 
+                                                    TA_Timestamp *endDate,
+                                                    TA_TradeLogPriv *tradeLog );
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -135,7 +137,11 @@ TA_RetCode TA_PMValue( TA_PM *pm,
          do
          {
             if( !(tradeLogPriv->flags & TA_PMVALUECACHE_CALCULATED) )
-               retCode = processTradeLog_BasicCalculation( tradeLogPriv );
+            {
+               retCode = processTradeLog_BasicCalculation( &pmPriv->startDate,
+                                                           &pmPriv->endDate,
+                                                           tradeLogPriv );
+            }
 
             mergeValueCache( &pmPriv->longValueCache, &tradeLogPriv->longValueCache );
             mergeValueCache( &pmPriv->shortValueCache, &tradeLogPriv->shortValueCache );
@@ -802,7 +808,9 @@ TA_RetCode TA_PMErrMargin( TA_PM *pm,
  *
  * Note: A trade is a TA_DataLog with the quantity > 0
  */
-static TA_RetCode processTradeLog_BasicCalculation( TA_TradeLogPriv *tradeLog )
+static TA_RetCode processTradeLog_BasicCalculation( TA_Timestamp *startDate, 
+                                                    TA_Timestamp *endDate,
+                                                    TA_TradeLogPriv *tradeLog )
 {
    TA_AllocatorForDataLog *allocator;
    TA_DataLogBlock *block;
@@ -867,7 +875,9 @@ static TA_RetCode processTradeLog_BasicCalculation( TA_TradeLogPriv *tradeLog )
                 * An entry have a negative 'quantity'.
                 */
                tempInt1 = curDataLog->u.trade.quantity;
-               if( tempInt1 > 0 )
+               if( (tempInt1 > 0) &&
+                   !TA_TimestampLess( &curDataLog->u.trade.entryTimestamp, startDate ) &&
+                   !TA_TimestampGreater( &curDataLog->u.trade.exitTimestamp, endDate ) )
                {
                   tempReal1 = curDataLog->u.trade.entryPrice; /* Positive = long, negative = short */
                   tempReal2 = curDataLog->u.trade.profit; /* Positive = winning, negative = losing */
