@@ -23,6 +23,7 @@ ZIP	=	zip -r -9
 
 HEADERS =	
 SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c &
+		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_candlestick.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_1out.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_2out.c &
 		..\..\..\..\..\src\tools\ta_regtest\test_ascii.c &
@@ -51,6 +52,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c &
 		..\..\..\..\..\src\tools\ta_regtest\test_csi.c &
 		..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 OBJECTS =	..\..\..\..\..\temp\cmr\ta_regtest.obj &
+		..\..\..\..\..\temp\cmr\test_candlestick.obj &
 		..\..\..\..\..\temp\cmr\test_1in_1out.obj &
 		..\..\..\..\..\temp\cmr\test_1in_2out.obj &
 		..\..\..\..\..\temp\cmr\test_ascii.obj &
@@ -91,7 +93,7 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS) $(OBJMOC) 
 	@%create $(TMPLIST)
 	@%append $(TMPLIST) NAME ta_regtest
-	@%append $(TMPLIST) FIL ..\..\..\..\..\temp\cmr\ta_regtest.obj,..\..\..\..\..\temp\cmr\test_1in_1out.obj,..\..\..\..\..\temp\cmr\test_1in_2out.obj,..\..\..\..\..\temp\cmr\test_ascii.obj,..\..\..\..\..\temp\cmr\test_internals.obj,..\..\..\..\..\temp\cmr\test_adx.obj,..\..\..\..\..\temp\cmr\test_bbands.obj,..\..\..\..\..\temp\cmr\test_ma.obj,..\..\..\..\..\temp\cmr\test_macd.obj,..\..\..\..\..\temp\cmr\test_merge.obj,..\..\..\..\..\temp\cmr\test_minmax.obj,..\..\..\..\..\temp\cmr\test_mom.obj,..\..\..\..\..\temp\cmr\test_per_ema.obj,..\..\..\..\..\temp\cmr\test_per_hl.obj,..\..\..\..\..\temp\cmr\test_per_hlc.obj,..\..\..\..\..\temp\cmr\test_per_hlcv.obj,..\..\..\..\..\temp\cmr\test_period.obj,..\..\..\..\..\temp\cmr\test_pm.obj,..\..\..\..\..\temp\cmr\test_po.obj,..\..\..\..\..\temp\cmr\test_rsi.obj,..\..\..\..\..\temp\cmr\test_sar.obj,..\..\..\..\..\temp\cmr\test_stddev.obj,..\..\..\..\..\temp\cmr\test_stoch.obj,..\..\..\..\..\temp\cmr\test_trange.obj,..\..\..\..\..\temp\cmr\test_util.obj,..\..\..\..\..\temp\cmr\test_abstract.obj,..\..\..\..\..\temp\cmr\test_csi.obj,..\..\..\..\..\temp\cmr\test_yahoo.obj
+	@%append $(TMPLIST) FIL ..\..\..\..\..\temp\cmr\ta_regtest.obj,..\..\..\..\..\temp\cmr\test_candlestick.obj,..\..\..\..\..\temp\cmr\test_1in_1out.obj,..\..\..\..\..\temp\cmr\test_1in_2out.obj,..\..\..\..\..\temp\cmr\test_ascii.obj,..\..\..\..\..\temp\cmr\test_internals.obj,..\..\..\..\..\temp\cmr\test_adx.obj,..\..\..\..\..\temp\cmr\test_bbands.obj,..\..\..\..\..\temp\cmr\test_ma.obj,..\..\..\..\..\temp\cmr\test_macd.obj,..\..\..\..\..\temp\cmr\test_merge.obj,..\..\..\..\..\temp\cmr\test_minmax.obj,..\..\..\..\..\temp\cmr\test_mom.obj,..\..\..\..\..\temp\cmr\test_per_ema.obj,..\..\..\..\..\temp\cmr\test_per_hl.obj,..\..\..\..\..\temp\cmr\test_per_hlc.obj,..\..\..\..\..\temp\cmr\test_per_hlcv.obj,..\..\..\..\..\temp\cmr\test_period.obj,..\..\..\..\..\temp\cmr\test_pm.obj,..\..\..\..\..\temp\cmr\test_po.obj,..\..\..\..\..\temp\cmr\test_rsi.obj,..\..\..\..\..\temp\cmr\test_sar.obj,..\..\..\..\..\temp\cmr\test_stddev.obj,..\..\..\..\..\temp\cmr\test_stoch.obj,..\..\..\..\..\temp\cmr\test_trange.obj,..\..\..\..\..\temp\cmr\test_util.obj,..\..\..\..\..\temp\cmr\test_abstract.obj,..\..\..\..\..\temp\cmr\test_csi.obj,..\..\..\..\..\temp\cmr\test_yahoo.obj
 	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_libc_cmr.lib,wininet.lib,odbc32.lib
 	$(LINK) $(LFLAGS) @$(TMPLIST)
 	del $(TMPLIST)
@@ -108,6 +110,7 @@ dist:
 
 clean:
 	-del ..\..\..\..\..\temp\cmr\ta_regtest.obj
+	-del ..\..\..\..\..\temp\cmr\test_candlestick.obj
 	-del ..\..\..\..\..\temp\cmr\test_1in_1out.obj
 	-del ..\..\..\..\..\temp\cmr\test_1in_2out.obj
 	-del ..\..\..\..\..\temp\cmr\test_ascii.obj
@@ -153,6 +156,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_regtest.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmr\ta_regtest.obj ..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c
+
+..\..\..\..\..\temp\cmr\test_candlestick.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_candlestick.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmr\test_candlestick.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_candlestick.c
 
 ..\..\..\..\..\temp\cmr\test_1in_1out.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_1out.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmr\test_1in_1out.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_1out.c
