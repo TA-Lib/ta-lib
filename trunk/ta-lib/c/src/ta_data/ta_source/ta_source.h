@@ -26,13 +26,19 @@
  *   retreiving data. Any data source relying solely on internet should be
  *   characterize as slow access.
  *
- * 
+ * TA_LOCATION_IS_PATH
+ *   Indicates that the "location" parameter when doing TA_AddDataSource
+ *   is expected to be a filesystem path. In that case, TA-Lib might adapt
+ *   the location (depending of the platform on which it is running) before
+ *   passing it to the driver.
+ *
  * The list of flags here are not accessible to the TA-Lib user.
  * See ta_defs.h for the flags accessible to the TA-Lib user.
  */
 
 /* Note: for the 16 less significant bits, see ta_defs.h */
-#define TA_SLOW_ACCESS (1<<16)
+#define TA_SLOW_ACCESS      (1<<16)
+#define TA_LOCATION_IS_PATH (1<<17)
 
 typedef struct
 {
