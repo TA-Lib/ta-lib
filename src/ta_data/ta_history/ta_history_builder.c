@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -37,6 +37,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  JS       Jon Sudul
+ *  AM       Adrian Michel
  *
  * Change history:
  *
@@ -46,6 +47,7 @@
  *  012504 MF,JS  Fix mem leak in TA_HistoryAddData (Bug#881950).
  *  013104 MF     TA_History now contains names of sources + adjust
  *                timestamp to cover the requested period (Bug#888470)
+ *  030405 MF,AM  Now do correctly do volume adjustment with split.
  */
 
 /* Description:
@@ -1006,7 +1008,7 @@ static TA_RetCode historyAdjustData( TA_BuilderSupport *builderSupport )
    TA_SupportForDataSource *supportForDataSource;
    TA_ValueAdjust *curValueAdjust;
    TA_SplitAdjust *curSplitAdjust;
-   double factor, temp;
+   double factor, factorVolume, temp;
    int i;
 
    if( !builderSupport )
@@ -1055,6 +1057,7 @@ static TA_RetCode historyAdjustData( TA_BuilderSupport *builderSupport )
       if( curSplitAdjust || curValueAdjust )
       {
          factor = 1.0;
+         factorVolume = 1.0;
 
          /* Iterate throught the price bar starting with the most recent going backward. */
          TA_ListIterInit( &blockIter, supportForDataSource->listOfDataBlock );
@@ -1069,6 +1072,7 @@ static TA_RetCode historyAdjustData( TA_BuilderSupport *builderSupport )
                    if( TA_TimestampGreater(&curSplitAdjust->timestamp,&curDataBlock->timestamp[i]) )
                    {
                       factor *= curSplitAdjust->factor;
+                      factorVolume /= curSplitAdjust->factor;
                       curSplitAdjust = TA_ListAccessNext(supportForDataSource->listOfSplitAdjust);
                    }
                 }
@@ -1098,8 +1102,11 @@ static TA_RetCode historyAdjustData( TA_BuilderSupport *builderSupport )
                 ADJUST_PRICE(open);
                 ADJUST_PRICE(high);
                 ADJUST_PRICE(low);
-                ADJUST_PRICE(close);
+                ADJUST_PRICE(close);               
                 #undef ADJUST_PRICE
+
+                if( curDataBlock->volume )
+                   curDataBlock->volume[i] = (int)(curDataBlock->volume[i]*factorVolume);
              }         
 
              curDataBlock = TA_ListIterPrev(&blockIter);
