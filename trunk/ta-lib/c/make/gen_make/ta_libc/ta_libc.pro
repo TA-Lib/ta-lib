@@ -49,7 +49,8 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_idx.c \
           ../../../../../src/tools/gen_data/ta_daily_ref_0.c \
           ../../../../../src/tools/gen_data/ta_intra_ref_0.c \
-          ../../../../../src/tools/gen_data/ta_mrg_0.c \
+          ../../../../../src/tools/gen_data/ta_mrg_0.c
+ \
           ../../../../../src/ta_common/bzip2/blocksort.c \
           ../../../../../src/ta_common/bzip2/bzlib.c \
           ../../../../../src/ta_common/bzip2/compress.c \
@@ -77,7 +78,8 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_common/ta_timestamp.c \
           ../../../../../src/ta_common/ta_trace.c \
           ../../../../../src/ta_common/ta_retcode.c \
-          ../../../../../src/ta_common/ta_version.c \
+          ../../../../../src/ta_common/ta_version.c
+ \
           ../../../../../src/ta_abstract/ta_abstract.c \
           ../../../../../src/ta_abstract/ta_def_ui.c \
           ../../../../../src/ta_abstract/ta_group_idx.c \
@@ -107,7 +109,8 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_abstract/tables/table_w.c \
           ../../../../../src/ta_abstract/tables/table_x.c \
           ../../../../../src/ta_abstract/tables/table_y.c \
-          ../../../../../src/ta_abstract/tables/table_z.c \
+          ../../../../../src/ta_abstract/tables/table_z.c
+ \
           ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_MAX.c \
           ../../../../../src/ta_func/ta_MIN.c \
@@ -173,7 +176,8 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_AVGPRICE.c \
           ../../../../../src/ta_func/ta_MEDPRICE.c \
           ../../../../../src/ta_func/ta_TYPPRICE.c \
-          ../../../../../src/ta_func/ta_WCLPRICE.c \
+          ../../../../../src/ta_func/ta_WCLPRICE.c
+ \
           ../../../../../src/ta_pm/ta_pm.c \
           ../../../../../src/ta_pm/ta_pmvalue.c \
           ../../../../../src/ta_pm/ta_pmarray.c \
