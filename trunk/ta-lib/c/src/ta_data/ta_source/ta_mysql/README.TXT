@@ -2,7 +2,7 @@
 MySQL Source Driver for TA-Lib
 Copyright 2003 (C) Paweł A. Konieczny
 ===============================================================================
-vim: textwidth=77
+vim: textwidth=77 fileencoding=utf-8
 
 This file describes how TA_MYSQL source data driver interprets 
 the TA_AddDataSourceParam struct:
@@ -52,12 +52,16 @@ TA_AddDataSourceParam.type: used only when TA_AddDataSourceParam.category is
 NULL.  Those fields contain strings making up the default category name or
 SQL queries returning all supported category components. Queries return data
 in columns "country", "exchange", and "type" respectively.
+NOTE: Currently handling of country, exchange, and type fields is not
+implemented.  Use category field instead.
 
-TA_AddDataSourceParam.symbol: contains an SQL query returning all symbols in
-the database.  Data is returned in the column named "symbol".  If this field
-is NULL, the list of symbols is obtained from the query in
-TA_AddDataSourceParam.category field, column "sumbol".  If such column is not
-available, the database name is used as the symbol.
+TA_AddDataSourceParam.symbol: contains an SQL query returning
+all symbols in the database.  This field is used only
+when TA_AddDataSourceParam.category query does not return a
+column named "symbol" If this field is NULL, (and the query in
+TA_AddDataSourceParam.category field did not return column "symbol"),
+the database name is used as the symbol.  If this field does not contain an
+SQL query, it is taken literally as the symbol name.
 
 PLACEHOLDERS
 ------------
@@ -84,6 +88,8 @@ TA_AddDataSourceParam.exchange = "SELECT exchange FROM exchange_data WHERE count
 ========================================================================
 To Do:
 
+Increase TA_CATEGORY_MAX_LENGTH to 200 (to accomodate longer SQL queries).
+Implement handling of country, exchange, and type.
 Replace MySQL++ by libMYSQL and switch to plain C.
 
 To do for Mario:
