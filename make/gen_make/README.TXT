@@ -22,6 +22,11 @@ library). Just put the tmake in your path and
 you are done (ta-lib comes with all the required
 template).
 
+TMake version tested: V1.7 and V1.8
+
+A bug in V1.9 and 1.10 prevents tmake to work.
+For now, use an older tmake version.
+
 ================================
 Porting to new Compiler/platform
 ================================
