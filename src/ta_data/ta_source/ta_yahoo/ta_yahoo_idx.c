@@ -83,35 +83,54 @@ TA_HardCodedIndice hardCodedIndice[] =
   { TA_Country_ID_US, "^DJA",   "DJC", "US.CBOT.INDEX" },
 
   { TA_Country_ID_US, "^NYA",   "NYA", "US.NYSE.INDEX" },
+  { TA_Country_ID_US, "^NFA",   "NFA", "US.NYSE.INDEX" },
+  { TA_Country_ID_US, "^NDA",   "NDA", "US.NYSE.INDEX" },
+  { TA_Country_ID_US, "^NNA",   "NNA", "US.NYSE.INDEX" },
+  { TA_Country_ID_US, "^NNA",   "NHB", "US.NYSE.INDEX" },
+  { TA_Country_ID_US, "^STI.N", "TRIN", "US.NYSE.INDEX" },
+  { TA_Country_ID_US, "^TIC.N", "TICK", "US.NYSE.INDEX" },
 
   { TA_Country_ID_US, "^IXIC",  "IXIC",  "US.NASDAQ.INDEX" },
+  { TA_Country_ID_US, "^IXQ",   "IXQ",   "US.NASDAQ.INDEX" },
   { TA_Country_ID_US, "^NDX",   "IXNDX", "US.NASDAQ.INDEX" },
-  { TA_Country_ID_US, "^IXQ",   "IXQ", "US.NASDAQ.INDEX" },
+  { TA_Country_ID_US, "^IXBQ",  "IXBQ",  "US.NASDAQ.INDEX" },
+  { TA_Country_ID_US, "^IXFN",  "IXFN",  "US.NASDAQ.INDEX" },
+  { TA_Country_ID_US, "^IXF",   "IXF",   "US.NASDAQ.INDEX" },
+  { TA_Country_ID_US, "^IXID",  "IXID",  "US.NASDAQ.INDEX" },
+  { TA_Country_ID_US, "^IXIS",  "IXIS",  "US.NASDAQ.INDEX" },
+  { TA_Country_ID_US, "^IXK",   "IXK",   "US.NASDAQ.INDEX" },
+  { TA_Country_ID_US, "^IXTR",  "IXTR",  "US.NASDAQ.INDEX" },
+  { TA_Country_ID_US, "^IXUT",  "IXUT",  "US.NASDAQ.INDEX" },
+  { TA_Country_ID_US, "^NBI",   "NBI",   "US.NASDAQ.INDEX" },
 
-  { TA_Country_ID_US, "^SPC",   "SPX", "US.OTHER.INDEX" },
-  { TA_Country_ID_US, "^OEX",   "OEX", "US.OTHER.INDEX" },
-  { TA_Country_ID_US, "^MID",   "MID", "US.OTHER.INDEX" },
-  { TA_Country_ID_US, "^SML",   "SML", "US.OTHER.INDEX" },
+  { TA_Country_ID_US, "^GSPC",  "SP500", "US.OTHER.INDEX" },
+  { TA_Country_ID_US, "^OEX",   "SP100", "US.OTHER.INDEX" },
+  { TA_Country_ID_US, "^MID",   "SP400", "US.OTHER.INDEX" },
+  { TA_Country_ID_US, "^SML",   "SP600", "US.OTHER.INDEX" },
 
   { TA_Country_ID_US, "^RUI",   "RUI", "US.OTHER.INDEX" },
   { TA_Country_ID_US, "^RUT",   "RUT", "US.OTHER.INDEX" },
   { TA_Country_ID_US, "^RUA",   "RUA", "US.OTHER.INDEX" },
 
-  /* { TA_Country_ID_USA, "^XAX", "XAX", "US.AMEX.INDEX" }, */
-  /* { TA_Country_ID_USA, "^NWX", "NWX", "US.AMEX.INDEX" }, */
-  { TA_Country_ID_US, "^NDI",   "NDI", "US.AMEX.INDEX" },
+  { TA_Country_ID_US, "^XAX",   "XAX", "US.AMEX.INDEX" },
   { TA_Country_ID_US, "^IIX",   "IIX", "US.AMEX.INDEX" },
+  { TA_Country_ID_US, "^NWX",   "NWX", "US.AMEX.INDEX" },
+  { TA_Country_ID_US, "^NDI",   "NDI", "US.AMEX.INDEX" },
   { TA_Country_ID_US, "^XMI",   "XMI", "US.AMEX.INDEX" },
   { TA_Country_ID_US, "^TMW",   "TMW", "US.AMEX.INDEX" },
-  { TA_Country_ID_US, "^STI.N", "TRIN", "US.AMEX.INDEX" },
 
   { TA_Country_ID_US, "^VLIC",  "VLIC", "US.KCBT.INDEX" },
 
   { TA_Country_ID_US, "^DOT",   "DOT", "US.PHLX.INDEX" },
   { TA_Country_ID_US, "^XAU",   "XAU", "US.PHLX.INDEX" },
   { TA_Country_ID_US, "^SOXX",  "SOX", "US.PHLX.INDEX" },
+  { TA_Country_ID_US, "^BKX",   "BKX", "US.PHLX.INDEX" },
 
   { TA_Country_ID_US, "^PSE",   "PSE", "US.PSE.INDEX" },
+
+  { TA_Country_ID_US, "^YHOh227", "YHOh227", "US.YAHOO.INDEX" },
+  { TA_Country_ID_US, "^YHOh240", "YHOh240", "US.YAHOO.INDEX" },
+  { TA_Country_ID_US, "^YHOh301", "YHOh301", "US.YAHOO.INDEX" },  
 
   { TA_Country_ID_CA, "^TSE",   "TSE300", "CA.TSE.INDEX" }
 };

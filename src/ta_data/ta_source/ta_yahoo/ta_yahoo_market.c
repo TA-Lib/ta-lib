@@ -45,6 +45,7 @@
  *  112400 MF   First version.
  *  062803 MF   Make parsing to find exchange/type more adaptive to 
  *              potential changes from Yahoo! market page format.
+ *  102103 MF   Now recognize American Mutual Fund ticker.
  */
 
 /* Description:
@@ -191,7 +192,7 @@ TA_RetCode TA_AllocStringFromYahooName( TA_DecodingParam *marketDecodingParam,
 
    TA_YahooMarketPage *allocatedMarketPage;
 
-   TA_TRACE_BEGIN(  TA_AllocStringFromYahooName );
+   TA_TRACE_BEGIN( TA_AllocStringFromYahooName );
 
    /* Validate parameter */
    if( !marketDecodingParam || !yahooSymbol ||
@@ -253,6 +254,17 @@ TA_RetCode TA_AllocStringFromYahooName( TA_DecodingParam *marketDecodingParam,
          ext = NULL; /* No known extension. */
    }
 
+   /* Trap the american mutual fund who are always
+    * 5 characters (with the last character being a 'X').
+    */
+   if( (strlen(yahooSymbol) == 5) && (yahooSymbol[4] == 'X') )
+   {
+      countryId      = TA_Country_ID_US;           
+      countryAbbrev  = TA_CountryIdToAbbrev( countryId );
+      exchangeString = "NASDAQ";
+      typeString     = "FUND";
+   }
+
    if( !exchangeString )
    {
       /* If online access is not allowed, and the 
@@ -269,8 +281,7 @@ TA_RetCode TA_AllocStringFromYahooName( TA_DecodingParam *marketDecodingParam,
       /* OK, we need to proceed by extracting the info
        * from Yahoo! web sites.
        */
-      retCode = internalMarketPageAlloc(
-                                         marketDecodingParam,
+      retCode = internalMarketPageAlloc( marketDecodingParam,
                                          yahooSymbol,
                                          &allocatedMarketPage );
 
@@ -295,8 +306,7 @@ TA_RetCode TA_AllocStringFromYahooName( TA_DecodingParam *marketDecodingParam,
    TA_DEBUG_ASSERT( countryAbbrev  != NULL );
 
    /* Build the Category string into a buffer. */
-   tempBuffer = TA_Malloc(
-                           strlen( countryAbbrev  )  +
+   tempBuffer = TA_Malloc( strlen( countryAbbrev  )  +
                            strlen( exchangeString ) +
                            strlen( typeString )     + 3 );
 
@@ -343,8 +353,7 @@ TA_RetCode TA_YahooMarketPageAlloc( const TA_DecodingParam *decodingParam,
    if( retCode != TA_SUCCESS )
       return retCode;
 
-   return internalMarketPageAlloc(
-                                   decodingParam,
+   return internalMarketPageAlloc( decodingParam,
                                    buffer,
                                    allocatedMarketPage );
 }
@@ -398,8 +407,7 @@ TA_RetCode TA_WebPageAllocFromYahooName( const TA_DecodingParam *decodingParam,
    /* Get the Web Page */   
    for( i=0; i < 10; i++ )
    {
-      retCode = TA_WebPageAlloc(
-                                 webSiteAddr,
+      retCode = TA_WebPageAlloc( webSiteAddr,
                                  webSitePage,
                                  NULL, NULL, &webPage, 10 );
 
