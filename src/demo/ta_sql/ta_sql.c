@@ -199,7 +199,8 @@ int main( int argc, char *argv[] )
    TA_AddDataSourceParam dsParam;
    TA_HistoryAllocParam  haParam;
 
-   int firstParam, nbParam, retValue, i;
+   int firstParam, nbParam, retValue;
+   unsigned int i;
 
    if( argc <= 1 )
    {
