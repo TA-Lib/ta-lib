@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  060102 MF   First version.
- *
+ *  030404 MF   Change TA_Transaction timestamp to execTimestamp
  */
 
 /* Description:
@@ -576,7 +576,7 @@ static ErrorNumber test_onetransaction_only( TA_KEY_TYPE keyTypeTest )
    transaction.id        = &instrument;
    transaction.price     = 34.45;
    transaction.quantity  = 8765;
-   TA_TimestampCopy( &transaction.timestamp, &timestampNow );
+   TA_TimestampCopy( &transaction.execTimestamp, &timestampNow );
    transaction.type      = TA_LONG_ENTRY;
 
    retCode = TA_TradeLogAdd( tradeLog, &transaction );
@@ -699,7 +699,7 @@ static ErrorNumber test_onetrade_only( TA_KEY_TYPE keyTypeTest,
    transaction.id        = &instrument;
    transaction.price     = 10.00;
    transaction.quantity  = 1234;
-   TA_TimestampCopy( &transaction.timestamp, &timestampNowPlusOneYear );
+   TA_TimestampCopy( &transaction.execTimestamp, &timestampNowPlusOneYear );
    transaction.type      = transactionType;
 
    retCode = TA_TradeLogAdd( tradeLog, &transaction );
@@ -1268,7 +1268,7 @@ static ErrorNumber test_valueId( TA_PMValueIdTest *test )
 
 static ErrorNumber test_arrayId( TA_PMArrayIdTest *test )
 {
-   int  i, j;
+   unsigned int  i, j;
    TA_TradeLog  *tradeLog;
    TA_PM        *pm;
    TA_RetCode    retCode;

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -91,7 +91,7 @@ typedef struct
    TA_Instrument        *id;
 
    /* The "when" and "how much" about the transaction */
-   TA_Timestamp         timestamp;
+   TA_Timestamp         execTimestamp;
    int                  quantity;
    TA_Real              price;
 
@@ -115,7 +115,7 @@ typedef struct
     * the call to TA_TradeLogAdd, so you
     * can free the data after the call.
     */
-   int nbPriceBar;
+   unsigned int nbPriceBar;
    double *highPrice;
    double *lowPrice;
 
@@ -347,7 +347,7 @@ typedef struct
    /* Never modify anything in that stucture. */
 
    /* This is the time serie. */
-   TA_Integer          nbData;
+   unsigned int        nbData;
    const TA_Timestamp *timestamp;
    const TA_Real      *data;
 
