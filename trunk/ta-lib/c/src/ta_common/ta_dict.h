@@ -146,6 +146,12 @@ void *TA_DictGetValue_S2( TA_Dict *dict, const char *key1, const char *key2 );
 /* For TA_DICT_KEY_INTEGER */
 void *TA_DictGetValue_I ( TA_Dict *dict, int key );
 
+/* Add all entries of a dictionary into another.
+ * They must have the same key type, else an error
+ * is returned.
+ */
+TA_RetCode TA_DictMerge( TA_Dict *dest, const TA_Dict *src );
+
 /* Access in alphabetical order all the entry in a dictionary.
  *
  * It is assume that the dictionary is not modified while you are

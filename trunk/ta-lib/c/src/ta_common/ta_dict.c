@@ -560,6 +560,32 @@ unsigned int TA_DictSize( TA_Dict *dict )
    return (unsigned int)dict_count( &theDict->d );
 }
 
+#if 0
+TA_RetCode TA_DictMerge( TA_Dict *dest, const TA_Dict *src )
+{
+   const TA_PrivDictInfo *srcDict;
+   TA_PrivDictInfo *destDict;
+
+   srcDict  = (const TA_PrivDictInfo *)src;
+   destDict = (TA_PrivDictInfo *)dest;
+
+   if( !srcDict || !destDict )
+      return TA_BAD_PARAM;
+
+   /* Make sure both dictionary are of the same type. */
+   #define DICT_TYPE_MASK (TA_DICT_KEY_ONE_STRING|TA_DICT_KEY_TWO_STRING|TA_DICT_KEY_INTEGER)
+   if( (srcDict->flags&DICT_TYPE_MASK) != (destDict->flags&DICT_TYPE_MASK) )
+      return TA_DICT_TYPE_MISMATCH;
+
+      dict_init( &theDict->d, DICTCOUNT_T_MAX, compareFunction_I );
+
+   dict_merge( &destDict->d, &srcDict->d );
+
+   TO BE COMPLETED
+}
+#endif
+
+
 /**** Local functions definitions.     ****/
 static int compareFunction_S( const void *key1, const void *key2 )
 {
