@@ -101,17 +101,17 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::HT_DCPERIOD( int    startIdx,
 /* Generated */                                          int    endIdx,
-/* Generated */                                          double       inReal_0 __gc [],
+/* Generated */                                          double       inReal __gc [],
 /* Generated */                                          [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          double        outReal_0 __gc [] )
+/* Generated */                                          double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_HT_DCPERIOD( int    startIdx,
 /* Generated */                            int    endIdx,
-/* Generated */                            const double inReal_0[],
+/* Generated */                            const double inReal[],
 /* Generated */                            int          *outBegIdx,
 /* Generated */                            int          *outNbElement,
-/* Generated */                            double        outReal_0[] )
+/* Generated */                            double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -159,8 +159,8 @@
 /* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -204,13 +204,13 @@
    /* Initialization is same as WMA, except loop is unrolled
     * for speed optimization.
     */
-   tempReal = inReal_0[today++];
+   tempReal = inReal[today++];
    periodWMASub = tempReal;
    periodWMASum = tempReal;
-   tempReal = inReal_0[today++];
+   tempReal = inReal[today++];
    periodWMASub += tempReal;
    periodWMASum += tempReal*2.0;
-   tempReal = inReal_0[today++];
+   tempReal = inReal[today++];
    periodWMASub += tempReal;
    periodWMASum += tempReal*3.0;
 
@@ -223,7 +223,7 @@
       periodWMASub     += varNewPrice; \
       periodWMASub     -= trailingWMAValue; \
       periodWMASum     += varNewPrice*4.0; \
-      trailingWMAValue  = inReal_0[trailingWMAIdx++]; \
+      trailingWMAValue  = inReal[trailingWMAIdx++]; \
       varToStoreSmoothedValue = periodWMASum*0.1; \
       periodWMASum -= periodWMASub; \
    }
@@ -231,7 +231,7 @@
    i = 9;
    do
    {
-      tempReal = inReal_0[today++];
+      tempReal = inReal[today++];
       DO_PRICE_WMA(tempReal,smoothedValue);
    } while( --i != 0);
 
@@ -270,7 +270,7 @@
    {
       adjustedPrevPeriod = (0.075*period)+0.54;
 
-      todayValue = inReal_0[today];
+      todayValue = inReal[today];
       DO_PRICE_WMA(todayValue,smoothedValue);
 
       if( today & 1 )
@@ -340,7 +340,7 @@
 
       if( today >= startIdx )
       {
-         outReal_0[outIdx++] = smoothPeriod;
+         outReal[outIdx++] = smoothPeriod;
       }
 
       /* Ooof... let's do the next price bar now! */
@@ -364,17 +364,17 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::HT_DCPERIOD( int    startIdx,
 /* Generated */                                          int    endIdx,
-/* Generated */                                          float        inReal_0 __gc [],
+/* Generated */                                          float        inReal __gc [],
 /* Generated */                                          [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          double        outReal_0 __gc [] )
+/* Generated */                                          double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_DCPERIOD( int    startIdx,
 /* Generated */                              int    endIdx,
-/* Generated */                              const float  inReal_0[],
+/* Generated */                              const float  inReal[],
 /* Generated */                              int          *outBegIdx,
 /* Generated */                              int          *outNbElement,
-/* Generated */                              double        outReal_0[] )
+/* Generated */                              double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int outIdx, i;
@@ -402,8 +402,8 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    rad2Deg = 180.0 / (4.0 * atan(1));
@@ -419,13 +419,13 @@
 /* Generated */    *outBegIdx = startIdx;
 /* Generated */    trailingWMAIdx = startIdx - lookbackTotal;
 /* Generated */    today = trailingWMAIdx;
-/* Generated */    tempReal = inReal_0[today++];
+/* Generated */    tempReal = inReal[today++];
 /* Generated */    periodWMASub = tempReal;
 /* Generated */    periodWMASum = tempReal;
-/* Generated */    tempReal = inReal_0[today++];
+/* Generated */    tempReal = inReal[today++];
 /* Generated */    periodWMASub += tempReal;
 /* Generated */    periodWMASum += tempReal*2.0;
-/* Generated */    tempReal = inReal_0[today++];
+/* Generated */    tempReal = inReal[today++];
 /* Generated */    periodWMASub += tempReal;
 /* Generated */    periodWMASum += tempReal*3.0;
 /* Generated */    trailingWMAValue = 0.0;
@@ -433,14 +433,14 @@
 /* Generated */       periodWMASub     += varNewPrice; \
 /* Generated */       periodWMASub     -= trailingWMAValue; \
 /* Generated */       periodWMASum     += varNewPrice*4.0; \
-/* Generated */       trailingWMAValue  = inReal_0[trailingWMAIdx++]; \
+/* Generated */       trailingWMAValue  = inReal[trailingWMAIdx++]; \
 /* Generated */       varToStoreSmoothedValue = periodWMASum*0.1; \
 /* Generated */       periodWMASum -= periodWMASub; \
 /* Generated */    }
 /* Generated */    i = 9;
 /* Generated */    do
 /* Generated */    {
-/* Generated */       tempReal = inReal_0[today++];
+/* Generated */       tempReal = inReal[today++];
 /* Generated */       DO_PRICE_WMA(tempReal,smoothedValue);
 /* Generated */    } while( --i != 0);
 /* Generated */    hilbertIdx = 0;
@@ -458,7 +458,7 @@
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
 /* Generated */       adjustedPrevPeriod = (0.075*period)+0.54;
-/* Generated */       todayValue = inReal_0[today];
+/* Generated */       todayValue = inReal[today];
 /* Generated */       DO_PRICE_WMA(todayValue,smoothedValue);
 /* Generated */       if( today & 1 )
 /* Generated */       {
@@ -505,7 +505,7 @@
 /* Generated */       smoothPeriod = (0.33*period)+(0.67*smoothPeriod);
 /* Generated */       if( today >= startIdx )
 /* Generated */       {
-/* Generated */          outReal_0[outIdx++] = smoothPeriod;
+/* Generated */          outReal[outIdx++] = smoothPeriod;
 /* Generated */       }
 /* Generated */       today++;
 /* Generated */    }

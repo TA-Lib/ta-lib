@@ -77,16 +77,16 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::TRIMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
+/* Generated */ int Core::TRIMA_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_TRIMA_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
+/* Generated */ int TA_TRIMA_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   return optInTimePeriod_0-1;
+   return optInTimePeriod-1;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -98,7 +98,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to 100000)
+ * optInTimePeriod:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -107,19 +107,19 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::TRIMA( int    startIdx,
 /* Generated */                                    int    endIdx,
-/* Generated */                                    double       inReal_0 __gc [],
-/* Generated */                                    int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                                    double       inReal __gc [],
+/* Generated */                                    int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                    [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                    [OutAttribute]Int32 *outNbElement,
-/* Generated */                                    double        outReal_0 __gc [] )
+/* Generated */                                    double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_TRIMA( int    startIdx,
 /* Generated */                      int    endIdx,
-/* Generated */                      const double inReal_0[],
-/* Generated */                      int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                      const double inReal[],
+/* Generated */                      int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                      int          *outBegIdx,
 /* Generated */                      int          *outNbElement,
-/* Generated */                      double        outReal_0[] )
+/* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -144,14 +144,14 @@
 /* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */    /* min/max are checked for optInTimePeriod_0. */
-/* Generated */    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod_0 = 30;
-/* Generated */    else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 30;
+/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -163,7 +163,7 @@
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = (optInTimePeriod_0-1);
+   lookbackTotal = (optInTimePeriod-1);
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -267,7 +267,7 @@
 
    outIdx = 0;
 
-   if( optInTimePeriod_0 & 1 )
+   if( optInTimePeriod & 1 )
    {
       /* Logic for Odd period */
 
@@ -299,7 +299,7 @@
       /* Note: entirely done with int and becomes double only 
        *       on assignement to the factor variable.
        */
-      i = (optInTimePeriod_0>>1);
+      i = (optInTimePeriod>>1);
       factor = (i+1)*(i+1); 
       factor = 1.0/factor;
 
@@ -313,7 +313,7 @@
       numeratorSub = 0.0;
       for( i=middleIdx; i >= trailingIdx; i-- )
       {
-         tempReal      = inReal_0[i];
+         tempReal      = inReal[i];
          numeratorSub += tempReal;
          numerator    += numeratorSub;
       }
@@ -321,20 +321,20 @@
       middleIdx++;
       for( i=middleIdx; i <= todayIdx; i++ )
       {
-         tempReal      = inReal_0[i];
+         tempReal      = inReal[i];
          numeratorAdd += tempReal;
          numerator    += numeratorAdd;
       }
 
       /* Write the first output */
       outIdx = 0;
-      tempReal = inReal_0[trailingIdx++]; 
-      outReal_0[outIdx++] = numerator * factor;
+      tempReal = inReal[trailingIdx++]; 
+      outReal[outIdx++] = numerator * factor;
       todayIdx++;
 
       /* Note: The value at the trailingIdx was saved
        *       in tempReal to account for the case where
-       *       outReal_0 and inReal_0 are ptr on the same
+       *       outReal and inReal are ptr on the same
        *       buffer.
        */
 
@@ -344,21 +344,21 @@
          /* Step (1) */
          numerator    -= numeratorSub;
          numeratorSub -= tempReal;
-         tempReal      = inReal_0[middleIdx++];
+         tempReal      = inReal[middleIdx++];
          numeratorSub += tempReal;
 
          /* Step (2) */
          numerator    += numeratorAdd;
          numeratorAdd -= tempReal;
-         tempReal      = inReal_0[todayIdx++];
+         tempReal      = inReal[todayIdx++];
          numeratorAdd += tempReal;
 
          /* Step (3) */
          numerator    += tempReal;
 
          /* Step (4) */
-         tempReal = inReal_0[trailingIdx++]; 
-         outReal_0[outIdx++] = numerator * factor;
+         tempReal = inReal[trailingIdx++]; 
+         outReal[outIdx++] = numerator * factor;
       }
    }
    else
@@ -371,7 +371,7 @@
        *    slightly different.
        *  - Adjustment of numeratorAdd is different. See Step (2).
        */
-      i = (optInTimePeriod_0>>1);
+      i = (optInTimePeriod>>1);
       factor = i*(i+1); 
       factor = 1.0/factor;
 
@@ -387,7 +387,7 @@
 
       for( i=middleIdx; i >= trailingIdx; i-- )
       {
-         tempReal      = inReal_0[i];
+         tempReal      = inReal[i];
          numeratorSub += tempReal;
          numerator    += numeratorSub;
       }
@@ -395,20 +395,20 @@
       middleIdx++;
       for( i=middleIdx; i <= todayIdx; i++ )
       {
-         tempReal      = inReal_0[i];
+         tempReal      = inReal[i];
          numeratorAdd += tempReal;
          numerator    += numeratorAdd;
       }
 
       /* Write the first output */
       outIdx = 0;
-      tempReal = inReal_0[trailingIdx++]; 
-      outReal_0[outIdx++] = numerator * factor;
+      tempReal = inReal[trailingIdx++]; 
+      outReal[outIdx++] = numerator * factor;
       todayIdx++;
 
       /* Note: The value at the trailingIdx was saved
        *       in tempReal to account for the case where
-       *       outReal_0 and inReal_0 are ptr on the same
+       *       outReal and inReal are ptr on the same
        *       buffer.
        */
 
@@ -418,21 +418,21 @@
          /* Step (1) */
          numerator    -= numeratorSub;
          numeratorSub -= tempReal;
-         tempReal      = inReal_0[middleIdx++];
+         tempReal      = inReal[middleIdx++];
          numeratorSub += tempReal;
 
          /* Step (2) */
          numeratorAdd -= tempReal;
          numerator    += numeratorAdd;
-         tempReal      = inReal_0[todayIdx++];
+         tempReal      = inReal[todayIdx++];
          numeratorAdd += tempReal;
 
          /* Step (3) */
          numerator    += tempReal;
 
          /* Step (4) */
-         tempReal = inReal_0[trailingIdx++]; 
-         outReal_0[outIdx++] = numerator * factor;
+         tempReal = inReal[trailingIdx++]; 
+         outReal[outIdx++] = numerator * factor;
       }
 
    }
@@ -455,19 +455,19 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::TRIMA( int    startIdx,
 /* Generated */                                    int    endIdx,
-/* Generated */                                    float        inReal_0 __gc [],
-/* Generated */                                    int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                                    float        inReal __gc [],
+/* Generated */                                    int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                    [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                    [OutAttribute]Int32 *outNbElement,
-/* Generated */                                    double        outReal_0 __gc [] )
+/* Generated */                                    double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_TRIMA( int    startIdx,
 /* Generated */                        int    endIdx,
-/* Generated */                        const float  inReal_0[],
-/* Generated */                        int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                        const float  inReal[],
+/* Generated */                        int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                        int          *outBegIdx,
 /* Generated */                        int          *outNbElement,
-/* Generated */                        double        outReal_0[] )
+/* Generated */                        double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int lookbackTotal;
@@ -481,15 +481,15 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */     if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInTimePeriod_0 = 30;
-/* Generated */     else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 30;
+/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    lookbackTotal = (optInTimePeriod_0-1);
+/* Generated */    lookbackTotal = (optInTimePeriod-1);
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
@@ -499,9 +499,9 @@
 /* Generated */       return TA_SUCCESS;
 /* Generated */    }
 /* Generated */    outIdx = 0;
-/* Generated */    if( optInTimePeriod_0 & 1 )
+/* Generated */    if( optInTimePeriod & 1 )
 /* Generated */    {
-/* Generated */       i = (optInTimePeriod_0>>1);
+/* Generated */       i = (optInTimePeriod>>1);
 /* Generated */       factor = (i+1)*(i+1); 
 /* Generated */       factor = 1.0/factor;
 /* Generated */       trailingIdx = startIdx-lookbackTotal;
@@ -511,7 +511,7 @@
 /* Generated */       numeratorSub = 0.0;
 /* Generated */       for( i=middleIdx; i >= trailingIdx; i-- )
 /* Generated */       {
-/* Generated */          tempReal      = inReal_0[i];
+/* Generated */          tempReal      = inReal[i];
 /* Generated */          numeratorSub += tempReal;
 /* Generated */          numerator    += numeratorSub;
 /* Generated */       }
@@ -519,32 +519,32 @@
 /* Generated */       middleIdx++;
 /* Generated */       for( i=middleIdx; i <= todayIdx; i++ )
 /* Generated */       {
-/* Generated */          tempReal      = inReal_0[i];
+/* Generated */          tempReal      = inReal[i];
 /* Generated */          numeratorAdd += tempReal;
 /* Generated */          numerator    += numeratorAdd;
 /* Generated */       }
 /* Generated */       outIdx = 0;
-/* Generated */       tempReal = inReal_0[trailingIdx++]; 
-/* Generated */       outReal_0[outIdx++] = numerator * factor;
+/* Generated */       tempReal = inReal[trailingIdx++]; 
+/* Generated */       outReal[outIdx++] = numerator * factor;
 /* Generated */       todayIdx++;
 /* Generated */       while( todayIdx <= endIdx )
 /* Generated */       {
 /* Generated */          numerator    -= numeratorSub;
 /* Generated */          numeratorSub -= tempReal;
-/* Generated */          tempReal      = inReal_0[middleIdx++];
+/* Generated */          tempReal      = inReal[middleIdx++];
 /* Generated */          numeratorSub += tempReal;
 /* Generated */          numerator    += numeratorAdd;
 /* Generated */          numeratorAdd -= tempReal;
-/* Generated */          tempReal      = inReal_0[todayIdx++];
+/* Generated */          tempReal      = inReal[todayIdx++];
 /* Generated */          numeratorAdd += tempReal;
 /* Generated */          numerator    += tempReal;
-/* Generated */          tempReal = inReal_0[trailingIdx++]; 
-/* Generated */          outReal_0[outIdx++] = numerator * factor;
+/* Generated */          tempReal = inReal[trailingIdx++]; 
+/* Generated */          outReal[outIdx++] = numerator * factor;
 /* Generated */       }
 /* Generated */    }
 /* Generated */    else
 /* Generated */    {
-/* Generated */       i = (optInTimePeriod_0>>1);
+/* Generated */       i = (optInTimePeriod>>1);
 /* Generated */       factor = i*(i+1); 
 /* Generated */       factor = 1.0/factor;
 /* Generated */       trailingIdx = startIdx-lookbackTotal;
@@ -554,7 +554,7 @@
 /* Generated */       numeratorSub = 0.0;
 /* Generated */       for( i=middleIdx; i >= trailingIdx; i-- )
 /* Generated */       {
-/* Generated */          tempReal      = inReal_0[i];
+/* Generated */          tempReal      = inReal[i];
 /* Generated */          numeratorSub += tempReal;
 /* Generated */          numerator    += numeratorSub;
 /* Generated */       }
@@ -562,27 +562,27 @@
 /* Generated */       middleIdx++;
 /* Generated */       for( i=middleIdx; i <= todayIdx; i++ )
 /* Generated */       {
-/* Generated */          tempReal      = inReal_0[i];
+/* Generated */          tempReal      = inReal[i];
 /* Generated */          numeratorAdd += tempReal;
 /* Generated */          numerator    += numeratorAdd;
 /* Generated */       }
 /* Generated */       outIdx = 0;
-/* Generated */       tempReal = inReal_0[trailingIdx++]; 
-/* Generated */       outReal_0[outIdx++] = numerator * factor;
+/* Generated */       tempReal = inReal[trailingIdx++]; 
+/* Generated */       outReal[outIdx++] = numerator * factor;
 /* Generated */       todayIdx++;
 /* Generated */       while( todayIdx <= endIdx )
 /* Generated */       {
 /* Generated */          numerator    -= numeratorSub;
 /* Generated */          numeratorSub -= tempReal;
-/* Generated */          tempReal      = inReal_0[middleIdx++];
+/* Generated */          tempReal      = inReal[middleIdx++];
 /* Generated */          numeratorSub += tempReal;
 /* Generated */          numeratorAdd -= tempReal;
 /* Generated */          numerator    += numeratorAdd;
-/* Generated */          tempReal      = inReal_0[todayIdx++];
+/* Generated */          tempReal      = inReal[todayIdx++];
 /* Generated */          numeratorAdd += tempReal;
 /* Generated */          numerator    += tempReal;
-/* Generated */          tempReal = inReal_0[trailingIdx++]; 
-/* Generated */          outReal_0[outIdx++] = numerator * factor;
+/* Generated */          tempReal = inReal[trailingIdx++]; 
+/* Generated */          outReal[outIdx++] = numerator * factor;
 /* Generated */       }
 /* Generated */    }
 /* Generated */    *outNbElement = outIdx;

@@ -75,17 +75,17 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::ADXR_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
+/* Generated */ int Core::ADXR_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_ADXR_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
+/* Generated */ int TA_ADXR_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   if( optInTimePeriod_0 > 1 )
-      return optInTimePeriod_0 + TA_ADX_Lookback( optInTimePeriod_0) - 1;
+   if( optInTimePeriod > 1 )
+      return optInTimePeriod + TA_ADX_Lookback( optInTimePeriod) - 1;
    else
       return 3;
 }
@@ -99,7 +99,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to 100000)
+ * optInTimePeriod:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -108,23 +108,23 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::ADXR( int    startIdx,
 /* Generated */                                   int    endIdx,
-/* Generated */                                   double       inHigh_0 __gc [],
-/* Generated */                                   double       inLow_0 __gc [],
-/* Generated */                                   double       inClose_0 __gc [],
-/* Generated */                                   int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                                   double       inHigh __gc [],
+/* Generated */                                   double       inLow __gc [],
+/* Generated */                                   double       inClose __gc [],
+/* Generated */                                   int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                   [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double        outReal_0 __gc [] )
+/* Generated */                                   double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_ADXR( int    startIdx,
 /* Generated */                     int    endIdx,
-/* Generated */                     const double inHigh_0[],
-/* Generated */                     const double inLow_0[],
-/* Generated */                     const double inClose_0[],
-/* Generated */                     int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                     const double inHigh[],
+/* Generated */                     const double inLow[],
+/* Generated */                     const double inClose[],
+/* Generated */                     int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                     int          *outBegIdx,
 /* Generated */                     int          *outNbElement,
-/* Generated */                     double        outReal_0[] )
+/* Generated */                     double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -145,16 +145,16 @@
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
-/* Generated */    if(!inHigh_0||!inLow_0||!inClose_0)
+/* Generated */    if(!inHigh||!inLow||!inClose)
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    /* min/max are checked for optInTimePeriod_0. */
-/* Generated */    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod_0 = 14;
-/* Generated */    else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 14;
+/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -182,7 +182,7 @@
     * enough initial data.
     * Always one price bar gets consumed.
     */
-   adxrLookback = TA_ADXR_Lookback( optInTimePeriod_0 );
+   adxrLookback = TA_ADXR_Lookback( optInTimePeriod );
 
    if( startIdx < adxrLookback )
       startIdx = adxrLookback;
@@ -195,13 +195,13 @@
       return TA_SUCCESS;
    }
 
-   ARRAY_ALLOC( adx, endIdx-startIdx+optInTimePeriod_0 );
+   ARRAY_ALLOC( adx, endIdx-startIdx+optInTimePeriod );
    if( !adx )
       return TA_ALLOC_ERR;
 
-   retCode = TA_PREFIX(ADX)( startIdx-(optInTimePeriod_0-1), endIdx,
-                           inHigh_0, inLow_0, inClose_0,
-                           optInTimePeriod_0, outBegIdx, outNbElement, adx );
+   retCode = TA_PREFIX(ADX)( startIdx-(optInTimePeriod-1), endIdx,
+                           inHigh, inLow, inClose,
+                           optInTimePeriod, outBegIdx, outNbElement, adx );
 
    if( retCode != TA_SUCCESS )      
    {
@@ -209,12 +209,12 @@
       return retCode;
    }
 
-   i = optInTimePeriod_0-1;
+   i = optInTimePeriod-1;
    j = 0;
    outIdx = 0;
    nbElement = endIdx-startIdx+2;
    while( --nbElement != 0 )
-      outReal_0[outIdx++] = round_pos( (adx[i++]+adx[j++])/2.0 );
+      outReal[outIdx++] = round_pos( (adx[i++]+adx[j++])/2.0 );
 
    ARRAY_FREE( adx );
 
@@ -236,23 +236,23 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::ADXR( int    startIdx,
 /* Generated */                                   int    endIdx,
-/* Generated */                                   float        inHigh_0 __gc [],
-/* Generated */                                   float        inLow_0 __gc [],
-/* Generated */                                   float        inClose_0 __gc [],
-/* Generated */                                   int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                                   float        inHigh __gc [],
+/* Generated */                                   float        inLow __gc [],
+/* Generated */                                   float        inClose __gc [],
+/* Generated */                                   int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                   [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double        outReal_0 __gc [] )
+/* Generated */                                   double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ADXR( int    startIdx,
 /* Generated */                       int    endIdx,
-/* Generated */                       const float  inHigh_0[],
-/* Generated */                       const float  inLow_0[],
-/* Generated */                       const float  inClose_0[],
-/* Generated */                       int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                       const float  inHigh[],
+/* Generated */                       const float  inLow[],
+/* Generated */                       const float  inClose[],
+/* Generated */                       int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                       int          *outBegIdx,
 /* Generated */                       int          *outNbElement,
-/* Generated */                       double        outReal_0[] )
+/* Generated */                       double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    ARRAY_REF( adx );
@@ -263,18 +263,18 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if(!inHigh_0||!inLow_0||!inClose_0)
+/* Generated */     if(!inHigh||!inLow||!inClose)
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInTimePeriod_0 = 14;
-/* Generated */     else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 14;
+/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    #undef  round_pos
 /* Generated */    #define round_pos(x) (x)
-/* Generated */    adxrLookback = TA_ADXR_Lookback( optInTimePeriod_0 );
+/* Generated */    adxrLookback = TA_ADXR_Lookback( optInTimePeriod );
 /* Generated */    if( startIdx < adxrLookback )
 /* Generated */       startIdx = adxrLookback;
 /* Generated */    if( startIdx > endIdx )
@@ -283,23 +283,23 @@
 /* Generated */       *outNbElement = 0;
 /* Generated */       return TA_SUCCESS;
 /* Generated */    }
-/* Generated */    ARRAY_ALLOC( adx, endIdx-startIdx+optInTimePeriod_0 );
+/* Generated */    ARRAY_ALLOC( adx, endIdx-startIdx+optInTimePeriod );
 /* Generated */    if( !adx )
 /* Generated */       return TA_ALLOC_ERR;
-/* Generated */    retCode = TA_PREFIX(ADX)( startIdx-(optInTimePeriod_0-1), endIdx,
-/* Generated */                            inHigh_0, inLow_0, inClose_0,
-/* Generated */                            optInTimePeriod_0, outBegIdx, outNbElement, adx );
+/* Generated */    retCode = TA_PREFIX(ADX)( startIdx-(optInTimePeriod-1), endIdx,
+/* Generated */                            inHigh, inLow, inClose,
+/* Generated */                            optInTimePeriod, outBegIdx, outNbElement, adx );
 /* Generated */    if( retCode != TA_SUCCESS )      
 /* Generated */    {
 /* Generated */       ARRAY_FREE( adx );
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    i = optInTimePeriod_0-1;
+/* Generated */    i = optInTimePeriod-1;
 /* Generated */    j = 0;
 /* Generated */    outIdx = 0;
 /* Generated */    nbElement = endIdx-startIdx+2;
 /* Generated */    while( --nbElement != 0 )
-/* Generated */       outReal_0[outIdx++] = round_pos( (adx[i++]+adx[j++])/2.0 );
+/* Generated */       outReal[outIdx++] = round_pos( (adx[i++]+adx[j++])/2.0 );
 /* Generated */    ARRAY_FREE( adx );
 /* Generated */    *outBegIdx    = startIdx;
 /* Generated */    *outNbElement = outIdx;

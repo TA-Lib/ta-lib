@@ -99,19 +99,19 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::OBV( int    startIdx,
 /* Generated */                                  int    endIdx,
-/* Generated */                                  double       inReal_0 __gc [],
-/* Generated */                                  int          inVolume_1 __gc [],
+/* Generated */                                  double       inReal __gc [],
+/* Generated */                                  int          inVolume __gc [],
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  int           outInteger_0 __gc [] )
+/* Generated */                                  int           outInteger __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_OBV( int    startIdx,
 /* Generated */                    int    endIdx,
-/* Generated */                    const double inReal_0[],
-/* Generated */                    const int    inVolume_1[],
+/* Generated */                    const double inReal[],
+/* Generated */                    const int    inVolume[],
 /* Generated */                    int          *outBegIdx,
 /* Generated */                    int          *outNbElement,
-/* Generated */                    int           outInteger_0[] )
+/* Generated */                    int           outInteger[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -131,12 +131,12 @@
 /* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal_0 ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return TA_BAD_PARAM;
 /* Generated */    /* Verify required price component. */
-/* Generated */    if(!inVolume_1)
+/* Generated */    if(!inVolume)
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outInteger_0 == NULL )
+/* Generated */    if( outInteger == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -144,19 +144,19 @@
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
-   prevOBV  = inVolume_1[startIdx];
-   prevReal = inReal_0[startIdx];
+   prevOBV  = inVolume[startIdx];
+   prevReal = inReal[startIdx];
    outIdx = 0;
 
    for(i=startIdx; i <= endIdx; i++ )
    {
-      tempReal = inReal_0[i];
+      tempReal = inReal[i];
       if( tempReal > prevReal )
-         prevOBV += inVolume_1[i];
+         prevOBV += inVolume[i];
       else if( tempReal < prevReal )
-         prevOBV -= inVolume_1[i];
+         prevOBV -= inVolume[i];
 
-      outInteger_0[outIdx++] = prevOBV;
+      outInteger[outIdx++] = prevOBV;
       prevReal = tempReal;
    }
 
@@ -178,19 +178,19 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::OBV( int    startIdx,
 /* Generated */                                  int    endIdx,
-/* Generated */                                  float        inReal_0 __gc [],
-/* Generated */                                  int          inVolume_1 __gc [],
+/* Generated */                                  float        inReal __gc [],
+/* Generated */                                  int          inVolume __gc [],
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  int           outInteger_0 __gc [] )
+/* Generated */                                  int           outInteger __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_OBV( int    startIdx,
 /* Generated */                      int    endIdx,
-/* Generated */                      const float  inReal_0[],
-/* Generated */                      const int    inVolume_1[],
+/* Generated */                      const float  inReal[],
+/* Generated */                      const int    inVolume[],
 /* Generated */                      int          *outBegIdx,
 /* Generated */                      int          *outNbElement,
-/* Generated */                      int           outInteger_0[] )
+/* Generated */                      int           outInteger[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int i;
@@ -201,23 +201,23 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */     if(!inVolume_1)
+/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */     if(!inVolume)
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outInteger_0 == NULL )
+/* Generated */     if( outInteger == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    prevOBV  = inVolume_1[startIdx];
-/* Generated */    prevReal = inReal_0[startIdx];
+/* Generated */    prevOBV  = inVolume[startIdx];
+/* Generated */    prevReal = inReal[startIdx];
 /* Generated */    outIdx = 0;
 /* Generated */    for(i=startIdx; i <= endIdx; i++ )
 /* Generated */    {
-/* Generated */       tempReal = inReal_0[i];
+/* Generated */       tempReal = inReal[i];
 /* Generated */       if( tempReal > prevReal )
-/* Generated */          prevOBV += inVolume_1[i];
+/* Generated */          prevOBV += inVolume[i];
 /* Generated */       else if( tempReal < prevReal )
-/* Generated */          prevOBV -= inVolume_1[i];
-/* Generated */       outInteger_0[outIdx++] = prevOBV;
+/* Generated */          prevOBV -= inVolume[i];
+/* Generated */       outInteger[outIdx++] = prevOBV;
 /* Generated */       prevReal = tempReal;
 /* Generated */    }
 /* Generated */    *outBegIdx = startIdx;

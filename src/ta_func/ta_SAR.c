@@ -82,19 +82,19 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::SAR_Lookback( double        optInAcceleration_0, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInMaximum_1 )  /* From 0 to TA_REAL_MAX */
+/* Generated */ int Core::SAR_Lookback( double        optInAcceleration, /* From 0 to TA_REAL_MAX */
+/* Generated */                       double        optInMaximum )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_SAR_Lookback( double        optInAcceleration_0, /* From 0 to TA_REAL_MAX */
-/* Generated */                    double        optInMaximum_1 )  /* From 0 to TA_REAL_MAX */
+/* Generated */ int TA_SAR_Lookback( double        optInAcceleration, /* From 0 to TA_REAL_MAX */
+/* Generated */                    double        optInMaximum )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   (void)optInAcceleration_0;
-   (void)optInMaximum_1;
+   (void)optInAcceleration;
+   (void)optInMaximum;
 
    /* SAR always sacrify one price bar to establish the
     * initial extreme price.
@@ -111,10 +111,10 @@
  * 
  * Optional Parameters
  * -------------------
- * optInAcceleration_0:(From 0 to TA_REAL_MAX)
+ * optInAcceleration:(From 0 to TA_REAL_MAX)
  *    Acceleration Factor used up to the Maximum value
  * 
- * optInMaximum_1:(From 0 to TA_REAL_MAX)
+ * optInMaximum:(From 0 to TA_REAL_MAX)
  *    Acceleration Factor Maximum value
  * 
  * 
@@ -123,23 +123,23 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::SAR( int    startIdx,
 /* Generated */                                  int    endIdx,
-/* Generated */                                  double       inHigh_0 __gc [],
-/* Generated */                                  double       inLow_0 __gc [],
-/* Generated */                                  double        optInAcceleration_0, /* From 0 to TA_REAL_MAX */
-/* Generated */                                  double        optInMaximum_1, /* From 0 to TA_REAL_MAX */
+/* Generated */                                  double       inHigh __gc [],
+/* Generated */                                  double       inLow __gc [],
+/* Generated */                                  double        optInAcceleration, /* From 0 to TA_REAL_MAX */
+/* Generated */                                  double        optInMaximum, /* From 0 to TA_REAL_MAX */
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal_0 __gc [] )
+/* Generated */                                  double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_SAR( int    startIdx,
 /* Generated */                    int    endIdx,
-/* Generated */                    const double inHigh_0[],
-/* Generated */                    const double inLow_0[],
-/* Generated */                    double        optInAcceleration_0, /* From 0 to TA_REAL_MAX */
-/* Generated */                    double        optInMaximum_1, /* From 0 to TA_REAL_MAX */
+/* Generated */                    const double inHigh[],
+/* Generated */                    const double inLow[],
+/* Generated */                    double        optInAcceleration, /* From 0 to TA_REAL_MAX */
+/* Generated */                    double        optInMaximum, /* From 0 to TA_REAL_MAX */
 /* Generated */                    int          *outBegIdx,
 /* Generated */                    int          *outNbElement,
-/* Generated */                    double        outReal_0[] )
+/* Generated */                    double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -171,20 +171,20 @@
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
-/* Generated */    if(!inHigh_0||!inLow_0)
+/* Generated */    if(!inHigh||!inLow)
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( optInAcceleration_0 == TA_REAL_DEFAULT )
-/* Generated */       optInAcceleration_0 = 2.000000e-2;
-/* Generated */    else if( (optInAcceleration_0 < 0.000000e+0) ||/* Generated */  (optInAcceleration_0 > 3.000000e+37) )
+/* Generated */    if( optInAcceleration == TA_REAL_DEFAULT )
+/* Generated */       optInAcceleration = 2.000000e-2;
+/* Generated */    else if( (optInAcceleration < 0.000000e+0) ||/* Generated */  (optInAcceleration > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( optInMaximum_1 == TA_REAL_DEFAULT )
-/* Generated */       optInMaximum_1 = 2.000000e-1;
-/* Generated */    else if( (optInMaximum_1 < 0.000000e+0) ||/* Generated */  (optInMaximum_1 > 3.000000e+37) )
+/* Generated */    if( optInMaximum == TA_REAL_DEFAULT )
+/* Generated */       optInMaximum = 2.000000e-1;
+/* Generated */    else if( (optInMaximum < 0.000000e+0) ||/* Generated */  (optInMaximum > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -254,15 +254,15 @@
    /* Make sure the acceleration and maximum are coherent.
     * If not, correct the acceleration.
     */
-   af = optInAcceleration_0;
-   if( af > optInMaximum_1 )
-      af = optInAcceleration_0 = optInMaximum_1;
+   af = optInAcceleration;
+   if( af > optInMaximum )
+      af = optInAcceleration = optInMaximum;
 
    /* Identify if the initial direction is long or short.
     * (ep is just used as a temp buffer here, the name
     *  of the parameter is not significant).
     */
-   retCode = TA_PREFIX(MINUS_DM)( startIdx-1, startIdx, inHigh_0, inLow_0,
+   retCode = TA_PREFIX(MINUS_DM)( startIdx-1, startIdx, inHigh, inLow,
                                   1, &tempInt, &tempInt, ep_temp );
    if( ep_temp[0] > 0 )
       isLong = 0;
@@ -282,20 +282,20 @@
    /* Write the first SAR. */
    todayIdx = startIdx;
 
-   newHigh = inHigh_0[todayIdx-1];
-   newLow  = inLow_0[todayIdx-1];
+   newHigh = inHigh[todayIdx-1];
+   newLow  = inLow[todayIdx-1];
 
    SAR_ROUNDING(newHigh);
    SAR_ROUNDING(newLow);
 
    if( isLong )
    {
-      ep  = inHigh_0[todayIdx];
+      ep  = inHigh[todayIdx];
       sar = newLow;
    }
    else
    {
-      ep  = inLow_0[todayIdx];
+      ep  = inLow[todayIdx];
       sar = newHigh;
    }
 
@@ -304,15 +304,15 @@
    /* Cheat on the newLow and newHigh for the
     * first iteration.
     */
-   newLow  = inLow_0[todayIdx];
-   newHigh = inHigh_0[todayIdx];
+   newLow  = inLow[todayIdx];
+   newHigh = inHigh[todayIdx];
 
    while( todayIdx <= endIdx )
    {
       prevLow  = newLow;
       prevHigh = newHigh;
-      newLow  = inLow_0[todayIdx];
-      newHigh = inHigh_0[todayIdx];   
+      newLow  = inLow[todayIdx];
+      newHigh = inHigh[todayIdx];   
       todayIdx++;
 
       SAR_ROUNDING(newLow);
@@ -336,10 +336,10 @@
                sar = newHigh;
 
             /* Output the overide SAR  */
-            outReal_0[outIdx++] = sar;
+            outReal[outIdx++] = sar;
 
             /* Adjust af and ep */
-            af = optInAcceleration_0;
+            af = optInAcceleration;
             ep = newLow;
  
             /* Calculate the new SAR */
@@ -359,15 +359,15 @@
             /* No switch */
 
             /* Output the SAR (was calculated in the previous iteration) */
-            outReal_0[outIdx++] = sar;
+            outReal[outIdx++] = sar;
  
             /* Adjust af and ep. */
             if( newHigh > ep )
             {
                ep = newHigh;
-               af += optInAcceleration_0;
-               if( af > optInMaximum_1 )
-                  af = optInMaximum_1;
+               af += optInAcceleration;
+               if( af > optInMaximum )
+                  af = optInMaximum;
             }
 
             /* Calculate the new SAR */
@@ -401,10 +401,10 @@
                sar = newLow;
 
             /* Output the overide SAR  */
-            outReal_0[outIdx++] = sar;
+            outReal[outIdx++] = sar;
 
             /* Adjust af and ep */
-            af = optInAcceleration_0;
+            af = optInAcceleration;
             ep = newHigh;
 
             /* Calculate the new SAR */
@@ -424,15 +424,15 @@
             /* No switch */
 
             /* Output the SAR (was calculated in the previous iteration) */
-            outReal_0[outIdx++] = sar;
+            outReal[outIdx++] = sar;
 
             /* Adjust af and ep. */
             if( newLow < ep )
             {
                ep = newLow;
-               af += optInAcceleration_0;
-               if( af > optInMaximum_1 )
-                  af = optInMaximum_1;
+               af += optInAcceleration;
+               if( af > optInMaximum )
+                  af = optInMaximum;
             }
 
             /* Calculate the new SAR */
@@ -467,23 +467,23 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::SAR( int    startIdx,
 /* Generated */                                  int    endIdx,
-/* Generated */                                  float        inHigh_0 __gc [],
-/* Generated */                                  float        inLow_0 __gc [],
-/* Generated */                                  double        optInAcceleration_0, /* From 0 to TA_REAL_MAX */
-/* Generated */                                  double        optInMaximum_1, /* From 0 to TA_REAL_MAX */
+/* Generated */                                  float        inHigh __gc [],
+/* Generated */                                  float        inLow __gc [],
+/* Generated */                                  double        optInAcceleration, /* From 0 to TA_REAL_MAX */
+/* Generated */                                  double        optInMaximum, /* From 0 to TA_REAL_MAX */
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal_0 __gc [] )
+/* Generated */                                  double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_SAR( int    startIdx,
 /* Generated */                      int    endIdx,
-/* Generated */                      const float  inHigh_0[],
-/* Generated */                      const float  inLow_0[],
-/* Generated */                      double        optInAcceleration_0, /* From 0 to TA_REAL_MAX */
-/* Generated */                      double        optInMaximum_1, /* From 0 to TA_REAL_MAX */
+/* Generated */                      const float  inHigh[],
+/* Generated */                      const float  inLow[],
+/* Generated */                      double        optInAcceleration, /* From 0 to TA_REAL_MAX */
+/* Generated */                      double        optInMaximum, /* From 0 to TA_REAL_MAX */
 /* Generated */                      int          *outBegIdx,
 /* Generated */                      int          *outNbElement,
-/* Generated */                      double        outReal_0[] )
+/* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    TA_RetCode retCode;
@@ -502,17 +502,17 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if(!inHigh_0||!inLow_0)
+/* Generated */     if(!inHigh||!inLow)
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( optInAcceleration_0 == TA_REAL_DEFAULT )
-/* Generated */        optInAcceleration_0 = 2.000000e-2;
-/* Generated */     else if( (optInAcceleration_0 < 0.000000e+0) ||  (optInAcceleration_0 > 3.000000e+37) )
+/* Generated */     if( optInAcceleration == TA_REAL_DEFAULT )
+/* Generated */        optInAcceleration = 2.000000e-2;
+/* Generated */     else if( (optInAcceleration < 0.000000e+0) ||  (optInAcceleration > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( optInMaximum_1 == TA_REAL_DEFAULT )
-/* Generated */        optInMaximum_1 = 2.000000e-1;
-/* Generated */     else if( (optInMaximum_1 < 0.000000e+0) ||  (optInMaximum_1 > 3.000000e+37) )
+/* Generated */     if( optInMaximum == TA_REAL_DEFAULT )
+/* Generated */        optInMaximum = 2.000000e-1;
+/* Generated */     else if( (optInMaximum < 0.000000e+0) ||  (optInMaximum > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    if( startIdx < 1 )
@@ -523,10 +523,10 @@
 /* Generated */       *outNbElement = 0;
 /* Generated */       return TA_SUCCESS;
 /* Generated */    }   
-/* Generated */    af = optInAcceleration_0;
-/* Generated */    if( af > optInMaximum_1 )
-/* Generated */       af = optInAcceleration_0 = optInMaximum_1;
-/* Generated */    retCode = TA_PREFIX(MINUS_DM)( startIdx-1, startIdx, inHigh_0, inLow_0,
+/* Generated */    af = optInAcceleration;
+/* Generated */    if( af > optInMaximum )
+/* Generated */       af = optInAcceleration = optInMaximum;
+/* Generated */    retCode = TA_PREFIX(MINUS_DM)( startIdx-1, startIdx, inHigh, inLow,
 /* Generated */                                   1, &tempInt, &tempInt, ep_temp );
 /* Generated */    if( ep_temp[0] > 0 )
 /* Generated */       isLong = 0;
@@ -541,29 +541,29 @@
 /* Generated */    *outBegIdx = startIdx;
 /* Generated */    outIdx = 0;
 /* Generated */    todayIdx = startIdx;
-/* Generated */    newHigh = inHigh_0[todayIdx-1];
-/* Generated */    newLow  = inLow_0[todayIdx-1];
+/* Generated */    newHigh = inHigh[todayIdx-1];
+/* Generated */    newLow  = inLow[todayIdx-1];
 /* Generated */    SAR_ROUNDING(newHigh);
 /* Generated */    SAR_ROUNDING(newLow);
 /* Generated */    if( isLong )
 /* Generated */    {
-/* Generated */       ep  = inHigh_0[todayIdx];
+/* Generated */       ep  = inHigh[todayIdx];
 /* Generated */       sar = newLow;
 /* Generated */    }
 /* Generated */    else
 /* Generated */    {
-/* Generated */       ep  = inLow_0[todayIdx];
+/* Generated */       ep  = inLow[todayIdx];
 /* Generated */       sar = newHigh;
 /* Generated */    }
 /* Generated */    SAR_ROUNDING(sar);
-/* Generated */    newLow  = inLow_0[todayIdx];
-/* Generated */    newHigh = inHigh_0[todayIdx];
+/* Generated */    newLow  = inLow[todayIdx];
+/* Generated */    newHigh = inHigh[todayIdx];
 /* Generated */    while( todayIdx <= endIdx )
 /* Generated */    {
 /* Generated */       prevLow  = newLow;
 /* Generated */       prevHigh = newHigh;
-/* Generated */       newLow  = inLow_0[todayIdx];
-/* Generated */       newHigh = inHigh_0[todayIdx];   
+/* Generated */       newLow  = inLow[todayIdx];
+/* Generated */       newHigh = inHigh[todayIdx];   
 /* Generated */       todayIdx++;
 /* Generated */       SAR_ROUNDING(newLow);
 /* Generated */       SAR_ROUNDING(newHigh);
@@ -577,8 +577,8 @@
 /* Generated */                sar = prevHigh;            
 /* Generated */             if( sar < newHigh )
 /* Generated */                sar = newHigh;
-/* Generated */             outReal_0[outIdx++] = sar;
-/* Generated */             af = optInAcceleration_0;
+/* Generated */             outReal[outIdx++] = sar;
+/* Generated */             af = optInAcceleration;
 /* Generated */             ep = newLow;
 /* Generated */             sar = sar + af * (ep - sar);
 /* Generated */             SAR_ROUNDING( sar );
@@ -589,13 +589,13 @@
 /* Generated */          }
 /* Generated */          else
 /* Generated */          {
-/* Generated */             outReal_0[outIdx++] = sar;
+/* Generated */             outReal[outIdx++] = sar;
 /* Generated */             if( newHigh > ep )
 /* Generated */             {
 /* Generated */                ep = newHigh;
-/* Generated */                af += optInAcceleration_0;
-/* Generated */                if( af > optInMaximum_1 )
-/* Generated */                   af = optInMaximum_1;
+/* Generated */                af += optInAcceleration;
+/* Generated */                if( af > optInMaximum )
+/* Generated */                   af = optInMaximum;
 /* Generated */             }
 /* Generated */             sar = sar + af * (ep - sar);
 /* Generated */             SAR_ROUNDING( sar );
@@ -615,8 +615,8 @@
 /* Generated */                sar = prevLow;            
 /* Generated */             if( sar > newLow )
 /* Generated */                sar = newLow;
-/* Generated */             outReal_0[outIdx++] = sar;
-/* Generated */             af = optInAcceleration_0;
+/* Generated */             outReal[outIdx++] = sar;
+/* Generated */             af = optInAcceleration;
 /* Generated */             ep = newHigh;
 /* Generated */             sar = sar + af * (ep - sar);
 /* Generated */             SAR_ROUNDING( sar );
@@ -627,13 +627,13 @@
 /* Generated */          }
 /* Generated */          else
 /* Generated */          {
-/* Generated */             outReal_0[outIdx++] = sar;
+/* Generated */             outReal[outIdx++] = sar;
 /* Generated */             if( newLow < ep )
 /* Generated */             {
 /* Generated */                ep = newLow;
-/* Generated */                af += optInAcceleration_0;
-/* Generated */                if( af > optInMaximum_1 )
-/* Generated */                   af = optInMaximum_1;
+/* Generated */                af += optInAcceleration;
+/* Generated */                if( af > optInMaximum )
+/* Generated */                   af = optInMaximum;
 /* Generated */             }
 /* Generated */             sar = sar + af * (ep - sar);
 /* Generated */             SAR_ROUNDING( sar );

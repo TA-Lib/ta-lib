@@ -101,21 +101,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::WCLPRICE( int    startIdx,
 /* Generated */                                       int    endIdx,
-/* Generated */                                       double       inHigh_0 __gc [],
-/* Generated */                                       double       inLow_0 __gc [],
-/* Generated */                                       double       inClose_0 __gc [],
+/* Generated */                                       double       inHigh __gc [],
+/* Generated */                                       double       inLow __gc [],
+/* Generated */                                       double       inClose __gc [],
 /* Generated */                                       [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                       [OutAttribute]Int32 *outNbElement,
-/* Generated */                                       double        outReal_0 __gc [] )
+/* Generated */                                       double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_WCLPRICE( int    startIdx,
 /* Generated */                         int    endIdx,
-/* Generated */                         const double inHigh_0[],
-/* Generated */                         const double inLow_0[],
-/* Generated */                         const double inClose_0[],
+/* Generated */                         const double inHigh[],
+/* Generated */                         const double inLow[],
+/* Generated */                         const double inClose[],
 /* Generated */                         int          *outBegIdx,
 /* Generated */                         int          *outNbElement,
-/* Generated */                         double        outReal_0[] )
+/* Generated */                         double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -134,10 +134,10 @@
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
-/* Generated */    if(!inHigh_0||!inLow_0||!inClose_0)
+/* Generated */    if(!inHigh||!inLow||!inClose)
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -152,9 +152,9 @@
 
    for( i= startIdx; i <= endIdx; i++ )
    {
-      outReal_0[outIdx++] = ( inHigh_0 [i] +
-                              inLow_0  [i] +
-                              (inClose_0[i]*2.0) ) / 4.0;
+      outReal[outIdx++] = ( inHigh [i] +
+                              inLow  [i] +
+                              (inClose[i]*2.0) ) / 4.0;
    }
 
    *outNbElement = outIdx;
@@ -175,21 +175,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::WCLPRICE( int    startIdx,
 /* Generated */                                       int    endIdx,
-/* Generated */                                       float        inHigh_0 __gc [],
-/* Generated */                                       float        inLow_0 __gc [],
-/* Generated */                                       float        inClose_0 __gc [],
+/* Generated */                                       float        inHigh __gc [],
+/* Generated */                                       float        inLow __gc [],
+/* Generated */                                       float        inClose __gc [],
 /* Generated */                                       [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                       [OutAttribute]Int32 *outNbElement,
-/* Generated */                                       double        outReal_0 __gc [] )
+/* Generated */                                       double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_WCLPRICE( int    startIdx,
 /* Generated */                           int    endIdx,
-/* Generated */                           const float  inHigh_0[],
-/* Generated */                           const float  inLow_0[],
-/* Generated */                           const float  inClose_0[],
+/* Generated */                           const float  inHigh[],
+/* Generated */                           const float  inLow[],
+/* Generated */                           const float  inClose[],
 /* Generated */                           int          *outBegIdx,
 /* Generated */                           int          *outNbElement,
-/* Generated */                           double        outReal_0[] )
+/* Generated */                           double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int outIdx, i;
@@ -198,17 +198,17 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if(!inHigh_0||!inLow_0||!inClose_0)
+/* Generated */     if(!inHigh||!inLow||!inClose)
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    outIdx = 0;
 /* Generated */    for( i= startIdx; i <= endIdx; i++ )
 /* Generated */    {
-/* Generated */       outReal_0[outIdx++] = ( inHigh_0 [i] +
-/* Generated */                               inLow_0  [i] +
-/* Generated */                               (inClose_0[i]*2.0) ) / 4.0;
+/* Generated */       outReal[outIdx++] = ( inHigh [i] +
+/* Generated */                               inLow  [i] +
+/* Generated */                               (inClose[i]*2.0) ) / 4.0;
 /* Generated */    }
 /* Generated */    *outNbElement = outIdx;
 /* Generated */    *outBegIdx    = 0;

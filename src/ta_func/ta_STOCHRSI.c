@@ -76,13 +76,13 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::STOCHRSI_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
-/* Generated */                            int           optInFastD_Period_1, /* From 1 to 100000 */
-/* Generated */                            TA_MAType     optInFastD_MAType_2 ) /* Generated */ 
+/* Generated */ int Core::STOCHRSI_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                            int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                            TA_MAType     optInFastD_MAType ) /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_STOCHRSI_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
-/* Generated */                         int           optInFastD_Period_1, /* From 1 to 100000 */
-/* Generated */                         TA_MAType     optInFastD_MAType_2 ) /* Generated */ 
+/* Generated */ int TA_STOCHRSI_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                         int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                         TA_MAType     optInFastD_MAType ) /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -99,13 +99,13 @@
  * 
  * Optional Parameters
  * -------------------
- * optInFastK_Period_0:(From 1 to 100000)
+ * optInFastK_Period:(From 1 to 100000)
  *    Time period for building the Fast-K line
  * 
- * optInFastD_Period_1:(From 1 to 100000)
+ * optInFastD_Period:(From 1 to 100000)
  *    Smoothing for making the Fast-D line. Usually set to 3
  * 
- * optInFastD_MAType_2:
+ * optInFastD_MAType:
  *    Type of Moving Average for Fast-D
  * 
  * 
@@ -114,25 +114,25 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::STOCHRSI( int    startIdx,
 /* Generated */                                       int    endIdx,
-/* Generated */                                       double       inReal_0 __gc [],
-/* Generated */                                       int           optInFastK_Period_0, /* From 1 to 100000 */
-/* Generated */                                       int           optInFastD_Period_1, /* From 1 to 100000 */
-/* Generated */                                       TA_MAType     optInFastD_MAType_2,
+/* Generated */                                       double       inReal __gc [],
+/* Generated */                                       int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                       int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                                       TA_MAType     optInFastD_MAType,
 /* Generated */                                       [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                       [OutAttribute]Int32 *outNbElement,
-/* Generated */                                       double        outFastK_0 __gc [],
-/* Generated */                                       double        outFastD_1 __gc [] )
+/* Generated */                                       double        outFastK __gc [],
+/* Generated */                                       double        outFastD __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_STOCHRSI( int    startIdx,
 /* Generated */                         int    endIdx,
-/* Generated */                         const double inReal_0[],
-/* Generated */                         int           optInFastK_Period_0, /* From 1 to 100000 */
-/* Generated */                         int           optInFastD_Period_1, /* From 1 to 100000 */
-/* Generated */                         TA_MAType     optInFastD_MAType_2,
+/* Generated */                         const double inReal[],
+/* Generated */                         int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                         int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                         TA_MAType     optInFastD_MAType,
 /* Generated */                         int          *outBegIdx,
 /* Generated */                         int          *outNbElement,
-/* Generated */                         double        outFastK_0[],
-/* Generated */                         double        outFastD_1[] )
+/* Generated */                         double        outFastK[],
+/* Generated */                         double        outFastD[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -149,30 +149,30 @@
 /* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */    /* min/max are checked for optInFastK_Period_0. */
-/* Generated */    if( (int)optInFastK_Period_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInFastK_Period_0 = 5;
-/* Generated */    else if( ((int)optInFastK_Period_0 < 1) || ((int)optInFastK_Period_0 > 100000) )
+/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    /* min/max are checked for optInFastK_Period. */
+/* Generated */    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
+/* Generated */       optInFastK_Period = 5;
+/* Generated */    else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    /* min/max are checked for optInFastD_Period_1. */
-/* Generated */    if( (int)optInFastD_Period_1 == TA_INTEGER_DEFAULT )
-/* Generated */       optInFastD_Period_1 = 3;
-/* Generated */    else if( ((int)optInFastD_Period_1 < 1) || ((int)optInFastD_Period_1 > 100000) )
+/* Generated */    /* min/max are checked for optInFastD_Period. */
+/* Generated */    if( (int)optInFastD_Period == TA_INTEGER_DEFAULT )
+/* Generated */       optInFastD_Period = 3;
+/* Generated */    else if( ((int)optInFastD_Period < 1) || ((int)optInFastD_Period > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED)
-/* Generated */    if( (int)optInFastD_MAType_2 == TA_INTEGER_DEFAULT )
-/* Generated */       optInFastD_MAType_2 = 0;
-/* Generated */    else if( ((int)optInFastD_MAType_2 < 0) || ((int)optInFastD_MAType_2 > 8) )
+/* Generated */    if( (int)optInFastD_MAType == TA_INTEGER_DEFAULT )
+/* Generated */       optInFastD_MAType = 0;
+/* Generated */    else if( ((int)optInFastD_MAType < 0) || ((int)optInFastD_MAType > 8) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) */
-/* Generated */    if( outFastK_0 == NULL )
+/* Generated */    if( outFastK == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outFastD_1 == NULL )
+/* Generated */    if( outFastD == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -198,25 +198,25 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::STOCHRSI( int    startIdx,
 /* Generated */                                       int    endIdx,
-/* Generated */                                       float        inReal_0 __gc [],
-/* Generated */                                       int           optInFastK_Period_0, /* From 1 to 100000 */
-/* Generated */                                       int           optInFastD_Period_1, /* From 1 to 100000 */
-/* Generated */                                       TA_MAType     optInFastD_MAType_2,
+/* Generated */                                       float        inReal __gc [],
+/* Generated */                                       int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                       int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                                       TA_MAType     optInFastD_MAType,
 /* Generated */                                       [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                       [OutAttribute]Int32 *outNbElement,
-/* Generated */                                       double        outFastK_0 __gc [],
-/* Generated */                                       double        outFastD_1 __gc [] )
+/* Generated */                                       double        outFastK __gc [],
+/* Generated */                                       double        outFastD __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STOCHRSI( int    startIdx,
 /* Generated */                           int    endIdx,
-/* Generated */                           const float  inReal_0[],
-/* Generated */                           int           optInFastK_Period_0, /* From 1 to 100000 */
-/* Generated */                           int           optInFastD_Period_1, /* From 1 to 100000 */
-/* Generated */                           TA_MAType     optInFastD_MAType_2,
+/* Generated */                           const float  inReal[],
+/* Generated */                           int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                           int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                           TA_MAType     optInFastD_MAType,
 /* Generated */                           int          *outBegIdx,
 /* Generated */                           int          *outNbElement,
-/* Generated */                           double        outFastK_0[],
-/* Generated */                           double        outFastD_1[] )
+/* Generated */                           double        outFastK[],
+/* Generated */                           double        outFastD[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
@@ -224,24 +224,24 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */     if( (int)optInFastK_Period_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInFastK_Period_0 = 5;
-/* Generated */     else if( ((int)optInFastK_Period_0 < 1) || ((int)optInFastK_Period_0 > 100000) )
+/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */     if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
+/* Generated */        optInFastK_Period = 5;
+/* Generated */     else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( (int)optInFastD_Period_1 == TA_INTEGER_DEFAULT )
-/* Generated */        optInFastD_Period_1 = 3;
-/* Generated */     else if( ((int)optInFastD_Period_1 < 1) || ((int)optInFastD_Period_1 > 100000) )
+/* Generated */     if( (int)optInFastD_Period == TA_INTEGER_DEFAULT )
+/* Generated */        optInFastD_Period = 3;
+/* Generated */     else if( ((int)optInFastD_Period < 1) || ((int)optInFastD_Period > 100000) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     #if !defined(_MANAGED)
-/* Generated */     if( (int)optInFastD_MAType_2 == TA_INTEGER_DEFAULT )
-/* Generated */        optInFastD_MAType_2 = 0;
-/* Generated */     else if( ((int)optInFastD_MAType_2 < 0) || ((int)optInFastD_MAType_2 > 8) )
+/* Generated */     if( (int)optInFastD_MAType == TA_INTEGER_DEFAULT )
+/* Generated */        optInFastD_MAType = 0;
+/* Generated */     else if( ((int)optInFastD_MAType < 0) || ((int)optInFastD_MAType > 8) )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */     #endif 
-/* Generated */     if( outFastK_0 == NULL )
+/* Generated */     if( outFastK == NULL )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outFastD_1 == NULL )
+/* Generated */     if( outFastD == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    *outBegIdx    = 0;

@@ -108,19 +108,19 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::HT_SINE( int    startIdx,
 /* Generated */                                      int    endIdx,
-/* Generated */                                      double       inReal_0 __gc [],
+/* Generated */                                      double       inReal __gc [],
 /* Generated */                                      [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                      [OutAttribute]Int32 *outNbElement,
-/* Generated */                                      double        outSine_0 __gc [],
-/* Generated */                                      double        outLeadSine_1 __gc [] )
+/* Generated */                                      double        outSine __gc [],
+/* Generated */                                      double        outLeadSine __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_HT_SINE( int    startIdx,
 /* Generated */                        int    endIdx,
-/* Generated */                        const double inReal_0[],
+/* Generated */                        const double inReal[],
 /* Generated */                        int          *outBegIdx,
 /* Generated */                        int          *outNbElement,
-/* Generated */                        double        outSine_0[],
-/* Generated */                        double        outLeadSine_1[] )
+/* Generated */                        double        outSine[],
+/* Generated */                        double        outLeadSine[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -179,11 +179,11 @@
 /* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */    if( outSine_0 == NULL )
+/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( outSine == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outLeadSine_1 == NULL )
+/* Generated */    if( outLeadSine == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -232,13 +232,13 @@
    /* Initialization is same as WMA, except loop is unrolled
     * for speed optimization.
     */
-   tempReal = inReal_0[today++];
+   tempReal = inReal[today++];
    periodWMASub = tempReal;
    periodWMASum = tempReal;
-   tempReal = inReal_0[today++];
+   tempReal = inReal[today++];
    periodWMASub += tempReal;
    periodWMASum += tempReal*2.0;
-   tempReal = inReal_0[today++];
+   tempReal = inReal[today++];
    periodWMASub += tempReal;
    periodWMASum += tempReal*3.0;
 
@@ -251,7 +251,7 @@
       periodWMASub     += varNewPrice; \
       periodWMASub     -= trailingWMAValue; \
       periodWMASum     += varNewPrice*4.0; \
-      trailingWMAValue  = inReal_0[trailingWMAIdx++]; \
+      trailingWMAValue  = inReal[trailingWMAIdx++]; \
       varToStoreSmoothedValue = periodWMASum*0.1; \
       periodWMASum -= periodWMASub; \
    }
@@ -259,7 +259,7 @@
    i = 34;
    do
    {
-      tempReal = inReal_0[today++];
+      tempReal = inReal[today++];
       DO_PRICE_WMA(tempReal,smoothedValue);
    } while( --i != 0);
 
@@ -302,7 +302,7 @@
    {
       adjustedPrevPeriod = (0.075*period)+0.54;
 
-      todayValue = inReal_0[today];
+      todayValue = inReal[today];
       DO_PRICE_WMA(todayValue,smoothedValue);
 
       /* Remember the smoothedValue into the smoothPrice
@@ -418,8 +418,8 @@
 
       if( today >= startIdx )
       {
-         outSine_0[outIdx]       = sin(DCPhase*deg2Rad);
-         outLeadSine_1[outIdx++] = sin((DCPhase+45)*deg2Rad);
+         outSine[outIdx]       = sin(DCPhase*deg2Rad);
+         outLeadSine[outIdx++] = sin((DCPhase+45)*deg2Rad);
       }
 
       /* Ooof... let's do the next price bar now! */
@@ -444,19 +444,19 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::HT_SINE( int    startIdx,
 /* Generated */                                      int    endIdx,
-/* Generated */                                      float        inReal_0 __gc [],
+/* Generated */                                      float        inReal __gc [],
 /* Generated */                                      [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                      [OutAttribute]Int32 *outNbElement,
-/* Generated */                                      double        outSine_0 __gc [],
-/* Generated */                                      double        outLeadSine_1 __gc [] )
+/* Generated */                                      double        outSine __gc [],
+/* Generated */                                      double        outLeadSine __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_SINE( int    startIdx,
 /* Generated */                          int    endIdx,
-/* Generated */                          const float  inReal_0[],
+/* Generated */                          const float  inReal[],
 /* Generated */                          int          *outBegIdx,
 /* Generated */                          int          *outNbElement,
-/* Generated */                          double        outSine_0[],
-/* Generated */                          double        outLeadSine_1[] )
+/* Generated */                          double        outSine[],
+/* Generated */                          double        outLeadSine[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int outIdx, i;
@@ -489,10 +489,10 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */     if( outSine_0 == NULL )
+/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */     if( outSine == NULL )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outLeadSine_1 == NULL )
+/* Generated */     if( outLeadSine == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    CIRCBUF_INIT_LOCAL_ONLY(smoothPrice,double);
@@ -512,13 +512,13 @@
 /* Generated */    *outBegIdx = startIdx;
 /* Generated */    trailingWMAIdx = startIdx - lookbackTotal;
 /* Generated */    today = trailingWMAIdx;
-/* Generated */    tempReal = inReal_0[today++];
+/* Generated */    tempReal = inReal[today++];
 /* Generated */    periodWMASub = tempReal;
 /* Generated */    periodWMASum = tempReal;
-/* Generated */    tempReal = inReal_0[today++];
+/* Generated */    tempReal = inReal[today++];
 /* Generated */    periodWMASub += tempReal;
 /* Generated */    periodWMASum += tempReal*2.0;
-/* Generated */    tempReal = inReal_0[today++];
+/* Generated */    tempReal = inReal[today++];
 /* Generated */    periodWMASub += tempReal;
 /* Generated */    periodWMASum += tempReal*3.0;
 /* Generated */    trailingWMAValue = 0.0;
@@ -526,14 +526,14 @@
 /* Generated */       periodWMASub     += varNewPrice; \
 /* Generated */       periodWMASub     -= trailingWMAValue; \
 /* Generated */       periodWMASum     += varNewPrice*4.0; \
-/* Generated */       trailingWMAValue  = inReal_0[trailingWMAIdx++]; \
+/* Generated */       trailingWMAValue  = inReal[trailingWMAIdx++]; \
 /* Generated */       varToStoreSmoothedValue = periodWMASum*0.1; \
 /* Generated */       periodWMASum -= periodWMASub; \
 /* Generated */    }
 /* Generated */    i = 34;
 /* Generated */    do
 /* Generated */    {
-/* Generated */       tempReal = inReal_0[today++];
+/* Generated */       tempReal = inReal[today++];
 /* Generated */       DO_PRICE_WMA(tempReal,smoothedValue);
 /* Generated */    } while( --i != 0);
 /* Generated */    hilbertIdx = 0;
@@ -554,7 +554,7 @@
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
 /* Generated */       adjustedPrevPeriod = (0.075*period)+0.54;
-/* Generated */       todayValue = inReal_0[today];
+/* Generated */       todayValue = inReal[today];
 /* Generated */       DO_PRICE_WMA(todayValue,smoothedValue);
 /* Generated */       smoothPrice[smoothPrice_Idx] = smoothedValue;
 /* Generated */       if( today & 1 )
@@ -634,8 +634,8 @@
 /* Generated */          DCPhase -= 360.0;
 /* Generated */       if( today >= startIdx )
 /* Generated */       {
-/* Generated */          outSine_0[outIdx]       = sin(DCPhase*deg2Rad);
-/* Generated */          outLeadSine_1[outIdx++] = sin((DCPhase+45)*deg2Rad);
+/* Generated */          outSine[outIdx]       = sin(DCPhase*deg2Rad);
+/* Generated */          outLeadSine[outIdx++] = sin((DCPhase+45)*deg2Rad);
 /* Generated */       }
 /* Generated */       CIRCBUF_NEXT(smoothPrice);
 /* Generated */       today++;

@@ -75,16 +75,16 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::MIDPRICE_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
+/* Generated */ int Core::MIDPRICE_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_MIDPRICE_Lookback( int           optInTimePeriod_0 )  /* From 2 to 100000 */
+/* Generated */ int TA_MIDPRICE_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   return (optInTimePeriod_0-1);
+   return (optInTimePeriod-1);
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -96,7 +96,7 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 2 to 100000)
+ * optInTimePeriod:(From 2 to 100000)
  *    Number of period
  * 
  * 
@@ -105,21 +105,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::MIDPRICE( int    startIdx,
 /* Generated */                                       int    endIdx,
-/* Generated */                                       double       inHigh_0 __gc [],
-/* Generated */                                       double       inLow_0 __gc [],
-/* Generated */                                       int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                                       double       inHigh __gc [],
+/* Generated */                                       double       inLow __gc [],
+/* Generated */                                       int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                       [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                       [OutAttribute]Int32 *outNbElement,
-/* Generated */                                       double        outReal_0 __gc [] )
+/* Generated */                                       double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MIDPRICE( int    startIdx,
 /* Generated */                         int    endIdx,
-/* Generated */                         const double inHigh_0[],
-/* Generated */                         const double inLow_0[],
-/* Generated */                         int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                         const double inHigh[],
+/* Generated */                         const double inLow[],
+/* Generated */                         int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                         int          *outBegIdx,
 /* Generated */                         int          *outNbElement,
-/* Generated */                         double        outReal_0[] )
+/* Generated */                         double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -140,16 +140,16 @@
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
-/* Generated */    if(!inHigh_0||!inLow_0)
+/* Generated */    if(!inHigh||!inLow)
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    /* min/max are checked for optInTimePeriod_0. */
-/* Generated */    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod_0 = 14;
-/* Generated */    else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 14;
+/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -168,7 +168,7 @@
     * to identify at least one output over the specified
     * period.
     */
-   nbInitialElementNeeded = (optInTimePeriod_0-1);
+   nbInitialElementNeeded = (optInTimePeriod-1);
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -194,18 +194,18 @@
    
    while( today <= endIdx )
    {
-      lowest  = inLow_0[trailingIdx];
-      highest = inHigh_0[trailingIdx];
+      lowest  = inLow[trailingIdx];
+      highest = inHigh[trailingIdx];
       trailingIdx++;
       for( i=trailingIdx; i <= today; i++ )
       {
-         tmp = inLow_0[i];
+         tmp = inLow[i];
          if( tmp < lowest ) lowest= tmp;
-         tmp = inHigh_0[i];
+         tmp = inHigh[i];
          if( tmp > highest) highest = tmp;
       }
 
-      outReal_0[outIdx++] = (highest+lowest)/2.0;
+      outReal[outIdx++] = (highest+lowest)/2.0;
       today++;
    }
 
@@ -230,21 +230,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::MIDPRICE( int    startIdx,
 /* Generated */                                       int    endIdx,
-/* Generated */                                       float        inHigh_0 __gc [],
-/* Generated */                                       float        inLow_0 __gc [],
-/* Generated */                                       int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                                       float        inHigh __gc [],
+/* Generated */                                       float        inLow __gc [],
+/* Generated */                                       int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                       [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                       [OutAttribute]Int32 *outNbElement,
-/* Generated */                                       double        outReal_0 __gc [] )
+/* Generated */                                       double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MIDPRICE( int    startIdx,
 /* Generated */                           int    endIdx,
-/* Generated */                           const float  inHigh_0[],
-/* Generated */                           const float  inLow_0[],
-/* Generated */                           int           optInTimePeriod_0, /* From 2 to 100000 */
+/* Generated */                           const float  inHigh[],
+/* Generated */                           const float  inLow[],
+/* Generated */                           int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                           int          *outBegIdx,
 /* Generated */                           int          *outNbElement,
-/* Generated */                           double        outReal_0[] )
+/* Generated */                           double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    double lowest, highest, tmp;
@@ -255,16 +255,16 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if(!inHigh_0||!inLow_0)
+/* Generated */     if(!inHigh||!inLow)
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInTimePeriod_0 = 14;
-/* Generated */     else if( ((int)optInTimePeriod_0 < 2) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 14;
+/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    nbInitialElementNeeded = (optInTimePeriod_0-1);
+/* Generated */    nbInitialElementNeeded = (optInTimePeriod-1);
 /* Generated */    if( startIdx < nbInitialElementNeeded )
 /* Generated */       startIdx = nbInitialElementNeeded;
 /* Generated */    if( startIdx > endIdx )
@@ -278,17 +278,17 @@
 /* Generated */    trailingIdx = startIdx-nbInitialElementNeeded;
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
-/* Generated */       lowest  = inLow_0[trailingIdx];
-/* Generated */       highest = inHigh_0[trailingIdx];
+/* Generated */       lowest  = inLow[trailingIdx];
+/* Generated */       highest = inHigh[trailingIdx];
 /* Generated */       trailingIdx++;
 /* Generated */       for( i=trailingIdx; i <= today; i++ )
 /* Generated */       {
-/* Generated */          tmp = inLow_0[i];
+/* Generated */          tmp = inLow[i];
 /* Generated */          if( tmp < lowest ) lowest= tmp;
-/* Generated */          tmp = inHigh_0[i];
+/* Generated */          tmp = inHigh[i];
 /* Generated */          if( tmp > highest) highest = tmp;
 /* Generated */       }
-/* Generated */       outReal_0[outIdx++] = (highest+lowest)/2.0;
+/* Generated */       outReal[outIdx++] = (highest+lowest)/2.0;
 /* Generated */       today++;
 /* Generated */    }
 /* Generated */    *outBegIdx    = startIdx;

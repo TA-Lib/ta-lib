@@ -75,20 +75,20 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::VAR_Lookback( int           optInTimePeriod_0, /* From 1 to 100000 */
-/* Generated */                       double        optInNbDev_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */ int Core::VAR_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                       double        optInNbDev )  /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_VAR_Lookback( int           optInTimePeriod_0, /* From 1 to 100000 */
-/* Generated */                    double        optInNbDev_1 )  /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */ int TA_VAR_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                    double        optInNbDev )  /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   (void)optInNbDev_1;
+   (void)optInNbDev;
 
-   return optInTimePeriod_0-1;
+   return optInTimePeriod-1;
 }
 
 
@@ -102,10 +102,10 @@
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to 100000)
+ * optInTimePeriod:(From 1 to 100000)
  *    Number of period
  * 
- * optInNbDev_1:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInNbDev:(From TA_REAL_MIN to TA_REAL_MAX)
  *    Nb of deviations
  * 
  * 
@@ -114,21 +114,21 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::VAR( int    startIdx,
 /* Generated */                                  int    endIdx,
-/* Generated */                                  double       inReal_0 __gc [],
-/* Generated */                                  int           optInTimePeriod_0, /* From 1 to 100000 */
-/* Generated */                                  double        optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                  double       inReal __gc [],
+/* Generated */                                  int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                  double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal_0 __gc [] )
+/* Generated */                                  double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_VAR( int    startIdx,
 /* Generated */                    int    endIdx,
-/* Generated */                    const double inReal_0[],
-/* Generated */                    int           optInTimePeriod_0, /* From 1 to 100000 */
-/* Generated */                    double        optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                    const double inReal[],
+/* Generated */                    int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                    double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                    int          *outBegIdx,
 /* Generated */                    int          *outNbElement,
-/* Generated */                    double        outReal_0[] )
+/* Generated */                    double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -145,19 +145,19 @@
 /* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */    /* min/max are checked for optInTimePeriod_0. */
-/* Generated */    if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod_0 = 5;
-/* Generated */    else if( ((int)optInTimePeriod_0 < 1) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 5;
+/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( optInNbDev_1 == TA_REAL_DEFAULT )
-/* Generated */       optInNbDev_1 = 1.000000e+0;
-/* Generated */    else if( (optInNbDev_1 < -3.000000e+37) ||/* Generated */  (optInNbDev_1 > 3.000000e+37) )
+/* Generated */    if( optInNbDev == TA_REAL_DEFAULT )
+/* Generated */       optInNbDev = 1.000000e+0;
+/* Generated */    else if( (optInNbDev < -3.000000e+37) ||/* Generated */  (optInNbDev > 3.000000e+37) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal_0 == NULL )
+/* Generated */    if( outReal == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -165,27 +165,27 @@
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
-   return TA_PREFIX(INT_VAR)( startIdx, endIdx, inReal_0,
-                              optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */                      
-                              outBegIdx, outNbElement, outReal_0 );
+   return TA_PREFIX(INT_VAR)( startIdx, endIdx, inReal,
+                              optInTimePeriod, /* From 1 to TA_INTEGER_MAX */                      
+                              outBegIdx, outNbElement, outReal );
 }
 
 #if defined( _MANAGED )
 enum Core::TA_RetCode Core::TA_INT_VAR( int    startIdx,
                                   int    endIdx,
-                                  INPUT_TYPE inReal_0 __gc [],
-                                  int    optInTimePeriod_0,                       
+                                  INPUT_TYPE inReal __gc [],
+                                  int    optInTimePeriod,                       
                                   [OutAttribute]Int32 *outBegIdx,
                                   [OutAttribute]Int32 *outNbElement,
-                                  double outReal_0 __gc [])
+                                  double outReal __gc [])
 #else
 TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
                                int    endIdx,
-                               const INPUT_TYPE *inReal_0,
-                               int    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */                       
+                               const INPUT_TYPE *inReal,
+                               int    optInTimePeriod, /* From 1 to TA_INTEGER_MAX */                       
                                int   *outBegIdx,
                                int   *outNbElement,
-                               double      *outReal_0 )
+                               double      *outReal )
 #endif
 {
    double tempReal, periodTotal1, periodTotal2, meanValue1, meanValue2;
@@ -195,7 +195,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
     * identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   nbInitialElementNeeded = (optInTimePeriod_0-1);
+   nbInitialElementNeeded = (optInTimePeriod-1);
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -218,10 +218,10 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
    trailingIdx = startIdx-nbInitialElementNeeded;
 
    i=trailingIdx;
-   if( optInTimePeriod_0 > 1 )
+   if( optInTimePeriod > 1 )
    {
       while( i < startIdx ) {
-         tempReal = inReal_0[i++];
+         tempReal = inReal[i++];
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
@@ -229,13 +229,13 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
    }
 
    /* Proceed with the calculation for the requested range.
-    * Note that this algorithm allows the inReal_0 and
-    * outReal_0 to be the same buffer.
+    * Note that this algorithm allows the inReal and
+    * outReal to be the same buffer.
     */
    outIdx = 0;
    do
    {
-      tempReal = inReal_0[i++];
+      tempReal = inReal[i++];
 
       /* Square and add all the deviation over
        * the same periods.
@@ -249,15 +249,15 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
        * the same period.
        */
 
-      meanValue1 = periodTotal1 / optInTimePeriod_0;
-      meanValue2 = periodTotal2 / optInTimePeriod_0;
+      meanValue1 = periodTotal1 / optInTimePeriod;
+      meanValue2 = periodTotal2 / optInTimePeriod;
 
-      tempReal = inReal_0[trailingIdx++];
+      tempReal = inReal[trailingIdx++];
       periodTotal1 -= tempReal;
       tempReal *= tempReal;
       periodTotal2 -= tempReal;
 
-      outReal_0[outIdx++] = meanValue2-meanValue1*meanValue1;
+      outReal[outIdx++] = meanValue2-meanValue1*meanValue1;
    } while( i <= endIdx );
 
    /* All done. Indicate the output limits and return. */
@@ -279,21 +279,21 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::VAR( int    startIdx,
 /* Generated */                                  int    endIdx,
-/* Generated */                                  float        inReal_0 __gc [],
-/* Generated */                                  int           optInTimePeriod_0, /* From 1 to 100000 */
-/* Generated */                                  double        optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                  float        inReal __gc [],
+/* Generated */                                  int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                  double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                                  [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                  double        outReal_0 __gc [] )
+/* Generated */                                  double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_VAR( int    startIdx,
 /* Generated */                      int    endIdx,
-/* Generated */                      const float  inReal_0[],
-/* Generated */                      int           optInTimePeriod_0, /* From 1 to 100000 */
-/* Generated */                      double        optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                      const float  inReal[],
+/* Generated */                      int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                      double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                      int          *outBegIdx,
 /* Generated */                      int          *outNbElement,
-/* Generated */                      double        outReal_0[] )
+/* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
@@ -301,43 +301,43 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */     if( (int)optInTimePeriod_0 == TA_INTEGER_DEFAULT )
-/* Generated */        optInTimePeriod_0 = 5;
-/* Generated */     else if( ((int)optInTimePeriod_0 < 1) || ((int)optInTimePeriod_0 > 100000) )
+/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 5;
+/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( optInNbDev_1 == TA_REAL_DEFAULT )
-/* Generated */        optInNbDev_1 = 1.000000e+0;
-/* Generated */     else if( (optInNbDev_1 < -3.000000e+37) ||  (optInNbDev_1 > 3.000000e+37) )
+/* Generated */     if( optInNbDev == TA_REAL_DEFAULT )
+/* Generated */        optInNbDev = 1.000000e+0;
+/* Generated */     else if( (optInNbDev < -3.000000e+37) ||  (optInNbDev > 3.000000e+37) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal_0 == NULL )
+/* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    return TA_PREFIX(INT_VAR)( startIdx, endIdx, inReal_0,
-/* Generated */                               optInTimePeriod_0,                       
-/* Generated */                               outBegIdx, outNbElement, outReal_0 );
+/* Generated */    return TA_PREFIX(INT_VAR)( startIdx, endIdx, inReal,
+/* Generated */                               optInTimePeriod,                       
+/* Generated */                               outBegIdx, outNbElement, outReal );
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::TA_INT_VAR( int    startIdx,
 /* Generated */                                   int    endIdx,
-/* Generated */                                   INPUT_TYPE inReal_0 __gc [],
-/* Generated */                                   int    optInTimePeriod_0,                       
+/* Generated */                                   INPUT_TYPE inReal __gc [],
+/* Generated */                                   int    optInTimePeriod,                       
 /* Generated */                                   [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double outReal_0 __gc [])
+/* Generated */                                   double outReal __gc [])
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */                                int    endIdx,
-/* Generated */                                const INPUT_TYPE *inReal_0,
-/* Generated */                                int    optInTimePeriod_0,                        
+/* Generated */                                const INPUT_TYPE *inReal,
+/* Generated */                                int    optInTimePeriod,                        
 /* Generated */                                int   *outBegIdx,
 /* Generated */                                int   *outNbElement,
-/* Generated */                                double      *outReal_0 )
+/* Generated */                                double      *outReal )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    double tempReal, periodTotal1, periodTotal2, meanValue1, meanValue2;
 /* Generated */    int i, outIdx, trailingIdx, nbInitialElementNeeded;
-/* Generated */    nbInitialElementNeeded = (optInTimePeriod_0-1);
+/* Generated */    nbInitialElementNeeded = (optInTimePeriod-1);
 /* Generated */    if( startIdx < nbInitialElementNeeded )
 /* Generated */       startIdx = nbInitialElementNeeded;
 /* Generated */    if( startIdx > endIdx )
@@ -350,10 +350,10 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */    periodTotal2 = 0;
 /* Generated */    trailingIdx = startIdx-nbInitialElementNeeded;
 /* Generated */    i=trailingIdx;
-/* Generated */    if( optInTimePeriod_0 > 1 )
+/* Generated */    if( optInTimePeriod > 1 )
 /* Generated */    {
 /* Generated */       while( i < startIdx ) {
-/* Generated */          tempReal = inReal_0[i++];
+/* Generated */          tempReal = inReal[i++];
 /* Generated */          periodTotal1 += tempReal;
 /* Generated */          tempReal *= tempReal;
 /* Generated */          periodTotal2 += tempReal;
@@ -362,17 +362,17 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */       tempReal = inReal_0[i++];
+/* Generated */       tempReal = inReal[i++];
 /* Generated */       periodTotal1 += tempReal;
 /* Generated */       tempReal *= tempReal;
 /* Generated */       periodTotal2 += tempReal;
-/* Generated */       meanValue1 = periodTotal1 / optInTimePeriod_0;
-/* Generated */       meanValue2 = periodTotal2 / optInTimePeriod_0;
-/* Generated */       tempReal = inReal_0[trailingIdx++];
+/* Generated */       meanValue1 = periodTotal1 / optInTimePeriod;
+/* Generated */       meanValue2 = periodTotal2 / optInTimePeriod;
+/* Generated */       tempReal = inReal[trailingIdx++];
 /* Generated */       periodTotal1 -= tempReal;
 /* Generated */       tempReal *= tempReal;
 /* Generated */       periodTotal2 -= tempReal;
-/* Generated */       outReal_0[outIdx++] = meanValue2-meanValue1*meanValue1;
+/* Generated */       outReal[outIdx++] = meanValue2-meanValue1*meanValue1;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    *outNbElement = outIdx;
 /* Generated */    *outBegIdx = startIdx;

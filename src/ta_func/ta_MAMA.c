@@ -76,12 +76,12 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::MAMA_Lookback( double        optInFastLimit_0, /* From 0.01 to 0.99 */
-/* Generated */                        double        optInSlowLimit_1 )  /* From 0.01 to 0.99 */
+/* Generated */ int Core::MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                        double        optInSlowLimit )  /* From 0.01 to 0.99 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_MAMA_Lookback( double        optInFastLimit_0, /* From 0.01 to 0.99 */
-/* Generated */                     double        optInSlowLimit_1 )  /* From 0.01 to 0.99 */
+/* Generated */ int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                     double        optInSlowLimit )  /* From 0.01 to 0.99 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -92,8 +92,8 @@
     * the lookback, but are still requested for 
     * consistency with all other Lookback functions.
     */
-   (void)optInFastLimit_0;
-   (void)optInSlowLimit_1;
+   (void)optInFastLimit;
+   (void)optInSlowLimit;
 
    /* Lookback is a fix amount + the unstable period.
     *
@@ -124,10 +124,10 @@
  * 
  * Optional Parameters
  * -------------------
- * optInFastLimit_0:(From 0.01 to 0.99)
+ * optInFastLimit:(From 0.01 to 0.99)
  *    Upper limit use in the adaptive algorithm
  * 
- * optInSlowLimit_1:(From 0.01 to 0.99)
+ * optInSlowLimit:(From 0.01 to 0.99)
  *    Lower limit use in the adaptive algorithm
  * 
  * 
@@ -136,23 +136,23 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::MAMA( int    startIdx,
 /* Generated */                                   int    endIdx,
-/* Generated */                                   double       inReal_0 __gc [],
-/* Generated */                                   double        optInFastLimit_0, /* From 0.01 to 0.99 */
-/* Generated */                                   double        optInSlowLimit_1, /* From 0.01 to 0.99 */
+/* Generated */                                   double       inReal __gc [],
+/* Generated */                                   double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                                   double        optInSlowLimit, /* From 0.01 to 0.99 */
 /* Generated */                                   [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double        outMAMA_0 __gc [],
-/* Generated */                                   double        outFAMA_1 __gc [] )
+/* Generated */                                   double        outMAMA __gc [],
+/* Generated */                                   double        outFAMA __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MAMA( int    startIdx,
 /* Generated */                     int    endIdx,
-/* Generated */                     const double inReal_0[],
-/* Generated */                     double        optInFastLimit_0, /* From 0.01 to 0.99 */
-/* Generated */                     double        optInSlowLimit_1, /* From 0.01 to 0.99 */
+/* Generated */                     const double inReal[],
+/* Generated */                     double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                     double        optInSlowLimit, /* From 0.01 to 0.99 */
 /* Generated */                     int          *outBegIdx,
 /* Generated */                     int          *outNbElement,
-/* Generated */                     double        outMAMA_0[],
-/* Generated */                     double        outFAMA_1[] )
+/* Generated */                     double        outMAMA[],
+/* Generated */                     double        outFAMA[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
@@ -200,21 +200,21 @@
 /* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */    if( optInFastLimit_0 == TA_REAL_DEFAULT )
-/* Generated */       optInFastLimit_0 = 5.000000e-1;
-/* Generated */    else if( (optInFastLimit_0 < 1.000000e-2) ||/* Generated */  (optInFastLimit_0 > 9.900000e-1) )
+/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( optInFastLimit == TA_REAL_DEFAULT )
+/* Generated */       optInFastLimit = 5.000000e-1;
+/* Generated */    else if( (optInFastLimit < 1.000000e-2) ||/* Generated */  (optInFastLimit > 9.900000e-1) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( optInSlowLimit_1 == TA_REAL_DEFAULT )
-/* Generated */       optInSlowLimit_1 = 5.000000e-2;
-/* Generated */    else if( (optInSlowLimit_1 < 1.000000e-2) ||/* Generated */  (optInSlowLimit_1 > 9.900000e-1) )
+/* Generated */    if( optInSlowLimit == TA_REAL_DEFAULT )
+/* Generated */       optInSlowLimit = 5.000000e-2;
+/* Generated */    else if( (optInSlowLimit < 1.000000e-2) ||/* Generated */  (optInSlowLimit > 9.900000e-1) )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outMAMA_0 == NULL )
+/* Generated */    if( outMAMA == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outFAMA_1 == NULL )
+/* Generated */    if( outFAMA == NULL )
 /* Generated */       return TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -258,13 +258,13 @@
    /* Initialization is same as WMA, except loop is unrolled
     * for speed optimization.
     */
-   tempReal = inReal_0[today++];
+   tempReal = inReal[today++];
    periodWMASub = tempReal;
    periodWMASum = tempReal;
-   tempReal = inReal_0[today++];
+   tempReal = inReal[today++];
    periodWMASub += tempReal;
    periodWMASum += tempReal*2.0;
-   tempReal = inReal_0[today++];
+   tempReal = inReal[today++];
    periodWMASub += tempReal;
    periodWMASum += tempReal*3.0;
 
@@ -277,7 +277,7 @@
       periodWMASub     += varNewPrice; \
       periodWMASub     -= trailingWMAValue; \
       periodWMASum     += varNewPrice*4.0; \
-      trailingWMAValue  = inReal_0[trailingWMAIdx++]; \
+      trailingWMAValue  = inReal[trailingWMAIdx++]; \
       varToStoreSmoothedValue = periodWMASum*0.1; \
       periodWMASum -= periodWMASub; \
    }
@@ -285,7 +285,7 @@
    i = 9;
    do
    {
-      tempReal = inReal_0[today++];
+      tempReal = inReal[today++];
       DO_PRICE_WMA(tempReal,smoothedValue);
    } while( --i != 0);
 
@@ -326,7 +326,7 @@
    {
       adjustedPrevPeriod = (0.075*period)+0.54;
 
-      todayValue = inReal_0[today];
+      todayValue = inReal[today];
       DO_PRICE_WMA(todayValue,smoothedValue);
 
       if( today & 1 )
@@ -393,13 +393,13 @@
       /* Put Alpha into tempReal */
       if( tempReal > 1.0 )
       {
-         tempReal = optInFastLimit_0/tempReal;
-         if( tempReal < optInSlowLimit_1 )
-            tempReal = optInSlowLimit_1;
+         tempReal = optInFastLimit/tempReal;
+         if( tempReal < optInSlowLimit )
+            tempReal = optInSlowLimit;
       }
       else
       {
-         tempReal = optInFastLimit_0;
+         tempReal = optInFastLimit;
       }  
 
       /* Calculate MAMA, FAMA */
@@ -408,8 +408,8 @@
       fama = (tempReal*mama)+((1-tempReal)*fama);
       if( today >= startIdx )
       {
-         outMAMA_0[outIdx] = mama;
-         outFAMA_1[outIdx++] = fama;
+         outMAMA[outIdx] = mama;
+         outFAMA[outIdx++] = fama;
       }
 
       /* Adjust the period for next price bar */
@@ -454,23 +454,23 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum Core::TA_RetCode Core::MAMA( int    startIdx,
 /* Generated */                                   int    endIdx,
-/* Generated */                                   float        inReal_0 __gc [],
-/* Generated */                                   double        optInFastLimit_0, /* From 0.01 to 0.99 */
-/* Generated */                                   double        optInSlowLimit_1, /* From 0.01 to 0.99 */
+/* Generated */                                   float        inReal __gc [],
+/* Generated */                                   double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                                   double        optInSlowLimit, /* From 0.01 to 0.99 */
 /* Generated */                                   [OutAttribute]Int32 *outBegIdx,
 /* Generated */                                   [OutAttribute]Int32 *outNbElement,
-/* Generated */                                   double        outMAMA_0 __gc [],
-/* Generated */                                   double        outFAMA_1 __gc [] )
+/* Generated */                                   double        outMAMA __gc [],
+/* Generated */                                   double        outFAMA __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MAMA( int    startIdx,
 /* Generated */                       int    endIdx,
-/* Generated */                       const float  inReal_0[],
-/* Generated */                       double        optInFastLimit_0, /* From 0.01 to 0.99 */
-/* Generated */                       double        optInSlowLimit_1, /* From 0.01 to 0.99 */
+/* Generated */                       const float  inReal[],
+/* Generated */                       double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                       double        optInSlowLimit, /* From 0.01 to 0.99 */
 /* Generated */                       int          *outBegIdx,
 /* Generated */                       int          *outNbElement,
-/* Generated */                       double        outMAMA_0[],
-/* Generated */                       double        outFAMA_1[] )
+/* Generated */                       double        outMAMA[],
+/* Generated */                       double        outFAMA[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int outIdx, i;
@@ -498,18 +498,18 @@
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal_0 ) return TA_BAD_PARAM;
-/* Generated */     if( optInFastLimit_0 == TA_REAL_DEFAULT )
-/* Generated */        optInFastLimit_0 = 5.000000e-1;
-/* Generated */     else if( (optInFastLimit_0 < 1.000000e-2) ||  (optInFastLimit_0 > 9.900000e-1) )
+/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */     if( optInFastLimit == TA_REAL_DEFAULT )
+/* Generated */        optInFastLimit = 5.000000e-1;
+/* Generated */     else if( (optInFastLimit < 1.000000e-2) ||  (optInFastLimit > 9.900000e-1) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( optInSlowLimit_1 == TA_REAL_DEFAULT )
-/* Generated */        optInSlowLimit_1 = 5.000000e-2;
-/* Generated */     else if( (optInSlowLimit_1 < 1.000000e-2) ||  (optInSlowLimit_1 > 9.900000e-1) )
+/* Generated */     if( optInSlowLimit == TA_REAL_DEFAULT )
+/* Generated */        optInSlowLimit = 5.000000e-2;
+/* Generated */     else if( (optInSlowLimit < 1.000000e-2) ||  (optInSlowLimit > 9.900000e-1) )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outMAMA_0 == NULL )
+/* Generated */     if( outMAMA == NULL )
 /* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outFAMA_1 == NULL )
+/* Generated */     if( outFAMA == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    rad2Deg = 180.0 / (4.0 * atan(1));
@@ -525,13 +525,13 @@
 /* Generated */    *outBegIdx = startIdx;
 /* Generated */    trailingWMAIdx = startIdx - lookbackTotal;
 /* Generated */    today = trailingWMAIdx;
-/* Generated */    tempReal = inReal_0[today++];
+/* Generated */    tempReal = inReal[today++];
 /* Generated */    periodWMASub = tempReal;
 /* Generated */    periodWMASum = tempReal;
-/* Generated */    tempReal = inReal_0[today++];
+/* Generated */    tempReal = inReal[today++];
 /* Generated */    periodWMASub += tempReal;
 /* Generated */    periodWMASum += tempReal*2.0;
-/* Generated */    tempReal = inReal_0[today++];
+/* Generated */    tempReal = inReal[today++];
 /* Generated */    periodWMASub += tempReal;
 /* Generated */    periodWMASum += tempReal*3.0;
 /* Generated */    trailingWMAValue = 0.0;
@@ -539,14 +539,14 @@
 /* Generated */       periodWMASub     += varNewPrice; \
 /* Generated */       periodWMASub     -= trailingWMAValue; \
 /* Generated */       periodWMASum     += varNewPrice*4.0; \
-/* Generated */       trailingWMAValue  = inReal_0[trailingWMAIdx++]; \
+/* Generated */       trailingWMAValue  = inReal[trailingWMAIdx++]; \
 /* Generated */       varToStoreSmoothedValue = periodWMASum*0.1; \
 /* Generated */       periodWMASum -= periodWMASub; \
 /* Generated */    }
 /* Generated */    i = 9;
 /* Generated */    do
 /* Generated */    {
-/* Generated */       tempReal = inReal_0[today++];
+/* Generated */       tempReal = inReal[today++];
 /* Generated */       DO_PRICE_WMA(tempReal,smoothedValue);
 /* Generated */    } while( --i != 0);
 /* Generated */    hilbertIdx = 0;
@@ -565,7 +565,7 @@
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
 /* Generated */       adjustedPrevPeriod = (0.075*period)+0.54;
-/* Generated */       todayValue = inReal_0[today];
+/* Generated */       todayValue = inReal[today];
 /* Generated */       DO_PRICE_WMA(todayValue,smoothedValue);
 /* Generated */       if( today & 1 )
 /* Generated */       {
@@ -605,21 +605,21 @@
 /* Generated */          tempReal = 1.0;
 /* Generated */       if( tempReal > 1.0 )
 /* Generated */       {
-/* Generated */          tempReal = optInFastLimit_0/tempReal;
-/* Generated */          if( tempReal < optInSlowLimit_1 )
-/* Generated */             tempReal = optInSlowLimit_1;
+/* Generated */          tempReal = optInFastLimit/tempReal;
+/* Generated */          if( tempReal < optInSlowLimit )
+/* Generated */             tempReal = optInSlowLimit;
 /* Generated */       }
 /* Generated */       else
 /* Generated */       {
-/* Generated */          tempReal = optInFastLimit_0;
+/* Generated */          tempReal = optInFastLimit;
 /* Generated */       }  
 /* Generated */       mama = (tempReal*todayValue)+((1-tempReal)*mama);
 /* Generated */       tempReal *= 0.5;
 /* Generated */       fama = (tempReal*mama)+((1-tempReal)*fama);
 /* Generated */       if( today >= startIdx )
 /* Generated */       {
-/* Generated */          outMAMA_0[outIdx] = mama;
-/* Generated */          outFAMA_1[outIdx++] = fama;
+/* Generated */          outMAMA[outIdx] = mama;
+/* Generated */          outFAMA[outIdx++] = fama;
 /* Generated */       }
 /* Generated */       Re = (0.2*((I2*prevI2)+(Q2*prevQ2)))+(0.8*Re);
 /* Generated */       Im = (0.2*((I2*prevQ2)-(Q2*prevI2)))+(0.8*Im);
