@@ -117,7 +117,7 @@ FileHandle *gOutDefs_H;        /* For "ta_defs.h" */
 FileHandle *gOutDotNet_H;      /* For .NET interface file */
 FileHandle *gOutFunc_SWG;      /* For SWIG */
 
-#ifdef _MSVC
+#ifdef _MSC_VER
 FileHandle *gOutProjFile;      /* For .NET project file */
 FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
 
@@ -194,7 +194,7 @@ static int addUnstablePeriodEnum( FILE *out );
 
 static int createTemplate( FileHandle *in, FileHandle *out );
 
-#ifdef _MSVC
+#ifdef _MSC_VER
 static int createProjTemplate( FileHandle *in, FileHandle *out );
 #endif
 
@@ -543,7 +543,7 @@ static void fileClose( FileHandle *handle )
          }
       }
 
-      #ifdef _MSVC
+      #if 0
          /* Make sure the last line of the output 
           * finish with a carriage return. This may
           * avoid warning from some compilers.
@@ -589,7 +589,7 @@ static int genCode(int argc, char* argv[])
    (void)argc; /* Get ride of compiler warning */
    (void)argv; /* Get ride of compiler warning */
 
-   #ifdef _MSVC
+   #ifdef _MSC_VER
       /* Create .NET project files template */
       #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.vcproj"
       #define FILE_NET_PROJ_TMP "..\\temp\\dotnetproj.tmp"
@@ -700,7 +700,7 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
-   #ifdef _MSVC
+   #ifdef _MSC_VER
       /* Create "excel_glue.c" */
       gOutExcelGlue_C = fileOpen( "..\\src\\ta_abstract\\excel_glue.c",
                               "..\\src\\ta_abstract\\templates\\excel_glue.c.template",
@@ -744,7 +744,7 @@ static int genCode(int argc, char* argv[])
    fileClose( gOutFrame_H );
    fileClose( gOutFrame_C );
 
-   #ifdef _MSVC
+   #ifdef _MSC_VER
       fileClose( gOutProjFile );
       fileClose( gOutExcelGlue_C );
    #endif
@@ -794,7 +794,7 @@ static int genCode(int argc, char* argv[])
    doDefsFile();
 
    /* Remove some temporary files */
-   #ifdef _MSVC   
+   #ifdef _MSC_VER   
       fileDelete( FILE_NET_PROJ_TMP   );
    #endif
    fileDelete( FILE_NET_HEADER_TMP );
@@ -898,7 +898,7 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    printCallFrame( gOutFrame_C->file, funcInfo );
 
    
-   #ifdef _MSVC
+   #ifdef _MSC_VER
       /* Add the entry in the .NET project file */
       fprintf( gOutProjFile->file, "				<File\n" );
       fprintf( gOutProjFile->file, "					RelativePath=\"..\\..\\..\\c\\src\\ta_func\\ta_%s.c\">\n", funcInfo->name );
@@ -2067,7 +2067,7 @@ static void doDefsFile( void )
    #undef FILE_TA_DEFS_TMP
 }
 
-#ifdef _MSVC
+#ifdef _MSC_VER
 static int createProjTemplate( FileHandle *in, FileHandle *out )
 {
    FILE *inFile;
@@ -2743,7 +2743,7 @@ const char *doubleToStr( double value )
    return gTempDoubleToStr;
 }
 
-#ifdef _MSVC
+#ifdef _MSC_VER
 static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo )
 {
    /*fprintf( out, "#include \"ta_%s.c\"\n", funcInfo->name );
@@ -2757,8 +2757,8 @@ static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo )
 
    for( i=0; i < funcInfo->nbInput; i++ )
    {
-      retCode = TA_SetInputParameterInfoPtr( funcInfo->handle,
-                                               i, &inputParamInfo );
+      retCode = TA_GetInputParameterInfo( funcInfo->handle,
+                                          i, &inputParamInfo );
 
       if( retCode != TA_SUCCESS )
       {
