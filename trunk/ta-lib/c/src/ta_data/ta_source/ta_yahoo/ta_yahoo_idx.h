@@ -68,6 +68,10 @@ typedef struct
  * requiring a lot of bandwidth and patience (can take
  * many hours).
  *
+ * TA_USE_YAHOO_AND_REMOTE_MERGE
+ * Use remote Yahoo! web site and TA-Lib.org to update
+ * more quickly a local index.
+ *
  * Note 1: The strategy can be mixed and are going to be attempted
  *         in the order state above. Example:
  *            TA_USE_YAHOO_SITE|TA_USE_REMOTE_CACHE will first
@@ -80,10 +84,11 @@ typedef struct
  */
 typedef enum
 {
-   TA_USE_STREAM           = 0x02,
-   TA_USE_LOCAL_CACHE      = 0x04,
-   TA_USE_REMOTE_CACHE     = 0x08,
-   TA_USE_YAHOO_SITE       = 0x10
+   TA_USE_STREAM                 = 0x02,
+   TA_USE_LOCAL_CACHE            = 0x04,
+   TA_USE_REMOTE_CACHE           = 0x08,
+   TA_USE_YAHOO_SITE             = 0x10,
+   TA_USE_YAHOO_AND_REMOTE_MERGE = 0x20
 } TA_YahooIdxStrategy;
 
 TA_RetCode TA_YahooIdxAlloc( TA_CountryId           countryId,
