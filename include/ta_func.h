@@ -1468,6 +1468,102 @@ int TA_OBV_Lookback( void );
  ******************************************/
 
 /*
+ * TA_LINEARREG - Linear Regression
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_LINEARREG( int    startIdx,
+                         int    endIdx,
+                         const double inReal_0[],
+                         int           optInTimePeriod_0, /* From 2 to 100000 */
+                         int          *outBegIdx,
+                         int          *outNbElement,
+                         double        outReal_0[] );
+
+int TA_LINEARREG_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
+
+
+/*
+ * TA_LINEARREG_SLOPE - Linear Regression Slope
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_LINEARREG_SLOPE( int    startIdx,
+                               int    endIdx,
+                               const double inReal_0[],
+                               int           optInTimePeriod_0, /* From 2 to 100000 */
+                               int          *outBegIdx,
+                               int          *outNbElement,
+                               double        outReal_0[] );
+
+int TA_LINEARREG_SLOPE_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
+
+
+/*
+ * TA_LINEARREG_ANGLE - Linear Regression Angle
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_LINEARREG_ANGLE( int    startIdx,
+                               int    endIdx,
+                               const double inReal_0[],
+                               int           optInTimePeriod_0, /* From 2 to 100000 */
+                               int          *outBegIdx,
+                               int          *outNbElement,
+                               double        outReal_0[] );
+
+int TA_LINEARREG_ANGLE_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
+
+
+/*
+ * TA_LINEARREG_INTERCEPT - Linear Regression Intercept
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_LINEARREG_INTERCEPT( int    startIdx,
+                                   int    endIdx,
+                                   const double inReal_0[],
+                                   int           optInTimePeriod_0, /* From 2 to 100000 */
+                                   int          *outBegIdx,
+                                   int          *outNbElement,
+                                   double        outReal_0[] );
+
+int TA_LINEARREG_INTERCEPT_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
+
+
+/*
  * TA_STDDEV - Standard Deviation
  * 
  * Input  = double

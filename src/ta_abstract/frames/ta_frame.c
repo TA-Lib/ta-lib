@@ -972,6 +972,70 @@ TA_RetCode TA_OBV_FramePP( const TA_ParamHolderPriv *params,
             outNbElement, 
             params->out[0].data.outInteger /*  outInteger_0 */ );
 }
+TA_RetCode TA_LINEARREG_FramePP( const TA_ParamHolderPriv *params,
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
+
+{
+   return TA_LINEARREG(
+                  startIdx,
+                  endIdx,
+                  params->in[0].data.inReal, /* inReal_0 */
+                  params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
+                  outBegIdx, 
+                  outNbElement, 
+                  params->out[0].data.outReal /*  outReal_0 */ );
+}
+TA_RetCode TA_LINEARREG_SLOPE_FramePP( const TA_ParamHolderPriv *params,
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
+
+{
+   return TA_LINEARREG_SLOPE(
+                        startIdx,
+                        endIdx,
+                        params->in[0].data.inReal, /* inReal_0 */
+                        params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
+                        outBegIdx, 
+                        outNbElement, 
+                        params->out[0].data.outReal /*  outReal_0 */ );
+}
+TA_RetCode TA_LINEARREG_ANGLE_FramePP( const TA_ParamHolderPriv *params,
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
+
+{
+   return TA_LINEARREG_ANGLE(
+                        startIdx,
+                        endIdx,
+                        params->in[0].data.inReal, /* inReal_0 */
+                        params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
+                        outBegIdx, 
+                        outNbElement, 
+                        params->out[0].data.outReal /*  outReal_0 */ );
+}
+TA_RetCode TA_LINEARREG_INTERCEPT_FramePP( const TA_ParamHolderPriv *params,
+                          int            startIdx,
+                          int            endIdx,
+                          int           *outBegIdx,
+                          int           *outNbElement )
+
+{
+   return TA_LINEARREG_INTERCEPT(
+                            startIdx,
+                            endIdx,
+                            params->in[0].data.inReal, /* inReal_0 */
+                            params->optIn[0].data.optInInteger, /* optInTimePeriod_0 */
+                            outBegIdx, 
+                            outNbElement, 
+                            params->out[0].data.outReal /*  outReal_0 */ );
+}
 TA_RetCode TA_STDDEV_FramePP( const TA_ParamHolderPriv *params,
                           int            startIdx,
                           int            endIdx,

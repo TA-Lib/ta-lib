@@ -308,6 +308,22 @@ SOURCE=..\..\..\..\src\ta_func\ta_KAMA.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_LINEARREG.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_MA.c
 # End Source File
 # Begin Source File

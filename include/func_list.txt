@@ -51,6 +51,10 @@ HT_TRENDMODE        Hilbert Transform - Trend vs Cycle Mode
 AD                  Chaikin A/D Line
 ADOSC               Chaikin A/D Oscillator
 OBV                 On Balance Volume
+LINEARREG           Linear Regression
+LINEARREG_SLOPE     Linear Regression Slope
+LINEARREG_ANGLE     Linear Regression Angle
+LINEARREG_INTERCEPT Linear Regression Intercept
 STDDEV              Standard Deviation
 VAR                 Variance
 AVGPRICE            Average Price
