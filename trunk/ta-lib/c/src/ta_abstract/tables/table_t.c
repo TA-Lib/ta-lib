@@ -38,19 +38,12 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
-/* Follow the 4 steps defined below for adding a new TA Function to this
+/* Follow the 3 steps defined below for adding a new TA Function to this
  * file.
  */
 
-/***************************************************************************
- * Step 1 - Define user inputs that are particular to your function.
- *          Consider the ones already defined in "ta_def_ui.c".
- ***************************************************************************/
-
-/* None */
-
 /****************************************************************************
- * Step 2 - Define here the interface to your TA functions with
+ * Step 1 - Define here the interface to your TA functions with
  *          the macro DEF_FUNCTION.
  *
  ****************************************************************************/
@@ -201,6 +194,33 @@ DEF_FUNCTION( TRIX,                       /* name */
              );
 /* TRIX END */
 
+/* TSF BEGIN */
+static const TA_InputParameterInfo *TA_TSF_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo *TA_TSF_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_TSF_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( TSF,                   /* name */
+              TA_GroupId_Statistic,  /* groupId */
+              "Time Series Forecast",/* hint */
+              NULL,                  /* helpFile */
+              TA_FUNC_FLG_OVERLAP,   /* flags */
+              NULL                   /* analysis function */
+             );
+/* TSF END */
+
 /* TYPPRICE BEGIN */
 static const TA_InputParameterInfo    *TA_TYPPRICE_Inputs[]    =
 {
@@ -226,7 +246,7 @@ DEF_FUNCTION( TYPPRICE,                   /* name */
 /* TYPPRICE END */
 
 /****************************************************************************
- * Step 3 - Add your TA function to the table.
+ * Step 2 - Add your TA function to the table.
  *          Order is not important. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableT[] =
@@ -236,6 +256,7 @@ const TA_FuncDef *TA_DEF_TableT[] =
    ADD_TO_TABLE(TRANGE),
    ADD_TO_TABLE(TRIMA),
    ADD_TO_TABLE(TRIX),
+   ADD_TO_TABLE(TSF),
    ADD_TO_TABLE(TYPPRICE),
    NULL
 };
@@ -247,7 +268,7 @@ const unsigned int TA_DEF_TableTSize =
 
 
 /****************************************************************************
- * Step 4 - Make sure "gen_code" is executed for generating all other
+ * Step 3 - Make sure "gen_code" is executed for generating all other
  *          source files derived from this one.
  *          You can then re-compile the library as usual and you are done!
  ****************************************************************************/
