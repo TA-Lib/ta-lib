@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  110199 MF   First version.
- *
+ *  012504 MF   Add a few TA_ASSERT.
  */
 
 /* Description:
@@ -117,22 +117,18 @@ TA_RetCode TA_ASCII_DataSourceHandleFree( TA_DataSourceHandle *handle )
    TA_PROLOG
    TA_PrivateAsciiHandle *privateHandle;
 
-   if( !handle )
-      return TA_INTERNAL_ERROR(60);
+   TA_TRACE_BEGIN( TA_ASCII_DataSourceHandleFree );
+   TA_ASSERT( handle != NULL );
 
    privateHandle = (TA_PrivateAsciiHandle *)handle->opaqueData;
 
-   TA_TRACE_BEGIN(  TA_ASCII_DataSourceHandleFree );
 
-   if( handle )
+   if( freePrivateHandle( (TA_PrivateAsciiHandle *)handle->opaqueData ) != TA_SUCCESS )
    {
-      if( freePrivateHandle( (TA_PrivateAsciiHandle *)handle->opaqueData ) != TA_SUCCESS )
-      {
-         TA_FATAL(  NULL, handle, 0 );
-      }
-
-      TA_Free( handle );
+      TA_FATAL(  NULL, handle, 0 );
    }
+
+   TA_Free( handle );
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -144,12 +140,10 @@ TA_RetCode TA_ASCII_BuildFileIndex( TA_DataSourceHandle *handle )
    TA_FileIndex *newIndex;
    TA_PrivateAsciiHandle *privateHandle;
 
-   if( !handle )
-      return TA_INTERNAL_ERROR(61);
+   TA_TRACE_BEGIN( TA_ASCII_BuildFileIndex );
 
+   TA_ASSERT( handle != NULL );
    privateHandle = (TA_PrivateAsciiHandle *)handle->opaqueData;
-
-   TA_TRACE_BEGIN(  TA_ASCII_BuildFileIndex );
 
    TA_ASSERT( privateHandle != NULL );
    TA_ASSERT( privateHandle->param != NULL );
@@ -194,12 +188,11 @@ TA_RetCode TA_ASCII_BuildReadOpInfo( TA_DataSourceHandle *handle )
    TA_PrivateAsciiHandle *privateHandle;
    int readOpFlags;
 
-   if( !handle )
-      return TA_INTERNAL_ERROR(62);
+   TA_TRACE_BEGIN( TA_ASCII_BuildFileIndex );
+   TA_ASSERT( handle != NULL );
 
    privateHandle = (TA_PrivateAsciiHandle *)handle->opaqueData;
 
-   TA_TRACE_BEGIN(  TA_ASCII_BuildFileIndex );
 
    TA_ASSERT( privateHandle != NULL );
    TA_ASSERT( privateHandle->param != NULL );
