@@ -301,6 +301,90 @@ DEF_FUNCTION( CDLADVANCEBLOCK,                /* name */
 
 /* CDLADVANCEBLOCK END */
 
+/* CDLBELTHOLD BEGIN */
+static const TA_InputParameterInfo    *TA_CDLBELTHOLD_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLBELTHOLD_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLBELTHOLD_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLBELTHOLD,                    /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Belt-hold",                    /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLBELTHOLD END */
+
+/* CDLBREAKAWAY BEGIN */
+static const TA_InputParameterInfo    *TA_CDLBREAKAWAY_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLBREAKAWAY_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLBREAKAWAY_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLBREAKAWAY,                   /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Breakaway",                    /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLBREAKAWAY END */
+
+/* CDLCOUNTERATTACK BEGIN */
+static const TA_InputParameterInfo    *TA_CDLCOUNTERATTACK_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLCOUNTERATTACK_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLCOUNTERATTACK_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLCOUNTERATTACK,               /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Counterattack",                /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLCOUNTERATTACK END */
+
 /* CDLDARKCLOUDCOVER BEGIN */
 static const TA_InputParameterInfo    *TA_CDLDARKCLOUDCOVER_Inputs[]    =
 {
@@ -330,6 +414,34 @@ DEF_FUNCTION( CDLDARKCLOUDCOVER,              /* name */
 
 /* CDLDARKCLOUDCOVER END */
 
+/* CDLDOJI BEGIN */
+static const TA_InputParameterInfo    *TA_CDLDOJI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLDOJI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLDOJI_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLDOJI,                        /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Doji",                         /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLDOJI END */
+
 /* CDLDOJISTAR BEGIN */
 static const TA_InputParameterInfo    *TA_CDLDOJISTAR_Inputs[]    =
 {
@@ -357,6 +469,34 @@ DEF_FUNCTION( CDLDOJISTAR,                    /* name */
              );
 
 /* CDLDOJISTAR END */
+
+/* CDLDRAGONFLYDOJI BEGIN */
+static const TA_InputParameterInfo    *TA_CDLDRAGONFLYDOJI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLDRAGONFLYDOJI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLDRAGONFLYDOJI_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLDRAGONFLYDOJI,               /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Dragonfly Doji",               /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLDRAGONFLYDOJI END */
 
 /* CDLENGULFING BEGIN */
 static const TA_InputParameterInfo    *TA_CDLENGULFING_Inputs[]    =
@@ -443,6 +583,34 @@ DEF_FUNCTION( CDLEVENINGSTAR,                 /* name */
              );
 
 /* CDLEVENINGSTAR END */
+
+/* CDLGRAVESTONEDOJI BEGIN */
+static const TA_InputParameterInfo    *TA_CDLGRAVESTONEDOJI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLGRAVESTONEDOJI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLGRAVESTONEDOJI_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLGRAVESTONEDOJI,              /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Gravestone Doji",              /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLGRAVESTONEDOJI END */
 
 /* CDLHAMMER BEGIN */
 static const TA_InputParameterInfo    *TA_CDLHAMMER_Inputs[]    =
@@ -668,6 +836,90 @@ DEF_FUNCTION( CDLINVERTEDHAMMER,              /* name */
 
 /* CDLINVERTEDHAMMER END */
 
+/* CDLKICKING BEGIN */
+static const TA_InputParameterInfo    *TA_CDLKICKING_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLKICKING_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLKICKING_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLKICKING,                     /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Kicking",                      /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLKICKING END */
+
+/* CDLKICKINGbyLength BEGIN */
+static const TA_InputParameterInfo    *TA_CDLKICKINGbyLength_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLKICKINGbyLength_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLKICKINGbyLength_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLKICKINGbyLength,             /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Kicking - bull/bear determined by the longer marubozu",              /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLKICKINGbyLength END */
+
+/* CDLLONGLEGGEDDOJI BEGIN */
+static const TA_InputParameterInfo    *TA_CDLLONGLEGGEDDOJI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLLONGLEGGEDDOJI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLLONGLEGGEDDOJI_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLLONGLEGGEDDOJI,              /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Long Legged Doji",             /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLLONGLEGGEDDOJI END */
+
 /* CDLLONGLINE BEGIN */
 static const TA_InputParameterInfo    *TA_CDLLONGLINE_Inputs[]    =
 {
@@ -695,6 +947,34 @@ DEF_FUNCTION( CDLLONGLINE,                    /* name */
              );
 
 /* CDLLONGLINE END */
+
+/* CDLMARUBOZU BEGIN */
+static const TA_InputParameterInfo    *TA_CDLMARUBOZU_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLMARUBOZU_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLMARUBOZU_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLMARUBOZU,                    /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Marubozu",                     /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLMARUBOZU END */
 
 /* CDLMORNINGDOJISTAR BEGIN */
 static const TA_InputParameterInfo    *TA_CDLMORNINGDOJISTAR_Inputs[]    =
@@ -810,6 +1090,62 @@ DEF_FUNCTION( CDLPIERCING,                    /* name */
 
 /* CDLPIERCING END */
 
+/* CDLRICKSHAWMAN BEGIN */
+static const TA_InputParameterInfo    *TA_CDLRICKSHAWMAN_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLRICKSHAWMAN_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLRICKSHAWMAN_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLRICKSHAWMAN,                 /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Rickshaw Man",                 /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLRICKSHAWMAN END */
+
+/* CDLSEPARATINGLINES BEGIN */
+static const TA_InputParameterInfo    *TA_CDLSEPARATINGLINES_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLSEPARATINGLINES_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLSEPARATINGLINES_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLSEPARATINGLINES,             /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Separating Lines",             /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLSEPARATINGLINES END */
+
 /* CDLSHOOTINGSTAR BEGIN */
 static const TA_InputParameterInfo    *TA_CDLSHOOTINGSTAR_Inputs[]    =
 {
@@ -922,6 +1258,62 @@ DEF_FUNCTION( CDLSTALLEDPATTERN,              /* name */
 
 /* CDLSTALLEDPATTERN END */
 
+/* CDLTAKURI BEGIN */
+static const TA_InputParameterInfo    *TA_CDLTAKURI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLTAKURI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLTAKURI_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLTAKURI,                      /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Takuri (Dragonfly Doji with very long lower shadow)",    /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLTAKURI END */
+
+/* CDLTASUKIGAP BEGIN */
+static const TA_InputParameterInfo    *TA_CDLTASUKIGAP_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLTASUKIGAP_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLTASUKIGAP_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLTASUKIGAP,                   /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Tasuki Gap",                   /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLTASUKIGAP END */
+
 /* CDLTHRUSTING BEGIN */
 static const TA_InputParameterInfo    *TA_CDLTHRUSTING_Inputs[]    =
 {
@@ -1006,6 +1398,34 @@ DEF_FUNCTION( CDLUPSIDEGAP2CROWS,             /* name */
 
 /* CDLUPSIDEGAP2CROWS END */
 
+/* CDLXSIDEGAP3METHODS BEGIN */
+static const TA_InputParameterInfo    *TA_CDLXSIDEGAP3METHODS_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLXSIDEGAP3METHODS_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLXSIDEGAP3METHODS_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLXSIDEGAP3METHODS,            /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Upside/Downside Gap Three Methods",    /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLXSIDEGAP3METHODS END */
+
 /* CORREL BEGIN */
 static const TA_InputParameterInfo    *TA_CORREL_Inputs[]    =
 {
@@ -1049,11 +1469,17 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDL3WHITESOLDIERS),
    ADD_TO_TABLE(CDLABANDONEDBABY),
    ADD_TO_TABLE(CDLADVANCEBLOCK),
+   ADD_TO_TABLE(CDLBELTHOLD),
+   ADD_TO_TABLE(CDLBREAKAWAY),
+   ADD_TO_TABLE(CDLCOUNTERATTACK),
    ADD_TO_TABLE(CDLDARKCLOUDCOVER),
+   ADD_TO_TABLE(CDLDOJI),
    ADD_TO_TABLE(CDLDOJISTAR),
+   ADD_TO_TABLE(CDLDRAGONFLYDOJI),
    ADD_TO_TABLE(CDLENGULFING),
    ADD_TO_TABLE(CDLEVENINGDOJISTAR),
    ADD_TO_TABLE(CDLEVENINGSTAR),
+   ADD_TO_TABLE(CDLGRAVESTONEDOJI),
    ADD_TO_TABLE(CDLHAMMER),
    ADD_TO_TABLE(CDLHANGINGMAN),
    ADD_TO_TABLE(CDLHARAMI),
@@ -1062,18 +1488,27 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLIDENTICAL3CROWS),
    ADD_TO_TABLE(CDLINNECK),
    ADD_TO_TABLE(CDLINVERTEDHAMMER),
+   ADD_TO_TABLE(CDLKICKING),
+   ADD_TO_TABLE(CDLKICKINGbyLength),
+   ADD_TO_TABLE(CDLLONGLEGGEDDOJI),
    ADD_TO_TABLE(CDLLONGLINE),
+   ADD_TO_TABLE(CDLMARUBOZU),
    ADD_TO_TABLE(CDLMORNINGDOJISTAR),
    ADD_TO_TABLE(CDLMORNINGSTAR),
    ADD_TO_TABLE(CDLONNECK),
    ADD_TO_TABLE(CDLPIERCING),
+   ADD_TO_TABLE(CDLRICKSHAWMAN),
+   ADD_TO_TABLE(CDLSEPARATINGLINES),
    ADD_TO_TABLE(CDLSHOOTINGSTAR),
    ADD_TO_TABLE(CDLSHORTLINE),
    ADD_TO_TABLE(CDLSPINNINGTOP),  
    ADD_TO_TABLE(CDLSTALLEDPATTERN),  
+   ADD_TO_TABLE(CDLTAKURI),
+   ADD_TO_TABLE(CDLTASUKIGAP),
    ADD_TO_TABLE(CDLTHRUSTING),
    ADD_TO_TABLE(CDLTRISTAR),
    ADD_TO_TABLE(CDLUPSIDEGAP2CROWS), 
+   ADD_TO_TABLE(CDLXSIDEGAP3METHODS), 
    ADD_TO_TABLE(CORREL),
    NULL
 };

@@ -50,11 +50,17 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_CDL3WHITESOLDIERS.c \ 
           ../../../../../src/ta_func/ta_CDLABANDONEDBABY.c \ 
           ../../../../../src/ta_func/ta_CDLADVANCEBLOCK.c \ 
+          ../../../../../src/ta_func/ta_CDLBELTHOLD.c \ 
+          ../../../../../src/ta_func/ta_CDLBREAKAWAY.c \ 
+          ../../../../../src/ta_func/ta_CDLCOUNTERATTACK.c \ 
           ../../../../../src/ta_func/ta_CDLDARKCLOUDCOVER.c \ 
+          ../../../../../src/ta_func/ta_CDLDOJI.c \ 
           ../../../../../src/ta_func/ta_CDLDOJISTAR.c \ 
+          ../../../../../src/ta_func/ta_CDLDRAGONFLYDOJI.c \ 
           ../../../../../src/ta_func/ta_CDLENGULFING.c \ 
           ../../../../../src/ta_func/ta_CDLEVENINGDOJISTAR.c \ 
           ../../../../../src/ta_func/ta_CDLEVENINGSTAR.c \ 
+          ../../../../../src/ta_func/ta_CDLGRAVESTONEDOJI.c \ 
           ../../../../../src/ta_func/ta_CDLHAMMER.c \ 
           ../../../../../src/ta_func/ta_CDLHANGINGMAN.c \ 
           ../../../../../src/ta_func/ta_CDLHARAMI.c \ 
@@ -63,18 +69,27 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_CDLIDENTICAL3CROWS.c \ 
           ../../../../../src/ta_func/ta_CDLINNECK.c \ 
           ../../../../../src/ta_func/ta_CDLINVERTEDHAMMER.c \ 
+          ../../../../../src/ta_func/ta_CDLKICKING.c \ 
+          ../../../../../src/ta_func/ta_CDLKICKINGbyLength.c \ 
+          ../../../../../src/ta_func/ta_CDLLONGLEGGEDDOJI.c \ 
           ../../../../../src/ta_func/ta_CDLLONGLINE.c \ 
+          ../../../../../src/ta_func/ta_CDLMARUBOZU.c \ 
           ../../../../../src/ta_func/ta_CDLMORNINGDOJISTAR.c \ 
           ../../../../../src/ta_func/ta_CDLMORNINGSTAR.c \ 
           ../../../../../src/ta_func/ta_CDLONNECK.c \ 
           ../../../../../src/ta_func/ta_CDLPIERCING.c \ 
+          ../../../../../src/ta_func/ta_CDLRICKSHAWMAN.c \ 
+          ../../../../../src/ta_func/ta_CDLSEPARATINGLINES.c \ 
           ../../../../../src/ta_func/ta_CDLSHOOTINGSTAR.c \ 
           ../../../../../src/ta_func/ta_CDLSHORTLINE.c \ 
           ../../../../../src/ta_func/ta_CDLSPINNINGTOP.c \ 
           ../../../../../src/ta_func/ta_CDLSTALLEDPATTERN.c \ 
+          ../../../../../src/ta_func/ta_CDLTAKURI.c \ 
+          ../../../../../src/ta_func/ta_CDLTASUKIGAP.c \ 
           ../../../../../src/ta_func/ta_CDLTHRUSTING.c \ 
           ../../../../../src/ta_func/ta_CDLTRISTAR.c \ 
           ../../../../../src/ta_func/ta_CDLUPSIDEGAP2CROWS.c \ 
+          ../../../../../src/ta_func/ta_CDLXSIDEGAP3METHODS.c \ 
           ../../../../../src/ta_func/ta_CORREL.c \ 
           ../../../../../src/ta_func/ta_DEMA.c \ 
           ../../../../../src/ta_func/ta_DX.c \ 
