@@ -6,6 +6,11 @@
 #ifndef TA_SQL_LOCAL_H
 #define TA_SQL_LOCAL_H
 
+#if defined(__unix__)
+/* remap to BSD 4.4 equivalents */
+#define stricmp  strcasecmp
+#define strnicmp strncasecmp
+#endif
 
 /* parse location URL; database[] has to be preallocated */
 TA_RetCode TA_SQL_ParseLocation(const char location[],    /* IN  */
