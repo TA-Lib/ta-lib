@@ -329,6 +329,8 @@ TA_RetCode TA_INT_MACD( TA_Libc      *libHandle,
    {
       *outBegIdx = 0;
       *outNbElement = 0;
+      TA_Free( libHandle, fastEMABuffer );
+      TA_Free( libHandle, slowEMABuffer );
       return retCode;
    }
 
@@ -338,7 +340,13 @@ TA_RetCode TA_INT_MACD( TA_Libc      *libHandle,
                          &outBegIdx2, &outNbElement2, fastEMABuffer );
 
    if( retCode != TA_SUCCESS )
+   {
+      *outBegIdx = 0;
+      *outNbElement = 0;
+      TA_Free( libHandle, fastEMABuffer );
+      TA_Free( libHandle, slowEMABuffer );
       return retCode;
+   }
 
    /* Parano tests. Will be removed eventually. */
    if( (outBegIdx1 != tempInteger) || 
@@ -352,13 +360,6 @@ TA_RetCode TA_INT_MACD( TA_Libc      *libHandle,
       TA_Free( libHandle, slowEMABuffer );
       return TA_INTERNAL_ERROR(119);
    }
-
-/*
-   tempInteger = outBegIdx1 - outBegIdx2;
-
-   for( i=0,j=tempInteger; i < outNbElement1; i++, j++ )
-      outRealMACD_0[i] = outRealMACD_0[j] - tempBuffer[i];
-*/
 
    /* Calculate (fast EMA) - (slow EMA). */
    for( i=0; i < outNbElement1; i++ )
