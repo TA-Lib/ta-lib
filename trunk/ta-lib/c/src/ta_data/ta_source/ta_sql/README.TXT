@@ -200,8 +200,8 @@ driver compiled in your ta-lib build, you need to do the following:
 ========================================================================
 To Do:
 
-+ Increase TA_CATEGORY_MAX_LENGTH to 200 (to accomodate longer SQL queries).
-+ Add period parameter in TA_AddDataSourceParam.
++ Increase TA_CATEGORY_MAX_LENGTH/TA_SYMBOL_MAX_LENGTH to 200 (to accomodate 
+longer SQL queries).
 - Implement handling of country, exchange, and type (on hold, because not
 really needed).
 - Replace MySQL++ by libMYSQL and switch to plain C (on hold because of
