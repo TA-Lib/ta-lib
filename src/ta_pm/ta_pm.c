@@ -51,6 +51,7 @@
  */
 
 /**** Headers ****/
+#include <stdlib.h>
 #include <string.h>
 #include "ta_pm.h"
 #include "ta_pm_priv.h"
@@ -72,6 +73,8 @@
 
 /**** Local functions declarations.    ****/
 static void freeTradeDictEntry( void *toBeFreed );
+static int  compareTrade( const void *arg1, const void *arg2 );
+
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -178,6 +181,77 @@ TA_RetCode TA_TradeLogFree( TA_TradeLog *toBeFreed )
    return TA_SUCCESS;
 }
 
+/* Macro used strictly by TA_TradeLogAdd */
+#define CALC_EXCURSION_LONG \
+{ \
+                if( (newTransaction->nbPriceBar != 0) && \
+                    (newTransaction->highPrice) && \
+                    (newTransaction->lowPrice) ) \
+                { \
+                   lowestLow   = highestLow = newTransaction->lowPrice[0]; \
+                   highestHigh = newTransaction->highPrice[0]; \
+                   for( i=1; i < newTransaction->nbPriceBar; i++ ) \
+                   { \
+                      tempReal = newTransaction->lowPrice[i]; \
+                      if( tempReal < lowestLow ) \
+                         lowestLow = tempReal; \
+                      else if( tempReal > highestLow ) \
+                         highestLow = tempReal; \
+                      tempReal = newTransaction->highPrice[i]; \
+                      if( tempReal > highestHigh ) \
+                         highestHigh = tempReal; \
+                   } \
+                   tempReal = entryPrice - lowestLow; \
+                   entryTradeLog->u.trade.mae = tempReal < 0.0? 0.0 : tempReal; \
+                   tempReal = highestHigh - entryPrice; \
+                   entryTradeLog->u.trade.maxfe = tempReal < 0.0? 0.0 : tempReal; \
+                   tempReal = highestLow - entryPrice; \
+                   entryTradeLog->u.trade.minfe = tempReal < 0.0? 0.0 : tempReal; \
+                } \
+                else \
+                { \
+                   entryTradeLog->u.trade.mae   = TA_REAL_DEFAULT; \
+                   entryTradeLog->u.trade.minfe = TA_REAL_DEFAULT; \
+                   entryTradeLog->u.trade.maxfe = TA_REAL_DEFAULT; \
+                } \
+}
+
+/* Macro used strictly by TA_TradeLogAdd */
+#define CALC_EXCURSION_SHORT \
+{ \
+                if( (newTransaction->nbPriceBar != 0) && \
+                    (newTransaction->highPrice) && \
+                    (newTransaction->lowPrice) ) \
+                { \
+                   lowestLow   = newTransaction->lowPrice[0]; \
+                   highestHigh = lowestHigh = newTransaction->highPrice[0]; \
+                   for( i=1; i < newTransaction->nbPriceBar; i++ ) \
+                   { \
+                      tempReal = newTransaction->lowPrice[i]; \
+                      if( tempReal < lowestLow ) \
+                         lowestLow = tempReal; \
+                      tempReal = newTransaction->highPrice[i]; \
+                      if( tempReal > highestHigh ) \
+                         highestHigh = tempReal; \
+                      else if( tempReal < lowestHigh ) \
+                         lowestHigh = tempReal; \
+                   } \
+                   tempReal = highestHigh - entryPrice; \
+                   entryTradeLog->u.trade.mae = tempReal < 0.0? 0.0 : tempReal; \
+                   tempReal = entryPrice - lowestLow; \
+                   entryTradeLog->u.trade.maxfe = tempReal < 0.0? 0.0 : tempReal; \
+                   tempReal = entryPrice - lowestHigh; \
+                   entryTradeLog->u.trade.minfe = tempReal < 0.0? 0.0 : tempReal; \
+                } \
+                else \
+                { \
+                   entryTradeLog->u.trade.mae   = TA_REAL_DEFAULT; \
+                   entryTradeLog->u.trade.minfe = TA_REAL_DEFAULT; \
+                   entryTradeLog->u.trade.maxfe = TA_REAL_DEFAULT; \
+                } \
+}
+
+
 TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
                            const TA_Transaction *newTransaction )
 {
@@ -196,7 +270,9 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
    TA_List *entryListToUse;
    TA_DataLog *entryTradeLog;
 
-   TA_Real tempReal;
+   TA_Real highestLow, highestHigh, lowestLow, lowestHigh;
+   TA_Real entryPrice, tempReal;
+   int i;
 
    retCode = TA_INTERNAL_ERROR(120);
 
@@ -209,7 +285,7 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
       return TA_BAD_PARAM;
 
    /* Check that the TA_Transaction makes sense. */
-   if( (newTransaction->price <= 0.0)   ||
+   if( (newTransaction->price <= 0.0)  ||
        (newTransaction->quantity <= 0) ||
        (TA_TimestampValidate(&newTransaction->timestamp) != TA_SUCCESS) ||
        (newTransaction->type >= TA_NB_TRADE_TYPE))
@@ -398,17 +474,20 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
               * Both are multiplied by the quantity being
               * traded.
               */
-             tempReal = entryTradeLog->u.entry.entryPrice;
+             entryPrice = entryTradeLog->u.entry.entryPrice;
              if( newTransaction->type == TA_LONG_EXIT )
              {
-                entryTradeLog->u.trade.profit = (newTransaction->price-tempReal)*quantity;
+                entryTradeLog->u.trade.profit = (newTransaction->price-entryPrice)*quantity;
+                CALC_EXCURSION_LONG;
              }
              else
              {
-                entryTradeLog->u.trade.profit = (tempReal-newTransaction->price)*quantity;
-                tempReal = -tempReal;
+                entryTradeLog->u.trade.profit = (entryPrice-newTransaction->price)*quantity;
+                entryPrice = -entryPrice;
+                CALC_EXCURSION_SHORT;
              }
-             entryTradeLog->u.entry.entryPrice = tempReal * quantity;
+             entryTradeLog->u.entry.entryPrice = entryPrice * quantity;
+
              return TA_SUCCESS; /* Done! */
          }
          else if( entryTradeQuantity < quantity )
@@ -428,15 +507,19 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
               * Both are multiplied by the quantity being
               * traded.
               */
-             tempReal = entryTradeLog->u.trade.entryPrice;
+             entryPrice = entryTradeLog->u.trade.entryPrice;
              if( newTransaction->type == TA_LONG_EXIT )
-                entryTradeLog->u.trade.profit = (newTransaction->price-tempReal)*entryTradeQuantity;
+             {
+                entryTradeLog->u.trade.profit = (newTransaction->price-entryPrice)*entryTradeQuantity;
+                CALC_EXCURSION_LONG;
+             }
              else
              {
-                entryTradeLog->u.trade.profit = (tempReal-newTransaction->price)*entryTradeQuantity;
-                tempReal = -tempReal;
+                entryTradeLog->u.trade.profit = (entryPrice-newTransaction->price)*entryTradeQuantity;
+                entryPrice = -entryPrice;
+                CALC_EXCURSION_SHORT;
              }
-             entryTradeLog->u.trade.entryPrice = tempReal * entryTradeQuantity;
+             entryTradeLog->u.trade.entryPrice = entryPrice * entryTradeQuantity;
 
              /* Move to the next entry. If none available, that means there
               * was more "exit" than "entry" and this is considered an
@@ -461,15 +544,19 @@ TA_RetCode TA_TradeLogAdd( TA_TradeLog    *tradeLog,
             TA_TimestampCopy( &dataLog->u.trade.exitTimestamp,
                               &newTransaction->timestamp );
             dataLog->u.trade.quantity = quantity;
-            tempReal = entryTradeLog->u.trade.entryPrice;
+            entryPrice = entryTradeLog->u.trade.entryPrice;
             if( newTransaction->type == TA_LONG_EXIT )
-                dataLog->u.trade.profit = (newTransaction->price-tempReal)*quantity;
+            {
+               dataLog->u.trade.profit = (newTransaction->price-entryPrice)*quantity;
+               CALC_EXCURSION_LONG;
+            }
             else
             {
-                dataLog->u.trade.profit = (tempReal-newTransaction->price)*quantity;
-                tempReal = -tempReal;
+               dataLog->u.trade.profit = (entryPrice-newTransaction->price)*quantity;
+               entryPrice = -entryPrice;
+               CALC_EXCURSION_SHORT;
             }
-            dataLog->u.trade.entryPrice = tempReal*quantity;
+            dataLog->u.trade.entryPrice = entryPrice*quantity;
             dataLog->u.trade.id = id;
 
             /* Adjust the entry and put it back for being process
@@ -537,11 +624,8 @@ TA_RetCode TA_PMAlloc( const TA_Timestamp  *startDate,
 
    /* TA_PMFree can be safely called from this point. */
 
-   if( endDate )
-      TA_TimestampCopy( &pmPriv->endDate, endDate );
-            
-   if( startDate )
-      TA_TimestampCopy( &pmPriv->startDate, startDate );
+   TA_TimestampCopy( &pmPriv->endDate, endDate );            
+   TA_TimestampCopy( &pmPriv->startDate, startDate );
 
    /* Success, return the allocated data to the caller. */
    *allocatedPM = pm;
@@ -650,13 +734,16 @@ TA_RetCode TA_TradeReportAlloc( TA_PM *pm, TA_TradeReport **tradeReportAllocated
    TA_List            *listOfBlock;
    TA_DataLog         *invalidDataLog;
    TA_DataLog         *curDataLog;
+   TA_Trade           **tradePtr;
+   TA_Timestamp       *startDate;
+   TA_Timestamp       *endDate;
 
    TA_RetCode retCode;
    TA_Real tempReal;
    int nbTrade, nbTradeAdded, i;
 
    if( !tradeReportAllocated )
-	   return TA_BAD_PARAM;
+      return TA_BAD_PARAM;
 
    *tradeReportAllocated = NULL;
 
@@ -692,23 +779,26 @@ TA_RetCode TA_TradeReportAlloc( TA_PM *pm, TA_TradeReport **tradeReportAllocated
 
    if( nbTrade != 0 )
    {      
-      tradeReport->trades = (const TA_Trade **)TA_Malloc( nbTrade*sizeof(const TA_Trade *));
+      startDate = &pmPriv->startDate;
+      endDate   = &pmPriv->endDate;
 
-      if( !tradeReport->trades )
+      tradeReport->trades = tradePtr = (TA_Trade **)TA_Malloc( nbTrade*sizeof(const TA_Trade *));
+
+      if( !tradePtr )
       {
          TA_TradeReportFree( tradeReport );
          return TA_ALLOC_ERR;
       }
 
-	  /* Iterate through all the closed trades. */
-	  nbTradeAdded = 0;
+      /* Iterate through all the closed trades. */
+      nbTradeAdded = 0;
       tradeLogList = &pmPriv->tradeLogList;
       tradeLogPriv = TA_ListAccessHead( tradeLogList );
       if( !tradeLogPriv )
-	  {
+      {
          TA_TradeReportFree( tradeReport );
          return TA_NO_TRADE_LOG;
-	  }
+      }
 
       do
       {   
@@ -716,7 +806,7 @@ TA_RetCode TA_TradeReportAlloc( TA_PM *pm, TA_TradeReport **tradeReportAllocated
          listOfBlock = &allocator->listOfDataLogBlock;
          block = TA_ListAccessHead( listOfBlock );
          while( block )
-		 {
+         {
             /* Process each blocks. */
             invalidDataLog = allocator->nextAvailableTrade;
             curDataLog = block->array;
@@ -731,24 +821,37 @@ TA_RetCode TA_TradeReportAlloc( TA_PM *pm, TA_TradeReport **tradeReportAllocated
                   /* Process each TA_DataLog being a trade (not an entry)
                    * An entry have a negative 'quantity'.
                    */
-                  if( curDataLog->u.trade.quantity > 0 )
+                  if( (curDataLog->u.trade.quantity > 0) &&
+                      !TA_TimestampLess( &curDataLog->u.trade.entryTimestamp, startDate ) &&
+                      !TA_TimestampGreater( &curDataLog->u.trade.exitTimestamp, endDate ) )
                   {
                      /* Make sure not to exceed array size */
-					 if( nbTradeAdded >= nbTrade )
-					 {
-					    TA_TradeReportFree( tradeReport );
-					    return TA_ALLOC_ERR;
-					 }
-					 tradeReport->trades[nbTradeAdded++] = &curDataLog->u.trade;
-			      }
-			   }
-			}
+                     if( nbTradeAdded >= nbTrade )
+                     {
+                        TA_TradeReportFree( tradeReport );
+                        return TA_ALLOC_ERR;
+                     }
+                     tradePtr[nbTradeAdded++] = &curDataLog->u.trade;
+                  }
+               }
+               curDataLog++;
+            }
 
             block = TA_ListAccessNext( listOfBlock );
-		 }
+         }
 
          tradeLogPriv = TA_ListAccessNext( tradeLogList );
       } while( tradeLogPriv );
+
+      /* Make sure all trades were initialized. */
+      if( nbTradeAdded != nbTrade )
+      {
+         TA_TradeReportFree( tradeReport );
+         return TA_ALLOC_ERR;
+      }
+      
+      /* Sort all trades in chronological order of exit. */
+      qsort( tradePtr, (size_t)nbTrade, sizeof(TA_Trade *), compareTrade );
    }
 
    /* All succeed. Return pointer to caller. */
@@ -778,6 +881,74 @@ TA_RetCode TA_TradeReportFree( TA_TradeReport *toBeFreed )
    return TA_SUCCESS;
 }
 
+TA_RetCode TA_TradeReportToFile( TA_TradeReport *tradeReport, FILE *out )
+{
+   TA_TradeReportPriv *tradeReportPriv;
+   const TA_Timestamp *entryTimestamp;
+   const TA_Timestamp *exitTimestamp;
+   unsigned int i;
+   double tmpReal;
+
+   if( !tradeReport || !out )
+      return TA_BAD_PARAM;
+
+   /* Make sure this TA_TradeReport is a valid object */
+   tradeReportPriv = (TA_TradeReportPriv *)tradeReport->hiddenData; 
+   if( !tradeReportPriv || (tradeReportPriv->magicNb != TA_TRADEREPORT_MAGIC_NB) )
+      return TA_BAD_OBJECT;
+
+   fprintf( out, "\n" );
+   fprintf( out, "[MM/DD/YYYY HH:MM:SS .. MM/DD/YYYY HH:MM:SS] [ID]\n" );
+   fprintf( out, "  Quantity  Entry($) Profit(%%)  MinFE(%%)  MaxFE(%%)    MAE(%%)\n" );
+   fprintf( out, "============================================================\n" );
+
+   for( i=0; i < tradeReport->nbTrades; i++ )
+   {
+      entryTimestamp = &tradeReport->trades[i]->entryTimestamp;
+      exitTimestamp  = &tradeReport->trades[i]->exitTimestamp;
+
+      fprintf( out, "[%02d/%02d/%04d %02d:%02d:%02d .. %02d/%02d/%04d %02d:%02d:%02d] [%s]\n",
+                    TA_GetMonth(entryTimestamp),
+                    TA_GetDay  (entryTimestamp),
+                    TA_GetYear (entryTimestamp),
+                    TA_GetHour (entryTimestamp),
+                    TA_GetMin  (entryTimestamp),
+                    TA_GetSec  (entryTimestamp),
+                    TA_GetMonth(exitTimestamp),
+                    TA_GetDay  (exitTimestamp),
+                    TA_GetYear (exitTimestamp),
+                    TA_GetHour (exitTimestamp),
+                    TA_GetMin  (exitTimestamp),
+                    TA_GetSec  (exitTimestamp),
+                    tradeReport->trades[i]->id->symString );
+
+      fprintf( out, "%10d",   tradeReport->trades[i]->quantity );
+      fprintf( out, "%10.2f", tradeReport->trades[i]->entryPrice );
+      fprintf( out, "%10.2f", tradeReport->trades[i]->profit );
+   
+      tmpReal = tradeReport->trades[i]->minfe;
+      if( tmpReal != TA_REAL_DEFAULT )         
+         fprintf( out, "%10.2f", tmpReal );
+      else
+         fprintf( out, "%10s", "N/A" );
+
+      tmpReal = tradeReport->trades[i]->maxfe;
+      if( tmpReal != TA_REAL_DEFAULT )         
+         fprintf( out, "%10.2f", tmpReal );
+      else
+         fprintf( out, "%10s", "N/A" );
+
+      tmpReal = tradeReport->trades[i]->mae;
+      if( tmpReal != TA_REAL_DEFAULT )         
+         fprintf( out, "%10.2f", tmpReal );
+      else
+         fprintf( out, "%10s", "N/A" );
+
+      fprintf( out, "\n\n" );
+   }
+
+   return TA_SUCCESS;
+}
 
 /**** Local functions definitions.     ****/
 static void freeTradeDictEntry( void *toBeFreed )
@@ -818,4 +989,15 @@ static void freeTradeDictEntry( void *toBeFreed )
    }
 
    TA_Free( dictEntry );
+}
+
+static int compareTrade( const void *arg1, const void *arg2 )
+{
+   const TA_Trade *trade1;
+   const TA_Trade *trade2;
+
+   trade1 = *((const TA_Trade **)arg1);
+   trade2 = *((const TA_Trade **)arg2);
+
+   return TA_TimestampCompare(&trade1->exitTimestamp, &trade2->exitTimestamp );
 }
