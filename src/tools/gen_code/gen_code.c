@@ -2002,7 +2002,8 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "#else\n" );
    print( out, "   #include <string.h>\n" );
    print( out, "   #include <math.h>\n" );
-   print( out, "   #include \"ta_func.h\"\n" );
+   print( out, "   #include \"ta_func.h\"\n" );   
+   print( out, "   #include \"ta_trace.h\"\n" );
    print( out, "#endif\n" );
    print( out, "\n" );
    print( out, "#ifndef TA_UTILITY_H\n" );
