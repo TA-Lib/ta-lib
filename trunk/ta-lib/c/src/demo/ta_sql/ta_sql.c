@@ -6,55 +6,90 @@
 #include <ctype.h>
 #include "ta_libc.h"
 
-/*
-#if defined (_MSC_VER)
-#include <windows.h>
-#endif
-*/
-
 typedef enum
 {
    DISPLAY_SYMBOLS,
    DISPLAY_CATEGORIES,
-   DISPLAY_HISTORIC_DATA
+   DISPLAY_HISTORIC_DATA,
+   UNKNOWN_ACTION
 } Action;
+
+typedef struct
+{
+  const char *string;
+  Action theAction;
+  TA_Period period;
+} CommandLineAction;
+
+static const CommandLineAction tableAction[] = 
+{ {"-c", DISPLAY_CATEGORIES,    TA_DAILY,    },
+  {"-s", DISPLAY_SYMBOLS,       TA_DAILY,    },
+  {"-d", DISPLAY_HISTORIC_DATA, TA_DAILY,    },
+  {"-dd",DISPLAY_HISTORIC_DATA, TA_DAILY,    },
+  {"-dw",DISPLAY_HISTORIC_DATA, TA_WEEKLY,   },
+  {"-dm",DISPLAY_HISTORIC_DATA, TA_MONTHLY,  },
+  {"-dq",DISPLAY_HISTORIC_DATA, TA_QUARTERLY },
+  {"-dy",DISPLAY_HISTORIC_DATA, TA_YEARLY    }
+};
+#define NB_ACTION_SWITCH (sizeof(tableAction)/sizeof(CommandLineAction))
+
+typedef struct
+{
+  const char *string;
+  unsigned int addDataSourceFlags;
+  unsigned int historyAllocFlags;
+} CommandLineOption;
+
+static const CommandLineOption tableOption[] =
+{
+  {"-z", TA_REPLACE_ZERO_PRICE_BAR, 0},
+  {"-t", 0, TA_USE_TOTAL_VOLUME },
+  {"-i", 0, TA_ALLOW_INCOMPLETE_PRICE_BARS }
+};
+#define NB_OPTION_SWITCH (sizeof(tableOption)/sizeof(CommandLineOption))
 
 void fatal_error_handler(void)
 {
-#if defined (_MSC_VER) && 0  /* disabled for now since TA_FatalReportToBuffer is missing */
-   /* Update: TA_FatalReportToBuffer is now implemented - Mario */
-   char buffer[TA_FATAL_ERROR_BUF_SIZE];
-   TA_FatalReportToBuffer( buffer, TA_FATAL_ERROR_BUF_SIZE);
-   OutputDebugString(buffer);
-#else
    TA_FatalReport( stderr );
-#endif
 }
 
 void print_usage( char *str ) 
 {
    printf( "\n" );
-   printf( "ta_sql V%s - Query stock market data SQL database\n", TA_GetVersionString() );
+   printf( "ta_sql V%s - SQL for market data\n", TA_GetVersionString() );
    printf( "\n" );
-   printf( "Usage: ta_sql -c <location> <user> <pass> <category (query)>\n" );
-   printf( "       ta_sql -s <location> <user> <pass> <category (query)> <given category> [<symbol (query)>]\n" );
-   printf( "       ta_sql -d <location> <user> <pass> <category> <symbol> <info>\n" );
+   printf( "Usage: ta_sql -c    <opt> <loc> <catsql>\n" );
+   printf( "       ta_sql -s    <opt> <loc> <catsql> <cat> <symsql>\n" );
+   printf( "       ta_sql -d<p> <opt> <loc> <catsql> <cat> <symsql> <sym> <infosql>\n" );
    printf( "\n" );
-   printf( "  -c  Display all supported categories\n" );
-   printf( "  -s  Display all symbols for a given category\n" );
-   printf( "  -d  Query and display quotes data\n" );
-   printf( "  Add 'z' to use TA_REPLACE_ZERO_PRICE_BAR flag\n" );
+   printf( "    Specify one of the following action switch:\n" );
+   printf( "      -c     Display all supported categories\n" );
+   printf( "      -s     Display all symbols for a given category\n" );
+   printf( "      -d<p>  Display market data for the specified <p> period. Use\n" );
+   printf( "             \"d,w,m,q,y\" for \"daily,weekly,monthly,quarterly,yearly\"\n" );
    printf( "\n" );
-   printf( "  Quotes output is \"Date,Open,High,Low,Close,Volume\"\n" );
+   printf( "    <opt> are optional switches:\n" );
+   printf( "      -z TA_REPLACE_ZERO_PRICE_BAR flag for TA_AddDataSource.\n" );
+   printf( "      -t TA_USE_TOTAL_VOLUME flag for TA_HistoryAlloc.\n" );
+   printf( "      -i TA_ALLOW_INCOMPLETE_PRICE_BARS flag for TA_AddDataSource.\n" );
    printf( "\n" );
-   printf( "  Examples:\"\n" );
-   printf( "    ta_sql -c mysql://localhost/db guest \"\" \"SELECT * FROM cat\"\n" );
-   printf( "    ta_sql -s mysql://localhost/db guest \"\" \"SELECT * FROM cat\" NL.EURONEXT.STOCKS\n" );
-   printf( "    ta_sql -dz mysql://localhost/db guest \"\" \"SELECT * FROM cat\" MSFT \"SELECT ...\"\n" );
+   printf( "      -u=<str>  Specify the username for TA_AddDataSource.\n" );
+   printf( "      -p=<str>  Specify the password for TA_AddDataSource.\n" );
    printf( "\n" );
-   printf( "  Online help: http://www.ta-lib.org\n" );
+   printf( "    <loc>     is the TA_AddDataSource location parameter.\n" );   
+   printf( "    <catsql>  is the TA_AddDataSource category parameter.\n" );
+   printf( "    <cat>     is a string of a given category.\n" );
+   printf( "    <symsql>  is the TA_AddDataSource symbol parameter.\n" );
+   printf( "    <sym>     is a string of a given symbol.\n" );
+   printf( "    <infosql> is the TA_AddDataSource info parameter.\n" );
    printf( "\n" );
-   printf( "Error: [%s]\n", str );
+   printf( "  Market data output is \"Date,Open,High,Low,Close,Volume\"\n" );
+   printf( "\n" );
+   printf( "  Check http://ta-lib.org/d_source/d_sql.html for usage examples.\"\n" );
+   printf( "\n" );
+   printf( "  For help, try the mailing list at http://ta-lib.org\n" );
+   printf( "\n" );
+   if( str) printf( "Error: [%s]\n", str );  
 }
 
 void print_error( TA_RetCode retCode )
@@ -67,30 +102,14 @@ void print_error( TA_RetCode retCode )
            retCodeInfo.infoStr );
 }
 
-int print_data( TA_UDBase *udb,
-                TA_AddDataSourceParam dsParam,
-                TA_Period period )
+int print_data( TA_UDBase *udb, TA_HistoryAllocParam *haParam )
 {
    TA_RetCode retCode;
-   TA_History *history = NULL;
+   TA_History *history;
    unsigned int i;
-   TA_HistoryAllocParam histParam;
 
-   retCode = TA_AddDataSource( udb, &dsParam );
-   if( retCode != TA_SUCCESS )
-   {
-      print_error( retCode );
-      return -1;
-   }
-
-   /* Get the historical data. */
-   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
-   histParam.category = dsParam.category;
-   histParam.symbol   = dsParam.symbol;
-   histParam.period   = period;
-   histParam.field    = TA_ALL;
-   retCode = TA_HistoryAlloc( udb, &histParam, &history );
-                              
+   history = NULL;
+   retCode = TA_HistoryAlloc( udb, haParam, &history );                              
    if( retCode != TA_SUCCESS )
    {
       print_error( retCode );
@@ -129,21 +148,11 @@ int print_data( TA_UDBase *udb,
 }
 
 
-int print_categories( TA_UDBase *udb,
-                      TA_AddDataSourceParam dsParam)
+int print_categories( TA_UDBase *udb )                      
 {
    TA_RetCode retCode;
    unsigned int i;
-   TA_StringTable *table;
-
-   /* info not needed for getting just categories, but the driver insists on it */
-   dsParam.info = "";  
-   retCode = TA_AddDataSource( udb, &dsParam );
-   if( retCode != TA_SUCCESS )
-   {
-      print_error( retCode );
-      return -1;
-   }
+   TA_StringTable *table = NULL;
    
    retCode = TA_CategoryTableAlloc( udb, &table );
    if( retCode != TA_SUCCESS )
@@ -153,34 +162,18 @@ int print_categories( TA_UDBase *udb,
    } 
 
    for( i=0; i < table->size; i++ )
-   {
       printf( "%s\n", table->string[i] );
-   }
 
    TA_CategoryTableFree( table );
-
    return 0;
 }
 
 
-int print_symbols( TA_UDBase *udb,
-                   TA_AddDataSourceParam dsParam,
-                   const char *category,
-                   const char *symbol)
+int print_symbols( TA_UDBase *udb, const char *category )
 {
    TA_RetCode retCode;
    unsigned int i;
    TA_StringTable *table = NULL;
-
-   /* info not needed for getting just categories, but the driver insists on it */
-   dsParam.info = "";  
-   dsParam.symbol = symbol;
-   retCode = TA_AddDataSource( udb, &dsParam );
-   if( retCode != TA_SUCCESS )
-   {
-      print_error( retCode );
-      return -1;
-   }
 
    retCode = TA_SymbolTableAlloc( udb, category, &table );
    if( retCode != TA_SUCCESS )
@@ -190,107 +183,102 @@ int print_symbols( TA_UDBase *udb,
    } 
 
    for( i=0; table && i < table->size; i++ )
-   {
       printf( "%s\n", table->string[i] );
-   }
 
-   TA_SymbolTableFree( table );
-  
+   TA_SymbolTableFree( table );  
    return 0;
 }
 
 int main( int argc, char *argv[] )
 {
    Action theAction;
-   TA_InitializeParam initParam;
    TA_UDBase *udb;
    TA_RetCode retCode;
-   TA_Period period;
+
+   TA_InitializeParam    initParam;
    TA_AddDataSourceParam dsParam;
-   TA_SourceFlag flags;
+   TA_HistoryAllocParam  haParam;
 
-   int retValue;
+   int firstParam, nbParam, retValue, i;
 
-   /* Verify that there is the minimum required number 
-    * of parameters.
-    */
-   if( argc < 6 )
+   if( argc <= 1 )
    {
-      print_usage( "Missing parameters" );
+      print_usage( NULL );
       return -1;
    }
 
-   /* Verify that there are not too many parameters */
-   if( argc > 8 )
+   /* Initialize defaults */
+   theAction = UNKNOWN_ACTION;
+   memset( &initParam, 0, sizeof(TA_InitializeParam) );
+   memset( &dsParam, 0, sizeof(TA_AddDataSourceParam) );
+   memset( &haParam, 0, sizeof(TA_HistoryAllocParam) );
+   
+   /* Check for the action switch and identify what needs to be done. */
+   if( strlen(argv[1]) > 1 )
    {
-      print_usage( "Too Many parameters" );
-      return -1;
-   }
-
-   /* Daily data by default. */
-   period = TA_DAILY;
-   flags = TA_NO_FLAGS;
-
-   /* Check for the switch, and identify what needs to be done. */
-   if ( strlen(argv[1]) > 1 && argv[1][strlen(argv[1])-1] == 'z') {
-      flags |= TA_REPLACE_ZERO_PRICE_BAR;
-   }
-   if( strcmp( "-c", argv[1] ) == 0 )
-      theAction = DISPLAY_CATEGORIES;
-   else if( strcmp( "-s", argv[1] ) == 0 )
-      theAction = DISPLAY_SYMBOLS;
-   else if( strncmp( "-d", argv[1], 2 ) == 0 )
-      theAction = DISPLAY_HISTORIC_DATA;
-   else if( strncmp( "-dd", argv[1], 3 ) == 0 )
-      theAction = DISPLAY_HISTORIC_DATA;
-   else if( strncmp( "-dw", argv[1], 3 ) == 0 )
-   {
-      theAction = DISPLAY_HISTORIC_DATA;
-      period = TA_WEEKLY;
-   }
-   else if( strncmp( "-dm", argv[1], 3 ) == 0 )
-   {
-      theAction = DISPLAY_HISTORIC_DATA;
-      period = TA_MONTHLY;
-   }
-   else if( strncmp( "-dq", argv[1], 3 ) == 0 )
-   {
-      theAction = DISPLAY_HISTORIC_DATA;
-      period = TA_QUARTERLY;
-   }
-   else if( strncmp( "-dy", argv[1], 3 ) == 0 )
-   {
-      theAction = DISPLAY_HISTORIC_DATA;
-      period = TA_YEARLY;
-   }
-   else
-   {
-      print_usage( "Switch not recognized" );
-      return -1;
-   }
-
-   /* Verify that there is at least a symbol and category 
-    * on the command line (when applicable).
-    */
-   switch( theAction )
-   {
-   case DISPLAY_SYMBOLS:
-      if( argc < 7 )
+      for( i=0; i < NB_ACTION_SWITCH; i++ )
       {
-         print_usage( "Symbol string missing" );
-         return -1;
-      }
-      break;
-   case DISPLAY_HISTORIC_DATA:
-      if( argc < 8 )
+        if( strcmp( tableAction[i].string, argv[1]) == 0 )
+        {
+           theAction = tableAction[i].theAction;
+           haParam.period = tableAction[i].period;
+           break;
+        }
+      }    
+   }
+   if( theAction == UNKNOWN_ACTION )
+   {
+      print_usage( "Action switch not recognized" );
+      return -1;
+   }
+
+   /* Handle optional switch. */
+   firstParam = 2; /* Will become index on first non-switch parameter. */
+   while( firstParam < argc )
+   {
+      if( argv[firstParam][0] != '-' ) break;
+
+      if( strlen(argv[firstParam]) >= 4 && 
+          (argv[firstParam][2] == '=') )
       {
-         print_usage( "Info string missing" );
-         return -1;
+         if( argv[firstParam][1] == 'u' )
+            dsParam.username = &argv[firstParam][3];
+         else if( argv[firstParam][1] == 'p' )
+            dsParam.password = &argv[firstParam][3];
+         else
+         {
+            print_usage( "Unrecognized optional switch" );
+            return -1;
+         }
       }
-      break;
-   case DISPLAY_CATEGORIES:
-      /* Nothing to do. */
-      break;
+      else
+      {
+         for( i=0; i < NB_OPTION_SWITCH; i++ )
+         {
+            if( strcmp(argv[firstParam],tableOption[i].string) == 0 )
+            {
+               dsParam.flags |= tableOption[i].addDataSourceFlags;
+               haParam.flags |= tableOption[i].historyAllocFlags;
+               break;
+            }                  
+         }
+         if( i == NB_OPTION_SWITCH )
+         {
+            print_usage( "Unrecognized optional switch" );
+            return -1;
+         }
+      } 
+      firstParam++;
+   }
+
+   /* Check the number of required parameter after the switches. */
+   nbParam = argc - firstParam;
+   if( ((theAction == DISPLAY_CATEGORIES)    && (nbParam < 2)) || 
+       ((theAction == DISPLAY_SYMBOLS)       && (nbParam < 4)) ||
+       ((theAction == DISPLAY_HISTORIC_DATA) && (nbParam < 6)))
+   {
+      print_usage( "Missing Parameters" );
+      return -1;
    }
 
    /* Initialize TA-LIB and create an unified database. */
@@ -313,34 +301,44 @@ int main( int argc, char *argv[] )
       return -1;
    }
 
-   memset( &dsParam, 0, sizeof( TA_AddDataSourceParam ) );
+   /* Set the parameters for TA-Lib. */
+   haParam.field = TA_ALL;
    dsParam.id = TA_SQL;
+   dsParam.location = argv[firstParam];
+   dsParam.info = "";
+   if( nbParam > 1 )
+      dsParam.category = argv[firstParam+1];
+   if( nbParam > 2 )
+      haParam.category = argv[firstParam+2];
+   if( nbParam > 3 )
+      dsParam.symbol = argv[firstParam+3];
+   if( nbParam > 4 )
+      haParam.symbol = argv[firstParam+4];
+   if( nbParam > 5 )
+      dsParam.info = argv[firstParam+5];
 
-   dsParam.flags = flags;
-   dsParam.location = argv[2];
-   dsParam.username = argv[3];
-   dsParam.password = argv[4];
-   dsParam.category = argv[5];
+   /* Add the data source. */
+   retCode = TA_AddDataSource( udb, &dsParam );
+   if( retCode != TA_SUCCESS )
+   {
+      print_error( retCode );
+      return -1;
+   }
 
-   /* Do 'theAction' after making an uppercase copy
-    * of the symbol and category.
-    */
+   /* Perform the requested action. */
    switch( theAction )
    {
-   case DISPLAY_HISTORIC_DATA:       
-       dsParam.symbol = argv[6];
-       dsParam.info = argv[7];
-       retValue = print_data(udb, dsParam, period);
+   case DISPLAY_CATEGORIES:
+       retValue = print_categories(udb);
        break;
 
    case DISPLAY_SYMBOLS:
-      retValue = print_symbols(udb, dsParam, argv[6], (argc>7? argv[7] : NULL));
-       break;
+      retValue = print_symbols(udb, haParam.category);
+      break;
 
-   case DISPLAY_CATEGORIES:
-       retValue = print_categories(udb, dsParam);
+   case DISPLAY_HISTORIC_DATA:       
+       retValue = print_data(udb, &haParam);
        break;
-
    default:
        retValue = -1;
        break;
