@@ -113,6 +113,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_BBANDS.c \
 		..\..\..\..\..\src\ta_func\ta_DEMA.c \
 		..\..\..\..\..\src\ta_func\ta_EMA.c \
+		..\..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c \
 		..\..\..\..\..\src\ta_func\ta_KAMA.c \
 		..\..\..\..\..\src\ta_func\ta_MA.c \
 		..\..\..\..\..\src\ta_func\ta_MAMA.c \
@@ -120,6 +121,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_MIDPOINT.c \
 		..\..\..\..\..\src\ta_func\ta_SAR.c \
 		..\..\..\..\..\src\ta_func\ta_SMA.c \
+		..\..\..\..\..\src\ta_func\ta_T3.c \
 		..\..\..\..\..\src\ta_func\ta_TEMA.c \
 		..\..\..\..\..\src\ta_func\ta_TRIMA.c \
 		..\..\..\..\..\src\ta_func\ta_WMA.c \
@@ -151,6 +153,11 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_STOCHF.c \
 		..\..\..\..\..\src\ta_func\ta_TRIX.c \
 		..\..\..\..\..\src\ta_func\ta_WILLR.c \
+		..\..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c \
+		..\..\..\..\..\src\ta_func\ta_HT_DCPHASE.c \
+		..\..\..\..\..\src\ta_func\ta_HT_PHASOR.c \
+		..\..\..\..\..\src\ta_func\ta_HT_SINE.c \
+		..\..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c \
 		..\..\..\..\..\src\ta_func\ta_AD.c \
 		..\..\..\..\..\src\ta_func\ta_ADOSC.c \
 		..\..\..\..\..\src\ta_func\ta_OBV.c \
@@ -260,6 +267,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_BBANDS.obj \
 		..\..\..\..\..\temp\cmr\ta_DEMA.obj \
 		..\..\..\..\..\temp\cmr\ta_EMA.obj \
+		..\..\..\..\..\temp\cmr\ta_HT_TRENDLINE.obj \
 		..\..\..\..\..\temp\cmr\ta_KAMA.obj \
 		..\..\..\..\..\temp\cmr\ta_MA.obj \
 		..\..\..\..\..\temp\cmr\ta_MAMA.obj \
@@ -267,6 +275,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_MIDPOINT.obj \
 		..\..\..\..\..\temp\cmr\ta_SAR.obj \
 		..\..\..\..\..\temp\cmr\ta_SMA.obj \
+		..\..\..\..\..\temp\cmr\ta_T3.obj \
 		..\..\..\..\..\temp\cmr\ta_TEMA.obj \
 		..\..\..\..\..\temp\cmr\ta_TRIMA.obj \
 		..\..\..\..\..\temp\cmr\ta_WMA.obj \
@@ -298,6 +307,11 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_STOCHF.obj \
 		..\..\..\..\..\temp\cmr\ta_TRIX.obj \
 		..\..\..\..\..\temp\cmr\ta_WILLR.obj \
+		..\..\..\..\..\temp\cmr\ta_HT_DCPERIOD.obj \
+		..\..\..\..\..\temp\cmr\ta_HT_DCPHASE.obj \
+		..\..\..\..\..\temp\cmr\ta_HT_PHASOR.obj \
+		..\..\..\..\..\temp\cmr\ta_HT_SINE.obj \
+		..\..\..\..\..\temp\cmr\ta_HT_TRENDMODE.obj \
 		..\..\..\..\..\temp\cmr\ta_AD.obj \
 		..\..\..\..\..\temp\cmr\ta_ADOSC.obj \
 		..\..\..\..\..\temp\cmr\ta_OBV.obj \
@@ -434,6 +448,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_BBANDS.obj \
 +..\..\..\..\..\temp\cmr\ta_DEMA.obj \
 +..\..\..\..\..\temp\cmr\ta_EMA.obj \
++..\..\..\..\..\temp\cmr\ta_HT_TRENDLINE.obj \
 +..\..\..\..\..\temp\cmr\ta_KAMA.obj \
 +..\..\..\..\..\temp\cmr\ta_MA.obj \
 +..\..\..\..\..\temp\cmr\ta_MAMA.obj \
@@ -441,6 +456,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_MIDPOINT.obj \
 +..\..\..\..\..\temp\cmr\ta_SAR.obj \
 +..\..\..\..\..\temp\cmr\ta_SMA.obj \
++..\..\..\..\..\temp\cmr\ta_T3.obj \
 +..\..\..\..\..\temp\cmr\ta_TEMA.obj \
 +..\..\..\..\..\temp\cmr\ta_TRIMA.obj \
 +..\..\..\..\..\temp\cmr\ta_WMA.obj \
@@ -472,6 +488,11 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_STOCHF.obj \
 +..\..\..\..\..\temp\cmr\ta_TRIX.obj \
 +..\..\..\..\..\temp\cmr\ta_WILLR.obj \
++..\..\..\..\..\temp\cmr\ta_HT_DCPERIOD.obj \
++..\..\..\..\..\temp\cmr\ta_HT_DCPHASE.obj \
++..\..\..\..\..\temp\cmr\ta_HT_PHASOR.obj \
++..\..\..\..\..\temp\cmr\ta_HT_SINE.obj \
++..\..\..\..\..\temp\cmr\ta_HT_TRENDMODE.obj \
 +..\..\..\..\..\temp\cmr\ta_AD.obj \
 +..\..\..\..\..\temp\cmr\ta_ADOSC.obj \
 +..\..\..\..\..\temp\cmr\ta_OBV.obj \
@@ -594,6 +615,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_BBANDS.obj
 	-del ..\..\..\..\..\temp\cmr\ta_DEMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_EMA.obj
+	-del ..\..\..\..\..\temp\cmr\ta_HT_TRENDLINE.obj
 	-del ..\..\..\..\..\temp\cmr\ta_KAMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_MAMA.obj
@@ -601,6 +623,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_MIDPOINT.obj
 	-del ..\..\..\..\..\temp\cmr\ta_SAR.obj
 	-del ..\..\..\..\..\temp\cmr\ta_SMA.obj
+	-del ..\..\..\..\..\temp\cmr\ta_T3.obj
 	-del ..\..\..\..\..\temp\cmr\ta_TEMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_TRIMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_WMA.obj
@@ -632,6 +655,11 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_STOCHF.obj
 	-del ..\..\..\..\..\temp\cmr\ta_TRIX.obj
 	-del ..\..\..\..\..\temp\cmr\ta_WILLR.obj
+	-del ..\..\..\..\..\temp\cmr\ta_HT_DCPERIOD.obj
+	-del ..\..\..\..\..\temp\cmr\ta_HT_DCPHASE.obj
+	-del ..\..\..\..\..\temp\cmr\ta_HT_PHASOR.obj
+	-del ..\..\..\..\..\temp\cmr\ta_HT_SINE.obj
+	-del ..\..\..\..\..\temp\cmr\ta_HT_TRENDMODE.obj
 	-del ..\..\..\..\..\temp\cmr\ta_AD.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ADOSC.obj
 	-del ..\..\..\..\..\temp\cmr\ta_OBV.obj
@@ -938,6 +966,9 @@ clean:
 ..\..\..\..\..\temp\cmr\ta_EMA.obj: ..\..\..\..\..\src\ta_func\ta_EMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_EMA.obj ..\..\..\..\..\src\ta_func\ta_EMA.c
 
+..\..\..\..\..\temp\cmr\ta_HT_TRENDLINE.obj: ..\..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_HT_TRENDLINE.obj ..\..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c
+
 ..\..\..\..\..\temp\cmr\ta_KAMA.obj: ..\..\..\..\..\src\ta_func\ta_KAMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_KAMA.obj ..\..\..\..\..\src\ta_func\ta_KAMA.c
 
@@ -958,6 +989,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_SMA.obj: ..\..\..\..\..\src\ta_func\ta_SMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_SMA.obj ..\..\..\..\..\src\ta_func\ta_SMA.c
+
+..\..\..\..\..\temp\cmr\ta_T3.obj: ..\..\..\..\..\src\ta_func\ta_T3.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_T3.obj ..\..\..\..\..\src\ta_func\ta_T3.c
 
 ..\..\..\..\..\temp\cmr\ta_TEMA.obj: ..\..\..\..\..\src\ta_func\ta_TEMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_TEMA.obj ..\..\..\..\..\src\ta_func\ta_TEMA.c
@@ -1051,6 +1085,21 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_WILLR.obj: ..\..\..\..\..\src\ta_func\ta_WILLR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_WILLR.obj ..\..\..\..\..\src\ta_func\ta_WILLR.c
+
+..\..\..\..\..\temp\cmr\ta_HT_DCPERIOD.obj: ..\..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_HT_DCPERIOD.obj ..\..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c
+
+..\..\..\..\..\temp\cmr\ta_HT_DCPHASE.obj: ..\..\..\..\..\src\ta_func\ta_HT_DCPHASE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_HT_DCPHASE.obj ..\..\..\..\..\src\ta_func\ta_HT_DCPHASE.c
+
+..\..\..\..\..\temp\cmr\ta_HT_PHASOR.obj: ..\..\..\..\..\src\ta_func\ta_HT_PHASOR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_HT_PHASOR.obj ..\..\..\..\..\src\ta_func\ta_HT_PHASOR.c
+
+..\..\..\..\..\temp\cmr\ta_HT_SINE.obj: ..\..\..\..\..\src\ta_func\ta_HT_SINE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_HT_SINE.obj ..\..\..\..\..\src\ta_func\ta_HT_SINE.c
+
+..\..\..\..\..\temp\cmr\ta_HT_TRENDMODE.obj: ..\..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_HT_TRENDMODE.obj ..\..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c
 
 ..\..\..\..\..\temp\cmr\ta_AD.obj: ..\..\..\..\..\src\ta_func\ta_AD.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_AD.obj ..\..\..\..\..\src\ta_func\ta_AD.c

@@ -30,6 +30,8 @@ RES_FILE =
 
 HEADERS =	
 SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
+		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_1out.c \
+		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_2out.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_ascii.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_internals.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_adx.c \
@@ -54,6 +56,8 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_util.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 OBJECTS =	..\..\..\..\..\temp\cmr\ta_regtest.obj \
+		..\..\..\..\..\temp\cmr\test_1in_1out.obj \
+		..\..\..\..\..\temp\cmr\test_1in_2out.obj \
 		..\..\..\..\..\temp\cmr\test_ascii.obj \
 		..\..\..\..\..\temp\cmr\test_internals.obj \
 		..\..\..\..\..\temp\cmr\test_adx.obj \
@@ -123,6 +127,8 @@ dist:
 
 clean:
 	-del ..\..\..\..\..\temp\cmr\ta_regtest.obj
+	-del ..\..\..\..\..\temp\cmr\test_1in_1out.obj
+	-del ..\..\..\..\..\temp\cmr\test_1in_2out.obj
 	-del ..\..\..\..\..\temp\cmr\test_ascii.obj
 	-del ..\..\..\..\..\temp\cmr\test_internals.obj
 	-del ..\..\..\..\..\temp\cmr\test_adx.obj
@@ -165,6 +171,12 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_regtest.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_regtest.obj ..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c
+
+..\..\..\..\..\temp\cmr\test_1in_1out.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_1out.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\test_1in_1out.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_1out.c
+
+..\..\..\..\..\temp\cmr\test_1in_2out.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_2out.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\test_1in_2out.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_2out.c
 
 ..\..\..\..\..\temp\cmr\test_ascii.obj: ..\..\..\..\..\src\tools\ta_regtest\test_ascii.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\test_ascii.obj ..\..\..\..\..\src\tools\ta_regtest\test_ascii.c

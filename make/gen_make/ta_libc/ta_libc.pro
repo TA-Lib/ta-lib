@@ -114,6 +114,7 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_BBANDS.c \
           ../../../../../src/ta_func/ta_DEMA.c \
           ../../../../../src/ta_func/ta_EMA.c \
+          ../../../../../src/ta_func/ta_HT_TRENDLINE.c \
           ../../../../../src/ta_func/ta_KAMA.c \
           ../../../../../src/ta_func/ta_MA.c \
           ../../../../../src/ta_func/ta_MAMA.c \
@@ -121,6 +122,7 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_MIDPOINT.c \
           ../../../../../src/ta_func/ta_SAR.c \
           ../../../../../src/ta_func/ta_SMA.c \
+          ../../../../../src/ta_func/ta_T3.c \
           ../../../../../src/ta_func/ta_TEMA.c \
           ../../../../../src/ta_func/ta_TRIMA.c \
           ../../../../../src/ta_func/ta_WMA.c \
@@ -152,6 +154,11 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_STOCHF.c \
           ../../../../../src/ta_func/ta_TRIX.c \
           ../../../../../src/ta_func/ta_WILLR.c \
+          ../../../../../src/ta_func/ta_HT_DCPERIOD.c \
+          ../../../../../src/ta_func/ta_HT_DCPHASE.c \
+          ../../../../../src/ta_func/ta_HT_PHASOR.c \
+          ../../../../../src/ta_func/ta_HT_SINE.c \
+          ../../../../../src/ta_func/ta_HT_TRENDMODE.c \
           ../../../../../src/ta_func/ta_AD.c \
           ../../../../../src/ta_func/ta_ADOSC.c \
           ../../../../../src/ta_func/ta_OBV.c \

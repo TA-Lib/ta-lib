@@ -29,6 +29,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_BBANDS.c \
 		../../../../../src/ta_func/ta_DEMA.c \
 		../../../../../src/ta_func/ta_EMA.c \
+		../../../../../src/ta_func/ta_HT_TRENDLINE.c \
 		../../../../../src/ta_func/ta_KAMA.c \
 		../../../../../src/ta_func/ta_MA.c \
 		../../../../../src/ta_func/ta_MAMA.c \
@@ -36,6 +37,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_MIDPOINT.c \
 		../../../../../src/ta_func/ta_SAR.c \
 		../../../../../src/ta_func/ta_SMA.c \
+		../../../../../src/ta_func/ta_T3.c \
 		../../../../../src/ta_func/ta_TEMA.c \
 		../../../../../src/ta_func/ta_TRIMA.c \
 		../../../../../src/ta_func/ta_WMA.c \
@@ -67,6 +69,11 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_STOCHF.c \
 		../../../../../src/ta_func/ta_TRIX.c \
 		../../../../../src/ta_func/ta_WILLR.c \
+		../../../../../src/ta_func/ta_HT_DCPERIOD.c \
+		../../../../../src/ta_func/ta_HT_DCPHASE.c \
+		../../../../../src/ta_func/ta_HT_PHASOR.c \
+		../../../../../src/ta_func/ta_HT_SINE.c \
+		../../../../../src/ta_func/ta_HT_TRENDMODE.c \
 		../../../../../src/ta_func/ta_AD.c \
 		../../../../../src/ta_func/ta_ADOSC.c \
 		../../../../../src/ta_func/ta_OBV.c \
@@ -82,6 +89,7 @@ OBJECTS =	../../../../../temp/csd/ta_utility.o \
 		../../../../../temp/csd/ta_BBANDS.o \
 		../../../../../temp/csd/ta_DEMA.o \
 		../../../../../temp/csd/ta_EMA.o \
+		../../../../../temp/csd/ta_HT_TRENDLINE.o \
 		../../../../../temp/csd/ta_KAMA.o \
 		../../../../../temp/csd/ta_MA.o \
 		../../../../../temp/csd/ta_MAMA.o \
@@ -89,6 +97,7 @@ OBJECTS =	../../../../../temp/csd/ta_utility.o \
 		../../../../../temp/csd/ta_MIDPOINT.o \
 		../../../../../temp/csd/ta_SAR.o \
 		../../../../../temp/csd/ta_SMA.o \
+		../../../../../temp/csd/ta_T3.o \
 		../../../../../temp/csd/ta_TEMA.o \
 		../../../../../temp/csd/ta_TRIMA.o \
 		../../../../../temp/csd/ta_WMA.o \
@@ -120,6 +129,11 @@ OBJECTS =	../../../../../temp/csd/ta_utility.o \
 		../../../../../temp/csd/ta_STOCHF.o \
 		../../../../../temp/csd/ta_TRIX.o \
 		../../../../../temp/csd/ta_WILLR.o \
+		../../../../../temp/csd/ta_HT_DCPERIOD.o \
+		../../../../../temp/csd/ta_HT_DCPHASE.o \
+		../../../../../temp/csd/ta_HT_PHASOR.o \
+		../../../../../temp/csd/ta_HT_SINE.o \
+		../../../../../temp/csd/ta_HT_TRENDMODE.o \
 		../../../../../temp/csd/ta_AD.o \
 		../../../../../temp/csd/ta_ADOSC.o \
 		../../../../../temp/csd/ta_OBV.o \
@@ -200,6 +214,9 @@ clean:
 ../../../../../temp/csd/ta_EMA.o: ../../../../../src/ta_func/ta_EMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_EMA.o ../../../../../src/ta_func/ta_EMA.c
 
+../../../../../temp/csd/ta_HT_TRENDLINE.o: ../../../../../src/ta_func/ta_HT_TRENDLINE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_HT_TRENDLINE.o ../../../../../src/ta_func/ta_HT_TRENDLINE.c
+
 ../../../../../temp/csd/ta_KAMA.o: ../../../../../src/ta_func/ta_KAMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_KAMA.o ../../../../../src/ta_func/ta_KAMA.c
 
@@ -220,6 +237,9 @@ clean:
 
 ../../../../../temp/csd/ta_SMA.o: ../../../../../src/ta_func/ta_SMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_SMA.o ../../../../../src/ta_func/ta_SMA.c
+
+../../../../../temp/csd/ta_T3.o: ../../../../../src/ta_func/ta_T3.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_T3.o ../../../../../src/ta_func/ta_T3.c
 
 ../../../../../temp/csd/ta_TEMA.o: ../../../../../src/ta_func/ta_TEMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_TEMA.o ../../../../../src/ta_func/ta_TEMA.c
@@ -313,6 +333,21 @@ clean:
 
 ../../../../../temp/csd/ta_WILLR.o: ../../../../../src/ta_func/ta_WILLR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_WILLR.o ../../../../../src/ta_func/ta_WILLR.c
+
+../../../../../temp/csd/ta_HT_DCPERIOD.o: ../../../../../src/ta_func/ta_HT_DCPERIOD.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_HT_DCPERIOD.o ../../../../../src/ta_func/ta_HT_DCPERIOD.c
+
+../../../../../temp/csd/ta_HT_DCPHASE.o: ../../../../../src/ta_func/ta_HT_DCPHASE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_HT_DCPHASE.o ../../../../../src/ta_func/ta_HT_DCPHASE.c
+
+../../../../../temp/csd/ta_HT_PHASOR.o: ../../../../../src/ta_func/ta_HT_PHASOR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_HT_PHASOR.o ../../../../../src/ta_func/ta_HT_PHASOR.c
+
+../../../../../temp/csd/ta_HT_SINE.o: ../../../../../src/ta_func/ta_HT_SINE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_HT_SINE.o ../../../../../src/ta_func/ta_HT_SINE.c
+
+../../../../../temp/csd/ta_HT_TRENDMODE.o: ../../../../../src/ta_func/ta_HT_TRENDMODE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_HT_TRENDMODE.o ../../../../../src/ta_func/ta_HT_TRENDMODE.c
 
 ../../../../../temp/csd/ta_AD.o: ../../../../../src/ta_func/ta_AD.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_AD.o ../../../../../src/ta_func/ta_AD.c
