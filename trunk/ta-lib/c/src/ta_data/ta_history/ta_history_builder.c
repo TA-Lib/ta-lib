@@ -137,12 +137,13 @@ static void trimAfterEnd( const TA_Timestamp *end, TA_Period period, TA_History 
 /* None */
 
 /**** Global functions definitions.   ****/
-TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
-                              TA_UDB_Symbol       *symbolData,
+TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
+                              TA_UDB_Symbol *symbolData,
                               TA_Period            period,
                               const TA_Timestamp  *start,
                               const TA_Timestamp  *end,
                               TA_Field             fieldToAlloc,
+                              TA_HistoryFlag       flags, 
                               TA_History         **history )
 {
    TA_PROLOG
@@ -154,6 +155,7 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
    TA_BuilderSupport *builderSupport;
    unsigned int nbDataSource;
    unsigned int driverIndex;
+   int i;
    const TA_DataSourceDriver *driver;
    TA_HistoryHiddenData *historyHiddenData;
    TA_Timestamp startLocal, endLocal;
@@ -169,25 +171,28 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
 
    listDriverHandle = &symbolData->listDriverHandle;
 
-   /* From now, use a copy of end/start since we might modify it. */
+   /* Use a copy of end/start since we might modify it. */
    if( start )
    {
       retCode = TA_TimestampCopy( &startLocal, start );
       TA_ASSERT( retCode == TA_SUCCESS );
-      start = &startLocal;
    }
 
    if( end )
    {
       retCode = TA_TimestampCopy( &endLocal, end );
       TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
-      end = &endLocal;
    }
 
    /* Adjust start/end to the upper/lower limit of the requested period. 
-    * As an example, if someone ask monthly data, the day and time component
+    * As an example, if caller wants monthly data, the day and time component
     * of the date is adjusted to the begining and end of the month for
     * respectively the start and end variables.
+    *
+    * When the user request "complete price bar", add a price bar before
+    * and after the requested period. Later, the first/last price bar
+    * will be considered completed if at least one price bar preceed or follow
+    * the requested date range.
     */
    if( start )
    {
@@ -195,6 +200,12 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
       {
       case TA_DAILY:
          retCode = TA_SetTime( 0, 0, 0, &startLocal );
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         break;
+      case TA_WEEKLY:
+         retCode = TA_SetTime( 0, 0, 0, &startLocal );
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         retCode = TA_BackToDayOfWeek(&startLocal,TA_MONDAY);
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          break;
       case TA_MONTHLY:
@@ -219,6 +230,15 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
          /* Do nothing */
          break;
       }
+
+      if( !(flags & TA_ALLOW_INCOMPLETE_PRICE_BARS) )
+      {
+         for( i=0; i < 6; i++ )
+         {
+            retCode = TA_PrevWeekday( &startLocal );
+            TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         }
+      }
    }
 
    if( end )
@@ -227,6 +247,13 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
       {
       case TA_DAILY:
          retCode = TA_SetTime( 23, 59, 59, &endLocal );
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         break;
+
+      case TA_WEEKLY:
+         retCode = TA_SetTime( 23, 59, 59, &endLocal );
+         TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         retCode = TA_JumpToDayOfWeek(&endLocal,TA_SUNDAY);
          TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
          break;
       case TA_MONTHLY:
@@ -250,6 +277,15 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
       default:
          /* Do nothing */
          break;
+      }
+
+      if( !(flags & TA_ALLOW_INCOMPLETE_PRICE_BARS) )
+      {
+         for( i=0; i < 6; i++ )
+         {
+            retCode = TA_NextWeekday( &endLocal );
+            TA_ASSERT_DEBUG( retCode == TA_SUCCESS );
+         }
       }
    }
 
@@ -299,8 +335,8 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
       supportForDataSource->categoryHandle = driverHandles->categoryHandle;
       supportForDataSource->symbolHandle   = &driverHandles->symbolHandle;
       supportForDataSource->period         = period;
-      supportForDataSource->start          = start;
-      supportForDataSource->end            = end;
+      supportForDataSource->start          = start?&startLocal:NULL;
+      supportForDataSource->end            = end?&endLocal:NULL;
       supportForDataSource->fieldToAlloc   = fieldToAlloc;
       
       driverIndex = driverHandles->addDataSourceParamPriv->id;
@@ -418,12 +454,13 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv       *privUDB,
       }
    }
 
-   /* Until the library is very stable, we will make a double check
-    * of the integrity of the "almost final" TA_History.
+   /* Check of the integrity of the "almost final" TA_History. 
+    * Verify expected consistency like low <= high, dates are 
+    * ascending, open >= low etc...
     */
-   retCode = TA_HistoryCheckInternal( period, start, end,
-                                      fieldToAlloc, *history,
-                                      NULL, NULL );
+   retCode = TA_HistoryCheck( period, start, end,
+                              fieldToAlloc, *history,
+                              NULL, NULL );
    if( retCode != TA_SUCCESS )
    {
       TA_HistoryFree( *history );
@@ -1334,11 +1371,6 @@ static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
    TA_List *listOfSupportForDataSource;
    TA_SupportForDataSource *curSupportForDataSource;
 
-   /* Variable used when changing the period. */
-   TA_Real    *open, *high, *low, *close;
-   TA_Integer *volume, *openInterest, nbBars;
-   TA_Timestamp *timestamp;
-
    TA_TRACE_BEGIN( allocHistory );
 
    TA_ASSERT( builderSupport != NULL );
@@ -1414,11 +1446,8 @@ static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
 
    if( (*history)->period != period )
    {
-      retCode = TA_PeriodTransform( *history,
-                                    period,
-                                    &nbBars, &timestamp,
-                                    &open, &high, &low, &close,
-                                    &volume, &openInterest );
+      retCode = TA_PeriodTransform( *history, period, 0, NULL, NULL, NULL,
+                                    NULL,NULL,NULL,NULL,NULL );
 
       if( retCode != TA_SUCCESS )
       {
@@ -1426,28 +1455,6 @@ static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
          *history = NULL;
          TA_TRACE_RETURN( retCode );
       }
-
-      /* Success. Free the original data. */
-      FREE_IF_NOT_NULL( (*history)->open );
-      FREE_IF_NOT_NULL( (*history)->high );
-      FREE_IF_NOT_NULL( (*history)->low );
-      FREE_IF_NOT_NULL( (*history)->close );
-      FREE_IF_NOT_NULL( (*history)->volume );
-      FREE_IF_NOT_NULL( (*history)->openInterest );
-      FREE_IF_NOT_NULL( (*history)->timestamp );
-
-      /* Replace what was the original data with the new one. */
-      (*history)->open         = open;
-      (*history)->high         = high;
-      (*history)->low          = low;
-      (*history)->close        = close;
-      (*history)->volume       = volume;
-      (*history)->openInterest = openInterest;
-      (*history)->timestamp    = timestamp;
-      (*history)->nbBars       = nbBars;
-
-      /* Finally, reflect the new period. */
-      (*history)->period = period;
    }
 
    TA_TRACE_RETURN( TA_SUCCESS );
