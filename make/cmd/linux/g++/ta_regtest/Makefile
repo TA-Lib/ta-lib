@@ -39,6 +39,7 @@ SOURCES =	../../../../../src/tools/ta_regtest/ta_regtest.c \
 		../../../../../src/tools/ta_regtest/test_pm.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_po.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_rsi.c \
+		../../../../../src/tools/ta_regtest/ta_test_func/test_sar.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_stddev.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_stoch.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_trange.c \
@@ -59,6 +60,7 @@ OBJECTS =	../../../../../temp/cmd/ta_regtest.o \
 		../../../../../temp/cmd/test_pm.o \
 		../../../../../temp/cmd/test_po.o \
 		../../../../../temp/cmd/test_rsi.o \
+		../../../../../temp/cmd/test_sar.o \
 		../../../../../temp/cmd/test_stddev.o \
 		../../../../../temp/cmd/test_stoch.o \
 		../../../../../temp/cmd/test_trange.o \
@@ -158,6 +160,9 @@ clean:
 
 ../../../../../temp/cmd/test_rsi.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_rsi.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/test_rsi.o ../../../../../src/tools/ta_regtest/ta_test_func/test_rsi.c
+
+../../../../../temp/cmd/test_sar.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_sar.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/test_sar.o ../../../../../src/tools/ta_regtest/ta_test_func/test_sar.c
 
 ../../../../../temp/cmd/test_stddev.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_stddev.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/test_stddev.o ../../../../../src/tools/ta_regtest/ta_test_func/test_stddev.c
