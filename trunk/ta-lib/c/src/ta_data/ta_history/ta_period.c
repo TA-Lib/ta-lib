@@ -214,11 +214,11 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
    switch( history->period )
    {
    case TA_1MIN:
-   case TA_5MIN:
-   case TA_10MIN:
-   case TA_15MIN:
-   case TA_30MIN:
-   case TA_HOURLY:
+   case TA_5MINS:
+   case TA_10MINS:
+   case TA_15MINS:
+   case TA_30MINS:
+   case TA_1HOUR:
       switch( newPeriod )
       {
       case TA_DAILY:
@@ -229,11 +229,11 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
          transformToDailyAndMore = 1;
          break;
       case TA_1MIN:
-      case TA_5MIN:
-      case TA_10MIN:
-      case TA_15MIN:
-      case TA_30MIN:
-      case TA_HOURLY:
+      case TA_5MINS:
+      case TA_10MINS:
+      case TA_15MINS:
+      case TA_30MINS:
+      case TA_1HOUR:
          if( newPeriod <= history->period )
          {
             TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );

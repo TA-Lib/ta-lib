@@ -267,8 +267,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
          break;
       }   
 
-      retCode = TA_WebPageAllocFromYahooName(
-                                              &localDecodingParam,
+      retCode = TA_WebPageAllocFromYahooName( &localDecodingParam,
                                               TA_StringToChar(yahooName),
                                               &webPage );
            

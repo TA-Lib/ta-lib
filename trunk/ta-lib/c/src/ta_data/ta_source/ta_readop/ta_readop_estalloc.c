@@ -117,7 +117,7 @@ TA_RetCode TA_EstimateAllocInit( const TA_Timestamp *start,
          TA_TimestampDeltaYear( start, end, &nbElement );
          break;
       default:
-         if( (period >= TA_1SEC) && (period <= TA_HOURLY) )
+         if( (period >= TA_1SEC) && (period <= TA_1HOUR) )
          {
             /* Estimate the number of day */
             if( (TA_GetDay  (start) != TA_GetDay  (end)) ||

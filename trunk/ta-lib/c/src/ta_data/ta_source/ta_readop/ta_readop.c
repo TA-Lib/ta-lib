@@ -452,11 +452,11 @@ TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
          errorOccurred = 1;
          break;
       case TA_HOUR_IDX:
-         if( (intraDayIncPeriod < TA_HOURLY) || (intraDayIncPeriod >= TA_DAILY) )
+         if( (intraDayIncPeriod < TA_1HOUR) || (intraDayIncPeriod >= TA_DAILY) )
             errorOccurred = 1;
          break;
       case TA_MIN_IDX:
-         if( (intraDayIncPeriod < TA_1MIN) || (intraDayIncPeriod >= TA_HOURLY) )
+         if( (intraDayIncPeriod < TA_1MIN) || (intraDayIncPeriod >= TA_1HOUR) )
             errorOccurred = 1;
          break;
       case TA_SEC_IDX:
@@ -490,7 +490,7 @@ TA_RetCode TA_ReadOpInfoAlloc( const char *sourceInfo,
          period = TA_DAILY;
          break;
       case TA_HOUR_IDX:
-         period = TA_HOURLY;
+         period = TA_1HOUR;
          break;
       case TA_MIN_IDX:
          period = TA_1MIN;

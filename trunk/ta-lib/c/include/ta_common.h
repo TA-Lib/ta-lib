@@ -90,19 +90,44 @@ typedef enum
   /* The history can have a precision of up to 1
    * second per bar.
    */
-  TA_1SEC    = 1,
-  TA_1MIN    = 60,
-  TA_5MIN    = 300,
-  TA_10MIN   = 600,
-  TA_15MIN   = 900,
-  TA_30MIN   = 1800,
-  TA_HOURLY  = 3600,
+  TA_1SEC   = 1,
+  TA_2SECS  = 2*TA_1SEC,
+  TA_3SECS  = 3*TA_1SEC,
+  TA_4SECS  = 4*TA_1SEC,
+  TA_5SECS  = 5*TA_1SEC,
+  TA_6SECS  = 6*TA_1SEC,
+  TA_10SECS = 10*TA_1SEC,
+  TA_12SECS = 12*TA_1SEC,
+  TA_15SECS = 15*TA_1SEC,
+  TA_20SECS = 20*TA_1SEC,
+  TA_30SECS = 30*TA_1SEC,
+
+  TA_1MIN   = 60*TA_1SEC,
+  TA_2MINS  = 2*TA_1MIN,
+  TA_3MINS  = 3*TA_1MIN,
+  TA_4MINS  = 4*TA_1MIN,
+  TA_5MINS  = 5*TA_1MIN,
+  TA_6MINS  = 6*TA_1MIN,
+  TA_10MINS = 10*TA_1MIN,
+  TA_12MINS = 12*TA_1MIN,
+  TA_15MINS = 15*TA_1MIN,
+  TA_20MINS = 20*TA_1MIN,
+  TA_30MINS = 30*TA_1MIN,
+    
+  TA_1HOUR   = 60*TA_1MIN,
+  TA_2HOURS  = 2*TA_1HOUR,
+  TA_3HOURS  = 3*TA_1HOUR,
+  TA_4HOURS  = 4*TA_1HOUR,
+  TA_6HOURS  = 6*TA_1HOUR,
+  TA_8HOURS  = 8*TA_1HOUR,
+  TA_12HOURS = 12*TA_1HOUR,
 
   TA_DAILY      = 32700,
   TA_WEEKLY     = 32710,
   TA_MONTHLY    = 32720,
   TA_QUARTERLY  = 32730,
   TA_YEARLY     = 32740
+
 } TA_Period;
 
 typedef struct
