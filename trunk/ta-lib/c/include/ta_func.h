@@ -286,26 +286,32 @@ int TA_MA_Lookback( TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX
 /*
  * TA_SAR - Parabolic SAR
  * 
- * Input  = TA_Real
+ * Input  = High, Low
  * Output = TA_Real
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod_0:(From 1 to TA_INTEGER_MAX)
- *    Number of period
+ * optInAcceleration_0:(From TA_REAL_MIN to TA_REAL_MAX)
+ *    Acceleration Factor used up to the Maximum parameter
+ * 
+ * optInMaximum_1:(From TA_REAL_MIN to TA_REAL_MAX)
+ *    Maximum value for the acceleration factor
  * 
  * 
  */
 TA_RetCode TA_SAR( TA_Libc      *libHandle,
                    TA_Integer    startIdx,
                    TA_Integer    endIdx,
-                   const TA_Real inReal_0[],
-                   TA_Integer    optInTimePeriod_0, /* From 1 to TA_INTEGER_MAX */
+                   const TA_Real inHigh_0[],
+                   const TA_Real inLow_0[],
+                   TA_Real       optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
+                   TA_Real       optInMaximum_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                    TA_Integer   *outBegIdx,
                    TA_Integer   *outNbElement,
                    TA_Real       outReal_0[] );
 
-int TA_SAR_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 1 to TA_INTEGER_MAX */
+int TA_SAR_Lookback( TA_Real       optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
+                     TA_Real       optInMaximum_1 );  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 
 /*
