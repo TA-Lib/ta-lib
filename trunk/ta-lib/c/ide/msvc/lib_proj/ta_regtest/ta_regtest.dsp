@@ -186,6 +186,14 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_regtest.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_1out.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_2out.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_adx.c
 # End Source File
 # Begin Source File

@@ -280,6 +280,30 @@ SOURCE=..\..\..\..\src\ta_func\ta_EMA.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_HT_DCPHASE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_HT_PHASOR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_HT_SINE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_KAMA.c
 # End Source File
 # Begin Source File
@@ -393,6 +417,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_STOCH.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_STOCHF.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_T3.c
 # End Source File
 # Begin Source File
 

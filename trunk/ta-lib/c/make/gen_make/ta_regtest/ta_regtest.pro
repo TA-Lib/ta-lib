@@ -17,6 +17,8 @@ DESTDIR     = ../../../../../bin
 
 # Files to process
 SOURCES	= ../../../../../src/tools/ta_regtest/ta_regtest.c \
+          ../../../../../src/tools/ta_regtest/ta_test_func/test_1in_1out.c \
+          ../../../../../src/tools/ta_regtest/ta_test_func/test_1in_2out.c \
           ../../../../../src/tools/ta_regtest/test_ascii.c \
           ../../../../../src/tools/ta_regtest/test_internals.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_adx.c \

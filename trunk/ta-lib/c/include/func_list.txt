@@ -1,52 +1,59 @@
-MAX         Highest value over a specified period
-MIN         Lowest value over a specified period
-BBANDS      Bollinger Bands
-DEMA        Double Exponential Moving Average
-EMA         Exponential Moving Average
-KAMA        Kaufman Adaptive Moving Average
-MA          All Moving Average
-MAMA        MESA Adaptive Moving Average
-MIDPRICE    Midpoint Price over period
-MIDPOINT    MidPoint over period
-SAR         Parabolic SAR
-SMA         Simple Moving Average
-TEMA        Triple Exponential Moving Average
-TRIMA       Triangular Moving Average
-WMA         Weighted Moving Average
-ATR         Average True Range
-TRANGE      True Range
-ADX         Average Directional Movement Index
-ADXR        Average Directional Movement Index Rating
-APO         Absolute Price Oscillator
-AROON       Aroon
-AROONOSC    Aroon Oscillator
-CCI         Commodity Channel Index
-DX          Directional Movement Index
-MACD        Moving Average Convergence/Divergence
-MACDEXT     MACD with controllable MA type
-MACDFIX     Moving Average Convergence/Divergence Fix 12/26
-MFI         Money Flow Index
-MINUS_DI    Minus Directional Indicator
-MINUS_DM    Minus Directional Movement
-MOM         Momentum
-PPO         Percentage Price Oscillator
-PLUS_DI     Plus Directional Indicator
-PLUS_DM     Plus Directional Movement
-ROC         Rate of change : ((price/prevPrice)-1)*100
-ROCP        Rate of change Percentage: (price-prevPrice)/prevPrice
-ROCR        Rate of change ratio: (price/prevPrice)
-ROCR100     Rate of change ratio 100 scale: (price/prevPrice)*100
-RSI         Relative Strength Index
-STOCH       Stochastic
-STOCHF      Stochastic Fast
-TRIX        1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
-WILLR       Williams' %R
-AD          Chaikin A/D Line
-ADOSC       Chaikin A/D Oscillator
-OBV         On Balance Volume
-STDDEV      Standard Deviation
-VAR         Variance
-AVGPRICE    Average Price
-MEDPRICE    Median Price
-TYPPRICE    Typical Price
-WCLPRICE    Weighted Close Price
+MAX                 Highest value over a specified period
+MIN                 Lowest value over a specified period
+BBANDS              Bollinger Bands
+DEMA                Double Exponential Moving Average
+EMA                 Exponential Moving Average
+HT_TRENDLINE        Hilbert Transform - Instantaneous Trendline
+KAMA                Kaufman Adaptive Moving Average
+MA                  All Moving Average
+MAMA                MESA Adaptive Moving Average
+MIDPRICE            Midpoint Price over period
+MIDPOINT            MidPoint over period
+SAR                 Parabolic SAR
+SMA                 Simple Moving Average
+T3                  Triple Exponential Moving Average (T3)
+TEMA                Triple Exponential Moving Average
+TRIMA               Triangular Moving Average
+WMA                 Weighted Moving Average
+ATR                 Average True Range
+TRANGE              True Range
+ADX                 Average Directional Movement Index
+ADXR                Average Directional Movement Index Rating
+APO                 Absolute Price Oscillator
+AROON               Aroon
+AROONOSC            Aroon Oscillator
+CCI                 Commodity Channel Index
+DX                  Directional Movement Index
+MACD                Moving Average Convergence/Divergence
+MACDEXT             MACD with controllable MA type
+MACDFIX             Moving Average Convergence/Divergence Fix 12/26
+MFI                 Money Flow Index
+MINUS_DI            Minus Directional Indicator
+MINUS_DM            Minus Directional Movement
+MOM                 Momentum
+PPO                 Percentage Price Oscillator
+PLUS_DI             Plus Directional Indicator
+PLUS_DM             Plus Directional Movement
+ROC                 Rate of change : ((price/prevPrice)-1)*100
+ROCP                Rate of change Percentage: (price-prevPrice)/prevPrice
+ROCR                Rate of change ratio: (price/prevPrice)
+ROCR100             Rate of change ratio 100 scale: (price/prevPrice)*100
+RSI                 Relative Strength Index
+STOCH               Stochastic
+STOCHF              Stochastic Fast
+TRIX                1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
+WILLR               Williams' %R
+HT_DCPERIOD         Hilbert Transform - Dominant Cycle Period
+HT_DCPHASE          Hilbert Transform - Dominant Cycle Phase
+HT_PHASOR           Hilbert Transform - Phasor Components
+HT_SINE             Hilbert Transform - SineWave
+HT_TRENDMODE        Hilbert Transform - Trend vs Cycle Mode
+AD                  Chaikin A/D Line
+ADOSC               Chaikin A/D Oscillator
+OBV                 On Balance Volume
+STDDEV              Standard Deviation
+VAR                 Variance
+AVGPRICE            Average Price
+MEDPRICE            Median Price
+TYPPRICE            Typical Price
+WCLPRICE            Weighted Close Price

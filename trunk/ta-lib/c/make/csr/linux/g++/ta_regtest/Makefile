@@ -25,6 +25,8 @@ GZIP	=	gzip -9f
 
 HEADERS =	
 SOURCES =	../../../../../src/tools/ta_regtest/ta_regtest.c \
+		../../../../../src/tools/ta_regtest/ta_test_func/test_1in_1out.c \
+		../../../../../src/tools/ta_regtest/ta_test_func/test_1in_2out.c \
 		../../../../../src/tools/ta_regtest/test_ascii.c \
 		../../../../../src/tools/ta_regtest/test_internals.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_adx.c \
@@ -49,6 +51,8 @@ SOURCES =	../../../../../src/tools/ta_regtest/ta_regtest.c \
 		../../../../../src/tools/ta_regtest/test_util.c \
 		../../../../../src/tools/ta_regtest/test_yahoo.c
 OBJECTS =	../../../../../temp/csr/ta_regtest.o \
+		../../../../../temp/csr/test_1in_1out.o \
+		../../../../../temp/csr/test_1in_2out.o \
 		../../../../../temp/csr/test_ascii.o \
 		../../../../../temp/csr/test_internals.o \
 		../../../../../temp/csr/test_adx.o \
@@ -124,6 +128,12 @@ clean:
 
 ../../../../../temp/csr/ta_regtest.o: ../../../../../src/tools/ta_regtest/ta_regtest.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_regtest.o ../../../../../src/tools/ta_regtest/ta_regtest.c
+
+../../../../../temp/csr/test_1in_1out.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_1in_1out.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/test_1in_1out.o ../../../../../src/tools/ta_regtest/ta_test_func/test_1in_1out.c
+
+../../../../../temp/csr/test_1in_2out.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_1in_2out.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/test_1in_2out.o ../../../../../src/tools/ta_regtest/ta_test_func/test_1in_2out.c
 
 ../../../../../temp/csr/test_ascii.o: ../../../../../src/tools/ta_regtest/test_ascii.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/test_ascii.o ../../../../../src/tools/ta_regtest/test_ascii.c

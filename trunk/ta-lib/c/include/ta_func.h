@@ -57,7 +57,8 @@ typedef enum
    TA_MAType_TEMA      =4,
    TA_MAType_TRIMA     =5,
    TA_MAType_KAMA      =6,
-   TA_MAType_MAMA      =7
+   TA_MAType_MAMA      =7,
+   TA_MAType_T3        =8
 } TA_MAType;
 
 
@@ -205,6 +206,23 @@ TA_RetCode TA_EMA( TA_Integer    startIdx,
                    TA_Real       outReal_0[] );
 
 int TA_EMA_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+
+
+/*
+ * TA_HT_TRENDLINE - Hilbert Transform - Instantaneous Trendline
+ * 
+ * Input  = TA_Real
+ * Output = TA_Real
+ * 
+ */
+TA_RetCode TA_HT_TRENDLINE( TA_Integer    startIdx,
+                            TA_Integer    endIdx,
+                            const TA_Real inReal_0[],
+                            TA_Integer   *outBegIdx,
+                            TA_Integer   *outNbElement,
+                            TA_Real       outReal_0[] );
+
+int TA_HT_TRENDLINE_Lookback( void );
 
 
 /*
@@ -390,6 +408,35 @@ TA_RetCode TA_SMA( TA_Integer    startIdx,
                    TA_Real       outReal_0[] );
 
 int TA_SMA_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 2 to TA_INTEGER_MAX */
+
+
+/*
+ * TA_T3 - Triple Exponential Moving Average (T3)
+ * 
+ * Input  = TA_Real
+ * Output = TA_Real
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod_0:(From 2 to TA_INTEGER_MAX)
+ *    Number of period
+ * 
+ * optInVFactor_1:(From 0 to 1)
+ *    Volume Factor
+ * 
+ * 
+ */
+TA_RetCode TA_T3( TA_Integer    startIdx,
+                  TA_Integer    endIdx,
+                  const TA_Real inReal_0[],
+                  TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                  TA_Real       optInVFactor_1, /* From 0 to 1 */
+                  TA_Integer   *outBegIdx,
+                  TA_Integer   *outNbElement,
+                  TA_Real       outReal_0[] );
+
+int TA_T3_Lookback( TA_Integer    optInTimePeriod_0, /* From 2 to TA_INTEGER_MAX */
+                    TA_Real       optInVFactor_1 );  /* From 0 to 1 */
 
 
 /*
@@ -1259,6 +1306,98 @@ int TA_WILLR_Lookback( TA_Integer    optInTimePeriod_0 );  /* From 2 to TA_INTEG
 
 
 /******************************************
+ * Group: [Cycle Indicators]
+ ******************************************/
+
+/*
+ * TA_HT_DCPERIOD - Hilbert Transform - Dominant Cycle Period
+ * 
+ * Input  = TA_Real
+ * Output = TA_Real
+ * 
+ */
+TA_RetCode TA_HT_DCPERIOD( TA_Integer    startIdx,
+                           TA_Integer    endIdx,
+                           const TA_Real inReal_0[],
+                           TA_Integer   *outBegIdx,
+                           TA_Integer   *outNbElement,
+                           TA_Real       outReal_0[] );
+
+int TA_HT_DCPERIOD_Lookback( void );
+
+
+/*
+ * TA_HT_DCPHASE - Hilbert Transform - Dominant Cycle Phase
+ * 
+ * Input  = TA_Real
+ * Output = TA_Real
+ * 
+ */
+TA_RetCode TA_HT_DCPHASE( TA_Integer    startIdx,
+                          TA_Integer    endIdx,
+                          const TA_Real inReal_0[],
+                          TA_Integer   *outBegIdx,
+                          TA_Integer   *outNbElement,
+                          TA_Real       outReal_0[] );
+
+int TA_HT_DCPHASE_Lookback( void );
+
+
+/*
+ * TA_HT_PHASOR - Hilbert Transform - Phasor Components
+ * 
+ * Input  = TA_Real
+ * Output = TA_Real, TA_Real
+ * 
+ */
+TA_RetCode TA_HT_PHASOR( TA_Integer    startIdx,
+                         TA_Integer    endIdx,
+                         const TA_Real inReal_0[],
+                         TA_Integer   *outBegIdx,
+                         TA_Integer   *outNbElement,
+                         TA_Real       outInPhase_0[],
+                         TA_Real       outQuadrature_1[] );
+
+int TA_HT_PHASOR_Lookback( void );
+
+
+/*
+ * TA_HT_SINE - Hilbert Transform - SineWave
+ * 
+ * Input  = TA_Real
+ * Output = TA_Real, TA_Real
+ * 
+ */
+TA_RetCode TA_HT_SINE( TA_Integer    startIdx,
+                       TA_Integer    endIdx,
+                       const TA_Real inReal_0[],
+                       TA_Integer   *outBegIdx,
+                       TA_Integer   *outNbElement,
+                       TA_Real       outSine_0[],
+                       TA_Real       outLeadSine_1[] );
+
+int TA_HT_SINE_Lookback( void );
+
+
+/*
+ * TA_HT_TRENDMODE - Hilbert Transform - Trend vs Cycle Mode
+ * 
+ * Input  = TA_Real
+ * Output = TA_Integer
+ * 
+ */
+TA_RetCode TA_HT_TRENDMODE( TA_Integer    startIdx,
+                            TA_Integer    endIdx,
+                            const TA_Real inReal_0[],
+                            TA_Integer   *outBegIdx,
+                            TA_Integer   *outNbElement,
+                            TA_Integer    outInteger_0[] );
+
+int TA_HT_TRENDMODE_Lookback( void );
+
+
+
+/******************************************
  * Group: [Volume Indicators]
  ******************************************/
 
@@ -1490,18 +1629,25 @@ int TA_WCLPRICE_Lookback( void );
  */
 typedef enum {
     /* 001 */  TA_FUNC_UNST_EMA,
-    /* 002 */  TA_FUNC_UNST_KAMA,
-    /* 003 */  TA_FUNC_UNST_MAMA,
-    /* 004 */  TA_FUNC_UNST_ATR,
-    /* 005 */  TA_FUNC_UNST_ADX,
-    /* 006 */  TA_FUNC_UNST_ADXR,
-    /* 007 */  TA_FUNC_UNST_DX,
-    /* 008 */  TA_FUNC_UNST_MFI,
-    /* 009 */  TA_FUNC_UNST_MINUS_DI,
-    /* 010 */  TA_FUNC_UNST_MINUS_DM,
-    /* 011 */  TA_FUNC_UNST_PLUS_DI,
-    /* 012 */  TA_FUNC_UNST_PLUS_DM,
-    /* 013 */  TA_FUNC_UNST_RSI,
+    /* 002 */  TA_FUNC_UNST_HT_TRENDLINE,
+    /* 003 */  TA_FUNC_UNST_KAMA,
+    /* 004 */  TA_FUNC_UNST_MAMA,
+    /* 005 */  TA_FUNC_UNST_T3,
+    /* 006 */  TA_FUNC_UNST_ATR,
+    /* 007 */  TA_FUNC_UNST_ADX,
+    /* 008 */  TA_FUNC_UNST_ADXR,
+    /* 009 */  TA_FUNC_UNST_DX,
+    /* 010 */  TA_FUNC_UNST_MFI,
+    /* 011 */  TA_FUNC_UNST_MINUS_DI,
+    /* 012 */  TA_FUNC_UNST_MINUS_DM,
+    /* 013 */  TA_FUNC_UNST_PLUS_DI,
+    /* 014 */  TA_FUNC_UNST_PLUS_DM,
+    /* 015 */  TA_FUNC_UNST_RSI,
+    /* 016 */  TA_FUNC_UNST_HT_DCPERIOD,
+    /* 017 */  TA_FUNC_UNST_HT_DCPHASE,
+    /* 018 */  TA_FUNC_UNST_HT_PHASOR,
+    /* 019 */  TA_FUNC_UNST_HT_SINE,
+    /* 020 */  TA_FUNC_UNST_HT_TRENDMODE,
                TA_FUNC_UNST_ALL,
                TA_FUNC_UNST_NONE=-1 } TA_FuncUnstId;
 
