@@ -47,6 +47,11 @@
  *                 new SPLIT/VALUE adjust flags.
  *  013104 MF      Add possibility to "name" data sources + add 
  *                 validation of start/end parameters.
+ *  032004 MF      TA_END_OF_INDEX now use only to exit prematurely
+ *                 while building the index. In normal operation, the 
+ *                 data source driver should not have to return it.
+ *  032704 MF      TA_AddDataSource location param will adapt to
+ *                 platform when the driver set TA_LOCATION_IS_PATH.
  */
 
 /* Decription:
@@ -164,6 +169,10 @@ static TA_RetCode processCategoryAndSymbols( TA_UDBasePriv *privUDB,
                                              const TA_AddDataSourceParamPriv *addDataSourceParamPriv,
                                              TA_DataSourceHandle *sourceHandle,
                                              TA_CategoryHandle   *categoryHandle );
+
+/* Function to alloc/free a TA_AddDataSourceParamPriv. */
+static TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDataSourceParam *param, TA_SourceFlag flags );
+static TA_RetCode TA_AddDataSourceParamPrivFree( TA_AddDataSourceParamPriv *toBeFreed );
 
 /* Mechanism for easily deleting lists. */
 static TA_RetCode freeListAndElement( TA_List *list,
@@ -516,7 +525,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
     * will also set the default values if not provided by the
     * caller. (particularly the category string).
     */
-   addDataSourceParamPriv = TA_AddDataSourceParamPrivAlloc( param );
+   addDataSourceParamPriv = TA_AddDataSourceParamPrivAlloc( param, dataSourceParams.flags );
    if( !addDataSourceParamPriv )
    {
       TA_TRACE_RETURN( TA_ALLOC_ERR );
@@ -569,7 +578,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
 
       categoryIndex = 0;
       again = 1;
-      while( again )
+      while( again && (categoryIndex < sourceHandle->nbCategory) )
       {
          /* Allocate the categoryHandle. */
          categoryHandle = (TA_CategoryHandle *)TA_Malloc( sizeof(TA_CategoryHandle) );
@@ -597,7 +606,7 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
          categoryIndex++;
          if( retCode == TA_END_OF_INDEX )
          {
-            TA_Free(  categoryHandle );
+            TA_Free( categoryHandle );
             again = 0;
          }
          else if( retCode != TA_SUCCESS )
@@ -1268,7 +1277,7 @@ int TA_HistoryEqual( const TA_History *history1, const TA_History *history2 )
    return 1; /* Contents is equivalent. */
 }
 
-TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDataSourceParam *param )
+static TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDataSourceParam *param, TA_SourceFlag flag )
 {
    /* Alloc an internal copy of the TA_AddDataSourceParam . */
    TA_AddDataSourceParamPriv *dst;
@@ -1313,7 +1322,15 @@ TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDataSourc
          } \
       }
 
-      DO( TA_StringAlloc,     location );
+      if( flag & TA_LOCATION_IS_PATH )
+      {
+         DO( TA_StringAlloc_Path, location );
+      }
+      else
+      {
+         DO( TA_StringAlloc, location );
+      }
+         
       DO( TA_StringAlloc,     info     );
       DO( TA_StringAlloc,     username );
       DO( TA_StringAlloc,     password );
@@ -1334,7 +1351,7 @@ TA_AddDataSourceParamPriv *TA_AddDataSourceParamPrivAlloc( const TA_AddDataSourc
    return dst;
 }
 
-TA_RetCode TA_AddDataSourceParamPrivFree( TA_AddDataSourceParamPriv *toBeFreed )
+static TA_RetCode TA_AddDataSourceParamPrivFree( TA_AddDataSourceParamPriv *toBeFreed )
 {
    TA_StringCache *stringCache;
 
