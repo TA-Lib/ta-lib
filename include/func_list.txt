@@ -8,6 +8,8 @@ SAR         Parabolic SAR
 SMA         Simple Moving Average
 TEMA        Triple Exponential Moving Average
 WMA         Weighted Moving Average
+ADX         Average Directional Movement Index
+ADXR        Average Directional Movement Index Rating
 APO         Absolute Price Oscillator
 DX          Directional Movement Index
 MACD        Moving Average Convergence/Divergence

@@ -174,6 +174,14 @@ SOURCE=..\..\..\..\src\ta_abstract\ta_abstract.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_ADX_frame.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_abstract\frames\ta_ADXR_frame.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_abstract\frames\ta_APO_frame.c
 # End Source File
 # Begin Source File

@@ -33,6 +33,8 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_SMA.c \ 
           ../../../../../src/ta_func/ta_TEMA.c \ 
           ../../../../../src/ta_func/ta_WMA.c \ 
+          ../../../../../src/ta_func/ta_ADX.c \ 
+          ../../../../../src/ta_func/ta_ADXR.c \ 
           ../../../../../src/ta_func/ta_APO.c \ 
           ../../../../../src/ta_func/ta_DX.c \ 
           ../../../../../src/ta_func/ta_MACD.c \ 
