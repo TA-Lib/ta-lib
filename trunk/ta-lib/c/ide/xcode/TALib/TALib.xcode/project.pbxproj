@@ -1347,6 +1347,10 @@
 		};
 		3A48BAE705E25FE300B42EE0 = {
 			children = (
+				3A742EC706E8458B004F675D,
+				3A742EC806E8458B004F675D,
+				3A742EC906E8458B004F675D,
+				3A742ECA06E8458B004F675D,
 				3A48BAE805E25FE300B42EE0,
 				3A48BAE905E25FE300B42EE0,
 				3A48BAEA05E25FE300B42EE0,
@@ -3336,6 +3340,66 @@
 			settings = {
 			};
 		};
+		3A742EC706E8458B004F675D = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			name = ta_CDLHIGHWAVE.c;
+			path = ../../../src/ta_func/ta_CDLHIGHWAVE.c;
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
+		};
+		3A742EC806E8458B004F675D = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			name = ta_CDLLONGLINE.c;
+			path = ../../../src/ta_func/ta_CDLLONGLINE.c;
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
+		};
+		3A742EC906E8458B004F675D = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			name = ta_CDLSHORTLINE.c;
+			path = ../../../src/ta_func/ta_CDLSHORTLINE.c;
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
+		};
+		3A742ECA06E8458B004F675D = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			name = ta_CDLSPINNINGTOP.c;
+			path = ../../../src/ta_func/ta_CDLSPINNINGTOP.c;
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
+		};
+		3A742ECB06E8458C004F675D = {
+			fileRef = 3A742EC706E8458B004F675D;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3A742ECC06E8458C004F675D = {
+			fileRef = 3A742EC806E8458B004F675D;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3A742ECD06E8458C004F675D = {
+			fileRef = 3A742EC906E8458B004F675D;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3A742ECE06E8458C004F675D = {
+			fileRef = 3A742ECA06E8458B004F675D;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		3AA3F93D05FB88980048BF36 = {
 			fileRef = 8D07F2C70486CC7A007CD1D0;
 			isa = PBXBuildFile;
@@ -4518,6 +4582,10 @@
 				3AB39B0E0619DC7D0004828D,
 				3AB39B100619DC7D0004828D,
 				3AB39B120619DC7D0004828D,
+				3A742ECB06E8458C004F675D,
+				3A742ECC06E8458C004F675D,
+				3A742ECD06E8458C004F675D,
+				3A742ECE06E8458C004F675D,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
