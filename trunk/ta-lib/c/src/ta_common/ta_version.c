@@ -36,10 +36,10 @@
  * Should be modified only by TA-Lib.org
  */
 #define MAJOR 0
-#define MINOR 1
+#define MINOR 2
 #define BUILD 0
 
-#define VERSION_STRING "0.1.0"
+#define VERSION_STRING "0.2.0"
 
 /* Nothing to modify below this line. */
 
