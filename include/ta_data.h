@@ -85,6 +85,7 @@ typedef enum
    TA_ASCII_FILE,
    TA_SIMULATOR,
    TA_YAHOO_WEB,
+   TA_SQL,
    TA_NUM_OF_SOURCE_ID
 } TA_SourceId;
 
