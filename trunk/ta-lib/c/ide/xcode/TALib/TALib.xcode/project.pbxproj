@@ -839,6 +839,96 @@
 			settings = {
 			};
 		};
+		3A35CD8A0735FAC1001993D0 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			name = ta_CDLDOJISTAR.c;
+			path = ../../../src/ta_func/ta_CDLDOJISTAR.c;
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
+		};
+		3A35CD8B0735FAC1001993D0 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			name = ta_CDLEVENINGDOJISTAR.c;
+			path = ../../../src/ta_func/ta_CDLEVENINGDOJISTAR.c;
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
+		};
+		3A35CD8C0735FAC1001993D0 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			name = ta_CDLEVENINGSTAR.c;
+			path = ../../../src/ta_func/ta_CDLEVENINGSTAR.c;
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
+		};
+		3A35CD8D0735FAC1001993D0 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			name = ta_CDLMORNINGDOJISTAR.c;
+			path = ../../../src/ta_func/ta_CDLMORNINGDOJISTAR.c;
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
+		};
+		3A35CD8E0735FAC1001993D0 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			name = ta_CDLMORNINGSTAR.c;
+			path = ../../../src/ta_func/ta_CDLMORNINGSTAR.c;
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
+		};
+		3A35CD8F0735FAC1001993D0 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			name = ta_CDLTRISTAR.c;
+			path = ../../../src/ta_func/ta_CDLTRISTAR.c;
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
+		};
+		3A35CD900735FAC1001993D0 = {
+			fileRef = 3A35CD8A0735FAC1001993D0;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3A35CD910735FAC1001993D0 = {
+			fileRef = 3A35CD8B0735FAC1001993D0;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3A35CD920735FAC1001993D0 = {
+			fileRef = 3A35CD8C0735FAC1001993D0;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3A35CD930735FAC1001993D0 = {
+			fileRef = 3A35CD8D0735FAC1001993D0;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3A35CD940735FAC1001993D0 = {
+			fileRef = 3A35CD8E0735FAC1001993D0;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		3A35CD950735FAC1001993D0 = {
+			fileRef = 3A35CD8F0735FAC1001993D0;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		3A3685CB05F5B22700BC816A = {
 			children = (
 				3A3685CC05F5B22700BC816A,
@@ -1347,6 +1437,12 @@
 		};
 		3A48BAE705E25FE300B42EE0 = {
 			children = (
+				3A35CD8A0735FAC1001993D0,
+				3A35CD8B0735FAC1001993D0,
+				3A35CD8C0735FAC1001993D0,
+				3A35CD8D0735FAC1001993D0,
+				3A35CD8E0735FAC1001993D0,
+				3A35CD8F0735FAC1001993D0,
 				3A742EC706E8458B004F675D,
 				3A742EC806E8458B004F675D,
 				3A742EC906E8458B004F675D,
@@ -4233,8 +4329,6 @@
 //4F3
 //4F4
 		4F0BB7EC011F40E904CA0E50 = {
-			buildRules = (
-			);
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 				DEBUGGING_SYMBOLS = YES;
@@ -4245,8 +4339,6 @@
 			name = Development;
 		};
 		4F0BB7ED011F40E904CA0E50 = {
-			buildRules = (
-			);
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
 			};
@@ -4586,6 +4678,12 @@
 				3A742ECC06E8458C004F675D,
 				3A742ECD06E8458C004F675D,
 				3A742ECE06E8458C004F675D,
+				3A35CD900735FAC1001993D0,
+				3A35CD910735FAC1001993D0,
+				3A35CD920735FAC1001993D0,
+				3A35CD930735FAC1001993D0,
+				3A35CD940735FAC1001993D0,
+				3A35CD950735FAC1001993D0,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
