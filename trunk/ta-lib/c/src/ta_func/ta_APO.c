@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
- *
+ *  062804 MF   Resolve div by zero bug on limit case.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -236,6 +236,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 {
    TA_RetCode retCode;
 
+   double tempReal;
    int tempInteger;
    int outBegIdx1, outNbElement1;
    int outBegIdx2, outNbElement2;
@@ -276,7 +277,13 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
          {
             /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */   
             for( i=0,j=tempInteger; i < outNbElement1; i++, j++ )
-               outReal[i] = ((outReal[j]-tempBuffer[i])/tempBuffer[i])*100;
+            {
+               tempReal = tempBuffer[i];
+               if( !TA_IS_ZERO(tempReal) )
+                  outReal[i] = ((outReal[j]-tempReal)/tempReal)*100.0;
+               else
+                  outReal[i] = 0.0;
+            }
          }
          else
          {

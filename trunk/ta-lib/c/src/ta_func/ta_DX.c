@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -37,6 +37,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AM       Adrian Michel
+ *  MIF      Mirek Fontan (mira@fontan.cz)
  *
  * Change history:
  *
@@ -45,6 +46,7 @@
  *  010802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
+ *  062704 MF   Fix #965557. Div by zero bug reported by MIF.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -379,14 +381,23 @@
    }
 
    /* Write the first DX output */
-   minusDI = round_pos(100.0*(prevMinusDM/prevTR));
-   plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
-   outReal[0] = round_pos( 100.0 * (fabs(minusDI-plusDI)/(minusDI+plusDI)) );
+   if( !TA_IS_ZERO(prevTR) )
+   {
+      minusDI = round_pos(100.0*(prevMinusDM/prevTR));
+      plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
+      tempReal = minusDI+plusDI;
+      if( !TA_IS_ZERO(tempReal) )
+         outReal[0] = round_pos( 100.0 * (fabs(minusDI-plusDI)/tempReal) );
+      else
+         outReal[0] = 0.0;
+   }
+   else
+      outReal[0] = 0.0;
    outIdx = 1;
 
    while( today < endIdx )
    {
-      /* Calculate the prevMinusDM */
+      /* Calculate the prevMinusDM and prevPlusDM */
       today++;
       tempReal = inHigh[today];
       diffP    = tempReal-prevHigh; /* Plus Delta */
@@ -416,9 +427,20 @@
       prevClose = inClose[today];
 
       /* Calculate the DX. The value is rounded (see Wilder book). */
-      minusDI = round_pos(100.0*(prevMinusDM/prevTR));
-      plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
-      outReal[outIdx++] = round_pos( 100.0 * (fabs(minusDI-plusDI)/(minusDI+plusDI)) );
+      if( !TA_IS_ZERO(prevTR))
+      {
+         minusDI = round_pos(100.0*(prevMinusDM/prevTR));
+         plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
+         /* This loop is just to accumulate the initial DX */
+         tempReal = minusDI+plusDI;
+         if( !TA_IS_ZERO(tempReal))         
+            outReal[outIdx] = round_pos( 100.0 * (fabs(minusDI-plusDI)/tempReal) );
+         else
+            outReal[outIdx] = outReal[outIdx-1];
+      }
+      else
+         outReal[outIdx] = outReal[outIdx-1];
+      outIdx++;
    }
 
    *outNbElement = outIdx;
@@ -555,9 +577,18 @@
 /* Generated */       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
 /* Generated */       prevClose = inClose[today];
 /* Generated */    }
-/* Generated */    minusDI = round_pos(100.0*(prevMinusDM/prevTR));
-/* Generated */    plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
-/* Generated */    outReal[0] = round_pos( 100.0 * (fabs(minusDI-plusDI)/(minusDI+plusDI)) );
+/* Generated */    if( prevTR != 0.0 )
+/* Generated */    {
+/* Generated */       minusDI = round_pos(100.0*(prevMinusDM/prevTR));
+/* Generated */       plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
+/* Generated */       tempReal = minusDI+plusDI;
+/* Generated */       if( tempReal != 0.0 )
+/* Generated */          outReal[0] = round_pos( 100.0 * (fabs(minusDI-plusDI)/tempReal) );
+/* Generated */       else
+/* Generated */          outReal[0] = 0.0;
+/* Generated */    }
+/* Generated */    else
+/* Generated */       outReal[0] = 0.0;
 /* Generated */    outIdx = 1;
 /* Generated */    while( today < endIdx )
 /* Generated */    {
@@ -581,9 +612,19 @@
 /* Generated */       TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
 /* Generated */       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
 /* Generated */       prevClose = inClose[today];
-/* Generated */       minusDI = round_pos(100.0*(prevMinusDM/prevTR));
-/* Generated */       plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
-/* Generated */       outReal[outIdx++] = round_pos( 100.0 * (fabs(minusDI-plusDI)/(minusDI+plusDI)) );
+/* Generated */       if( prevTR != 0.0 )
+/* Generated */       {
+/* Generated */          minusDI = round_pos(100.0*(prevMinusDM/prevTR));
+/* Generated */          plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
+/* Generated */          tempReal = minusDI+plusDI;
+/* Generated */          if( tempReal != 0.0 )         
+/* Generated */             outReal[outIdx] = round_pos( 100.0 * (fabs(minusDI-plusDI)/tempReal) );
+/* Generated */          else
+/* Generated */             outReal[outIdx] = outReal[outIdx-1];
+/* Generated */       }
+/* Generated */       else
+/* Generated */          outReal[outIdx] = outReal[outIdx-1];
+/* Generated */       outIdx++;
 /* Generated */    }
 /* Generated */    *outNbElement = outIdx;
 /* Generated */    return TA_SUCCESS;

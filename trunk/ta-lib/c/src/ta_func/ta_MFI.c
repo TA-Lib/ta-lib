@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
- *
+ *  062704 MF   Prevent divide by zero.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -239,7 +239,13 @@
     * The second equation is used here for speed optimization.
     */
    if( today > startIdx )
-      outReal[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
+   {
+      tempValue1 = posSumMF+negSumMF;
+      if( tempValue1 < 1.0 )
+         outReal[outIdx++] = 0.0;
+      else
+         outReal[outIdx++] = 100.0*(posSumMF/tempValue1);
+   }
    else
    {
       /* Skip the unstable period. Do the processing 
@@ -296,7 +302,11 @@
          mflow[mflow_Idx].negative = 0.0;
       }
 
-      outReal[outIdx++] = 100.0*(posSumMF/(posSumMF+negSumMF));
+      tempValue1 = posSumMF+negSumMF;
+      if( tempValue1 < 1.0 )
+         outReal[outIdx++] = 0.0;
+      else
+         outReal[outIdx++] = 100.0*(posSumMF/tempValue1);
 
       CIRCBUF_NEXT(mflow);
    }

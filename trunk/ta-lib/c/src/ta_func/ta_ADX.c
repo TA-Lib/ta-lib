@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -37,6 +37,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AM       Adrian Michel
+ *  MIF      Mirek Fontan (mira@fontan.cz)
  *
  * Change history:
  *
@@ -45,6 +46,7 @@
  *  010802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
+ *  062704 MF   Fix #965557. Div by zero bug reported by MIF.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -392,11 +394,15 @@
       prevClose = inClose[today];
 
       /* Calculate the DX. The value is rounded (see Wilder book). */
-      minusDI = round_pos(100.0*(prevMinusDM/prevTR));
-      plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
-
-      /* This loop is just to accumulate the initial DX */
-      sumDX  += round_pos( 100.0 * (fabs(minusDI-plusDI)/(minusDI+plusDI)) );
+      if( !TA_IS_ZERO(prevTR) )
+      {
+         minusDI = round_pos(100.0*(prevMinusDM/prevTR));
+         plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
+         /* This loop is just to accumulate the initial DX */
+         tempReal = minusDI+plusDI;
+         if( !TA_IS_ZERO(prevTR) )         
+            sumDX  += round_pos( 100.0 * (fabs(minusDI-plusDI)/tempReal) );
+      }
    }
 
    /* Calculate the first ADX */
@@ -435,13 +441,19 @@
       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
       prevClose = inClose[today];
 
-      /* Calculate the DX. The value is rounded (see Wilder book). */
-      minusDI  = round_pos(100.0*(prevMinusDM/prevTR));
-      plusDI   = round_pos(100.0*(prevPlusDM/prevTR));
-      tempReal = round_pos(100.0*(fabs(minusDI-plusDI)/(minusDI+plusDI)));
-
-      /* Calculate the ADX */
-      prevADX = round_pos(((prevADX*(optInTimePeriod-1))+tempReal)/optInTimePeriod);     
+      if( prevTR != 0.0 )
+      {
+         /* Calculate the DX. The value is rounded (see Wilder book). */
+         minusDI  = round_pos(100.0*(prevMinusDM/prevTR));
+         plusDI   = round_pos(100.0*(prevPlusDM/prevTR));
+         tempReal = minusDI+plusDI;
+         if( tempReal != 0.0 )
+         {
+            tempReal = round_pos(100.0*(fabs(minusDI-plusDI)/tempReal));
+            /* Calculate the ADX */
+            prevADX = round_pos(((prevADX*(optInTimePeriod-1))+tempReal)/optInTimePeriod);
+         }
+      }
    }
 
    /* Output the first ADX */
@@ -480,13 +492,21 @@
       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
       prevClose = inClose[today];
 
-      /* Calculate the DX. The value is rounded (see Wilder book). */
-      minusDI  = round_pos(100.0*(prevMinusDM/prevTR));
-      plusDI   = round_pos(100.0*(prevPlusDM/prevTR));
-      tempReal = round_pos(100.0*(fabs(minusDI-plusDI)/(minusDI+plusDI)));
+      if( prevTR != 0.0 )
+      {
+         /* Calculate the DX. The value is rounded (see Wilder book). */
+         minusDI  = round_pos(100.0*(prevMinusDM/prevTR));
+         plusDI   = round_pos(100.0*(prevPlusDM/prevTR));
+         tempReal = minusDI+plusDI;
+         if( tempReal != 0.0 )
+         {
+            tempReal = round_pos(100.0*(fabs(minusDI-plusDI)/tempReal));
+            /* Calculate the ADX */
+            prevADX = round_pos(((prevADX*(optInTimePeriod-1))+tempReal)/optInTimePeriod);
+         }
+      }
 
-      /* Calculate and output the ADX */
-      prevADX = round_pos(((prevADX*(optInTimePeriod-1))+tempReal)/optInTimePeriod);     
+      /* Output the ADX */
       outReal[outIdx++] = prevADX;
    }
 
@@ -624,9 +644,14 @@
 /* Generated */       TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
 /* Generated */       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
 /* Generated */       prevClose = inClose[today];
-/* Generated */       minusDI = round_pos(100.0*(prevMinusDM/prevTR));
-/* Generated */       plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
-/* Generated */       sumDX  += round_pos( 100.0 * (fabs(minusDI-plusDI)/(minusDI+plusDI)) );
+/* Generated */       if( prevTR != 0.0 )
+/* Generated */       {
+/* Generated */          minusDI = round_pos(100.0*(prevMinusDM/prevTR));
+/* Generated */          plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
+/* Generated */          tempReal = minusDI+plusDI;
+/* Generated */          if( tempReal != 0.0 )         
+/* Generated */             sumDX  += round_pos( 100.0 * (fabs(minusDI-plusDI)/tempReal) );
+/* Generated */       }
 /* Generated */    }
 /* Generated */    prevADX = round_pos( sumDX / optInTimePeriod );
 /* Generated */    i = TA_Globals->unstablePeriod[TA_FUNC_UNST_ADX];
@@ -652,10 +677,17 @@
 /* Generated */       TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
 /* Generated */       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
 /* Generated */       prevClose = inClose[today];
-/* Generated */       minusDI  = round_pos(100.0*(prevMinusDM/prevTR));
-/* Generated */       plusDI   = round_pos(100.0*(prevPlusDM/prevTR));
-/* Generated */       tempReal = round_pos(100.0*(fabs(minusDI-plusDI)/(minusDI+plusDI)));
-/* Generated */       prevADX = round_pos(((prevADX*(optInTimePeriod-1))+tempReal)/optInTimePeriod);     
+/* Generated */       if( prevTR != 0.0 )
+/* Generated */       {
+/* Generated */          minusDI  = round_pos(100.0*(prevMinusDM/prevTR));
+/* Generated */          plusDI   = round_pos(100.0*(prevPlusDM/prevTR));
+/* Generated */          tempReal = minusDI+plusDI;
+/* Generated */          if( tempReal != 0.0 )
+/* Generated */          {
+/* Generated */             tempReal = round_pos(100.0*(fabs(minusDI-plusDI)/tempReal));
+/* Generated */             prevADX = round_pos(((prevADX*(optInTimePeriod-1))+tempReal)/optInTimePeriod);
+/* Generated */          }
+/* Generated */       }
 /* Generated */    }
 /* Generated */    outReal[0] = prevADX;
 /* Generated */    outIdx = 1;
@@ -681,10 +713,17 @@
 /* Generated */       TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
 /* Generated */       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
 /* Generated */       prevClose = inClose[today];
-/* Generated */       minusDI  = round_pos(100.0*(prevMinusDM/prevTR));
-/* Generated */       plusDI   = round_pos(100.0*(prevPlusDM/prevTR));
-/* Generated */       tempReal = round_pos(100.0*(fabs(minusDI-plusDI)/(minusDI+plusDI)));
-/* Generated */       prevADX = round_pos(((prevADX*(optInTimePeriod-1))+tempReal)/optInTimePeriod);     
+/* Generated */       if( prevTR != 0.0 )
+/* Generated */       {
+/* Generated */          minusDI  = round_pos(100.0*(prevMinusDM/prevTR));
+/* Generated */          plusDI   = round_pos(100.0*(prevPlusDM/prevTR));
+/* Generated */          tempReal = minusDI+plusDI;
+/* Generated */          if( tempReal != 0.0 )
+/* Generated */          {
+/* Generated */             tempReal = round_pos(100.0*(fabs(minusDI-plusDI)/tempReal));
+/* Generated */             prevADX = round_pos(((prevADX*(optInTimePeriod-1))+tempReal)/optInTimePeriod);
+/* Generated */          }
+/* Generated */       }
 /* Generated */       outReal[outIdx++] = prevADX;
 /* Generated */    }
 /* Generated */    *outNbElement = outIdx;

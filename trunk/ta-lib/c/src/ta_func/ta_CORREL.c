@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
  *  101003 MF   Initial Coding
+ *  062804 MF   Resolve div by zero bug on limit case.
  *
  */
 
@@ -126,7 +127,8 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
-    double sumXY, sumX, sumY, sumX2, sumY2, n, x, y, trailingX, trailingY;
+    double sumXY, sumX, sumY, sumX2, sumY2, x, y, trailingX, trailingY;
+    double tempReal;
     int lookbackTotal, today, trailingIdx, outIdx;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -195,9 +197,11 @@
     */
    trailingX = inReal0[trailingIdx];
    trailingY = inReal1[trailingIdx++];
-   n = optInTimePeriod;
-   outReal[0] = (sumXY-((sumX*sumY)/n)) / sqrt( (sumX2-((sumX*sumX)/n)) * (sumY2-((sumY*sumY)/n)));
-
+   tempReal = (sumX2-((sumX*sumX)/optInTimePeriod)) * (sumY2-((sumY*sumY)/optInTimePeriod));
+   if( !TA_IS_ZERO(tempReal) )
+      outReal[0] = (sumXY-((sumX*sumY)/optInTimePeriod)) / sqrt(tempReal);
+   else 
+      outReal[0] = 0.0;
 
    /* Tight loop to do subsequent values. */
    outIdx = 1;
@@ -227,7 +231,11 @@
        */
       trailingX = inReal0[trailingIdx];
       trailingY = inReal1[trailingIdx++];
-      outReal[outIdx++] = (sumXY-((sumX*sumY)/n)) / sqrt( (sumX2-((sumX*sumX)/n)) * (sumY2-((sumY*sumY)/n)));
+      tempReal = (sumX2-((sumX*sumX)/optInTimePeriod)) * (sumY2-((sumY*sumY)/optInTimePeriod));
+      if( !TA_IS_ZERO(tempReal) )
+         outReal[outIdx++] = (sumXY-((sumX*sumY)/optInTimePeriod)) / sqrt(tempReal);
+      else
+         outReal[outIdx++] = 0.0;
    }  
 
    *outNbElement = outIdx;

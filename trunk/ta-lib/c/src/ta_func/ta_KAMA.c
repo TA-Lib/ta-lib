@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -44,7 +44,9 @@
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
- *
+ *  062704 MF   Fix limit case to avoid divid by zero (or by
+ *              a value close to zero induce by the imprecision
+ *              of floating points).
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -218,7 +220,10 @@
    trailingValue = tempReal2;
 
    /* Calculate the efficiency ratio */
-   tempReal = fabs(periodROC/sumROC1);
+   if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1))
+      tempReal = 1.0;
+   else
+      tempReal = fabs(periodROC/sumROC1);
 
    /* Calculate the smoothing constant */
    tempReal  = (tempReal*constDiff)+constMax;
@@ -255,7 +260,10 @@
       trailingValue = tempReal2;
 
       /* Calculate the efficiency ratio */
-      tempReal = fabs(periodROC/sumROC1);
+      if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
+         tempReal = 1.0;
+      else
+         tempReal = fabs(periodROC/sumROC1);
 
       /* Calculate the smoothing constant */
       tempReal  = (tempReal*constDiff)+constMax;
@@ -292,7 +300,10 @@
       trailingValue = tempReal2;
 
       /* Calculate the efficiency ratio */
-      tempReal = fabs(periodROC / sumROC1);
+      if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
+         tempReal = 1.0;
+      else
+         tempReal = fabs(periodROC / sumROC1);
 
       /* Calculate the smoothing constant */
       tempReal  = (tempReal*constDiff)+constMax;
@@ -383,7 +394,10 @@
 /* Generated */    tempReal2 = inReal[trailingIdx++];
 /* Generated */    periodROC = tempReal-tempReal2;
 /* Generated */    trailingValue = tempReal2;
-/* Generated */    tempReal = fabs(periodROC/sumROC1);
+/* Generated */    if( (sumROC1 <= periodROC) || (sumROC1 == 0.0) )
+/* Generated */       tempReal = 1.0;
+/* Generated */    else
+/* Generated */       tempReal = fabs(periodROC/sumROC1);
 /* Generated */    tempReal  = (tempReal*constDiff)+constMax;
 /* Generated */    tempReal *= tempReal;
 /* Generated */    prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
@@ -395,7 +409,10 @@
 /* Generated */       sumROC1 -= fabs(trailingValue-tempReal2);
 /* Generated */       sumROC1 += fabs(tempReal-inReal[today-1]);
 /* Generated */       trailingValue = tempReal2;
-/* Generated */       tempReal = fabs(periodROC/sumROC1);
+/* Generated */       if( (sumROC1 <= periodROC) || (sumROC1 == 0.0) )
+/* Generated */          tempReal = 1.0;
+/* Generated */       else
+/* Generated */          tempReal = fabs(periodROC/sumROC1);
 /* Generated */       tempReal  = (tempReal*constDiff)+constMax;
 /* Generated */       tempReal *= tempReal;
 /* Generated */       prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
@@ -411,7 +428,10 @@
 /* Generated */       sumROC1 -= fabs(trailingValue-tempReal2);
 /* Generated */       sumROC1 += fabs(tempReal-inReal[today-1]);
 /* Generated */       trailingValue = tempReal2;
-/* Generated */       tempReal = fabs(periodROC / sumROC1);
+/* Generated */       if( (sumROC1 <= periodROC) || (sumROC1 == 0.0) )
+/* Generated */          tempReal = 1.0;
+/* Generated */       else
+/* Generated */          tempReal = fabs(periodROC / sumROC1);
 /* Generated */       tempReal  = (tempReal*constDiff)+constMax;
 /* Generated */       tempReal *= tempReal;
 /* Generated */       prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
- *
+ *  062804 MF   Resolve div by zero bug on limit case.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -250,7 +250,11 @@
       tempValue2 = prevGain/optInTimePeriod;
 
       /* Write the output. */
-      outReal[outIdx++] = 100*(tempValue2/(tempValue2+tempValue1));
+      tempValue1 = tempValue2+tempValue1;
+      if( !TA_IS_ZERO(tempValue1) )
+         outReal[outIdx++] = 100*(tempValue2/tempValue1);
+      else
+         outReal[outIdx++] = 0.0;
 
       /* Are we done? */
       if( today > endIdx )
@@ -302,7 +306,13 @@
     * The second equation is used here for speed optimization.
     */
    if( today > startIdx )
-      outReal[outIdx++] = 100.0*(prevGain/(prevGain+prevLoss));
+   {
+      tempValue1 = prevGain+prevLoss;
+      if( !TA_IS_ZERO(tempValue1) )
+         outReal[outIdx++] = 100.0*(prevGain/tempValue1);
+      else
+         outReal[outIdx++] = 0.0;
+   }
    else
    {
       /* Skip the unstable period. Do the processing 
@@ -346,8 +356,11 @@
 
       prevLoss /= optInTimePeriod;
       prevGain /= optInTimePeriod;
-
-      outReal[outIdx++] = 100.0*(prevGain/(prevGain+prevLoss));
+      tempValue1 = prevGain+prevLoss;
+      if( !TA_IS_ZERO(tempValue1) )
+         outReal[outIdx++] = 100.0*(prevGain/tempValue1);
+      else
+         outReal[outIdx++] = 0.0;
    }
 
    *outBegIdx = startIdx;
