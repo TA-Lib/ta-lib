@@ -113,10 +113,6 @@ int main( int argc, char **argv )
    /* Some tests are using randomness. */
    srand( (unsigned)time( NULL ) );
 
-   /* Test the Yahoo! data source. */
-   retValue = test_yahoo();
-   if( retValue != TA_TEST_PASS )
-      return retValue;
 
    /* Test utility like List/Stack/Dictionary/Memory Allocation etc... */
    retValue = test_internals();
@@ -162,6 +158,11 @@ int main( int argc, char **argv )
 
    /* Test the merging of multiple data source */
    retValue = test_datasource_merge();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   /* Test the Yahoo! data source. */
+   retValue = test_yahoo();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
