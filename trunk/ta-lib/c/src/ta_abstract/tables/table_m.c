@@ -216,7 +216,7 @@ DEF_FUNCTION( MIN,                       /* name */
 /* MINUS_DI BEGIN */
 static const TA_InputParameterInfo    *TA_MINUS_DI_Inputs[]    =
 {
-  &TA_DEF_UI_Input_Price_HL,
+  &TA_DEF_UI_Input_Price_HLC,
   NULL
 };
 
