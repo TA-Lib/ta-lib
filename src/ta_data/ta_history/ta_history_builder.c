@@ -64,6 +64,7 @@
 #include "ta_memory.h"
 #include "ta_list.h"
 #include "ta_history_priv.h"
+#include "../../ta_func/ta_utility.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -1071,8 +1072,11 @@ static TA_RetCode historyAdjustData( TA_BuilderSupport *builderSupport )
                 {
                    if( TA_TimestampGreater(&curSplitAdjust->timestamp,&curDataBlock->timestamp[i]) )
                    {
-                      factor *= curSplitAdjust->factor;
-                      factorVolume /= curSplitAdjust->factor;
+                      if( !TA_IS_ZERO(curSplitAdjust->factor)  )
+                      {
+                         factor *= curSplitAdjust->factor;
+                         factorVolume /= curSplitAdjust->factor;
+                      }
                       curSplitAdjust = TA_ListAccessNext(supportForDataSource->listOfSplitAdjust);
                    }
                 }
@@ -1089,6 +1093,8 @@ static TA_RetCode historyAdjustData( TA_BuilderSupport *builderSupport )
                       else if( curDataBlock->high ) temp = curDataBlock->high[i];
                       else if( curDataBlock->low) temp = curDataBlock->low[i];
                       else return TA_MISSING_PRICE_FOR_ADJUSTMENT;
+                      if( TA_IS_ZERO(temp) )
+                         return TA_MISSING_PRICE_FOR_ADJUSTMENT;
                       factor *= 1.0-(curValueAdjust->amount/temp);
                       curValueAdjust = TA_ListAccessNext(supportForDataSource->listOfValueAdjust);
                    }
