@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -256,18 +256,18 @@ TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
 
       for( i=0; i < tableGroup->size; i++ )
       {
-         TA_DEBUG_ASSERT( tableGroup->string[i] != NULL );
+         TA_ASSERT_DEBUG( tableGroup->string[i] != NULL );
 
          /* Get all the symbols to iterate for this category. */
          retCode = TA_FuncTableAlloc( tableGroup->string[i], &tableFunc );
 
          if( retCode == TA_SUCCESS )
          {
-            TA_DEBUG_ASSERT( tableFunc != NULL );
+            TA_ASSERT_DEBUG( tableFunc != NULL );
 
             for( j=0; j < tableFunc->size; j++ )
             {
-               TA_DEBUG_ASSERT( tableFunc->string[j] != NULL );
+               TA_ASSERT_DEBUG( tableFunc->string[j] != NULL );
 
                /* Get the function handle, and then the TA_FuncDef,
                 * and then the TA_FuncInfo...
@@ -277,15 +277,15 @@ TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
                if( retCode != TA_SUCCESS )
                   continue;
 
-               TA_DEBUG_ASSERT( funcHandle != NULL );
+               TA_ASSERT_DEBUG( funcHandle != NULL );
 
                funcDef  = (const TA_FuncDef *)funcHandle;
 
-               TA_DEBUG_ASSERT( funcDef != NULL );
+               TA_ASSERT_DEBUG( funcDef != NULL );
 
                funcInfo = funcDef->funcInfo;
 
-               TA_DEBUG_ASSERT( funcInfo != NULL );
+               TA_ASSERT_DEBUG( funcInfo != NULL );
 
                /* Call user provided function. */
                (*functionToCall)( funcInfo, opaqueData );
@@ -468,11 +468,11 @@ TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
    for( i=0; i < funcDefTableSize; i++ )
    {
       funcDef = funcDefTable[i];
-      TA_DEBUG_ASSERT( funcDef != NULL );
-      TA_DEBUG_ASSERT( funcDef->funcInfo != NULL );
+      TA_ASSERT_DEBUG( funcDef != NULL );
+      TA_ASSERT_DEBUG( funcDef->funcInfo != NULL );
 
       funcInfo = funcDef->funcInfo;      
-      TA_DEBUG_ASSERT( funcInfo != NULL );
+      TA_ASSERT_DEBUG( funcInfo != NULL );
       
       if( strcmp( funcInfo->name, name ) == 0 )
       {
@@ -506,7 +506,7 @@ TA_RetCode TA_GetFuncInfo(  const TA_FuncHandle *handle,
 
    *funcInfo = funcDef->funcInfo;
 
-   TA_DEBUG_ASSERT( *funcInfo != NULL );
+   TA_ASSERT_DEBUG( *funcInfo != NULL );
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -537,7 +537,7 @@ TA_RetCode TA_SetInputParameterInfoPtr( const TA_FuncHandle *handle,
    }
    funcInfo = funcDef->funcInfo;
 
-   TA_DEBUG_ASSERT( funcInfo != NULL );
+   TA_ASSERT_DEBUG( funcInfo != NULL );
 
    if( paramIndex >= funcInfo->nbInput )
    {
@@ -546,11 +546,11 @@ TA_RetCode TA_SetInputParameterInfoPtr( const TA_FuncHandle *handle,
 
    inputTable = (const TA_InputParameterInfo **)funcDef->input;
 
-   TA_DEBUG_ASSERT( inputTable != NULL );
+   TA_ASSERT_DEBUG( inputTable != NULL );
 
    *info = inputTable[paramIndex];
 
-   TA_DEBUG_ASSERT( *info != NULL );
+   TA_ASSERT_DEBUG( *info != NULL );
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -582,7 +582,7 @@ TA_RetCode TA_SetOptInputParameterInfoPtr( const TA_FuncHandle *handle,
 
    funcInfo = funcDef->funcInfo;
 
-   TA_DEBUG_ASSERT( funcInfo != NULL );
+   TA_ASSERT_DEBUG( funcInfo != NULL );
 
    if( paramIndex >= funcInfo->nbOptInput )
    {
@@ -591,11 +591,11 @@ TA_RetCode TA_SetOptInputParameterInfoPtr( const TA_FuncHandle *handle,
 
    inputTable = (const TA_OptInputParameterInfo **)funcDef->optInput;
 
-   TA_DEBUG_ASSERT( inputTable != NULL );
+   TA_ASSERT_DEBUG( inputTable != NULL );
 
    *info = inputTable[paramIndex];
 
-   TA_DEBUG_ASSERT( *info != NULL );
+   TA_ASSERT_DEBUG( *info != NULL );
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -627,7 +627,7 @@ TA_RetCode TA_SetOutputParameterInfoPtr( const TA_FuncHandle *handle,
 
    funcInfo = funcDef->funcInfo;
 
-   TA_DEBUG_ASSERT( funcInfo != NULL );
+   TA_ASSERT_DEBUG( funcInfo != NULL );
 
    if( paramIndex >= funcInfo->nbOutput )
    {
@@ -636,11 +636,11 @@ TA_RetCode TA_SetOutputParameterInfoPtr( const TA_FuncHandle *handle,
 
    outputTable = (const TA_OutputParameterInfo **)funcDef->output;
 
-   TA_DEBUG_ASSERT( outputTable != NULL );
+   TA_ASSERT_DEBUG( outputTable != NULL );
 
    *info = outputTable[paramIndex];
 
-   TA_DEBUG_ASSERT( *info != NULL );
+   TA_ASSERT_DEBUG( *info != NULL );
 
    TA_TRACE_RETURN( TA_SUCCESS );
 }
@@ -681,7 +681,7 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
 
    /* Get the TA_FuncInfo. */
    funcInfo = funcDef->funcInfo;
-   TA_DEBUG_ASSERT( funcInfo != NULL );
+   TA_ASSERT_DEBUG( funcInfo != NULL );
 
    /* Allocate the TA_ParamHolder. */
    newParams = (TA_ParamHolder *)TA_Malloc( sizeof(TA_ParamHolder) + sizeof(TA_ParamHolderPriv));
@@ -701,7 +701,7 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
    /* Allocate the array of structure holding the info
     * for each parameter.
     */
-   TA_DEBUG_ASSERT( funcInfo->nbInput != 0 );
+   TA_ASSERT_DEBUG( funcInfo->nbInput != 0 );
 
    allocSize = (funcInfo->nbInput) * sizeof(TA_ParamHolderInput);
    input = (TA_ParamHolderInput *)TA_Malloc( allocSize );
@@ -849,7 +849,7 @@ TA_RetCode TA_SetInputParamIntegerPtr( TA_ParamHolder *param,
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_DEBUG_ASSERT( funcInfo != NULL );
+   TA_ASSERT_DEBUG( funcInfo != NULL );
    if( paramIndex >= funcInfo->nbInput )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
@@ -857,7 +857,7 @@ TA_RetCode TA_SetInputParamIntegerPtr( TA_ParamHolder *param,
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->in[paramIndex].inputInfo;
-   TA_DEBUG_ASSERT( paramInfo != NULL );
+   TA_ASSERT_DEBUG( paramInfo != NULL );
    if( paramInfo->type != TA_Input_Integer )
    {
       TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER_TYPE );
@@ -896,7 +896,7 @@ TA_RetCode TA_SetInputParamRealPtr( TA_ParamHolder *param,
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_DEBUG_ASSERT( funcInfo != NULL );
+   TA_ASSERT_DEBUG( funcInfo != NULL );
    if( paramIndex >= funcInfo->nbInput )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
@@ -904,7 +904,7 @@ TA_RetCode TA_SetInputParamRealPtr( TA_ParamHolder *param,
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->in[paramIndex].inputInfo;
-   TA_DEBUG_ASSERT( paramInfo != NULL );
+   TA_ASSERT_DEBUG( paramInfo != NULL );
    if( paramInfo->type != TA_Input_Real )
    {
       TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER_TYPE );
@@ -949,7 +949,7 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_DEBUG_ASSERT( funcInfo != NULL );
+   TA_ASSERT_DEBUG( funcInfo != NULL );
    if( paramIndex >= funcInfo->nbInput )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
@@ -957,7 +957,7 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->in[paramIndex].inputInfo;
-   TA_DEBUG_ASSERT( paramInfo != NULL );
+   TA_ASSERT_DEBUG( paramInfo != NULL );
    if( paramInfo->type != TA_Input_Price )
    {
       TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER_TYPE );
@@ -1016,7 +1016,7 @@ TA_RetCode TA_SetOptInputParamInteger( TA_ParamHolder *param,
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_DEBUG_ASSERT( funcInfo != NULL );
+   TA_ASSERT_DEBUG( funcInfo != NULL );
    if( paramIndex >= funcInfo->nbOptInput )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
@@ -1024,7 +1024,7 @@ TA_RetCode TA_SetOptInputParamInteger( TA_ParamHolder *param,
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->optIn[paramIndex].optInputInfo;
-   TA_DEBUG_ASSERT( paramInfo != NULL );
+   TA_ASSERT_DEBUG( paramInfo != NULL );
    if( (paramInfo->type != TA_OptInput_IntegerRange) &&
        (paramInfo->type != TA_OptInput_IntegerList) )
    {
@@ -1061,7 +1061,7 @@ TA_RetCode TA_SetOptInputParamReal( TA_ParamHolder *param,
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_DEBUG_ASSERT( funcInfo != NULL );
+   TA_ASSERT_DEBUG( funcInfo != NULL );
    if( paramIndex >= funcInfo->nbOptInput )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
@@ -1069,7 +1069,7 @@ TA_RetCode TA_SetOptInputParamReal( TA_ParamHolder *param,
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->optIn[paramIndex].optInputInfo;
-   TA_DEBUG_ASSERT( paramInfo != NULL );
+   TA_ASSERT_DEBUG( paramInfo != NULL );
    if( (paramInfo->type != TA_OptInput_RealRange) &&
        (paramInfo->type != TA_OptInput_RealList) )
    {
@@ -1108,7 +1108,7 @@ TA_RetCode TA_SetOutputParamIntegerPtr( TA_ParamHolder *param,
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_DEBUG_ASSERT( funcInfo != NULL );
+   TA_ASSERT_DEBUG( funcInfo != NULL );
    if( paramIndex >= funcInfo->nbOutput )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
@@ -1116,7 +1116,7 @@ TA_RetCode TA_SetOutputParamIntegerPtr( TA_ParamHolder *param,
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->out[paramIndex].outputInfo;
-   TA_DEBUG_ASSERT( paramInfo != NULL );
+   TA_ASSERT_DEBUG( paramInfo != NULL );
    if( paramInfo->type != TA_Output_Integer )
    {
       TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER_TYPE );
@@ -1155,7 +1155,7 @@ TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *param,
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_DEBUG_ASSERT( funcInfo != NULL );
+   TA_ASSERT_DEBUG( funcInfo != NULL );
    if( paramIndex >= funcInfo->nbOutput )
    {
       TA_TRACE_RETURN( TA_BAD_PARAM );
@@ -1163,7 +1163,7 @@ TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *param,
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->out[paramIndex].outputInfo;
-   TA_DEBUG_ASSERT( paramInfo != NULL );
+   TA_ASSERT_DEBUG( paramInfo != NULL );
    if( paramInfo->type != TA_Output_Real )
    {
       TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER_TYPE );
@@ -1221,11 +1221,11 @@ TA_RetCode TA_CallFunc( const TA_ParamHolder *param,
 
    /* Get the pointer on the function */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_DEBUG_ASSERT( funcInfo != NULL );
+   TA_ASSERT_DEBUG( funcInfo != NULL );
    funcDef = (const TA_FuncDef *)funcInfo->handle;
-   TA_DEBUG_ASSERT( funcDef != NULL );
+   TA_ASSERT_DEBUG( funcDef != NULL );
    function = funcDef->function;
-   TA_DEBUG_ASSERT( function != NULL );
+   TA_ASSERT_DEBUG( function != NULL );
 
    /* Perform the function call. */
    retCode = (*function)( paramHolderPriv, startIdx, endIdx,
