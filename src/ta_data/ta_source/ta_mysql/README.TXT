@@ -100,13 +100,42 @@ Note that the order of the data is important! TA-Lib cannot process unordered
 historical data.
 
 ========================================================================
+Compilation Notes
+========================================================================
+
+Currently, this driver is tested only with mysql++ version 1.7.1 for Visual C++
+
+Compilation of this driver is DISABLED by default.  In order to get this
+driver compiled in your ta-lib build, you need to do the following:
+1. Download libMySQL++ from http://www.mysql.com/get/Downloads/mysql++/mysql++-1.7.1-1-win32-vc++.zip/from/pick
+2. Unpack it to a peer directory to ta-lib, e.g. if ta-lib is in
+    C:\src\ta-lib
+then mysql++ should be in 
+    C:\src\mysql++
+3. Copy C:\src\mysql++\mysql\lib\libmySQL.dll to Windows directory.
+4. Compile mysql++ in the same model as you use for ta-mysql (Debug/Release,
+Single/Multi-thread, etc.)
+5. Define preprocessor symbol TA_SQL in the top-level makefile of ta-lib (or
+Visual C++ project settings).
+6. Add C:\src\mysql++\include to include search path for ta-lib
+7. Add C:\src\lib\mysql++.lib to link libs.
+8. Rebuild ta-lib.
+Note that the resulting ta_libc_???.lib will be GPL, not BSD, because mysql++
+is GPL.
+
+
+========================================================================
 To Do:
 
 Increase TA_CATEGORY_MAX_LENGTH to 200 (to accomodate longer SQL queries).
-Implement handling of country, exchange, and type.
-Replace MySQL++ by libMYSQL and switch to plain C.
+Implement handling of country, exchange, and type (on hold, because not
+really needed).
+Replace MySQL++ by libMYSQL and switch to plain C (on hold because of
+incompatible MySQL license).
+Expand time placeholders: $[ and $]
 Validate timestamps in history procedure (to avoid buffer overflows during
 date conversion).
+Replace MySQL by ODBC
 
 To do for Mario:
 Implement TA_FatalReportToBuffer().
