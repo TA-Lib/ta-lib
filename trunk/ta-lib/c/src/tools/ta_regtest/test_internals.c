@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  070401 MF   First version.
- *
+ *  050104 MF   Add TA_RegressionTest calls.
  */
 
 /* Description:
@@ -75,8 +75,10 @@
 /* None */
 
 /**** Local functions declarations.    ****/
+static ErrorNumber testFatalErrors( void );
 static ErrorNumber testCircularBuffer( void );
 static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer );
+
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -95,7 +97,55 @@ ErrorNumber test_internals( void )
    if( retValue != TA_TEST_PASS )
       return retValue;
 
-   return TA_TEST_PASS; /* Succcess. */
+   retValue = testFatalErrors();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   return TA_TEST_PASS; /* Success. */
+}
+
+static ErrorNumber testFatalErrors( void )
+{
+   TA_RetCode retCode;
+   TA_UDBase *uDBase;
+   ErrorNumber retValue;
+
+   /* Initialize the library. */
+   retValue = allocLib( &uDBase );
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\ntestFatalErrors Failed: Can't initialize the library\n" );
+      return retValue;
+   }
+
+   TA_SetFatalErrorHandler( NULL );
+
+   retCode = TA_RegressionTest(TA_REG_TEST_FATAL_ERROR);
+   if( retCode != TA_FATAL_ERR )
+      return TA_FATAL_TST_FAIL;
+
+   retValue = freeLib( uDBase );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = allocLib( &uDBase );
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\ntestFatalErrors Failed: Can't initialize the library\n" );
+      return retValue;
+   }
+
+   TA_SetFatalErrorHandler( NULL );
+
+   retCode = TA_RegressionTest(TA_REG_TEST_ASSERT_FAIL);
+   if( retCode != TA_FATAL_ERR )
+      return TA_ASSERT_TST_FAIL;
+
+   retValue = freeLib( uDBase );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   return TA_TEST_PASS; /* Success. */
 }
 
 static ErrorNumber testCircularBuffer( void )
