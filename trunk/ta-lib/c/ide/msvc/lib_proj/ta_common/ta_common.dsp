@@ -272,6 +272,10 @@ SOURCE=..\..\..\..\src\ta_common\imatix\sfl\sfldir.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_common\imatix\sfl\sflfile.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_common\imatix\sfl\sflstr.c
 # End Source File
 # Begin Source File
