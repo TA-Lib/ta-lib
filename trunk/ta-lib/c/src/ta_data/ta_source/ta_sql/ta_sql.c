@@ -615,7 +615,7 @@ static TA_RetCode executeDataQuery( TA_PrivateSQLHandle *privateHandle,
    void *queryResult;
    int resColumns, resRows = -1;
    int colNum, rowNum, barNum;
-   char *strval = NULL;
+   const char *strval = NULL;
 
 
    TA_TRACE_BEGIN( executeDataQuery );
