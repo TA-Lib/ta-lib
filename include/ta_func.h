@@ -79,6 +79,14 @@ TA_RetCode TA_MAX( int    startIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
+TA_RetCode TA_S_MAX( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     int           optInTimePeriod_0, /* From 2 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
+
 int TA_MAX_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -102,6 +110,14 @@ TA_RetCode TA_MIN( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
+
+TA_RetCode TA_S_MIN( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     int           optInTimePeriod_0, /* From 2 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
 
 int TA_MIN_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
@@ -146,6 +162,19 @@ TA_RetCode TA_BBANDS( int    startIdx,
                       double        outRealMiddleBand_1[],
                       double        outRealLowerBand_2[] );
 
+TA_RetCode TA_S_BBANDS( int    startIdx,
+                        int    endIdx,
+                        const float  inReal_0[],
+                        int           optInTimePeriod_0, /* From 2 to 100000 */
+                        double        optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                        double        optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
+                        TA_MAType     optInMAType_3,
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double        outRealUpperBand_0[],
+                        double        outRealMiddleBand_1[],
+                        double        outRealLowerBand_2[] );
+
 int TA_BBANDS_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
                       double        optInNbDevUp_1, /* From TA_REAL_MIN to TA_REAL_MAX */
                       double        optInNbDevDn_2, /* From TA_REAL_MIN to TA_REAL_MAX */
@@ -172,6 +201,14 @@ TA_RetCode TA_DEMA( int    startIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
 
+TA_RetCode TA_S_DEMA( int    startIdx,
+                      int    endIdx,
+                      const float  inReal_0[],
+                      int           optInTimePeriod_0, /* From 2 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal_0[] );
+
 int TA_DEMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -196,6 +233,14 @@ TA_RetCode TA_EMA( int    startIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
+TA_RetCode TA_S_EMA( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     int           optInTimePeriod_0, /* From 2 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
+
 int TA_EMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -212,6 +257,13 @@ TA_RetCode TA_HT_TRENDLINE( int    startIdx,
                             int          *outBegIdx,
                             int          *outNbElement,
                             double        outReal_0[] );
+
+TA_RetCode TA_S_HT_TRENDLINE( int    startIdx,
+                              int    endIdx,
+                              const float  inReal_0[],
+                              int          *outBegIdx,
+                              int          *outNbElement,
+                              double        outReal_0[] );
 
 int TA_HT_TRENDLINE_Lookback( void );
 
@@ -236,6 +288,14 @@ TA_RetCode TA_KAMA( int    startIdx,
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
+
+TA_RetCode TA_S_KAMA( int    startIdx,
+                      int    endIdx,
+                      const float  inReal_0[],
+                      int           optInTimePeriod_0, /* From 2 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal_0[] );
 
 int TA_KAMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
@@ -264,6 +324,15 @@ TA_RetCode TA_MA( int    startIdx,
                   int          *outBegIdx,
                   int          *outNbElement,
                   double        outReal_0[] );
+
+TA_RetCode TA_S_MA( int    startIdx,
+                    int    endIdx,
+                    const float  inReal_0[],
+                    int           optInTimePeriod_0, /* From 2 to 100000 */
+                    TA_MAType     optInMAType_1,
+                    int          *outBegIdx,
+                    int          *outNbElement,
+                    double        outReal_0[] );
 
 int TA_MA_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
                   TA_MAType     optInMAType_1 ); 
@@ -294,6 +363,16 @@ TA_RetCode TA_MAMA( int    startIdx,
                     double        outMAMA_0[],
                     double        outFAMA_1[] );
 
+TA_RetCode TA_S_MAMA( int    startIdx,
+                      int    endIdx,
+                      const float  inReal_0[],
+                      double        optInFastLimit_0, /* From 0.01 to 0.99 */
+                      double        optInSlowLimit_1, /* From 0.01 to 0.99 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outMAMA_0[],
+                      double        outFAMA_1[] );
+
 int TA_MAMA_Lookback( double        optInFastLimit_0, /* From 0.01 to 0.99 */
                     double        optInSlowLimit_1 );  /* From 0.01 to 0.99 */
 
@@ -320,6 +399,15 @@ TA_RetCode TA_MIDPRICE( int    startIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
 
+TA_RetCode TA_S_MIDPRICE( int    startIdx,
+                          int    endIdx,
+                          const float  inHigh_0[],
+                          const float  inLow_0[],
+                          int           optInTimePeriod_0, /* From 2 to 100000 */
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          double        outReal_0[] );
+
 int TA_MIDPRICE_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -343,6 +431,14 @@ TA_RetCode TA_MIDPOINT( int    startIdx,
                         int          *outBegIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
+
+TA_RetCode TA_S_MIDPOINT( int    startIdx,
+                          int    endIdx,
+                          const float  inReal_0[],
+                          int           optInTimePeriod_0, /* From 2 to 100000 */
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          double        outReal_0[] );
 
 int TA_MIDPOINT_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
@@ -373,6 +469,16 @@ TA_RetCode TA_SAR( int    startIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
+TA_RetCode TA_S_SAR( int    startIdx,
+                     int    endIdx,
+                     const float  inHigh_0[],
+                     const float  inLow_0[],
+                     double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
+                     double        optInMaximum_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
+
 int TA_SAR_Lookback( double        optInAcceleration_0, /* From TA_REAL_MIN to TA_REAL_MAX */
                    double        optInMaximum_1 );  /* From TA_REAL_MIN to TA_REAL_MAX */
 
@@ -397,6 +503,14 @@ TA_RetCode TA_SMA( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
+
+TA_RetCode TA_S_SMA( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     int           optInTimePeriod_0, /* From 2 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
 
 int TA_SMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
@@ -426,6 +540,15 @@ TA_RetCode TA_T3( int    startIdx,
                   int          *outNbElement,
                   double        outReal_0[] );
 
+TA_RetCode TA_S_T3( int    startIdx,
+                    int    endIdx,
+                    const float  inReal_0[],
+                    int           optInTimePeriod_0, /* From 2 to 100000 */
+                    double        optInVFactor_1, /* From 0 to 1 */
+                    int          *outBegIdx,
+                    int          *outNbElement,
+                    double        outReal_0[] );
+
 int TA_T3_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
                   double        optInVFactor_1 );  /* From 0 to 1 */
 
@@ -451,6 +574,14 @@ TA_RetCode TA_TEMA( int    startIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
 
+TA_RetCode TA_S_TEMA( int    startIdx,
+                      int    endIdx,
+                      const float  inReal_0[],
+                      int           optInTimePeriod_0, /* From 2 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal_0[] );
+
 int TA_TEMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -475,6 +606,14 @@ TA_RetCode TA_TRIMA( int    startIdx,
                      int          *outNbElement,
                      double        outReal_0[] );
 
+TA_RetCode TA_S_TRIMA( int    startIdx,
+                       int    endIdx,
+                       const float  inReal_0[],
+                       int           optInTimePeriod_0, /* From 2 to 100000 */
+                       int          *outBegIdx,
+                       int          *outNbElement,
+                       double        outReal_0[] );
+
 int TA_TRIMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -498,6 +637,14 @@ TA_RetCode TA_WMA( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
+
+TA_RetCode TA_S_WMA( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     int           optInTimePeriod_0, /* From 2 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
 
 int TA_WMA_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
@@ -530,6 +677,16 @@ TA_RetCode TA_ATR( int    startIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
+TA_RetCode TA_S_ATR( int    startIdx,
+                     int    endIdx,
+                     const float  inHigh_0[],
+                     const float  inLow_0[],
+                     const float  inClose_0[],
+                     int           optInTimePeriod_0, /* From 1 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
+
 int TA_ATR_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
@@ -548,6 +705,15 @@ TA_RetCode TA_TRANGE( int    startIdx,
                       int          *outBegIdx,
                       int          *outNbElement,
                       double        outReal_0[] );
+
+TA_RetCode TA_S_TRANGE( int    startIdx,
+                        int    endIdx,
+                        const float  inHigh_0[],
+                        const float  inLow_0[],
+                        const float  inClose_0[],
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double        outReal_0[] );
 
 int TA_TRANGE_Lookback( void );
 
@@ -580,6 +746,16 @@ TA_RetCode TA_ADX( int    startIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
+TA_RetCode TA_S_ADX( int    startIdx,
+                     int    endIdx,
+                     const float  inHigh_0[],
+                     const float  inLow_0[],
+                     const float  inClose_0[],
+                     int           optInTimePeriod_0, /* From 2 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
+
 int TA_ADX_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -605,6 +781,16 @@ TA_RetCode TA_ADXR( int    startIdx,
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
+
+TA_RetCode TA_S_ADXR( int    startIdx,
+                      int    endIdx,
+                      const float  inHigh_0[],
+                      const float  inLow_0[],
+                      const float  inClose_0[],
+                      int           optInTimePeriod_0, /* From 2 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal_0[] );
 
 int TA_ADXR_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
@@ -638,6 +824,16 @@ TA_RetCode TA_APO( int    startIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
+TA_RetCode TA_S_APO( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     int           optInFastPeriod_0, /* From 2 to 100000 */
+                     int           optInSlowPeriod_1, /* From 2 to 100000 */
+                     TA_MAType     optInMAType_2,
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
+
 int TA_APO_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
                    int           optInSlowPeriod_1, /* From 2 to 100000 */
                    TA_MAType     optInMAType_2 ); 
@@ -665,6 +861,16 @@ TA_RetCode TA_AROON( int    startIdx,
                      double        outAroonDown_0[],
                      double        outAroonUp_1[] );
 
+TA_RetCode TA_S_AROON( int    startIdx,
+                       int    endIdx,
+                       const float  inHigh_0[],
+                       const float  inLow_0[],
+                       int           optInTimePeriod_0, /* From 2 to 100000 */
+                       int          *outBegIdx,
+                       int          *outNbElement,
+                       double        outAroonDown_0[],
+                       double        outAroonUp_1[] );
+
 int TA_AROON_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -689,6 +895,15 @@ TA_RetCode TA_AROONOSC( int    startIdx,
                         int          *outBegIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
+
+TA_RetCode TA_S_AROONOSC( int    startIdx,
+                          int    endIdx,
+                          const float  inHigh_0[],
+                          const float  inLow_0[],
+                          int           optInTimePeriod_0, /* From 2 to 100000 */
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          double        outReal_0[] );
 
 int TA_AROONOSC_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
@@ -716,6 +931,16 @@ TA_RetCode TA_CCI( int    startIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
+TA_RetCode TA_S_CCI( int    startIdx,
+                     int    endIdx,
+                     const float  inHigh_0[],
+                     const float  inLow_0[],
+                     const float  inClose_0[],
+                     int           optInTimePeriod_0, /* From 5 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
+
 int TA_CCI_Lookback( int           optInTimePeriod_0 );  /* From 5 to 100000 */
 
 
@@ -741,6 +966,16 @@ TA_RetCode TA_DX( int    startIdx,
                   int          *outBegIdx,
                   int          *outNbElement,
                   double        outReal_0[] );
+
+TA_RetCode TA_S_DX( int    startIdx,
+                    int    endIdx,
+                    const float  inHigh_0[],
+                    const float  inLow_0[],
+                    const float  inClose_0[],
+                    int           optInTimePeriod_0, /* From 2 to 100000 */
+                    int          *outBegIdx,
+                    int          *outNbElement,
+                    double        outReal_0[] );
 
 int TA_DX_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
@@ -775,6 +1010,18 @@ TA_RetCode TA_MACD( int    startIdx,
                     double        outMACD_0[],
                     double        outMACDSignal_1[],
                     double        outMACDHist_2[] );
+
+TA_RetCode TA_S_MACD( int    startIdx,
+                      int    endIdx,
+                      const float  inReal_0[],
+                      int           optInFastPeriod_0, /* From 2 to 100000 */
+                      int           optInSlowPeriod_1, /* From 2 to 100000 */
+                      int           optInSignalPeriod_2, /* From 1 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outMACD_0[],
+                      double        outMACDSignal_1[],
+                      double        outMACDHist_2[] );
 
 int TA_MACD_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
                     int           optInSlowPeriod_1, /* From 2 to 100000 */
@@ -824,6 +1071,21 @@ TA_RetCode TA_MACDEXT( int    startIdx,
                        double        outMACDSignal_1[],
                        double        outMACDHist_2[] );
 
+TA_RetCode TA_S_MACDEXT( int    startIdx,
+                         int    endIdx,
+                         const float  inReal_0[],
+                         int           optInFastPeriod_0, /* From 2 to 100000 */
+                         TA_MAType     optInFastMAType_1,
+                         int           optInSlowPeriod_2, /* From 2 to 100000 */
+                         TA_MAType     optInSlowMAType_3,
+                         int           optInSignalPeriod_4, /* From 1 to 100000 */
+                         TA_MAType     optInSignalMAType_5,
+                         int          *outBegIdx,
+                         int          *outNbElement,
+                         double        outMACD_0[],
+                         double        outMACDSignal_1[],
+                         double        outMACDHist_2[] );
+
 int TA_MACDEXT_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
                        TA_MAType     optInFastMAType_1,
                        int           optInSlowPeriod_2, /* From 2 to 100000 */
@@ -854,6 +1116,16 @@ TA_RetCode TA_MACDFIX( int    startIdx,
                        double        outMACDSignal_1[],
                        double        outMACDHist_2[] );
 
+TA_RetCode TA_S_MACDFIX( int    startIdx,
+                         int    endIdx,
+                         const float  inReal_0[],
+                         int           optInSignalPeriod_0, /* From 1 to 100000 */
+                         int          *outBegIdx,
+                         int          *outNbElement,
+                         double        outMACD_0[],
+                         double        outMACDSignal_1[],
+                         double        outMACDHist_2[] );
+
 int TA_MACDFIX_Lookback( int           optInSignalPeriod_0 );  /* From 1 to 100000 */
 
 
@@ -881,6 +1153,17 @@ TA_RetCode TA_MFI( int    startIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
+TA_RetCode TA_S_MFI( int    startIdx,
+                     int    endIdx,
+                     const float  inHigh_0[],
+                     const float  inLow_0[],
+                     const float  inClose_0[],
+                     const int    inVolume_0[],
+                     int           optInTimePeriod_0, /* From 2 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
+
 int TA_MFI_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -907,6 +1190,16 @@ TA_RetCode TA_MINUS_DI( int    startIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
 
+TA_RetCode TA_S_MINUS_DI( int    startIdx,
+                          int    endIdx,
+                          const float  inHigh_0[],
+                          const float  inLow_0[],
+                          const float  inClose_0[],
+                          int           optInTimePeriod_0, /* From 1 to 100000 */
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          double        outReal_0[] );
+
 int TA_MINUS_DI_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
@@ -932,6 +1225,15 @@ TA_RetCode TA_MINUS_DM( int    startIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
 
+TA_RetCode TA_S_MINUS_DM( int    startIdx,
+                          int    endIdx,
+                          const float  inHigh_0[],
+                          const float  inLow_0[],
+                          int           optInTimePeriod_0, /* From 1 to 100000 */
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          double        outReal_0[] );
+
 int TA_MINUS_DM_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
@@ -955,6 +1257,14 @@ TA_RetCode TA_MOM( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
+
+TA_RetCode TA_S_MOM( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     int           optInTimePeriod_0, /* From 1 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
 
 int TA_MOM_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
@@ -988,6 +1298,16 @@ TA_RetCode TA_PPO( int    startIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
+TA_RetCode TA_S_PPO( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     int           optInFastPeriod_0, /* From 2 to 100000 */
+                     int           optInSlowPeriod_1, /* From 2 to 100000 */
+                     TA_MAType     optInMAType_2,
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
+
 int TA_PPO_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
                    int           optInSlowPeriod_1, /* From 2 to 100000 */
                    TA_MAType     optInMAType_2 ); 
@@ -1015,6 +1335,16 @@ TA_RetCode TA_PLUS_DI( int    startIdx,
                        int          *outNbElement,
                        double        outReal_0[] );
 
+TA_RetCode TA_S_PLUS_DI( int    startIdx,
+                         int    endIdx,
+                         const float  inHigh_0[],
+                         const float  inLow_0[],
+                         const float  inClose_0[],
+                         int           optInTimePeriod_0, /* From 2 to 100000 */
+                         int          *outBegIdx,
+                         int          *outNbElement,
+                         double        outReal_0[] );
+
 int TA_PLUS_DI_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -1040,6 +1370,15 @@ TA_RetCode TA_PLUS_DM( int    startIdx,
                        int          *outNbElement,
                        double        outReal_0[] );
 
+TA_RetCode TA_S_PLUS_DM( int    startIdx,
+                         int    endIdx,
+                         const float  inHigh_0[],
+                         const float  inLow_0[],
+                         int           optInTimePeriod_0, /* From 2 to 100000 */
+                         int          *outBegIdx,
+                         int          *outNbElement,
+                         double        outReal_0[] );
+
 int TA_PLUS_DM_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -1063,6 +1402,14 @@ TA_RetCode TA_ROC( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
+
+TA_RetCode TA_S_ROC( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     int           optInTimePeriod_0, /* From 1 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
 
 int TA_ROC_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
@@ -1088,6 +1435,14 @@ TA_RetCode TA_ROCP( int    startIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
 
+TA_RetCode TA_S_ROCP( int    startIdx,
+                      int    endIdx,
+                      const float  inReal_0[],
+                      int           optInTimePeriod_0, /* From 1 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal_0[] );
+
 int TA_ROCP_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
@@ -1111,6 +1466,14 @@ TA_RetCode TA_ROCR( int    startIdx,
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
+
+TA_RetCode TA_S_ROCR( int    startIdx,
+                      int    endIdx,
+                      const float  inReal_0[],
+                      int           optInTimePeriod_0, /* From 1 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal_0[] );
 
 int TA_ROCR_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
@@ -1136,6 +1499,14 @@ TA_RetCode TA_ROCR100( int    startIdx,
                        int          *outNbElement,
                        double        outReal_0[] );
 
+TA_RetCode TA_S_ROCR100( int    startIdx,
+                         int    endIdx,
+                         const float  inReal_0[],
+                         int           optInTimePeriod_0, /* From 1 to 100000 */
+                         int          *outBegIdx,
+                         int          *outNbElement,
+                         double        outReal_0[] );
+
 int TA_ROCR100_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
 
@@ -1159,6 +1530,14 @@ TA_RetCode TA_RSI( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
+
+TA_RetCode TA_S_RSI( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     int           optInTimePeriod_0, /* From 2 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
 
 int TA_RSI_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
@@ -1203,6 +1582,21 @@ TA_RetCode TA_STOCH( int    startIdx,
                      double        outSlowK_0[],
                      double        outSlowD_1[] );
 
+TA_RetCode TA_S_STOCH( int    startIdx,
+                       int    endIdx,
+                       const float  inHigh_0[],
+                       const float  inLow_0[],
+                       const float  inClose_0[],
+                       int           optInFastK_Period_0, /* From 1 to 100000 */
+                       int           optInSlowK_Period_1, /* From 1 to 100000 */
+                       TA_MAType     optInSlowK_MAType_2,
+                       int           optInSlowD_Period_3, /* From 1 to 100000 */
+                       TA_MAType     optInSlowD_MAType_4,
+                       int          *outBegIdx,
+                       int          *outNbElement,
+                       double        outSlowK_0[],
+                       double        outSlowD_1[] );
+
 int TA_STOCH_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
                      int           optInSlowK_Period_1, /* From 1 to 100000 */
                      TA_MAType     optInSlowK_MAType_2,
@@ -1241,6 +1635,19 @@ TA_RetCode TA_STOCHF( int    startIdx,
                       double        outFastK_0[],
                       double        outFastD_1[] );
 
+TA_RetCode TA_S_STOCHF( int    startIdx,
+                        int    endIdx,
+                        const float  inHigh_0[],
+                        const float  inLow_0[],
+                        const float  inClose_0[],
+                        int           optInFastK_Period_0, /* From 1 to 100000 */
+                        int           optInFastD_Period_1, /* From 1 to 100000 */
+                        TA_MAType     optInFastD_MAType_2,
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double        outFastK_0[],
+                        double        outFastD_1[] );
+
 int TA_STOCHF_Lookback( int           optInFastK_Period_0, /* From 1 to 100000 */
                       int           optInFastD_Period_1, /* From 1 to 100000 */
                       TA_MAType     optInFastD_MAType_2 ); 
@@ -1265,6 +1672,14 @@ TA_RetCode TA_TRIX( int    startIdx,
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal_0[] );
+
+TA_RetCode TA_S_TRIX( int    startIdx,
+                      int    endIdx,
+                      const float  inReal_0[],
+                      int           optInTimePeriod_0, /* From 1 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal_0[] );
 
 int TA_TRIX_Lookback( int           optInTimePeriod_0 );  /* From 1 to 100000 */
 
@@ -1292,6 +1707,16 @@ TA_RetCode TA_WILLR( int    startIdx,
                      int          *outNbElement,
                      double        outReal_0[] );
 
+TA_RetCode TA_S_WILLR( int    startIdx,
+                       int    endIdx,
+                       const float  inHigh_0[],
+                       const float  inLow_0[],
+                       const float  inClose_0[],
+                       int           optInTimePeriod_0, /* From 2 to 100000 */
+                       int          *outBegIdx,
+                       int          *outNbElement,
+                       double        outReal_0[] );
+
 int TA_WILLR_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -1314,6 +1739,13 @@ TA_RetCode TA_HT_DCPERIOD( int    startIdx,
                            int          *outNbElement,
                            double        outReal_0[] );
 
+TA_RetCode TA_S_HT_DCPERIOD( int    startIdx,
+                             int    endIdx,
+                             const float  inReal_0[],
+                             int          *outBegIdx,
+                             int          *outNbElement,
+                             double        outReal_0[] );
+
 int TA_HT_DCPERIOD_Lookback( void );
 
 
@@ -1330,6 +1762,13 @@ TA_RetCode TA_HT_DCPHASE( int    startIdx,
                           int          *outBegIdx,
                           int          *outNbElement,
                           double        outReal_0[] );
+
+TA_RetCode TA_S_HT_DCPHASE( int    startIdx,
+                            int    endIdx,
+                            const float  inReal_0[],
+                            int          *outBegIdx,
+                            int          *outNbElement,
+                            double        outReal_0[] );
 
 int TA_HT_DCPHASE_Lookback( void );
 
@@ -1349,6 +1788,14 @@ TA_RetCode TA_HT_PHASOR( int    startIdx,
                          double        outInPhase_0[],
                          double        outQuadrature_1[] );
 
+TA_RetCode TA_S_HT_PHASOR( int    startIdx,
+                           int    endIdx,
+                           const float  inReal_0[],
+                           int          *outBegIdx,
+                           int          *outNbElement,
+                           double        outInPhase_0[],
+                           double        outQuadrature_1[] );
+
 int TA_HT_PHASOR_Lookback( void );
 
 
@@ -1367,6 +1814,14 @@ TA_RetCode TA_HT_SINE( int    startIdx,
                        double        outSine_0[],
                        double        outLeadSine_1[] );
 
+TA_RetCode TA_S_HT_SINE( int    startIdx,
+                         int    endIdx,
+                         const float  inReal_0[],
+                         int          *outBegIdx,
+                         int          *outNbElement,
+                         double        outSine_0[],
+                         double        outLeadSine_1[] );
+
 int TA_HT_SINE_Lookback( void );
 
 
@@ -1383,6 +1838,13 @@ TA_RetCode TA_HT_TRENDMODE( int    startIdx,
                             int          *outBegIdx,
                             int          *outNbElement,
                             int           outInteger_0[] );
+
+TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
+                              int    endIdx,
+                              const float  inReal_0[],
+                              int          *outBegIdx,
+                              int          *outNbElement,
+                              int           outInteger_0[] );
 
 int TA_HT_TRENDMODE_Lookback( void );
 
@@ -1408,6 +1870,16 @@ TA_RetCode TA_AD( int    startIdx,
                   int          *outBegIdx,
                   int          *outNbElement,
                   double        outReal_0[] );
+
+TA_RetCode TA_S_AD( int    startIdx,
+                    int    endIdx,
+                    const float  inHigh_0[],
+                    const float  inLow_0[],
+                    const float  inClose_0[],
+                    const int    inVolume_0[],
+                    int          *outBegIdx,
+                    int          *outNbElement,
+                    double        outReal_0[] );
 
 int TA_AD_Lookback( void );
 
@@ -1440,6 +1912,18 @@ TA_RetCode TA_ADOSC( int    startIdx,
                      int          *outNbElement,
                      double        outReal_0[] );
 
+TA_RetCode TA_S_ADOSC( int    startIdx,
+                       int    endIdx,
+                       const float  inHigh_0[],
+                       const float  inLow_0[],
+                       const float  inClose_0[],
+                       const int    inVolume_0[],
+                       int           optInFastPeriod_0, /* From 2 to 100000 */
+                       int           optInSlowPeriod_1, /* From 2 to 100000 */
+                       int          *outBegIdx,
+                       int          *outNbElement,
+                       double        outReal_0[] );
+
 int TA_ADOSC_Lookback( int           optInFastPeriod_0, /* From 2 to 100000 */
                      int           optInSlowPeriod_1 );  /* From 2 to 100000 */
 
@@ -1458,6 +1942,14 @@ TA_RetCode TA_OBV( int    startIdx,
                    int          *outBegIdx,
                    int          *outNbElement,
                    int           outInteger_0[] );
+
+TA_RetCode TA_S_OBV( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     const int    inVolume_1[],
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     int           outInteger_0[] );
 
 int TA_OBV_Lookback( void );
 
@@ -1488,6 +1980,14 @@ TA_RetCode TA_LINEARREG( int    startIdx,
                          int          *outNbElement,
                          double        outReal_0[] );
 
+TA_RetCode TA_S_LINEARREG( int    startIdx,
+                           int    endIdx,
+                           const float  inReal_0[],
+                           int           optInTimePeriod_0, /* From 2 to 100000 */
+                           int          *outBegIdx,
+                           int          *outNbElement,
+                           double        outReal_0[] );
+
 int TA_LINEARREG_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -1511,6 +2011,14 @@ TA_RetCode TA_LINEARREG_SLOPE( int    startIdx,
                                int          *outBegIdx,
                                int          *outNbElement,
                                double        outReal_0[] );
+
+TA_RetCode TA_S_LINEARREG_SLOPE( int    startIdx,
+                                 int    endIdx,
+                                 const float  inReal_0[],
+                                 int           optInTimePeriod_0, /* From 2 to 100000 */
+                                 int          *outBegIdx,
+                                 int          *outNbElement,
+                                 double        outReal_0[] );
 
 int TA_LINEARREG_SLOPE_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
@@ -1536,6 +2044,14 @@ TA_RetCode TA_LINEARREG_ANGLE( int    startIdx,
                                int          *outNbElement,
                                double        outReal_0[] );
 
+TA_RetCode TA_S_LINEARREG_ANGLE( int    startIdx,
+                                 int    endIdx,
+                                 const float  inReal_0[],
+                                 int           optInTimePeriod_0, /* From 2 to 100000 */
+                                 int          *outBegIdx,
+                                 int          *outNbElement,
+                                 double        outReal_0[] );
+
 int TA_LINEARREG_ANGLE_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
 
@@ -1559,6 +2075,14 @@ TA_RetCode TA_LINEARREG_INTERCEPT( int    startIdx,
                                    int          *outBegIdx,
                                    int          *outNbElement,
                                    double        outReal_0[] );
+
+TA_RetCode TA_S_LINEARREG_INTERCEPT( int    startIdx,
+                                     int    endIdx,
+                                     const float  inReal_0[],
+                                     int           optInTimePeriod_0, /* From 2 to 100000 */
+                                     int          *outBegIdx,
+                                     int          *outNbElement,
+                                     double        outReal_0[] );
 
 int TA_LINEARREG_INTERCEPT_Lookback( int           optInTimePeriod_0 );  /* From 2 to 100000 */
 
@@ -1587,6 +2111,15 @@ TA_RetCode TA_STDDEV( int    startIdx,
                       int          *outBegIdx,
                       int          *outNbElement,
                       double        outReal_0[] );
+
+TA_RetCode TA_S_STDDEV( int    startIdx,
+                        int    endIdx,
+                        const float  inReal_0[],
+                        int           optInTimePeriod_0, /* From 2 to 100000 */
+                        double        optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double        outReal_0[] );
 
 int TA_STDDEV_Lookback( int           optInTimePeriod_0, /* From 2 to 100000 */
                       double        optInNbDev_1 );  /* From TA_REAL_MIN to TA_REAL_MAX */
@@ -1617,6 +2150,15 @@ TA_RetCode TA_VAR( int    startIdx,
                    int          *outNbElement,
                    double        outReal_0[] );
 
+TA_RetCode TA_S_VAR( int    startIdx,
+                     int    endIdx,
+                     const float  inReal_0[],
+                     int           optInTimePeriod_0, /* From 1 to 100000 */
+                     double        optInNbDev_1, /* From TA_REAL_MIN to TA_REAL_MAX */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal_0[] );
+
 int TA_VAR_Lookback( int           optInTimePeriod_0, /* From 1 to 100000 */
                    double        optInNbDev_1 );  /* From TA_REAL_MIN to TA_REAL_MAX */
 
@@ -1643,6 +2185,16 @@ TA_RetCode TA_AVGPRICE( int    startIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
 
+TA_RetCode TA_S_AVGPRICE( int    startIdx,
+                          int    endIdx,
+                          const float  inOpen_0[],
+                          const float  inHigh_0[],
+                          const float  inLow_0[],
+                          const float  inClose_0[],
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          double        outReal_0[] );
+
 int TA_AVGPRICE_Lookback( void );
 
 
@@ -1660,6 +2212,14 @@ TA_RetCode TA_MEDPRICE( int    startIdx,
                         int          *outBegIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
+
+TA_RetCode TA_S_MEDPRICE( int    startIdx,
+                          int    endIdx,
+                          const float  inHigh_0[],
+                          const float  inLow_0[],
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          double        outReal_0[] );
 
 int TA_MEDPRICE_Lookback( void );
 
@@ -1680,6 +2240,15 @@ TA_RetCode TA_TYPPRICE( int    startIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
 
+TA_RetCode TA_S_TYPPRICE( int    startIdx,
+                          int    endIdx,
+                          const float  inHigh_0[],
+                          const float  inLow_0[],
+                          const float  inClose_0[],
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          double        outReal_0[] );
+
 int TA_TYPPRICE_Lookback( void );
 
 
@@ -1698,6 +2267,15 @@ TA_RetCode TA_WCLPRICE( int    startIdx,
                         int          *outBegIdx,
                         int          *outNbElement,
                         double        outReal_0[] );
+
+TA_RetCode TA_S_WCLPRICE( int    startIdx,
+                          int    endIdx,
+                          const float  inHigh_0[],
+                          const float  inLow_0[],
+                          const float  inClose_0[],
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          double        outReal_0[] );
 
 int TA_WCLPRICE_Lookback( void );
 
