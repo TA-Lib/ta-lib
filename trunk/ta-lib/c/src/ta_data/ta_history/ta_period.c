@@ -488,7 +488,7 @@ TA_RetCode TA_PeriodTransform( const TA_History *history, /* The original histor
          /* We got all the info needed in the cur_XXXXX variables for
           * proceeding with the initialization of the new period price bar.
           */
-         TA_DEBUG_ASSERT( newPriceBar < new_nbBars );
+         TA_ASSERT_DEBUG( newPriceBar < new_nbBars );
          
          /* Volume and Open interest are changed to daily average. */
          if( old_volume )
