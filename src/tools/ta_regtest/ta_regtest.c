@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -88,7 +88,7 @@ int main( int argc, char **argv )
    (void)argv;
 
    printf( "\n" );
-   printf( "ta_regtest V%s - Regression Testing of TA-Lib code\n", TA_GetVersionString() );
+   printf( "ta_regtest V%s - Regression Tests of TA-Lib code\n", TA_GetVersionString() );
    printf( "\n" );
 
    if( argc > 1 )
