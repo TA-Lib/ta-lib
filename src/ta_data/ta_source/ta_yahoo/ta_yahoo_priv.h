@@ -209,4 +209,21 @@ typedef struct
 extern TA_HardCodedIndice hardCodedIndice[];
 extern const unsigned int hardCodedIndiceSize;
 
+/* Facilitate specification of URL to access Yahoo! web sites. */
+typedef struct 
+{
+   TA_CountryId countryId;
+   const char *dataServer;
+   const char *dataPrefix;
+   const char *dataSuffix;
+
+   const char *adjustmentServer;
+   const char *adjustmentPrefix;
+   const char *adjustmentSuffix;
+} TA_DirectYahooDecoding;
+
+extern TA_DirectYahooDecoding tableDirectYahooDecoding[];
+
+extern unsigned int tableDirectYahooDecodingSize;
+
 #endif

@@ -164,6 +164,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
    TA_WebPage *webPage;
    TA_PrivateYahooHandle *yahooHandle;
    TA_DecodingParam localDecodingParam;
+   TA_DecodingParam directYahooDecodingParam;
    const TA_DecodingParam *decodingParam;
    TA_FileHandle *fileHandle;
    TA_ReadOpInfo *readOpInfo;
@@ -218,16 +219,17 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
    if( (dayOfWeek == TA_SUNDAY) || (dayOfWeek == TA_SATURDAY) )
       TA_PrevWeekday( &lastBarTimestamp );
 
-   /* Map the TA-Lib name into the Yahoo! name. */
    TA_ASSERT( yahooHandle != NULL );
 
    if( yahooHandle->param->id == TA_YAHOO_ONE_SYMBOL )
    {
+      /* User specified Yahoo! name. */
       yahooName = TA_StringDup(stringCache,yahooHandle->webSiteSymbol);
       TA_ASSERT( yahooName != NULL );
    }
    else
    {
+      /* Map the TA-Lib name into the Yahoo! name. */
       retCode = TA_AllocStringFromLibName( categoryHandle->string,
                                            symbolHandle->string,
                                            &yahooName );  
@@ -237,7 +239,6 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
       }
 
       TA_ASSERT( yahooName != NULL );
-
    }
 
    /* Check if the user did overide the server address in the location parameter. 
@@ -247,14 +248,30 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
       overideServerAddr = TA_StringToChar(yahooHandle->userSpecifiedServer);
    else
       overideServerAddr = NULL;
-
+   
    /* Get the decoding parameter for the CSV web page. */
-   decodingParam = TA_YahooIdxDecodingParam( yahooHandle->index, TA_YAHOOIDX_CSV_PAGE );
-   if( !decodingParam )
+   if( yahooHandle->param->id == TA_YAHOO_ONE_SYMBOL )
    {
-      TA_StringFree( stringCache, yahooName );
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(103) );
+      retCode = TA_YahooIdxDataDecoding( yahooHandle->webSiteCountry,
+                                         TA_YAHOOIDX_CSV_PAGE,
+                                         &directYahooDecodingParam );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_StringFree( stringCache, yahooName );
+         TA_TRACE_RETURN( retCode );
+      }
+      decodingParam = &directYahooDecodingParam;
    }
+   else
+   {
+      decodingParam = TA_YahooIdxDecodingParam( yahooHandle->index, TA_YAHOOIDX_CSV_PAGE );
+      if( !decodingParam )
+      {
+         TA_StringFree( stringCache, yahooName );
+         TA_TRACE_RETURN( TA_INTERNAL_ERROR(103) );
+      }
+   }
+
    localDecodingParam = *decodingParam;
 
    /* Check if split/value adjustment are necessary. */
@@ -568,11 +585,26 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
    if( doAdjustment && (nbTotalBarAdded >= 1) )
    {
       /* Get the decoding parameter for the adjustment page. */
-      decodingParam = TA_YahooIdxDecodingParam( yahooHandle->index, TA_YAHOOIDX_ADJUSTMENT );
-      if( !decodingParam )
+      if( yahooHandle->param->id == TA_YAHOO_ONE_SYMBOL )
       {
-         TA_StringFree( stringCache, yahooName );
-         TA_TRACE_RETURN( TA_INTERNAL_ERROR(140) );
+         retCode = TA_YahooIdxDataDecoding( yahooHandle->webSiteCountry,
+                                            TA_YAHOOIDX_ADJUSTMENT,
+                                            &directYahooDecodingParam );
+         if( retCode != TA_SUCCESS )
+         {
+            TA_StringFree( stringCache, yahooName );
+            TA_TRACE_RETURN( retCode );
+         }
+         decodingParam = &directYahooDecodingParam;
+      }
+      else
+      {
+         decodingParam = TA_YahooIdxDecodingParam( yahooHandle->index, TA_YAHOOIDX_ADJUSTMENT );
+         if( !decodingParam )
+         {
+            TA_StringFree( stringCache, yahooName );
+            TA_TRACE_RETURN( TA_INTERNAL_ERROR(140) );
+         }
       }
       localDecodingParam = *decodingParam;
 

@@ -126,12 +126,13 @@ int print_data( TA_UDBase *udb,
 
    /* Setup the datasource. */
    memset( &addSourceParam, 0, sizeof( TA_AddDataSourceParam ) );
-   if( strcmp(category,"DIRECT=US") == 0 )
+   if( strncmp(category,"DIRECT=", 7) == 0 )
    {
      addSourceParam.id       = TA_YAHOO_ONE_SYMBOL;
      addSourceParam.info     = symbol;
      addSourceParam.category = category;
      addSourceParam.symbol   = symbol;
+     addSourceParam.location = &category[7];
    }
    else
      addSourceParam.id = TA_YAHOO_WEB;
@@ -151,6 +152,7 @@ int print_data( TA_UDBase *udb,
    histParam.symbol   = symbol;
    histParam.period   = period;
    histParam.field    = TA_ALL;
+   histParam.flags    = TA_DISABLE_PRICE_VALIDATION;
    retCode = TA_HistoryAlloc( udb, &histParam, &history );
 
    if( retCode != TA_SUCCESS )
