@@ -369,7 +369,7 @@ SOURCE=..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_market.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\ta_yahoo_one_symbol.c
+SOURCE=..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_one_symbol.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
