@@ -63,6 +63,7 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_historical.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_market.c \
 		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_idx.c \
+		../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_one_symbol.c \
 		../../../../../src/ta_data/ta_source/ta_csi/ta_csi.c \
 		../../../../../src/ta_data/ta_source/ta_csi/ta_csi_handle.c \
 		../../../../../src/ta_data/ta_source/ta_csi/ta_csi_files.c \
@@ -291,6 +292,7 @@ OBJECTS =	../../../../../temp/csr/ta_ascii.o \
 		../../../../../temp/csr/ta_yahoo_historical.o \
 		../../../../../temp/csr/ta_yahoo_market.o \
 		../../../../../temp/csr/ta_yahoo_idx.o \
+		../../../../../temp/csr/ta_yahoo_one_symbol.o \
 		../../../../../temp/csr/ta_csi.o \
 		../../../../../temp/csr/ta_csi_handle.o \
 		../../../../../temp/csr/ta_csi_files.o \
@@ -631,6 +633,9 @@ clean:
 
 ../../../../../temp/csr/ta_yahoo_idx.o: ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_idx.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_yahoo_idx.o ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_idx.c
+
+../../../../../temp/csr/ta_yahoo_one_symbol.o: ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_one_symbol.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_yahoo_one_symbol.o ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_one_symbol.c
 
 ../../../../../temp/csr/ta_csi.o: ../../../../../src/ta_data/ta_source/ta_csi/ta_csi.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_csi.o ../../../../../src/ta_data/ta_source/ta_csi/ta_csi.c

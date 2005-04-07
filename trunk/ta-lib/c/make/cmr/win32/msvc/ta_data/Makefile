@@ -51,6 +51,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_historical.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_market.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_idx.c \
+		..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_one_symbol.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi_handle.c \
 		..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi_files.c \
@@ -88,6 +89,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_yahoo_historical.obj \
 		..\..\..\..\..\temp\cmr\ta_yahoo_market.obj \
 		..\..\..\..\..\temp\cmr\ta_yahoo_idx.obj \
+		..\..\..\..\..\temp\cmr\ta_yahoo_one_symbol.obj \
 		..\..\..\..\..\temp\cmr\ta_csi.obj \
 		..\..\..\..\..\temp\cmr\ta_csi_handle.obj \
 		..\..\..\..\..\temp\cmr\ta_csi_files.obj \
@@ -170,6 +172,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_yahoo_historical.obj
 	-del ..\..\..\..\..\temp\cmr\ta_yahoo_market.obj
 	-del ..\..\..\..\..\temp\cmr\ta_yahoo_idx.obj
+	-del ..\..\..\..\..\temp\cmr\ta_yahoo_one_symbol.obj
 	-del ..\..\..\..\..\temp\cmr\ta_csi.obj
 	-del ..\..\..\..\..\temp\cmr\ta_csi_handle.obj
 	-del ..\..\..\..\..\temp\cmr\ta_csi_files.obj
@@ -282,6 +285,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_yahoo_idx.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_idx.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_yahoo_idx.obj ..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_idx.c
+
+..\..\..\..\..\temp\cmr\ta_yahoo_one_symbol.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_one_symbol.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_yahoo_one_symbol.obj ..\..\..\..\..\src\ta_data\ta_source\ta_yahoo\ta_yahoo_one_symbol.c
 
 ..\..\..\..\..\temp\cmr\ta_csi.obj: ..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_csi.obj ..\..\..\..\..\src\ta_data\ta_source\ta_csi\ta_csi.c
