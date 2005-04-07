@@ -127,4 +127,11 @@ typedef enum {TA_YAHOOIDX_CSV_PAGE,
 
 TA_DecodingParam *TA_YahooIdxDecodingParam( TA_YahooIdx *idx, TA_DecodeType type );
 
+/* Get the decoding parameters to get the market data from 
+ * a specific Yahoo! web site.
+ */ 
+TA_RetCode TA_YahooIdxDataDecoding( TA_CountryId id,
+                                    TA_DecodeType type,
+                                    TA_DecodingParam *param );
+
 #endif

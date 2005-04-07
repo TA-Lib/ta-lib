@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -46,6 +46,7 @@
  *  062803 MF   Add printf when failed to add the symbol to index.
  *  031604 SD   Fix #917085 - Unprotected fclose was causing segfault.
  *  061304 MF   Replace chart.yahoo.com with ichart.yahoo.com
+ *  040205 MF   Make it easy to add decoding for other Yahoo! web site.
  */
 
 /* Description:
@@ -306,14 +307,51 @@ static TA_DecodingParam euInfoDecoding =
 
 /**** Global functions definitions.   ****/
 
+TA_RetCode TA_YahooIdxDataDecoding( TA_CountryId id, TA_DecodeType type, TA_DecodingParam *param )
+{
+   unsigned int i;
+
+   memset( param, 0, sizeof( TA_DecodingParam ) );
+
+   for( i=0; i < tableDirectYahooDecodingSize; i++ )
+   {
+      if( id == tableDirectYahooDecoding[i].countryId )
+      {
+         switch( type )
+         {
+         case TA_YAHOOIDX_CSV_PAGE:
+            param->uirPrefix = tableDirectYahooDecoding[i].dataPrefix;
+            param->uirSuffix = tableDirectYahooDecoding[i].dataSuffix;
+            param->webSiteServer = tableDirectYahooDecoding[i].dataServer;
+            break;
+
+         case TA_YAHOOIDX_ADJUSTMENT:
+            param->uirPrefix = tableDirectYahooDecoding[i].adjustmentPrefix;
+            param->uirSuffix = tableDirectYahooDecoding[i].adjustmentSuffix;
+            param->webSiteServer = tableDirectYahooDecoding[i].adjustmentServer;
+            break;
+
+         default:
+            /* Do nothing */
+            break;
+         }
+
+         return TA_SUCCESS; /* The country was found. */
+      }
+   }
+
+   return TA_UNSUPPORTED_COUNTRY;
+}
+
 TA_DecodingParam *TA_YahooIdxDecodingParam( TA_YahooIdx *idx, TA_DecodeType type )
 {
    TA_YahooIdxHidden *idxHidden;
 
    if( idx == NULL )
    {
-      // When no index (from .dat file) is provided, we
-      // use by default the US web-site for now.
+      /* When no index (from .dat file) is provided, we
+       * use by default the US web-site for now.
+       */
       switch( type )
       {
       case TA_YAHOOIDX_CSV_PAGE:
@@ -1449,8 +1487,7 @@ static TA_RetCode convertStreamToTables( TA_YahooIdx *idx, TA_StreamAccess *stre
    return TA_SUCCESS;
 }
 
-static TA_RetCode writeDecodingParam( 
-                                      TA_Stream *stream,
+static TA_RetCode writeDecodingParam( TA_Stream *stream,
                                       TA_DecodingParam *param )
 {
    TA_RetCode retCode;

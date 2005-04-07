@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -249,20 +249,6 @@ TA_RetCode TA_YAHOO_OpenSource( const TA_AddDataSourceParamPriv *param,
 
    if( privData->param->id == TA_YAHOO_ONE_SYMBOL )
    {
-      /* Check for the web site providing the data when adding
-       * only ONE symbol to the index.
-       */
-      switch( countryId )
-      {
-      case TA_Country_ID_US:
-         /* For this data source, US is the only Yahoo! web
-          * site supported for now.
-          */
-         break;
-      default:
-         TA_YAHOO_DataSourceHandleFree( tmpHandle );
-         TA_TRACE_RETURN( TA_UNSUPPORTED_COUNTRY );
-      }
       privData->index = NULL;
       privData->webSiteCountry = countryId;
       privData->webSiteSymbol  = TA_StringDup(stringCache,privData->param->info);
