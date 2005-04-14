@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  082304 MF   First version.
- *              
+ *  041305 MF   Add latest list of function.
  */
 
 /* Description:
@@ -191,39 +191,65 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
 /* List of test to perform. */
 static TA_Test tableTest[] =
 {
-   { "CDL3BLACKCROWS",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLABANDONEDBABY",   1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLDOJISTAR",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLENGULFING",       1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLEVENINGDOJISTAR", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLEVENINGSTAR",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLHAMMER",          1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLHANGINGMAN",      1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLHARAMI",          1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLHARAMICROSS",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLHIGHWAVE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLIDENTICAL3CROWS", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLINVERTEDHAMMER",  1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLLONGLINE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLMORNINGDOJISTAR", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLMORNINGSTAR",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLSHOOTINGSTAR",    1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLSHORTLINE",       1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLSPINNINGTOP",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLUPSIDEGAP2CROWS", 1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLTRISTAR",         1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDL2CROWS",          1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDL3INSIDE",         1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDL3LINESTRIKE",     1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDL3OUTSIDE",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDL3WHITESOLDIERS",  1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLADVANCEBLOCK",    1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLDARKCLOUDCOVER",  1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLINNECK",          1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLONNECK",          1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLPIERCING",        1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLSTALLEDPATTERN",  1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
-   { "CDLTHRUSTING",       1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }}
+   { "CDL2CROWS",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDL3BLACKCROWS",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDL3INSIDE",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDL3LINESTRIKE",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDL3OUTSIDE",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDL3STARSINSOUTH",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDL3WHITESOLDIERS",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLABANDONEDBABY",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLADVANCEBLOCK",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLBELTHOLD",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLBREAKAWAY",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLCLOSINGMARUBOZU",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLCONCEALBABYSWALL",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLCOUNTERATTACK",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLDARKCLOUDCOVER",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLDOJI",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLDOJISTAR",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLDRAGONFLYDOJI",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLENGULFING",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLEVENINGDOJISTAR",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLEVENINGSTAR",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLGAPSIDESIDEWHITE",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLGRAVESTONEDOJI",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLHAMMER",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLHANGINGMAN",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLHARAMI",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLHARAMICROSS",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLHIGHWAVE",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLHOMINGPIGEON",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLIDENTICAL3CROWS",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLINNECK",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLINVERTEDHAMMER",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLKICKING",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLKICKINGBYLENGTH",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLLADDERBOTTOM",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLLONGLEGGEDDOJI",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLLONGLINE",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLMARUBOZU",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLMATCHINGLOW",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLMATHOLD",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLMORNINGDOJISTAR",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLMORNINGSTAR",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLONNECK",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLPIERCING",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLRICKSHAWMAN",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLRISEFALL3METHODS",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLSEPARATINGLINES",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLSHOOTINGSTAR",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLSHORTLINE",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLSPINNINGTOP",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLSTALLEDPATTERN",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLSTICKSANDWICH",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLTAKURI",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLTASUKIGAP",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLTHRUSTING",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLTRISTAR",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLUNIQUE3RIVER",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLUPSIDEGAP2CROWS",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }},
+   { "CDLXSIDEGAP3METHODS",1, 0, 0, {0.0,0.0}, TA_SUCCESS, { {0,0}, {1,1} }}
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
