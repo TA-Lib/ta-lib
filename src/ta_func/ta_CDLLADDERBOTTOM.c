@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,14 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
- *
+ *  MF       Mario Fortier
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  032005 AC   Creation           
- *
+ *  041305 MF   Minor modification for a compiler warning
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -122,7 +122,7 @@
 {
    /* Insert local variables here. */
     double ShadowVeryShortPeriodTotal;
-    int i, outIdx, totIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
+    int i, outIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -252,7 +252,7 @@
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */     double ShadowVeryShortPeriodTotal;
-/* Generated */     int i, outIdx, totIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
+/* Generated */     int i, outIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
