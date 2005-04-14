@@ -553,6 +553,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLHOMINGPIGEON.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLIDENTICAL3CROWS.c
 # End Source File
 # Begin Source File
@@ -573,6 +577,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLKICKINGBYLENGTH.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLLADDERBOTTOM.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c
 # End Source File
 # Begin Source File
@@ -586,6 +594,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_CDLMATHOLD.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLMATCHINGLOW.c
 # End Source File
 # Begin Source File
 
@@ -630,6 +642,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_CDLSTALLEDPATTERN.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLSTICKSANDWICH.c
 # End Source File
 # Begin Source File
 
