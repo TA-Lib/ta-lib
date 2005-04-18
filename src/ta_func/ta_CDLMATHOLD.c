@@ -85,7 +85,8 @@
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-    return max( TA_CANDLEAVGPERIOD(TA_BodyShort), TA_CANDLEAVGPERIOD(TA_BodyLong) ) + 4;
+   (void)optInPenetration;
+   return max( TA_CANDLEAVGPERIOD(TA_BodyShort), TA_CANDLEAVGPERIOD(TA_BodyLong) ) + 4;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
