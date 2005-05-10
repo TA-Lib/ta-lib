@@ -191,7 +191,7 @@
         if( TA_REALBODY(i-2) <= TA_CANDLEAVERAGE( TA_BodyDoji, BodyPeriodTotal, i-2 ) &&    // 1st: doji
             TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( TA_BodyDoji, BodyPeriodTotal, i-2 ) &&    // 2nd: doji
             TA_REALBODY(i) <= TA_CANDLEAVERAGE( TA_BodyDoji, BodyPeriodTotal, i-2 ) ) {     // 3rd: doji
-            outInteger[outIdx++] = 0;
+            outInteger[outIdx] = 0;
             if ( TA_REALBODYGAPUP(i-1,i-2)                                                  // 2nd gaps up
                  &&
                  max(inOpen[i],inClose[i]) < max(inOpen[i-1],inClose[i-1])                  // 3rd is not higher than 2nd
@@ -202,6 +202,7 @@
                  min(inOpen[i],inClose[i]) > min(inOpen[i-1],inClose[i-1])                  // 3rd is not lower than 2nd
                )
                 outInteger[outIdx] = +100;
+            outIdx++;
         }
         else
             outInteger[outIdx++] = 0;
@@ -209,7 +210,7 @@
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyPeriodTotal += TA_CANDLERANGE( TA_BodyDoji, i-2 ) - TA_CANDLERANGE( TA_BodyDoji, BodyTrailingIdx );
-        i++; 
+        i++;
         BodyTrailingIdx++;
    } while( i <= endIdx );
 
@@ -286,7 +287,7 @@
 /* Generated */         if( TA_REALBODY(i-2) <= TA_CANDLEAVERAGE( TA_BodyDoji, BodyPeriodTotal, i-2 ) &&    // 1st: doji
 /* Generated */             TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( TA_BodyDoji, BodyPeriodTotal, i-2 ) &&    // 2nd: doji
 /* Generated */             TA_REALBODY(i) <= TA_CANDLEAVERAGE( TA_BodyDoji, BodyPeriodTotal, i-2 ) ) {     // 3rd: doji
-/* Generated */             outInteger[outIdx++] = 0;
+/* Generated */             outInteger[outIdx] = 0;
 /* Generated */             if ( TA_REALBODYGAPUP(i-1,i-2)                                                  // 2nd gaps up
 /* Generated */                  &&
 /* Generated */                  max(inOpen[i],inClose[i]) < max(inOpen[i-1],inClose[i-1])                  // 3rd is not higher than 2nd
@@ -297,11 +298,12 @@
 /* Generated */                  min(inOpen[i],inClose[i]) > min(inOpen[i-1],inClose[i-1])                  // 3rd is not lower than 2nd
 /* Generated */                )
 /* Generated */                 outInteger[outIdx] = +100;
+/* Generated */             outIdx++;
 /* Generated */         }
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         BodyPeriodTotal += TA_CANDLERANGE( TA_BodyDoji, i-2 ) - TA_CANDLERANGE( TA_BodyDoji, BodyTrailingIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         BodyTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    *outNbElement = outIdx;
