@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,14 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
- *
+ *  CSB      Christopher Barnhouse
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY      Description
  *  -------------------------------------------------------------------
- *  100204 AC   Creation           
- *
+ *  100204 AC      Creation           
+ *  051005 CSB,AC  Fix #1199526 for out-of-bound write in output.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
