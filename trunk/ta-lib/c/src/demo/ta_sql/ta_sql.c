@@ -67,7 +67,7 @@ void print_usage( char *str )
    printf( "\n" );
    printf( "Usage: ta_sql -c    <opt> <loc> <catsql>\n" );
    printf( "       ta_sql -s    <opt> <loc> <catsql> <cat> <symsql>\n" );
-   printf( "       ta_sql -d<p> <opt> <loc> <catsql> <cat> <symsql> <sym> <infosql>\n" );
+   printf( "       ta_sql -d<p> <opt> <loc> <catsql> <cat> <symsql> <sym> <infosql> [period]\n" );
    printf( "\n" );
    printf( "    Specify one of the following action switch:\n" );
    printf( "      -c     Display all supported categories\n" );
@@ -91,6 +91,7 @@ void print_usage( char *str )
    printf( "    <symsql>  is the TA_AddDataSource symbol parameter.\n" );
    printf( "    <sym>     is a string of a given symbol.\n" );
    printf( "    <infosql> is the TA_AddDataSource info parameter.\n" );
+   printf( "    [period]  optional value in sec specifying the database period." );
    printf( "\n" );
    printf( "  Market data output is \"Date,Open,High,Low,Close,Volume\"\n" );
    printf( "  or \"Date,Time,Open,High,Low,Close,Volume\" for intraday data.\n" );
@@ -334,6 +335,8 @@ int main( int argc, char *argv[] )
       haParam.symbol = argv[firstParam+4];
    if( nbParam > 5 )
       dsParam.info = argv[firstParam+5];
+   if( nbParam > 6 )
+      dsParam.period = atoi(argv[firstParam+6]);
 
    /* Add the data source. */
    retCode = TA_AddDataSource( udb, &dsParam );
