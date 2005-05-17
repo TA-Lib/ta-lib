@@ -22,14 +22,20 @@ typedef struct
 } CommandLineAction;
 
 static const CommandLineAction tableAction[] = 
-{ {"-c", DISPLAY_CATEGORIES,    TA_DAILY,    },
-  {"-s", DISPLAY_SYMBOLS,       TA_DAILY,    },
-  {"-d", DISPLAY_HISTORIC_DATA, TA_DAILY,    },
-  {"-dd",DISPLAY_HISTORIC_DATA, TA_DAILY,    },
-  {"-dw",DISPLAY_HISTORIC_DATA, TA_WEEKLY,   },
-  {"-dm",DISPLAY_HISTORIC_DATA, TA_MONTHLY,  },
-  {"-dq",DISPLAY_HISTORIC_DATA, TA_QUARTERLY },
-  {"-dy",DISPLAY_HISTORIC_DATA, TA_YEARLY    }
+{ {"-c",  DISPLAY_CATEGORIES,    TA_DAILY,    },
+  {"-s",  DISPLAY_SYMBOLS,       TA_DAILY,    },
+  {"-d",  DISPLAY_HISTORIC_DATA, TA_DAILY,    },
+  {"-dd", DISPLAY_HISTORIC_DATA, TA_DAILY,    },
+  {"-dw", DISPLAY_HISTORIC_DATA, TA_WEEKLY,   },
+  {"-dm", DISPLAY_HISTORIC_DATA, TA_MONTHLY,  },
+  {"-dq", DISPLAY_HISTORIC_DATA, TA_QUARTERLY },
+  {"-dy", DISPLAY_HISTORIC_DATA, TA_YEARLY    },
+  {"-d1", DISPLAY_HISTORIC_DATA, TA_1MIN      },
+  {"-d5", DISPLAY_HISTORIC_DATA, TA_5MINS     },
+  {"-d10",DISPLAY_HISTORIC_DATA, TA_10MINS    },
+  {"-d15",DISPLAY_HISTORIC_DATA, TA_15MINS    },
+  {"-d30",DISPLAY_HISTORIC_DATA, TA_30MINS    },
+  {"-d1H",DISPLAY_HISTORIC_DATA, TA_1HOUR     }
 };
 #define NB_ACTION_SWITCH (sizeof(tableAction)/sizeof(CommandLineAction))
 
@@ -43,8 +49,9 @@ typedef struct
 static const CommandLineOption tableOption[] =
 {
   {"-z", TA_REPLACE_ZERO_PRICE_BAR, 0},
-  {"-t", 0, TA_USE_TOTAL_VOLUME },
-  {"-i", 0, TA_ALLOW_INCOMPLETE_PRICE_BARS }
+  {"-t", 0, TA_USE_TOTAL_VOLUME | TA_USE_TOTAL_OPENINTEREST },
+  {"-i", 0, TA_ALLOW_INCOMPLETE_PRICE_BARS },
+  {"-f", 0, TA_DISABLE_PRICE_VALIDATION }
 };
 #define NB_OPTION_SWITCH (sizeof(tableOption)/sizeof(CommandLineOption))
 
@@ -67,11 +74,13 @@ void print_usage( char *str )
    printf( "      -s     Display all symbols for a given category\n" );
    printf( "      -d<p>  Display market data for the specified <p> period. Use\n" );
    printf( "             \"d,w,m,q,y\" for \"daily,weekly,monthly,quarterly,yearly\"\n" );
+   printf( "             \"1,5,10,15,30,1H\" for \"1,5,10,15,30mins,1hour\"\n" );
    printf( "\n" );
    printf( "    <opt> are optional switches:\n" );
    printf( "      -z TA_REPLACE_ZERO_PRICE_BAR flag for TA_AddDataSource.\n" );
-   printf( "      -t TA_USE_TOTAL_VOLUME flag for TA_HistoryAlloc.\n" );
-   printf( "      -i TA_ALLOW_INCOMPLETE_PRICE_BARS flag for TA_AddDataSource.\n" );
+   printf( "      -t TA_USE_TOTAL_VOLUME and OPENINTEREST flag for TA_HistoryAlloc.\n" );
+   printf( "      -i TA_ALLOW_INCOMPLETE_PRICE_BARS flag for TA_HistoryAlloc.\n" );
+   printf( "      -f TA_DISABLE_PRICE_VALIDATION flag for TA_HistoryAlloc.\n" );
    printf( "\n" );
    printf( "      -u=<str>  Specify the username for TA_AddDataSource.\n" );
    printf( "      -p=<str>  Specify the password for TA_AddDataSource.\n" );
@@ -84,8 +93,9 @@ void print_usage( char *str )
    printf( "    <infosql> is the TA_AddDataSource info parameter.\n" );
    printf( "\n" );
    printf( "  Market data output is \"Date,Open,High,Low,Close,Volume\"\n" );
+   printf( "  or \"Date,Time,Open,High,Low,Close,Volume\" for intraday data.\n" );
    printf( "\n" );
-   printf( "  Check http://ta-lib.org/d_source/d_sql.html for usage examples.\"\n" );
+   printf( "  Check http://ta-lib.org/d_source/d_sql.html for usage examples.\n" );
    printf( "\n" );
    printf( "  For help, try the mailing list at http://ta-lib.org\n" );
    printf( "\n" );
@@ -107,6 +117,7 @@ int print_data( TA_UDBase *udb, TA_HistoryAllocParam *haParam )
    TA_RetCode retCode;
    TA_History *history;
    unsigned int i;
+   int intraday = (haParam->period < TA_DAILY);
 
    history = NULL;
    retCode = TA_HistoryAlloc( udb, haParam, &history );                              
@@ -127,6 +138,12 @@ int print_data( TA_UDBase *udb, TA_HistoryAllocParam *haParam )
          printf( "%04u-%02u-%02u", TA_GetYear(&history->timestamp[i]),
                                    TA_GetMonth(&history->timestamp[i]),
                                    TA_GetDay(&history->timestamp[i]) );
+         if (intraday)
+         {
+             printf( ",%02u:%02u:%02u", TA_GetHour(&history->timestamp[i]),
+                                        TA_GetMin(&history->timestamp[i]),
+                                        TA_GetSec(&history->timestamp[i]) );
+         }
          if( history->open )
             printf( ",%.2f", history->open[i] );
          if( history->high )
