@@ -38,6 +38,7 @@
  *  MF       Mario Fortier
  *  JS       Jon Sudul
  *  AM       Adrian Michel
+ *  AC       Angelo Ciceri
  *
  * Change history:
  *
@@ -47,7 +48,8 @@
  *  012504 MF,JS  Fix mem leak in TA_HistoryAddData (Bug#881950).
  *  013104 MF     TA_History now contains names of sources + adjust
  *                timestamp to cover the requested period (Bug#888470)
- *  030405 MF,AM  Now do correctly do volume adjustment with split.
+ *  030405 MF,AM  Now do volume adjustment with split correctly.
+ *  060605 MF,AC  Fix merge logic.
  */
 
 /* Description:
@@ -1953,11 +1955,9 @@ static TA_RetCode buildListMergeOp( TA_BuilderSupport *builderSupport )
    {
       TA_TRACE_RETURN( retCode );
    }
-
-   while( nbSupportHavingData > 0 )
+   
+   while( 1 ) 
    {
-      /* Still have some data to process... here we go... */
-
       /* Within one iteration in this while loop there is one and only
        * one TA_MergeOp created.
        */
@@ -1991,10 +1991,11 @@ static TA_RetCode buildListMergeOp( TA_BuilderSupport *builderSupport )
       while( curSupport && (curSupport->allDataConsumed == 1) )
          curSupport = (TA_SupportForDataSource *)TA_ListIterNext( &iterSupport );
 
-      /* Parano test: because nbSupportHavingData > 0, we should have at least
-       *              one curSupport with some data!
-       */
-      TA_ASSERT( curSupport != NULL );
+      /* Exit the loop when ALL the data is consumed. */
+      if( curSupport == NULL )
+      {
+         break;
+      }      
 
       oldestTimestamp = curSupport->curTimestamp;
       TA_ListIterSavePos( &iterSupport, &curSupportPos );
