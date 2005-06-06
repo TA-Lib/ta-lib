@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,6 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  082301 MF   First version.
+ *  060605 MF   Add test_acExample
  *
  */
 
@@ -76,7 +77,8 @@
 /* None */
 
 /**** Local variables definitions.     ****/
-static ErrorNumber test_refmerge( TA_UDBase *udb );
+static ErrorNumber test_refmerge( TA_UDBase *udBase );
+static ErrorNumber test_acExample( TA_UDBase *udBase );
 
 /**** Global functions definitions.   ****/
 ErrorNumber test_datasource_merge( void )
@@ -89,6 +91,13 @@ ErrorNumber test_datasource_merge( void )
    retValue = allocLib( &udb );
    if( retValue != TA_TEST_PASS )
       return retValue;    
+
+   retValue = test_acExample( udb );
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nTest failed with value %d", retValue );
+      return retValue;
+   }
 
    retValue = test_refmerge( udb );
    if( retValue != TA_TEST_PASS )
@@ -106,11 +115,64 @@ ErrorNumber test_datasource_merge( void )
 
 
 /**** Local functions definitions.     ****/
-static ErrorNumber test_refmerge( TA_UDBase *udb )
+static ErrorNumber test_refmerge( TA_UDBase *udBase )
 {
-   (void)udb;
+   (void)udBase;
 
    /* !!! Not implemented yet !!! */
+
+   return TA_TEST_PASS;
+}
+
+static ErrorNumber test_acExample( TA_UDBase *udBase )
+{
+   TA_RetCode retCode;
+   TA_AddDataSourceParam addParam;
+   TA_HistoryAllocParam allocParam;
+   TA_History *history;
+
+   /* Test for Angelo Ciceri setup. */
+
+   memset( &addParam, 0, sizeof(TA_AddDataSourceParam) );
+   addParam.id = TA_ASCII_FILE; 
+   addParam.location = "..\\src\\tools\\ta_regtest\\sampling\\[SYM]?.txt";
+   addParam.info = "[-H=1][YYYY][MM][DD][-C=6][O][H][L][C][V][OI]"; 
+   addParam.category = "IT.BI.FUND"; 
+   retCode = TA_AddDataSource(udBase, &addParam);
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nTest failed with retCode %d", retCode );
+      return TA_TSTMERGE_AC_ADDFAILED_1;
+   }
+
+   addParam.location = "..\\src\\tools\\ta_regtest\\sampling\\[SYM].txt"; 
+   addParam.info = "[DD][MM][YY][C]"; 
+   retCode = TA_AddDataSource(udBase, &addParam); 
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nTest failed with retCode %d", retCode );
+      return TA_TSTMERGE_AC_ADDFAILED_2;
+   }
+
+   
+   memset( &allocParam, 0, sizeof(TA_HistoryAllocParam) );
+   allocParam.category= addParam.category;
+   allocParam.field = TA_ALL;
+   allocParam.symbol = "TestMergeAC";
+   allocParam.period = TA_DAILY;
+   retCode = TA_HistoryAlloc( udBase, &allocParam, &history );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nTest failed with retCode %d", retCode );
+      return TA_TSTMERGE_AC_HISTALLOC_1;
+   }
+
+   retCode = TA_HistoryFree( history );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nTest failed with retCode %d", retCode );
+      return TA_TSTMERGE_AC_HISTFREE_1;
+   }
 
    return TA_TEST_PASS;
 }

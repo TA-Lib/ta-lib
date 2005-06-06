@@ -121,6 +121,11 @@ int main( int argc, char **argv )
       return retValue;
    }
 
+   /* Test the merging of multiple data source */
+   retValue = test_datasource_merge();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
    /* Test the CSI data source. */
    retValue = test_csi();
    if( retValue != TA_TEST_PASS )
@@ -157,12 +162,6 @@ int main( int argc, char **argv )
 
    /* Perform all the tests using the TA_SIMULATOR data */
    retValue = test_with_simulator();
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-
-
-   /* Test the merging of multiple data source */
-   retValue = test_datasource_merge();
    if( retValue != TA_TEST_PASS )
       return retValue;
 

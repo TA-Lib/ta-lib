@@ -215,6 +215,7 @@ typedef enum
   TA_ABS_TST_FAIL_CALLFUNC_3            = 614,
   TA_ABS_TST_FAIL_CALLFUNC_4            = 615,
   TA_ABS_TST_FAIL_INVALID_OUTPUT        = 616,
+  TA_ABS_TST_FAIL_STARTEND_ZERO         = 617,
 
   /* Error code related to internal tests. */
   TA_CIRC_BUFF_FAIL_0 = 700,
@@ -253,6 +254,12 @@ typedef enum
   TA_TSTCDL_GETLOOKBACK_FAIL     = 908,
   TA_TSTCDL_PARAMHOLDERFREE_FAIL = 909,
    
+  /* Error code related to test_merge */
+  TA_TSTMERGE_AC_ADDFAILED_1     = 1000,
+  TA_TSTMERGE_AC_ADDFAILED_2     = 1001,
+  TA_TSTMERGE_AC_HISTALLOC_1     = 1002,
+  TA_TSTMERGE_AC_HISTFREE_1      = 1003,
+
   TA_LAST_VALID_ERROR = 0xFFFF
 } ErrorNumber;
 #endif
