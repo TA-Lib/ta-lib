@@ -263,8 +263,8 @@ static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
    CALL( inputRandomData );
    CALL( inputRandFltEpsilon );
    CALL( inputRandDblEpsilon );
-
 #undef CALL
+
 }
 
 static ErrorNumber callWithDefaults( const char *funcName, const double *input, const int *input_int, int size )
@@ -381,6 +381,23 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 	  }
    }
 
+   /* Do another function call where startIdx == endIdx == 0.
+    * In that case, outBegIdx should ALWAYS be zero.
+    */
+   retCode = TA_CallFunc(paramHolder,0,0,&outBegIdx,&outNbElement);
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "TA_CallFunc() failed data test 4 [%d]\n", retCode );
+      TA_ParamHolderFree( paramHolder );
+      return TA_ABS_TST_FAIL_CALLFUNC_4;
+   }
+
+   if( outBegIdx != 0 )
+   {
+      printf( "[%s] failed outBegIdx=%d when startIdx==endIdx==0\n", outBegIdx );
+      TA_ParamHolderFree( paramHolder );
+      return TA_ABS_TST_FAIL_STARTEND_ZERO;
+   }
 
    retCode = TA_ParamHolderFree( paramHolder );
    if( retCode != TA_SUCCESS )
