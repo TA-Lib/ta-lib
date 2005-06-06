@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -46,6 +46,7 @@
  *  062203 MF   Ignore "time" component of the start/end range when
  *              there is no time fields in the file.
  *  040304 MF   Allows skipping lines not starting with a digit.
+ *  060605 MF   When not having a time field, use default 00:00:00.
  */
 
 /* Description:
@@ -578,7 +579,7 @@ op_loop: /* Jump here when ready to proceed with the next command. */
                if( !timeNeeded )
                {
                   /* Ignore time in comparison and use default to build the price bar. */
-                  tmpTimestamp.time = 23595900; /* Default EOD time */
+                  tmpTimestamp.time = 0; /* Default EOD time */
                   if( start && (tmpTimestamp.date < start->date) )
                   {
                      /* This price bar is not needed, jump to the next line. */
