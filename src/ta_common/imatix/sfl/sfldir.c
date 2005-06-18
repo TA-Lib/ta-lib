@@ -1373,7 +1373,14 @@ file_matches ( const char *filename, const char *pattern)
         /*  If we have a '*', match as much of the filename as we can        */
         if (*pattern_ptr == '*')
           {
-            pattern_ptr++;              /*  Try to match following char      */
+            while (*pattern_ptr == '*')
+                pattern_ptr++;          /*  Try to match following char      */
+            /*  If the pattern chars are '?', at least so many chars skipped */
+            while (*pattern_ptr == '?' && *filename_ptr != '\0')
+              {
+                pattern_ptr++;
+                filename_ptr++;
+              }
             while (*filename_ptr && toupper (*filename_ptr) != toupper (*pattern_ptr))
                 filename_ptr++;
           }
