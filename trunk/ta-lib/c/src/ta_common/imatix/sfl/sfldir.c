@@ -1381,7 +1381,7 @@ file_matches ( const char *filename, const char *pattern)
                 pattern_ptr++;
                 filename_ptr++;
               }
-            while (*filename_ptr && toupper (*filename_ptr) != toupper (*pattern_ptr))
+            while (*filename_ptr && toupper (*filename_ptr) != toupper (*pattern_ptr) && *pattern_ptr != '*' )
                 filename_ptr++;
           }
         else
