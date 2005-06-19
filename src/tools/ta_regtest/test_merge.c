@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  082301 MF   First version.
  *  060605 MF   Add test_acExample
- *
+ *  061805 MF   Add test_AsciiExample
  */
 
 /* Description:
@@ -79,6 +79,7 @@
 /**** Local variables definitions.     ****/
 static ErrorNumber test_refmerge( TA_UDBase *udBase );
 static ErrorNumber test_acExample( TA_UDBase *udBase );
+static ErrorNumber test_AsciiExample( TA_UDBase *udBase );
 
 /**** Global functions definitions.   ****/
 ErrorNumber test_datasource_merge( void )
@@ -100,6 +101,23 @@ ErrorNumber test_datasource_merge( void )
    }
 
    retValue = test_refmerge( udb );
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nTest failed with value %d", retValue );
+      return retValue;
+   }
+
+   /* Free and re-alloc just to detect potential memory leak. */
+   retValue = freeLib( udb );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = allocLib( &udb );
+   if( retValue != TA_TEST_PASS )
+      return retValue;    
+
+   /* Test merging of ASCII files mrgX.csv where X are 1,2,3 and 4 */
+   retValue = test_AsciiExample( udb );
    if( retValue != TA_TEST_PASS )
    {
       printf( "\nTest failed with value %d", retValue );
@@ -132,7 +150,6 @@ static ErrorNumber test_acExample( TA_UDBase *udBase )
    TA_History *history;
 
    /* Test for Angelo Ciceri setup. */
-
    memset( &addParam, 0, sizeof(TA_AddDataSourceParam) );
    addParam.id = TA_ASCII_FILE; 
    addParam.location = "..\\src\\tools\\ta_regtest\\sampling\\[SYM]?.txt";
@@ -153,7 +170,6 @@ static ErrorNumber test_acExample( TA_UDBase *udBase )
       printf( "\nTest failed with retCode %d", retCode );
       return TA_TSTMERGE_AC_ADDFAILED_2;
    }
-
    
    memset( &allocParam, 0, sizeof(TA_HistoryAllocParam) );
    allocParam.category= addParam.category;
@@ -176,3 +192,129 @@ static ErrorNumber test_acExample( TA_UDBase *udBase )
 
    return TA_TEST_PASS;
 }
+
+static ErrorNumber test_AsciiExample( TA_UDBase *udBase )
+{
+   TA_RetCode retCode;
+   TA_AddDataSourceParam addParam;
+   TA_HistoryAllocParam allocParam;
+   TA_History *history;
+   TA_Timestamp curTs;
+   double open, high, low, close;
+   double tmp1, tmp2;
+   int i;
+
+   /* Add the 4 ASCII files. See tools\gen_data\mrg_gen.pl for 
+    * a lengthy description of what is expected when these
+    * 4 files are merged.
+    */
+   memset( &addParam, 0, sizeof(TA_AddDataSourceParam) );
+   addParam.id = TA_ASCII_FILE; 
+   addParam.location = "..\\src\\tools\\gen_data\\[SYM]1.csv";
+   addParam.info = "[M][D][Y][O][H][L][C][V][OI]"; 
+   retCode = TA_AddDataSource(udBase, &addParam);
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nTest failed with retCode %d", retCode );
+      return TA_TSTMERGE_ASCII_ADDFAILED_1;
+   }
+
+   addParam.location = "..\\src\\tools\\gen_data\\[SYM]2.csv";
+   retCode = TA_AddDataSource(udBase, &addParam);
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nTest failed with retCode %d", retCode );
+      return TA_TSTMERGE_ASCII_ADDFAILED_2;
+   }
+
+   addParam.location = "..\\src\\tools\\gen_data\\[SYM]3.csv";
+   retCode = TA_AddDataSource(udBase, &addParam);
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nTest failed with retCode %d", retCode );
+      return TA_TSTMERGE_ASCII_ADDFAILED_3;
+   }
+
+   addParam.location = "..\\src\\tools\\gen_data\\[SYM]4.csv";   
+   retCode = TA_AddDataSource(udBase, &addParam);
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nTest failed with retCode %d", retCode );
+      return TA_TSTMERGE_ASCII_ADDFAILED_4;
+   }
+   
+   memset( &allocParam, 0, sizeof(TA_HistoryAllocParam) );
+   allocParam.field = TA_ALL;
+   allocParam.symbol = "mrg";
+   allocParam.period = TA_DAILY;
+   retCode = TA_HistoryAlloc( udBase, &allocParam, &history );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nTest failed with retCode %d", retCode );
+      return TA_TSTMERGE_ASCII_HISTALLOC;
+   }
+
+   /* Check that the expected pattern is returned. Again,
+    * See tools\gen_data\mrg_gen.pl for a description of the
+    * pattern. 
+    */
+   if( history->nbBars != 1000 )
+   {
+      printf( "\nNumber of price bar 1000 != %d", history->nbBars );
+      return TA_TSTMERGE_ASCII_BAD_PATTERN_1;
+   }
+   
+   low   = 1000.0001;
+   open  = 2000.0001;
+   close = 3000.0001;
+   high  = 4000.0001;
+   TA_TimestampCopy(&curTs, &history->timestamp[0] );
+   for( i=0; i < 1000; i++ )
+   {
+      if( history->volume[i] != (10000+i) )
+      {
+         printf( "\nBad volume at index %d. %d != %d\n", i, history->volume[i], (10000+i) );
+         return TA_TSTMERGE_ASCII_BAD_PATTERN_VOL;
+      }
+      if( history->openInterest[i] != (20000+i) )
+      {
+         printf( "\nBad openInterest at index %d. %d != %d\n", i, history->openInterest[i], (20000+i) );
+         return TA_TSTMERGE_ASCII_BAD_PATTERN_OI;
+      }
+
+      #define CHECK_PRICE( field, errorCode ) \
+      { \
+        tmp1 = ((int)((history->field[i]+0.00005)*10000.0))/10000.0;  \
+        tmp2 = ((int)((field+0.00005)*10000.0))/10000.0; \
+        if( tmp1 != tmp2 ) \
+        { \
+           printf( "\nBad price at index %d. %f != %f\n", i, tmp1, tmp2 ); \
+           return errorCode; \
+        } \
+        field += 1.0001; \
+      }
+      
+      CHECK_PRICE( open, TA_TSTMERGE_ASCII_BAD_PATTERN_OPEN );
+      CHECK_PRICE( high, TA_TSTMERGE_ASCII_BAD_PATTERN_HIGH );
+      CHECK_PRICE( low,  TA_TSTMERGE_ASCII_BAD_PATTERN_LOW );
+      CHECK_PRICE( close,TA_TSTMERGE_ASCII_BAD_PATTERN_CLOSE );      
+      #undef CHECK_PRICE
+
+      if( !TA_TimestampEqual(&history->timestamp[i], &curTs ) )
+      {
+         printf( "\nBad timestamp at index %d.\n", i );
+         return TA_TSTMERGE_ASCII_BAD_PATTERN_TS;
+      }
+      TA_NextDay(&curTs);
+   }
+
+   retCode = TA_HistoryFree( history );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nTest failed with retCode %d", retCode );
+      return TA_TSTMERGE_ASCII_HISTFREE;
+   }
+
+   return TA_TEST_PASS;
+}
+
