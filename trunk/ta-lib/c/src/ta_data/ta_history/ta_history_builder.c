@@ -50,6 +50,7 @@
  *                timestamp to cover the requested period (Bug#888470)
  *  030405 MF,AM  Now do volume adjustment with split correctly.
  *  060605 MF,AC  Fix merge logic.
+ *  061805 MF     Fix merge logic for bug found with test_AsciiExample.
  */
 
 /* Description:
@@ -2003,7 +2004,7 @@ static TA_RetCode buildListMergeOp( TA_BuilderSupport *builderSupport )
       curSupport = (TA_SupportForDataSource *)TA_ListIterNext( &iterSupport );
       while( curSupport )
       {
-         if( TA_TimestampLess( curSupport->curTimestamp, oldestTimestamp ) )
+         if( (!curSupport->allDataConsumed) && TA_TimestampLess( curSupport->curTimestamp, oldestTimestamp ) )
          {
             nextOverideTimestamp = oldestTimestamp;
             oldestTimestamp = curSupport->curTimestamp;
@@ -2105,6 +2106,14 @@ static TA_RetCode buildListMergeOp( TA_BuilderSupport *builderSupport )
                curLowerPrecedenceTS = adjLowerPrecedenceSupport( &iterSupport,
                                                                  curLowerPrecedenceTS  );
             }
+            else
+            {
+               /* The lower precedence data source could not provide any additional data. */
+
+               /* The price bar will be taken from curSupport. */
+               moveForwardCurPos = 1;
+               nbDataToBeCopied++;
+            }
          }
 
          /* Trap the case when this was the last price bar of the data block. */
@@ -2171,13 +2180,14 @@ static const TA_Timestamp *adjLowerPrecedenceSupport( TA_ListIter *curSupport,
    TA_SupportForDataSource *curSupportForDataSource;
    const TA_Timestamp *newLowerLimit;
    const TA_Timestamp *tmpLowerLimit;
+   const TA_Timestamp *tmpTimestamp;
 
    TA_ListIterPos savedListPos;
 
    /* Bring all lower precedence data source to a price bar after
-    * the specified 'curLowerPrecedenceTS'.
-    * On TA_SUCCESS, the pointer 'curLowerPrecedenceTS' will indicates
-    * the new oldest timestamp among the lower precedence data source.
+    * the specified 'minTimestamp'.
+    * When applicable, the pointer 'newLowerLimit' will be on the
+    * oldest timestamp among the lower precedence data sources.
     */
    newLowerLimit = NULL;
 
@@ -2190,15 +2200,30 @@ static const TA_Timestamp *adjLowerPrecedenceSupport( TA_ListIter *curSupport,
 
    while( curSupportForDataSource )
    {
-      if( TA_TimestampEqual( curSupportForDataSource->curTimestamp, minTimestamp ) ||
-          TA_TimestampLess  ( curSupportForDataSource->curTimestamp, minTimestamp ) )
+      tmpTimestamp = curSupportForDataSource->curTimestamp;
+      
+      if( !curSupportForDataSource->allDataConsumed )
       {
-         tmpLowerLimit = nextPriceBar( curSupportForDataSource, minTimestamp );
-
-         if( tmpLowerLimit )
+         /* A lower precedence data source with data was found. */
+         if( (TA_TimestampEqual( tmpTimestamp, minTimestamp ) ||
+              TA_TimestampLess  ( tmpTimestamp, minTimestamp )) )
          {
-            if( !newLowerLimit || TA_TimestampLess(tmpLowerLimit,newLowerLimit) )
-               newLowerLimit = tmpLowerLimit;
+            /* Make sure the data source position is at least at minTimestamp. */
+            tmpLowerLimit = nextPriceBar( curSupportForDataSource, minTimestamp );
+
+            if( tmpLowerLimit )
+            {
+               if( !newLowerLimit || TA_TimestampLess(tmpLowerLimit,newLowerLimit) )
+                  newLowerLimit = tmpLowerLimit;
+            }
+         }
+         else
+         {
+            /* The data source is already after minTimestamp, so now
+             * just check if this is a lower limit timestamp.
+             */
+            if( !newLowerLimit || TA_TimestampLess(tmpTimestamp,newLowerLimit) )
+               newLowerLimit = tmpTimestamp;
          }
       }
 
