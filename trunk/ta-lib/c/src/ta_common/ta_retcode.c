@@ -65,7 +65,7 @@ static TA_InternalRetCodeInfo retCodeInfoTable[] = {
          {13,"TA_INTERNAL_ERR","No Info"},
          {14,"TA_FATAL_ERR","No Info"},
          {15,"TA_NO_NEW_DATA","No Info"},
-         {16,"TA_NOT_SUPPORTED","No Info"},
+         {16,"TA_NOT_SUPPORTED","Requested functionality not supported or not implemented yet"},
          {17,"TA_END_OF_INDEX","No Info"},
          {18,"TA_ENOUGH_DATA","No Info"},
          {19,"TA_MISSING_FIELD","No Info"},
