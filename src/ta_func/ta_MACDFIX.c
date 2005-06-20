@@ -54,9 +54,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -112,15 +111,15 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::MACDFIX( int    startIdx,
-/* Generated */                                              int    endIdx,
-/* Generated */                                              double       inReal __gc [],
-/* Generated */                                              int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                                              [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                              [OutAttribute]Int32 *outNbElement,
-/* Generated */                                              double        outMACD __gc [],
-/* Generated */                                              double        outMACDSignal __gc [],
-/* Generated */                                              double        outMACDHist __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::MACDFIX( int    startIdx,
+/* Generated */                                            int    endIdx,
+/* Generated */                                            cli::array<double>^ inReal,
+/* Generated */                                            int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                            [OutAttribute]int^ outBegIdx,
+/* Generated */                                            [OutAttribute]int^ outNbElement,
+/* Generated */                                            cli::array<double>^  outMACD,
+/* Generated */                                            cli::array<double>^  outMACDSignal,
+/* Generated */                                            cli::array<double>^  outMACDHist )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MACDFIX( int    startIdx,
 /* Generated */                        int    endIdx,
@@ -142,26 +141,26 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    /* min/max are checked for optInSignalPeriod. */
 /* Generated */    if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInSignalPeriod = 9;
 /* Generated */    else if( ((int)optInSignalPeriod < 1) || ((int)optInSignalPeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outMACD == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outMACD )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outMACDSignal == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outMACDSignal )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outMACDHist == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outMACDHist )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -190,15 +189,15 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::MACDFIX( int    startIdx,
-/* Generated */                                              int    endIdx,
-/* Generated */                                              float        inReal __gc [],
-/* Generated */                                              int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                                              [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                              [OutAttribute]Int32 *outNbElement,
-/* Generated */                                              double        outMACD __gc [],
-/* Generated */                                              double        outMACDSignal __gc [],
-/* Generated */                                              double        outMACDHist __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::MACDFIX( int    startIdx,
+/* Generated */                                            int    endIdx,
+/* Generated */                                            cli::array<float>^ inReal,
+/* Generated */                                            int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                            [OutAttribute]int^ outBegIdx,
+/* Generated */                                            [OutAttribute]int^ outNbElement,
+/* Generated */                                            cli::array<double>^  outMACD,
+/* Generated */                                            cli::array<double>^  outMACDSignal,
+/* Generated */                                            cli::array<double>^  outMACDHist )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MACDFIX( int    startIdx,
 /* Generated */                          int    endIdx,
@@ -213,20 +212,20 @@
 /* Generated */ {
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInSignalPeriod = 9;
 /* Generated */     else if( ((int)optInSignalPeriod < 1) || ((int)optInSignalPeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outMACD == NULL )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outMACDSignal == NULL )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outMACDHist == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outMACD )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outMACDSignal )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outMACDHist )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    return TA_PREFIX(INT_MACD)( startIdx, endIdx, inReal,
 /* Generated */                                0, 

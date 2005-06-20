@@ -54,9 +54,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -114,14 +113,14 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::VAR( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          double       inReal __gc [],
-/* Generated */                                          int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                          double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::VAR( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        cli::array<double>^ inReal,
+/* Generated */                                        int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                        double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                        [OutAttribute]int^ outBegIdx,
+/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_VAR( int    startIdx,
 /* Generated */                    int    endIdx,
@@ -142,25 +141,25 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 5;
 /* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInNbDev == TA_REAL_DEFAULT )
 /* Generated */       optInNbDev = 1.000000e+0;
 /* Generated */    else if( (optInNbDev < -3.000000e+37) ||/* Generated */  (optInNbDev > 3.000000e+37) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outReal )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -172,21 +171,30 @@
                               outBegIdx, outNbElement, outReal );
 }
 
+/*
+         static  enum class TA_RetCode TA_INT_VAR( int    startIdx,
+                                int    endIdx,
+								cli::array<double>^ inReal_0,
+                                int    optInTimePeriod_0,                       
+                                [OutAttribute]int^ outBegIdx,
+                                [OutAttribute]int^ outNbElement,
+                                cli::array<double>^ outReal_0);*/
+
 #if defined( _MANAGED )
-__value enum Core::TA_RetCode Core::TA_INT_VAR( int    startIdx,
+enum class Core::TA_RetCode Core::TA_INT_VAR( int    startIdx,
                                                 int    endIdx,
-                                                INPUT_TYPE inReal __gc [],
+												cli::array<INPUT_TYPE>^ inReal,
                                                 int    optInTimePeriod,                       
-                                                [OutAttribute]Int32 *outBegIdx,
-                                                [OutAttribute]Int32 *outNbElement,
-                                                double outReal __gc [])
+                                                [OutAttribute]int^ outBegIdx,
+                                                [OutAttribute]int^ outNbElement,
+												cli::array<double>^ outReal )
 #else
 TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
                                int    endIdx,
                                const INPUT_TYPE *inReal,
                                int    optInTimePeriod, /* From 1 to TA_INTEGER_MAX */                       
-                               int   *outBegIdx,
-                               int   *outNbElement,
+                               int   VALUE_HANDLE_DEREF(outBegIdx),
+                               int   VALUE_HANDLE_DEREF(outNbElement),
                                double      *outReal )
 #endif
 {
@@ -208,9 +216,9 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      *outBegIdx    = 0;
-      *outNbElement = 0;
-      return TA_SUCCESS;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      return NAMESPACE(TA_RetCode)TA_SUCCESS;
    }
 
    /* Do the MA calculation using tight loops. */
@@ -263,10 +271,10 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
    } while( i <= endIdx );
 
    /* All done. Indicate the output limits and return. */
-   *outNbElement = outIdx;
-   *outBegIdx = startIdx;
+   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+   VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -279,14 +287,14 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::VAR( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          float        inReal __gc [],
-/* Generated */                                          int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                          double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::VAR( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        cli::array<float>^ inReal,
+/* Generated */                                        int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                        double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                        [OutAttribute]int^ outBegIdx,
+/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_VAR( int    startIdx,
 /* Generated */                      int    endIdx,
@@ -300,40 +308,40 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */ {
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 5;
 /* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( optInNbDev == TA_REAL_DEFAULT )
 /* Generated */        optInNbDev = 1.000000e+0;
 /* Generated */     else if( (optInNbDev < -3.000000e+37) ||  (optInNbDev > 3.000000e+37) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outReal )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    return TA_PREFIX(INT_VAR)( startIdx, endIdx, inReal,
 /* Generated */                               optInTimePeriod,                       
 /* Generated */                               outBegIdx, outNbElement, outReal );
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::TA_INT_VAR( int    startIdx,
+/* Generated */ enum class Core::TA_RetCode Core::TA_INT_VAR( int    startIdx,
 /* Generated */                                                 int    endIdx,
-/* Generated */                                                 INPUT_TYPE inReal __gc [],
+/* Generated */ 												cli::array<INPUT_TYPE>^ inReal,
 /* Generated */                                                 int    optInTimePeriod,                       
-/* Generated */                                                 [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                                 [OutAttribute]Int32 *outNbElement,
-/* Generated */                                                 double outReal __gc [])
+/* Generated */                                                 [OutAttribute]int^ outBegIdx,
+/* Generated */                                                 [OutAttribute]int^ outNbElement,
+/* Generated */ 												cli::array<double>^ outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */                                int    endIdx,
 /* Generated */                                const INPUT_TYPE *inReal,
 /* Generated */                                int    optInTimePeriod,                        
-/* Generated */                                int   *outBegIdx,
-/* Generated */                                int   *outNbElement,
+/* Generated */                                int   VALUE_HANDLE_DEREF(outBegIdx),
+/* Generated */                                int   VALUE_HANDLE_DEREF(outNbElement),
 /* Generated */                                double      *outReal )
 /* Generated */ #endif
 /* Generated */ {
@@ -344,9 +352,9 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */       startIdx = nbInitialElementNeeded;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
-/* Generated */       *outBegIdx    = 0;
-/* Generated */       *outNbElement = 0;
-/* Generated */       return TA_SUCCESS;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }
 /* Generated */    periodTotal1 = 0;
 /* Generated */    periodTotal2 = 0;
@@ -376,9 +384,9 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */       periodTotal2 -= tempReal;
 /* Generated */       outReal[outIdx++] = meanValue2-meanValue1*meanValue1;
 /* Generated */    } while( i <= endIdx );
-/* Generated */    *outNbElement = outIdx;
-/* Generated */    *outBegIdx = startIdx;
-/* Generated */    return TA_SUCCESS;
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

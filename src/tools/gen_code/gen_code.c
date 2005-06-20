@@ -321,8 +321,8 @@ int main(int argc, char* argv[])
          printf( "     5) ta-lib/c/src/ta_abstract/ta_group_idx.c\n");     
          printf( "     6) ta-lib/c/src/ta_abstract/frames/*.*\n");
          printf( "     7) ta-lib/c/src/ta_abstract/excel_glue.c\n" );
-         printf( "     8) ta-lib/dotnet/src/Core/TA-Lib-Core.vcproj\n" );
-         printf( "     9) ta-lib/dotnet/src/Core/Core.h\n" );
+         printf( "     8) ta-lib/dotnet/src/TA-Lib-Core/TA-Lib-Core.vcproj\n" );
+         printf( "     9) ta-lib/dotnet/src/TA-Lib-Core/TA-Lib-Core.h\n" );
          printf( "    10) ta-lib/swig/src/interface/ta_func.swg\n" );
          printf( "    11) ta-lib/c/ide/msvc/lib_proj/ta_func/ta_func.dsp\n" );
          printf( "\n" );
@@ -595,7 +595,7 @@ static int genCode(int argc, char* argv[])
 
    #ifdef _MSC_VER
       /* Create .NET project files template */
-      #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.vcproj"
+      #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\TA-Lib-Core\\TA-Lib-Core.vcproj"
       #define FILE_NET_PROJ_TMP "..\\temp\\dotnetproj.tmp"
       gOutProjFile = fileOpen( FILE_NET_PROJ, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
       if( gOutProjFile == NULL )   
@@ -642,7 +642,7 @@ static int genCode(int argc, char* argv[])
    #endif
 
    /* Create the .NET interface file template */
-   #define FILE_NET_HEADER     "..\\..\\dotnet\\src\\Core\\Core.h"
+   #define FILE_NET_HEADER     "..\\..\\dotnet\\src\\TA-Lib-Core\\TA-Lib-Core.h"
    #define FILE_NET_HEADER_TMP "..\\temp\\dotneth.tmp"
    gOutDotNet_H = fileOpen( FILE_NET_HEADER, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
    if( gOutDotNet_H == NULL )   
@@ -1118,6 +1118,8 @@ static void printFunc( FILE *out,
    const char *typeString;
    const char *inputDoubleArrayType;
    const char *inputIntArrayType;
+   const char *outputDoubleArrayType;
+   const char *outputIntArrayType;
    const char *outputIntParam;
    const char *arrayBracket;
    int excludeFromManaged;
@@ -1130,12 +1132,14 @@ static void printFunc( FILE *out,
    if( managedCPPCode )
    {
       if( inputIsSinglePrecision )
-         inputDoubleArrayType  = "float";
+         inputDoubleArrayType  = "cli::array<float>^";         
       else
-         inputDoubleArrayType  = "double";
-      inputIntArrayType     = "int";
-      outputIntParam        = "[OutAttribute]Int32";
-      arrayBracket          = " __gc []";
+         inputDoubleArrayType  = "cli::array<double>^";
+      inputIntArrayType     = "cli::array<int>^";
+      outputDoubleArrayType = "cli::array<double>^";
+      outputIntArrayType    = "cli::array<int>^";
+      outputIntParam        = "[OutAttribute]int^";
+      arrayBracket          = "";
       startIdxString        = "startIdx";
       endIdxString          = "endIdx";
       outNbElementString    = "outNbElement";
@@ -1148,6 +1152,8 @@ static void printFunc( FILE *out,
       else
          inputDoubleArrayType  = "const double *";
       inputIntArrayType     = "const int    *";
+      outputIntArrayType    = "int";
+      outputDoubleArrayType = "double";
       outputIntParam        = "int";
       arrayBracket          = "";
       startIdxString        = "       START_IDX";
@@ -1162,6 +1168,8 @@ static void printFunc( FILE *out,
       else
          inputDoubleArrayType  = "const double";
       inputIntArrayType     = "const int";
+      outputDoubleArrayType = "double";
+      outputIntArrayType    = "int";
       outputIntParam        = "int";
       arrayBracket          = "[]";
       startIdxString        = "startIdx";
@@ -1198,7 +1206,7 @@ static void printFunc( FILE *out,
       {
          if( managedCPPCode )
          {
-            sprintf( gTempBuf, "%s%s__value enum %sTA_RetCode %s%s( int    %s,\n",
+            sprintf( gTempBuf, "%s%senum class %sTA_RetCode %s%s( int    %s,\n",
                      prefix? prefix:"",
                      managedCPPDeclaration? "         static ":"",
                      managedCPPDeclaration? "":"Core::",
@@ -1363,7 +1371,7 @@ static void printFunc( FILE *out,
 
                fprintf( out, "\n" );
                printIndent( out, indent );
-               fprintf( out, "   return TA_BAD_PARAM;\n" );
+               fprintf( out, "   return NAMESPACE(TA_RetCode)TA_BAD_PARAM;\n" );
                print( out, "\n" );
             }
             else
@@ -1492,7 +1500,7 @@ static void printFunc( FILE *out,
          {
             printIndent( out, indent );
             if( validationCode )
-               fprintf( out, "if( !%s ) return TA_BAD_PARAM;\n", inputParamInfo->paramName );
+               fprintf( out, "if( !%s ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;\n", inputParamInfo->paramName );
             else
             {
                if( frame )
@@ -1708,7 +1716,7 @@ static void printFunc( FILE *out,
                fprintf( out, "%-*s %s%s",
                       prototype? 12 : 0,
                       prototype? outputIntParam : "",
-                      prototype? "*" : "",
+                      prototype&&!managedCPPCode? "*" : "",
                       outBegIdxString );
 
             fprintf( out, "%s\n", frame? "":"," );
@@ -1720,7 +1728,7 @@ static void printFunc( FILE *out,
                fprintf( out, "%-*s %s%s",
                       prototype? 12 : 0,
                       prototype? outputIntParam : "",
-                      prototype? "*" : "",
+                      prototype&&!managedCPPCode? "*" : "",
                       outNbElementString );
             fprintf( out, "%s\n", frame? "":"," );
       }
@@ -1744,11 +1752,11 @@ static void printFunc( FILE *out,
          switch( outputParamInfo->type )
          {
          case TA_Output_Real:
-            typeString = "double";
+            typeString = outputDoubleArrayType;
             defaultParamName = outputForSWIG? "OUT_ARRAY":"outReal";
             break;
          case TA_Output_Integer:
-            typeString = "int";
+            typeString = outputIntArrayType;;
             defaultParamName = outputForSWIG? "OUT_ARRAY":"outInteger";
             break;
          default:
@@ -1765,8 +1773,8 @@ static void printFunc( FILE *out,
 
          if( validationCode )
          {
-            print( out, "   if( %s == NULL )\n", paramName );
-            print( out, "      return TA_BAD_PARAM;\n" );
+            print( out, "   if( !%s )\n", paramName );
+            print( out, "      return NAMESPACE(TA_RetCode)TA_BAD_PARAM;\n" );
             print( out, "\n" );
          }
          else
@@ -2278,9 +2286,8 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    genPrefix = 1;
    print( out, "\n" );
    print( out, "#if defined( _MANAGED )\n" );
-   print( out, "   #using <mscorlib.dll>\n" );
-   print( out, "   #include \"Core.h\"\n" );
-   print( out, "   #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)\n" );
+   print( out, "   #include \"TA-Lib-Core.h\"\n" );
+   print( out, "   #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)\n" );
    print( out, "   namespace TA { namespace Lib {\n" );
    print( out, "#else\n" );
    print( out, "   #include <string.h>\n" );
@@ -2329,9 +2336,9 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "\n" );
    print( out, "   /* Validate the requested output range. */\n" );
    print( out, "   if( startIdx < 0 )\n" );
-   print( out, "      return TA_OUT_OF_RANGE_START_INDEX;\n" );
+   print( out, "      return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;\n" );
    print( out, "   if( (endIdx < 0) || (endIdx < startIdx))\n" );
-   print( out, "      return TA_OUT_OF_RANGE_END_INDEX;\n" );
+   print( out, "      return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;\n" );
    print( out, "\n" );
    /* Generate the code for checking the parameters.
     * Also generates the code for setting up the
@@ -2422,7 +2429,7 @@ static void printOptInputValidation( FILE *out,
       break;
    }
 
-   print( out, "      return TA_BAD_PARAM;\n" );
+   print( out, "      return NAMESPACE(TA_RetCode)TA_BAD_PARAM;\n" );
    print( out, "\n" );
 }
 

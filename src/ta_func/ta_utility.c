@@ -49,7 +49,7 @@
 
 #if defined( _MANAGED )
    #using <mscorlib.dll>
-   #include "Core.h"
+   #include "TA-Lib-Core.h"
    namespace TA { namespace Lib {
 #else
    #include "ta_utility.h"
@@ -57,7 +57,7 @@
 #endif
 
 #if defined( _MANAGED )
-__value enum Core::TA_RetCode Core::SetUnstablePeriod( __value enum TA_FuncUnstId id,
+ enum class Core::TA_RetCode Core::SetUnstablePeriod(  enum class TA_FuncUnstId id,
                                                        unsigned int  unstablePeriod )
 #else
 TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
@@ -66,51 +66,51 @@ TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
 {
    unsigned int i;
 
-   if( id > TA_FUNC_UNST_ALL )
-      return TA_BAD_PARAM;
+   if( id > NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_ALL )
+      return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 
-   if( id == TA_FUNC_UNST_ALL )
+   if( id == NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_ALL )
    {
-      for( i=0; i < TA_FUNC_UNST_ALL; i++ )
+      for( i=0; i < (int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_ALL; i++ )
          TA_Globals->unstablePeriod[i] = unstablePeriod;
    }
    else
    {
-      TA_Globals->unstablePeriod[id] = unstablePeriod;
+      TA_Globals->unstablePeriod[(int)id] = unstablePeriod;
    }
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 #if defined( _MANAGED )
-unsigned int Core::GetUnstablePeriod( __value enum TA_FuncUnstId id )
+unsigned int Core::GetUnstablePeriod( enum class TA_FuncUnstId id )
 #else
 unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id )
 #endif
 {
-   if( id >= TA_FUNC_UNST_ALL )
-      return TA_BAD_PARAM;
+   if( id >= NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_ALL )
+      return 0;
 
-   return TA_Globals->unstablePeriod[id];
+   return TA_Globals->unstablePeriod[(int)id];
 }
 
 #if defined( _MANAGED )
-__value enum Core::TA_RetCode Core::SetCompatibility( __value enum TA_Compatibility value )
+ enum class Core::TA_RetCode Core::SetCompatibility(  enum class TA_Compatibility value )
 #else
 TA_RetCode TA_SetCompatibility( TA_Compatibility value )
 #endif
 {
    TA_Globals->compatibility = value;
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 #if defined( _MANAGED )
-__value enum Core::TA_Compatibility Core::GetCompatibility( void )
+ enum class Core::TA_Compatibility Core::GetCompatibility( void )
 #else
 TA_Compatibility TA_GetCompatibility( void )
 #endif
 {
-   return (TA_Compatibility)TA_Globals->compatibility;
+   return TA_Globals->compatibility;
 }
 
 #if defined( _MANAGED )

@@ -54,9 +54,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -88,7 +87,7 @@
    /* insert lookback code here. */
 
    /* See TA_MAMA_Lookback for an explanation of these */
-   return 32 + TA_Globals->unstablePeriod[TA_FUNC_UNST_HT_PHASOR];
+   return 32 + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_HT_PHASOR];
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -101,13 +100,13 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::HT_PHASOR( int    startIdx,
-/* Generated */                                                int    endIdx,
-/* Generated */                                                double       inReal __gc [],
-/* Generated */                                                [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                                [OutAttribute]Int32 *outNbElement,
-/* Generated */                                                double        outInPhase __gc [],
-/* Generated */                                                double        outQuadrature __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::HT_PHASOR( int    startIdx,
+/* Generated */                                              int    endIdx,
+/* Generated */                                              cli::array<double>^ inReal,
+/* Generated */                                              [OutAttribute]int^ outBegIdx,
+/* Generated */                                              [OutAttribute]int^ outNbElement,
+/* Generated */                                              cli::array<double>^  outInPhase,
+/* Generated */                                              cli::array<double>^  outQuadrature )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_HT_PHASOR( int    startIdx,
 /* Generated */                          int    endIdx,
@@ -158,17 +157,17 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal ) return TA_BAD_PARAM;
-/* Generated */    if( outInPhase == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    if( !outInPhase )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outQuadrature == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outQuadrature )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -182,7 +181,7 @@
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 32 + TA_Globals->unstablePeriod[TA_FUNC_UNST_HT_PHASOR];
+   lookbackTotal = 32 + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_HT_PHASOR];
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -193,12 +192,12 @@
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      *outBegIdx = 0;
-      *outNbElement = 0;
-      return TA_SUCCESS;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      return NAMESPACE(TA_RetCode)TA_SUCCESS;
    }
 
-   *outBegIdx = startIdx;
+   VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 
    /* Initialize the price smoother, which is simply a weighted
     * moving average of the price.
@@ -358,9 +357,9 @@
    }
 
    /* Default return values */
-   *outNbElement = outIdx;
+   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -373,13 +372,13 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::HT_PHASOR( int    startIdx,
-/* Generated */                                                int    endIdx,
-/* Generated */                                                float        inReal __gc [],
-/* Generated */                                                [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                                [OutAttribute]Int32 *outNbElement,
-/* Generated */                                                double        outInPhase __gc [],
-/* Generated */                                                double        outQuadrature __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::HT_PHASOR( int    startIdx,
+/* Generated */                                              int    endIdx,
+/* Generated */                                              cli::array<float>^ inReal,
+/* Generated */                                              [OutAttribute]int^ outBegIdx,
+/* Generated */                                              [OutAttribute]int^ outNbElement,
+/* Generated */                                              cli::array<double>^  outInPhase,
+/* Generated */                                              cli::array<double>^  outQuadrature )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_PHASOR( int    startIdx,
 /* Generated */                            int    endIdx,
@@ -412,26 +411,26 @@
 /* Generated */    double todayValue;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal ) return TA_BAD_PARAM;
-/* Generated */     if( outInPhase == NULL )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outQuadrature == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outInPhase )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outQuadrature )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    rad2Deg = 180.0 / (4.0 * atan(1));
-/* Generated */    lookbackTotal = 32 + TA_Globals->unstablePeriod[TA_FUNC_UNST_HT_PHASOR];
+/* Generated */    lookbackTotal = 32 + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_HT_PHASOR];
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
-/* Generated */       *outBegIdx = 0;
-/* Generated */       *outNbElement = 0;
-/* Generated */       return TA_SUCCESS;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }
-/* Generated */    *outBegIdx = startIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */    trailingWMAIdx = startIdx - lookbackTotal;
 /* Generated */    today = trailingWMAIdx;
 /* Generated */    tempReal = inReal[today++];
@@ -528,8 +527,8 @@
 /* Generated */       period = (0.2*period) + (0.8 * tempReal);
 /* Generated */       today++;
 /* Generated */    }
-/* Generated */    *outNbElement = outIdx;
-/* Generated */    return TA_SUCCESS;
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

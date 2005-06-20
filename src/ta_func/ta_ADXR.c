@@ -54,9 +54,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -108,15 +107,15 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::ADXR( int    startIdx,
-/* Generated */                                           int    endIdx,
-/* Generated */                                           double       inHigh __gc [],
-/* Generated */                                           double       inLow __gc [],
-/* Generated */                                           double       inClose __gc [],
-/* Generated */                                           int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                           [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                           [OutAttribute]Int32 *outNbElement,
-/* Generated */                                           double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::ADXR( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         cli::array<double>^ inHigh,
+/* Generated */                                         cli::array<double>^ inLow,
+/* Generated */                                         cli::array<double>^ inClose,
+/* Generated */                                         int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                         [OutAttribute]int^ outBegIdx,
+/* Generated */                                         [OutAttribute]int^ outNbElement,
+/* Generated */                                         cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_ADXR( int    startIdx,
 /* Generated */                     int    endIdx,
@@ -141,23 +140,23 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow||!inClose)
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
 /* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outReal )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -192,20 +191,20 @@
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      *outBegIdx = 0;
-      *outNbElement = 0;
-      return TA_SUCCESS;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      return NAMESPACE(TA_RetCode)TA_SUCCESS;
    }
 
    ARRAY_ALLOC( adx, endIdx-startIdx+optInTimePeriod );
    if( !adx )
-      return TA_ALLOC_ERR;
+      return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
 
    retCode = TA_PREFIX(ADX)( startIdx-(optInTimePeriod-1), endIdx,
                            inHigh, inLow, inClose,
                            optInTimePeriod, outBegIdx, outNbElement, adx );
 
-   if( retCode != TA_SUCCESS )      
+   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )      
    {
       ARRAY_FREE( adx );
       return retCode;
@@ -220,10 +219,10 @@
 
    ARRAY_FREE( adx );
 
-   *outBegIdx    = startIdx;
-   *outNbElement = outIdx;
+   VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -236,15 +235,15 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::ADXR( int    startIdx,
-/* Generated */                                           int    endIdx,
-/* Generated */                                           float        inHigh __gc [],
-/* Generated */                                           float        inLow __gc [],
-/* Generated */                                           float        inClose __gc [],
-/* Generated */                                           int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                           [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                           [OutAttribute]Int32 *outNbElement,
-/* Generated */                                           double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::ADXR( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         cli::array<float>^ inHigh,
+/* Generated */                                         cli::array<float>^ inLow,
+/* Generated */                                         cli::array<float>^ inClose,
+/* Generated */                                         int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                         [OutAttribute]int^ outBegIdx,
+/* Generated */                                         [OutAttribute]int^ outNbElement,
+/* Generated */                                         cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ADXR( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -262,17 +261,17 @@
 /* Generated */    TA_RetCode retCode;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */     if(!inHigh||!inLow||!inClose)
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
 /* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outReal )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    #undef  round_pos
 /* Generated */    #define round_pos(x) (x)
@@ -281,17 +280,17 @@
 /* Generated */       startIdx = adxrLookback;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
-/* Generated */       *outBegIdx = 0;
-/* Generated */       *outNbElement = 0;
-/* Generated */       return TA_SUCCESS;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }
 /* Generated */    ARRAY_ALLOC( adx, endIdx-startIdx+optInTimePeriod );
 /* Generated */    if( !adx )
-/* Generated */       return TA_ALLOC_ERR;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
 /* Generated */    retCode = TA_PREFIX(ADX)( startIdx-(optInTimePeriod-1), endIdx,
 /* Generated */                            inHigh, inLow, inClose,
 /* Generated */                            optInTimePeriod, outBegIdx, outNbElement, adx );
-/* Generated */    if( retCode != TA_SUCCESS )      
+/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )      
 /* Generated */    {
 /* Generated */       ARRAY_FREE( adx );
 /* Generated */       return retCode;
@@ -303,9 +302,9 @@
 /* Generated */    while( --nbElement != 0 )
 /* Generated */       outReal[outIdx++] = round_pos( (adx[i++]+adx[j++])/2.0 );
 /* Generated */    ARRAY_FREE( adx );
-/* Generated */    *outBegIdx    = startIdx;
-/* Generated */    *outNbElement = outIdx;
-/* Generated */    return TA_SUCCESS;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

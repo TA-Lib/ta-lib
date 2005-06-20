@@ -56,9 +56,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -124,18 +123,18 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::BBANDS( int    startIdx,
-/* Generated */                                             int    endIdx,
-/* Generated */                                             double       inReal __gc [],
-/* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                             double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                             double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                             TA_MAType     optInMAType,
-/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                             [OutAttribute]Int32 *outNbElement,
-/* Generated */                                             double        outRealUpperBand __gc [],
-/* Generated */                                             double        outRealMiddleBand __gc [],
-/* Generated */                                             double        outRealLowerBand __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::BBANDS( int    startIdx,
+/* Generated */                                           int    endIdx,
+/* Generated */                                           cli::array<double>^ inReal,
+/* Generated */                                           int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                           double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                           double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                           TA_MAType     optInMAType,
+/* Generated */                                           [OutAttribute]int^ outBegIdx,
+/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           cli::array<double>^  outRealUpperBand,
+/* Generated */                                           cli::array<double>^  outRealMiddleBand,
+/* Generated */                                           cli::array<double>^  outRealLowerBand )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_BBANDS( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -165,43 +164,43 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 5;
 /* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInNbDevUp == TA_REAL_DEFAULT )
 /* Generated */       optInNbDevUp = 2.000000e+0;
 /* Generated */    else if( (optInNbDevUp < -3.000000e+37) ||/* Generated */  (optInNbDevUp > 3.000000e+37) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInNbDevDn == TA_REAL_DEFAULT )
 /* Generated */       optInNbDevDn = 2.000000e+0;
 /* Generated */    else if( (optInNbDevDn < -3.000000e+37) ||/* Generated */  (optInNbDevDn > 3.000000e+37) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED)
 /* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInMAType = 0;
 /* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) */
-/* Generated */    if( outRealUpperBand == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outRealUpperBand )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outRealMiddleBand == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outRealMiddleBand )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outRealLowerBand == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outRealLowerBand )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -245,7 +244,7 @@
        * (like using the input buffer in two output!)
        */
       if( (tempBuffer1 == inReal) || (tempBuffer2 == inReal) )
-         return TA_BAD_PARAM;
+         return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
    #endif
 
 
@@ -257,32 +256,32 @@
                             optInTimePeriod, optInMAType,
                             outBegIdx, outNbElement, tempBuffer1 );
 
-   if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
+   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
    {
-      *outNbElement = 0;
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       return retCode;
    }
 
    /* Calculate the standard deviation into tempBuffer2. */
-   if( optInMAType == TA_MAType_SMA )
+   if( optInMAType == NAMESPACE(TA_MAType)TA_MAType_SMA )
    {
       /* A small speed optimization by re-using the
        * already calculated SMA.
        */
        TA_PREFIX(INT_stddev_using_precalc_ma)( inReal, tempBuffer1, 
-                                              *outBegIdx, *outNbElement,
+                                              (int)VALUE_HANDLE_DEREF(outBegIdx), (int)VALUE_HANDLE_DEREF(outNbElement),
                                               optInTimePeriod, tempBuffer2 );
    }
    else
    {
       /* Calculate the Standard Deviation */
-      retCode = TA_PREFIX(STDDEV)( *outBegIdx, endIdx, inReal,
+      retCode = TA_PREFIX(STDDEV)( (int)VALUE_HANDLE_DEREF(outBegIdx), endIdx, inReal,
                                    optInTimePeriod, 1.0,
                                    outBegIdx, outNbElement, tempBuffer2 );
 
-      if( retCode != TA_SUCCESS )
+      if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
       {
-         *outNbElement = 0;
+         VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
          return retCode;
       }
    }
@@ -293,7 +292,7 @@
    #if !defined(USE_SINGLE_PRECISION_INPUT)
       if( tempBuffer1 != outRealMiddleBand )
       {
-         ARRAY_COPY( outRealMiddleBand, tempBuffer1, *outNbElement );
+         ARRAY_COPY( outRealMiddleBand, tempBuffer1, VALUE_HANDLE_DEREF(outNbElement) );
       }
    #endif
 
@@ -309,7 +308,7 @@
       if(  optInNbDevUp == 1.0 )
       {
          /* No standard deviation multiplier needed. */
-         for( i=0; i < *outNbElement; i++ )
+         for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
          {
             tempReal  = tempBuffer2[i];
             tempReal2 = outRealMiddleBand[i];
@@ -320,7 +319,7 @@
       else
       {
          /* Upper/lower band use the same standard deviation multiplier. */
-         for( i=0; i < *outNbElement; i++ )
+         for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
          {
             tempReal  = tempBuffer2[i] * optInNbDevUp;
             tempReal2 = outRealMiddleBand[i];
@@ -332,7 +331,7 @@
    else if( optInNbDevUp == 1.0 )
    {
       /* Only lower band has a standard deviation multiplier. */
-      for( i=0; i < *outNbElement; i++ )
+      for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
       {
          tempReal  = tempBuffer2[i];
          tempReal2 = outRealMiddleBand[i];
@@ -343,7 +342,7 @@
    else if( optInNbDevDn == 1.0 )
    {
       /* Only upper band has a standard deviation multiplier. */
-      for( i=0; i < *outNbElement; i++ )
+      for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
       {
          tempReal  = tempBuffer2[i];
          tempReal2 = outRealMiddleBand[i];
@@ -354,7 +353,7 @@
    else
    {
       /* Upper/lower band have distinctive standard deviation multiplier. */
-      for( i=0; i < *outNbElement; i++ )
+      for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
       {
          tempReal  = tempBuffer2[i];
          tempReal2 = outRealMiddleBand[i];
@@ -363,7 +362,7 @@
       }
    }
    
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -376,18 +375,18 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::BBANDS( int    startIdx,
-/* Generated */                                             int    endIdx,
-/* Generated */                                             float        inReal __gc [],
-/* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                             double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                             double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                             TA_MAType     optInMAType,
-/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                             [OutAttribute]Int32 *outNbElement,
-/* Generated */                                             double        outRealUpperBand __gc [],
-/* Generated */                                             double        outRealMiddleBand __gc [],
-/* Generated */                                             double        outRealLowerBand __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::BBANDS( int    startIdx,
+/* Generated */                                           int    endIdx,
+/* Generated */                                           cli::array<float>^ inReal,
+/* Generated */                                           int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                           double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                           double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                           TA_MAType     optInMAType,
+/* Generated */                                           [OutAttribute]int^ outBegIdx,
+/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           cli::array<double>^  outRealUpperBand,
+/* Generated */                                           cli::array<double>^  outRealMiddleBand,
+/* Generated */                                           cli::array<double>^  outRealLowerBand )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_BBANDS( int    startIdx,
 /* Generated */                         int    endIdx,
@@ -410,34 +409,34 @@
 /* Generated */    ARRAY_REF(tempBuffer2);
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 5;
 /* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( optInNbDevUp == TA_REAL_DEFAULT )
 /* Generated */        optInNbDevUp = 2.000000e+0;
 /* Generated */     else if( (optInNbDevUp < -3.000000e+37) ||  (optInNbDevUp > 3.000000e+37) )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( optInNbDevDn == TA_REAL_DEFAULT )
 /* Generated */        optInNbDevDn = 2.000000e+0;
 /* Generated */     else if( (optInNbDevDn < -3.000000e+37) ||  (optInNbDevDn > 3.000000e+37) )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     #if !defined(_MANAGED)
 /* Generated */     if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInMAType = 0;
 /* Generated */     else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     #endif 
-/* Generated */     if( outRealUpperBand == NULL )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outRealMiddleBand == NULL )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outRealLowerBand == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */     if( !outRealUpperBand )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outRealMiddleBand )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outRealLowerBand )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT)
 /* Generated */       tempBuffer1 = outRealMiddleBand;
@@ -464,44 +463,44 @@
 /* Generated */          tempBuffer2 = outRealUpperBand;
 /* Generated */       }
 /* Generated */       if( (tempBuffer1 == inReal) || (tempBuffer2 == inReal) )
-/* Generated */          return TA_BAD_PARAM;
+/* Generated */          return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    #endif
 /* Generated */    retCode = TA_PREFIX(MA)( startIdx, endIdx, inReal,
 /* Generated */                             optInTimePeriod, optInMAType,
 /* Generated */                             outBegIdx, outNbElement, tempBuffer1 );
-/* Generated */    if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
+/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
 /* Generated */    {
-/* Generated */       *outNbElement = 0;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    if( optInMAType == TA_MAType_SMA )
+/* Generated */    if( optInMAType == NAMESPACE(TA_MAType)TA_MAType_SMA )
 /* Generated */    {
 /* Generated */        TA_PREFIX(INT_stddev_using_precalc_ma)( inReal, tempBuffer1, 
-/* Generated */                                               *outBegIdx, *outNbElement,
+/* Generated */                                               (int)VALUE_HANDLE_DEREF(outBegIdx), (int)VALUE_HANDLE_DEREF(outNbElement),
 /* Generated */                                               optInTimePeriod, tempBuffer2 );
 /* Generated */    }
 /* Generated */    else
 /* Generated */    {
-/* Generated */       retCode = TA_PREFIX(STDDEV)( *outBegIdx, endIdx, inReal,
+/* Generated */       retCode = TA_PREFIX(STDDEV)( (int)VALUE_HANDLE_DEREF(outBegIdx), endIdx, inReal,
 /* Generated */                                    optInTimePeriod, 1.0,
 /* Generated */                                    outBegIdx, outNbElement, tempBuffer2 );
-/* Generated */       if( retCode != TA_SUCCESS )
+/* Generated */       if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
 /* Generated */       {
-/* Generated */          *outNbElement = 0;
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */          return retCode;
 /* Generated */       }
 /* Generated */    }
 /* Generated */    #if !defined(USE_SINGLE_PRECISION_INPUT)
 /* Generated */       if( tempBuffer1 != outRealMiddleBand )
 /* Generated */       {
-/* Generated */          ARRAY_COPY( outRealMiddleBand, tempBuffer1, *outNbElement );
+/* Generated */          ARRAY_COPY( outRealMiddleBand, tempBuffer1, VALUE_HANDLE_DEREF(outNbElement) );
 /* Generated */       }
 /* Generated */    #endif
 /* Generated */    if( optInNbDevUp == optInNbDevDn )
 /* Generated */    {
 /* Generated */       if(  optInNbDevUp == 1.0 )
 /* Generated */       {
-/* Generated */          for( i=0; i < *outNbElement; i++ )
+/* Generated */          for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
 /* Generated */          {
 /* Generated */             tempReal  = tempBuffer2[i];
 /* Generated */             tempReal2 = outRealMiddleBand[i];
@@ -511,7 +510,7 @@
 /* Generated */       }
 /* Generated */       else
 /* Generated */       {
-/* Generated */          for( i=0; i < *outNbElement; i++ )
+/* Generated */          for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
 /* Generated */          {
 /* Generated */             tempReal  = tempBuffer2[i] * optInNbDevUp;
 /* Generated */             tempReal2 = outRealMiddleBand[i];
@@ -522,7 +521,7 @@
 /* Generated */    }
 /* Generated */    else if( optInNbDevUp == 1.0 )
 /* Generated */    {
-/* Generated */       for( i=0; i < *outNbElement; i++ )
+/* Generated */       for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
 /* Generated */       {
 /* Generated */          tempReal  = tempBuffer2[i];
 /* Generated */          tempReal2 = outRealMiddleBand[i];
@@ -532,7 +531,7 @@
 /* Generated */    }
 /* Generated */    else if( optInNbDevDn == 1.0 )
 /* Generated */    {
-/* Generated */       for( i=0; i < *outNbElement; i++ )
+/* Generated */       for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
 /* Generated */       {
 /* Generated */          tempReal  = tempBuffer2[i];
 /* Generated */          tempReal2 = outRealMiddleBand[i];
@@ -542,7 +541,7 @@
 /* Generated */    }
 /* Generated */    else
 /* Generated */    {
-/* Generated */       for( i=0; i < *outNbElement; i++ )
+/* Generated */       for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
 /* Generated */       {
 /* Generated */          tempReal  = tempBuffer2[i];
 /* Generated */          tempReal2 = outRealMiddleBand[i];
@@ -550,7 +549,7 @@
 /* Generated */          outRealLowerBand[i] = tempReal2 - (tempReal * optInNbDevDn);
 /* Generated */       }
 /* Generated */    }
-/* Generated */    return TA_SUCCESS;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

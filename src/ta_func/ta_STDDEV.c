@@ -55,9 +55,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -113,14 +112,14 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::STDDEV( int    startIdx,
-/* Generated */                                             int    endIdx,
-/* Generated */                                             double       inReal __gc [],
-/* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                             double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                             [OutAttribute]Int32 *outNbElement,
-/* Generated */                                             double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::STDDEV( int    startIdx,
+/* Generated */                                           int    endIdx,
+/* Generated */                                           cli::array<double>^ inReal,
+/* Generated */                                           int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                           double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                           [OutAttribute]int^ outBegIdx,
+/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_STDDEV( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -144,25 +143,25 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 5;
 /* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInNbDev == TA_REAL_DEFAULT )
 /* Generated */       optInNbDev = 1.000000e+0;
 /* Generated */    else if( (optInNbDev < -3.000000e+37) ||/* Generated */  (optInNbDev > 3.000000e+37) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outReal )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -175,7 +174,7 @@
                                  inReal, optInTimePeriod,
                                  outBegIdx, outNbElement, outReal );
 
-   if( retCode != TA_SUCCESS )
+   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
       return retCode;
 
    /* Calculate the square root of each variance, this
@@ -185,7 +184,7 @@
     */
    if( optInNbDev != 1.0 )
    {
-      for( i=0; i < *outNbElement; i++ )
+      for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
       {
          tempReal = outReal[i];
          if( !TA_IS_ZERO_OR_NEG(tempReal) )
@@ -196,7 +195,7 @@
    }
    else
    {
-      for( i=0; i < *outNbElement; i++ )
+      for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
       {
          tempReal = outReal[i];
          if( !TA_IS_ZERO_OR_NEG(tempReal) )
@@ -206,7 +205,7 @@
       }
    }
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 /* The inMovAvg is the moving average of the inReal. 
@@ -224,12 +223,12 @@
  *       closely related.
  */
 #if defined( _MANAGED )
-void Core::TA_INT_stddev_using_precalc_ma( INPUT_TYPE inReal __gc[],
-                                           double inMovAvg __gc [],
+void Core::TA_INT_stddev_using_precalc_ma( cli::array<INPUT_TYPE>^ inReal,
+										   cli::array<double>^ inMovAvg,
                                            int inMovAvgBegIdx,                                    
                                            int inMovAvgNbElement,
                                            int timePeriod,
-                                           double output __gc [])
+										   cli::array<double>^ output)
 #else
 void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
                                              const double *inMovAvg,
@@ -289,14 +288,14 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::STDDEV( int    startIdx,
-/* Generated */                                             int    endIdx,
-/* Generated */                                             float        inReal __gc [],
-/* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                             double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                             [OutAttribute]Int32 *outNbElement,
-/* Generated */                                             double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::STDDEV( int    startIdx,
+/* Generated */                                           int    endIdx,
+/* Generated */                                           cli::array<float>^ inReal,
+/* Generated */                                           int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                           double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                           [OutAttribute]int^ outBegIdx,
+/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STDDEV( int    startIdx,
 /* Generated */                         int    endIdx,
@@ -313,29 +312,29 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */    double tempReal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 5;
 /* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( optInNbDev == TA_REAL_DEFAULT )
 /* Generated */        optInNbDev = 1.000000e+0;
 /* Generated */     else if( (optInNbDev < -3.000000e+37) ||  (optInNbDev > 3.000000e+37) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outReal )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    retCode = TA_PREFIX(INT_VAR)( startIdx, endIdx,
 /* Generated */                                  inReal, optInTimePeriod,
 /* Generated */                                  outBegIdx, outNbElement, outReal );
-/* Generated */    if( retCode != TA_SUCCESS )
+/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
 /* Generated */       return retCode;
 /* Generated */    if( optInNbDev != 1.0 )
 /* Generated */    {
-/* Generated */       for( i=0; i < *outNbElement; i++ )
+/* Generated */       for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
 /* Generated */       {
 /* Generated */          tempReal = outReal[i];
 /* Generated */          if( !TA_IS_ZERO_OR_NEG(tempReal) )
@@ -346,7 +345,7 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */    }
 /* Generated */    else
 /* Generated */    {
-/* Generated */       for( i=0; i < *outNbElement; i++ )
+/* Generated */       for( i=0; i < (int)VALUE_HANDLE_DEREF(outNbElement); i++ )
 /* Generated */       {
 /* Generated */          tempReal = outReal[i];
 /* Generated */          if( !TA_IS_ZERO_OR_NEG(tempReal) )
@@ -355,15 +354,15 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */             outReal[i] = (double)0.0;
 /* Generated */       }
 /* Generated */    }
-/* Generated */    return TA_SUCCESS;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ void Core::TA_INT_stddev_using_precalc_ma( INPUT_TYPE inReal __gc[],
-/* Generated */                                            double inMovAvg __gc [],
+/* Generated */ void Core::TA_INT_stddev_using_precalc_ma( cli::array<INPUT_TYPE>^ inReal,
+/* Generated */ 										   cli::array<double>^ inMovAvg,
 /* Generated */                                            int inMovAvgBegIdx,                                    
 /* Generated */                                            int inMovAvgNbElement,
 /* Generated */                                            int timePeriod,
-/* Generated */                                            double output __gc [])
+/* Generated */ 										   cli::array<double>^ output)
 /* Generated */ #else
 /* Generated */ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */                                              const double *inMovAvg,
