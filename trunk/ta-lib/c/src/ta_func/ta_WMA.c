@@ -54,9 +54,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -105,13 +104,13 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::WMA( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          double       inReal __gc [],
-/* Generated */                                          int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::WMA( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        cli::array<double>^ inReal,
+/* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                        [OutAttribute]int^ outBegIdx,
+/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_WMA( int    startIdx,
 /* Generated */                    int    endIdx,
@@ -124,9 +123,9 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   unsigned int inIdx, outIdx, i, trailingIdx, divider;
+   int inIdx, outIdx, i, trailingIdx, divider;
    double periodSum, periodSub, tempReal, trailingValue;
-   unsigned int lookbackTotal;
+   int lookbackTotal;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -134,20 +133,20 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
 /* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outReal )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -159,15 +158,15 @@
    /* Move up the start index if there is not
     * enough initial data.
     */
-   if( (unsigned int)startIdx < lookbackTotal )
+   if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
 
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      *outBegIdx    = 0;
-      *outNbElement = 0;
-      return TA_SUCCESS;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      return NAMESPACE(TA_RetCode)TA_SUCCESS;
    }
 
    /* To make the rest more efficient, handle exception
@@ -177,17 +176,17 @@
     */
    if( optInTimePeriod == 1 ) 
    {      
-      *outBegIdx    = startIdx;
-      *outNbElement = endIdx-startIdx+1;
-      ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, *outNbElement );
-      return TA_SUCCESS;
+      VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+      VALUE_HANDLE_DEREF(outNbElement) = endIdx-startIdx+1;
+      ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNbElement) );	  	  
+      return NAMESPACE(TA_RetCode)TA_SUCCESS;
    }
 
    /* Calculate the divider (always an integer value).
     * By induction: 1+2+3+4+'n' = n(n+1)/2
     * '>>1' is usually faster than '/2' for unsigned.
     */
-   divider = ((unsigned int)optInTimePeriod*((unsigned int)optInTimePeriod+1))>>1;
+   divider = (optInTimePeriod*(optInTimePeriod+1))>>1;
 
    /* The algo used here use a very basic property of
     * multiplication/addition: (x*2) = x+x
@@ -223,7 +222,7 @@
    periodSum = periodSub = (double)0.0;
    inIdx=trailingIdx;
    i = 1;
-   while( inIdx < (unsigned int)startIdx )
+   while( inIdx < startIdx )
    {
       tempReal = inReal[inIdx++];
       periodSub += tempReal;
@@ -233,7 +232,7 @@
    trailingValue = 0.0;
 
    /* Tight loop for the requested range. */
-   while( inIdx <= (unsigned int)endIdx )
+   while( inIdx <= endIdx )
    {
       /* Add the current price bar to the sum
        * who are carried through the iterations.
@@ -258,10 +257,10 @@
    }
 
    /* Set output limits. */
-   *outNbElement = outIdx;
-   *outBegIdx    = startIdx;
+   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+   VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -274,13 +273,13 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::WMA( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          float        inReal __gc [],
-/* Generated */                                          int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::WMA( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        cli::array<float>^ inReal,
+/* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                        [OutAttribute]int^ outBegIdx,
+/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_WMA( int    startIdx,
 /* Generated */                      int    endIdx,
@@ -291,45 +290,45 @@
 /* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
-/* Generated */    unsigned int inIdx, outIdx, i, trailingIdx, divider;
+/* Generated */    int inIdx, outIdx, i, trailingIdx, divider;
 /* Generated */    double periodSum, periodSub, tempReal, trailingValue;
-/* Generated */    unsigned int lookbackTotal;
+/* Generated */    int lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
 /* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outReal )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    lookbackTotal = optInTimePeriod-1;
-/* Generated */    if( (unsigned int)startIdx < lookbackTotal )
+/* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
-/* Generated */       *outBegIdx    = 0;
-/* Generated */       *outNbElement = 0;
-/* Generated */       return TA_SUCCESS;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }
 /* Generated */    if( optInTimePeriod == 1 ) 
 /* Generated */    {      
-/* Generated */       *outBegIdx    = startIdx;
-/* Generated */       *outNbElement = endIdx-startIdx+1;
-/* Generated */       ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, *outNbElement );
-/* Generated */       return TA_SUCCESS;
+/* Generated */       VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+/* Generated */       VALUE_HANDLE_DEREF(outNbElement) = endIdx-startIdx+1;
+/* Generated */       ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNbElement) );	  	  
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }
-/* Generated */    divider = ((unsigned int)optInTimePeriod*((unsigned int)optInTimePeriod+1))>>1;
+/* Generated */    divider = (optInTimePeriod*(optInTimePeriod+1))>>1;
 /* Generated */    outIdx      = 0;
 /* Generated */    trailingIdx = startIdx - lookbackTotal;
 /* Generated */    periodSum = periodSub = (double)0.0;
 /* Generated */    inIdx=trailingIdx;
 /* Generated */    i = 1;
-/* Generated */    while( inIdx < (unsigned int)startIdx )
+/* Generated */    while( inIdx < startIdx )
 /* Generated */    {
 /* Generated */       tempReal = inReal[inIdx++];
 /* Generated */       periodSub += tempReal;
@@ -337,7 +336,7 @@
 /* Generated */       i++;
 /* Generated */    }
 /* Generated */    trailingValue = 0.0;
-/* Generated */    while( inIdx <= (unsigned int)endIdx )
+/* Generated */    while( inIdx <= endIdx )
 /* Generated */    {
 /* Generated */       tempReal = inReal[inIdx++];
 /* Generated */       periodSub += tempReal;
@@ -347,9 +346,9 @@
 /* Generated */       outReal[outIdx++] = periodSum / divider;
 /* Generated */       periodSum -= periodSub;
 /* Generated */    }
-/* Generated */    *outNbElement = outIdx;
-/* Generated */    *outBegIdx    = startIdx;
-/* Generated */    return TA_SUCCESS;
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

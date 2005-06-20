@@ -55,9 +55,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -106,14 +105,14 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::CORREL( int    startIdx,
-/* Generated */                                             int    endIdx,
-/* Generated */                                             double       inReal0 __gc [],
-/* Generated */                                             double       inReal1 __gc [],
-/* Generated */                                             int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                             [OutAttribute]Int32 *outNbElement,
-/* Generated */                                             double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::CORREL( int    startIdx,
+/* Generated */                                           int    endIdx,
+/* Generated */                                           cli::array<double>^ inReal0,
+/* Generated */                                           cli::array<double>^ inReal1,
+/* Generated */                                           int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                           [OutAttribute]int^ outBegIdx,
+/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CORREL( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -137,21 +136,21 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal0 ) return TA_BAD_PARAM;
-/* Generated */    if( !inReal1 ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal0 ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    if( !inReal1 ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
 /* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outReal )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -169,12 +168,12 @@
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      *outBegIdx    = 0;
-      *outNbElement = 0;
-      return TA_SUCCESS;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      return NAMESPACE(TA_RetCode)TA_SUCCESS;
    }
 
-   *outBegIdx  = startIdx;
+   VALUE_HANDLE_DEREF(outBegIdx)  = startIdx;
    trailingIdx = startIdx - lookbackTotal;
 
    /* Calculate the initial values. */
@@ -238,9 +237,9 @@
          outReal[outIdx++] = 0.0;
    }  
 
-   *outNbElement = outIdx;
+   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -253,14 +252,14 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::CORREL( int    startIdx,
-/* Generated */                                             int    endIdx,
-/* Generated */                                             float        inReal0 __gc [],
-/* Generated */                                             float        inReal1 __gc [],
-/* Generated */                                             int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                             [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                             [OutAttribute]Int32 *outNbElement,
-/* Generated */                                             double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::CORREL( int    startIdx,
+/* Generated */                                           int    endIdx,
+/* Generated */                                           cli::array<float>^ inReal0,
+/* Generated */                                           cli::array<float>^ inReal1,
+/* Generated */                                           int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                           [OutAttribute]int^ outBegIdx,
+/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CORREL( int    startIdx,
 /* Generated */                         int    endIdx,
@@ -277,28 +276,28 @@
 /* Generated */     int lookbackTotal, today, trailingIdx, outIdx;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal0 ) return TA_BAD_PARAM;
-/* Generated */     if( !inReal1 ) return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     if( !inReal0 ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !inReal1 ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
 /* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outReal )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    lookbackTotal = optInTimePeriod-1;
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
-/* Generated */       *outBegIdx    = 0;
-/* Generated */       *outNbElement = 0;
-/* Generated */       return TA_SUCCESS;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }
-/* Generated */    *outBegIdx  = startIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)  = startIdx;
 /* Generated */    trailingIdx = startIdx - lookbackTotal;
 /* Generated */    sumXY = sumX = sumY = sumX2 = sumY2 = 0.0;
 /* Generated */    for( today=trailingIdx; today <= startIdx; today++ )
@@ -341,8 +340,8 @@
 /* Generated */       else
 /* Generated */          outReal[outIdx++] = 0.0;
 /* Generated */    }  
-/* Generated */    *outNbElement = outIdx;
-/* Generated */    return TA_SUCCESS;
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

@@ -214,8 +214,8 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
  * Do a search on Google for a more generalize algo.
  */
 #define TA_REAL_EQ(x,v,ep)   (((v-ep)<x)&&(x<(v+ep)))
-#define TA_IS_ZERO(v)        (((-0.000001)<v)&&(v<0.000001))
-#define TA_IS_ZERO_OR_NEG(v) (v<0.000001)
+#define TA_IS_ZERO(v)        (((-0.00000001)<v)&&(v<0.00000001))
+#define TA_IS_ZERO_OR_NEG(v) (v<0.00000001)
 
 /* The following macros are being used to do
  * the Hilbert Transform logic as documented
@@ -223,8 +223,8 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
  */
 #if defined( _MANAGED )
    #define HILBERT_VARIABLES(varName) \
-         double varName##_Odd  __gc [] = new double __gc [3]; \
-         double varName##_Even __gc [] = new double __gc [3]; \
+         cli::array<double>^ varName##_Odd  = gcnew cli::array<double>(3); \
+         cli::array<double>^ varName##_Even = gcnew cli::array<double>(3); \
          double varName; \
          double prev_##varName##_Odd; \
          double prev_##varName##_Even; \
@@ -299,19 +299,25 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define TA_HIGHLOWRANGE(IDX)    ( inHigh[IDX] - inLow[IDX] )
 #define TA_CANDLECOLOR(IDX)     ( inClose[IDX] >= inOpen[IDX] ? 1 : -1 )
 
-#define TA_CANDLERANGETYPE(SET) TA_Globals->candleSettings[SET].rangeType
-#define TA_CANDLEAVGPERIOD(SET) TA_Globals->candleSettings[SET].avgPeriod
-#define TA_CANDLEFACTOR(SET)    TA_Globals->candleSettings[SET].factor
+#if defined( _MANAGED )
+   #define TA_CANDLERANGETYPE(SET) TA_Globals->candleSettings[(int)NAMESPACE(TA_CandleSettingType)SET]->rangeType
+   #define TA_CANDLEAVGPERIOD(SET) TA_Globals->candleSettings[(int)NAMESPACE(TA_CandleSettingType)SET]->avgPeriod
+   #define TA_CANDLEFACTOR(SET)    TA_Globals->candleSettings[(int)NAMESPACE(TA_CandleSettingType)SET]->factor
+#else
+   #define TA_CANDLERANGETYPE(SET) TA_Globals->candleSettings[SET].rangeType
+   #define TA_CANDLEAVGPERIOD(SET) TA_Globals->candleSettings[SET].avgPeriod
+   #define TA_CANDLEFACTOR(SET)    TA_Globals->candleSettings[SET].factor
+#endif
 
 #define TA_CANDLERANGE(SET,IDX) \
-    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_RealBody ? TA_REALBODY(IDX) : \
-    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_HighLow  ? TA_HIGHLOWRANGE(IDX) : \
-    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_Shadows  ? TA_UPPERSHADOW(IDX) + TA_LOWERSHADOW(IDX) : \
+    ( TA_CANDLERANGETYPE(SET) == NAMESPACE(TA_RangeType)TA_RangeType_RealBody ? TA_REALBODY(IDX) : \
+    ( TA_CANDLERANGETYPE(SET) == NAMESPACE(TA_RangeType)TA_RangeType_HighLow  ? TA_HIGHLOWRANGE(IDX) : \
+    ( TA_CANDLERANGETYPE(SET) == NAMESPACE(TA_RangeType)TA_RangeType_Shadows  ? TA_UPPERSHADOW(IDX) + TA_LOWERSHADOW(IDX) : \
       0 ) ) )
 #define TA_CANDLEAVERAGE(SET,SUM,IDX) \
     ( TA_CANDLEFACTOR(SET) \
         * ( TA_CANDLEAVGPERIOD(SET) ? SUM / TA_CANDLEAVGPERIOD(SET) : TA_CANDLERANGE(SET,IDX) ) \
-        / ( TA_CANDLERANGETYPE(SET) == TA_RangeType_Shadows ? 2 : 1 ) \
+        / ( TA_CANDLERANGETYPE(SET) == NAMESPACE(TA_RangeType)TA_RangeType_Shadows ? 2 : 1 ) \
     )
 #define TA_REALBODYGAPUP(IDX2,IDX1)     ( min(inOpen[IDX2],inClose[IDX2]) > max(inOpen[IDX1],inClose[IDX1]) )
 #define TA_REALBODYGAPDOWN(IDX2,IDX1)   ( max(inOpen[IDX2],inClose[IDX2]) < min(inOpen[IDX1],inClose[IDX1]) )

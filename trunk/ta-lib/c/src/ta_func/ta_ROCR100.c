@@ -54,9 +54,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -105,13 +104,13 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::ROCR100( int    startIdx,
-/* Generated */                                              int    endIdx,
-/* Generated */                                              double       inReal __gc [],
-/* Generated */                                              int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                              [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                              [OutAttribute]Int32 *outNbElement,
-/* Generated */                                              double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::ROCR100( int    startIdx,
+/* Generated */                                            int    endIdx,
+/* Generated */                                            cli::array<double>^ inReal,
+/* Generated */                                            int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                            [OutAttribute]int^ outBegIdx,
+/* Generated */                                            [OutAttribute]int^ outNbElement,
+/* Generated */                                            cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_ROCR100( int    startIdx,
 /* Generated */                        int    endIdx,
@@ -134,20 +133,20 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 10;
 /* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outReal )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -196,9 +195,9 @@
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      *outBegIdx = 0;
-      *outNbElement = 0;
-      return TA_SUCCESS;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      return NAMESPACE(TA_RetCode)TA_SUCCESS;
    }
 
    /* Calculate Rate of change Ratio: (price / prevPrice) */
@@ -218,10 +217,10 @@
    }
 
    /* Set output limits. */
-   *outNbElement = outIdx;
-   *outBegIdx    = startIdx;
+   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+   VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -234,13 +233,13 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::ROCR100( int    startIdx,
-/* Generated */                                              int    endIdx,
-/* Generated */                                              float        inReal __gc [],
-/* Generated */                                              int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                              [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                              [OutAttribute]Int32 *outNbElement,
-/* Generated */                                              double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::ROCR100( int    startIdx,
+/* Generated */                                            int    endIdx,
+/* Generated */                                            cli::array<float>^ inReal,
+/* Generated */                                            int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                            [OutAttribute]int^ outBegIdx,
+/* Generated */                                            [OutAttribute]int^ outNbElement,
+/* Generated */                                            cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ROCR100( int    startIdx,
 /* Generated */                          int    endIdx,
@@ -255,24 +254,24 @@
 /* Generated */    double tempReal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 10;
 /* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outReal )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    if( startIdx < optInTimePeriod )
 /* Generated */       startIdx = optInTimePeriod;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
-/* Generated */       *outBegIdx = 0;
-/* Generated */       *outNbElement = 0;
-/* Generated */       return TA_SUCCESS;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }
 /* Generated */    outIdx      = 0;
 /* Generated */    inIdx       = startIdx;
@@ -286,9 +285,9 @@
 /* Generated */          outReal[outIdx++] = 0.0; 
 /* Generated */       inIdx++;
 /* Generated */    }
-/* Generated */    *outNbElement = outIdx;
-/* Generated */    *outBegIdx    = startIdx;
-/* Generated */    return TA_SUCCESS;
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

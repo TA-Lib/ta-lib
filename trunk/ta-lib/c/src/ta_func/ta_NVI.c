@@ -102,16 +102,16 @@
 /* Generated */                                  int    endIdx,
 /* Generated */                                  double       inClose __gc [],
 /* Generated */                                  int          inVolume __gc [],
-/* Generated */                                  [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                  [OutAttribute]Int32 *outNbElement,
+/* Generated */                                  [OutAttribute]Int32 REF(outBegIdx),
+/* Generated */                                  [OutAttribute]Int32 REF(outNbElement),
 /* Generated */                                  double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_NVI( int    startIdx,
 /* Generated */                    int    endIdx,
 /* Generated */                    const double inClose[],
 /* Generated */                    const int    inVolume[],
-/* Generated */                    int          *outBegIdx,
-/* Generated */                    int          *outNbElement,
+/* Generated */                    int          REF(outBegIdx),
+/* Generated */                    int          REF(outNbElement),
 /* Generated */                    double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -143,8 +143,8 @@
    /* Insert TA function code here. */
 
    /* Default return values */
-   *outBegIdx    = 0;
-   *outNbElement = 0;
+   REF(outBegIdx)    = 0;
+   REF(outNbElement) = 0;
 
    return TA_SUCCESS;
 }
@@ -163,16 +163,16 @@
 /* Generated */                                  int    endIdx,
 /* Generated */                                  float        inClose __gc [],
 /* Generated */                                  int          inVolume __gc [],
-/* Generated */                                  [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                  [OutAttribute]Int32 *outNbElement,
+/* Generated */                                  [OutAttribute]Int32 REF(outBegIdx),
+/* Generated */                                  [OutAttribute]Int32 REF(outNbElement),
 /* Generated */                                  double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_NVI( int    startIdx,
 /* Generated */                      int    endIdx,
 /* Generated */                      const float  inClose[],
 /* Generated */                      const int    inVolume[],
-/* Generated */                      int          *outBegIdx,
-/* Generated */                      int          *outNbElement,
+/* Generated */                      int          REF(outBegIdx),
+/* Generated */                      int          REF(outNbElement),
 /* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
@@ -186,8 +186,8 @@
 /* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    *outBegIdx    = 0;
-/* Generated */    *outNbElement = 0;
+/* Generated */    REF(outBegIdx)    = 0;
+/* Generated */    REF(outNbElement) = 0;
 /* Generated */    return TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 

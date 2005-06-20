@@ -54,9 +54,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -106,13 +105,13 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::TRIX( int    startIdx,
-/* Generated */                                           int    endIdx,
-/* Generated */                                           double       inReal __gc [],
-/* Generated */                                           int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                           [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                           [OutAttribute]Int32 *outNbElement,
-/* Generated */                                           double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::TRIX( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         cli::array<double>^ inReal,
+/* Generated */                                         int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                         [OutAttribute]int^ outBegIdx,
+/* Generated */                                         [OutAttribute]int^ outNbElement,
+/* Generated */                                         cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_TRIX( int    startIdx,
 /* Generated */                     int    endIdx,
@@ -127,9 +126,10 @@
    /* Insert local variables here. */
    double k;
    ARRAY_REF(tempBuffer);
+   VALUE_HANDLE(int,nbElement);
+   VALUE_HANDLE(int,begIdx);
    int totalLookback;
    int emaLookback, rocLookback;
-   int nbElement, begIdx;
    TA_RetCode retCode;
    int nbElementToOutput;
 
@@ -139,20 +139,20 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
 /* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outReal )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -171,12 +171,12 @@
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      *outNbElement = 0;
-      *outBegIdx = 0;
-      return TA_SUCCESS; 
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      return NAMESPACE(TA_RetCode)TA_SUCCESS; 
    }
 
-   *outBegIdx = startIdx; 
+   VALUE_HANDLE_DEREF(outBegIdx) = startIdx; 
 
    nbElementToOutput = (endIdx-startIdx)+1+totalLookback;
 
@@ -186,24 +186,25 @@
    ARRAY_ALLOC(tempBuffer, nbElementToOutput );
    if( !tempBuffer )
    {
-      *outNbElement = 0;
-      *outBegIdx = 0;
-      return TA_ALLOC_ERR;
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
    }
 
    /* Calculate the first EMA */   
    k = PER_TO_K(optInTimePeriod);  
    retCode = TA_PREFIX(INT_EMA)( (startIdx-totalLookback), endIdx, inReal,
                                  optInTimePeriod, k,
-                                 &begIdx, &nbElement, tempBuffer );
+                                 VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
+								 tempBuffer );
    
    /* Verify for failure or if not enough data after
     * calculating the EMA.
     */
-   if( (retCode != TA_SUCCESS) || (nbElement == 0) )
+   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)nbElement == 0) )
    {
-      *outNbElement = 0;
-      *outBegIdx = 0;
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       ARRAY_FREE( tempBuffer );
       return retCode;
    }
@@ -214,15 +215,16 @@
    nbElementToOutput -= emaLookback;
    retCode = TA_INT_EMA( 0, nbElementToOutput, tempBuffer,
                          optInTimePeriod, k,
-                         &begIdx, &nbElement, tempBuffer );
+                         VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
+						 tempBuffer );
    
    /* Verify for failure or if not enough data after
     * calculating the EMA.
     */
-   if( (retCode != TA_SUCCESS) || (nbElement == 0) )
+   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)nbElement == 0) )
    {
-      *outNbElement = 0;
-      *outBegIdx = 0;
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       ARRAY_FREE( tempBuffer );
       return retCode;
    }
@@ -231,15 +233,16 @@
    nbElementToOutput -= emaLookback;
    retCode = TA_INT_EMA( 0, nbElementToOutput, tempBuffer,
                          optInTimePeriod, k,
-                         &begIdx, &nbElement, tempBuffer );
+                         VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
+						 tempBuffer );
    
    /* Verify for failure or if not enough data after
     * calculating the EMA.
     */
-   if( (retCode != TA_SUCCESS) || (nbElement == 0) )
+   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)nbElement == 0) )
    {
-      *outNbElement = 0;
-      *outBegIdx = 0;
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       ARRAY_FREE( tempBuffer );
       return retCode;
    }
@@ -248,21 +251,21 @@
    nbElementToOutput -= emaLookback;
    retCode = TA_ROC( 0, nbElementToOutput,
                       tempBuffer,
-                      1,  &begIdx, outNbElement,
+                      1,  VALUE_HANDLE_OUT(begIdx), outNbElement,
                       outReal );
 
    ARRAY_FREE( tempBuffer );
    /* Verify for failure or if not enough data after
     * calculating the rate-of-change.
     */
-   if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
+   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
    {
-      *outNbElement = 0;
-      *outBegIdx = 0;
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       return retCode;
    }
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -275,13 +278,13 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::TRIX( int    startIdx,
-/* Generated */                                           int    endIdx,
-/* Generated */                                           float        inReal __gc [],
-/* Generated */                                           int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                           [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                           [OutAttribute]Int32 *outNbElement,
-/* Generated */                                           double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::TRIX( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         cli::array<float>^ inReal,
+/* Generated */                                         int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                         [OutAttribute]int^ outBegIdx,
+/* Generated */                                         [OutAttribute]int^ outNbElement,
+/* Generated */                                         cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_TRIX( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -294,23 +297,24 @@
 /* Generated */ {
 /* Generated */    double k;
 /* Generated */    ARRAY_REF(tempBuffer);
+/* Generated */    VALUE_HANDLE(int,nbElement);
+/* Generated */    VALUE_HANDLE(int,begIdx);
 /* Generated */    int totalLookback;
 /* Generated */    int emaLookback, rocLookback;
-/* Generated */    int nbElement, begIdx;
 /* Generated */    TA_RetCode retCode;
 /* Generated */    int nbElementToOutput;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
 /* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outReal )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    emaLookback   = TA_EMA_Lookback( optInTimePeriod );
 /* Generated */    rocLookback   = TA_ROCR_Lookback( 1 );
@@ -319,27 +323,28 @@
 /* Generated */       startIdx = totalLookback;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
-/* Generated */       *outNbElement = 0;
-/* Generated */       *outBegIdx = 0;
-/* Generated */       return TA_SUCCESS; 
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS; 
 /* Generated */    }
-/* Generated */    *outBegIdx = startIdx; 
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx; 
 /* Generated */    nbElementToOutput = (endIdx-startIdx)+1+totalLookback;
 /* Generated */    ARRAY_ALLOC(tempBuffer, nbElementToOutput );
 /* Generated */    if( !tempBuffer )
 /* Generated */    {
-/* Generated */       *outNbElement = 0;
-/* Generated */       *outBegIdx = 0;
-/* Generated */       return TA_ALLOC_ERR;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
 /* Generated */    }
 /* Generated */    k = PER_TO_K(optInTimePeriod);  
 /* Generated */    retCode = TA_PREFIX(INT_EMA)( (startIdx-totalLookback), endIdx, inReal,
 /* Generated */                                  optInTimePeriod, k,
-/* Generated */                                  &begIdx, &nbElement, tempBuffer );
-/* Generated */    if( (retCode != TA_SUCCESS) || (nbElement == 0) )
+/* Generated */                                  VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
+/* Generated */ 								 tempBuffer );
+/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)nbElement == 0) )
 /* Generated */    {
-/* Generated */       *outNbElement = 0;
-/* Generated */       *outBegIdx = 0;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       ARRAY_FREE( tempBuffer );
 /* Generated */       return retCode;
 /* Generated */    }
@@ -347,38 +352,40 @@
 /* Generated */    nbElementToOutput -= emaLookback;
 /* Generated */    retCode = TA_INT_EMA( 0, nbElementToOutput, tempBuffer,
 /* Generated */                          optInTimePeriod, k,
-/* Generated */                          &begIdx, &nbElement, tempBuffer );
-/* Generated */    if( (retCode != TA_SUCCESS) || (nbElement == 0) )
+/* Generated */                          VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
+/* Generated */ 						 tempBuffer );
+/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)nbElement == 0) )
 /* Generated */    {
-/* Generated */       *outNbElement = 0;
-/* Generated */       *outBegIdx = 0;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       ARRAY_FREE( tempBuffer );
 /* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    nbElementToOutput -= emaLookback;
 /* Generated */    retCode = TA_INT_EMA( 0, nbElementToOutput, tempBuffer,
 /* Generated */                          optInTimePeriod, k,
-/* Generated */                          &begIdx, &nbElement, tempBuffer );
-/* Generated */    if( (retCode != TA_SUCCESS) || (nbElement == 0) )
+/* Generated */                          VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
+/* Generated */ 						 tempBuffer );
+/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)nbElement == 0) )
 /* Generated */    {
-/* Generated */       *outNbElement = 0;
-/* Generated */       *outBegIdx = 0;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       ARRAY_FREE( tempBuffer );
 /* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    nbElementToOutput -= emaLookback;
 /* Generated */    retCode = TA_ROC( 0, nbElementToOutput,
 /* Generated */                       tempBuffer,
-/* Generated */                       1,  &begIdx, outNbElement,
+/* Generated */                       1,  VALUE_HANDLE_OUT(begIdx), outNbElement,
 /* Generated */                       outReal );
 /* Generated */    ARRAY_FREE( tempBuffer );
-/* Generated */    if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
+/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
 /* Generated */    {
-/* Generated */       *outNbElement = 0;
-/* Generated */       *outBegIdx = 0;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    return TA_SUCCESS;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

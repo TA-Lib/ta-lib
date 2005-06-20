@@ -61,14 +61,16 @@
  * The macros offer the advantage to work in C/C++ and managed C++.
  */
 #if defined( _MANAGED )
-   #define ARRAY_REF(name)             double name __gc []
-   #define ARRAY_ALLOC(name,size)      name = new double __gc [size]
+   #define ARRAY_REF(name)             cli::array<double>^ name
+   #define ARRAY_LOCAL(name,size)      cli::array<double>^ name = gcnew cli::array<double>(size);
+   #define ARRAY_ALLOC(name,size)      name = gcnew cli::array<double>(size);
    #define ARRAY_COPY(dest,src,size)   src->CopyTo(dest,0)
-   #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) Array::Copy( src, srcIdx, dest, destIdx, size )
+   #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) cli::array<double>::Copy( src, srcIdx, dest, destIdx, size )
    #define ARRAY_FREE(name)
-   #define ARRAY_FREE_COND(cond,name)
+   #define ARRAY_FREE_COND(cond,name)   
 #else
    #define ARRAY_REF(name)             double *name
+   #define ARRAY_LOCAL(name,size)      double name[size]
    #define ARRAY_ALLOC(name,size)      name = (double *)TA_Malloc( sizeof(double)*(size))
    #define ARRAY_COPY(dest,src,size)   memcpy(dest,src,sizeof(double)*(size))
    #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) memmove( &dest[destIdx], &src[srcIdx], (size)*sizeof(double) )
@@ -76,19 +78,19 @@
    #define ARRAY_FREE_COND(cond,name)  if( cond ){ TA_Free(name); }
 #endif
 
-/* CBUF : Circular Buffer Macros.
+/* CIRCBUF : Circular Buffer Macros.
  *
- * The CBUF is like a FIFO buffer (First In - First Out), except
+ * The CIRCBUF is like a FIFO buffer (First In - First Out), except
  * that the rate of data coming out is the same as the rate of
  * data coming in (for simplification and speed optimization).
  * In other word, when you add one new value, you must also consume
  * one value (if not consume, the value is lost).
  *
- * The CBUF size is unlimited, so it will automatically allocate and
- * de-allocate memory as needed. When small enough, CBUF will instead
- * use a buffer "allocated" on the stack (automatic variable).
+ * The CIRCBUF size is unlimited, so it will automatically allocate and
+ * de-allocate memory as needed. In C/C++. when small enough, CIRCBUF will 
+ * instead use a buffer "allocated" on the stack (automatic variable).
  * 
- * Multiple CBUF can be used within the same function. To make that
+ * Multiple CIRCBUF can be used within the same function. To make that
  * possible the first parameter of the MACRO is an "Id" that can be
  * any string.
  *
@@ -96,7 +98,7 @@
  * 
  * CIRCBUF_PROLOG(Id,Type,Size);
  *          Will declare all the needed variables. 2 variables are
- *          important to the CBUF user: 
+ *          important: 
  *                 1) 'Id' will be a ptr of the specified Type.
  *                 2) 'Id'_Idx indicates from where to consume and 
  *                     to add the data.
@@ -180,27 +182,45 @@
 #if defined( _MANAGED )
 
 #define CIRCBUF_PROLOG(Id,Type,Size) int Id##_Idx = 0; \
-                                     Type Id __gc []; \
+                                     cli::array<Type>^ Id; \
                                      int maxIdx_##Id = (Size-1)
+
+/* Use this macro instead if the Type is a class or a struct. */
+#define CIRCBUF_PROLOG_CLASS(Id,Type,Size) int Id##_Idx = 0; \
+                                           cli::array<Type^>^ Id; \
+                                           int maxIdx_##Id = (Size-1)
 
 #define CIRCBUF_INIT(Id,Type,Size) \
    { \
       if( Size <= 0 ) \
-         return TA_ALLOC_ERR; \
-      Id = new Type __gc [Size]; \
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
+      Id = gcnew cli::array<Type>(Size); \
       if( !Id ) \
-         return TA_ALLOC_ERR; \
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
+      maxIdx_##Id = (Size-1); \
+   }
+
+#define CIRCBUF_INIT_CLASS(Id,Type,Size) \
+   { \
+      if( Size <= 0 ) \
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
+      Id = gcnew cli::array<Type^>(Size); \
+      if( !Id ) \
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
       maxIdx_##Id = (Size-1); \
    }
 
 #define CIRCBUF_INIT_LOCAL_ONLY(Id,Type) \
    { \
-      Id = new Type __gc [maxIdx_##Id+1]; \
+      Id = gcnew cli::array<Type>(maxIdx_##Id+1); \
       if( !Id ) \
-         return TA_ALLOC_ERR; \
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
    }
 
 #define CIRCBUF_DESTROY(Id)
+
+/* Use this macro to access the member when type is a class or a struct. */
+#define CIRCBUF_REF(x) (x)->
 
 #else
 
@@ -208,6 +228,9 @@
                                   int Id##_Idx; \
                                   Type *Id; \
                                   int maxIdx_##Id
+
+/* Use this macro instead if the Type is a class or a struct. */
+#define CIRCBUF_PROLOG_CLASS(Id,Type,Size) CIRCBUF_PROLOG(Id,Type,Size)
 
 #define CIRCBUF_INIT(Id,Type,Size) \
    { \
@@ -225,6 +248,8 @@
       Id##_Idx = 0; \
    }
 
+#define CIRCBUF_INIT_CLASS(Id,Type,Size) CIRCBUF_INIT(Id,Type,Size)
+
 #define CIRCBUF_INIT_LOCAL_ONLY(Id,Type) \
    { \
       Id = &local_##Id[0]; \
@@ -237,6 +262,10 @@
       if( Id != &local_##Id[0] ) \
          TA_Free( Id ); \
    }
+
+/* Use this macro to access the member when Type is a class or a struct. */
+#define CIRCBUF_REF(x) (x).
+
 #endif
 
 #define CIRCBUF_NEXT(Id) \

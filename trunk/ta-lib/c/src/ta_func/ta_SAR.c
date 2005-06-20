@@ -61,9 +61,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -123,15 +122,15 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::SAR( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          double       inHigh __gc [],
-/* Generated */                                          double       inLow __gc [],
-/* Generated */                                          double        optInAcceleration, /* From 0 to TA_REAL_MAX */
-/* Generated */                                          double        optInMaximum, /* From 0 to TA_REAL_MAX */
-/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::SAR( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        cli::array<double>^ inHigh,
+/* Generated */                                        cli::array<double>^ inLow,
+/* Generated */                                        double        optInAcceleration, /* From 0 to TA_REAL_MAX */
+/* Generated */                                        double        optInMaximum, /* From 0 to TA_REAL_MAX */
+/* Generated */                                        [OutAttribute]int^ outBegIdx,
+/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_SAR( int    startIdx,
 /* Generated */                    int    endIdx,
@@ -151,15 +150,11 @@
    int isLong; /* > 0 indicates long. == 0 indicates short */
    int todayIdx, outIdx;
 
-   int tempInt;
+   VALUE_HANDLE(int,tempInt);
 
    double newHigh, newLow, prevHigh, prevLow;
    double af, ep, sar;
-   #if defined( _MANAGED )
-      double ep_temp __gc [] = new double __gc [1];
-   #else
-      double ep_temp[1];
-   #endif
+   ARRAY_LOCAL(ep_temp,1);
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -167,27 +162,27 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow)
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInAcceleration == TA_REAL_DEFAULT )
 /* Generated */       optInAcceleration = 2.000000e-2;
 /* Generated */    else if( (optInAcceleration < 0.000000e+0) ||/* Generated */  (optInAcceleration > 3.000000e+37) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( optInMaximum == TA_REAL_DEFAULT )
 /* Generated */       optInMaximum = 2.000000e-1;
 /* Generated */    else if( (optInMaximum < 0.000000e+0) ||/* Generated */  (optInMaximum > 3.000000e+37) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outReal )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -248,9 +243,9 @@
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      *outBegIdx = 0;
-      *outNbElement = 0;
-      return TA_SUCCESS;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      return NAMESPACE(TA_RetCode)TA_SUCCESS;
    }   
 
    /* Make sure the acceleration and maximum are coherent.
@@ -264,21 +259,22 @@
     * (ep is just used as a temp buffer here, the name
     *  of the parameter is not significant).
     */
-   retCode = TA_PREFIX(MINUS_DM)( startIdx, startIdx, inHigh, inLow,
-                                  1, &tempInt, &tempInt, ep_temp );
+   retCode = TA_PREFIX(MINUS_DM)( startIdx, startIdx, inHigh, inLow, 1,
+                                  VALUE_HANDLE_OUT(tempInt), VALUE_HANDLE_OUT(tempInt),
+								  ep_temp );
    if( ep_temp[0] > 0 )
       isLong = 0;
    else
       isLong = 1;
 
-   if( retCode != TA_SUCCESS )
+   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
    {
-      *outBegIdx = 0;
-      *outNbElement = 0;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       return retCode;
    }
 
-   *outBegIdx = startIdx;
+   VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
    outIdx = 0;
 
    /* Write the first SAR. */
@@ -452,9 +448,9 @@
       }
    }
 
-   *outNbElement = outIdx;
+   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -467,15 +463,15 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::SAR( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          float        inHigh __gc [],
-/* Generated */                                          float        inLow __gc [],
-/* Generated */                                          double        optInAcceleration, /* From 0 to TA_REAL_MAX */
-/* Generated */                                          double        optInMaximum, /* From 0 to TA_REAL_MAX */
-/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::SAR( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        cli::array<float>^ inHigh,
+/* Generated */                                        cli::array<float>^ inLow,
+/* Generated */                                        double        optInAcceleration, /* From 0 to TA_REAL_MAX */
+/* Generated */                                        double        optInMaximum, /* From 0 to TA_REAL_MAX */
+/* Generated */                                        [OutAttribute]int^ outBegIdx,
+/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_SAR( int    startIdx,
 /* Generated */                      int    endIdx,
@@ -491,56 +487,53 @@
 /* Generated */    TA_RetCode retCode;
 /* Generated */    int isLong; 
 /* Generated */    int todayIdx, outIdx;
-/* Generated */    int tempInt;
+/* Generated */    VALUE_HANDLE(int,tempInt);
 /* Generated */    double newHigh, newLow, prevHigh, prevLow;
 /* Generated */    double af, ep, sar;
-/* Generated */    #if defined( _MANAGED )
-/* Generated */       double ep_temp __gc [] = new double __gc [1];
-/* Generated */    #else
-/* Generated */       double ep_temp[1];
-/* Generated */    #endif
+/* Generated */    ARRAY_LOCAL(ep_temp,1);
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */     if(!inHigh||!inLow)
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( optInAcceleration == TA_REAL_DEFAULT )
 /* Generated */        optInAcceleration = 2.000000e-2;
 /* Generated */     else if( (optInAcceleration < 0.000000e+0) ||  (optInAcceleration > 3.000000e+37) )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( optInMaximum == TA_REAL_DEFAULT )
 /* Generated */        optInMaximum = 2.000000e-1;
 /* Generated */     else if( (optInMaximum < 0.000000e+0) ||  (optInMaximum > 3.000000e+37) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outReal )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    if( startIdx < 1 )
 /* Generated */       startIdx = 1;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
-/* Generated */       *outBegIdx = 0;
-/* Generated */       *outNbElement = 0;
-/* Generated */       return TA_SUCCESS;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }   
 /* Generated */    af = optInAcceleration;
 /* Generated */    if( af > optInMaximum )
 /* Generated */       af = optInAcceleration = optInMaximum;
-/* Generated */    retCode = TA_PREFIX(MINUS_DM)( startIdx, startIdx, inHigh, inLow,
-/* Generated */                                   1, &tempInt, &tempInt, ep_temp );
+/* Generated */    retCode = TA_PREFIX(MINUS_DM)( startIdx, startIdx, inHigh, inLow, 1,
+/* Generated */                                   VALUE_HANDLE_OUT(tempInt), VALUE_HANDLE_OUT(tempInt),
+/* Generated */ 								  ep_temp );
 /* Generated */    if( ep_temp[0] > 0 )
 /* Generated */       isLong = 0;
 /* Generated */    else
 /* Generated */       isLong = 1;
-/* Generated */    if( retCode != TA_SUCCESS )
+/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
 /* Generated */    {
-/* Generated */       *outBegIdx = 0;
-/* Generated */       *outNbElement = 0;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    *outBegIdx = startIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */    outIdx = 0;
 /* Generated */    todayIdx = startIdx;
 /* Generated */    newHigh = inHigh[todayIdx-1];
@@ -646,8 +639,8 @@
 /* Generated */          }
 /* Generated */       }
 /* Generated */    }
-/* Generated */    *outNbElement = outIdx;
-/* Generated */    return TA_SUCCESS;
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

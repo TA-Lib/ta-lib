@@ -54,9 +54,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -101,13 +100,13 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::OBV( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          double       inReal __gc [],
-/* Generated */                                          int          inVolume __gc [],
-/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          int           outInteger __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::OBV( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        cli::array<double>^ inReal,
+/* Generated */                                        cli::array<int>^ inVolume,
+/* Generated */                                        [OutAttribute]int^ outBegIdx,
+/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        cli::array<int>^  outInteger )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_OBV( int    startIdx,
 /* Generated */                    int    endIdx,
@@ -130,18 +129,18 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inVolume)
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outInteger == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outInteger )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -164,10 +163,10 @@
       prevReal = tempReal;
    }
 
-   *outBegIdx = startIdx;
-   *outNbElement = outIdx;
+   VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
+   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -180,13 +179,13 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::OBV( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          float        inReal __gc [],
-/* Generated */                                          int          inVolume __gc [],
-/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          int           outInteger __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::OBV( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        cli::array<float>^ inReal,
+/* Generated */                                        cli::array<int>^ inVolume,
+/* Generated */                                        [OutAttribute]int^ outBegIdx,
+/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        cli::array<int>^  outInteger )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_OBV( int    startIdx,
 /* Generated */                      int    endIdx,
@@ -202,14 +201,14 @@
 /* Generated */    double prevReal, tempReal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if(!inVolume)
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outInteger == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outInteger )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    prevOBV  = inVolume[startIdx];
 /* Generated */    prevReal = inReal[startIdx];
@@ -224,9 +223,9 @@
 /* Generated */       outInteger[outIdx++] = prevOBV;
 /* Generated */       prevReal = tempReal;
 /* Generated */    }
-/* Generated */    *outBegIdx = startIdx;
-/* Generated */    *outNbElement = outIdx;
-/* Generated */    return TA_SUCCESS;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

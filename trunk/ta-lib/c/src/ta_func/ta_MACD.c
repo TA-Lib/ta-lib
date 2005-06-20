@@ -55,9 +55,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -137,17 +136,17 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::MACD( int    startIdx,
-/* Generated */                                           int    endIdx,
-/* Generated */                                           double       inReal __gc [],
-/* Generated */                                           int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                                           int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                           int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                                           [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                           [OutAttribute]Int32 *outNbElement,
-/* Generated */                                           double        outMACD __gc [],
-/* Generated */                                           double        outMACDSignal __gc [],
-/* Generated */                                           double        outMACDHist __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::MACD( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         cli::array<double>^ inReal,
+/* Generated */                                         int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                         int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                         int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                         [OutAttribute]int^ outBegIdx,
+/* Generated */                                         [OutAttribute]int^ outNbElement,
+/* Generated */                                         cli::array<double>^  outMACD,
+/* Generated */                                         cli::array<double>^  outMACDSignal,
+/* Generated */                                         cli::array<double>^  outMACDHist )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MACD( int    startIdx,
 /* Generated */                     int    endIdx,
@@ -171,38 +170,38 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    /* min/max are checked for optInFastPeriod. */
 /* Generated */    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastPeriod = 12;
 /* Generated */    else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    /* min/max are checked for optInSlowPeriod. */
 /* Generated */    if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowPeriod = 26;
 /* Generated */    else if( ((int)optInSlowPeriod < 2) || ((int)optInSlowPeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    /* min/max are checked for optInSignalPeriod. */
 /* Generated */    if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInSignalPeriod = 9;
 /* Generated */    else if( ((int)optInSignalPeriod < 1) || ((int)optInSignalPeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outMACD == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outMACD )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outMACDSignal == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outMACDSignal )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outMACDHist == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outMACDHist )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -222,17 +221,17 @@
 }
 
 #if defined( _MANAGED )
-__value enum Core::TA_RetCode Core::TA_INT_MACD( int    startIdx,
+ enum class Core::TA_RetCode Core::TA_INT_MACD( int    startIdx,
                                                  int    endIdx,
-                                                 INPUT_TYPE inReal __gc [],
+												 cli::array<INPUT_TYPE>^ inReal,
                                                  int    optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
                                                  int    optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
                                                  int    optInSignalPeriod_2, /* From 1 to 200 */
-                                                 [OutAttribute]Int32 *outBegIdx,
-                                                 [OutAttribute]Int32 *outNbElement,
-                                                 double outMACD __gc [],
-                                                 double outMACDSignal __gc [],
-                                                 double outMACDHist __gc [] )
+                                                 [OutAttribute]int^ outBegIdx,
+                                                 [OutAttribute]int^ outNbElement,
+												 cli::array<double>^ outMACD,
+                                                 cli::array<double>^ outMACDSignal,
+                                                 cli::array<double>^ outMACDHist )
 #else
 TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
                                 int    endIdx,
@@ -240,8 +239,8 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
                                 int    optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
                                 int    optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
                                 int    optInSignalPeriod_2, /* From 1 to 200 */
-                                int   *outBegIdx,
-                                int   *outNbElement,
+                                int   VALUE_HANDLE_DEREF(outBegIdx),
+                                int   VALUE_HANDLE_DEREF(outNbElement),
                                 double       outMACD[],
                                 double       outMACDSignal[],
                                 double       outMACDHist[] )
@@ -251,8 +250,11 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    ARRAY_REF(fastEMABuffer);
    double k1, k2;
    TA_RetCode retCode;
-   int tempInteger, outBegIdx1, outNbElement1;
-   int outBegIdx2, outNbElement2;
+   int tempInteger;
+   VALUE_HANDLE(int,outBegIdx1);
+   VALUE_HANDLE(int,outNbElement1);
+   VALUE_HANDLE(int,outBegIdx2);
+   VALUE_HANDLE(int,outNbElement2);
    int lookbackTotal, lookbackSignal;
    int i;
 
@@ -323,9 +325,9 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      *outBegIdx = 0;
-      *outNbElement = 0;
-      return TA_SUCCESS;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      return NAMESPACE(TA_RetCode)TA_SUCCESS;
    }
 
    /* Allocate intermediate buffer for fast/slow EMA. */
@@ -333,18 +335,18 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    ARRAY_ALLOC( fastEMABuffer, tempInteger );
    if( !fastEMABuffer )
    {
-      *outBegIdx = 0;
-      *outNbElement = 0;
-      return TA_ALLOC_ERR;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
    }
 
    ARRAY_ALLOC( slowEMABuffer, tempInteger );
    if( !slowEMABuffer )
    {
-      *outBegIdx = 0;
-      *outNbElement = 0;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       ARRAY_FREE( fastEMABuffer );
-      return TA_ALLOC_ERR;
+      return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
    }
 
    /* Calculate the slow EMA. 
@@ -357,12 +359,12 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    tempInteger = startIdx-lookbackSignal;
    retCode = TA_PREFIX(INT_EMA)( tempInteger, endIdx,
                                  inReal, optInSlowPeriod, k1,
-                                 &outBegIdx1, &outNbElement1, slowEMABuffer );
+                                 VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1), slowEMABuffer );
 
-   if( retCode != TA_SUCCESS )
+   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
    {
-      *outBegIdx = 0;
-      *outNbElement = 0;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       ARRAY_FREE( fastEMABuffer );
       ARRAY_FREE( slowEMABuffer );
       return retCode;
@@ -371,32 +373,32 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    /* Calculate the fast EMA. */
    retCode = TA_PREFIX(INT_EMA)( tempInteger, endIdx,
                                  inReal, optInFastPeriod, k2,
-                                 &outBegIdx2, &outNbElement2, fastEMABuffer );
+                                 VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), fastEMABuffer );
 
-   if( retCode != TA_SUCCESS )
+   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
    {
-      *outBegIdx = 0;
-      *outNbElement = 0;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       ARRAY_FREE( fastEMABuffer );
       ARRAY_FREE( slowEMABuffer );
       return retCode;
    }
 
    /* Parano tests. Will be removed eventually. */
-   if( (outBegIdx1 != tempInteger) || 
-       (outBegIdx2 != tempInteger) || 
-       (outNbElement1 != outNbElement2) ||
-       (outNbElement1 != (endIdx-startIdx)+1+lookbackSignal) )
+   if( ((int)outBegIdx1 != tempInteger) || 
+       ((int)outBegIdx2 != tempInteger) || 
+       ((int)outNbElement1 != (int)outNbElement2) ||
+       ((int)outNbElement1 != (endIdx-startIdx)+1+lookbackSignal) )
    {
-      *outBegIdx = 0;
-      *outNbElement = 0;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       ARRAY_FREE( fastEMABuffer );
       ARRAY_FREE( slowEMABuffer );
       return TA_INTERNAL_ERROR(119);
    }
 
    /* Calculate (fast EMA) - (slow EMA). */
-   for( i=0; i < outNbElement1; i++ )
+   for( i=0; i < (int)outNbElement1; i++ )
       fastEMABuffer[i] = fastEMABuffer[i] - slowEMABuffer[i];
 
 
@@ -404,31 +406,31 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    ARRAY_MEMMOVE( outMACD, 0, fastEMABuffer, lookbackSignal, (endIdx-startIdx)+1 );
 
    /* Calculate the signal/trigger line. */
-   retCode = TA_INT_EMA( 0, outNbElement1-1,
+   retCode = TA_INT_EMA( 0, ((int)outNbElement1)-1,
                          fastEMABuffer, optInSignalPeriod_2, PER_TO_K(optInSignalPeriod_2), 
-                         &outBegIdx2, &outNbElement2, outMACDSignal );
+                         VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), outMACDSignal );
 
 
    ARRAY_FREE( fastEMABuffer );
    ARRAY_FREE( slowEMABuffer );
 
-   if( retCode != TA_SUCCESS )
+   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
    {
-      *outBegIdx = 0;
-      *outNbElement = 0;
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       return retCode;
    }
 
    /* Calculate the histogram. */
-   for( i=0; i < outNbElement2; i++ )
+   for( i=0; i < (int)outNbElement2; i++ )
       outMACDHist[i] = outMACD[i]-outMACDSignal[i];
 
 
    /* All done! Indicate the output limits and return success. */
-   *outBegIdx     = startIdx;
-   *outNbElement  = outNbElement2;
+   VALUE_HANDLE_DEREF(outBegIdx)     = startIdx;
+   VALUE_HANDLE_DEREF(outNbElement)  = (int)outNbElement2;
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 
@@ -442,17 +444,17 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::MACD( int    startIdx,
-/* Generated */                                           int    endIdx,
-/* Generated */                                           float        inReal __gc [],
-/* Generated */                                           int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                                           int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                           int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                                           [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                           [OutAttribute]Int32 *outNbElement,
-/* Generated */                                           double        outMACD __gc [],
-/* Generated */                                           double        outMACDSignal __gc [],
-/* Generated */                                           double        outMACDHist __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::MACD( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         cli::array<float>^ inReal,
+/* Generated */                                         int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                         int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                         int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                         [OutAttribute]int^ outBegIdx,
+/* Generated */                                         [OutAttribute]int^ outNbElement,
+/* Generated */                                         cli::array<double>^  outMACD,
+/* Generated */                                         cli::array<double>^  outMACDSignal,
+/* Generated */                                         cli::array<double>^  outMACDHist )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MACD( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -469,28 +471,28 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */ {
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastPeriod = 12;
 /* Generated */     else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowPeriod = 26;
 /* Generated */     else if( ((int)optInSlowPeriod < 2) || ((int)optInSlowPeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInSignalPeriod = 9;
 /* Generated */     else if( ((int)optInSignalPeriod < 1) || ((int)optInSignalPeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outMACD == NULL )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outMACDSignal == NULL )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outMACDHist == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outMACD )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outMACDSignal )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outMACDHist )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    return TA_PREFIX(INT_MACD)( startIdx, endIdx, inReal,
 /* Generated */                                optInFastPeriod,
@@ -503,17 +505,17 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                outMACDHist );
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::TA_INT_MACD( int    startIdx,
+/* Generated */  enum class Core::TA_RetCode Core::TA_INT_MACD( int    startIdx,
 /* Generated */                                                  int    endIdx,
-/* Generated */                                                  INPUT_TYPE inReal __gc [],
+/* Generated */ 												 cli::array<INPUT_TYPE>^ inReal,
 /* Generated */                                                  int    optInFastPeriod, 
 /* Generated */                                                  int    optInSlowPeriod, 
 /* Generated */                                                  int    optInSignalPeriod_2, 
-/* Generated */                                                  [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                                  [OutAttribute]Int32 *outNbElement,
-/* Generated */                                                  double outMACD __gc [],
-/* Generated */                                                  double outMACDSignal __gc [],
-/* Generated */                                                  double outMACDHist __gc [] )
+/* Generated */                                                  [OutAttribute]int^ outBegIdx,
+/* Generated */                                                  [OutAttribute]int^ outNbElement,
+/* Generated */ 												 cli::array<double>^ outMACD,
+/* Generated */                                                  cli::array<double>^ outMACDSignal,
+/* Generated */                                                  cli::array<double>^ outMACDHist )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                 int    endIdx,
@@ -521,8 +523,8 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                 int    optInFastPeriod, 
 /* Generated */                                 int    optInSlowPeriod, 
 /* Generated */                                 int    optInSignalPeriod_2, 
-/* Generated */                                 int   *outBegIdx,
-/* Generated */                                 int   *outNbElement,
+/* Generated */                                 int   VALUE_HANDLE_DEREF(outBegIdx),
+/* Generated */                                 int   VALUE_HANDLE_DEREF(outNbElement),
 /* Generated */                                 double       outMACD[],
 /* Generated */                                 double       outMACDSignal[],
 /* Generated */                                 double       outMACDHist[] )
@@ -532,8 +534,11 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */    ARRAY_REF(fastEMABuffer);
 /* Generated */    double k1, k2;
 /* Generated */    TA_RetCode retCode;
-/* Generated */    int tempInteger, outBegIdx1, outNbElement1;
-/* Generated */    int outBegIdx2, outNbElement2;
+/* Generated */    int tempInteger;
+/* Generated */    VALUE_HANDLE(int,outBegIdx1);
+/* Generated */    VALUE_HANDLE(int,outNbElement1);
+/* Generated */    VALUE_HANDLE(int,outBegIdx2);
+/* Generated */    VALUE_HANDLE(int,outNbElement2);
 /* Generated */    int lookbackTotal, lookbackSignal;
 /* Generated */    int i;
 /* Generated */    if( optInSlowPeriod < optInFastPeriod )
@@ -563,79 +568,79 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
-/* Generated */       *outBegIdx = 0;
-/* Generated */       *outNbElement = 0;
-/* Generated */       return TA_SUCCESS;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }
 /* Generated */    tempInteger = (endIdx-startIdx)+1+lookbackSignal;
 /* Generated */    ARRAY_ALLOC( fastEMABuffer, tempInteger );
 /* Generated */    if( !fastEMABuffer )
 /* Generated */    {
-/* Generated */       *outBegIdx = 0;
-/* Generated */       *outNbElement = 0;
-/* Generated */       return TA_ALLOC_ERR;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
 /* Generated */    }
 /* Generated */    ARRAY_ALLOC( slowEMABuffer, tempInteger );
 /* Generated */    if( !slowEMABuffer )
 /* Generated */    {
-/* Generated */       *outBegIdx = 0;
-/* Generated */       *outNbElement = 0;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       ARRAY_FREE( fastEMABuffer );
-/* Generated */       return TA_ALLOC_ERR;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
 /* Generated */    }
 /* Generated */    tempInteger = startIdx-lookbackSignal;
 /* Generated */    retCode = TA_PREFIX(INT_EMA)( tempInteger, endIdx,
 /* Generated */                                  inReal, optInSlowPeriod, k1,
-/* Generated */                                  &outBegIdx1, &outNbElement1, slowEMABuffer );
-/* Generated */    if( retCode != TA_SUCCESS )
+/* Generated */                                  VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1), slowEMABuffer );
+/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
 /* Generated */    {
-/* Generated */       *outBegIdx = 0;
-/* Generated */       *outNbElement = 0;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       ARRAY_FREE( fastEMABuffer );
 /* Generated */       ARRAY_FREE( slowEMABuffer );
 /* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    retCode = TA_PREFIX(INT_EMA)( tempInteger, endIdx,
 /* Generated */                                  inReal, optInFastPeriod, k2,
-/* Generated */                                  &outBegIdx2, &outNbElement2, fastEMABuffer );
-/* Generated */    if( retCode != TA_SUCCESS )
+/* Generated */                                  VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), fastEMABuffer );
+/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
 /* Generated */    {
-/* Generated */       *outBegIdx = 0;
-/* Generated */       *outNbElement = 0;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       ARRAY_FREE( fastEMABuffer );
 /* Generated */       ARRAY_FREE( slowEMABuffer );
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    if( (outBegIdx1 != tempInteger) || 
-/* Generated */        (outBegIdx2 != tempInteger) || 
-/* Generated */        (outNbElement1 != outNbElement2) ||
-/* Generated */        (outNbElement1 != (endIdx-startIdx)+1+lookbackSignal) )
+/* Generated */    if( ((int)outBegIdx1 != tempInteger) || 
+/* Generated */        ((int)outBegIdx2 != tempInteger) || 
+/* Generated */        ((int)outNbElement1 != (int)outNbElement2) ||
+/* Generated */        ((int)outNbElement1 != (endIdx-startIdx)+1+lookbackSignal) )
 /* Generated */    {
-/* Generated */       *outBegIdx = 0;
-/* Generated */       *outNbElement = 0;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       ARRAY_FREE( fastEMABuffer );
 /* Generated */       ARRAY_FREE( slowEMABuffer );
 /* Generated */       return TA_INTERNAL_ERROR(119);
 /* Generated */    }
-/* Generated */    for( i=0; i < outNbElement1; i++ )
+/* Generated */    for( i=0; i < (int)outNbElement1; i++ )
 /* Generated */       fastEMABuffer[i] = fastEMABuffer[i] - slowEMABuffer[i];
 /* Generated */    ARRAY_MEMMOVE( outMACD, 0, fastEMABuffer, lookbackSignal, (endIdx-startIdx)+1 );
-/* Generated */    retCode = TA_INT_EMA( 0, outNbElement1-1,
+/* Generated */    retCode = TA_INT_EMA( 0, ((int)outNbElement1)-1,
 /* Generated */                          fastEMABuffer, optInSignalPeriod_2, PER_TO_K(optInSignalPeriod_2), 
-/* Generated */                          &outBegIdx2, &outNbElement2, outMACDSignal );
+/* Generated */                          VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), outMACDSignal );
 /* Generated */    ARRAY_FREE( fastEMABuffer );
 /* Generated */    ARRAY_FREE( slowEMABuffer );
-/* Generated */    if( retCode != TA_SUCCESS )
+/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
 /* Generated */    {
-/* Generated */       *outBegIdx = 0;
-/* Generated */       *outNbElement = 0;
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    for( i=0; i < outNbElement2; i++ )
+/* Generated */    for( i=0; i < (int)outNbElement2; i++ )
 /* Generated */       outMACDHist[i] = outMACD[i]-outMACDSignal[i];
-/* Generated */    *outBegIdx     = startIdx;
-/* Generated */    *outNbElement  = outNbElement2;
-/* Generated */    return TA_SUCCESS;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)     = startIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement)  = (int)outNbElement2;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

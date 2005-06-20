@@ -54,9 +54,8 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */    #using <mscorlib.dll>
-/* Generated */    #include "Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
+/* Generated */    #include "TA-Lib-Core.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
 /* Generated */ #else
 /* Generated */    #include <string.h>
@@ -88,8 +87,8 @@
    /* insert lookback code here. */
    int retValue;
 
-   retValue = optInTimePeriod + TA_Globals->unstablePeriod[TA_FUNC_UNST_RSI];
-   if( TA_Globals->compatibility == TA_COMPATIBILITY_METASTOCK )
+   retValue = optInTimePeriod + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_RSI];
+   if( TA_Globals->compatibility == NAMESPACE(TA_Compatibility)TA_COMPATIBILITY_METASTOCK )
       retValue--;
 
    return retValue;
@@ -111,13 +110,13 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::RSI( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          double       inReal __gc [],
-/* Generated */                                          int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::RSI( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        cli::array<double>^ inReal,
+/* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                        [OutAttribute]int^ outBegIdx,
+/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_RSI( int    startIdx,
 /* Generated */                    int    endIdx,
@@ -142,20 +141,20 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
-/* Generated */    if( !inReal ) return TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
 /* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    if( outReal == NULL )
-/* Generated */       return TA_BAD_PARAM;
+/* Generated */    if( !outReal )
+/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
@@ -173,8 +172,8 @@
     * previous one (no gain or loss).
     */
 
-   *outBegIdx    = 0;
-   *outNbElement = 0;
+   VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+   VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
    
    /* Adjust startIdx to account for the lookback period. */
    lookbackTotal = TA_RSI_Lookback( optInTimePeriod );
@@ -184,7 +183,7 @@
 
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
-      return TA_SUCCESS;
+      return NAMESPACE(TA_RetCode)TA_SUCCESS;
 
    outIdx = 0; /* Index into the output. */
 
@@ -194,11 +193,11 @@
     */
    if( optInTimePeriod == 1 )
    {
-      *outBegIdx = startIdx;
+      VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
       i = (endIdx-startIdx)+1;
-      *outNbElement = i;
+      VALUE_HANDLE_DEREF(outNbElement) = i;
       ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, i );
-      return TA_SUCCESS;
+      return NAMESPACE(TA_RetCode)TA_SUCCESS;
    }
 
    /* Accumulate Wilder's "Average Gain" and "Average Loss" 
@@ -207,7 +206,7 @@
    today = startIdx-lookbackTotal;
    prevValue = inReal[today];
 
-   unstablePeriod = TA_Globals->unstablePeriod[TA_FUNC_UNST_RSI];
+   unstablePeriod = TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_RSI];
 
    /* If there is no unstable period,
     * calculate the 'additional' initial
@@ -218,7 +217,7 @@
     * first value will be surely skip.
     */
    if( (unstablePeriod == 0) && 
-       (TA_Globals->compatibility == TA_COMPATIBILITY_METASTOCK))
+       (TA_Globals->compatibility == NAMESPACE(TA_Compatibility)TA_COMPATIBILITY_METASTOCK))
    {
       /* Preserve prevValue because it may get 
        * overwritten by the output.
@@ -259,9 +258,9 @@
       /* Are we done? */
       if( today > endIdx )
       {
-         *outBegIdx    = startIdx;
-         *outNbElement = outIdx;
-         return TA_SUCCESS;
+         VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+         VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+         return NAMESPACE(TA_RetCode)TA_SUCCESS;
       }
 
       /* Start over for the next price bar. */
@@ -363,10 +362,10 @@
          outReal[outIdx++] = 0.0;
    }
 
-   *outBegIdx = startIdx;
-   *outNbElement = outIdx;
+   VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
+   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 
@@ -380,13 +379,13 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ __value enum Core::TA_RetCode Core::RSI( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          float        inReal __gc [],
-/* Generated */                                          int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                          [OutAttribute]Int32 *outBegIdx,
-/* Generated */                                          [OutAttribute]Int32 *outNbElement,
-/* Generated */                                          double        outReal __gc [] )
+/* Generated */ enum class Core::TA_RetCode Core::RSI( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        cli::array<float>^ inReal,
+/* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                        [OutAttribute]int^ outBegIdx,
+/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_RSI( int    startIdx,
 /* Generated */                      int    endIdx,
@@ -403,38 +402,38 @@
 /* Generated */    double tempValue1, tempValue2;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return TA_OUT_OF_RANGE_END_INDEX;
-/* Generated */     if( !inReal ) return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
 /* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */        return TA_BAD_PARAM;
-/* Generated */     if( outReal == NULL )
-/* Generated */        return TA_BAD_PARAM;
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !outReal )
+/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    *outBegIdx    = 0;
-/* Generated */    *outNbElement = 0;
+/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */    lookbackTotal = TA_RSI_Lookback( optInTimePeriod );
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
-/* Generated */       return TA_SUCCESS;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    outIdx = 0; 
 /* Generated */    if( optInTimePeriod == 1 )
 /* Generated */    {
-/* Generated */       *outBegIdx = startIdx;
+/* Generated */       VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */       i = (endIdx-startIdx)+1;
-/* Generated */       *outNbElement = i;
+/* Generated */       VALUE_HANDLE_DEREF(outNbElement) = i;
 /* Generated */       ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, i );
-/* Generated */       return TA_SUCCESS;
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }
 /* Generated */    today = startIdx-lookbackTotal;
 /* Generated */    prevValue = inReal[today];
-/* Generated */    unstablePeriod = TA_Globals->unstablePeriod[TA_FUNC_UNST_RSI];
+/* Generated */    unstablePeriod = TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_RSI];
 /* Generated */    if( (unstablePeriod == 0) && 
-/* Generated */        (TA_Globals->compatibility == TA_COMPATIBILITY_METASTOCK))
+/* Generated */        (TA_Globals->compatibility == NAMESPACE(TA_Compatibility)TA_COMPATIBILITY_METASTOCK))
 /* Generated */    {
 /* Generated */       savePrevValue = prevValue;
 /* Generated */       prevGain = 0.0;
@@ -458,9 +457,9 @@
 /* Generated */          outReal[outIdx++] = 0.0;
 /* Generated */       if( today > endIdx )
 /* Generated */       {
-/* Generated */          *outBegIdx    = startIdx;
-/* Generated */          *outNbElement = outIdx;
-/* Generated */          return TA_SUCCESS;
+/* Generated */          VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+/* Generated */          VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */          return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */       }
 /* Generated */       today -= optInTimePeriod;
 /* Generated */       prevValue = savePrevValue;
@@ -525,9 +524,9 @@
 /* Generated */       else
 /* Generated */          outReal[outIdx++] = 0.0;
 /* Generated */    }
-/* Generated */    *outBegIdx = startIdx;
-/* Generated */    *outNbElement = outIdx;
-/* Generated */    return TA_SUCCESS;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
