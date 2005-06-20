@@ -55,7 +55,7 @@
  *  082004 AC    Add generation of candlestick functions declaration
  *  010405 RM    Change createProjTemplate to work with VS03 and VS05
  *  031805 MF    Add generation of MSVC project file.
- *
+ *  061805 MF    Changes related to .NET verifiable code.
  */
 
 /* Description:
@@ -321,8 +321,8 @@ int main(int argc, char* argv[])
          printf( "     5) ta-lib/c/src/ta_abstract/ta_group_idx.c\n");     
          printf( "     6) ta-lib/c/src/ta_abstract/frames/*.*\n");
          printf( "     7) ta-lib/c/src/ta_abstract/excel_glue.c\n" );
-         printf( "     8) ta-lib/dotnet/src/TA-Lib-Core/TA-Lib-Core.vcproj\n" );
-         printf( "     9) ta-lib/dotnet/src/TA-Lib-Core/TA-Lib-Core.h\n" );
+         printf( "     8) ta-lib/dotnet/src/Core/TA-Lib-Core.vcproj\n" );
+         printf( "     9) ta-lib/dotnet/src/Core/TA-Lib-Core.h\n" );
          printf( "    10) ta-lib/swig/src/interface/ta_func.swg\n" );
          printf( "    11) ta-lib/c/ide/msvc/lib_proj/ta_func/ta_func.dsp\n" );
          printf( "\n" );
@@ -595,7 +595,7 @@ static int genCode(int argc, char* argv[])
 
    #ifdef _MSC_VER
       /* Create .NET project files template */
-      #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\TA-Lib-Core\\TA-Lib-Core.vcproj"
+      #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.vcproj"
       #define FILE_NET_PROJ_TMP "..\\temp\\dotnetproj.tmp"
       gOutProjFile = fileOpen( FILE_NET_PROJ, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
       if( gOutProjFile == NULL )   
@@ -642,7 +642,7 @@ static int genCode(int argc, char* argv[])
    #endif
 
    /* Create the .NET interface file template */
-   #define FILE_NET_HEADER     "..\\..\\dotnet\\src\\TA-Lib-Core\\TA-Lib-Core.h"
+   #define FILE_NET_HEADER     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.h"
    #define FILE_NET_HEADER_TMP "..\\temp\\dotneth.tmp"
    gOutDotNet_H = fileOpen( FILE_NET_HEADER, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
    if( gOutDotNet_H == NULL )   
