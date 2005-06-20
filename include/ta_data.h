@@ -119,13 +119,23 @@ typedef enum
  * ======================
  *    Return data that is not dividend adjusted.
  *
+ * TA_SOURCE_USES_END_OF_PERIOD
+ * ============================
+ *    The datasource uses the convention that quotes periods are timestamed
+ *    at the end of the period (by default, datasources set the timestamp
+ *    at the beginning of the period). By using this option, a quotes record
+ *    stamped by a 'timestamp' is interpreted as covering interval
+ *    ['timestamp'-'period','timestamp).  Without this option, it would be
+ *    interpreted as covering interval ['timestamp','timestamp'+'period').
+ *
  */
 
 typedef int TA_SourceFlag;
 #define TA_NO_FLAGS  0
-#define TA_REPLACE_ZERO_PRICE_BAR (1<<0)
-#define TA_DO_NOT_SPLIT_ADJUST    (1<<1)
-#define TA_DO_NOT_VALUE_ADJUST    (1<<2)
+#define TA_REPLACE_ZERO_PRICE_BAR       (1<<0)
+#define TA_DO_NOT_SPLIT_ADJUST          (1<<1)
+#define TA_DO_NOT_VALUE_ADJUST          (1<<2)
+#define TA_SOURCE_USES_END_OF_PERIOD    (1<<4)
 
 typedef struct
 {
@@ -425,12 +435,19 @@ typedef struct
  *    these price validations and the caller is left on its own to detect 
  *    erroneous data.
  *
+ * TA_USES_END_OF_PERIOD
+ * =====================
+ *    Retrieve the history data using the end-of-period logic, i.e. set the
+ *    timestamps to the end of the period the records are covering rather than 
+ *    the beginning of the period.
+ *
  */
 typedef int TA_HistoryFlag;
 #define TA_ALLOW_INCOMPLETE_PRICE_BARS (1<<0)
 #define TA_USE_TOTAL_VOLUME            (1<<1)
 #define TA_USE_TOTAL_OPENINTEREST      (1<<2)
 #define TA_DISABLE_PRICE_VALIDATION    (1<<3)
+#define TA_USE_END_OF_PERIOD           (1<<4)
 
 typedef struct
 {

@@ -100,6 +100,7 @@ typedef struct
 } WeekDayCheck;
 
 /**** Local functions declarations.    ****/
+static ErrorNumber validate_end_of_period_series( TA_History *historyBop, TA_History *historyEop, TA_Period period );
 static ErrorNumber testTimestampDelta( void );
 
 /**** Local variables definitions.     ****/
@@ -374,6 +375,315 @@ ErrorNumber test_period( TA_UDBase *unifiedDatabase )
 
    return 0; /* Succcess. */
 }
+
+
+ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
+{
+   TA_RetCode  retCode;
+   ErrorNumber retValue;
+   TA_AddDataSourceParam  sourceParam;
+   TA_HistoryAllocParam  histParam;
+   TA_History  *historyBop, *historyEop;
+   TA_UDBase  *localDatabase;
+
+   /* The main database uses the beginning-of-period logic.
+    * As by now, mixing of begin- and end-of-period logic
+    * is not supported.
+    */
+   memset( &sourceParam, 0, sizeof( TA_AddDataSourceParam ) );
+   sourceParam.id = TA_SIMULATOR;
+   sourceParam.flags = TA_SOURCE_USES_END_OF_PERIOD;
+   retCode = TA_AddDataSource( mainDatabase, &sourceParam );
+
+   if( retCode != TA_NOT_SUPPORTED )
+   {
+      printf( "TA_AddDataSource (end->begin) failed [%d]\n", retCode );
+      return TA_PERIOD_END_OF_PERIOD_ADD_FAILED;
+   }
+
+   /* Create own unified database. */
+   retCode = TA_UDBaseAlloc( &localDatabase );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "TA_UDBaseAlloc failed [%d]\n", retCode );
+      return TA_TESTUTIL_UDBASE_ALLOC_FAILED;
+   }
+
+   /* Adding end-of-period source to an empty database 
+    * should always succeed.
+    */
+   retCode = TA_AddDataSource( localDatabase, &sourceParam );
+
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "TA_AddDataSource (end->empty) failed [%d]\n", retCode );
+
+      retCode = TA_UDBaseFree( localDatabase );
+      if( retCode != TA_SUCCESS )
+      {
+          printf( "TA_UDBaseFree failed [%d]\n", retCode );
+      }
+
+      return TA_PERIOD_END_OF_PERIOD_ADD_FAILED;
+   }
+
+   /* However, adding begin-of-period should fail */
+   sourceParam.flags &= !TA_SOURCE_USES_END_OF_PERIOD;
+   retCode = TA_AddDataSource( localDatabase, &sourceParam );
+
+   if( retCode != TA_NOT_SUPPORTED )
+   {
+      printf( "TA_AddDataSource (begin->end) failed [%d]\n", retCode );
+
+      retCode = TA_UDBaseFree( localDatabase );
+      if( retCode != TA_SUCCESS )
+      {
+          printf( "TA_UDBaseFree failed [%d]\n", retCode );
+      }
+
+      return TA_PERIOD_END_OF_PERIOD_ADD_FAILED;
+   }
+
+
+   /* Check whether history flags are treated consistently */
+   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
+   histParam.category = "TA_SIM_REF";
+   histParam.symbol   = "INTRA_REF_0";
+   histParam.period   = TA_10MINS;  /* no consolidation */
+   histParam.field    = TA_ALL;
+   
+   /* For now, no end->begin or begin->end conversion are supported */
+   histParam.flags    = TA_USE_END_OF_PERIOD;
+   retCode = TA_HistoryAlloc( mainDatabase, &histParam, &historyBop );
+
+   if( retCode != TA_NOT_SUPPORTED )
+   {
+      printf( "TA_HistoryAlloc (begin->end) failed [%d]\n", retCode );
+
+      if( retCode == TA_SUCCESS )
+      {
+          TA_HistoryFree( historyBop );
+      }
+
+      retCode = TA_UDBaseFree( localDatabase );
+      if( retCode != TA_SUCCESS )
+      {
+          printf( "TA_UDBaseFree failed [%d]\n", retCode );
+      }
+
+      return TA_PERIOD_END_OF_PERIOD_HISTORY_FAILED;
+   }
+
+   /* But allocating regular history should succeed */
+   histParam.flags   &= !TA_USE_END_OF_PERIOD;
+   retCode = TA_HistoryAlloc( mainDatabase, &histParam, &historyBop );
+
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "TA_HistoryAlloc (begin->begin) failed [%d]\n", retCode );
+
+      retCode = TA_UDBaseFree( localDatabase );
+      if( retCode != TA_SUCCESS )
+      {
+          printf( "TA_UDBaseFree failed [%d]\n", retCode );
+      }
+
+      return TA_PERIOD_END_OF_PERIOD_HISTORY_FAILED;
+   }
+
+   /* Now try to get begin-of-period from end-of-period database */
+   retCode = TA_HistoryAlloc( localDatabase, &histParam, &historyEop );
+
+   if( retCode != TA_NOT_SUPPORTED )
+   {
+      printf( "TA_HistoryAlloc (end->begin) failed [%d]\n", retCode );
+
+      TA_HistoryFree( historyBop );
+      if( retCode == TA_SUCCESS )
+      {
+          TA_HistoryFree( historyEop );
+      }
+
+      retCode = TA_UDBaseFree( localDatabase );
+      if( retCode != TA_SUCCESS )
+      {
+          printf( "TA_UDBaseFree failed [%d]\n", retCode );
+      }
+
+      return TA_PERIOD_END_OF_PERIOD_HISTORY_FAILED;
+   }
+
+   /* Well, the end logic has to work, though */
+   histParam.flags    = TA_USE_END_OF_PERIOD;
+   retCode = TA_HistoryAlloc( localDatabase, &histParam, &historyEop );
+
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "TA_HistoryAlloc (end->end) failed [%d]\n", retCode );
+      TA_HistoryFree( historyBop );
+
+      retCode = TA_UDBaseFree( localDatabase );
+      if( retCode != TA_SUCCESS )
+      {
+          printf( "TA_UDBaseFree failed [%d]\n", retCode );
+      }
+
+      return TA_PERIOD_END_OF_PERIOD_HISTORY_FAILED;
+   }
+
+   /* Test whether the EOP history is indeed end-of-period stamped */
+   retValue = validate_end_of_period_series( historyBop, historyEop, TA_10MINS );
+
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "End-of-period stamped quotes are invalid\n" );
+      TA_HistoryFree( historyBop );
+      TA_HistoryFree( historyEop );
+
+      retCode = TA_UDBaseFree( localDatabase );
+      if( retCode != TA_SUCCESS )
+      {
+          printf( "TA_UDBaseFree failed [%d]\n", retCode );
+      }
+
+      return retValue;
+   }
+
+   TA_HistoryFree( historyBop );
+   TA_HistoryFree( historyEop );
+
+   /* Try retrieving some consolidated data */
+   histParam.period   = TA_30MINS;
+   histParam.flags   &= !TA_USE_END_OF_PERIOD;
+   retCode = TA_HistoryAlloc( mainDatabase, &histParam, &historyBop );
+
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "TA_HistoryAlloc (begin consolidated) failed [%d]\n", retCode );
+
+      retCode = TA_UDBaseFree( localDatabase );
+      if( retCode != TA_SUCCESS )
+      {
+          printf( "TA_UDBaseFree failed [%d]\n", retCode );
+      }
+
+      return TA_PERIOD_END_OF_PERIOD_CONSOLIDATED_FAILED;
+   }
+
+   histParam.flags    = TA_USE_END_OF_PERIOD;
+   retCode = TA_HistoryAlloc( localDatabase, &histParam, &historyEop );
+
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "TA_HistoryAlloc (end consolidated) failed [%d]\n", retCode );
+      TA_HistoryFree( historyBop );
+
+      retCode = TA_UDBaseFree( localDatabase );
+      if( retCode != TA_SUCCESS )
+      {
+          printf( "TA_UDBaseFree failed [%d]\n", retCode );
+      }
+
+      return TA_PERIOD_END_OF_PERIOD_CONSOLIDATED_FAILED;
+   }
+
+   /* Test whether the consolidated EOP history is correct */
+   retValue = validate_end_of_period_series( historyBop, historyEop, TA_30MINS );
+
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "End-of-period stamped consolidated quotes are invalid\n" );
+      TA_HistoryFree( historyBop );
+      TA_HistoryFree( historyEop );
+
+      retCode = TA_UDBaseFree( localDatabase );
+      if( retCode != TA_SUCCESS )
+      {
+          printf( "TA_UDBaseFree failed [%d]\n", retCode );
+      }
+
+      return retValue;
+   }
+
+   TA_HistoryFree( historyBop );
+   TA_HistoryFree( historyEop );
+
+   retCode = TA_UDBaseFree( localDatabase );
+   if( retCode != TA_SUCCESS )
+   {
+       printf( "TA_UDBaseFree failed [%d]\n", retCode );
+   }
+
+   return TA_TEST_PASS; /* Succcess. */
+}
+
+
+
+static ErrorNumber validate_end_of_period_series( TA_History *historyBop, TA_History *historyEop, TA_Period period )
+{
+   TA_RetCode retCode;
+   TA_Timestamp ts;
+   unsigned int i;
+
+   if( historyBop->nbBars != historyEop->nbBars )
+   {
+       printf( "History series not equal length\n");
+       return TA_PERIOD_END_OF_PERIOD_WRONG_HISTORY;
+   }
+
+   for ( i = 0;  i < historyBop->nbBars && i < historyEop->nbBars;  i++)
+   {
+       retCode = TA_TimestampValidate( &historyBop->timestamp[i] );
+       if( retCode != TA_SUCCESS )
+       {
+           printf( "History BOP timestamp invalid [%d]\n", retCode );
+           return TA_PERIOD_END_OF_PERIOD_WRONG_HISTORY;
+       }
+
+       retCode = TA_TimestampValidate( &historyEop->timestamp[i] );
+       if( retCode != TA_SUCCESS )
+       {
+           printf( "History EOP timestamp invalid [%d]\n", retCode );
+           return TA_PERIOD_END_OF_PERIOD_WRONG_HISTORY;
+       }
+
+       /* the timestamps of both series should be shifted by period */
+       TA_AddTimeToTimestamp( &ts, &historyBop->timestamp[i], period );
+       if( ! TA_TimestampEqual( &ts, &historyEop->timestamp[i] ) )
+       {
+           printf( "End-of-period history timestamp incorrect [%d]\n", retCode );
+           return TA_PERIOD_END_OF_PERIOD_WRONG_HISTORY;
+       }
+
+       /* check whether quotes match */
+#define CHECK_HISTORY_FIELD(field)                                        \
+       if( historyBop->field && historyEop->field )                         \
+       {                                                                  \
+           if( historyBop->field[i] != historyEop->field[i] )             \
+           {                                                              \
+               printf( "History series inconsistent, field: %s, record: %d\n", #field, i ); \
+               return TA_PERIOD_END_OF_PERIOD_WRONG_HISTORY;              \
+           }                                                              \
+       } else if( historyBop->field != historyEop->field )                \
+       {                                                                  \
+           printf( "History series inconsistent, field: %s\n", #field ); \
+           return TA_PERIOD_END_OF_PERIOD_WRONG_HISTORY;                  \
+       }
+
+       CHECK_HISTORY_FIELD(open)
+       CHECK_HISTORY_FIELD(high)
+       CHECK_HISTORY_FIELD(low)
+       CHECK_HISTORY_FIELD(close)
+       CHECK_HISTORY_FIELD(volume)
+       CHECK_HISTORY_FIELD(openInterest)
+
+#undef CHECK_HISTORY_FIELD
+
+   }
+
+   return TA_TEST_PASS;
+}
+
 
 /* Period transformation is highly dependable on
  * the function evaluating the 'delta' between

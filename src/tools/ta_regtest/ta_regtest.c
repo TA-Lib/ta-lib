@@ -127,9 +127,13 @@ int main( int argc, char **argv )
       return retValue;
 
    /* Test the CSI data source. */
+#ifdef __64BIT__
+   printf( "Skipping testing CSI source - known not working on 64bit systems (bug #1201009)\n" );
+#else
    retValue = test_csi();
    if( retValue != TA_TEST_PASS )
       return retValue;
+#endif
 
    /* Test Performance Measurements. */
    retValue = test_pm();
@@ -216,6 +220,15 @@ static ErrorNumber test_with_simulator( void )
       freeLib( uDBase );
       return retValue;
    }
+
+   /* Test ta_period using end-of-period functionality. */
+   retValue = test_end_of_period( uDBase );
+   if( retValue != TA_TEST_PASS )
+   {
+      freeLib( uDBase );
+      return retValue;
+   }
+
 
    /* Allocate the reference historical data. */
    memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );

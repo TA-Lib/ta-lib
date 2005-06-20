@@ -43,6 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  110199 MF   First version.
+ *  062105 PK   Simulator can produce end-of-period timestamped data.
  *
  */
 
@@ -113,6 +114,7 @@ typedef struct
    unsigned int mrgAllocated; /* boolean */
    unsigned int mrgInstance;  /* 1,2,3,4 */
    TA_History   mrgHistory;
+   TA_SourceFlag flags;
 
 } TA_PrivateHandle;
 
@@ -240,6 +242,8 @@ TA_RetCode TA_SIMULATOR_OpenSource( const TA_AddDataSourceParamPriv *param,
       freePrivateHandle( privData );
       TA_TRACE_RETURN( TA_ALLOC_ERR );
    }
+
+   privData->flags = param->flags;
 
    /* Everything is fine, return the handle to the caller. */
    *handle = tmpHandle;
@@ -470,7 +474,7 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_DataSourceHandle *handle,
    case 0: /* This is TA_SIM_REF */
       switch( (unsigned long)symbolHandle->opaqueData )
       {
-      case 0:
+      case 0: /* DAILY_REF_0 */
           timestamp = (TA_Timestamp *)NULL;
           open = high = low = close = (TA_Real *)NULL;
           volume = (TA_Integer *)NULL;
@@ -510,6 +514,12 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_DataSourceHandle *handle,
          for( i=0; i < TA_REF_DAILY_NB_BARS; i++ )
             TA_TimestampCopy( &timestamp[i], &TA_SREF_timestamp_daily_ref_0_PRIV[i] );
 
+         if( privateHandle->flags & TA_SOURCE_USES_END_OF_PERIOD )
+         {
+             for( i=0; i < TA_REF_DAILY_NB_BARS; i++ )
+                 TA_NextWeekday( &timestamp[i] );
+         }
+
           retCode = TA_HistoryAddData( paramForAddData,
                                        TA_REF_DAILY_NB_BARS, TA_DAILY,                                      
                                        timestamp,
@@ -518,7 +528,7 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_DataSourceHandle *handle,
                                        volume, NULL );                                      
           break;
 
-      case 1:
+      case 1: /* INTRA_REF_0 */
           /* Allocate the rest. */
           timestamp = (TA_Timestamp *)NULL;
           open = high = low = close = (TA_Real *)NULL;
@@ -536,14 +546,14 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_DataSourceHandle *handle,
                   } \
                   memcpy( varName, TA_SREF_##varName##_daily_ref_0_PRIV, sizeof( varType )*varSize ); }
 
-         TA_ALLOC_COPY( open,      TA_Real,      33 );
-         TA_ALLOC_COPY( high,      TA_Real,      33 );
-         TA_ALLOC_COPY( low,       TA_Real,      33 );
-         TA_ALLOC_COPY( close,     TA_Real,      33 );
+         TA_ALLOC_COPY( open,      TA_Real,      TA_REF_INTRA_NB_BARS );
+         TA_ALLOC_COPY( high,      TA_Real,      TA_REF_INTRA_NB_BARS );
+         TA_ALLOC_COPY( low,       TA_Real,      TA_REF_INTRA_NB_BARS );
+         TA_ALLOC_COPY( close,     TA_Real,      TA_REF_INTRA_NB_BARS );
          #undef TA_ALLOC_COPY
 
          /* Set the timestamp. */
-         timestamp = (TA_Timestamp *)TA_Malloc( sizeof( TA_Timestamp ) * 33 );
+         timestamp = (TA_Timestamp *)TA_Malloc( sizeof( TA_Timestamp ) * TA_REF_INTRA_NB_BARS );
          if( !timestamp )
          {
             FREE_IF_NOT_NULL( open  );
@@ -554,10 +564,15 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_DataSourceHandle *handle,
          }
 
          for( i=0; i < TA_REF_INTRA_NB_BARS; i++ )
-            TA_TimestampCopy( &timestamp[i], &TA_SREF_timestamp_intra_ref_0_PRIV[i] );
+         {
+            if( privateHandle->flags & TA_SOURCE_USES_END_OF_PERIOD )
+               TA_AddTimeToTimestamp( &timestamp[i], &TA_SREF_timestamp_intra_ref_0_PRIV[i], TA_10MINS );
+            else
+               TA_TimestampCopy( &timestamp[i], &TA_SREF_timestamp_intra_ref_0_PRIV[i] );
+         }
 
          retCode = TA_HistoryAddData( paramForAddData,
-                                      TA_REF_INTRA_NB_BARS, TA_1MIN*10,
+                                      TA_REF_INTRA_NB_BARS, TA_10MINS,
                                       timestamp,
                                       open, high,                                      
                                       low, close,                                      
