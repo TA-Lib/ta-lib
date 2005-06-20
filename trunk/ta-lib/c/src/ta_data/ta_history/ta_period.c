@@ -49,6 +49,8 @@
  *              Now allow to transform in pre-allocated buffer.
  *  103104 MF   Add support for TA_ALLOW_INCOMPLETE_PRICE_BARS
  *  111804 MF   Add support for TA_USE_TOTAL_VOLUME/OPENINTEREST
+ *  062105 PK   Added (partial) support for end-of-period
+ *              timestamp logic.
  */
 
 /* Description:
@@ -131,6 +133,7 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
    int transformToDailyAndMore;         /* Boolean */
    int transformToIntraday;             /* Boolean */
    int mustSkipFirstIncompletePriceBar; /* Boolean */
+   int useEndOfPeriodLogic;             /* Boolean */
 
    TA_DayOfWeek dayOfTheWeek;
 
@@ -273,6 +276,14 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
    default:      
       TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );
    }
+
+   useEndOfPeriodLogic = ((flags & TA_USE_END_OF_PERIOD) != 0);
+   if( useEndOfPeriodLogic && transformToDailyAndMore )
+   {
+       /* not implemented yet */
+       TA_TRACE_RETURN( TA_NOT_SUPPORTED );
+   }
+ 
 
    old_timestamp    = &history->timestamp   [0];
    old_open         = &history->open        [0];
@@ -742,7 +753,10 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
          }
 
          /* Check if the new bar is already completed --AK-- */
-         if( newDay || !TA_TimestampLess(&old_timestamp[oldPriceBar],&next_DEST_ts) ){
+         if( newDay || 
+             TA_TimestampGreater(&old_timestamp[oldPriceBar],&next_DEST_ts) ||
+             (!useEndOfPeriodLogic && TA_TimestampEqual(&old_timestamp[oldPriceBar],&next_DEST_ts)) )
+         {
              periodCompleted = 1;
          }
 
@@ -755,6 +769,15 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
                for the new bar.  --AK--                                  */
             TA_TimestampAlign(&tmp_ts, &old_timestamp[oldPriceBar], newPeriod);
 
+            /* Find the timestamp of the next new bar --AK-- */
+            TA_AddTimeToTimestamp(&next_DEST_ts, &tmp_ts, newPeriod);
+
+            /* TA_TimestampAlign aligns towards beginning of period.
+               This has to be adjusted when the end of period logic is used. --PK-- */
+            if( useEndOfPeriodLogic ){
+               TA_TimestampCopy(&tmp_ts, &next_DEST_ts);
+            }
+
             /* Create a new bar --AK-- */
             SET_DEST_FROM_OLD_IF_NOT_NULL( timestamp,     tmp_ts );
             SET_DEST_FROM_OLD_IF_NOT_NULL( open,          old_open  [oldPriceBar] );
@@ -763,8 +786,6 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
             SET_DEST_FROM_OLD_IF_NOT_NULL( close,         old_close [oldPriceBar] );
             SET_DEST_FROM_OLD_IF_NOT_NULL( volume,        old_volume[oldPriceBar] );
 
-            /* Find the timestamp of the next new bar --AK-- */
-            TA_AddTimeToTimestamp(&next_DEST_ts, &dest_timestamp[newPriceBar], newPeriod);
             periodCompleted = 0;
          }else{
             /* Modify the current new --AK-- */

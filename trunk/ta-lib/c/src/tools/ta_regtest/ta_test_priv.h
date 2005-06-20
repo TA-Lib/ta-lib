@@ -10,6 +10,7 @@
 #endif
 
 ErrorNumber test_period( TA_UDBase *unifiedDatabase );
+ErrorNumber test_end_of_period( TA_UDBase *unifiedDatabase );
 ErrorNumber test_ascii ( void );
 ErrorNumber test_yahoo ( void );
 ErrorNumber test_csi   ( void );
