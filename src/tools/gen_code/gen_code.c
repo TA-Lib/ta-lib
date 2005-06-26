@@ -56,6 +56,7 @@
  *  010405 RM    Change createProjTemplate to work with VS03 and VS05
  *  031805 MF    Add generation of MSVC project file.
  *  061805 MF    Changes related to .NET verifiable code.
+ *  062505 MF    Fix 'out' attribute for .NET verifiable code.
  */
 
 /* Description:
@@ -1138,7 +1139,7 @@ static void printFunc( FILE *out,
       inputIntArrayType     = "cli::array<int>^";
       outputDoubleArrayType = "cli::array<double>^";
       outputIntArrayType    = "cli::array<int>^";
-      outputIntParam        = "[OutAttribute]int^";
+      outputIntParam        = "[Out]int%";
       arrayBracket          = "";
       startIdxString        = "startIdx";
       endIdxString          = "endIdx";
