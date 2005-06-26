@@ -49,9 +49,9 @@
   #define STRUCT_END(x) };
   #define NAMESPACE(x) x::
 
-  #define VALUE_HANDLE(type,name)        type^ name
+  #define VALUE_HANDLE(type,name)        type name
   #define VALUE_HANDLE_DEREF(name)       name
-  #define VALUE_HANDLE_DEREF_TO_ZERO(x)  x = nullptr
+  #define VALUE_HANDLE_DEREF_TO_ZERO(x)  x = 0
   #define VALUE_HANDLE_OUT(name)         name
 
 #else
