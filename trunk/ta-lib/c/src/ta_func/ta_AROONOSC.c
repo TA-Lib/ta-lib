@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -110,8 +110,8 @@
 /* Generated */                                             cli::array<double>^ inHigh,
 /* Generated */                                             cli::array<double>^ inLow,
 /* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                             [OutAttribute]int^ outBegIdx,
-/* Generated */                                             [OutAttribute]int^ outNbElement,
+/* Generated */                                             [Out]int%    outBegIdx,
+/* Generated */                                             [Out]int%    outNbElement,
 /* Generated */                                             cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_AROONOSC( int    startIdx,
@@ -294,8 +294,8 @@
 /* Generated */                                             cli::array<float>^ inHigh,
 /* Generated */                                             cli::array<float>^ inLow,
 /* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                             [OutAttribute]int^ outBegIdx,
-/* Generated */                                             [OutAttribute]int^ outNbElement,
+/* Generated */                                             [Out]int%    outBegIdx,
+/* Generated */                                             [Out]int%    outNbElement,
 /* Generated */                                             cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_AROONOSC( int    startIdx,

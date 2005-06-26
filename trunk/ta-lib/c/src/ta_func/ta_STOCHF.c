@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -129,8 +129,8 @@
 /* Generated */                                           int           optInFastK_Period, /* From 1 to 100000 */
 /* Generated */                                           int           optInFastD_Period, /* From 1 to 100000 */
 /* Generated */                                           TA_MAType     optInFastD_MAType,
-/* Generated */                                           [OutAttribute]int^ outBegIdx,
-/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           [Out]int%    outBegIdx,
+/* Generated */                                           [Out]int%    outNbElement,
 /* Generated */                                           cli::array<double>^  outFastK,
 /* Generated */                                           cli::array<double>^  outFastD )
 /* Generated */ #else
@@ -454,8 +454,8 @@
 /* Generated */                                           int           optInFastK_Period, /* From 1 to 100000 */
 /* Generated */                                           int           optInFastD_Period, /* From 1 to 100000 */
 /* Generated */                                           TA_MAType     optInFastD_MAType,
-/* Generated */                                           [OutAttribute]int^ outBegIdx,
-/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           [Out]int%    outBegIdx,
+/* Generated */                                           [Out]int%    outNbElement,
 /* Generated */                                           cli::array<double>^  outFastK,
 /* Generated */                                           cli::array<double>^  outFastD )
 /* Generated */ #else

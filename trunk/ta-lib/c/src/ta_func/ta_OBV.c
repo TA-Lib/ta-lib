@@ -104,8 +104,8 @@
 /* Generated */                                        int    endIdx,
 /* Generated */                                        cli::array<double>^ inReal,
 /* Generated */                                        cli::array<int>^ inVolume,
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<int>^  outInteger )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_OBV( int    startIdx,
@@ -183,8 +183,8 @@
 /* Generated */                                        int    endIdx,
 /* Generated */                                        cli::array<float>^ inReal,
 /* Generated */                                        cli::array<int>^ inVolume,
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<int>^  outInteger )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_OBV( int    startIdx,

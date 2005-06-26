@@ -122,8 +122,8 @@
 /* Generated */                                        int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                        int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                                        TA_MAType     optInMAType,
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_APO( int    startIdx,
@@ -214,8 +214,8 @@
                                               int    optInFastPeriod, /* From 1 to 200 */
                                               int    optInSlowPeriod, /* From 1 to 200 */
                                               TA_MAType    optInMethod_2,
-                                              [OutAttribute]int^ outBegIdx,
-                                              [OutAttribute]int^ outNbElement,
+                                              [Out]int% outBegIdx,
+                                              [Out]int% outNbElement,
 											  cli::array<double>^ outReal,
                                               cli::array<double>^ tempBuffer,
                                               unsigned int  doPercentageOutput )
@@ -325,8 +325,8 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */                                        int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                        int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                                        TA_MAType     optInMAType,
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_APO( int    startIdx,
@@ -388,8 +388,8 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */                                               int    optInFastPeriod, 
 /* Generated */                                               int    optInSlowPeriod, 
 /* Generated */                                               TA_MAType    optInMethod_2,
-/* Generated */                                               [OutAttribute]int^ outBegIdx,
-/* Generated */                                               [OutAttribute]int^ outNbElement,
+/* Generated */                                               [Out]int% outBegIdx,
+/* Generated */                                               [Out]int% outNbElement,
 /* Generated */ 											  cli::array<double>^ outReal,
 /* Generated */                                               cli::array<double>^ tempBuffer,
 /* Generated */                                               unsigned int  doPercentageOutput )
