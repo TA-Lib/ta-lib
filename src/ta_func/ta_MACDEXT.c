@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -146,8 +146,8 @@
 /* Generated */                                            TA_MAType     optInSlowMAType,
 /* Generated */                                            int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                                            TA_MAType     optInSignalMAType,
-/* Generated */                                            [OutAttribute]int^ outBegIdx,
-/* Generated */                                            [OutAttribute]int^ outNbElement,
+/* Generated */                                            [Out]int%    outBegIdx,
+/* Generated */                                            [Out]int%    outNbElement,
 /* Generated */                                            cli::array<double>^  outMACD,
 /* Generated */                                            cli::array<double>^  outMACDSignal,
 /* Generated */                                            cli::array<double>^  outMACDHist )
@@ -409,8 +409,8 @@
 /* Generated */                                            TA_MAType     optInSlowMAType,
 /* Generated */                                            int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                                            TA_MAType     optInSignalMAType,
-/* Generated */                                            [OutAttribute]int^ outBegIdx,
-/* Generated */                                            [OutAttribute]int^ outNbElement,
+/* Generated */                                            [Out]int%    outBegIdx,
+/* Generated */                                            [Out]int%    outNbElement,
 /* Generated */                                            cli::array<double>^  outMACD,
 /* Generated */                                            cli::array<double>^  outMACDSignal,
 /* Generated */                                            cli::array<double>^  outMACDHist )

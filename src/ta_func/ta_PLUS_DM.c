@@ -113,8 +113,8 @@
 /* Generated */                                            cli::array<double>^ inHigh,
 /* Generated */                                            cli::array<double>^ inLow,
 /* Generated */                                            int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                            [OutAttribute]int^ outBegIdx,
-/* Generated */                                            [OutAttribute]int^ outNbElement,
+/* Generated */                                            [Out]int%    outBegIdx,
+/* Generated */                                            [Out]int%    outNbElement,
 /* Generated */                                            cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PLUS_DM( int    startIdx,
@@ -385,8 +385,8 @@
 /* Generated */                                            cli::array<float>^ inHigh,
 /* Generated */                                            cli::array<float>^ inLow,
 /* Generated */                                            int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                            [OutAttribute]int^ outBegIdx,
-/* Generated */                                            [OutAttribute]int^ outNbElement,
+/* Generated */                                            [Out]int%    outBegIdx,
+/* Generated */                                            [Out]int%    outNbElement,
 /* Generated */                                            cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_PLUS_DM( int    startIdx,

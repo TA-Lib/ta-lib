@@ -110,8 +110,8 @@
 /* Generated */                                         int    endIdx,
 /* Generated */                                         cli::array<double>^ inReal,
 /* Generated */                                         int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                         [OutAttribute]int^ outBegIdx,
-/* Generated */                                         [OutAttribute]int^ outNbElement,
+/* Generated */                                         [Out]int%    outBegIdx,
+/* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_KAMA( int    startIdx,
@@ -334,8 +334,8 @@
 /* Generated */                                         int    endIdx,
 /* Generated */                                         cli::array<float>^ inReal,
 /* Generated */                                         int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                         [OutAttribute]int^ outBegIdx,
-/* Generated */                                         [OutAttribute]int^ outNbElement,
+/* Generated */                                         [Out]int%    outBegIdx,
+/* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_KAMA( int    startIdx,

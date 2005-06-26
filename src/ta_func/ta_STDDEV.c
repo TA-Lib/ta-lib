@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -117,8 +117,8 @@
 /* Generated */                                           cli::array<double>^ inReal,
 /* Generated */                                           int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                           double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                           [OutAttribute]int^ outBegIdx,
-/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           [Out]int%    outBegIdx,
+/* Generated */                                           [Out]int%    outNbElement,
 /* Generated */                                           cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_STDDEV( int    startIdx,
@@ -293,8 +293,8 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */                                           cli::array<float>^ inReal,
 /* Generated */                                           int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                           double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                           [OutAttribute]int^ outBegIdx,
-/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           [Out]int%    outBegIdx,
+/* Generated */                                           [Out]int%    outNbElement,
 /* Generated */                                           cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STDDEV( int    startIdx,

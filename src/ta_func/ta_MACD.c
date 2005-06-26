@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -142,8 +142,8 @@
 /* Generated */                                         int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                         int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                                         int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                                         [OutAttribute]int^ outBegIdx,
-/* Generated */                                         [OutAttribute]int^ outNbElement,
+/* Generated */                                         [Out]int%    outBegIdx,
+/* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outMACD,
 /* Generated */                                         cli::array<double>^  outMACDSignal,
 /* Generated */                                         cli::array<double>^  outMACDHist )
@@ -227,8 +227,8 @@
                                                  int    optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
                                                  int    optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
                                                  int    optInSignalPeriod_2, /* From 1 to 200 */
-                                                 [OutAttribute]int^ outBegIdx,
-                                                 [OutAttribute]int^ outNbElement,
+                                                 [Out]int% outBegIdx,
+                                                 [Out]int% outNbElement,
 												 cli::array<double>^ outMACD,
                                                  cli::array<double>^ outMACDSignal,
                                                  cli::array<double>^ outMACDHist )
@@ -450,8 +450,8 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                         int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                         int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                                         int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                                         [OutAttribute]int^ outBegIdx,
-/* Generated */                                         [OutAttribute]int^ outNbElement,
+/* Generated */                                         [Out]int%    outBegIdx,
+/* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outMACD,
 /* Generated */                                         cli::array<double>^  outMACDSignal,
 /* Generated */                                         cli::array<double>^  outMACDHist )
@@ -511,8 +511,8 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                                  int    optInFastPeriod, 
 /* Generated */                                                  int    optInSlowPeriod, 
 /* Generated */                                                  int    optInSignalPeriod_2, 
-/* Generated */                                                  [OutAttribute]int^ outBegIdx,
-/* Generated */                                                  [OutAttribute]int^ outNbElement,
+/* Generated */                                                  [Out]int% outBegIdx,
+/* Generated */                                                  [Out]int% outNbElement,
 /* Generated */ 												 cli::array<double>^ outMACD,
 /* Generated */                                                  cli::array<double>^ outMACDSignal,
 /* Generated */                                                  cli::array<double>^ outMACDHist )

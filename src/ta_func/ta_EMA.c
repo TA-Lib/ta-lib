@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -108,8 +108,8 @@
 /* Generated */                                        int    endIdx,
 /* Generated */                                        cli::array<double>^ inReal,
 /* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_EMA( int    startIdx,
@@ -178,8 +178,8 @@
 											   cli::array<INPUT_TYPE>^ inReal,
                                                int           optInTimePeriod,
                                                double        optInK_1,
-                                               [OutAttribute]int^ outBegIdx,
-                                               [OutAttribute]int^ outNbElement,
+                                               [Out]int% outBegIdx,
+                                               [Out]int% outNbElement,
                                                cli::array<double>^ outReal )
 #else
 TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
@@ -309,8 +309,8 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */                                        int    endIdx,
 /* Generated */                                        cli::array<float>^ inReal,
 /* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_EMA( int    startIdx,
@@ -346,8 +346,8 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */ 											   cli::array<INPUT_TYPE>^ inReal,
 /* Generated */                                                int           optInTimePeriod,
 /* Generated */                                                double        optInK_1,
-/* Generated */                                                [OutAttribute]int^ outBegIdx,
-/* Generated */                                                [OutAttribute]int^ outNbElement,
+/* Generated */                                                [Out]int% outBegIdx,
+/* Generated */                                                [Out]int% outNbElement,
 /* Generated */                                                cli::array<double>^ outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,

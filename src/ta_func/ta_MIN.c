@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -111,8 +111,8 @@
 /* Generated */                                        int    endIdx,
 /* Generated */                                        cli::array<double>^ inReal,
 /* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MIN( int    startIdx,
@@ -240,8 +240,8 @@
 /* Generated */                                        int    endIdx,
 /* Generated */                                        cli::array<float>^ inReal,
 /* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MIN( int    startIdx,

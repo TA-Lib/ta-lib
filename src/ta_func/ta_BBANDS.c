@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -130,8 +130,8 @@
 /* Generated */                                           double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                                           double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                                           TA_MAType     optInMAType,
-/* Generated */                                           [OutAttribute]int^ outBegIdx,
-/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           [Out]int%    outBegIdx,
+/* Generated */                                           [Out]int%    outNbElement,
 /* Generated */                                           cli::array<double>^  outRealUpperBand,
 /* Generated */                                           cli::array<double>^  outRealMiddleBand,
 /* Generated */                                           cli::array<double>^  outRealLowerBand )
@@ -382,8 +382,8 @@
 /* Generated */                                           double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                                           double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                                           TA_MAType     optInMAType,
-/* Generated */                                           [OutAttribute]int^ outBegIdx,
-/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           [Out]int%    outBegIdx,
+/* Generated */                                           [Out]int%    outNbElement,
 /* Generated */                                           cli::array<double>^  outRealUpperBand,
 /* Generated */                                           cli::array<double>^  outRealMiddleBand,
 /* Generated */                                           cli::array<double>^  outRealLowerBand )

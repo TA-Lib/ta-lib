@@ -113,8 +113,8 @@
 /* Generated */                                                       cli::array<double>^ inLow,
 /* Generated */                                                       cli::array<double>^ inClose,
 /* Generated */                                                       double        optInPenetration, /* From 0 to TA_REAL_MAX */
-/* Generated */                                                       [OutAttribute]int^ outBegIdx,
-/* Generated */                                                       [OutAttribute]int^ outNbElement,
+/* Generated */                                                       [Out]int%    outBegIdx,
+/* Generated */                                                       [Out]int%    outNbElement,
 /* Generated */                                                       cli::array<int>^  outInteger )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CDLMORNINGDOJISTAR( int    startIdx,
@@ -270,8 +270,8 @@
 /* Generated */                                                       cli::array<float>^ inLow,
 /* Generated */                                                       cli::array<float>^ inClose,
 /* Generated */                                                       double        optInPenetration, /* From 0 to TA_REAL_MAX */
-/* Generated */                                                       [OutAttribute]int^ outBegIdx,
-/* Generated */                                                       [OutAttribute]int^ outNbElement,
+/* Generated */                                                       [Out]int%    outBegIdx,
+/* Generated */                                                       [Out]int%    outNbElement,
 /* Generated */                                                       cli::array<int>^  outInteger )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLMORNINGDOJISTAR( int    startIdx,

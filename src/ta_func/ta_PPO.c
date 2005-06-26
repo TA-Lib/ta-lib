@@ -121,8 +121,8 @@
 /* Generated */                                        int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                        int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                                        TA_MAType     optInMAType,
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PPO( int    startIdx,
@@ -217,8 +217,8 @@
 /* Generated */                                        int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                        int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                                        TA_MAType     optInMAType,
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_PPO( int    startIdx,

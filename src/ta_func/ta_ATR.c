@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -118,8 +118,8 @@
 /* Generated */                                        cli::array<double>^ inLow,
 /* Generated */                                        cli::array<double>^ inClose,
 /* Generated */                                        int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_ATR( int    startIdx,
@@ -140,6 +140,7 @@
    int nbATR;
    VALUE_HANDLE(int,outBegIdx1);
    VALUE_HANDLE(int,outNbElement1);
+
    double prevATR;
    ARRAY_REF( tempBuffer );
    ARRAY_LOCAL(prevATRTemp,1);
@@ -293,8 +294,8 @@
 /* Generated */                                        cli::array<float>^ inLow,
 /* Generated */                                        cli::array<float>^ inClose,
 /* Generated */                                        int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ATR( int    startIdx,

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -127,8 +127,8 @@
 /* Generated */                                          cli::array<int>^ inVolume,
 /* Generated */                                          int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                          int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                          [OutAttribute]int^ outBegIdx,
-/* Generated */                                          [OutAttribute]int^ outNbElement,
+/* Generated */                                          [Out]int%    outBegIdx,
+/* Generated */                                          [Out]int%    outNbElement,
 /* Generated */                                          cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_ADOSC( int    startIdx,
@@ -313,8 +313,8 @@
 /* Generated */                                          cli::array<int>^ inVolume,
 /* Generated */                                          int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                          int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                          [OutAttribute]int^ outBegIdx,
-/* Generated */                                          [OutAttribute]int^ outNbElement,
+/* Generated */                                          [Out]int%    outBegIdx,
+/* Generated */                                          [Out]int%    outNbElement,
 /* Generated */                                          cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ADOSC( int    startIdx,

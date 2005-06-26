@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -140,8 +140,8 @@
 /* Generated */                                         cli::array<double>^ inReal,
 /* Generated */                                         double        optInFastLimit, /* From 0.01 to 0.99 */
 /* Generated */                                         double        optInSlowLimit, /* From 0.01 to 0.99 */
-/* Generated */                                         [OutAttribute]int^ outBegIdx,
-/* Generated */                                         [OutAttribute]int^ outNbElement,
+/* Generated */                                         [Out]int%    outBegIdx,
+/* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outMAMA,
 /* Generated */                                         cli::array<double>^  outFAMA )
 /* Generated */ #else
@@ -458,8 +458,8 @@
 /* Generated */                                         cli::array<float>^ inReal,
 /* Generated */                                         double        optInFastLimit, /* From 0.01 to 0.99 */
 /* Generated */                                         double        optInSlowLimit, /* From 0.01 to 0.99 */
-/* Generated */                                         [OutAttribute]int^ outBegIdx,
-/* Generated */                                         [OutAttribute]int^ outNbElement,
+/* Generated */                                         [Out]int%    outBegIdx,
+/* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outMAMA,
 /* Generated */                                         cli::array<double>^  outFAMA )
 /* Generated */ #else

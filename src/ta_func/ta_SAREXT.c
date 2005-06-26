@@ -176,8 +176,8 @@
 /* Generated */                                           double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
 /* Generated */                                           double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
 /* Generated */                                           double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                                           [OutAttribute]int^ outBegIdx,
-/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           [Out]int%    outBegIdx,
+/* Generated */                                           [Out]int%    outNbElement,
 /* Generated */                                           cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_SAREXT( int    startIdx,
@@ -623,8 +623,8 @@
 /* Generated */                                           double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
 /* Generated */                                           double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
 /* Generated */                                           double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                                           [OutAttribute]int^ outBegIdx,
-/* Generated */                                           [OutAttribute]int^ outNbElement,
+/* Generated */                                           [Out]int%    outBegIdx,
+/* Generated */                                           [Out]int%    outNbElement,
 /* Generated */                                           cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_SAREXT( int    startIdx,

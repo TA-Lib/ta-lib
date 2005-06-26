@@ -128,8 +128,8 @@
 /* Generated */                                        cli::array<double>^ inLow,
 /* Generated */                                        double        optInAcceleration, /* From 0 to TA_REAL_MAX */
 /* Generated */                                        double        optInMaximum, /* From 0 to TA_REAL_MAX */
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_SAR( int    startIdx,
@@ -469,8 +469,8 @@
 /* Generated */                                        cli::array<float>^ inLow,
 /* Generated */                                        double        optInAcceleration, /* From 0 to TA_REAL_MAX */
 /* Generated */                                        double        optInMaximum, /* From 0 to TA_REAL_MAX */
-/* Generated */                                        [OutAttribute]int^ outBegIdx,
-/* Generated */                                        [OutAttribute]int^ outNbElement,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_SAR( int    startIdx,
