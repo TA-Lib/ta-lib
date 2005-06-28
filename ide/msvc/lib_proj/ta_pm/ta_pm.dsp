@@ -31,6 +31,7 @@ CFG=ta_pm - Win32 CSD Single Thread Debug
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
+F90=df.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "ta_pm - Win32 CDR Multithread DLL Release"
@@ -195,7 +196,7 @@ LIB32=link.exe -lib
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /WX /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_pm\ta_source\ta_readop" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_pm" /I "..\..\..\..\src\ta_pm\ta_source" /I "..\..\..\..\src\ta_pm\ta_source\ta_fileindex" /I "..\..\..\..\src\ta_pm\ta_source\ta_ascii" /I "..\..\..\..\src\ta_pm\ta_history" /I "..\..\..\..\src\ta_pm\ta_source\ta_simulator" /I "..\..\..\..\src\ta_pm\ta_fileindex" /I "..\..\..\..\src\ta_pm\ta_source\ta_yahoo" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # SUBTRACT BASE CPP /Fr
-# ADD CPP /nologo /MDd /W3 /WX /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_pm\ta_source\ta_readop" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_pm" /I "..\..\..\..\src\ta_pm\ta_source" /I "..\..\..\..\src\ta_pm\ta_source\ta_fileindex" /I "..\..\..\..\src\ta_pm\ta_source\ta_ascii" /I "..\..\..\..\src\ta_pm\ta_history" /I "..\..\..\..\src\ta_pm\ta_source\ta_simulator" /I "..\..\..\..\src\ta_pm\ta_fileindex" /I "..\..\..\..\src\ta_pm\ta_source\ta_yahoo" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /Fr /YX /FD /c
+# ADD CPP /nologo /MDd /W3 /WX /Zi /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_pm\ta_source\ta_readop" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_pm" /I "..\..\..\..\src\ta_pm\ta_source" /I "..\..\..\..\src\ta_pm\ta_source\ta_fileindex" /I "..\..\..\..\src\ta_pm\ta_source\ta_ascii" /I "..\..\..\..\src\ta_pm\ta_history" /I "..\..\..\..\src\ta_pm\ta_source\ta_simulator" /I "..\..\..\..\src\ta_pm\ta_fileindex" /I "..\..\..\..\src\ta_pm\ta_source\ta_yahoo" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /Fr /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
