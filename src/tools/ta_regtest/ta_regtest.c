@@ -235,6 +235,18 @@ static ErrorNumber test_with_simulator( void )
    histParam.category = "TA_SIM_REF";
    histParam.symbol   = "DAILY_REF_0";
    histParam.field    = TA_ALL;
+
+   /* first some negative testing - calls that should fail */
+   histParam.period   = TA_1MIN;
+   retCode = TA_HistoryAlloc( uDBase, &histParam, &history );
+   if( retCode != TA_PERIOD_NOT_AVAILABLE )
+   {
+       printf( "TA_HistoryAlloc did not report TA_PERIOD_NOT_AVAILABLE [%d]\n", retCode );
+       freeLib( uDBase );
+       return TA_REGTEST_HISTORYALLOC_FAILED;
+   }
+   
+   /* now allocate the "correct" history */
    histParam.period   = TA_DAILY;
    retCode = TA_HistoryAlloc( uDBase, &histParam, &history );
 
