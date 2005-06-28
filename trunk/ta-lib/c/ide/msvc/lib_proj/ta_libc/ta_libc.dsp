@@ -31,6 +31,7 @@ CFG=ta_libc - Win32 CDR Multithread DLL Release
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
+F90=df.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "ta_libc - Win32 CDR Multithread DLL Release"
@@ -92,7 +93,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "..\..\..\..\temp\csd\ta_libc"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_DEBUG" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /WX /Gm /GX- /Zi /Od /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_DEBUG" /FR /YX /FD /GZ /c
+# ADD CPP /nologo /W3 /WX /Gm /Zi /Od /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_DEBUG" /FR /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -185,7 +186,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "..\..\..\..\temp\cdd\ta_libc"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /WX /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MDd /W3 /WX /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /FR /YX /FD /c
+# ADD CPP /nologo /MDd /W3 /WX /Zi /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /FR /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
