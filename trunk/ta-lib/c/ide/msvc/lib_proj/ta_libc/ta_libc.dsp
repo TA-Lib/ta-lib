@@ -186,7 +186,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "..\..\..\..\temp\cdd\ta_libc"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /WX /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MDd /W3 /WX /Zi /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /FR /YX /FD /c
+# ADD CPP /nologo /MDd /W3 /WX /Zi /Od /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /FR /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
