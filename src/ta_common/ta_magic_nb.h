@@ -26,5 +26,6 @@
 #define TA_PMPRIV_MAGIC_NB              0xA20FB20F
 #define TA_PMREPORT_MAGIC_NB            0xA210B210
 #define TA_TRADEREPORT_MAGIC_NB         0xA211B211
+#define TA_HISTORY_MAGIC_NB             0xA212B212
 
 #endif
