@@ -39,6 +39,7 @@
  *  JS       Jon Sudul
  *  AM       Adrian Michel
  *  AC       Angelo Ciceri
+ *  PK       Pawel Konieczny
  *
  * Change history:
  *
@@ -51,6 +52,7 @@
  *  030405 MF,AM  Now do volume adjustment with split correctly.
  *  060605 MF,AC  Fix merge logic.
  *  061805 MF     Fix merge logic for bug found with test_AsciiExample.
+ *  070305 MF,PK  Fix #1229243 memory leak in some failure scenario. 
  */
 
 /* Description:
@@ -67,6 +69,7 @@
 #include "ta_memory.h"
 #include "ta_list.h"
 #include "ta_history_priv.h"
+#include "ta_magic_nb.h"
 #include "../../ta_func/ta_utility.h"
 
 /**** External functions declarations. ****/
@@ -2276,27 +2279,22 @@ static TA_History *allocEmptyHistory( TA_UDBasePriv *privUDB, TA_Period period )
 {
    TA_History *newHistory;
    TA_HistoryHiddenData *hiddenData;
+   int totalSize;
 
-   /* Alloc the TA_History for the user. */
-   newHistory = (TA_History *)TA_Malloc( sizeof( TA_History ) );
-
+   /* Alloc the TA_History with both the public and private part. */
+   totalSize = sizeof( TA_History ) + sizeof( TA_HistoryHiddenData );
+   newHistory = (TA_History *)TA_Malloc( totalSize );
    if( !newHistory )
       return NULL;
-
-   memset( newHistory, 0, sizeof( TA_History ) );
-   newHistory->period = period;
-
-   /* Alloc and initialize the hidden data. */
-   hiddenData = (TA_HistoryHiddenData *)TA_Malloc( sizeof( TA_HistoryHiddenData ) );
-   memset( hiddenData,0,sizeof(TA_HistoryHiddenData));
-   if( !hiddenData )
-   {
-      TA_Free( newHistory );
-      return NULL;
-   }
-
+   memset( newHistory, 0, totalSize );
+   hiddenData = (TA_HistoryHiddenData *)(((char *)newHistory)+sizeof( TA_History ));
    newHistory->hiddenData = hiddenData;
+   hiddenData->magicNb = TA_HISTORY_MAGIC_NB;
+
+   /**** From this point TA_HistoryFree can be safely called ****/
+
    hiddenData->privUDB = privUDB;
+   newHistory->period = period;
 
    return newHistory;
 }
