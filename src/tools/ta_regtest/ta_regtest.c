@@ -245,7 +245,7 @@ static ErrorNumber test_with_simulator( void )
        freeLib( uDBase );
        return TA_REGTEST_HISTORYALLOC_FAILED;
    }
-   
+
    /* now allocate the "correct" history */
    histParam.period   = TA_DAILY;
    retCode = TA_HistoryAlloc( uDBase, &histParam, &history );
