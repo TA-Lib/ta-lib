@@ -71,9 +71,11 @@ TA_RetCode TA_HistoryAllocCopyInternal( const TA_History *history,
 /* The hidden data put in a TA_History. */
 typedef struct
 {
+   unsigned int magicNb;
+
    TA_UDBasePriv *privUDB;
 
-   /* Ptr on the date that must be freed. */
+   /* Ptr on the data that must be freed. */
    const void *open;
    const void *high;
    const void *low;
