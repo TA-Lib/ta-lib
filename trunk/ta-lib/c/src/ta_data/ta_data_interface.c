@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  PK       Pawel Konieczny
  *
  *
  * Change history:
@@ -54,6 +55,7 @@
  *                 platform when the driver set TA_LOCATION_IS_PATH.
  *  062105 PK      Added (partial) support for end-of-period
  *                 timestamp logic.
+ *  070305 MF,PK   Fix #1229243 memory leak in some failure scenario.
  */
 
 /* Decription:
@@ -1247,36 +1249,51 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
 TA_RetCode TA_HistoryFree( TA_History *history )
 {
    TA_PROLOG
-   TA_UDBasePriv *privUDB;
    TA_HistoryHiddenData *hiddenData;
 
    TA_TRACE_BEGIN( TA_HistoryFree );
 
-   if( !history || !history->hiddenData )       
+   if( !history )       
       TA_TRACE_RETURN(TA_BAD_PARAM);
 
    hiddenData = (TA_HistoryHiddenData *)history->hiddenData;
-   TA_ASSERT( hiddenData != NULL );
+   if( !hiddenData || (hiddenData->magicNb != TA_HISTORY_MAGIC_NB) )
+      TA_TRACE_RETURN(TA_BAD_OBJECT);
 
-   /* This pointer does not need to be freed, but it is suppose
-    * to be always set. If not, somehting is wrong in the logic.
+   /* Free all block of data. 
+    *
+    * The meaning of setting the hiddenData->"field"
+    * is to transform the corresponding history->"field" 
+    * into an internal pointer instead of a pointer where
+    * the allocated memory starts.
+    * 
+    * When hiddenData->"field" is not set, the corresponding
+    * public field in TA_History is the one that should
+    * be look at for being freed.
     */
-   privUDB = (TA_UDBasePriv *)hiddenData->privUDB;
-   if( !privUDB )
-      TA_TRACE_RETURN(TA_INTERNAL_ERROR(29));
-
-   /* Free all ressources. */
-   
-   FREE_IF_NOT_NULL( hiddenData->timestamp );
-   FREE_IF_NOT_NULL( hiddenData->close );
-   FREE_IF_NOT_NULL( hiddenData->open );
-   FREE_IF_NOT_NULL( hiddenData->high );
-   FREE_IF_NOT_NULL( hiddenData->low );
-   FREE_IF_NOT_NULL( hiddenData->volume );
-   FREE_IF_NOT_NULL( hiddenData->openInterest );
+   #define FREE_FIELD(x) { \
+      if( hiddenData->x ) \
+      { \
+         TA_Free((void *)hiddenData->x); \
+         hiddenData->x = NULL; \
+         history->x = NULL; \
+      } \
+      else \
+      { \
+         FREE_IF_NOT_NULL( history->x ); \
+      } \
+   }         
+   FREE_FIELD( timestamp );
+   FREE_FIELD( close );
+   FREE_FIELD( open );
+   FREE_FIELD( high );
+   FREE_FIELD( low );
+   FREE_FIELD( volume );
+   FREE_FIELD( openInterest );
+   #undef FREE_FIELD
 
    stringTableFree( &history->listOfSource, 1 );
-   TA_Free( (void *)hiddenData );
+
    TA_Free( (void *)history );
 
    TA_TRACE_RETURN( TA_SUCCESS );
