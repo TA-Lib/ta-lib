@@ -435,8 +435,8 @@ typedef struct
  *    these price validations and the caller is left on its own to detect 
  *    erroneous data.
  *
- * TA_USES_END_OF_PERIOD
- * =====================
+ * TA_USE_END_OF_PERIOD
+ * ====================
  *    Retrieve the history data using the end-of-period logic, i.e. set the
  *    timestamps to the end of the period the records are covering rather than 
  *    the beginning of the period.
