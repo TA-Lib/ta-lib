@@ -115,7 +115,7 @@ TA_RetCode TA_PeriodNormalize( TA_BuilderSupport *builderSupport )
  */
 TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original history. */
                                TA_Period newPeriod,       /* The new desired period. */
-                               TA_HistoryFlag flags, 
+                               TA_HistoryFlag flags,      /* flags used when history requested. */
                                int doAllocateNew,         /* When true, following ptrs are used. */
                                TA_Integer *nbBars,        /* Return the number of price bar allocated. */
                                TA_Timestamp **timestamp,  /* Allocate new timestamp. */
@@ -221,6 +221,8 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
    {
       TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );
    }
+   
+   useEndOfPeriodLogic = ((flags & TA_USE_END_OF_PERIOD) != 0);
 
    /* Eliminate all the transform that
     * are currently not supported. 
@@ -275,13 +277,6 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
    /* All other are not implemented yet. */
    default:      
       TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );
-   }
-
-   useEndOfPeriodLogic = ((flags & TA_USE_END_OF_PERIOD) != 0);
-   if( useEndOfPeriodLogic && transformToDailyAndMore )
-   {
-       /* not implemented yet */
-       TA_TRACE_RETURN( TA_NOT_SUPPORTED );
    }
  
 
@@ -606,31 +601,67 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
             switch( newPeriod )
             {
             case TA_WEEKLY:
-                  /* Now something a little bit tricky, we must
-                   * make sure that this new price bar is reported
-                   * as being the Sunday of that week.
-                   */
-                  TA_BackToDayOfWeek( &cur_timestamp, TA_SUNDAY );
+                  if (!useEndOfPeriodLogic)
+                  {
+                     /* Now something a little bit tricky, we must
+                      * make sure that this new price bar is reported
+                      * as being the Sunday of that week.
+                      */
+                     TA_BackToDayOfWeek( &cur_timestamp, TA_SUNDAY );
+                  }
+                  else
+                  {
+                     /* In case of end of period, a weeks end on Saturday
+                      */
+                     TA_JumpToDayOfWeek( &cur_timestamp, TA_SATURDAY );
+                  }
                   break;
             case TA_MONTHLY:
-                  /* Monthly timestamp are always on the first day of
-                   * the month.
-                   */
-                  TA_BackToBeginOfMonth( &cur_timestamp );
+                  if (!useEndOfPeriodLogic)
+                  {
+                     /* Monthly timestamp are always on the first day of
+                      * the month.
+                      */
+                     TA_BackToBeginOfMonth( &cur_timestamp );
+                  }
+                  else
+                  {
+                     /* End-of-period timestamps ate in the last day of 
+                      * the month.
+                      */
+                     TA_JumpToEndOfMonth( &cur_timestamp );
+                  }
                   break;
             case TA_QUARTERLY:
-                  /* Quarterly timestamp are always the first day of
-                   * the quarter.
-                   * Quarter 1 =  1/1
-                   * Quarter 2 =  4/1
-                   * Quarter 3 =  7/1
-                   * Quarter 4 = 10/1
-                   */
-                  TA_BackToBeginOfQuarter( &cur_timestamp );
+                  if (!useEndOfPeriodLogic)
+                  {
+                     /* Quarterly timestamp are always the first day of
+                      * the quarter.
+                      * Quarter 1 =  1/1
+                      * Quarter 2 =  4/1
+                      * Quarter 3 =  7/1
+                      * Quarter 4 = 10/1
+                      */
+                     TA_BackToBeginOfQuarter( &cur_timestamp );
+                  }
+                  else
+                  {
+                     /* End-of-period timestamps are on the last day of 
+                      * the quarter.
+                      */
+                     TA_JumpToEndOfQuarter( &cur_timestamp );
+                  }
                   break;
             case TA_YEARLY:
-                  /* Yearly data always end on 12/31. */
-                  TA_BackToBeginOfYear( &cur_timestamp );
+                  if (!useEndOfPeriodLogic)
+                  {
+                     /* Yearly data always end on 12/31. */
+                     TA_BackToBeginOfYear( &cur_timestamp );
+                  }
+                  else
+                  {
+                     TA_JumpToEndOfYear( &tempLocalTimestamp );
+                  }
                   break;
             default:
                   /* Do nothing. */
@@ -638,7 +669,16 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
             }   
 
             dest_timestamp[newPriceBar].date = cur_timestamp.date;
-            dest_timestamp[newPriceBar].time = 0; /* All EOD price bar starts at 00:00:00 */
+            if (!useEndOfPeriodLogic)
+            {
+                /* All EOD price bar starts at 00:00:00 */
+               dest_timestamp[newPriceBar].time = 0;
+            }
+            else
+            {
+               /* All end-of-period price bars have time at the end of day */
+               TA_SetTime( 23, 59, 59, &dest_timestamp[newPriceBar] );
+            }
          }
          #define SET_DEST_PERIOD_IF_NOT_NULL(var) { if( dest_##var ) { dest_##var[newPriceBar] = cur_##var; } }
          SET_DEST_PERIOD_IF_NOT_NULL( open );
@@ -663,8 +703,12 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
          tempTimestamp = &dest_timestamp[newPriceBar-1];
          TA_TimestampCopy(&tempLocalTimestamp,tempTimestamp);
 
-         if( newPeriod == TA_WEEKLY )
-            TA_JumpToDayOfWeek( &tempLocalTimestamp, TA_FRIDAY );
+         if( newPeriod == TA_WEEKLY ) {
+            if (!useEndOfPeriodLogic)
+               TA_JumpToDayOfWeek( &tempLocalTimestamp, TA_FRIDAY );
+            else
+               TA_BackToDayOfWeek( &tempLocalTimestamp, TA_FRIDAY );
+         }
          else
          {
             switch( newPeriod )
