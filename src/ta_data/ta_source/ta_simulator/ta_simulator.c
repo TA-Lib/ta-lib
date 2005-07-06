@@ -517,7 +517,7 @@ TA_RetCode TA_SIMULATOR_GetHistoryData( TA_DataSourceHandle *handle,
          if( privateHandle->flags & TA_SOURCE_USES_END_OF_PERIOD )
          {
              for( i=0; i < TA_REF_DAILY_NB_BARS; i++ )
-                 TA_NextWeekday( &timestamp[i] );
+                 TA_SetTime(23, 59, 59, &timestamp[i] );
          }
 
           retCode = TA_HistoryAddData( paramForAddData,
