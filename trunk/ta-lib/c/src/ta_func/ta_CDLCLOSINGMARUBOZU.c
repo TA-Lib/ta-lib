@@ -149,7 +149,7 @@
     * to calculate at least one output.
     */
 
-   lookbackTotal = TA_CDLMARUBOZU_Lookback();
+   lookbackTotal = TA_CDLCLOSINGMARUBOZU_Lookback();
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -268,7 +268,7 @@
 /* Generated */     if( !outInteger )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    lookbackTotal = TA_CDLMARUBOZU_Lookback();
+/* Generated */    lookbackTotal = TA_CDLCLOSINGMARUBOZU_Lookback();
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
