@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -37,7 +37,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AK       Alexander Kugel
- *
+ *  PK       Pawel Konieczny
  *
  * Change history:
  *
@@ -655,7 +655,7 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
             case TA_YEARLY:
                   if (!useEndOfPeriodLogic)
                   {
-                     /* Yearly data always end on 12/31. */
+                     /* Yearly data always on January 1st. */
                      TA_BackToBeginOfYear( &cur_timestamp );
                   }
                   else
