@@ -329,7 +329,7 @@ TA_RetCode TA_UDBaseFree( TA_UDBase *toBeFreed )
    TA_DataGlobal *global;
    TA_UDBasePriv *privUDB;
 
-   /* Return immediatly if aparently already freed. */
+   /* Return immediately if apparently already freed. */
    privUDB = (TA_UDBasePriv *)toBeFreed;
    if( !privUDB )
       return TA_SUCCESS;
@@ -420,7 +420,6 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
    TA_UDBasePriv *privUDB;
 
    TA_DataSource  *dataSource;
-   TA_DataSource  *prevDataSource;
 
    TA_DataSourceHandle *sourceHandle;
    TA_CategoryHandle   *categoryHandle;
@@ -522,43 +521,6 @@ TA_RetCode TA_AddDataSource( TA_UDBase *unifiedDatabase,
       !(dataSourceParams.flags & TA_DO_NOT_VALUE_ADJUST) )
    {
       TA_TRACE_RETURN( TA_UNSUPPORTED_DO_NOT_VALUE_ADJUST );
-   }
-
-   /* Check whether the timestamp logic is consistent with that
-    * used by other sources in the database.  Mixing timestamp
-    * loging in one database is not supported yet.
-    */
-   finalRetCode = TA_SUCCESS;
-
-   #if !defined( TA_SINGLE_THREAD )
-   retCode = TA_SemaWait( &privUDB->sema );
-   if( retCode != TA_SUCCESS )
-   {
-      TA_TRACE_RETURN( retCode );
-   }
-   #endif
-
-   prevDataSource = (TA_DataSource*) TA_ListAccessHead(privUDB->listDataSource);
-   if( prevDataSource )
-   {
-      if( (prevDataSource->addDataSourceParamPriv->flags & TA_SOURCE_USES_END_OF_PERIOD) !=
-          (param->flags                                  & TA_SOURCE_USES_END_OF_PERIOD) )
-      {
-          finalRetCode = TA_NOT_SUPPORTED;
-      }
-   }
-
-   #if !defined( TA_SINGLE_THREAD )
-   retCode = TA_SemaPost( &privUDB->sema );
-   if( retCode != TA_SUCCESS )
-   {
-      TA_TRACE_RETURN( retCode );
-   }
-   #endif
-
-   if( finalRetCode != TA_SUCCESS )
-   {
-      TA_TRACE_RETURN( finalRetCode );
    }
 
    /* Open the source. */
@@ -1086,7 +1048,6 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
 {
    TA_PROLOG
    TA_RetCode retCode;
-   TA_RetCode finalRetCode;
 
    TA_UDB_Category *categoryData;
    TA_UDB_Symbol   *symbolData;
@@ -1094,7 +1055,6 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
    TA_Dict         *dictUDBSymbol;
    TA_UDBasePriv   *privUDB;
    TA_StringCache  *stringCache;
-   TA_DataSource   *prevDataSource;
 
    const TA_Timestamp *startLocal;
    const TA_Timestamp *endLocal;
@@ -1183,49 +1143,6 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
    if( !symbolData )
    {
       TA_TRACE_RETURN( TA_SYMBOL_NOT_FOUND );
-   }
-
-   /* Check whether requested timestamp logic is natively supported by
-    * the database.  Conversion from begin-of-period logic to end-of-period
-    * and back is not supported yet.
-    */
-   finalRetCode = TA_SUCCESS;
-
-   #if !defined( TA_SINGLE_THREAD )
-   retCode = TA_SemaWait( &privUDB->sema );
-   if( retCode != TA_SUCCESS )
-   {
-      TA_TRACE_RETURN( retCode );
-   }
-   #endif
-
-   prevDataSource = (TA_DataSource*) TA_ListAccessHead(privUDB->listDataSource);
-   if( prevDataSource )
-   {
-      if(  (prevDataSource->addDataSourceParamPriv->flags & TA_SOURCE_USES_END_OF_PERIOD) &&
-          !(param->flags                                  & TA_USE_END_OF_PERIOD) )
-      {
-          finalRetCode = TA_NOT_SUPPORTED;
-      } 
-      else
-      if( !(prevDataSource->addDataSourceParamPriv->flags & TA_SOURCE_USES_END_OF_PERIOD) &&
-           (param->flags                                  & TA_USE_END_OF_PERIOD) )
-      {
-          finalRetCode = TA_NOT_SUPPORTED;
-      }
-   }
-
-   #if !defined( TA_SINGLE_THREAD )
-   retCode = TA_SemaPost( &privUDB->sema );
-   if( retCode != TA_SUCCESS )
-   {
-      TA_TRACE_RETURN( retCode );
-   }
-   #endif
-
-   if( finalRetCode != TA_SUCCESS )
-   {
-      TA_TRACE_RETURN( finalRetCode );
    }
 
    /* Leave it to the TA_History sub-module to do the rest. */

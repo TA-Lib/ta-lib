@@ -409,7 +409,7 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
             supportForDataSource->end = 0;
       }
 
-      /* Check immediatly for the next driver handles. */
+      /* Check immediately for the next driver handles. */
       driverHandles = (TA_UDB_Driver *)TA_ListAccessNext( listDriverHandle );
 
       /* Get the data from each slowAccess data source in a different thread.
@@ -1430,22 +1430,27 @@ static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
    curSupportForDataSource = (TA_SupportForDataSource *)TA_ListAccessHead( listOfSupportForDataSource );
    TA_ASSERT( curSupportForDataSource != NULL );
 
+   /* Adjust the begin/end-of-period logic to the requested one */
+   retCode = TA_PeriodLogicAdjust( builderSupport, flags & TA_USE_END_OF_PERIOD );
+   if( retCode != TA_SUCCESS )
+      TA_TRACE_RETURN(retCode);
+
    /* Do "Normalization" of each data source. Normalization will bring all the
     * data source to the same common period so that the merge can take place.
     */
    retCode = TA_PeriodNormalize( builderSupport );
    if( retCode != TA_SUCCESS )
-      return retCode;
+      TA_TRACE_RETURN(retCode);
 
    /* Check for split/value adjustment for all data sources. */
    retCode = historyAdjustData( builderSupport );
    if( retCode != TA_SUCCESS )
-      return retCode;
+      TA_TRACE_RETURN(retCode);
 
    /* Merge the data from the multiple data sources. */
    if( nbDataSource == 1 )
    {
-      /* Handle seperatly the simplified case where there is only one data source.
+      /* Handle separately the simplified case where there is only one data source.
        * In that case, all the logic for merging operations can be bypass.
        */
       retCode = allocHistoryFromOneDataSource( privUDB, history, period,
@@ -1483,7 +1488,7 @@ static TA_RetCode allocHistory( TA_UDBasePriv *privUDB,
    }
 
    /* At this point the history merge is completed but not 
-    * necesseraly at the requested period. Adjust the
+    * necessarily at the requested period. Adjust the
     * timeframe as needed.
     */
    TA_ASSERT( *history != NULL );

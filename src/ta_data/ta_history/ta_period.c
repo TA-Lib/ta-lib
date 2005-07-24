@@ -49,7 +49,7 @@
  *              Now allow to transform in pre-allocated buffer.
  *  103104 MF   Add support for TA_ALLOW_INCOMPLETE_PRICE_BARS
  *  111804 MF   Add support for TA_USE_TOTAL_VOLUME/OPENINTEREST
- *  062105 PK   Added (partial) support for end-of-period
+ *  062105 PK   Added support for end-of-period
  *              timestamp logic.
  */
 
@@ -83,12 +83,48 @@
 #endif
 
 /**** Local functions declarations.    ****/
-/* None */
+void convertTimestampLogic(TA_List* listOfDataBlock, int toEop);
 
 /**** Local variables definitions.     ****/
 TA_FILE_INFO;
 
 /**** Global functions definitions.   ****/
+
+TA_RetCode TA_PeriodLogicAdjust( TA_BuilderSupport *builderSupport, TA_HistoryFlag flag )
+{
+   TA_ListIter iterSource;
+   TA_SupportForDataSource *supportForDataSource;
+
+   if( !builderSupport )
+      return TA_BAD_PARAM;
+
+   /* Iterate through all the data sources. */
+   TA_ListIterInit( &iterSource, builderSupport->listOfSupportForDataSource );
+
+   supportForDataSource = (TA_SupportForDataSource *)TA_ListIterHead(&iterSource);
+
+   while( supportForDataSource )
+   {
+      if ( (supportForDataSource->addDataSourceParamPriv->flags & TA_SOURCE_USES_END_OF_PERIOD)
+         && !(flag & TA_USE_END_OF_PERIOD))
+      {
+         /* Convert all timestamps from end-of-period to begin-of-period, as requested */
+         convertTimestampLogic(supportForDataSource->listOfDataBlock, flag & TA_USE_END_OF_PERIOD);
+      }
+      else
+      if ( !(supportForDataSource->addDataSourceParamPriv->flags & TA_SOURCE_USES_END_OF_PERIOD)
+         && (flag & TA_USE_END_OF_PERIOD))
+      {
+         /* Convert all timestamps from begin-of-period to end-of-period, as requested */
+         convertTimestampLogic(supportForDataSource->listOfDataBlock, flag & TA_USE_END_OF_PERIOD);
+      }
+
+      /* Check for handling the next data source. */
+      supportForDataSource = (TA_SupportForDataSource *)TA_ListIterNext(&iterSource);
+   }
+
+   return TA_SUCCESS;
+}
 
 
 TA_RetCode TA_PeriodNormalize( TA_BuilderSupport *builderSupport )
@@ -660,7 +696,7 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
                   }
                   else
                   {
-                     TA_JumpToEndOfYear( &tempLocalTimestamp );
+                     TA_JumpToEndOfYear( &cur_timestamp );
                   }
                   break;
             default:
@@ -911,5 +947,93 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
 }
 
 /**** Local functions definitions.     ****/
-/* None */
 
+void convertTimestampLogic(TA_List* listOfDataBlock, int toEop)
+{
+   TA_ListIter blockIter;
+   TA_DataBlock *curDataBlock;
+
+   if (!listOfDataBlock)
+      return;
+
+   /* Iterate through all data blocks. */
+   TA_ListIterInit( &blockIter, listOfDataBlock );
+   
+   curDataBlock = (TA_DataBlock *)TA_ListIterHead(&blockIter);
+   
+   while( curDataBlock )
+   {
+      if ( !curDataBlock->timestamp )
+      {
+         /* this should not happen, but if does, ignore the case */
+      }
+      else
+      if ( curDataBlock->period < TA_DAILY )  /* intraday */
+      {
+         int adjust = toEop? curDataBlock->period : -curDataBlock->period;
+         int i = curDataBlock->nbBars;
+         TA_Timestamp *timestamp = curDataBlock->timestamp;
+         TA_Timestamp tmp_ts;
+
+         while ( i-- > 0 )
+         {
+            TA_TimestampCopy(&tmp_ts, &timestamp[i]);
+            TA_AddTimeToTimestamp(&timestamp[i], &tmp_ts, adjust);
+            
+         }
+      }
+      else /* daily or longer */
+      {
+         TA_Period period = curDataBlock->period;
+         int i = curDataBlock->nbBars;
+         TA_Timestamp *timestamp = curDataBlock->timestamp;
+         
+         while ( i-- > 0 )
+         {
+            switch( period )
+            {
+
+            case TA_WEEKLY:
+                  if (!toEop)
+                     TA_BackToDayOfWeek( &timestamp[i], TA_SUNDAY );
+                  else
+                     TA_JumpToDayOfWeek( &timestamp[i], TA_SATURDAY );
+                  break;
+
+            case TA_MONTHLY:
+                  if (!toEop)
+                     TA_BackToBeginOfMonth( &timestamp[i] );
+                  else
+                     TA_JumpToEndOfMonth( &timestamp[i] );
+                  break;
+
+            case TA_QUARTERLY:
+                  if (!toEop)
+                     TA_BackToBeginOfQuarter( &timestamp[i] );
+                  else
+                     TA_JumpToEndOfQuarter( &timestamp[i] );
+                  break;
+
+            case TA_YEARLY:
+                  if (!toEop)
+                     TA_BackToBeginOfYear( &timestamp[i] );
+                  else
+                     TA_JumpToEndOfYear( &timestamp[i] );
+                  break;
+
+            default:
+                  /* Do nothing. */
+                  break;
+            }   
+
+            if (!toEop)
+               timestamp[i].time = 0;
+            else
+               TA_SetTime( 23, 59, 59, &timestamp[i] );
+         }
+      }
+
+      /* Check for handling the next data block. */
+      curDataBlock = (TA_DataBlock *)TA_ListIterNext(&blockIter);
+   }
+}

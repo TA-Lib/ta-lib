@@ -194,8 +194,14 @@ typedef struct
 
 /********** Prototype for function in ta_period.c *********/
 
+/* Will make all list of datablock use the same period logic. 
+ * That is all datablocks using begin-of-period or end-of-period
+ * timestamps.
+ */
+TA_RetCode TA_PeriodLogicAdjust( TA_BuilderSupport *builderSupport, TA_HistoryFlag flag );
+
 /* Will make all list of datablock use the same period. The datablock
- * with the longuest period will determine the period.
+ * with the longest period will determine the period.
  *
  * Example: if a data source provides the data in 15 minutes increment
  *          and another in daily price bar, all data block will be normalize

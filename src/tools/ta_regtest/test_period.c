@@ -389,16 +389,6 @@ ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
    TA_History  *historyBop, *historyEop;
    TA_UDBase  *localDatabase;
 
-   /* The main database uses the beginning-of-period logic.
-    * As by now, mixing of begin- and end-of-period logic
-    * is not supported.
-    */
-   memset( &sourceParam, 0, sizeof( TA_AddDataSourceParam ) );
-   sourceParam.id = TA_SIMULATOR;
-   sourceParam.flags = TA_SOURCE_USES_END_OF_PERIOD;
-   retCode = TA_AddDataSource( mainDatabase, &sourceParam );
-   historyBop = historyEop = NULL;
-
 #define CLEANUP_AND_RETURN_WITH_ERROR(errorMsg,retCode,retValue)  \
    {                                                              \
       printf(errorMsg, retCode);                                  \
@@ -416,13 +406,9 @@ ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
       return retValue;                                            \
    }
 
-   if( retCode != TA_NOT_SUPPORTED )
-   {
-      printf( "TA_AddDataSource (end->begin) failed [%d]\n", retCode );
-      return TA_PERIOD_END_OF_PERIOD_ADD_FAILED;
-   }
-
-   /* Create own unified database. */
+   /* The main database uses the beginning-of-period logic.
+    * The "localDatabase" will use end-of-period logic.
+    */
    retCode = TA_UDBaseAlloc( &localDatabase );
    if( retCode != TA_SUCCESS )
    {
@@ -433,6 +419,11 @@ ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
    /* Adding end-of-period source to an empty database 
     * should always succeed.
     */
+   memset( &sourceParam, 0, sizeof( TA_AddDataSourceParam ) );
+   sourceParam.id = TA_SIMULATOR;
+   sourceParam.flags = TA_SOURCE_USES_END_OF_PERIOD;
+   retCode = TA_AddDataSource( mainDatabase, &sourceParam );
+   historyBop = historyEop = NULL;
    retCode = TA_AddDataSource( localDatabase, &sourceParam );
 
    if( retCode != TA_SUCCESS )
@@ -442,18 +433,6 @@ ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
          TA_PERIOD_END_OF_PERIOD_ADD_FAILED
       );
 
-   /* However, adding begin-of-period should fail */
-   sourceParam.flags &= !TA_SOURCE_USES_END_OF_PERIOD;
-   retCode = TA_AddDataSource( localDatabase, &sourceParam );
-
-   if( retCode != TA_NOT_SUPPORTED )
-      CLEANUP_AND_RETURN_WITH_ERROR(
-         "TA_AddDataSource (begin->end) failed [%d]\n",
-         retCode,
-         TA_PERIOD_END_OF_PERIOD_ADD_FAILED
-      );
-
-
    /* Check whether history flags are treated consistently */
    memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
    histParam.category = "TA_SIM_REF";
@@ -461,18 +440,7 @@ ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
    histParam.period   = TA_10MINS;  /* no consolidation */
    histParam.field    = TA_ALL;
    
-   /* For now, no end->begin or begin->end conversion are supported */
-   histParam.flags    = TA_USE_END_OF_PERIOD;
-   retCode = TA_HistoryAlloc( mainDatabase, &histParam, &historyBop );
-
-   if( retCode != TA_NOT_SUPPORTED )
-      CLEANUP_AND_RETURN_WITH_ERROR(
-         "TA_HistoryAlloc (begin->end) failed [%d]\n",
-         retCode,
-         TA_PERIOD_END_OF_PERIOD_HISTORY_FAILED
-      );
-
-   /* But allocating regular history should succeed */
+   /* Allocating regular history (no conversion) should succeed */
    histParam.flags   &= !TA_USE_END_OF_PERIOD;
    retCode = TA_HistoryAlloc( mainDatabase, &histParam, &historyBop );
 
@@ -483,17 +451,7 @@ ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
          TA_PERIOD_END_OF_PERIOD_HISTORY_FAILED
       );
 
-   /* Now try to get begin-of-period from end-of-period database */
-   retCode = TA_HistoryAlloc( localDatabase, &histParam, &historyEop );
-
-   if( retCode != TA_NOT_SUPPORTED )
-      CLEANUP_AND_RETURN_WITH_ERROR(
-         "TA_HistoryAlloc (end->begin) failed [%d]\n",
-         retCode,
-         TA_PERIOD_END_OF_PERIOD_HISTORY_FAILED
-      );
-
-   /* Well, the end logic has to work, though */
+   /* No conversion but end-of-period logic history */
    histParam.flags    = TA_USE_END_OF_PERIOD;
    retCode = TA_HistoryAlloc( localDatabase, &histParam, &historyEop );
 
