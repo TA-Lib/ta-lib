@@ -110,8 +110,8 @@
 /* Generated */                    int    endIdx,
 /* Generated */                    const double inClose[],
 /* Generated */                    const int    inVolume[],
-/* Generated */                    int          REF(outBegIdx),
-/* Generated */                    int          REF(outNbElement),
+/* Generated */                    int          *outBegIdx,
+/* Generated */                    int          *outNbElement,
 /* Generated */                    double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -143,8 +143,8 @@
    /* Insert TA function code here. */
 
    /* Default return values */
-   REF(outBegIdx)    = 0;
-   REF(outNbElement) = 0;
+   *outBegIdx    = 0;
+   *outNbElement = 0;
 
    return TA_SUCCESS;
 }
@@ -171,8 +171,8 @@
 /* Generated */                      int    endIdx,
 /* Generated */                      const float  inClose[],
 /* Generated */                      const int    inVolume[],
-/* Generated */                      int          REF(outBegIdx),
-/* Generated */                      int          REF(outNbElement),
+/* Generated */                      int          *outBegIdx,
+/* Generated */                      int          *outNbElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
@@ -186,8 +186,8 @@
 /* Generated */     if( outReal == NULL )
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
-/* Generated */    REF(outBegIdx)    = 0;
-/* Generated */    REF(outNbElement) = 0;
+/* Generated */    *outBegIdx    = 0;
+/* Generated */    *outNbElement = 0;
 /* Generated */    return TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
