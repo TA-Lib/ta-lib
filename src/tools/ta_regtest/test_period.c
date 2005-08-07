@@ -467,7 +467,7 @@ ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
 
    if( retValue != TA_TEST_PASS )
       CLEANUP_AND_RETURN_WITH_ERROR(
-         "End-of-period stamped quotes are invalid\n",
+         "End-of-period stamped quotes are invalid [%d]\n",
          retCode,
          retValue
       );
@@ -503,7 +503,7 @@ ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
 
    if( retValue != TA_TEST_PASS )
       CLEANUP_AND_RETURN_WITH_ERROR(
-         "End-of-period stamped consolidated quotes are invalid\n",
+         "End-of-period stamped consolidated quotes are invalid [%d]\n",
          retCode,
          retValue
       );
@@ -539,7 +539,7 @@ ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
    
    if( retValue != TA_TEST_PASS )
       CLEANUP_AND_RETURN_WITH_ERROR(
-         "End-of-period stamped consolidated quotes (daily) are invalid\n",
+         "End-of-period stamped consolidated quotes (daily) are invalid [%d]\n",
          retCode,
          retValue
       );
@@ -576,7 +576,7 @@ ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
    
    if( retValue != TA_TEST_PASS )
       CLEANUP_AND_RETURN_WITH_ERROR(
-         "End-of-period stamped quotes (daily) are invalid\n",
+         "End-of-period stamped quotes (daily) are invalid [%d]\n",
          retCode,
          retValue
       );
@@ -613,7 +613,7 @@ ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
    
    if( retValue != TA_TEST_PASS )
       CLEANUP_AND_RETURN_WITH_ERROR(
-         "End-of-period stamped quotes (weekly) are invalid\n",
+         "End-of-period stamped quotes (weekly) are invalid [%d]\n",
          retCode,
          retValue
       );
@@ -650,7 +650,7 @@ ErrorNumber test_end_of_period( TA_UDBase *mainDatabase )
    
    if( retValue != TA_TEST_PASS )
       CLEANUP_AND_RETURN_WITH_ERROR(
-      "End-of-period stamped quotes (monthly) are invalid\n",
+      "End-of-period stamped quotes (monthly) are invalid [%d]\n",
       retCode,
       retValue
       );
