@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -117,7 +117,7 @@ int main( int argc, char **argv )
    retValue = test_internals();
    if( retValue != TA_TEST_PASS )
    {
-      printf( "Failed internal cricular buffer test with code=%d\n", retValue );
+      printf( "\nFailed an internal test with code=%d\n", retValue );
       return retValue;
    }
 
