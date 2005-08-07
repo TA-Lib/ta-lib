@@ -1,5 +1,5 @@
 
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -555,6 +555,14 @@ typedef enum
 } TA_RegressionTestId;
 
 TA_RetCode TA_RegressionTest( TA_RegressionTestId id );
+
+/* Seed for the pseudo-random generator. */
+void TA_SRand( UInt32 seed );
+
+/* Return a pseudo-random value.
+ * Implemented using the Mersenne Twister algorithm.
+ */
+double TA_Rand();
 
 #ifdef __cplusplus
 }
