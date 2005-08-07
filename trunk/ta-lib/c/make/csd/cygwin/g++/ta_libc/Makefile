@@ -11,7 +11,7 @@ CC	=	gcc
 CXX	=	g++
 CFLAGS	=	-pipe -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
 CXXFLAGS=	-pipe -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
-INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_data -I../../../../../src/ta_data/ta_source -I../../../../../src/ta_data/ta_source/ta_fileindex -I../../../../../src/ta_data/ta_source/ta_ascii -I../../../../../src/ta_data/ta_source/ta_readop -I../../../../../src/ta_data/ta_source/ta_yahoo -I../../../../../src/ta_data/ta_source/ta_sql -I../../../../../src/ta_data/ta_source/ta_csi -I../../../../../src/ta_data/ta_history -I../../../../../src/ta_data/ta_source/ta_simulator -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include -I../../../../../src/ta_common/bzip2 -I../../../../../src/ta_abstract -I../../../../../src/ta_abstract/tables -I../../../../../src/ta_abstract/frames -I../../../../../src/ta_pm -I$(QTDIR)/include
+INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_data -I../../../../../src/ta_data/ta_source -I../../../../../src/ta_data/ta_source/ta_fileindex -I../../../../../src/ta_data/ta_source/ta_ascii -I../../../../../src/ta_data/ta_source/ta_readop -I../../../../../src/ta_data/ta_source/ta_yahoo -I../../../../../src/ta_data/ta_source/ta_sql -I../../../../../src/ta_data/ta_source/ta_csi -I../../../../../src/ta_data/ta_history -I../../../../../src/ta_data/ta_source/ta_simulator -I../../../../../src/ta_common/imatix/sfl -I../../../../../src/ta_common/kazlib -I../../../../../include -I../../../../../src/ta_common/bzip2 -I../../../../../src/ta_common/mt -I../../../../../src/ta_abstract -I../../../../../src/ta_abstract/tables -I../../../../../src/ta_abstract/frames -I../../../../../src/ta_pm -I$(QTDIR)/include
 AR	=	ar cqs
 RANLIB	=	
 MOC	=	$(QTDIR)/bin/moc
@@ -98,6 +98,8 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_common/ta_trace.c \
 		../../../../../src/ta_common/ta_retcode.c \
 		../../../../../src/ta_common/ta_version.c \
+		../../../../../src/ta_common/ta_random.c \
+		../../../../../src/ta_common/mt/mt19937ar.c \
 		../../../../../src/ta_abstract/ta_abstract.c \
 		../../../../../src/ta_abstract/ta_def_ui.c \
 		../../../../../src/ta_abstract/ta_group_idx.c \
@@ -327,6 +329,8 @@ OBJECTS =	../../../../../temp/csd/ta_ascii.o \
 		../../../../../temp/csd/ta_trace.o \
 		../../../../../temp/csd/ta_retcode.o \
 		../../../../../temp/csd/ta_version.o \
+		../../../../../temp/csd/ta_random.o \
+		../../../../../temp/csd/mt19937ar.o \
 		../../../../../temp/csd/ta_abstract.o \
 		../../../../../temp/csd/ta_def_ui.o \
 		../../../../../temp/csd/ta_group_idx.o \
@@ -738,6 +742,12 @@ clean:
 
 ../../../../../temp/csd/ta_version.o: ../../../../../src/ta_common/ta_version.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_version.o ../../../../../src/ta_common/ta_version.c
+
+../../../../../temp/csd/ta_random.o: ../../../../../src/ta_common/ta_random.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_random.o ../../../../../src/ta_common/ta_random.c
+
+../../../../../temp/csd/mt19937ar.o: ../../../../../src/ta_common/mt/mt19937ar.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/mt19937ar.o ../../../../../src/ta_common/mt/mt19937ar.c
 
 ../../../../../temp/csd/ta_abstract.o: ../../../../../src/ta_abstract/ta_abstract.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csd/ta_abstract.o ../../../../../src/ta_abstract/ta_abstract.c

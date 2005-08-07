@@ -11,7 +11,7 @@ CC	=	sc
 CXX	=	sc
 CFLAGS	=	-mn -w2 -o -DWIN32
 CXXFLAGS=	-mn -w2 -o -DWIN32
-INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\include"
+INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\src\ta_common\mt" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\include"
 LIB	=	lib /C /N /NOI /P:32
 MOC	=	moc
 
@@ -47,7 +47,9 @@ SOURCES =	..\..\..\..\..\src\ta_common\bzip2\blocksort.c \
 		..\..\..\..\..\src\ta_common\ta_timestamp.c \
 		..\..\..\..\..\src\ta_common\ta_trace.c \
 		..\..\..\..\..\src\ta_common\ta_retcode.c \
-		..\..\..\..\..\src\ta_common\ta_version.c
+		..\..\..\..\..\src\ta_common\ta_version.c \
+		..\..\..\..\..\src\ta_common\ta_random.c \
+		..\..\..\..\..\src\ta_common\mt\mt19937ar.c
 OBJECTS =	..\..\..\..\..\temp\cmr\blocksort.obj \
 		..\..\..\..\..\temp\cmr\bzlib.obj \
 		..\..\..\..\..\temp\cmr\compress.obj \
@@ -75,7 +77,9 @@ OBJECTS =	..\..\..\..\..\temp\cmr\blocksort.obj \
 		..\..\..\..\..\temp\cmr\ta_timestamp.obj \
 		..\..\..\..\..\temp\cmr\ta_trace.obj \
 		..\..\..\..\..\temp\cmr\ta_retcode.obj \
-		..\..\..\..\..\temp\cmr\ta_version.obj
+		..\..\..\..\..\temp\cmr\ta_version.obj \
+		..\..\..\..\..\temp\cmr\ta_random.obj \
+		..\..\..\..\..\temp\cmr\mt19937ar.obj
 SRCMOC	=	
 OBJMOC	=	
 DIST	=	
@@ -131,6 +135,8 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_trace.obj \
 +..\..\..\..\..\temp\cmr\ta_retcode.obj \
 +..\..\..\..\..\temp\cmr\ta_version.obj \
++..\..\..\..\..\temp\cmr\ta_random.obj \
++..\..\..\..\..\temp\cmr\mt19937ar.obj \
 +,;
 
 moc: $(SRCMOC)
@@ -172,6 +178,8 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_trace.obj
 	-del ..\..\..\..\..\temp\cmr\ta_retcode.obj
 	-del ..\..\..\..\..\temp\cmr\ta_version.obj
+	-del ..\..\..\..\..\temp\cmr\ta_random.obj
+	-del ..\..\..\..\..\temp\cmr\mt19937ar.obj
 	-del $(TARGET)
 	-del ../../../../../bin/*.map
 	-del ../../../../../bin/*._xe
@@ -271,4 +279,10 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_version.obj: ..\..\..\..\..\src\ta_common\ta_version.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_version.obj ..\..\..\..\..\src\ta_common\ta_version.c
+
+..\..\..\..\..\temp\cmr\ta_random.obj: ..\..\..\..\..\src\ta_common\ta_random.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_random.obj ..\..\..\..\..\src\ta_common\ta_random.c
+
+..\..\..\..\..\temp\cmr\mt19937ar.obj: ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\mt19937ar.obj ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
 

@@ -11,7 +11,7 @@ CC	=	gcc
 CXX	=	g++
 CFLAGS	=	-pipe -fPIC -Wall -W -g -O -pg -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
 CXXFLAGS=	-pipe -fPIC -Wall -W -g -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD
-INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_common/bzip2 -I../../../../../src/ta_common/kazlib -I../../../../../src/ta_common/imatix/sfl -I../../../../../include
+INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_common/bzip2 -I../../../../../src/ta_common/kazlib -I../../../../../src/ta_common/mt -I../../../../../src/ta_common/imatix/sfl -I../../../../../include
 AR	=	ar cqs
 RANLIB	=	
 MOC	=	$(QTDIR)/bin/moc
@@ -60,7 +60,9 @@ SOURCES =	../../../../../src/ta_common/bzip2/blocksort.c \
 		../../../../../src/ta_common/ta_timestamp.c \
 		../../../../../src/ta_common/ta_trace.c \
 		../../../../../src/ta_common/ta_retcode.c \
-		../../../../../src/ta_common/ta_version.c
+		../../../../../src/ta_common/ta_version.c \
+		../../../../../src/ta_common/ta_random.c \
+		../../../../../src/ta_common/mt/mt19937ar.c
 OBJECTS =	../../../../../temp/csp/blocksort.o \
 		../../../../../temp/csp/bzlib.o \
 		../../../../../temp/csp/compress.o \
@@ -88,7 +90,9 @@ OBJECTS =	../../../../../temp/csp/blocksort.o \
 		../../../../../temp/csp/ta_timestamp.o \
 		../../../../../temp/csp/ta_trace.o \
 		../../../../../temp/csp/ta_retcode.o \
-		../../../../../temp/csp/ta_version.o
+		../../../../../temp/csp/ta_version.o \
+		../../../../../temp/csp/ta_random.o \
+		../../../../../temp/csp/mt19937ar.o
 INTERFACES =	
 UICDECLS =	
 UICIMPLS =	
@@ -225,4 +229,10 @@ clean:
 
 ../../../../../temp/csp/ta_version.o: ../../../../../src/ta_common/ta_version.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csp/ta_version.o ../../../../../src/ta_common/ta_version.c
+
+../../../../../temp/csp/ta_random.o: ../../../../../src/ta_common/ta_random.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csp/ta_random.o ../../../../../src/ta_common/ta_random.c
+
+../../../../../temp/csp/mt19937ar.o: ../../../../../src/ta_common/mt/mt19937ar.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csp/mt19937ar.o ../../../../../src/ta_common/mt/mt19937ar.c
 

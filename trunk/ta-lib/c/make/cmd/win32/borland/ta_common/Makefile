@@ -15,7 +15,7 @@ CC	=	bcc32
 CXX	=	bcc32
 CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -w-8080 -tWM -DTA_DEBUG -D_DEBUG -DWIN32 -DQT_THREAD_SUPPORT
 CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -w-8080 -tWM -DTA_DEBUG -D_DEBUG -DWIN32 -DQT_THREAD_SUPPORT
-INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\include"
+INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\src\ta_common\mt" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\include"
 LIB	=	tlib /C /P256
 MOC	=	moc
 UIC	=	uic
@@ -54,7 +54,9 @@ SOURCES =	..\..\..\..\..\src\ta_common\bzip2\blocksort.c \
 		..\..\..\..\..\src\ta_common\ta_timestamp.c \
 		..\..\..\..\..\src\ta_common\ta_trace.c \
 		..\..\..\..\..\src\ta_common\ta_retcode.c \
-		..\..\..\..\..\src\ta_common\ta_version.c
+		..\..\..\..\..\src\ta_common\ta_version.c \
+		..\..\..\..\..\src\ta_common\ta_random.c \
+		..\..\..\..\..\src\ta_common\mt\mt19937ar.c
 OBJECTS =	..\..\..\..\..\temp\cmd\blocksort.obj \
 		..\..\..\..\..\temp\cmd\bzlib.obj \
 		..\..\..\..\..\temp\cmd\compress.obj \
@@ -82,7 +84,9 @@ OBJECTS =	..\..\..\..\..\temp\cmd\blocksort.obj \
 		..\..\..\..\..\temp\cmd\ta_timestamp.obj \
 		..\..\..\..\..\temp\cmd\ta_trace.obj \
 		..\..\..\..\..\temp\cmd\ta_retcode.obj \
-		..\..\..\..\..\temp\cmd\ta_version.obj
+		..\..\..\..\..\temp\cmd\ta_version.obj \
+		..\..\..\..\..\temp\cmd\ta_random.obj \
+		..\..\..\..\..\temp\cmd\mt19937ar.obj
 INTERFACES =	
 UICDECLS =	
 UICIMPLS =	
@@ -143,6 +147,8 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmd\ta_trace.obj \
 +..\..\..\..\..\temp\cmd\ta_retcode.obj \
 +..\..\..\..\..\temp\cmd\ta_version.obj \
++..\..\..\..\..\temp\cmd\ta_random.obj \
++..\..\..\..\..\temp\cmd\mt19937ar.obj \
 +
 |
 
@@ -185,6 +191,8 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_trace.obj
 	-del ..\..\..\..\..\temp\cmd\ta_retcode.obj
 	-del ..\..\..\..\..\temp\cmd\ta_version.obj
+	-del ..\..\..\..\..\temp\cmd\ta_random.obj
+	-del ..\..\..\..\..\temp\cmd\mt19937ar.obj
 	-del $(TARGET)
 	-del ta_common_cmd.tds
 	-del ../../../../../bin/*.map
@@ -285,4 +293,10 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_version.obj: ..\..\..\..\..\src\ta_common\ta_version.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_version.obj ..\..\..\..\..\src\ta_common\ta_version.c
+
+..\..\..\..\..\temp\cmd\ta_random.obj: ..\..\..\..\..\src\ta_common\ta_random.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_random.obj ..\..\..\..\..\src\ta_common\ta_random.c
+
+..\..\..\..\..\temp\cmd\mt19937ar.obj: ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\mt19937ar.obj ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
 

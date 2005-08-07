@@ -11,7 +11,7 @@ CC	=	cl
 CXX	=	cl
 CFLAGS	=	-nologo -W3 -Zi -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD -DWIN32 -D_MBCS -D_LIB
 CXXFLAGS=	-nologo -W3 -Zi -DTA_DEBUG -D_DEBUG -DTA_SINGLE_THREAD -DWIN32 -D_MBCS -D_LIB
-INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data\ta_source\ta_fileindex" -I"..\..\..\..\..\src\ta_data\ta_source\ta_ascii" -I"..\..\..\..\..\src\ta_data\ta_source\ta_readop" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\src\ta_data\ta_source\ta_sql" -I"..\..\..\..\..\src\ta_data\ta_source\ta_csi" -I"..\..\..\..\..\src\ta_data\ta_history" -I"..\..\..\..\..\src\ta_data\ta_source\ta_simulator" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_abstract" -I"..\..\..\..\..\src\ta_abstract\tables" -I"..\..\..\..\..\src\ta_abstract\frames" -I"..\..\..\..\..\src\ta_pm" -I"$(QTDIR)\include"
+INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data\ta_source\ta_fileindex" -I"..\..\..\..\..\src\ta_data\ta_source\ta_ascii" -I"..\..\..\..\..\src\ta_data\ta_source\ta_readop" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\src\ta_data\ta_source\ta_sql" -I"..\..\..\..\..\src\ta_data\ta_source\ta_csi" -I"..\..\..\..\..\src\ta_data\ta_history" -I"..\..\..\..\..\src\ta_data\ta_source\ta_simulator" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_common\mt" -I"..\..\..\..\..\src\ta_abstract" -I"..\..\..\..\..\src\ta_abstract\tables" -I"..\..\..\..\..\src\ta_abstract\frames" -I"..\..\..\..\..\src\ta_pm" -I"$(QTDIR)\include"
 LIB	=	lib /NOLOGO
 MOC	=	moc
 UIC	=	uic
@@ -86,6 +86,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_common\ta_trace.c \
 		..\..\..\..\..\src\ta_common\ta_retcode.c \
 		..\..\..\..\..\src\ta_common\ta_version.c \
+		..\..\..\..\..\src\ta_common\ta_random.c \
+		..\..\..\..\..\src\ta_common\mt\mt19937ar.c \
 		..\..\..\..\..\src\ta_abstract\ta_abstract.c \
 		..\..\..\..\..\src\ta_abstract\ta_def_ui.c \
 		..\..\..\..\..\src\ta_abstract\ta_group_idx.c \
@@ -316,6 +318,8 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj \
 		..\..\..\..\..\temp\csd\ta_trace.obj \
 		..\..\..\..\..\temp\csd\ta_retcode.obj \
 		..\..\..\..\..\temp\csd\ta_version.obj \
+		..\..\..\..\..\temp\csd\ta_random.obj \
+		..\..\..\..\..\temp\csd\mt19937ar.obj \
 		..\..\..\..\..\temp\csd\ta_abstract.obj \
 		..\..\..\..\..\temp\csd\ta_def_ui.obj \
 		..\..\..\..\..\temp\csd\ta_group_idx.obj \
@@ -591,6 +595,8 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_trace.obj
 	-del ..\..\..\..\..\temp\csd\ta_retcode.obj
 	-del ..\..\..\..\..\temp\csd\ta_version.obj
+	-del ..\..\..\..\..\temp\csd\ta_random.obj
+	-del ..\..\..\..\..\temp\csd\mt19937ar.obj
 	-del ..\..\..\..\..\temp\csd\ta_abstract.obj
 	-del ..\..\..\..\..\temp\csd\ta_def_ui.obj
 	-del ..\..\..\..\..\temp\csd\ta_group_idx.obj
@@ -964,6 +970,12 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_version.obj: ..\..\..\..\..\src\ta_common\ta_version.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\ta_version.obj ..\..\..\..\..\src\ta_common\ta_version.c
+
+..\..\..\..\..\temp\csd\ta_random.obj: ..\..\..\..\..\src\ta_common\ta_random.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\ta_random.obj ..\..\..\..\..\src\ta_common\ta_random.c
+
+..\..\..\..\..\temp\csd\mt19937ar.obj: ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\mt19937ar.obj ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
 
 ..\..\..\..\..\temp\csd\ta_abstract.obj: ..\..\..\..\..\src\ta_abstract\ta_abstract.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csd\ta_abstract.obj ..\..\..\..\..\src\ta_abstract\ta_abstract.c

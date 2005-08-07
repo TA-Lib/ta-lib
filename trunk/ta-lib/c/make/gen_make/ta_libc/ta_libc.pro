@@ -93,6 +93,8 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_common/ta_trace.c \
           ../../../../../src/ta_common/ta_retcode.c \
           ../../../../../src/ta_common/ta_version.c \
+          ../../../../../src/ta_common/ta_random.c \
+          ../../../../../src/ta_common/mt/mt19937ar.c \
           ../../../../../src/ta_abstract/ta_abstract.c \
           ../../../../../src/ta_abstract/ta_def_ui.c \
           ../../../../../src/ta_abstract/ta_group_idx.c \
@@ -279,6 +281,7 @@ INCLUDEPATH *= ../../../../../include
 INCLUDEPATH *= ../../../../../src/ta_common
 INCLUDEPATH *= ../../../../../src/ta_common/bzip2
 INCLUDEPATH *= ../../../../../src/ta_common/kazlib
+INCLUDEPATH *= ../../../../../src/ta_common/mt
 INCLUDEPATH *= ../../../../../src/ta_common/imatix/sfl
 INCLUDEPATH *= ../../../../../include
 INCLUDEPATH *= ../../../../../src/ta_common
