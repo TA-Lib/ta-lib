@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -394,7 +394,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 
    if( outBegIdx != 0 )
    {
-      printf( "[%s] failed outBegIdx=%d when startIdx==endIdx==0\n", outBegIdx );
+      printf( "failed outBegIdx=%d when startIdx==endIdx==0\n", outBegIdx );
       TA_ParamHolderFree( paramHolder );
       return TA_ABS_TST_FAIL_STARTEND_ZERO;
    }
