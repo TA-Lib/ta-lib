@@ -86,7 +86,8 @@ INCLUDEPATH = ../../../../../src/ta_common \
               ../../../../../src/ta_func \
               ../../../../../include \
               ../../../../../src/ta_common/imatix/sfl \
-              ../../../../../src/ta_common/trio
+              ../../../../../src/ta_common/trio \
+              ../../../../../src/ta_common/mt
 
 # debug/release dependent options.
 debug:DEFINES   *= TA_DEBUG

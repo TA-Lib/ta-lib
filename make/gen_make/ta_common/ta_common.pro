@@ -54,13 +54,16 @@ SOURCES	= ../../../../../src/ta_common/bzip2/blocksort.c \
           ../../../../../src/ta_common/ta_timestamp.c \
           ../../../../../src/ta_common/ta_trace.c \
           ../../../../../src/ta_common/ta_retcode.c \
-          ../../../../../src/ta_common/ta_version.c
+          ../../../../../src/ta_common/ta_version.c \
+	  ../../../../../src/ta_common/ta_random.c \
+	  ../../../../../src/ta_common/mt/mt19937ar.c
 
 
 # Compiler Options
 INCLUDEPATH = ../../../../../src/ta_common \
               ../../../../../src/ta_common/bzip2 \
               ../../../../../src/ta_common/kazlib \
+              ../../../../../src/ta_common/mt \
               ../../../../../src/ta_common/imatix/sfl \
               ../../../../../include
 

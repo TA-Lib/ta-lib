@@ -15,7 +15,7 @@ CC	=	bcc32
 CXX	=	bcc32
 CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -w-8080 -tWM -O2 -DWIN32 -DQT_THREAD_SUPPORT -DNO_DEBUG
 CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -w-8080 -tWM -O2 -DWIN32 -DQT_THREAD_SUPPORT -DNO_DEBUG
-INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data\ta_source\ta_fileindex" -I"..\..\..\..\..\src\ta_data\ta_source\ta_ascii" -I"..\..\..\..\..\src\ta_data\ta_source\ta_readop" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\src\ta_data\ta_source\ta_sql" -I"..\..\..\..\..\src\ta_data\ta_source\ta_csi" -I"..\..\..\..\..\src\ta_data\ta_history" -I"..\..\..\..\..\src\ta_data\ta_source\ta_simulator" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_abstract" -I"..\..\..\..\..\src\ta_abstract\tables" -I"..\..\..\..\..\src\ta_abstract\frames" -I"..\..\..\..\..\src\ta_pm" -I"$(QTDIR)\include"
+INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_data" -I"..\..\..\..\..\src\ta_data\ta_source" -I"..\..\..\..\..\src\ta_data\ta_source\ta_fileindex" -I"..\..\..\..\..\src\ta_data\ta_source\ta_ascii" -I"..\..\..\..\..\src\ta_data\ta_source\ta_readop" -I"..\..\..\..\..\src\ta_data\ta_source\ta_yahoo" -I"..\..\..\..\..\src\ta_data\ta_source\ta_sql" -I"..\..\..\..\..\src\ta_data\ta_source\ta_csi" -I"..\..\..\..\..\src\ta_data\ta_history" -I"..\..\..\..\..\src\ta_data\ta_source\ta_simulator" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_common\mt" -I"..\..\..\..\..\src\ta_abstract" -I"..\..\..\..\..\src\ta_abstract\tables" -I"..\..\..\..\..\src\ta_abstract\frames" -I"..\..\..\..\..\src\ta_pm" -I"$(QTDIR)\include"
 LIB	=	tlib /C /P256
 MOC	=	moc
 UIC	=	uic
@@ -92,6 +92,8 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_common\ta_trace.c \
 		..\..\..\..\..\src\ta_common\ta_retcode.c \
 		..\..\..\..\..\src\ta_common\ta_version.c \
+		..\..\..\..\..\src\ta_common\ta_random.c \
+		..\..\..\..\..\src\ta_common\mt\mt19937ar.c \
 		..\..\..\..\..\src\ta_abstract\ta_abstract.c \
 		..\..\..\..\..\src\ta_abstract\ta_def_ui.c \
 		..\..\..\..\..\src\ta_abstract\ta_group_idx.c \
@@ -322,6 +324,8 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_ascii.obj \
 		..\..\..\..\..\temp\cmr\ta_trace.obj \
 		..\..\..\..\..\temp\cmr\ta_retcode.obj \
 		..\..\..\..\..\temp\cmr\ta_version.obj \
+		..\..\..\..\..\temp\cmr\ta_random.obj \
+		..\..\..\..\..\temp\cmr\mt19937ar.obj \
 		..\..\..\..\..\temp\cmr\ta_abstract.obj \
 		..\..\..\..\..\temp\cmr\ta_def_ui.obj \
 		..\..\..\..\..\temp\cmr\ta_group_idx.obj \
@@ -584,6 +588,8 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_trace.obj \
 +..\..\..\..\..\temp\cmr\ta_retcode.obj \
 +..\..\..\..\..\temp\cmr\ta_version.obj \
++..\..\..\..\..\temp\cmr\ta_random.obj \
++..\..\..\..\..\temp\cmr\mt19937ar.obj \
 +..\..\..\..\..\temp\cmr\ta_abstract.obj \
 +..\..\..\..\..\temp\cmr\ta_def_ui.obj \
 +..\..\..\..\..\temp\cmr\ta_group_idx.obj \
@@ -828,6 +834,8 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_trace.obj
 	-del ..\..\..\..\..\temp\cmr\ta_retcode.obj
 	-del ..\..\..\..\..\temp\cmr\ta_version.obj
+	-del ..\..\..\..\..\temp\cmr\ta_random.obj
+	-del ..\..\..\..\..\temp\cmr\mt19937ar.obj
 	-del ..\..\..\..\..\temp\cmr\ta_abstract.obj
 	-del ..\..\..\..\..\temp\cmr\ta_def_ui.obj
 	-del ..\..\..\..\..\temp\cmr\ta_group_idx.obj
@@ -1199,6 +1207,12 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_version.obj: ..\..\..\..\..\src\ta_common\ta_version.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_version.obj ..\..\..\..\..\src\ta_common\ta_version.c
+
+..\..\..\..\..\temp\cmr\ta_random.obj: ..\..\..\..\..\src\ta_common\ta_random.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_random.obj ..\..\..\..\..\src\ta_common\ta_random.c
+
+..\..\..\..\..\temp\cmr\mt19937ar.obj: ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\mt19937ar.obj ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
 
 ..\..\..\..\..\temp\cmr\ta_abstract.obj: ..\..\..\..\..\src\ta_abstract\ta_abstract.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_abstract.obj ..\..\..\..\..\src\ta_abstract\ta_abstract.c

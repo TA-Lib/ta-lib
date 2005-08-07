@@ -11,7 +11,7 @@ CC	=	cl
 CXX	=	cl
 CFLAGS	=	-nologo -W3 -MDd -DTA_DEBUG -D_DEBUG -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT
 CXXFLAGS=	-nologo -W3 -MDd -DTA_DEBUG -D_DEBUG -DWIN32 -D_MBCS -D_LIB -DQT_THREAD_SUPPORT
-INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\include"
+INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_common\bzip2" -I"..\..\..\..\..\src\ta_common\kazlib" -I"..\..\..\..\..\src\ta_common\mt" -I"..\..\..\..\..\src\ta_common\imatix\sfl" -I"..\..\..\..\..\include"
 LIB	=	lib /NOLOGO
 MOC	=	moc
 UIC	=	uic
@@ -48,7 +48,9 @@ SOURCES =	..\..\..\..\..\src\ta_common\bzip2\blocksort.c \
 		..\..\..\..\..\src\ta_common\ta_timestamp.c \
 		..\..\..\..\..\src\ta_common\ta_trace.c \
 		..\..\..\..\..\src\ta_common\ta_retcode.c \
-		..\..\..\..\..\src\ta_common\ta_version.c
+		..\..\..\..\..\src\ta_common\ta_version.c \
+		..\..\..\..\..\src\ta_common\ta_random.c \
+		..\..\..\..\..\src\ta_common\mt\mt19937ar.c
 OBJECTS =	..\..\..\..\..\temp\cdd\blocksort.obj \
 		..\..\..\..\..\temp\cdd\bzlib.obj \
 		..\..\..\..\..\temp\cdd\compress.obj \
@@ -76,7 +78,9 @@ OBJECTS =	..\..\..\..\..\temp\cdd\blocksort.obj \
 		..\..\..\..\..\temp\cdd\ta_timestamp.obj \
 		..\..\..\..\..\temp\cdd\ta_trace.obj \
 		..\..\..\..\..\temp\cdd\ta_retcode.obj \
-		..\..\..\..\..\temp\cdd\ta_version.obj
+		..\..\..\..\..\temp\cdd\ta_version.obj \
+		..\..\..\..\..\temp\cdd\ta_random.obj \
+		..\..\..\..\..\temp\cdd\mt19937ar.obj
 INTERFACES =	
 UICDECLS =	
 UICIMPLS =	
@@ -150,6 +154,8 @@ clean:
 	-del ..\..\..\..\..\temp\cdd\ta_trace.obj
 	-del ..\..\..\..\..\temp\cdd\ta_retcode.obj
 	-del ..\..\..\..\..\temp\cdd\ta_version.obj
+	-del ..\..\..\..\..\temp\cdd\ta_random.obj
+	-del ..\..\..\..\..\temp\cdd\mt19937ar.obj
 	-del $(TARGET)
 	-del ../../../../../bin/*.map
 	-del ../../../../../bin/*._xe
@@ -252,4 +258,10 @@ clean:
 
 ..\..\..\..\..\temp\cdd\ta_version.obj: ..\..\..\..\..\src\ta_common\ta_version.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_version.obj ..\..\..\..\..\src\ta_common\ta_version.c
+
+..\..\..\..\..\temp\cdd\ta_random.obj: ..\..\..\..\..\src\ta_common\ta_random.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_random.obj ..\..\..\..\..\src\ta_common\ta_random.c
+
+..\..\..\..\..\temp\cdd\mt19937ar.obj: ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\mt19937ar.obj ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
 
