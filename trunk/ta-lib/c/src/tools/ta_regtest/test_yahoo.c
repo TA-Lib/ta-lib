@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -51,8 +51,6 @@
  */
 
 /**** Headers ****/
-#include <stdio.h>
-#include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 
