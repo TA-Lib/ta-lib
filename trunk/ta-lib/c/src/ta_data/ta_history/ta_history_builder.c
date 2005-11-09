@@ -53,6 +53,7 @@
  *  060605 MF,AC  Fix merge logic.
  *  061805 MF     Fix merge logic for bug found with test_AsciiExample.
  *  070305 MF,PK  Fix #1229243 memory leak in some failure scenario. 
+ *  110905 MF     Replace volume adjustment overflows with INT_MAX.
  */
 
 /* Description:
@@ -1017,6 +1018,8 @@ static TA_RetCode historyAdjustData( TA_BuilderSupport *builderSupport )
    TA_SplitAdjust *curSplitAdjust;
    double factor, factorVolume, temp;
    int i;
+   int tempInt, tempInt2;
+
 
    if( !builderSupport )
       return TA_BAD_PARAM;
@@ -1118,7 +1121,20 @@ static TA_RetCode historyAdjustData( TA_BuilderSupport *builderSupport )
                 #undef ADJUST_PRICE
 
                 if( curDataBlock->volume )
-                   curDataBlock->volume[i] = (int)(curDataBlock->volume[i]*factorVolume);
+                {
+                   tempInt  = curDataBlock->volume[i];
+                   tempInt2 = (int)(tempInt*factorVolume);
+                   if( (tempInt2 < 0) ||
+                       ((factorVolume < 1.0) && (tempInt2 > tempInt)) ||
+                       ((factorVolume > 1.0) && (tempInt2 < tempInt)) )
+                   {
+                      curDataBlock->volume[i] = INT_MAX;
+                   }
+                   else
+                   {
+                      curDataBlock->volume[i] = tempInt2;
+                   }
+                }
              }         
 
              curDataBlock = TA_ListIterPrev(&blockIter);
