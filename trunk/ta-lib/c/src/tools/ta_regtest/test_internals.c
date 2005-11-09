@@ -45,6 +45,7 @@
  *  070401 MF   First version.
  *  050104 MF   Add TA_RegressionTest calls.
  *  080605 MF   Add tests for pseudo-random generator.
+ *  091705 MF   Add tests for TA_AddTimeToTimestamp (Fix#1293953).
  */
 
 /* Description:
@@ -63,6 +64,7 @@
 #include "ta_trace.h"
 #include "ta_defs.h"
 #include "mt19937ar.h"
+#include "ta_common.h"
 
 
 /**** External functions declarations. ****/
@@ -81,6 +83,7 @@
 static ErrorNumber testFatalErrors( void );
 static ErrorNumber testCircularBuffer( void );
 static ErrorNumber testPseudoRandomGenerator( void );
+static ErrorNumber testTimestamps( void );
 
 static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer );
 
@@ -119,6 +122,13 @@ ErrorNumber test_internals( void )
       return retValue;
    }
 
+   retValue = testTimestamps();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Timestamps generator test (%d)\n", retValue );
+      return retValue;
+   }
+
    return TA_TEST_PASS; /* Success. */
 }
 
@@ -141,7 +151,7 @@ static ErrorNumber testFatalErrors( void )
 
    retCode = TA_RegressionTest(TA_REG_TEST_FATAL_ERROR);
    if( retCode != TA_FATAL_ERR )
-      return TA_FATAL_TST_FAIL;
+      return TA_INTERNAL_FATAL_TST_FAIL;
 
    /* After a function returns a TA_FATAL_ERR, further
     * information can be obtained with TA_FatalReportToBuffer()
@@ -179,7 +189,7 @@ static ErrorNumber testFatalErrors( void )
 
    retCode = TA_RegressionTest(TA_REG_TEST_ASSERT_FAIL);
    if( retCode != TA_FATAL_ERR )
-      return TA_ASSERT_TST_FAIL;
+      return TA_INTERNAL_ASSERT_TST_FAIL;
 
    retValue = freeLib( uDBase );
    if( retValue != TA_TEST_PASS )
@@ -213,14 +223,14 @@ static ErrorNumber testCircularBuffer( void )
    if( retCode != TA_SUCCESS )
    {
       printf( "\nFailed circular buffer test RetCode = %d\n", retCode );
-      return TA_CIRC_BUFF_FAIL_0;
+      return TA_INTERNAL_CIRC_BUFF_FAIL_0;
    }
    for( i=0; i < (1+3); i++ )
    {
       if( buffer[i] != i )
       {
          printf( "\nFailed circular buffer test (%d != %d)\n", buffer[i], i );
-         return TA_CIRC_BUFF_FAIL_1;
+         return TA_INTERNAL_CIRC_BUFF_FAIL_1;
       }
    }
 
@@ -229,14 +239,14 @@ static ErrorNumber testCircularBuffer( void )
    if( retCode != TA_SUCCESS )
    {
       printf( "\nFailed circular buffer test RetCode = %d\n", retCode );
-      return TA_CIRC_BUFF_FAIL_0;
+      return TA_INTERNAL_CIRC_BUFF_FAIL_0;
    }
    for( i=0; i < (2+3); i++ )
    {
       if( buffer[i] != i )
       {
          printf( "\nFailed circular buffer test (%d != %d)\n", buffer[i], i );
-         return TA_CIRC_BUFF_FAIL_2;
+         return TA_INTERNAL_CIRC_BUFF_FAIL_2;
       }
    }
 
@@ -245,14 +255,14 @@ static ErrorNumber testCircularBuffer( void )
    if( retCode != TA_SUCCESS )
    {
       printf( "\nFailed circular buffer test RetCode = %d\n", retCode );
-      return TA_CIRC_BUFF_FAIL_0;
+      return TA_INTERNAL_CIRC_BUFF_FAIL_0;
    }
    for( i=0; i < (3+3); i++ )
    {
       if( buffer[i] != i )
       {
          printf( "\nFailed circular buffer test (%d != %d)\n", buffer[i], i );
-         return TA_CIRC_BUFF_FAIL_3;
+         return TA_INTERNAL_CIRC_BUFF_FAIL_3;
       }
    }
 
@@ -261,14 +271,14 @@ static ErrorNumber testCircularBuffer( void )
    if( retCode != TA_SUCCESS )
    {
       printf( "\nFailed circular buffer test RetCode = %d\n", retCode );
-      return TA_CIRC_BUFF_FAIL_0;
+      return TA_INTERNAL_CIRC_BUFF_FAIL_0;
    }
    for( i=0; i < (4+3); i++ )
    {
       if( buffer[i] != i )
       {
          printf( "\nFailed circular buffer test (%d != %d)\n", buffer[i], i );
-         return TA_CIRC_BUFF_FAIL_4;
+         return TA_INTERNAL_CIRC_BUFF_FAIL_4;
       }
    }
 
@@ -277,14 +287,14 @@ static ErrorNumber testCircularBuffer( void )
    if( retCode != TA_SUCCESS )
    {
       printf( "\nFailed circular buffer test RetCode = %d\n", retCode );
-      return TA_CIRC_BUFF_FAIL_0;
+      return TA_INTERNAL_CIRC_BUFF_FAIL_0;
    }
    for( i=0; i < (5+3); i++ )
    {
       if( buffer[i] != i )
       {
          printf( "\nFailed circular buffer test (%d != %d)\n", buffer[i], i );
-         return TA_CIRC_BUFF_FAIL_5;
+         return TA_INTERNAL_CIRC_BUFF_FAIL_5;
       }
    }
 
@@ -293,14 +303,14 @@ static ErrorNumber testCircularBuffer( void )
    if( retCode != TA_SUCCESS )
    {
       printf( "\nFailed circular buffer test RetCode = %d\n", retCode );
-      return TA_CIRC_BUFF_FAIL_0;
+      return TA_INTERNAL_CIRC_BUFF_FAIL_0;
    }
    for( i=0; i < (6+3); i++ )
    {
       if( buffer[i] != i )
       {
          printf( "\nFailed circular buffer test (%d != %d)\n", buffer[i], i );
-         return TA_CIRC_BUFF_FAIL_6;
+         return TA_INTERNAL_CIRC_BUFF_FAIL_6;
       }
    }
 
@@ -778,7 +788,7 @@ static ErrorNumber testPseudoRandomGenerator( void )
       if( tempUInt32 != ExpectedRandomValuesUInt32[i] )
       {
          printf("%10u != %10u", tempUInt32, ExpectedRandomValuesUInt32[i] );
-         return TA_TESTUTIL_PSEUDORANDOM_UINT32;
+         return TA_INTERNAL_PSEUDORANDOM_UINT32;
       }
     }
 
@@ -789,9 +799,33 @@ static ErrorNumber testPseudoRandomGenerator( void )
       if( strcmp(buffer1,buffer2) != 0 )
       {
          printf("%10.8f != %10.8f", tempDouble, ExpectedRandomValuesDouble[i] );
-         return TA_TESTUTIL_PSEUDORANDOM_DOUBLE;  
+         return TA_INTERNAL_PSEUDORANDOM_DOUBLE;  
       }
     }
    
    return TA_TEST_PASS; /* Success */
 }
+
+static ErrorNumber testTimestamps( void )
+{
+  TA_Timestamp ts;
+
+  /* TEst for fix #1293953. */
+  TA_SetDate( 2001, 1, 1, &ts );
+  TA_SetTime( 8, 0, 0, &ts );
+  TA_AddTimeToTimestamp( &ts, &ts, TA_30MINS );
+
+  if( (TA_GetYear( &ts ) != 2001) ||
+      (TA_GetMonth( &ts ) != 1) ||
+      (TA_GetDay( &ts ) != 1) ||
+      (TA_GetHour( &ts ) != 8) ||
+      (TA_GetMin( &ts ) != 30) ||
+      (TA_GetSec( &ts ) != 0) )
+  {
+     printf( "Internal Error: Timestamp offset bug\n" );
+     return TA_INTERNAL_TIMESTAMP_TEST_FAILED;
+  }
+
+  return TA_TEST_PASS; /* Success */
+}
+
