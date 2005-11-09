@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -496,6 +496,20 @@ typedef struct
 
    /* Optional flags. */
    TA_HistoryFlag flags;
+
+   /* Timeout
+    *
+    * Define the maximum amount of time that 
+    * TA-Lib should retry to get the data.
+    *
+    * Leave to zero for reasonable best-effort
+    * retries: 
+    *     - up to 1/2 hour for online data.
+    *     - No retries for SQL and ASCII files.
+    *     etc...
+    */
+   unsigned int timeout; /* Nb of seconds */
+
 } TA_HistoryAllocParam;
 
 TA_RetCode TA_HistoryAlloc( TA_UDBase *unifiedDatabase,
