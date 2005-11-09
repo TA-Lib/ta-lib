@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -49,6 +49,7 @@
  *  020104 MF   Add TA_TimestampValidateYMD and TA_TimestampValidateHMS 
  *  052604 AK   Add TA_TimestampAlign, TA_AddTimeToTimestamp
  *              and TA_TimestampDeltaIntraday.
+ *  091705 MF   Fix #1293953 for TA_AddTimeToTimestamp.
  *
  */
 
@@ -309,14 +310,12 @@ TA_RetCode TA_TimestampAlign( TA_Timestamp *dest,
    }
    #endif
 
-
    if( !src || !dest )
       return TA_BAD_PARAM;
 
    /* Calculate the number of seconds from the day's beginning --AK-- */
-   TA_TimestampCopy(dest, src);
-   sec1 = date_to_timer(dest->date, dest->time);
-   sec2 = date_to_timer(dest->date, 0);
+   sec1 = date_to_timer(src->date, src->time);
+   sec2 = date_to_timer(src->date, 0);
    seconds = sec1 - sec2;
 
    /* Allign seconds --AK-- */
@@ -759,6 +758,7 @@ TA_RetCode TA_AddTimeToTimestamp( TA_Timestamp *dest,
 {
    long offset;
    time_t timer;
+   TA_Timestamp temp;
    #ifdef TA_DEBUG
    TA_RetCode retCode;
    #endif
@@ -774,23 +774,23 @@ TA_RetCode TA_AddTimeToTimestamp( TA_Timestamp *dest,
    }
    #endif
 
-   TA_TimestampCopy(dest, src);
+   TA_TimestampCopy(&temp, src);
 
    /* Move the date approximately to the middle of the valid */ 
    /* time_t range: between 1970 amd 2038 --AK--             */
-   TA_SetDate(2004,1,1,dest);
+   TA_SetDate(2004,1,1,&temp);
 
    /* Store the offset --AK--                                */
-   offset =  date_to_days(src->date) - date_to_days(dest->date);
+   offset =  date_to_days(src->date) - date_to_days(temp.date);
    
    /* Add the delta --AK--                                   */
-   timer = date_to_timer(dest->date, dest->time);
+   timer = date_to_timer(temp.date, temp.time);
    timer += delta;
-   dest->date = timer_to_date(timer);
+   temp.date = timer_to_date(timer);
    dest->time = timer_to_time(timer);
 
    /* Restore the offset --AK--                               */
-   dest->date = days_to_date(offset + date_to_days(dest->date) );
+   dest->date = days_to_date(offset + date_to_days(temp.date) );
 
    return TA_SUCCESS;   
 }
