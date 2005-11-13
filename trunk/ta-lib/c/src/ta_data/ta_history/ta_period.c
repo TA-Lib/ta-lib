@@ -779,23 +779,8 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
       {
          #define SET_DEST_FROM_OLD_IF_NOT_NULL(var,todo) { if( dest_##var ) { dest_##var[newPriceBar] = todo; } }
          
-         /* Check if we are at a new day */
-         currentDay   = TA_GetDay  ( &old_timestamp[oldPriceBar] );
-         currentMonth = TA_GetMonth( &old_timestamp[oldPriceBar] );
-         currentYear  = TA_GetYear ( &old_timestamp[oldPriceBar] );
-
-         if( (currentDay != day )  || (currentMonth != month) || (currentYear != year) ){
-            newDay = 1;
-            day    = currentDay;
-            month  = currentMonth;
-            year   = currentYear;
-         }else{
-            newDay = 0;
-         }
-
          /* Check if the new bar is already completed --AK-- */
-         if( newDay || 
-             TA_TimestampGreater(&old_timestamp[oldPriceBar],&next_DEST_ts) ||
+         if( TA_TimestampGreater(&old_timestamp[oldPriceBar],&next_DEST_ts) ||
              (!useEndOfPeriodLogic && TA_TimestampEqual(&old_timestamp[oldPriceBar],&next_DEST_ts)) )
          {
              periodCompleted = 1;
