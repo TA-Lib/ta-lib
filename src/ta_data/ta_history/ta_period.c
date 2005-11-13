@@ -315,6 +315,12 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
       TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );
    }
  
+   if( useEndOfPeriodLogic && transformToDailyAndMore )
+   {
+       /* not implemented yet */
+       TA_TRACE_RETURN( TA_PERIOD_NOT_AVAILABLE );
+   }
+
 
    old_timestamp    = &history->timestamp   [0];
    old_open         = &history->open        [0];
@@ -636,68 +642,34 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
          {
             switch( newPeriod )
             {
+            case TA_DAILY:
+                  break;
             case TA_WEEKLY:
-                  if (!useEndOfPeriodLogic)
-                  {
-                     /* Now something a little bit tricky, we must
-                      * make sure that this new price bar is reported
-                      * as being the Sunday of that week.
-                      */
-                     TA_BackToDayOfWeek( &cur_timestamp, TA_SUNDAY );
-                  }
-                  else
-                  {
-                     /* In case of end of period, a weeks end on Saturday
-                      */
-                     TA_JumpToDayOfWeek( &cur_timestamp, TA_SATURDAY );
-                  }
+                  /* Now something a little bit tricky, we must
+                   * make sure that this new price bar is reported
+                   * as being the Sunday of that week.
+                   */
+                  TA_BackToDayOfWeek( &cur_timestamp, TA_SUNDAY );
                   break;
             case TA_MONTHLY:
-                  if (!useEndOfPeriodLogic)
-                  {
-                     /* Monthly timestamp are always on the first day of
-                      * the month.
-                      */
-                     TA_BackToBeginOfMonth( &cur_timestamp );
-                  }
-                  else
-                  {
-                     /* End-of-period timestamps ate in the last day of 
-                      * the month.
-                      */
-                     TA_JumpToEndOfMonth( &cur_timestamp );
-                  }
+                  /* Monthly timestamp are always on the first day of
+                   * the month.
+                   */
+                  TA_BackToBeginOfMonth( &cur_timestamp );
                   break;
             case TA_QUARTERLY:
-                  if (!useEndOfPeriodLogic)
-                  {
-                     /* Quarterly timestamp are always the first day of
-                      * the quarter.
-                      * Quarter 1 =  1/1
-                      * Quarter 2 =  4/1
-                      * Quarter 3 =  7/1
-                      * Quarter 4 = 10/1
-                      */
-                     TA_BackToBeginOfQuarter( &cur_timestamp );
-                  }
-                  else
-                  {
-                     /* End-of-period timestamps are on the last day of 
-                      * the quarter.
-                      */
-                     TA_JumpToEndOfQuarter( &cur_timestamp );
-                  }
+                  /* Quarterly timestamp are always the first day of
+                   * the quarter.
+                   * Quarter 1 =  1/1
+                   * Quarter 2 =  4/1
+                   * Quarter 3 =  7/1
+                   * Quarter 4 = 10/1
+                   */
+                  TA_BackToBeginOfQuarter( &cur_timestamp );
                   break;
             case TA_YEARLY:
-                  if (!useEndOfPeriodLogic)
-                  {
-                     /* Yearly data always on January 1st. */
-                     TA_BackToBeginOfYear( &cur_timestamp );
-                  }
-                  else
-                  {
-                     TA_JumpToEndOfYear( &cur_timestamp );
-                  }
+                  /* Yearly data always on January 1st. */
+                  TA_BackToBeginOfYear( &cur_timestamp );
                   break;
             default:
                   /* Do nothing. */
@@ -705,16 +677,7 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
             }   
 
             dest_timestamp[newPriceBar].date = cur_timestamp.date;
-            if (!useEndOfPeriodLogic)
-            {
-                /* All EOD price bar starts at 00:00:00 */
-               dest_timestamp[newPriceBar].time = 0;
-            }
-            else
-            {
-               /* All end-of-period price bars have time at the end of day */
-               TA_SetTime( 23, 59, 59, &dest_timestamp[newPriceBar] );
-            }
+            dest_timestamp[newPriceBar].time = 0; /* All price bar starts at 00:00:00 */
          }
          #define SET_DEST_PERIOD_IF_NOT_NULL(var) { if( dest_##var ) { dest_##var[newPriceBar] = cur_##var; } }
          SET_DEST_PERIOD_IF_NOT_NULL( open );
@@ -739,11 +702,9 @@ TA_RetCode TA_PeriodTransform( TA_History *history,       /* The original histor
          tempTimestamp = &dest_timestamp[newPriceBar-1];
          TA_TimestampCopy(&tempLocalTimestamp,tempTimestamp);
 
-         if( newPeriod == TA_WEEKLY ) {
-            if (!useEndOfPeriodLogic)
+         if( newPeriod == TA_WEEKLY ) 
+         {
                TA_JumpToDayOfWeek( &tempLocalTimestamp, TA_FRIDAY );
-            else
-               TA_BackToDayOfWeek( &tempLocalTimestamp, TA_FRIDAY );
          }
          else
          {
@@ -997,28 +958,40 @@ void convertTimestampLogic(TA_List* listOfDataBlock, int toEop)
                   if (!toEop)
                      TA_BackToDayOfWeek( &timestamp[i], TA_SUNDAY );
                   else
-                     TA_JumpToDayOfWeek( &timestamp[i], TA_SATURDAY );
+                  {
+                     TA_JumpToDayOfWeek( &timestamp[i], TA_SUNDAY );
+                     TA_NextDay( &timestamp[i] );
+                  }
                   break;
 
             case TA_MONTHLY:
                   if (!toEop)
                      TA_BackToBeginOfMonth( &timestamp[i] );
                   else
+                  {
                      TA_JumpToEndOfMonth( &timestamp[i] );
+                     TA_NextDay( &timestamp[i] );
+                  }
                   break;
 
             case TA_QUARTERLY:
                   if (!toEop)
                      TA_BackToBeginOfQuarter( &timestamp[i] );
                   else
+                  {
                      TA_JumpToEndOfQuarter( &timestamp[i] );
+                     TA_NextDay( &timestamp[i] );
+                  }
                   break;
 
             case TA_YEARLY:
                   if (!toEop)
                      TA_BackToBeginOfYear( &timestamp[i] );
                   else
+                  {
                      TA_JumpToEndOfYear( &timestamp[i] );
+                     TA_NextDay( &timestamp[i] );
+                  }
                   break;
 
             default:
@@ -1026,10 +999,7 @@ void convertTimestampLogic(TA_List* listOfDataBlock, int toEop)
                   break;
             }   
 
-            if (!toEop)
-               timestamp[i].time = 0;
-            else
-               TA_SetTime( 23, 59, 59, &timestamp[i] );
+            timestamp[i].time = 0;
          }
       }
 
