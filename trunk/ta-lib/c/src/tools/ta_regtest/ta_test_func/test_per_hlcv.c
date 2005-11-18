@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  011103 MF   First version.
- *
+ *  111705 MF   Add test for Fix#1359452 (AD Function).
  */
 
 /* Description:
@@ -599,8 +599,7 @@ static ErrorNumber do_test( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   /* The previous call to TA_MA should have the same output
-    * as this call.
+   /* The previous call should have the same output as this call.
     *
     * checkSameContent verify that all value different than NAN in
     * the first parameter is identical in the second parameter.
@@ -652,6 +651,59 @@ static ErrorNumber do_test( const TA_History *history,
       default:
          break;
       }
+   }
+
+   /* Check for fix #1359452 - AD RAnge not working as expected. */
+   if( test->theFunction == TA_AD_TEST )
+   {
+      gBuffer[0].out0[0] = -1.0;
+      gBuffer[0].out0[1] = -1.0;
+      retCode = TA_AD( 0,
+                       0,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       history->volume,
+                       &outBegIdx,
+                       &outNbElement,
+                       &gBuffer[0].out0[0] );
+      if( retCode != TA_SUCCESS )
+      {
+         printf( "Failed AD call for fix #1359452 [%d]\n", retCode );
+         return TA_TEST_FAIL_BUG1359452_1;
+      }
+      if( gBuffer[0].out0[0] == -1.0 )
+      {
+         printf( "Failed AD call for fix #1359452 out0[0] == -1\n" );
+         return TA_TEST_FAIL_BUG1359452_2;
+      }
+
+      retCode = TA_AD( 1,
+                       1,
+                       gBuffer[0].in,
+                       gBuffer[1].in,
+                       gBuffer[2].in,
+                       history->volume,
+                       &outBegIdx,
+                       &outNbElement,
+                       &gBuffer[0].out0[1] );
+      if( retCode != TA_SUCCESS )
+      {
+         printf( "Failed AD call for fix #1359452 [%d]\n", retCode );
+         return TA_TEST_FAIL_BUG1359452_3;
+      }
+      if( gBuffer[0].out0[1] == -1.0 )
+      {
+         printf( "Failed AD call for fix #1359452 out0[1] == -1\n" );
+         return TA_TEST_FAIL_BUG1359452_4;
+      }
+
+      /* The two values are to be different. */
+      if( gBuffer[0].out0[1] == gBuffer[0].out0[0] )
+      {
+         printf( "Failed AD logic for fix #1359452\n" );
+         return TA_TEST_FAIL_BUG1359452_5;
+      }       
    }
 
    return TA_TEST_PASS;
