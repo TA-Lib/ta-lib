@@ -36,15 +36,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  JD       jdoyle
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  120802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *
+ *  120802 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  111705 MF,JD  Fix#1359452 for handling properly start/end range.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -123,7 +123,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
-   int nbBar, today, outIdx;
+   int nbBar, currentBar, outIdx;
 
    double high, low, close, tmp;
    double ad;
@@ -171,24 +171,23 @@
    nbBar = endIdx-startIdx+1;
    VALUE_HANDLE_DEREF(outNbElement) = nbBar;
    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
-   outIdx = 0;
-   today  = 0;
+   currentBar = startIdx;
    outIdx = 0;
    ad = 0.0;
 
    while( nbBar != 0 )
    {
-      high  = inHigh[today];
-      low   = inLow[today];
+      high  = inHigh[currentBar];
+      low   = inLow[currentBar];
       tmp   = high-low;
-      close = inClose[today];
+      close = inClose[currentBar];
 
       if( tmp > 0.0 )
-         ad += (((close-low)-(high-close))/tmp)*((double)inVolume[today]);
+         ad += (((close-low)-(high-close))/tmp)*((double)inVolume[currentBar]);
       
       outReal[outIdx++] = ad;
 
-      today++;
+      currentBar++;
       nbBar--;
    }
 
@@ -226,7 +225,7 @@
 /* Generated */                     double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
-/* Generated */    int nbBar, today, outIdx;
+/* Generated */    int nbBar, currentBar, outIdx;
 /* Generated */    double high, low, close, tmp;
 /* Generated */    double ad;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
@@ -242,20 +241,19 @@
 /* Generated */    nbBar = endIdx-startIdx+1;
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = nbBar;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
-/* Generated */    outIdx = 0;
-/* Generated */    today  = 0;
+/* Generated */    currentBar = startIdx;
 /* Generated */    outIdx = 0;
 /* Generated */    ad = 0.0;
 /* Generated */    while( nbBar != 0 )
 /* Generated */    {
-/* Generated */       high  = inHigh[today];
-/* Generated */       low   = inLow[today];
+/* Generated */       high  = inHigh[currentBar];
+/* Generated */       low   = inLow[currentBar];
 /* Generated */       tmp   = high-low;
-/* Generated */       close = inClose[today];
+/* Generated */       close = inClose[currentBar];
 /* Generated */       if( tmp > 0.0 )
-/* Generated */          ad += (((close-low)-(high-close))/tmp)*((double)inVolume[today]);
+/* Generated */          ad += (((close-low)-(high-close))/tmp)*((double)inVolume[currentBar]);
 /* Generated */       outReal[outIdx++] = ad;
-/* Generated */       today++;
+/* Generated */       currentBar++;
 /* Generated */       nbBar--;
 /* Generated */    }
 /* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
