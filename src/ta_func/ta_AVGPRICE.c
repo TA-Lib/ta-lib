@@ -44,7 +44,7 @@
  *  -------------------------------------------------------------------
  *  010802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
- *
+ *  112605 MF   Fix outBegIdx when startIdx != 0
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -162,7 +162,7 @@
    }
 
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
-   VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+   VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
@@ -218,7 +218,7 @@
 /* Generated */                               inOpen [i]) / 4;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
-/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
