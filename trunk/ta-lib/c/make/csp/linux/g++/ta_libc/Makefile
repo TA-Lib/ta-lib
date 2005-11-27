@@ -141,6 +141,7 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_ATR.c \
 		../../../../../src/ta_func/ta_AVGPRICE.c \
 		../../../../../src/ta_func/ta_BBANDS.c \
+		../../../../../src/ta_func/ta_BOP.c \
 		../../../../../src/ta_func/ta_CCI.c \
 		../../../../../src/ta_func/ta_CDL2CROWS.c \
 		../../../../../src/ta_func/ta_CDL3BLACKCROWS.c \
@@ -372,6 +373,7 @@ OBJECTS =	../../../../../temp/csp/ta_ascii.o \
 		../../../../../temp/csp/ta_ATR.o \
 		../../../../../temp/csp/ta_AVGPRICE.o \
 		../../../../../temp/csp/ta_BBANDS.o \
+		../../../../../temp/csp/ta_BOP.o \
 		../../../../../temp/csp/ta_CCI.o \
 		../../../../../temp/csp/ta_CDL2CROWS.o \
 		../../../../../temp/csp/ta_CDL3BLACKCROWS.o \
@@ -871,6 +873,9 @@ clean:
 
 ../../../../../temp/csp/ta_BBANDS.o: ../../../../../src/ta_func/ta_BBANDS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csp/ta_BBANDS.o ../../../../../src/ta_func/ta_BBANDS.c
+
+../../../../../temp/csp/ta_BOP.o: ../../../../../src/ta_func/ta_BOP.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csp/ta_BOP.o ../../../../../src/ta_func/ta_BOP.c
 
 ../../../../../temp/csp/ta_CCI.o: ../../../../../src/ta_func/ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csp/ta_CCI.o ../../../../../src/ta_func/ta_CCI.c

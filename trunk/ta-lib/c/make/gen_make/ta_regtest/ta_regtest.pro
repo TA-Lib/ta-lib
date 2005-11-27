@@ -37,6 +37,7 @@ SOURCES	= ../../../../../src/tools/ta_regtest/ta_regtest.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hl.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlc.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlcv.c \
+          ../../../../../src/tools/ta_regtest/ta_test_func/test_per_ohlc.c \
           ../../../../../src/tools/ta_regtest/test_period.c \
           ../../../../../src/tools/ta_regtest/test_pm.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_po.c \

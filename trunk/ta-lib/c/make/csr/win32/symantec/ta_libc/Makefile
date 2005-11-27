@@ -128,6 +128,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_ATR.c \
 		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_BBANDS.c \
+		..\..\..\..\..\src\ta_func\ta_BOP.c \
 		..\..\..\..\..\src\ta_func\ta_CCI.c \
 		..\..\..\..\..\src\ta_func\ta_CDL2CROWS.c \
 		..\..\..\..\..\src\ta_func\ta_CDL3BLACKCROWS.c \
@@ -360,6 +361,7 @@ OBJECTS =	..\..\..\..\..\temp\csr\ta_ascii.obj \
 		..\..\..\..\..\temp\csr\ta_ATR.obj \
 		..\..\..\..\..\temp\csr\ta_AVGPRICE.obj \
 		..\..\..\..\..\temp\csr\ta_BBANDS.obj \
+		..\..\..\..\..\temp\csr\ta_BOP.obj \
 		..\..\..\..\..\temp\csr\ta_CCI.obj \
 		..\..\..\..\..\temp\csr\ta_CDL2CROWS.obj \
 		..\..\..\..\..\temp\csr\ta_CDL3BLACKCROWS.obj \
@@ -619,6 +621,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csr\ta_ATR.obj \
 +..\..\..\..\..\temp\csr\ta_AVGPRICE.obj \
 +..\..\..\..\..\temp\csr\ta_BBANDS.obj \
++..\..\..\..\..\temp\csr\ta_BOP.obj \
 +..\..\..\..\..\temp\csr\ta_CCI.obj \
 +..\..\..\..\..\temp\csr\ta_CDL2CROWS.obj \
 +..\..\..\..\..\temp\csr\ta_CDL3BLACKCROWS.obj \
@@ -864,6 +867,7 @@ clean:
 	-del ..\..\..\..\..\temp\csr\ta_ATR.obj
 	-del ..\..\..\..\..\temp\csr\ta_AVGPRICE.obj
 	-del ..\..\..\..\..\temp\csr\ta_BBANDS.obj
+	-del ..\..\..\..\..\temp\csr\ta_BOP.obj
 	-del ..\..\..\..\..\temp\csr\ta_CCI.obj
 	-del ..\..\..\..\..\temp\csr\ta_CDL2CROWS.obj
 	-del ..\..\..\..\..\temp\csr\ta_CDL3BLACKCROWS.obj
@@ -1322,6 +1326,9 @@ clean:
 
 ..\..\..\..\..\temp\csr\ta_BBANDS.obj: ..\..\..\..\..\src\ta_func\ta_BBANDS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_BBANDS.obj ..\..\..\..\..\src\ta_func\ta_BBANDS.c
+
+..\..\..\..\..\temp\csr\ta_BOP.obj: ..\..\..\..\..\src\ta_func\ta_BOP.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_BOP.obj ..\..\..\..\..\src\ta_func\ta_BOP.c
 
 ..\..\..\..\..\temp\csr\ta_CCI.obj: ..\..\..\..\..\src\ta_func\ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_CCI.obj ..\..\..\..\..\src\ta_func\ta_CCI.c
