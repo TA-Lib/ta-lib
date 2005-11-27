@@ -121,6 +121,30 @@ DEF_FUNCTION( BBANDS,                    /* name */
 /* BBANDS END */
 
 
+/* BOP BEGIN */
+static const TA_InputParameterInfo    *TA_BOP_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_BOP_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_BOP_OptInputs[] = { NULL };
+
+DEF_FUNCTION( BOP,                   /* name */
+              TA_GroupId_MomentumIndicators,  /* groupId */
+              "Balance Of Power",         /* hint */
+              NULL,                       /* helpFile */
+              0,                           /* flags */
+              NULL                        /* analysis function */
+             );
+/* BOP END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Order is not important. Must be NULL terminated.
@@ -128,6 +152,7 @@ DEF_FUNCTION( BBANDS,                    /* name */
 const TA_FuncDef *TA_DEF_TableB[] =
 {
    ADD_TO_TABLE(BBANDS),
+   ADD_TO_TABLE(BOP),
    NULL
 };
 
