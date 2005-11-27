@@ -258,6 +258,10 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ohlc.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\tools\ta_regtest\test_period.c
 # End Source File
 # Begin Source File
