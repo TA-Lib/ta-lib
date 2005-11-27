@@ -985,6 +985,36 @@ int TA_AROONOSC_Lookback( int           optInTimePeriod );  /* From 2 to 100000 
 
 
 /*
+ * TA_BOP - Balance Of Power
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = double
+ * 
+ */
+TA_RetCode TA_BOP( int    startIdx,
+                   int    endIdx,
+                   const double inOpen[],
+                   const double inHigh[],
+                   const double inLow[],
+                   const double inClose[],
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   double        outReal[] );
+
+TA_RetCode TA_S_BOP( int    startIdx,
+                     int    endIdx,
+                     const float  inOpen[],
+                     const float  inHigh[],
+                     const float  inLow[],
+                     const float  inClose[],
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal[] );
+
+int TA_BOP_Lookback( void );
+
+
+/*
  * TA_CCI - Commodity Channel Index
  * 
  * Input  = High, Low, Close

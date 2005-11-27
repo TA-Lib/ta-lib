@@ -322,6 +322,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_AROONOSC.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_BOP.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CCI.c
 # End Source File
 # Begin Source File
