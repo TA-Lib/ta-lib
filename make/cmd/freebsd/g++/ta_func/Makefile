@@ -105,6 +105,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_CDLUNIQUE3RIVER.c \
 		../../../../../src/ta_func/ta_CDLUPSIDEGAP2CROWS.c \
 		../../../../../src/ta_func/ta_CDLXSIDEGAP3METHODS.c \
+		../../../../../src/ta_func/ta_CMO.c \
 		../../../../../src/ta_func/ta_CORREL.c \
 		../../../../../src/ta_func/ta_DEMA.c \
 		../../../../../src/ta_func/ta_DX.c \
@@ -233,6 +234,7 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_CDLUNIQUE3RIVER.o \
 		../../../../../temp/cmd/ta_CDLUPSIDEGAP2CROWS.o \
 		../../../../../temp/cmd/ta_CDLXSIDEGAP3METHODS.o \
+		../../../../../temp/cmd/ta_CMO.o \
 		../../../../../temp/cmd/ta_CORREL.o \
 		../../../../../temp/cmd/ta_DEMA.o \
 		../../../../../temp/cmd/ta_DX.o \
@@ -557,6 +559,9 @@ clean:
 
 ../../../../../temp/cmd/ta_CDLXSIDEGAP3METHODS.o: ../../../../../src/ta_func/ta_CDLXSIDEGAP3METHODS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_CDLXSIDEGAP3METHODS.o ../../../../../src/ta_func/ta_CDLXSIDEGAP3METHODS.c
+
+../../../../../temp/cmd/ta_CMO.o: ../../../../../src/ta_func/ta_CMO.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_CMO.o ../../../../../src/ta_func/ta_CMO.c
 
 ../../../../../temp/cmd/ta_CORREL.o: ../../../../../src/ta_func/ta_CORREL.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_CORREL.o ../../../../../src/ta_func/ta_CORREL.c

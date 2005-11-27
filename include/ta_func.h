@@ -1051,6 +1051,38 @@ int TA_CCI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
+ * TA_CMO - Chande Momentum Oscillator
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_CMO( int    startIdx,
+                   int    endIdx,
+                   const double inReal[],
+                   int           optInTimePeriod, /* From 2 to 100000 */
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   double        outReal[] );
+
+TA_RetCode TA_S_CMO( int    startIdx,
+                     int    endIdx,
+                     const float  inReal[],
+                     int           optInTimePeriod, /* From 2 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal[] );
+
+int TA_CMO_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+/*
  * TA_DX - Directional Movement Index
  * 
  * Input  = High, Low, Close

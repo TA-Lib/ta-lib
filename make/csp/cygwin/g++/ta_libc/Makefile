@@ -202,6 +202,7 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_CDLUNIQUE3RIVER.c \
 		../../../../../src/ta_func/ta_CDLUPSIDEGAP2CROWS.c \
 		../../../../../src/ta_func/ta_CDLXSIDEGAP3METHODS.c \
+		../../../../../src/ta_func/ta_CMO.c \
 		../../../../../src/ta_func/ta_CORREL.c \
 		../../../../../src/ta_func/ta_DEMA.c \
 		../../../../../src/ta_func/ta_DX.c \
@@ -434,6 +435,7 @@ OBJECTS =	../../../../../temp/csp/ta_ascii.o \
 		../../../../../temp/csp/ta_CDLUNIQUE3RIVER.o \
 		../../../../../temp/csp/ta_CDLUPSIDEGAP2CROWS.o \
 		../../../../../temp/csp/ta_CDLXSIDEGAP3METHODS.o \
+		../../../../../temp/csp/ta_CMO.o \
 		../../../../../temp/csp/ta_CORREL.o \
 		../../../../../temp/csp/ta_DEMA.o \
 		../../../../../temp/csp/ta_DX.o \
@@ -1056,6 +1058,9 @@ clean:
 
 ../../../../../temp/csp/ta_CDLXSIDEGAP3METHODS.o: ../../../../../src/ta_func/ta_CDLXSIDEGAP3METHODS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csp/ta_CDLXSIDEGAP3METHODS.o ../../../../../src/ta_func/ta_CDLXSIDEGAP3METHODS.c
+
+../../../../../temp/csp/ta_CMO.o: ../../../../../src/ta_func/ta_CMO.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csp/ta_CMO.o ../../../../../src/ta_func/ta_CMO.c
 
 ../../../../../temp/csp/ta_CORREL.o: ../../../../../src/ta_func/ta_CORREL.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csp/ta_CORREL.o ../../../../../src/ta_func/ta_CORREL.c

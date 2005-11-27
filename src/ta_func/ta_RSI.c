@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -170,6 +170,11 @@
     * bar earlier. To make this possible, they assume
     * that the very first bar will be identical to the
     * previous one (no gain or loss).
+    */
+
+   /* If changing this function, please check also CMO 
+    * which is mostly identical (just different in one step 
+    * of calculation).
     */
 
    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
