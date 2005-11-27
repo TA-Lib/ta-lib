@@ -304,7 +304,7 @@ static int testTAFunction_ALL( TA_History *history )
    /* Make tests for each TA functions. */
    #define DO_TEST(func,str) \
       { \
-      printf( "%30s: Testing....", str ); \
+      printf( "%40s: Testing....", str ); \
       fflush(stdout); \
       showFeedback(); \
       TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT ); \
@@ -316,17 +316,17 @@ static int testTAFunction_ALL( TA_History *history )
       fflush(stdout); \
       }
    DO_TEST( test_func_per_ohlc, "BOP,AVGPRICE" );
+   DO_TEST( test_func_rsi,      "RSI,CMO" );
+   DO_TEST( test_func_1in_1out, "DCPERIOD/PHASE,TRENDLINE/MODE" );
    DO_TEST( test_func_po,       "PO,APO" );
    DO_TEST( test_func_adx,      "ADX,ADXR,DI,DM,DX" );
-   DO_TEST( test_func_sar,      "Parabolic SAR" );
-   DO_TEST( test_candlestick,   "Candlesticks" );
+   DO_TEST( test_func_sar,      "SAR,SAREXT" );
+   DO_TEST( test_candlestick,   "All Candlesticks" );
    DO_TEST( test_func_ma,       "All Moving Averages" );
    DO_TEST( test_func_stoch,    "STOCH,STOCHF,STOCHRSI" );
    DO_TEST( test_func_per_hl,   "AROON,CORREL" );
-   DO_TEST( test_func_rsi,      "RSI" );
    DO_TEST( test_func_per_hlc,  "CCI,WILLR" );
    DO_TEST( test_func_per_hlcv, "MFI,AD,ADOSC" );
-   DO_TEST( test_func_1in_1out, "DCPERIOD,DCPHASE,TRENDLINE,TRENDMODE" );
    DO_TEST( test_func_1in_2out, "PHASOR,SINE" );   
    DO_TEST( test_func_per_ema,  "TRIX" );
    DO_TEST( test_func_minmax,   "MIN,MAX" );

@@ -92,6 +92,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_CDLUNIQUE3RIVER.c \
 		..\..\..\..\..\src\ta_func\ta_CDLUPSIDEGAP2CROWS.c \
 		..\..\..\..\..\src\ta_func\ta_CDLXSIDEGAP3METHODS.c \
+		..\..\..\..\..\src\ta_func\ta_CMO.c \
 		..\..\..\..\..\src\ta_func\ta_CORREL.c \
 		..\..\..\..\..\src\ta_func\ta_DEMA.c \
 		..\..\..\..\..\src\ta_func\ta_DX.c \
@@ -220,6 +221,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_utility.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLUNIQUE3RIVER.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLUPSIDEGAP2CROWS.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLXSIDEGAP3METHODS.obj \
+		..\..\..\..\..\temp\cmr\ta_CMO.obj \
 		..\..\..\..\..\temp\cmr\ta_CORREL.obj \
 		..\..\..\..\..\temp\cmr\ta_DEMA.obj \
 		..\..\..\..\..\temp\cmr\ta_DX.obj \
@@ -375,6 +377,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_CDLUNIQUE3RIVER.obj \
 +..\..\..\..\..\temp\cmr\ta_CDLUPSIDEGAP2CROWS.obj \
 +..\..\..\..\..\temp\cmr\ta_CDLXSIDEGAP3METHODS.obj \
++..\..\..\..\..\temp\cmr\ta_CMO.obj \
 +..\..\..\..\..\temp\cmr\ta_CORREL.obj \
 +..\..\..\..\..\temp\cmr\ta_DEMA.obj \
 +..\..\..\..\..\temp\cmr\ta_DX.obj \
@@ -516,6 +519,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_CDLUNIQUE3RIVER.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLUPSIDEGAP2CROWS.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLXSIDEGAP3METHODS.obj
+	-del ..\..\..\..\..\temp\cmr\ta_CMO.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CORREL.obj
 	-del ..\..\..\..\..\temp\cmr\ta_DEMA.obj
 	-del ..\..\..\..\..\temp\cmr\ta_DX.obj
@@ -803,6 +807,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_CDLXSIDEGAP3METHODS.obj: ..\..\..\..\..\src\ta_func\ta_CDLXSIDEGAP3METHODS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CDLXSIDEGAP3METHODS.obj ..\..\..\..\..\src\ta_func\ta_CDLXSIDEGAP3METHODS.c
+
+..\..\..\..\..\temp\cmr\ta_CMO.obj: ..\..\..\..\..\src\ta_func\ta_CMO.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CMO.obj ..\..\..\..\..\src\ta_func\ta_CMO.c
 
 ..\..\..\..\..\temp\cmr\ta_CORREL.obj: ..\..\..\..\..\src\ta_func\ta_CORREL.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CORREL.obj ..\..\..\..\..\src\ta_func\ta_CORREL.c

@@ -93,6 +93,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_CDLUNIQUE3RIVER.c \
 		..\..\..\..\..\src\ta_func\ta_CDLUPSIDEGAP2CROWS.c \
 		..\..\..\..\..\src\ta_func\ta_CDLXSIDEGAP3METHODS.c \
+		..\..\..\..\..\src\ta_func\ta_CMO.c \
 		..\..\..\..\..\src\ta_func\ta_CORREL.c \
 		..\..\..\..\..\src\ta_func\ta_DEMA.c \
 		..\..\..\..\..\src\ta_func\ta_DX.c \
@@ -221,6 +222,7 @@ OBJECTS =	..\..\..\..\..\temp\cdd\ta_utility.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLUNIQUE3RIVER.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLUPSIDEGAP2CROWS.obj \
 		..\..\..\..\..\temp\cdd\ta_CDLXSIDEGAP3METHODS.obj \
+		..\..\..\..\..\temp\cdd\ta_CMO.obj \
 		..\..\..\..\..\temp\cdd\ta_CORREL.obj \
 		..\..\..\..\..\temp\cdd\ta_DEMA.obj \
 		..\..\..\..\..\temp\cdd\ta_DX.obj \
@@ -394,6 +396,7 @@ clean:
 	-del ..\..\..\..\..\temp\cdd\ta_CDLUNIQUE3RIVER.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLUPSIDEGAP2CROWS.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CDLXSIDEGAP3METHODS.obj
+	-del ..\..\..\..\..\temp\cdd\ta_CMO.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CORREL.obj
 	-del ..\..\..\..\..\temp\cdd\ta_DEMA.obj
 	-del ..\..\..\..\..\temp\cdd\ta_DX.obj
@@ -684,6 +687,9 @@ clean:
 
 ..\..\..\..\..\temp\cdd\ta_CDLXSIDEGAP3METHODS.obj: ..\..\..\..\..\src\ta_func\ta_CDLXSIDEGAP3METHODS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CDLXSIDEGAP3METHODS.obj ..\..\..\..\..\src\ta_func\ta_CDLXSIDEGAP3METHODS.c
+
+..\..\..\..\..\temp\cdd\ta_CMO.obj: ..\..\..\..\..\src\ta_func\ta_CMO.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CMO.obj ..\..\..\..\..\src\ta_func\ta_CMO.c
 
 ..\..\..\..\..\temp\cdd\ta_CORREL.obj: ..\..\..\..\..\src\ta_func\ta_CORREL.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_CORREL.obj ..\..\..\..\..\src\ta_func\ta_CORREL.c

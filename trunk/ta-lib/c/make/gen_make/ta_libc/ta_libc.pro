@@ -197,6 +197,7 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_CDLUNIQUE3RIVER.c \
           ../../../../../src/ta_func/ta_CDLUPSIDEGAP2CROWS.c \
           ../../../../../src/ta_func/ta_CDLXSIDEGAP3METHODS.c \
+          ../../../../../src/ta_func/ta_CMO.c \
           ../../../../../src/ta_func/ta_CORREL.c \
           ../../../../../src/ta_func/ta_DEMA.c \
           ../../../../../src/ta_func/ta_DX.c \

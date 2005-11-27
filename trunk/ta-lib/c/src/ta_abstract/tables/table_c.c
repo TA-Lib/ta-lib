@@ -1737,6 +1737,34 @@ DEF_FUNCTION( CDLXSIDEGAP3METHODS,            /* name */
 
 /* CDLXSIDEGAP3METHODS END */
 
+/* CMO BEGIN */
+static const TA_InputParameterInfo    *TA_CMO_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CMO_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CMO_OptInputs[] =
+{
+  &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( CMO,                        /* name */
+              TA_GroupId_MomentumIndicators,  /* groupId */
+              "Chande Momentum Oscillator",  /* hint */
+              NULL,                       /* helpFile */
+              TA_FUNC_FLG_UNST_PER,       /* flags */
+              NULL                        /* analysis function */
+             );
+/* CMO END */
+
 /* CORREL BEGIN */
 static const TA_InputParameterInfo    *TA_CORREL_Inputs[]    =
 {
@@ -1831,6 +1859,7 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLUNIQUE3RIVER), 
    ADD_TO_TABLE(CDLUPSIDEGAP2CROWS), 
    ADD_TO_TABLE(CDLXSIDEGAP3METHODS), 
+   ADD_TO_TABLE(CMO),
    ADD_TO_TABLE(CORREL),
    NULL
 };
