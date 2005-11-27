@@ -39,6 +39,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c &
+		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ohlc.c &
 		..\..\..\..\..\src\tools\ta_regtest\test_period.c &
 		..\..\..\..\..\src\tools\ta_regtest\test_pm.c &
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_po.c &
@@ -68,6 +69,7 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_regtest.obj &
 		..\..\..\..\..\temp\cmd\test_per_hl.obj &
 		..\..\..\..\..\temp\cmd\test_per_hlc.obj &
 		..\..\..\..\..\temp\cmd\test_per_hlcv.obj &
+		..\..\..\..\..\temp\cmd\test_per_ohlc.obj &
 		..\..\..\..\..\temp\cmd\test_period.obj &
 		..\..\..\..\..\temp\cmd\test_pm.obj &
 		..\..\..\..\..\temp\cmd\test_po.obj &
@@ -93,7 +95,7 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS) $(OBJMOC) 
 	@%create $(TMPLIST)
 	@%append $(TMPLIST) NAME ta_regtest
-	@%append $(TMPLIST) FIL ..\..\..\..\..\temp\cmd\ta_regtest.obj,..\..\..\..\..\temp\cmd\test_candlestick.obj,..\..\..\..\..\temp\cmd\test_1in_1out.obj,..\..\..\..\..\temp\cmd\test_1in_2out.obj,..\..\..\..\..\temp\cmd\test_ascii.obj,..\..\..\..\..\temp\cmd\test_internals.obj,..\..\..\..\..\temp\cmd\test_adx.obj,..\..\..\..\..\temp\cmd\test_bbands.obj,..\..\..\..\..\temp\cmd\test_ma.obj,..\..\..\..\..\temp\cmd\test_macd.obj,..\..\..\..\..\temp\cmd\test_merge.obj,..\..\..\..\..\temp\cmd\test_minmax.obj,..\..\..\..\..\temp\cmd\test_mom.obj,..\..\..\..\..\temp\cmd\test_per_ema.obj,..\..\..\..\..\temp\cmd\test_per_hl.obj,..\..\..\..\..\temp\cmd\test_per_hlc.obj,..\..\..\..\..\temp\cmd\test_per_hlcv.obj,..\..\..\..\..\temp\cmd\test_period.obj,..\..\..\..\..\temp\cmd\test_pm.obj,..\..\..\..\..\temp\cmd\test_po.obj,..\..\..\..\..\temp\cmd\test_rsi.obj,..\..\..\..\..\temp\cmd\test_sar.obj,..\..\..\..\..\temp\cmd\test_stddev.obj,..\..\..\..\..\temp\cmd\test_stoch.obj,..\..\..\..\..\temp\cmd\test_trange.obj,..\..\..\..\..\temp\cmd\test_util.obj,..\..\..\..\..\temp\cmd\test_abstract.obj,..\..\..\..\..\temp\cmd\test_csi.obj,..\..\..\..\..\temp\cmd\test_yahoo.obj
+	@%append $(TMPLIST) FIL ..\..\..\..\..\temp\cmd\ta_regtest.obj,..\..\..\..\..\temp\cmd\test_candlestick.obj,..\..\..\..\..\temp\cmd\test_1in_1out.obj,..\..\..\..\..\temp\cmd\test_1in_2out.obj,..\..\..\..\..\temp\cmd\test_ascii.obj,..\..\..\..\..\temp\cmd\test_internals.obj,..\..\..\..\..\temp\cmd\test_adx.obj,..\..\..\..\..\temp\cmd\test_bbands.obj,..\..\..\..\..\temp\cmd\test_ma.obj,..\..\..\..\..\temp\cmd\test_macd.obj,..\..\..\..\..\temp\cmd\test_merge.obj,..\..\..\..\..\temp\cmd\test_minmax.obj,..\..\..\..\..\temp\cmd\test_mom.obj,..\..\..\..\..\temp\cmd\test_per_ema.obj,..\..\..\..\..\temp\cmd\test_per_hl.obj,..\..\..\..\..\temp\cmd\test_per_hlc.obj,..\..\..\..\..\temp\cmd\test_per_hlcv.obj,..\..\..\..\..\temp\cmd\test_per_ohlc.obj,..\..\..\..\..\temp\cmd\test_period.obj,..\..\..\..\..\temp\cmd\test_pm.obj,..\..\..\..\..\temp\cmd\test_po.obj,..\..\..\..\..\temp\cmd\test_rsi.obj,..\..\..\..\..\temp\cmd\test_sar.obj,..\..\..\..\..\temp\cmd\test_stddev.obj,..\..\..\..\..\temp\cmd\test_stoch.obj,..\..\..\..\..\temp\cmd\test_trange.obj,..\..\..\..\..\temp\cmd\test_util.obj,..\..\..\..\..\temp\cmd\test_abstract.obj,..\..\..\..\..\temp\cmd\test_csi.obj,..\..\..\..\..\temp\cmd\test_yahoo.obj
 	@%append $(TMPLIST) LIBR ..\..\..\..\..\lib\ta_libc_cmd.lib,wininet.lib,odbc32.lib
 	$(LINK) $(LFLAGS) @$(TMPLIST)
 	del $(TMPLIST)
@@ -126,6 +128,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\test_per_hl.obj
 	-del ..\..\..\..\..\temp\cmd\test_per_hlc.obj
 	-del ..\..\..\..\..\temp\cmd\test_per_hlcv.obj
+	-del ..\..\..\..\..\temp\cmd\test_per_ohlc.obj
 	-del ..\..\..\..\..\temp\cmd\test_period.obj
 	-del ..\..\..\..\..\temp\cmd\test_pm.obj
 	-del ..\..\..\..\..\temp\cmd\test_po.obj
@@ -204,6 +207,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\test_per_hlcv.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\test_per_hlcv.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c
+
+..\..\..\..\..\temp\cmd\test_per_ohlc.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ohlc.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\test_per_ohlc.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ohlc.c
 
 ..\..\..\..\..\temp\cmd\test_period.obj: ..\..\..\..\..\src\tools\ta_regtest\test_period.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmd\test_period.obj ..\..\..\..\..\src\tools\ta_regtest\test_period.c

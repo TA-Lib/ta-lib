@@ -51,6 +51,7 @@ SOURCES =	../../../../../src/tools/ta_regtest/ta_regtest.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_per_hl.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlc.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlcv.c \
+		../../../../../src/tools/ta_regtest/ta_test_func/test_per_ohlc.c \
 		../../../../../src/tools/ta_regtest/test_period.c \
 		../../../../../src/tools/ta_regtest/test_pm.c \
 		../../../../../src/tools/ta_regtest/ta_test_func/test_po.c \
@@ -80,6 +81,7 @@ OBJECTS =	../../../../../temp/cmd/ta_regtest.o \
 		../../../../../temp/cmd/test_per_hl.o \
 		../../../../../temp/cmd/test_per_hlc.o \
 		../../../../../temp/cmd/test_per_hlcv.o \
+		../../../../../temp/cmd/test_per_ohlc.o \
 		../../../../../temp/cmd/test_period.o \
 		../../../../../temp/cmd/test_pm.o \
 		../../../../../temp/cmd/test_po.o \
@@ -192,6 +194,9 @@ clean:
 
 ../../../../../temp/cmd/test_per_hlcv.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlcv.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/test_per_hlcv.o ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlcv.c
+
+../../../../../temp/cmd/test_per_ohlc.o: ../../../../../src/tools/ta_regtest/ta_test_func/test_per_ohlc.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/test_per_ohlc.o ../../../../../src/tools/ta_regtest/ta_test_func/test_per_ohlc.c
 
 ../../../../../temp/cmd/test_period.o: ../../../../../src/tools/ta_regtest/test_period.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/test_period.o ../../../../../src/tools/ta_regtest/test_period.c

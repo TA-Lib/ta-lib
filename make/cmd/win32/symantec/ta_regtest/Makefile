@@ -39,6 +39,7 @@ SOURCES =	..\..\..\..\..\src\tools\ta_regtest\ta_regtest.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c \
+		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ohlc.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_period.c \
 		..\..\..\..\..\src\tools\ta_regtest\test_pm.c \
 		..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_po.c \
@@ -68,6 +69,7 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_regtest.obj \
 		..\..\..\..\..\temp\cmd\test_per_hl.obj \
 		..\..\..\..\..\temp\cmd\test_per_hlc.obj \
 		..\..\..\..\..\temp\cmd\test_per_hlcv.obj \
+		..\..\..\..\..\temp\cmd\test_per_ohlc.obj \
 		..\..\..\..\..\temp\cmd\test_period.obj \
 		..\..\..\..\..\temp\cmd\test_pm.obj \
 		..\..\..\..\..\temp\cmd\test_po.obj \
@@ -136,6 +138,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\test_per_hl.obj
 	-del ..\..\..\..\..\temp\cmd\test_per_hlc.obj
 	-del ..\..\..\..\..\temp\cmd\test_per_hlcv.obj
+	-del ..\..\..\..\..\temp\cmd\test_per_ohlc.obj
 	-del ..\..\..\..\..\temp\cmd\test_period.obj
 	-del ..\..\..\..\..\temp\cmd\test_pm.obj
 	-del ..\..\..\..\..\temp\cmd\test_po.obj
@@ -214,6 +217,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\test_per_hlcv.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_per_hlcv.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c
+
+..\..\..\..\..\temp\cmd\test_per_ohlc.obj: ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ohlc.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_per_ohlc.obj ..\..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ohlc.c
 
 ..\..\..\..\..\temp\cmd\test_period.obj: ..\..\..\..\..\src\tools\ta_regtest\test_period.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\test_period.obj ..\..\..\..\..\src\tools\ta_regtest\test_period.c

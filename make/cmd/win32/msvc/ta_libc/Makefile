@@ -129,6 +129,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_ATR.c \
 		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_BBANDS.c \
+		..\..\..\..\..\src\ta_func\ta_BOP.c \
 		..\..\..\..\..\src\ta_func\ta_CCI.c \
 		..\..\..\..\..\src\ta_func\ta_CDL2CROWS.c \
 		..\..\..\..\..\src\ta_func\ta_CDL3BLACKCROWS.c \
@@ -361,6 +362,7 @@ OBJECTS =	..\..\..\..\..\temp\cmd\ta_ascii.obj \
 		..\..\..\..\..\temp\cmd\ta_ATR.obj \
 		..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj \
 		..\..\..\..\..\temp\cmd\ta_BBANDS.obj \
+		..\..\..\..\..\temp\cmd\ta_BOP.obj \
 		..\..\..\..\..\temp\cmd\ta_CCI.obj \
 		..\..\..\..\..\temp\cmd\ta_CDL2CROWS.obj \
 		..\..\..\..\..\temp\cmd\ta_CDL3BLACKCROWS.obj \
@@ -638,6 +640,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmd\ta_ATR.obj
 	-del ..\..\..\..\..\temp\cmd\ta_AVGPRICE.obj
 	-del ..\..\..\..\..\temp\cmd\ta_BBANDS.obj
+	-del ..\..\..\..\..\temp\cmd\ta_BOP.obj
 	-del ..\..\..\..\..\temp\cmd\ta_CCI.obj
 	-del ..\..\..\..\..\temp\cmd\ta_CDL2CROWS.obj
 	-del ..\..\..\..\..\temp\cmd\ta_CDL3BLACKCROWS.obj
@@ -1099,6 +1102,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_BBANDS.obj: ..\..\..\..\..\src\ta_func\ta_BBANDS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_BBANDS.obj ..\..\..\..\..\src\ta_func\ta_BBANDS.c
+
+..\..\..\..\..\temp\cmd\ta_BOP.obj: ..\..\..\..\..\src\ta_func\ta_BOP.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_BOP.obj ..\..\..\..\..\src\ta_func\ta_BOP.c
 
 ..\..\..\..\..\temp\cmd\ta_CCI.obj: ..\..\..\..\..\src\ta_func\ta_CCI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmd\ta_CCI.obj ..\..\..\..\..\src\ta_func\ta_CCI.c

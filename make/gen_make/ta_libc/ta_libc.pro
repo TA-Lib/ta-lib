@@ -136,6 +136,7 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_ATR.c \
           ../../../../../src/ta_func/ta_AVGPRICE.c \
           ../../../../../src/ta_func/ta_BBANDS.c \
+          ../../../../../src/ta_func/ta_BOP.c \
           ../../../../../src/ta_func/ta_CCI.c \
           ../../../../../src/ta_func/ta_CDL2CROWS.c \
           ../../../../../src/ta_func/ta_CDL3BLACKCROWS.c \
