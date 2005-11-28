@@ -288,6 +288,8 @@ static ErrorNumber do_test( const TA_History *history,
    const TA_FuncHandle *funcHandle;
    const TA_FuncInfo *funcInfo;
    TA_ParamHolder *params;
+   
+   retCode = TA_SUCCESS;
 
    /* Set to NAN all the elements of the gBuffers.  */
    clearAllBuffers();
