@@ -1,2 +1,6 @@
-#! Use the common Unix template
-#$ IncludeTemplate("../unix/app.t");
+#############################################################################
+#!
+#! This is a tmake template for building Unix applications.
+#!
+#$ Project('TMAKE_APP_FLAG = 1');
+#$ IncludeTemplate("generic.t");
