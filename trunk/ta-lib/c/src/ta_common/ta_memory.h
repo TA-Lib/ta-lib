@@ -13,7 +13,6 @@
    #else
       /* Some includes to get malloc,free,realloc */
       #include <stdlib.h> 
-      #include <malloc.h>
    #endif
 
    /* Interface functions */
