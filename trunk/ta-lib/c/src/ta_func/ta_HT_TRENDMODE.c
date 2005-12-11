@@ -57,6 +57,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -78,6 +81,9 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ int Core::HT_TRENDMODE_Lookback( void )
 /* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int HT_TRENDMODE_Lookback(  )
+/* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_HT_TRENDMODE_Lookback( void )
 /* Generated */ 
@@ -94,7 +100,7 @@
     * 31 is for being compatible with Tradestation.
     * See TA_MAMA_Lookback for an explanation of the "32".
     */
-   return 63 + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_HT_TRENDMODE];
+   return 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_TRENDMODE);
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -113,6 +119,13 @@
 /* Generated */                                                 [Out]int%    outBegIdx,
 /* Generated */                                                 [Out]int%    outNbElement,
 /* Generated */                                                 cli::array<int>^  outInteger )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode HT_TRENDMODE( int    startIdx,
+/* Generated */                                 int    endIdx,
+/* Generated */                                 double       inReal[],
+/* Generated */                                 MInteger     outBegIdx,
+/* Generated */                                 MInteger     outNbElement,
+/* Generated */                                 int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_HT_TRENDMODE( int    startIdx,
 /* Generated */                             int    endIdx,
@@ -131,7 +144,7 @@
    double adjustedPrevPeriod, period;
 
    /* Variable used for the price smoother (a weighted moving average). */
-   unsigned int trailingWMAIdx;
+   int trailingWMAIdx;
    double periodWMASum, periodWMASub, trailingWMAValue;
    double smoothedValue;
 
@@ -139,8 +152,8 @@
    double iTrend1, iTrend2, iTrend3;
 
    /* Variables used for the Hilbert Transormation */
-   const double a = 0.0962;
-   const double b = 0.5769;
+   CONSTANT_DOUBLE(a) = 0.0962;
+   CONSTANT_DOUBLE(b) = 0.5769;
    double hilbertTempReal;
    int hilbertIdx;
 
@@ -157,8 +170,6 @@
    double rad2Deg, deg2Rad, constDeg2RadBy360;
 
    double todayValue, smoothPeriod;
-
-   double iTrend;
 
    /* Variable used to keep track of the previous
     * smooth price. In the case of this algorithm,
@@ -189,10 +200,14 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outInteger )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -216,7 +231,7 @@
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 63 + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_HT_TRENDMODE];
+   lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_TRENDMODE);
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -323,7 +338,7 @@
        */
       smoothPrice[smoothPrice_Idx] = smoothedValue;
 
-      if( today & 1 )
+      if( (today%2) == 0 )
       {
          /* Do the Hilbert Transforms for even price bar */
          DO_HILBERT_EVEN(detrender,smoothedValue);
@@ -438,7 +453,6 @@
       /* Compute Trendline */
       DCPeriod    = smoothPeriod+0.5;
       DCPeriodInt = (int)DCPeriod;
-      iTrend = 0.0;
 
       /* idx is used to iterate for up to 50 of the last
        * value of smoothPrice.
@@ -501,7 +515,7 @@
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -514,6 +528,13 @@
 /* Generated */                                                 [Out]int%    outBegIdx,
 /* Generated */                                                 [Out]int%    outNbElement,
 /* Generated */                                                 cli::array<int>^  outInteger )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode HT_TRENDMODE( int    startIdx,
+/* Generated */                                 int    endIdx,
+/* Generated */                                 float        inReal[],
+/* Generated */                                 MInteger     outBegIdx,
+/* Generated */                                 MInteger     outNbElement,
+/* Generated */                                 int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -527,12 +548,12 @@
 /* Generated */    int lookbackTotal, today;
 /* Generated */    double tempReal, tempReal2;
 /* Generated */    double adjustedPrevPeriod, period;
-/* Generated */    unsigned int trailingWMAIdx;
+/* Generated */    int trailingWMAIdx;
 /* Generated */    double periodWMASum, periodWMASub, trailingWMAValue;
 /* Generated */    double smoothedValue;
 /* Generated */    double iTrend1, iTrend2, iTrend3;
-/* Generated */    const double a = 0.0962;
-/* Generated */    const double b = 0.5769;
+/* Generated */    CONSTANT_DOUBLE(a) = 0.0962;
+/* Generated */    CONSTANT_DOUBLE(b) = 0.5769;
 /* Generated */    double hilbertTempReal;
 /* Generated */    int hilbertIdx;
 /* Generated */    HILBERT_VARIABLES( detrender );
@@ -544,7 +565,6 @@
 /* Generated */    double I1ForEvenPrev2, I1ForEvenPrev3;
 /* Generated */    double rad2Deg, deg2Rad, constDeg2RadBy360;
 /* Generated */    double todayValue, smoothPeriod;
-/* Generated */    double iTrend;
 /* Generated */    #define SMOOTH_PRICE_SIZE 50
 /* Generated */    CIRCBUF_PROLOG(smoothPrice,double,SMOOTH_PRICE_SIZE);
 /* Generated */    int idx;
@@ -558,9 +578,13 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outInteger )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    CIRCBUF_INIT_LOCAL_ONLY(smoothPrice,double);
 /* Generated */    iTrend1 = iTrend2 = iTrend3 = 0.0;
@@ -572,7 +596,7 @@
 /* Generated */    rad2Deg = 45.0/tempReal;
 /* Generated */    deg2Rad = 1.0/rad2Deg;
 /* Generated */    constDeg2RadBy360 = tempReal*8.0;
-/* Generated */    lookbackTotal = 63 + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_HT_TRENDMODE];
+/* Generated */    lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_TRENDMODE);
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
@@ -629,7 +653,7 @@
 /* Generated */       todayValue = inReal[today];
 /* Generated */       DO_PRICE_WMA(todayValue,smoothedValue);
 /* Generated */       smoothPrice[smoothPrice_Idx] = smoothedValue;
-/* Generated */       if( today & 1 )
+/* Generated */       if( (today%2) == 0 )
 /* Generated */       {
 /* Generated */          DO_HILBERT_EVEN(detrender,smoothedValue);
 /* Generated */          DO_HILBERT_EVEN(Q1,detrender);
@@ -711,7 +735,6 @@
 /* Generated */       leadSine = sin((DCPhase+45)*deg2Rad);
 /* Generated */       DCPeriod    = smoothPeriod+0.5;
 /* Generated */       DCPeriodInt = (int)DCPeriod;
-/* Generated */       iTrend = 0.0;
 /* Generated */       idx = today;
 /* Generated */       tempReal = 0.0;
 /* Generated */       for( i=0; i < DCPeriodInt; i++ )

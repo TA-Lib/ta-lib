@@ -59,6 +59,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -82,6 +85,11 @@
 /* Generated */                            int           optInFastK_Period, /* From 1 to 100000 */
 /* Generated */                            int           optInFastD_Period, /* From 1 to 100000 */
 /* Generated */                            TA_MAType     optInFastD_MAType ) /* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                             int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                             int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                             TA_MAType     optInFastD_MAType ) /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                         int           optInFastK_Period, /* From 1 to 100000 */
@@ -93,7 +101,7 @@
    /* insert lookback code here. */
    int retValue;
 
-   retValue = TA_RSI_Lookback( optInTimePeriod ) + TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+   retValue = LOOKBACK_CALL(RSI)( optInTimePeriod ) + LOOKBACK_CALL(STOCHF)( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
 
    return retValue;
 }
@@ -134,6 +142,18 @@
 /* Generated */                                             [Out]int%    outNbElement,
 /* Generated */                                             cli::array<double>^  outFastK,
 /* Generated */                                             cli::array<double>^  outFastD )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode STOCHRSI( int    startIdx,
+/* Generated */                             int    endIdx,
+/* Generated */                             double       inReal[],
+/* Generated */                             int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                             int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                             int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                             TA_MAType     optInFastD_MAType,
+/* Generated */                             MInteger     outBegIdx,
+/* Generated */                             MInteger     outNbElement,
+/* Generated */                             double        outFastK[],
+/* Generated */                             double        outFastD[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_STOCHRSI( int    startIdx,
 /* Generated */                         int    endIdx,
@@ -154,9 +174,9 @@
 
    TA_RetCode retCode;
    int lookbackTotal, lookbackSTOCHF, tempArraySize;
-   VALUE_HANDLE(int,outBegIdx1);
-   VALUE_HANDLE(int,outBegIdx2);
-   VALUE_HANDLE(int,outNbElement1);
+   VALUE_HANDLE_INT(outBegIdx1);
+   VALUE_HANDLE_INT(outBegIdx2);
+   VALUE_HANDLE_INT(outNbElement1);
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -169,7 +189,9 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
@@ -188,19 +210,21 @@
 /* Generated */    else if( ((int)optInFastD_Period < 1) || ((int)optInFastD_Period > 100000) )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED)
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInFastD_MAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastD_MAType = 0;
 /* Generated */    else if( ((int)optInFastD_MAType < 0) || ((int)optInFastD_MAType > 8) )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) */
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outFastK )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( !outFastD )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -236,8 +260,8 @@
    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 
    /* Adjust startIdx to account for the lookback period. */
-   lookbackSTOCHF  = TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
-   lookbackTotal   = TA_RSI_Lookback( optInTimePeriod ) + lookbackSTOCHF;
+   lookbackSTOCHF  = LOOKBACK_CALL(STOCHF)( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+   lookbackTotal   = LOOKBACK_CALL(RSI)( optInTimePeriod ) + lookbackSTOCHF;
 
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
@@ -256,15 +280,15 @@
 
    ARRAY_ALLOC( tempRSIBuffer, tempArraySize );
 
-   retCode = TA_PREFIX(RSI)(startIdx-lookbackSTOCHF, 
-                            endIdx, 
-                            inReal, 
-                            optInTimePeriod, 
-                            VALUE_HANDLE_OUT(outBegIdx1),
-                            VALUE_HANDLE_OUT(outNbElement1), 
-                            tempRSIBuffer);
+   retCode = FUNCTION_CALL(RSI)(startIdx-lookbackSTOCHF, 
+                                endIdx, 
+                                inReal, 
+                                optInTimePeriod, 
+                                VALUE_HANDLE_OUT(outBegIdx1),
+                                VALUE_HANDLE_OUT(outNbElement1), 
+                                tempRSIBuffer);
 
-   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS || (int)outNbElement1 == 0 )
+   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS || VALUE_HANDLE_GET(outNbElement1) == 0 )
    {
       ARRAY_FREE( tempRSIBuffer );
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -272,18 +296,18 @@
       return retCode;
    }
    
-   retCode = TA_STOCHF(0,
-                       tempArraySize-1,
-                       tempRSIBuffer,
-                       tempRSIBuffer,
-                       tempRSIBuffer,
-                       optInFastK_Period,
-                       optInFastD_Period,
-                       optInFastD_MAType,
-                       VALUE_HANDLE_OUT(outBegIdx2),
-                       outNbElement,
-                       outFastK,
-                       outFastD);
+   retCode = FUNCTION_CALL_DOUBLE(STOCHF)(0,
+                                          tempArraySize-1,
+                                          tempRSIBuffer,
+                                          tempRSIBuffer,
+                                          tempRSIBuffer,
+                                          optInFastK_Period,
+                                          optInFastD_Period,
+                                          optInFastD_MAType,
+                                          VALUE_HANDLE_OUT(outBegIdx2),
+                                          outNbElement,
+                                          outFastK,
+                                          outFastD);
  
    ARRAY_FREE( tempRSIBuffer );
 
@@ -300,7 +324,7 @@
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -318,6 +342,18 @@
 /* Generated */                                             [Out]int%    outNbElement,
 /* Generated */                                             cli::array<double>^  outFastK,
 /* Generated */                                             cli::array<double>^  outFastD )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode STOCHRSI( int    startIdx,
+/* Generated */                             int    endIdx,
+/* Generated */                             float        inReal[],
+/* Generated */                             int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                             int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                             int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                             TA_MAType     optInFastD_MAType,
+/* Generated */                             MInteger     outBegIdx,
+/* Generated */                             MInteger     outNbElement,
+/* Generated */                             double        outFastK[],
+/* Generated */                             double        outFastD[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STOCHRSI( int    startIdx,
 /* Generated */                           int    endIdx,
@@ -335,15 +371,17 @@
 /* Generated */    ARRAY_REF(tempRSIBuffer);
 /* Generated */    TA_RetCode retCode;
 /* Generated */    int lookbackTotal, lookbackSTOCHF, tempArraySize;
-/* Generated */    VALUE_HANDLE(int,outBegIdx1);
-/* Generated */    VALUE_HANDLE(int,outBegIdx2);
-/* Generated */    VALUE_HANDLE(int,outNbElement1);
+/* Generated */    VALUE_HANDLE_INT(outBegIdx1);
+/* Generated */    VALUE_HANDLE_INT(outBegIdx2);
+/* Generated */    VALUE_HANDLE_INT(outNbElement1);
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
 /* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
@@ -356,21 +394,23 @@
 /* Generated */        optInFastD_Period = 3;
 /* Generated */     else if( ((int)optInFastD_Period < 1) || ((int)optInFastD_Period > 100000) )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
-/* Generated */     #if !defined(_MANAGED)
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInFastD_MAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastD_MAType = 0;
 /* Generated */     else if( ((int)optInFastD_MAType < 0) || ((int)optInFastD_MAType > 8) )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     #endif 
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outFastK )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( !outFastD )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */    lookbackSTOCHF  = TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
-/* Generated */    lookbackTotal   = TA_RSI_Lookback( optInTimePeriod ) + lookbackSTOCHF;
+/* Generated */    lookbackSTOCHF  = LOOKBACK_CALL(STOCHF)( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+/* Generated */    lookbackTotal   = LOOKBACK_CALL(RSI)( optInTimePeriod ) + lookbackSTOCHF;
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
@@ -382,32 +422,32 @@
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */    tempArraySize = (endIdx - startIdx) + 1 + lookbackSTOCHF;
 /* Generated */    ARRAY_ALLOC( tempRSIBuffer, tempArraySize );
-/* Generated */    retCode = TA_PREFIX(RSI)(startIdx-lookbackSTOCHF, 
-/* Generated */                             endIdx, 
-/* Generated */                             inReal, 
-/* Generated */                             optInTimePeriod, 
-/* Generated */                             VALUE_HANDLE_OUT(outBegIdx1),
-/* Generated */                             VALUE_HANDLE_OUT(outNbElement1), 
-/* Generated */                             tempRSIBuffer);
-/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS || (int)outNbElement1 == 0 )
+/* Generated */    retCode = FUNCTION_CALL(RSI)(startIdx-lookbackSTOCHF, 
+/* Generated */                                 endIdx, 
+/* Generated */                                 inReal, 
+/* Generated */                                 optInTimePeriod, 
+/* Generated */                                 VALUE_HANDLE_OUT(outBegIdx1),
+/* Generated */                                 VALUE_HANDLE_OUT(outNbElement1), 
+/* Generated */                                 tempRSIBuffer);
+/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS || VALUE_HANDLE_GET(outNbElement1) == 0 )
 /* Generated */    {
 /* Generated */       ARRAY_FREE( tempRSIBuffer );
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    retCode = TA_STOCHF(0,
-/* Generated */                        tempArraySize-1,
-/* Generated */                        tempRSIBuffer,
-/* Generated */                        tempRSIBuffer,
-/* Generated */                        tempRSIBuffer,
-/* Generated */                        optInFastK_Period,
-/* Generated */                        optInFastD_Period,
-/* Generated */                        optInFastD_MAType,
-/* Generated */                        VALUE_HANDLE_OUT(outBegIdx2),
-/* Generated */                        outNbElement,
-/* Generated */                        outFastK,
-/* Generated */                        outFastD);
+/* Generated */    retCode = FUNCTION_CALL_DOUBLE(STOCHF)(0,
+/* Generated */                                           tempArraySize-1,
+/* Generated */                                           tempRSIBuffer,
+/* Generated */                                           tempRSIBuffer,
+/* Generated */                                           tempRSIBuffer,
+/* Generated */                                           optInFastK_Period,
+/* Generated */                                           optInFastD_Period,
+/* Generated */                                           optInFastD_MAType,
+/* Generated */                                           VALUE_HANDLE_OUT(outBegIdx2),
+/* Generated */                                           outNbElement,
+/* Generated */                                           outFastK,
+/* Generated */                                           outFastD);
 /* Generated */    ARRAY_FREE( tempRSIBuffer );
 /* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS || ((int)VALUE_HANDLE_DEREF(outNbElement)) == 0 )
 /* Generated */    {

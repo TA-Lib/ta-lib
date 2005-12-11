@@ -63,6 +63,11 @@
  *       Generates a lot of source code. Run "gen_code ?" for
  *       the list of file.
  *
+ *       The generator use as input the interface definition 
+ *       of each of the TA functions. The interface is provided
+ *       from static data in the TA-Abstract module.
+ *       (See the 'table_x.c' files)
+ *
  *       This utility is intended only to people integrating new 
  *       TA functions in TA-Lib.
  *       
@@ -80,6 +85,8 @@
 #include "ta_system.h"
 #include "ta_memory.h"
 #include "sfl.h"
+
+extern int mcpp_main( int argc, char ** argv);
 
 #define BUFFER_SIZE 8192
 
@@ -120,6 +127,7 @@ FileHandle *gOutFuncList_TXT;  /* For "func_list.txt" */
 FileHandle *gOutDefs_H;        /* For "ta_defs.h" */
 FileHandle *gOutDotNet_H;      /* For .NET interface file */
 FileHandle *gOutFunc_SWG;      /* For SWIG */
+FileHandle *gOutCore_Java;     /* For Java */
 
 #ifdef _MSC_VER
 FileHandle *gOutProjFile;      /* For .NET project file */
@@ -127,7 +135,9 @@ FileHandle *gOutMSVCProjFile;  /* For MSVC project file */
 FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
 
 static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
+static void genJavaCode( const TA_FuncInfo *funcInfo );
 #endif
+
 
 typedef void (*TA_ForEachGroup)( const char *groupName,
                                  unsigned int index,
@@ -161,7 +171,8 @@ static void printFunc( FILE *out,
                        unsigned int managedCPPCode,         /* Boolean */
                        unsigned int managedCPPDeclaration,  /* Boolean */
                        unsigned int inputIsSinglePrecision, /* Boolean */
-                       unsigned int outputForSWIG           /* Boolean */
+                       unsigned int outputForSWIG,          /* Boolean */
+                       unsigned int outputForJava           /* Boolean */
                      );
 
 static void printCallFrame  ( FILE *out, const TA_FuncInfo *funcInfo );
@@ -326,6 +337,7 @@ int main(int argc, char* argv[])
          printf( "     9) ta-lib/dotnet/src/Core/TA-Lib-Core.h\n" );
          printf( "    10) ta-lib/swig/src/interface/ta_func.swg\n" );
          printf( "    11) ta-lib/c/ide/msvc/lib_proj/ta_func/ta_func.dsp\n" );
+         printf( "    12) ta-lib/java/src/ta/lib/Core.java\n" );
          printf( "\n" );
          printf( "  The function header, parameters and validation code of all TA\n" );
          printf( "  function in c/src/ta_func are also updated.\n" );
@@ -642,6 +654,29 @@ static int genCode(int argc, char* argv[])
       fileClose(tempFile);
    #endif
 
+   /* Create Java template for Core.java */
+   #define FILE_CORE_JAVA     "..\\..\\java\\src\\TA\\Lib\\Core.java"
+   #define FILE_CORE_JAVA_TMP "..\\temp\\CoreJava.tmp"
+   gOutCore_Java = fileOpen( FILE_CORE_JAVA, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
+   if( gOutCore_Java == NULL )   
+   {
+         printf( "\nCannot access [%s]\n", gToOpen );
+         return -1;
+   }
+   tempFile = fileOpen( FILE_CORE_JAVA_TMP, NULL, FILE_WRITE|WRITE_ALWAYS );
+   if( tempFile == NULL )
+   {
+         printf( "Cannot create temporary Core.java project file!\n" );
+         return -1;
+   }
+   if( createTemplate( gOutCore_Java, tempFile ) != 0 )
+   {
+         printf( "Failed to parse and write the temporary Core.java project file!\n" );
+         return -1;
+   }
+   fileClose(gOutCore_Java);
+   fileClose(tempFile);
+
    /* Create the .NET interface file template */
    #define FILE_NET_HEADER     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.h"
    #define FILE_NET_HEADER_TMP "..\\temp\\dotneth.tmp"
@@ -758,6 +793,14 @@ static int genCode(int argc, char* argv[])
 
    #endif
 
+   /* Re-open the MSVC project template. */
+   gOutCore_Java = fileOpen( FILE_CORE_JAVA, FILE_CORE_JAVA_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+   if( gOutCore_Java == NULL )
+   {
+      printf( "Cannot update [%s]\n", FILE_CORE_JAVA );
+      return -1;
+   }
+
    /* Re-open the .NET interface template. */
    gOutDotNet_H = fileOpen( FILE_NET_HEADER, FILE_NET_HEADER_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
    if( gOutDotNet_H == NULL )
@@ -780,6 +823,7 @@ static int genCode(int argc, char* argv[])
    fileClose( gOutFunc_SWG );
    fileClose( gOutFrame_H );
    fileClose( gOutFrame_C );
+   fileClose( gOutCore_Java );
 
    #ifdef _MSC_VER
       fileClose( gOutProjFile );
@@ -836,8 +880,7 @@ static int genCode(int argc, char* argv[])
       fileDelete( FILE_NET_PROJ_TMP );
       fileDelete( FILE_MSVC_PROJ_TMP );
    #endif
-   fileDelete( FILE_NET_HEADER_TMP );
-
+   fileDelete( FILE_NET_HEADER_TMP );   
    printf( "\n** Update completed with success **\n");
 
    return 0;
@@ -914,19 +957,19 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    printDefines( gOutFunc_SWG->file, funcInfo );
 
    /* Generate the function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0 );
    fprintf( gOutFunc_H->file, "\n" );
 
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 1, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0 );
    fprintf( gOutFunc_H->file, "\n" );
 
    /* Generate the SWIG interface. */
-   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 1 );
+   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0 );
    fprintf( gOutFunc_SWG->file, "\n" );
 
    /* Generate the corresponding lookback function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0 );
-   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0 );
 
    /* Create the frame definition (ta_frame.c) and declaration (ta_frame.h) */
    genPrefix = 1;
@@ -971,14 +1014,20 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    #endif
 
    /* Generate the functions declaration for the .NET interface. */
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0 );
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0 );
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0 );
    fprintf( gOutDotNet_H->file, "\n" );
    fprintf( gOutDotNet_H->file, "         #define TA_%s Core::%s\n", funcInfo->name, funcInfo->name );
    fprintf( gOutDotNet_H->file, "         #define TA_%s_Lookback Core::%s_Lookback\n\n", funcInfo->name, funcInfo->name );
 
    doFuncFile( funcInfo );
+
+
+   #ifdef _MSC_VER
+      /* Run the func file through the pre-processor to generate the Java code. */
+      genJavaCode( funcInfo );   
+   #endif
 }
 
 static void doForEachUnstableFunction( const TA_FuncInfo *funcInfo,
@@ -1105,7 +1154,8 @@ static void printFunc( FILE *out,
                        unsigned int managedCPPCode, /* Boolean */
                        unsigned int managedCPPDeclaration, /* Boolean */
                        unsigned int inputIsSinglePrecision, /* Boolean */
-                       unsigned int outputForSWIG /* Boolean */
+                       unsigned int outputForSWIG, /* Boolean */
+                       unsigned int outputForJava /* Boolean */
                       )
 {
    TA_RetCode retCode;
@@ -1162,6 +1212,23 @@ static void printFunc( FILE *out,
       outNbElementString    = "OUT_SIZE";
       outBegIdxString       = "BEG_IDX";
    }
+   else if( outputForJava )
+   {
+      if( inputIsSinglePrecision )
+         inputDoubleArrayType  = "float";
+      else
+         inputDoubleArrayType  = "double";
+      inputIntArrayType     = "int";
+      outputDoubleArrayType = "double";
+      outputIntArrayType    = "int";
+      outputIntParam        = "MInteger";
+      arrayBracket          = "[]";
+      startIdxString        = "startIdx";
+      endIdxString          = "endIdx";
+      outNbElementString    = "outNbElement";
+      outBegIdxString       = "outBegIdx";
+
+   }
    else
    {
       if( inputIsSinglePrecision )
@@ -1194,6 +1261,12 @@ static void printFunc( FILE *out,
                      managedCPPDeclaration? "":"Core::",
                      funcInfo->name );
          }
+         else if( outputForJava )
+         {         
+            sprintf( gTempBuf, "%spublic int %s_Lookback( ",
+                     prefix? prefix:"",
+                     funcInfo->name );
+         }
          else
          {
             sprintf( gTempBuf, "%sint TA_%s_Lookback( ",
@@ -1214,6 +1287,13 @@ static void printFunc( FILE *out,
                      managedCPPDeclaration? "":"Core::",
                      funcInfo->name,
                      startIdxString );
+         }
+         else if( outputForJava )
+         {
+               sprintf( gTempBuf, "%spublic TA_RetCode %s( int    %s,\n",
+                        prefix? prefix:"",                        
+                        funcInfo->name,
+                        startIdxString );
          }
          else
          {
@@ -1281,6 +1361,12 @@ static void printFunc( FILE *out,
    /* Go through all the input. */
    if( !lookbackSignature )
    {
+      if( validationCode )
+      {
+         printIndent( out, indent );
+         fprintf( out, "#if !defined(_MANAGED) && !defined(_JAVA)\n" );
+      }
+
       paramNb = 0;
       for( i=0; i < funcInfo->nbInput; i++ )
       {
@@ -1524,6 +1610,12 @@ static void printFunc( FILE *out,
          }
          paramNb++;
       }
+
+      if( validationCode )
+      {
+         printIndent( out, indent );
+         fprintf( out, "#endif /* !defined(_MANAGED) && !defined(_JAVA)*/\n" );
+      }
    }
 
    /* Go through all the optional input */
@@ -1588,7 +1680,7 @@ static void printFunc( FILE *out,
          if( excludeFromManaged )
          {
              printIndent( out, indent );
-             fprintf( out, "#if !defined(_MANAGED)\n" );
+             fprintf( out, "#if !defined(_MANAGED) && !defined(_JAVA)\n" );
          }
 
          printOptInputValidation( out, paramName, optInputParamInfo );
@@ -1596,7 +1688,7 @@ static void printFunc( FILE *out,
          if( excludeFromManaged )
          {
              printIndent( out, indent );
-             fprintf( out, "#endif /* !defined(_MANAGED) */\n" );
+             fprintf( out, "#endif /* !defined(_MANAGED) && !defined(_JAVA)*/\n" );
          }
       }
       else
@@ -1691,9 +1783,9 @@ static void printFunc( FILE *out,
 
    if( lookbackSignature && (funcInfo->nbOptInput == 0) )
    {
-      if( frame )
+      if( frame || outputForJava )
          fprintf( out, " )%s\n", semiColonNeeded? ";":"" );
-      else
+      else      
          fprintf( out, "void )%s\n", semiColonNeeded? ";":"" );
    }
 
@@ -1717,7 +1809,7 @@ static void printFunc( FILE *out,
                fprintf( out, "%-*s %s%s",
                       prototype? 12 : 0,
                       prototype? outputIntParam : "",
-                      prototype&&!managedCPPCode? "*" : "",
+                      prototype&&!managedCPPCode&&!outputForJava? "*" : "",
                       outBegIdxString );
 
             fprintf( out, "%s\n", frame? "":"," );
@@ -1729,9 +1821,15 @@ static void printFunc( FILE *out,
                fprintf( out, "%-*s %s%s",
                       prototype? 12 : 0,
                       prototype? outputIntParam : "",
-                      prototype&&!managedCPPCode? "*" : "",
+                      prototype&&!managedCPPCode&&!outputForJava? "*" : "",
                       outNbElementString );
             fprintf( out, "%s\n", frame? "":"," );
+      }
+
+      if( validationCode )
+      {
+         printIndent( out, indent );
+         fprintf( out, "#if !defined(_MANAGED) && !defined(_JAVA)\n" );
       }
 
       for( i=0; i < funcInfo->nbOutput; i++ )
@@ -1812,7 +1910,15 @@ static void printFunc( FILE *out,
 
          paramNb++;
       }
+
+      if( validationCode )
+      {
+         printIndent( out, indent );
+         fprintf( out, "#endif /* !defined(_MANAGED) && !defined(_JAVA) */\n" );
+      }
+
    }
+
 }
 
 static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
@@ -1821,14 +1927,14 @@ static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
 
    printFrameHeader( out, funcInfo, 0 );
    print( out, "{\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "}\n" );
 
    printFrameHeader( out, funcInfo, 1 );
    print( out, "{\n" );
    if( funcInfo->nbOptInput == 0 )
       print( out, "   (void)params;\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 1, 0, 0, 0, 0 );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0 );
    print( out, "}\n" );
    
    genPrefix = 0;
@@ -2029,7 +2135,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    /* Duplicate the function, but using float this time */
    print( gOutFunc_C->file, "\n" );
    print( gOutFunc_C->file, "#define  USE_SINGLE_PRECISION_INPUT\n" );
-   print( gOutFunc_C->file, "#if !defined( _MANAGED )\n" );
+   print( gOutFunc_C->file, "#if !defined( _MANAGED ) && !defined( _JAVA )\n" );
    print( gOutFunc_C->file, "   #undef   TA_PREFIX\n" );
    print( gOutFunc_C->file, "   #define  TA_PREFIX(x) TA_S_##x\n" );
    print( gOutFunc_C->file, "#endif\n" );
@@ -2037,9 +2143,11 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    print( gOutFunc_C->file, "#define  INPUT_TYPE float\n" );
    
    print( gOutFunc_C->file, "#if defined( _MANAGED )\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0 );
+   print( gOutFunc_C->file, "#elif defined( _JAVA )\n" );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1 );
    print( gOutFunc_C->file, "#else\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 );
    print( gOutFunc_C->file, "#endif\n" );
 
    /* Insert the internal logic of the function */
@@ -2290,6 +2398,9 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "   #include \"TA-Lib-Core.h\"\n" );
    print( out, "   #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)\n" );
    print( out, "   namespace TA { namespace Lib {\n" );
+   print( out, "#elif defined( _JAVA )\n" );
+   print( out, "   #include \"ta_defs.h\"\n" );
+   print( out, "   #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)\n" );
    print( out, "#else\n" );
    print( out, "   #include <string.h>\n" );
    print( out, "   #include <math.h>\n" );
@@ -2309,9 +2420,11 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "#define INPUT_TYPE   double\n" );
    print( out, "\n" );
    print( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0 );
+   print( out, "#elif defined( _JAVA )\n" );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1 );
    print( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
    print( out, "#endif\n" );
 
    genPrefix = 0;
@@ -2323,9 +2436,11 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    fprintf( out, " */\n" );
    print( out, "\n" );
    print( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 );
+   print( out, "#elif defined( _JAVA )\n" );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 );
    print( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "#endif\n" );
 
    genPrefix = 0;
@@ -2346,7 +2461,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
     * default values.
     */
    print( out, "   /* Validate the parameters. */\n" );
-   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 );
 
    print( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
    print( out, "\n" );
@@ -3172,3 +3287,66 @@ static void appendToFunc( FILE *out )
    fprintf( out, "TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType );\n" );
 }
 
+#ifdef _MSC_VER
+void genJavaCode( const TA_FuncInfo *funcInfo )
+{
+   FILE *logicTmp;
+   char buffer[500];
+
+   #if 0
+   int argc;
+   static int nbFuncOut = 0;
+    For now call an external mcpp.exe on microsoft platform only.
+   char *argv[] = { "mcpp",
+                          "-c",
+                          "-+", 
+                          "-z",
+                          "-P",
+                          "-I..\\src\\ta_common",
+                          "-I..\\include",
+                          "-D",
+                          "_JAVA",
+                          "..\\src\\ta_func\\TA_%s.c",
+                          "..\\temp\\CoreJavaCode.tmp",
+                          NULL };
+
+   if( nbFuncOut++ > 0 )
+      return;
+
+   /* Count the number of "command line" arguments for the C pre-processor.
+    *
+    * At the same time, replace the %s field with the function name.
+    * Assumed that only one of the argument have such %s.
+    */      
+   argc = 0;
+   while( argv[argc] != NULL )
+   {
+      if( strstr(argv[argc], "%s" ) )
+      {
+         sprintf( buffer, argv[argc], funcInfo->name );
+         argv[argc] = buffer;
+      }
+      argc++;
+   }
+   #endif
+
+   sprintf( buffer, "..\\src\\tools\\gen_code\\mcpp -c -+ -z -P -I..\\src\\ta_common -I..\\include -D _JAVA ..\\src\\ta_func\\TA_%s.c >..\\temp\\CoreJavaCode.tmp ", funcInfo->name);
+   system( buffer );
+
+   /* Append the output of the C pre-processor to the Core.Java file. */
+   init_gToOpen( "..\\temp\\CoreJavaCode.tmp", NULL );
+   logicTmp = fopen( gToOpen, "r" );
+   if( !logicTmp )
+   {
+      printf( "Cannot open CoreJavaCode.tmp\n" );
+      return;
+   }
+   while( fgets(gTempBuf,BUFFER_SIZE,logicTmp) )
+      fputs( gTempBuf, gOutCore_Java->file );
+
+   /* Clean-up */
+   fclose(logicTmp);
+   print( gOutCore_Java->file, "\n" );   
+   fileDelete( "..\\temp\\CoreJavaCode.tmp" );
+}
+#endif

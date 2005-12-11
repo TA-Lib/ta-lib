@@ -58,6 +58,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -80,6 +83,11 @@
 /* Generated */ int Core::MACD_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                        int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                        int           optInSignalPeriod )  /* From 1 to 100000 */
+/* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int MACD_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                         int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                         int           optInSignalPeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_MACD_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
@@ -109,8 +117,8 @@
        optInFastPeriod = tempInteger;
    }
 
-   return   TA_EMA_Lookback( optInSlowPeriod   )
-          + TA_EMA_Lookback( optInSignalPeriod );
+   return   LOOKBACK_CALL(EMA)( optInSlowPeriod   )
+          + LOOKBACK_CALL(EMA)( optInSignalPeriod );
 }
 
 
@@ -147,6 +155,18 @@
 /* Generated */                                         cli::array<double>^  outMACD,
 /* Generated */                                         cli::array<double>^  outMACDSignal,
 /* Generated */                                         cli::array<double>^  outMACDHist )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode MACD( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         double       inReal[],
+/* Generated */                         int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                         int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                         int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         double        outMACD[],
+/* Generated */                         double        outMACDSignal[],
+/* Generated */                         double        outMACDHist[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MACD( int    startIdx,
 /* Generated */                     int    endIdx,
@@ -175,7 +195,9 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInFastPeriod. */
 /* Generated */    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastPeriod = 12;
@@ -194,6 +216,7 @@
 /* Generated */    else if( ((int)optInSignalPeriod < 1) || ((int)optInSignalPeriod > 100000) )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outMACD )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
@@ -203,21 +226,22 @@
 /* Generated */    if( !outMACDHist )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */  
 
-   return TA_PREFIX(INT_MACD)( startIdx, endIdx, inReal,
-                               optInFastPeriod,
-                               optInSlowPeriod,
-                               optInSignalPeriod,
-                               outBegIdx,
-                               outNbElement,
-                               outMACD,
-                               outMACDSignal,
-                               outMACDHist );
+   return FUNCTION_CALL(INT_MACD)( startIdx, endIdx, inReal,
+                                   optInFastPeriod,
+                                   optInSlowPeriod,
+                                   optInSignalPeriod,
+                                   outBegIdx,
+                                   outNbElement,
+                                   outMACD,
+                                   outMACDSignal,
+                                   outMACDHist );
 }
 
 #if defined( _MANAGED )
@@ -232,6 +256,19 @@
 												 cli::array<double>^ outMACD,
                                                  cli::array<double>^ outMACDSignal,
                                                  cli::array<double>^ outMACDHist )
+#elif defined( _JAVA )
+TA_RetCode INT_MACD( int        startIdx,
+                     int        endIdx,
+                     INPUT_TYPE inReal[],
+                     int        optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
+                     int        optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
+                     int        optInSignalPeriod_2, /* From 1 to 200 */
+                     MInteger   outBegIdx,
+                     MInteger   outNbElement,
+                     double     outMACD[],
+                     double     outMACDSignal[],
+                     double     outMACDHist[] )
+
 #else
 TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
                                 int    endIdx,
@@ -239,8 +276,8 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
                                 int    optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
                                 int    optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
                                 int    optInSignalPeriod_2, /* From 1 to 200 */
-                                int   VALUE_HANDLE_DEREF(outBegIdx),
-                                int   VALUE_HANDLE_DEREF(outNbElement),
+                                int   *outBegIdx,
+                                int   *outNbElement,
                                 double       outMACD[],
                                 double       outMACDSignal[],
                                 double       outMACDHist[] )
@@ -251,10 +288,10 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    double k1, k2;
    TA_RetCode retCode;
    int tempInteger;
-   VALUE_HANDLE(int,outBegIdx1);
-   VALUE_HANDLE(int,outNbElement1);
-   VALUE_HANDLE(int,outBegIdx2);
-   VALUE_HANDLE(int,outNbElement2);
+   VALUE_HANDLE_INT(outBegIdx1);
+   VALUE_HANDLE_INT(outNbElement1);
+   VALUE_HANDLE_INT(outBegIdx2);
+   VALUE_HANDLE_INT(outNbElement2);
    int lookbackTotal, lookbackSignal;
    int i;
 
@@ -311,13 +348,13 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
       k2 = (double)0.15; /* Fix 12 */
    }
 
-   lookbackSignal = TA_EMA_Lookback( optInSignalPeriod_2 ); 
+   lookbackSignal = LOOKBACK_CALL(EMA)( optInSignalPeriod_2 ); 
 
    /* Move up the start index if there is not
     * enough initial data.
     */
    lookbackTotal =  lookbackSignal;
-   lookbackTotal += TA_EMA_Lookback( optInSlowPeriod );
+   lookbackTotal += LOOKBACK_CALL(EMA)( optInSlowPeriod );
 
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
@@ -333,21 +370,25 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    /* Allocate intermediate buffer for fast/slow EMA. */
    tempInteger = (endIdx-startIdx)+1+lookbackSignal;
    ARRAY_ALLOC( fastEMABuffer, tempInteger );
-   if( !fastEMABuffer )
-   {
-      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
-   }
+   #if !defined( _JAVA )
+      if( !fastEMABuffer )
+      {
+         VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+         VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+      }
+   #endif
 
    ARRAY_ALLOC( slowEMABuffer, tempInteger );
-   if( !slowEMABuffer )
-   {
-      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      ARRAY_FREE( fastEMABuffer );
-      return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
-   }
+   #if !defined( _JAVA )
+      if( !slowEMABuffer )
+      {
+         VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+         VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+         ARRAY_FREE( fastEMABuffer );
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+      }
+   #endif
 
    /* Calculate the slow EMA. 
     *
@@ -357,9 +398,9 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
     * will start at the requested 'startIdx'.
     */
    tempInteger = startIdx-lookbackSignal;
-   retCode = TA_PREFIX(INT_EMA)( tempInteger, endIdx,
-                                 inReal, optInSlowPeriod, k1,
-                                 VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1), slowEMABuffer );
+   retCode = FUNCTION_CALL(INT_EMA)( tempInteger, endIdx,
+                                     inReal, optInSlowPeriod, k1,
+                                     VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1), slowEMABuffer );
 
    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
    {
@@ -371,9 +412,9 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    }
 
    /* Calculate the fast EMA. */
-   retCode = TA_PREFIX(INT_EMA)( tempInteger, endIdx,
-                                 inReal, optInFastPeriod, k2,
-                                 VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), fastEMABuffer );
+   retCode = FUNCTION_CALL(INT_EMA)( tempInteger, endIdx,
+                                     inReal, optInFastPeriod, k2,
+                                     VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), fastEMABuffer );
 
    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
    {
@@ -385,10 +426,10 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    }
 
    /* Parano tests. Will be removed eventually. */
-   if( ((int)outBegIdx1 != tempInteger) || 
-       ((int)outBegIdx2 != tempInteger) || 
-       ((int)outNbElement1 != (int)outNbElement2) ||
-       ((int)outNbElement1 != (endIdx-startIdx)+1+lookbackSignal) )
+   if( (VALUE_HANDLE_GET(outBegIdx1) != tempInteger) || 
+       (VALUE_HANDLE_GET(outBegIdx2) != tempInteger) || 
+       (VALUE_HANDLE_GET(outNbElement1) != VALUE_HANDLE_GET(outNbElement2)) ||
+       (VALUE_HANDLE_GET(outNbElement1) != (endIdx-startIdx)+1+lookbackSignal) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
@@ -398,7 +439,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    }
 
    /* Calculate (fast EMA) - (slow EMA). */
-   for( i=0; i < (int)outNbElement1; i++ )
+   for( i=0; i < VALUE_HANDLE_GET(outNbElement1); i++ )
       fastEMABuffer[i] = fastEMABuffer[i] - slowEMABuffer[i];
 
 
@@ -406,9 +447,9 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    ARRAY_MEMMOVE( outMACD, 0, fastEMABuffer, lookbackSignal, (endIdx-startIdx)+1 );
 
    /* Calculate the signal/trigger line. */
-   retCode = TA_INT_EMA( 0, ((int)outNbElement1)-1,
-                         fastEMABuffer, optInSignalPeriod_2, PER_TO_K(optInSignalPeriod_2), 
-                         VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), outMACDSignal );
+   retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, VALUE_HANDLE_GET(outNbElement1)-1,
+                                            fastEMABuffer, optInSignalPeriod_2, PER_TO_K(optInSignalPeriod_2), 
+                                            VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), outMACDSignal );
 
 
    ARRAY_FREE( fastEMABuffer );
@@ -422,13 +463,13 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    }
 
    /* Calculate the histogram. */
-   for( i=0; i < (int)outNbElement2; i++ )
+   for( i=0; i < VALUE_HANDLE_GET(outNbElement2); i++ )
       outMACDHist[i] = outMACD[i]-outMACDSignal[i];
 
 
    /* All done! Indicate the output limits and return success. */
    VALUE_HANDLE_DEREF(outBegIdx)     = startIdx;
-   VALUE_HANDLE_DEREF(outNbElement)  = (int)outNbElement2;
+   VALUE_HANDLE_DEREF(outNbElement)  = VALUE_HANDLE_GET(outNbElement2);
 
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
@@ -437,7 +478,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -455,6 +496,18 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                         cli::array<double>^  outMACD,
 /* Generated */                                         cli::array<double>^  outMACDSignal,
 /* Generated */                                         cli::array<double>^  outMACDHist )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode MACD( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         float        inReal[],
+/* Generated */                         int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                         int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                         int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         double        outMACD[],
+/* Generated */                         double        outMACDSignal[],
+/* Generated */                         double        outMACDHist[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MACD( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -474,7 +527,9 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */     if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastPeriod = 12;
 /* Generated */     else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
@@ -487,22 +542,24 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */        optInSignalPeriod = 9;
 /* Generated */     else if( ((int)optInSignalPeriod < 1) || ((int)optInSignalPeriod > 100000) )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outMACD )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( !outMACDSignal )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( !outMACDHist )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    return TA_PREFIX(INT_MACD)( startIdx, endIdx, inReal,
-/* Generated */                                optInFastPeriod,
-/* Generated */                                optInSlowPeriod,
-/* Generated */                                optInSignalPeriod,
-/* Generated */                                outBegIdx,
-/* Generated */                                outNbElement,
-/* Generated */                                outMACD,
-/* Generated */                                outMACDSignal,
-/* Generated */                                outMACDHist );
+/* Generated */    return FUNCTION_CALL(INT_MACD)( startIdx, endIdx, inReal,
+/* Generated */                                    optInFastPeriod,
+/* Generated */                                    optInSlowPeriod,
+/* Generated */                                    optInSignalPeriod,
+/* Generated */                                    outBegIdx,
+/* Generated */                                    outNbElement,
+/* Generated */                                    outMACD,
+/* Generated */                                    outMACDSignal,
+/* Generated */                                    outMACDHist );
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
 /* Generated */  enum class Core::TA_RetCode Core::TA_INT_MACD( int    startIdx,
@@ -516,6 +573,18 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */ 												 cli::array<double>^ outMACD,
 /* Generated */                                                  cli::array<double>^ outMACDSignal,
 /* Generated */                                                  cli::array<double>^ outMACDHist )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ TA_RetCode INT_MACD( int        startIdx,
+/* Generated */                      int        endIdx,
+/* Generated */                      INPUT_TYPE inReal[],
+/* Generated */                      int        optInFastPeriod, 
+/* Generated */                      int        optInSlowPeriod, 
+/* Generated */                      int        optInSignalPeriod_2, 
+/* Generated */                      MInteger   outBegIdx,
+/* Generated */                      MInteger   outNbElement,
+/* Generated */                      double     outMACD[],
+/* Generated */                      double     outMACDSignal[],
+/* Generated */                      double     outMACDHist[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                 int    endIdx,
@@ -523,8 +592,8 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                 int    optInFastPeriod, 
 /* Generated */                                 int    optInSlowPeriod, 
 /* Generated */                                 int    optInSignalPeriod_2, 
-/* Generated */                                 int   VALUE_HANDLE_DEREF(outBegIdx),
-/* Generated */                                 int   VALUE_HANDLE_DEREF(outNbElement),
+/* Generated */                                 int   *outBegIdx,
+/* Generated */                                 int   *outNbElement,
 /* Generated */                                 double       outMACD[],
 /* Generated */                                 double       outMACDSignal[],
 /* Generated */                                 double       outMACDHist[] )
@@ -535,10 +604,10 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */    double k1, k2;
 /* Generated */    TA_RetCode retCode;
 /* Generated */    int tempInteger;
-/* Generated */    VALUE_HANDLE(int,outBegIdx1);
-/* Generated */    VALUE_HANDLE(int,outNbElement1);
-/* Generated */    VALUE_HANDLE(int,outBegIdx2);
-/* Generated */    VALUE_HANDLE(int,outNbElement2);
+/* Generated */    VALUE_HANDLE_INT(outBegIdx1);
+/* Generated */    VALUE_HANDLE_INT(outNbElement1);
+/* Generated */    VALUE_HANDLE_INT(outBegIdx2);
+/* Generated */    VALUE_HANDLE_INT(outNbElement2);
 /* Generated */    int lookbackTotal, lookbackSignal;
 /* Generated */    int i;
 /* Generated */    if( optInSlowPeriod < optInFastPeriod )
@@ -561,9 +630,9 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */       optInFastPeriod = 12;
 /* Generated */       k2 = (double)0.15; 
 /* Generated */    }
-/* Generated */    lookbackSignal = TA_EMA_Lookback( optInSignalPeriod_2 ); 
+/* Generated */    lookbackSignal = LOOKBACK_CALL(EMA)( optInSignalPeriod_2 ); 
 /* Generated */    lookbackTotal =  lookbackSignal;
-/* Generated */    lookbackTotal += TA_EMA_Lookback( optInSlowPeriod );
+/* Generated */    lookbackTotal += LOOKBACK_CALL(EMA)( optInSlowPeriod );
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
@@ -574,24 +643,28 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */    }
 /* Generated */    tempInteger = (endIdx-startIdx)+1+lookbackSignal;
 /* Generated */    ARRAY_ALLOC( fastEMABuffer, tempInteger );
-/* Generated */    if( !fastEMABuffer )
-/* Generated */    {
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
-/* Generated */    }
+/* Generated */    #if !defined( _JAVA )
+/* Generated */       if( !fastEMABuffer )
+/* Generated */       {
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */          return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+/* Generated */       }
+/* Generated */    #endif
 /* Generated */    ARRAY_ALLOC( slowEMABuffer, tempInteger );
-/* Generated */    if( !slowEMABuffer )
-/* Generated */    {
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       ARRAY_FREE( fastEMABuffer );
-/* Generated */       return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
-/* Generated */    }
+/* Generated */    #if !defined( _JAVA )
+/* Generated */       if( !slowEMABuffer )
+/* Generated */       {
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */          ARRAY_FREE( fastEMABuffer );
+/* Generated */          return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+/* Generated */       }
+/* Generated */    #endif
 /* Generated */    tempInteger = startIdx-lookbackSignal;
-/* Generated */    retCode = TA_PREFIX(INT_EMA)( tempInteger, endIdx,
-/* Generated */                                  inReal, optInSlowPeriod, k1,
-/* Generated */                                  VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1), slowEMABuffer );
+/* Generated */    retCode = FUNCTION_CALL(INT_EMA)( tempInteger, endIdx,
+/* Generated */                                      inReal, optInSlowPeriod, k1,
+/* Generated */                                      VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1), slowEMABuffer );
 /* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -600,9 +673,9 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */       ARRAY_FREE( slowEMABuffer );
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    retCode = TA_PREFIX(INT_EMA)( tempInteger, endIdx,
-/* Generated */                                  inReal, optInFastPeriod, k2,
-/* Generated */                                  VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), fastEMABuffer );
+/* Generated */    retCode = FUNCTION_CALL(INT_EMA)( tempInteger, endIdx,
+/* Generated */                                      inReal, optInFastPeriod, k2,
+/* Generated */                                      VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), fastEMABuffer );
 /* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -611,10 +684,10 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */       ARRAY_FREE( slowEMABuffer );
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    if( ((int)outBegIdx1 != tempInteger) || 
-/* Generated */        ((int)outBegIdx2 != tempInteger) || 
-/* Generated */        ((int)outNbElement1 != (int)outNbElement2) ||
-/* Generated */        ((int)outNbElement1 != (endIdx-startIdx)+1+lookbackSignal) )
+/* Generated */    if( (VALUE_HANDLE_GET(outBegIdx1) != tempInteger) || 
+/* Generated */        (VALUE_HANDLE_GET(outBegIdx2) != tempInteger) || 
+/* Generated */        (VALUE_HANDLE_GET(outNbElement1) != VALUE_HANDLE_GET(outNbElement2)) ||
+/* Generated */        (VALUE_HANDLE_GET(outNbElement1) != (endIdx-startIdx)+1+lookbackSignal) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
@@ -622,12 +695,12 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */       ARRAY_FREE( slowEMABuffer );
 /* Generated */       return TA_INTERNAL_ERROR(119);
 /* Generated */    }
-/* Generated */    for( i=0; i < (int)outNbElement1; i++ )
+/* Generated */    for( i=0; i < VALUE_HANDLE_GET(outNbElement1); i++ )
 /* Generated */       fastEMABuffer[i] = fastEMABuffer[i] - slowEMABuffer[i];
 /* Generated */    ARRAY_MEMMOVE( outMACD, 0, fastEMABuffer, lookbackSignal, (endIdx-startIdx)+1 );
-/* Generated */    retCode = TA_INT_EMA( 0, ((int)outNbElement1)-1,
-/* Generated */                          fastEMABuffer, optInSignalPeriod_2, PER_TO_K(optInSignalPeriod_2), 
-/* Generated */                          VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), outMACDSignal );
+/* Generated */    retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, VALUE_HANDLE_GET(outNbElement1)-1,
+/* Generated */                                             fastEMABuffer, optInSignalPeriod_2, PER_TO_K(optInSignalPeriod_2), 
+/* Generated */                                             VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), outMACDSignal );
 /* Generated */    ARRAY_FREE( fastEMABuffer );
 /* Generated */    ARRAY_FREE( slowEMABuffer );
 /* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
@@ -636,10 +709,10 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    for( i=0; i < (int)outNbElement2; i++ )
+/* Generated */    for( i=0; i < VALUE_HANDLE_GET(outNbElement2); i++ )
 /* Generated */       outMACDHist[i] = outMACD[i]-outMACDSignal[i];
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)     = startIdx;
-/* Generated */    VALUE_HANDLE_DEREF(outNbElement)  = (int)outNbElement2;
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement)  = VALUE_HANDLE_GET(outNbElement2);
 /* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 

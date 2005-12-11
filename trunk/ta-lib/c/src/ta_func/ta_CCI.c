@@ -59,6 +59,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -79,6 +82,9 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ int Core::CCI_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
+/* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int CCI_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_CCI_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
@@ -115,6 +121,16 @@
 /* Generated */                                        [Out]int%    outBegIdx,
 /* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode CCI( int    startIdx,
+/* Generated */                        int    endIdx,
+/* Generated */                        double       inHigh[],
+/* Generated */                        double       inLow[],
+/* Generated */                        double       inClose[],
+/* Generated */                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                        MInteger     outBegIdx,
+/* Generated */                        MInteger     outNbElement,
+/* Generated */                        double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CCI( int    startIdx,
 /* Generated */                    int    endIdx,
@@ -149,19 +165,23 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow||!inClose)
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
 /* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -260,7 +280,7 @@
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -276,6 +296,16 @@
 /* Generated */                                        [Out]int%    outBegIdx,
 /* Generated */                                        [Out]int%    outNbElement,
 /* Generated */                                        cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode CCI( int    startIdx,
+/* Generated */                        int    endIdx,
+/* Generated */                        float        inHigh[],
+/* Generated */                        float        inLow[],
+/* Generated */                        float        inClose[],
+/* Generated */                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                        MInteger     outBegIdx,
+/* Generated */                        MInteger     outNbElement,
+/* Generated */                        double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CCI( int    startIdx,
 /* Generated */                      int    endIdx,
@@ -296,14 +326,18 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
 /* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    lookbackTotal = (optInTimePeriod-1);
 /* Generated */    if( startIdx < lookbackTotal )

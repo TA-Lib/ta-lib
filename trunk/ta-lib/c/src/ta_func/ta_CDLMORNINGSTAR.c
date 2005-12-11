@@ -56,6 +56,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -77,6 +80,9 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ int Core::CDLMORNINGSTAR_Lookback( double        optInPenetration )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int CDLMORNINGSTAR_Lookback( double        optInPenetration )  /* From 0 to TA_REAL_MAX */
+/* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_CDLMORNINGSTAR_Lookback( double        optInPenetration )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
@@ -84,7 +90,7 @@
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-    (void) optInPenetration;
+    UNUSED_VARIABLE(optInPenetration);
     return max( TA_CANDLEAVGPERIOD(TA_BodyShort), TA_CANDLEAVGPERIOD(TA_BodyLong) ) + 2;
 }
 
@@ -114,6 +120,17 @@
 /* Generated */                                                   [Out]int%    outBegIdx,
 /* Generated */                                                   [Out]int%    outNbElement,
 /* Generated */                                                   cli::array<int>^  outInteger )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode CDLMORNINGSTAR( int    startIdx,
+/* Generated */                                   int    endIdx,
+/* Generated */                                   double       inOpen[],
+/* Generated */                                   double       inHigh[],
+/* Generated */                                   double       inLow[],
+/* Generated */                                   double       inClose[],
+/* Generated */                                   double        optInPenetration, /* From 0 to TA_REAL_MAX */
+/* Generated */                                   MInteger     outBegIdx,
+/* Generated */                                   MInteger     outNbElement,
+/* Generated */                                   int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CDLMORNINGSTAR( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -143,18 +160,22 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    if( optInPenetration == TA_REAL_DEFAULT )
 /* Generated */       optInPenetration = 3.000000e-1;
 /* Generated */    else if( (optInPenetration < 0.000000e+0) ||/* Generated */  (optInPenetration > 3.000000e+37) )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outInteger )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -163,7 +184,7 @@
     * to calculate at least one output.
     */
 
-   lookbackTotal = TA_CDLMORNINGSTAR_Lookback(optInPenetration);
+   lookbackTotal = LOOKBACK_CALL(CDLMORNINGSTAR)(optInPenetration);
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -248,7 +269,7 @@
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -265,6 +286,17 @@
 /* Generated */                                                   [Out]int%    outBegIdx,
 /* Generated */                                                   [Out]int%    outNbElement,
 /* Generated */                                                   cli::array<int>^  outInteger )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode CDLMORNINGSTAR( int    startIdx,
+/* Generated */                                   int    endIdx,
+/* Generated */                                   float        inOpen[],
+/* Generated */                                   float        inHigh[],
+/* Generated */                                   float        inLow[],
+/* Generated */                                   float        inClose[],
+/* Generated */                                   double        optInPenetration, /* From 0 to TA_REAL_MAX */
+/* Generated */                                   MInteger     outBegIdx,
+/* Generated */                                   MInteger     outNbElement,
+/* Generated */                                   int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLMORNINGSTAR( int    startIdx,
 /* Generated */                                 int    endIdx,
@@ -285,16 +317,20 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */     if( optInPenetration == TA_REAL_DEFAULT )
 /* Generated */        optInPenetration = 3.000000e-1;
 /* Generated */     else if( (optInPenetration < 0.000000e+0) ||  (optInPenetration > 3.000000e+37) )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outInteger )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    lookbackTotal = TA_CDLMORNINGSTAR_Lookback(optInPenetration);
+/* Generated */    lookbackTotal = LOOKBACK_CALL(CDLMORNINGSTAR)(optInPenetration);
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
