@@ -1,7 +1,7 @@
 #ifndef TA_MEMORY_H
 #define TA_MEMORY_H
 
-#if !defined( _MANAGED )
+#if !defined( _MANAGED ) && !defined( _JAVA )
    #ifndef TA_COMMON_H
       #include "ta_common.h"
    #endif
@@ -50,14 +50,15 @@
 
    /* A Typical function pointer for freeing memory. */
    typedef TA_RetCode (*TA_FreeFuncPtr)( void *toBeFreed, void *opaqueData);
-#endif /* !defined(_MANAGED) */
+#endif /* !defined(_MANAGED) && !defined( _JAVA ) */
 
 /* ARRAY : Macros to manipulate arrays of double.
  *
  * Using temporary array of double is often needed for the TA functions
  * and these macros allow basic operations to alloc/copy/free these.
  *
- * The macros offer the advantage to work in C/C++ and managed C++.
+ * These macros offer the advantage to work in 
+ * plain old C/C++, managed C++.and Java.
  */
 #if defined( _MANAGED )
    #define ARRAY_REF(name)             cli::array<double>^ name
@@ -65,6 +66,14 @@
    #define ARRAY_ALLOC(name,size)      name = gcnew cli::array<double>(size);
    #define ARRAY_COPY(dest,src,size)   src->CopyTo(dest,0)
    #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) cli::array<double>::Copy( src, srcIdx, dest, destIdx, size )
+   #define ARRAY_FREE(name)
+   #define ARRAY_FREE_COND(cond,name)   
+#elif defined( _JAVA )
+   #define ARRAY_REF(name)             double []name
+   #define ARRAY_LOCAL(name,size)      double []name = new double[size];
+   #define ARRAY_ALLOC(name,size)      name = new double[size]
+   #define ARRAY_COPY(dest,src,size)   System.arraycopy(src,0,dest,0,size)
+   #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) System.arraycopy(src,0,dest,0,size)
    #define ARRAY_FREE(name)
    #define ARRAY_FREE_COND(cond,name)   
 #else
@@ -76,6 +85,24 @@
    #define ARRAY_FREE(name)            TA_Free(name)
    #define ARRAY_FREE_COND(cond,name)  if( cond ){ TA_Free(name); }
 #endif
+
+/* Access to "Globals"
+ *
+ * The globals here just means that these variables are accessible from
+ * all technical analysis functions.
+ *
+ * Depending of the language/platform, the globals might be in reality
+ * a private member variable of an object...
+ */
+#if defined( _JAVA )
+   #define TA_GLOBALS_UNSTABLE_PERIOD(x) (this.unstablePeriod[TA_FuncUnstId.x.ordinal()])
+   #define TA_GLOBALS_COMPATIBILITY      (this.compatibility)
+#else
+   #define TA_GLOBALS_UNSTABLE_PERIOD(x) (TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)x])
+   #define TA_GLOBALS_COMPATIBILITY      (TA_Globals->compatibility)
+#endif
+
+
 
 /* CIRCBUF : Circular Buffer Macros.
  *
@@ -220,6 +247,37 @@
 
 /* Use this macro to access the member when type is a class or a struct. */
 #define CIRCBUF_REF(x) (x)->
+
+#elif defined(_JAVA)
+
+#define CIRCBUF_PROLOG(Id,Type,Size) int Id##_Idx = 0; \
+                                     Type []Id; \
+                                     int maxIdx_##Id = (Size-1)
+
+/* Use this macro instead if the Type is a class or a struct. */
+#define CIRCBUF_PROLOG_CLASS(Id,Type,Size) int Id##_Idx = 0; \
+                                           Type []Id; \
+                                           int maxIdx_##Id = (Size-1)
+
+#define CIRCBUF_INIT(Id,Type,Size) \
+   { \
+      if( Size <= 0 ) \
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
+      Id = new Type[Size]; \
+      maxIdx_##Id = (Size-1); \
+   }
+
+#define CIRCBUF_INIT_CLASS(Id,Type,Size) CIRCBUF_INIT(Id,Type,Size)
+
+#define CIRCBUF_INIT_LOCAL_ONLY(Id,Type) \
+   { \
+      Id = new Type[maxIdx_##Id+1]; \
+   }
+
+#define CIRCBUF_DESTROY(Id)
+
+/* Use this macro to access the member when type is a class or a struct. */
+#define CIRCBUF_REF(x) (x).
 
 #else
 

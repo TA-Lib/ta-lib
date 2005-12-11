@@ -57,6 +57,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -78,6 +81,9 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ int Core::TEMA_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int TEMA_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
+/* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_TEMA_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
@@ -87,7 +93,7 @@
    /* insert lookback code here. */
 
    /* Get lookack for one EMA. */
-   int retValue = TA_EMA_Lookback( optInTimePeriod );
+   int retValue = LOOKBACK_CALL(EMA)( optInTimePeriod );
 
    return retValue * 3;
 }
@@ -115,6 +121,14 @@
 /* Generated */                                         [Out]int%    outBegIdx,
 /* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode TEMA( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         double       inReal[],
+/* Generated */                         int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_TEMA( int    startIdx,
 /* Generated */                     int    endIdx,
@@ -131,12 +145,12 @@
    ARRAY_REF(secondEMA);
    double k;
 
-   VALUE_HANDLE(int,firstEMABegIdx);
-   VALUE_HANDLE(int,firstEMANbElement);
-   VALUE_HANDLE(int,secondEMABegIdx);
-   VALUE_HANDLE(int,secondEMANbElement);
-   VALUE_HANDLE(int,thirdEMABegIdx);
-   VALUE_HANDLE(int,thirdEMANbElement);
+   VALUE_HANDLE_INT(firstEMABegIdx);
+   VALUE_HANDLE_INT(firstEMANbElement);
+   VALUE_HANDLE_INT(secondEMABegIdx);
+   VALUE_HANDLE_INT(secondEMANbElement);
+   VALUE_HANDLE_INT(thirdEMABegIdx);
+   VALUE_HANDLE_INT(thirdEMANbElement);
 
    int tempInt, outIdx, lookbackTotal, lookbackEMA;
    int firstEMAIdx, secondEMAIdx;
@@ -154,16 +168,20 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
 /* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -199,7 +217,7 @@
    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 
    /* Adjust startIdx to account for the lookback period. */
-   lookbackEMA = TA_EMA_Lookback( optInTimePeriod );
+   lookbackEMA = LOOKBACK_CALL(EMA)( optInTimePeriod );
    lookbackTotal = lookbackEMA * 3;
 
    if( startIdx < lookbackTotal )
@@ -212,42 +230,46 @@
    /* Allocate a temporary buffer for the firstEMA. */
    tempInt = lookbackTotal+(endIdx-startIdx)+1;
    ARRAY_ALLOC(firstEMA,tempInt);
-   if( !firstEMA )
-      return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+   #if !defined( _JAVA )
+      if( !firstEMA )
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+   #endif
 
    /* Calculate the first EMA */   
    k = PER_TO_K(optInTimePeriod);
-   retCode = TA_PREFIX(INT_EMA)( startIdx-(lookbackEMA*2), endIdx, inReal,
-                                 optInTimePeriod, k,
-                                 VALUE_HANDLE_OUT(firstEMABegIdx), VALUE_HANDLE_OUT(firstEMANbElement),
-								 firstEMA );
+   retCode = FUNCTION_CALL(INT_EMA)( startIdx-(lookbackEMA*2), endIdx, inReal,
+                                     optInTimePeriod, k,
+                                     VALUE_HANDLE_OUT(firstEMABegIdx), VALUE_HANDLE_OUT(firstEMANbElement),
+								     firstEMA );
    
    /* Verify for failure or if not enough data after
     * calculating the first EMA.
     */
-   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)firstEMANbElement == 0) )
+   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || (VALUE_HANDLE_GET(firstEMANbElement) == 0) )
    {
       ARRAY_FREE( firstEMA );
       return retCode;
    }
 
    /* Allocate a temporary buffer for storing the EMA2 */
-   ARRAY_ALLOC(secondEMA,(int)firstEMANbElement);
-   if( !secondEMA )
-   {
-      ARRAY_FREE( firstEMA );
-      return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
-   }
+   ARRAY_ALLOC(secondEMA,VALUE_HANDLE_GET(firstEMANbElement));
+   #if !defined( _JAVA )
+      if( !secondEMA )
+      {
+         ARRAY_FREE( firstEMA );
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+      }   
+   #endif
 
-   retCode = TA_INT_EMA( 0, ((int)firstEMANbElement)-1, firstEMA,
-                         optInTimePeriod, k,
-                         VALUE_HANDLE_OUT(secondEMABegIdx), VALUE_HANDLE_OUT(secondEMANbElement), 
-						 secondEMA );
+   retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, VALUE_HANDLE_GET(firstEMANbElement)-1, firstEMA,
+                                            optInTimePeriod, k,
+                                            VALUE_HANDLE_OUT(secondEMABegIdx), VALUE_HANDLE_OUT(secondEMANbElement), 
+						                    secondEMA );
 
    /* Return empty output on failure or if not enough data after
     * calculating the second EMA.
     */
-   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)secondEMANbElement == 0) )      
+   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || (VALUE_HANDLE_GET(secondEMANbElement) == 0) )      
    {
       ARRAY_FREE( firstEMA );
       ARRAY_FREE( secondEMA );
@@ -255,15 +277,15 @@
    }
 
    /* Calculate the EMA3 into the caller provided output. */
-   retCode = TA_INT_EMA( 0, ((int)secondEMANbElement)-1, secondEMA,
-                         optInTimePeriod, k,
-                         VALUE_HANDLE_OUT(thirdEMABegIdx), VALUE_HANDLE_OUT(thirdEMANbElement),
-                         outReal );
+   retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, VALUE_HANDLE_GET(secondEMANbElement)-1, secondEMA,
+                                            optInTimePeriod, k,
+                                            VALUE_HANDLE_OUT(thirdEMABegIdx), VALUE_HANDLE_OUT(thirdEMANbElement),
+                                            outReal );
 
    /* Return empty output on failure or if not enough data after
     * calculating the third EMA.
     */
-   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)thirdEMANbElement == 0) )
+   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || (VALUE_HANDLE_GET(thirdEMANbElement) == 0) )
    {
       ARRAY_FREE( firstEMA );
       ARRAY_FREE( secondEMA );
@@ -273,16 +295,16 @@
    /* Indicate where the output starts relative to
     * the caller input.
     */
-   firstEMAIdx  = (int)thirdEMABegIdx + (int)secondEMABegIdx;
-   secondEMAIdx = (int)thirdEMABegIdx;
-   VALUE_HANDLE_DEREF(outBegIdx) = firstEMAIdx + (int)firstEMABegIdx;
+   firstEMAIdx  = VALUE_HANDLE_GET(thirdEMABegIdx) + VALUE_HANDLE_GET(secondEMABegIdx);
+   secondEMAIdx = VALUE_HANDLE_GET(thirdEMABegIdx);
+   VALUE_HANDLE_DEREF(outBegIdx) = firstEMAIdx + VALUE_HANDLE_GET(firstEMABegIdx);
 
    /* Do the TEMA:
     *  Iterate through the EMA3 (output buffer) and adjust
     *  the value by using the EMA2 and EMA1.
     */
    outIdx = 0;
-   while( outIdx < (int)thirdEMANbElement ) 
+   while( outIdx < VALUE_HANDLE_GET(thirdEMANbElement) ) 
    {
       outReal[outIdx] += (3.0*firstEMA[firstEMAIdx++]) - (3.0*secondEMA[secondEMAIdx++]);
       outIdx++;
@@ -303,7 +325,7 @@
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -317,6 +339,14 @@
 /* Generated */                                         [Out]int%    outBegIdx,
 /* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode TEMA( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         float        inReal[],
+/* Generated */                         int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_TEMA( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -330,12 +360,12 @@
 /* Generated */    ARRAY_REF(firstEMA);
 /* Generated */    ARRAY_REF(secondEMA);
 /* Generated */    double k;
-/* Generated */    VALUE_HANDLE(int,firstEMABegIdx);
-/* Generated */    VALUE_HANDLE(int,firstEMANbElement);
-/* Generated */    VALUE_HANDLE(int,secondEMABegIdx);
-/* Generated */    VALUE_HANDLE(int,secondEMANbElement);
-/* Generated */    VALUE_HANDLE(int,thirdEMABegIdx);
-/* Generated */    VALUE_HANDLE(int,thirdEMANbElement);
+/* Generated */    VALUE_HANDLE_INT(firstEMABegIdx);
+/* Generated */    VALUE_HANDLE_INT(firstEMANbElement);
+/* Generated */    VALUE_HANDLE_INT(secondEMABegIdx);
+/* Generated */    VALUE_HANDLE_INT(secondEMANbElement);
+/* Generated */    VALUE_HANDLE_INT(thirdEMABegIdx);
+/* Generated */    VALUE_HANDLE_INT(thirdEMANbElement);
 /* Generated */    int tempInt, outIdx, lookbackTotal, lookbackEMA;
 /* Generated */    int firstEMAIdx, secondEMAIdx;
 /* Generated */    TA_RetCode retCode;
@@ -344,17 +374,21 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
 /* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */    lookbackEMA = TA_EMA_Lookback( optInTimePeriod );
+/* Generated */    lookbackEMA = LOOKBACK_CALL(EMA)( optInTimePeriod );
 /* Generated */    lookbackTotal = lookbackEMA * 3;
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
@@ -362,49 +396,53 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS; 
 /* Generated */    tempInt = lookbackTotal+(endIdx-startIdx)+1;
 /* Generated */    ARRAY_ALLOC(firstEMA,tempInt);
-/* Generated */    if( !firstEMA )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+/* Generated */    #if !defined( _JAVA )
+/* Generated */       if( !firstEMA )
+/* Generated */          return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+/* Generated */    #endif
 /* Generated */    k = PER_TO_K(optInTimePeriod);
-/* Generated */    retCode = TA_PREFIX(INT_EMA)( startIdx-(lookbackEMA*2), endIdx, inReal,
-/* Generated */                                  optInTimePeriod, k,
-/* Generated */                                  VALUE_HANDLE_OUT(firstEMABegIdx), VALUE_HANDLE_OUT(firstEMANbElement),
-/* Generated */ 								 firstEMA );
-/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)firstEMANbElement == 0) )
+/* Generated */    retCode = FUNCTION_CALL(INT_EMA)( startIdx-(lookbackEMA*2), endIdx, inReal,
+/* Generated */                                      optInTimePeriod, k,
+/* Generated */                                      VALUE_HANDLE_OUT(firstEMABegIdx), VALUE_HANDLE_OUT(firstEMANbElement),
+/* Generated */ 								     firstEMA );
+/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || (VALUE_HANDLE_GET(firstEMANbElement) == 0) )
 /* Generated */    {
 /* Generated */       ARRAY_FREE( firstEMA );
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    ARRAY_ALLOC(secondEMA,(int)firstEMANbElement);
-/* Generated */    if( !secondEMA )
-/* Generated */    {
-/* Generated */       ARRAY_FREE( firstEMA );
-/* Generated */       return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
-/* Generated */    }
-/* Generated */    retCode = TA_INT_EMA( 0, ((int)firstEMANbElement)-1, firstEMA,
-/* Generated */                          optInTimePeriod, k,
-/* Generated */                          VALUE_HANDLE_OUT(secondEMABegIdx), VALUE_HANDLE_OUT(secondEMANbElement), 
-/* Generated */ 						 secondEMA );
-/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)secondEMANbElement == 0) )      
+/* Generated */    ARRAY_ALLOC(secondEMA,VALUE_HANDLE_GET(firstEMANbElement));
+/* Generated */    #if !defined( _JAVA )
+/* Generated */       if( !secondEMA )
+/* Generated */       {
+/* Generated */          ARRAY_FREE( firstEMA );
+/* Generated */          return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+/* Generated */       }   
+/* Generated */    #endif
+/* Generated */    retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, VALUE_HANDLE_GET(firstEMANbElement)-1, firstEMA,
+/* Generated */                                             optInTimePeriod, k,
+/* Generated */                                             VALUE_HANDLE_OUT(secondEMABegIdx), VALUE_HANDLE_OUT(secondEMANbElement), 
+/* Generated */ 						                    secondEMA );
+/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || (VALUE_HANDLE_GET(secondEMANbElement) == 0) )      
 /* Generated */    {
 /* Generated */       ARRAY_FREE( firstEMA );
 /* Generated */       ARRAY_FREE( secondEMA );
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    retCode = TA_INT_EMA( 0, ((int)secondEMANbElement)-1, secondEMA,
-/* Generated */                          optInTimePeriod, k,
-/* Generated */                          VALUE_HANDLE_OUT(thirdEMABegIdx), VALUE_HANDLE_OUT(thirdEMANbElement),
-/* Generated */                          outReal );
-/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)thirdEMANbElement == 0) )
+/* Generated */    retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, VALUE_HANDLE_GET(secondEMANbElement)-1, secondEMA,
+/* Generated */                                             optInTimePeriod, k,
+/* Generated */                                             VALUE_HANDLE_OUT(thirdEMABegIdx), VALUE_HANDLE_OUT(thirdEMANbElement),
+/* Generated */                                             outReal );
+/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || (VALUE_HANDLE_GET(thirdEMANbElement) == 0) )
 /* Generated */    {
 /* Generated */       ARRAY_FREE( firstEMA );
 /* Generated */       ARRAY_FREE( secondEMA );
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    firstEMAIdx  = (int)thirdEMABegIdx + (int)secondEMABegIdx;
-/* Generated */    secondEMAIdx = (int)thirdEMABegIdx;
-/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = firstEMAIdx + (int)firstEMABegIdx;
+/* Generated */    firstEMAIdx  = VALUE_HANDLE_GET(thirdEMABegIdx) + VALUE_HANDLE_GET(secondEMABegIdx);
+/* Generated */    secondEMAIdx = VALUE_HANDLE_GET(thirdEMABegIdx);
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = firstEMAIdx + VALUE_HANDLE_GET(firstEMABegIdx);
 /* Generated */    outIdx = 0;
-/* Generated */    while( outIdx < (int)thirdEMANbElement ) 
+/* Generated */    while( outIdx < VALUE_HANDLE_GET(thirdEMANbElement) ) 
 /* Generated */    {
 /* Generated */       outReal[outIdx] += (3.0*firstEMA[firstEMAIdx++]) - (3.0*secondEMA[secondEMAIdx++]);
 /* Generated */       outIdx++;

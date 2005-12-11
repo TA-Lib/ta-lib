@@ -57,6 +57,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -78,6 +81,9 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ int Core::ADXR_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int ADXR_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
+/* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_ADXR_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
@@ -86,7 +92,7 @@
 {
    /* insert lookback code here. */
    if( optInTimePeriod > 1 )
-      return optInTimePeriod + TA_ADX_Lookback( optInTimePeriod) - 1;
+      return optInTimePeriod + LOOKBACK_CALL(ADX)( optInTimePeriod) - 1;
    else
       return 3;
 }
@@ -116,6 +122,16 @@
 /* Generated */                                         [Out]int%    outBegIdx,
 /* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode ADXR( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         double       inHigh[],
+/* Generated */                         double       inLow[],
+/* Generated */                         double       inClose[],
+/* Generated */                         int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_ADXR( int    startIdx,
 /* Generated */                     int    endIdx,
@@ -145,19 +161,23 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow||!inClose)
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
 /* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -183,7 +203,7 @@
     * enough initial data.
     * Always one price bar gets consumed.
     */
-   adxrLookback = TA_ADXR_Lookback( optInTimePeriod );
+   adxrLookback = LOOKBACK_CALL(ADXR)( optInTimePeriod );
 
    if( startIdx < adxrLookback )
       startIdx = adxrLookback;
@@ -197,12 +217,14 @@
    }
 
    ARRAY_ALLOC( adx, endIdx-startIdx+optInTimePeriod );
-   if( !adx )
-      return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+   #if !defined( _JAVA )
+      if( !adx )
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+   #endif
 
-   retCode = TA_PREFIX(ADX)( startIdx-(optInTimePeriod-1), endIdx,
-                           inHigh, inLow, inClose,
-                           optInTimePeriod, outBegIdx, outNbElement, adx );
+   retCode = FUNCTION_CALL(ADX)( startIdx-(optInTimePeriod-1), endIdx,
+                                 inHigh, inLow, inClose,
+                                 optInTimePeriod, outBegIdx, outNbElement, adx );
 
    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )      
    {
@@ -228,7 +250,7 @@
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -244,6 +266,16 @@
 /* Generated */                                         [Out]int%    outBegIdx,
 /* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode ADXR( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         float        inHigh[],
+/* Generated */                         float        inLow[],
+/* Generated */                         float        inClose[],
+/* Generated */                         int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ADXR( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -264,18 +296,22 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
 /* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    #undef  round_pos
 /* Generated */    #define round_pos(x) (x)
-/* Generated */    adxrLookback = TA_ADXR_Lookback( optInTimePeriod );
+/* Generated */    adxrLookback = LOOKBACK_CALL(ADXR)( optInTimePeriod );
 /* Generated */    if( startIdx < adxrLookback )
 /* Generated */       startIdx = adxrLookback;
 /* Generated */    if( startIdx > endIdx )
@@ -285,11 +321,13 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }
 /* Generated */    ARRAY_ALLOC( adx, endIdx-startIdx+optInTimePeriod );
-/* Generated */    if( !adx )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
-/* Generated */    retCode = TA_PREFIX(ADX)( startIdx-(optInTimePeriod-1), endIdx,
-/* Generated */                            inHigh, inLow, inClose,
-/* Generated */                            optInTimePeriod, outBegIdx, outNbElement, adx );
+/* Generated */    #if !defined( _JAVA )
+/* Generated */       if( !adx )
+/* Generated */          return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+/* Generated */    #endif
+/* Generated */    retCode = FUNCTION_CALL(ADX)( startIdx-(optInTimePeriod-1), endIdx,
+/* Generated */                                  inHigh, inLow, inClose,
+/* Generated */                                  optInTimePeriod, outBegIdx, outNbElement, adx );
 /* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )      
 /* Generated */    {
 /* Generated */       ARRAY_FREE( adx );

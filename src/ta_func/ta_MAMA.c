@@ -58,6 +58,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -80,6 +83,10 @@
 /* Generated */ int Core::MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
 /* Generated */                        double        optInSlowLimit )  /* From 0.01 to 0.99 */
 /* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                         double        optInSlowLimit )  /* From 0.01 to 0.99 */
+/* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
 /* Generated */                     double        optInSlowLimit )  /* From 0.01 to 0.99 */
@@ -93,8 +100,8 @@
     * the lookback, but are still requested for 
     * consistency with all other Lookback functions.
     */
-   (void)optInFastLimit;
-   (void)optInSlowLimit;
+   UNUSED_VARIABLE(optInFastLimit);
+   UNUSED_VARIABLE(optInSlowLimit);
 
    /* Lookback is a fix amount + the unstable period.
     *
@@ -113,7 +120,7 @@
     *         32 Total
     */
 
-   return 32 + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_MAMA];
+   return 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA);
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -144,6 +151,16 @@
 /* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outMAMA,
 /* Generated */                                         cli::array<double>^  outFAMA )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode MAMA( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         double       inReal[],
+/* Generated */                         double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                         double        optInSlowLimit, /* From 0.01 to 0.99 */
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         double        outMAMA[],
+/* Generated */                         double        outFAMA[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MAMA( int    startIdx,
 /* Generated */                     int    endIdx,
@@ -166,13 +183,13 @@
    double adjustedPrevPeriod, period;
 
    /* Variable used for the price smoother (a weighted moving average). */
-   unsigned int trailingWMAIdx;
+   int trailingWMAIdx;
    double periodWMASum, periodWMASub, trailingWMAValue;
    double smoothedValue;
 
    /* Variables used for the Hilbert Transormation */
-   const double a = 0.0962;
-   const double b = 0.5769;
+   CONSTANT_DOUBLE(a) = 0.0962;
+   CONSTANT_DOUBLE(b) = 0.5769;
    double hilbertTempReal;
    int hilbertIdx;
 
@@ -201,7 +218,9 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    if( optInFastLimit == TA_REAL_DEFAULT )
 /* Generated */       optInFastLimit = 5.000000e-1;
 /* Generated */    else if( (optInFastLimit < 1.000000e-2) ||/* Generated */  (optInFastLimit > 9.900000e-1) )
@@ -212,12 +231,14 @@
 /* Generated */    else if( (optInSlowLimit < 1.000000e-2) ||/* Generated */  (optInSlowLimit > 9.900000e-1) )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outMAMA )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    if( !outFAMA )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -230,7 +251,7 @@
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 32 + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_MAMA];
+   lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA);
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -330,7 +351,7 @@
       todayValue = inReal[today];
       DO_PRICE_WMA(todayValue,smoothedValue);
 
-      if( today & 1 )
+      if( (today%2) == 0 )
       {
          /* Do the Hilbert Transforms for even price bar */
          DO_HILBERT_EVEN(detrender,smoothedValue);
@@ -446,7 +467,7 @@
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -462,6 +483,16 @@
 /* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outMAMA,
 /* Generated */                                         cli::array<double>^  outFAMA )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode MAMA( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         float        inReal[],
+/* Generated */                         double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                         double        optInSlowLimit, /* From 0.01 to 0.99 */
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         double        outMAMA[],
+/* Generated */                         double        outFAMA[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MAMA( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -478,11 +509,11 @@
 /* Generated */    int lookbackTotal, today;
 /* Generated */    double tempReal, tempReal2;
 /* Generated */    double adjustedPrevPeriod, period;
-/* Generated */    unsigned int trailingWMAIdx;
+/* Generated */    int trailingWMAIdx;
 /* Generated */    double periodWMASum, periodWMASub, trailingWMAValue;
 /* Generated */    double smoothedValue;
-/* Generated */    const double a = 0.0962;
-/* Generated */    const double b = 0.5769;
+/* Generated */    CONSTANT_DOUBLE(a) = 0.0962;
+/* Generated */    CONSTANT_DOUBLE(b) = 0.5769;
 /* Generated */    double hilbertTempReal;
 /* Generated */    int hilbertIdx;
 /* Generated */    HILBERT_VARIABLES( detrender );
@@ -499,7 +530,9 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */     if( optInFastLimit == TA_REAL_DEFAULT )
 /* Generated */        optInFastLimit = 5.000000e-1;
 /* Generated */     else if( (optInFastLimit < 1.000000e-2) ||  (optInFastLimit > 9.900000e-1) )
@@ -508,13 +541,15 @@
 /* Generated */        optInSlowLimit = 5.000000e-2;
 /* Generated */     else if( (optInSlowLimit < 1.000000e-2) ||  (optInSlowLimit > 9.900000e-1) )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outMAMA )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     if( !outFAMA )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    rad2Deg = 180.0 / (4.0 * atan(1));
-/* Generated */    lookbackTotal = 32 + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_MAMA];
+/* Generated */    lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA);
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
@@ -568,7 +603,7 @@
 /* Generated */       adjustedPrevPeriod = (0.075*period)+0.54;
 /* Generated */       todayValue = inReal[today];
 /* Generated */       DO_PRICE_WMA(todayValue,smoothedValue);
-/* Generated */       if( today & 1 )
+/* Generated */       if( (today%2) == 0 )
 /* Generated */       {
 /* Generated */          DO_HILBERT_EVEN(detrender,smoothedValue);
 /* Generated */          DO_HILBERT_EVEN(Q1,detrender);

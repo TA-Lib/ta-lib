@@ -61,6 +61,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -82,6 +85,9 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ int Core::PLUS_DI_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int PLUS_DI_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
+/* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_PLUS_DI_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
@@ -91,7 +97,7 @@
    /* insert lookback code here. */
 
    if( optInTimePeriod > 1 )
-      return optInTimePeriod + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_PLUS_DI];
+      return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DI);
    else
       return 1;
 }
@@ -121,6 +127,16 @@
 /* Generated */                                            [Out]int%    outBegIdx,
 /* Generated */                                            [Out]int%    outNbElement,
 /* Generated */                                            cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode PLUS_DI( int    startIdx,
+/* Generated */                            int    endIdx,
+/* Generated */                            double       inHigh[],
+/* Generated */                            double       inLow[],
+/* Generated */                            double       inClose[],
+/* Generated */                            int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                            MInteger     outBegIdx,
+/* Generated */                            MInteger     outNbElement,
+/* Generated */                            double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PLUS_DI( int    startIdx,
 /* Generated */                        int    endIdx,
@@ -164,19 +180,23 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow||!inClose)
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
 /* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -279,7 +299,7 @@
    #define round_pos(x) (x)
 
    if( optInTimePeriod > 1 )
-      lookbackTotal = optInTimePeriod + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_PLUS_DI];
+      lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DI);
    else
       lookbackTotal = 1;
 
@@ -377,7 +397,7 @@
    /* Skip the unstable period. Note that this loop must be executed
     * at least ONCE to calculate the first DI.
     */
-   i = TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_PLUS_DI] + 1;
+   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DI) + 1;
    while( i-- != 0 )
    {
       /* Calculate the prevPlusDM */
@@ -457,7 +477,7 @@
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -473,6 +493,16 @@
 /* Generated */                                            [Out]int%    outBegIdx,
 /* Generated */                                            [Out]int%    outNbElement,
 /* Generated */                                            cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode PLUS_DI( int    startIdx,
+/* Generated */                            int    endIdx,
+/* Generated */                            float        inHigh[],
+/* Generated */                            float        inLow[],
+/* Generated */                            float        inClose[],
+/* Generated */                            int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                            MInteger     outBegIdx,
+/* Generated */                            MInteger     outNbElement,
+/* Generated */                            double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_PLUS_DI( int    startIdx,
 /* Generated */                          int    endIdx,
@@ -504,19 +534,23 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
 /* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    #undef  round_pos
 /* Generated */    #define round_pos(x) (x)
 /* Generated */    if( optInTimePeriod > 1 )
-/* Generated */       lookbackTotal = optInTimePeriod + TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_PLUS_DI];
+/* Generated */       lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DI);
 /* Generated */    else
 /* Generated */       lookbackTotal = 1;
 /* Generated */    if( startIdx < lookbackTotal )
@@ -584,7 +618,7 @@
 /* Generated */       prevTR += tempReal;
 /* Generated */       prevClose = inClose[today];
 /* Generated */    }
-/* Generated */    i = TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)TA_FUNC_UNST_PLUS_DI] + 1;
+/* Generated */    i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DI) + 1;
 /* Generated */    while( i-- != 0 )
 /* Generated */    {
 /* Generated */       today++;

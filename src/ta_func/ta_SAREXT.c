@@ -69,6 +69,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -97,6 +100,16 @@
 /* Generated */                          double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
 /* Generated */                          double        optInAccelerationMaxShort )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int SAREXT_Lookback( double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                           double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationMaxShort )  /* From 0 to TA_REAL_MAX */
+/* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_SAREXT_Lookback( double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                       double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
@@ -111,14 +124,14 @@
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   (void)optInStartValue;
-   (void)optInOffsetOnReverse;
-   (void)optInAccelerationInitLong;
-   (void)optInAccelerationLong;
-   (void)optInAccelerationMaxLong;
-   (void)optInAccelerationInitShort;
-   (void)optInAccelerationShort;
-   (void)optInAccelerationMaxShort;
+   UNUSED_VARIABLE(optInStartValue);
+   UNUSED_VARIABLE(optInOffsetOnReverse);
+   UNUSED_VARIABLE(optInAccelerationInitLong);
+   UNUSED_VARIABLE(optInAccelerationLong);
+   UNUSED_VARIABLE(optInAccelerationMaxLong);
+   UNUSED_VARIABLE(optInAccelerationInitShort);
+   UNUSED_VARIABLE(optInAccelerationShort);
+   UNUSED_VARIABLE(optInAccelerationMaxShort);
 
     /* SAR always sacrifices one price bar to establish the
      * initial extreme price.
@@ -179,6 +192,22 @@
 /* Generated */                                           [Out]int%    outBegIdx,
 /* Generated */                                           [Out]int%    outNbElement,
 /* Generated */                                           cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode SAREXT( int    startIdx,
+/* Generated */                           int    endIdx,
+/* Generated */                           double       inHigh[],
+/* Generated */                           double       inLow[],
+/* Generated */                           double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                           double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                           MInteger     outBegIdx,
+/* Generated */                           MInteger     outNbElement,
+/* Generated */                           double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_SAREXT( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -204,7 +233,7 @@
    int isLong; /* > 0 indicates long. == 0 indicates short */
    int todayIdx, outIdx;
 
-   VALUE_HANDLE(int,tempInt);
+   VALUE_HANDLE_INT(tempInt);
 
    double newHigh, newLow, prevHigh, prevLow;
    double afLong, afShort, ep, sar;
@@ -221,10 +250,12 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow)
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    if( optInStartValue == TA_REAL_DEFAULT )
 /* Generated */       optInStartValue = 0.000000e+0;
 /* Generated */    else if( (optInStartValue < -3.000000e+37) ||/* Generated */  (optInStartValue > 3.000000e+37) )
@@ -265,9 +296,11 @@
 /* Generated */    else if( (optInAccelerationMaxShort < 0.000000e+0) ||/* Generated */  (optInAccelerationMaxShort > 3.000000e+37) )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -380,9 +413,9 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = TA_PREFIX(MINUS_DM)( startIdx, startIdx, inHigh, inLow, 1,
-                                     VALUE_HANDLE_OUT(tempInt), VALUE_HANDLE_OUT(tempInt),
-									 ep_temp );
+      retCode = FUNCTION_CALL(MINUS_DM)( startIdx, startIdx, inHigh, inLow, 1,
+                                         VALUE_HANDLE_OUT(tempInt), VALUE_HANDLE_OUT(tempInt),
+									     ep_temp );
       if( ep_temp[0] > 0 )
          isLong = 0;
       else
@@ -419,7 +452,7 @@
 
    if(optInStartValue == 0) /* Default action */
    {
-      if( isLong )
+      if( isLong == 1 )
       {
          ep  = inHigh[todayIdx];
          sar = newLow;
@@ -460,7 +493,7 @@
       SAR_ROUNDING(newLow);
       SAR_ROUNDING(newHigh);
 
-      if( isLong )
+      if( isLong == 1 )
       {  
          /* Switch to short if the low penetrates the SAR value. */
          if( newLow <= sar )
@@ -478,7 +511,7 @@
                sar = newHigh;
 
             /* Output the overide SAR  */
-            if( optInOffsetOnReverse )
+            if( optInOffsetOnReverse != 0.0 )
                sar += sar * optInOffsetOnReverse; 
             outReal[outIdx++] = -sar;
 
@@ -545,7 +578,7 @@
                sar = newLow;
 
             /* Output the overide SAR  */
-            if( optInOffsetOnReverse )
+            if( optInOffsetOnReverse != 0.0 )
                sar -= sar * optInOffsetOnReverse;
             outReal[outIdx++] = sar;
 
@@ -604,7 +637,7 @@
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -626,6 +659,22 @@
 /* Generated */                                           [Out]int%    outBegIdx,
 /* Generated */                                           [Out]int%    outNbElement,
 /* Generated */                                           cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode SAREXT( int    startIdx,
+/* Generated */                           int    endIdx,
+/* Generated */                           float        inHigh[],
+/* Generated */                           float        inLow[],
+/* Generated */                           double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                           double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                           double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                           MInteger     outBegIdx,
+/* Generated */                           MInteger     outNbElement,
+/* Generated */                           double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_SAREXT( int    startIdx,
 /* Generated */                         int    endIdx,
@@ -647,7 +696,7 @@
 /* Generated */    TA_RetCode retCode;
 /* Generated */    int isLong; 
 /* Generated */    int todayIdx, outIdx;
-/* Generated */    VALUE_HANDLE(int,tempInt);
+/* Generated */    VALUE_HANDLE_INT(tempInt);
 /* Generated */    double newHigh, newLow, prevHigh, prevLow;
 /* Generated */    double afLong, afShort, ep, sar;
 /* Generated */    ARRAY_LOCAL(ep_temp,1);
@@ -656,8 +705,10 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow)
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */     if( optInStartValue == TA_REAL_DEFAULT )
 /* Generated */        optInStartValue = 0.000000e+0;
 /* Generated */     else if( (optInStartValue < -3.000000e+37) ||  (optInStartValue > 3.000000e+37) )
@@ -690,8 +741,10 @@
 /* Generated */        optInAccelerationMaxShort = 2.000000e-1;
 /* Generated */     else if( (optInAccelerationMaxShort < 0.000000e+0) ||  (optInAccelerationMaxShort > 3.000000e+37) )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    if( startIdx < 1 )
 /* Generated */       startIdx = 1;
@@ -713,9 +766,9 @@
 /* Generated */       optInAccelerationShort = optInAccelerationMaxShort;      
 /* Generated */    if(optInStartValue == 0) 
 /* Generated */    {
-/* Generated */       retCode = TA_PREFIX(MINUS_DM)( startIdx, startIdx, inHigh, inLow, 1,
-/* Generated */                                      VALUE_HANDLE_OUT(tempInt), VALUE_HANDLE_OUT(tempInt),
-/* Generated */ 									 ep_temp );
+/* Generated */       retCode = FUNCTION_CALL(MINUS_DM)( startIdx, startIdx, inHigh, inLow, 1,
+/* Generated */                                          VALUE_HANDLE_OUT(tempInt), VALUE_HANDLE_OUT(tempInt),
+/* Generated */ 									     ep_temp );
 /* Generated */       if( ep_temp[0] > 0 )
 /* Generated */          isLong = 0;
 /* Generated */       else
@@ -744,7 +797,7 @@
 /* Generated */    SAR_ROUNDING(newLow);
 /* Generated */    if(optInStartValue == 0) 
 /* Generated */    {
-/* Generated */       if( isLong )
+/* Generated */       if( isLong == 1 )
 /* Generated */       {
 /* Generated */          ep  = inHigh[todayIdx];
 /* Generated */          sar = newLow;
@@ -777,7 +830,7 @@
 /* Generated */       todayIdx++;
 /* Generated */       SAR_ROUNDING(newLow);
 /* Generated */       SAR_ROUNDING(newHigh);
-/* Generated */       if( isLong )
+/* Generated */       if( isLong == 1 )
 /* Generated */       {  
 /* Generated */          if( newLow <= sar )
 /* Generated */          {
@@ -787,7 +840,7 @@
 /* Generated */                sar = prevHigh;            
 /* Generated */             if( sar < newHigh )
 /* Generated */                sar = newHigh;
-/* Generated */             if( optInOffsetOnReverse )
+/* Generated */             if( optInOffsetOnReverse != 0.0 )
 /* Generated */                sar += sar * optInOffsetOnReverse; 
 /* Generated */             outReal[outIdx++] = -sar;
 /* Generated */             afShort = optInAccelerationInitShort;
@@ -827,7 +880,7 @@
 /* Generated */                sar = prevLow;            
 /* Generated */             if( sar > newLow )
 /* Generated */                sar = newLow;
-/* Generated */             if( optInOffsetOnReverse )
+/* Generated */             if( optInOffsetOnReverse != 0.0 )
 /* Generated */                sar -= sar * optInOffsetOnReverse;
 /* Generated */             outReal[outIdx++] = sar;
 /* Generated */             afLong = optInAccelerationInitLong;

@@ -58,6 +58,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -80,6 +83,10 @@
 /* Generated */ int Core::STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                          double        optInNbDev )  /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                           double        optInNbDev )  /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                       double        optInNbDev )  /* From TA_REAL_MIN to TA_REAL_MAX */
@@ -90,7 +97,7 @@
    /* insert lookback code here. */
 
    /* Lookback is driven by the variance. */
-   return TA_VAR_Lookback( optInTimePeriod, optInNbDev );
+   return LOOKBACK_CALL(VAR)( optInTimePeriod, optInNbDev );
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -120,6 +127,15 @@
 /* Generated */                                           [Out]int%    outBegIdx,
 /* Generated */                                           [Out]int%    outNbElement,
 /* Generated */                                           cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode STDDEV( int    startIdx,
+/* Generated */                           int    endIdx,
+/* Generated */                           double       inReal[],
+/* Generated */                           int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                           double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                           MInteger     outBegIdx,
+/* Generated */                           MInteger     outNbElement,
+/* Generated */                           double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_STDDEV( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -148,7 +164,9 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 5;
@@ -160,9 +178,11 @@
 /* Generated */    else if( (optInNbDev < -3.000000e+37) ||/* Generated */  (optInNbDev > 3.000000e+37) )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -170,9 +190,9 @@
    /* Insert TA function code here. */
 
    /* Calculate the variance. */
-   retCode = TA_PREFIX(INT_VAR)( startIdx, endIdx,
-                                 inReal, optInTimePeriod,
-                                 outBegIdx, outNbElement, outReal );
+   retCode = FUNCTION_CALL(INT_VAR)( startIdx, endIdx,
+                                     inReal, optInTimePeriod,
+                                     outBegIdx, outNbElement, outReal );
 
    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
       return retCode;
@@ -229,6 +249,13 @@ void Core::TA_INT_stddev_using_precalc_ma( cli::array<INPUT_TYPE>^ inReal,
                                            int inMovAvgNbElement,
                                            int timePeriod,
 										   cli::array<double>^ output)
+#elif defined( _JAVA )
+void INT_stddev_using_precalc_ma( INPUT_TYPE inReal[],
+                                  double     inMovAvg[],
+                                  int        inMovAvgBegIdx,                                    
+                                  int        inMovAvgNbElement,
+                                  int        timePeriod,
+                                  double     output[] )
 #else
 void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
                                              const double *inMovAvg,
@@ -281,7 +308,7 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -296,6 +323,15 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */                                           [Out]int%    outBegIdx,
 /* Generated */                                           [Out]int%    outNbElement,
 /* Generated */                                           cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode STDDEV( int    startIdx,
+/* Generated */                           int    endIdx,
+/* Generated */                           float        inReal[],
+/* Generated */                           int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                           double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                           MInteger     outBegIdx,
+/* Generated */                           MInteger     outNbElement,
+/* Generated */                           double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STDDEV( int    startIdx,
 /* Generated */                         int    endIdx,
@@ -315,7 +351,9 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 5;
 /* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
@@ -324,12 +362,14 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */        optInNbDev = 1.000000e+0;
 /* Generated */     else if( (optInNbDev < -3.000000e+37) ||  (optInNbDev > 3.000000e+37) )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    retCode = TA_PREFIX(INT_VAR)( startIdx, endIdx,
-/* Generated */                                  inReal, optInTimePeriod,
-/* Generated */                                  outBegIdx, outNbElement, outReal );
+/* Generated */    retCode = FUNCTION_CALL(INT_VAR)( startIdx, endIdx,
+/* Generated */                                      inReal, optInTimePeriod,
+/* Generated */                                      outBegIdx, outNbElement, outReal );
 /* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
 /* Generated */       return retCode;
 /* Generated */    if( optInNbDev != 1.0 )
@@ -363,6 +403,13 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */                                            int inMovAvgNbElement,
 /* Generated */                                            int timePeriod,
 /* Generated */ 										   cli::array<double>^ output)
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ void INT_stddev_using_precalc_ma( INPUT_TYPE inReal[],
+/* Generated */                                   double     inMovAvg[],
+/* Generated */                                   int        inMovAvgBegIdx,                                    
+/* Generated */                                   int        inMovAvgNbElement,
+/* Generated */                                   int        timePeriod,
+/* Generated */                                   double     output[] )
 /* Generated */ #else
 /* Generated */ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */                                              const double *inMovAvg,

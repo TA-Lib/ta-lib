@@ -57,6 +57,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -77,6 +80,9 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ int Core::AVGPRICE_Lookback( void )
+/* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int AVGPRICE_Lookback(  )
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_AVGPRICE_Lookback( void )
@@ -109,6 +115,16 @@
 /* Generated */                                             [Out]int%    outBegIdx,
 /* Generated */                                             [Out]int%    outNbElement,
 /* Generated */                                             cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode AVGPRICE( int    startIdx,
+/* Generated */                             int    endIdx,
+/* Generated */                             double       inOpen[],
+/* Generated */                             double       inHigh[],
+/* Generated */                             double       inLow[],
+/* Generated */                             double       inClose[],
+/* Generated */                             MInteger     outBegIdx,
+/* Generated */                             MInteger     outNbElement,
+/* Generated */                             double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_AVGPRICE( int    startIdx,
 /* Generated */                         int    endIdx,
@@ -136,13 +152,17 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -170,7 +190,7 @@
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -186,6 +206,16 @@
 /* Generated */                                             [Out]int%    outBegIdx,
 /* Generated */                                             [Out]int%    outNbElement,
 /* Generated */                                             cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode AVGPRICE( int    startIdx,
+/* Generated */                             int    endIdx,
+/* Generated */                             float        inOpen[],
+/* Generated */                             float        inHigh[],
+/* Generated */                             float        inLow[],
+/* Generated */                             float        inClose[],
+/* Generated */                             MInteger     outBegIdx,
+/* Generated */                             MInteger     outNbElement,
+/* Generated */                             double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_AVGPRICE( int    startIdx,
 /* Generated */                           int    endIdx,
@@ -204,10 +234,14 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    outIdx = 0;
 /* Generated */    for( i=startIdx; i <= endIdx; i++ )

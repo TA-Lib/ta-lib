@@ -57,6 +57,9 @@
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */    namespace TA { namespace Lib {
+/* Generated */ #elif defined( _JAVA )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -78,6 +81,9 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ int Core::TRIX_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int TRIX_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
+/* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_TRIX_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
@@ -85,8 +91,8 @@
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-   unsigned int emaLookback = TA_EMA_Lookback( optInTimePeriod );
-   return (emaLookback*3) + TA_ROCR_Lookback( 1 );
+   int emaLookback = LOOKBACK_CALL(EMA)( optInTimePeriod );
+   return (emaLookback*3) + LOOKBACK_CALL(ROCR)( 1 );
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -112,6 +118,14 @@
 /* Generated */                                         [Out]int%    outBegIdx,
 /* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode TRIX( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         double       inReal[],
+/* Generated */                         int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_TRIX( int    startIdx,
 /* Generated */                     int    endIdx,
@@ -126,8 +140,8 @@
    /* Insert local variables here. */
    double k;
    ARRAY_REF(tempBuffer);
-   VALUE_HANDLE(int,nbElement);
-   VALUE_HANDLE(int,begIdx);
+   VALUE_HANDLE_INT(nbElement);
+   VALUE_HANDLE_INT(begIdx);
    int totalLookback;
    int emaLookback, rocLookback;
    TA_RetCode retCode;
@@ -144,16 +158,20 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
 /* Generated */    /* Validate the parameters. */
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
 /* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -161,8 +179,8 @@
    /* Insert TA function code here. */
 
    /* Adjust the startIdx to account for the lookback. */
-   emaLookback   = TA_EMA_Lookback( optInTimePeriod );
-   rocLookback   = TA_ROCR_Lookback( 1 );
+   emaLookback   = LOOKBACK_CALL(EMA)( optInTimePeriod );
+   rocLookback   = LOOKBACK_CALL(ROCR)( 1 );
    totalLookback = (emaLookback*3) + rocLookback;
 
    if( startIdx < totalLookback )
@@ -184,24 +202,26 @@
     * the calculation.
     */
    ARRAY_ALLOC(tempBuffer, nbElementToOutput );
-   if( !tempBuffer )
-   {
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
-   }
+   #if !defined( _JAVA )
+      if( !tempBuffer )
+      {
+         VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+         VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+      }
+   #endif
 
    /* Calculate the first EMA */   
    k = PER_TO_K(optInTimePeriod);  
-   retCode = TA_PREFIX(INT_EMA)( (startIdx-totalLookback), endIdx, inReal,
-                                 optInTimePeriod, k,
-                                 VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
-								 tempBuffer );
+   retCode = FUNCTION_CALL(INT_EMA)( (startIdx-totalLookback), endIdx, inReal,
+                                     optInTimePeriod, k,
+                                     VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
+								     tempBuffer );
    
    /* Verify for failure or if not enough data after
     * calculating the EMA.
     */
-   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)nbElement == 0) )
+   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || (VALUE_HANDLE_GET(nbElement) == 0) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -213,15 +233,15 @@
 
    /* Calculate the second EMA */   
    nbElementToOutput -= emaLookback;
-   retCode = TA_INT_EMA( 0, nbElementToOutput, tempBuffer,
-                         optInTimePeriod, k,
-                         VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
-						 tempBuffer );
+   retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, nbElementToOutput, tempBuffer,
+                                            optInTimePeriod, k,
+                                            VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
+						                    tempBuffer );
    
    /* Verify for failure or if not enough data after
     * calculating the EMA.
     */
-   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)nbElement == 0) )
+   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || (VALUE_HANDLE_GET(nbElement) == 0) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -231,15 +251,15 @@
 
    /* Calculate the third EMA */   
    nbElementToOutput -= emaLookback;
-   retCode = TA_INT_EMA( 0, nbElementToOutput, tempBuffer,
-                         optInTimePeriod, k,
-                         VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
-						 tempBuffer );
+   retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, nbElementToOutput, tempBuffer,
+                                            optInTimePeriod, k,
+                                            VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
+						                    tempBuffer );
    
    /* Verify for failure or if not enough data after
     * calculating the EMA.
     */
-   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)nbElement == 0) )
+   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || (VALUE_HANDLE_GET(nbElement) == 0) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -249,10 +269,10 @@
 
    /* Calculate the 1-day Rate-Of-Change */
    nbElementToOutput -= emaLookback;
-   retCode = TA_ROC( 0, nbElementToOutput,
-                      tempBuffer,
-                      1,  VALUE_HANDLE_OUT(begIdx), outNbElement,
-                      outReal );
+   retCode = FUNCTION_CALL_DOUBLE(ROC)( 0, nbElementToOutput,
+                                        tempBuffer,
+                                        1,  VALUE_HANDLE_OUT(begIdx), outNbElement,
+                                        outReal );
 
    ARRAY_FREE( tempBuffer );
    /* Verify for failure or if not enough data after
@@ -271,7 +291,7 @@
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #if !defined( _MANAGED )
+/* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
 /* Generated */ #endif
@@ -285,6 +305,14 @@
 /* Generated */                                         [Out]int%    outBegIdx,
 /* Generated */                                         [Out]int%    outNbElement,
 /* Generated */                                         cli::array<double>^  outReal )
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public TA_RetCode TRIX( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         float        inReal[],
+/* Generated */                         int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_TRIX( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -297,8 +325,8 @@
 /* Generated */ {
 /* Generated */    double k;
 /* Generated */    ARRAY_REF(tempBuffer);
-/* Generated */    VALUE_HANDLE(int,nbElement);
-/* Generated */    VALUE_HANDLE(int,begIdx);
+/* Generated */    VALUE_HANDLE_INT(nbElement);
+/* Generated */    VALUE_HANDLE_INT(begIdx);
 /* Generated */    int totalLookback;
 /* Generated */    int emaLookback, rocLookback;
 /* Generated */    TA_RetCode retCode;
@@ -308,16 +336,20 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
 /* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    emaLookback   = TA_EMA_Lookback( optInTimePeriod );
-/* Generated */    rocLookback   = TA_ROCR_Lookback( 1 );
+/* Generated */    emaLookback   = LOOKBACK_CALL(EMA)( optInTimePeriod );
+/* Generated */    rocLookback   = LOOKBACK_CALL(ROCR)( 1 );
 /* Generated */    totalLookback = (emaLookback*3) + rocLookback;
 /* Generated */    if( startIdx < totalLookback )
 /* Generated */       startIdx = totalLookback;
@@ -330,18 +362,20 @@
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx; 
 /* Generated */    nbElementToOutput = (endIdx-startIdx)+1+totalLookback;
 /* Generated */    ARRAY_ALLOC(tempBuffer, nbElementToOutput );
-/* Generated */    if( !tempBuffer )
-/* Generated */    {
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
-/* Generated */    }
+/* Generated */    #if !defined( _JAVA )
+/* Generated */       if( !tempBuffer )
+/* Generated */       {
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */          return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+/* Generated */       }
+/* Generated */    #endif
 /* Generated */    k = PER_TO_K(optInTimePeriod);  
-/* Generated */    retCode = TA_PREFIX(INT_EMA)( (startIdx-totalLookback), endIdx, inReal,
-/* Generated */                                  optInTimePeriod, k,
-/* Generated */                                  VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
-/* Generated */ 								 tempBuffer );
-/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)nbElement == 0) )
+/* Generated */    retCode = FUNCTION_CALL(INT_EMA)( (startIdx-totalLookback), endIdx, inReal,
+/* Generated */                                      optInTimePeriod, k,
+/* Generated */                                      VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
+/* Generated */ 								     tempBuffer );
+/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || (VALUE_HANDLE_GET(nbElement) == 0) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -350,11 +384,11 @@
 /* Generated */    }
 /* Generated */    nbElementToOutput--; 
 /* Generated */    nbElementToOutput -= emaLookback;
-/* Generated */    retCode = TA_INT_EMA( 0, nbElementToOutput, tempBuffer,
-/* Generated */                          optInTimePeriod, k,
-/* Generated */                          VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
-/* Generated */ 						 tempBuffer );
-/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)nbElement == 0) )
+/* Generated */    retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, nbElementToOutput, tempBuffer,
+/* Generated */                                             optInTimePeriod, k,
+/* Generated */                                             VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
+/* Generated */ 						                    tempBuffer );
+/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || (VALUE_HANDLE_GET(nbElement) == 0) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -362,11 +396,11 @@
 /* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    nbElementToOutput -= emaLookback;
-/* Generated */    retCode = TA_INT_EMA( 0, nbElementToOutput, tempBuffer,
-/* Generated */                          optInTimePeriod, k,
-/* Generated */                          VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
-/* Generated */ 						 tempBuffer );
-/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)nbElement == 0) )
+/* Generated */    retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, nbElementToOutput, tempBuffer,
+/* Generated */                                             optInTimePeriod, k,
+/* Generated */                                             VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
+/* Generated */ 						                    tempBuffer );
+/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || (VALUE_HANDLE_GET(nbElement) == 0) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -374,10 +408,10 @@
 /* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    nbElementToOutput -= emaLookback;
-/* Generated */    retCode = TA_ROC( 0, nbElementToOutput,
-/* Generated */                       tempBuffer,
-/* Generated */                       1,  VALUE_HANDLE_OUT(begIdx), outNbElement,
-/* Generated */                       outReal );
+/* Generated */    retCode = FUNCTION_CALL_DOUBLE(ROC)( 0, nbElementToOutput,
+/* Generated */                                         tempBuffer,
+/* Generated */                                         1,  VALUE_HANDLE_OUT(begIdx), outNbElement,
+/* Generated */                                         outReal );
 /* Generated */    ARRAY_FREE( tempBuffer );
 /* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
 /* Generated */    {

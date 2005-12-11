@@ -7,7 +7,7 @@
 #ifndef TA_UTILITY_H
 #define TA_UTILITY_H
 
-#if !defined( _MANAGED )
+#if !defined( _MANAGED ) && !defined( _JAVA )
    #ifndef TA_FUNC_H
       #include "ta_func.h"
    #endif
@@ -27,7 +27,7 @@
  * This is an internal version, parameter are assumed validated.
  * (startIdx and endIdx cannot be -1).
  */
-#if !defined( _MANAGED )
+#if !defined( _MANAGED ) && !defined( _JAVA )
 TA_RetCode TA_INT_SMA( int           startIdx,
                        int           endIdx,
                        const double *inReal,
@@ -49,7 +49,7 @@ TA_RetCode TA_S_INT_SMA( int          startIdx,
  * This is an internal version, parameter are assumed validated.
  * (startIdx and endIdx cannot be -1).
  */
-#if !defined( _MANAGED )
+#if !defined( _MANAGED ) && !defined( _JAVA )
 TA_RetCode TA_INT_EMA( int           startIdx,
                        int           endIdx,
                        const double *inReal,
@@ -73,7 +73,7 @@ TA_RetCode TA_S_INT_EMA( int          startIdx,
  * This is an internal version, parameter are assumed validated.
  * (startIdx and endIdx cannot be -1).
  */
-#if !defined( _MANAGED )
+#if !defined( _MANAGED ) && !defined( _JAVA )
 TA_RetCode TA_INT_MACD( int           startIdx,
                         int           endIdx,
                         const double  inReal[],
@@ -104,7 +104,7 @@ TA_RetCode TA_S_INT_MACD( int          startIdx,
  * A buffer must be provided for intermediate processing
  * 'tempBuffer' must be of at least (endIdx-startIdx+1)
  */
-#if !defined( _MANAGED )
+#if !defined( _MANAGED ) && !defined( _JAVA )
 TA_RetCode TA_INT_PO( int           startIdx,
                       int           endIdx,
                       const double *inReal,
@@ -115,7 +115,7 @@ TA_RetCode TA_INT_PO( int           startIdx,
                       int          *outNbElement,
                       double       *outReal,
                       double       *tempBuffer,
-                      unsigned int  doPercentageOutput );
+                      int  doPercentageOutput );
 
 TA_RetCode TA_S_INT_PO( int           startIdx,
                         int           endIdx,
@@ -127,11 +127,11 @@ TA_RetCode TA_S_INT_PO( int           startIdx,
                         int          *outNbElement,
                         double       *outReal,
                         double       *tempBuffer,
-                        unsigned int  doPercentageOutput );
+                        int  doPercentageOutput );
 #endif
 
 /* Internal variance function. */
-#if !defined( _MANAGED )
+#if !defined( _MANAGED ) && !defined( _JAVA )
 TA_RetCode TA_INT_VAR( int           startIdx,
                        int           endIdx,
                        const double *inReal,
@@ -154,7 +154,7 @@ TA_RetCode TA_S_INT_VAR( int           startIdx,
  * This function allows speed optimization when the
  * moving average series is already calculated.
  */
-#if !defined( _MANAGED )
+#if !defined( _MANAGED ) && !defined( _JAVA )
 void TA_INT_stddev_using_precalc_ma( const double *inReal,
                                      const double *inMovAvg,
                                      int           inMovAvgBegIdx,
@@ -181,6 +181,14 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
    #define cos   Math::Cos
    #define sin   Math::Sin
    #define sqrt  Math::Sqrt
+#elif defined( _JAVA )
+   #define floor Math.floor
+   #define ceil  Math.ceil
+   #define fabs  Math.abs
+   #define atan  Math.atan
+   #define cos   Math.cos
+   #define sin   Math.sin
+   #define sqrt  Math.sqrt
 #endif
 
 /* Rounding macro for doubles. Works only with positive numbers. */
@@ -221,25 +229,14 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
  * the Hilbert Transform logic as documented
  * in John Ehlers books "Rocket Science For Traders".
  */
-#if defined( _MANAGED )
-   #define HILBERT_VARIABLES(varName) \
-         cli::array<double>^ varName##_Odd  = gcnew cli::array<double>(3); \
-         cli::array<double>^ varName##_Even = gcnew cli::array<double>(3); \
-         double varName; \
-         double prev_##varName##_Odd; \
-         double prev_##varName##_Even; \
-         double prev_##varName##_input_Odd; \
-         double prev_##varName##_input_Even
-#else
-   #define HILBERT_VARIABLES(varName) \
-         double varName##_Odd[3]; \
-         double varName##_Even[3]; \
-         double varName; \
-         double prev_##varName##_Odd; \
-         double prev_##varName##_Even; \
-         double prev_##varName##_input_Odd; \
-         double prev_##varName##_input_Even
-#endif
+#define HILBERT_VARIABLES(varName) \
+   ARRAY_LOCAL(varName##_Odd,3); \
+   ARRAY_LOCAL(varName##_Even, 3); \
+   double varName; \
+   double prev_##varName##_Odd; \
+   double prev_##varName##_Even; \
+   double prev_##varName##_input_Odd; \
+   double prev_##varName##_input_Even
 
 #define INIT_HILBERT_VARIABLES(varName) { \
       varName##_Odd [0] = 0.0; \
@@ -300,13 +297,17 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define TA_CANDLECOLOR(IDX)     ( inClose[IDX] >= inOpen[IDX] ? 1 : -1 )
 
 #if defined( _MANAGED )
-   #define TA_CANDLERANGETYPE(SET) TA_Globals->candleSettings[(int)NAMESPACE(TA_CandleSettingType)SET]->rangeType
-   #define TA_CANDLEAVGPERIOD(SET) TA_Globals->candleSettings[(int)NAMESPACE(TA_CandleSettingType)SET]->avgPeriod
-   #define TA_CANDLEFACTOR(SET)    TA_Globals->candleSettings[(int)NAMESPACE(TA_CandleSettingType)SET]->factor
+   #define TA_CANDLERANGETYPE(SET) (TA_Globals->candleSettings[(int)NAMESPACE(TA_CandleSettingType)SET]->rangeType)
+   #define TA_CANDLEAVGPERIOD(SET) (TA_Globals->candleSettings[(int)NAMESPACE(TA_CandleSettingType)SET]->avgPeriod)
+   #define TA_CANDLEFACTOR(SET)    (TA_Globals->candleSettings[(int)NAMESPACE(TA_CandleSettingType)SET]->factor)
+#elif defined( _JAVA )
+   #define TA_CANDLERANGETYPE(SET) (this.candleSettings[TA_CandleSettingType.SET.ordinal()].rangeType)
+   #define TA_CANDLEAVGPERIOD(SET) (this.candleSettings[TA_CandleSettingType.SET.ordinal()].avgPeriod)
+   #define TA_CANDLEFACTOR(SET)    (this.candleSettings[TA_CandleSettingType.SET.ordinal()].factor)
 #else
-   #define TA_CANDLERANGETYPE(SET) TA_Globals->candleSettings[SET].rangeType
-   #define TA_CANDLEAVGPERIOD(SET) TA_Globals->candleSettings[SET].avgPeriod
-   #define TA_CANDLEFACTOR(SET)    TA_Globals->candleSettings[SET].factor
+   #define TA_CANDLERANGETYPE(SET) (TA_Globals->candleSettings[SET].rangeType)
+   #define TA_CANDLEAVGPERIOD(SET) (TA_Globals->candleSettings[SET].avgPeriod)
+   #define TA_CANDLEFACTOR(SET)    (TA_Globals->candleSettings[SET].factor)
 #endif
 
 #define TA_CANDLERANGE(SET,IDX) \
@@ -316,8 +317,8 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
       0 ) ) )
 #define TA_CANDLEAVERAGE(SET,SUM,IDX) \
     ( TA_CANDLEFACTOR(SET) \
-        * ( TA_CANDLEAVGPERIOD(SET) ? SUM / TA_CANDLEAVGPERIOD(SET) : TA_CANDLERANGE(SET,IDX) ) \
-        / ( TA_CANDLERANGETYPE(SET) == NAMESPACE(TA_RangeType)TA_RangeType_Shadows ? 2 : 1 ) \
+        * ( TA_CANDLEAVGPERIOD(SET) != 0.0? SUM / TA_CANDLEAVGPERIOD(SET) : TA_CANDLERANGE(SET,IDX) ) \
+        / ( TA_CANDLERANGETYPE(SET) == NAMESPACE(TA_RangeType)TA_RangeType_Shadows ? 2.0 : 1.0 ) \
     )
 #define TA_REALBODYGAPUP(IDX2,IDX1)     ( min(inOpen[IDX2],inClose[IDX2]) > max(inOpen[IDX1],inClose[IDX1]) )
 #define TA_REALBODYGAPDOWN(IDX2,IDX1)   ( max(inOpen[IDX2],inClose[IDX2]) < min(inOpen[IDX1],inClose[IDX1]) )
