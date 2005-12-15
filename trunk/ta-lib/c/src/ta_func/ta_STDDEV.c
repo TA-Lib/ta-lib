@@ -243,12 +243,12 @@
  *       closely related.
  */
 #if defined( _MANAGED )
-void Core::TA_INT_stddev_using_precalc_ma( cli::array<INPUT_TYPE>^ inReal,
-										   cli::array<double>^ inMovAvg,
-                                           int inMovAvgBegIdx,                                    
-                                           int inMovAvgNbElement,
-                                           int timePeriod,
-										   cli::array<double>^ output)
+void Core::INT_stddev_using_precalc_ma( cli::array<INPUT_TYPE>^ inReal,
+										cli::array<double>^ inMovAvg,
+                                        int inMovAvgBegIdx,                                    
+                                        int inMovAvgNbElement,
+                                        int timePeriod,
+										cli::array<double>^ output)
 #elif defined( _JAVA )
 void INT_stddev_using_precalc_ma( INPUT_TYPE inReal[],
                                   double     inMovAvg[],
@@ -397,12 +397,12 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ void Core::TA_INT_stddev_using_precalc_ma( cli::array<INPUT_TYPE>^ inReal,
-/* Generated */ 										   cli::array<double>^ inMovAvg,
-/* Generated */                                            int inMovAvgBegIdx,                                    
-/* Generated */                                            int inMovAvgNbElement,
-/* Generated */                                            int timePeriod,
-/* Generated */ 										   cli::array<double>^ output)
+/* Generated */ void Core::INT_stddev_using_precalc_ma( cli::array<INPUT_TYPE>^ inReal,
+/* Generated */ 										cli::array<double>^ inMovAvg,
+/* Generated */                                         int inMovAvgBegIdx,                                    
+/* Generated */                                         int inMovAvgNbElement,
+/* Generated */                                         int timePeriod,
+/* Generated */ 										cli::array<double>^ output)
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ void INT_stddev_using_precalc_ma( INPUT_TYPE inReal[],
 /* Generated */                                   double     inMovAvg[],

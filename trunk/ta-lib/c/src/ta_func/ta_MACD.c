@@ -245,17 +245,17 @@
 }
 
 #if defined( _MANAGED )
- enum class Core::TA_RetCode Core::TA_INT_MACD( int    startIdx,
-                                                 int    endIdx,
-												 cli::array<INPUT_TYPE>^ inReal,
-                                                 int    optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
-                                                 int    optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
-                                                 int    optInSignalPeriod_2, /* From 1 to 200 */
-                                                 [Out]int% outBegIdx,
-                                                 [Out]int% outNbElement,
-												 cli::array<double>^ outMACD,
-                                                 cli::array<double>^ outMACDSignal,
-                                                 cli::array<double>^ outMACDHist )
+ enum class Core::TA_RetCode Core::INT_MACD( int    startIdx,
+                                             int    endIdx,
+											 cli::array<INPUT_TYPE>^ inReal,
+                                             int    optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
+                                             int    optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
+                                             int    optInSignalPeriod_2, /* From 1 to 200 */
+                                             [Out]int% outBegIdx,
+                                             [Out]int% outNbElement,
+											 cli::array<double>^ outMACD,
+                                             cli::array<double>^ outMACDSignal,
+                                             cli::array<double>^ outMACDHist )
 #elif defined( _JAVA )
 TA_RetCode INT_MACD( int        startIdx,
                      int        endIdx,
@@ -562,17 +562,17 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                    outMACDHist );
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
-/* Generated */  enum class Core::TA_RetCode Core::TA_INT_MACD( int    startIdx,
-/* Generated */                                                  int    endIdx,
-/* Generated */ 												 cli::array<INPUT_TYPE>^ inReal,
-/* Generated */                                                  int    optInFastPeriod, 
-/* Generated */                                                  int    optInSlowPeriod, 
-/* Generated */                                                  int    optInSignalPeriod_2, 
-/* Generated */                                                  [Out]int% outBegIdx,
-/* Generated */                                                  [Out]int% outNbElement,
-/* Generated */ 												 cli::array<double>^ outMACD,
-/* Generated */                                                  cli::array<double>^ outMACDSignal,
-/* Generated */                                                  cli::array<double>^ outMACDHist )
+/* Generated */  enum class Core::TA_RetCode Core::INT_MACD( int    startIdx,
+/* Generated */                                              int    endIdx,
+/* Generated */ 											 cli::array<INPUT_TYPE>^ inReal,
+/* Generated */                                              int    optInFastPeriod, 
+/* Generated */                                              int    optInSlowPeriod, 
+/* Generated */                                              int    optInSignalPeriod_2, 
+/* Generated */                                              [Out]int% outBegIdx,
+/* Generated */                                              [Out]int% outNbElement,
+/* Generated */ 											 cli::array<double>^ outMACD,
+/* Generated */                                              cli::array<double>^ outMACDSignal,
+/* Generated */                                              cli::array<double>^ outMACDHist )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ TA_RetCode INT_MACD( int        startIdx,
 /* Generated */                      int        endIdx,

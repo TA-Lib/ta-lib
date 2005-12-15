@@ -191,14 +191,14 @@
  * The macro PER_TO_K is equivalent to the above formula.
  */
 #if defined( _MANAGED )
- enum class Core::TA_RetCode Core::TA_INT_EMA( int           startIdx,
-                                               int           endIdx,
-											   cli::array<INPUT_TYPE>^ inReal,
-                                               int           optInTimePeriod,
-                                               double        optInK_1,
-                                               [Out]int% outBegIdx,
-                                               [Out]int% outNbElement,
-                                               cli::array<double>^ outReal )
+ enum class Core::TA_RetCode Core::INT_EMA( int           startIdx,
+                                            int           endIdx,
+								            cli::array<INPUT_TYPE>^ inReal,
+                                            int           optInTimePeriod,
+                                            double        optInK_1,
+                                            [Out]int% outBegIdx,
+                                            [Out]int% outNbElement,
+                                            cli::array<double>^ outReal )
 #elif defined( _JAVA )
 public TA_RetCode INT_EMA( int               startIdx,
                            int               endIdx,
@@ -381,14 +381,14 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */                                   outBegIdx, outNbElement, outReal );
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
-/* Generated */  enum class Core::TA_RetCode Core::TA_INT_EMA( int           startIdx,
-/* Generated */                                                int           endIdx,
-/* Generated */ 											   cli::array<INPUT_TYPE>^ inReal,
-/* Generated */                                                int           optInTimePeriod,
-/* Generated */                                                double        optInK_1,
-/* Generated */                                                [Out]int% outBegIdx,
-/* Generated */                                                [Out]int% outNbElement,
-/* Generated */                                                cli::array<double>^ outReal )
+/* Generated */  enum class Core::TA_RetCode Core::INT_EMA( int           startIdx,
+/* Generated */                                             int           endIdx,
+/* Generated */ 								            cli::array<INPUT_TYPE>^ inReal,
+/* Generated */                                             int           optInTimePeriod,
+/* Generated */                                             double        optInK_1,
+/* Generated */                                             [Out]int% outBegIdx,
+/* Generated */                                             [Out]int% outNbElement,
+/* Generated */                                             cli::array<double>^ outReal )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public TA_RetCode INT_EMA( int               startIdx,
 /* Generated */                            int               endIdx,

@@ -174,13 +174,13 @@
 }
 
 #if defined( _MANAGED )
- enum class Core::TA_RetCode Core::TA_INT_SMA( int     startIdx,
-                                               int     endIdx,
-											   cli::array<INPUT_TYPE>^ inReal, 
-								               int     optInTimePeriod,
-								               [Out]int% outBegIdx, 
-								               [Out]int% outNbElement,
-											   cli::array<double>^  outReal)
+ enum class Core::TA_RetCode Core::INT_SMA( int     startIdx,
+                                            int     endIdx,
+									        cli::array<INPUT_TYPE>^ inReal, 
+								            int     optInTimePeriod,
+								            [Out]int% outBegIdx, 
+								            [Out]int% outNbElement,
+											cli::array<double>^  outReal)
 #elif defined( _JAVA )
 TA_RetCode INT_SMA( int    startIdx,
                     int    endIdx,
@@ -311,13 +311,13 @@ TA_RetCode TA_PREFIX(INT_SMA)( int    startIdx,
 /* Generated */                                  outBegIdx, outNbElement, outReal ); 
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
-/* Generated */  enum class Core::TA_RetCode Core::TA_INT_SMA( int     startIdx,
-/* Generated */                                                int     endIdx,
-/* Generated */ 											   cli::array<INPUT_TYPE>^ inReal, 
-/* Generated */ 								               int     optInTimePeriod,
-/* Generated */ 								               [Out]int% outBegIdx, 
-/* Generated */ 								               [Out]int% outNbElement,
-/* Generated */ 											   cli::array<double>^  outReal)
+/* Generated */  enum class Core::TA_RetCode Core::INT_SMA( int     startIdx,
+/* Generated */                                             int     endIdx,
+/* Generated */ 											cli::array<INPUT_TYPE>^ inReal, 
+/* Generated */ 								            int     optInTimePeriod,
+/* Generated */ 								            [Out]int% outBegIdx, 
+/* Generated */ 								            [Out]int% outNbElement,
+/* Generated */ 											cli::array<double>^  outReal)
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ TA_RetCode INT_SMA( int    startIdx,
 /* Generated */                     int    endIdx,
