@@ -230,18 +230,19 @@
  *
  * A buffer must be provided for intermediate processing.
  */
+
 #if defined( _MANAGED )
- enum class Core::TA_RetCode Core::TA_INT_PO( int    startIdx,
-                                              int    endIdx,
-											  cli::array<INPUT_TYPE>^ inReal,
-                                              int    optInFastPeriod, /* From 1 to 200 */
-                                              int    optInSlowPeriod, /* From 1 to 200 */
-                                              TA_MAType    optInMethod_2,
-                                              [Out]int% outBegIdx,
-                                              [Out]int% outNbElement,
-											  cli::array<double>^ outReal,
-                                              cli::array<double>^ tempBuffer,
-                                              int  doPercentageOutput )
+ enum class Core::TA_RetCode Core::INT_PO( int    startIdx,
+                                           int    endIdx,
+									       cli::array<INPUT_TYPE>^ inReal,
+                                           int    optInFastPeriod, /* From 1 to 200 */
+                                           int    optInSlowPeriod, /* From 1 to 200 */
+										   TA_MAType    optInMethod_2,
+                                           [Out]int% outBegIdx,
+                                           [Out]int% outNbElement,
+										   cli::array<double>^ outReal,
+                                           cli::array<double>^ tempBuffer,
+                                           int  doPercentageOutput )
 #elif defined( _JAVA )
 TA_RetCode INT_PO( int        startIdx,
                    int        endIdx,
@@ -434,17 +435,17 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */    return retCode;
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
-/* Generated */  enum class Core::TA_RetCode Core::TA_INT_PO( int    startIdx,
-/* Generated */                                               int    endIdx,
-/* Generated */ 											  cli::array<INPUT_TYPE>^ inReal,
-/* Generated */                                               int    optInFastPeriod, 
-/* Generated */                                               int    optInSlowPeriod, 
-/* Generated */                                               TA_MAType    optInMethod_2,
-/* Generated */                                               [Out]int% outBegIdx,
-/* Generated */                                               [Out]int% outNbElement,
-/* Generated */ 											  cli::array<double>^ outReal,
-/* Generated */                                               cli::array<double>^ tempBuffer,
-/* Generated */                                               int  doPercentageOutput )
+/* Generated */  enum class Core::TA_RetCode Core::INT_PO( int    startIdx,
+/* Generated */                                            int    endIdx,
+/* Generated */ 									       cli::array<float>^ inReal,
+/* Generated */                                            int    optInFastPeriod, 
+/* Generated */                                            int    optInSlowPeriod, 
+/* Generated */                                            TA_MAType    optInMethod_2,
+/* Generated */                                            [Out]int% outBegIdx,
+/* Generated */                                            [Out]int% outNbElement,
+/* Generated */ 										   cli::array<double>^ outReal,
+/* Generated */                                            cli::array<double>^ tempBuffer,
+/* Generated */                                            int  doPercentageOutput )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ TA_RetCode INT_PO( int        startIdx,
 /* Generated */                    int        endIdx,
