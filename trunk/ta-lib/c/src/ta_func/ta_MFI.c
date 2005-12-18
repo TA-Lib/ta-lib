@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -45,6 +45,7 @@
  *  120802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  062704 MF   Prevent divide by zero.
+ *  121705 MF   Java port related changes.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -204,7 +205,7 @@
 
    /* Insert TA function code here. */
 
-   CIRCBUF_INIT_CLASS( mflow, MoneyFlow, optInTimePeriod );
+   CIRCBUF_INIT_CLASS( mflow, MoneyFlow, optInTimePeriod );   
 
    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
