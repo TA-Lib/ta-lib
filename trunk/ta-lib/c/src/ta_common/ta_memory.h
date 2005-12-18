@@ -62,20 +62,20 @@
  */
 #if defined( _MANAGED )
    #define ARRAY_REF(name)             cli::array<double>^ name
-   #define ARRAY_LOCAL(name,size)      cli::array<double>^ name = gcnew cli::array<double>(size);
-   #define ARRAY_ALLOC(name,size)      name = gcnew cli::array<double>(size);
-   #define ARRAY_COPY(dest,src,size)   src->CopyTo(dest,0)
+   #define ARRAY_LOCAL(name,size)      cli::array<double>^ name = gcnew cli::array<double>(size)
+   #define ARRAY_ALLOC(name,size)      name = gcnew cli::array<double>(size)
+   #define ARRAY_COPY(dest,src,size)   cli::array<double>::Copy( src, 0, dest, 0, size )
    #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) cli::array<double>::Copy( src, srcIdx, dest, destIdx, size )
    #define ARRAY_FREE(name)
    #define ARRAY_FREE_COND(cond,name)   
 #elif defined( _JAVA )
    #define ARRAY_REF(name)             double []name
-   #define ARRAY_LOCAL(name,size)      double []name = new double[size];
+   #define ARRAY_LOCAL(name,size)      double []name = new double[size]
    #define ARRAY_ALLOC(name,size)      name = new double[size]
    #define ARRAY_COPY(dest,src,size)   System.arraycopy(src,0,dest,0,size)
-   #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) System.arraycopy(src,0,dest,0,size)
+   #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) System.arraycopy(src,srcIdx,dest,destIdx,size)
    #define ARRAY_FREE(name)
-   #define ARRAY_FREE_COND(cond,name)   
+   #define ARRAY_FREE_COND(cond,name)
 #else
    #define ARRAY_REF(name)             double *name
    #define ARRAY_LOCAL(name,size)      double name[size]
@@ -267,7 +267,17 @@
       maxIdx_##Id = (Size-1); \
    }
 
-#define CIRCBUF_INIT_CLASS(Id,Type,Size) CIRCBUF_INIT(Id,Type,Size)
+#define CIRCBUF_INIT_CLASS(Id,Type,Size) \
+   { \
+      if( Size <= 0 ) \
+         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
+      Id = new Type[Size]; \
+      for( int _##Id##_index=0; _##Id##_index<Id.length; _##Id##_index++) \
+      { \
+         Id[_##Id##_index]=new Type(); \
+      } \
+      maxIdx_##Id = (Size-1); \
+   }
 
 #define CIRCBUF_INIT_LOCAL_ONLY(Id,Type) \
    { \

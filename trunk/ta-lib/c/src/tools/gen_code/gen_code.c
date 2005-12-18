@@ -57,6 +57,7 @@
  *  031805 MF    Add generation of MSVC project file.
  *  061805 MF    Changes related to .NET verifiable code.
  *  062505 MF    Fix 'out' attribute for .NET verifiable code.
+ *  121705 MF    Complete Java port.
  */
 
 /* Description:
@@ -127,13 +128,24 @@ FileHandle *gOutFuncList_TXT;  /* For "func_list.txt" */
 FileHandle *gOutDefs_H;        /* For "ta_defs.h" */
 FileHandle *gOutDotNet_H;      /* For .NET interface file */
 FileHandle *gOutFunc_SWG;      /* For SWIG */
-FileHandle *gOutCore_Java;     /* For Java */
 
 #ifdef _MSC_VER
+/* The following files are generated only on Windows platform. */
+FileHandle *gOutCore_Java;     /* For Core.Java */
 FileHandle *gOutProjFile;      /* For .NET project file */
 FileHandle *gOutMSVCProjFile;  /* For MSVC project file */
 FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
 
+/* Why these file are not generated from a unix platform?
+ *
+ * The reason is obvious for .NET, Excel and MSVC related files.
+ * 
+ * For the Java code, the reason is that I use a C preprocessor 
+ * called MCPP and for now I have ported it only on windows.
+ * (see the mcpp.exe included in the package).
+ * If someone get the mcpp or an equivalent to be integrated
+ * in gen_code, then Java code could also be generated from unix.
+ */
 static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
 static void genJavaCode( const TA_FuncInfo *funcInfo );
 #endif
@@ -313,7 +325,7 @@ int main(int argc, char* argv[])
    {
          /* There is no parameter needed for this tool. */
          printf( "\n" );
-         printf( "gen_code V%s - Updates many TA-LIB source files\n", TA_GetVersionString() );
+         printf( "gen_code V%s - Updates many TA-Lib source files\n", TA_GetVersionString() );
          printf( "\n" );
          printf( "Usage: gen_code\n");
          printf( "\n" );         
@@ -332,12 +344,12 @@ int main(int argc, char* argv[])
          printf( "     4) ta-lib/c/src/ta_common/ta_retcode.*\n" );
          printf( "     5) ta-lib/c/src/ta_abstract/ta_group_idx.c\n");     
          printf( "     6) ta-lib/c/src/ta_abstract/frames/*.*\n");
-         printf( "     7) ta-lib/c/src/ta_abstract/excel_glue.c\n" );
-         printf( "     8) ta-lib/dotnet/src/Core/TA-Lib-Core.vcproj\n" );
-         printf( "     9) ta-lib/dotnet/src/Core/TA-Lib-Core.h\n" );
-         printf( "    10) ta-lib/swig/src/interface/ta_func.swg\n" );
-         printf( "    11) ta-lib/c/ide/msvc/lib_proj/ta_func/ta_func.dsp\n" );
-         printf( "    12) ta-lib/java/src/ta/lib/Core.java\n" );
+         printf( "     7) ta-lib/swig/src/interface/ta_func.swg\n" );
+         printf( "     8) ta-lib/dotnet/src/Core/TA-Lib-Core.vcproj (Win32 only)\n" );
+         printf( "     9) ta-lib/dotnet/src/Core/TA-Lib-Core.h (Win32 only)\n" );
+         printf( "    10) ta-lib/c/src/ta_abstract/excel_glue.c (Win32 only)\n" );
+         printf( "    11) ta-lib/c/ide/msvc/lib_proj/ta_func/ta_func.dsp (Win32 only)\n" );
+         printf( "    12) ta-lib/java/src/ta/lib/Core.java (Win32 only)\n" );
          printf( "\n" );
          printf( "  The function header, parameters and validation code of all TA\n" );
          printf( "  function in c/src/ta_func are also updated.\n" );
@@ -654,6 +666,7 @@ static int genCode(int argc, char* argv[])
       fileClose(tempFile);
    #endif
 
+   #ifdef _MSC_VER
    /* Create Java template for Core.java */
    #define FILE_CORE_JAVA     "..\\..\\java\\src\\TA\\Lib\\Core.java"
    #define FILE_CORE_JAVA_TMP "..\\temp\\CoreJava.tmp"
@@ -676,6 +689,7 @@ static int genCode(int argc, char* argv[])
    }
    fileClose(gOutCore_Java);
    fileClose(tempFile);
+   #endif
 
    /* Create the .NET interface file template */
    #define FILE_NET_HEADER     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.h"
@@ -793,13 +807,15 @@ static int genCode(int argc, char* argv[])
 
    #endif
 
-   /* Re-open the MSVC project template. */
+   #ifdef _MSC_VER
+   /* Re-open the Core.java template. */
    gOutCore_Java = fileOpen( FILE_CORE_JAVA, FILE_CORE_JAVA_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
    if( gOutCore_Java == NULL )
    {
       printf( "Cannot update [%s]\n", FILE_CORE_JAVA );
       return -1;
    }
+   #endif
 
    /* Re-open the .NET interface template. */
    gOutDotNet_H = fileOpen( FILE_NET_HEADER, FILE_NET_HEADER_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
@@ -823,9 +839,9 @@ static int genCode(int argc, char* argv[])
    fileClose( gOutFunc_SWG );
    fileClose( gOutFrame_H );
    fileClose( gOutFrame_C );
-   fileClose( gOutCore_Java );
 
    #ifdef _MSC_VER
+      fileClose( gOutCore_Java );
       fileClose( gOutProjFile );
       fileClose( gOutMSVCProjFile );
       fileClose( gOutExcelGlue_C );
@@ -1022,7 +1038,6 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    fprintf( gOutDotNet_H->file, "         #define TA_%s_Lookback Core::%s_Lookback\n\n", funcInfo->name, funcInfo->name );
 
    doFuncFile( funcInfo );
-
 
    #ifdef _MSC_VER
       /* Run the func file through the pre-processor to generate the Java code. */
@@ -2343,6 +2358,7 @@ static int createTemplate( FileHandle *in, FileHandle *out )
 {
    FILE *inFile;
    FILE *outFile;
+   char *inTheLinePtr;
    unsigned int skipSection;
    unsigned int sectionDone;
 
@@ -2353,14 +2369,18 @@ static int createTemplate( FileHandle *in, FileHandle *out )
    sectionDone = 0;
    while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
    {
-      if( strncmp( gTempBuf, "/**** START GENCODE SECTION", 27 ) == 0 )
+      inTheLinePtr = gTempBuf;
+      /* Skip leading whitespace. */
+      while( isspace(*inTheLinePtr) ) inTheLinePtr++;
+
+      if( strncmp( inTheLinePtr, "/**** START GENCODE SECTION", 27 ) == 0 )
       {
          skipSection = 1;
          fputs( gTempBuf, outFile );
          fputs( "%%%GENCODE%%%\n", outFile );
       }
 
-      else if( strncmp( gTempBuf, "/**** END GENCODE SECTION", 25 ) == 0 )
+      else if( strncmp( inTheLinePtr, "/**** END GENCODE SECTION", 25 ) == 0 )
       {
          if( skipSection )
          {
@@ -3292,43 +3312,7 @@ void genJavaCode( const TA_FuncInfo *funcInfo )
 {
    FILE *logicTmp;
    char buffer[500];
-
-   #if 0
-   int argc;
-   static int nbFuncOut = 0;
-    For now call an external mcpp.exe on microsoft platform only.
-   char *argv[] = { "mcpp",
-                          "-c",
-                          "-+", 
-                          "-z",
-                          "-P",
-                          "-I..\\src\\ta_common",
-                          "-I..\\include",
-                          "-D",
-                          "_JAVA",
-                          "..\\src\\ta_func\\TA_%s.c",
-                          "..\\temp\\CoreJavaCode.tmp",
-                          NULL };
-
-   if( nbFuncOut++ > 0 )
-      return;
-
-   /* Count the number of "command line" arguments for the C pre-processor.
-    *
-    * At the same time, replace the %s field with the function name.
-    * Assumed that only one of the argument have such %s.
-    */      
-   argc = 0;
-   while( argv[argc] != NULL )
-   {
-      if( strstr(argv[argc], "%s" ) )
-      {
-         sprintf( buffer, argv[argc], funcInfo->name );
-         argv[argc] = buffer;
-      }
-      argc++;
-   }
-   #endif
+   int idx, again;
 
    sprintf( buffer, "..\\src\\tools\\gen_code\\mcpp -c -+ -z -P -I..\\src\\ta_common -I..\\include -D _JAVA ..\\src\\ta_func\\TA_%s.c >..\\temp\\CoreJavaCode.tmp ", funcInfo->name);
    system( buffer );
@@ -3342,7 +3326,19 @@ void genJavaCode( const TA_FuncInfo *funcInfo )
       return;
    }
    while( fgets(gTempBuf,BUFFER_SIZE,logicTmp) )
-      fputs( gTempBuf, gOutCore_Java->file );
+   {
+      /* Remove empty lines and lines with only a ';' */
+      idx = 0;
+      again = 1;
+      while( again && gTempBuf[idx] != '\0' )
+      {
+         if( !isspace(gTempBuf[idx]) && !(gTempBuf[idx] == ';') )
+            again = 0;
+         idx++;
+      }
+      if( (again == 0) && (idx > 0) )
+         fputs( gTempBuf, gOutCore_Java->file );
+   }
 
    /* Clean-up */
    fclose(logicTmp);
