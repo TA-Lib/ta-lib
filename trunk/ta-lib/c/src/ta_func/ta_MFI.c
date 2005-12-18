@@ -408,7 +408,7 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    CIRCBUF_INIT_CLASS( mflow, MoneyFlow, optInTimePeriod );
+/* Generated */    CIRCBUF_INIT_CLASS( mflow, MoneyFlow, optInTimePeriod );   
 /* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */    lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MFI);
