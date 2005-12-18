@@ -313,7 +313,7 @@ TA_RetCode TA_PREFIX(INT_SMA)( int    startIdx,
 /* Generated */ #if defined( _MANAGED )
 /* Generated */  enum class Core::TA_RetCode Core::INT_SMA( int     startIdx,
 /* Generated */                                             int     endIdx,
-/* Generated */ 											cli::array<INPUT_TYPE>^ inReal, 
+/* Generated */ 									        cli::array<INPUT_TYPE>^ inReal, 
 /* Generated */ 								            int     optInTimePeriod,
 /* Generated */ 								            [Out]int% outBegIdx, 
 /* Generated */ 								            [Out]int% outNbElement,
