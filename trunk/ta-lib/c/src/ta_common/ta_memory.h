@@ -231,6 +231,10 @@
       if( Size <= 0 ) \
          return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
       Id = gcnew cli::array<Type^>(Size); \
+      for( int _##Id##_index=0; _##Id##_index<Id->Length; _##Id##_index++) \
+      { \
+         Id[_##Id##_index]=gcnew Type(); \
+      } \
       if( !Id ) \
          return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
       maxIdx_##Id = (Size-1); \
