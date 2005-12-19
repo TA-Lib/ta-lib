@@ -91,6 +91,7 @@
 #include "ta_global.h"
 #include "ta_memory.h"
 #include "ta_network.h"
+#include "ta_source.h"
 
 #if defined( USE_WININET )
    #include "windows.h"
@@ -215,10 +216,14 @@ TA_RetCode TA_WebPageAlloc( const char    *webSiteAddr,
                             const char    *proxyName,
                             const char    *proxyPort,
                             TA_WebPage   **webPageAllocated,
-                            unsigned int   nbAttempt )
+                            unsigned int   nbAttempt,
+                            void          *paramForAddData )
 {
    TA_RetCode retCode;
-   unsigned int i,j;
+   unsigned int i,j, k;
+   TA_ParamForAddData *paramForAddDataPtr;
+
+   paramForAddDataPtr = (TA_ParamForAddData *)paramForAddData;
 
    /* Make sure there is at least one attempt. */
    if( nbAttempt == 0 )
@@ -240,7 +245,16 @@ TA_RetCode TA_WebPageAlloc( const char    *webSiteAddr,
           */
          j = i*2;
          if( j > 20 ) j = 20;
-         TA_Sleep( j ); 
+
+         retCode = TA_DriverShouldContinue(paramForAddDataPtr);
+         k = 0;
+         while( (retCode == TA_SUCCESS) && (k++<j) )
+         {
+            TA_Sleep( 1 ); 
+            retCode = TA_DriverShouldContinue(paramForAddDataPtr);
+         }
+         if( retCode != TA_SUCCESS )
+            return retCode;
       }
 
       /* On data retreival problems, keep retrying

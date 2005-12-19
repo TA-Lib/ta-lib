@@ -320,6 +320,7 @@ ENUM_BEGIN(TA_RetCode)
     /* 123 */  TA_DATA_ERROR_CLOSE_EXCEED_HIGH,    /* A data source returned a price bar with close greater than high. */
     /* 124 */  TA_DATA_ERROR_CLOSE_BELOW_LOW,      /* A data source returned a price bar with close less than low. */
     /* 125 */  TA_INTERNET_NO_CONTENT,             /* No content was found at the specified URL. */
+    /* 126 */  TA_DATA_RETREIVE_TIMEOUT,           /* Timeout at user specified value from TA_HistoryAlloc (or 30 min default). */
 
     /****** IP Error Code *****/
     /* 700 */  TA_IP_NOSOCKETS = 700,  /* Sockets not supported      */

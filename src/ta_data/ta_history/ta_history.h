@@ -30,7 +30,8 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
                               const TA_Timestamp  *start,
                               const TA_Timestamp  *end,
                               TA_Field             fieldToAlloc,
-                              TA_HistoryFlag       flags,      
+                              TA_HistoryFlag       flags,  
+                              unsigned int         timeout,    
                               TA_History         **history ); 
 
 /* Validate the integrity of a TA_History.

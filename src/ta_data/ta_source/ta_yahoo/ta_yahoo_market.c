@@ -393,12 +393,13 @@ TA_RetCode TA_YahooMarketPageFree( TA_YahooMarketPage *marketPage )
 TA_RetCode TA_WebPageAllocFromYahooName( const TA_DecodingParam *decodingParam,
                                          const char *yahooName,
                                          const char *overideServerAddr,
-                                         TA_WebPage **allocatedWebPage )
+                                         TA_WebPage **allocatedWebPage,
+                                         TA_ParamForAddData *paramForAddData )
 {
    TA_PROLOG
    TA_RetCode retCode;
    char webSitePage[300];
-   unsigned int prefixLength, suffixLength, symbolLength, i;
+   unsigned int prefixLength, suffixLength, symbolLength, i, j;
    const char *webSiteAddr;
    const char *uirPrefix, *uirSuffix;
    TA_WebPage *webPage;
@@ -437,18 +438,33 @@ TA_RetCode TA_WebPageAllocFromYahooName( const TA_DecodingParam *decodingParam,
    sprintf( webSitePage, "%s%s%s", uirPrefix, yahooName, uirSuffix );
 
    /* Get the Web Page */   
-   for( i=0; i < 10; i++ )
+   retCode = TA_SUCCESS;
+   for( i=0; (i < 10) && (retCode != TA_DATA_RETREIVE_TIMEOUT); i++ )
    {
+
       retCode = TA_WebPageAlloc( webSiteAddr,
                                  webSitePage,
-                                 NULL, NULL, &webPage, 10 );
+                                 NULL, NULL, &webPage, 10, paramForAddData );
 
       if( retCode == TA_SUCCESS )
          break;
       else
       {         
-         /* Yahoo! is may be slow, let's sleep 1 minute */
-         TA_Sleep( 60 ); 
+         /* Yahoo! is may be slow, let's sleep 20 seconds. */
+         if( !paramForAddData )
+         {
+            TA_Sleep(20);
+         }
+         else
+         {
+            retCode = TA_DriverShouldContinue(paramForAddData);
+            j = 0;
+            while( (retCode == TA_SUCCESS) && (j++ < 20) )
+            {
+               TA_Sleep( 1 ); 
+               retCode = TA_DriverShouldContinue(paramForAddData);
+            }
+         }
       }
    }
 
@@ -584,7 +600,7 @@ static TA_RetCode internalMarketPageAlloc( const TA_DecodingParam *decodingParam
    retCode = TA_WebPageAllocFromYahooName( decodingParam,
                                            yahooName,
                                            overideServerAddr,
-                                           &webPage );
+                                           &webPage, NULL );
                                               
    if( retCode != TA_SUCCESS )
       return retCode;

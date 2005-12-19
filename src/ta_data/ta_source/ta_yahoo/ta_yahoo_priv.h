@@ -175,7 +175,8 @@ TA_RetCode TA_AllocStringFromLibName( const TA_String *category,
 TA_RetCode TA_WebPageAllocFromYahooName( const TA_DecodingParam *info,
                                          const char *yahooName,
                                          const char *overideServerAddr,
-                                         TA_WebPage **allocatedWebPage );
+                                         TA_WebPage **allocatedWebPage,
+                                         TA_ParamForAddData *paramForAddData );
 
 
 /* Retreive the historical data corresponding to a 

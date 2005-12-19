@@ -107,6 +107,16 @@ TA_RetCode TA_HistoryAddData( TA_ParamForAddData *paramForAddData,
                               TA_Integer *volume,
                               TA_Integer *openInterest );
 
+/* The following can be called by the driver from the getHistoryData() 
+ * function only.
+ * This allow the driver to verify if the driver should abort 
+ * the data retreival operation (typically because exceeding user specified timeout).
+ *
+ * When returning a value != TA_SUCCESS, the driver should return from the getHistoryData 
+ * with the error code returned by TA_DriverShouldContinue().
+ */
+TA_RetCode TA_DriverShouldContinue( TA_ParamForAddData *paramForAddData );
+
 /* The following functions can be called by the driver from the
  * GetHistoryData() function only! (see below)
  *

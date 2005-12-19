@@ -162,6 +162,7 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
                               const TA_Timestamp  *end,
                               TA_Field             fieldToAlloc,
                               TA_HistoryFlag       flags, 
+                              unsigned int         timeout,
                               TA_History         **history )
 {
    TA_PROLOG
@@ -178,6 +179,7 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
    TA_HistoryHiddenData *historyHiddenData;
    TA_Timestamp startRounded, endRounded;
    TA_Timestamp startForDrivers, endForDrivers;
+   TA_Timestamp timeLimit;
 
    TA_PAR_VARS;
 
@@ -354,6 +356,14 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
     */
    TA_ASSERT( TA_ListSize(listOfSupportForDataSource) == nbDataSource );
 
+   /* Calculate the time for time out. 30 minutes by default. */
+   TA_SetDateNow( &timeLimit );
+   TA_SetTimeNow( &timeLimit );
+   if( timeout != 0 )
+      TA_AddTimeToTimestamp( &timeLimit, &timeLimit, timeout );
+   else
+      TA_AddTimeToTimestamp( &timeLimit, &timeLimit, 60*30 );
+
    /* Initialize variable used for parallel processing. */
    TA_PAR_INIT();
 
@@ -370,6 +380,7 @@ TA_RetCode TA_HistoryBuilder( TA_UDBasePriv *privUDB,
       supportForDataSource->start          = start?&startForDrivers:NULL;
       supportForDataSource->end            = end?&endForDrivers:NULL;
       supportForDataSource->fieldToAlloc   = fieldToAlloc;
+      supportForDataSource->timeLimit      = timeLimit;
       
       driverIndex = driverHandles->addDataSourceParamPriv->id;
       TA_ASSERT( driverIndex < TA_gDataSourceTableSize );
@@ -1004,6 +1015,24 @@ TA_RetCode TA_HistoryAddValueAdjust( TA_ParamForAddData *paramForAddData, TA_Tim
    }
 
    return TA_SUCCESS;
+}
+
+TA_RetCode TA_DriverShouldContinue( TA_ParamForAddData *paramForAddData )
+{
+   TA_Timestamp timeNow;
+
+   TA_SupportForDataSource *supportForDataSource;
+
+   if( !paramForAddData )
+      return TA_BAD_PARAM;
+
+   supportForDataSource = (TA_SupportForDataSource *)paramForAddData;
+   TA_SetDateNow(&timeNow);
+   TA_SetTimeNow(&timeNow);
+   if( TA_TimestampLess(&supportForDataSource->timeLimit,&timeNow) )
+      return TA_DATA_RETREIVE_TIMEOUT;
+   else
+      return TA_SUCCESS;   
 }
 
 /**** Local functions definitions.     ****/

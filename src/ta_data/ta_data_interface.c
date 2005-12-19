@@ -1148,7 +1148,7 @@ TA_RetCode TA_HistoryAlloc( TA_UDBase           *unifiedDatabase,
    /* Leave it to the TA_History sub-module to do the rest. */
    retCode = TA_HistoryBuilder( privUDB, symbolData,
                                 param->period, startLocal, endLocal,
-                                param->field, param->flags, &newHistory );
+                                param->field, param->flags, param->timeout, &newHistory );
 
    if( retCode != TA_SUCCESS )
    {
