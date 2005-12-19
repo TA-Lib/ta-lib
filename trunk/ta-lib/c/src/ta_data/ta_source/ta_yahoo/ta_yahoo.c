@@ -404,9 +404,9 @@ TA_RetCode TA_YAHOO_GetHistoryData( TA_DataSourceHandle *handle,
                                     TA_ParamForAddData  *paramForAddData )
 {
    TA_PROLOG
-   TA_RetCode retCode;
+   TA_RetCode tempRetCode, retCode;
    TA_PrivateYahooHandle *yahooHandle;
-   int again;
+   int again, j;
 
    TA_TRACE_BEGIN( TA_YAHOO_GetHistoryData );
 
@@ -453,10 +453,18 @@ TA_RetCode TA_YAHOO_GetHistoryData( TA_DataSourceHandle *handle,
             --again; /* Try again */
 
             /* Sometimes giving Yahoo! a break helps. */
-            if( again < 2 )
-               TA_Sleep( 10 ); /* Seconds */ 
-            else
-               TA_Sleep( 4 ); /* Seconds */ 
+            tempRetCode = TA_DriverShouldContinue(paramForAddData);
+            j = 0;
+            while( (j++ < 5) && (tempRetCode != TA_DATA_RETREIVE_TIMEOUT) )
+            {
+               TA_Sleep(1);
+               tempRetCode = TA_DriverShouldContinue(paramForAddData);
+            }
+            if( tempRetCode == TA_DATA_RETREIVE_TIMEOUT )
+            {
+               retCode = tempRetCode;
+               again = 0;            
+            }
          }
       }
       else

@@ -100,7 +100,7 @@ typedef struct
    * when a TA_HistoryAlloc call is done.
    */
 
-  /* Parameters needed to be passed to the data soruce driver. */
+  /* Parameters needed to be passed to the data source driver. */
   TA_BuilderSupport   *parent;
   TA_DataSourceHandle *sourceHandle;
   TA_CategoryHandle   *categoryHandle;
@@ -189,6 +189,13 @@ typedef struct
    * final data returned to the caller of TA_HistoryAlloc.
    */
   unsigned int contributingDataSource;
+
+  /* Moment from which the data source should give up and
+   * return with a TA_DATA_RETREIVE_TIMEOUT error.
+   * When all zero, the driver do a best-effort before
+   * giving up.
+   */
+  TA_Timestamp timeLimit;
 
 } TA_SupportForDataSource;
 

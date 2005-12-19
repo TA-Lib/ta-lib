@@ -127,12 +127,11 @@ TA_RetCode TA_WebFetch( const char *url, FILE *out )
       }
    }
 
-   retCode = TA_WebPageAlloc(
-                              stringStart,
+   retCode = TA_WebPageAlloc( stringStart,
                               webSitePage,
                               NULL, NULL,
                               &webPage,
-                              2 );
+                              2, NULL );
 
    if( allocString )
       TA_Free(  allocString );

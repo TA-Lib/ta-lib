@@ -991,7 +991,7 @@ static TA_RetCode buildIndexFromRemoteCache( TA_YahooIdx *idx, TA_Timestamp *cac
    retCode = TA_WebPageAlloc( "ta-lib.org",
                               buffer,
                               NULL, NULL,
-                              &webPage, 2 );
+                              &webPage, 2, NULL );
 
    if( retCode != TA_SUCCESS )
       return retCode;
@@ -1729,7 +1729,7 @@ static TA_RetCode buildDictFromWebSite( TA_YahooIdx *idx, TA_CountryId countryId
    retCode = TA_WebPageAlloc( opaqueData.serverName,
                               opaqueData.topIndex,
                               NULL, NULL,
-                              &webPage, 2 );
+                              &webPage, 2, NULL );
 
    if( retCode != TA_SUCCESS )
       return retCode;
@@ -1861,7 +1861,7 @@ static TA_RetCode processTopIndex( unsigned int line,
       retCode = TA_WebPageAlloc( tableParseInfo->serverName,
                                  href,
                                  NULL, NULL,
-                                 &webPage, 2 );
+                                 &webPage, 2, NULL );
 
       if( retCode != TA_SUCCESS )
          goto Exit_processTopIndex;
@@ -1977,7 +1977,7 @@ static TA_RetCode processIndex( unsigned int line,
       retCode = TA_WebPageAlloc( tableParseInfo->serverName,
                                  href,
                                  NULL, NULL,
-                                 &webPage, 2 );
+                                 &webPage, 2, NULL );
 
       if( retCode != TA_SUCCESS )
          goto Exit_processIndex;

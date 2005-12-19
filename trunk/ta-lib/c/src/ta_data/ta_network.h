@@ -41,13 +41,18 @@ typedef struct
  * retreived for you from the registry.
  *
  * webSiteAddr can be the dotted-decimal address as well (x.x.x.x)
+ *
+ * Leave paramForAddData to NULL. This parameter is used exclusively
+ * to control timeout when the call is done from the TA-Lib data source
+ * drivers.
  */
 TA_RetCode TA_WebPageAlloc( const char    *webSiteAddr,
                             const char    *webSitePage,
                             const char    *proxyName,
                             const char    *proxyPort,
                             TA_WebPage   **webPageAllocated,
-                            unsigned int   nbAttempt );
+                            unsigned int   nbAttempt,
+                            void          *paramForAddData  );
 
 /* When TA_WebPageAlloc return TA_SUCCESS, the
  * allocated web page must be eventually freed

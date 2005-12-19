@@ -331,6 +331,18 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
    nbTotalBarAdded = 0;
    while( again && (++nbBatch < 100) && (zeroBarAddedAttempt < 10) )
    {    
+      retCode = TA_DriverShouldContinue(paramForAddData);
+      if( retCode != TA_SUCCESS )
+      {
+         TA_StringFree( stringCache, yahooName );
+         TA_Free( (char *)localDecodingParam.uirSuffix );
+         #if !defined( TA_SINGLE_THREAD )   
+            if( readOpInfo )
+               TA_ReadOpInfoFree( readOpInfo );
+         #endif
+         TA_TRACE_RETURN( retCode );
+      }
+
       if( TA_TimestampLess(&lastBarTimestamp,&firstBarTimestamp) )
       {
           /* Get out of this loop if all the requested data
@@ -343,7 +355,7 @@ TA_RetCode TA_GetHistoryDataFromWeb( TA_DataSourceHandle *handle,
       retCode = TA_WebPageAllocFromYahooName( &localDecodingParam,
                                               TA_StringToChar(yahooName),
                                               overideServerAddr,
-                                              &webPage );
+                                              &webPage, paramForAddData );
            
       if( retCode != TA_SUCCESS )
       {
@@ -703,7 +715,7 @@ static TA_RetCode doAdjustments( TA_DecodingParam *localDecodingParam,
    retCode = TA_WebPageAllocFromYahooName( localDecodingParam,
                                            TA_StringToChar(yahooName),
                                            overideServerAddr,
-                                           &webPage );
+                                           &webPage, paramForAddData );
 
    if( retCode != TA_SUCCESS )
       return retCode;
