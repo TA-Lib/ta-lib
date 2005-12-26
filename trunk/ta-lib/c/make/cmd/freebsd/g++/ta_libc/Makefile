@@ -20,6 +20,12 @@ UIC	=	$(QTDIR)/bin/uic
 TAR	=	tar -cf
 GZIP	=	gzip -9f
 
+####### Support for 64-bit systems
+ifeq ($(shell uname -m), x86_64)
+     CFLAGS   += -march=x86-64 -m64 -D__64BIT__
+     CXXFLAGS += -march=x86-64 -m64 -D__64BIT__
+endif
+
 ####### Apply additional overruling user flags, if any
 CFLAGS   += $(CUSERFLAGS)
 CXXFLAGS += $(CUSERFLAGS)
@@ -165,6 +171,8 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_CDLHARAMI.c \
 		../../../../../src/ta_func/ta_CDLHARAMICROSS.c \
 		../../../../../src/ta_func/ta_CDLHIGHWAVE.c \
+		../../../../../src/ta_func/ta_CDLHIKKAKE.c \
+		../../../../../src/ta_func/ta_CDLHIKKAKEMOD.c \
 		../../../../../src/ta_func/ta_CDLHOMINGPIGEON.c \
 		../../../../../src/ta_func/ta_CDLIDENTICAL3CROWS.c \
 		../../../../../src/ta_func/ta_CDLINNECK.c \
@@ -398,6 +406,8 @@ OBJECTS =	../../../../../temp/cmd/ta_ascii.o \
 		../../../../../temp/cmd/ta_CDLHARAMI.o \
 		../../../../../temp/cmd/ta_CDLHARAMICROSS.o \
 		../../../../../temp/cmd/ta_CDLHIGHWAVE.o \
+		../../../../../temp/cmd/ta_CDLHIKKAKE.o \
+		../../../../../temp/cmd/ta_CDLHIKKAKEMOD.o \
 		../../../../../temp/cmd/ta_CDLHOMINGPIGEON.o \
 		../../../../../temp/cmd/ta_CDLIDENTICAL3CROWS.o \
 		../../../../../temp/cmd/ta_CDLINNECK.o \
@@ -959,6 +969,12 @@ clean:
 
 ../../../../../temp/cmd/ta_CDLHIGHWAVE.o: ../../../../../src/ta_func/ta_CDLHIGHWAVE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_CDLHIGHWAVE.o ../../../../../src/ta_func/ta_CDLHIGHWAVE.c
+
+../../../../../temp/cmd/ta_CDLHIKKAKE.o: ../../../../../src/ta_func/ta_CDLHIKKAKE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_CDLHIKKAKE.o ../../../../../src/ta_func/ta_CDLHIKKAKE.c
+
+../../../../../temp/cmd/ta_CDLHIKKAKEMOD.o: ../../../../../src/ta_func/ta_CDLHIKKAKEMOD.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_CDLHIKKAKEMOD.o ../../../../../src/ta_func/ta_CDLHIKKAKEMOD.c
 
 ../../../../../temp/cmd/ta_CDLHOMINGPIGEON.o: ../../../../../src/ta_func/ta_CDLHOMINGPIGEON.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_CDLHOMINGPIGEON.o ../../../../../src/ta_func/ta_CDLHOMINGPIGEON.c

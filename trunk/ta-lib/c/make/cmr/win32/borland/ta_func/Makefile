@@ -68,6 +68,8 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_CDLHARAMI.c \
 		..\..\..\..\..\src\ta_func\ta_CDLHARAMICROSS.c \
 		..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c \
+		..\..\..\..\..\src\ta_func\ta_CDLHIKKAKE.c \
+		..\..\..\..\..\src\ta_func\ta_CDLHIKKAKEMOD.c \
 		..\..\..\..\..\src\ta_func\ta_CDLHOMINGPIGEON.c \
 		..\..\..\..\..\src\ta_func\ta_CDLIDENTICAL3CROWS.c \
 		..\..\..\..\..\src\ta_func\ta_CDLINNECK.c \
@@ -197,6 +199,8 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_utility.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLHARAMI.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLHARAMICROSS.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLHIGHWAVE.obj \
+		..\..\..\..\..\temp\cmr\ta_CDLHIKKAKE.obj \
+		..\..\..\..\..\temp\cmr\ta_CDLHIKKAKEMOD.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLHOMINGPIGEON.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLIDENTICAL3CROWS.obj \
 		..\..\..\..\..\temp\cmr\ta_CDLINNECK.obj \
@@ -358,6 +362,8 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\ta_CDLHARAMI.obj \
 +..\..\..\..\..\temp\cmr\ta_CDLHARAMICROSS.obj \
 +..\..\..\..\..\temp\cmr\ta_CDLHIGHWAVE.obj \
++..\..\..\..\..\temp\cmr\ta_CDLHIKKAKE.obj \
++..\..\..\..\..\temp\cmr\ta_CDLHIKKAKEMOD.obj \
 +..\..\..\..\..\temp\cmr\ta_CDLHOMINGPIGEON.obj \
 +..\..\..\..\..\temp\cmr\ta_CDLIDENTICAL3CROWS.obj \
 +..\..\..\..\..\temp\cmr\ta_CDLINNECK.obj \
@@ -501,6 +507,8 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\ta_CDLHARAMI.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLHARAMICROSS.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLHIGHWAVE.obj
+	-del ..\..\..\..\..\temp\cmr\ta_CDLHIKKAKE.obj
+	-del ..\..\..\..\..\temp\cmr\ta_CDLHIKKAKEMOD.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLHOMINGPIGEON.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLIDENTICAL3CROWS.obj
 	-del ..\..\..\..\..\temp\cmr\ta_CDLINNECK.obj
@@ -728,6 +736,12 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_CDLHIGHWAVE.obj: ..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CDLHIGHWAVE.obj ..\..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
+
+..\..\..\..\..\temp\cmr\ta_CDLHIKKAKE.obj: ..\..\..\..\..\src\ta_func\ta_CDLHIKKAKE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CDLHIKKAKE.obj ..\..\..\..\..\src\ta_func\ta_CDLHIKKAKE.c
+
+..\..\..\..\..\temp\cmr\ta_CDLHIKKAKEMOD.obj: ..\..\..\..\..\src\ta_func\ta_CDLHIKKAKEMOD.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CDLHIKKAKEMOD.obj ..\..\..\..\..\src\ta_func\ta_CDLHIKKAKEMOD.c
 
 ..\..\..\..\..\temp\cmr\ta_CDLHOMINGPIGEON.obj: ..\..\..\..\..\src\ta_func\ta_CDLHOMINGPIGEON.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_CDLHOMINGPIGEON.obj ..\..\..\..\..\src\ta_func\ta_CDLHOMINGPIGEON.c
