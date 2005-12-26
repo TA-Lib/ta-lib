@@ -166,6 +166,8 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_CDLHARAMI.c \
           ../../../../../src/ta_func/ta_CDLHARAMICROSS.c \
           ../../../../../src/ta_func/ta_CDLHIGHWAVE.c \
+          ../../../../../src/ta_func/ta_CDLHIKKAKE.c \
+          ../../../../../src/ta_func/ta_CDLHIKKAKEMOD.c \
           ../../../../../src/ta_func/ta_CDLHOMINGPIGEON.c \
           ../../../../../src/ta_func/ta_CDLIDENTICAL3CROWS.c \
           ../../../../../src/ta_func/ta_CDLINNECK.c \

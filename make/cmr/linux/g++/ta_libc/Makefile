@@ -171,6 +171,8 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_CDLHARAMI.c \
 		../../../../../src/ta_func/ta_CDLHARAMICROSS.c \
 		../../../../../src/ta_func/ta_CDLHIGHWAVE.c \
+		../../../../../src/ta_func/ta_CDLHIKKAKE.c \
+		../../../../../src/ta_func/ta_CDLHIKKAKEMOD.c \
 		../../../../../src/ta_func/ta_CDLHOMINGPIGEON.c \
 		../../../../../src/ta_func/ta_CDLIDENTICAL3CROWS.c \
 		../../../../../src/ta_func/ta_CDLINNECK.c \
@@ -404,6 +406,8 @@ OBJECTS =	../../../../../temp/cmr/ta_ascii.o \
 		../../../../../temp/cmr/ta_CDLHARAMI.o \
 		../../../../../temp/cmr/ta_CDLHARAMICROSS.o \
 		../../../../../temp/cmr/ta_CDLHIGHWAVE.o \
+		../../../../../temp/cmr/ta_CDLHIKKAKE.o \
+		../../../../../temp/cmr/ta_CDLHIKKAKEMOD.o \
 		../../../../../temp/cmr/ta_CDLHOMINGPIGEON.o \
 		../../../../../temp/cmr/ta_CDLIDENTICAL3CROWS.o \
 		../../../../../temp/cmr/ta_CDLINNECK.o \
@@ -965,6 +969,12 @@ clean:
 
 ../../../../../temp/cmr/ta_CDLHIGHWAVE.o: ../../../../../src/ta_func/ta_CDLHIGHWAVE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLHIGHWAVE.o ../../../../../src/ta_func/ta_CDLHIGHWAVE.c
+
+../../../../../temp/cmr/ta_CDLHIKKAKE.o: ../../../../../src/ta_func/ta_CDLHIKKAKE.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLHIKKAKE.o ../../../../../src/ta_func/ta_CDLHIKKAKE.c
+
+../../../../../temp/cmr/ta_CDLHIKKAKEMOD.o: ../../../../../src/ta_func/ta_CDLHIKKAKEMOD.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLHIKKAKEMOD.o ../../../../../src/ta_func/ta_CDLHIKKAKEMOD.c
 
 ../../../../../temp/cmr/ta_CDLHOMINGPIGEON.o: ../../../../../src/ta_func/ta_CDLHOMINGPIGEON.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_CDLHOMINGPIGEON.o ../../../../../src/ta_func/ta_CDLHOMINGPIGEON.c

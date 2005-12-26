@@ -866,6 +866,62 @@ DEF_FUNCTION( CDLHIGHWAVE,                    /* name */
 
 /* CDLHIGHWAVE END */
 
+/* CDLHIKKAKE BEGIN */
+static const TA_InputParameterInfo    *TA_CDLHIKKAKE_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLHIKKAKE_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLHIKKAKE_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLHIKKAKE,                     /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Hikkake Pattern",              /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLHIKKAKE END */
+
+/* CDLHIKKAKEMOD BEGIN */
+static const TA_InputParameterInfo    *TA_CDLHIKKAKEMOD_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CDLHIKKAKEMOD_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CDLHIKKAKEMOD_OptInputs[] =
+{ 
+  NULL
+};
+
+DEF_FUNCTION( CDLHIKKAKEMOD,                  /* name */
+              TA_GroupId_PatternRecognition,  /* groupId */
+              "Modified Hikkake Pattern",     /* hint */
+              NULL,                           /* helpFile */
+              TA_FUNC_FLG_CANDLESTICK,        /* flags */
+              NULL                            /* analysis function */
+             );
+
+/* CDLHIKKAKEMOD END */
+
 /* CDLHOMINGPIGEON BEGIN */
 static const TA_InputParameterInfo    *TA_CDLHOMINGPIGEON_Inputs[]    =
 {
@@ -1828,6 +1884,8 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLHARAMI),
    ADD_TO_TABLE(CDLHARAMICROSS),
    ADD_TO_TABLE(CDLHIGHWAVE),
+   ADD_TO_TABLE(CDLHIKKAKE),
+   ADD_TO_TABLE(CDLHIKKAKEMOD),
    ADD_TO_TABLE(CDLHOMINGPIGEON),
    ADD_TO_TABLE(CDLIDENTICAL3CROWS),
    ADD_TO_TABLE(CDLINNECK),

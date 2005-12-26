@@ -3021,6 +3021,66 @@ int TA_CDLHIGHWAVE_Lookback( void );
 
 
 /*
+ * TA_CDLHIKKAKE - Hikkake Pattern
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLHIKKAKE( int    startIdx,
+                          int    endIdx,
+                          const double inOpen[],
+                          const double inHigh[],
+                          const double inLow[],
+                          const double inClose[],
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          int           outInteger[] );
+
+TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
+                            int    endIdx,
+                            const float  inOpen[],
+                            const float  inHigh[],
+                            const float  inLow[],
+                            const float  inClose[],
+                            int          *outBegIdx,
+                            int          *outNbElement,
+                            int           outInteger[] );
+
+int TA_CDLHIKKAKE_Lookback( void );
+
+
+/*
+ * TA_CDLHIKKAKEMOD - Modified Hikkake Pattern
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = int
+ * 
+ */
+TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,
+                             int    endIdx,
+                             const double inOpen[],
+                             const double inHigh[],
+                             const double inLow[],
+                             const double inClose[],
+                             int          *outBegIdx,
+                             int          *outNbElement,
+                             int           outInteger[] );
+
+TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
+                               int    endIdx,
+                               const float  inOpen[],
+                               const float  inHigh[],
+                               const float  inLow[],
+                               const float  inClose[],
+                               int          *outBegIdx,
+                               int          *outNbElement,
+                               int           outInteger[] );
+
+int TA_CDLHIKKAKEMOD_Lookback( void );
+
+
+/*
  * TA_CDLHOMINGPIGEON - Homing Pigeon
  * 
  * Input  = Open, High, Low, Close
