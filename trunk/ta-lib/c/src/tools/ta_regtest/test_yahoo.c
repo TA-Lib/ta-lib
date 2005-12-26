@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  082301 MF   First version.
  *  061304 MF   Add TA_YAHOO_ONE_SYMBOL tests.
+ *  122605 MF   Add memory clean-up for many failure scenario.
  */
 
 /* Description:
@@ -160,18 +161,21 @@ static ErrorNumber test_web( TA_UDBase *udb )
 
    if( retCode != TA_SUCCESS )
    {
+      TA_HistoryFree( history );
       reportError( "TA_HistoryAlloc", retCode );
       return TA_YAHOO_HISTORYALLOC_1_FAILED;
    }
 
    if( history->nbBars < 3000 )
    {
+      TA_HistoryFree( history );
       printf( "Insufficient nbBars returned for MSFT ticker test (%d < 3000)\n", history->nbBars );
       return TA_YAHOO_VALUE_1_FAILED;
    }
 
    if( !history->close || !history->timestamp || !history->volume )
    {
+      TA_HistoryFree( history );
       return TA_YAHOO_FIELD_MISSING_1;
    }
 
@@ -210,11 +214,13 @@ static ErrorNumber test_web( TA_UDBase *udb )
 
    if( history->nbBars < 2065 )
    {
+      TA_HistoryFree( history );
       return TA_YAHOO_VALUE_2_FAILED;
    }
 
    if( !history->open )
    {
+      TA_HistoryFree( history );
       return TA_YAHOO_FIELD_MISSING_2;
    }
 
@@ -236,12 +242,14 @@ static ErrorNumber test_web( TA_UDBase *udb )
    retCode = TA_HistoryAlloc( udb, &histParam, &history );
    if( retCode != TA_SUCCESS )
    {
+      TA_HistoryFree( history );
       reportError( "TA_HistoryAlloc", retCode );
       return TA_YAHOO_HISTORYALLOC_3_FAILED;
    }
 
    if( history->nbBars < 700 )
    {
+      TA_HistoryFree( history );
       return TA_YAHOO_VALUE_3_FAILED;
    }
 
@@ -252,12 +260,14 @@ static ErrorNumber test_web( TA_UDBase *udb )
        !history->volume ||
        !history->timestamp )
    {
+      TA_HistoryFree( history );
       return TA_YAHOO_FIELD_MISSING_3;
    }
 
    errNumber = checkRangeSame( udb, history, &history->timestamp[0], &history->timestamp[0], TA_DAILY, 0, 1 );
    if( errNumber != TA_TEST_PASS )
    {
+      TA_HistoryFree( history );
       printf( "Failed: Test getting first price bar only.\n" );
       return errNumber;
    }
@@ -265,6 +275,7 @@ static ErrorNumber test_web( TA_UDBase *udb )
    errNumber = checkRangeSame( udb, history, &history->timestamp[1], &history->timestamp[1], TA_DAILY, 1, 1 );
    if( errNumber != TA_TEST_PASS )
    {
+      TA_HistoryFree( history );
       printf( "Failed: Test getting second price bar only.\n" );
       return errNumber;
    }
@@ -272,6 +283,7 @@ static ErrorNumber test_web( TA_UDBase *udb )
    errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-2], &history->timestamp[history->nbBars-2], TA_DAILY, history->nbBars-2, 1 );
    if( errNumber != TA_TEST_PASS )
    {
+      TA_HistoryFree( history );
       printf( "Failed: Test getting before last price bar only.\n" );
       return errNumber;
    }
@@ -279,6 +291,7 @@ static ErrorNumber test_web( TA_UDBase *udb )
    errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-1], &history->timestamp[history->nbBars-1], TA_DAILY, history->nbBars-1, 1 );
    if( errNumber != TA_TEST_PASS )
    {
+      TA_HistoryFree( history );
       printf( "Failed: Test getting last price bar only.\n" );
       return errNumber;
    }
@@ -286,6 +299,7 @@ static ErrorNumber test_web( TA_UDBase *udb )
    errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-200], &history->timestamp[history->nbBars-1], TA_DAILY, history->nbBars-200, 200 );
    if( errNumber != TA_TEST_PASS )
    {
+      TA_HistoryFree( history );
       printf( "Failed: Test getting last 200 price bars only.\n" );
       return errNumber;
    }
@@ -293,6 +307,7 @@ static ErrorNumber test_web( TA_UDBase *udb )
    errNumber = checkRangeSame( udb, history, &history->timestamp[0], &history->timestamp[199], TA_DAILY, 0, 200 );
    if( errNumber != TA_TEST_PASS )
    {
+      TA_HistoryFree( history );
       printf( "Failed: Test getting first 200 price bars only.\n" );
       return errNumber;
    }
@@ -323,6 +338,7 @@ static ErrorNumber test_web( TA_UDBase *udb )
    errNumber = checkRangeSame( udb, history, &history->timestamp[0], &history->timestamp[0], TA_MONTHLY, 0, 1 );
    if( errNumber != TA_TEST_PASS )
    {
+      TA_HistoryFree( history );
       printf( "Failed: Test getting first price bar only. (Monthly)\n" );
       return errNumber;
    }
@@ -330,6 +346,7 @@ static ErrorNumber test_web( TA_UDBase *udb )
    errNumber = checkRangeSame( udb, history, &history->timestamp[1], &history->timestamp[1], TA_MONTHLY, 1, 1 );
    if( errNumber != TA_TEST_PASS )
    {
+      TA_HistoryFree( history );
       printf( "Failed: Test getting second price bar only. (Monthly)\n" );
       return errNumber;
    }
@@ -337,6 +354,7 @@ static ErrorNumber test_web( TA_UDBase *udb )
    errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-2], &history->timestamp[history->nbBars-2], TA_MONTHLY, history->nbBars-2, 1 );
    if( errNumber != TA_TEST_PASS )
    {
+      TA_HistoryFree( history );
       printf( "Failed: Test getting before last price bar only. (Monthly)\n" );
       return errNumber;
    }
@@ -344,6 +362,7 @@ static ErrorNumber test_web( TA_UDBase *udb )
    errNumber = checkRangeSame( udb, history, &history->timestamp[history->nbBars-1], &history->timestamp[history->nbBars-1], TA_MONTHLY, history->nbBars-1, 1 );
    if( errNumber != TA_TEST_PASS )
    {
+      TA_HistoryFree( history );
       printf( "Failed: Test getting last price bar only. (Monthly)\n" );
       return errNumber;
    }
@@ -427,12 +446,14 @@ static ErrorNumber test_one_symbol( TA_UDBase *udb )
 
    if( history->nbBars < 3000 )
    {
+      TA_HistoryFree( history );
       printf( "Insufficient nbBars returned for MSFT ticker test (%d < 3000)\n", history->nbBars );
       return TA_YAHOO_VALUE_1_FAILED;
    }
 
    if( !history->close || !history->timestamp || !history->volume )
    {
+      TA_HistoryFree( history );
       return TA_YAHOO_FIELD_MISSING_1;
    }
 
@@ -482,6 +503,7 @@ static ErrorNumber test_one_symbol( TA_UDBase *udb )
 
    if( history->nbBars < 700 )
    {
+      TA_HistoryFree( history );
       return TA_YAHOO_VALUE_3_FAILED;
    }
 
@@ -492,6 +514,7 @@ static ErrorNumber test_one_symbol( TA_UDBase *udb )
        !history->volume ||
        !history->timestamp )
    {
+      TA_HistoryFree( history );
       return TA_YAHOO_FIELD_MISSING_3;
    }
 
@@ -502,6 +525,7 @@ static ErrorNumber test_one_symbol( TA_UDBase *udb )
                                TA_DAILY, history->nbBars-200, 200 );
    if( errNumber != TA_TEST_PASS )
    {
+      TA_HistoryFree( history );
       printf( "Failed: Test getting last 200 price bars only.\n" );
       return errNumber;
    }
