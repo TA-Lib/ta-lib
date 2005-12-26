@@ -3346,3 +3346,4 @@ void genJavaCode( const TA_FuncInfo *funcInfo )
    fileDelete( "..\\temp\\CoreJavaCode.tmp" );
 }
 #endif
+
