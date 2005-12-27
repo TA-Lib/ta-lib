@@ -562,6 +562,14 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CDLHIKKAKE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CDLHIKKAKEMOD.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CDLHOMINGPIGEON.c
 # End Source File
 # Begin Source File
