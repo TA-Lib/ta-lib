@@ -136,7 +136,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-    int i, outIdx, lookbackTotal, confirmIdx, patternIdx, zeroIdx;
+    int i, outIdx, lookbackTotal, patternIdx, zeroIdx;
     
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -275,7 +275,7 @@
 /* Generated */                             int           outInteger[] )
 /* Generated */ #endif
 /* Generated */ {
-/* Generated */     int i, outIdx, lookbackTotal, confirmIdx, patternIdx, zeroIdx;
+/* Generated */     int i, outIdx, lookbackTotal, patternIdx, zeroIdx;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;

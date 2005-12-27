@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -137,7 +137,7 @@
 {
    /* Insert local variables here. */
     double NearPeriodTotal;
-    int i, outIdx, NearTrailingIdx, lookbackTotal, confirmIdx, patternIdx, zeroIdx;
+    int i, outIdx, NearTrailingIdx, lookbackTotal, patternIdx, zeroIdx;
     
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -299,7 +299,7 @@
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */     double NearPeriodTotal;
-/* Generated */     int i, outIdx, NearTrailingIdx, lookbackTotal, confirmIdx, patternIdx, zeroIdx;
+/* Generated */     int i, outIdx, NearTrailingIdx, lookbackTotal, patternIdx, zeroIdx;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
