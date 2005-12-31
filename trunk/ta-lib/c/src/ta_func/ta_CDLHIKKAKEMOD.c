@@ -90,7 +90,7 @@
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-    return max( 3, TA_CANDLEAVGPERIOD(TA_Near)+2 );
+    return max( 1, TA_CANDLEAVGPERIOD(TA_Near) ) + 5;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -137,7 +137,7 @@
 {
    /* Insert local variables here. */
     double NearPeriodTotal;
-    int i, outIdx, NearTrailingIdx, lookbackTotal, patternIdx, zeroIdx;
+    int i, outIdx, NearTrailingIdx, lookbackTotal, patternIdx, patternResult;
     
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -188,16 +188,49 @@
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
    NearPeriodTotal = 0;
-   NearTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_Near);
+   NearTrailingIdx = startIdx - 3 - TA_CANDLEAVGPERIOD(TA_Near);
    i = NearTrailingIdx;
-   while( i < startIdx ) {
+   while( i < startIdx - 3 ) {
         NearPeriodTotal += TA_CANDLERANGE( TA_Near, i-2 );
         i++;
    }
 
+   patternIdx = 0;
+   patternResult = 0;
+
+   i = startIdx - 3;
+   while( i < startIdx ) {
+        /* copy here the pattern recognition code below */
+        if( inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] &&             // 2nd: lower high and higher low than 1st
+            inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 3rd: lower high and higher low than 2nd
+            ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&             // (bull) 4th: lower high and lower low
+                inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal, i-2 )  
+                                                                                // (bull) 2nd: close near the low
+              )
+              ||
+              ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&             // (bear) 4th: higher high and higher low
+                inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal, i-2 )
+                                                                                // (bull) 2nd: close near the top
+              )
+            )
+        ) {
+            patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
+            patternIdx = i;
+        } else
+            /* search for confirmation if modified hikkake was no more than 3 bars ago */
+            if( i <= patternIdx+3 &&
+                ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 3rd
+                  ||
+                  ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 3rd
+                )
+            ) 
+                patternIdx = 0;
+        NearPeriodTotal += TA_CANDLERANGE( TA_Near, i-2 ) - TA_CANDLERANGE( TA_Near, NearTrailingIdx-2 );
+        NearTrailingIdx++;
+        i++; 
+   }
+
    i = startIdx;
-   zeroIdx = -4-1;
-   patternIdx = zeroIdx;
 
    /* Proceed with the calculation for the requested range.
     * Must have:
@@ -231,18 +264,19 @@
               )
             )
         ) {
-            outInteger[outIdx++] = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
+            patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
             patternIdx = i;
+            outInteger[outIdx++] = patternResult;
         } else
             /* search for confirmation if modified hikkake was no more than 3 bars ago */
             if( i <= patternIdx+3 &&
-                ( ( outInteger[patternIdx-startIdx] > 0 && inClose[i] > inHigh[patternIdx-1] )  // close higher than the high of 3rd
+                ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 3rd
                   ||
-                  ( outInteger[patternIdx-startIdx] < 0 && inClose[i] < inLow[patternIdx-1] )   // close lower than the low of 3rd
+                  ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 3rd
                 )
             ) {
-                outInteger[outIdx++] = outInteger[patternIdx-startIdx] + 100 * ( outInteger[patternIdx-startIdx] > 0 ? 1 : -1 );
-                patternIdx = zeroIdx;
+                outInteger[outIdx++] = patternResult + 100 * ( patternResult > 0 ? 1 : -1 );
+                patternIdx = 0;
             } else
                 outInteger[outIdx++] = 0;
         NearPeriodTotal += TA_CANDLERANGE( TA_Near, i-2 ) - TA_CANDLERANGE( TA_Near, NearTrailingIdx-2 );
