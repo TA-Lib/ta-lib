@@ -90,7 +90,7 @@
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
    /* insert lookback code here. */
-    return 2;
+    return 5;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -136,7 +136,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-    int i, outIdx, lookbackTotal, patternIdx, zeroIdx;
+    int i, outIdx, lookbackTotal, patternIdx, patternResult;
     
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -186,9 +186,33 @@
 
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
+   patternIdx = 0;
+   patternResult = 0;
+
+   i = startIdx - 3;
+   while( i < startIdx ) {
+        /* copy here the pattern recognition code below */
+        if( inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 1st + 2nd: lower high and higher low
+            ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] )              // (bull) 3rd: lower high and lower low
+              ||
+              ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] )              // (bear) 3rd: higher high and higher low
+            )
+        ) {
+            patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
+            patternIdx = i;
+        } else
+            /* search for confirmation if hikkake was no more than 3 bars ago */
+            if( i <= patternIdx+3 &&
+                ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 2nd
+                  ||
+                  ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 2nd
+                )
+            )
+                patternIdx = 0;
+        i++; 
+   }
+
    i = startIdx;
-   zeroIdx = -3-1;
-   patternIdx = zeroIdx;
 
    /* Proceed with the calculation for the requested range.
     * Must have:
@@ -210,18 +234,19 @@
               ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] )              // (bear) 3rd: higher high and higher low
             )
         ) {
-            outInteger[outIdx++] = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
+            patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
             patternIdx = i;
+            outInteger[outIdx++] = patternResult;
         } else
             /* search for confirmation if hikkake was no more than 3 bars ago */
             if( i <= patternIdx+3 &&
-                ( ( outInteger[patternIdx-startIdx] > 0 && inClose[i] > inHigh[patternIdx-1] )  // close higher than the high of 2nd
+                ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 2nd
                   ||
-                  ( outInteger[patternIdx-startIdx] < 0 && inClose[i] < inLow[patternIdx-1] )   // close lower than the low of 2nd
+                  ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 2nd
                 )
             ) {
-                outInteger[outIdx++] = outInteger[patternIdx-startIdx] + 100 * ( outInteger[patternIdx-startIdx] > 0 ? 1 : -1 );
-                patternIdx = zeroIdx;
+                outInteger[outIdx++] = patternResult + 100 * ( patternResult > 0 ? 1 : -1 );
+                patternIdx = 0;
             } else
                 outInteger[outIdx++] = 0;
         i++; 
