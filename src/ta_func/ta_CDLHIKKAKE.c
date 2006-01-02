@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -300,7 +300,7 @@
 /* Generated */                             int           outInteger[] )
 /* Generated */ #endif
 /* Generated */ {
-/* Generated */     int i, outIdx, lookbackTotal, patternIdx, zeroIdx;
+/* Generated */     int i, outIdx, lookbackTotal, patternIdx, patternResult;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
@@ -324,9 +324,29 @@
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }
+/* Generated */    patternIdx = 0;
+/* Generated */    patternResult = 0;
+/* Generated */    i = startIdx - 3;
+/* Generated */    while( i < startIdx ) {
+/* Generated */         if( inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 1st + 2nd: lower high and higher low
+/* Generated */             ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] )              // (bull) 3rd: lower high and lower low
+/* Generated */               ||
+/* Generated */               ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] )              // (bear) 3rd: higher high and higher low
+/* Generated */             )
+/* Generated */         ) {
+/* Generated */             patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
+/* Generated */             patternIdx = i;
+/* Generated */         } else
+/* Generated */             if( i <= patternIdx+3 &&
+/* Generated */                 ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 2nd
+/* Generated */                   ||
+/* Generated */                   ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 2nd
+/* Generated */                 )
+/* Generated */             )
+/* Generated */                 patternIdx = 0;
+/* Generated */         i++; 
+/* Generated */    }
 /* Generated */    i = startIdx;
-/* Generated */    zeroIdx = -3-1;
-/* Generated */    patternIdx = zeroIdx;
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
@@ -336,17 +356,18 @@
 /* Generated */               ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] )              // (bear) 3rd: higher high and higher low
 /* Generated */             )
 /* Generated */         ) {
-/* Generated */             outInteger[outIdx++] = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
+/* Generated */             patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
 /* Generated */             patternIdx = i;
+/* Generated */             outInteger[outIdx++] = patternResult;
 /* Generated */         } else
 /* Generated */             if( i <= patternIdx+3 &&
-/* Generated */                 ( ( outInteger[patternIdx-startIdx] > 0 && inClose[i] > inHigh[patternIdx-1] )  // close higher than the high of 2nd
+/* Generated */                 ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 2nd
 /* Generated */                   ||
-/* Generated */                   ( outInteger[patternIdx-startIdx] < 0 && inClose[i] < inLow[patternIdx-1] )   // close lower than the low of 2nd
+/* Generated */                   ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 2nd
 /* Generated */                 )
 /* Generated */             ) {
-/* Generated */                 outInteger[outIdx++] = outInteger[patternIdx-startIdx] + 100 * ( outInteger[patternIdx-startIdx] > 0 ? 1 : -1 );
-/* Generated */                 patternIdx = zeroIdx;
+/* Generated */                 outInteger[outIdx++] = patternResult + 100 * ( patternResult > 0 ? 1 : -1 );
+/* Generated */                 patternIdx = 0;
 /* Generated */             } else
 /* Generated */                 outInteger[outIdx++] = 0;
 /* Generated */         i++; 

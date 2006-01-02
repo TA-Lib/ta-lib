@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -333,7 +333,7 @@
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */     double NearPeriodTotal;
-/* Generated */     int i, outIdx, NearTrailingIdx, lookbackTotal, patternIdx, zeroIdx;
+/* Generated */     int i, outIdx, NearTrailingIdx, lookbackTotal, patternIdx, patternResult;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
@@ -358,15 +358,44 @@
 /* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    }
 /* Generated */    NearPeriodTotal = 0;
-/* Generated */    NearTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_Near);
+/* Generated */    NearTrailingIdx = startIdx - 3 - TA_CANDLEAVGPERIOD(TA_Near);
 /* Generated */    i = NearTrailingIdx;
-/* Generated */    while( i < startIdx ) {
+/* Generated */    while( i < startIdx - 3 ) {
 /* Generated */         NearPeriodTotal += TA_CANDLERANGE( TA_Near, i-2 );
 /* Generated */         i++;
 /* Generated */    }
+/* Generated */    patternIdx = 0;
+/* Generated */    patternResult = 0;
+/* Generated */    i = startIdx - 3;
+/* Generated */    while( i < startIdx ) {
+/* Generated */         if( inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] &&             // 2nd: lower high and higher low than 1st
+/* Generated */             inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 3rd: lower high and higher low than 2nd
+/* Generated */             ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&             // (bull) 4th: lower high and lower low
+/* Generated */                 inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal, i-2 )  
+/* Generated */                                                                                 // (bull) 2nd: close near the low
+/* Generated */               )
+/* Generated */               ||
+/* Generated */               ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&             // (bear) 4th: higher high and higher low
+/* Generated */                 inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal, i-2 )
+/* Generated */                                                                                 // (bull) 2nd: close near the top
+/* Generated */               )
+/* Generated */             )
+/* Generated */         ) {
+/* Generated */             patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
+/* Generated */             patternIdx = i;
+/* Generated */         } else
+/* Generated */             if( i <= patternIdx+3 &&
+/* Generated */                 ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 3rd
+/* Generated */                   ||
+/* Generated */                   ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 3rd
+/* Generated */                 )
+/* Generated */             ) 
+/* Generated */                 patternIdx = 0;
+/* Generated */         NearPeriodTotal += TA_CANDLERANGE( TA_Near, i-2 ) - TA_CANDLERANGE( TA_Near, NearTrailingIdx-2 );
+/* Generated */         NearTrailingIdx++;
+/* Generated */         i++; 
+/* Generated */    }
 /* Generated */    i = startIdx;
-/* Generated */    zeroIdx = -4-1;
-/* Generated */    patternIdx = zeroIdx;
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
@@ -383,17 +412,18 @@
 /* Generated */               )
 /* Generated */             )
 /* Generated */         ) {
-/* Generated */             outInteger[outIdx++] = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
+/* Generated */             patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
 /* Generated */             patternIdx = i;
+/* Generated */             outInteger[outIdx++] = patternResult;
 /* Generated */         } else
 /* Generated */             if( i <= patternIdx+3 &&
-/* Generated */                 ( ( outInteger[patternIdx-startIdx] > 0 && inClose[i] > inHigh[patternIdx-1] )  // close higher than the high of 3rd
+/* Generated */                 ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 3rd
 /* Generated */                   ||
-/* Generated */                   ( outInteger[patternIdx-startIdx] < 0 && inClose[i] < inLow[patternIdx-1] )   // close lower than the low of 3rd
+/* Generated */                   ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 3rd
 /* Generated */                 )
 /* Generated */             ) {
-/* Generated */                 outInteger[outIdx++] = outInteger[patternIdx-startIdx] + 100 * ( outInteger[patternIdx-startIdx] > 0 ? 1 : -1 );
-/* Generated */                 patternIdx = zeroIdx;
+/* Generated */                 outInteger[outIdx++] = patternResult + 100 * ( patternResult > 0 ? 1 : -1 );
+/* Generated */                 patternIdx = 0;
 /* Generated */             } else
 /* Generated */                 outInteger[outIdx++] = 0;
 /* Generated */         NearPeriodTotal += TA_CANDLERANGE( TA_Near, i-2 ) - TA_CANDLERANGE( TA_Near, NearTrailingIdx-2 );
