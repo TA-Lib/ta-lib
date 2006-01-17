@@ -252,6 +252,7 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_TRIX.c \
           ../../../../../src/ta_func/ta_TSF.c \
           ../../../../../src/ta_func/ta_TYPPRICE.c \
+          ../../../../../src/ta_func/ta_ULTOSC.c \
           ../../../../../src/ta_func/ta_VAR.c \
           ../../../../../src/ta_func/ta_WCLPRICE.c \
           ../../../../../src/ta_func/ta_WILLR.c \

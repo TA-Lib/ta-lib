@@ -124,6 +124,7 @@ TRIMA               Triangular Moving Average
 TRIX                1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 TSF                 Time Series Forecast
 TYPPRICE            Typical Price
+ULTOSC              Ultimate Oscillator
 VAR                 Variance
 WCLPRICE            Weighted Close Price
 WILLR               Williams' %R

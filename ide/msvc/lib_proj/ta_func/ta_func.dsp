@@ -414,6 +414,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_TRIX.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_ULTOSC.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_WILLR.c
 # End Source File
 # Begin Source File

@@ -483,6 +483,15 @@
 /* Generated */ unsigned int TA_TRIX_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+/* Generated */ TA_RetCode TA_ULTOSC_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+;
+/* Generated */ unsigned int TA_ULTOSC_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 /* Generated */ TA_RetCode TA_WILLR_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,

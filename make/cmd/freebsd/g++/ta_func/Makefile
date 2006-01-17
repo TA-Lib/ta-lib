@@ -154,6 +154,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_TRIX.c \
 		../../../../../src/ta_func/ta_TSF.c \
 		../../../../../src/ta_func/ta_TYPPRICE.c \
+		../../../../../src/ta_func/ta_ULTOSC.c \
 		../../../../../src/ta_func/ta_VAR.c \
 		../../../../../src/ta_func/ta_WCLPRICE.c \
 		../../../../../src/ta_func/ta_WILLR.c \
@@ -285,6 +286,7 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_TRIX.o \
 		../../../../../temp/cmd/ta_TSF.o \
 		../../../../../temp/cmd/ta_TYPPRICE.o \
+		../../../../../temp/cmd/ta_ULTOSC.o \
 		../../../../../temp/cmd/ta_VAR.o \
 		../../../../../temp/cmd/ta_WCLPRICE.o \
 		../../../../../temp/cmd/ta_WILLR.o \
@@ -722,6 +724,9 @@ clean:
 
 ../../../../../temp/cmd/ta_TYPPRICE.o: ../../../../../src/ta_func/ta_TYPPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_TYPPRICE.o ../../../../../src/ta_func/ta_TYPPRICE.c
+
+../../../../../temp/cmd/ta_ULTOSC.o: ../../../../../src/ta_func/ta_ULTOSC.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ULTOSC.o ../../../../../src/ta_func/ta_ULTOSC.c
 
 ../../../../../temp/cmd/ta_VAR.o: ../../../../../src/ta_func/ta_VAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_VAR.o ../../../../../src/ta_func/ta_VAR.c

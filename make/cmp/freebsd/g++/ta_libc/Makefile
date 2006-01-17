@@ -251,6 +251,7 @@ SOURCES =	../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
 		../../../../../src/ta_func/ta_TRIX.c \
 		../../../../../src/ta_func/ta_TSF.c \
 		../../../../../src/ta_func/ta_TYPPRICE.c \
+		../../../../../src/ta_func/ta_ULTOSC.c \
 		../../../../../src/ta_func/ta_VAR.c \
 		../../../../../src/ta_func/ta_WCLPRICE.c \
 		../../../../../src/ta_func/ta_WILLR.c \
@@ -486,6 +487,7 @@ OBJECTS =	../../../../../temp/cmp/ta_ascii.o \
 		../../../../../temp/cmp/ta_TRIX.o \
 		../../../../../temp/cmp/ta_TSF.o \
 		../../../../../temp/cmp/ta_TYPPRICE.o \
+		../../../../../temp/cmp/ta_ULTOSC.o \
 		../../../../../temp/cmp/ta_VAR.o \
 		../../../../../temp/cmp/ta_WCLPRICE.o \
 		../../../../../temp/cmp/ta_WILLR.o \
@@ -1221,6 +1223,9 @@ clean:
 
 ../../../../../temp/cmp/ta_TYPPRICE.o: ../../../../../src/ta_func/ta_TYPPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_TYPPRICE.o ../../../../../src/ta_func/ta_TYPPRICE.c
+
+../../../../../temp/cmp/ta_ULTOSC.o: ../../../../../src/ta_func/ta_ULTOSC.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_ULTOSC.o ../../../../../src/ta_func/ta_ULTOSC.c
 
 ../../../../../temp/cmp/ta_VAR.o: ../../../../../src/ta_func/ta_VAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_VAR.o ../../../../../src/ta_func/ta_VAR.c
