@@ -244,6 +244,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_TRIX.c \
 		..\..\..\..\..\src\ta_func\ta_TSF.c \
 		..\..\..\..\..\src\ta_func\ta_TYPPRICE.c \
+		..\..\..\..\..\src\ta_func\ta_ULTOSC.c \
 		..\..\..\..\..\src\ta_func\ta_VAR.c \
 		..\..\..\..\..\src\ta_func\ta_WCLPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_WILLR.c \
@@ -480,6 +481,7 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_ascii.obj \
 		..\..\..\..\..\temp\csd\ta_TRIX.obj \
 		..\..\..\..\..\temp\csd\ta_TSF.obj \
 		..\..\..\..\..\temp\csd\ta_TYPPRICE.obj \
+		..\..\..\..\..\temp\csd\ta_ULTOSC.obj \
 		..\..\..\..\..\temp\csd\ta_VAR.obj \
 		..\..\..\..\..\temp\csd\ta_WCLPRICE.obj \
 		..\..\..\..\..\temp\csd\ta_WILLR.obj \
@@ -743,6 +745,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_TRIX.obj \
 +..\..\..\..\..\temp\csd\ta_TSF.obj \
 +..\..\..\..\..\temp\csd\ta_TYPPRICE.obj \
++..\..\..\..\..\temp\csd\ta_ULTOSC.obj \
 +..\..\..\..\..\temp\csd\ta_VAR.obj \
 +..\..\..\..\..\temp\csd\ta_WCLPRICE.obj \
 +..\..\..\..\..\temp\csd\ta_WILLR.obj \
@@ -992,6 +995,7 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_TRIX.obj
 	-del ..\..\..\..\..\temp\csd\ta_TSF.obj
 	-del ..\..\..\..\..\temp\csd\ta_TYPPRICE.obj
+	-del ..\..\..\..\..\temp\csd\ta_ULTOSC.obj
 	-del ..\..\..\..\..\temp\csd\ta_VAR.obj
 	-del ..\..\..\..\..\temp\csd\ta_WCLPRICE.obj
 	-del ..\..\..\..\..\temp\csd\ta_WILLR.obj
@@ -1686,6 +1690,9 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_TYPPRICE.obj: ..\..\..\..\..\src\ta_func\ta_TYPPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_TYPPRICE.obj ..\..\..\..\..\src\ta_func\ta_TYPPRICE.c
+
+..\..\..\..\..\temp\csd\ta_ULTOSC.obj: ..\..\..\..\..\src\ta_func\ta_ULTOSC.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_ULTOSC.obj ..\..\..\..\..\src\ta_func\ta_ULTOSC.c
 
 ..\..\..\..\..\temp\csd\ta_VAR.obj: ..\..\..\..\..\src\ta_func\ta_VAR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_VAR.obj ..\..\..\..\..\src\ta_func\ta_VAR.c

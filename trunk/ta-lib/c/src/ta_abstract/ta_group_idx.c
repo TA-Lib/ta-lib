@@ -96,6 +96,7 @@ extern const TA_FuncDef TA_DEF_STOCH;
 extern const TA_FuncDef TA_DEF_STOCHF;
 extern const TA_FuncDef TA_DEF_STOCHRSI;
 extern const TA_FuncDef TA_DEF_TRIX;
+extern const TA_FuncDef TA_DEF_ULTOSC;
 extern const TA_FuncDef TA_DEF_WILLR;
 extern const TA_FuncDef TA_DEF_HT_DCPERIOD;
 extern const TA_FuncDef TA_DEF_HT_DCPHASE;
@@ -244,6 +245,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_STOCHF,
 &TA_DEF_STOCHRSI,
 &TA_DEF_TRIX,
+&TA_DEF_ULTOSC,
 &TA_DEF_WILLR,
 NULL };
 #define SIZE_GROUP_4 ((sizeof(TA_PerGroupFunc_4)/sizeof(const TA_FuncDef *))-1)

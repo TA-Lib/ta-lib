@@ -1874,6 +1874,54 @@ int TA_TRIX_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
+ * TA_ULTOSC - Ultimate Oscillator
+ * 
+ * Input  = High, Low, Close
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod1:(From 1 to 100000)
+ *    Number of bars for 1st period.
+ * 
+ * optInTimePeriod2:(From 1 to 100000)
+ *    Number of bars fro 2nd period
+ * 
+ * optInTimePeriod3:(From 1 to 100000)
+ *    Number of bars for 3rd period
+ * 
+ * 
+ */
+TA_RetCode TA_ULTOSC( int    startIdx,
+                      int    endIdx,
+                      const double inHigh[],
+                      const double inLow[],
+                      const double inClose[],
+                      int           optInTimePeriod1, /* From 1 to 100000 */
+                      int           optInTimePeriod2, /* From 1 to 100000 */
+                      int           optInTimePeriod3, /* From 1 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal[] );
+
+TA_RetCode TA_S_ULTOSC( int    startIdx,
+                        int    endIdx,
+                        const float  inHigh[],
+                        const float  inLow[],
+                        const float  inClose[],
+                        int           optInTimePeriod1, /* From 1 to 100000 */
+                        int           optInTimePeriod2, /* From 1 to 100000 */
+                        int           optInTimePeriod3, /* From 1 to 100000 */
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double        outReal[] );
+
+int TA_ULTOSC_Lookback( int           optInTimePeriod1, /* From 1 to 100000 */
+                      int           optInTimePeriod2, /* From 1 to 100000 */
+                      int           optInTimePeriod3 );  /* From 1 to 100000 */
+
+
+/*
  * TA_WILLR - Williams' %R
  * 
  * Input  = High, Low, Close

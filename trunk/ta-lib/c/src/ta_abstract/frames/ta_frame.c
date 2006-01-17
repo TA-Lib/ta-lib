@@ -1082,6 +1082,31 @@
 /* Generated */ {
 /* Generated */    return TA_TRIX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 /* Generated */ }
+/* Generated */ TA_RetCode TA_ULTOSC_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_ULTOSC(
+/* Generated */                startIdx,
+/* Generated */                endIdx,
+/* Generated */                params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                params->optIn[0].data.optInInteger, /* optInTimePeriod1*/
+/* Generated */                params->optIn[1].data.optInInteger, /* optInTimePeriod2*/
+/* Generated */                params->optIn[2].data.optInInteger, /* optInTimePeriod3*/
+/* Generated */                outBegIdx, 
+/* Generated */                outNbElement, 
+/* Generated */                params->out[0].data.outReal /*  outReal */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_ULTOSC_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    return TA_ULTOSC_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod1*/
+/* Generated */                        params->optIn[1].data.optInInteger, /* optInTimePeriod2*/
+/* Generated */                        params->optIn[2].data.optInInteger /* optInTimePeriod3*/ );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_WILLR_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
