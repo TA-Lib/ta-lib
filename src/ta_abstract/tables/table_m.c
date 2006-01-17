@@ -48,7 +48,6 @@
  *
  ****************************************************************************/
 
-/* MA BEGIN */
 const TA_OptInputParameterInfo TA_DEF_UI_Signal_Period =
 {
    TA_OptInput_IntegerRange, /* type */
@@ -104,6 +103,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_Signal_MA_Type =
    NULL /* helpFile */
 };
 
+/* MA BEGIN */
 static const TA_InputParameterInfo    *TA_MA_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
