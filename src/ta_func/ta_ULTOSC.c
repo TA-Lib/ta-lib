@@ -208,7 +208,8 @@
    /* Insert TA function code here. */
 
    /* Default return values */
-
+   VALUE_HANDLE_DEREF(outNbElement) = 0;
+   VALUE_HANDLE_DEREF(outBegIdx)    = 0;
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
@@ -285,6 +286,8 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     #endif 
 /* Generated */  #endif 
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = 0;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = 0;
 /* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
