@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  DM       Drew McCormack
  *
  *
  * Change history:
@@ -94,9 +95,14 @@
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
-{
-   /* insert lookback code here. */
-   return 0;
+{   
+   /* Lookback for the Ultimate Oscillator is the lookback of the SMA with the longest
+    * time period, plus 1 for the True Range.
+    */
+    #define MAX(a,b) (a > b ? a : b)
+    #define MIN(a,b) (a < b ? a : b)
+    int maxPeriod = MAX( MAX(optInTimePeriod1, optInTimePeriod2), optInTimePeriod3);
+    return LOOKBACK_CALL(SMA)( maxPeriod ) + 1;
 }
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -159,7 +165,16 @@
 /* Generated */ #endif
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 {
-	/* insert local variable here */
+   /* insert local variable here */
+   double a1Total, a2Total, a3Total;
+   double b1Total, b2Total, b3Total;
+   double trueHigh, trueLow, trueRange, closeMinusTrueLow;
+   int usedFlag[] = {0, 0, 0};
+   int periods[3], sortedPeriods[3];
+   int lookbackTotal;
+   int longestPeriod, longestIndex;
+   int i,j,today,outIdx;
+   int trailingIdx1, trailingIdx2, trailingIdx3;
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -205,12 +220,104 @@
 /* Generated */ 
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 
-   /* Insert TA function code here. */
+   VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+   VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 
-   /* Default return values */
-   VALUE_HANDLE_DEREF(outNbElement) = 0;
-   VALUE_HANDLE_DEREF(outBegIdx)    = 0;
+   /* Ensure that the time periods are ordered from shortest to longest.
+    * Sort. */
+   periods[0] = optInTimePeriod1;
+   periods[1] = optInTimePeriod2;
+   periods[2] = optInTimePeriod3;
+   for ( i = 0; i < 3; ++i ) 
+   {
+      longestPeriod = 0;
+      longestIndex = 0;
+      for ( j = 0; j < 3; ++j ) 
+      {
+         if ( !usedFlag[j] && periods[j] > longestPeriod ) 
+         {
+            longestPeriod = periods[j];
+            longestIndex = j;
+          }
+      }
+      usedFlag[longestIndex] = 1;
+      sortedPeriods[i] = longestPeriod;
+   }
+   optInTimePeriod1 = sortedPeriods[0];
+   optInTimePeriod2 = sortedPeriods[1];
+   optInTimePeriod3 = sortedPeriods[2];
+
+   /* Adjust startIdx for lookback period. */
+   lookbackTotal = LOOKBACK_CALL(ULTOSC)( optInTimePeriod1, optInTimePeriod2, optInTimePeriod3 );
+   if( startIdx < lookbackTotal ) startIdx = lookbackTotal;
+   
+   /* Make sure there is still something to evaluate. */
+   if( startIdx > endIdx ) return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   
+   /* Prime running totals used in moving averages */
+   #define CALC_TERMS(day)                        \
+   trueHigh = MAX( inHigh[day], inClose[day-1] ); \
+   trueLow = MIN( inLow[day], inClose[day-1] );   \
+   closeMinusTrueLow = inClose[day] - trueLow;    \
+   trueRange = trueHigh - trueLow;
+
+   #define PRIME_TOTALS(aTotal, bTotal, period)                 \
+   aTotal = 0;                                                  \
+   bTotal = 0;                                                  \
+   for ( i = startIdx-period; i < startIdx; ++i )               \
+   {                                                            \
+      CALC_TERMS(i)                                             \
+      aTotal += closeMinusTrueLow;                              \
+      bTotal += trueRange;                                      \
+   }
+   
+   PRIME_TOTALS(a1Total, b1Total, optInTimePeriod1)
+   PRIME_TOTALS(a2Total, b2Total, optInTimePeriod2)
+   PRIME_TOTALS(a3Total, b3Total, optInTimePeriod3)
+
+   /* Calculate oscillator */
+   today = startIdx;
+   outIdx = 0;
+   trailingIdx1 = today - optInTimePeriod1;
+   trailingIdx2 = today - optInTimePeriod2;
+   trailingIdx3 = today - optInTimePeriod3;
+   while( today <= endIdx )
+   {
+      CALC_TERMS(today)
+      a1Total += closeMinusTrueLow;
+      a2Total += closeMinusTrueLow;
+      a3Total += closeMinusTrueLow;
+      b1Total += trueRange;
+      b2Total += trueRange;
+      b3Total += trueRange;
+      
+      CALC_TERMS(trailingIdx1)
+      a1Total -= closeMinusTrueLow;
+      b1Total -= trueRange;
+
+      CALC_TERMS(trailingIdx2)
+      a2Total -= closeMinusTrueLow;
+      b2Total -= trueRange;
+      
+      CALC_TERMS(trailingIdx3)
+      a3Total -= closeMinusTrueLow;
+      b3Total -= trueRange;
+      
+      outReal[outIdx] = ( 4.0*a1Total/b1Total + 2.0*a2Total/b2Total + a3Total/b3Total ) / 7.0;
+      
+      outIdx++;
+      today++; 
+      trailingIdx1++; 
+      trailingIdx2++; 
+      trailingIdx3++;
+   }
+   
+   /* All done. Indicate the output limits and return. */
+   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+   VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
