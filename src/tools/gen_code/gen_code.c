@@ -494,8 +494,6 @@ static  FileHandle *fileOpen( const char *fileToOpen,
           * is going to be truly write enabled.
           */
          retValue->fileTarget = retValue->file;
-         retValue->file = NULL;
-
          init_gToOpen( fileToOpen, ".tmp" );
          strcpy( retValue->f2_name, gToOpen );
          retValue->file = fopen( gToOpen, "w" );
@@ -512,6 +510,7 @@ static  FileHandle *fileOpen( const char *fileToOpen,
          /* File does not exist, directly open for write
           * no temporary will be used.
           */
+         retValue->fileTarget = NULL;
          retValue->file = fopen( gToOpen, "w" );
 
          if( retValue->file == NULL )
@@ -589,7 +588,7 @@ static void fileClose( FileHandle *handle )
    if(handle->templateFile) fclose( handle->templateFile );
    if(handle->file)         fclose( handle->file );
 
-   if( !(handle->flags&FILE_READ) && !(handle->flags&WRITE_ALWAYS) )
+   if( !(handle->flags&FILE_READ) && !(handle->flags&WRITE_ALWAYS) && (handle->fileTarget != NULL))
    {
       if( handle->flags&SORT_OUTPUT )
          sortFile(handle->f2_name);
@@ -676,7 +675,7 @@ static int genCode(int argc, char* argv[])
    #define FILE_CORE_JAVA     "..\\..\\java\\src\\TA\\Lib\\Core.java"
    #define FILE_CORE_JAVA_TMP "..\\temp\\CoreJava.tmp"
    #define FILE_CORE_JAVA_UNF "..\\temp\\CoreJavaUnformated.tmp"
-   gOutCore_Java = fileOpen( FILE_CORE_JAVA, NULL, FILE_READ );
+   gOutCore_Java = fileOpen( FILE_CORE_JAVA, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
    if( gOutCore_Java == NULL )   
    {
          printf( "\nCannot access [%s]\n", gToOpen );
@@ -851,6 +850,7 @@ static int genCode(int argc, char* argv[])
       fileClose( gOutProjFile );
       fileClose( gOutMSVCProjFile );
       fileClose( gOutExcelGlue_C );
+      fileDelete( FILE_CORE_JAVA_TMP );
    #endif
 
    if( retCode != TA_SUCCESS )
@@ -907,7 +907,8 @@ static int genCode(int argc, char* argv[])
       system( "javac -d . \"..\\src\\tools\\gen_code\\java\\Main.java" );
       system( "javac -d . \"..\\src\\tools\\gen_code\\java\\PrettyCode.java" );
       system( "java -classpath . Main" );
-      tempFile = fileOpen(JAVA_SUCCESS_FILE,NULL,FILE_READ);
+      fileDelete( FILE_CORE_JAVA_UNF );
+      tempFile = fileOpen(JAVA_SUCCESS_FILE,NULL,FILE_READ|WRITE_ON_CHANGE_ONLY);
       if( tempFile == NULL )
          printf( "\nWarning: Java post-processing NOT done.\n" );
       else
@@ -917,7 +918,7 @@ static int genCode(int argc, char* argv[])
          /* Java processing done. Overwrite the original Core.java ONLY if there
           * is changes (re-use fileOpen/fileClose even if not efficient).
           */
-         tempFile = fileOpen( JAVA_PRETTY_TEMP_FILE, NULL, FILE_READ );
+         tempFile = fileOpen( JAVA_PRETTY_TEMP_FILE, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
          tempFileOut = fileOpen( FILE_CORE_JAVA, NULL,
                                  FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
