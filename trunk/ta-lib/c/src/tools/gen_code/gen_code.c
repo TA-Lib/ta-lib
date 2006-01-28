@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -58,6 +58,7 @@
  *  061805 MF    Changes related to .NET verifiable code.
  *  062505 MF    Fix 'out' attribute for .NET verifiable code.
  *  121705 MF    Complete Java port.
+ *  012806 MF    Add call to Java post-processing.
  */
 
 /* Description:
@@ -89,7 +90,7 @@
 
 extern int mcpp_main( int argc, char ** argv);
 
-#define BUFFER_SIZE 8192
+#define BUFFER_SIZE 16000
 
 #define FILE_WRITE            0
 #define WRITE_ON_CHANGE_ONLY  0
@@ -615,6 +616,10 @@ static int genCode(int argc, char* argv[])
    unsigned int nbGroup;
    FileHandle *tempFile;
 
+   #ifdef _MSC_VER
+   FileHandle *tempFileOut;
+   #endif
+
    (void)argc; /* Get ride of compiler warning */
    (void)argv; /* Get ride of compiler warning */
 
@@ -670,7 +675,8 @@ static int genCode(int argc, char* argv[])
    /* Create Java template for Core.java */
    #define FILE_CORE_JAVA     "..\\..\\java\\src\\TA\\Lib\\Core.java"
    #define FILE_CORE_JAVA_TMP "..\\temp\\CoreJava.tmp"
-   gOutCore_Java = fileOpen( FILE_CORE_JAVA, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
+   #define FILE_CORE_JAVA_UNF "..\\temp\\CoreJavaUnformated.tmp"
+   gOutCore_Java = fileOpen( FILE_CORE_JAVA, NULL, FILE_READ );
    if( gOutCore_Java == NULL )   
    {
          printf( "\nCannot access [%s]\n", gToOpen );
@@ -809,10 +815,10 @@ static int genCode(int argc, char* argv[])
 
    #ifdef _MSC_VER
    /* Re-open the Core.java template. */
-   gOutCore_Java = fileOpen( FILE_CORE_JAVA, FILE_CORE_JAVA_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+   gOutCore_Java = fileOpen( FILE_CORE_JAVA_UNF, FILE_CORE_JAVA_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
    if( gOutCore_Java == NULL )
    {
-      printf( "Cannot update [%s]\n", FILE_CORE_JAVA );
+      printf( "Cannot update [%s]\n", FILE_CORE_JAVA_UNF );
       return -1;
    }
    #endif
@@ -891,12 +897,56 @@ static int genCode(int argc, char* argv[])
    /* Update "ta_defs.h" */
    doDefsFile();
 
-   /* Remove some temporary files */
+   /* Run Java Post-Processing.   
+    * On Success, the Java program create a file named "java_success". 
+    */
+   #ifdef _MSC_VER   
+      #define JAVA_SUCCESS_FILE     "..\\temp\\java_success"
+      #define JAVA_PRETTY_TEMP_FILE "..\\temp\\CoreJavaPretty.tmp"
+      fileDelete( JAVA_SUCCESS_FILE );
+      system( "javac -d . \"..\\src\\tools\\gen_code\\java\\Main.java" );
+      system( "javac -d . \"..\\src\\tools\\gen_code\\java\\PrettyCode.java" );
+      system( "java -classpath . Main" );
+      tempFile = fileOpen(JAVA_SUCCESS_FILE,NULL,FILE_READ);
+      if( tempFile == NULL )
+         printf( "\nWarning: Java post-processing NOT done.\n" );
+      else
+      {
+         fileClose( tempFile );
+
+         /* Java processing done. Overwrite the original Core.java ONLY if there
+          * is changes (re-use fileOpen/fileClose even if not efficient).
+          */
+         tempFile = fileOpen( JAVA_PRETTY_TEMP_FILE, NULL, FILE_READ );
+         tempFileOut = fileOpen( FILE_CORE_JAVA, NULL,
+                                 FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+
+         if( (tempFile == NULL) || (tempFileOut == NULL) )
+         {
+            printf( "\nError: Core.java update failed.\n" );
+            return -1;
+         }
+         else
+         {
+            
+            while( fgets( gTempBuf, BUFFER_SIZE, tempFile->file ) )
+               fputs(gTempBuf,tempFileOut->file);            
+
+            fileClose(tempFile);
+            fileClose(tempFileOut);
+         }      
+      }
+      fileDelete( JAVA_SUCCESS_FILE );
+      fileDelete( JAVA_PRETTY_TEMP_FILE );
+   #endif
+
+   /* Remove temporary files. */
    #ifdef _MSC_VER   
       fileDelete( FILE_NET_PROJ_TMP );
       fileDelete( FILE_MSVC_PROJ_TMP );
    #endif
    fileDelete( FILE_NET_HEADER_TMP );   
+
    printf( "\n** Update completed with success **\n");
 
    return 0;
