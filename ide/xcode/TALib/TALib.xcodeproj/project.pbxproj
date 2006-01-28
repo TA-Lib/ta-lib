@@ -10,6 +10,11 @@
 		3A1FA1CA05F220F100605309 /* README_XCODE.TXT in Resources */ = {isa = PBXBuildFile; fileRef = 3A1FA1C905F220F100605309 /* README_XCODE.TXT */; };
 		3A2E9574082A714D00778A6E /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A2E9573082A714D00778A6E /* libcurl.a */; };
 		3A2E9576082A716B00778A6E /* libbz2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A2E9575082A716B00778A6E /* libbz2.a */; };
+		3A3370FE097E1DDC00082D6C /* ta_BOP.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A3370F9097E1DDC00082D6C /* ta_BOP.c */; };
+		3A3370FF097E1DDC00082D6C /* ta_CDLHIKKAKE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A3370FA097E1DDC00082D6C /* ta_CDLHIKKAKE.c */; };
+		3A337100097E1DDC00082D6C /* ta_CDLHIKKAKEMOD.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A3370FB097E1DDC00082D6C /* ta_CDLHIKKAKEMOD.c */; };
+		3A337101097E1DDC00082D6C /* ta_CMO.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A3370FC097E1DDC00082D6C /* ta_CMO.c */; };
+		3A337102097E1DDC00082D6C /* ta_ULTOSC.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A3370FD097E1DDC00082D6C /* ta_ULTOSC.c */; };
 		3A34367305E6A318006FF367 /* ta_adddatasourceparam_priv.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A34362805E6A317006FF367 /* ta_adddatasourceparam_priv.h */; };
 		3A34367405E6A318006FF367 /* ta_data_interface.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A34362905E6A317006FF367 /* ta_data_interface.c */; };
 		3A34367505E6A318006FF367 /* ta_data_udb.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A34362A05E6A317006FF367 /* ta_data_udb.h */; };
@@ -347,6 +352,11 @@
 		3A1FA1C905F220F100605309 /* README_XCODE.TXT */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README_XCODE.TXT; sourceTree = SOURCE_ROOT; };
 		3A2E9573082A714D00778A6E /* libcurl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcurl.a; path = /Developer/SDKs/MacOSX10.3.9.sdk/usr/lib/libcurl.a; sourceTree = "<absolute>"; };
 		3A2E9575082A716B00778A6E /* libbz2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libbz2.a; path = /Developer/SDKs/MacOSX10.3.9.sdk/usr/lib/libbz2.a; sourceTree = "<absolute>"; };
+		3A3370F9097E1DDC00082D6C /* ta_BOP.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_BOP.c; path = ../../../src/ta_func/ta_BOP.c; sourceTree = SOURCE_ROOT; };
+		3A3370FA097E1DDC00082D6C /* ta_CDLHIKKAKE.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDLHIKKAKE.c; path = ../../../src/ta_func/ta_CDLHIKKAKE.c; sourceTree = SOURCE_ROOT; };
+		3A3370FB097E1DDC00082D6C /* ta_CDLHIKKAKEMOD.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDLHIKKAKEMOD.c; path = ../../../src/ta_func/ta_CDLHIKKAKEMOD.c; sourceTree = SOURCE_ROOT; };
+		3A3370FC097E1DDC00082D6C /* ta_CMO.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CMO.c; path = ../../../src/ta_func/ta_CMO.c; sourceTree = SOURCE_ROOT; };
+		3A3370FD097E1DDC00082D6C /* ta_ULTOSC.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_ULTOSC.c; path = ../../../src/ta_func/ta_ULTOSC.c; sourceTree = SOURCE_ROOT; };
 		3A34362805E6A317006FF367 /* ta_adddatasourceparam_priv.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ta_adddatasourceparam_priv.h; sourceTree = "<group>"; };
 		3A34362905E6A317006FF367 /* ta_data_interface.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_data_interface.c; sourceTree = "<group>"; };
 		3A34362A05E6A317006FF367 /* ta_data_udb.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ta_data_udb.h; sourceTree = "<group>"; };
@@ -927,6 +937,11 @@
 		3A48BAE705E25FE300B42EE0 /* ta_func */ = {
 			isa = PBXGroup;
 			children = (
+				3A3370F9097E1DDC00082D6C /* ta_BOP.c */,
+				3A3370FA097E1DDC00082D6C /* ta_CDLHIKKAKE.c */,
+				3A3370FB097E1DDC00082D6C /* ta_CDLHIKKAKEMOD.c */,
+				3A3370FC097E1DDC00082D6C /* ta_CMO.c */,
+				3A3370FD097E1DDC00082D6C /* ta_ULTOSC.c */,
 				3AC7C3CD080C313900D11B6F /* ta_CDL2CROWS.c */,
 				3AC7C3CE080C313900D11B6F /* ta_CDL3INSIDE.c */,
 				3AC7C3CF080C313900D11B6F /* ta_CDL3LINESTRIKE.c */,
@@ -1681,6 +1696,11 @@
 				3AC7C417080C313900D11B6F /* ta_CDLUNIQUE3RIVER.c in Sources */,
 				3AC7C418080C313900D11B6F /* ta_CDLXSIDEGAP3METHODS.c in Sources */,
 				3AC7C420080C319600D11B6F /* ta_yahoo_one_symbol.c in Sources */,
+				3A3370FE097E1DDC00082D6C /* ta_BOP.c in Sources */,
+				3A3370FF097E1DDC00082D6C /* ta_CDLHIKKAKE.c in Sources */,
+				3A337100097E1DDC00082D6C /* ta_CDLHIKKAKEMOD.c in Sources */,
+				3A337101097E1DDC00082D6C /* ta_CMO.c in Sources */,
+				3A337102097E1DDC00082D6C /* ta_ULTOSC.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
