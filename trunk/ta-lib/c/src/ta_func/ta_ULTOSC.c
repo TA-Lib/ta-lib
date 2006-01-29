@@ -303,7 +303,8 @@
       a3Total -= closeMinusTrueLow;
       b3Total -= trueRange;
       
-      outReal[outIdx] = ( 4.0*a1Total/b1Total + 2.0*a2Total/b2Total + a3Total/b3Total ) / 7.0;
+      outReal[outIdx] = 100.0 * 
+          ( 4.0*a1Total/b1Total + 2.0*a2Total/b2Total + a3Total/b3Total ) / 7.0;
       
       outIdx++;
       today++; 

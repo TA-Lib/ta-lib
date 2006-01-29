@@ -72,25 +72,28 @@
       ||defined(__x86_64__)
      #define __64BIT__ 1
   #endif		  
-		 
-  typedef signed int   Int32;
-  typedef unsigned int UInt32;
+		   
+  #if !defined(__MACTYPES__)
+      typedef signed int   Int32;
+      typedef unsigned int UInt32;
 
-  #if defined(_WIN32) || defined(_WIN64)
-     /* See "Windows Data Types". Platform SDK. MSDN documentation. */
-     typedef signed __int64   Int64;
-     typedef unsigned __int64 UInt64;
-  #else
-     #if defined(__64BIT__)
-        /* Standard LP64 model for 64 bits Unix platform. */
-        typedef signed long   Int64;
-        typedef unsigned long UInt64;
-     #else
-        /* Standard ILP32 model for 32 bits Unix platform. */
-        typedef signed long long   Int64;
-        typedef unsigned long long UInt64;
-     #endif
-   #endif
+      #if defined(_WIN32) || defined(_WIN64)
+         /* See "Windows Data Types". Platform SDK. MSDN documentation. */
+         typedef signed __int64   Int64;
+         typedef unsigned __int64 UInt64;
+      #else
+         #if defined(__64BIT__)
+            /* Standard LP64 model for 64 bits Unix platform. */
+            typedef signed long   Int64;
+            typedef unsigned long UInt64;
+         #else
+            /* Standard ILP32 model for 32 bits Unix platform. */
+            typedef signed long long   Int64;
+            typedef unsigned long long UInt64;
+         #endif
+       #endif
+  #endif
+
 #endif
 
 /* Enumeration and macros to abstract from syntax difference 
