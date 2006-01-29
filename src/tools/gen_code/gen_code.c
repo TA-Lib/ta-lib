@@ -900,19 +900,26 @@ static int genCode(int argc, char* argv[])
    /* Run Java Post-Processing.   
     * On Success, the Java program create a file named "java_success". 
     */
-   #ifdef _MSC_VER   
+   #ifndef _MSC_VER   
+      printf( "\nWarning: Java code update not supported for non-win32 platform.\n" );
+   #else
+      printf( "\nPost-Processing Java Code\n" );
       #define JAVA_SUCCESS_FILE     "..\\temp\\java_success"
       #define JAVA_PRETTY_TEMP_FILE "..\\temp\\CoreJavaPretty.tmp"
-      fileDelete( JAVA_SUCCESS_FILE );
+      fileDelete( JAVA_SUCCESS_FILE );      
       system( "javac -d . \"..\\src\\tools\\gen_code\\java\\Main.java" );
       system( "javac -d . \"..\\src\\tools\\gen_code\\java\\PrettyCode.java" );
       system( "java -classpath . Main" );
-      fileDelete( FILE_CORE_JAVA_UNF );
       tempFile = fileOpen(JAVA_SUCCESS_FILE,NULL,FILE_READ|WRITE_ON_CHANGE_ONLY);
+      fileDelete( FILE_CORE_JAVA_UNF );
+
       if( tempFile == NULL )
-         printf( "\nWarning: Java post-processing NOT done.\n" );
+      {                  
+         printf( "\nWarning: Java code NOT updated.\n" );
+      }
       else
       {
+
          fileClose( tempFile );
 
          /* Java processing done. Overwrite the original Core.java ONLY if there
@@ -924,7 +931,7 @@ static int genCode(int argc, char* argv[])
 
          if( (tempFile == NULL) || (tempFileOut == NULL) )
          {
-            printf( "\nError: Core.java update failed.\n" );
+            printf( "\nError: Java code update failed.\n" );
             return -1;
          }
          else
