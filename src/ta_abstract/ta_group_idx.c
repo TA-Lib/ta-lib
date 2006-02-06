@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -50,6 +50,7 @@
 
 extern const TA_FuncDef TA_DEF_MAX;
 extern const TA_FuncDef TA_DEF_MIN;
+extern const TA_FuncDef TA_DEF_SUM;
 extern const TA_FuncDef TA_DEF_BBANDS;
 extern const TA_FuncDef TA_DEF_DEMA;
 extern const TA_FuncDef TA_DEF_EMA;
@@ -183,6 +184,7 @@ extern const TA_FuncDef TA_DEF_WCLPRICE;
 const TA_FuncDef *TA_PerGroupFunc_0[] = {
 &TA_DEF_MAX,
 &TA_DEF_MIN,
+&TA_DEF_SUM,
 NULL };
 #define SIZE_GROUP_0 ((sizeof(TA_PerGroupFunc_0)/sizeof(const TA_FuncDef *))-1)
 

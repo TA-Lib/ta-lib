@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -35,14 +35,14 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
- *  MF       Mario Fortier
+ *  MF       Mario Fortier (Replace when you are the original author)
  *
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  120802 MF   Template creation.
+ *  XXXXXX MF   XXXXX
  *
  */
 
@@ -67,10 +67,10 @@
    /* Insert TA function code here. */
 
    /* Default return values */
-   *outBegIdx    = 0;
-   *outNbElement = 0;
+   VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+   VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 
-   return TA_SUCCESS;
+   return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/

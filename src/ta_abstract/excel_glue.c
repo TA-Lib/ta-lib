@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -40,6 +40,7 @@
  
 EXCEL_GLUE_CODE_WITH_2_PARAM(MAX)
 EXCEL_GLUE_CODE_WITH_2_PARAM(MIN)
+EXCEL_GLUE_CODE_WITH_2_PARAM(SUM)
 EXCEL_GLUE_CODE_WITH_5_PARAM(BBANDS)
 EXCEL_GLUE_CODE_WITH_2_PARAM(DEMA)
 EXCEL_GLUE_CODE_WITH_2_PARAM(EMA)

@@ -150,6 +150,7 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_STOCH.c \ 
           ../../../../../src/ta_func/ta_STOCHF.c \ 
           ../../../../../src/ta_func/ta_STOCHRSI.c \ 
+          ../../../../../src/ta_func/ta_SUM.c \ 
           ../../../../../src/ta_func/ta_T3.c \ 
           ../../../../../src/ta_func/ta_TEMA.c \ 
           ../../../../../src/ta_func/ta_TRANGE.c \ 
