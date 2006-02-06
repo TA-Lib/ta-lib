@@ -36,14 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  DM       Drew McCormack (http://www.trade-strategist.com)
- *
+ *  MF       Mario Fortier
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  281206 DM   Initial Implementation
- *
+ *  010606 MF   Abstract local arrays. Detect divide by zero.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -98,9 +98,7 @@
    /* Lookback for the Ultimate Oscillator is the lookback of the SMA with the longest
     * time period, plus 1 for the True Range.
     */
-    #define MAX(a,b) (a > b ? a : b)
-    #define MIN(a,b) (a < b ? a : b)
-    int maxPeriod = MAX( MAX(optInTimePeriod1, optInTimePeriod2), optInTimePeriod3);
+    int maxPeriod = max( max(optInTimePeriod1, optInTimePeriod2), optInTimePeriod3);
     return LOOKBACK_CALL(SMA)( maxPeriod ) + 1;
 }
 
@@ -168,12 +166,15 @@
    double a1Total, a2Total, a3Total;
    double b1Total, b2Total, b3Total;
    double trueHigh, trueLow, trueRange, closeMinusTrueLow;
-   int usedFlag[] = {0, 0, 0};
-   int periods[3], sortedPeriods[3];
+   double tempDouble;
    int lookbackTotal;
    int longestPeriod, longestIndex;
    int i,j,today,outIdx;
    int trailingIdx1, trailingIdx2, trailingIdx3;
+
+   ARRAY_INT_LOCAL(usedFlag,3);
+   ARRAY_INT_LOCAL(periods,3);
+   ARRAY_INT_LOCAL(sortedPeriods,3);
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -227,13 +228,16 @@
    periods[0] = optInTimePeriod1;
    periods[1] = optInTimePeriod2;
    periods[2] = optInTimePeriod3;
+   usedFlag[0] = 0;
+   usedFlag[1] = 0;
+   usedFlag[2] = 0;
    for ( i = 0; i < 3; ++i ) 
    {
       longestPeriod = 0;
       longestIndex = 0;
       for ( j = 0; j < 3; ++j ) 
       {
-         if ( !usedFlag[j] && periods[j] > longestPeriod ) 
+         if ( (usedFlag[j] == 0) && (periods[j] > longestPeriod) ) 
          {
             longestPeriod = periods[j];
             longestIndex = j;
@@ -255,8 +259,8 @@
    
    /* Prime running totals used in moving averages */
    #define CALC_TERMS(day)                        \
-   trueHigh = MAX( inHigh[day], inClose[day-1] ); \
-   trueLow = MIN( inLow[day], inClose[day-1] );   \
+   trueHigh = max( inHigh[day], inClose[day-1] ); \
+   trueLow = min( inLow[day], inClose[day-1] );   \
    closeMinusTrueLow = inClose[day] - trueLow;    \
    trueRange = trueHigh - trueLow;
 
@@ -301,9 +305,13 @@
       CALC_TERMS(trailingIdx3)
       a3Total -= closeMinusTrueLow;
       b3Total -= trueRange;
+
+      tempDouble = 0.0; 
+      if( !TA_IS_ZERO(b1Total) ) tempDouble += 4.0*a1Total/b1Total;
+      if( !TA_IS_ZERO(b2Total) ) tempDouble += 2.0*a2Total/b2Total;
+      if( !TA_IS_ZERO(b3Total) ) tempDouble += a3Total/b3Total;
       
-      outReal[outIdx] = 100.0 * 
-          ( 4.0*a1Total/b1Total + 2.0*a2Total/b2Total + a3Total/b3Total ) / 7.0;
+      outReal[outIdx] = 100.0 * (tempDouble / 7.0);
       
       outIdx++;
       today++; 
@@ -370,12 +378,14 @@
 /* Generated */    double a1Total, a2Total, a3Total;
 /* Generated */    double b1Total, b2Total, b3Total;
 /* Generated */    double trueHigh, trueLow, trueRange, closeMinusTrueLow;
-/* Generated */    int usedFlag[] = {0, 0, 0};
-/* Generated */    int periods[3], sortedPeriods[3];
+/* Generated */    double tempDouble;
 /* Generated */    int lookbackTotal;
 /* Generated */    int longestPeriod, longestIndex;
 /* Generated */    int i,j,today,outIdx;
 /* Generated */    int trailingIdx1, trailingIdx2, trailingIdx3;
+/* Generated */    ARRAY_INT_LOCAL(usedFlag,3);
+/* Generated */    ARRAY_INT_LOCAL(periods,3);
+/* Generated */    ARRAY_INT_LOCAL(sortedPeriods,3);
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
@@ -407,13 +417,16 @@
 /* Generated */    periods[0] = optInTimePeriod1;
 /* Generated */    periods[1] = optInTimePeriod2;
 /* Generated */    periods[2] = optInTimePeriod3;
+/* Generated */    usedFlag[0] = 0;
+/* Generated */    usedFlag[1] = 0;
+/* Generated */    usedFlag[2] = 0;
 /* Generated */    for ( i = 0; i < 3; ++i ) 
 /* Generated */    {
 /* Generated */       longestPeriod = 0;
 /* Generated */       longestIndex = 0;
 /* Generated */       for ( j = 0; j < 3; ++j ) 
 /* Generated */       {
-/* Generated */          if ( !usedFlag[j] && periods[j] > longestPeriod ) 
+/* Generated */          if ( (usedFlag[j] == 0) && (periods[j] > longestPeriod) ) 
 /* Generated */          {
 /* Generated */             longestPeriod = periods[j];
 /* Generated */             longestIndex = j;
@@ -429,8 +442,8 @@
 /* Generated */    if( startIdx < lookbackTotal ) startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx ) return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    #define CALC_TERMS(day)                        \
-/* Generated */    trueHigh = MAX( inHigh[day], inClose[day-1] ); \
-/* Generated */    trueLow = MIN( inLow[day], inClose[day-1] );   \
+/* Generated */    trueHigh = max( inHigh[day], inClose[day-1] ); \
+/* Generated */    trueLow = min( inLow[day], inClose[day-1] );   \
 /* Generated */    closeMinusTrueLow = inClose[day] - trueLow;    \
 /* Generated */    trueRange = trueHigh - trueLow;
 /* Generated */    #define PRIME_TOTALS(aTotal, bTotal, period)                 \
@@ -468,8 +481,11 @@
 /* Generated */       CALC_TERMS(trailingIdx3)
 /* Generated */       a3Total -= closeMinusTrueLow;
 /* Generated */       b3Total -= trueRange;
-/* Generated */       outReal[outIdx] = 100.0 * 
-/* Generated */           ( 4.0*a1Total/b1Total + 2.0*a2Total/b2Total + a3Total/b3Total ) / 7.0;
+/* Generated */       tempDouble = 0.0; 
+/* Generated */       if( !TA_IS_ZERO(b1Total) ) tempDouble += 4.0*a1Total/b1Total;
+/* Generated */       if( !TA_IS_ZERO(b2Total) ) tempDouble += 2.0*a2Total/b2Total;
+/* Generated */       if( !TA_IS_ZERO(b3Total) ) tempDouble += a3Total/b3Total;
+/* Generated */       outReal[outIdx] = 100.0 * (tempDouble / 7.0);
 /* Generated */       outIdx++;
 /* Generated */       today++; 
 /* Generated */       trailingIdx1++; 
