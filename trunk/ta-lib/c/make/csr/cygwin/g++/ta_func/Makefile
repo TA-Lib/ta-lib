@@ -153,6 +153,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_STOCH.c \
 		../../../../../src/ta_func/ta_STOCHF.c \
 		../../../../../src/ta_func/ta_STOCHRSI.c \
+		../../../../../src/ta_func/ta_SUM.c \
 		../../../../../src/ta_func/ta_T3.c \
 		../../../../../src/ta_func/ta_TEMA.c \
 		../../../../../src/ta_func/ta_TRANGE.c \
@@ -285,6 +286,7 @@ OBJECTS =	../../../../../temp/csr/ta_utility.o \
 		../../../../../temp/csr/ta_STOCH.o \
 		../../../../../temp/csr/ta_STOCHF.o \
 		../../../../../temp/csr/ta_STOCHRSI.o \
+		../../../../../temp/csr/ta_SUM.o \
 		../../../../../temp/csr/ta_T3.o \
 		../../../../../temp/csr/ta_TEMA.o \
 		../../../../../temp/csr/ta_TRANGE.o \
@@ -709,6 +711,9 @@ clean:
 
 ../../../../../temp/csr/ta_STOCHRSI.o: ../../../../../src/ta_func/ta_STOCHRSI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_STOCHRSI.o ../../../../../src/ta_func/ta_STOCHRSI.c
+
+../../../../../temp/csr/ta_SUM.o: ../../../../../src/ta_func/ta_SUM.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_SUM.o ../../../../../src/ta_func/ta_SUM.c
 
 ../../../../../temp/csr/ta_T3.o: ../../../../../src/ta_func/ta_T3.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_T3.o ../../../../../src/ta_func/ta_T3.c

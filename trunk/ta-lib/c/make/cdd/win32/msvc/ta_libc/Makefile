@@ -238,6 +238,7 @@ SOURCES =	..\..\..\..\..\src\ta_data\ta_source\ta_ascii\ta_ascii.c \
 		..\..\..\..\..\src\ta_func\ta_STOCH.c \
 		..\..\..\..\..\src\ta_func\ta_STOCHF.c \
 		..\..\..\..\..\src\ta_func\ta_STOCHRSI.c \
+		..\..\..\..\..\src\ta_func\ta_SUM.c \
 		..\..\..\..\..\src\ta_func\ta_T3.c \
 		..\..\..\..\..\src\ta_func\ta_TEMA.c \
 		..\..\..\..\..\src\ta_func\ta_TRANGE.c \
@@ -475,6 +476,7 @@ OBJECTS =	..\..\..\..\..\temp\cdd\ta_ascii.obj \
 		..\..\..\..\..\temp\cdd\ta_STOCH.obj \
 		..\..\..\..\..\temp\cdd\ta_STOCHF.obj \
 		..\..\..\..\..\temp\cdd\ta_STOCHRSI.obj \
+		..\..\..\..\..\temp\cdd\ta_SUM.obj \
 		..\..\..\..\..\temp\cdd\ta_T3.obj \
 		..\..\..\..\..\temp\cdd\ta_TEMA.obj \
 		..\..\..\..\..\temp\cdd\ta_TRANGE.obj \
@@ -757,6 +759,7 @@ clean:
 	-del ..\..\..\..\..\temp\cdd\ta_STOCH.obj
 	-del ..\..\..\..\..\temp\cdd\ta_STOCHF.obj
 	-del ..\..\..\..\..\temp\cdd\ta_STOCHRSI.obj
+	-del ..\..\..\..\..\temp\cdd\ta_SUM.obj
 	-del ..\..\..\..\..\temp\cdd\ta_T3.obj
 	-del ..\..\..\..\..\temp\cdd\ta_TEMA.obj
 	-del ..\..\..\..\..\temp\cdd\ta_TRANGE.obj
@@ -1441,6 +1444,9 @@ clean:
 
 ..\..\..\..\..\temp\cdd\ta_STOCHRSI.obj: ..\..\..\..\..\src\ta_func\ta_STOCHRSI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_STOCHRSI.obj ..\..\..\..\..\src\ta_func\ta_STOCHRSI.c
+
+..\..\..\..\..\temp\cdd\ta_SUM.obj: ..\..\..\..\..\src\ta_func\ta_SUM.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_SUM.obj ..\..\..\..\..\src\ta_func\ta_SUM.c
 
 ..\..\..\..\..\temp\cdd\ta_T3.obj: ..\..\..\..\..\src\ta_func\ta_T3.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_T3.obj ..\..\..\..\..\src\ta_func\ta_T3.c

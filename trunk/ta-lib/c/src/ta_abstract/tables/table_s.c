@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -327,6 +327,33 @@ DEF_FUNCTION( SMA,                        /* name */
 
 /* SMA END */
 
+/* SUM BEGIN */
+static const TA_InputParameterInfo    *TA_SUM_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SUM_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SUM_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( SUM, /* name */
+              TA_GroupId_MathOperators, /* groupId */
+              "Summation", /* hint */
+              NULL,     /* helpFile */
+              0,        /* flags */
+              NULL      /* analysis function */
+             );
+/* SUM END */
+
 /* STDDEV BEGIN */
 static const TA_InputParameterInfo    *TA_STDDEV_Inputs[]    =
 {
@@ -570,6 +597,7 @@ const TA_FuncDef *TA_DEF_TableS[] =
    ADD_TO_TABLE(SAREXT),
    ADD_TO_TABLE(STDDEV),
    ADD_TO_TABLE(SMA),
+   ADD_TO_TABLE(SUM),
    ADD_TO_TABLE(STOCH),
    ADD_TO_TABLE(STOCHF),
    ADD_TO_TABLE(STOCHRSI),
