@@ -52,39 +52,61 @@
    typedef TA_RetCode (*TA_FreeFuncPtr)( void *toBeFreed, void *opaqueData);
 #endif /* !defined(_MANAGED) && !defined( _JAVA ) */
 
-/* ARRAY : Macros to manipulate arrays of double.
+
+/* ARRAY : Macros to manipulate arrays of value type.
  *
- * Using temporary array of double is often needed for the TA functions
- * and these macros allow basic operations to alloc/copy/free these.
+ * Using temporary array of double and integer are often needed for the 
+ * TA functions.
  *
- * These macros offer the advantage to work in 
- * plain old C/C++, managed C++.and Java.
+ * These macros allow basic operations to alloc/copy/free array of value type.
+ *
+ * These macros works in plain old C/C++, managed C++.and Java.
+ * 
+ * (Use ARRAY_REF and ARRAY_INT_REF for double/integer arrays).
  */
 #if defined( _MANAGED )
-   #define ARRAY_REF(name)             cli::array<double>^ name
-   #define ARRAY_LOCAL(name,size)      cli::array<double>^ name = gcnew cli::array<double>(size)
-   #define ARRAY_ALLOC(name,size)      name = gcnew cli::array<double>(size)
-   #define ARRAY_COPY(dest,src,size)   cli::array<double>::Copy( src, 0, dest, 0, size )
-   #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) cli::array<double>::Copy( src, srcIdx, dest, destIdx, size )
-   #define ARRAY_FREE(name)
-   #define ARRAY_FREE_COND(cond,name)   
+   #define ARRAY_VTYPE_REF(type,name)             cli::array<type>^ name
+   #define ARRAY_VTYPE_LOCAL(type,name,size)      cli::array<type>^ name = gcnew cli::array<type>(size)
+   #define ARRAY_VTYPE_ALLOC(type,name,size)      name = gcnew cli::array<type>(size)
+   #define ARRAY_VTYPE_COPY(type,dest,src,size)   cli::array<type>::Copy( src, 0, dest, 0, size )
+   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) cli::array<type>::Copy( src, srcIdx, dest, destIdx, size )
+   #define ARRAY_VTYPE_FREE(type,name)
+   #define ARRAY_VTYPE_FREE_COND(type,cond,name)   
 #elif defined( _JAVA )
-   #define ARRAY_REF(name)             double []name
-   #define ARRAY_LOCAL(name,size)      double []name = new double[size]
-   #define ARRAY_ALLOC(name,size)      name = new double[size]
-   #define ARRAY_COPY(dest,src,size)   System.arraycopy(src,0,dest,0,size)
-   #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) System.arraycopy(src,srcIdx,dest,destIdx,size)
-   #define ARRAY_FREE(name)
-   #define ARRAY_FREE_COND(cond,name)
+   #define ARRAY_VTYPE_REF(type,name)             type []name
+   #define ARRAY_VTYPE_LOCAL(type,name,size)      type []name = new type[size]
+   #define ARRAY_VTYPE_ALLOC(type,name,size)      name = new type[size]
+   #define ARRAY_VTYPE_COPY(type,dest,src,size)   System.arraycopy(src,0,dest,0,size)
+   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) System.arraycopy(src,srcIdx,dest,destIdx,size)
+   #define ARRAY_VTYPE_FREE(type,name)
+   #define ARRAY_VTYPE_FREE_COND(type,cond,name)
 #else
-   #define ARRAY_REF(name)             double *name
-   #define ARRAY_LOCAL(name,size)      double name[size]
-   #define ARRAY_ALLOC(name,size)      name = (double *)TA_Malloc( sizeof(double)*(size))
-   #define ARRAY_COPY(dest,src,size)   memcpy(dest,src,sizeof(double)*(size))
-   #define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) memmove( &dest[destIdx], &src[srcIdx], (size)*sizeof(double) )
-   #define ARRAY_FREE(name)            TA_Free(name)
-   #define ARRAY_FREE_COND(cond,name)  if( cond ){ TA_Free(name); }
+   #define ARRAY_VTYPE_REF(type,name)             type *name
+   #define ARRAY_VTYPE_LOCAL(type,name,size)      type name[size]
+   #define ARRAY_VTYPE_ALLOC(type,name,size)      name = (type *)TA_Malloc( sizeof(type)*(size))
+   #define ARRAY_VTYPE_COPY(type,dest,src,size)   memcpy(dest,src,sizeof(type)*(size))
+   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) memmove( &dest[destIdx], &src[srcIdx], (size)*sizeof(type) )
+   #define ARRAY_VTYPE_FREE(type,name)            TA_Free(name)
+   #define ARRAY_VTYPE_FREE_COND(type,cond,name)  if( cond ){ TA_Free(name); }
 #endif
+
+/* ARRAY : Macros to manipulate arrays of double. */
+#define ARRAY_REF(name)             ARRAY_VTYPE_REF(double,name)
+#define ARRAY_LOCAL(name,size)      ARRAY_VTYPE_LOCAL(double,name,size)
+#define ARRAY_ALLOC(name,size)      ARRAY_VTYPE_ALLOC(double,name,size)
+#define ARRAY_COPY(dest,src,size)   ARRAY_VTYPE_COPY(double,dest,src,size)
+#define ARRAY_MEMMOVE(dest,destIdx,src,srcIdx,size) ARRAY_VTYPE_MEMMOVE(double,dest,destIdx,src,srcIdx,size)
+#define ARRAY_FREE(name)            ARRAY_VTYPE_FREE(double,name)
+#define ARRAY_FREE_COND(cond,name)  ARRAY_VTYPE_FREE_COND(double,cond,name)
+
+/* ARRAY : Macros to manipulate arrays of integer. */
+#define ARRAY_INT_REF(name)             ARRAY_VTYPE_REF(int,name)
+#define ARRAY_INT_LOCAL(name,size)      ARRAY_VTYPE_LOCAL(int,name,size)
+#define ARRAY_INT_ALLOC(name,size)      ARRAY_VTYPE_ALLOC(int,name,size)
+#define ARRAY_INT_COPY(dest,src,size)   ARRAY_VTYPE_COPY(int,dest,src,size)
+#define ARRAY_INT_MEMMOVE(dest,destIdx,src,srcIdx,size) ARRAY_VTYPE_MEMMOVE(int,dest,destIdx,src,srcIdx,size)
+#define ARRAY_INT_FREE(name)            ARRAY_VTYPE_FREE(int,name)
+#define ARRAY_INT_FREE_COND(cond,name)  ARRAY_VTYPE_FREE_COND(int,cond,name)
 
 /* Access to "Globals"
  *
