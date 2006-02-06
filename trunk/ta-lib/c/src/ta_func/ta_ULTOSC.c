@@ -35,15 +35,14 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
- *  MF       Mario Fortier
- *  DM       Drew McCormack
+ *  DM       Drew McCormack (http://www.trade-strategist.com)
  *
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  120802 MF   Template creation.
+ *  281206 DM   Initial Implementation
  *
  */
 
@@ -368,6 +367,15 @@
 /* Generated */                         double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
+/* Generated */    double a1Total, a2Total, a3Total;
+/* Generated */    double b1Total, b2Total, b3Total;
+/* Generated */    double trueHigh, trueLow, trueRange, closeMinusTrueLow;
+/* Generated */    int usedFlag[] = {0, 0, 0};
+/* Generated */    int periods[3], sortedPeriods[3];
+/* Generated */    int lookbackTotal;
+/* Generated */    int longestPeriod, longestIndex;
+/* Generated */    int i,j,today,outIdx;
+/* Generated */    int trailingIdx1, trailingIdx2, trailingIdx3;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
@@ -394,8 +402,82 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = 0;
-/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = 0;
+/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */    periods[0] = optInTimePeriod1;
+/* Generated */    periods[1] = optInTimePeriod2;
+/* Generated */    periods[2] = optInTimePeriod3;
+/* Generated */    for ( i = 0; i < 3; ++i ) 
+/* Generated */    {
+/* Generated */       longestPeriod = 0;
+/* Generated */       longestIndex = 0;
+/* Generated */       for ( j = 0; j < 3; ++j ) 
+/* Generated */       {
+/* Generated */          if ( !usedFlag[j] && periods[j] > longestPeriod ) 
+/* Generated */          {
+/* Generated */             longestPeriod = periods[j];
+/* Generated */             longestIndex = j;
+/* Generated */           }
+/* Generated */       }
+/* Generated */       usedFlag[longestIndex] = 1;
+/* Generated */       sortedPeriods[i] = longestPeriod;
+/* Generated */    }
+/* Generated */    optInTimePeriod1 = sortedPeriods[0];
+/* Generated */    optInTimePeriod2 = sortedPeriods[1];
+/* Generated */    optInTimePeriod3 = sortedPeriods[2];
+/* Generated */    lookbackTotal = LOOKBACK_CALL(ULTOSC)( optInTimePeriod1, optInTimePeriod2, optInTimePeriod3 );
+/* Generated */    if( startIdx < lookbackTotal ) startIdx = lookbackTotal;
+/* Generated */    if( startIdx > endIdx ) return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    #define CALC_TERMS(day)                        \
+/* Generated */    trueHigh = MAX( inHigh[day], inClose[day-1] ); \
+/* Generated */    trueLow = MIN( inLow[day], inClose[day-1] );   \
+/* Generated */    closeMinusTrueLow = inClose[day] - trueLow;    \
+/* Generated */    trueRange = trueHigh - trueLow;
+/* Generated */    #define PRIME_TOTALS(aTotal, bTotal, period)                 \
+/* Generated */    aTotal = 0;                                                  \
+/* Generated */    bTotal = 0;                                                  \
+/* Generated */    for ( i = startIdx-period; i < startIdx; ++i )               \
+/* Generated */    {                                                            \
+/* Generated */       CALC_TERMS(i)                                             \
+/* Generated */       aTotal += closeMinusTrueLow;                              \
+/* Generated */       bTotal += trueRange;                                      \
+/* Generated */    }
+/* Generated */    PRIME_TOTALS(a1Total, b1Total, optInTimePeriod1)
+/* Generated */    PRIME_TOTALS(a2Total, b2Total, optInTimePeriod2)
+/* Generated */    PRIME_TOTALS(a3Total, b3Total, optInTimePeriod3)
+/* Generated */    today = startIdx;
+/* Generated */    outIdx = 0;
+/* Generated */    trailingIdx1 = today - optInTimePeriod1;
+/* Generated */    trailingIdx2 = today - optInTimePeriod2;
+/* Generated */    trailingIdx3 = today - optInTimePeriod3;
+/* Generated */    while( today <= endIdx )
+/* Generated */    {
+/* Generated */       CALC_TERMS(today)
+/* Generated */       a1Total += closeMinusTrueLow;
+/* Generated */       a2Total += closeMinusTrueLow;
+/* Generated */       a3Total += closeMinusTrueLow;
+/* Generated */       b1Total += trueRange;
+/* Generated */       b2Total += trueRange;
+/* Generated */       b3Total += trueRange;
+/* Generated */       CALC_TERMS(trailingIdx1)
+/* Generated */       a1Total -= closeMinusTrueLow;
+/* Generated */       b1Total -= trueRange;
+/* Generated */       CALC_TERMS(trailingIdx2)
+/* Generated */       a2Total -= closeMinusTrueLow;
+/* Generated */       b2Total -= trueRange;
+/* Generated */       CALC_TERMS(trailingIdx3)
+/* Generated */       a3Total -= closeMinusTrueLow;
+/* Generated */       b3Total -= trueRange;
+/* Generated */       outReal[outIdx] = 100.0 * 
+/* Generated */           ( 4.0*a1Total/b1Total + 2.0*a2Total/b2Total + a3Total/b3Total ) / 7.0;
+/* Generated */       outIdx++;
+/* Generated */       today++; 
+/* Generated */       trailingIdx1++; 
+/* Generated */       trailingIdx2++; 
+/* Generated */       trailingIdx3++;
+/* Generated */    }
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 
