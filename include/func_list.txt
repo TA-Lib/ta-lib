@@ -117,6 +117,7 @@ STDDEV              Standard Deviation
 STOCH               Stochastic
 STOCHF              Stochastic Fast
 STOCHRSI            Stochastic Relative Strength Index
+SUM                 Summation
 T3                  Triple Exponential Moving Average (T3)
 TEMA                Triple Exponential Moving Average
 TRANGE              True Range

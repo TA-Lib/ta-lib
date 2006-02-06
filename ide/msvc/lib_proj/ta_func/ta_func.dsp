@@ -230,6 +230,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_MIN.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_SUM.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_BBANDS.c
 # End Source File
 # Begin Source File

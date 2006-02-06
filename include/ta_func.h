@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -120,6 +120,38 @@ TA_RetCode TA_S_MIN( int    startIdx,
                      double        outReal[] );
 
 int TA_MIN_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+/*
+ * TA_SUM - Summation
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_SUM( int    startIdx,
+                   int    endIdx,
+                   const double inReal[],
+                   int           optInTimePeriod, /* From 2 to 100000 */
+                   int          *outBegIdx,
+                   int          *outNbElement,
+                   double        outReal[] );
+
+TA_RetCode TA_S_SUM( int    startIdx,
+                     int    endIdx,
+                     const float  inReal[],
+                     int           optInTimePeriod, /* From 2 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNbElement,
+                     double        outReal[] );
+
+int TA_SUM_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 
