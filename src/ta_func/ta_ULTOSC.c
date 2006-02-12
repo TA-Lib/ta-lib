@@ -165,8 +165,8 @@
    /* insert local variable here */
    double a1Total, a2Total, a3Total;
    double b1Total, b2Total, b3Total;
-   double trueHigh, trueLow, trueRange, closeMinusTrueLow;
-   double tempDouble;
+   double trueLow, trueRange, closeMinusTrueLow;
+   double tempDouble, tempHT, tempLT, tempCY;
    int lookbackTotal;
    int longestPeriod, longestIndex;
    int i,j,today,outIdx;
@@ -259,24 +259,39 @@
    
    /* Prime running totals used in moving averages */
    #define CALC_TERMS(day)                        \
-   trueHigh = max( inHigh[day], inClose[day-1] ); \
-   trueLow = min( inLow[day], inClose[day-1] );   \
-   closeMinusTrueLow = inClose[day] - trueLow;    \
-   trueRange = trueHigh - trueLow;
+   {                                              \
+      tempLT = inLow[day];                        \
+      tempHT = inHigh[day];                       \
+      tempCY = inClose[day-1];                    \
+      trueLow = min( tempLT, tempCY );            \
+      closeMinusTrueLow = inClose[day] - trueLow; \
+      trueRange = tempHT - tempLT;                \
+      tempDouble = fabs( tempCY - tempHT );       \
+      if( tempDouble > trueRange )                 \
+         trueRange = tempDouble;                  \
+      tempDouble = fabs( tempCY - tempLT  );      \
+      if( tempDouble > trueRange )                 \
+         trueRange = tempDouble;                  \
+   }
+
 
    #define PRIME_TOTALS(aTotal, bTotal, period)                 \
-   aTotal = 0;                                                  \
-   bTotal = 0;                                                  \
-   for ( i = startIdx-period; i < startIdx; ++i )               \
    {                                                            \
-      CALC_TERMS(i)                                             \
-      aTotal += closeMinusTrueLow;                              \
-      bTotal += trueRange;                                      \
+      aTotal = 0;                                               \
+      bTotal = 0;                                               \
+      for ( i = startIdx-period; i < startIdx; ++i )            \
+      {                                                         \
+         CALC_TERMS(i);                                         \
+         aTotal += closeMinusTrueLow;                           \
+         bTotal += trueRange;                                   \
+      }                                                         \
    }
-   
-   PRIME_TOTALS(a1Total, b1Total, optInTimePeriod1)
-   PRIME_TOTALS(a2Total, b2Total, optInTimePeriod2)
-   PRIME_TOTALS(a3Total, b3Total, optInTimePeriod3)
+
+   PRIME_TOTALS(a1Total, b1Total, optInTimePeriod1);
+   PRIME_TOTALS(a2Total, b2Total, optInTimePeriod2);
+   PRIME_TOTALS(a3Total, b3Total, optInTimePeriod3);
+
+   #undef PRIME_TOTALS
 
    /* Calculate oscillator */
    today = startIdx;
@@ -286,7 +301,7 @@
    trailingIdx3 = today - optInTimePeriod3;
    while( today <= endIdx )
    {
-      CALC_TERMS(today)
+      CALC_TERMS(today);
       a1Total += closeMinusTrueLow;
       a2Total += closeMinusTrueLow;
       a3Total += closeMinusTrueLow;
@@ -294,21 +309,21 @@
       b2Total += trueRange;
       b3Total += trueRange;
       
-      CALC_TERMS(trailingIdx1)
+      CALC_TERMS(trailingIdx1);
       a1Total -= closeMinusTrueLow;
       b1Total -= trueRange;
 
-      CALC_TERMS(trailingIdx2)
+      CALC_TERMS(trailingIdx2);
       a2Total -= closeMinusTrueLow;
       b2Total -= trueRange;
       
-      CALC_TERMS(trailingIdx3)
+      CALC_TERMS(trailingIdx3);
       a3Total -= closeMinusTrueLow;
       b3Total -= trueRange;
 
       tempDouble = 0.0; 
-      if( !TA_IS_ZERO(b1Total) ) tempDouble += 4.0*a1Total/b1Total;
-      if( !TA_IS_ZERO(b2Total) ) tempDouble += 2.0*a2Total/b2Total;
+      if( !TA_IS_ZERO(b1Total) ) tempDouble += 4.0*(a1Total/b1Total);
+      if( !TA_IS_ZERO(b2Total) ) tempDouble += 2.0*(a2Total/b2Total);
       if( !TA_IS_ZERO(b3Total) ) tempDouble += a3Total/b3Total;
       
       outReal[outIdx] = 100.0 * (tempDouble / 7.0);
@@ -319,13 +334,13 @@
       trailingIdx2++; 
       trailingIdx3++;
    }
+   #undef CALC_TERMS
    
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
-
 }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
