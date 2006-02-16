@@ -8,8 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3A1FA1CA05F220F100605309 /* README_XCODE.TXT in Resources */ = {isa = PBXBuildFile; fileRef = 3A1FA1C905F220F100605309 /* README_XCODE.TXT */; };
-		3A2E9574082A714D00778A6E /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A2E9573082A714D00778A6E /* libcurl.a */; };
-		3A2E9576082A716B00778A6E /* libbz2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A2E9575082A716B00778A6E /* libbz2.a */; };
+		3A2E9574082A714D00778A6E /* libcurl.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A2E9573082A714D00778A6E /* libcurl.3.dylib */; };
 		3A3370FE097E1DDC00082D6C /* ta_BOP.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A3370F9097E1DDC00082D6C /* ta_BOP.c */; };
 		3A3370FF097E1DDC00082D6C /* ta_CDLHIKKAKE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A3370FA097E1DDC00082D6C /* ta_CDLHIKKAKE.c */; };
 		3A337100097E1DDC00082D6C /* ta_CDLHIKKAKEMOD.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A3370FB097E1DDC00082D6C /* ta_CDLHIKKAKEMOD.c */; };
@@ -221,6 +220,7 @@
 		3A59A1DB05F09F5E005A4582 /* ta_pmreport.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A59A1D305F09F5E005A4582 /* ta_pmreport.c */; };
 		3A59A1DC05F09F5E005A4582 /* ta_pmstring.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A59A1D405F09F5E005A4582 /* ta_pmstring.c */; };
 		3A59A1DD05F09F5E005A4582 /* ta_pmvalue.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A59A1D505F09F5E005A4582 /* ta_pmvalue.c */; };
+		3A5D775309A5106100AFB481 /* libbz2.1.0.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A2E9575082A716B00778A6E /* libbz2.1.0.2.dylib */; };
 		3A742ECB06E8458C004F675D /* ta_CDLHIGHWAVE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A742EC706E8458B004F675D /* ta_CDLHIGHWAVE.c */; };
 		3A742ECC06E8458C004F675D /* ta_CDLLONGLINE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A742EC806E8458B004F675D /* ta_CDLLONGLINE.c */; };
 		3A742ECD06E8458C004F675D /* ta_CDLSHORTLINE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A742EC906E8458B004F675D /* ta_CDLSHORTLINE.c */; };
@@ -350,8 +350,8 @@
 /* Begin PBXFileReference section */
 		089C1667FE841158C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		3A1FA1C905F220F100605309 /* README_XCODE.TXT */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README_XCODE.TXT; sourceTree = SOURCE_ROOT; };
-		3A2E9573082A714D00778A6E /* libcurl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcurl.a; path = /Developer/SDKs/MacOSX10.3.9.sdk/usr/lib/libcurl.a; sourceTree = "<absolute>"; };
-		3A2E9575082A716B00778A6E /* libbz2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libbz2.a; path = /Developer/SDKs/MacOSX10.3.9.sdk/usr/lib/libbz2.a; sourceTree = "<absolute>"; };
+		3A2E9573082A714D00778A6E /* libcurl.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcurl.3.dylib; path = /usr/lib/libcurl.3.dylib; sourceTree = "<absolute>"; };
+		3A2E9575082A716B00778A6E /* libbz2.1.0.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbz2.1.0.2.dylib; path = /usr/lib/libbz2.1.0.2.dylib; sourceTree = "<absolute>"; };
 		3A3370F9097E1DDC00082D6C /* ta_BOP.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_BOP.c; path = ../../../src/ta_func/ta_BOP.c; sourceTree = SOURCE_ROOT; };
 		3A3370FA097E1DDC00082D6C /* ta_CDLHIKKAKE.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDLHIKKAKE.c; path = ../../../src/ta_func/ta_CDLHIKKAKE.c; sourceTree = SOURCE_ROOT; };
 		3A3370FB097E1DDC00082D6C /* ta_CDLHIKKAKEMOD.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDLHIKKAKEMOD.c; path = ../../../src/ta_func/ta_CDLHIKKAKEMOD.c; sourceTree = SOURCE_ROOT; };
@@ -676,8 +676,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3A2E9574082A714D00778A6E /* libcurl.a in Frameworks */,
-				3A2E9576082A716B00778A6E /* libbz2.a in Frameworks */,
+				3A2E9574082A714D00778A6E /* libcurl.3.dylib in Frameworks */,
+				3A5D775309A5106100AFB481 /* libbz2.1.0.2.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -706,8 +706,8 @@
 		0867D69AFE84028FC02AAC07 /* External Frameworks and Libraries */ = {
 			isa = PBXGroup;
 			children = (
-				3A2E9575082A716B00778A6E /* libbz2.a */,
-				3A2E9573082A714D00778A6E /* libcurl.a */,
+				3A2E9575082A716B00778A6E /* libbz2.1.0.2.dylib */,
+				3A2E9573082A714D00778A6E /* libcurl.3.dylib */,
 			);
 			name = "External Frameworks and Libraries";
 			sourceTree = "<group>";
@@ -1367,11 +1367,7 @@
 				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "@executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					/usr/lib,
-					/Users/drew/CocoaPrograms/TALib/c/ide/xcode/TALib,
-					"$(SYSTEM_DEVELOPER_DIR)/SDKs/MacOSX10.3.9.sdk/usr/lib",
-				);
+				LIBRARY_SEARCH_PATHS = /usr/lib;
 				LIBRARY_STYLE = DYNAMIC;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				OTHER_LDFLAGS = (
@@ -1724,7 +1720,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUGGING_SYMBOLS = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 0.1.1;
+				DYLIB_CURRENT_VERSION = 0.1.5;
 				FRAMEWORK_SEARCH_PATHS = "";
 				FRAMEWORK_VERSION = A;
 				GCC_ENABLE_TRIGRAPHS = NO;
@@ -1749,11 +1745,7 @@
 				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "@executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					/usr/lib,
-					/Users/drew/CocoaPrograms/TALib/c/ide/xcode/TALib,
-					"$(SYSTEM_DEVELOPER_DIR)/SDKs/MacOSX10.3.9.sdk/usr/lib",
-				);
+				LIBRARY_SEARCH_PATHS = /usr/lib;
 				LIBRARY_STYLE = DYNAMIC;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				OTHER_LDFLAGS = (
@@ -1777,7 +1769,7 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 0.1.1;
+				DYLIB_CURRENT_VERSION = 0.1.5;
 				FRAMEWORK_SEARCH_PATHS = "";
 				FRAMEWORK_VERSION = A;
 				GCC_ENABLE_TRIGRAPHS = NO;
@@ -1801,11 +1793,7 @@
 				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "@executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					/usr/lib,
-					/Users/drew/CocoaPrograms/TALib/c/ide/xcode/TALib,
-					"$(SYSTEM_DEVELOPER_DIR)/SDKs/MacOSX10.3.9.sdk/usr/lib",
-				);
+				LIBRARY_SEARCH_PATHS = /usr/lib;
 				LIBRARY_STYLE = DYNAMIC;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				OTHER_LDFLAGS = (
@@ -1828,7 +1816,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 0.1.1;
+				DYLIB_CURRENT_VERSION = 0.1.5;
 				FRAMEWORK_SEARCH_PATHS = "";
 				FRAMEWORK_VERSION = A;
 				GCC_ENABLE_TRIGRAPHS = NO;
@@ -1852,11 +1840,7 @@
 				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "@executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					/usr/lib,
-					/Users/drew/CocoaPrograms/TALib/c/ide/xcode/TALib,
-					"$(SYSTEM_DEVELOPER_DIR)/SDKs/MacOSX10.3.9.sdk/usr/lib",
-				);
+				LIBRARY_SEARCH_PATHS = /usr/lib;
 				LIBRARY_STYLE = DYNAMIC;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				OTHER_LDFLAGS = (
@@ -1878,24 +1862,18 @@
 		3A170941089D33AE00A96AC2 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				MACOSX_DEPLOYMENT_TARGET = 10.3;
-				SDKROOT = /Developer/SDKs/MacOSX10.3.9.sdk;
 			};
 			name = Development;
 		};
 		3A170942089D33AE00A96AC2 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				MACOSX_DEPLOYMENT_TARGET = 10.3;
-				SDKROOT = /Developer/SDKs/MacOSX10.3.9.sdk;
 			};
 			name = Deployment;
 		};
 		3A170943089D33AE00A96AC2 /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				MACOSX_DEPLOYMENT_TARGET = 10.3;
-				SDKROOT = /Developer/SDKs/MacOSX10.3.9.sdk;
 			};
 			name = Default;
 		};
