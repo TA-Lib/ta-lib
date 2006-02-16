@@ -28,7 +28,7 @@ appropriately.
 What frameworks/libraries does the TALib framework use?
 =======================================================
 The TALib framework requires libbz2 and libcurl. Both of these
-libraries are preinstalled in Mac OS X 10.3. You can either use the 
+libraries are preinstalled in Mac OS X 10.3 and 10.4. You can either use the 
 versions installed with Mac OS X, or include your own versions. 
 
 Is the TALib framework for Cocoa or Carbon applications?
