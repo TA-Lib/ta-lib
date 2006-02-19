@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,14 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  BT       Barry Tsung
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY      Description
  *  -------------------------------------------------------------------
- *  112605 MF   Initial version.
- *
+ *  112605 MF      Initial version.
+ *  021806 MF,BT   Fix #1434450 reported by BT.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -374,8 +374,9 @@
 
       prevLoss /= optInTimePeriod;
       prevGain /= optInTimePeriod;
+      tempValue1 = prevGain+prevLoss;
       if( !TA_IS_ZERO(tempValue1) )
-         outReal[outIdx++] = 100.0*((prevGain-prevLoss)/(prevGain+prevLoss));
+         outReal[outIdx++] = 100.0*((prevGain-prevLoss)/tempValue1);
       else
          outReal[outIdx++] = 0.0;
    }
@@ -548,8 +549,9 @@
 /* Generated */          prevGain += tempValue2;
 /* Generated */       prevLoss /= optInTimePeriod;
 /* Generated */       prevGain /= optInTimePeriod;
+/* Generated */       tempValue1 = prevGain+prevLoss;
 /* Generated */       if( !TA_IS_ZERO(tempValue1) )
-/* Generated */          outReal[outIdx++] = 100.0*((prevGain-prevLoss)/(prevGain+prevLoss));
+/* Generated */          outReal[outIdx++] = 100.0*((prevGain-prevLoss)/tempValue1);
 /* Generated */       else
 /* Generated */          outReal[outIdx++] = 0.0;
 /* Generated */    }
