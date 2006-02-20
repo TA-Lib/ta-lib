@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -90,6 +90,12 @@
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
+   /* insert local variable here */
+
+/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/* Generated */ /* No parameters to validate. */
+/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+
    /* insert lookback code here. */
 
    /*  31 input are skip 
@@ -103,7 +109,7 @@
    return 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_TRENDMODE);
 }
 
-/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /*
  * TA_HT_TRENDMODE - Hilbert Transform - Trend vs Cycle Mode
  * 
@@ -134,7 +140,7 @@
 /* Generated */                             int          *outNbElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #endif
-/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
    int outIdx, i;
@@ -189,7 +195,7 @@
    double prevSine, prevLeadSine, sine, leadSine;
    
 
-/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */ 
@@ -199,7 +205,6 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
-/* Generated */    /* Validate the parameters. */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -210,7 +215,7 @@
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
-/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
 
@@ -512,7 +517,7 @@
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
-/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
@@ -778,5 +783,5 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ }} // Close namespace TA.Lib
 /* Generated */ #endif
-/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 

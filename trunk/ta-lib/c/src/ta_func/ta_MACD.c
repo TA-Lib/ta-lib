@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -97,6 +97,32 @@
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
+   /* insert local variable here */
+   int tempInteger;
+
+/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
+/* Generated */    /* min/max are checked for optInFastPeriod. */
+/* Generated */    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInFastPeriod = 12;
+/* Generated */    else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    /* min/max are checked for optInSlowPeriod. */
+/* Generated */    if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInSlowPeriod = 26;
+/* Generated */    else if( ((int)optInSlowPeriod < 2) || ((int)optInSlowPeriod > 100000) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    /* min/max are checked for optInSignalPeriod. */
+/* Generated */    if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInSignalPeriod = 9;
+/* Generated */    else if( ((int)optInSignalPeriod < 1) || ((int)optInSignalPeriod > 100000) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
+/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+
    /* insert lookback code here. */
 
    /* The lookback is driven by the signal line output.
@@ -104,7 +130,6 @@
     * (must also account for the initial data consume 
     *  by the slow period).
     */
-   int tempInteger;
 
    /* Make sure slow is really slower than
     * the fast period! if not, swap...
@@ -122,7 +147,7 @@
 }
 
 
-/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /*
  * TA_MACD - Moving Average Convergence/Divergence
  * 
@@ -180,11 +205,11 @@
 /* Generated */                     double        outMACDSignal[],
 /* Generated */                     double        outMACDHist[] )
 /* Generated */ #endif
-/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
 
-/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */ 
@@ -194,7 +219,6 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
-/* Generated */    /* Validate the parameters. */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -229,7 +253,7 @@
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
-/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */  
 
@@ -475,7 +499,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 }
 
 
-/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
@@ -719,5 +743,5 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ }} // Close namespace TA.Lib
 /* Generated */ #endif
-/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 

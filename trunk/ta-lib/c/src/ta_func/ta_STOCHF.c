@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -94,8 +94,34 @@
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
-   /* insert lookback code here. */
+   /* insert local variable here */
    int retValue;
+
+/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
+/* Generated */    /* min/max are checked for optInFastK_Period. */
+/* Generated */    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
+/* Generated */       optInFastK_Period = 5;
+/* Generated */    else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    /* min/max are checked for optInFastD_Period. */
+/* Generated */    if( (int)optInFastD_Period == TA_INTEGER_DEFAULT )
+/* Generated */       optInFastD_Period = 3;
+/* Generated */    else if( ((int)optInFastD_Period < 1) || ((int)optInFastD_Period > 100000) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    if( (int)optInFastD_MAType == TA_INTEGER_DEFAULT )
+/* Generated */       optInFastD_MAType = 0;
+/* Generated */    else if( ((int)optInFastD_MAType < 0) || ((int)optInFastD_MAType > 8) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
+/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+
+   /* insert lookback code here. */
    
    /* Account for the initial data needed for Fast-K. */
    retValue = (optInFastK_Period - 1);
@@ -106,7 +132,7 @@
    return retValue;
 }
 
-/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /*
  * TA_STOCHF - Stochastic Fast
  * 
@@ -167,7 +193,7 @@
 /* Generated */                       double        outFastK[],
 /* Generated */                       double        outFastD[] )
 /* Generated */ #endif
-/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
    TA_RetCode retCode;
@@ -181,7 +207,7 @@
    int bufferIsAllocated;
    #endif
 
-/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */ 
@@ -191,7 +217,6 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
-/* Generated */    /* Validate the parameters. */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow||!inClose)
@@ -227,7 +252,7 @@
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
-/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
 
@@ -460,7 +485,7 @@
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
-/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
@@ -680,5 +705,5 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ }} // Close namespace TA.Lib
 /* Generated */ #endif
-/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 
