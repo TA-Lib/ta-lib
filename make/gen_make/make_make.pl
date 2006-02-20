@@ -216,8 +216,8 @@ foreach $z (@platformCompilerPath) {
       if( $makeDebug == 1 ) {
          $toRun = $toRun." "."\"CONFIG+=debug\"";
          if( $makeDLL == 1 ) {
-            $toRun = $toRun." "."\"TMAKE_CFLAGS_MT_DBG=-MDd\"";
-            $toRun = $toRun." "."\"TMAKE_CXXFLAGS_MT_DBG=-MDd\"";
+            $toRun = $toRun." "."\"TMAKE_CFLAGS_MT_DBG=-MDd -Zi\"";
+            $toRun = $toRun." "."\"TMAKE_CXXFLAGS_MT_DBG=-MDd -Zi\"";
          }
       }
       #Set the profiler options here --AK--
