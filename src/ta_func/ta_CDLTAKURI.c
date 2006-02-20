@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -89,13 +89,19 @@
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
+   /* insert local variable here */
+
+/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/* Generated */ /* No parameters to validate. */
+/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+
    /* insert lookback code here. */
     return max( max( TA_CANDLEAVGPERIOD(TA_BodyDoji), TA_CANDLEAVGPERIOD(TA_ShadowVeryShort) ),
                 TA_CANDLEAVGPERIOD(TA_ShadowVeryLong)
             );
 }
 
-/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /*
  * TA_CDLTAKURI - Takuri (Dragonfly Doji with very long lower shadow)
  * 
@@ -135,13 +141,13 @@
 /* Generated */                          int          *outNbElement,
 /* Generated */                          int           outInteger[] )
 /* Generated */ #endif
-/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
     double BodyDojiPeriodTotal, ShadowVeryShortPeriodTotal, ShadowVeryLongPeriodTotal;
     int i, outIdx, BodyDojiTrailingIdx, ShadowVeryShortTrailingIdx, ShadowVeryLongTrailingIdx, lookbackTotal;
 
-/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */ 
@@ -151,7 +157,6 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
-/* Generated */    /* Validate the parameters. */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
@@ -165,7 +170,7 @@
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
-/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -253,7 +258,7 @@
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
-/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
@@ -368,5 +373,5 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ }} // Close namespace TA.Lib
 /* Generated */ #endif
-/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 

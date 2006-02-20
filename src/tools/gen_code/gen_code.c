@@ -185,7 +185,8 @@ static void printFunc( FILE *out,
                        unsigned int managedCPPDeclaration,  /* Boolean */
                        unsigned int inputIsSinglePrecision, /* Boolean */
                        unsigned int outputForSWIG,          /* Boolean */
-                       unsigned int outputForJava           /* Boolean */
+                       unsigned int outputForJava,          /* Boolean */
+                       unsigned int lookbackValidationCode  /* Boolean */
                      );
 
 static void printCallFrame  ( FILE *out, const TA_FuncInfo *funcInfo );
@@ -232,7 +233,8 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo );
 static void doFuncFile( const TA_FuncInfo *funcInfo );
 static void printOptInputValidation( FILE *out,
                                      const char *name,                                     
-                                     const TA_OptInputParameterInfo *optInputParamInfo );
+                                     const TA_OptInputParameterInfo *optInputParamInfo,
+                                     int lookbackValidationCode /* Boolean */ );
 static int skipToGenCode( const char *dstName, FILE *out, FILE *templateFile );
 static void printDefines( FILE *out, const TA_FuncInfo *funcInfo );
 
@@ -901,7 +903,7 @@ static int genCode(int argc, char* argv[])
     * On Success, the Java program create a file named "java_success". 
     */
    #ifndef _MSC_VER   
-      printf( "\nWarning: Java code update not supported for non-win32 platform.\n" );
+      printf( "\nWarning: Java code update supported only for MSVC compiler for now.\n" );
    #else
       printf( "\nPost-Processing Java Code\n" );
       #define JAVA_SUCCESS_FILE     "..\\temp\\java_success"
@@ -1031,19 +1033,19 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    printDefines( gOutFunc_SWG->file, funcInfo );
 
    /* Generate the function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
    fprintf( gOutFunc_H->file, "\n" );
 
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0 );
    fprintf( gOutFunc_H->file, "\n" );
 
    /* Generate the SWIG interface. */
-   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0 );
+   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0 );
    fprintf( gOutFunc_SWG->file, "\n" );
 
    /* Generate the corresponding lookback function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0 );
-   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0 );
 
    /* Create the frame definition (ta_frame.c) and declaration (ta_frame.h) */
    genPrefix = 1;
@@ -1088,9 +1090,9 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    #endif
 
    /* Generate the functions declaration for the .NET interface. */
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0 );
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0 );
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0 );
    fprintf( gOutDotNet_H->file, "\n" );
    fprintf( gOutDotNet_H->file, "         #define TA_%s Core::%s\n", funcInfo->name, funcInfo->name );
    fprintf( gOutDotNet_H->file, "         #define TA_%s_Lookback Core::%s_Lookback\n\n", funcInfo->name, funcInfo->name );
@@ -1228,7 +1230,8 @@ static void printFunc( FILE *out,
                        unsigned int managedCPPDeclaration, /* Boolean */
                        unsigned int inputIsSinglePrecision, /* Boolean */
                        unsigned int outputForSWIG, /* Boolean */
-                       unsigned int outputForJava /* Boolean */
+                       unsigned int outputForJava, /* Boolean */
+                       unsigned int lookbackValidationCode  /* Boolean */
                       )
 {
    TA_RetCode retCode;
@@ -1432,7 +1435,7 @@ static void printFunc( FILE *out,
    }
 
    /* Go through all the input. */
-   if( !lookbackSignature )
+   if( !lookbackSignature && !lookbackValidationCode )
    {
       if( validationCode )
       {
@@ -1756,7 +1759,7 @@ static void printFunc( FILE *out,
              fprintf( out, "#if !defined(_MANAGED) && !defined(_JAVA)\n" );
          }
 
-         printOptInputValidation( out, paramName, optInputParamInfo );
+         printOptInputValidation( out, paramName, optInputParamInfo, lookbackValidationCode );
 
          if( excludeFromManaged )
          {
@@ -1868,7 +1871,7 @@ static void printFunc( FILE *out,
       if( !frame )
          print( out, "\n" );
    }
-   else
+   else if( !lookbackValidationCode  )
    {
       paramNb = 0;
       lastParam = 0;
@@ -2000,14 +2003,14 @@ static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
 
    printFrameHeader( out, funcInfo, 0 );
    print( out, "{\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "}\n" );
 
    printFrameHeader( out, funcInfo, 1 );
    print( out, "{\n" );
    if( funcInfo->nbOptInput == 0 )
       print( out, "   (void)params;\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0 );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0 );
    print( out, "}\n" );
    
    genPrefix = 0;
@@ -2216,11 +2219,11 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    print( gOutFunc_C->file, "#define  INPUT_TYPE float\n" );
    
    print( gOutFunc_C->file, "#if defined( _MANAGED )\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 );
    print( gOutFunc_C->file, "#elif defined( _JAVA )\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0 );
    print( gOutFunc_C->file, "#else\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 );
    print( gOutFunc_C->file, "#endif\n" );
 
    /* Insert the internal logic of the function */
@@ -2498,12 +2501,24 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "#define INPUT_TYPE   double\n" );
    print( out, "\n" );
    print( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0 );
    print( out, "#elif defined( _JAVA )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0 );
    print( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 );
    print( out, "#endif\n" );
+
+   genPrefix = 0;
+   skipToGenCode( funcInfo->name, gOutFunc_C->file, gOutFunc_C->templateFile );
+
+   genPrefix = 1;
+   if( funcInfo->nbOptInput != 0 )
+      print( out, "#ifndef TA_FUNC_NO_RANGE_CHECK\n" );
+   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1 );
+   if( funcInfo->nbOptInput != 0 )     
+     print( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
+   else   
+     print( out, "/* No parameters to validate. */\n" );
 
    genPrefix = 0;
    skipToGenCode( funcInfo->name, gOutFunc_C->file, gOutFunc_C->templateFile );
@@ -2514,11 +2529,11 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    fprintf( out, " */\n" );
    print( out, "\n" );
    print( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
    print( out, "#elif defined( _JAVA )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 );
    print( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "#endif\n" );
 
    genPrefix = 0;
@@ -2538,8 +2553,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
     * Also generates the code for setting up the
     * default values.
     */
-   print( out, "   /* Validate the parameters. */\n" );
-   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 );
 
    print( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
    print( out, "\n" );
@@ -2552,7 +2566,8 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
 
 static void printOptInputValidation( FILE *out,
                                      const char *name,                                     
-                                     const TA_OptInputParameterInfo *optInputParamInfo )
+                                     const TA_OptInputParameterInfo *optInputParamInfo,
+                                     int lookbackValidationCode /* Boolean */ )
 {
    int minInt, maxInt;
    double minReal, maxReal;
@@ -2623,7 +2638,11 @@ static void printOptInputValidation( FILE *out,
       break;
    }
 
-   print( out, "      return NAMESPACE(TA_RetCode)TA_BAD_PARAM;\n" );
+   if( lookbackValidationCode )
+      print( out, "      return -1;\n" );
+   else
+      print( out, "      return NAMESPACE(TA_RetCode)TA_BAD_PARAM;\n" );
+
    print( out, "\n" );
 }
 
@@ -3106,8 +3125,8 @@ static void extractTALogic( FILE *inFile, FILE *outFile )
    int i, length, nbCodeChar;
    int commentBlock, commentFirstCharFound, outIdx;
 
-   #define START_DELIMITATOR "/**** END GENCODE SECTION 2"
-   #define STOP_DELIMITATOR  "/**** START GENCODE SECTION 4"
+   #define START_DELIMITATOR "/**** END GENCODE SECTION 3"
+   #define STOP_DELIMITATOR  "/**** START GENCODE SECTION 5"
 
    /* Find the begining of the function */
    while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )

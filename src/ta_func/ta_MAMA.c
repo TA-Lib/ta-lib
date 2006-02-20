@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -94,6 +94,23 @@
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
+   /* insert local variable here */
+
+/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
+/* Generated */    if( optInFastLimit == TA_REAL_DEFAULT )
+/* Generated */       optInFastLimit = 5.000000e-1;
+/* Generated */    else if( (optInFastLimit < 1.000000e-2) ||/* Generated */  (optInFastLimit > 9.900000e-1) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    if( optInSlowLimit == TA_REAL_DEFAULT )
+/* Generated */       optInSlowLimit = 5.000000e-2;
+/* Generated */    else if( (optInSlowLimit < 1.000000e-2) ||/* Generated */  (optInSlowLimit > 9.900000e-1) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
+/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+
    /* insert lookback code here. */
 
    /* The two parameters are not a factor to determine
@@ -123,7 +140,7 @@
    return 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA);
 }
 
-/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /*
  * TA_MAMA - MESA Adaptive Moving Average
  * 
@@ -172,7 +189,7 @@
 /* Generated */                     double        outMAMA[],
 /* Generated */                     double        outFAMA[] )
 /* Generated */ #endif
-/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
 
@@ -207,7 +224,7 @@
 
    double mama,fama,todayValue,prevPhase;
 
-/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */ 
@@ -217,7 +234,6 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
-/* Generated */    /* Validate the parameters. */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -241,7 +257,7 @@
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
-/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
 
@@ -464,7 +480,7 @@
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
-/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
@@ -684,5 +700,5 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ }} // Close namespace TA.Lib
 /* Generated */ #endif
-/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 

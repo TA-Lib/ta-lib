@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -123,6 +123,53 @@
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
+   /* insert local variable here */
+
+/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
+/* Generated */    if( optInStartValue == TA_REAL_DEFAULT )
+/* Generated */       optInStartValue = 0.000000e+0;
+/* Generated */    else if( (optInStartValue < -3.000000e+37) ||/* Generated */  (optInStartValue > 3.000000e+37) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    if( optInOffsetOnReverse == TA_REAL_DEFAULT )
+/* Generated */       optInOffsetOnReverse = 0.000000e+0;
+/* Generated */    else if( (optInOffsetOnReverse < 0.000000e+0) ||/* Generated */  (optInOffsetOnReverse > 3.000000e+37) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    if( optInAccelerationInitLong == TA_REAL_DEFAULT )
+/* Generated */       optInAccelerationInitLong = 2.000000e-2;
+/* Generated */    else if( (optInAccelerationInitLong < 0.000000e+0) ||/* Generated */  (optInAccelerationInitLong > 3.000000e+37) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    if( optInAccelerationLong == TA_REAL_DEFAULT )
+/* Generated */       optInAccelerationLong = 2.000000e-2;
+/* Generated */    else if( (optInAccelerationLong < 0.000000e+0) ||/* Generated */  (optInAccelerationLong > 3.000000e+37) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    if( optInAccelerationMaxLong == TA_REAL_DEFAULT )
+/* Generated */       optInAccelerationMaxLong = 2.000000e-1;
+/* Generated */    else if( (optInAccelerationMaxLong < 0.000000e+0) ||/* Generated */  (optInAccelerationMaxLong > 3.000000e+37) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    if( optInAccelerationInitShort == TA_REAL_DEFAULT )
+/* Generated */       optInAccelerationInitShort = 2.000000e-2;
+/* Generated */    else if( (optInAccelerationInitShort < 0.000000e+0) ||/* Generated */  (optInAccelerationInitShort > 3.000000e+37) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    if( optInAccelerationShort == TA_REAL_DEFAULT )
+/* Generated */       optInAccelerationShort = 2.000000e-2;
+/* Generated */    else if( (optInAccelerationShort < 0.000000e+0) ||/* Generated */  (optInAccelerationShort > 3.000000e+37) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    if( optInAccelerationMaxShort == TA_REAL_DEFAULT )
+/* Generated */       optInAccelerationMaxShort = 2.000000e-1;
+/* Generated */    else if( (optInAccelerationMaxShort < 0.000000e+0) ||/* Generated */  (optInAccelerationMaxShort > 3.000000e+37) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
+/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+
    /* insert lookback code here. */
    UNUSED_VARIABLE(optInStartValue);
    UNUSED_VARIABLE(optInOffsetOnReverse);
@@ -140,7 +187,7 @@
    return 1;
 }
 
-/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /*
  * TA_SAREXT - Parabolic SAR - Extended
  * 
@@ -225,7 +272,7 @@
 /* Generated */                       int          *outNbElement,
 /* Generated */                       double        outReal[] )
 /* Generated */ #endif
-/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
    TA_RetCode retCode;
@@ -239,7 +286,7 @@
    double afLong, afShort, ep, sar;
    ARRAY_LOCAL(ep_temp,1);
 
-/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */ 
@@ -249,7 +296,6 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
-/* Generated */    /* Validate the parameters. */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow)
@@ -303,7 +349,7 @@
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
-/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
 
@@ -634,7 +680,7 @@
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
-/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
@@ -918,6 +964,6 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ }} // Close namespace TA.Lib
 /* Generated */ #endif
-/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 
 

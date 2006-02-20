@@ -95,14 +95,39 @@
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {   
+   /* insert local variable here */
+   int maxPeriod;
+/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
+/* Generated */    /* min/max are checked for optInTimePeriod1. */
+/* Generated */    if( (int)optInTimePeriod1 == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod1 = 7;
+/* Generated */    else if( ((int)optInTimePeriod1 < 1) || ((int)optInTimePeriod1 > 100000) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    /* min/max are checked for optInTimePeriod2. */
+/* Generated */    if( (int)optInTimePeriod2 == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod2 = 14;
+/* Generated */    else if( ((int)optInTimePeriod2 < 1) || ((int)optInTimePeriod2 > 100000) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    /* min/max are checked for optInTimePeriod3. */
+/* Generated */    if( (int)optInTimePeriod3 == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod3 = 28;
+/* Generated */    else if( ((int)optInTimePeriod3 < 1) || ((int)optInTimePeriod3 > 100000) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
+/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+
    /* Lookback for the Ultimate Oscillator is the lookback of the SMA with the longest
     * time period, plus 1 for the True Range.
     */
-    int maxPeriod = max( max(optInTimePeriod1, optInTimePeriod2), optInTimePeriod3);
+    maxPeriod = max( max(optInTimePeriod1, optInTimePeriod2), optInTimePeriod3);
     return LOOKBACK_CALL(SMA)( maxPeriod ) + 1;
 }
 
-/**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /*
  * TA_ULTOSC - Ultimate Oscillator
  * 
@@ -160,7 +185,7 @@
 /* Generated */                       int          *outNbElement,
 /* Generated */                       double        outReal[] )
 /* Generated */ #endif
-/**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
    /* insert local variable here */
    double a1Total, a2Total, a3Total;
@@ -176,7 +201,7 @@
    ARRAY_INT_LOCAL(periods,3);
    ARRAY_INT_LOCAL(sortedPeriods,3);
 
-/**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */ 
@@ -186,7 +211,6 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
 /* Generated */ 
-/* Generated */    /* Validate the parameters. */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow||!inClose)
@@ -218,7 +242,7 @@
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
-/**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
@@ -343,7 +367,7 @@
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
-/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
@@ -392,8 +416,8 @@
 /* Generated */ {
 /* Generated */    double a1Total, a2Total, a3Total;
 /* Generated */    double b1Total, b2Total, b3Total;
-/* Generated */    double trueHigh, trueLow, trueRange, closeMinusTrueLow;
-/* Generated */    double tempDouble;
+/* Generated */    double trueLow, trueRange, closeMinusTrueLow;
+/* Generated */    double tempDouble, tempHT, tempLT, tempCY;
 /* Generated */    int lookbackTotal;
 /* Generated */    int longestPeriod, longestIndex;
 /* Generated */    int i,j,today,outIdx;
@@ -457,22 +481,35 @@
 /* Generated */    if( startIdx < lookbackTotal ) startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx ) return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */    #define CALC_TERMS(day)                        \
-/* Generated */    trueHigh = max( inHigh[day], inClose[day-1] ); \
-/* Generated */    trueLow = min( inLow[day], inClose[day-1] );   \
-/* Generated */    closeMinusTrueLow = inClose[day] - trueLow;    \
-/* Generated */    trueRange = trueHigh - trueLow;
-/* Generated */    #define PRIME_TOTALS(aTotal, bTotal, period)                 \
-/* Generated */    aTotal = 0;                                                  \
-/* Generated */    bTotal = 0;                                                  \
-/* Generated */    for ( i = startIdx-period; i < startIdx; ++i )               \
-/* Generated */    {                                                            \
-/* Generated */       CALC_TERMS(i)                                             \
-/* Generated */       aTotal += closeMinusTrueLow;                              \
-/* Generated */       bTotal += trueRange;                                      \
+/* Generated */    {                                              \
+/* Generated */       tempLT = inLow[day];                        \
+/* Generated */       tempHT = inHigh[day];                       \
+/* Generated */       tempCY = inClose[day-1];                    \
+/* Generated */       trueLow = min( tempLT, tempCY );            \
+/* Generated */       closeMinusTrueLow = inClose[day] - trueLow; \
+/* Generated */       trueRange = tempHT - tempLT;                \
+/* Generated */       tempDouble = fabs( tempCY - tempHT );       \
+/* Generated */       if( tempDouble > trueRange )                 \
+/* Generated */          trueRange = tempDouble;                  \
+/* Generated */       tempDouble = fabs( tempCY - tempLT  );      \
+/* Generated */       if( tempDouble > trueRange )                 \
+/* Generated */          trueRange = tempDouble;                  \
 /* Generated */    }
-/* Generated */    PRIME_TOTALS(a1Total, b1Total, optInTimePeriod1)
-/* Generated */    PRIME_TOTALS(a2Total, b2Total, optInTimePeriod2)
-/* Generated */    PRIME_TOTALS(a3Total, b3Total, optInTimePeriod3)
+/* Generated */    #define PRIME_TOTALS(aTotal, bTotal, period)                 \
+/* Generated */    {                                                            \
+/* Generated */       aTotal = 0;                                               \
+/* Generated */       bTotal = 0;                                               \
+/* Generated */       for ( i = startIdx-period; i < startIdx; ++i )            \
+/* Generated */       {                                                         \
+/* Generated */          CALC_TERMS(i);                                         \
+/* Generated */          aTotal += closeMinusTrueLow;                           \
+/* Generated */          bTotal += trueRange;                                   \
+/* Generated */       }                                                         \
+/* Generated */    }
+/* Generated */    PRIME_TOTALS(a1Total, b1Total, optInTimePeriod1);
+/* Generated */    PRIME_TOTALS(a2Total, b2Total, optInTimePeriod2);
+/* Generated */    PRIME_TOTALS(a3Total, b3Total, optInTimePeriod3);
+/* Generated */    #undef PRIME_TOTALS
 /* Generated */    today = startIdx;
 /* Generated */    outIdx = 0;
 /* Generated */    trailingIdx1 = today - optInTimePeriod1;
@@ -480,25 +517,25 @@
 /* Generated */    trailingIdx3 = today - optInTimePeriod3;
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
-/* Generated */       CALC_TERMS(today)
+/* Generated */       CALC_TERMS(today);
 /* Generated */       a1Total += closeMinusTrueLow;
 /* Generated */       a2Total += closeMinusTrueLow;
 /* Generated */       a3Total += closeMinusTrueLow;
 /* Generated */       b1Total += trueRange;
 /* Generated */       b2Total += trueRange;
 /* Generated */       b3Total += trueRange;
-/* Generated */       CALC_TERMS(trailingIdx1)
+/* Generated */       CALC_TERMS(trailingIdx1);
 /* Generated */       a1Total -= closeMinusTrueLow;
 /* Generated */       b1Total -= trueRange;
-/* Generated */       CALC_TERMS(trailingIdx2)
+/* Generated */       CALC_TERMS(trailingIdx2);
 /* Generated */       a2Total -= closeMinusTrueLow;
 /* Generated */       b2Total -= trueRange;
-/* Generated */       CALC_TERMS(trailingIdx3)
+/* Generated */       CALC_TERMS(trailingIdx3);
 /* Generated */       a3Total -= closeMinusTrueLow;
 /* Generated */       b3Total -= trueRange;
 /* Generated */       tempDouble = 0.0; 
-/* Generated */       if( !TA_IS_ZERO(b1Total) ) tempDouble += 4.0*a1Total/b1Total;
-/* Generated */       if( !TA_IS_ZERO(b2Total) ) tempDouble += 2.0*a2Total/b2Total;
+/* Generated */       if( !TA_IS_ZERO(b1Total) ) tempDouble += 4.0*(a1Total/b1Total);
+/* Generated */       if( !TA_IS_ZERO(b2Total) ) tempDouble += 2.0*(a2Total/b2Total);
 /* Generated */       if( !TA_IS_ZERO(b3Total) ) tempDouble += a3Total/b3Total;
 /* Generated */       outReal[outIdx] = 100.0 * (tempDouble / 7.0);
 /* Generated */       outIdx++;
@@ -507,6 +544,7 @@
 /* Generated */       trailingIdx2++; 
 /* Generated */       trailingIdx3++;
 /* Generated */    }
+/* Generated */    #undef CALC_TERMS
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
@@ -515,5 +553,5 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ }} // Close namespace TA.Lib
 /* Generated */ #endif
-/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 
