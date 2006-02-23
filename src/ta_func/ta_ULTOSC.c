@@ -303,7 +303,7 @@
    {                                                            \
       aTotal = 0;                                               \
       bTotal = 0;                                               \
-      for ( i = startIdx-period; i < startIdx; ++i )            \
+      for ( i = startIdx-period+1; i < startIdx; ++i )          \
       {                                                         \
          CALC_TERMS(i);                                         \
          aTotal += closeMinusTrueLow;                           \
@@ -320,9 +320,9 @@
    /* Calculate oscillator */
    today = startIdx;
    outIdx = 0;
-   trailingIdx1 = today - optInTimePeriod1;
-   trailingIdx2 = today - optInTimePeriod2;
-   trailingIdx3 = today - optInTimePeriod3;
+   trailingIdx1 = today - optInTimePeriod1 + 1;
+   trailingIdx2 = today - optInTimePeriod2 + 1;
+   trailingIdx3 = today - optInTimePeriod3 + 1;
    while( today <= endIdx )
    {
       CALC_TERMS(today);
@@ -499,7 +499,7 @@
 /* Generated */    {                                                            \
 /* Generated */       aTotal = 0;                                               \
 /* Generated */       bTotal = 0;                                               \
-/* Generated */       for ( i = startIdx-period; i < startIdx; ++i )            \
+/* Generated */       for ( i = startIdx-period+1; i < startIdx; ++i )          \
 /* Generated */       {                                                         \
 /* Generated */          CALC_TERMS(i);                                         \
 /* Generated */          aTotal += closeMinusTrueLow;                           \
@@ -512,9 +512,9 @@
 /* Generated */    #undef PRIME_TOTALS
 /* Generated */    today = startIdx;
 /* Generated */    outIdx = 0;
-/* Generated */    trailingIdx1 = today - optInTimePeriod1;
-/* Generated */    trailingIdx2 = today - optInTimePeriod2;
-/* Generated */    trailingIdx3 = today - optInTimePeriod3;
+/* Generated */    trailingIdx1 = today - optInTimePeriod1 + 1;
+/* Generated */    trailingIdx2 = today - optInTimePeriod2 + 1;
+/* Generated */    trailingIdx3 = today - optInTimePeriod3 + 1;
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
 /* Generated */       CALC_TERMS(today);
