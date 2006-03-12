@@ -315,6 +315,7 @@ static int testTAFunction_ALL( TA_History *history )
       printf( "done.\n" ); \
       fflush(stdout); \
       }
+   DO_TEST( test_func_per_hlc,  "CCI,WILLR,ULTOSC" );
    DO_TEST( test_func_per_ohlc, "BOP,AVGPRICE" );
    DO_TEST( test_func_rsi,      "RSI,CMO" );
    DO_TEST( test_func_1in_1out, "DCPERIOD/PHASE,TRENDLINE/MODE" );
@@ -325,7 +326,6 @@ static int testTAFunction_ALL( TA_History *history )
    DO_TEST( test_func_ma,       "All Moving Averages" );
    DO_TEST( test_func_stoch,    "STOCH,STOCHF,STOCHRSI" );
    DO_TEST( test_func_per_hl,   "AROON,CORREL" );
-   DO_TEST( test_func_per_hlc,  "CCI,WILLR" );
    DO_TEST( test_func_per_hlcv, "MFI,AD,ADOSC" );
    DO_TEST( test_func_1in_2out, "PHASOR,SINE" );   
    DO_TEST( test_func_per_ema,  "TRIX" );
