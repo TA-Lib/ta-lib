@@ -9,18 +9,25 @@
    #include "ta_error_number.h"
 #endif
 
-ErrorNumber test_period( TA_UDBase *unifiedDatabase );
-ErrorNumber test_end_of_period( TA_UDBase *unifiedDatabase );
-ErrorNumber test_ascii ( void );
-ErrorNumber test_yahoo ( void );
-ErrorNumber test_csi   ( void );
-ErrorNumber test_pm    ( void );
-ErrorNumber test_datasource_merge( void );
+typedef struct
+{
+   unsigned int nbBars; /* Nb of element into the following arrays. */
+
+   /* The arrays containing data. Unused array are set to NULL. */
+   TA_Timestamp *timestamp;
+   TA_Real      *open;
+   TA_Real      *high;
+   TA_Real      *low;
+   TA_Real      *close;
+   TA_Integer   *volume;
+   TA_Integer   *openInterest;
+} TA_History;
+
 ErrorNumber test_internals( void );
 ErrorNumber test_abstract( void );
 
-ErrorNumber freeLib( TA_UDBase  *uDBase );
-ErrorNumber allocLib( TA_UDBase **uDBasePtr );
+ErrorNumber freeLib( void );
+ErrorNumber allocLib( void );
 
 void reportError( const char *str, TA_RetCode retCode );
 

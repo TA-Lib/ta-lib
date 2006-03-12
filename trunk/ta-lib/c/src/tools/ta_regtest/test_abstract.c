@@ -103,11 +103,10 @@ ErrorNumber test_abstract( void )
    TA_RetCode retCode;
    TA_ParamHolder *paramHolder;
    const TA_FuncHandle *handle;
-   TA_UDBase *udb;
 
    printf( "Testing Abstract interface\n" );
    
-   retValue = allocLib( &udb );
+   retValue = allocLib();
    if( retValue != TA_TEST_PASS )
       return retValue;    
 
@@ -141,12 +140,12 @@ ErrorNumber test_abstract( void )
       return TA_ABS_TST_FAIL_PARAMHOLDERFREE;
    }
 
-   retValue = freeLib( udb );
+   retValue = freeLib();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
    /* Call all the TA functions through the abstract interface. */
-   retValue = allocLib( &udb );
+   retValue = allocLib();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -157,7 +156,7 @@ ErrorNumber test_abstract( void )
       return retValue;
    }
 
-   retValue = freeLib( udb );
+   retValue = freeLib();
    if( retValue != TA_TEST_PASS )
       return retValue;
    
