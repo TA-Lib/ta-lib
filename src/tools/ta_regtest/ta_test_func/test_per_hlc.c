@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -45,6 +45,7 @@
  *  112400 MF   First version.
  *  061904 MF   Add test to detect cummulative errors in CCI algorithm 
  *              when some values were close to zero (epsilon).
+ *  021106 MF   Add tests for ULTOSC.
  *              
  */
 
@@ -52,8 +53,6 @@
  *
  *     Test functions which have the following
  *     characterisic: 
- *      - have one output with the optional 
- *        parameter being a period.
  *      - the input is high,low and close.
  *     
  */
@@ -83,6 +82,7 @@
 typedef enum {
 TA_CCI_TEST,
 TA_WILLR_TEST,
+TA_ULTOSC_TEST,
 } TA_TestId;
 
 typedef struct
@@ -93,7 +93,10 @@ typedef struct
 
    TA_Integer startIdx;
    TA_Integer endIdx;
-   TA_Integer optInTimePeriod;
+
+   TA_Integer optInTimePeriod1;
+   TA_Integer optInTimePeriod2;
+   TA_Integer optInTimePeriod3;
    
    TA_RetCode expectedRetCode;
 
@@ -121,57 +124,64 @@ static ErrorNumber do_test( const TA_History *history,
 static TA_Test tableTest[] =
 {
    /****************/
+   /* ULTOSC TEST  */
+   /****************/
+   { 0, TA_ULTOSC_TEST, 0, 251, 7, 14, 28, TA_SUCCESS,  251,   40.0854,  13,  252-28 },
+   { 0, TA_ULTOSC_TEST, 0, 251, 7, 14, 28, TA_SUCCESS,    0,   51.9378,  13,  252-28 }, /* First Value */
+
+
+   /****************/
    /* WILLR TEST   */
    /****************/
-   { 0, TA_WILLR_TEST, 13, 251, 14, TA_SUCCESS,   1,   -66.9903,  13,  252-13 }, /* First Value */
-   { 1, TA_WILLR_TEST,  0, 251, 14, TA_SUCCESS,   0,   -90.1943,  13,  252-13 },
-   { 0, TA_WILLR_TEST,  0, 251, 14, TA_SUCCESS, 112,        0.0,  13,  252-13 },
+   { 0, TA_WILLR_TEST, 13, 251, 14, 0, 0, TA_SUCCESS,   1,   -66.9903,  13,  252-13 }, /* First Value */
+   { 1, TA_WILLR_TEST,  0, 251, 14, 0, 0, TA_SUCCESS,   0,   -90.1943,  13,  252-13 },
+   { 0, TA_WILLR_TEST,  0, 251, 14, 0, 0, TA_SUCCESS, 112,        0.0,  13,  252-13 },
 
-   { 0, TA_WILLR_TEST,  24, 24, 14, TA_SUCCESS, 0,    -89.2857,  24,  1 },
-   { 0, TA_WILLR_TEST,  25, 25, 14, TA_SUCCESS, 0,    -97.2602,  25,  1 },
-   { 0, TA_WILLR_TEST,  26, 26, 14, TA_SUCCESS, 0,    -71.5482,  26,  1 },
+   { 0, TA_WILLR_TEST,  24, 24, 14, 0, 0, TA_SUCCESS, 0,    -89.2857,  24,  1 },
+   { 0, TA_WILLR_TEST,  25, 25, 14, 0, 0, TA_SUCCESS, 0,    -97.2602,  25,  1 },
+   { 0, TA_WILLR_TEST,  26, 26, 14, 0, 0, TA_SUCCESS, 0,    -71.5482,  26,  1 },
 
-   { 0, TA_WILLR_TEST, 251, 251, 14, TA_SUCCESS,      0,    -59.1515, 251,  1 },
-   { 0, TA_WILLR_TEST,  14,  251, 14, TA_SUCCESS, 252-15,   -59.1515, 14,  252-14 },
+   { 0, TA_WILLR_TEST, 251, 251, 14, 0, 0, TA_SUCCESS,      0,    -59.1515, 251,  1 },
+   { 0, TA_WILLR_TEST,  14,  251, 14, 0, 0, TA_SUCCESS, 252-15,   -59.1515, 14,  252-14 },
 
    /****************/
    /*   CCI TEST  */
    /****************/
 
    /* The following two should always be identical. */
-   { 0, TA_CCI_TEST, 186,187,  2, TA_SUCCESS,   1, 0.0, 186,  2 },
-   { 0, TA_CCI_TEST, 187,187,  2, TA_SUCCESS,   0, 0.0, 187,  1 },
+   { 0, TA_CCI_TEST, 186,187,  2, 0, 0, TA_SUCCESS,   1, 0.0, 186,  2 },
+   { 0, TA_CCI_TEST, 187,187,  2, 0, 0, TA_SUCCESS,   0, 0.0, 187,  1 },
  
    /* Test period 2, 5 and 11 */
-   { 0, TA_CCI_TEST, 0, 251,  2, TA_SUCCESS,  0, 66.666, 1,  252-1 },
-   { 1, TA_CCI_TEST, 0, 251,  5, TA_SUCCESS,  0, 18.857, 4,  252-4 },
+   { 0, TA_CCI_TEST, 0, 251,  2, 0, 0, TA_SUCCESS,  0, 66.666, 1,  252-1 },
+   { 1, TA_CCI_TEST, 0, 251,  5, 0, 0, TA_SUCCESS,  0, 18.857, 4,  252-4 },
 
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  0,   87.927,  10,  252-10 }, /* First Value */
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  1,   180.005, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  2,  143.5190963, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  3,  -113.8669783, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  4,  -111.064497, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  5,  -26.77393309, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  6,  -70.77933765, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  7,  -83.15662884, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  8,  -41.14421073, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS,  9,  -49.63059589, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 10,  -86.45142995, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 11,  -105.6275799, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 12,  -157.698269, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 13,  -190.5251436, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 14,  -142.8364298, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 15,  -122.4448056, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 16,  -79.95100041, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 17,  22.03829204, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 18,  7.765575065, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 19,  32.38905945, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 20,  -0.005587727, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 21,  43.84607294, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 22,  40.35152301, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 23,  92.89237535, 10,  252-10 },
-   { 0, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 24,  113.4778681, 10,  252-10 },
-   { 1, TA_CCI_TEST, 0, 251, 11, TA_SUCCESS, 252-11,  -169.65514, 10,  252-10 }, /* Last Value */
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS,  0,   87.927,  10,  252-10 }, /* First Value */
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS,  1,   180.005, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS,  2,  143.5190963, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS,  3,  -113.8669783, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS,  4,  -111.064497, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS,  5,  -26.77393309, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS,  6,  -70.77933765, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS,  7,  -83.15662884, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS,  8,  -41.14421073, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS,  9,  -49.63059589, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 10,  -86.45142995, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 11,  -105.6275799, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 12,  -157.698269, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 13,  -190.5251436, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 14,  -142.8364298, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 15,  -122.4448056, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 16,  -79.95100041, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 17,  22.03829204, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 18,  7.765575065, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 19,  32.38905945, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 20,  -0.005587727, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 21,  43.84607294, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 22,  40.35152301, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 23,  92.89237535, 10,  252-10 },
+   { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 24,  113.4778681, 10,  252-10 },
+   { 1, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 252-11,  -169.65514, 10,  252-10 }, /* Last Value */
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
@@ -239,11 +249,11 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         testParam->high,
                         testParam->low,
                         testParam->close,
-                        testParam->test->optInTimePeriod,
+                        testParam->test->optInTimePeriod1,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
-      *lookback = TA_CCI_Lookback( testParam->test->optInTimePeriod );
+      *lookback = TA_CCI_Lookback( testParam->test->optInTimePeriod1 );
       break;
    case TA_WILLR_TEST:
       retCode = TA_WILLR( startIdx,
@@ -251,12 +261,30 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                           testParam->high,
                           testParam->low,
                           testParam->close,
-                          testParam->test->optInTimePeriod,
+                          testParam->test->optInTimePeriod1,
                           outBegIdx,
                           outNbElement,
                           outputBuffer );
-      *lookback = TA_WILLR_Lookback( testParam->test->optInTimePeriod );
+      *lookback = TA_WILLR_Lookback( testParam->test->optInTimePeriod1 );
       break;
+
+   case TA_ULTOSC_TEST:
+      retCode = TA_ULTOSC( startIdx,
+                           endIdx,
+                           testParam->high,
+                           testParam->low,
+                           testParam->close,
+                           testParam->test->optInTimePeriod1,
+                           testParam->test->optInTimePeriod2,
+                           testParam->test->optInTimePeriod3,
+                           outBegIdx,
+                           outNbElement,
+                           outputBuffer );
+      *lookback = TA_ULTOSC_Lookback( testParam->test->optInTimePeriod1,
+                                      testParam->test->optInTimePeriod2,
+                                      testParam->test->optInTimePeriod3 );
+      break;
+
    default:
       retCode = TA_INTERNAL_ERROR(132);
    }
@@ -290,7 +318,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[0].in,
                         gBuffer[1].in,
                         gBuffer[2].in,
-                        test->optInTimePeriod,
+                        test->optInTimePeriod1,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -302,10 +330,24 @@ static ErrorNumber do_test( const TA_History *history,
                           gBuffer[0].in,
                           gBuffer[1].in,
                           gBuffer[2].in,
-                          test->optInTimePeriod,
+                          test->optInTimePeriod1,
                           &outBegIdx,
                           &outNbElement,
                           gBuffer[0].out0 );
+      break;
+
+   case TA_ULTOSC_TEST:
+      retCode = TA_ULTOSC( test->startIdx,
+                           test->endIdx,
+                           gBuffer[0].in,
+                           gBuffer[1].in,
+                           gBuffer[2].in,
+                           test->optInTimePeriod1,
+                           test->optInTimePeriod2,
+                           test->optInTimePeriod3,
+                           &outBegIdx,
+                           &outNbElement,
+                           gBuffer[0].out0 );
       break;
 
    default:
@@ -338,7 +380,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[0].in,
                         gBuffer[1].in,
                         gBuffer[2].in,
-                        test->optInTimePeriod,
+                        test->optInTimePeriod1,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].in );
@@ -349,10 +391,23 @@ static ErrorNumber do_test( const TA_History *history,
                           gBuffer[0].in,
                           gBuffer[1].in,
                           gBuffer[2].in,
-                          test->optInTimePeriod,
+                          test->optInTimePeriod1,
                           &outBegIdx,
                           &outNbElement,
                           gBuffer[0].in );
+      break;
+   case TA_ULTOSC_TEST:
+      retCode = TA_ULTOSC( test->startIdx,
+                           test->endIdx,
+                           gBuffer[0].in,
+                           gBuffer[1].in,
+                           gBuffer[2].in,
+                           test->optInTimePeriod1,
+                           test->optInTimePeriod2,
+                           test->optInTimePeriod3,
+                           &outBegIdx,
+                           &outNbElement,
+                           gBuffer[0].in );
       break;
    default:
       retCode = TA_INTERNAL_ERROR(134);
@@ -390,7 +445,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[0].in,
                         gBuffer[1].in,
                         gBuffer[2].in,
-                        test->optInTimePeriod,
+                        test->optInTimePeriod1,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -401,10 +456,23 @@ static ErrorNumber do_test( const TA_History *history,
                           gBuffer[0].in,
                           gBuffer[1].in,
                           gBuffer[2].in,
-                          test->optInTimePeriod,
+                          test->optInTimePeriod1,
                           &outBegIdx,
                           &outNbElement,
                           gBuffer[1].in );
+      break;
+   case TA_ULTOSC_TEST:
+      retCode = TA_ULTOSC( test->startIdx,
+                           test->endIdx,
+                           gBuffer[0].in,
+                           gBuffer[1].in,
+                           gBuffer[2].in,
+                           test->optInTimePeriod1,
+                           test->optInTimePeriod2,
+                           test->optInTimePeriod3,
+                           &outBegIdx,
+                           &outNbElement,
+                           gBuffer[1].in );
       break;
    default:
       retCode = TA_INTERNAL_ERROR(135);
@@ -441,7 +509,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[0].in,
                         gBuffer[1].in,
                         gBuffer[2].in,
-                        test->optInTimePeriod,
+                        test->optInTimePeriod1,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[2].in );
@@ -452,10 +520,23 @@ static ErrorNumber do_test( const TA_History *history,
                           gBuffer[0].in,
                           gBuffer[1].in,
                           gBuffer[2].in,
-                          test->optInTimePeriod,
+                          test->optInTimePeriod1,
                           &outBegIdx,
                           &outNbElement,
                           gBuffer[2].in );
+      break;
+   case TA_ULTOSC_TEST:
+      retCode = TA_ULTOSC( test->startIdx,
+                           test->endIdx,
+                           gBuffer[0].in,
+                           gBuffer[1].in,
+                           gBuffer[2].in,
+                           test->optInTimePeriod1,
+                           test->optInTimePeriod2,
+                           test->optInTimePeriod3,
+                           &outBegIdx,
+                           &outNbElement,
+                           gBuffer[2].in );
       break;
    default:
       retCode = TA_INTERNAL_ERROR(136);
