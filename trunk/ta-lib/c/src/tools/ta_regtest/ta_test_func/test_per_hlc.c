@@ -126,8 +126,10 @@ static TA_Test tableTest[] =
    /****************/
    /* ULTOSC TEST  */
    /****************/
+/*
    { 0, TA_ULTOSC_TEST, 0, 251, 7, 14, 28, TA_SUCCESS,  251,   40.0854,  13,  252-28 },
-   { 0, TA_ULTOSC_TEST, 0, 251, 7, 14, 28, TA_SUCCESS,    0,   51.9378,  13,  252-28 }, /* First Value */
+   { 0, TA_ULTOSC_TEST, 0, 251, 7, 14, 28, TA_SUCCESS,    0,   51.9378,  13,  252-28 },
+*/
 
 
    /****************/
