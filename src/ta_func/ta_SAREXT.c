@@ -44,9 +44,9 @@
  *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
  *  120802 MF    Template creation.
- *  150903 PP    Reworked TA_SAR to allow customisation of more SAR params.
- *  210903 MF    Some changes related on first round of tests
- *  230903 PP    Minor bug fixes.
+ *  091503 PP    Reworked TA_SAR to allow customisation of more SAR params.
+ *  092103 MF    Some changes related on first round of tests
+ *  092303 PP    Minor bug fixes.
  *  122104 MF,CF Fix#1089506 for out-of-bound access to ep_temp.
  *
  */
@@ -180,9 +180,9 @@
    UNUSED_VARIABLE(optInAccelerationShort);
    UNUSED_VARIABLE(optInAccelerationMaxShort);
 
-    /* SAR always sacrifices one price bar to establish the
-     * initial extreme price.
-     */
+   /* SAR always sacrifices one price bar to establish the
+    * initial extreme price.
+    */
 
    return 1;
 }
@@ -376,7 +376,7 @@
     *    second bar. The highest directional indication will
     *    indicate the assumed direction of the trade for the second
     *    price bar. 
-    *  - In the case of a high between +DM and -DM,
+    *  - In the case of a tie between +DM and -DM,
     *    the direction is LONG by default.
     *
     * What is the initial "extreme point" and thus SAR?

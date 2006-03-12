@@ -243,7 +243,7 @@
     *    second bar. The highest directional indication will
     *    indicate the assumed direction of the trade for the second
     *    price bar. 
-    *  - In the case of a tigh between +DM and -DM,
+    *  - In the case of a tie between +DM and -DM,
     *    the direction is LONG by default.
     *
     * What is the initial "extreme point" and thus SAR?
