@@ -73,9 +73,8 @@
 /* None */
 
 /**** Local functions declarations.    ****/
-static int testTAFunction_ALL( TA_History *history );
+static int testTAFunction_ALL( void );
 static ErrorNumber test_with_simulator( void );
-static ErrorNumber testHistoryAlloc( void );
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -121,28 +120,6 @@ int main( int argc, char **argv )
       return retValue;
    }
 
-   /* Test the merging of multiple data source */
-   retValue = test_datasource_merge();
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-
-   /* Test the CSI data source. */
-#ifdef __64BIT__
-   printf( "Skipping testing CSI source - known not working on 64bit systems (bug #1201009)\n" );
-#else
-   retValue = test_csi();
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-#endif
-
-   /* Test Performance Measurements. */
-   retValue = test_pm();
-   if( retValue != TA_TEST_PASS )
-   {
-      printf( "Failed: Performance Measurements Tests (error number = %d)\n", retValue );
-      return retValue;
-   }
-
    /* Test abstract interface. */
    retValue = test_abstract();
    if( retValue != TA_TEST_PASS )
@@ -151,26 +128,8 @@ int main( int argc, char **argv )
       return retValue;
    }
 
-   /* Test history alloc. */
-   retValue = testHistoryAlloc();
-   if( retValue != TA_TEST_PASS )
-   {
-      printf( "Failed TA_HistoryAlloc test with code=%d\n", retValue );
-      return retValue;
-   }
-
-   /* Test the ASCII data source. */
-   retValue = test_ascii();
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-
    /* Perform all the tests using the TA_SIMULATOR data */
    retValue = test_with_simulator();
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-
-   /* Test the Yahoo! data source. */
-   retValue = test_yahoo();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -182,124 +141,51 @@ int main( int argc, char **argv )
 /**** Local functions definitions.     ****/
 static ErrorNumber test_with_simulator( void )
 {
-   TA_UDBase  *uDBase;
-   TA_History *history;
-   TA_AddDataSourceParam param;
-   TA_RetCode  retCode;
    ErrorNumber retValue;
-   TA_HistoryAllocParam histParam;
 
    /* Initialize the library. */
-   retValue = allocLib( &uDBase );
+   retValue = allocLib();
    if( retValue != TA_TEST_PASS )
       return retValue;
-
-   /* Add a datasource using pre-defined data.
-    * This data is embedded in the library and does
-    * not required any external data provider.
-    * The test functions may assume that this data will
-    * be unmodified forever by TA-LIB.
-    */
-   memset( &param, 0, sizeof( TA_AddDataSourceParam ) );
-   param.id = TA_SIMULATOR;
-   retCode = TA_AddDataSource( uDBase, &param );
-
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "TA_AddDataSource failed [%d]\n", retCode );
-      freeLib( uDBase );
-      return TA_REGTEST_ADDDATASOURCE_FAILED;
-   }
-
-   /* Regression testing of the functionality provided
-    * by ta_period.c
-    */
-   retValue = test_period( uDBase );
-   if( retValue != TA_TEST_PASS )
-   {
-      freeLib( uDBase );
-      return retValue;
-   }
-
-   /* Test ta_period using end-of-period functionality. */
-   retValue = test_end_of_period( uDBase );
-   if( retValue != TA_TEST_PASS )
-   {
-      freeLib( uDBase );
-      return retValue;
-   }
-
-
-   /* Allocate the reference historical data. */
-   memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) );
-   histParam.category = "TA_SIM_REF";
-   histParam.symbol   = "DAILY_REF_0";
-   histParam.field    = TA_ALL;
-
-   /* first some negative testing - calls that should fail */
-   histParam.period   = TA_1MIN;
-   retCode = TA_HistoryAlloc( uDBase, &histParam, &history );
-   if( retCode != TA_PERIOD_NOT_AVAILABLE )
-   {
-       printf( "TA_HistoryAlloc did not report TA_PERIOD_NOT_AVAILABLE [%d]\n", retCode );
-       freeLib( uDBase );
-       return TA_REGTEST_HISTORYALLOC_FAILED;
-   }
-
-   /* now allocate the "correct" history */
-   histParam.period   = TA_DAILY;
-   retCode = TA_HistoryAlloc( uDBase, &histParam, &history );
-
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "TA_HistoryAlloc failed [%d]\n", retCode );
-      freeLib( uDBase );
-      return TA_REGTEST_HISTORYALLOC_FAILED;
-   }
 
    /* Perform testing of each of the TA Functions. */
-   retValue = testTAFunction_ALL( history );
+   retValue = testTAFunction_ALL();
    if( retValue != TA_TEST_PASS )
    {
-      TA_HistoryFree( history );
-      freeLib( uDBase );
       return retValue;
    }
 
    /* Clean-up and exit. */
 
-   retCode = TA_HistoryFree( history );
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "TA_HistoryFree failed [%d]\n", retCode );
-      freeLib( uDBase );
-      return TA_REGTEST_HISTORYFREE_FAILED;
-   }
-
-   retValue = freeLib( uDBase );
+   retValue = freeLib( );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
    return TA_TEST_PASS; /* All test succeed. */
 }
 
-static int testTAFunction_ALL( TA_History *history )
+extern TA_Timestamp TA_SREF_timestamp_daily_ref_0_PRIV[];
+extern TA_Real      TA_SREF_open_daily_ref_0_PRIV[];
+extern TA_Real      TA_SREF_high_daily_ref_0_PRIV[];
+extern TA_Real      TA_SREF_low_daily_ref_0_PRIV[];
+extern TA_Real      TA_SREF_close_daily_ref_0_PRIV[];
+extern TA_Integer   TA_SREF_volume_daily_ref_0_PRIV[];
+
+static int testTAFunction_ALL( void )
 {
    ErrorNumber retValue;
+   TA_History history;
+
+   history.nbBars = 252;
+   history.open   = TA_SREF_open_daily_ref_0_PRIV;
+   history.high   = TA_SREF_high_daily_ref_0_PRIV;
+   history.low    = TA_SREF_low_daily_ref_0_PRIV;
+   history.close  = TA_SREF_close_daily_ref_0_PRIV;
+   history.volume = TA_SREF_volume_daily_ref_0_PRIV;
 
    printf( "Testing the TA functions\n" );
 
    initGlobalBuffer();
-
-   /* Just validate that the history is not too big for the
-    * global temporary buffers used troughout the testing.
-    */
-   if( history->nbBars >= MAX_NB_TEST_ELEMENT )
-   {
-      printf( "Buffer too small to proceed with tests [%d >= %d]\n",
-              history->nbBars, MAX_NB_TEST_ELEMENT );
-      return -1;
-   }
 
    /* Make tests for each TA functions. */
    #define DO_TEST(func,str) \
@@ -308,7 +194,7 @@ static int testTAFunction_ALL( TA_History *history )
       fflush(stdout); \
       showFeedback(); \
       TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT ); \
-      retValue = func( history ); \
+      retValue = func( &history ); \
       if( retValue != TA_TEST_PASS ) \
          return retValue; \
       hideFeedback(); \
@@ -337,233 +223,4 @@ static int testTAFunction_ALL( TA_History *history )
    DO_TEST( test_func_bbands,   "BBANDS" );
 
    return TA_TEST_PASS; /* All test succeed. */
-}
-
-static ErrorNumber testHistoryAlloc( void )
-{
-   TA_UDBase *unifiedDatabase;
-   TA_History *data;
-   TA_RetCode retCode;
-   TA_InitializeParam param;
-   TA_AddDataSourceParam addParam;
-   TA_HistoryAllocParam histParam;
-
-   memset( &param, 0, sizeof( TA_InitializeParam ) );
-   param.logOutput = stdout;
-   retCode = TA_Initialize( &param );
-
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "Cannot initialize TA-LIB (%d)!", retCode );
-      return TA_REGTEST_HISTORYALLOC_0;
-   }
-
-   /* Create an unified database. */
-   if( TA_UDBaseAlloc( &unifiedDatabase ) != TA_SUCCESS )
-   {
-      TA_Shutdown();
-      return TA_REGTEST_HISTORYALLOC_1;
-   }
-   
-   /* USE SIMULATOR DATA */
-   memset( &addParam, 0, sizeof( TA_AddDataSourceParam ) );
-   addParam.id = TA_SIMULATOR;
-
-   addParam.flags = TA_NO_FLAGS;
-   retCode = TA_AddDataSource( unifiedDatabase, &addParam );
-
-   /* Now, display all daily close price available
-    * for the DAILY_REF_0 symbol.
-    */
-   if( retCode != TA_SUCCESS )
-      return TA_REGTEST_ADDDSOURCE_FAILED;
-
-   #if defined __BORLANDC__
-      #pragma warn -ccc
-      #pragma warn -rch
-   #endif
-      
-   #define CHECK_FIELDSUBSET(field_par) \
-         { \
-            memset( &histParam, 0, sizeof( TA_HistoryAllocParam ) ); \
-            histParam.category = "TA_SIM_REF"; \
-            histParam.symbol   = "DAILY_REF_0"; \
-            histParam.field    = field_par; \
-            histParam.period   = TA_DAILY; \
-            retCode = TA_HistoryAlloc( unifiedDatabase, &histParam, &data ); \
-            if( retCode == TA_SUCCESS ) \
-            { \
-               if( (field_par) & TA_OPEN ) \
-               { \
-                  if( !data->open ) \
-                     return TA_REGTEST_HISTORYALLOC_2; \
-                  if( data->open[0] != 92.5 ) \
-                     return TA_REGTEST_HISTORYALLOC_3; \
-               } \
-               else \
-               { \
-                  if( data->open ) \
-                     return TA_REGTEST_HISTORYALLOC_4; \
-               } \
-               if( (field_par) & TA_HIGH ) \
-               { \
-                  if( !data->high ) \
-                     return TA_REGTEST_HISTORYALLOC_5; \
-                  if( data->high[0] != 93.25 ) \
-                     return TA_REGTEST_HISTORYALLOC_6; \
-               } \
-               else \
-               { \
-                  if( data->high ) \
-                     return TA_REGTEST_HISTORYALLOC_7; \
-               } \
-               if( (field_par) & TA_LOW ) \
-               { \
-                  if( !data->low ) \
-                     return TA_REGTEST_HISTORYALLOC_8; \
-                  if( data->low[0] != 90.75 ) \
-                     return TA_REGTEST_HISTORYALLOC_9; \
-               } \
-               else \
-               { \
-                  if( data->low ) \
-                     return TA_REGTEST_HISTORYALLOC_10; \
-               } \
-               if( (field_par) & TA_CLOSE ) \
-               { \
-                  if( !data->close ) \
-                     return TA_REGTEST_HISTORYALLOC_11; \
-                  if( data->close[0] != 91.50 ) \
-                     return TA_REGTEST_HISTORYALLOC_12; \
-               } \
-               else \
-               { \
-                  if( data->close ) \
-                     return TA_REGTEST_HISTORYALLOC_13; \
-               } \
-               if( (field_par) & TA_VOLUME ) \
-               { \
-                  if( !data->volume ) \
-                     return TA_REGTEST_HISTORYALLOC_14; \
-                  if( data->volume[0] != 4077500) \
-                     return TA_REGTEST_HISTORYALLOC_15; \
-               } \
-               else \
-               { \
-                  if( data->volume ) \
-                     return TA_REGTEST_HISTORYALLOC_16; \
-               } \
-               if( (field_par) & TA_TIMESTAMP ) \
-               { \
-                  if( !data->timestamp ) \
-                     return TA_REGTEST_HISTORYALLOC_17; \
-               } \
-               else \
-               { \
-                  if( data->timestamp ) \
-                     return TA_REGTEST_HISTORYALLOC_18; \
-               } \
-               TA_HistoryFree( data ); \
-            } \
-            else \
-            { \
-               printf( "Cannot TA_HistoryAlloc for TA_SIM_REF (%d)!\n", retCode ); \
-               return TA_REGTEST_HISTORYALLOC_19; \
-            } \
-         } 
-         /* 6 Fields */
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_CLOSE|TA_HIGH|TA_LOW|TA_VOLUME)
-
-         /* 5 Fields */
-         CHECK_FIELDSUBSET(TA_OPEN|TA_CLOSE|TA_HIGH|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_CLOSE|TA_HIGH|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_HIGH|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_CLOSE|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_CLOSE|TA_HIGH|TA_VOLUME)
-
-         /* 4 Fields */
-         CHECK_FIELDSUBSET(TA_CLOSE|TA_HIGH|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_OPEN|TA_HIGH|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_OPEN|TA_CLOSE|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_OPEN|TA_CLOSE|TA_HIGH|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_OPEN|TA_CLOSE|TA_HIGH|TA_LOW)
-
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_HIGH|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_CLOSE|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_CLOSE|TA_HIGH|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_CLOSE|TA_HIGH|TA_LOW)
-
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_HIGH|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_HIGH|TA_LOW)
-
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_CLOSE|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_CLOSE|TA_LOW)
-
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_CLOSE|TA_HIGH)
-
-         /* 3 Fields */
-         CHECK_FIELDSUBSET(TA_HIGH|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_CLOSE|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_CLOSE|TA_HIGH|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_CLOSE|TA_HIGH|TA_LOW)
-
-         CHECK_FIELDSUBSET(TA_OPEN|TA_LOW|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_OPEN|TA_HIGH|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_OPEN|TA_HIGH|TA_LOW)
-
-         CHECK_FIELDSUBSET(TA_OPEN|TA_CLOSE|TA_VOLUME)
-         CHECK_FIELDSUBSET(TA_OPEN|TA_CLOSE|TA_LOW)
-
-         CHECK_FIELDSUBSET(TA_OPEN|TA_CLOSE|TA_HIGH)
-
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_HIGH)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_LOW)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_CLOSE)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN|TA_VOLUME)
-
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_HIGH|TA_LOW)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_HIGH|TA_CLOSE)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_HIGH|TA_VOLUME)
-
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_LOW|TA_CLOSE)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_LOW|TA_VOLUME)
-
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_CLOSE|TA_VOLUME)
-
-         /* Two field. */
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_OPEN)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_HIGH)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_LOW)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_CLOSE)
-         CHECK_FIELDSUBSET(TA_TIMESTAMP|TA_VOLUME)
-
-         CHECK_FIELDSUBSET(TA_OPEN|TA_HIGH)
-         CHECK_FIELDSUBSET(TA_OPEN|TA_LOW)
-         CHECK_FIELDSUBSET(TA_OPEN|TA_CLOSE)
-         CHECK_FIELDSUBSET(TA_OPEN|TA_VOLUME)
-
-         CHECK_FIELDSUBSET(TA_HIGH|TA_LOW)
-         CHECK_FIELDSUBSET(TA_HIGH|TA_CLOSE)
-         CHECK_FIELDSUBSET(TA_HIGH|TA_VOLUME)
-
-         CHECK_FIELDSUBSET(TA_LOW|TA_CLOSE)
-         CHECK_FIELDSUBSET(TA_LOW|TA_VOLUME)
-
-         CHECK_FIELDSUBSET(TA_CLOSE|TA_VOLUME)
-
-         /* One Field */
-         CHECK_FIELDSUBSET(TA_TIMESTAMP);
-         CHECK_FIELDSUBSET(TA_OPEN);
-         CHECK_FIELDSUBSET(TA_HIGH)
-         CHECK_FIELDSUBSET(TA_LOW)
-         CHECK_FIELDSUBSET(TA_CLOSE)
-         CHECK_FIELDSUBSET(TA_VOLUME)
-
-   #undef CHECK_FIELDSUBSET
-
-   /* Clean-up and exit. */
-   TA_UDBaseFree( unifiedDatabase );
-   TA_Shutdown();
-   return TA_SUCCESS;
 }

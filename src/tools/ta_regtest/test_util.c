@@ -148,11 +148,10 @@ void hideFeedback()
    ta_g_val = 0;
 }
 
-ErrorNumber allocLib( TA_UDBase **uDBasePtr )
+ErrorNumber allocLib()
 {
    TA_InitializeParam initializeParam;
    TA_RetCode retCode;
-   TA_UDBase *uDBase;
 
    /* Initialize the library. */
    memset( &initializeParam, 0, sizeof( TA_InitializeParam ) );
@@ -173,34 +172,16 @@ ErrorNumber allocLib( TA_UDBase **uDBasePtr )
       TA_Shutdown();
       return TA_TESTUTIL_SET_FATAL_ERROR_FAILED;
    }
-      
-   /* Create an unified database. */
-   retCode = TA_UDBaseAlloc( &uDBase );
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "TA_UDBaseAlloc failed [%d]\n", retCode );
-      TA_Shutdown();
-      return TA_TESTUTIL_UDBASE_ALLOC_FAILED;
-   }
-
-   *uDBasePtr = uDBase;
 
    return TA_TEST_PASS;
 }
 
-ErrorNumber freeLib( TA_UDBase  *uDBase )
+ErrorNumber freeLib()
 {
    TA_RetCode retCode;
 
    /* For testing purpose */
    /* TA_FATAL_RET( "Test again", 100, 200, 0 ); */
-
-   retCode = TA_UDBaseFree( uDBase );
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "TA_UDBaseFree failed [%d]\n", retCode );
-      return TA_TESTUTIL_UDBASE_FREE_FAILED;
-   }
 
    retCode = TA_Shutdown();
    if( retCode != TA_SUCCESS )

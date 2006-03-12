@@ -135,12 +135,11 @@ ErrorNumber test_internals( void )
 static ErrorNumber testFatalErrors( void )
 {
    TA_RetCode retCode;
-   TA_UDBase *uDBase;
    ErrorNumber retValue;
    char *b;
 
    /* Initialize the library. */
-   retValue = allocLib( &uDBase );
+   retValue = allocLib();
    if( retValue != TA_TEST_PASS )
    {
       printf( "\ntestFatalErrors Failed: Can't initialize the library\n" );
@@ -174,11 +173,11 @@ static ErrorNumber testFatalErrors( void )
    }
    TA_Free(b);
 
-   retValue = freeLib( uDBase );
+   retValue = freeLib();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
-   retValue = allocLib( &uDBase );
+   retValue = allocLib();
    if( retValue != TA_TEST_PASS )
    {
       printf( "\ntestFatalErrors Failed: Can't initialize the library\n" );
@@ -191,7 +190,7 @@ static ErrorNumber testFatalErrors( void )
    if( retCode != TA_FATAL_ERR )
       return TA_INTERNAL_ASSERT_TST_FAIL;
 
-   retValue = freeLib( uDBase );
+   retValue = freeLib();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -203,11 +202,10 @@ static ErrorNumber testCircularBuffer( void )
    TA_RetCode retCode;
    int i; 
    int buffer[20];
-   TA_UDBase *uDBase;
    ErrorNumber retValue;
 
    /* Initialize the library. */
-   retValue = allocLib( &uDBase );
+   retValue = allocLib();
    if( retValue != TA_TEST_PASS )
    {
       printf( "\nFailed: Can't initialize the library\n" );
@@ -314,7 +312,7 @@ static ErrorNumber testCircularBuffer( void )
       }
    }
 
-   retValue = freeLib( uDBase );
+   retValue = freeLib();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
