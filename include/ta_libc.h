@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,16 +43,9 @@
     #include "ta_func.h"
 #endif
 
-#ifndef TA_DATA_H
-    #include "ta_data.h"
-#endif
-
 #ifndef TA_ABSTRACT_H
    #include "ta_abstract.h"
 #endif
 
-#ifndef TA_PM_H
-   #include "ta_pm.h"
 #endif
 
-#endif

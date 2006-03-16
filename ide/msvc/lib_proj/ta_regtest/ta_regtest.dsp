@@ -202,10 +202,6 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_adx.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\tools\ta_regtest\test_ascii.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_bbands.c
 # End Source File
 # Begin Source File
@@ -214,7 +210,7 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_candlestick.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\tools\ta_regtest\test_csi.c
+SOURCE=..\..\..\..\src\tools\ta_regtest\test_data.c
 # End Source File
 # Begin Source File
 
@@ -227,10 +223,6 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_ma.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_macd.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\tools\ta_regtest\test_merge.c
 # End Source File
 # Begin Source File
 
@@ -262,14 +254,6 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ohlc.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\tools\ta_regtest\test_period.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\tools\ta_regtest\test_pm.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_po.c
 # End Source File
 # Begin Source File
@@ -295,10 +279,6 @@ SOURCE=..\..\..\..\src\tools\ta_regtest\ta_test_func\test_trange.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\tools\ta_regtest\test_util.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\tools\ta_regtest\test_yahoo.c
 # End Source File
 # End Group
 # Begin Group "Header Files"

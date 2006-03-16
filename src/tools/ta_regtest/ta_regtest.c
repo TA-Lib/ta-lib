@@ -164,7 +164,6 @@ static ErrorNumber test_with_simulator( void )
    return TA_TEST_PASS; /* All test succeed. */
 }
 
-extern TA_Timestamp TA_SREF_timestamp_daily_ref_0_PRIV[];
 extern TA_Real      TA_SREF_open_daily_ref_0_PRIV[];
 extern TA_Real      TA_SREF_high_daily_ref_0_PRIV[];
 extern TA_Real      TA_SREF_low_daily_ref_0_PRIV[];

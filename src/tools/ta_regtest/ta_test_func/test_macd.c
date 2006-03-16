@@ -58,8 +58,6 @@
 #include "ta_test_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_trace.h"
-
 
 /**** External functions declarations. ****/
 /* None */

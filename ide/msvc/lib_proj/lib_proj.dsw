@@ -18,42 +18,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "gen_data"=".\gen_data\gen_data.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name ta_common
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name ta_data
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "gen_rdata"=".\gen_rdata\gen_rdata.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name ta_common
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name ta_data
-    End Project Dependency
-}}}
-
-###############################################################################
-
 Project: "ta_abstract"=".\ta_abstract\ta_abstract.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -67,18 +31,6 @@ Package=<4>
 ###############################################################################
 
 Project: "ta_common"=".\ta_common\ta_common.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "ta_data"=".\ta_data\ta_data.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -117,26 +69,8 @@ Package=<4>
     Project_Dep_Name ta_common
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name ta_data
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name ta_func
     End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name ta_pm
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "ta_pm"=".\ta_pm\ta_pm.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
 }}}
 
 ###############################################################################
@@ -159,13 +93,7 @@ Package=<4>
     Project_Dep_Name ta_common
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name ta_data
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name ta_func
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name ta_pm
     End Project Dependency
 }}}
 

@@ -61,7 +61,6 @@
 
 #include "ta_test_priv.h"
 #include "ta_memory.h"
-#include "ta_trace.h"
 #include "ta_defs.h"
 #include "mt19937ar.h"
 #include "ta_common.h"
@@ -80,10 +79,8 @@
 /* None */
 
 /**** Local functions declarations.    ****/
-static ErrorNumber testFatalErrors( void );
 static ErrorNumber testCircularBuffer( void );
 static ErrorNumber testPseudoRandomGenerator( void );
-static ErrorNumber testTimestamps( void );
 
 static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer );
 
@@ -108,91 +105,12 @@ ErrorNumber test_internals( void )
       return retValue;
    }
 
-   retValue = testFatalErrors();
-   if( retValue != TA_TEST_PASS )
-   {
-      printf( "\nFailed: Fatal Errors Test (%d)\n", retValue );
-      return retValue;
-   }
-
    retValue = testPseudoRandomGenerator();
    if( retValue != TA_TEST_PASS )
    {
       printf( "\nFailed: Pseudo-random generator test (%d)\n", retValue );
       return retValue;
    }
-
-   retValue = testTimestamps();
-   if( retValue != TA_TEST_PASS )
-   {
-      printf( "\nFailed: Timestamps generator test (%d)\n", retValue );
-      return retValue;
-   }
-
-   return TA_TEST_PASS; /* Success. */
-}
-
-static ErrorNumber testFatalErrors( void )
-{
-   TA_RetCode retCode;
-   ErrorNumber retValue;
-   char *b;
-
-   /* Initialize the library. */
-   retValue = allocLib();
-   if( retValue != TA_TEST_PASS )
-   {
-      printf( "\ntestFatalErrors Failed: Can't initialize the library\n" );
-      return retValue;
-   }
-
-   TA_SetFatalErrorHandler( NULL );
-
-   retCode = TA_RegressionTest(TA_REG_TEST_FATAL_ERROR);
-   if( retCode != TA_FATAL_ERR )
-      return TA_INTERNAL_FATAL_TST_FAIL;
-
-   /* After a function returns a TA_FATAL_ERR, further
-    * information can be obtained with TA_FatalReportToBuffer()
-    * and/or TA_FatalReport().
-    *
-    * These functions returns the info only about the LAST
-    * recorded fatal error. To more easily record all the fatal
-    * error, you should install a fatal error handler and call
-    * the TA_FatalReportXXXX() function from the handler.
-    *
-    * You can monitor what is getting in the buffer by 
-    * un-commenting the printf.
-    *      
-    */
-   b = (char *)TA_Malloc(TA_FATAL_ERROR_BUF_SIZE);
-   if( b )
-   {
-      TA_FatalReportToBuffer( b, TA_FATAL_ERROR_BUF_SIZE );
-      /* printf( b ); */
-   }
-   TA_Free(b);
-
-   retValue = freeLib();
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-
-   retValue = allocLib();
-   if( retValue != TA_TEST_PASS )
-   {
-      printf( "\ntestFatalErrors Failed: Can't initialize the library\n" );
-      return retValue;
-   }
-
-   TA_SetFatalErrorHandler( NULL );
-
-   retCode = TA_RegressionTest(TA_REG_TEST_ASSERT_FAIL);
-   if( retCode != TA_FATAL_ERR )
-      return TA_INTERNAL_ASSERT_TST_FAIL;
-
-   retValue = freeLib();
-   if( retValue != TA_TEST_PASS )
-      return retValue;
 
    return TA_TEST_PASS; /* Success. */
 }
@@ -802,28 +720,5 @@ static ErrorNumber testPseudoRandomGenerator( void )
     }
    
    return TA_TEST_PASS; /* Success */
-}
-
-static ErrorNumber testTimestamps( void )
-{
-  TA_Timestamp ts;
-
-  /* TEst for fix #1293953. */
-  TA_SetDate( 2001, 1, 1, &ts );
-  TA_SetTime( 8, 0, 0, &ts );
-  TA_AddTimeToTimestamp( &ts, &ts, TA_30MINS );
-
-  if( (TA_GetYear( &ts ) != 2001) ||
-      (TA_GetMonth( &ts ) != 1) ||
-      (TA_GetDay( &ts ) != 1) ||
-      (TA_GetHour( &ts ) != 8) ||
-      (TA_GetMin( &ts ) != 30) ||
-      (TA_GetSec( &ts ) != 0) )
-  {
-     printf( "Internal Error: Timestamp offset bug\n" );
-     return TA_INTERNAL_TIMESTAMP_TEST_FAILED;
-  }
-
-  return TA_TEST_PASS; /* Success */
 }
 

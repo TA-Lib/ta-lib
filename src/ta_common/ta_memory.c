@@ -92,9 +92,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ta_memory.h"
-#include "ta_system.h"
 #include "ta_global.h"
-#include "ta_trace.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -142,9 +140,6 @@ typedef struct
 {
    unsigned long   mem_size;   /* Amount of memory used */
    unsigned long   init_mem_size;
-   #if !defined( TA_SINGLE_THREAD )
-      TA_Sema mutexMemSema;
-   #endif
    #if defined(TA_MEM_LIST)
       TA_MEMHDR *memlist;   /* List of memory blocks */
    #endif

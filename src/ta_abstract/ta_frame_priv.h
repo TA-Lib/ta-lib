@@ -25,7 +25,6 @@ typedef struct
    const TA_Real      *close;
    const TA_Integer   *volume;
    const TA_Integer   *openInterest;
-   const TA_Timestamp *timestamp;
 } TA_PricePtrs;
 
 typedef struct
