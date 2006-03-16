@@ -58,7 +58,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "ta_test_priv.h"
-#include "ta_trace.h"
 #include "trionan.h"
 
 /**** External functions declarations. ****/
@@ -301,7 +300,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 	  switch(inputInfo->type)
 	  {
 	  case TA_Input_Price:
-         TA_SetInputParamPricePtr( paramHolder, i, NULL,
+         TA_SetInputParamPricePtr( paramHolder, i,
 			 inputInfo->flags&TA_IN_PRICE_OPEN?input:NULL,
 			 inputInfo->flags&TA_IN_PRICE_HIGH?input:NULL,
 			 inputInfo->flags&TA_IN_PRICE_LOW?input:NULL,

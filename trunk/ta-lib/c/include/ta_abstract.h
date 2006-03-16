@@ -488,7 +488,6 @@ TA_RetCode TA_SetInputParamRealPtr( TA_ParamHolder *params,
 
 TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder *params,
                                      unsigned int paramIndex,
-                                     const TA_Timestamp *timestamp,
                                      const TA_Real      *open,
                                      const TA_Real      *high,
                                      const TA_Real      *low,

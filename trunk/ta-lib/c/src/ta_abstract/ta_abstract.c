@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -63,7 +63,6 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 #include "ta_frame_priv.h"
-#include "ta_trace.h"
 
 #include <limits.h>
 
@@ -170,22 +169,19 @@ static const unsigned int *TA_DEF_TablesSize[26] =
 /**** Global functions definitions.   ****/
 TA_RetCode TA_GroupTableAlloc( TA_StringTable **table )
 {
-   TA_PROLOG
    TA_StringTable *stringTable;
    TA_StringTablePriv *stringTablePriv;
 
-   TA_TRACE_BEGIN( TA_GroupTableAlloc );
-
    if( table == NULL )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    stringTable = (TA_StringTable *)TA_Malloc( sizeof(TA_StringTable) + sizeof(TA_StringTablePriv) );
    if( !stringTable )
    {
       *table = NULL;
-      TA_TRACE_RETURN( TA_ALLOC_ERR );
+      return TA_ALLOC_ERR;
    }
 
    memset( stringTable, 0, sizeof(TA_StringTable) + sizeof(TA_StringTablePriv) );
@@ -201,38 +197,34 @@ TA_RetCode TA_GroupTableAlloc( TA_StringTable **table )
    /* Success. Return the table to the caller. */
    *table = stringTable;
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_GroupTableFree( TA_StringTable *table )
 {
-   TA_PROLOG
    TA_StringTablePriv *stringTablePriv;
-
-   TA_TRACE_BEGIN( TA_GroupTableFree );
 
    if( table )
    {
       stringTablePriv = (TA_StringTablePriv *)table->hiddenData;
       if( !stringTablePriv )
       {
-         TA_TRACE_RETURN( TA_INTERNAL_ERROR(1) );
+         return TA_INTERNAL_ERROR(1);
       }
    
       if( stringTablePriv->magicNumber != TA_STRING_TABLE_GROUP_MAGIC_NB )
       {
-         TA_TRACE_RETURN( TA_BAD_OBJECT );
+         return TA_BAD_OBJECT;
       }
 
       TA_Free( table );
    }
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
 {
-   TA_PROLOG
    TA_StringTable   *tableGroup;
    TA_StringTable   *tableFunc;
    const TA_FuncDef *funcDef;
@@ -242,11 +234,9 @@ TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
 
    const TA_FuncInfo *funcInfo;
 
-   TA_TRACE_BEGIN( TA_ForEachFunc );
-
    if( functionToCall == NULL )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
    
    /* Get all the group to iterate. */
@@ -254,22 +244,34 @@ TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
 
    if( retCode == TA_SUCCESS )
    {
-      TA_ASSERT( tableGroup != NULL );
-
       for( i=0; i < tableGroup->size; i++ )
       {
-         TA_ASSERT_DEBUG( tableGroup->string[i] != NULL );
+         if( !tableGroup->string[i] )
+         {
+            TA_GroupTableFree( tableGroup );
+            return TA_INTERNAL_ERROR(2);
+         }
 
          /* Get all the symbols to iterate for this category. */
          retCode = TA_FuncTableAlloc( tableGroup->string[i], &tableFunc );
 
          if( retCode == TA_SUCCESS )
          {
-            TA_ASSERT_DEBUG( tableFunc != NULL );
+            if( !tableFunc )
+            {
+               TA_GroupTableFree( tableGroup );
+               TA_FuncTableFree( tableFunc );
+               return TA_INTERNAL_ERROR(2);
+            }            
 
             for( j=0; j < tableFunc->size; j++ )
             {
-               TA_ASSERT_DEBUG( tableFunc->string[j] != NULL );
+               if( !tableFunc->string[j] )
+               {
+                  TA_GroupTableFree( tableGroup );
+                  TA_FuncTableFree( tableFunc );
+                  return TA_INTERNAL_ERROR(2);
+               }
 
                /* Get the function handle, and then the TA_FuncDef,
                 * and then the TA_FuncInfo...
@@ -279,15 +281,30 @@ TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
                if( retCode != TA_SUCCESS )
                   continue;
 
-               TA_ASSERT_DEBUG( funcHandle != NULL );
+               if( !funcHandle )
+               {
+                  TA_GroupTableFree( tableGroup );
+                  TA_FuncTableFree( tableFunc );
+                  return TA_INTERNAL_ERROR(2);
+               }
 
                funcDef  = (const TA_FuncDef *)funcHandle;
 
-               TA_ASSERT_DEBUG( funcDef != NULL );
+               if( !funcDef )
+               {
+                  TA_GroupTableFree( tableGroup );
+                  TA_FuncTableFree( tableFunc );
+                  return TA_INTERNAL_ERROR(2);
+               }
 
                funcInfo = funcDef->funcInfo;
 
-               TA_ASSERT_DEBUG( funcInfo != NULL );
+               if( !funcInfo )
+               {
+                  TA_GroupTableFree( tableGroup );
+                  TA_FuncTableFree( tableFunc );
+                  return TA_INTERNAL_ERROR(2);
+               }
 
                /* Call user provided function. */
                (*functionToCall)( funcInfo, opaqueData );
@@ -301,15 +318,14 @@ TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
    }
    else
    {
-      TA_TRACE_RETURN( TA_INTERNAL_ERROR(2) );
+      return TA_INTERNAL_ERROR(2);
    }
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
 {
-   TA_PROLOG
    TA_RetCode retCode;
    unsigned int i;
    TA_StringTable *stringTable;
@@ -317,11 +333,10 @@ TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
    unsigned int groupSize;
    const char *stringPtr;
    TA_StringTablePriv *stringTablePriv;
-   TA_TRACE_BEGIN( TA_FuncTableAlloc );
 
    if( (group == NULL) || (table == NULL ) )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    *table = NULL;
@@ -330,13 +345,13 @@ TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
    retCode = getGroupId( group, &groupId );
    if( retCode != TA_SUCCESS )
    {
-      TA_TRACE_RETURN( retCode );
+      return retCode;
    }
 
    retCode = getGroupSize( (TA_GroupId)groupId, &groupSize );
    if( retCode != TA_SUCCESS )
    {
-      TA_TRACE_RETURN( retCode );
+      return retCode;
    }
 
    /* Allocate the table. */
@@ -345,7 +360,7 @@ TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
    if( !stringTable )
    {
       *table = NULL;
-      TA_TRACE_RETURN( TA_ALLOC_ERR );
+      return TA_ALLOC_ERR;
    }
 
    memset( stringTable, 0, sizeof(TA_StringTable) + sizeof(TA_StringTablePriv) );
@@ -364,7 +379,7 @@ TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
       {
          *table = NULL;
          TA_FuncTableFree( stringTable );
-         TA_TRACE_RETURN( TA_ALLOC_ERR );
+         return TA_ALLOC_ERR;
       }
 
       memset( (void *)stringTable->string, 0,
@@ -378,7 +393,7 @@ TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
          {
             *table = NULL;
             TA_FuncTableFree( stringTable );
-            TA_TRACE_RETURN( TA_ALLOC_ERR );
+            return TA_ALLOC_ERR;
          }
 
          (stringTable->string)[i] = stringPtr;
@@ -388,27 +403,24 @@ TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
    /* Return the table to the caller. */
    *table = stringTable;
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_FuncTableFree( TA_StringTable *table )
 {
-   TA_PROLOG
    TA_StringTablePriv *stringTablePriv;
-
-   TA_TRACE_BEGIN( TA_FuncTableFree );
 
    if( table )
    {
       stringTablePriv = (TA_StringTablePriv *)table->hiddenData;
       if( !stringTablePriv )
       {
-         TA_TRACE_RETURN( TA_INTERNAL_ERROR(3) );
+         return TA_INTERNAL_ERROR(3);
       }
    
       if( stringTablePriv->magicNumber != TA_STRING_TABLE_FUNC_MAGIC_NB )
       {
-         TA_TRACE_RETURN( TA_BAD_OBJECT );
+         return TA_BAD_OBJECT;
       }
 
       if( table->string )
@@ -417,26 +429,23 @@ TA_RetCode TA_FuncTableFree( TA_StringTable *table )
       TA_Free( table );
    }
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
 {
-   TA_PROLOG
    char firstChar, tmp;
    const TA_FuncDef **funcDefTable;
    const TA_FuncDef *funcDef;
    const TA_FuncInfo *funcInfo;
    unsigned int i, funcDefTableSize;
 
-   TA_TRACE_BEGIN( TA_GetFuncHandle );
-
    /* A TA_FuncHandle is internally a TA_FuncDef. Let's find it
     * by using the alphabetical tables.
     */
    if( (name == NULL) || (handle == NULL) )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    *handle = NULL;
@@ -445,14 +454,14 @@ TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
 
    if( firstChar == '\0' )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    tmp = (char)tolower( firstChar );
 
    if( (tmp < 'a') || (tmp > 'z') )
    {
-      TA_TRACE_RETURN( TA_FUNC_NOT_FOUND );
+      return TA_FUNC_NOT_FOUND;
    }
 
    /* Identify the table. */
@@ -463,70 +472,65 @@ TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
    funcDefTableSize = *TA_DEF_TablesSize[(int)tmp];
    if( funcDefTableSize < 1 )
    {
-      TA_TRACE_RETURN( TA_FUNC_NOT_FOUND );
+      return TA_FUNC_NOT_FOUND;
    }
 
    /* Iterate all entries of the table and return as soon as found. */
    for( i=0; i < funcDefTableSize; i++ )
    {
       funcDef = funcDefTable[i];
-      TA_ASSERT_DEBUG( funcDef != NULL );
-      TA_ASSERT_DEBUG( funcDef->funcInfo != NULL );
+      if( !funcDef || !funcDef->funcInfo )
+         return TA_INTERNAL_ERROR(3);
 
       funcInfo = funcDef->funcInfo;      
-      TA_ASSERT_DEBUG( funcInfo != NULL );
+      if( !funcInfo )
+         return TA_INTERNAL_ERROR(4);
       
       if( strcmp( funcInfo->name, name ) == 0 )
       {
          *handle = (TA_FuncHandle *)funcDef;
-         TA_TRACE_RETURN( TA_SUCCESS );
+         return TA_SUCCESS;
       }
    }
 
-   TA_TRACE_RETURN( TA_FUNC_NOT_FOUND );
+   return TA_FUNC_NOT_FOUND;
 }
 
 TA_RetCode TA_GetFuncInfo(  const TA_FuncHandle *handle,
                             const TA_FuncInfo **funcInfo )
 {
-   TA_PROLOG
    const TA_FuncDef *funcDef;
-
-   TA_TRACE_BEGIN( TA_GetFuncInfo );
 
    if( !funcInfo || !handle )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    /* Validate that this is a valid funcHandle. */
    funcDef = (const TA_FuncDef *)handle;
    if( funcDef->magicNumber != TA_FUNC_DEF_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_HANDLE );
+      return TA_INVALID_HANDLE;
    }
 
-   *funcInfo = funcDef->funcInfo;
+   *funcInfo = funcDef->funcInfo;  
+   if( !funcDef->funcInfo )
+      return TA_INVALID_HANDLE;
 
-   TA_ASSERT_DEBUG( *funcInfo != NULL );
-
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_GetInputParameterInfo( const TA_FuncHandle *handle,
                                      unsigned int paramIndex,
                                      const TA_InputParameterInfo **info )
 {
-   TA_PROLOG
    const TA_FuncDef  *funcDef;
    const TA_FuncInfo *funcInfo;
    const TA_InputParameterInfo **inputTable;
 
-   TA_TRACE_BEGIN( TA_SetInputParameterInfoPtr );
-   
    if( (handle == NULL) || (info == NULL) )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    *info = NULL;
@@ -535,42 +539,41 @@ TA_RetCode TA_GetInputParameterInfo( const TA_FuncHandle *handle,
    funcDef = (const TA_FuncDef *)handle;
    if( funcDef->magicNumber != TA_FUNC_DEF_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_HANDLE );
+      return TA_INVALID_HANDLE;
    }
    funcInfo = funcDef->funcInfo;
 
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo ) return TA_INVALID_HANDLE;
 
    if( paramIndex >= funcInfo->nbInput )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    inputTable = (const TA_InputParameterInfo **)funcDef->input;
 
-   TA_ASSERT_DEBUG( inputTable != NULL );
+   if( !inputTable )
+      return TA_INTERNAL_ERROR(2);
 
    *info = inputTable[paramIndex];
 
-   TA_ASSERT_DEBUG( *info != NULL );
+   if( !(*info) )
+      return TA_INTERNAL_ERROR(3);
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_GetOptInputParameterInfo( const TA_FuncHandle *handle,
                                         unsigned int paramIndex,
                                         const TA_OptInputParameterInfo **info )
 {
-   TA_PROLOG
    const TA_FuncDef  *funcDef;
    const TA_FuncInfo *funcInfo;
    const TA_OptInputParameterInfo **inputTable;
 
-   TA_TRACE_BEGIN( TA_SetOptInputParameterInfoPtr );
-
    if( (handle == NULL) || (info == NULL) )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    *info = NULL;
@@ -579,43 +582,44 @@ TA_RetCode TA_GetOptInputParameterInfo( const TA_FuncHandle *handle,
    funcDef = (const TA_FuncDef *)handle;
    if( funcDef->magicNumber != TA_FUNC_DEF_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_HANDLE );
+      return TA_INVALID_HANDLE;
    }
 
    funcInfo = funcDef->funcInfo;
 
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo )
+      return TA_INVALID_HANDLE;
 
    if( paramIndex >= funcInfo->nbOptInput )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    inputTable = (const TA_OptInputParameterInfo **)funcDef->optInput;
 
-   TA_ASSERT_DEBUG( inputTable != NULL );
+   if( !inputTable )
+      return TA_INTERNAL_ERROR(3);
 
    *info = inputTable[paramIndex];
 
-   TA_ASSERT_DEBUG( *info != NULL );
+   if( !(*info) )
+      return TA_INTERNAL_ERROR(4);
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
                                       unsigned int paramIndex,
                                       const TA_OutputParameterInfo **info )
 {
-   TA_PROLOG
+   
    const TA_FuncDef  *funcDef;
    const TA_FuncInfo *funcInfo;
    const TA_OutputParameterInfo **outputTable;
 
-   TA_TRACE_BEGIN( TA_SetOutputParameterInfoPtr );
-
    if( (handle == NULL) || (info == NULL) )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    *info = NULL;
@@ -624,33 +628,42 @@ TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
    funcDef = (const TA_FuncDef *)handle;
    if( funcDef->magicNumber != TA_FUNC_DEF_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_HANDLE );
+      return TA_INVALID_HANDLE;
    }
 
    funcInfo = funcDef->funcInfo;
 
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo )
+   {
+      return TA_INVALID_HANDLE;
+   }
 
    if( paramIndex >= funcInfo->nbOutput )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    outputTable = (const TA_OutputParameterInfo **)funcDef->output;
 
-   TA_ASSERT_DEBUG( outputTable != NULL );
+   if( !outputTable )
+   {
+      return TA_INTERNAL_ERROR(4);
+   }
 
    *info = outputTable[paramIndex];
 
-   TA_ASSERT_DEBUG( *info != NULL );
+   if( !(*info) )
+   {
+      return TA_INTERNAL_ERROR(5);
+   }
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
                                 TA_ParamHolder **allocatedParams )
 {
-   TA_PROLOG
+   
    TA_FuncDef *funcDef;
    unsigned int allocSize, i;
    TA_ParamHolderInput    *input;
@@ -665,12 +678,10 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
    const TA_OptInputParameterInfo **optInputInfo;
    const TA_OutputParameterInfo   **outputInfo;
 
-   TA_TRACE_BEGIN( TA_ParamHoldersAlloc );
-
    /* Validate the parameters. */
    if( !handle || !allocatedParams)
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    /* Validate that this is a valid funcHandle. */
@@ -678,19 +689,19 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
    if( funcDef->magicNumber != TA_FUNC_DEF_MAGIC_NB )
    {
       *allocatedParams = NULL;
-      TA_TRACE_RETURN( TA_INVALID_HANDLE );
+      return TA_INVALID_HANDLE;
    }
 
    /* Get the TA_FuncInfo. */
    funcInfo = funcDef->funcInfo;
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo ) return TA_INVALID_HANDLE;
 
    /* Allocate the TA_ParamHolder. */
    newParams = (TA_ParamHolder *)TA_Malloc( sizeof(TA_ParamHolder) + sizeof(TA_ParamHolderPriv));
    if( !newParams )
    {
       *allocatedParams = NULL;
-      TA_TRACE_RETURN( TA_ALLOC_ERR );
+      return TA_ALLOC_ERR;
    }
 
    memset( newParams, 0, sizeof(TA_ParamHolder) + sizeof(TA_ParamHolderPriv) );
@@ -703,7 +714,7 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
    /* Allocate the array of structure holding the info
     * for each parameter.
     */
-   TA_ASSERT_DEBUG( funcInfo->nbInput != 0 );
+   if( funcInfo->nbInput == 0 ) return TA_INTERNAL_ERROR(2);
 
    allocSize = (funcInfo->nbInput) * sizeof(TA_ParamHolderInput);
    input = (TA_ParamHolderInput *)TA_Malloc( allocSize );
@@ -712,7 +723,7 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
    {
       TA_ParamHolderFree( newParams );
       *allocatedParams = NULL;
-      TA_TRACE_RETURN( TA_ALLOC_ERR );
+      return TA_ALLOC_ERR;
    }
    memset( input, 0, allocSize );
    newParamsPriv->in = input;
@@ -728,7 +739,7 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
       {
          TA_ParamHolderFree( newParams );
          *allocatedParams = NULL;
-         TA_TRACE_RETURN( TA_ALLOC_ERR );
+         return TA_ALLOC_ERR;
       }
       memset( optInput, 0, allocSize );
    }
@@ -740,7 +751,7 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
    {
       TA_ParamHolderFree( newParams );
       *allocatedParams = NULL;
-      TA_TRACE_RETURN( TA_ALLOC_ERR );
+      return TA_ALLOC_ERR;
    }
    memset( output, 0, allocSize );
    newParamsPriv->out = output;
@@ -777,36 +788,32 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
    /* Succcess, return the result to the caller. */
    *allocatedParams = newParams;
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_ParamHolderFree( TA_ParamHolder *paramsToFree )
 {
-   TA_PROLOG
-
    TA_ParamHolderPriv     *paramPriv;
 
    TA_ParamHolderInput    *input;
    TA_ParamHolderOptInput *optInput;
    TA_ParamHolderOutput   *output;
 
-   TA_TRACE_BEGIN( TA_ParamHolderFree );
-
    if( !paramsToFree )
    {
-      TA_TRACE_RETURN( TA_SUCCESS );
+      return TA_SUCCESS;
    }
 
    paramPriv = paramsToFree->hiddenData;
 
    if( !paramPriv )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER );
+      return TA_INVALID_PARAM_HOLDER;
    }
 
    if( paramPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER );
+      return TA_INVALID_PARAM_HOLDER;
    }
 
    optInput = paramPriv->optIn;
@@ -823,7 +830,7 @@ TA_RetCode TA_ParamHolderFree( TA_ParamHolder *paramsToFree )
 
    TA_Free( paramsToFree );
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 
@@ -831,38 +838,37 @@ TA_RetCode TA_SetInputParamIntegerPtr( TA_ParamHolder *param,
                                        unsigned int paramIndex,
                                        const TA_Integer *value )
 {
-   TA_PROLOG
+   
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_InputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
 
-   TA_TRACE_BEGIN( TA_SetInputParamIntegerPtr );
-
    if( (param == NULL) || (value == NULL) )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER );
+      return TA_INVALID_PARAM_HOLDER;
    }
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo ) return TA_INVALID_HANDLE;
+
    if( paramIndex >= funcInfo->nbInput )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }   
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->in[paramIndex].inputInfo;
-   TA_ASSERT_DEBUG( paramInfo != NULL );
+   if( !paramInfo ) return TA_INTERNAL_ERROR(2);
    if( paramInfo->type != TA_Input_Integer )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER_TYPE );
+      return TA_INVALID_PARAM_HOLDER_TYPE;
    }
 
    /* keep a copy of the provided parameter. */
@@ -871,45 +877,43 @@ TA_RetCode TA_SetInputParamIntegerPtr( TA_ParamHolder *param,
    /* This parameter is now initialized, clear the corresponding bit. */
    paramHolderPriv->inBitmap &= ~(1<<paramIndex);
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_SetInputParamRealPtr( TA_ParamHolder *param,
                                     unsigned int paramIndex,
                                     const TA_Real *value )
-{
-   TA_PROLOG
+{   
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_InputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
 
-   TA_TRACE_BEGIN( TA_SetInputParamIntegerPtr );
-
    if( (param == NULL) || (value == NULL) )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER );
+      return TA_INVALID_PARAM_HOLDER;
    }
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo ) return TA_INVALID_HANDLE;
+
    if( paramIndex >= funcInfo->nbInput )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }   
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->in[paramIndex].inputInfo;
-   TA_ASSERT_DEBUG( paramInfo != NULL );
+   if( !paramInfo ) return TA_INTERNAL_ERROR(2);
    if( paramInfo->type != TA_Input_Real )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER_TYPE );
+      return TA_INVALID_PARAM_HOLDER_TYPE;
    }
 
    /* keep a copy of the provided parameter. */
@@ -918,12 +922,11 @@ TA_RetCode TA_SetInputParamRealPtr( TA_ParamHolder *param,
    /* This parameter is now initialized, clear the corresponding bit. */
    paramHolderPriv->inBitmap &= ~(1<<paramIndex);
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
                                      unsigned int        paramIndex,
-                                     const TA_Timestamp *timestamp,
                                      const TA_Real      *open,
                                      const TA_Real      *high,
                                      const TA_Real      *low,
@@ -931,38 +934,36 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
                                      const TA_Integer   *volume,
                                      const TA_Integer   *openInterest )
 {
-   TA_PROLOG
+   
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_InputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
 
-   TA_TRACE_BEGIN( TA_SetInputParamIntegerPtr );
-
    if( param == NULL )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER );
+      return TA_INVALID_PARAM_HOLDER;
    }
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo ) return TA_INVALID_HANDLE;
    if( paramIndex >= funcInfo->nbInput )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }   
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->in[paramIndex].inputInfo;
-   TA_ASSERT_DEBUG( paramInfo != NULL );
+   if( !paramInfo ) return TA_INTERNAL_ERROR(2);
    if( paramInfo->type != TA_Input_Price )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER_TYPE );
+      return TA_INVALID_PARAM_HOLDER_TYPE;
    }
 
    /* keep a copy of the provided parameter. */
@@ -972,7 +973,7 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
       { \
          if( lowerParam == NULL ) \
          { \
-            TA_TRACE_RETURN( TA_BAD_PARAM ); \
+            return TA_BAD_PARAM; \
          } \
          paramHolderPriv->in[paramIndex].data.inPrice.lowerParam = lowerParam; \
       } \
@@ -984,104 +985,99 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
    SET_PARAM_INFO(close, CLOSE );
    SET_PARAM_INFO(volume, VOLUME );
    SET_PARAM_INFO(openInterest, OPENINTEREST );
-   SET_PARAM_INFO(timestamp, TIMESTAMP );
 
    #undef SET_PARAM_INFO
 
    /* This parameter is now initialized, clear the corresponding bit. */
    paramHolderPriv->inBitmap &= ~(1<<paramIndex);
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_SetOptInputParamInteger( TA_ParamHolder *param,
                                        unsigned int paramIndex,
                                        TA_Integer value )
 {
-   TA_PROLOG
+   
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_OptInputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
 
-   TA_TRACE_BEGIN( TA_SetOptInputParamReal );
-
    if( param == NULL )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER );
+      return TA_INVALID_PARAM_HOLDER;
    }
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo ) return TA_INVALID_HANDLE;
    if( paramIndex >= funcInfo->nbOptInput )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }   
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->optIn[paramIndex].optInputInfo;
-   TA_ASSERT_DEBUG( paramInfo != NULL );
+   if( !paramInfo ) return TA_INTERNAL_ERROR(2);
    if( (paramInfo->type != TA_OptInput_IntegerRange) &&
        (paramInfo->type != TA_OptInput_IntegerList) )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER_TYPE );
+      return TA_INVALID_PARAM_HOLDER_TYPE;
    }
 
    /* keep a copy of the provided parameter. */
    paramHolderPriv->optIn[paramIndex].data.optInInteger = value; 
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_SetOptInputParamReal( TA_ParamHolder *param,
                                     unsigned int paramIndex,
                                     TA_Real value )
-{
-   TA_PROLOG
+{   
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_OptInputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
 
-   TA_TRACE_BEGIN( TA_SetOptInputParamReal );
-
    if( param == NULL )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER );
+      return TA_INVALID_PARAM_HOLDER;
    }
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo ) return TA_INVALID_HANDLE;
+
    if( paramIndex >= funcInfo->nbOptInput )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }   
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->optIn[paramIndex].optInputInfo;
-   TA_ASSERT_DEBUG( paramInfo != NULL );
+   if( !paramInfo ) return TA_INTERNAL_ERROR(2);
    if( (paramInfo->type != TA_OptInput_RealRange) &&
        (paramInfo->type != TA_OptInput_RealList) )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER_TYPE );
+      return TA_INVALID_PARAM_HOLDER_TYPE;
    }
 
    /* keep a copy of the provided parameter. */
    paramHolderPriv->optIn[paramIndex].data.optInReal = value; 
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 
@@ -1089,39 +1085,37 @@ TA_RetCode TA_SetOptInputParamReal( TA_ParamHolder *param,
 TA_RetCode TA_SetOutputParamIntegerPtr( TA_ParamHolder *param,
                                         unsigned int paramIndex,
                                         TA_Integer     *out )
-{
-   TA_PROLOG
+{   
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_OutputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
 
-   TA_TRACE_BEGIN( TA_SetOutputParamIntegerPtr );
-
    if( (param == NULL) || (out == NULL) )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER );
+      return TA_INVALID_PARAM_HOLDER;
    }
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo ) return TA_INVALID_HANDLE;
+
    if( paramIndex >= funcInfo->nbOutput )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }   
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->out[paramIndex].outputInfo;
-   TA_ASSERT_DEBUG( paramInfo != NULL );
+   if( !paramInfo ) return TA_INTERNAL_ERROR(2);
    if( paramInfo->type != TA_Output_Integer )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER_TYPE );
+      return TA_INVALID_PARAM_HOLDER_TYPE;
    }
 
    /* keep a copy of the provided parameter. */
@@ -1130,45 +1124,43 @@ TA_RetCode TA_SetOutputParamIntegerPtr( TA_ParamHolder *param,
    /* This parameter is now initialized, clear the corresponding bit. */
    paramHolderPriv->outBitmap &= ~(1<<paramIndex);
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *param,
                                      unsigned int paramIndex,
                                      TA_Real        *out )
-{
-   TA_PROLOG
+{   
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_OutputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
 
-   TA_TRACE_BEGIN( TA_SetOutputParamIntegerPtr );
-
    if( (param == NULL) || (out == NULL) )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER );
+      return TA_INVALID_PARAM_HOLDER;
    }
 
    /* Make sure this index really exist. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo ) return TA_INVALID_HANDLE;
+
    if( paramIndex >= funcInfo->nbOutput )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }   
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->out[paramIndex].outputInfo;
-   TA_ASSERT_DEBUG( paramInfo != NULL );
+   if( !paramInfo ) return TA_INTERNAL_ERROR(2);
    if( paramInfo->type != TA_Output_Real )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER_TYPE );
+      return TA_INVALID_PARAM_HOLDER_TYPE;
    }
 
    /* keep a copy of the provided parameter. */
@@ -1177,44 +1169,41 @@ TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *param,
    /* This parameter is now initialized, clear the corresponding bit. */
    paramHolderPriv->outBitmap &= ~(1<<paramIndex);
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_GetLookback( const TA_ParamHolder *param, TA_Integer *lookback )
-{
-   TA_PROLOG
+{   
    const TA_ParamHolderPriv *paramHolderPriv;
 
    const TA_FuncDef *funcDef;
    const TA_FuncInfo *funcInfo;
    TA_FrameLookback lookbackFunction;
 
-   TA_TRACE_BEGIN( TA_GetLookback );
-
    if( (param == NULL) || (lookback == NULL))
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER );
+      return TA_INVALID_PARAM_HOLDER;
    }
 
    /* Get the pointer on the lookback function. */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo ) return TA_INVALID_HANDLE;
+
    funcDef = (const TA_FuncDef *)funcInfo->handle;
-   TA_ASSERT_DEBUG( funcDef != NULL );
+   if( !funcDef ) return TA_INTERNAL_ERROR(2);
    lookbackFunction = funcDef->lookback;
-   TA_ASSERT_DEBUG( lookbackFunction != NULL );
+   if( !lookbackFunction ) return TA_INTERNAL_ERROR(2);
 
    /* Perform the function call. */
    *lookback = (*lookbackFunction)( paramHolderPriv );
-   TA_ASSERT_DEBUG( *lookback >= 0 );
 
-   TA_TRACE_RETURN( TA_SUCCESS );
+   return TA_SUCCESS;
 }
 
 /* Finally, call a TA function with the parameters. */
@@ -1223,8 +1212,7 @@ TA_RetCode TA_CallFunc( const TA_ParamHolder *param,
                         TA_Integer            endIdx,
                         TA_Integer           *outBegIdx,
                         TA_Integer           *outNbElement )
-{
-   TA_PROLOG
+{   
    TA_RetCode retCode;
    const TA_ParamHolderPriv *paramHolderPriv;
 
@@ -1232,100 +1220,75 @@ TA_RetCode TA_CallFunc( const TA_ParamHolder *param,
    const TA_FuncInfo *funcInfo;
    TA_FrameFunction function;
 
-   TA_TRACE_BEGIN( TA_CallFunc );
-
    if( (param == NULL) ||
        (outBegIdx == NULL) ||
        (outNbElement == NULL) )
    {
-      TA_TRACE_RETURN( TA_BAD_PARAM );
+      return TA_BAD_PARAM;
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
-      TA_TRACE_RETURN( TA_INVALID_PARAM_HOLDER );
+      return TA_INVALID_PARAM_HOLDER;
    }
    
    /* Check that all parameters are initialize (except the optInput). */
    if( paramHolderPriv->inBitmap != 0 )
    {
-      TA_TRACE_RETURN( TA_INPUT_NOT_ALL_INITIALIZE );
+      return TA_INPUT_NOT_ALL_INITIALIZE;
    }
 
    if( paramHolderPriv->outBitmap != 0 )
    {
-      TA_TRACE_RETURN( TA_OUTPUT_NOT_ALL_INITIALIZE );
+      return TA_OUTPUT_NOT_ALL_INITIALIZE;
    }
 
    /* Get the pointer on the function */
    funcInfo = paramHolderPriv->funcInfo;
-   TA_ASSERT_DEBUG( funcInfo != NULL );
+   if( !funcInfo ) return TA_INVALID_HANDLE;
    funcDef = (const TA_FuncDef *)funcInfo->handle;
-   TA_ASSERT_DEBUG( funcDef != NULL );
+   if( !funcDef ) return TA_INTERNAL_ERROR(2);
    function = funcDef->function;
-   TA_ASSERT_DEBUG( function != NULL );
+   if( !function ) return TA_INTERNAL_ERROR(2);
 
    /* Perform the function call. */
    retCode = (*function)( paramHolderPriv, startIdx, endIdx,
                           outBegIdx, outNbElement );
 
-   TA_TRACE_RETURN( retCode );
+   return retCode;
 }
 
 /**** Local functions definitions.     ****/
 static TA_RetCode getGroupId( const char *groupString, unsigned int *groupId )
 {
-   #ifdef TA_GEN_CODE
-   TA_PROLOG
-   #endif
-
    unsigned int i;
-
-   #ifdef TA_GEN_CODE
-      TA_TRACE_BEGIN( getgroupId );
-
-      TA_ASSERT( groupString != NULL );
-      TA_ASSERT( groupId != NULL );
-   #endif
 
    for( i=0; i < TA_NB_GROUP_ID; i++ )
    {
       if( strcmp( TA_GroupString[i], groupString ) == 0 )
       {
          *groupId = i;
-         #ifdef TA_GEN_CODE
-            TA_TRACE_RETURN( TA_SUCCESS );
-         #else
-            return TA_SUCCESS;
-         #endif
+         return TA_SUCCESS;
       }
    }
 
-   #ifdef TA_GEN_CODE
-      TA_TRACE_RETURN( TA_GROUP_NOT_FOUND );
-   #else
-      return TA_GROUP_NOT_FOUND;
-   #endif
+   return TA_GROUP_NOT_FOUND;
 }
 
 static TA_RetCode getGroupSize( TA_GroupId groupId, unsigned int *groupSize )
 {
    #ifdef TA_GEN_CODE
       /* Code used only when compiled with gen_code. */
-      TA_PROLOG
+      
       unsigned int i, j;
       const TA_FuncDef **funcDefTable;
       const TA_FuncDef *funcDef;
       unsigned int tableSize;
       unsigned int nbFuncFound;
 
-      TA_TRACE_BEGIN( getGroupSize );
-
-      TA_ASSERT( groupId < TA_NB_GROUP_ID );
-
-      TA_ASSERT( groupId < TA_NB_GROUP_ID );
-      TA_ASSERT( groupSize != NULL );
+      if( groupId >= TA_NB_GROUP_ID ) return TA_INTERNAL_ERROR(2);     
+      if( !groupSize ) return TA_INTERNAL_ERROR(2);
 
       nbFuncFound = 0;
       for( i=0; i < 26; i++ )
@@ -1343,7 +1306,7 @@ static TA_RetCode getGroupSize( TA_GroupId groupId, unsigned int *groupSize )
 
       *groupSize = nbFuncFound;
 
-      TA_TRACE_RETURN( TA_SUCCESS );
+      return TA_SUCCESS;
    #else
       /* Optimized code in the final library. */
       *groupSize = TA_PerGroupSize[groupId];
@@ -1364,16 +1327,14 @@ static TA_RetCode getGroupSize( TA_GroupId groupId, unsigned int *groupSize )
 {
    #ifdef TA_GEN_CODE
       /* Code used only when compiled with gen_code. */
-      TA_PROLOG
+      
       unsigned int curIdx;
       unsigned int i, j, found;
       const TA_FuncDef **funcDefTable;
       unsigned int tableSize;
       const TA_FuncInfo *funcInfo;
 
-      TA_TRACE_BEGIN( getFuncNameByIdx );
-
-      TA_ASSERT( stringPtr != NULL );
+      if( !stringPtr ) return TA_INTERNAL_ERROR(2);
 
       curIdx = 0;
       found = 0;
@@ -1389,7 +1350,7 @@ static TA_RetCode getGroupSize( TA_GroupId groupId, unsigned int *groupSize )
                if( idx == curIdx )
                {
                   funcInfo = funcDefTable[j]->funcInfo;
-                  TA_ASSERT( funcInfo != NULL );
+                  if( !funcInfo ) return TA_INTERNAL_ERROR(2);
                   *stringPtr = funcInfo->name;
                   found = 1;
                }
@@ -1398,10 +1359,10 @@ static TA_RetCode getGroupSize( TA_GroupId groupId, unsigned int *groupSize )
          }
       }
 
-      TA_ASSERT( found == 1 );
-      TA_ASSERT( *stringPtr != NULL );
+      if( found != 1 ) return TA_INTERNAL_ERROR(2);
+      if( !(*stringPtr) ) return TA_INTERNAL_ERROR(2);
 
-      TA_TRACE_RETURN( TA_SUCCESS );
+      return TA_SUCCESS;
    #else
       /* Optimized code in the final library. */
       const TA_FuncDef **funcDefTable;

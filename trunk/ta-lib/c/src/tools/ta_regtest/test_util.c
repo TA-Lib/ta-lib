@@ -58,7 +58,6 @@
 #include "trionan.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_trace.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -101,7 +100,6 @@ TestBuffer gBuffer[5]; /* See initGlobalBuffer. */
 /* None */
 
 /**** Local functions declarations.    ****/
-static void myFatalHandler( void );
 static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                                        void *opaqueData,
                                        TA_Integer refOutBeg,
@@ -150,27 +148,14 @@ void hideFeedback()
 
 ErrorNumber allocLib()
 {
-   TA_InitializeParam initializeParam;
    TA_RetCode retCode;
 
    /* Initialize the library. */
-   memset( &initializeParam, 0, sizeof( TA_InitializeParam ) );
-   initializeParam.logOutput = stdout;
-
-   retCode = TA_Initialize( &initializeParam );
+   retCode = TA_Initialize();
    if( retCode != TA_SUCCESS )
    {
       printf( "TA_Initialize failed [%d]\n", retCode );
       return TA_TESTUTIL_INIT_FAILED;
-   }
-   
-   /* Install a fatal error handler. */
-   retCode = TA_SetFatalErrorHandler( myFatalHandler );
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "TA_SetFatalErrorHandler failed [%d]\n", retCode );
-      TA_Shutdown();
-      return TA_TESTUTIL_SET_FATAL_ERROR_FAILED;
    }
 
    return TA_TEST_PASS;
@@ -527,21 +512,6 @@ void printRetCode( TA_RetCode retCode )
 
 
 /**** Local functions definitions.     ****/
-static void myFatalHandler( void )
-{
-   TA_FatalReport( stdout );
-
-#if 0
-   /* Can be used for testing purpose */
-   char *b = (char *)malloc(TA_FATAL_ERROR_BUF_SIZE);
-   if( b )
-   {
-      TA_FatalReportToBuffer( b, TA_FATAL_ERROR_BUF_SIZE );
-      printf( b );
-   }
-#endif
-}
-
 static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
                                             TA_FuncUnstId unstId,
                                             void *opaqueData,

@@ -14,7 +14,6 @@ typedef struct
    unsigned int nbBars; /* Nb of element into the following arrays. */
 
    /* The arrays containing data. Unused array are set to NULL. */
-   TA_Timestamp *timestamp;
    TA_Real      *open;
    TA_Real      *high;
    TA_Real      *low;

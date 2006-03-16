@@ -31,7 +31,6 @@ CFG=ta_libc - Win32 CDR Multithread DLL Release
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
-F90=df.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "ta_libc - Win32 CDR Multithread DLL Release"
@@ -46,6 +45,7 @@ RSC=rc.exe
 # PROP Output_Dir "..\..\..\..\lib"
 # PROP Intermediate_Dir "..\..\..\..\temp\cdr\ta_libc"
 # PROP Target_Dir ""
+F90=df.exe
 # ADD BASE CPP /nologo /MD /W3 /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # ADD CPP /nologo /MD /W3 /WX /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -69,6 +69,7 @@ LIB32=link.exe -lib
 # PROP Output_Dir "..\..\..\..\lib"
 # PROP Intermediate_Dir "..\..\..\..\temp\cmd\ta_libc"
 # PROP Target_Dir ""
+F90=df.exe
 # ADD BASE CPP /nologo /MDd /W3 /Gm /Zi /Od /D "_LIB" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_DEBUG" /YX /FD /GZ /c
 # ADD CPP /nologo /MTd /W3 /WX /Gm /Zi /Od /D "_LIB" /D "TA_DEBUG" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_FUNC_NO_RANGE_CHECK" /Fr /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -92,6 +93,7 @@ LIB32=link.exe -lib
 # PROP Output_Dir "..\..\..\..\lib"
 # PROP Intermediate_Dir "..\..\..\..\temp\csd\ta_libc"
 # PROP Target_Dir ""
+F90=df.exe
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_DEBUG" /YX /FD /GZ /c
 # ADD CPP /nologo /W3 /WX /Gm /Zi /Od /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "TA_DEBUG" /FR /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -115,6 +117,7 @@ LIB32=link.exe -lib
 # PROP Output_Dir "..\..\..\..\lib"
 # PROP Intermediate_Dir "..\..\..\..\temp\csr\ta_libc"
 # PROP Target_Dir ""
+F90=df.exe
 # ADD BASE CPP /nologo /W3 /O2 /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # ADD CPP /nologo /W3 /WX /O2 /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -138,6 +141,7 @@ LIB32=link.exe -lib
 # PROP Output_Dir "..\..\..\..\lib"
 # PROP Intermediate_Dir "..\..\..\..\temp\cmr\ta_libc"
 # PROP Target_Dir ""
+F90=df.exe
 # ADD BASE CPP /nologo /MD /W3 /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # ADD CPP /nologo /MT /W3 /WX /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # SUBTRACT CPP /Fr
@@ -162,6 +166,7 @@ LIB32=link.exe -lib
 # PROP Output_Dir "ta_libc___Win32_Profiling"
 # PROP Intermediate_Dir "ta_libc___Win32_Profiling"
 # PROP Target_Dir ""
+F90=df.exe
 # ADD BASE CPP /nologo /W3 /O2 /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # ADD CPP /nologo /W3 /WX /O2 /D "_LIB" /D "TA_SINGLE_THREAD" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -185,6 +190,7 @@ LIB32=link.exe -lib
 # PROP Output_Dir "..\..\..\..\lib"
 # PROP Intermediate_Dir "..\..\..\..\temp\cdd\ta_libc"
 # PROP Target_Dir ""
+F90=df.exe
 # ADD BASE CPP /nologo /MD /W3 /WX /O1 /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # ADD CPP /nologo /MDd /W3 /WX /Zi /Od /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /FR /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -224,14 +230,6 @@ SOURCE=..\..\..\..\include\ta_common.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\ta_csi_priv.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\include\ta_data.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\include\ta_defs.h
 # End Source File
 # Begin Source File
@@ -241,10 +239,6 @@ SOURCE=..\..\..\..\include\ta_func.h
 # Begin Source File
 
 SOURCE=..\..\..\..\include\ta_libc.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\include\ta_pm.h
 # End Source File
 # End Group
 # Begin Source File

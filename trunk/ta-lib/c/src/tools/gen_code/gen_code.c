@@ -84,7 +84,6 @@
 
 #include "ta_common.h"
 #include "ta_abstract.h"
-#include "ta_system.h"
 #include "ta_memory.h"
 #include "sfl.h"
 
@@ -249,11 +248,17 @@ static void extractTALogic( FILE *inFile, FILE *outFile );
 
 static void sortFile( const char *file );
 
+static void cnvtToUpperCase( char *str );
+static void cnvtChar( char *str, char from, char to );
+static char *trimWhitespace( char *str );
+
 /* Return 1 on success */
 static int copyFile( const char *src, const char *dest );
 
 /* Return 1 when identical */
 static int areFileSame( const char *file1, const char *file2 );
+
+static void fileDelete( const char *fileToDelete );
 
 static void appendToFunc( FILE *out );
 
@@ -321,7 +326,6 @@ static void printIndent( FILE *out, unsigned int indent )
 int main(int argc, char* argv[])
 {
    int retValue;
-   TA_InitializeParam param;
    TA_RetCode retCode;
 
    if( argc > 1 )
@@ -363,9 +367,7 @@ int main(int argc, char* argv[])
 
    printf( "gen_code V%s\n", TA_GetVersionString() );
 
-   memset( &param, 0, sizeof( TA_InitializeParam ) );
-   param.logOutput = stdout;
-   retCode = TA_Initialize( &param );
+   retCode = TA_Initialize();
    if( retCode != TA_SUCCESS )
    {
       printf( "\nCannot initialize the library\n");
@@ -413,10 +415,14 @@ int main(int argc, char* argv[])
  */
 static void init_gToOpen( const char *filePath, const char *suffix )
 {
-   int sepChar;
+   
    char *ptr;
+   #ifdef WIN32
+      const int sepChar = (int)'\\';
+   #else
+      const int sepChar = (int)'/';
+   #endif
 
-   sepChar = TA_SeparatorASCII();
 
    strcpy( gToOpen, filePath );
    if( suffix )
@@ -598,7 +604,7 @@ static void fileClose( FileHandle *handle )
       if( !areFileSame( handle->f1_name, handle->f2_name ) )
          copyFile( handle->f2_name, handle->f1_name );
 
-      file_delete( handle->f2_name );      
+      fileDelete( handle->f2_name );      
    }
 
    memset( handle, 0, sizeof(FileHandle) );   
@@ -608,7 +614,12 @@ static void fileClose( FileHandle *handle )
 static void fileDelete( const char *fileToDelete )
 {
    init_gToOpen( fileToDelete, NULL );
-   file_delete( gToOpen );
+
+   #if defined (WIN32)
+      DeleteFile (fileToDelete);
+   #else
+      unlink (fileToDelete);
+   #endif
 }
 
 static int genCode(int argc, char* argv[])
@@ -1178,9 +1189,9 @@ static void printDefines( FILE *out, const TA_FuncInfo *funcInfo )
                for( j=0; j < intList->nbElement; j++ )
                {
                   strcpy( gTempBuf, intList->data[j].string );
-                  strconvch( gTempBuf, ' ', '_' );
-                  trim( gTempBuf );
-                  strupc( gTempBuf );
+                  cnvtChar( gTempBuf, ' ', '_' );
+                  trimWhitespace( gTempBuf );
+                  cnvtToUpperCase( gTempBuf );
                   fprintf( out, "#define TA_%s_%s %d\n",
                            funcInfo->name,
                            gTempBuf,
@@ -1198,9 +1209,9 @@ static void printDefines( FILE *out, const TA_FuncInfo *funcInfo )
             for( j=0; j < realList->nbElement; j++ )
             {
                strcpy( gTempBuf, realList->data[j].string );
-               strconvch( gTempBuf, ' ', '_' );
-               trim( gTempBuf );
-               strupc( gTempBuf );
+               cnvtChar( gTempBuf, ' ', '_' );
+               trimWhitespace( gTempBuf );
+               cnvtToUpperCase( gTempBuf );
                fprintf( out, "#define TA_%s_%s %s\n",
                         funcInfo->name,
                         gTempBuf,
@@ -1539,20 +1550,6 @@ static void printFunc( FILE *out,
             }
             else
             {
-               if( inputParamInfo->flags & TA_IN_PRICE_TIMESTAMP )
-               {
-                  printIndent( out, indent );
-                  if( frame )
-                     fprintf( out, "params->in[%d].data.inPrice.timestamp, /*", paramNb );
-                  fprintf( out, "%-*s%s%s%s",
-                         prototype? 12 : 0,
-                         outputForSWIG?"":" ",
-                         prototype? "const TA_Timestamp" : "",                           
-                         "inTimestamp",
-                         prototype? arrayBracket : "" );
-                  fprintf( out, "%s\n", frame? " */":"," );
-               }
-
                if( inputParamInfo->flags & TA_IN_PRICE_OPEN )
                {
                   printIndent( out, indent );
@@ -1646,10 +1643,6 @@ static void printFunc( FILE *out,
             typeString = inputIntArrayType;
             defaultParamName = outputForSWIG? "IN_ARRAY":"inInteger";
             break;
-         /*case TA_Input_Timestamp:
-            typeString = "const TA_Timestamp";
-            defaultParamName = "inTimestamp";
-            break;*/
          default:
             if( !paramName )
                paramName = "inParam";
@@ -2486,7 +2479,6 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "   #include <string.h>\n" );
    print( out, "   #include <math.h>\n" );
    print( out, "   #include \"ta_func.h\"\n" );   
-   print( out, "   #include \"ta_trace.h\"\n" );
    print( out, "#endif\n" );
    print( out, "\n" );
    print( out, "#ifndef TA_UTILITY_H\n" );
@@ -2734,9 +2726,6 @@ static void printFuncHeaderDoc( FILE *out,
       case TA_Input_Real:
          fprintf( out, "double" );
          break;
-/*      case TA_Input_Timestamp:
-         fprintf( out, "TA_Timestamp" );
-         break;*/
       }
       if( paramNb+1 == funcInfo->nbInput )
          fprintf( out, "\n" );
@@ -2937,24 +2926,24 @@ static int gen_retcode( void )
    {
       if( !step1Done )
       {
-         if( stricstr( gTempBuf, "TA-LIB Error Code" ) != NULL )
+         if( strstr( gTempBuf, "TA-LIB Error Code" ) != NULL )
             step1Done = 1;
       }
       else
       {
-         if( stricstr( gTempBuf, "TA_UNKNOWN_ERR" ) != NULL )
+         if( strstr( gTempBuf, "TA_UNKNOWN_ERR" ) != NULL )
          {
             retValue = 0;
             goto gen_retcode_exit;
          }
 
-         ptr1 = stricstr( gTempBuf, "/*" );
-         ptr2 = stricstr( gTempBuf, "/***" );
+         ptr1 = strstr( gTempBuf, "/*" );
+         ptr2 = strstr( gTempBuf, "/***" );
          if( ptr1 && !ptr2 )
          {
             ptr1 += 2;
             retCodeValue = atoi(ptr1);
-            ptr1 = stricstr( ptr1, "TA_" );
+            ptr1 = strstr( ptr1, "TA_" );
             if( !ptr1 )
             {
                printf( "Can't find TA_" );
@@ -2971,11 +2960,11 @@ static int gen_retcode( void )
                ptr1++;
                if( *ptr1 != '\0' )
                {
-                  retCodeInfo = stricstr( ptr1, "/* " );
+                  retCodeInfo = strstr( ptr1, "/* " );
                   if( retCodeInfo )
                   {
                      retCodeInfo += 3;
-                     ptr1 = stricstr( retCodeInfo, "*/" );
+                     ptr1 = strstr( retCodeInfo, "*/" );
                      if( ptr1 == NULL )
                         retCodeInfo = NULL;
                      else
@@ -2988,11 +2977,11 @@ static int gen_retcode( void )
                retCodeInfo = "No Info";
 
             strcpy( gTempBuf, retCodeEnum );
-            ptr1 = trim( gTempBuf );
+            ptr1 = trimWhitespace( gTempBuf );
             fprintf( gOutRetCode_C->file, "         {%d,\"%s\",", retCodeValue, ptr1 );                     
             fprintf( gOutRetCode_CSV->file, "%d,%s", retCodeValue, ptr1 );
             strcpy( gTempBuf, retCodeInfo );
-            ptr1 = trim( gTempBuf );
+            ptr1 = trimWhitespace( gTempBuf );
             fprintf( gOutRetCode_C->file, "\"%s\"},\n", ptr1 );
             fprintf( gOutRetCode_CSV->file, ",%s\n", ptr1 );
          }
@@ -3047,6 +3036,52 @@ const char *doubleToStr( double value )
    gTempDoubleToStr[outIdx] = '\0';
 
    return gTempDoubleToStr;
+}
+
+static void cnvtToUpperCase( char *str )
+{
+   char c;
+
+   if( !str ) return;
+
+   
+   while( c = *str )
+   {
+      *str = (char)toupper(c);
+      str++;
+   }      
+}
+
+static char *trimWhitespace( char *str )
+{
+   int i;
+
+   if( !str ) return str;
+
+   while( isspace(*str) ) str++;
+   if( *str == '\0' ) return str;
+
+   for( i=strlen(str)-1; i >= 0; i-- )
+   {
+      if( !isspace(str[i]) )
+         return str;
+      str[i] = '\0';      
+   }
+
+   return str;
+}
+
+static void cnvtChar( char *str, char from, char to )
+{
+   char c;
+
+   if( !str ) return;
+   
+   while( c = *str )
+   {
+      if( c == from ) *str = to;
+      str++;
+   }
 }
 
 #ifdef _MSC_VER
@@ -3111,9 +3146,9 @@ static void addFuncEnumeration( FILE *out )
    for( j=0; j < intList->nbElement; j++ )
    {
       strcpy( gTempBuf, intList->data[j].string );
-      strconvch( gTempBuf, ' ', '_' );
-      trim( gTempBuf );
-      strupc( gTempBuf );
+      cnvtChar( gTempBuf, ' ', '_' );
+      trimWhitespace( gTempBuf );
+      cnvtToUpperCase( gTempBuf );
       print( out, "   TA_MAType_%-10s=%d%s", gTempBuf, intList->data[j].value,
                      j < (intList->nbElement)-1?",\n":"\n");
    }

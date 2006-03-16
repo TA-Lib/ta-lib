@@ -228,87 +228,11 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_common\bzip2\blocksort.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\bzip2\BZLIB.C
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\bzip2\COMPRESS.C
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\bzip2\CRCTABLE.C
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\bzip2\decompress.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\kazlib\Dict.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\bzip2\HUFFMAN.C
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\kazlib\list.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\ta_common\mt\mt19937ar.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_common\bzip2\randtable.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\imatix\sfl\sflcryp.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\imatix\sfl\sfldate.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\imatix\sfl\sfldir.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\imatix\sfl\sflfile.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\imatix\sfl\sflstr.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\imatix\sfl\sfltok.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_country_info.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_dict.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\ta_common\ta_global.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_list.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_memory.c
 # End Source File
 # Begin Source File
 
@@ -317,26 +241,6 @@ SOURCE=..\..\..\..\src\ta_common\ta_random.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_common\ta_retcode.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_stream.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_string.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_system.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_timestamp.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_trace.c
 # End Source File
 # Begin Source File
 
@@ -371,19 +275,7 @@ SOURCE=..\..\..\..\src\ta_common\trio\trionan.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_common\ta_country_info.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_dict.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\ta_common\ta_global.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_list.h
 # End Source File
 # Begin Source File
 
@@ -392,30 +284,6 @@ SOURCE=..\..\..\..\src\ta_common\ta_magic_nb.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_common\ta_memory.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_parallel.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\include\ta_pm.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_stream.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_string.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_system.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_trace.h
 # End Source File
 # End Group
 # End Target

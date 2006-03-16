@@ -57,7 +57,6 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
-#include "ta_trace.h"
 
 #include "trionan.h"
 
@@ -395,7 +394,7 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
    }
 
    /* Set the input buffers. */
-   TA_SetInputParamPricePtr( paramHolder, 0, NULL, 
+   TA_SetInputParamPricePtr( paramHolder, 0,
                              inOpen, inHigh, inLow, inClose, NULL, NULL );
 
    TA_SetOutputParamIntegerPtr(paramHolder,0,outInteger);

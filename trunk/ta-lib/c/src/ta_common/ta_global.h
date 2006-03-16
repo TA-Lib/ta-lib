@@ -5,16 +5,8 @@
    #include "ta_common.h"
 #endif
 
-#ifndef TA_STRING_H
-   #include "ta_string.h"
-#endif
-
 #ifndef TA_FUNC_H
    #include "ta_func.h"
-#endif
-
-#ifndef TA_SYSTEM_H
-   #include "ta_system.h"
 #endif
 
 /* TA_CandleSetting is the one setting struct */
@@ -54,14 +46,7 @@ typedef enum
    	
    TA_ABSTRACTION_GLOBAL_ID,
    TA_FUNC_GLOBAL_ID,
-   TA_DATA_GLOBAL_ID,
-
-   TA_NETWORK_GLOBAL_ID,   /* Network/internet support. */
-   TA_SYSTEM_GLOBAL_ID,    /* OS specific ressources. */
-
-   TA_TRACE_GLOBAL_ID,  /* Must be before last. */
    TA_MEMORY_GLOBAL_ID, /* Must be last.        */
-
    TA_NB_GLOBAL_ID
 } TA_GlobalModuleId;
 
@@ -78,8 +63,6 @@ typedef struct
 TA_RetCode TA_GetGlobal( const TA_GlobalControl * const control,
                          void **global );
 
-TA_StringCache *TA_GetGlobalStringCache( void );
-
 /* Occasionaly, code tracing must be disable.
  * Example:
  *  - The memory module needs to know if the tracing is
@@ -91,11 +74,6 @@ int  TA_IsTraceEnabled( void );
 void TA_TraceEnable   ( void );
 void TA_TraceDisable  ( void );
 
-/* If enabled by the user, use stdio for debugging.
- * Will return NULL if not enabled.
- */
-FILE *TA_GetStdioFilePtr( void );
-
 /* If enabled by the user, use a local drive
  * for configuration and/or temporary file.
  * TA-LIB must NEVER assume such local drive 
@@ -105,9 +83,6 @@ const char *TA_GetLocalCachePath( void );
 
 typedef struct
 {
-  #if !defined( TA_SINGLE_THREAD )
-  TA_Sema sema;
-  #endif
   unsigned int initialize;
   const TA_GlobalControl * control;
   void *global;
@@ -117,7 +92,6 @@ typedef struct
 typedef struct
 {
    unsigned int magicNb; /* Unique identifier of this object. */
-   TA_StringCache *dfltCache;
    TA_ModuleControl moduleControl[TA_NB_GLOBAL_ID];
 
    unsigned int traceEnabled;
@@ -143,4 +117,3 @@ typedef struct
 extern TA_LibcPriv *TA_Globals;
 
 #endif
-

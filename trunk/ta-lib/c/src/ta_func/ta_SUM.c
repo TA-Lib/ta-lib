@@ -63,7 +63,6 @@
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
 /* Generated */    #include "ta_func.h"
-/* Generated */    #include "ta_trace.h"
 /* Generated */ #endif
 /* Generated */ 
 /* Generated */ #ifndef TA_UTILITY_H
@@ -103,7 +102,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-   return 0;
+   return optInTimePeriod-1;
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -149,6 +148,8 @@
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
+   double periodTotal, tempReal;
+   int i, outIdx, trailingIdx, lookbackTotal;
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -180,9 +181,54 @@
 
    /* Insert TA function code here. */
 
-   /* Default return values */
-   VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-   VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+   /* Identify the minimum number of price bar needed
+    * to calculate at least one output.
+    */
+   lookbackTotal = (optInTimePeriod-1);
+
+   /* Move up the start index if there is not
+    * enough initial data.
+    */
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
+
+   /* Make sure there is still something to evaluate. */
+   if( startIdx > endIdx )
+   {
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   }
+
+   /* Do the MA calculation using tight loops. */
+
+   /* Add-up the initial period, except for the last value. */
+   periodTotal = 0;
+   trailingIdx = startIdx-lookbackTotal;
+   
+   i=trailingIdx;
+   if( optInTimePeriod > 1 )
+   {
+      while( i < startIdx )
+         periodTotal += inReal[i++];
+   }
+
+   /* Proceed with the calculation for the requested range.
+    * Note that this algorithm allows the inReal and
+    * outReal to be the same buffer.
+    */
+   outIdx = 0;
+   do
+   {
+      periodTotal += inReal[i++];
+      tempReal = periodTotal;
+      periodTotal -= inReal[trailingIdx++];
+      outReal[outIdx++] = tempReal;
+   } while( i <= endIdx );
+
+   /* All done. Indicate the output limits and return. */
+   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+   VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
