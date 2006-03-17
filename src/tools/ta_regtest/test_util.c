@@ -66,7 +66,6 @@
 /* None */
 
 /**** Global variables definitions.    ****/
-/*TA_FILE_INFO;*/
 
 /* Global temporary buffers used while testing. */
 #define RESV_PATTERN_MEMGUARD_1   (2.4789205E-150)

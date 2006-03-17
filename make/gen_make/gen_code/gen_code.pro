@@ -78,9 +78,7 @@ csp:LIBS += ../../../../../lib/$$TA_COMMON_CSP
 cdr:LIBS += ../../../../../lib/$$TA_COMMON_CDR
 cdd:LIBS += ../../../../../lib/$$TA_COMMON_CDD
 
-win32:LIBS += wininet.lib odbc32.lib
-win32-msvc:LIBS += odbccp32.lib
-unix:LIBS += -lcurl -lssl -lcrypto -ldl
+unix:LIBS += -ldl
 
 # Compiler Options
 INCLUDEPATH = ../../../../../include \
