@@ -228,11 +228,87 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_func\ta_AD.c
+SOURCE=..\..\..\..\src\ta_func\ta_MAX.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_func\ta_ADOSC.c
+SOURCE=..\..\..\..\src\ta_func\ta_MIN.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_SUM.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_BBANDS.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_DEMA.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_EMA.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_KAMA.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MA.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MAMA.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MIDPRICE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MIDPOINT.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_SAR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_SAREXT.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_SMA.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_T3.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_TEMA.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_TRIMA.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_WMA.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_ATR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_TRANGE.c
 # End Source File
 # Begin Source File
 
@@ -256,23 +332,135 @@ SOURCE=..\..\..\..\src\ta_func\ta_AROONOSC.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_func\ta_ATR.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_AVGPRICE.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_BBANDS.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\ta_func\ta_BOP.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_CCI.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_CMO.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_DX.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MACD.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MACDEXT.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MACDFIX.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MFI.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MINUS_DI.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MINUS_DM.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MOM.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_PPO.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_PLUS_DI.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_PLUS_DM.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_ROC.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_ROCP.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_ROCR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_ROCR100.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_RSI.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_STOCH.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_STOCHF.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_STOCHRSI.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_TRIX.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_ULTOSC.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_WILLR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_HT_DCPHASE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_HT_PHASOR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_HT_SINE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_AD.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_ADOSC.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_OBV.c
 # End Source File
 # Begin Source File
 
@@ -436,11 +624,11 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_func\ta_CDLMATCHINGLOW.c
+SOURCE=..\..\..\..\src\ta_func\ta_CDLMATHOLD.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_func\ta_CDLMATHOLD.c
+SOURCE=..\..\..\..\src\ta_func\ta_CDLMATCHINGLOW.c
 # End Source File
 # Begin Source File
 
@@ -520,55 +708,15 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLXSIDEGAP3METHODS.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_func\ta_CMO.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\ta_func\ta_CORREL.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_func\ta_DEMA.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_DX.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_EMA.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_HT_DCPHASE.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_HT_PHASOR.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_HT_SINE.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_KAMA.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\ta_func\ta_LINEARREG.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c
 # End Source File
 # Begin Source File
 
@@ -580,151 +728,7 @@ SOURCE=..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MA.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MACD.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MACDEXT.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MACDFIX.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MAMA.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MAX.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MEDPRICE.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MFI.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MIDPOINT.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MIDPRICE.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MIN.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MINUS_DI.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MINUS_DM.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_MOM.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_OBV.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_PLUS_DI.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_PLUS_DM.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_PPO.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_ROC.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_ROCP.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_ROCR.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_ROCR100.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_RSI.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_SAR.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_SAREXT.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_SMA.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\ta_func\ta_STDDEV.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_STOCH.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_STOCHF.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_STOCHRSI.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_SUM.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_T3.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_TEMA.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_TRANGE.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_TRIMA.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_TRIX.c
 # End Source File
 # Begin Source File
 
@@ -732,19 +736,19 @@ SOURCE=..\..\..\..\src\ta_func\ta_TSF.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_func\ta_TYPPRICE.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_ULTOSC.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_utility.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\ta_func\ta_VAR.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_AVGPRICE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MEDPRICE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_TYPPRICE.c
 # End Source File
 # Begin Source File
 
@@ -752,11 +756,7 @@ SOURCE=..\..\..\..\src\ta_func\ta_WCLPRICE.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_func\ta_WILLR.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_func\ta_WMA.c
+SOURCE=..\..\..\..\src\ta_func\ta_utility.c
 # End Source File
 # End Group
 # Begin Group "Header Files"

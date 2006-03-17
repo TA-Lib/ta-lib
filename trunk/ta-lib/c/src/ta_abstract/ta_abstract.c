@@ -141,7 +141,6 @@ typedef struct
 #endif
 
 /**** Local variables definitions.     ****/
-TA_FILE_INFO;
 
 static const TA_FuncDef **TA_DEF_Tables[26] =
 {
