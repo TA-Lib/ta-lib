@@ -48,7 +48,7 @@ RSC=rc.exe
 F90=df.exe
 # ADD BASE CPP /nologo /MD /W3 /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # SUBTRACT BASE CPP /Fr
-# ADD CPP /nologo /MD /W3 /WX /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_common" /I "..\..\..\..\src\ta_common\mt" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /WX /O2 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_common" /I "..\..\..\..\src\ta_common\mt" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # SUBTRACT CPP /Fr
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
@@ -150,7 +150,7 @@ LIB32=link.exe -lib
 F90=df.exe
 # ADD BASE CPP /nologo /MD /W3 /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_common" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # SUBTRACT BASE CPP /Fr
-# ADD CPP /nologo /MT /W3 /WX /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_common" /I "..\..\..\..\src\ta_common\mt" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /WX /O2 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_common" /I "..\..\..\..\src\ta_common\mt" /D "_LIB" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # SUBTRACT CPP /Fr
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"

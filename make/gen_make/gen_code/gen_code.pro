@@ -85,8 +85,6 @@ unix:LIBS += -lcurl -lssl -lcrypto -ldl
 # Compiler Options
 INCLUDEPATH = ../../../../../include \
               ../../../../../src/ta_common \
-              ../../../../../src/ta_common/imatix/sfl \
-              ../../../../../src/ta_common/kazlib \
               ../../../../../src/ta_abstract \
               ../../../../../src/ta_abstract/tables \
               ../../../../../src/ta_abstract/frames

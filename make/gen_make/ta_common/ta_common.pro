@@ -27,32 +27,8 @@ cdd:TARGET = ta_common_cdd
 DESTDIR     = ../../../../../lib
 
 # Files to process
-SOURCES	= ../../../../../src/ta_common/bzip2/blocksort.c \
-          ../../../../../src/ta_common/bzip2/bzlib.c \
-          ../../../../../src/ta_common/bzip2/compress.c \
-          ../../../../../src/ta_common/bzip2/crctable.c \
-          ../../../../../src/ta_common/bzip2/decompress.c \
-          ../../../../../src/ta_common/bzip2/huffman.c \
-          ../../../../../src/ta_common/bzip2/randtable.c \
-          ../../../../../src/ta_common/kazlib/dict.c \
-          ../../../../../src/ta_common/kazlib/list.c \
-          ../../../../../src/ta_common/imatix/sfl/sflcryp.c \
-          ../../../../../src/ta_common/imatix/sfl/sfldate.c \
-          ../../../../../src/ta_common/imatix/sfl/sflstr.c \
-          ../../../../../src/ta_common/imatix/sfl/sfltok.c \
-          ../../../../../src/ta_common/imatix/sfl/sfldir.c \
-          ../../../../../src/ta_common/imatix/sfl/sflfile.c \
-          ../../../../../src/ta_common/trio/trionan.c \
-          ../../../../../src/ta_common/ta_country_info.c \
-          ../../../../../src/ta_common/ta_dict.c \
+SOURCES	= ../../../../../src/ta_common/trio/trionan.c \          
           ../../../../../src/ta_common/ta_global.c \
-          ../../../../../src/ta_common/ta_list.c \
-          ../../../../../src/ta_common/ta_memory.c \
-          ../../../../../src/ta_common/ta_stream.c \
-          ../../../../../src/ta_common/ta_string.c \
-          ../../../../../src/ta_common/ta_system.c \
-          ../../../../../src/ta_common/ta_timestamp.c \
-          ../../../../../src/ta_common/ta_trace.c \
           ../../../../../src/ta_common/ta_retcode.c \
           ../../../../../src/ta_common/ta_version.c \
 	  ../../../../../src/ta_common/ta_random.c \
@@ -61,10 +37,7 @@ SOURCES	= ../../../../../src/ta_common/bzip2/blocksort.c \
 
 # Compiler Options
 INCLUDEPATH = ../../../../../src/ta_common \
-              ../../../../../src/ta_common/bzip2 \
-              ../../../../../src/ta_common/kazlib \
               ../../../../../src/ta_common/mt \
-              ../../../../../src/ta_common/imatix/sfl \
               ../../../../../include
 
 # debug/release dependent options.

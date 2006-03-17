@@ -81,11 +81,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
+
+#if defined (WIN32)
+   #include <windows.h>
+#endif
 
 #include "ta_common.h"
 #include "ta_abstract.h"
 #include "ta_memory.h"
-#include "sfl.h"
 
 extern int mcpp_main( int argc, char ** argv);
 

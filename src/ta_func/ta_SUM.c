@@ -268,6 +268,8 @@
 /* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
+/* Generated */    double periodTotal, tempReal;
+/* Generated */    int i, outIdx, trailingIdx, lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
@@ -285,8 +287,33 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */    lookbackTotal = (optInTimePeriod-1);
+/* Generated */    if( startIdx < lookbackTotal )
+/* Generated */       startIdx = lookbackTotal;
+/* Generated */    if( startIdx > endIdx )
+/* Generated */    {
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    }
+/* Generated */    periodTotal = 0;
+/* Generated */    trailingIdx = startIdx-lookbackTotal;
+/* Generated */    i=trailingIdx;
+/* Generated */    if( optInTimePeriod > 1 )
+/* Generated */    {
+/* Generated */       while( i < startIdx )
+/* Generated */          periodTotal += inReal[i++];
+/* Generated */    }
+/* Generated */    outIdx = 0;
+/* Generated */    do
+/* Generated */    {
+/* Generated */       periodTotal += inReal[i++];
+/* Generated */       tempReal = periodTotal;
+/* Generated */       periodTotal -= inReal[trailingIdx++];
+/* Generated */       outReal[outIdx++] = tempReal;
+/* Generated */    } while( i <= endIdx );
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 

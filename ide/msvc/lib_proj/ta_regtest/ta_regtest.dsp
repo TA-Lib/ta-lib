@@ -130,7 +130,7 @@ LINK32=link.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /O1 /I "..\..\..\..\src\ta_common" /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\trio" /I "..\..\..\..\src\tools\ta_regtest" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_func" /I "..\..\..\..\src\ta_data\ta_source\ta_readop" /D "_CONSOLE" /D "WIN32" /D "NDEBUG" /D "_MBCS" /FD /c
 # SUBTRACT BASE CPP /Fr /YX
-# ADD CPP /nologo /MT /W3 /WX /O1 /I "..\..\..\..\src\ta_common" /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\trio" /I "..\..\..\..\src\tools\ta_regtest" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_func" /I "..\..\..\..\src\ta_data\ta_source\ta_readop" /I "..\..\..\..\src\ta_common\mt" /D "_CONSOLE" /D "WIN32" /D "NDEBUG" /D "_MBCS" /FD /c
+# ADD CPP /nologo /MT /W3 /WX /O2 /I "..\..\..\..\src\ta_common" /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common\trio" /I "..\..\..\..\src\tools\ta_regtest" /I "..\..\..\..\src\ta_common\imatix\sfl" /I "..\..\..\..\src\ta_func" /I "..\..\..\..\src\ta_data\ta_source\ta_readop" /I "..\..\..\..\src\ta_common\mt" /D "_CONSOLE" /D "WIN32" /D "NDEBUG" /D "_MBCS" /FD /c
 # SUBTRACT CPP /Fr /YX
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"

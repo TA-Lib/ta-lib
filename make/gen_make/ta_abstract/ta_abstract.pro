@@ -65,7 +65,7 @@ INCLUDEPATH = ../../../../../src/ta_common \
               ../../../../../src/ta_abstract \ 
               ../../../../../src/ta_abstract/tables \ 
               ../../../../../src/ta_abstract/frames \ 
-              ../../../../../include \ 
+              ../../../../../include
 
 # debug/release dependent options.
 debug:DEFINES   *= TA_DEBUG
