@@ -67,6 +67,7 @@ static TA_InternalRetCodeInfo retCodeInfoTable[] = {
          {15,"TA_FATAL_ERR","No Info"},
          {16,"TA_INVALID_LIST_TYPE","No Info"},
          {17,"TA_BAD_OBJECT","No Info"},
+         {18,"TA_NOT_SUPPORTED","No Info"},
          {5000,"TA_INTERNAL_ERROR","Internal Error - Contact TA-Lib.org"},
          {0xFFFF,"TA_UNKNOWN_ERR","Unknown Error"}
 };

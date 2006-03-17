@@ -129,7 +129,7 @@ LINK32=link.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common" /I "..\..\..\..\src\ta_abstract" /I "..\..\..\..\src\ta_abstract\tables" /I "..\..\..\..\src\ta_abstract\frames" /I "..\..\..\..\src\ta_common\imatix\sfl" /D "_CONSOLE" /D "TA_GEN_CODE" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # SUBTRACT BASE CPP /Fr
-# ADD CPP /nologo /MT /W3 /WX /O1 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common" /I "..\..\..\..\src\ta_abstract" /I "..\..\..\..\src\ta_abstract\tables" /I "..\..\..\..\src\ta_abstract\frames" /I "..\..\..\..\src\ta_common\imatix\sfl" /D "_CONSOLE" /D "TA_GEN_CODE" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /WX /O2 /I "..\..\..\..\include" /I "..\..\..\..\src\ta_common" /I "..\..\..\..\src\ta_abstract" /I "..\..\..\..\src\ta_abstract\tables" /I "..\..\..\..\src\ta_abstract\frames" /I "..\..\..\..\src\ta_common\imatix\sfl" /D "_CONSOLE" /D "TA_GEN_CODE" /D "WIN32" /D "NDEBUG" /D "_MBCS" /YX /FD /c
 # SUBTRACT CPP /Fr
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"

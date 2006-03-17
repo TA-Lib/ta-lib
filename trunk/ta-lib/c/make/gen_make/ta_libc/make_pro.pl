@@ -21,65 +21,47 @@ $ENV{'TMAKEPATH'} = '../template/win32-msvc';
 # Concatenate all the sources of all sub-library into '@source'
 if( $^O eq "MSWin32" )
 {
-   $a = `tmake ..\\ta_data\\ta_data.pro -e Expand("SOURCES")`;
    $b = `tmake ..\\ta_common\\ta_common.pro -e Expand("SOURCES")`;
    $c = `tmake ..\\ta_abstract\\ta_abstract.pro -e Expand("SOURCES")`;
    $d = `tmake ..\\ta_func\\ta_func.pro -e Expand("SOURCES")`;
-   $e = `tmake ..\\ta_pm\\ta_pm.pro -e Expand("SOURCES")`;
 }
 else
 {
-   $a = `tmake ../ta_data/ta_data.pro -e "Expand("SOURCES")"`;
    $b = `tmake ../ta_common/ta_common.pro -e "Expand("SOURCES")"`;
    $c = `tmake ../ta_abstract/ta_abstract.pro -e "Expand("SOURCES")"`;
    $d = `tmake ../ta_func/ta_func.pro -e "Expand("SOURCES")"`;
-   $e = `tmake ../ta_pm/ta_pm.pro -e "Expand("SOURCES")"`;
 }
 
-chomp $a;
 chomp $b;
 chomp $c;
 chomp $d;
-chomp $e;
 
 @sources = ();
 $nbsources = 0;
-for $z (split / /, $a ) { @sources = (@sources, $z ); $nbSources += 1}
 for $z (split / /, $b ) { @sources = (@sources, $z ); $nbSources += 1}
 for $z (split / /, $c ) { @sources = (@sources, $z ); $nbSources += 1}
 for $z (split / /, $d ) { @sources = (@sources, $z ); $nbSources += 1}
-for $z (split / /, $e ) { @sources = (@sources, $z ); $nbSources += 1}
 
 # Concatenate all the include path of all sub-library into '@incpath'
 if( $^O eq "MsWin32" )
 {
-   $a = `tmake ..\\ta_data\\ta_data.pro -e Expand("INCLUDEPATH")`;
    $b = `tmake ..\\ta_common\\ta_common.pro -e Expand("INCLUDEPATH")`;
    $c = `tmake ..\\ta_abstract\\ta_abstract.pro -e Expand("INCLUDEPATH")`;
    $d = `tmake ..\\ta_func\\ta_func.pro -e Expand("INCLUDEPATH")`;
-   $e = `tmake ..\\ta_pm\\ta_pm.pro -e Expand("INCLUDEPATH")`;
 }
 else
 {
-   $a = `tmake ../ta_data/ta_data.pro -e "Expand("INCLUDEPATH")"`;
    $b = `tmake ../ta_common/ta_common.pro -e "Expand("INCLUDEPATH")"`;
    $c = `tmake ../ta_abstract/ta_abstract.pro -e "Expand("INCLUDEPATH")"`;
    $d = `tmake ../ta_func/ta_func.pro -e "Expand("INCLUDEPATH")"`;
-   $e = `tmake ../ta_pm/ta_pm.pro -e "Expand("INCLUDEPATH")"`;
 }
 
-chomp $a;
 chomp $b;
 chomp $c;
 chomp $d;
-chomp $e;
 
 @incpath = ();
 $nbincpath  = 0;
-for $z (split / /, $a )
-{ 
-   if( $z ne "\\n" ) { @incpath = (@incpath, $z ); $nbincpath += 1 }
-}
 
 for $z (split / /, $b )
 { 
@@ -92,11 +74,6 @@ for $z (split / /, $c )
 }
 
 for $z (split / /, $d ) 
-{ 
-   if( $z ne "\\n" ) { @incpath = (@incpath, $z ); $nbincpath += 1 }
-}
-
-for $z (split / /, $e )
 { 
    if( $z ne "\\n" ) { @incpath = (@incpath, $z ); $nbincpath += 1 }
 }
@@ -156,10 +133,7 @@ $firstline = 1;
 for $z (@sources) {
    $iter += 1;
    chomp($z);
-   
-   # Skip files that are platform specific
-   next if( $z =~ "ta_sql_odbc.c" );
-   
+      
    if( $firstline ) {   
       print "SOURCES = ";
       $firstline = 0;
@@ -173,11 +147,6 @@ for $z (@sources) {
    else
       { print $z," \\", "\n"; }
 }
-
-# Files that are on win32 only
-print "\n\n";
-print "\# Platform specific files\n";
-print "win32:SOURCES *= ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c\n";
 
 print "\n\# Compiler Options\n";
 

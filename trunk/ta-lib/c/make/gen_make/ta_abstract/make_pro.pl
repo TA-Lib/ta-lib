@@ -90,7 +90,7 @@ print "INCLUDEPATH = ../../../../../src/ta_common \\ \n";
 print "              ../../../../../src/ta_abstract \\ \n";
 print "              ../../../../../src/ta_abstract/tables \\ \n";
 print "              ../../../../../src/ta_abstract/frames \\ \n";
-print "              ../../../../../include \\ \n";
+print "              ../../../../../include\n";
 print "\n";
 print "# debug/release dependent options.\n";
 print "debug:DEFINES   *= TA_DEBUG\n";

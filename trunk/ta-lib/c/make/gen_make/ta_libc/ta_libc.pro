@@ -28,69 +28,8 @@ cdd:TARGET = ta_libc_cdd
 # Output info
 DESTDIR     = ../../../../../lib
 # File to process
-SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
-          ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii_handle.c \
-          ../../../../../src/ta_data/ta_source/ta_fileindex/ta_build_index.c \
-          ../../../../../src/ta_data/ta_data_interface.c \
-          ../../../../../src/ta_data/ta_source/ta_fileindex/ta_fileindex.c \
-          ../../../../../src/ta_data/ta_source/ta_fileindex/ta_fileindex_priv.c \
-          ../../../../../src/ta_data/ta_source/ta_fileindex/ta_fileindex_utils.c \
-          ../../../../../src/ta_data/ta_history/ta_history_builder.c \
-          ../../../../../src/ta_data/ta_history/ta_historycheck.c \
-          ../../../../../src/ta_data/ta_source/ta_fileindex/ta_parse_path.c \
-          ../../../../../src/ta_data/ta_history/ta_period.c \
-          ../../../../../src/ta_data/ta_source/ta_readop/ta_readop.c \
-          ../../../../../src/ta_data/ta_source/ta_readop/ta_readop_do.c \
-          ../../../../../src/ta_data/ta_source/ta_readop/ta_readop_estalloc.c \
-          ../../../../../src/ta_data/ta_source/ta_readop/ta_readop_optimize.c \
-          ../../../../../src/ta_data/ta_report.c \
-          ../../../../../src/ta_data/ta_network.c \
-          ../../../../../src/ta_data/ta_webfetch.c \
-          ../../../../../src/ta_data/ta_source/ta_simulator/ta_simulator.c \
-          ../../../../../src/ta_data/ta_source/ta_source.c \
-          ../../../../../src/ta_data/ta_source/ta_sql/ta_sql.c \
-          ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_handle.c \
-          ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_local.c \
-          ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_minidriver.c \
-          ../../../../../src/ta_data/ta_token.c \
-          ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo.c \
-          ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_handle.c \
-          ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_historical.c \
-          ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_market.c \
-          ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_idx.c \
-          ../../../../../src/ta_data/ta_source/ta_yahoo/ta_yahoo_one_symbol.c \
-          ../../../../../src/ta_data/ta_source/ta_csi/ta_csi.c \
-          ../../../../../src/ta_data/ta_source/ta_csi/ta_csi_handle.c \
-          ../../../../../src/ta_data/ta_source/ta_csi/ta_csi_files.c \
-          ../../../../../src/tools/gen_data/ta_daily_ref_0.c \
-          ../../../../../src/tools/gen_data/ta_intra_ref_0.c \
-          ../../../../../src/tools/gen_data/ta_mrg_0.c \
-          ../../../../../src/ta_common/bzip2/blocksort.c \
-          ../../../../../src/ta_common/bzip2/bzlib.c \
-          ../../../../../src/ta_common/bzip2/compress.c \
-          ../../../../../src/ta_common/bzip2/crctable.c \
-          ../../../../../src/ta_common/bzip2/decompress.c \
-          ../../../../../src/ta_common/bzip2/huffman.c \
-          ../../../../../src/ta_common/bzip2/randtable.c \
-          ../../../../../src/ta_common/kazlib/dict.c \
-          ../../../../../src/ta_common/kazlib/list.c \
-          ../../../../../src/ta_common/imatix/sfl/sflcryp.c \
-          ../../../../../src/ta_common/imatix/sfl/sfldate.c \
-          ../../../../../src/ta_common/imatix/sfl/sflstr.c \
-          ../../../../../src/ta_common/imatix/sfl/sfltok.c \
-          ../../../../../src/ta_common/imatix/sfl/sfldir.c \
-          ../../../../../src/ta_common/imatix/sfl/sflfile.c \
-          ../../../../../src/ta_common/trio/trionan.c \
-          ../../../../../src/ta_common/ta_country_info.c \
-          ../../../../../src/ta_common/ta_dict.c \
+SOURCES = ../../../../../src/ta_common/trio/trionan.c \
           ../../../../../src/ta_common/ta_global.c \
-          ../../../../../src/ta_common/ta_list.c \
-          ../../../../../src/ta_common/ta_memory.c \
-          ../../../../../src/ta_common/ta_stream.c \
-          ../../../../../src/ta_common/ta_string.c \
-          ../../../../../src/ta_common/ta_system.c \
-          ../../../../../src/ta_common/ta_timestamp.c \
-          ../../../../../src/ta_common/ta_trace.c \
           ../../../../../src/ta_common/ta_retcode.c \
           ../../../../../src/ta_common/ta_version.c \
           ../../../../../src/ta_common/ta_random.c \
@@ -257,38 +196,10 @@ SOURCES = ../../../../../src/ta_data/ta_source/ta_ascii/ta_ascii.c \
           ../../../../../src/ta_func/ta_VAR.c \
           ../../../../../src/ta_func/ta_WCLPRICE.c \
           ../../../../../src/ta_func/ta_WILLR.c \
-          ../../../../../src/ta_func/ta_WMA.c \
-          ../../../../../src/ta_pm/ta_pm.c \
-          ../../../../../src/ta_pm/ta_pmvalue.c \
-          ../../../../../src/ta_pm/ta_pmarray.c \
-          ../../../../../src/ta_pm/ta_pmreport.c \
-          ../../../../../src/ta_pm/ta_pmstring.c \
-          ../../../../../src/ta_pm/ta_datalog.c \
-          ../../../../../src/ta_pm/ta_instrument.c
-
-# Platform specific files
-win32:SOURCES *= ../../../../../src/ta_data/ta_source/ta_sql/ta_sql_odbc.c
-
+          ../../../../../src/ta_func/ta_WMA.c
 # Compiler Options
 INCLUDEPATH *= ../../../../../src/ta_common
-INCLUDEPATH *= ../../../../../src/ta_data
-INCLUDEPATH *= ../../../../../src/ta_data/ta_source
-INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_fileindex
-INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_ascii
-INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_readop
-INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_yahoo
-INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_sql
-INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_csi
-INCLUDEPATH *= ../../../../../src/ta_data/ta_history
-INCLUDEPATH *= ../../../../../src/ta_data/ta_source/ta_simulator
-INCLUDEPATH *= ../../../../../src/ta_common/imatix/sfl
-INCLUDEPATH *= ../../../../../src/ta_common/kazlib
-INCLUDEPATH *= ../../../../../include
-INCLUDEPATH *= ../../../../../src/ta_common
-INCLUDEPATH *= ../../../../../src/ta_common/bzip2
-INCLUDEPATH *= ../../../../../src/ta_common/kazlib
 INCLUDEPATH *= ../../../../../src/ta_common/mt
-INCLUDEPATH *= ../../../../../src/ta_common/imatix/sfl
 INCLUDEPATH *= ../../../../../include
 INCLUDEPATH *= ../../../../../src/ta_common
 INCLUDEPATH *= ../../../../../src/ta_abstract
@@ -296,11 +207,6 @@ INCLUDEPATH *= ../../../../../src/ta_abstract/tables
 INCLUDEPATH *= ../../../../../src/ta_abstract/frames
 INCLUDEPATH *= ../../../../../include
 INCLUDEPATH *= ../../../../../src/ta_common
-INCLUDEPATH *= ../../../../../include
-INCLUDEPATH *= ../../../../../src/ta_common
-INCLUDEPATH *= ../../../../../src/ta_pm
-INCLUDEPATH *= ../../../../../src/ta_common/imatix/sfl
-INCLUDEPATH *= ../../../../../src/ta_common/kazlib
 INCLUDEPATH *= ../../../../../include
 
 # debug/release dependent options.

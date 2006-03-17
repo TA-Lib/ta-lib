@@ -24,13 +24,11 @@ SOURCES	= ../../../../../src/tools/ta_regtest/ta_regtest.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_candlestick.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_1in_1out.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_1in_2out.c \
-          ../../../../../src/tools/ta_regtest/test_ascii.c \
           ../../../../../src/tools/ta_regtest/test_internals.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_adx.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_bbands.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_ma.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_macd.c \
-          ../../../../../src/tools/ta_regtest/test_merge.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_minmax.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_mom.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_per_ema.c \
@@ -38,8 +36,6 @@ SOURCES	= ../../../../../src/tools/ta_regtest/ta_regtest.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlc.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_per_hlcv.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_per_ohlc.c \
-          ../../../../../src/tools/ta_regtest/test_period.c \
-          ../../../../../src/tools/ta_regtest/test_pm.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_po.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_rsi.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_sar.c \
@@ -47,9 +43,8 @@ SOURCES	= ../../../../../src/tools/ta_regtest/ta_regtest.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_stoch.c \
           ../../../../../src/tools/ta_regtest/ta_test_func/test_trange.c \
           ../../../../../src/tools/ta_regtest/test_util.c \
-          ../../../../../src/tools/ta_regtest/test_abstract.c \
-          ../../../../../src/tools/ta_regtest/test_csi.c \
-          ../../../../../src/tools/ta_regtest/test_yahoo.c
+          ../../../../../src/tools/ta_regtest/test_data.c \
+          ../../../../../src/tools/ta_regtest/test_abstract.c
 
 # Additional libraries
 win32:TA_LIBC_CMD = ta_libc_cmd.lib
@@ -86,7 +81,6 @@ INCLUDEPATH = ../../../../../src/ta_common \
               ../../../../../src/tools/ta_regtest \
               ../../../../../src/ta_func \
               ../../../../../include \
-              ../../../../../src/ta_common/imatix/sfl \
               ../../../../../src/ta_common/trio \
               ../../../../../src/ta_common/mt
 
