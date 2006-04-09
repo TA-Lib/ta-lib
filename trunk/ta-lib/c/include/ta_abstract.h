@@ -181,7 +181,6 @@ TA_RetCode TA_GetFuncHandle( const char *name,
  */
 typedef int TA_FuncFlags;
 #define TA_FUNC_FLG_OVERLAP   0x01000000 /* Output scale same as input data. */
-#define TA_FUNC_FLG_INDICATOR 0x02000000 /* Output shall be in a new graph/scale.*/
 #define TA_FUNC_FLG_VOLUME    0x04000000 /* Output shall be over the volume data. */
 #define TA_FUNC_FLG_UNST_PER  0x08000000 /* Indicate if this function have an unstable 
                                           * initial period. Some additional code exist
