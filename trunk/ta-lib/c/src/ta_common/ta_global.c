@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -46,7 +46,7 @@
  *  112400 MF   First version.
  *  082004 AC   Add TA_SetCandleSettings, TA_RestoreCandleDefaultSettings
  *              and call to TA_RestoreCandleDefaultSettings in TA_Initialize
- *
+ *  041106 MF   Add prefix to theGlobals to avoid clash with other libs.
  */
 
 /* Description:
@@ -83,8 +83,8 @@
 /**** Global variables definitions.    ****/
 
 /* The entry point for all globals */
-TA_LibcPriv theGlobals;
-TA_LibcPriv *TA_Globals = &theGlobals;
+TA_LibcPriv ta_theGlobals;
+TA_LibcPriv *TA_Globals = &ta_theGlobals;
 
 /**** Local declarations.              ****/
 /* None */
