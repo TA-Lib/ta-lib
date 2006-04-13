@@ -2239,7 +2239,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
 
    /* Add the suffix at the end of the file. */
    print( gOutFunc_C->file, "#if defined( _MANAGED )\n" );
-   print( gOutFunc_C->file, "}} // Close namespace TA.Lib\n" );
+   print( gOutFunc_C->file, "}}} // Close namespace TicTacTec.TA.Lib\n" );
    print( gOutFunc_C->file, "#endif\n" );
 
    fileClose( gOutFunc_C );
@@ -2475,7 +2475,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "#if defined( _MANAGED )\n" );
    print( out, "   #include \"TA-Lib-Core.h\"\n" );
    print( out, "   #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)\n" );
-   print( out, "   namespace TA { namespace Lib {\n" );
+   print( out, "   namespace TicTacTec { namespace TA { namespace Lib {\n" );
    print( out, "#elif defined( _JAVA )\n" );
    print( out, "   #include \"ta_defs.h\"\n" );
    print( out, "   #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)\n" );

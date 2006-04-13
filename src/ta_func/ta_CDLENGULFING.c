@@ -55,7 +55,7 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
-/* Generated */    namespace TA { namespace Lib {
+/* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
@@ -312,7 +312,7 @@
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ }} // Close namespace TA.Lib
+/* Generated */ }}} // Close namespace TicTacTec.TA.Lib
 /* Generated */ #endif
 /**** END GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 
