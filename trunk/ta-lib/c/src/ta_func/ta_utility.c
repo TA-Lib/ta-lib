@@ -50,7 +50,7 @@
 #if defined( _MANAGED )
    #using <mscorlib.dll>
    #include "TA-Lib-Core.h"
-   namespace TA { namespace Lib {
+namespace TicTacTec { namespace TA { namespace Lib {
 #else
    #include "ta_utility.h"
    #include "ta_func.h"
@@ -114,5 +114,5 @@ TA_Compatibility TA_GetCompatibility( void )
 }
 
 #if defined( _MANAGED )
-}} // Close namespace TA.Lib
+}}} // Close namespace TicTacTec::TA::Lib
 #endif
