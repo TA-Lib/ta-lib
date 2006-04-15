@@ -269,9 +269,9 @@
       usedFlag[longestIndex] = 1;
       sortedPeriods[i] = longestPeriod;
    }
-   optInTimePeriod1 = sortedPeriods[0];
+   optInTimePeriod1 = sortedPeriods[2];
    optInTimePeriod2 = sortedPeriods[1];
-   optInTimePeriod3 = sortedPeriods[2];
+   optInTimePeriod3 = sortedPeriods[0];
 
    /* Adjust startIdx for lookback period. */
    lookbackTotal = LOOKBACK_CALL(ULTOSC)( optInTimePeriod1, optInTimePeriod2, optInTimePeriod3 );
@@ -296,7 +296,6 @@
       if( tempDouble > trueRange )                 \
          trueRange = tempDouble;                  \
    }
-
 
    #define PRIME_TOTALS(aTotal, bTotal, period)                 \
    {                                                            \
@@ -323,7 +322,8 @@
    trailingIdx2 = today - optInTimePeriod2 + 1;
    trailingIdx3 = today - optInTimePeriod3 + 1;
    while( today <= endIdx )
-   {
+   { 
+      /* Add on today's terms */
       CALC_TERMS(today);
       a1Total += closeMinusTrueLow;
       a2Total += closeMinusTrueLow;
@@ -332,6 +332,16 @@
       b2Total += trueRange;
       b3Total += trueRange;
       
+      /* Calculate the oscillator value for today */
+      tempDouble = 0.0; 
+      
+      if( !TA_IS_ZERO(b1Total) ) tempDouble += 4.0*(a1Total/b1Total);
+      if( !TA_IS_ZERO(b2Total) ) tempDouble += 2.0*(a2Total/b2Total);
+      if( !TA_IS_ZERO(b3Total) ) tempDouble += a3Total/b3Total; 
+      
+      outReal[outIdx] = 100.0 * (tempDouble / 7.0);
+      
+      /* Remove the trailing terms to prepare for next day */
       CALC_TERMS(trailingIdx1);
       a1Total -= closeMinusTrueLow;
       b1Total -= trueRange;
@@ -343,14 +353,8 @@
       CALC_TERMS(trailingIdx3);
       a3Total -= closeMinusTrueLow;
       b3Total -= trueRange;
-
-      tempDouble = 0.0; 
-      if( !TA_IS_ZERO(b1Total) ) tempDouble += 4.0*(a1Total/b1Total);
-      if( !TA_IS_ZERO(b2Total) ) tempDouble += 2.0*(a2Total/b2Total);
-      if( !TA_IS_ZERO(b3Total) ) tempDouble += a3Total/b3Total;
       
-      outReal[outIdx] = 100.0 * (tempDouble / 7.0);
-      
+      /* Increment indexes */
       outIdx++;
       today++; 
       trailingIdx1++; 
