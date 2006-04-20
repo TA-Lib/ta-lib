@@ -190,7 +190,7 @@
    double a1Total, a2Total, a3Total;
    double b1Total, b2Total, b3Total;
    double trueLow, trueRange, closeMinusTrueLow;
-   double tempDouble, tempHT, tempLT, tempCY;
+   double tempDouble, output, tempHT, tempLT, tempCY;
    int lookbackTotal;
    int longestPeriod, longestIndex;
    int i,j,today,outIdx;
@@ -333,14 +333,12 @@
       b3Total += trueRange;
       
       /* Calculate the oscillator value for today */
-      tempDouble = 0.0; 
+      output = 0.0; 
       
-      if( !TA_IS_ZERO(b1Total) ) tempDouble += 4.0*(a1Total/b1Total);
-      if( !TA_IS_ZERO(b2Total) ) tempDouble += 2.0*(a2Total/b2Total);
-      if( !TA_IS_ZERO(b3Total) ) tempDouble += a3Total/b3Total; 
-      
-      outReal[outIdx] = 100.0 * (tempDouble / 7.0);
-      
+      if( !TA_IS_ZERO(b1Total) ) output += 4.0*(a1Total/b1Total);
+      if( !TA_IS_ZERO(b2Total) ) output += 2.0*(a2Total/b2Total);
+      if( !TA_IS_ZERO(b3Total) ) output += a3Total/b3Total; 
+                  
       /* Remove the trailing terms to prepare for next day */
       CALC_TERMS(trailingIdx1);
       a1Total -= closeMinusTrueLow;
@@ -354,6 +352,14 @@
       a3Total -= closeMinusTrueLow;
       b3Total -= trueRange;
       
+      /* Last operation is to write the output. Must
+       * be done after the trailing index have all been
+       * taken care of because the caller is allowed
+       * to have the input array to be also the output 
+       * array.
+       */
+      outReal[outIdx] = 100.0 * (output / 7.0);
+
       /* Increment indexes */
       outIdx++;
       today++; 
@@ -420,7 +426,7 @@
 /* Generated */    double a1Total, a2Total, a3Total;
 /* Generated */    double b1Total, b2Total, b3Total;
 /* Generated */    double trueLow, trueRange, closeMinusTrueLow;
-/* Generated */    double tempDouble, tempHT, tempLT, tempCY;
+/* Generated */    double tempDouble, output, tempHT, tempLT, tempCY;
 /* Generated */    int lookbackTotal;
 /* Generated */    int longestPeriod, longestIndex;
 /* Generated */    int i,j,today,outIdx;
@@ -477,9 +483,9 @@
 /* Generated */       usedFlag[longestIndex] = 1;
 /* Generated */       sortedPeriods[i] = longestPeriod;
 /* Generated */    }
-/* Generated */    optInTimePeriod1 = sortedPeriods[0];
+/* Generated */    optInTimePeriod1 = sortedPeriods[2];
 /* Generated */    optInTimePeriod2 = sortedPeriods[1];
-/* Generated */    optInTimePeriod3 = sortedPeriods[2];
+/* Generated */    optInTimePeriod3 = sortedPeriods[0];
 /* Generated */    lookbackTotal = LOOKBACK_CALL(ULTOSC)( optInTimePeriod1, optInTimePeriod2, optInTimePeriod3 );
 /* Generated */    if( startIdx < lookbackTotal ) startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx ) return NAMESPACE(TA_RetCode)TA_SUCCESS;
@@ -519,7 +525,7 @@
 /* Generated */    trailingIdx2 = today - optInTimePeriod2 + 1;
 /* Generated */    trailingIdx3 = today - optInTimePeriod3 + 1;
 /* Generated */    while( today <= endIdx )
-/* Generated */    {
+/* Generated */    { 
 /* Generated */       CALC_TERMS(today);
 /* Generated */       a1Total += closeMinusTrueLow;
 /* Generated */       a2Total += closeMinusTrueLow;
@@ -527,6 +533,10 @@
 /* Generated */       b1Total += trueRange;
 /* Generated */       b2Total += trueRange;
 /* Generated */       b3Total += trueRange;
+/* Generated */       output = 0.0; 
+/* Generated */       if( !TA_IS_ZERO(b1Total) ) output += 4.0*(a1Total/b1Total);
+/* Generated */       if( !TA_IS_ZERO(b2Total) ) output += 2.0*(a2Total/b2Total);
+/* Generated */       if( !TA_IS_ZERO(b3Total) ) output += a3Total/b3Total; 
 /* Generated */       CALC_TERMS(trailingIdx1);
 /* Generated */       a1Total -= closeMinusTrueLow;
 /* Generated */       b1Total -= trueRange;
@@ -536,11 +546,7 @@
 /* Generated */       CALC_TERMS(trailingIdx3);
 /* Generated */       a3Total -= closeMinusTrueLow;
 /* Generated */       b3Total -= trueRange;
-/* Generated */       tempDouble = 0.0; 
-/* Generated */       if( !TA_IS_ZERO(b1Total) ) tempDouble += 4.0*(a1Total/b1Total);
-/* Generated */       if( !TA_IS_ZERO(b2Total) ) tempDouble += 2.0*(a2Total/b2Total);
-/* Generated */       if( !TA_IS_ZERO(b3Total) ) tempDouble += a3Total/b3Total;
-/* Generated */       outReal[outIdx] = 100.0 * (tempDouble / 7.0);
+/* Generated */       outReal[outIdx] = 100.0 * (output / 7.0);
 /* Generated */       outIdx++;
 /* Generated */       today++; 
 /* Generated */       trailingIdx1++; 
