@@ -360,7 +360,7 @@ int main(int argc, char* argv[])
          printf( "     9) ta-lib/dotnet/src/Core/TA-Lib-Core.h (Win32 only)\n" );
          printf( "    10) ta-lib/c/src/ta_abstract/excel_glue.c (Win32 only)\n" );
          printf( "    11) ta-lib/c/ide/msvc/lib_proj/ta_func/ta_func.dsp (Win32 only)\n" );
-         printf( "    12) ta-lib/java/src/ta/lib/Core.java (Win32 only)\n" );
+         printf( "    12) ta-lib/java/src/com/tictactec/ta/lib/Core.java (Win32 only)\n" );
          printf( "\n" );
          printf( "  The function header, parameters and validation code of all TA\n" );
          printf( "  function in c/src/ta_func are also updated.\n" );
@@ -689,7 +689,7 @@ static int genCode(int argc, char* argv[])
 
    #ifdef _MSC_VER
    /* Create Java template for Core.java */
-   #define FILE_CORE_JAVA     "..\\..\\java\\src\\TA\\Lib\\Core.java"
+   #define FILE_CORE_JAVA     "..\\..\\java\\src\\com\\tictactec\\ta\\lib\\Core.java"
    #define FILE_CORE_JAVA_TMP "..\\temp\\CoreJava.tmp"
    #define FILE_CORE_JAVA_UNF "..\\temp\\CoreJavaUnformated.tmp"
    gOutCore_Java = fileOpen( FILE_CORE_JAVA, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
