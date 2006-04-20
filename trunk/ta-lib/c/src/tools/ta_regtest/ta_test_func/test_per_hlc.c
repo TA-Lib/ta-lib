@@ -123,10 +123,9 @@ static TA_Test tableTest[] =
    /****************/
    /* ULTOSC TEST  */
    /****************/
-/*
-   { 0, TA_ULTOSC_TEST, 0, 251, 7, 14, 28, TA_SUCCESS,  251,   40.0854,  13,  252-28 },
-   { 0, TA_ULTOSC_TEST, 0, 251, 7, 14, 28, TA_SUCCESS,    0,   51.9378,  13,  252-28 },
-*/
+   { 0, TA_ULTOSC_TEST, 0, 251, 7, 14, 28, TA_SUCCESS,       0,   47.1713, 28,  252-28 },
+   { 0, TA_ULTOSC_TEST, 0, 251, 7, 14, 28, TA_SUCCESS,       1,   46.2802, 28,  252-28 },
+   { 1, TA_ULTOSC_TEST, 0, 251, 7, 14, 28, TA_SUCCESS,  252-29,   40.0854, 28,  252-28 },
 
 
    /****************/
@@ -572,8 +571,7 @@ static ErrorNumber do_test( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest(
-                           rangeTestFunction, 
+      errNb = doRangeTest( rangeTestFunction, 
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )
