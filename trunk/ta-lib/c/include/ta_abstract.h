@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -189,7 +189,7 @@ typedef int TA_FuncFlags;
                                           */
 #define TA_FUNC_FLG_CANDLESTICK 0x10000000 /* Output shall be a candlestick */
 
-typedef struct
+typedef struct TA_FuncInfoTag
 {
    /* Constant information about the function. The
     * information found in this structure is guarantee
@@ -244,7 +244,7 @@ TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
 
 /* Structures representing extended information on a parameter. */
 
-typedef struct
+typedef struct TA_RealRangeTag
 {
    TA_Real     min;
    TA_Real     max;
@@ -258,7 +258,7 @@ typedef struct
    TA_Real     suggested_increment;
 } TA_RealRange;
 
-typedef struct
+typedef struct TA_IntegerRangeTag
 {
    TA_Integer  min;
    TA_Integer  max;
@@ -271,27 +271,27 @@ typedef struct
    TA_Integer  suggested_increment;
 } TA_IntegerRange;
 
-typedef struct
+typedef struct TA_RealDataPairTag
 {
    /* A TA_Real value and the corresponding string. */
    TA_Real     value;
    const char *string;
 } TA_RealDataPair;
 
-typedef struct
+typedef struct TA_IntegerDataPairTag
 {
    /* A TA_Integer value and the corresponding string. */
    TA_Integer  value;
    const char *string;
 } TA_IntegerDataPair;
 
-typedef struct
+typedef struct TA_RealListTag
 {
    const TA_RealDataPair *data;
    unsigned int nbElement;
 } TA_RealList;
 
-typedef struct
+typedef struct TA_IntegerListTag
 {
    const TA_IntegerDataPair *data;
    unsigned int nbElement;
@@ -377,7 +377,7 @@ typedef int TA_OutputFlags;
  * These structures tells you everything you need to know for identifying
  * the parameters applicable to the function.
  */
-typedef struct
+typedef struct TA_InputParameterInfoTag
 {
    TA_InputParameterType type;
    const char           *paramName;
@@ -385,7 +385,7 @@ typedef struct
 
 } TA_InputParameterInfo;
 
-typedef struct
+typedef struct TA_OptInputParameterInfoTag
 {
    TA_OptInputParameterType type;
    const char              *paramName;
@@ -399,7 +399,7 @@ typedef struct
 
 } TA_OptInputParameterInfo;
 
-typedef struct
+typedef struct TA_OutputParameterInfoTag
 {
    TA_OutputParameterType type;
    const char            *paramName;
@@ -462,7 +462,7 @@ TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
  * If you provide a wrong parameter value, or wrong type, or wrong pointer etc. the
  * library shall return TA_BAD_PARAM or TA_BAD_OBJECT and not hang.
  */
-typedef struct
+typedef struct TA_ParamHolderTag
 {
   /* Implementation is hidden. */
   void *hiddenData;
