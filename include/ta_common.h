@@ -1,4 +1,3 @@
-
 /* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
@@ -95,7 +94,7 @@ typedef int    TA_Integer;
  *    }
  *
  */
-typedef struct
+typedef struct TA_StringTableTag
 {
     unsigned int size;    /* Number of string. */
     const char **string;  /* Pointer to the strings. */
@@ -122,7 +121,7 @@ typedef struct
  * Would display:
  *        "Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not sucessfully called"
  */
-typedef struct
+typedef struct TA_RetCodeInfoTag
 {
    const char *enumStr; /* Like "TA_IP_SOCKETERROR"     */
    const char *infoStr; /* Like "Error creating socket" */      
