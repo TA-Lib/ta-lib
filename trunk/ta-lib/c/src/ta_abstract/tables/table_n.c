@@ -48,6 +48,33 @@
  *
  ****************************************************************************/
 
+/* NATR BEGIN */
+static const TA_InputParameterInfo    *TA_NATR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_NATR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_NATR_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( NATR,                        /* name */
+              TA_GroupId_VolatilityIndicators, /* groupId */
+              "Normalized Average True Range", /* hint */
+              NULL,                       /* helpFile */
+              TA_FUNC_FLG_UNST_PER,       /* flags */
+              NULL                        /* analysis function */
+             );
+/* NATR END */
+
 #if 0
 Will be implemented later
 /* NVI BEGIN */
@@ -85,7 +112,7 @@ DEF_FUNCTION( NVI,                     /* name */
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableN[] =
 {
-   /* ADD_TO_TABLE(NVI),*/
+   ADD_TO_TABLE(NATR),
    NULL
 };
 

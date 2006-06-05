@@ -200,7 +200,7 @@ static int testTAFunction_ALL( void )
       printf( "done.\n" ); \
       fflush(stdout); \
       }
-   DO_TEST( test_func_per_hlc,  "CCI,WILLR,ULTOSC" );
+   DO_TEST( test_func_per_hlc,  "CCI,WILLR,ULTOSC,NATR" );
    DO_TEST( test_func_per_ohlc, "BOP,AVGPRICE" );
    DO_TEST( test_func_rsi,      "RSI,CMO" );
    DO_TEST( test_func_1in_1out, "DCPERIOD/PHASE,TRENDLINE/MODE" );

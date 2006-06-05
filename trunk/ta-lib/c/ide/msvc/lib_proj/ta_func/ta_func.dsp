@@ -308,6 +308,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_ATR.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_NATR.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_TRANGE.c
 # End Source File
 # Begin Source File
