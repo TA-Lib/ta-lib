@@ -46,6 +46,7 @@
  *  061904 MF   Add test to detect cummulative errors in CCI algorithm 
  *              when some values were close to zero (epsilon).
  *  021106 MF   Add tests for ULTOSC.
+ *  042206 MF   Add tests for NATR
  *              
  */
 
@@ -80,6 +81,7 @@ typedef enum {
 TA_CCI_TEST,
 TA_WILLR_TEST,
 TA_ULTOSC_TEST,
+TA_NATR_TEST
 } TA_TestId;
 
 typedef struct
@@ -120,6 +122,16 @@ static ErrorNumber do_test( const TA_History *history,
 
 static TA_Test tableTest[] =
 {
+   /****************/
+   /* NATR TEST    */
+   /****************/
+   /* TODO Analyze further why NATR requires a very large unstable period.
+    * for now, just disable range testing.
+    */
+   { 0, TA_NATR_TEST, 0, 251, 14, 0, 0, TA_SUCCESS,       0,  3.9321, 14,  252-14 },
+   { 0, TA_NATR_TEST, 0, 251, 14, 0, 0, TA_SUCCESS,       1,  3.7576, 14,  252-14 },
+   { 0, TA_NATR_TEST, 0, 251, 14, 0, 0, TA_SUCCESS,  252-15,  3.0229, 14,  252-14 },
+
    /****************/
    /* ULTOSC TEST  */
    /****************/
@@ -241,6 +253,19 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    switch( testParam->test->theFunction )
    {
+   case TA_NATR_TEST:
+      retCode = TA_NATR( startIdx,
+                         endIdx,
+                         testParam->high,
+                         testParam->low,
+                         testParam->close,
+                         testParam->test->optInTimePeriod1,
+                         outBegIdx,
+                         outNbElement,
+                         outputBuffer );
+      *lookback = TA_NATR_Lookback( testParam->test->optInTimePeriod1 );
+      break;
+
    case TA_CCI_TEST:
       retCode = TA_CCI( startIdx,
                         endIdx,
@@ -290,6 +315,67 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    return retCode;
 }
 
+static TA_RetCode do_call( const TA_Test *test,
+                            const double high[],
+                            const double low[],
+                            const double close[],
+                            int *outBegIdx,
+                            int *outNbElement,
+                            double output[] )
+{
+   TA_RetCode retCode;
+
+   switch( test->theFunction )
+   {
+   case TA_NATR_TEST:
+      retCode = TA_NATR( test->startIdx,
+                         test->endIdx,
+                         high, low, close,
+                         test->optInTimePeriod1,
+                         outBegIdx,
+                         outNbElement,
+                         output );
+      break;
+
+   case TA_CCI_TEST:
+      retCode = TA_CCI( test->startIdx,
+                        test->endIdx,
+                        high, low, close,
+                        test->optInTimePeriod1,
+                        outBegIdx,
+                        outNbElement,
+                        output );
+      break;
+
+   case TA_WILLR_TEST:
+      retCode = TA_WILLR( test->startIdx,
+                          test->endIdx,
+                          high, low, close,
+                          test->optInTimePeriod1,
+                          outBegIdx,
+                          outNbElement,
+                          output );
+      break;
+
+   case TA_ULTOSC_TEST:
+      retCode = TA_ULTOSC( test->startIdx,
+                           test->endIdx,
+                           high, low, close,
+                           test->optInTimePeriod1,
+                           test->optInTimePeriod2,
+                           test->optInTimePeriod3,
+                           outBegIdx,
+                           outNbElement,
+                           output );
+      break;
+
+   default:
+      retCode = TA_INTERNAL_ERROR(133);
+   }
+
+   return retCode;
+}
+
 static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test )
 {
@@ -308,49 +394,13 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 2, history->close, history->nbBars );
       
    /* Make a simple first call. */
-   switch( test->theFunction )
-   {
-   case TA_CCI_TEST:
-      retCode = TA_CCI( test->startIdx,
-                        test->endIdx,
-                        gBuffer[0].in,
-                        gBuffer[1].in,
-                        gBuffer[2].in,
-                        test->optInTimePeriod1,
-                        &outBegIdx,
-                        &outNbElement,
-                        gBuffer[0].out0 );
-      break;
-
-   case TA_WILLR_TEST:
-      retCode = TA_WILLR( test->startIdx,
-                          test->endIdx,
-                          gBuffer[0].in,
-                          gBuffer[1].in,
-                          gBuffer[2].in,
-                          test->optInTimePeriod1,
-                          &outBegIdx,
-                          &outNbElement,
-                          gBuffer[0].out0 );
-      break;
-
-   case TA_ULTOSC_TEST:
-      retCode = TA_ULTOSC( test->startIdx,
-                           test->endIdx,
-                           gBuffer[0].in,
-                           gBuffer[1].in,
-                           gBuffer[2].in,
-                           test->optInTimePeriod1,
-                           test->optInTimePeriod2,
-                           test->optInTimePeriod3,
-                           &outBegIdx,
-                           &outNbElement,
-                           gBuffer[0].out0 );
-      break;
-
-   default:
-      retCode = TA_INTERNAL_ERROR(133);
-   }
+   retCode = do_call( test,
+                      gBuffer[0].in,
+                      gBuffer[1].in,
+                      gBuffer[2].in,                  
+                      &outBegIdx,
+                      &outNbElement,
+                      gBuffer[0].out0 );
 
    /* Check that the input were preserved. */
    errNb = checkDataSame( gBuffer[0].in, history->high,history->nbBars );
@@ -370,46 +420,13 @@ static ErrorNumber do_test( const TA_History *history,
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   switch( test->theFunction )
-   {
-   case TA_CCI_TEST:
-      retCode = TA_CCI( test->startIdx,
-                        test->endIdx,
-                        gBuffer[0].in,
-                        gBuffer[1].in,
-                        gBuffer[2].in,
-                        test->optInTimePeriod1,
-                        &outBegIdx,
-                        &outNbElement,
-                        gBuffer[0].in );
-      break;
-   case TA_WILLR_TEST:
-      retCode = TA_WILLR( test->startIdx,
-                          test->endIdx,
-                          gBuffer[0].in,
-                          gBuffer[1].in,
-                          gBuffer[2].in,
-                          test->optInTimePeriod1,
-                          &outBegIdx,
-                          &outNbElement,
-                          gBuffer[0].in );
-      break;
-   case TA_ULTOSC_TEST:
-      retCode = TA_ULTOSC( test->startIdx,
-                           test->endIdx,
-                           gBuffer[0].in,
-                           gBuffer[1].in,
-                           gBuffer[2].in,
-                           test->optInTimePeriod1,
-                           test->optInTimePeriod2,
-                           test->optInTimePeriod3,
-                           &outBegIdx,
-                           &outNbElement,
-                           gBuffer[0].in );
-      break;
-   default:
-      retCode = TA_INTERNAL_ERROR(134);
-   }
+   retCode = do_call( test,
+                      gBuffer[0].in,
+                      gBuffer[1].in,
+                      gBuffer[2].in,                  
+                      &outBegIdx,
+                      &outNbElement,
+                      gBuffer[0].in );
 
    /* Check that the input were preserved. */
    errNb = checkDataSame( gBuffer[1].in, history->low, history->nbBars );
@@ -419,8 +436,7 @@ static ErrorNumber do_test( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   /* The previous call to TA_MA should have the same output
-    * as this call.
+   /* The previous call should have the same output as this call.
     *
     * checkSameContent verify that all value different than NAN in
     * the first parameter is identical in the second parameter.
@@ -435,46 +451,13 @@ static ErrorNumber do_test( const TA_History *history,
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   switch( test->theFunction )
-   {
-   case TA_CCI_TEST:
-      retCode = TA_CCI( test->startIdx,
-                        test->endIdx,
-                        gBuffer[0].in,
-                        gBuffer[1].in,
-                        gBuffer[2].in,
-                        test->optInTimePeriod1,
-                        &outBegIdx,
-                        &outNbElement,
-                        gBuffer[1].in );
-      break;
-   case TA_WILLR_TEST:
-      retCode = TA_WILLR( test->startIdx,
-                          test->endIdx,
-                          gBuffer[0].in,
-                          gBuffer[1].in,
-                          gBuffer[2].in,
-                          test->optInTimePeriod1,
-                          &outBegIdx,
-                          &outNbElement,
-                          gBuffer[1].in );
-      break;
-   case TA_ULTOSC_TEST:
-      retCode = TA_ULTOSC( test->startIdx,
-                           test->endIdx,
-                           gBuffer[0].in,
-                           gBuffer[1].in,
-                           gBuffer[2].in,
-                           test->optInTimePeriod1,
-                           test->optInTimePeriod2,
-                           test->optInTimePeriod3,
-                           &outBegIdx,
-                           &outNbElement,
-                           gBuffer[1].in );
-      break;
-   default:
-      retCode = TA_INTERNAL_ERROR(135);
-   }
+   retCode = do_call( test,
+                      gBuffer[0].in,
+                      gBuffer[1].in,
+                      gBuffer[2].in,                  
+                      &outBegIdx,
+                      &outNbElement,
+                      gBuffer[1].in );
 
    /* Check that the input were preserved. */
    errNb = checkDataSame( gBuffer[0].in, history->high,history->nbBars );
@@ -499,46 +482,13 @@ static ErrorNumber do_test( const TA_History *history,
    /* Make another call where the input and the output are the
     * same buffer.
     */
-   switch( test->theFunction )
-   {
-   case TA_CCI_TEST:
-      retCode = TA_CCI( test->startIdx,
-                        test->endIdx,
-                        gBuffer[0].in,
-                        gBuffer[1].in,
-                        gBuffer[2].in,
-                        test->optInTimePeriod1,
-                        &outBegIdx,
-                        &outNbElement,
-                        gBuffer[2].in );
-      break;
-   case TA_WILLR_TEST:
-      retCode = TA_WILLR( test->startIdx,
-                          test->endIdx,
-                          gBuffer[0].in,
-                          gBuffer[1].in,
-                          gBuffer[2].in,
-                          test->optInTimePeriod1,
-                          &outBegIdx,
-                          &outNbElement,
-                          gBuffer[2].in );
-      break;
-   case TA_ULTOSC_TEST:
-      retCode = TA_ULTOSC( test->startIdx,
-                           test->endIdx,
-                           gBuffer[0].in,
-                           gBuffer[1].in,
-                           gBuffer[2].in,
-                           test->optInTimePeriod1,
-                           test->optInTimePeriod2,
-                           test->optInTimePeriod3,
-                           &outBegIdx,
-                           &outNbElement,
-                           gBuffer[2].in );
-      break;
-   default:
-      retCode = TA_INTERNAL_ERROR(136);
-   }
+   retCode = do_call( test,
+                      gBuffer[0].in,
+                      gBuffer[1].in,
+                      gBuffer[2].in,                  
+                      &outBegIdx,
+                      &outNbElement,
+                      gBuffer[2].in );
 
    /* Check that the input were preserved. */
    errNb = checkDataSame( gBuffer[0].in, history->high,history->nbBars );
@@ -548,8 +498,7 @@ static ErrorNumber do_test( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   /* The previous call to TA_MA should have the same output
-    * as this call.
+   /* The previous call should have the same output as this call.
     *
     * checkSameContent verify that all value different than NAN in
     * the first parameter is identical in the second parameter.
@@ -571,9 +520,20 @@ static ErrorNumber do_test( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( rangeTestFunction, 
-                           TA_FUNC_UNST_NONE,
-                           (void *)&testParam, 1, 0 );
+      switch( test->theFunction )
+      {
+      case TA_NATR_TEST:
+         errNb = doRangeTest( rangeTestFunction, 
+                              TA_FUNC_UNST_NATR,
+                              (void *)&testParam, 1, 0 );
+         break;
+      default:
+         errNb = doRangeTest( rangeTestFunction, 
+                              TA_FUNC_UNST_NONE,
+                              (void *)&testParam, 1, 0 );
+         break;
+      }
+
       if( errNb != TA_TEST_PASS )
          return errNb;
    }

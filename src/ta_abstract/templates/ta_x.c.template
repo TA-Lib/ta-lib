@@ -37,32 +37,37 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier (Replace when you are the original author)
  *
- *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  XXXXXX MF   XXXXX
- *
+ *  XXXXXX MF     Initial Version
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 %%%GENCODE%%%
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
-   /* insert lookback code here. */
-   return 0;
-}
+   /* insert local variable here */
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 %%%GENCODE%%%
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
-{
-	/* insert local variable here */
+
+   /* insert lookback code here. */
+
+   return 0;
+}
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 %%%GENCODE%%%
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
+{
+   /* insert local variable here */
+
+/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+%%%GENCODE%%%
+/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
 
@@ -73,7 +78,7 @@
    return NAMESPACE(TA_RetCode)TA_SUCCESS;
 }
 
-/**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 %%%GENCODE%%%
-/**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
+/**** END GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 

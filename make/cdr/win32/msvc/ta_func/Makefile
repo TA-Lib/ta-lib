@@ -125,6 +125,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_MINUS_DI.c \
 		..\..\..\..\..\src\ta_func\ta_MINUS_DM.c \
 		..\..\..\..\..\src\ta_func\ta_MOM.c \
+		..\..\..\..\..\src\ta_func\ta_NATR.c \
 		..\..\..\..\..\src\ta_func\ta_OBV.c \
 		..\..\..\..\..\src\ta_func\ta_PLUS_DI.c \
 		..\..\..\..\..\src\ta_func\ta_PLUS_DM.c \
@@ -258,6 +259,7 @@ OBJECTS =	..\..\..\..\..\temp\cdr\ta_utility.obj \
 		..\..\..\..\..\temp\cdr\ta_MINUS_DI.obj \
 		..\..\..\..\..\temp\cdr\ta_MINUS_DM.obj \
 		..\..\..\..\..\temp\cdr\ta_MOM.obj \
+		..\..\..\..\..\temp\cdr\ta_NATR.obj \
 		..\..\..\..\..\temp\cdr\ta_OBV.obj \
 		..\..\..\..\..\temp\cdr\ta_PLUS_DI.obj \
 		..\..\..\..\..\temp\cdr\ta_PLUS_DM.obj \
@@ -436,6 +438,7 @@ clean:
 	-del ..\..\..\..\..\temp\cdr\ta_MINUS_DI.obj
 	-del ..\..\..\..\..\temp\cdr\ta_MINUS_DM.obj
 	-del ..\..\..\..\..\temp\cdr\ta_MOM.obj
+	-del ..\..\..\..\..\temp\cdr\ta_NATR.obj
 	-del ..\..\..\..\..\temp\cdr\ta_OBV.obj
 	-del ..\..\..\..\..\temp\cdr\ta_PLUS_DI.obj
 	-del ..\..\..\..\..\temp\cdr\ta_PLUS_DM.obj
@@ -792,6 +795,9 @@ clean:
 
 ..\..\..\..\..\temp\cdr\ta_MOM.obj: ..\..\..\..\..\src\ta_func\ta_MOM.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdr\ta_MOM.obj ..\..\..\..\..\src\ta_func\ta_MOM.c
+
+..\..\..\..\..\temp\cdr\ta_NATR.obj: ..\..\..\..\..\src\ta_func\ta_NATR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdr\ta_NATR.obj ..\..\..\..\..\src\ta_func\ta_NATR.c
 
 ..\..\..\..\..\temp\cdr\ta_OBV.obj: ..\..\..\..\..\src\ta_func\ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdr\ta_OBV.obj ..\..\..\..\..\src\ta_func\ta_OBV.c

@@ -137,6 +137,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_MINUS_DI.c \
 		../../../../../src/ta_func/ta_MINUS_DM.c \
 		../../../../../src/ta_func/ta_MOM.c \
+		../../../../../src/ta_func/ta_NATR.c \
 		../../../../../src/ta_func/ta_OBV.c \
 		../../../../../src/ta_func/ta_PLUS_DI.c \
 		../../../../../src/ta_func/ta_PLUS_DM.c \
@@ -270,6 +271,7 @@ OBJECTS =	../../../../../temp/csr/ta_utility.o \
 		../../../../../temp/csr/ta_MINUS_DI.o \
 		../../../../../temp/csr/ta_MINUS_DM.o \
 		../../../../../temp/csr/ta_MOM.o \
+		../../../../../temp/csr/ta_NATR.o \
 		../../../../../temp/csr/ta_OBV.o \
 		../../../../../temp/csr/ta_PLUS_DI.o \
 		../../../../../temp/csr/ta_PLUS_DM.o \
@@ -663,6 +665,9 @@ clean:
 
 ../../../../../temp/csr/ta_MOM.o: ../../../../../src/ta_func/ta_MOM.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MOM.o ../../../../../src/ta_func/ta_MOM.c
+
+../../../../../temp/csr/ta_NATR.o: ../../../../../src/ta_func/ta_NATR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_NATR.o ../../../../../src/ta_func/ta_NATR.c
 
 ../../../../../temp/csr/ta_OBV.o: ../../../../../src/ta_func/ta_OBV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_OBV.o ../../../../../src/ta_func/ta_OBV.c

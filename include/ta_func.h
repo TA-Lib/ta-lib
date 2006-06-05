@@ -799,6 +799,42 @@ int TA_ATR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
+ * TA_NATR - Normalized Average True Range
+ * 
+ * Input  = High, Low, Close
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_NATR( int    startIdx,
+                    int    endIdx,
+                    const double inHigh[],
+                    const double inLow[],
+                    const double inClose[],
+                    int           optInTimePeriod, /* From 1 to 100000 */
+                    int          *outBegIdx,
+                    int          *outNbElement,
+                    double        outReal[] );
+
+TA_RetCode TA_S_NATR( int    startIdx,
+                      int    endIdx,
+                      const float  inHigh[],
+                      const float  inLow[],
+                      const float  inClose[],
+                      int           optInTimePeriod, /* From 1 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal[] );
+
+int TA_NATR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+
+
+/*
  * TA_TRANGE - True Range
  * 
  * Input  = High, Low, Close

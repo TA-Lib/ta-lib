@@ -134,6 +134,7 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_MINUS_DI.c \ 
           ../../../../../src/ta_func/ta_MINUS_DM.c \ 
           ../../../../../src/ta_func/ta_MOM.c \ 
+          ../../../../../src/ta_func/ta_NATR.c \ 
           ../../../../../src/ta_func/ta_OBV.c \ 
           ../../../../../src/ta_func/ta_PLUS_DI.c \ 
           ../../../../../src/ta_func/ta_PLUS_DM.c \ 

@@ -101,6 +101,7 @@ MIN                 Lowest value over a specified period
 MINUS_DI            Minus Directional Indicator
 MINUS_DM            Minus Directional Movement
 MOM                 Momentum
+NATR                Normalized Average True Range
 OBV                 On Balance Volume
 PLUS_DI             Plus Directional Indicator
 PLUS_DM             Plus Directional Movement
