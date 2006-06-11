@@ -3048,11 +3048,12 @@ static void cnvtToUpperCase( char *str )
 
    if( !str ) return;
 
-   
-   while( c = *str )
+   c = *str; 
+   while( c != '\0' )
    {
       *str = (char)toupper(c);
       str++;
+      c = *str;
    }      
 }
 
@@ -3081,10 +3082,12 @@ static void cnvtChar( char *str, char from, char to )
 
    if( !str ) return;
    
-   while( c = *str )
+   c = *str;
+   while( c != '\0' )
    {
       if( c == from ) *str = to;
       str++;
+      c = *str;
    }
 }
 
