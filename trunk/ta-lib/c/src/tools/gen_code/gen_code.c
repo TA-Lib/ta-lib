@@ -82,6 +82,11 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
+                                                                                
+#if !defined(__WIN32__) && !defined(__MSDOS__) && !defined(WIN32)
+   #include <unistd.h>
+#endif
 
 #if defined (WIN32)
    #include <windows.h>
