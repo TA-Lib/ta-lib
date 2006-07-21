@@ -94,7 +94,7 @@ typedef int    TA_Integer;
  *    }
  *
  */
-typedef struct TA_StringTableTag
+typedef struct TA_StringTable
 {
     unsigned int size;    /* Number of string. */
     const char **string;  /* Pointer to the strings. */
@@ -121,7 +121,7 @@ typedef struct TA_StringTableTag
  * Would display:
  *        "Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not sucessfully called"
  */
-typedef struct TA_RetCodeInfoTag
+typedef struct TA_RetCodeInfo
 {
    const char *enumStr; /* Like "TA_IP_SOCKETERROR"     */
    const char *infoStr; /* Like "Error creating socket" */      
