@@ -929,8 +929,8 @@ static int genCode(int argc, char* argv[])
       #define JAVA_SUCCESS_FILE     "..\\temp\\java_success"
       #define JAVA_PRETTY_TEMP_FILE "..\\temp\\CoreJavaPretty.tmp"
       fileDelete( JAVA_SUCCESS_FILE );      
-      system( "javac -d . \"..\\src\\tools\\gen_code\\java\\Main.java" );
       system( "javac -d . \"..\\src\\tools\\gen_code\\java\\PrettyCode.java" );
+      system( "javac -d . \"..\\src\\tools\\gen_code\\java\\Main.java" );
       system( "java -classpath . Main" );
       tempFile = fileOpen(JAVA_SUCCESS_FILE,NULL,FILE_READ|WRITE_ON_CHANGE_ONLY);
       fileDelete( FILE_CORE_JAVA_UNF );
