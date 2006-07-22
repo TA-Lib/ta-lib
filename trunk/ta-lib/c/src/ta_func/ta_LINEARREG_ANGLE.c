@@ -36,14 +36,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  JP       John Price <jp_talib@gcfl.net>
- *
+ *  MF       Mario Fortier
+ *  AM       Adrian Michel <http://amichel.com>
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY      Description
  *  -------------------------------------------------------------------
- *  070203 JP   Initial.
- *
+ *  070203 JP      Initial.
+ *  072106 MF,AM   Fix #1526632. Add missing atan().
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -237,7 +238,7 @@
        SumXY += (double)i * tempValue1;
      }
      m = ( optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-     outReal[outIdx++] = m * ( 180.0 / PI );
+     outReal[outIdx++] = atan(m) * ( 180.0 / PI );
      today++;
    }
 
@@ -329,7 +330,7 @@
 /* Generated */        SumXY += (double)i * tempValue1;
 /* Generated */      }
 /* Generated */      m = ( optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-/* Generated */      outReal[outIdx++] = m * ( 180.0 / PI );
+/* Generated */      outReal[outIdx++] = atan(m) * ( 180.0 / PI );
 /* Generated */      today++;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
