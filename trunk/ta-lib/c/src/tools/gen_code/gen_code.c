@@ -137,6 +137,7 @@ FileHandle *gOutFuncList_TXT;  /* For "func_list.txt" */
 FileHandle *gOutDefs_H;        /* For "ta_defs.h" */
 FileHandle *gOutDotNet_H;      /* For .NET interface file */
 FileHandle *gOutFunc_SWG;      /* For SWIG */
+FileHandle *gOutFunc_XML;      /* For "TAFunctions.xml" */
 
 #ifdef _MSC_VER
 /* The following files are generated only on Windows platform. */
@@ -171,6 +172,9 @@ static unsigned int forEachGroup( TA_ForEachGroup forEachGroupfunc,
 
 static void doForEachFunction( const TA_FuncInfo *funcInfo,
                                void *opaqueData );
+
+static void doForEachFunctionXml( const TA_FuncInfo *funcInfo,
+                                  void *opaqueData );
 
 static void doForEachUnstableFunction( const TA_FuncInfo *funcInfo,
                                        void *opaqueData );
@@ -759,6 +763,13 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
+   gOutFunc_XML = fileOpen( "TAFunctions.xml", NULL, FILE_WRITE|WRITE_ALWAYS );
+   if(gOutFunc_XML == NULL)
+   {
+	   printf( "\nCannot access TAFunctions.xml" );
+   }
+
+
    /* Create "ta_func.swg" */
    gOutFunc_SWG = fileOpen( "..\\..\\swig\\src\\interface\\ta_func.swg",
                           "..\\src\\ta_abstract\\templates\\ta_func.swg.template",
@@ -855,6 +866,12 @@ static int genCode(int argc, char* argv[])
    /* Process each function. */
    retCode = TA_ForEachFunc( doForEachFunction, NULL );
 
+   /* Seperate generation of xml description file */
+   fprintf(gOutFunc_XML->file, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");
+   fprintf(gOutFunc_XML->file, "<FinancialFunctions>\n");
+   retCode = TA_ForEachFunc( doForEachFunctionXml, NULL );
+   fprintf(gOutFunc_XML->file, "</FinancialFunctions>\n");
+
    /* Append some "hard coded" prototype for ta_func */
    appendToFunc( gOutFunc_H->file );
    appendToFunc( gOutFunc_SWG->file );
@@ -866,6 +883,7 @@ static int genCode(int argc, char* argv[])
    fileClose( gOutFunc_SWG );
    fileClose( gOutFrame_H );
    fileClose( gOutFrame_C );
+   fileClose( gOutFunc_XML );
 
    #ifdef _MSC_VER
       fileClose( gOutCore_Java );
@@ -929,8 +947,8 @@ static int genCode(int argc, char* argv[])
       #define JAVA_SUCCESS_FILE     "..\\temp\\java_success"
       #define JAVA_PRETTY_TEMP_FILE "..\\temp\\CoreJavaPretty.tmp"
       fileDelete( JAVA_SUCCESS_FILE );      
-      system( "javac -d . \"..\\src\\tools\\gen_code\\java\\PrettyCode.java" );
       system( "javac -d . \"..\\src\\tools\\gen_code\\java\\Main.java" );
+      system( "javac -d . \"..\\src\\tools\\gen_code\\java\\PrettyCode.java" );
       system( "java -classpath . Main" );
       tempFile = fileOpen(JAVA_SUCCESS_FILE,NULL,FILE_READ|WRITE_ON_CHANGE_ONLY);
       fileDelete( FILE_CORE_JAVA_UNF );
@@ -1008,6 +1026,195 @@ static unsigned int forEachGroup( TA_ForEachGroup forEachGroupFunc,
       return 0;
 
    return i;
+}
+
+static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
+								 void *opaqueData)
+{
+	TA_RetCode retCode;
+	TA_InputParameterInfo *inputInfo;
+	TA_OptInputParameterInfo *optInputInfo;
+	TA_OutputParameterInfo *outputInfo;
+	unsigned int i;
+
+	//General stuff about function
+	fprintf(gOutFunc_XML->file, "	<!-- %s -->\n", funcInfo->name);
+	fprintf(gOutFunc_XML->file, "	<FinancialFunction>\n");
+    fprintf(gOutFunc_XML->file, "		<ShortName>%s</ShortName>\n", funcInfo->name);
+    fprintf(gOutFunc_XML->file, "		<FullName>%s</FullName>\n", funcInfo->hint);
+    fprintf(gOutFunc_XML->file, "		<ShortDescription>%s</ShortDescription>\n", funcInfo->hint);
+    fprintf(gOutFunc_XML->file, "		<LongDescription>%s</LongDescription>\n", funcInfo->helpFile);
+    fprintf(gOutFunc_XML->file, "		<GroupId>%s</GroupId>\n", funcInfo->group);
+
+	//Required input arguments
+    fprintf(gOutFunc_XML->file, "		<RequiredInputArguments>\n");
+	for(i=0; i<funcInfo->nbInput; i++)
+	{
+		retCode = TA_GetInputParameterInfo( funcInfo->handle, i, &inputInfo);
+		if(inputInfo->type == TA_Input_Price)
+		{
+			if(inputInfo->flags & TA_IN_PRICE_OPEN)
+			{
+				fprintf(gOutFunc_XML->file, "			<RequiredInputArgument>\n");
+				fprintf(gOutFunc_XML->file, "				<Type>Open</Type>\n");
+				fprintf(gOutFunc_XML->file, "				<Name>Open</Name>\n");
+				fprintf(gOutFunc_XML->file, "			</RequiredInputArgument>\n");
+			}
+			if(inputInfo->flags & TA_IN_PRICE_HIGH)
+			{
+				fprintf(gOutFunc_XML->file, "			<RequiredInputArgument>\n");
+				fprintf(gOutFunc_XML->file, "				<Type>High</Type>\n");
+				fprintf(gOutFunc_XML->file, "				<Name>High</Name>\n");
+				fprintf(gOutFunc_XML->file, "			</RequiredInputArgument>\n");
+			}
+			if(inputInfo->flags & TA_IN_PRICE_LOW)
+			{
+				fprintf(gOutFunc_XML->file, "			<RequiredInputArgument>\n");
+				fprintf(gOutFunc_XML->file, "				<Type>Low</Type>\n");
+				fprintf(gOutFunc_XML->file, "				<Name>Low</Name>\n");
+				fprintf(gOutFunc_XML->file, "			</RequiredInputArgument>\n");
+			}
+			if(inputInfo->flags & TA_IN_PRICE_CLOSE)
+			{
+				fprintf(gOutFunc_XML->file, "			<RequiredInputArgument>\n");
+				fprintf(gOutFunc_XML->file, "				<Type>Close</Type>\n");
+				fprintf(gOutFunc_XML->file, "				<Name>Close</Name>\n");
+				fprintf(gOutFunc_XML->file, "			</RequiredInputArgument>\n");
+			}
+			if(inputInfo->flags & TA_IN_PRICE_VOLUME)
+			{
+				fprintf(gOutFunc_XML->file, "			<RequiredInputArgument>\n");
+				fprintf(gOutFunc_XML->file, "				<Type>Volume</Type>\n");
+				fprintf(gOutFunc_XML->file, "				<Name>Volume</Name>\n");
+				fprintf(gOutFunc_XML->file, "			</RequiredInputArgument>\n");
+			}
+			if(inputInfo->flags & TA_IN_PRICE_OPENINTEREST)
+			{
+				fprintf(gOutFunc_XML->file, "			<RequiredInputArgument>\n");
+				fprintf(gOutFunc_XML->file, "				<Type>Open Interest</Type>\n");
+				fprintf(gOutFunc_XML->file, "				<Name>Open Interest</Name>\n");
+				fprintf(gOutFunc_XML->file, "			</RequiredInputArgument>\n");
+			}
+			if(inputInfo->flags & TA_IN_PRICE_TIMESTAMP)
+			{
+				fprintf(gOutFunc_XML->file, "			<RequiredInputArgument>\n");
+				fprintf(gOutFunc_XML->file, "				<Type>Timestamp</Type>\n");
+				fprintf(gOutFunc_XML->file, "				<Name>Timestamp</Name>\n");
+				fprintf(gOutFunc_XML->file, "			</RequiredInputArgument>\n");
+			}
+		}
+		else
+		{
+			fprintf(gOutFunc_XML->file, "			<RequiredInputArgument>\n");
+			if(inputInfo->type == TA_Input_Real)
+			{
+				fprintf(gOutFunc_XML->file, "				<Type>Double Array</Type>\n");
+			}
+			else if(inputInfo->type == TA_Input_Integer)
+			{
+				fprintf(gOutFunc_XML->file, "				<Type>Integer Array</Type>\n");
+			}
+			else
+			{
+				printf("Unknown input type detected.\n");
+			}
+			fprintf(gOutFunc_XML->file, "				<Name>%s</Name>\n", inputInfo->paramName);
+			fprintf(gOutFunc_XML->file, "			</RequiredInputArgument>\n");
+		}
+	}
+    fprintf(gOutFunc_XML->file, "		</RequiredInputArguments>\n");
+
+	//Optional input arguments
+	if(funcInfo->nbOptInput > 0)
+	{
+
+		fprintf(gOutFunc_XML->file, "		<OptionalInputArguments>\n");
+		for(i=0; i<funcInfo->nbOptInput; i++)
+		{
+			//Get the type of the optional parameter.
+			fprintf(gOutFunc_XML->file, "			<OptionalInputArgument>\n");
+			retCode = TA_GetOptInputParameterInfo( funcInfo->handle, i, &optInputInfo );
+
+			//Add information about optional input parameter.
+			fprintf(gOutFunc_XML->file, "				<Name>%s</Name>\n", optInputInfo->displayName);
+			if(optInputInfo->type == TA_OptInput_RealRange)
+			{
+				TA_RealRange *doubleRange;
+					
+				doubleRange= (TA_RealRange*)optInputInfo->dataSet;
+				fprintf(gOutFunc_XML->file, "				<Type>Double</Type>\n", funcInfo->name);
+				fprintf(gOutFunc_XML->file, "				<Range>\n");
+				fprintf(gOutFunc_XML->file, "					<Minimum>%f</Minimum>\n", doubleRange->min);
+				fprintf(gOutFunc_XML->file, "					<Maximum>%f</Maximum>\n", doubleRange->max);
+				fprintf(gOutFunc_XML->file, "					<Precision>%d</Precision>\n", doubleRange->precision);
+				fprintf(gOutFunc_XML->file, "					<SuggestedStart>%f</SuggestedStart>\n", doubleRange->suggested_start);
+				fprintf(gOutFunc_XML->file, "					<SuggestedEnd>%f</SuggestedEnd>\n", doubleRange->suggested_end);
+				fprintf(gOutFunc_XML->file, "					<SuggestedIncrement>%f</SuggestedIncrement>\n", doubleRange->suggested_increment);
+				fprintf(gOutFunc_XML->file, "				</Range>\n");
+				fprintf(gOutFunc_XML->file, "				<DefaultValue>%f</DefaultValue>\n", optInputInfo->defaultValue);
+			}
+			else if(optInputInfo->type == TA_OptInput_IntegerRange)
+			{
+				TA_IntegerRange *integerRange;
+				
+				integerRange = (TA_IntegerRange*)optInputInfo->dataSet;
+				fprintf(gOutFunc_XML->file, "				<Type>Integer</Type>\n", funcInfo->name);
+				fprintf(gOutFunc_XML->file, "				<Range>\n");
+				fprintf(gOutFunc_XML->file, "					<Minimum>%d</Minimum>\n", integerRange->min);
+				fprintf(gOutFunc_XML->file, "					<Maximum>%d</Maximum>\n", integerRange->max);
+				fprintf(gOutFunc_XML->file, "					<SuggestedStart>%d</SuggestedStart>\n", integerRange->max);
+				fprintf(gOutFunc_XML->file, "					<SuggestedEnd>%d</SuggestedEnd>\n", integerRange->max);
+				fprintf(gOutFunc_XML->file, "					<SuggestedIncrement>%d</SuggestedIncrement>\n", integerRange->max);
+				fprintf(gOutFunc_XML->file, "				</Range>\n");
+				fprintf(gOutFunc_XML->file, "				<DefaultValue>%d</DefaultValue>\n", (int)optInputInfo->defaultValue);
+			}
+			else if(optInputInfo->type == TA_OptInput_IntegerList)
+			{
+				TA_IntegerList *intList;
+					
+				intList = (TA_IntegerList*) optInputInfo->dataSet;
+				fprintf(gOutFunc_XML->file, "				<Type>MA Type</Type>\n", funcInfo->name);
+				fprintf(gOutFunc_XML->file, "				<DefaultValue>%d</DefaultValue>\n", (int)optInputInfo->defaultValue);
+				if( intList != (TA_IntegerList*) TA_DEF_UI_MA_Method.dataSet )
+				{
+					printf("Integer lists are not supported.\n");
+				}
+			}
+			else
+			{
+				printf("Unknown optional input type detected.\n");
+			}
+
+			fprintf(gOutFunc_XML->file, "			</OptionalInputArgument>\n");
+		}
+		fprintf(gOutFunc_XML->file, "		</OptionalInputArguments>\n");
+	}
+
+	//Output arguments
+	fprintf(gOutFunc_XML->file, "		<OutputArguments>\n");
+	for(i=0; i<funcInfo->nbOutput; i++)
+	{
+		retCode = TA_GetOutputParameterInfo( funcInfo->handle, i, &outputInfo );
+		fprintf(gOutFunc_XML->file, "			<OutputArgument>\n");
+		if(outputInfo->type == TA_Output_Integer)
+		{
+			fprintf(gOutFunc_XML->file, "				<Type>Integer Array</Type>\n");
+		}
+		else if(outputInfo->type == TA_Output_Real)
+		{
+			fprintf(gOutFunc_XML->file, "				<Type>Double Array</Type>\n");
+		}
+		else
+		{
+			printf("Unknown output type detected.\n");
+		}
+		fprintf(gOutFunc_XML->file, "				<Name>%s</Name>\n", outputInfo->paramName);
+		fprintf(gOutFunc_XML->file, "			</OutputArgument>\n");
+	}
+	fprintf(gOutFunc_XML->file, "		</OutputArguments>\n");
+    fprintf(gOutFunc_XML->file, "	</FinancialFunction>\n");
+	fprintf(gOutFunc_XML->file, "\n");
+	fprintf(gOutFunc_XML->file, "\n");
 }
 
 static void doForEachFunction( const TA_FuncInfo *funcInfo,
