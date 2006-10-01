@@ -47,10 +47,10 @@ extern "C" {
  *
  * This capability is particularly useful for an application who needs
  * to support the complete list of TA functions without having to
- * re-write new code each time a new function is added to TA-LIB.
+ * re-write new code each time a new function is added to TA-Lib.
  *
  * Example 1:
- *        Let's say you are doing a charting software. When the user select
+ *        Lets say you are doing a charting software. When the user select
  *        a price bar, a side list offers blindly all the TA functions
  *        that could be applied to a price bar. The user selects one of
  *        these, then a dialog open for allowing to adjust some parameter
@@ -71,8 +71,6 @@ extern "C" {
  *        calling the TA Functions, you can write a code that
  *        re-generate a different interface. This is already
  *        done even for the 'C' interface (ta_func.h is generated).
- *        I plan to use such mechanism for a more friendly C++
- *        interface eventually.
  *
  * Example 3:
  *        With the abstract interface you can easily generate
@@ -84,6 +82,7 @@ extern "C" {
  * the following:
  *   - used by gen_code to generate all the glue code.
  *   - used by the Excel interface to call all the TA functions.
+ *   - used to generate a XML representation of the TA functions.
  */
 
 /* The following functions are used to obtain the name of all the
@@ -131,8 +130,7 @@ TA_RetCode TA_GroupTableFree ( TA_StringTable *table );
  *   TA_RetCode retCode;
  *   int i;
  *
- *   retCode = TA_FuncTableAlloc( "Market Strength",
- *                                &table );
+ *   retCode = TA_FuncTableAlloc( "Market Strength", &table );
  *
  *   if( retCode == TA_SUCCESS )
  *   {
@@ -544,7 +542,7 @@ TA_RetCode TA_CallFunc( const TA_ParamHolder *params,
 
 
 /* Return XML representation of all the TA functions.
- * The returned array is the same as the func_api.xml file.
+ * The returned array is the same as the ta_func_api.xml file.
  */
 const char *TA_FunctionDescriptionXML( void );
 
