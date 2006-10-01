@@ -39,6 +39,7 @@ print "\n";
 print "# Files to process\n";
 print "SOURCES	= ../../../../../src/ta_abstract/ta_abstract.c \\ \n";
 print "          ../../../../../src/ta_abstract/ta_def_ui.c \\ \n";
+print "          ../../../../../src/ta_abstract/ta_func_api.c \\ \n";
 print "          ../../../../../src/ta_abstract/ta_group_idx.c \\ \n";
 print "          ../../../../../src/ta_abstract/frames/ta_frame.c \\ \n";
 print "          ../../../../../src/ta_abstract/tables/table_a.c \\ \n";
@@ -69,19 +70,6 @@ print "          ../../../../../src/ta_abstract/tables/table_y.c \\ \n";
 print "          ../../../../../src/ta_abstract/tables/table_z.c";
 
 # Generate the list of functions.
-
-# NOTE: This is not done anymore. Simply use "ta_frame.c" instead.
-#
-# open FUNCLIST_TXT, "<../../../include/func_list.txt" or die "Can't open func_list.txt: $!";
-# @funclist = <FUNCLIST_TXT>;
-# foreach $z (@funclist) {
-#   if( length($z) > 2 )
-#   {
-#      @words = split( / /, $z );
-#      print " \\ \n";
-#      print "          ../../../../../src/ta_abstract/frames/ta_",$words[0],"_frame.c";
-#   }
-# }
 
 print " \n";
 

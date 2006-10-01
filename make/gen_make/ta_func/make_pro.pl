@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # This file generates the "ta_func.pro" using the information
-# provided by the "func_list.txt"
+# provided by the "ta_func_list.txt"
 #
 # Reminder: ta_func.pro is then process by tmake for
 #           generating the multi-platform makefiles.
@@ -44,7 +44,7 @@ print "# Files to process\n";
 print "SOURCES	= ../../../../../src/ta_func/ta_utility.c";
 
 # Generate the list of functions.
-open FUNCLIST_TXT, "<../../../include/func_list.txt" or die "Can't open func_list.txt: $!";
+open FUNCLIST_TXT, "<../../../../ta_func_list.txt" or die "Can't open ta_func_list.txt: $!";
 @funclist = <FUNCLIST_TXT>;
 foreach $z (@funclist) {
    if( length($z) > 2 )

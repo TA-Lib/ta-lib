@@ -36,6 +36,7 @@ SOURCES = ../../../../../src/ta_common/trio/trionan.c \
           ../../../../../src/ta_common/mt/mt19937ar.c \
           ../../../../../src/ta_abstract/ta_abstract.c \
           ../../../../../src/ta_abstract/ta_def_ui.c \
+          ../../../../../src/ta_abstract/ta_func_api.c \
           ../../../../../src/ta_abstract/ta_group_idx.c \
           ../../../../../src/ta_abstract/frames/ta_frame.c \
           ../../../../../src/ta_abstract/tables/table_a.c \
