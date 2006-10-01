@@ -542,8 +542,15 @@ TA_RetCode TA_CallFunc( const TA_ParamHolder *params,
                         TA_Integer           *outBegIdx,
                         TA_Integer           *outNbElement );
 
+
+/* Return XML representation of all the TA functions.
+ * The returned array is the same as the func_api.xml file.
+ */
+const char *TA_FunctionDescriptionXML( void );
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+
