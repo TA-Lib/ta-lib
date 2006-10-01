@@ -29,6 +29,7 @@ RES_FILE =
 HEADERS =	
 SOURCES =	..\..\..\..\..\src\ta_abstract\ta_abstract.c \
 		..\..\..\..\..\src\ta_abstract\ta_def_ui.c \
+		..\..\..\..\..\src\ta_abstract\ta_func_api.c \
 		..\..\..\..\..\src\ta_abstract\ta_group_idx.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_frame.c \
 		..\..\..\..\..\src\ta_abstract\tables\table_a.c \
@@ -59,6 +60,7 @@ SOURCES =	..\..\..\..\..\src\ta_abstract\ta_abstract.c \
 		..\..\..\..\..\src\ta_abstract\tables\table_z.c
 OBJECTS =	..\..\..\..\..\temp\cmd\ta_abstract.obj \
 		..\..\..\..\..\temp\cmd\ta_def_ui.obj \
+		..\..\..\..\..\temp\cmd\ta_func_api.obj \
 		..\..\..\..\..\temp\cmd\ta_group_idx.obj \
 		..\..\..\..\..\temp\cmd\ta_frame.obj \
 		..\..\..\..\..\temp\cmd\table_a.obj \
@@ -121,6 +123,7 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 	$(LIB) $(TARGET) @&&|
 +..\..\..\..\..\temp\cmd\ta_abstract.obj \
 +..\..\..\..\..\temp\cmd\ta_def_ui.obj \
++..\..\..\..\..\temp\cmd\ta_func_api.obj \
 +..\..\..\..\..\temp\cmd\ta_group_idx.obj \
 +..\..\..\..\..\temp\cmd\ta_frame.obj \
 +..\..\..\..\..\temp\cmd\table_a.obj \
@@ -165,6 +168,7 @@ dist:
 clean:
 	-del ..\..\..\..\..\temp\cmd\ta_abstract.obj
 	-del ..\..\..\..\..\temp\cmd\ta_def_ui.obj
+	-del ..\..\..\..\..\temp\cmd\ta_func_api.obj
 	-del ..\..\..\..\..\temp\cmd\ta_group_idx.obj
 	-del ..\..\..\..\..\temp\cmd\ta_frame.obj
 	-del ..\..\..\..\..\temp\cmd\table_a.obj
@@ -215,6 +219,9 @@ clean:
 
 ..\..\..\..\..\temp\cmd\ta_def_ui.obj: ..\..\..\..\..\src\ta_abstract\ta_def_ui.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_def_ui.obj ..\..\..\..\..\src\ta_abstract\ta_def_ui.c
+
+..\..\..\..\..\temp\cmd\ta_func_api.obj: ..\..\..\..\..\src\ta_abstract\ta_func_api.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_func_api.obj ..\..\..\..\..\src\ta_abstract\ta_func_api.c
 
 ..\..\..\..\..\temp\cmd\ta_group_idx.obj: ..\..\..\..\..\src\ta_abstract\ta_group_idx.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmd\ta_group_idx.obj ..\..\..\..\..\src\ta_abstract\ta_group_idx.c

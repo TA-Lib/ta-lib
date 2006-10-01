@@ -35,6 +35,7 @@ CXXFLAGS += $(CUSERFLAGS)
 HEADERS =	
 SOURCES =	../../../../../src/ta_abstract/ta_abstract.c \
 		../../../../../src/ta_abstract/ta_def_ui.c \
+		../../../../../src/ta_abstract/ta_func_api.c \
 		../../../../../src/ta_abstract/ta_group_idx.c \
 		../../../../../src/ta_abstract/frames/ta_frame.c \
 		../../../../../src/ta_abstract/tables/table_a.c \
@@ -65,6 +66,7 @@ SOURCES =	../../../../../src/ta_abstract/ta_abstract.c \
 		../../../../../src/ta_abstract/tables/table_z.c
 OBJECTS =	../../../../../temp/cmr/ta_abstract.o \
 		../../../../../temp/cmr/ta_def_ui.o \
+		../../../../../temp/cmr/ta_func_api.o \
 		../../../../../temp/cmr/ta_group_idx.o \
 		../../../../../temp/cmr/ta_frame.o \
 		../../../../../temp/cmr/table_a.o \
@@ -151,6 +153,9 @@ clean:
 
 ../../../../../temp/cmr/ta_def_ui.o: ../../../../../src/ta_abstract/ta_def_ui.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_def_ui.o ../../../../../src/ta_abstract/ta_def_ui.c
+
+../../../../../temp/cmr/ta_func_api.o: ../../../../../src/ta_abstract/ta_func_api.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_func_api.o ../../../../../src/ta_abstract/ta_func_api.c
 
 ../../../../../temp/cmr/ta_group_idx.o: ../../../../../src/ta_abstract/ta_group_idx.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_group_idx.o ../../../../../src/ta_abstract/ta_group_idx.c

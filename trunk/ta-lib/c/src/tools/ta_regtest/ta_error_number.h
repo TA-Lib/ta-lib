@@ -221,6 +221,8 @@ typedef enum
   TA_ABS_TST_FAIL_CALLFUNC_4            = 615,
   TA_ABS_TST_FAIL_INVALID_OUTPUT        = 616,
   TA_ABS_TST_FAIL_STARTEND_ZERO         = 617,
+  TA_ABS_TST_FAIL_FUNCTION_DESC_SMALL   = 618,
+  TA_ABS_TST_FAIL_FUNCTION_DESC_LARGE   = 619,
 
   /* Error code related to internal tests. */
   TA_INTERNAL_CIRC_BUFF_FAIL_0      = 700,

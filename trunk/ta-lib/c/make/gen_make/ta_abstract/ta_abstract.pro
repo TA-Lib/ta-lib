@@ -32,6 +32,7 @@ DESTDIR     = ../../../../../lib
 # Files to process
 SOURCES	= ../../../../../src/ta_abstract/ta_abstract.c \ 
           ../../../../../src/ta_abstract/ta_def_ui.c \ 
+          ../../../../../src/ta_abstract/ta_func_api.c \ 
           ../../../../../src/ta_abstract/ta_group_idx.c \ 
           ../../../../../src/ta_abstract/frames/ta_frame.c \ 
           ../../../../../src/ta_abstract/tables/table_a.c \ 

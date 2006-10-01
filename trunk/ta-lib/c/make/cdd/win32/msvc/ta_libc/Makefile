@@ -29,6 +29,7 @@ SOURCES =	..\..\..\..\..\src\ta_common\trio\trionan.c \
 		..\..\..\..\..\src\ta_common\mt\mt19937ar.c \
 		..\..\..\..\..\src\ta_abstract\ta_abstract.c \
 		..\..\..\..\..\src\ta_abstract\ta_def_ui.c \
+		..\..\..\..\..\src\ta_abstract\ta_func_api.c \
 		..\..\..\..\..\src\ta_abstract\ta_group_idx.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_frame.c \
 		..\..\..\..\..\src\ta_abstract\tables\table_a.c \
@@ -199,6 +200,7 @@ OBJECTS =	..\..\..\..\..\temp\cdd\trionan.obj \
 		..\..\..\..\..\temp\cdd\mt19937ar.obj \
 		..\..\..\..\..\temp\cdd\ta_abstract.obj \
 		..\..\..\..\..\temp\cdd\ta_def_ui.obj \
+		..\..\..\..\..\temp\cdd\ta_func_api.obj \
 		..\..\..\..\..\temp\cdd\ta_group_idx.obj \
 		..\..\..\..\..\temp\cdd\ta_frame.obj \
 		..\..\..\..\..\temp\cdd\table_a.obj \
@@ -414,6 +416,7 @@ clean:
 	-del ..\..\..\..\..\temp\cdd\mt19937ar.obj
 	-del ..\..\..\..\..\temp\cdd\ta_abstract.obj
 	-del ..\..\..\..\..\temp\cdd\ta_def_ui.obj
+	-del ..\..\..\..\..\temp\cdd\ta_func_api.obj
 	-del ..\..\..\..\..\temp\cdd\ta_group_idx.obj
 	-del ..\..\..\..\..\temp\cdd\ta_frame.obj
 	-del ..\..\..\..\..\temp\cdd\table_a.obj
@@ -613,6 +616,9 @@ clean:
 
 ..\..\..\..\..\temp\cdd\ta_def_ui.obj: ..\..\..\..\..\src\ta_abstract\ta_def_ui.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_def_ui.obj ..\..\..\..\..\src\ta_abstract\ta_def_ui.c
+
+..\..\..\..\..\temp\cdd\ta_func_api.obj: ..\..\..\..\..\src\ta_abstract\ta_func_api.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_func_api.obj ..\..\..\..\..\src\ta_abstract\ta_func_api.c
 
 ..\..\..\..\..\temp\cdd\ta_group_idx.obj: ..\..\..\..\..\src\ta_abstract\ta_group_idx.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_group_idx.obj ..\..\..\..\..\src\ta_abstract\ta_group_idx.c

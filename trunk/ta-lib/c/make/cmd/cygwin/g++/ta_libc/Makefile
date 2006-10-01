@@ -41,6 +41,7 @@ SOURCES =	../../../../../src/ta_common/trio/trionan.c \
 		../../../../../src/ta_common/mt/mt19937ar.c \
 		../../../../../src/ta_abstract/ta_abstract.c \
 		../../../../../src/ta_abstract/ta_def_ui.c \
+		../../../../../src/ta_abstract/ta_func_api.c \
 		../../../../../src/ta_abstract/ta_group_idx.c \
 		../../../../../src/ta_abstract/frames/ta_frame.c \
 		../../../../../src/ta_abstract/tables/table_a.c \
@@ -211,6 +212,7 @@ OBJECTS =	../../../../../temp/cmd/trionan.o \
 		../../../../../temp/cmd/mt19937ar.o \
 		../../../../../temp/cmd/ta_abstract.o \
 		../../../../../temp/cmd/ta_def_ui.o \
+		../../../../../temp/cmd/ta_func_api.o \
 		../../../../../temp/cmd/ta_group_idx.o \
 		../../../../../temp/cmd/ta_frame.o \
 		../../../../../temp/cmd/table_a.o \
@@ -449,6 +451,9 @@ clean:
 
 ../../../../../temp/cmd/ta_def_ui.o: ../../../../../src/ta_abstract/ta_def_ui.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_def_ui.o ../../../../../src/ta_abstract/ta_def_ui.c
+
+../../../../../temp/cmd/ta_func_api.o: ../../../../../src/ta_abstract/ta_func_api.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_func_api.o ../../../../../src/ta_abstract/ta_func_api.c
 
 ../../../../../temp/cmd/ta_group_idx.o: ../../../../../src/ta_abstract/ta_group_idx.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_group_idx.o ../../../../../src/ta_abstract/ta_group_idx.c

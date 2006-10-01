@@ -23,6 +23,7 @@ ZIP	=	zip -r -9
 HEADERS =	
 SOURCES =	..\..\..\..\..\src\ta_abstract\ta_abstract.c \
 		..\..\..\..\..\src\ta_abstract\ta_def_ui.c \
+		..\..\..\..\..\src\ta_abstract\ta_func_api.c \
 		..\..\..\..\..\src\ta_abstract\ta_group_idx.c \
 		..\..\..\..\..\src\ta_abstract\frames\ta_frame.c \
 		..\..\..\..\..\src\ta_abstract\tables\table_a.c \
@@ -53,6 +54,7 @@ SOURCES =	..\..\..\..\..\src\ta_abstract\ta_abstract.c \
 		..\..\..\..\..\src\ta_abstract\tables\table_z.c
 OBJECTS =	..\..\..\..\..\temp\cmr\ta_abstract.obj \
 		..\..\..\..\..\temp\cmr\ta_def_ui.obj \
+		..\..\..\..\..\temp\cmr\ta_func_api.obj \
 		..\..\..\..\..\temp\cmr\ta_group_idx.obj \
 		..\..\..\..\..\temp\cmr\ta_frame.obj \
 		..\..\..\..\..\temp\cmr\table_a.obj \
@@ -128,6 +130,7 @@ dist:
 clean:
         -del ..\..\..\..\..\temp\cmr\ta_abstract.obj
 	-del ..\..\..\..\..\temp\cmr\ta_def_ui.obj
+	-del ..\..\..\..\..\temp\cmr\ta_func_api.obj
 	-del ..\..\..\..\..\temp\cmr\ta_group_idx.obj
 	-del ..\..\..\..\..\temp\cmr\ta_frame.obj
 	-del ..\..\..\..\..\temp\cmr\table_a.obj
@@ -177,6 +180,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_def_ui.obj: ..\..\..\..\..\src\ta_abstract\ta_def_ui.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_def_ui.obj ..\..\..\..\..\src\ta_abstract\ta_def_ui.c
+
+..\..\..\..\..\temp\cmr\ta_func_api.obj: ..\..\..\..\..\src\ta_abstract\ta_func_api.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_func_api.obj ..\..\..\..\..\src\ta_abstract\ta_func_api.c
 
 ..\..\..\..\..\temp\cmr\ta_group_idx.obj: ..\..\..\..\..\src\ta_abstract\ta_group_idx.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cmr\ta_group_idx.obj ..\..\..\..\..\src\ta_abstract\ta_group_idx.c

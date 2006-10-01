@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2005, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -102,6 +102,8 @@ ErrorNumber test_abstract( void )
    TA_RetCode retCode;
    TA_ParamHolder *paramHolder;
    const TA_FuncHandle *handle;
+   int i;
+   const char *xmlArray;
 
    printf( "Testing Abstract interface\n" );
    
@@ -159,6 +161,28 @@ ErrorNumber test_abstract( void )
    if( retValue != TA_TEST_PASS )
       return retValue;
    
+   /* Verify that the TA_FunctionDescription is null terminated
+    * and as at least 500 characters (less is guaranteed bad...)
+    */
+   xmlArray = TA_FunctionDescriptionXML();
+   for( i=0; i < 1000000; i++ )
+   {
+      if( xmlArray[i] == 0x0 )
+         break;
+   }
+
+   if( i < 500) 
+   {
+      printf( "TA_FunctionDescriptionXML failed. Size too small.\n" );
+      return TA_ABS_TST_FAIL_FUNCTION_DESC_SMALL;
+   }
+
+   if( i == 1000000 )
+   {
+      printf( "TA_FunctionDescriptionXML failed. Size too large (missing null?).\n" );
+      return TA_ABS_TST_FAIL_FUNCTION_DESC_LARGE;
+   }
+
    return TA_TEST_PASS; /* Succcess. */
 }
 

@@ -35,10 +35,10 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
- *  MF       Mario Fortier
- *  ST       Steve Thames (steve@softlife.com)
+ *  MF       Mario Fortier (mfortier@ta-lib.org)
+ *  ST       Steve Thames  (steve@softlife.com)
  *  AC       Angelo Ciceri
- *  RM       Robert Meier (talib@meierlim.com)
+ *  RM       Robert Meier  (talib@meierlim.com)
  *
  * Change history:
  *
@@ -59,6 +59,7 @@
  *  062505 MF    Fix 'out' attribute for .NET verifiable code.
  *  121705 MF    Complete Java port.
  *  012806 MF    Add call to Java post-processing.
+ *  093006 MF    Add code generation for TA_FunctionDescription
  */
 
 /* Description:
@@ -71,7 +72,7 @@
  *       (See the 'table_x.c' files)
  *
  *       This utility is intended only to people integrating new 
- *       TA functions in TA-Lib.
+ *       TA functions in TA-Lib. 
  *       
  * Note: All directory in this code is relative to the 'bin'
  *       directory. You must run "gen_code" from ta-lib/c/bin.
@@ -133,11 +134,12 @@ FileHandle *gOutGroupIdx_C;    /* For "ta_group_idx.c" */
 FileHandle *gOutFunc_C;        /* For "ta_x.c" where 'x' is TA function name. */
 FileHandle *gOutRetCode_C;     /* For "ta_retcode.c" */
 FileHandle *gOutRetCode_CSV;   /* For "ta_retcode.csv" */
-FileHandle *gOutFuncList_TXT;  /* For "func_list.txt" */
+FileHandle *gOutFuncList_TXT;  /* For "ta_func_list.txt" */
 FileHandle *gOutDefs_H;        /* For "ta_defs.h" */
 FileHandle *gOutDotNet_H;      /* For .NET interface file */
 FileHandle *gOutFunc_SWG;      /* For SWIG */
-FileHandle *gOutFunc_XML;      /* For "TAFunctions.xml" */
+FileHandle *gOutFunc_XML;      /* For "ta_func_api.xml" */
+FileHandle *gOutFuncAPI_C;     /* For "ta_func_api.c" */
 
 #ifdef _MSC_VER
 /* The following files are generated only on Windows platform. */
@@ -275,6 +277,9 @@ static void fileDelete( const char *fileToDelete );
 
 static void appendToFunc( FILE *out );
 
+static int  generateFuncAPI_C();
+static void convertFileToCArray( FILE *in, FILE *out );
+
 char gToOpen[BUFFER_SIZE];
 char gTempBuf[BUFFER_SIZE];
 char gTempBuf2[BUFFER_SIZE];
@@ -360,7 +365,7 @@ int main(int argc, char* argv[])
          printf( "  The following files are updated or regenerated:\n" );
          printf( "     1) ta-lib/c/include/ta_func.h\n" );
          printf( "     2) ta-lib/c/include/ta_defs.h\n" );
-         printf( "     3) ta-lib/c/include/func_list.txt\n" );
+         printf( "     3) ta-lib/ta_func_list.txt\n" );
          printf( "     4) ta-lib/c/src/ta_common/ta_retcode.*\n" );
          printf( "     5) ta-lib/c/src/ta_abstract/ta_group_idx.c\n");     
          printf( "     6) ta-lib/c/src/ta_abstract/frames/*.*\n");
@@ -370,6 +375,8 @@ int main(int argc, char* argv[])
          printf( "    10) ta-lib/c/src/ta_abstract/excel_glue.c (Win32 only)\n" );
          printf( "    11) ta-lib/c/ide/msvc/lib_proj/ta_func/ta_func.dsp (Win32 only)\n" );
          printf( "    12) ta-lib/java/src/com/tictactec/ta/lib/Core.java (Win32 only)\n" );
+         printf( "    13) ta-lib/ta_func_api.xml\n" );
+         printf( "    14) ta-lib/c/src/ta_abstract/ta_func_api.c\n" );
          printf( "\n" );
          printf( "  The function header, parameters and validation code of all TA\n" );
          printf( "  function in c/src/ta_func are also updated.\n" );
@@ -652,7 +659,7 @@ static int genCode(int argc, char* argv[])
       /* Create .NET project files template */
       #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.vcproj"
       #define FILE_NET_PROJ_TMP "..\\temp\\dotnetproj.tmp"
-      gOutProjFile = fileOpen( FILE_NET_PROJ, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
+      gOutProjFile = fileOpen( FILE_NET_PROJ, NULL, FILE_READ );
       if( gOutProjFile == NULL )   
       {
          printf( "\nCannot access [%s]\n", gToOpen );
@@ -675,7 +682,7 @@ static int genCode(int argc, char* argv[])
       /* Create MSVC project files template */
       #define FILE_MSVC_PROJ     "..\\..\\c\\ide\\msvc\\lib_proj\\ta_func\\ta_func.dsp"
       #define FILE_MSVC_PROJ_TMP "..\\temp\\ta_func_dsp.tmp"
-      gOutMSVCProjFile = fileOpen( FILE_MSVC_PROJ, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
+      gOutMSVCProjFile = fileOpen( FILE_MSVC_PROJ, NULL, FILE_READ );
       if( gOutMSVCProjFile == NULL )   
       {
          printf( "\nCannot access [%s]\n", gToOpen );
@@ -701,7 +708,7 @@ static int genCode(int argc, char* argv[])
    #define FILE_CORE_JAVA     "..\\..\\java\\src\\com\\tictactec\\ta\\lib\\Core.java"
    #define FILE_CORE_JAVA_TMP "..\\temp\\CoreJava.tmp"
    #define FILE_CORE_JAVA_UNF "..\\temp\\CoreJavaUnformated.tmp"
-   gOutCore_Java = fileOpen( FILE_CORE_JAVA, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
+   gOutCore_Java = fileOpen( FILE_CORE_JAVA, NULL, FILE_READ );
    if( gOutCore_Java == NULL )   
    {
          printf( "\nCannot access [%s]\n", gToOpen );
@@ -725,7 +732,7 @@ static int genCode(int argc, char* argv[])
    /* Create the .NET interface file template */
    #define FILE_NET_HEADER     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.h"
    #define FILE_NET_HEADER_TMP "..\\temp\\dotneth.tmp"
-   gOutDotNet_H = fileOpen( FILE_NET_HEADER, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
+   gOutDotNet_H = fileOpen( FILE_NET_HEADER, NULL, FILE_READ );
    if( gOutDotNet_H == NULL )   
    {
       printf( "\nCannot access [%s]\n", gToOpen );
@@ -763,10 +770,10 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
-   gOutFunc_XML = fileOpen( "TAFunctions.xml", NULL, FILE_WRITE|WRITE_ALWAYS );
+   gOutFunc_XML = fileOpen( "..\\..\\ta_func_api.xml", NULL, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
    if(gOutFunc_XML == NULL)
    {
-	   printf( "\nCannot access TAFunctions.xml" );
+	   printf( "\nCannot access ta_func_api.xml" );
    }
 
 
@@ -781,8 +788,8 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
-   /* Create the "func_list.txt" */
-   gOutFuncList_TXT = fileOpen( "..\\include\\func_list.txt",
+   /* Create the "ta_func_list.txt" */
+   gOutFuncList_TXT = fileOpen( "..\\..\\ta_func_list.txt",
                                 NULL,
                                 FILE_WRITE|WRITE_ON_CHANGE_ONLY|SORT_OUTPUT );
 
@@ -872,6 +879,7 @@ static int genCode(int argc, char* argv[])
    retCode = TA_ForEachFunc( doForEachFunctionXml, NULL );
    fprintf(gOutFunc_XML->file, "</FinancialFunctions>\n");
 
+
    /* Append some "hard coded" prototype for ta_func */
    appendToFunc( gOutFunc_H->file );
    appendToFunc( gOutFunc_SWG->file );
@@ -936,6 +944,13 @@ static int genCode(int argc, char* argv[])
 
    /* Update "ta_defs.h" */
    doDefsFile();
+ 
+   /* Convert the xml description file into a format embedded in the library. */
+   if( generateFuncAPI_C() != 1 )
+   {
+      return -1; // Failed.
+   }
+
 
    /* Run Java Post-Processing.   
     * On Success, the Java program create a file named "java_success". 
@@ -947,10 +962,10 @@ static int genCode(int argc, char* argv[])
       #define JAVA_SUCCESS_FILE     "..\\temp\\java_success"
       #define JAVA_PRETTY_TEMP_FILE "..\\temp\\CoreJavaPretty.tmp"
       fileDelete( JAVA_SUCCESS_FILE );      
-      system( "javac -d . \"..\\src\\tools\\gen_code\\java\\Main.java" );
-      system( "javac -d . \"..\\src\\tools\\gen_code\\java\\PrettyCode.java" );
-      system( "java -classpath . Main" );
-      tempFile = fileOpen(JAVA_SUCCESS_FILE,NULL,FILE_READ|WRITE_ON_CHANGE_ONLY);
+      system( "javac -cp . -d . \"..\\src\\tools\\gen_code\\java\\PrettyCode.java" );
+      system( "javac -cp . -d . \"..\\src\\tools\\gen_code\\java\\Main.java" );
+      system( "java -cp . Main" );
+      tempFile = fileOpen(JAVA_SUCCESS_FILE,NULL,FILE_READ );
       fileDelete( FILE_CORE_JAVA_UNF );
 
       if( tempFile == NULL )
@@ -965,7 +980,7 @@ static int genCode(int argc, char* argv[])
          /* Java processing done. Overwrite the original Core.java ONLY if there
           * is changes (re-use fileOpen/fileClose even if not efficient).
           */
-         tempFile = fileOpen( JAVA_PRETTY_TEMP_FILE, NULL, FILE_READ|WRITE_ON_CHANGE_ONLY );
+         tempFile = fileOpen( JAVA_PRETTY_TEMP_FILE, NULL, FILE_READ );
          tempFileOut = fileOpen( FILE_CORE_JAVA, NULL,
                                  FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
@@ -1224,7 +1239,7 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
 
    (void)opaqueData; /* Get ride of compiler warning */
 
-   /* Add this function to the "func_list.txt" */
+   /* Add this function to the "ta_func_list.txt" */
    genPrefix = 0;
    fprintf( gOutFuncList_TXT->file, "%-20s%s\n", funcInfo->name, funcInfo->hint );
   
@@ -3678,3 +3693,60 @@ void genJavaCode( const TA_FuncInfo *funcInfo )
 }
 #endif
 
+
+static int generateFuncAPI_C()
+{
+   FileHandle *inFile;
+   FILE *out;
+   FILE *in;
+
+   #define FILE_INPUT           "..\\..\\ta_func_api.xml"
+   #define FILE_OUTPUT          "..\\src\\ta_abstract\\ta_func_api.c"
+   #define FILE_OUTPUT_TEMPLATE "..\\src\\ta_abstract\\templates\\ta_func_api.c.template"
+
+   inFile = fileOpen( FILE_INPUT, NULL, FILE_READ );
+   if( inFile == NULL )   
+   {
+      printf( "\nCannot access [%s]\n", gToOpen );
+      return -1;
+   }
+   gOutFuncAPI_C = fileOpen( FILE_OUTPUT, FILE_OUTPUT_TEMPLATE, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+   if( gOutFuncAPI_C == NULL )
+   {
+      printf( "\nCannot write to [%s]\n", gToOpen );
+      return -1;
+   }
+
+   out = gOutFuncAPI_C->file;
+   in  = inFile->file;
+ 
+   convertFileToCArray(in, out);
+
+   fileClose(gOutFuncAPI_C);
+   fileClose(inFile);
+
+   return 1;
+}
+
+static void convertFileToCArray( FILE *in, FILE *out )
+{
+    int c;
+    int position;
+    
+    position = 0;
+    c = getc(in);
+    while( c != EOF )
+    {
+       if( position == 0 )
+          fprintf( out, "0x%02X", (char)c );
+       else
+       {
+          fprintf( out, ",0x%02X", (char)c );
+          if( (position % 20) == 0 )
+             fprintf( out, "\n" );
+       }       
+       position++;
+       c = getc(in);
+   }
+ 
+}
