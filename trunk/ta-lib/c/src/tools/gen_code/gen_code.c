@@ -1043,6 +1043,84 @@ static unsigned int forEachGroup( TA_ForEachGroup forEachGroupFunc,
    return i;
 }
 
+//Replaces reserved xml characters with the appropriate escape sequence.
+static void ReplaceReservedXmlCharacters(const char *input, char *output)
+{
+	char *currentPosition;
+	char tempString[8*1024];
+
+	if((input == NULL) || (output == NULL))
+	{
+		return;
+	}
+
+	strcpy(output, input);
+
+	//Replace '&' with "&amp;"
+	//Note1: '&' has to be processed first as otherwise we replace the
+	//       '&' in the escaped characters.
+	//Note2: We assume that the input string does not have any escaped
+	//       characters already.
+	currentPosition = output;
+	while((currentPosition = strchr(currentPosition, '&')) != NULL)
+	{
+		tempString[0] = '\0';
+		if(strlen(currentPosition) > 1)
+		{
+			strcpy(tempString, currentPosition+1);
+		}
+		sprintf(currentPosition, "&amp;%s", tempString);
+	}
+
+	//Replace '<' with "&lt;"
+	currentPosition = output;
+	while((currentPosition = strchr(currentPosition, '<')) != NULL)
+	{
+		tempString[0] = '\0';
+		if(strlen(currentPosition) > 1)
+		{
+			strcpy(tempString, currentPosition+1);
+		}
+		sprintf(currentPosition, "&lt;%s", tempString);
+	}
+
+	//Replace '>' with "&gt;"
+	currentPosition = output;
+	while((currentPosition = strchr(currentPosition, '>')) != NULL)
+	{
+		tempString[0] = '\0';
+		if(strlen(currentPosition) > 1)
+		{
+			strcpy(tempString, currentPosition+1);
+		}
+		sprintf(currentPosition, "&gt;%s", tempString);
+	}
+
+	//Replace ''' with "&apos;"
+	currentPosition = output;
+	while((currentPosition = strchr(currentPosition, '\'')) != NULL)
+	{
+		tempString[0] = '\0';
+		if(strlen(currentPosition) > 1)
+		{
+			strcpy(tempString, currentPosition+1);
+		}
+		sprintf(currentPosition, "&apos;%s", tempString);
+	}
+
+	//Replace '"' with "&quot;"
+	currentPosition = output;
+	while((currentPosition = strchr(currentPosition, '"')) != NULL)
+	{
+		tempString[0] = '\0';
+		if(strlen(currentPosition) > 1)
+		{
+			strcpy(tempString, currentPosition+1);
+		}
+		sprintf(currentPosition, "&quot;%s", tempString);
+	}
+}
+
 static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 								 void *opaqueData)
 {
@@ -1050,15 +1128,18 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 	TA_InputParameterInfo *inputInfo;
 	TA_OptInputParameterInfo *optInputInfo;
 	TA_OutputParameterInfo *outputInfo;
+	char tempString[8*1024];
 	unsigned int i;
 
 	//General stuff about function
 	fprintf(gOutFunc_XML->file, "	<!-- %s -->\n", funcInfo->name);
 	fprintf(gOutFunc_XML->file, "	<FinancialFunction>\n");
-    fprintf(gOutFunc_XML->file, "		<ShortName>%s</ShortName>\n", funcInfo->name);
-    fprintf(gOutFunc_XML->file, "		<FullName>%s</FullName>\n", funcInfo->hint);
-    fprintf(gOutFunc_XML->file, "		<ShortDescription>%s</ShortDescription>\n", funcInfo->hint);
-    fprintf(gOutFunc_XML->file, "		<LongDescription>%s</LongDescription>\n", funcInfo->helpFile);
+    fprintf(gOutFunc_XML->file, "		<ShortName>%s</ShortName>\n", (funcInfo->name == NULL)? "" : funcInfo->name);
+    fprintf(gOutFunc_XML->file, "		<FullName>%s</FullName>\n", (funcInfo->hint == NULL)? "" : funcInfo->hint);
+	ReplaceReservedXmlCharacters(funcInfo->hint, tempString);
+    fprintf(gOutFunc_XML->file, "		<ShortDescription>%s</ShortDescription>\n", (funcInfo->hint == NULL)? "" : tempString);
+	ReplaceReservedXmlCharacters(funcInfo->helpFile, tempString);
+    fprintf(gOutFunc_XML->file, "		<LongDescription>%s</LongDescription>\n", (funcInfo->helpFile == NULL)? "" : tempString);
     fprintf(gOutFunc_XML->file, "		<GroupId>%s</GroupId>\n", funcInfo->group);
 
 	//Required input arguments
@@ -1146,18 +1227,44 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 		fprintf(gOutFunc_XML->file, "		<OptionalInputArguments>\n");
 		for(i=0; i<funcInfo->nbOptInput; i++)
 		{
-			//Get the type of the optional parameter.
-			fprintf(gOutFunc_XML->file, "			<OptionalInputArgument>\n");
 			retCode = TA_GetOptInputParameterInfo( funcInfo->handle, i, &optInputInfo );
 
-			//Add information about optional input parameter.
+			fprintf(gOutFunc_XML->file, "			<OptionalInputArgument>\n");
 			fprintf(gOutFunc_XML->file, "				<Name>%s</Name>\n", optInputInfo->displayName);
+			ReplaceReservedXmlCharacters(optInputInfo->hint, tempString);
+			fprintf(gOutFunc_XML->file, "				<ShortDescription>%s</ShortDescription>\n", (optInputInfo->hint == NULL)? "" : tempString);
+			ReplaceReservedXmlCharacters(optInputInfo->helpFile, tempString);
+			fprintf(gOutFunc_XML->file, "				<LongDescription>%s</LongDescription>\n", (optInputInfo->helpFile == NULL)? "" : tempString);
+			if(optInputInfo->flags != 0)
+			{
+				fprintf(gOutFunc_XML->file, "				<Flags>\n");
+
+				if(optInputInfo->flags & TA_OPTIN_IS_PERCENT)
+				{
+					fprintf(gOutFunc_XML->file, "					<Flag>Percent</Flag>\n");
+				}
+				if(optInputInfo->flags & TA_OPTIN_IS_DEGREE)
+				{
+					fprintf(gOutFunc_XML->file, "					<Flag>Degree</Flag>\n");
+				}
+				if(optInputInfo->flags & TA_OPTIN_IS_CURRENCY)
+				{
+					fprintf(gOutFunc_XML->file, "					<Flag>Currency</Flag>\n");
+				}
+				if(optInputInfo->flags & TA_OPTIN_ADVANCED)
+				{
+					fprintf(gOutFunc_XML->file, "					<Flag>Advanced</Flag>\n");
+				}
+
+				fprintf(gOutFunc_XML->file, "				</Flags>\n");
+			}
+
 			if(optInputInfo->type == TA_OptInput_RealRange)
 			{
 				TA_RealRange *doubleRange;
 					
 				doubleRange= (TA_RealRange*)optInputInfo->dataSet;
-				fprintf(gOutFunc_XML->file, "				<Type>Double</Type>\n", funcInfo->name);
+				fprintf(gOutFunc_XML->file, "				<Type>Double</Type>\n");
 				fprintf(gOutFunc_XML->file, "				<Range>\n");
 				fprintf(gOutFunc_XML->file, "					<Minimum>%f</Minimum>\n", doubleRange->min);
 				fprintf(gOutFunc_XML->file, "					<Maximum>%f</Maximum>\n", doubleRange->max);
@@ -1173,7 +1280,7 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 				TA_IntegerRange *integerRange;
 				
 				integerRange = (TA_IntegerRange*)optInputInfo->dataSet;
-				fprintf(gOutFunc_XML->file, "				<Type>Integer</Type>\n", funcInfo->name);
+				fprintf(gOutFunc_XML->file, "				<Type>Integer</Type>\n");
 				fprintf(gOutFunc_XML->file, "				<Range>\n");
 				fprintf(gOutFunc_XML->file, "					<Minimum>%d</Minimum>\n", integerRange->min);
 				fprintf(gOutFunc_XML->file, "					<Maximum>%d</Maximum>\n", integerRange->max);
@@ -1188,7 +1295,7 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 				TA_IntegerList *intList;
 					
 				intList = (TA_IntegerList*) optInputInfo->dataSet;
-				fprintf(gOutFunc_XML->file, "				<Type>MA Type</Type>\n", funcInfo->name);
+				fprintf(gOutFunc_XML->file, "				<Type>MA Type</Type>\n");
 				fprintf(gOutFunc_XML->file, "				<DefaultValue>%d</DefaultValue>\n", (int)optInputInfo->defaultValue);
 				if( intList != (TA_IntegerList*) TA_DEF_UI_MA_Method.dataSet )
 				{
@@ -1224,6 +1331,57 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 			printf("Unknown output type detected.\n");
 		}
 		fprintf(gOutFunc_XML->file, "				<Name>%s</Name>\n", outputInfo->paramName);
+		if(outputInfo->flags != 0)
+		{
+			fprintf(gOutFunc_XML->file, "				<Flags>\n");
+
+			if(outputInfo->flags & TA_OUT_LINE)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Line</Flag>\n");
+			}
+			if(outputInfo->flags & TA_OUT_DOT_LINE)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Dotted Line</Flag>\n");
+			}
+			if(outputInfo->flags & TA_OUT_DASH_LINE)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Dashed Line</Flag>\n");
+			}
+			if(outputInfo->flags & TA_OUT_DOT)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Dots</Flag>\n");
+			}
+			if(outputInfo->flags & TA_OUT_HISTO)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Histogram</Flag>\n");
+			}
+			if(outputInfo->flags & TA_OUT_PATTERN_BOOL)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Pattern Bool</Flag>\n");
+			}
+			if(outputInfo->flags & TA_OUT_PATTERN_BULL_BEAR)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Pattern Bull Bear</Flag>\n");
+			}
+			if(outputInfo->flags & TA_OUT_PATTERN_STRENGTH)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Pattern Strength</Flag>\n");
+			}
+			if(outputInfo->flags & TA_OUT_POSITIVE)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Positive</Flag>\n");
+			}
+			if(outputInfo->flags & TA_OUT_NEGATIVE)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Negative</Flag>\n");
+			}
+			if(outputInfo->flags & TA_OUT_ZERO)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Zero</Flag>\n");
+			}
+
+			fprintf(gOutFunc_XML->file, "				</Flags>\n");
+		}
 		fprintf(gOutFunc_XML->file, "			</OutputArgument>\n");
 	}
 	fprintf(gOutFunc_XML->file, "		</OutputArguments>\n");
