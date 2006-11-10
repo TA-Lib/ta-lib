@@ -228,15 +228,7 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\..\..\..\src\ta_common\mt\mt19937ar.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\ta_common\ta_global.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\ta_random.c
 # End Source File
 # Begin Source File
 
@@ -264,10 +256,6 @@ SOURCE=..\..\..\..\src\ta_common\ta_version.c
 
 !ENDIF 
 
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\ta_common\trio\trionan.c
 # End Source File
 # End Group
 # Begin Group "Header Files"

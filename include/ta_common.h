@@ -142,14 +142,6 @@ void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo );
 TA_RetCode TA_Initialize( void );
 TA_RetCode TA_Shutdown( void );
 
-/* Seed for the pseudo-random generator. */
-void TA_SRand( UInt32 seed );
-
-/* Return a pseudo-random value.
- * Implemented using the Mersenne Twister algorithm.
- */
-double TA_Rand();
-
 #ifdef __cplusplus
 }
 #endif

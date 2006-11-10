@@ -15,7 +15,7 @@ CC	=	bcc32
 CXX	=	bcc32
 CFLAGS	=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -w-8080 -O2 -DTA_SINGLE_THREAD -DWIN32 -DNO_DEBUG
 CXXFLAGS=	-x- -RT- -tWR -w -w-8004 -w-8071 -w-8057 -w-8080 -O2 -DTA_SINGLE_THREAD -DWIN32 -DNO_DEBUG
-INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_common\mt" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_abstract" -I"..\..\..\..\..\src\ta_abstract\tables" -I"..\..\..\..\..\src\ta_abstract\frames" -I"$(QTDIR)\include"
+INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\include" -I"..\..\..\..\..\src\ta_abstract" -I"..\..\..\..\..\src\ta_abstract\tables" -I"..\..\..\..\..\src\ta_abstract\frames" -I"$(QTDIR)\include"
 LIB	=	tlib /C /P256
 MOC	=	moc
 UIC	=	uic
@@ -27,12 +27,9 @@ RES_FILE =
 ####### Files
 
 HEADERS =	
-SOURCES =	..\..\..\..\..\src\ta_common\trio\trionan.c \
-		..\..\..\..\..\src\ta_common\ta_global.c \
+SOURCES =	..\..\..\..\..\src\ta_common\ta_global.c \
 		..\..\..\..\..\src\ta_common\ta_retcode.c \
 		..\..\..\..\..\src\ta_common\ta_version.c \
-		..\..\..\..\..\src\ta_common\ta_random.c \
-		..\..\..\..\..\src\ta_common\mt\mt19937ar.c \
 		..\..\..\..\..\src\ta_abstract\ta_abstract.c \
 		..\..\..\..\..\src\ta_abstract\ta_def_ui.c \
 		..\..\..\..\..\src\ta_abstract\ta_func_api.c \
@@ -198,12 +195,9 @@ SOURCES =	..\..\..\..\..\src\ta_common\trio\trionan.c \
 		..\..\..\..\..\src\ta_func\ta_WCLPRICE.c \
 		..\..\..\..\..\src\ta_func\ta_WILLR.c \
 		..\..\..\..\..\src\ta_func\ta_WMA.c
-OBJECTS =	..\..\..\..\..\temp\csr\trionan.obj \
-		..\..\..\..\..\temp\csr\ta_global.obj \
+OBJECTS =	..\..\..\..\..\temp\csr\ta_global.obj \
 		..\..\..\..\..\temp\csr\ta_retcode.obj \
 		..\..\..\..\..\temp\csr\ta_version.obj \
-		..\..\..\..\..\temp\csr\ta_random.obj \
-		..\..\..\..\..\temp\csr\mt19937ar.obj \
 		..\..\..\..\..\temp\csr\ta_abstract.obj \
 		..\..\..\..\..\temp\csr\ta_def_ui.obj \
 		..\..\..\..\..\temp\csr\ta_func_api.obj \
@@ -401,12 +395,9 @@ all: $(TARGET)
 $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC) 
 	-del $(TARGET)
 	$(LIB) $(TARGET) @&&|
-+..\..\..\..\..\temp\csr\trionan.obj \
 +..\..\..\..\..\temp\csr\ta_global.obj \
 +..\..\..\..\..\temp\csr\ta_retcode.obj \
 +..\..\..\..\..\temp\csr\ta_version.obj \
-+..\..\..\..\..\temp\csr\ta_random.obj \
-+..\..\..\..\..\temp\csr\mt19937ar.obj \
 +..\..\..\..\..\temp\csr\ta_abstract.obj \
 +..\..\..\..\..\temp\csr\ta_def_ui.obj \
 +..\..\..\..\..\temp\csr\ta_func_api.obj \
@@ -586,12 +577,9 @@ dist:
 	$(ZIP) ta_libc/ta_libc.zip ta_libc/ta_libc.pro $(SOURCES) $(HEADERS) $(DIST)
 
 clean:
-	-del ..\..\..\..\..\temp\csr\trionan.obj
 	-del ..\..\..\..\..\temp\csr\ta_global.obj
 	-del ..\..\..\..\..\temp\csr\ta_retcode.obj
 	-del ..\..\..\..\..\temp\csr\ta_version.obj
-	-del ..\..\..\..\..\temp\csr\ta_random.obj
-	-del ..\..\..\..\..\temp\csr\mt19937ar.obj
 	-del ..\..\..\..\..\temp\csr\ta_abstract.obj
 	-del ..\..\..\..\..\temp\csr\ta_def_ui.obj
 	-del ..\..\..\..\..\temp\csr\ta_func_api.obj
@@ -769,9 +757,6 @@ clean:
 
 ####### Compile
 
-..\..\..\..\..\temp\csr\trionan.obj: ..\..\..\..\..\src\ta_common\trio\trionan.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\trionan.obj ..\..\..\..\..\src\ta_common\trio\trionan.c
-
 ..\..\..\..\..\temp\csr\ta_global.obj: ..\..\..\..\..\src\ta_common\ta_global.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_global.obj ..\..\..\..\..\src\ta_common\ta_global.c
 
@@ -780,12 +765,6 @@ clean:
 
 ..\..\..\..\..\temp\csr\ta_version.obj: ..\..\..\..\..\src\ta_common\ta_version.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_version.obj ..\..\..\..\..\src\ta_common\ta_version.c
-
-..\..\..\..\..\temp\csr\ta_random.obj: ..\..\..\..\..\src\ta_common\ta_random.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_random.obj ..\..\..\..\..\src\ta_common\ta_random.c
-
-..\..\..\..\..\temp\csr\mt19937ar.obj: ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\mt19937ar.obj ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
 
 ..\..\..\..\..\temp\csr\ta_abstract.obj: ..\..\..\..\..\src\ta_abstract\ta_abstract.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csr\ta_abstract.obj ..\..\..\..\..\src\ta_abstract\ta_abstract.c

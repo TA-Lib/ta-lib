@@ -27,17 +27,13 @@ cdd:TARGET = ta_common_cdd
 DESTDIR     = ../../../../../lib
 
 # Files to process
-SOURCES	= ../../../../../src/ta_common/trio/trionan.c \          
-          ../../../../../src/ta_common/ta_global.c \
+SOURCES	= ../../../../../src/ta_common/ta_global.c \
           ../../../../../src/ta_common/ta_retcode.c \
-          ../../../../../src/ta_common/ta_version.c \
-	  ../../../../../src/ta_common/ta_random.c \
-	  ../../../../../src/ta_common/mt/mt19937ar.c
+          ../../../../../src/ta_common/ta_version.c
 
 
 # Compiler Options
 INCLUDEPATH = ../../../../../src/ta_common \
-              ../../../../../src/ta_common/mt \
               ../../../../../include
 
 # debug/release dependent options.
