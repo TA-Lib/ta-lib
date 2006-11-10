@@ -11,7 +11,7 @@ CC	=	gcc
 CXX	=	g++
 CFLAGS	=	-pipe -Wall -W -g -O -pg -D_REENTRANT -DTA_DEBUG -D_DEBUG -DQT_THREAD_SUPPORT
 CXXFLAGS=	-pipe -Wall -W -g -D_REENTRANT -DTA_DEBUG -D_DEBUG -DQT_THREAD_SUPPORT
-INCPATH	=	-I../../../../../src/ta_common -I../../../../../src/ta_common/mt -I../../../../../include -I/usr/local/include
+INCPATH	=	-I../../../../../src/ta_common -I../../../../../include -I/usr/local/include
 AR	=	ar cqs
 RANLIB	=	
 MOC	=	$(QTDIR)/bin/moc
@@ -33,18 +33,12 @@ CXXFLAGS += $(CUSERFLAGS)
 ####### Files
 
 HEADERS =	
-SOURCES =	../../../../../src/ta_common/trio/trionan.c \
-		../../../../../src/ta_common/ta_global.c \
+SOURCES =	../../../../../src/ta_common/ta_global.c \
 		../../../../../src/ta_common/ta_retcode.c \
-		../../../../../src/ta_common/ta_version.c \
-		../../../../../src/ta_common/ta_random.c \
-		../../../../../src/ta_common/mt/mt19937ar.c
-OBJECTS =	../../../../../temp/cmp/trionan.o \
-		../../../../../temp/cmp/ta_global.o \
+		../../../../../src/ta_common/ta_version.c
+OBJECTS =	../../../../../temp/cmp/ta_global.o \
 		../../../../../temp/cmp/ta_retcode.o \
-		../../../../../temp/cmp/ta_version.o \
-		../../../../../temp/cmp/ta_random.o \
-		../../../../../temp/cmp/mt19937ar.o
+		../../../../../temp/cmp/ta_version.o
 INTERFACES =	
 UICDECLS =	
 UICIMPLS =	
@@ -98,9 +92,6 @@ clean:
 
 ####### Compile
 
-../../../../../temp/cmp/trionan.o: ../../../../../src/ta_common/trio/trionan.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/trionan.o ../../../../../src/ta_common/trio/trionan.c
-
 ../../../../../temp/cmp/ta_global.o: ../../../../../src/ta_common/ta_global.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_global.o ../../../../../src/ta_common/ta_global.c
 
@@ -109,10 +100,4 @@ clean:
 
 ../../../../../temp/cmp/ta_version.o: ../../../../../src/ta_common/ta_version.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_version.o ../../../../../src/ta_common/ta_version.c
-
-../../../../../temp/cmp/ta_random.o: ../../../../../src/ta_common/ta_random.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/ta_random.o ../../../../../src/ta_common/ta_random.c
-
-../../../../../temp/cmp/mt19937ar.o: ../../../../../src/ta_common/mt/mt19937ar.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmp/mt19937ar.o ../../../../../src/ta_common/mt/mt19937ar.c
 

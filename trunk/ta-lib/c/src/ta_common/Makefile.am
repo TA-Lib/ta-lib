@@ -1,14 +1,8 @@
 
 lib_LTLIBRARIES = libta_common.la
-AM_CPPFLAGS = -Itrio/ -Imt/ -I../ta_common/
+AM_CPPFLAGS = -I../ta_common/
 
-libta_common_la_SOURCES = mt/mt19937ar.c \
-	trio/compare.c \
-	trio/trionan.c \
-	trio/strio.c \
-	trio/trio.c \
-	ta_global.c \
-	ta_random.c \
+libta_common_la_SOURCES = ta_global.c \
 	ta_retcode.c \
 	ta_version.c 
 

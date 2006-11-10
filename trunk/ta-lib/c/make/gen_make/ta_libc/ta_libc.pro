@@ -28,12 +28,9 @@ cdd:TARGET = ta_libc_cdd
 # Output info
 DESTDIR     = ../../../../../lib
 # File to process
-SOURCES = ../../../../../src/ta_common/trio/trionan.c \
-          ../../../../../src/ta_common/ta_global.c \
+SOURCES = ../../../../../src/ta_common/ta_global.c \
           ../../../../../src/ta_common/ta_retcode.c \
           ../../../../../src/ta_common/ta_version.c \
-          ../../../../../src/ta_common/ta_random.c \
-          ../../../../../src/ta_common/mt/mt19937ar.c \
           ../../../../../src/ta_abstract/ta_abstract.c \
           ../../../../../src/ta_abstract/ta_def_ui.c \
           ../../../../../src/ta_abstract/ta_func_api.c \
@@ -201,7 +198,6 @@ SOURCES = ../../../../../src/ta_common/trio/trionan.c \
           ../../../../../src/ta_func/ta_WMA.c
 # Compiler Options
 INCLUDEPATH *= ../../../../../src/ta_common
-INCLUDEPATH *= ../../../../../src/ta_common/mt
 INCLUDEPATH *= ../../../../../include
 INCLUDEPATH *= ../../../../../src/ta_common
 INCLUDEPATH *= ../../../../../src/ta_abstract

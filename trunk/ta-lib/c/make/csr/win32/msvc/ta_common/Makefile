@@ -11,7 +11,7 @@ CC	=	cl
 CXX	=	cl
 CFLAGS	=	-nologo -W3 -O2 -DTA_SINGLE_THREAD -DWIN32 -D_MBCS -D_LIB
 CXXFLAGS=	-nologo -W3 -O2 -DTA_SINGLE_THREAD -DWIN32 -D_MBCS -D_LIB
-INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\src\ta_common\mt" -I"..\..\..\..\..\include"
+INCPATH	=	-I"..\..\..\..\..\src\ta_common" -I"..\..\..\..\..\include"
 LIB	=	lib /NOLOGO
 MOC	=	moc
 UIC	=	uic
@@ -21,18 +21,12 @@ ZIP	=	zip -r -9
 ####### Files
 
 HEADERS =	
-SOURCES =	..\..\..\..\..\src\ta_common\trio\trionan.c \
-		..\..\..\..\..\src\ta_common\ta_global.c \
+SOURCES =	..\..\..\..\..\src\ta_common\ta_global.c \
 		..\..\..\..\..\src\ta_common\ta_retcode.c \
-		..\..\..\..\..\src\ta_common\ta_version.c \
-		..\..\..\..\..\src\ta_common\ta_random.c \
-		..\..\..\..\..\src\ta_common\mt\mt19937ar.c
-OBJECTS =	..\..\..\..\..\temp\csr\trionan.obj \
-		..\..\..\..\..\temp\csr\ta_global.obj \
+		..\..\..\..\..\src\ta_common\ta_version.c
+OBJECTS =	..\..\..\..\..\temp\csr\ta_global.obj \
 		..\..\..\..\..\temp\csr\ta_retcode.obj \
-		..\..\..\..\..\temp\csr\ta_version.obj \
-		..\..\..\..\..\temp\csr\ta_random.obj \
-		..\..\..\..\..\temp\csr\mt19937ar.obj
+		..\..\..\..\..\temp\csr\ta_version.obj
 INTERFACES =	
 UICDECLS =	
 UICIMPLS =	
@@ -78,12 +72,9 @@ dist:
 	$(ZIP) ta_common/ta_common.zip ta_common/ta_common.pro $(SOURCES) $(HEADERS) $(DIST) $(INTERFACES)
 
 clean:
-        -del ..\..\..\..\..\temp\csr\trionan.obj
-	-del ..\..\..\..\..\temp\csr\ta_global.obj
+        -del ..\..\..\..\..\temp\csr\ta_global.obj
 	-del ..\..\..\..\..\temp\csr\ta_retcode.obj
 	-del ..\..\..\..\..\temp\csr\ta_version.obj
-	-del ..\..\..\..\..\temp\csr\ta_random.obj
-	-del ..\..\..\..\..\temp\csr\mt19937ar.obj
 	-del $(TARGET)
 	-del ../../../../../bin/*.map
 	-del ../../../../../bin/*._xe
@@ -100,9 +91,6 @@ clean:
 
 ####### Compile
 
-..\..\..\..\..\temp\csr\trionan.obj: ..\..\..\..\..\src\ta_common\trio\trionan.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\trionan.obj ..\..\..\..\..\src\ta_common\trio\trionan.c
-
 ..\..\..\..\..\temp\csr\ta_global.obj: ..\..\..\..\..\src\ta_common\ta_global.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\ta_global.obj ..\..\..\..\..\src\ta_common\ta_global.c
 
@@ -111,10 +99,4 @@ clean:
 
 ..\..\..\..\..\temp\csr\ta_version.obj: ..\..\..\..\..\src\ta_common\ta_version.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\ta_version.obj ..\..\..\..\..\src\ta_common\ta_version.c
-
-..\..\..\..\..\temp\csr\ta_random.obj: ..\..\..\..\..\src\ta_common\ta_random.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\ta_random.obj ..\..\..\..\..\src\ta_common\ta_random.c
-
-..\..\..\..\..\temp\csr\mt19937ar.obj: ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\csr\mt19937ar.obj ..\..\..\..\..\src\ta_common\mt\mt19937ar.c
 

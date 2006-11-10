@@ -78,9 +78,7 @@ unix:LIBS += -ldl
 INCLUDEPATH = ../../../../../src/ta_common \
               ../../../../../src/tools/ta_regtest \
               ../../../../../src/ta_func \
-              ../../../../../include \
-              ../../../../../src/ta_common/trio \
-              ../../../../../src/ta_common/mt
+              ../../../../../include
 
 # debug/release dependent options.
 debug:DEFINES   *= TA_DEBUG

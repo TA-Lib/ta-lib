@@ -58,7 +58,6 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
-#include "trionan.h"
 
 /**** External functions declarations. ****/
 /* None */

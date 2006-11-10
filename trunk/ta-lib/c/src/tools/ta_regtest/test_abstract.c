@@ -58,7 +58,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "ta_test_priv.h"
-#include "trionan.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -383,6 +382,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
       return TA_ABS_TST_FAIL_CALLFUNC_3;
    }                       
 
+   /* TODO Add back nan/inf tests. 
    for( i=0; i < funcInfo->nbOutput; i++ )
    {
 	  switch(outputInfo->type)
@@ -401,7 +401,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 	  case TA_Output_Integer:	     
 		break;
 	  }
-   }
+   }*/
 
    /* Do another function call where startIdx == endIdx == 0.
     * In that case, outBegIdx should ALWAYS be zero.
