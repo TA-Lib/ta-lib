@@ -1324,7 +1324,7 @@
 /* Generated */             params->in[1].data.inPrice.volume, /* inVolume */
 /* Generated */             outBegIdx, 
 /* Generated */             outNbElement, 
-/* Generated */             params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */             params->out[0].data.outReal /*  outReal */ );
 /* Generated */ }
 /* Generated */ unsigned int TA_OBV_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {

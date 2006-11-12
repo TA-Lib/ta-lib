@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  AC       Angelo Ciceri
  *
  *
  * Change history:
@@ -48,6 +49,7 @@
  *  022904 MF   Add TA_GetLookback
  *  031404 MF   Some function renaming for consistency and better
  *              Perl integration.
+ *  110206 AC   Change volume and open interest to double
  */
 
 /* Description:
@@ -930,8 +932,8 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
                                      const TA_Real      *high,
                                      const TA_Real      *low,
                                      const TA_Real      *close,
-                                     const TA_Integer   *volume,
-                                     const TA_Integer   *openInterest )
+                                     const TA_Real      *volume,
+                                     const TA_Real      *openInterest )
 {
    
    TA_ParamHolderPriv *paramHolderPriv;
@@ -1231,7 +1233,7 @@ TA_RetCode TA_CallFunc( const TA_ParamHolder *param,
    {
       return TA_INVALID_PARAM_HOLDER;
    }
-   
+
    /* Check that all parameters are initialize (except the optInput). */
    if( paramHolderPriv->inBitmap != 0 )
    {
@@ -1254,7 +1256,6 @@ TA_RetCode TA_CallFunc( const TA_ParamHolder *param,
    /* Perform the function call. */
    retCode = (*function)( paramHolderPriv, startIdx, endIdx,
                           outBegIdx, outNbElement );
-
    return retCode;
 }
 

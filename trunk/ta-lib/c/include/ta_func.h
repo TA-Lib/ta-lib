@@ -1353,7 +1353,7 @@ TA_RetCode TA_MFI( int    startIdx,
                    const double inHigh[],
                    const double inLow[],
                    const double inClose[],
-                   const int    inVolume[],
+                   const double inVolume[],
                    int           optInTimePeriod, /* From 2 to 100000 */
                    int          *outBegIdx,
                    int          *outNbElement,
@@ -1364,7 +1364,7 @@ TA_RetCode TA_S_MFI( int    startIdx,
                      const float  inHigh[],
                      const float  inLow[],
                      const float  inClose[],
-                     const int    inVolume[],
+                     const float  inVolume[],
                      int           optInTimePeriod, /* From 2 to 100000 */
                      int          *outBegIdx,
                      int          *outNbElement,
@@ -2171,7 +2171,7 @@ TA_RetCode TA_AD( int    startIdx,
                   const double inHigh[],
                   const double inLow[],
                   const double inClose[],
-                  const int    inVolume[],
+                  const double inVolume[],
                   int          *outBegIdx,
                   int          *outNbElement,
                   double        outReal[] );
@@ -2181,7 +2181,7 @@ TA_RetCode TA_S_AD( int    startIdx,
                     const float  inHigh[],
                     const float  inLow[],
                     const float  inClose[],
-                    const int    inVolume[],
+                    const float  inVolume[],
                     int          *outBegIdx,
                     int          *outNbElement,
                     double        outReal[] );
@@ -2210,7 +2210,7 @@ TA_RetCode TA_ADOSC( int    startIdx,
                      const double inHigh[],
                      const double inLow[],
                      const double inClose[],
-                     const int    inVolume[],
+                     const double inVolume[],
                      int           optInFastPeriod, /* From 2 to 100000 */
                      int           optInSlowPeriod, /* From 2 to 100000 */
                      int          *outBegIdx,
@@ -2222,7 +2222,7 @@ TA_RetCode TA_S_ADOSC( int    startIdx,
                        const float  inHigh[],
                        const float  inLow[],
                        const float  inClose[],
-                       const int    inVolume[],
+                       const float  inVolume[],
                        int           optInFastPeriod, /* From 2 to 100000 */
                        int           optInSlowPeriod, /* From 2 to 100000 */
                        int          *outBegIdx,
@@ -2237,24 +2237,24 @@ int TA_ADOSC_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
  * TA_OBV - On Balance Volume
  * 
  * Input  = double, Volume
- * Output = int
+ * Output = double
  * 
  */
 TA_RetCode TA_OBV( int    startIdx,
                    int    endIdx,
                    const double inReal[],
-                   const int    inVolume[],
+                   const double inVolume[],
                    int          *outBegIdx,
                    int          *outNbElement,
-                   int           outInteger[] );
+                   double        outReal[] );
 
 TA_RetCode TA_S_OBV( int    startIdx,
                      int    endIdx,
                      const float  inReal[],
-                     const int    inVolume[],
+                     const float  inVolume[],
                      int          *outBegIdx,
                      int          *outNbElement,
-                     int           outInteger[] );
+                     double        outReal[] );
 
 int TA_OBV_Lookback( void );
 

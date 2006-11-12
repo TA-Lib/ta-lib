@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  AC       Angelo Ciceri
  *
  *
  * Change history:
@@ -44,6 +45,7 @@
  *  -------------------------------------------------------------------
  *  011103 MF   First version.
  *  111705 MF   Add test for Fix#1359452 (AD Function).
+ *  110206 AC   Change volume and open interest to double
  */
 
 /* Description:
@@ -107,7 +109,7 @@ typedef struct
    const TA_Real    *high;
    const TA_Real    *low;
    const TA_Real    *close;
-   const TA_Integer *volume;
+   const TA_Real    *volume;
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/

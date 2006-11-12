@@ -58,7 +58,7 @@ static const TA_InputParameterInfo    *TA_OBV_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_OBV_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Real,
   NULL
 };
 

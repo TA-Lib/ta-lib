@@ -23,8 +23,8 @@ typedef struct
    const TA_Real      *high;
    const TA_Real      *low;
    const TA_Real      *close;
-   const TA_Integer   *volume;
-   const TA_Integer   *openInterest;
+   const TA_Real      *volume;
+   const TA_Real      *openInterest;
 } TA_PricePtrs;
 
 typedef struct

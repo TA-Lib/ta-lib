@@ -326,7 +326,7 @@
                                    outBegIdx, outNbElement, outReal );
       break;
 
-   default:
+   default: 
       retCode = NAMESPACE(TA_RetCode)TA_BAD_PARAM;
       break;
    }
@@ -455,7 +455,7 @@
 /* Generated */                                    optInTimePeriod, 0.7,
 /* Generated */                                    outBegIdx, outNbElement, outReal );
 /* Generated */       break;
-/* Generated */    default:
+/* Generated */    default: 
 /* Generated */       retCode = NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */       break;
 /* Generated */    }
