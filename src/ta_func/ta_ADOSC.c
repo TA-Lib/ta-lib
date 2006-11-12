@@ -148,7 +148,7 @@
 /* Generated */                                          cli::array<double>^ inHigh,
 /* Generated */                                          cli::array<double>^ inLow,
 /* Generated */                                          cli::array<double>^ inClose,
-/* Generated */                                          cli::array<int>^ inVolume,
+/* Generated */                                          cli::array<double>^ inVolume,
 /* Generated */                                          int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                          int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                                          [Out]int%    outBegIdx,
@@ -160,7 +160,7 @@
 /* Generated */                          double       inHigh[],
 /* Generated */                          double       inLow[],
 /* Generated */                          double       inClose[],
-/* Generated */                          int          inVolume[],
+/* Generated */                          double       inVolume[],
 /* Generated */                          int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                          int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                          MInteger     outBegIdx,
@@ -172,7 +172,7 @@
 /* Generated */                      const double inHigh[],
 /* Generated */                      const double inLow[],
 /* Generated */                      const double inClose[],
-/* Generated */                      const int    inVolume[],
+/* Generated */                      const double inVolume[],
 /* Generated */                      int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                      int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                      int          *outBegIdx,
@@ -349,7 +349,7 @@
 /* Generated */                                          cli::array<float>^ inHigh,
 /* Generated */                                          cli::array<float>^ inLow,
 /* Generated */                                          cli::array<float>^ inClose,
-/* Generated */                                          cli::array<int>^ inVolume,
+/* Generated */                                          cli::array<float>^ inVolume,
 /* Generated */                                          int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                          int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                                          [Out]int%    outBegIdx,
@@ -361,7 +361,7 @@
 /* Generated */                          float        inHigh[],
 /* Generated */                          float        inLow[],
 /* Generated */                          float        inClose[],
-/* Generated */                          int          inVolume[],
+/* Generated */                          float        inVolume[],
 /* Generated */                          int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                          int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                          MInteger     outBegIdx,
@@ -373,7 +373,7 @@
 /* Generated */                        const float  inHigh[],
 /* Generated */                        const float  inLow[],
 /* Generated */                        const float  inClose[],
-/* Generated */                        const int    inVolume[],
+/* Generated */                        const float  inVolume[],
 /* Generated */                        int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                        int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                        int          *outBegIdx,

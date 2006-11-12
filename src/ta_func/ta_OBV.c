@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  AC       Angelo Ciceri
  *
  *
  * Change history:
@@ -44,6 +45,7 @@
  *  -------------------------------------------------------------------
  *  010802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  110206 AC   Change volume and open interest to double
  *
  */
 
@@ -106,7 +108,7 @@
  * TA_OBV - On Balance Volume
  * 
  * Input  = double, Volume
- * Output = int
+ * Output = double
  * 
  */
 /* Generated */ 
@@ -114,33 +116,33 @@
 /* Generated */ enum class Core::TA_RetCode Core::OBV( int    startIdx,
 /* Generated */                                        int    endIdx,
 /* Generated */                                        cli::array<double>^ inReal,
-/* Generated */                                        cli::array<int>^ inVolume,
+/* Generated */                                        cli::array<double>^ inVolume,
 /* Generated */                                        [Out]int%    outBegIdx,
 /* Generated */                                        [Out]int%    outNbElement,
-/* Generated */                                        cli::array<int>^  outInteger )
+/* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public TA_RetCode OBV( int    startIdx,
 /* Generated */                        int    endIdx,
 /* Generated */                        double       inReal[],
-/* Generated */                        int          inVolume[],
+/* Generated */                        double       inVolume[],
 /* Generated */                        MInteger     outBegIdx,
 /* Generated */                        MInteger     outNbElement,
-/* Generated */                        int           outInteger[] )
+/* Generated */                        double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_OBV( int    startIdx,
 /* Generated */                    int    endIdx,
 /* Generated */                    const double inReal[],
-/* Generated */                    const int    inVolume[],
+/* Generated */                    const double inVolume[],
 /* Generated */                    int          *outBegIdx,
 /* Generated */                    int          *outNbElement,
-/* Generated */                    int           outInteger[] )
+/* Generated */                    double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
 	/* insert local variable here */
    int i;
-   int prevOBV, outIdx;
-   double prevReal, tempReal;
+   int outIdx;
+   double prevReal, tempReal, prevOBV;
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -160,7 +162,7 @@
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */    if( !outInteger )
+/* Generated */    if( !outReal )
 /* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
@@ -181,7 +183,7 @@
       else if( tempReal < prevReal )
          prevOBV -= inVolume[i];
 
-      outInteger[outIdx++] = prevOBV;
+      outReal[outIdx++] = prevOBV;
       prevReal = tempReal;
    }
 
@@ -204,31 +206,31 @@
 /* Generated */ enum class Core::TA_RetCode Core::OBV( int    startIdx,
 /* Generated */                                        int    endIdx,
 /* Generated */                                        cli::array<float>^ inReal,
-/* Generated */                                        cli::array<int>^ inVolume,
+/* Generated */                                        cli::array<float>^ inVolume,
 /* Generated */                                        [Out]int%    outBegIdx,
 /* Generated */                                        [Out]int%    outNbElement,
-/* Generated */                                        cli::array<int>^  outInteger )
+/* Generated */                                        cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public TA_RetCode OBV( int    startIdx,
 /* Generated */                        int    endIdx,
 /* Generated */                        float        inReal[],
-/* Generated */                        int          inVolume[],
+/* Generated */                        float        inVolume[],
 /* Generated */                        MInteger     outBegIdx,
 /* Generated */                        MInteger     outNbElement,
-/* Generated */                        int           outInteger[] )
+/* Generated */                        double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_OBV( int    startIdx,
 /* Generated */                      int    endIdx,
 /* Generated */                      const float  inReal[],
-/* Generated */                      const int    inVolume[],
+/* Generated */                      const float  inVolume[],
 /* Generated */                      int          *outBegIdx,
 /* Generated */                      int          *outNbElement,
-/* Generated */                      int           outInteger[] )
+/* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int i;
-/* Generated */    int prevOBV, outIdx;
-/* Generated */    double prevReal, tempReal;
+/* Generated */    int outIdx;
+/* Generated */    double prevReal, tempReal, prevOBV;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
@@ -240,7 +242,7 @@
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */     if( !outInteger )
+/* Generated */     if( !outReal )
 /* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
 /* Generated */     #endif 
 /* Generated */  #endif 
@@ -254,7 +256,7 @@
 /* Generated */          prevOBV += inVolume[i];
 /* Generated */       else if( tempReal < prevReal )
 /* Generated */          prevOBV -= inVolume[i];
-/* Generated */       outInteger[outIdx++] = prevOBV;
+/* Generated */       outReal[outIdx++] = prevOBV;
 /* Generated */       prevReal = tempReal;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;

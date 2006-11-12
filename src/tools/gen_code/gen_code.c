@@ -60,6 +60,7 @@
  *  121705 MF    Complete Java port.
  *  012806 MF    Add call to Java post-processing.
  *  093006 MF    Add code generation for TA_FunctionDescription
+ *  110206 AC    Change volume and open interest to double
  */
 
 /* Description:
@@ -2002,7 +2003,7 @@ static void printFunc( FILE *out,
                      fprintf( out, "params->in[%d].data.inPrice.volume, /*", paramNb );
                   fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
-                         prototype? inputIntArrayType : "",
+                         prototype? inputDoubleArrayType : "",
                          outputForSWIG?"":" ",
                          outputForSWIG? "IN_ARRAY /* inVolume */":"inVolume",
                          prototype? arrayBracket : "" );
@@ -2016,7 +2017,7 @@ static void printFunc( FILE *out,
                      fprintf( out, "params->in[%d].data.inPrice.openInterest, /*", paramNb );
                   fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
-                         prototype? inputIntArrayType : "",
+                         prototype? inputDoubleArrayType : "",
                          outputForSWIG?"":" ",
                          outputForSWIG? "IN_ARRAY /* inOpenInterest */":"inOpenInterest",
                          prototype? arrayBracket : "" );

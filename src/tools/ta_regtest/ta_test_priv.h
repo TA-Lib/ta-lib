@@ -18,8 +18,8 @@ typedef struct
    TA_Real      *high;
    TA_Real      *low;
    TA_Real      *close;
-   TA_Integer   *volume;
-   TA_Integer   *openInterest;
+   TA_Real      *volume;
+   TA_Real      *openInterest;
 } TA_History;
 
 ErrorNumber test_internals( void );

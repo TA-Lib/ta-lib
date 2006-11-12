@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  AC       Angelo Ciceri
  *
  *
  * Change history:
@@ -45,6 +46,7 @@
  *  112703 MF   First version.
  *  030104 MF   Add tests for TA_GetLookback
  *  062504 MF   Add test_default_calls.
+ *  110206 AC   Change volume and open interest to double
  */
 
 /* Description:
@@ -328,7 +330,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 			 inputInfo->flags&TA_IN_PRICE_HIGH?input:NULL,
 			 inputInfo->flags&TA_IN_PRICE_LOW?input:NULL,
 			 inputInfo->flags&TA_IN_PRICE_CLOSE?input:NULL,
-			 inputInfo->flags&TA_IN_PRICE_VOLUME?input_int:NULL, NULL );
+			 inputInfo->flags&TA_IN_PRICE_VOLUME?input:NULL, NULL );
 		 break;
 	  case TA_Input_Real:
          TA_SetInputParamRealPtr( paramHolder, i, input );

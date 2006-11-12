@@ -492,8 +492,8 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder *params,
                                      const TA_Real      *high,
                                      const TA_Real      *low,
                                      const TA_Real      *close,
-                                     const TA_Integer   *volume,
-                                     const TA_Integer   *openInterest );
+                                     const TA_Real      *volume,
+                                     const TA_Real      *openInterest );
 
 /* Setup the values of the optional input parameters.
  * If an optional input is not set, a default value will be used.

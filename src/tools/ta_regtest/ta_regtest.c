@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  AC       Angelo Ciceri
  *
  *
  * Change history:
@@ -44,6 +45,7 @@
  *  -------------------------------------------------------------------
  *  063001 MF   First version (initial framework only).
  *  090404 MF   Add test_candlestick
+ *  110206 AC   Change volume and open interest to double
  */
 
 /* Description:
@@ -168,7 +170,7 @@ extern TA_Real      TA_SREF_open_daily_ref_0_PRIV[];
 extern TA_Real      TA_SREF_high_daily_ref_0_PRIV[];
 extern TA_Real      TA_SREF_low_daily_ref_0_PRIV[];
 extern TA_Real      TA_SREF_close_daily_ref_0_PRIV[];
-extern TA_Integer   TA_SREF_volume_daily_ref_0_PRIV[];
+extern TA_Real      TA_SREF_volume_daily_ref_0_PRIV[];
 
 static int testTAFunction_ALL( void )
 {
