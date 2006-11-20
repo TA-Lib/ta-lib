@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -66,9 +66,8 @@ static const TA_OptInputParameterInfo *TA_WCLPRICE_OptInputs[] = { NULL };
 DEF_FUNCTION( WCLPRICE,                   /* name */
               TA_GroupId_PriceTransform,  /* groupId */
               "Weighted Close Price",     /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "WclPrice",                 /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP         /* flags */
              );
 /* WCL END */
 
@@ -93,9 +92,8 @@ static const TA_OptInputParameterInfo *TA_WILLR_OptInputs[] =
 DEF_FUNCTION( WILLR,          /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Williams' %R", /* hint */
-              NULL,           /* helpFile */
-              0,              /* flags */
-              NULL            /* analysis function */
+              "WillR",        /* CamelCase name */
+              0               /* flags */              
              );
 /* WILLR END */
 
@@ -120,16 +118,15 @@ static const TA_OptInputParameterInfo *TA_WMA_OptInputs[] =
 DEF_FUNCTION( WMA,                        /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
               "Weighted Moving Average",  /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "Wma",                      /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP         /* flags */              
              );
 
 /* WMA END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableW[] =
 {

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -69,9 +69,8 @@ static const TA_OptInputParameterInfo *TA_AD_OptInputs[] =
 DEF_FUNCTION( AD,                         /* name */
               TA_GroupId_VolumeIndicators,   /* groupId */
               "Chaikin A/D Line", /* hint */
-              NULL,                         /* helpFile */
-              0,                            /* flags */
-              NULL                          /* analysis function */
+              "Ad",                         /* CamelCase name */
+              0                             /* flags */
              );
 /* AD END */
 
@@ -87,7 +86,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_FastADOSC_Period =
    3, /* defaultValue */
    "Number of period for the fast MA", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_SlowADOSC_Period =
@@ -101,7 +100,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_SlowADOSC_Period =
    10, /* defaultValue */
    "Number of period for the slow MA", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_InputParameterInfo    *TA_ADOSC_Inputs[]    =
@@ -126,9 +125,8 @@ static const TA_OptInputParameterInfo *TA_ADOSC_OptInputs[] =
 DEF_FUNCTION( ADOSC,                         /* name */
               TA_GroupId_VolumeIndicators,   /* groupId */
               "Chaikin A/D Oscillator", /* hint */
-              NULL,                         /* helpFile */
-              0,                            /* flags */
-              NULL                          /* analysis function */
+              "AdOsc",                  /* CamelCase name */
+              0                         /* flags */
              );
 /* ADOSC END */
 
@@ -153,9 +151,8 @@ static const TA_OptInputParameterInfo *TA_ADX_OptInputs[] =
 DEF_FUNCTION( ADX,                          /* name */
               TA_GroupId_MomentumIndicators,   /* groupId */
               "Average Directional Movement Index", /* hint */
-              NULL,                         /* helpFile */
-              TA_FUNC_FLG_UNST_PER,         /* flags */
-              NULL                          /* analysis function */
+              "Adx",                         /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER          /* flags */
              );
 /* ADX END */
 
@@ -180,9 +177,8 @@ static const TA_OptInputParameterInfo *TA_ADXR_OptInputs[] =
 DEF_FUNCTION( ADXR,                         /* name */
               TA_GroupId_MomentumIndicators,   /* groupId */
               "Average Directional Movement Index Rating", /* hint */
-              NULL,                         /* helpFile */
-              TA_FUNC_FLG_UNST_PER,         /* flags */
-              NULL                          /* analysis function */
+			  "Adxr",                      /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER          /* flags */
              );
 /* ADXR END */
 
@@ -209,9 +205,8 @@ static const TA_OptInputParameterInfo *TA_APO_OptInputs[] =
 DEF_FUNCTION( APO,                         /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Absolute Price Oscillator", /* hint */
-              NULL,                        /* helpFile */
-              0,                           /* flags */
-              NULL                         /* analysis function */
+              "Apo",                       /* CamelCase name */
+              0                            /* flags */
              );
 /* APO END */
 
@@ -244,9 +239,8 @@ static const TA_OptInputParameterInfo *TA_AROON_OptInputs[] =
 DEF_FUNCTION( AROON,                          /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Aroon",                        /* hint */
-              NULL,                           /* helpFile */
-              0,                              /* flags */
-              NULL                            /* analysis function */
+              "Aroon",                        /* CamelCase name */
+              0                               /* flags */              
              );
 
 /* AROON END */
@@ -273,9 +267,8 @@ static const TA_OptInputParameterInfo *TA_AROONOSC_OptInputs[] =
 DEF_FUNCTION( AROONOSC,                       /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Aroon Oscillator",             /* hint */
-              NULL,                           /* helpFile */
-              0,                              /* flags */
-              NULL                            /* analysis function */
+			  "AroonOsc",                     /* CamelCase name */
+              0                               /* flags */
              );
 
 /* AROONOSC END */
@@ -301,9 +294,8 @@ static const TA_OptInputParameterInfo *TA_ATR_OptInputs[] =
 DEF_FUNCTION( ATR,                        /* name */
               TA_GroupId_VolatilityIndicators, /* groupId */
               "Average True Range",       /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER,       /* flags */
-              NULL                        /* analysis function */
+              "Atr",                      /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER        /* flags */
              );
 /* ATR END */
 
@@ -325,15 +317,14 @@ static const TA_OptInputParameterInfo *TA_AVGPRICE_OptInputs[] = { NULL };
 DEF_FUNCTION( AVGPRICE,                   /* name */
               TA_GroupId_PriceTransform,  /* groupId */
               "Average Price",            /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "AvgPrice",                 /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP         /* flags */
              );
 /* AVGPRICE END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableA[] =
 {

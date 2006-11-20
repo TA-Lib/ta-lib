@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -59,7 +59,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_VFactor =
    (const void *)&TA_DEF_ZeroToOne, /* dataSet */
    0.7, /* defaultValue */
    "Volume Factor", /* hint */
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_InputParameterInfo    *TA_T3_Inputs[]    =
@@ -83,9 +83,8 @@ static const TA_OptInputParameterInfo *TA_T3_OptInputs[] =
 DEF_FUNCTION( T3,                       /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
               "Triple Exponential Moving Average (T3)", /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP|TA_FUNC_FLG_UNST_PER, /* flags */
-              NULL                        /* analysis function */
+              "T3",                       /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP|TA_FUNC_FLG_UNST_PER /* flags */
              );
 /* T3 END */
 
@@ -110,9 +109,8 @@ static const TA_OptInputParameterInfo *TA_TEMA_OptInputs[] =
 DEF_FUNCTION( TEMA,                       /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
               "Triple Exponential Moving Average", /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "Tema",                     /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP         /* flags */
              );
 /* TEMA END */
 
@@ -134,9 +132,8 @@ static const TA_OptInputParameterInfo *TA_TRANGE_OptInputs[] = { NULL };
 DEF_FUNCTION( TRANGE,                     /* name */
               TA_GroupId_VolatilityIndicators,  /* groupId */
               "True Range",               /* hint */
-              NULL,                       /* helpFile */
-              0,                          /* flags */
-              NULL                        /* analysis function */
+              "TrueRange",                /* CamelCase name */
+              0                           /* flags */
              );
 /* TRANGE END */
 
@@ -159,11 +156,10 @@ static const TA_OptInputParameterInfo *TA_TRIMA_OptInputs[] =
 };
 
 DEF_FUNCTION( TRIMA,                       /* name */
-              TA_GroupId_OverlapStudies,  /* groupId */
+              TA_GroupId_OverlapStudies,   /* groupId */
               "Triangular Moving Average", /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "Trima",                     /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP          /* flags */
              );
 /* TRIMA END */
 
@@ -188,9 +184,8 @@ static const TA_OptInputParameterInfo *TA_TRIX_OptInputs[] =
 DEF_FUNCTION( TRIX,                       /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA", /* hint */
-              NULL,                       /* helpFile */
-              0,        /* flags */
-              NULL                        /* analysis function */
+              "Trix",                     /* CamelCase name */
+              0                           /* flags */
              );
 /* TRIX END */
 
@@ -215,9 +210,8 @@ static const TA_OptInputParameterInfo *TA_TSF_OptInputs[] =
 DEF_FUNCTION( TSF,                   /* name */
               TA_GroupId_Statistic,  /* groupId */
               "Time Series Forecast",/* hint */
-              NULL,                  /* helpFile */
-              TA_FUNC_FLG_OVERLAP,   /* flags */
-              NULL                   /* analysis function */
+              "Tsf",                 /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP    /* flags */
              );
 /* TSF END */
 
@@ -239,15 +233,14 @@ static const TA_OptInputParameterInfo *TA_TYPPRICE_OptInputs[] = { NULL };
 DEF_FUNCTION( TYPPRICE,                   /* name */
               TA_GroupId_PriceTransform,  /* groupId */
               "Typical Price",            /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "TypPrice",                 /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP         /* flags */
              );
 /* TYPPRICE END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableT[] =
 {

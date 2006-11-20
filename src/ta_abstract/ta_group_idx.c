@@ -48,66 +48,18 @@
 #include "ta_def_ui.h"
 #include "ta_abstract.h"
 
-extern const TA_FuncDef TA_DEF_MAX;
-extern const TA_FuncDef TA_DEF_MIN;
-extern const TA_FuncDef TA_DEF_SUM;
-extern const TA_FuncDef TA_DEF_BBANDS;
-extern const TA_FuncDef TA_DEF_DEMA;
-extern const TA_FuncDef TA_DEF_EMA;
-extern const TA_FuncDef TA_DEF_HT_TRENDLINE;
-extern const TA_FuncDef TA_DEF_KAMA;
-extern const TA_FuncDef TA_DEF_MA;
-extern const TA_FuncDef TA_DEF_MAMA;
-extern const TA_FuncDef TA_DEF_MIDPRICE;
-extern const TA_FuncDef TA_DEF_MIDPOINT;
-extern const TA_FuncDef TA_DEF_SAR;
-extern const TA_FuncDef TA_DEF_SAREXT;
-extern const TA_FuncDef TA_DEF_SMA;
-extern const TA_FuncDef TA_DEF_T3;
-extern const TA_FuncDef TA_DEF_TEMA;
-extern const TA_FuncDef TA_DEF_TRIMA;
-extern const TA_FuncDef TA_DEF_WMA;
-extern const TA_FuncDef TA_DEF_ATR;
-extern const TA_FuncDef TA_DEF_NATR;
-extern const TA_FuncDef TA_DEF_TRANGE;
+extern const TA_FuncDef TA_DEF_AD;
+extern const TA_FuncDef TA_DEF_ADOSC;
 extern const TA_FuncDef TA_DEF_ADX;
 extern const TA_FuncDef TA_DEF_ADXR;
 extern const TA_FuncDef TA_DEF_APO;
 extern const TA_FuncDef TA_DEF_AROON;
 extern const TA_FuncDef TA_DEF_AROONOSC;
+extern const TA_FuncDef TA_DEF_ATR;
+extern const TA_FuncDef TA_DEF_AVGPRICE;
+extern const TA_FuncDef TA_DEF_BBANDS;
 extern const TA_FuncDef TA_DEF_BOP;
 extern const TA_FuncDef TA_DEF_CCI;
-extern const TA_FuncDef TA_DEF_CMO;
-extern const TA_FuncDef TA_DEF_DX;
-extern const TA_FuncDef TA_DEF_MACD;
-extern const TA_FuncDef TA_DEF_MACDEXT;
-extern const TA_FuncDef TA_DEF_MACDFIX;
-extern const TA_FuncDef TA_DEF_MFI;
-extern const TA_FuncDef TA_DEF_MINUS_DI;
-extern const TA_FuncDef TA_DEF_MINUS_DM;
-extern const TA_FuncDef TA_DEF_MOM;
-extern const TA_FuncDef TA_DEF_PPO;
-extern const TA_FuncDef TA_DEF_PLUS_DI;
-extern const TA_FuncDef TA_DEF_PLUS_DM;
-extern const TA_FuncDef TA_DEF_ROC;
-extern const TA_FuncDef TA_DEF_ROCP;
-extern const TA_FuncDef TA_DEF_ROCR;
-extern const TA_FuncDef TA_DEF_ROCR100;
-extern const TA_FuncDef TA_DEF_RSI;
-extern const TA_FuncDef TA_DEF_STOCH;
-extern const TA_FuncDef TA_DEF_STOCHF;
-extern const TA_FuncDef TA_DEF_STOCHRSI;
-extern const TA_FuncDef TA_DEF_TRIX;
-extern const TA_FuncDef TA_DEF_ULTOSC;
-extern const TA_FuncDef TA_DEF_WILLR;
-extern const TA_FuncDef TA_DEF_HT_DCPERIOD;
-extern const TA_FuncDef TA_DEF_HT_DCPHASE;
-extern const TA_FuncDef TA_DEF_HT_PHASOR;
-extern const TA_FuncDef TA_DEF_HT_SINE;
-extern const TA_FuncDef TA_DEF_HT_TRENDMODE;
-extern const TA_FuncDef TA_DEF_AD;
-extern const TA_FuncDef TA_DEF_ADOSC;
-extern const TA_FuncDef TA_DEF_OBV;
 extern const TA_FuncDef TA_DEF_CDL2CROWS;
 extern const TA_FuncDef TA_DEF_CDL3BLACKCROWS;
 extern const TA_FuncDef TA_DEF_CDL3INSIDE;
@@ -148,8 +100,8 @@ extern const TA_FuncDef TA_DEF_CDLLADDERBOTTOM;
 extern const TA_FuncDef TA_DEF_CDLLONGLEGGEDDOJI;
 extern const TA_FuncDef TA_DEF_CDLLONGLINE;
 extern const TA_FuncDef TA_DEF_CDLMARUBOZU;
-extern const TA_FuncDef TA_DEF_CDLMATHOLD;
 extern const TA_FuncDef TA_DEF_CDLMATCHINGLOW;
+extern const TA_FuncDef TA_DEF_CDLMATHOLD;
 extern const TA_FuncDef TA_DEF_CDLMORNINGDOJISTAR;
 extern const TA_FuncDef TA_DEF_CDLMORNINGSTAR;
 extern const TA_FuncDef TA_DEF_CDLONNECK;
@@ -169,18 +121,66 @@ extern const TA_FuncDef TA_DEF_CDLTRISTAR;
 extern const TA_FuncDef TA_DEF_CDLUNIQUE3RIVER;
 extern const TA_FuncDef TA_DEF_CDLUPSIDEGAP2CROWS;
 extern const TA_FuncDef TA_DEF_CDLXSIDEGAP3METHODS;
+extern const TA_FuncDef TA_DEF_CMO;
 extern const TA_FuncDef TA_DEF_CORREL;
+extern const TA_FuncDef TA_DEF_DEMA;
+extern const TA_FuncDef TA_DEF_DX;
+extern const TA_FuncDef TA_DEF_EMA;
+extern const TA_FuncDef TA_DEF_HT_DCPERIOD;
+extern const TA_FuncDef TA_DEF_HT_DCPHASE;
+extern const TA_FuncDef TA_DEF_HT_PHASOR;
+extern const TA_FuncDef TA_DEF_HT_SINE;
+extern const TA_FuncDef TA_DEF_HT_TRENDLINE;
+extern const TA_FuncDef TA_DEF_HT_TRENDMODE;
+extern const TA_FuncDef TA_DEF_KAMA;
 extern const TA_FuncDef TA_DEF_LINEARREG;
-extern const TA_FuncDef TA_DEF_LINEARREG_SLOPE;
 extern const TA_FuncDef TA_DEF_LINEARREG_ANGLE;
 extern const TA_FuncDef TA_DEF_LINEARREG_INTERCEPT;
-extern const TA_FuncDef TA_DEF_STDDEV;
-extern const TA_FuncDef TA_DEF_TSF;
-extern const TA_FuncDef TA_DEF_VAR;
-extern const TA_FuncDef TA_DEF_AVGPRICE;
+extern const TA_FuncDef TA_DEF_LINEARREG_SLOPE;
+extern const TA_FuncDef TA_DEF_MA;
+extern const TA_FuncDef TA_DEF_MACD;
+extern const TA_FuncDef TA_DEF_MACDEXT;
+extern const TA_FuncDef TA_DEF_MACDFIX;
+extern const TA_FuncDef TA_DEF_MAMA;
+extern const TA_FuncDef TA_DEF_MAX;
 extern const TA_FuncDef TA_DEF_MEDPRICE;
+extern const TA_FuncDef TA_DEF_MFI;
+extern const TA_FuncDef TA_DEF_MIDPOINT;
+extern const TA_FuncDef TA_DEF_MIDPRICE;
+extern const TA_FuncDef TA_DEF_MIN;
+extern const TA_FuncDef TA_DEF_MINUS_DI;
+extern const TA_FuncDef TA_DEF_MINUS_DM;
+extern const TA_FuncDef TA_DEF_MOM;
+extern const TA_FuncDef TA_DEF_NATR;
+extern const TA_FuncDef TA_DEF_OBV;
+extern const TA_FuncDef TA_DEF_PLUS_DI;
+extern const TA_FuncDef TA_DEF_PLUS_DM;
+extern const TA_FuncDef TA_DEF_PPO;
+extern const TA_FuncDef TA_DEF_ROC;
+extern const TA_FuncDef TA_DEF_ROCP;
+extern const TA_FuncDef TA_DEF_ROCR;
+extern const TA_FuncDef TA_DEF_ROCR100;
+extern const TA_FuncDef TA_DEF_RSI;
+extern const TA_FuncDef TA_DEF_SAR;
+extern const TA_FuncDef TA_DEF_SAREXT;
+extern const TA_FuncDef TA_DEF_SMA;
+extern const TA_FuncDef TA_DEF_STDDEV;
+extern const TA_FuncDef TA_DEF_STOCH;
+extern const TA_FuncDef TA_DEF_STOCHF;
+extern const TA_FuncDef TA_DEF_STOCHRSI;
+extern const TA_FuncDef TA_DEF_SUM;
+extern const TA_FuncDef TA_DEF_T3;
+extern const TA_FuncDef TA_DEF_TEMA;
+extern const TA_FuncDef TA_DEF_TRANGE;
+extern const TA_FuncDef TA_DEF_TRIMA;
+extern const TA_FuncDef TA_DEF_TRIX;
+extern const TA_FuncDef TA_DEF_TSF;
 extern const TA_FuncDef TA_DEF_TYPPRICE;
+extern const TA_FuncDef TA_DEF_ULTOSC;
+extern const TA_FuncDef TA_DEF_VAR;
 extern const TA_FuncDef TA_DEF_WCLPRICE;
+extern const TA_FuncDef TA_DEF_WILLR;
+extern const TA_FuncDef TA_DEF_WMA;
 
 const TA_FuncDef *TA_PerGroupFunc_0[] = {
 &TA_DEF_MAX,
@@ -201,8 +201,8 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_KAMA,
 &TA_DEF_MA,
 &TA_DEF_MAMA,
-&TA_DEF_MIDPRICE,
 &TA_DEF_MIDPOINT,
+&TA_DEF_MIDPRICE,
 &TA_DEF_SAR,
 &TA_DEF_SAREXT,
 &TA_DEF_SMA,
@@ -237,9 +237,9 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_MINUS_DI,
 &TA_DEF_MINUS_DM,
 &TA_DEF_MOM,
-&TA_DEF_PPO,
 &TA_DEF_PLUS_DI,
 &TA_DEF_PLUS_DM,
+&TA_DEF_PPO,
 &TA_DEF_ROC,
 &TA_DEF_ROCP,
 &TA_DEF_ROCR,
@@ -311,8 +311,8 @@ const TA_FuncDef *TA_PerGroupFunc_7[] = {
 &TA_DEF_CDLLONGLEGGEDDOJI,
 &TA_DEF_CDLLONGLINE,
 &TA_DEF_CDLMARUBOZU,
-&TA_DEF_CDLMATHOLD,
 &TA_DEF_CDLMATCHINGLOW,
+&TA_DEF_CDLMATHOLD,
 &TA_DEF_CDLMORNINGDOJISTAR,
 &TA_DEF_CDLMORNINGSTAR,
 &TA_DEF_CDLONNECK,
@@ -338,9 +338,9 @@ NULL };
 const TA_FuncDef *TA_PerGroupFunc_8[] = {
 &TA_DEF_CORREL,
 &TA_DEF_LINEARREG,
-&TA_DEF_LINEARREG_SLOPE,
 &TA_DEF_LINEARREG_ANGLE,
 &TA_DEF_LINEARREG_INTERCEPT,
+&TA_DEF_LINEARREG_SLOPE,
 &TA_DEF_STDDEV,
 &TA_DEF_TSF,
 &TA_DEF_VAR,

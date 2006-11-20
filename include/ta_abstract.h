@@ -197,7 +197,7 @@ typedef struct TA_FuncInfo
    const char * group;
 
    const char * hint;
-   const char * helpFile;
+   const char * camelCaseName;
    TA_FuncFlags flags;
 
    unsigned int nbInput;

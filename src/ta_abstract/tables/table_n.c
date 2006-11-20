@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -69,9 +69,8 @@ static const TA_OptInputParameterInfo *TA_NATR_OptInputs[] =
 DEF_FUNCTION( NATR,                        /* name */
               TA_GroupId_VolatilityIndicators, /* groupId */
               "Normalized Average True Range", /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER,       /* flags */
-              NULL                        /* analysis function */
+              "Natr",                     /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER        /* flags */
              );
 /* NATR END */
 
@@ -98,9 +97,8 @@ static const TA_OptInputParameterInfo *TA_NVI_OptInputs[] =
 DEF_FUNCTION( NVI,                     /* name */
               TA_GroupId_VolumeIndicators,   /* groupId */
               "Negative Volume Index", /* hint */
-              NULL,      /* helpFile */
-              0,         /* flags */
-              NULL       /* analysis function */
+              "Nvi",      /* CamelCase name */
+              0          /* flags */
              );
 
 /* NVI END */
@@ -108,7 +106,7 @@ DEF_FUNCTION( NVI,                     /* name */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableN[] =
 {

@@ -69,10 +69,8 @@ static const TA_OptInputParameterInfo *TA_CCI_OptInputs[] =
 DEF_FUNCTION( CCI,                           /* name */
               TA_GroupId_MomentumIndicators, /* groupId */
               "Commodity Channel Index",     /* hint */
-              NULL,                          /* helpFile */
-              0,                             /* flags */
-              NULL                           /* analysis function */
-             );
+              "Cci",                         /* CamelCase name */
+              0                              /* flags */             );
 
 /* CCI END */
 
@@ -97,10 +95,9 @@ static const TA_OptInputParameterInfo *TA_CDL2CROWS_OptInputs[] =
 DEF_FUNCTION( CDL2CROWS,                      /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Two Crows",                    /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
-             );
+              "Cdl2Crows",                    /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
+			 );
 
 /* CDL2CROWS END */
 
@@ -125,10 +122,9 @@ static const TA_OptInputParameterInfo *TA_CDL3BLACKCROWS_OptInputs[] =
 DEF_FUNCTION( CDL3BLACKCROWS,                 /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Three Black Crows",            /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
-             );
+              "Cdl3BlackCrows",               /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
+			);
 
 /* CDL3BLACKCROWS END */
 
@@ -153,10 +149,9 @@ static const TA_OptInputParameterInfo *TA_CDL3INSIDE_OptInputs[] =
 DEF_FUNCTION( CDL3INSIDE,                     /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Three Inside Up/Down",         /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
-             );
+              "Cdl3Inside",                   /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
+			);
 
 /* CDL3INSIDE END */
 
@@ -181,10 +176,9 @@ static const TA_OptInputParameterInfo *TA_CDL3LINESTRIKE_OptInputs[] =
 DEF_FUNCTION( CDL3LINESTRIKE,                 /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Three-Line Strike ",           /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
-             );
+              "Cdl3LineStrike",               /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */              
+            );
 
 /* CDL3LINESTRIKE END */
 
@@ -209,10 +203,9 @@ static const TA_OptInputParameterInfo *TA_CDL3OUTSIDE_OptInputs[] =
 DEF_FUNCTION( CDL3OUTSIDE,                    /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Three Outside Up/Down",        /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
-             );
+              "Cdl3Outside",                  /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
+			);
 
 /* CDL3OUTSIDE END */
 
@@ -237,10 +230,9 @@ static const TA_OptInputParameterInfo *TA_CDL3STARSINSOUTH_OptInputs[] =
 DEF_FUNCTION( CDL3STARSINSOUTH,               /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Three Stars In The South",     /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
-             );
+              "Cdl3StarsInSouth",             /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */              
+            );
 
 /* CDL3STARSINSOUTH END */
 
@@ -265,10 +257,9 @@ static const TA_OptInputParameterInfo *TA_CDL3WHITESOLDIERS_OptInputs[] =
 DEF_FUNCTION( CDL3WHITESOLDIERS,              /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Three Advancing White Soldiers", /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
-             );
+              "Cdl3WhiteSoldiers",            /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
+			);
 
 /* CDL3WHITESOLDIERS END */
 
@@ -294,10 +285,9 @@ static const TA_OptInputParameterInfo *TA_CDLABANDONEDBABY_OptInputs[] =
 DEF_FUNCTION( CDLABANDONEDBABY,               /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Abandoned Baby",               /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
-             );
+              "CdlAbandonedBaby",             /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
+		    );
 
 /* CDLABANDONEDBABY END */
 
@@ -322,10 +312,9 @@ static const TA_OptInputParameterInfo *TA_CDLADVANCEBLOCK_OptInputs[] =
 DEF_FUNCTION( CDLADVANCEBLOCK,                /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Advance Block",                /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
-             );
+              "CdlAdvanceBlock",              /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
+			);
 
 /* CDLADVANCEBLOCK END */
 
@@ -350,10 +339,9 @@ static const TA_OptInputParameterInfo *TA_CDLBELTHOLD_OptInputs[] =
 DEF_FUNCTION( CDLBELTHOLD,                    /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Belt-hold",                    /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
-             );
+              "CdlBeltHold",                  /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
+			);
 
 /* CDLBELTHOLD END */
 
@@ -378,10 +366,9 @@ static const TA_OptInputParameterInfo *TA_CDLBREAKAWAY_OptInputs[] =
 DEF_FUNCTION( CDLBREAKAWAY,                   /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Breakaway",                    /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
-             );
+              "CdlBreakaway",                 /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
+			);
 
 /* CDLBREAKAWAY END */
 
@@ -406,10 +393,9 @@ static const TA_OptInputParameterInfo *TA_CDLCLOSINGMARUBOZU_OptInputs[] =
 DEF_FUNCTION( CDLCLOSINGMARUBOZU,             /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Closing Marubozu",             /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
-             );
+              "CdlClosingMarubozu",           /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
+            );
 
 /* CDLCLOSINGMARUBOZU END */
 
@@ -434,9 +420,8 @@ static const TA_OptInputParameterInfo *TA_CDLCONCEALBABYSWALL_OptInputs[] =
 DEF_FUNCTION( CDLCONCEALBABYSWALL,            /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Concealing Baby Swallow",      /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+			  "CdlConcealBabysWall",          /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLCONCEALBABYSWALL END */
@@ -462,9 +447,8 @@ static const TA_OptInputParameterInfo *TA_CDLCOUNTERATTACK_OptInputs[] =
 DEF_FUNCTION( CDLCOUNTERATTACK,               /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Counterattack",                /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlCounterAttack",             /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLCOUNTERATTACK END */
@@ -491,9 +475,8 @@ static const TA_OptInputParameterInfo *TA_CDLDARKCLOUDCOVER_OptInputs[] =
 DEF_FUNCTION( CDLDARKCLOUDCOVER,              /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Dark Cloud Cover",             /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+			  "CdlDarkCloudCover",            /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLDARKCLOUDCOVER END */
@@ -519,9 +502,8 @@ static const TA_OptInputParameterInfo *TA_CDLDOJI_OptInputs[] =
 DEF_FUNCTION( CDLDOJI,                        /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Doji",                         /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlDoji",                      /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLDOJI END */
@@ -547,9 +529,8 @@ static const TA_OptInputParameterInfo *TA_CDLDOJISTAR_OptInputs[] =
 DEF_FUNCTION( CDLDOJISTAR,                    /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Doji Star",                    /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlDojiStar",                  /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLDOJISTAR END */
@@ -575,9 +556,8 @@ static const TA_OptInputParameterInfo *TA_CDLDRAGONFLYDOJI_OptInputs[] =
 DEF_FUNCTION( CDLDRAGONFLYDOJI,               /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Dragonfly Doji",               /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlDragonflyDoji",             /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLDRAGONFLYDOJI END */
@@ -603,9 +583,8 @@ static const TA_OptInputParameterInfo *TA_CDLENGULFING_OptInputs[] =
 DEF_FUNCTION( CDLENGULFING,                   /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Engulfing Pattern",            /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlEngulfing",                 /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLENGULFING END */
@@ -632,9 +611,8 @@ static const TA_OptInputParameterInfo *TA_CDLEVENINGDOJISTAR_OptInputs[] =
 DEF_FUNCTION( CDLEVENINGDOJISTAR,             /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Evening Doji Star",            /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlEveningDojiStar",           /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLEVENINGDOJISTAR END */
@@ -661,9 +639,8 @@ static const TA_OptInputParameterInfo *TA_CDLEVENINGSTAR_OptInputs[] =
 DEF_FUNCTION( CDLEVENINGSTAR,                 /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Evening Star",                 /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlEveningStar",               /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLEVENINGSTAR END */
@@ -691,9 +668,8 @@ static const TA_OptInputParameterInfo *TA_CDLGAPSIDESIDEWHITE_OptInputs[] =
 DEF_FUNCTION( CDLGAPSIDESIDEWHITE,            /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Up/Down-gap side-by-side white lines",   /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+			  "CdlGapSideSideWhite",         /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK        /* flags */
              );
 
 /* CDLGAPSIDESIDEWHITE END */
@@ -719,9 +695,8 @@ static const TA_OptInputParameterInfo *TA_CDLGRAVESTONEDOJI_OptInputs[] =
 DEF_FUNCTION( CDLGRAVESTONEDOJI,              /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Gravestone Doji",              /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlGravestoneDoji",            /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLGRAVESTONEDOJI END */
@@ -747,9 +722,8 @@ static const TA_OptInputParameterInfo *TA_CDLHAMMER_OptInputs[] =
 DEF_FUNCTION( CDLHAMMER,                      /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Hammer",                       /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlHammer",                    /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLHAMMER END */
@@ -775,9 +749,8 @@ static const TA_OptInputParameterInfo *TA_CDLHANGINGMAN_OptInputs[] =
 DEF_FUNCTION( CDLHANGINGMAN,                  /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Hanging Man",                  /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlHangingMan",                /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLHANGINGMAN END */
@@ -803,9 +776,8 @@ static const TA_OptInputParameterInfo *TA_CDLHARAMI_OptInputs[] =
 DEF_FUNCTION( CDLHARAMI,                      /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Harami Pattern",               /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlHarami",                    /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLHARAMI END */
@@ -831,9 +803,8 @@ static const TA_OptInputParameterInfo *TA_CDLHARAMICROSS_OptInputs[] =
 DEF_FUNCTION( CDLHARAMICROSS,                 /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Harami Cross Pattern",         /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlHaramiCross",               /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLHARAMICROSS END */
@@ -859,9 +830,8 @@ static const TA_OptInputParameterInfo *TA_CDLHIGHWAVE_OptInputs[] =
 DEF_FUNCTION( CDLHIGHWAVE,                    /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "High-Wave Candle",             /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlHignWave",                  /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLHIGHWAVE END */
@@ -887,9 +857,8 @@ static const TA_OptInputParameterInfo *TA_CDLHIKKAKE_OptInputs[] =
 DEF_FUNCTION( CDLHIKKAKE,                     /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Hikkake Pattern",              /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlHikkake",                   /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLHIKKAKE END */
@@ -915,9 +884,8 @@ static const TA_OptInputParameterInfo *TA_CDLHIKKAKEMOD_OptInputs[] =
 DEF_FUNCTION( CDLHIKKAKEMOD,                  /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Modified Hikkake Pattern",     /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlHikkakeMod",                /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLHIKKAKEMOD END */
@@ -943,9 +911,8 @@ static const TA_OptInputParameterInfo *TA_CDLHOMINGPIGEON_OptInputs[] =
 DEF_FUNCTION( CDLHOMINGPIGEON,                /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Homing Pigeon",                /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlHomingPigeon",              /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLHOMINGPIGEON END */
@@ -971,9 +938,8 @@ static const TA_OptInputParameterInfo *TA_CDLIDENTICAL3CROWS_OptInputs[] =
 DEF_FUNCTION( CDLIDENTICAL3CROWS,             /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Identical Three Crows",        /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlIdentical3Crows",           /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLIDENTICAL3CROWS END */
@@ -999,9 +965,8 @@ static const TA_OptInputParameterInfo *TA_CDLINNECK_OptInputs[] =
 DEF_FUNCTION( CDLINNECK,                      /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "In-Neck Pattern",              /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlInNeck",                    /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLINNECK END */
@@ -1027,9 +992,8 @@ static const TA_OptInputParameterInfo *TA_CDLINVERTEDHAMMER_OptInputs[] =
 DEF_FUNCTION( CDLINVERTEDHAMMER,              /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Inverted Hammer",              /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlInvertedHammer",            /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLINVERTEDHAMMER END */
@@ -1055,9 +1019,8 @@ static const TA_OptInputParameterInfo *TA_CDLKICKING_OptInputs[] =
 DEF_FUNCTION( CDLKICKING,                     /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Kicking",                      /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlKicking",                   /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLKICKING END */
@@ -1083,9 +1046,8 @@ static const TA_OptInputParameterInfo *TA_CDLKICKINGBYLENGTH_OptInputs[] =
 DEF_FUNCTION( CDLKICKINGBYLENGTH,             /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Kicking - bull/bear determined by the longer marubozu",              /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlKickingByLength",           /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLKICKINGBYLENGTH END */
@@ -1111,9 +1073,8 @@ static const TA_OptInputParameterInfo *TA_CDLLADDERBOTTOM_OptInputs[] =
 DEF_FUNCTION( CDLLADDERBOTTOM,                /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Ladder Bottom",                /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlLadderBottom",              /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLLADDERBOTTOM END */
@@ -1139,9 +1100,8 @@ static const TA_OptInputParameterInfo *TA_CDLLONGLEGGEDDOJI_OptInputs[] =
 DEF_FUNCTION( CDLLONGLEGGEDDOJI,              /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Long Legged Doji",             /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlLongLeggedDoji",            /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLLONGLEGGEDDOJI END */
@@ -1167,9 +1127,8 @@ static const TA_OptInputParameterInfo *TA_CDLLONGLINE_OptInputs[] =
 DEF_FUNCTION( CDLLONGLINE,                    /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Long Line Candle",             /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlLongLine",                  /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLLONGLINE END */
@@ -1195,9 +1154,8 @@ static const TA_OptInputParameterInfo *TA_CDLMARUBOZU_OptInputs[] =
 DEF_FUNCTION( CDLMARUBOZU,                    /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Marubozu",                     /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlMarubozu",                 /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK        /* flags */
              );
 
 /* CDLMARUBOZU END */
@@ -1223,9 +1181,8 @@ static const TA_OptInputParameterInfo *TA_CDLMATCHINGLOW_OptInputs[] =
 DEF_FUNCTION( CDLMATCHINGLOW,                 /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Matching Low",                 /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+			  "CdlMatchingLow",               /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLMATCHINGLOW END */
@@ -1252,9 +1209,8 @@ static const TA_OptInputParameterInfo *TA_CDLMATHOLD_OptInputs[] =
 DEF_FUNCTION( CDLMATHOLD,                     /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Mat Hold",                     /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlMatHold",                   /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK        /* flags */
              );
 
 /* CDLMATHOLD END */
@@ -1281,9 +1237,8 @@ static const TA_OptInputParameterInfo *TA_CDLMORNINGDOJISTAR_OptInputs[] =
 DEF_FUNCTION( CDLMORNINGDOJISTAR,             /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Morning Doji Star",            /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlMorningDojiStar",           /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLMORNINGDOJISTAR END */
@@ -1310,9 +1265,8 @@ static const TA_OptInputParameterInfo *TA_CDLMORNINGSTAR_OptInputs[] =
 DEF_FUNCTION( CDLMORNINGSTAR,                 /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Morning Star",                 /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlMorningStar",               /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLMORNINGSTAR END */
@@ -1338,9 +1292,8 @@ static const TA_OptInputParameterInfo *TA_CDLONNECK_OptInputs[] =
 DEF_FUNCTION( CDLONNECK,                      /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "On-Neck Pattern",              /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+			  "CdlOnNeck",                    /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLONNECK END */
@@ -1366,9 +1319,8 @@ static const TA_OptInputParameterInfo *TA_CDLPIERCING_OptInputs[] =
 DEF_FUNCTION( CDLPIERCING,                    /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Piercing Pattern",             /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlPiercing",                  /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLPIERCING END */
@@ -1394,9 +1346,8 @@ static const TA_OptInputParameterInfo *TA_CDLRICKSHAWMAN_OptInputs[] =
 DEF_FUNCTION( CDLRICKSHAWMAN,                 /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Rickshaw Man",                 /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlRickshawMan",               /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLRICKSHAWMAN END */
@@ -1422,9 +1373,8 @@ static const TA_OptInputParameterInfo *TA_CDLRISEFALL3METHODS_OptInputs[] =
 DEF_FUNCTION( CDLRISEFALL3METHODS,            /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Rising/Falling Three Methods", /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlRiseFall3Methods",          /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLRISEFALL3METHODS END */
@@ -1450,9 +1400,8 @@ static const TA_OptInputParameterInfo *TA_CDLSEPARATINGLINES_OptInputs[] =
 DEF_FUNCTION( CDLSEPARATINGLINES,             /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Separating Lines",             /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlSeperatingLines",           /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLSEPARATINGLINES END */
@@ -1478,9 +1427,8 @@ static const TA_OptInputParameterInfo *TA_CDLSHOOTINGSTAR_OptInputs[] =
 DEF_FUNCTION( CDLSHOOTINGSTAR,                /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Shooting Star",                /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlShootingStar",              /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLSHOOTINGSTAR END */
@@ -1506,9 +1454,8 @@ static const TA_OptInputParameterInfo *TA_CDLSHORTLINE_OptInputs[] =
 DEF_FUNCTION( CDLSHORTLINE,                   /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Short Line Candle",            /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+			  "CdlShortLine",                 /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLSHORTLINE END */
@@ -1534,9 +1481,8 @@ static const TA_OptInputParameterInfo *TA_CDLSPINNINGTOP_OptInputs[] =
 DEF_FUNCTION( CDLSPINNINGTOP,                 /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Spinning Top",                 /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlSpinningTop",               /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLSPINNINGTOP END */
@@ -1562,9 +1508,8 @@ static const TA_OptInputParameterInfo *TA_CDLSTALLEDPATTERN_OptInputs[] =
 DEF_FUNCTION( CDLSTALLEDPATTERN,              /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Stalled Pattern",              /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlStalledPattern",            /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLSTALLEDPATTERN END */
@@ -1590,9 +1535,8 @@ static const TA_OptInputParameterInfo *TA_CDLSTICKSANDWICH_OptInputs[] =
 DEF_FUNCTION( CDLSTICKSANDWICH,               /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Stick Sandwich",               /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+			  "CdlStickSandwhich",            /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLSTICKSANDWICH END */
@@ -1618,9 +1562,8 @@ static const TA_OptInputParameterInfo *TA_CDLTAKURI_OptInputs[] =
 DEF_FUNCTION( CDLTAKURI,                      /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Takuri (Dragonfly Doji with very long lower shadow)",    /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlTakuri",                   /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK        /* flags */
              );
 
 /* CDLTAKURI END */
@@ -1646,9 +1589,8 @@ static const TA_OptInputParameterInfo *TA_CDLTASUKIGAP_OptInputs[] =
 DEF_FUNCTION( CDLTASUKIGAP,                   /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Tasuki Gap",                   /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlTasukiGap",                 /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLTASUKIGAP END */
@@ -1674,9 +1616,8 @@ static const TA_OptInputParameterInfo *TA_CDLTHRUSTING_OptInputs[] =
 DEF_FUNCTION( CDLTHRUSTING,                   /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Thrusting Pattern",            /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlThrusting",                 /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLTHRUSTING END */
@@ -1702,9 +1643,8 @@ static const TA_OptInputParameterInfo *TA_CDLTRISTAR_OptInputs[] =
 DEF_FUNCTION( CDLTRISTAR,                     /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Tristar Pattern",              /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlTristar",                   /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLTRISTAR END */
@@ -1730,9 +1670,8 @@ static const TA_OptInputParameterInfo *TA_CDLUNIQUE3RIVER_OptInputs[] =
 DEF_FUNCTION( CDLUNIQUE3RIVER,                /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Unique 3 River",               /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlUnique3River",              /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLUNIQUE3RIVER END */
@@ -1758,9 +1697,8 @@ static const TA_OptInputParameterInfo *TA_CDLUPSIDEGAP2CROWS_OptInputs[] =
 DEF_FUNCTION( CDLUPSIDEGAP2CROWS,             /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Upside Gap Two Crows",         /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlUpsideGap2Crows",           /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 
 /* CDLUPSIDEGAP2CROWS END */
@@ -1786,9 +1724,8 @@ static const TA_OptInputParameterInfo *TA_CDLXSIDEGAP3METHODS_OptInputs[] =
 DEF_FUNCTION( CDLXSIDEGAP3METHODS,            /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Upside/Downside Gap Three Methods",    /* hint */
-              NULL,                           /* helpFile */
-              TA_FUNC_FLG_CANDLESTICK,        /* flags */
-              NULL                            /* analysis function */
+              "CdlXSideGap3Methods",         /* CamelCase name */
+              TA_FUNC_FLG_CANDLESTICK        /* flags */
              );
 
 /* CDLXSIDEGAP3METHODS END */
@@ -1815,9 +1752,8 @@ static const TA_OptInputParameterInfo *TA_CMO_OptInputs[] =
 DEF_FUNCTION( CMO,                        /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Chande Momentum Oscillator",  /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER,       /* flags */
-              NULL                        /* analysis function */
+              "Cmo",                      /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER       /* flags */
              );
 /* CMO END */
 
@@ -1843,15 +1779,14 @@ static const TA_OptInputParameterInfo *TA_CORREL_OptInputs[] =
 DEF_FUNCTION( CORREL,                      /* name */
               TA_GroupId_Statistic,     /* groupId */
               "Pearson's Correlation Coefficient (r)", /* hint */
-              NULL,                     /* helpFile */
-              0,                        /* flags */
-              NULL                      /* analysis function */
+              "Correl",                /* CamelCase name */
+              0                        /* flags */
              );
 /* CORREL END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableC[] =
 {
@@ -1896,8 +1831,8 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLLONGLEGGEDDOJI),
    ADD_TO_TABLE(CDLLONGLINE),
    ADD_TO_TABLE(CDLMARUBOZU),
-   ADD_TO_TABLE(CDLMATHOLD),
    ADD_TO_TABLE(CDLMATCHINGLOW),
+   ADD_TO_TABLE(CDLMATHOLD),
    ADD_TO_TABLE(CDLMORNINGDOJISTAR),
    ADD_TO_TABLE(CDLMORNINGSTAR),
    ADD_TO_TABLE(CDLONNECK),

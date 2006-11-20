@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -69,9 +69,8 @@ static const TA_OptInputParameterInfo *TA_ROC_OptInputs[] =
 DEF_FUNCTION( ROC,                     /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Rate of change : ((price/prevPrice)-1)*100", /* hint */
-              NULL,             /* helpFile */
-              0,                /* flags */
-              NULL              /* analysis function */
+              "Roc",            /* CamelCase name */
+              0                 /* flags */
              );
 /* ROC END */
 
@@ -96,9 +95,8 @@ static const TA_OptInputParameterInfo *TA_ROCP_OptInputs[] =
 DEF_FUNCTION( ROCP,                    /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Rate of change Percentage: (price-prevPrice)/prevPrice", /* hint */
-              NULL,             /* helpFile */
-              0,                /* flags */
-              NULL              /* analysis function */
+              "RocP",           /* CamelCase name */
+              0                 /* flags */
              );
 /* ROCP END */
 
@@ -123,9 +121,8 @@ static const TA_OptInputParameterInfo *TA_ROCR_OptInputs[] =
 DEF_FUNCTION( ROCR,                    /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Rate of change ratio: (price/prevPrice)", /* hint */
-              NULL,             /* helpFile */
-              0,                /* flags */
-              NULL              /* analysis function */
+              "RocR",           /* CamelCase name */
+              0                 /* flags */
              );
 /* ROCR END */
 
@@ -150,9 +147,8 @@ static const TA_OptInputParameterInfo *TA_ROCR100_OptInputs[] =
 DEF_FUNCTION( ROCR100,                    /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Rate of change ratio 100 scale: (price/prevPrice)*100", /* hint */
-              NULL,             /* helpFile */
-              0,                /* flags */
-              NULL              /* analysis function */
+              "RocR100",       /* CamelCase name */
+              0                /* flags */
              );
 /* ROCR100 END */
 
@@ -178,15 +174,14 @@ static const TA_OptInputParameterInfo *TA_RSI_OptInputs[] =
 DEF_FUNCTION( RSI,                        /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Relative Strength Index",  /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER,       /* flags */
-              NULL                        /* analysis function */
+              "Rsi",                      /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER        /* flags */
              );
 /* RSI END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableR[] =
 {

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -69,16 +69,15 @@ static const TA_OptInputParameterInfo *TA_KAMA_OptInputs[] =
 DEF_FUNCTION( KAMA,                       /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
               "Kaufman Adaptive Moving Average", /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP|TA_FUNC_FLG_UNST_PER,        /* flags */
-              NULL                        /* analysis function */
+              "Kama",                       /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP|TA_FUNC_FLG_UNST_PER        /* flags */
              );
 /* KAMA END */
 
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableK[] =
 {

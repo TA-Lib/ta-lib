@@ -79,7 +79,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationFactor =
    (const void *)&TA_DEF_AccelerationFactor, /* dataSet */
    0.02, /* defaultValue */
    "Acceleration Factor used up to the Maximum value", /* hint */
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationMaximum =
@@ -93,7 +93,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationMaximum =
    0.20, /* defaultValue */
    "Acceleration Factor Maximum value", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_InputParameterInfo    *TA_SAR_Inputs[]    =
@@ -117,9 +117,8 @@ static const TA_OptInputParameterInfo *TA_SAR_OptInputs[] =
 DEF_FUNCTION( SAR,                        /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
               "Parabolic SAR",            /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "Sar",                      /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP         /* flags */
              );
 
 /* SAR END */
@@ -166,7 +165,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_StartValue =
    0.0, /* defaultValue */
    "Start value and direction. 0 for Auto, >0 for Long, <0 for Short", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_OffsetOnReverse =
@@ -180,7 +179,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_OffsetOnReverse =
    0.0, /* defaultValue */
    "Percent offset added/removed to initial stop on short/long reversal", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationInitLong =
@@ -194,7 +193,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationInitLong =
    0.02, /* defaultValue */
    "Acceleration Factor initial value for the Long direction", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationLong =
@@ -207,7 +206,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationLong =
    (const void *)&TA_DEF_AccelerationFactor, /* dataSet */
    0.02, /* defaultValue */
    "Acceleration Factor for the Long direction", /* hint */
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationMaxLong =
@@ -221,7 +220,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationMaxLong =
    0.20, /* defaultValue */
    "Acceleration Factor maximum value for the Long direction", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationInitShort =
@@ -235,7 +234,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationInitShort =
    0.02, /* defaultValue */
    "Acceleration Factor initial value for the Short direction", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationShort =
@@ -248,7 +247,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationShort =
    (const void *)&TA_DEF_AccelerationFactor, /* dataSet */
    0.02, /* defaultValue */
    "Acceleration Factor for the Short direction", /* hint */
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationMaxShort =
@@ -262,7 +261,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_AccelerationMaxShort =
    0.20, /* defaultValue */
    "Acceleration Factor maximum value for the Short direction", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_InputParameterInfo    *TA_SAREXT_Inputs[]    =
@@ -292,9 +291,8 @@ static const TA_OptInputParameterInfo *TA_SAREXT_OptInputs[] =
 DEF_FUNCTION( SAREXT,                     /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
               "Parabolic SAR - Extended", /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "SarExt",                   /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP         /* flags */
              );
 
 /* SAREXT END */
@@ -320,9 +318,8 @@ static const TA_OptInputParameterInfo *TA_SMA_OptInputs[] =
 DEF_FUNCTION( SMA,                        /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
               "Simple Moving Average",    /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "Sma",                      /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP         /* flags */
              );
 
 /* SMA END */
@@ -348,9 +345,8 @@ static const TA_OptInputParameterInfo *TA_SUM_OptInputs[] =
 DEF_FUNCTION( SUM, /* name */
               TA_GroupId_MathOperators, /* groupId */
               "Summation", /* hint */
-              NULL,     /* helpFile */
-              0,        /* flags */
-              NULL      /* analysis function */
+              "Sum",   /* CamelCase name */
+              0        /* flags */
              );
 /* SUM END */
 
@@ -376,9 +372,8 @@ static const TA_OptInputParameterInfo *TA_STDDEV_OptInputs[] =
 DEF_FUNCTION( STDDEV,                   /* name */
               TA_GroupId_Statistic,     /* groupId */
               "Standard Deviation",     /* hint */
-              NULL,                     /* helpFile */
-              0,                        /* flags */
-              NULL                      /* analysis function */
+              "StdDev",                 /* CamelCase name */
+              0                         /* flags */
              );
 /* STDDEV END */
 
@@ -394,7 +389,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_FastK_Period =
    5, /* defaultValue */
    "Time period for building the Fast-K line", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_SlowK_Period =
@@ -408,7 +403,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_SlowK_Period =
    3, /* defaultValue */
    "Smoothing for making the Slow-K line. Usually set to 3", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_SlowD_Period =
@@ -422,7 +417,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_SlowD_Period =
    3, /* defaultValue */
    "Smoothing for making the Slow-D line", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OptInputParameterInfo TA_DEF_UI_SlowK_MAType =
@@ -436,7 +431,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_SlowK_MAType =
    0, /* defaultValue = simple average */
    "Type of Moving Average for Slow-K", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OptInputParameterInfo TA_DEF_UI_SlowD_MAType =
@@ -450,7 +445,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_SlowD_MAType =
    0, /* defaultValue = simple average */
    "Type of Moving Average for Slow-D", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_SlowK =
@@ -484,9 +479,8 @@ static const TA_OptInputParameterInfo *TA_STOCH_OptInputs[] =
 DEF_FUNCTION( STOCH,                   /* name */
               TA_GroupId_MomentumIndicators, /* groupId */
               "Stochastic",             /* hint */
-              NULL,                     /* helpFile */
-              0,                        /* flags */
-              NULL                      /* analysis function */
+              "Stoch",                  /* CamelCase name */
+              0                         /* flags */
              );
 /* STOCH END */
 
@@ -502,7 +496,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_FastD_Period =
    3, /* defaultValue */
    "Smoothing for making the Fast-D line. Usually set to 3", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OptInputParameterInfo TA_DEF_UI_FastD_MAType =
@@ -516,7 +510,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_FastD_MAType =
    0, /* defaultValue = simple average */
    "Type of Moving Average for Fast-D", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_FastK =
@@ -548,9 +542,8 @@ static const TA_OptInputParameterInfo *TA_STOCHF_OptInputs[] =
 DEF_FUNCTION( STOCHF,                   /* name */
               TA_GroupId_MomentumIndicators, /* groupId */
               "Stochastic Fast",        /* hint */
-              NULL,                     /* helpFile */
-              0,                        /* flags */
-              NULL                      /* analysis function */
+              "StochF",                 /* CamelCase name */
+              0                         /* flags */
              );
 /* STOCHF END */
 
@@ -580,27 +573,26 @@ static const TA_OptInputParameterInfo *TA_STOCHRSI_OptInputs[] =
 DEF_FUNCTION( STOCHRSI,                        /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Stochastic Relative Strength Index",  /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER,       /* flags */
-              NULL                        /* analysis function */
+              "StochRsi",                 /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER        /* flags */
              );
 
 /* STOCHRSI END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableS[] =
 {
    ADD_TO_TABLE(SAR),
    ADD_TO_TABLE(SAREXT),
-   ADD_TO_TABLE(STDDEV),
    ADD_TO_TABLE(SMA),
-   ADD_TO_TABLE(SUM),
+   ADD_TO_TABLE(STDDEV),
    ADD_TO_TABLE(STOCH),
    ADD_TO_TABLE(STOCHF),
    ADD_TO_TABLE(STOCHRSI),
+   ADD_TO_TABLE(SUM),
    NULL
 };
 

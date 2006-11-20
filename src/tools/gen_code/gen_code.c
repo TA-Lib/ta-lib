@@ -107,7 +107,6 @@ extern int mcpp_main( int argc, char ** argv);
 
 #define FILE_READ     0x00000001
 #define WRITE_ALWAYS  0x00000002
-#define SORT_OUTPUT   0x00000004
 
 #ifndef min
    #define min(a, b)  (((a) < (b)) ? (a) : (b))
@@ -262,8 +261,6 @@ static void addFuncEnumeration( FILE *out );
 
 static void extractTALogic( FILE *inFile, FILE *outFile );
 
-static void sortFile( const char *file );
-
 static void cnvtToUpperCase( char *str );
 static void cnvtChar( char *str, char from, char to );
 static char *trimWhitespace( char *str );
@@ -280,6 +277,8 @@ static void appendToFunc( FILE *out );
 
 static int  generateFuncAPI_C();
 static void convertFileToCArray( FILE *in, FILE *out );
+
+static void ReplaceReservedXmlCharacters(const char *input, char *output );
 
 char gToOpen[BUFFER_SIZE];
 char gTempBuf[BUFFER_SIZE];
@@ -619,9 +618,6 @@ static void fileClose( FileHandle *handle )
 
    if( !(handle->flags&FILE_READ) && !(handle->flags&WRITE_ALWAYS) && (handle->fileTarget != NULL))
    {
-      if( handle->flags&SORT_OUTPUT )
-         sortFile(handle->f2_name);
-
       if( !areFileSame( handle->f1_name, handle->f2_name ) )
          copyFile( handle->f2_name, handle->f1_name );
 
@@ -792,7 +788,7 @@ static int genCode(int argc, char* argv[])
    /* Create the "ta_func_list.txt" */
    gOutFuncList_TXT = fileOpen( "..\\..\\ta_func_list.txt",
                                 NULL,
-                                FILE_WRITE|WRITE_ON_CHANGE_ONLY|SORT_OUTPUT );
+                                FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
    if( gOutFuncList_TXT == NULL )
    {
@@ -1045,7 +1041,7 @@ static unsigned int forEachGroup( TA_ForEachGroup forEachGroupFunc,
 }
 
 //Replaces reserved xml characters with the appropriate escape sequence.
-static void ReplaceReservedXmlCharacters(const char *input, char *output)
+static void ReplaceReservedXmlCharacters(const char *input, char *output )
 {
 	char *currentPosition;
 	char tempString[8*1024];
@@ -1135,12 +1131,10 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 	//General stuff about function
 	fprintf(gOutFunc_XML->file, "	<!-- %s -->\n", funcInfo->name);
 	fprintf(gOutFunc_XML->file, "	<FinancialFunction>\n");
-    fprintf(gOutFunc_XML->file, "		<ShortName>%s</ShortName>\n", (funcInfo->name == NULL)? "" : funcInfo->name);
-    fprintf(gOutFunc_XML->file, "		<FullName>%s</FullName>\n", (funcInfo->hint == NULL)? "" : funcInfo->hint);
+    fprintf(gOutFunc_XML->file, "		<Abbreviation>%s</Abbreviation>\n", (funcInfo->name == NULL)? "" : funcInfo->name);
+    fprintf(gOutFunc_XML->file, "		<CamelCaseName>%s</CamelCaseName>\n", (funcInfo->camelCaseName == NULL)? "" : funcInfo->camelCaseName);
 	ReplaceReservedXmlCharacters(funcInfo->hint, tempString);
     fprintf(gOutFunc_XML->file, "		<ShortDescription>%s</ShortDescription>\n", (funcInfo->hint == NULL)? "" : tempString);
-	ReplaceReservedXmlCharacters(funcInfo->helpFile, tempString);
-    fprintf(gOutFunc_XML->file, "		<LongDescription>%s</LongDescription>\n", (funcInfo->helpFile == NULL)? "" : tempString);
     fprintf(gOutFunc_XML->file, "		<GroupId>%s</GroupId>\n", funcInfo->group);
 
 	//Required input arguments
@@ -1234,8 +1228,6 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 			fprintf(gOutFunc_XML->file, "				<Name>%s</Name>\n", optInputInfo->displayName);
 			ReplaceReservedXmlCharacters(optInputInfo->hint, tempString);
 			fprintf(gOutFunc_XML->file, "				<ShortDescription>%s</ShortDescription>\n", (optInputInfo->hint == NULL)? "" : tempString);
-			ReplaceReservedXmlCharacters(optInputInfo->helpFile, tempString);
-			fprintf(gOutFunc_XML->file, "				<LongDescription>%s</LongDescription>\n", (optInputInfo->helpFile == NULL)? "" : tempString);
 			if(optInputInfo->flags != 0)
 			{
 				fprintf(gOutFunc_XML->file, "				<Flags>\n");
@@ -1405,21 +1397,7 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    fprintf( gOutFunc_H->file, "\n" );
    fprintf( gOutFunc_SWG->file, "\n" );
 
-   if( (prevGroup == NULL) || (prevGroup != funcInfo->group) )
-   {
-      printf( "Processing Group [%s]\n", funcInfo->group );
-      fprintf( gOutFunc_H->file, "\n/******************************************\n" );
-      fprintf( gOutFunc_H->file, " * Group: [%s]\n", funcInfo->group );
-      fprintf( gOutFunc_H->file, " ******************************************/\n\n" );
-
-      fprintf( gOutFunc_SWG->file, "\n/******************************************\n" );
-      fprintf( gOutFunc_SWG->file, " * Group: [%s]\n", funcInfo->group );
-      fprintf( gOutFunc_SWG->file, " ******************************************/\n\n" );
-
-      prevGroup = funcInfo->group;
-   }
-
-   /* printf( "Processing Func  [TA_%s]\n", funcInfo->name ); */
+   printf( "Processing [TA_%s]\n", funcInfo->name );
 
    fprintf( gOutFunc_H->file, "/*\n" );
    printFuncHeaderDoc( gOutFunc_H->file, funcInfo, " * " );
@@ -3645,20 +3623,6 @@ static void extractTALogic( FILE *inFile, FILE *outFile )
          fputs( gTempBuf2, outFile );
       }
    }
-}
-
-static void sortFile( const char *file )
-{
-   strcpy( gTempBuf, "sort " );
-   strcat( gTempBuf, file );
-   strcat( gTempBuf, " >" );
-   strcat( gTempBuf, file );
-   strcat( gTempBuf, ".tmp" );
-   system( gTempBuf );
-    
-   strcpy( gTempBuf, file );
-   strcat( gTempBuf, ".tmp" );
-   copyFile( gTempBuf, file );
 }
 
 static int copyFile( const char *src, const char *dest )
