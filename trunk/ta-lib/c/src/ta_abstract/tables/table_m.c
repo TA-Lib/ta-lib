@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -59,7 +59,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_Signal_Period =
    9, /* defaultValue */
    "Smoothing for the signal line (nb of period)", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OptInputParameterInfo TA_DEF_UI_Slow_MA_Type =
@@ -73,7 +73,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_Slow_MA_Type =
    0, /* defaultValue = simple average */
    "Type of Moving Average for slow MA", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OptInputParameterInfo TA_DEF_UI_Fast_MA_Type =
@@ -87,7 +87,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_Fast_MA_Type =
    0, /* defaultValue = simple average */
    "Type of Moving Average for fast MA", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OptInputParameterInfo TA_DEF_UI_Signal_MA_Type =
@@ -100,7 +100,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_Signal_MA_Type =
    0, /* defaultValue = simple average */
    "Type of Moving Average for signal line", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 /* MA BEGIN */
@@ -125,9 +125,8 @@ static const TA_OptInputParameterInfo *TA_MA_OptInputs[] =
 DEF_FUNCTION( MA,                         /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
               "All Moving Average",       /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "MovingAverage",            /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP         /* flags */
              );
 /* MA END */
 
@@ -165,9 +164,8 @@ static const TA_OptInputParameterInfo *TA_MACD_OptInputs[] =
 DEF_FUNCTION( MACD,                       /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Moving Average Convergence/Divergence", /* hint */
-              NULL,                       /* helpFile */
-              0,                          /* flags */
-              NULL                        /* analysis function */
+              "Macd",                     /* CamelCase name */
+              0                           /* flags */
              );
 /* MACD END */
 
@@ -199,9 +197,8 @@ static const TA_OptInputParameterInfo *TA_MACDEXT_OptInputs[] =
 DEF_FUNCTION( MACDEXT,                     /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "MACD with controllable MA type", /* hint */
-              NULL,                       /* helpFile */
-              0,                          /* flags */
-              NULL                        /* analysis function */
+			  "MacdExt",                  /* CamelCase name */
+              0                           /* flags */
              );
 /* MACDEXT END */
 
@@ -228,9 +225,8 @@ static const TA_OptInputParameterInfo *TA_MACDFIX_OptInputs[] =
 DEF_FUNCTION( MACDFIX,                    /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Moving Average Convergence/Divergence Fix 12/26", /* hint */
-              NULL,                       /* helpFile */
-              0,                          /* flags */
-              NULL                        /* analysis function */
+              "MacdFix",                  /* CamelCase name */
+              0                           /* flags */
              );
 /* MACDFIX END */
 
@@ -264,7 +260,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_MAMA_FastLimit =
    (const void *)&TA_DEF_MAMA_FastLimit, /* dataSet */
    0.5, /* defaultValue */
    "Upper limit use in the adaptive algorithm", /* hint */
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OptInputParameterInfo TA_DEF_UI_MAMA_SlowLimit =
@@ -277,7 +273,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_MAMA_SlowLimit =
    (const void *)&TA_DEF_MAMA_SlowLimit, /* dataSet */
    0.05, /* defaultValue */
    "Lower limit use in the adaptive algorithm", /* hint */
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MAMA =
@@ -308,9 +304,8 @@ static const TA_OptInputParameterInfo *TA_MAMA_OptInputs[] =
 DEF_FUNCTION( MAMA,                         /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
               "MESA Adaptive Moving Average",       /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER|TA_FUNC_FLG_OVERLAP, /* flags */
-              NULL                        /* analysis function */
+              "Mama",                       /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER|TA_FUNC_FLG_OVERLAP /* flags */
              );
 /* MAMA END */
 
@@ -335,9 +330,8 @@ static const TA_OptInputParameterInfo *TA_MAX_OptInputs[] =
 DEF_FUNCTION( MAX,                       /* name */
               TA_GroupId_MathOperators,  /* groupId */
               "Highest value over a specified period", /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "Max",                     /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP        /* flags */
              );
 /* MAX END */
 
@@ -359,9 +353,8 @@ static const TA_OptInputParameterInfo *TA_MEDPRICE_OptInputs[] = { NULL };
 DEF_FUNCTION( MEDPRICE,                   /* name */
               TA_GroupId_PriceTransform,  /* groupId */
               "Median Price",             /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "MedPrice",                 /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP         /* flags */
              );
 
 /* MEDPRICE END */
@@ -387,10 +380,9 @@ static const TA_OptInputParameterInfo *TA_MFI_OptInputs[] =
 
 DEF_FUNCTION( MFI,                   /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
-              "Money Flow Index",            /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER,        /* flags */
-              NULL                        /* analysis function */
+              "Money Flow Index",         /* hint */
+              "Mfi",                      /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER        /* flags */
              );
 /* MFI END */
 
@@ -415,9 +407,8 @@ static const TA_OptInputParameterInfo *TA_MIDPRICE_OptInputs[] =
 DEF_FUNCTION( MIDPRICE,                    /* name */
               TA_GroupId_OverlapStudies,   /* groupId */
               "Midpoint Price over period",/* hint */
-              NULL,                        /* helpFile */
-              TA_FUNC_FLG_OVERLAP,         /* flags */
-              NULL                         /* analysis function */
+              "MidPrice",                  /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP          /* flags */
              );
 
 /* MIDPRICE END */
@@ -443,9 +434,8 @@ static const TA_OptInputParameterInfo *TA_MIDPOINT_OptInputs[] =
 DEF_FUNCTION( MIDPOINT,                   /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
               "MidPoint over period",     /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "MidPoint",                 /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP         /* flags */
              );
 /* MIDPOINT END */
 
@@ -470,9 +460,8 @@ static const TA_OptInputParameterInfo *TA_MIN_OptInputs[] =
 DEF_FUNCTION( MIN,                       /* name */
               TA_GroupId_MathOperators,  /* groupId */
               "Lowest value over a specified period", /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_OVERLAP,        /* flags */
-              NULL                        /* analysis function */
+              "Min",                     /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP        /* flags */
              );
 /* MIN END */
 
@@ -497,9 +486,8 @@ static const TA_OptInputParameterInfo *TA_MINUS_DI_OptInputs[] =
 DEF_FUNCTION( MINUS_DI,                      /* name */
               TA_GroupId_MomentumIndicators,    /* groupId */
               "Minus Directional Indicator", /* hint */
-              NULL,                          /* helpFile */
-              TA_FUNC_FLG_UNST_PER,          /* flags */
-              NULL                           /* analysis function */
+              "MinusDI",                     /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER           /* flags */              
              );
 
 /* MINUS_DI END */
@@ -525,9 +513,8 @@ static const TA_OptInputParameterInfo *TA_MINUS_DM_OptInputs[] =
 DEF_FUNCTION( MINUS_DM,                     /* name */
               TA_GroupId_MomentumIndicators,   /* groupId */
               "Minus Directional Movement", /* hint */
-              NULL,                         /* helpFile */
-              TA_FUNC_FLG_UNST_PER,         /* flags */
-              NULL                          /* analysis function */
+              "MinusDM",                    /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER          /* flags */
              );
 
 /* MINUS_DM END */
@@ -552,16 +539,15 @@ static const TA_OptInputParameterInfo *TA_MOM_OptInputs[] =
 
 DEF_FUNCTION( MOM,                     /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
-              "Momentum",       /* hint */
-              NULL,             /* helpFile */
-              0,                /* flags */
-              NULL              /* analysis function */
+              "Momentum",        /* hint */
+              "Mom",             /* CamelCase name */
+              0                  /* flags */
              );
 /* MOM END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableM[] =
 {
@@ -573,8 +559,8 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MAX),
    ADD_TO_TABLE(MEDPRICE),
    ADD_TO_TABLE(MFI),
-   ADD_TO_TABLE(MIDPRICE),
    ADD_TO_TABLE(MIDPOINT),
+   ADD_TO_TABLE(MIDPRICE),
    ADD_TO_TABLE(MIN),
    ADD_TO_TABLE(MINUS_DI),
    ADD_TO_TABLE(MINUS_DM),

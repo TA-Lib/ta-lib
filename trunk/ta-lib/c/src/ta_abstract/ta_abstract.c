@@ -224,102 +224,37 @@ TA_RetCode TA_GroupTableFree( TA_StringTable *table )
    return TA_SUCCESS;
 }
 
+/* Iterate in alphabetical order */
 TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
 {
-   TA_StringTable   *tableGroup;
-   TA_StringTable   *tableFunc;
+   const TA_FuncDef **funcDefTable;
    const TA_FuncDef *funcDef;
-   const TA_FuncHandle *funcHandle;
-   TA_RetCode retCode;
-   unsigned int i, j;
-
    const TA_FuncInfo *funcInfo;
+   unsigned int i, j, funcDefTableSize;
 
    if( functionToCall == NULL )
    {
       return TA_BAD_PARAM;
    }
    
-   /* Get all the group to iterate. */
-   retCode = TA_GroupTableAlloc( &tableGroup );
+   /* Iterate the tables (each table is for one letter) */
+   for( i=0; i < 26; i++ )
+   {   
+      funcDefTable = TA_DEF_Tables[i];
 
-   if( retCode == TA_SUCCESS )
-   {
-      for( i=0; i < tableGroup->size; i++ )
+      /* Identify the table size. */
+      funcDefTableSize = *TA_DEF_TablesSize[i];
+      for( j=0; j < funcDefTableSize; j++ )
       {
-         if( !tableGroup->string[i] )
-         {
-            TA_GroupTableFree( tableGroup );
-            return TA_INTERNAL_ERROR(2);
-         }
+         funcDef = funcDefTable[j];
+         if( !funcDef || !funcDef->funcInfo )
+            return TA_INTERNAL_ERROR(3);
 
-         /* Get all the symbols to iterate for this category. */
-         retCode = TA_FuncTableAlloc( tableGroup->string[i], &tableFunc );
-
-         if( retCode == TA_SUCCESS )
-         {
-            if( !tableFunc )
-            {
-               TA_GroupTableFree( tableGroup );
-               TA_FuncTableFree( tableFunc );
-               return TA_INTERNAL_ERROR(2);
-            }            
-
-            for( j=0; j < tableFunc->size; j++ )
-            {
-               if( !tableFunc->string[j] )
-               {
-                  TA_GroupTableFree( tableGroup );
-                  TA_FuncTableFree( tableFunc );
-                  return TA_INTERNAL_ERROR(2);
-               }
-
-               /* Get the function handle, and then the TA_FuncDef,
-                * and then the TA_FuncInfo...
-                */
-               retCode = TA_GetFuncHandle( tableFunc->string[j], &funcHandle );
-
-               if( retCode != TA_SUCCESS )
-                  continue;
-
-               if( !funcHandle )
-               {
-                  TA_GroupTableFree( tableGroup );
-                  TA_FuncTableFree( tableFunc );
-                  return TA_INTERNAL_ERROR(2);
-               }
-
-               funcDef  = (const TA_FuncDef *)funcHandle;
-
-               if( !funcDef )
-               {
-                  TA_GroupTableFree( tableGroup );
-                  TA_FuncTableFree( tableFunc );
-                  return TA_INTERNAL_ERROR(2);
-               }
-
-               funcInfo = funcDef->funcInfo;
-
-               if( !funcInfo )
-               {
-                  TA_GroupTableFree( tableGroup );
-                  TA_FuncTableFree( tableFunc );
-                  return TA_INTERNAL_ERROR(2);
-               }
-
-               /* Call user provided function. */
-               (*functionToCall)( funcInfo, opaqueData );
-            }
-         }
-
-         TA_FuncTableFree( tableFunc );
+         funcInfo = funcDef->funcInfo;      
+         if( !funcInfo )
+            return TA_INTERNAL_ERROR(4);	
+         (*functionToCall)( funcInfo, opaqueData );
       }
-
-      TA_GroupTableFree( tableGroup );
-   }
-   else
-   {
-      return TA_INTERNAL_ERROR(2);
    }
 
    return TA_SUCCESS;

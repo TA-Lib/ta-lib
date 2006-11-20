@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -69,9 +69,8 @@ static const TA_OptInputParameterInfo *TA_LINEARREG_OptInputs[] =
 DEF_FUNCTION( LINEARREG,           /* name */
               TA_GroupId_Statistic,/* groupId */
               "Linear Regression", /* hint */
-              NULL,                /* helpFile */
-              TA_FUNC_FLG_OVERLAP, /* flags */
-              NULL                 /* analysis function */
+              "LinearReg",         /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP  /* flags */
              );
 /* LINEARREG END */
 
@@ -96,9 +95,8 @@ static const TA_OptInputParameterInfo *TA_LINEARREG_SLOPE_OptInputs[] =
 DEF_FUNCTION( LINEARREG_SLOPE,     /* name */
               TA_GroupId_Statistic,/* groupId */
               "Linear Regression Slope", /* hint */
-              NULL,                /* helpFile */
-              0,                   /* flags */
-              NULL                 /* analysis function */
+              "LinearRegSlope",    /* CamelCase name */
+              0                    /* flags */
              );
 /* LINEARREG_SLOPE END */
 
@@ -123,9 +121,8 @@ static const TA_OptInputParameterInfo *TA_LINEARREG_ANGLE_OptInputs[] =
 DEF_FUNCTION( LINEARREG_ANGLE,           /* name */
               TA_GroupId_Statistic,/* groupId */
               "Linear Regression Angle", /* hint */
-              NULL,                /* helpFile */
-              0,                   /* flags */
-              NULL                 /* analysis function */
+              "LinearRegAngle",    /* CamelCase name */
+              0                    /* flags */
              );
 /* LINEARREG_ANGLE END */
 
@@ -150,22 +147,21 @@ static const TA_OptInputParameterInfo *TA_LINEARREG_INTERCEPT_OptInputs[] =
 DEF_FUNCTION( LINEARREG_INTERCEPT,           /* name */
               TA_GroupId_Statistic,/* groupId */
               "Linear Regression Intercept", /* hint */
-              NULL,                /* helpFile */
-              TA_FUNC_FLG_OVERLAP, /* flags */
-              NULL                 /* analysis function */
+              "LinearRegIntercept",  /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP    /* flags */
              );
 /* LINEARREG_INTERCEPT END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableL[] =
 {
    ADD_TO_TABLE(LINEARREG),
-   ADD_TO_TABLE(LINEARREG_SLOPE),
    ADD_TO_TABLE(LINEARREG_ANGLE),
    ADD_TO_TABLE(LINEARREG_INTERCEPT),
+   ADD_TO_TABLE(LINEARREG_SLOPE),
    NULL
 };
 

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -70,15 +70,14 @@ static const TA_OptInputParameterInfo *TA_VAR_OptInputs[] =
 DEF_FUNCTION( VAR,                      /* name */
               TA_GroupId_Statistic,     /* groupId */
               "Variance",               /* hint */
-              NULL,                     /* helpFile */
-              0,                        /* flags */
-              NULL                      /* analysis function */
+              "Variance",               /* CamelCase name */
+              0                         /* flags */
              );
 /* VAR END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableV[] =
 {

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -69,9 +69,8 @@ static const TA_OptInputParameterInfo *TA_HT_DCPERIOD_OptInputs[] =
 DEF_FUNCTION( HT_DCPERIOD,                   /* name */
               TA_GroupId_CycleIndicators,  /* groupId */
               "Hilbert Transform - Dominant Cycle Period",  /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER, /* flags */
-              NULL    /* analysis function */
+              "HtDcPeriod",                       /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER /* flags */
              );
 /* HT_DCPERIOD END */
 
@@ -96,9 +95,8 @@ static const TA_OptInputParameterInfo *TA_HT_DCPHASE_OptInputs[] =
 DEF_FUNCTION( HT_DCPHASE,                   /* name */
               TA_GroupId_CycleIndicators,  /* groupId */
               "Hilbert Transform - Dominant Cycle Phase",  /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER, /* flags */
-              NULL    /* analysis function */
+              "HtDcPhase",   /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER /* flags */
              );
 /* HT_DCPHASE END */
 
@@ -130,9 +128,8 @@ static const TA_OptInputParameterInfo *TA_HT_PHASOR_OptInputs[] =
 DEF_FUNCTION( HT_PHASOR,                   /* name */
               TA_GroupId_CycleIndicators,  /* groupId */
               "Hilbert Transform - Phasor Components",  /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER, /* flags */
-              NULL    /* analysis function */
+              "HtPhasor",                       /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER /* flags */
              );
 /* HT_PHASOR END */
 
@@ -164,9 +161,8 @@ static const TA_OptInputParameterInfo *TA_HT_SINE_OptInputs[] =
 DEF_FUNCTION( HT_SINE,                   /* name */
               TA_GroupId_CycleIndicators,  /* groupId */
               "Hilbert Transform - SineWave",  /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER, /* flags */
-              NULL    /* analysis function */
+              "HtSine",                       /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER /* flags */
              );
 /* HT_SINE END */
 
@@ -191,9 +187,8 @@ static const TA_OptInputParameterInfo *TA_HT_TRENDLINE_OptInputs[] =
 DEF_FUNCTION( HT_TRENDLINE,                   /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
               "Hilbert Transform - Instantaneous Trendline",  /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER|TA_FUNC_FLG_OVERLAP, /* flags */
-              NULL    /* analysis function */
+              "HtTrendline", /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER|TA_FUNC_FLG_OVERLAP /* flags */
              );
 /* HT_TRENDLINE END */
 
@@ -218,15 +213,14 @@ static const TA_OptInputParameterInfo *TA_HT_TRENDMODE_OptInputs[] =
 DEF_FUNCTION( HT_TRENDMODE,                   /* name */
               TA_GroupId_CycleIndicators,  /* groupId */
               "Hilbert Transform - Trend vs Cycle Mode",  /* hint */
-              NULL,                       /* helpFile */
-              TA_FUNC_FLG_UNST_PER, /* flags */
-              NULL    /* analysis function */
+              "HtTrendMode",                       /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER /* flags */
              );
 /* HT_TRENDMODE END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableH[] =
 {

@@ -69,9 +69,8 @@ static const TA_OptInputParameterInfo *TA_PLUS_DI_OptInputs[] =
 DEF_FUNCTION( PLUS_DI,                     /* name */
               TA_GroupId_MomentumIndicators,   /* groupId */
               "Plus Directional Indicator", /* hint */
-              NULL,                         /* helpFile */
-              TA_FUNC_FLG_UNST_PER,         /* flags */
-              NULL                          /* analysis function */
+              "PlusDI",                     /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER          /* flags */
              );
 
 /* PLUS_DI END */
@@ -94,12 +93,11 @@ static const TA_OptInputParameterInfo *TA_PLUS_DM_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( PLUS_DM,                     /* name */
-              TA_GroupId_MomentumIndicators,   /* groupId */
-              "Plus Directional Movement", /* hint */
-              NULL,                         /* helpFile */
-              TA_FUNC_FLG_UNST_PER,         /* flags */
-              NULL                          /* analysis function */
+DEF_FUNCTION( PLUS_DM,                       /* name */
+              TA_GroupId_MomentumIndicators, /* groupId */
+              "Plus Directional Movement",   /* hint */
+              "PlusDM",                      /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER           /* flags */
              );
 
 /* PLUS_DM END */
@@ -124,12 +122,11 @@ static const TA_OptInputParameterInfo *TA_PPO_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( PPO,                        /* name */
-              TA_GroupId_MomentumIndicators,  /* groupId */
+DEF_FUNCTION( PPO,                           /* name */
+              TA_GroupId_MomentumIndicators, /* groupId */
               "Percentage Price Oscillator", /* hint */
-              NULL,                       /* helpFile */
-              0,                          /* flags */
-              NULL                        /* analysis function */
+              "Ppo",                         /* CamelCase name */
+              0                              /* flags */
              );
 /* PPO END */
 
@@ -153,12 +150,11 @@ static const TA_OptInputParameterInfo *TA_PVI_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( PVI,                     /* name */
-              TA_GroupId_VolumeIndicators,   /* groupId */
-              "Positive Volume Index", /* hint */
-              NULL,      /* helpFile */
-              0,         /* flags */
-              NULL       /* analysis function */
+DEF_FUNCTION( PVI,                         /* name */
+              TA_GroupId_VolumeIndicators, /* groupId */
+              "Positive Volume Index",     /* hint */
+              "Pvi",                       /* CamelCase name */
+              0                            /* flags */
              );
 
 /* PVI END */
@@ -166,13 +162,13 @@ DEF_FUNCTION( PVI,                     /* name */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableP[] =
 {
-   ADD_TO_TABLE(PPO),
    ADD_TO_TABLE(PLUS_DI),
    ADD_TO_TABLE(PLUS_DM),
+   ADD_TO_TABLE(PPO),
    /* ADD_TO_TABLE(PVI),*/
    NULL
 };

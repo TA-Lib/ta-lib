@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -68,15 +68,14 @@ static const TA_OptInputParameterInfo *TA_OBV_OptInputs[] =
 DEF_FUNCTION( OBV,                          /* name */
               TA_GroupId_VolumeIndicators,  /* groupId */
               "On Balance Volume",          /* hint */
-              NULL,                         /* helpFile */
-              0,                            /* flags */
-              NULL                          /* analysis function */
+              "Obv",                        /* CamelCase name */
+              0                             /* flags */
              );
 /* OBV END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableO[] =
 {

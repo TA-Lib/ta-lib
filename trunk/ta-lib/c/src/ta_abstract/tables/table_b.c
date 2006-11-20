@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -63,7 +63,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_NbDeviationUp =
    2.0, /* defaultValue */
    "Deviation multiplier for upper band", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OptInputParameterInfo TA_DEF_UI_NbDeviationDn =
@@ -77,7 +77,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_NbDeviationDn =
    2.0, /* defaultValue */
    "Deviation multiplier for lower band", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_BBANDS_Middle =
@@ -114,9 +114,8 @@ static const TA_OptInputParameterInfo *TA_BBANDS_OptInputs[] =
 DEF_FUNCTION( BBANDS,                    /* name */
               TA_GroupId_OverlapStudies, /* groupId */
               "Bollinger Bands",         /* hint */
-              NULL,                      /* helpFile */
-              TA_FUNC_FLG_OVERLAP,       /* flags */
-              NULL                       /* analysis function */
+              "Bbands",                  /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP        /* flags */
              );
 /* BBANDS END */
 
@@ -139,15 +138,14 @@ static const TA_OptInputParameterInfo *TA_BOP_OptInputs[] = { NULL };
 DEF_FUNCTION( BOP,                   /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Balance Of Power",         /* hint */
-              NULL,                       /* helpFile */
-              0,                           /* flags */
-              NULL                        /* analysis function */
+              "Bop",                      /* CamelCase name */
+              0                          /* flags */
              );
 /* BOP END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableB[] =
 {

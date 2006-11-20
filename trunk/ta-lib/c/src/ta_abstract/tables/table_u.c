@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2003, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -60,7 +60,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_7_PER1 =
    7, /* defaultValue */
    "Number of bars for 1st period.", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_PER2 =
@@ -74,7 +74,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_14_PER2 =
    14, /* defaultValue */
    "Number of bars fro 2nd period", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_28_PER3 =
@@ -88,7 +88,7 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_28_PER3 =
    28, /* defaultValue */
    "Number of bars for 3rd period", /* hint */
 
-   NULL /* helpFile */
+   NULL /* CamelCase name */
 };
 
 static const TA_InputParameterInfo    *TA_ULTOSC_Inputs[]    =
@@ -111,18 +111,17 @@ static const TA_OptInputParameterInfo *TA_ULTOSC_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( ULTOSC,                      /* name */
+DEF_FUNCTION( ULTOSC,                         /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
-              "Ultimate Oscillator",  /* hint */
-              NULL,                       /* helpFile */
-              0,             /* flags */
-              NULL                        /* analysis function */
+              "Ultimate Oscillator",          /* hint */
+              "UltOsc",                       /* CamelCase name */
+              0                               /* flags */
              );
 /* ULTOSC END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
- *          Order is not important. Must be NULL terminated.
+ *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableU[] =
 {
