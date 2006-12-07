@@ -1137,6 +1137,31 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
     fprintf(gOutFunc_XML->file, "		<ShortDescription>%s</ShortDescription>\n", (funcInfo->hint == NULL)? "" : tempString);
     fprintf(gOutFunc_XML->file, "		<GroupId>%s</GroupId>\n", funcInfo->group);
 
+	//Optional function flags
+	if(funcInfo->flags & (TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_VOLUME | TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_UNST_PER))
+	{
+	    fprintf(gOutFunc_XML->file, "		<Flags>\n");
+		if(funcInfo->flags & TA_FUNC_FLG_OVERLAP)
+		{
+			fprintf(gOutFunc_XML->file, "			<Flag>Overlap</Flag>\n");
+		}
+		if(funcInfo->flags & TA_FUNC_FLG_VOLUME)
+		{
+			fprintf(gOutFunc_XML->file, "			<Flag>Volume</Flag>\n");
+		}
+		if(funcInfo->flags & TA_FUNC_FLG_CANDLESTICK)
+		{
+			fprintf(gOutFunc_XML->file, "			<Flag>Candlestick</Flag>\n");
+		}
+		if(funcInfo->flags & TA_FUNC_FLG_UNST_PER)
+		{
+			fprintf(gOutFunc_XML->file, "			<Flag>Unstable Period</Flag>\n");
+		}
+		
+	    fprintf(gOutFunc_XML->file, "		</Flags>\n");
+	}
+
+
 	//Required input arguments
     fprintf(gOutFunc_XML->file, "		<RequiredInputArguments>\n");
 	for(i=0; i<funcInfo->nbInput; i++)
