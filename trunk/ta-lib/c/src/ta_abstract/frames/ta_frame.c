@@ -2111,6 +2111,25 @@
 /* Generated */ {
 /* Generated */    return TA_MAX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 /* Generated */ }
+/* Generated */ TA_RetCode TA_MAXINDEX_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_MAXINDEX(
+/* Generated */                  startIdx,
+/* Generated */                  endIdx,
+/* Generated */                  params->in[0].data.inReal, /* inReal */
+/* Generated */                  params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+/* Generated */                  outBegIdx, 
+/* Generated */                  outNbElement, 
+/* Generated */                  params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_MAXINDEX_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    return TA_MAXINDEX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_MEDPRICE_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
@@ -2210,6 +2229,65 @@
 /* Generated */ unsigned int TA_MIN_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
 /* Generated */    return TA_MIN_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_MININDEX_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_MININDEX(
+/* Generated */                  startIdx,
+/* Generated */                  endIdx,
+/* Generated */                  params->in[0].data.inReal, /* inReal */
+/* Generated */                  params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+/* Generated */                  outBegIdx, 
+/* Generated */                  outNbElement, 
+/* Generated */                  params->out[0].data.outInteger /*  outInteger */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_MININDEX_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    return TA_MININDEX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_MINMAX_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_MINMAX(
+/* Generated */                startIdx,
+/* Generated */                endIdx,
+/* Generated */                params->in[0].data.inReal, /* inReal */
+/* Generated */                params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+/* Generated */                outBegIdx, 
+/* Generated */                outNbElement, 
+/* Generated */                params->out[0].data.outReal, /*  outMin */
+/* Generated */                params->out[1].data.outReal /*  outMax */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_MINMAX_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    return TA_MINMAX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_MINMAXINDEX_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_MINMAXINDEX(
+/* Generated */                     startIdx,
+/* Generated */                     endIdx,
+/* Generated */                     params->in[0].data.inReal, /* inReal */
+/* Generated */                     params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+/* Generated */                     outBegIdx, 
+/* Generated */                     outNbElement, 
+/* Generated */                     params->out[0].data.outInteger, /*  outMinIdx */
+/* Generated */                     params->out[1].data.outInteger /*  outMaxIdx */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_MINMAXINDEX_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    return TA_MINMAXINDEX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_MINUS_DI_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,

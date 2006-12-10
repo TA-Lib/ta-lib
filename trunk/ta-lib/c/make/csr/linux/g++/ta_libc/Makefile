@@ -163,11 +163,15 @@ SOURCES =	../../../../../src/ta_common/ta_global.c \
 		../../../../../src/ta_func/ta_MACDFIX.c \
 		../../../../../src/ta_func/ta_MAMA.c \
 		../../../../../src/ta_func/ta_MAX.c \
+		../../../../../src/ta_func/ta_MAXINDEX.c \
 		../../../../../src/ta_func/ta_MEDPRICE.c \
 		../../../../../src/ta_func/ta_MFI.c \
 		../../../../../src/ta_func/ta_MIDPOINT.c \
 		../../../../../src/ta_func/ta_MIDPRICE.c \
 		../../../../../src/ta_func/ta_MIN.c \
+		../../../../../src/ta_func/ta_MININDEX.c \
+		../../../../../src/ta_func/ta_MINMAX.c \
+		../../../../../src/ta_func/ta_MINMAXINDEX.c \
 		../../../../../src/ta_func/ta_MINUS_DI.c \
 		../../../../../src/ta_func/ta_MINUS_DM.c \
 		../../../../../src/ta_func/ta_MOM.c \
@@ -331,11 +335,15 @@ OBJECTS =	../../../../../temp/csr/ta_global.o \
 		../../../../../temp/csr/ta_MACDFIX.o \
 		../../../../../temp/csr/ta_MAMA.o \
 		../../../../../temp/csr/ta_MAX.o \
+		../../../../../temp/csr/ta_MAXINDEX.o \
 		../../../../../temp/csr/ta_MEDPRICE.o \
 		../../../../../temp/csr/ta_MFI.o \
 		../../../../../temp/csr/ta_MIDPOINT.o \
 		../../../../../temp/csr/ta_MIDPRICE.o \
 		../../../../../temp/csr/ta_MIN.o \
+		../../../../../temp/csr/ta_MININDEX.o \
+		../../../../../temp/csr/ta_MINMAX.o \
+		../../../../../temp/csr/ta_MINMAXINDEX.o \
 		../../../../../temp/csr/ta_MINUS_DI.o \
 		../../../../../temp/csr/ta_MINUS_DM.o \
 		../../../../../temp/csr/ta_MOM.o \
@@ -812,6 +820,9 @@ clean:
 ../../../../../temp/csr/ta_MAX.o: ../../../../../src/ta_func/ta_MAX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MAX.o ../../../../../src/ta_func/ta_MAX.c
 
+../../../../../temp/csr/ta_MAXINDEX.o: ../../../../../src/ta_func/ta_MAXINDEX.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MAXINDEX.o ../../../../../src/ta_func/ta_MAXINDEX.c
+
 ../../../../../temp/csr/ta_MEDPRICE.o: ../../../../../src/ta_func/ta_MEDPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MEDPRICE.o ../../../../../src/ta_func/ta_MEDPRICE.c
 
@@ -826,6 +837,15 @@ clean:
 
 ../../../../../temp/csr/ta_MIN.o: ../../../../../src/ta_func/ta_MIN.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MIN.o ../../../../../src/ta_func/ta_MIN.c
+
+../../../../../temp/csr/ta_MININDEX.o: ../../../../../src/ta_func/ta_MININDEX.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MININDEX.o ../../../../../src/ta_func/ta_MININDEX.c
+
+../../../../../temp/csr/ta_MINMAX.o: ../../../../../src/ta_func/ta_MINMAX.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MINMAX.o ../../../../../src/ta_func/ta_MINMAX.c
+
+../../../../../temp/csr/ta_MINMAXINDEX.o: ../../../../../src/ta_func/ta_MINMAXINDEX.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MINMAXINDEX.o ../../../../../src/ta_func/ta_MINMAXINDEX.c
 
 ../../../../../temp/csr/ta_MINUS_DI.o: ../../../../../src/ta_func/ta_MINUS_DI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_MINUS_DI.o ../../../../../src/ta_func/ta_MINUS_DI.c

@@ -3116,6 +3116,38 @@ int TA_MAX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
+ * TA_MAXINDEX - Index of highest value over a specified period
+ * 
+ * Input  = double
+ * Output = int
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_MAXINDEX( int    startIdx,
+                        int    endIdx,
+                        const double inReal[],
+                        int           optInTimePeriod, /* From 2 to 100000 */
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        int           outInteger[] );
+
+TA_RetCode TA_S_MAXINDEX( int    startIdx,
+                          int    endIdx,
+                          const float  inReal[],
+                          int           optInTimePeriod, /* From 2 to 100000 */
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          int           outInteger[] );
+
+int TA_MAXINDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+/*
  * TA_MEDPRICE - Median Price
  * 
  * Input  = High, Low
@@ -3275,6 +3307,106 @@ TA_RetCode TA_S_MIN( int    startIdx,
                      double        outReal[] );
 
 int TA_MIN_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+/*
+ * TA_MININDEX - Index of lowest value over a specified period
+ * 
+ * Input  = double
+ * Output = int
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_MININDEX( int    startIdx,
+                        int    endIdx,
+                        const double inReal[],
+                        int           optInTimePeriod, /* From 2 to 100000 */
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        int           outInteger[] );
+
+TA_RetCode TA_S_MININDEX( int    startIdx,
+                          int    endIdx,
+                          const float  inReal[],
+                          int           optInTimePeriod, /* From 2 to 100000 */
+                          int          *outBegIdx,
+                          int          *outNbElement,
+                          int           outInteger[] );
+
+int TA_MININDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+/*
+ * TA_MINMAX - Lowest and highest values over a specified period
+ * 
+ * Input  = double
+ * Output = double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_MINMAX( int    startIdx,
+                      int    endIdx,
+                      const double inReal[],
+                      int           optInTimePeriod, /* From 2 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outMin[],
+                      double        outMax[] );
+
+TA_RetCode TA_S_MINMAX( int    startIdx,
+                        int    endIdx,
+                        const float  inReal[],
+                        int           optInTimePeriod, /* From 2 to 100000 */
+                        int          *outBegIdx,
+                        int          *outNbElement,
+                        double        outMin[],
+                        double        outMax[] );
+
+int TA_MINMAX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+/*
+ * TA_MINMAXINDEX - Indexes of lowest and highest values over a specified period
+ * 
+ * Input  = double
+ * Output = int, int
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_MINMAXINDEX( int    startIdx,
+                           int    endIdx,
+                           const double inReal[],
+                           int           optInTimePeriod, /* From 2 to 100000 */
+                           int          *outBegIdx,
+                           int          *outNbElement,
+                           int           outMinIdx[],
+                           int           outMaxIdx[] );
+
+TA_RetCode TA_S_MINMAXINDEX( int    startIdx,
+                             int    endIdx,
+                             const float  inReal[],
+                             int           optInTimePeriod, /* From 2 to 100000 */
+                             int          *outBegIdx,
+                             int          *outNbElement,
+                             int           outMinIdx[],
+                             int           outMaxIdx[] );
+
+int TA_MINMAXINDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
