@@ -158,11 +158,15 @@ SOURCES = ../../../../../src/ta_common/ta_global.c \
           ../../../../../src/ta_func/ta_MACDFIX.c \
           ../../../../../src/ta_func/ta_MAMA.c \
           ../../../../../src/ta_func/ta_MAX.c \
+          ../../../../../src/ta_func/ta_MAXINDEX.c \
           ../../../../../src/ta_func/ta_MEDPRICE.c \
           ../../../../../src/ta_func/ta_MFI.c \
           ../../../../../src/ta_func/ta_MIDPOINT.c \
           ../../../../../src/ta_func/ta_MIDPRICE.c \
           ../../../../../src/ta_func/ta_MIN.c \
+          ../../../../../src/ta_func/ta_MININDEX.c \
+          ../../../../../src/ta_func/ta_MINMAX.c \
+          ../../../../../src/ta_func/ta_MINMAXINDEX.c \
           ../../../../../src/ta_func/ta_MINUS_DI.c \
           ../../../../../src/ta_func/ta_MINUS_DM.c \
           ../../../../../src/ta_func/ta_MOM.c \

@@ -143,11 +143,15 @@ extern const TA_FuncDef TA_DEF_MACDEXT;
 extern const TA_FuncDef TA_DEF_MACDFIX;
 extern const TA_FuncDef TA_DEF_MAMA;
 extern const TA_FuncDef TA_DEF_MAX;
+extern const TA_FuncDef TA_DEF_MAXINDEX;
 extern const TA_FuncDef TA_DEF_MEDPRICE;
 extern const TA_FuncDef TA_DEF_MFI;
 extern const TA_FuncDef TA_DEF_MIDPOINT;
 extern const TA_FuncDef TA_DEF_MIDPRICE;
 extern const TA_FuncDef TA_DEF_MIN;
+extern const TA_FuncDef TA_DEF_MININDEX;
+extern const TA_FuncDef TA_DEF_MINMAX;
+extern const TA_FuncDef TA_DEF_MINMAXINDEX;
 extern const TA_FuncDef TA_DEF_MINUS_DI;
 extern const TA_FuncDef TA_DEF_MINUS_DM;
 extern const TA_FuncDef TA_DEF_MOM;
@@ -184,7 +188,11 @@ extern const TA_FuncDef TA_DEF_WMA;
 
 const TA_FuncDef *TA_PerGroupFunc_0[] = {
 &TA_DEF_MAX,
+&TA_DEF_MAXINDEX,
 &TA_DEF_MIN,
+&TA_DEF_MININDEX,
+&TA_DEF_MINMAX,
+&TA_DEF_MINMAXINDEX,
 &TA_DEF_SUM,
 NULL };
 #define SIZE_GROUP_0 ((sizeof(TA_PerGroupFunc_0)/sizeof(const TA_FuncDef *))-1)

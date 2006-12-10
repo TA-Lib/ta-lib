@@ -197,7 +197,7 @@ static const TA_OptInputParameterInfo *TA_MACDEXT_OptInputs[] =
 DEF_FUNCTION( MACDEXT,                     /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "MACD with controllable MA type", /* hint */
-			  "MacdExt",                  /* CamelCase name */
+              "MacdExt",                  /* CamelCase name */
               0                           /* flags */
              );
 /* MACDEXT END */
@@ -335,6 +335,32 @@ DEF_FUNCTION( MAX,                       /* name */
              );
 /* MAX END */
 
+/* MAXINDEX BEGIN */
+static const TA_InputParameterInfo    *TA_MAXINDEX_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MAXINDEX_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MAXINDEX_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( MAXINDEX,                  /* name */
+              TA_GroupId_MathOperators,  /* groupId */
+              "Index of highest value over a specified period", /* hint */
+              "MaxIndex",                /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP        /* flags */
+             );
+/* MAXINDEX END */
+
 /* MEDPRICE BEGIN */
 static const TA_InputParameterInfo    *TA_MEDPRICE_Inputs[]    =
 {
@@ -465,6 +491,98 @@ DEF_FUNCTION( MIN,                       /* name */
              );
 /* MIN END */
 
+/* MININDEX BEGIN */
+static const TA_InputParameterInfo    *TA_MININDEX_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MININDEX_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MININDEX_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( MININDEX,                  /* name */
+              TA_GroupId_MathOperators,  /* groupId */
+              "Index of lowest value over a specified period", /* hint */
+              "MinIndex",                /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP        /* flags */
+             );
+/* MININDEX END */
+
+/* MINMAX BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_Min =
+                               { TA_Output_Real, "outMin", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_Max =
+                               { TA_Output_Real, "outMax", TA_OUT_LINE };
+
+static const TA_InputParameterInfo    *TA_MINMAX_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MINMAX_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_Min,
+  &TA_DEF_UI_Output_Real_Max,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MINMAX_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( MINMAX,                    /* name */
+              TA_GroupId_MathOperators,  /* groupId */
+              "Lowest and highest values over a specified period", /* hint */
+              "MINMAX",                  /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP        /* flags */
+             );
+/* MINMAX END */
+
+/* MINMAXINDEX BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_MinIdx =
+                               { TA_Output_Integer, "outMinIdx", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_MaxIdx =
+                               { TA_Output_Integer, "outMaxIdx", TA_OUT_LINE };
+
+static const TA_InputParameterInfo    *TA_MINMAXINDEX_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MINMAXINDEX_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer_MinIdx,
+  &TA_DEF_UI_Output_Integer_MaxIdx,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MINMAXINDEX_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_30_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( MINMAXINDEX,               /* name */
+              TA_GroupId_MathOperators,  /* groupId */
+              "Indexes of lowest and highest values over a specified period", /* hint */
+              "MINMAXINDEX",             /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP        /* flags */
+             );
+/* MINMAXINDEX END */
+
 /* MINUS_DI BEGIN */
 static const TA_InputParameterInfo    *TA_MINUS_DI_Inputs[]    =
 {
@@ -557,11 +675,15 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MACDFIX),
    ADD_TO_TABLE(MAMA),
    ADD_TO_TABLE(MAX),
+   ADD_TO_TABLE(MAXINDEX),
    ADD_TO_TABLE(MEDPRICE),
    ADD_TO_TABLE(MFI),
    ADD_TO_TABLE(MIDPOINT),
    ADD_TO_TABLE(MIDPRICE),
    ADD_TO_TABLE(MIN),
+   ADD_TO_TABLE(MININDEX),
+   ADD_TO_TABLE(MINMAX),
+   ADD_TO_TABLE(MINMAXINDEX),
    ADD_TO_TABLE(MINUS_DI),
    ADD_TO_TABLE(MINUS_DM),
    ADD_TO_TABLE(MOM),
