@@ -244,6 +244,8 @@ static int addUnstablePeriodEnum( FILE *out );
 
 static int createTemplate( FileHandle *in, FileHandle *out );
 
+static int generateFuncAPI_C( void );
+
 #ifdef _MSC_VER
 static int createProjTemplate( FileHandle *in, FileHandle *out );
 static int createMSVCProjTemplate( FileHandle *in, FileHandle *out );
@@ -279,7 +281,6 @@ static void fileDelete( const char *fileToDelete );
 
 static void appendToFunc( FILE *out );
 
-static int  generateFuncAPI_C();
 static void convertFileToCArray( FILE *in, FILE *out );
 
 static void ReplaceReservedXmlCharacters(const char *input, char *output );
@@ -1140,9 +1141,9 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 								 void *opaqueData)
 {
 	TA_RetCode retCode;
-	TA_InputParameterInfo *inputInfo;
-	TA_OptInputParameterInfo *optInputInfo;
-	TA_OutputParameterInfo *outputInfo;
+	const TA_InputParameterInfo *inputInfo;
+	const TA_OptInputParameterInfo *optInputInfo;
+	const TA_OutputParameterInfo *outputInfo;
 	char tempString[8*1024];
 	unsigned int i;
 
