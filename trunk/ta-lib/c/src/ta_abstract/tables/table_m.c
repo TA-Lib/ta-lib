@@ -545,7 +545,7 @@ static const TA_OptInputParameterInfo *TA_MINMAX_OptInputs[] =
 DEF_FUNCTION( MINMAX,                    /* name */
               TA_GroupId_MathOperators,  /* groupId */
               "Lowest and highest values over a specified period", /* hint */
-              "MINMAX",                  /* CamelCase name */
+              "MinMax",                  /* CamelCase name */
               TA_FUNC_FLG_OVERLAP        /* flags */
              );
 /* MINMAX END */
@@ -578,7 +578,7 @@ static const TA_OptInputParameterInfo *TA_MINMAXINDEX_OptInputs[] =
 DEF_FUNCTION( MINMAXINDEX,               /* name */
               TA_GroupId_MathOperators,  /* groupId */
               "Indexes of lowest and highest values over a specified period", /* hint */
-              "MINMAXINDEX",             /* CamelCase name */
+              "MinMaxIndex",             /* CamelCase name */
               TA_FUNC_FLG_OVERLAP        /* flags */
              );
 /* MINMAXINDEX END */
