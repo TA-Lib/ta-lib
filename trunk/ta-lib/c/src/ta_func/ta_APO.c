@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -56,11 +56,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -79,13 +80,13 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::APO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                       int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                       TA_MAType     optInMAType ) /* Generated */ 
+/* Generated */ int Core::ApoLookback( int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                      int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                      MAType        optInMAType ) /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int APO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                        int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                        TA_MAType     optInMAType ) /* Generated */ 
+/* Generated */ public int apoLookback( int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                       int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                       MAType        optInMAType ) /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_APO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                    int           optInSlowPeriod, /* From 2 to 100000 */
@@ -148,25 +149,25 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::APO( int    startIdx,
-/* Generated */                                        int    endIdx,
-/* Generated */                                        cli::array<double>^ inReal,
-/* Generated */                                        int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                                        int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                        TA_MAType     optInMAType,
-/* Generated */                                        [Out]int%    outBegIdx,
-/* Generated */                                        [Out]int%    outNbElement,
-/* Generated */                                        cli::array<double>^  outReal )
+/* Generated */ enum class Core::RetCode Core::Apo( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     cli::array<double>^ inReal,
+/* Generated */                                     int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                     int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                     MAType        optInMAType,
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNbElement,
+/* Generated */                                     cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode APO( int    startIdx,
-/* Generated */                        int    endIdx,
-/* Generated */                        double       inReal[],
-/* Generated */                        int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                        int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                        TA_MAType     optInMAType,
-/* Generated */                        MInteger     outBegIdx,
-/* Generated */                        MInteger     outNbElement,
-/* Generated */                        double        outReal[] )
+/* Generated */ public RetCode apo( int    startIdx,
+/* Generated */                     int    endIdx,
+/* Generated */                     double       inReal[],
+/* Generated */                     int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                     int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                     MAType        optInMAType,
+/* Generated */                     MInteger     outBegIdx,
+/* Generated */                     MInteger     outNbElement,
+/* Generated */                     double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_APO( int    startIdx,
 /* Generated */                    int    endIdx,
@@ -182,7 +183,7 @@
 {
    /* Insert local variables here. */
    ARRAY_REF(tempBuffer);
-   TA_RetCode retCode;
+   ENUM_DECLARATION(RetCode) retCode;
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -190,35 +191,35 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInFastPeriod. */
 /* Generated */    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastPeriod = 12;
 /* Generated */    else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    /* min/max are checked for optInSlowPeriod. */
 /* Generated */    if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowPeriod = 26;
 /* Generated */    else if( ((int)optInSlowPeriod < 2) || ((int)optInSlowPeriod > 100000) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInMAType = 0;
 /* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -231,7 +232,7 @@
    ARRAY_ALLOC(tempBuffer, (endIdx-startIdx+1) );
    #if !defined(_JAVA)
       if( !tempBuffer )
-         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
    #endif
 
    retCode = FUNCTION_CALL(INT_PO)( startIdx, endIdx,                        
@@ -256,24 +257,24 @@
  */
 
 #if defined( _MANAGED )
- enum class Core::TA_RetCode Core::INT_PO( int    startIdx,
+ enum class Core::RetCode Core::TA_INT_PO( int    startIdx,
                                            int    endIdx,
 									       cli::array<INPUT_TYPE>^ inReal,
                                            int    optInFastPeriod, /* From 1 to 200 */
                                            int    optInSlowPeriod, /* From 1 to 200 */
-										   TA_MAType    optInMethod_2,
+										   MAType    optInMethod_2,
                                            [Out]int% outBegIdx,
                                            [Out]int% outNbElement,
 										   cli::array<double>^ outReal,
                                            cli::array<double>^ tempBuffer,
                                            int  doPercentageOutput )
 #elif defined( _JAVA )
-TA_RetCode INT_PO( int        startIdx,
+RetCode TA_INT_PO( int        startIdx,
                    int        endIdx,
                    INPUT_TYPE inReal[],
                    int        optInFastPeriod, /* From 1 to 200 */
                    int        optInSlowPeriod, /* From 1 to 200 */
-                   TA_MAType  optInMethod_2,
+                   MAType  optInMethod_2,
                    MInteger   outBegIdx,
                    MInteger   outNbElement,
                    double     outReal[],
@@ -294,7 +295,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
                               int  doPercentageOutput )
 #endif
 {
-   TA_RetCode retCode;
+   ENUM_DECLARATION(RetCode) retCode;
 
    double tempReal;
    int tempInteger;
@@ -324,7 +325,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
                                 VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2),
 							    tempBuffer );
 
-   if( retCode == NAMESPACE(TA_RetCode)TA_SUCCESS )
+   if( retCode == ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
    {
       /* Calculate the slow MA into the output. */
       retCode = FUNCTION_CALL(MA)( startIdx, endIdx,                       
@@ -334,7 +335,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
                                    VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1),
 							       outReal );
 
-      if( retCode == NAMESPACE(TA_RetCode)TA_SUCCESS )
+      if( retCode == ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
       {
          tempInteger = VALUE_HANDLE_GET(outBegIdx1) - VALUE_HANDLE_GET(outBegIdx2);
          if( doPercentageOutput != 0 )
@@ -361,7 +362,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
       }
    }
 
-   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
@@ -380,25 +381,25 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::APO( int    startIdx,
-/* Generated */                                        int    endIdx,
-/* Generated */                                        cli::array<float>^ inReal,
-/* Generated */                                        int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                                        int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                        TA_MAType     optInMAType,
-/* Generated */                                        [Out]int%    outBegIdx,
-/* Generated */                                        [Out]int%    outNbElement,
-/* Generated */                                        cli::array<double>^  outReal )
+/* Generated */ enum class Core::RetCode Core::Apo( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     cli::array<float>^ inReal,
+/* Generated */                                     int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                     int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                     MAType        optInMAType,
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNbElement,
+/* Generated */                                     cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode APO( int    startIdx,
-/* Generated */                        int    endIdx,
-/* Generated */                        float        inReal[],
-/* Generated */                        int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                        int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                        TA_MAType     optInMAType,
-/* Generated */                        MInteger     outBegIdx,
-/* Generated */                        MInteger     outNbElement,
-/* Generated */                        double        outReal[] )
+/* Generated */ public RetCode apo( int    startIdx,
+/* Generated */                     int    endIdx,
+/* Generated */                     float        inReal[],
+/* Generated */                     int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                     int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                     MAType        optInMAType,
+/* Generated */                     MInteger     outBegIdx,
+/* Generated */                     MInteger     outNbElement,
+/* Generated */                     double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_APO( int    startIdx,
 /* Generated */                      int    endIdx,
@@ -412,38 +413,38 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    ARRAY_REF(tempBuffer);
-/* Generated */    TA_RetCode retCode;
+/* Generated */    ENUM_DECLARATION(RetCode) retCode;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastPeriod = 12;
 /* Generated */     else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowPeriod = 26;
 /* Generated */     else if( ((int)optInSlowPeriod < 2) || ((int)optInSlowPeriod > 100000) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInMAType = 0;
 /* Generated */     else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    ARRAY_ALLOC(tempBuffer, (endIdx-startIdx+1) );
 /* Generated */    #if !defined(_JAVA)
 /* Generated */       if( !tempBuffer )
-/* Generated */          return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+/* Generated */          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
 /* Generated */    #endif
 /* Generated */    retCode = FUNCTION_CALL(INT_PO)( startIdx, endIdx,                        
 /* Generated */                                     inReal,
@@ -459,24 +460,24 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */    return retCode;
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
-/* Generated */  enum class Core::TA_RetCode Core::INT_PO( int    startIdx,
+/* Generated */  enum class Core::RetCode Core::TA_INT_PO( int    startIdx,
 /* Generated */                                            int    endIdx,
 /* Generated */ 									       cli::array<INPUT_TYPE>^ inReal,
 /* Generated */                                            int    optInFastPeriod, 
 /* Generated */                                            int    optInSlowPeriod, 
-/* Generated */ 										   TA_MAType    optInMethod_2,
+/* Generated */ 										   MAType    optInMethod_2,
 /* Generated */                                            [Out]int% outBegIdx,
 /* Generated */                                            [Out]int% outNbElement,
 /* Generated */ 										   cli::array<double>^ outReal,
 /* Generated */                                            cli::array<double>^ tempBuffer,
 /* Generated */                                            int  doPercentageOutput )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ TA_RetCode INT_PO( int        startIdx,
+/* Generated */ RetCode TA_INT_PO( int        startIdx,
 /* Generated */                    int        endIdx,
 /* Generated */                    INPUT_TYPE inReal[],
 /* Generated */                    int        optInFastPeriod, 
 /* Generated */                    int        optInSlowPeriod, 
-/* Generated */                    TA_MAType  optInMethod_2,
+/* Generated */                    MAType  optInMethod_2,
 /* Generated */                    MInteger   outBegIdx,
 /* Generated */                    MInteger   outNbElement,
 /* Generated */                    double     outReal[],
@@ -496,7 +497,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */                               int  doPercentageOutput )
 /* Generated */ #endif
 /* Generated */ {
-/* Generated */    TA_RetCode retCode;
+/* Generated */    ENUM_DECLARATION(RetCode) retCode;
 /* Generated */    double tempReal;
 /* Generated */    int tempInteger;
 /* Generated */    VALUE_HANDLE_INT(outBegIdx1);
@@ -516,7 +517,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */                                 optInMethod_2,                    
 /* Generated */                                 VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2),
 /* Generated */ 							    tempBuffer );
-/* Generated */    if( retCode == NAMESPACE(TA_RetCode)TA_SUCCESS )
+/* Generated */    if( retCode == ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
 /* Generated */       retCode = FUNCTION_CALL(MA)( startIdx, endIdx,                       
 /* Generated */                                    inReal,
@@ -524,7 +525,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */                                    optInMethod_2,
 /* Generated */                                    VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1),
 /* Generated */ 							       outReal );
-/* Generated */       if( retCode == NAMESPACE(TA_RetCode)TA_SUCCESS )
+/* Generated */       if( retCode == ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */       {
 /* Generated */          tempInteger = VALUE_HANDLE_GET(outBegIdx1) - VALUE_HANDLE_GET(outBegIdx2);
 /* Generated */          if( doPercentageOutput != 0 )
@@ -547,7 +548,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */          VALUE_HANDLE_DEREF(outNbElement)  = VALUE_HANDLE_GET(outNbElement1);
 /* Generated */       }
 /* Generated */    }
-/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);

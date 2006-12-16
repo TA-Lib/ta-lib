@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -55,11 +55,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -78,10 +79,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::HT_DCPERIOD_Lookback( void )
+/* Generated */ int Core::HtDcPeriodLookback( void )
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int HT_DCPERIOD_Lookback(  )
+/* Generated */ public int htDcPeriodLookback(  )
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_HT_DCPERIOD_Lookback( void )
@@ -98,7 +99,7 @@
    /* insert lookback code here. */
 
    /* See TA_MAMA_Lookback for an explanation of these */
-   return 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPERIOD);
+   return 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPERIOD,HtDcPeriod);
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -111,19 +112,19 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::HT_DCPERIOD( int    startIdx,
-/* Generated */                                                int    endIdx,
-/* Generated */                                                cli::array<double>^ inReal,
-/* Generated */                                                [Out]int%    outBegIdx,
-/* Generated */                                                [Out]int%    outNbElement,
-/* Generated */                                                cli::array<double>^  outReal )
+/* Generated */ enum class Core::RetCode Core::HtDcPeriod( int    startIdx,
+/* Generated */                                            int    endIdx,
+/* Generated */                                            cli::array<double>^ inReal,
+/* Generated */                                            [Out]int%    outBegIdx,
+/* Generated */                                            [Out]int%    outNbElement,
+/* Generated */                                            cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode HT_DCPERIOD( int    startIdx,
-/* Generated */                                int    endIdx,
-/* Generated */                                double       inReal[],
-/* Generated */                                MInteger     outBegIdx,
-/* Generated */                                MInteger     outNbElement,
-/* Generated */                                double        outReal[] )
+/* Generated */ public RetCode htDcPeriod( int    startIdx,
+/* Generated */                            int    endIdx,
+/* Generated */                            double       inReal[],
+/* Generated */                            MInteger     outBegIdx,
+/* Generated */                            MInteger     outNbElement,
+/* Generated */                            double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_HT_DCPERIOD( int    startIdx,
 /* Generated */                            int    endIdx,
@@ -173,16 +174,16 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -197,7 +198,7 @@
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPERIOD);
+   lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPERIOD,HtDcPeriod);
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -210,7 +211,7 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
@@ -371,7 +372,7 @@
 
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
  
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -384,19 +385,19 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::HT_DCPERIOD( int    startIdx,
-/* Generated */                                                int    endIdx,
-/* Generated */                                                cli::array<float>^ inReal,
-/* Generated */                                                [Out]int%    outBegIdx,
-/* Generated */                                                [Out]int%    outNbElement,
-/* Generated */                                                cli::array<double>^  outReal )
+/* Generated */ enum class Core::RetCode Core::HtDcPeriod( int    startIdx,
+/* Generated */                                            int    endIdx,
+/* Generated */                                            cli::array<float>^ inReal,
+/* Generated */                                            [Out]int%    outBegIdx,
+/* Generated */                                            [Out]int%    outNbElement,
+/* Generated */                                            cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode HT_DCPERIOD( int    startIdx,
-/* Generated */                                int    endIdx,
-/* Generated */                                float        inReal[],
-/* Generated */                                MInteger     outBegIdx,
-/* Generated */                                MInteger     outNbElement,
-/* Generated */                                double        outReal[] )
+/* Generated */ public RetCode htDcPeriod( int    startIdx,
+/* Generated */                            int    endIdx,
+/* Generated */                            float        inReal[],
+/* Generated */                            MInteger     outBegIdx,
+/* Generated */                            MInteger     outNbElement,
+/* Generated */                            double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_DCPERIOD( int    startIdx,
 /* Generated */                              int    endIdx,
@@ -428,26 +429,26 @@
 /* Generated */    double todayValue, smoothPeriod;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    rad2Deg = 180.0 / (4.0 * atan(1));
-/* Generated */    lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPERIOD);
+/* Generated */    lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPERIOD,HtDcPeriod);
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */    trailingWMAIdx = startIdx - lookbackTotal;
@@ -543,7 +544,7 @@
 /* Generated */       today++;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

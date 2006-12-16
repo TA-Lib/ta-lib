@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -56,11 +56,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -79,12 +80,12 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
-/* Generated */                        double        optInSlowLimit )  /* From 0.01 to 0.99 */
+/* Generated */ int Core::MamaLookback( double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                       double        optInSlowLimit )  /* From 0.01 to 0.99 */
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
-/* Generated */                         double        optInSlowLimit )  /* From 0.01 to 0.99 */
+/* Generated */ public int mamaLookback( double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                        double        optInSlowLimit )  /* From 0.01 to 0.99 */
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
@@ -136,7 +137,7 @@
     *         32 Total
     */
 
-   return 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA);
+   return 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA,Mama);
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -158,25 +159,25 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::MAMA( int    startIdx,
-/* Generated */                                         int    endIdx,
-/* Generated */                                         cli::array<double>^ inReal,
-/* Generated */                                         double        optInFastLimit, /* From 0.01 to 0.99 */
-/* Generated */                                         double        optInSlowLimit, /* From 0.01 to 0.99 */
-/* Generated */                                         [Out]int%    outBegIdx,
-/* Generated */                                         [Out]int%    outNbElement,
-/* Generated */                                         cli::array<double>^  outMAMA,
-/* Generated */                                         cli::array<double>^  outFAMA )
+/* Generated */ enum class Core::RetCode Core::Mama( int    startIdx,
+/* Generated */                                      int    endIdx,
+/* Generated */                                      cli::array<double>^ inReal,
+/* Generated */                                      double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                                      double        optInSlowLimit, /* From 0.01 to 0.99 */
+/* Generated */                                      [Out]int%    outBegIdx,
+/* Generated */                                      [Out]int%    outNbElement,
+/* Generated */                                      cli::array<double>^  outMAMA,
+/* Generated */                                      cli::array<double>^  outFAMA )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode MAMA( int    startIdx,
-/* Generated */                         int    endIdx,
-/* Generated */                         double       inReal[],
-/* Generated */                         double        optInFastLimit, /* From 0.01 to 0.99 */
-/* Generated */                         double        optInSlowLimit, /* From 0.01 to 0.99 */
-/* Generated */                         MInteger     outBegIdx,
-/* Generated */                         MInteger     outNbElement,
-/* Generated */                         double        outMAMA[],
-/* Generated */                         double        outFAMA[] )
+/* Generated */ public RetCode mama( int    startIdx,
+/* Generated */                      int    endIdx,
+/* Generated */                      double       inReal[],
+/* Generated */                      double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                      double        optInSlowLimit, /* From 0.01 to 0.99 */
+/* Generated */                      MInteger     outBegIdx,
+/* Generated */                      MInteger     outNbElement,
+/* Generated */                      double        outMAMA[],
+/* Generated */                      double        outFAMA[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MAMA( int    startIdx,
 /* Generated */                     int    endIdx,
@@ -229,29 +230,29 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    if( optInFastLimit == TA_REAL_DEFAULT )
 /* Generated */       optInFastLimit = 5.000000e-1;
 /* Generated */    else if( (optInFastLimit < 1.000000e-2) ||/* Generated */  (optInFastLimit > 9.900000e-1) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    if( optInSlowLimit == TA_REAL_DEFAULT )
 /* Generated */       optInSlowLimit = 5.000000e-2;
 /* Generated */    else if( (optInSlowLimit < 1.000000e-2) ||/* Generated */  (optInSlowLimit > 9.900000e-1) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outMAMA )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    if( !outFAMA )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -266,7 +267,7 @@
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA);
+   lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA,Mama);
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -279,7 +280,7 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
@@ -476,7 +477,7 @@
    /* Default return values */
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -489,25 +490,25 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::MAMA( int    startIdx,
-/* Generated */                                         int    endIdx,
-/* Generated */                                         cli::array<float>^ inReal,
-/* Generated */                                         double        optInFastLimit, /* From 0.01 to 0.99 */
-/* Generated */                                         double        optInSlowLimit, /* From 0.01 to 0.99 */
-/* Generated */                                         [Out]int%    outBegIdx,
-/* Generated */                                         [Out]int%    outNbElement,
-/* Generated */                                         cli::array<double>^  outMAMA,
-/* Generated */                                         cli::array<double>^  outFAMA )
+/* Generated */ enum class Core::RetCode Core::Mama( int    startIdx,
+/* Generated */                                      int    endIdx,
+/* Generated */                                      cli::array<float>^ inReal,
+/* Generated */                                      double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                                      double        optInSlowLimit, /* From 0.01 to 0.99 */
+/* Generated */                                      [Out]int%    outBegIdx,
+/* Generated */                                      [Out]int%    outNbElement,
+/* Generated */                                      cli::array<double>^  outMAMA,
+/* Generated */                                      cli::array<double>^  outFAMA )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode MAMA( int    startIdx,
-/* Generated */                         int    endIdx,
-/* Generated */                         float        inReal[],
-/* Generated */                         double        optInFastLimit, /* From 0.01 to 0.99 */
-/* Generated */                         double        optInSlowLimit, /* From 0.01 to 0.99 */
-/* Generated */                         MInteger     outBegIdx,
-/* Generated */                         MInteger     outNbElement,
-/* Generated */                         double        outMAMA[],
-/* Generated */                         double        outFAMA[] )
+/* Generated */ public RetCode mama( int    startIdx,
+/* Generated */                      int    endIdx,
+/* Generated */                      float        inReal[],
+/* Generated */                      double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                      double        optInSlowLimit, /* From 0.01 to 0.99 */
+/* Generated */                      MInteger     outBegIdx,
+/* Generated */                      MInteger     outNbElement,
+/* Generated */                      double        outMAMA[],
+/* Generated */                      double        outFAMA[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MAMA( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -542,36 +543,36 @@
 /* Generated */    double mama,fama,todayValue,prevPhase;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( optInFastLimit == TA_REAL_DEFAULT )
 /* Generated */        optInFastLimit = 5.000000e-1;
 /* Generated */     else if( (optInFastLimit < 1.000000e-2) ||  (optInFastLimit > 9.900000e-1) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( optInSlowLimit == TA_REAL_DEFAULT )
 /* Generated */        optInSlowLimit = 5.000000e-2;
 /* Generated */     else if( (optInSlowLimit < 1.000000e-2) ||  (optInSlowLimit > 9.900000e-1) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outMAMA )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( !outFAMA )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    rad2Deg = 180.0 / (4.0 * atan(1));
-/* Generated */    lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA);
+/* Generated */    lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA,Mama);
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */    trailingWMAIdx = startIdx - lookbackTotal;
@@ -693,7 +694,7 @@
 /* Generated */       today++;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -55,11 +55,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -78,19 +79,19 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::MACDEXT_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                           TA_MAType     optInFastMAType,
-/* Generated */                           int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                           TA_MAType     optInSlowMAType,
-/* Generated */                           int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                           TA_MAType     optInSignalMAType ) /* Generated */ 
+/* Generated */ int Core::MacdExtLookback( int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                          MAType        optInFastMAType,
+/* Generated */                          int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                          MAType        optInSlowMAType,
+/* Generated */                          int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                          MAType        optInSignalMAType ) /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int MACDEXT_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                            TA_MAType     optInFastMAType,
-/* Generated */                            int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                            TA_MAType     optInSlowMAType,
-/* Generated */                            int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                            TA_MAType     optInSignalMAType ) /* Generated */ 
+/* Generated */ public int macdExtLookback( int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                           MAType        optInFastMAType,
+/* Generated */                           int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                           MAType        optInSlowMAType,
+/* Generated */                           int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                           MAType        optInSignalMAType ) /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_MACDEXT_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                        TA_MAType     optInFastMAType,
@@ -191,35 +192,35 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::MACDEXT( int    startIdx,
-/* Generated */                                            int    endIdx,
-/* Generated */                                            cli::array<double>^ inReal,
-/* Generated */                                            int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                                            TA_MAType     optInFastMAType,
-/* Generated */                                            int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                            TA_MAType     optInSlowMAType,
-/* Generated */                                            int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                                            TA_MAType     optInSignalMAType,
-/* Generated */                                            [Out]int%    outBegIdx,
-/* Generated */                                            [Out]int%    outNbElement,
-/* Generated */                                            cli::array<double>^  outMACD,
-/* Generated */                                            cli::array<double>^  outMACDSignal,
-/* Generated */                                            cli::array<double>^  outMACDHist )
+/* Generated */ enum class Core::RetCode Core::MacdExt( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         cli::array<double>^ inReal,
+/* Generated */                                         int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                         MAType        optInFastMAType,
+/* Generated */                                         int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                         MAType        optInSlowMAType,
+/* Generated */                                         int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                         MAType        optInSignalMAType,
+/* Generated */                                         [Out]int%    outBegIdx,
+/* Generated */                                         [Out]int%    outNbElement,
+/* Generated */                                         cli::array<double>^  outMACD,
+/* Generated */                                         cli::array<double>^  outMACDSignal,
+/* Generated */                                         cli::array<double>^  outMACDHist )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode MACDEXT( int    startIdx,
-/* Generated */                            int    endIdx,
-/* Generated */                            double       inReal[],
-/* Generated */                            int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                            TA_MAType     optInFastMAType,
-/* Generated */                            int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                            TA_MAType     optInSlowMAType,
-/* Generated */                            int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                            TA_MAType     optInSignalMAType,
-/* Generated */                            MInteger     outBegIdx,
-/* Generated */                            MInteger     outNbElement,
-/* Generated */                            double        outMACD[],
-/* Generated */                            double        outMACDSignal[],
-/* Generated */                            double        outMACDHist[] )
+/* Generated */ public RetCode macdExt( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         double       inReal[],
+/* Generated */                         int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                         MAType        optInFastMAType,
+/* Generated */                         int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                         MAType        optInSlowMAType,
+/* Generated */                         int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                         MAType        optInSignalMAType,
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         double        outMACD[],
+/* Generated */                         double        outMACDSignal[],
+/* Generated */                         double        outMACDHist[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MACDEXT( int    startIdx,
 /* Generated */                        int    endIdx,
@@ -241,7 +242,7 @@
 	/* insert local variable here */
    ARRAY_REF( slowMABuffer );
    ARRAY_REF( fastMABuffer );
-   TA_RetCode retCode;
+   ENUM_DECLARATION(RetCode) retCode;
    int tempInteger;
    VALUE_HANDLE_INT(outBegIdx1);
    VALUE_HANDLE_INT(outNbElement1);
@@ -249,7 +250,7 @@
    VALUE_HANDLE_INT(outNbElement2);
    int lookbackTotal, lookbackSignal, lookbackLargest;
    int i;
-   TA_MAType tempMAType;
+   ENUM_DECLARATION(MAType) tempMAType;
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -257,61 +258,61 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInFastPeriod. */
 /* Generated */    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastPeriod = 12;
 /* Generated */    else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInFastMAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastMAType = 0;
 /* Generated */    else if( ((int)optInFastMAType < 0) || ((int)optInFastMAType > 8) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInSlowPeriod. */
 /* Generated */    if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowPeriod = 26;
 /* Generated */    else if( ((int)optInSlowPeriod < 2) || ((int)optInSlowPeriod > 100000) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInSlowMAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowMAType = 0;
 /* Generated */    else if( ((int)optInSlowMAType < 0) || ((int)optInSlowMAType > 8) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInSignalPeriod. */
 /* Generated */    if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInSignalPeriod = 9;
 /* Generated */    else if( ((int)optInSignalPeriod < 1) || ((int)optInSignalPeriod > 100000) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInSignalMAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInSignalMAType = 0;
 /* Generated */    else if( ((int)optInSignalMAType < 0) || ((int)optInSignalMAType > 8) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outMACD )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    if( !outMACDSignal )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    if( !outMACDHist )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -356,7 +357,7 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    /* Allocate intermediate buffer for fast/slow MA. */
@@ -367,7 +368,7 @@
       {
          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
       }
    #endif
 
@@ -378,7 +379,7 @@
          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
          ARRAY_FREE( fastMABuffer );
-         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
       }
    #endif
 
@@ -395,7 +396,7 @@
                                 VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1), 
 							    slowMABuffer );
 
-   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
@@ -410,7 +411,7 @@
                                 VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2),
 							    fastMABuffer );
 
-   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
@@ -447,7 +448,7 @@
    ARRAY_FREE( fastMABuffer );
    ARRAY_FREE( slowMABuffer );
 
-   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
@@ -462,7 +463,7 @@
    VALUE_HANDLE_DEREF(outBegIdx)     = startIdx;
    VALUE_HANDLE_DEREF(outNbElement)  = VALUE_HANDLE_GET(outNbElement2);
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 
@@ -476,35 +477,35 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::MACDEXT( int    startIdx,
-/* Generated */                                            int    endIdx,
-/* Generated */                                            cli::array<float>^ inReal,
-/* Generated */                                            int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                                            TA_MAType     optInFastMAType,
-/* Generated */                                            int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                                            TA_MAType     optInSlowMAType,
-/* Generated */                                            int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                                            TA_MAType     optInSignalMAType,
-/* Generated */                                            [Out]int%    outBegIdx,
-/* Generated */                                            [Out]int%    outNbElement,
-/* Generated */                                            cli::array<double>^  outMACD,
-/* Generated */                                            cli::array<double>^  outMACDSignal,
-/* Generated */                                            cli::array<double>^  outMACDHist )
+/* Generated */ enum class Core::RetCode Core::MacdExt( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         cli::array<float>^ inReal,
+/* Generated */                                         int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                         MAType        optInFastMAType,
+/* Generated */                                         int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                         MAType        optInSlowMAType,
+/* Generated */                                         int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                         MAType        optInSignalMAType,
+/* Generated */                                         [Out]int%    outBegIdx,
+/* Generated */                                         [Out]int%    outNbElement,
+/* Generated */                                         cli::array<double>^  outMACD,
+/* Generated */                                         cli::array<double>^  outMACDSignal,
+/* Generated */                                         cli::array<double>^  outMACDHist )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode MACDEXT( int    startIdx,
-/* Generated */                            int    endIdx,
-/* Generated */                            float        inReal[],
-/* Generated */                            int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                            TA_MAType     optInFastMAType,
-/* Generated */                            int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                            TA_MAType     optInSlowMAType,
-/* Generated */                            int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                            TA_MAType     optInSignalMAType,
-/* Generated */                            MInteger     outBegIdx,
-/* Generated */                            MInteger     outNbElement,
-/* Generated */                            double        outMACD[],
-/* Generated */                            double        outMACDSignal[],
-/* Generated */                            double        outMACDHist[] )
+/* Generated */ public RetCode macdExt( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         float        inReal[],
+/* Generated */                         int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                         MAType        optInFastMAType,
+/* Generated */                         int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                         MAType        optInSlowMAType,
+/* Generated */                         int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                         MAType        optInSignalMAType,
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         double        outMACD[],
+/* Generated */                         double        outMACDSignal[],
+/* Generated */                         double        outMACDHist[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MACDEXT( int    startIdx,
 /* Generated */                          int    endIdx,
@@ -524,7 +525,7 @@
 /* Generated */ {
 /* Generated */    ARRAY_REF( slowMABuffer );
 /* Generated */    ARRAY_REF( fastMABuffer );
-/* Generated */    TA_RetCode retCode;
+/* Generated */    ENUM_DECLARATION(RetCode) retCode;
 /* Generated */    int tempInteger;
 /* Generated */    VALUE_HANDLE_INT(outBegIdx1);
 /* Generated */    VALUE_HANDLE_INT(outNbElement1);
@@ -532,52 +533,52 @@
 /* Generated */    VALUE_HANDLE_INT(outNbElement2);
 /* Generated */    int lookbackTotal, lookbackSignal, lookbackLargest;
 /* Generated */    int i;
-/* Generated */    TA_MAType tempMAType;
+/* Generated */    ENUM_DECLARATION(MAType) tempMAType;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastPeriod = 12;
 /* Generated */     else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInFastMAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastMAType = 0;
 /* Generated */     else if( ((int)optInFastMAType < 0) || ((int)optInFastMAType > 8) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowPeriod = 26;
 /* Generated */     else if( ((int)optInSlowPeriod < 2) || ((int)optInSlowPeriod > 100000) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInSlowMAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowMAType = 0;
 /* Generated */     else if( ((int)optInSlowMAType < 0) || ((int)optInSlowMAType > 8) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInSignalPeriod = 9;
 /* Generated */     else if( ((int)optInSignalPeriod < 1) || ((int)optInSignalPeriod > 100000) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInSignalMAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInSignalMAType = 0;
 /* Generated */     else if( ((int)optInSignalMAType < 0) || ((int)optInSignalMAType > 8) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outMACD )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( !outMACDSignal )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( !outMACDHist )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    if( optInSlowPeriod < optInFastPeriod )
@@ -601,7 +602,7 @@
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    tempInteger = (endIdx-startIdx)+1+lookbackSignal;
 /* Generated */    ARRAY_ALLOC( fastMABuffer, tempInteger );
@@ -610,7 +611,7 @@
 /* Generated */       {
 /* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */          return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+/* Generated */          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
 /* Generated */       }
 /* Generated */    #endif
 /* Generated */    ARRAY_ALLOC( slowMABuffer, tempInteger );
@@ -620,7 +621,7 @@
 /* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */          ARRAY_FREE( fastMABuffer );
-/* Generated */          return NAMESPACE(TA_RetCode)TA_ALLOC_ERR;
+/* Generated */          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
 /* Generated */       }
 /* Generated */    #endif
 /* Generated */    tempInteger = startIdx-lookbackSignal;
@@ -628,7 +629,7 @@
 /* Generated */                                 inReal, optInSlowPeriod, optInSlowMAType,
 /* Generated */                                 VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1), 
 /* Generated */ 							    slowMABuffer );
-/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
@@ -640,7 +641,7 @@
 /* Generated */                                 inReal, optInFastPeriod, optInFastMAType,
 /* Generated */                                 VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2),
 /* Generated */ 							    fastMABuffer );
-/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
@@ -667,7 +668,7 @@
 /* Generated */                                        VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), outMACDSignal );
 /* Generated */    ARRAY_FREE( fastMABuffer );
 /* Generated */    ARRAY_FREE( slowMABuffer );
-/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
@@ -677,7 +678,7 @@
 /* Generated */       outMACDHist[i] = outMACD[i]-outMACDSignal[i];
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)     = startIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement)  = VALUE_HANDLE_GET(outNbElement2);
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

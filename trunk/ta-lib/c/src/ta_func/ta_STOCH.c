@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -55,11 +55,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -78,17 +79,17 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::STOCH_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
-/* Generated */                         int           optInSlowK_Period, /* From 1 to 100000 */
-/* Generated */                         TA_MAType     optInSlowK_MAType,
-/* Generated */                         int           optInSlowD_Period, /* From 1 to 100000 */
-/* Generated */                         TA_MAType     optInSlowD_MAType ) /* Generated */ 
+/* Generated */ int Core::StochLookback( int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                        int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                        MAType        optInSlowK_MAType,
+/* Generated */                        int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                        MAType        optInSlowD_MAType ) /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int STOCH_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
-/* Generated */                          int           optInSlowK_Period, /* From 1 to 100000 */
-/* Generated */                          TA_MAType     optInSlowK_MAType,
-/* Generated */                          int           optInSlowD_Period, /* From 1 to 100000 */
-/* Generated */                          TA_MAType     optInSlowD_MAType ) /* Generated */ 
+/* Generated */ public int stochLookback( int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                         int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                         MAType        optInSlowK_MAType,
+/* Generated */                         int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                         MAType        optInSlowD_MAType ) /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_STOCH_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
 /* Generated */                      int           optInSlowK_Period, /* From 1 to 100000 */
@@ -180,35 +181,35 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::STOCH( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          cli::array<double>^ inHigh,
-/* Generated */                                          cli::array<double>^ inLow,
-/* Generated */                                          cli::array<double>^ inClose,
-/* Generated */                                          int           optInFastK_Period, /* From 1 to 100000 */
-/* Generated */                                          int           optInSlowK_Period, /* From 1 to 100000 */
-/* Generated */                                          TA_MAType     optInSlowK_MAType,
-/* Generated */                                          int           optInSlowD_Period, /* From 1 to 100000 */
-/* Generated */                                          TA_MAType     optInSlowD_MAType,
-/* Generated */                                          [Out]int%    outBegIdx,
-/* Generated */                                          [Out]int%    outNbElement,
-/* Generated */                                          cli::array<double>^  outSlowK,
-/* Generated */                                          cli::array<double>^  outSlowD )
+/* Generated */ enum class Core::RetCode Core::Stoch( int    startIdx,
+/* Generated */                                       int    endIdx,
+/* Generated */                                       cli::array<double>^ inHigh,
+/* Generated */                                       cli::array<double>^ inLow,
+/* Generated */                                       cli::array<double>^ inClose,
+/* Generated */                                       int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                       int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                                       MAType        optInSlowK_MAType,
+/* Generated */                                       int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                                       MAType        optInSlowD_MAType,
+/* Generated */                                       [Out]int%    outBegIdx,
+/* Generated */                                       [Out]int%    outNbElement,
+/* Generated */                                       cli::array<double>^  outSlowK,
+/* Generated */                                       cli::array<double>^  outSlowD )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode STOCH( int    startIdx,
-/* Generated */                          int    endIdx,
-/* Generated */                          double       inHigh[],
-/* Generated */                          double       inLow[],
-/* Generated */                          double       inClose[],
-/* Generated */                          int           optInFastK_Period, /* From 1 to 100000 */
-/* Generated */                          int           optInSlowK_Period, /* From 1 to 100000 */
-/* Generated */                          TA_MAType     optInSlowK_MAType,
-/* Generated */                          int           optInSlowD_Period, /* From 1 to 100000 */
-/* Generated */                          TA_MAType     optInSlowD_MAType,
-/* Generated */                          MInteger     outBegIdx,
-/* Generated */                          MInteger     outNbElement,
-/* Generated */                          double        outSlowK[],
-/* Generated */                          double        outSlowD[] )
+/* Generated */ public RetCode stoch( int    startIdx,
+/* Generated */                       int    endIdx,
+/* Generated */                       double       inHigh[],
+/* Generated */                       double       inLow[],
+/* Generated */                       double       inClose[],
+/* Generated */                       int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                       int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                       MAType        optInSlowK_MAType,
+/* Generated */                       int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                       MAType        optInSlowD_MAType,
+/* Generated */                       MInteger     outBegIdx,
+/* Generated */                       MInteger     outNbElement,
+/* Generated */                       double        outSlowK[],
+/* Generated */                       double        outSlowD[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_STOCH( int    startIdx,
 /* Generated */                      int    endIdx,
@@ -228,7 +229,7 @@
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   TA_RetCode retCode;
+   ENUM_DECLARATION(RetCode) retCode;
    double lowest, highest, tmp, diff;
    ARRAY_REF( tempBuffer );
    int outIdx, lowestIdx, highestIdx;
@@ -244,54 +245,54 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow||!inClose)
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInFastK_Period. */
 /* Generated */    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastK_Period = 5;
 /* Generated */    else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    /* min/max are checked for optInSlowK_Period. */
 /* Generated */    if( (int)optInSlowK_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowK_Period = 3;
 /* Generated */    else if( ((int)optInSlowK_Period < 1) || ((int)optInSlowK_Period > 100000) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInSlowK_MAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowK_MAType = 0;
 /* Generated */    else if( ((int)optInSlowK_MAType < 0) || ((int)optInSlowK_MAType > 8) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInSlowD_Period. */
 /* Generated */    if( (int)optInSlowD_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowD_Period = 3;
 /* Generated */    else if( ((int)optInSlowD_Period < 1) || ((int)optInSlowD_Period > 100000) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInSlowD_MAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowD_MAType = 0;
 /* Generated */    else if( ((int)optInSlowD_MAType < 0) || ((int)optInSlowD_MAType > 8) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outSlowK )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    if( !outSlowD )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -349,7 +350,7 @@
       /* Succeed... but no data in the output. */
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    /* Do the K calculation:
@@ -489,7 +490,7 @@
                                        outBegIdx, outNbElement, tempBuffer );
 
 
-   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
+   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
    {
       #if defined(USE_SINGLE_PRECISION_INPUT)
          ARRAY_FREE( tempBuffer ); 
@@ -524,7 +525,7 @@
       ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
    #endif
 
-   if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
    {
       /* Something wrong happen while processing %D? */
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -537,7 +538,7 @@
     */
    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 
@@ -551,35 +552,35 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::STOCH( int    startIdx,
-/* Generated */                                          int    endIdx,
-/* Generated */                                          cli::array<float>^ inHigh,
-/* Generated */                                          cli::array<float>^ inLow,
-/* Generated */                                          cli::array<float>^ inClose,
-/* Generated */                                          int           optInFastK_Period, /* From 1 to 100000 */
-/* Generated */                                          int           optInSlowK_Period, /* From 1 to 100000 */
-/* Generated */                                          TA_MAType     optInSlowK_MAType,
-/* Generated */                                          int           optInSlowD_Period, /* From 1 to 100000 */
-/* Generated */                                          TA_MAType     optInSlowD_MAType,
-/* Generated */                                          [Out]int%    outBegIdx,
-/* Generated */                                          [Out]int%    outNbElement,
-/* Generated */                                          cli::array<double>^  outSlowK,
-/* Generated */                                          cli::array<double>^  outSlowD )
+/* Generated */ enum class Core::RetCode Core::Stoch( int    startIdx,
+/* Generated */                                       int    endIdx,
+/* Generated */                                       cli::array<float>^ inHigh,
+/* Generated */                                       cli::array<float>^ inLow,
+/* Generated */                                       cli::array<float>^ inClose,
+/* Generated */                                       int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                       int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                                       MAType        optInSlowK_MAType,
+/* Generated */                                       int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                                       MAType        optInSlowD_MAType,
+/* Generated */                                       [Out]int%    outBegIdx,
+/* Generated */                                       [Out]int%    outNbElement,
+/* Generated */                                       cli::array<double>^  outSlowK,
+/* Generated */                                       cli::array<double>^  outSlowD )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode STOCH( int    startIdx,
-/* Generated */                          int    endIdx,
-/* Generated */                          float        inHigh[],
-/* Generated */                          float        inLow[],
-/* Generated */                          float        inClose[],
-/* Generated */                          int           optInFastK_Period, /* From 1 to 100000 */
-/* Generated */                          int           optInSlowK_Period, /* From 1 to 100000 */
-/* Generated */                          TA_MAType     optInSlowK_MAType,
-/* Generated */                          int           optInSlowD_Period, /* From 1 to 100000 */
-/* Generated */                          TA_MAType     optInSlowD_MAType,
-/* Generated */                          MInteger     outBegIdx,
-/* Generated */                          MInteger     outNbElement,
-/* Generated */                          double        outSlowK[],
-/* Generated */                          double        outSlowD[] )
+/* Generated */ public RetCode stoch( int    startIdx,
+/* Generated */                       int    endIdx,
+/* Generated */                       float        inHigh[],
+/* Generated */                       float        inLow[],
+/* Generated */                       float        inClose[],
+/* Generated */                       int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                       int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                       MAType        optInSlowK_MAType,
+/* Generated */                       int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                       MAType        optInSlowD_MAType,
+/* Generated */                       MInteger     outBegIdx,
+/* Generated */                       MInteger     outNbElement,
+/* Generated */                       double        outSlowK[],
+/* Generated */                       double        outSlowD[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STOCH( int    startIdx,
 /* Generated */                        int    endIdx,
@@ -597,7 +598,7 @@
 /* Generated */                        double        outSlowD[] )
 /* Generated */ #endif
 /* Generated */ {
-/* Generated */    TA_RetCode retCode;
+/* Generated */    ENUM_DECLARATION(RetCode) retCode;
 /* Generated */    double lowest, highest, tmp, diff;
 /* Generated */    ARRAY_REF( tempBuffer );
 /* Generated */    int outIdx, lowestIdx, highestIdx;
@@ -608,42 +609,42 @@
 /* Generated */    #endif
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastK_Period = 5;
 /* Generated */     else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( (int)optInSlowK_Period == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowK_Period = 3;
 /* Generated */     else if( ((int)optInSlowK_Period < 1) || ((int)optInSlowK_Period > 100000) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInSlowK_MAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowK_MAType = 0;
 /* Generated */     else if( ((int)optInSlowK_MAType < 0) || ((int)optInSlowK_MAType > 8) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInSlowD_Period == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowD_Period = 3;
 /* Generated */     else if( ((int)optInSlowD_Period < 1) || ((int)optInSlowD_Period > 100000) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInSlowD_MAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowD_MAType = 0;
 /* Generated */     else if( ((int)optInSlowD_MAType < 0) || ((int)optInSlowD_MAType > 8) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outSlowK )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( !outSlowD )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    lookbackK      = optInFastK_Period-1;
@@ -656,7 +657,7 @@
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    outIdx = 0;
 /* Generated */    trailingIdx = startIdx-lookbackTotal;
@@ -748,7 +749,7 @@
 /* Generated */                                        tempBuffer, optInSlowK_Period,
 /* Generated */                                        optInSlowK_MAType, 
 /* Generated */                                        outBegIdx, outNbElement, tempBuffer );
-/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
+/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
 /* Generated */    {
 /* Generated */       #if defined(USE_SINGLE_PRECISION_INPUT)
 /* Generated */          ARRAY_FREE( tempBuffer ); 
@@ -769,14 +770,14 @@
 /* Generated */    #else
 /* Generated */       ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
 /* Generated */    #endif
-/* Generated */    if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
