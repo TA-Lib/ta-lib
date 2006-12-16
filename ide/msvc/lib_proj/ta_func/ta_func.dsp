@@ -608,6 +608,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_MAX.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_MAXINDEX.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_MEDPRICE.c
 # End Source File
 # Begin Source File
@@ -625,6 +629,18 @@ SOURCE=..\..\..\..\src\ta_func\ta_MIDPRICE.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_MIN.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MININDEX.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MINMAX.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_MINMAXINDEX.c
 # End Source File
 # Begin Source File
 
