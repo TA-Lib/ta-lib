@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -55,11 +55,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -78,10 +79,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::HT_DCPHASE_Lookback( void )
+/* Generated */ int Core::HtDcPhaseLookback( void )
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int HT_DCPHASE_Lookback(  )
+/* Generated */ public int htDcPhaseLookback(  )
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_HT_DCPHASE_Lookback( void )
@@ -105,7 +106,7 @@
     * 31 is for being compatible with Tradestation.
     * See TA_MAMA_Lookback for an explanation of the "32".
     */
-   return 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPHASE);
+   return 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPHASE,HtDcPhase);
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -118,19 +119,19 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::HT_DCPHASE( int    startIdx,
-/* Generated */                                               int    endIdx,
-/* Generated */                                               cli::array<double>^ inReal,
-/* Generated */                                               [Out]int%    outBegIdx,
-/* Generated */                                               [Out]int%    outNbElement,
-/* Generated */                                               cli::array<double>^  outReal )
+/* Generated */ enum class Core::RetCode Core::HtDcPhase( int    startIdx,
+/* Generated */                                           int    endIdx,
+/* Generated */                                           cli::array<double>^ inReal,
+/* Generated */                                           [Out]int%    outBegIdx,
+/* Generated */                                           [Out]int%    outNbElement,
+/* Generated */                                           cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode HT_DCPHASE( int    startIdx,
-/* Generated */                               int    endIdx,
-/* Generated */                               double       inReal[],
-/* Generated */                               MInteger     outBegIdx,
-/* Generated */                               MInteger     outNbElement,
-/* Generated */                               double        outReal[] )
+/* Generated */ public RetCode htDcPhase( int    startIdx,
+/* Generated */                           int    endIdx,
+/* Generated */                           double       inReal[],
+/* Generated */                           MInteger     outBegIdx,
+/* Generated */                           MInteger     outNbElement,
+/* Generated */                           double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_HT_DCPHASE( int    startIdx,
 /* Generated */                           int    endIdx,
@@ -191,16 +192,16 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -219,7 +220,7 @@
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPHASE);
+   lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPHASE,HtDcPhase);
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -232,7 +233,7 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
@@ -444,7 +445,7 @@
 
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
  
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -457,19 +458,19 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::HT_DCPHASE( int    startIdx,
-/* Generated */                                               int    endIdx,
-/* Generated */                                               cli::array<float>^ inReal,
-/* Generated */                                               [Out]int%    outBegIdx,
-/* Generated */                                               [Out]int%    outNbElement,
-/* Generated */                                               cli::array<double>^  outReal )
+/* Generated */ enum class Core::RetCode Core::HtDcPhase( int    startIdx,
+/* Generated */                                           int    endIdx,
+/* Generated */                                           cli::array<float>^ inReal,
+/* Generated */                                           [Out]int%    outBegIdx,
+/* Generated */                                           [Out]int%    outNbElement,
+/* Generated */                                           cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode HT_DCPHASE( int    startIdx,
-/* Generated */                               int    endIdx,
-/* Generated */                               float        inReal[],
-/* Generated */                               MInteger     outBegIdx,
-/* Generated */                               MInteger     outNbElement,
-/* Generated */                               double        outReal[] )
+/* Generated */ public RetCode htDcPhase( int    startIdx,
+/* Generated */                           int    endIdx,
+/* Generated */                           float        inReal[],
+/* Generated */                           MInteger     outBegIdx,
+/* Generated */                           MInteger     outNbElement,
+/* Generated */                           double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_DCPHASE( int    startIdx,
 /* Generated */                             int    endIdx,
@@ -506,29 +507,29 @@
 /* Generated */    double DCPhase, DCPeriod, imagPart, realPart;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    CIRCBUF_INIT_LOCAL_ONLY(smoothPrice,double);
 /* Generated */    tempReal = atan(1);
 /* Generated */    rad2Deg = 45.0/tempReal;
 /* Generated */    constDeg2RadBy360 = tempReal*8.0;
-/* Generated */    lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPHASE);
+/* Generated */    lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPHASE,HtDcPhase);
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */    trailingWMAIdx = startIdx - lookbackTotal;
@@ -661,7 +662,7 @@
 /* Generated */       today++;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

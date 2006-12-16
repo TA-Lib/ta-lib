@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -54,11 +54,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -77,10 +78,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::CDLCONCEALBABYSWALL_Lookback( void )
+/* Generated */ int Core::CdlConcealBabysWallLookback( void )
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int CDLCONCEALBABYSWALL_Lookback(  )
+/* Generated */ public int cdlConcealBabysWallLookback(  )
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_CDLCONCEALBABYSWALL_Lookback( void )
@@ -95,7 +96,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-    return TA_CANDLEAVGPERIOD(TA_ShadowVeryShort) + 3;
+    return TA_CANDLEAVGPERIOD(ShadowVeryShort) + 3;
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -108,25 +109,25 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLCONCEALBABYSWALL( int    startIdx,
-/* Generated */                                                        int    endIdx,
-/* Generated */                                                        cli::array<double>^ inOpen,
-/* Generated */                                                        cli::array<double>^ inHigh,
-/* Generated */                                                        cli::array<double>^ inLow,
-/* Generated */                                                        cli::array<double>^ inClose,
-/* Generated */                                                        [Out]int%    outBegIdx,
-/* Generated */                                                        [Out]int%    outNbElement,
-/* Generated */                                                        cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlConcealBabysWall( int    startIdx,
+/* Generated */                                                     int    endIdx,
+/* Generated */                                                     cli::array<double>^ inOpen,
+/* Generated */                                                     cli::array<double>^ inHigh,
+/* Generated */                                                     cli::array<double>^ inLow,
+/* Generated */                                                     cli::array<double>^ inClose,
+/* Generated */                                                     [Out]int%    outBegIdx,
+/* Generated */                                                     [Out]int%    outNbElement,
+/* Generated */                                                     cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLCONCEALBABYSWALL( int    startIdx,
-/* Generated */                                        int    endIdx,
-/* Generated */                                        double       inOpen[],
-/* Generated */                                        double       inHigh[],
-/* Generated */                                        double       inLow[],
-/* Generated */                                        double       inClose[],
-/* Generated */                                        MInteger     outBegIdx,
-/* Generated */                                        MInteger     outNbElement,
-/* Generated */                                        int           outInteger[] )
+/* Generated */ public RetCode cdlConcealBabysWall( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     double       inOpen[],
+/* Generated */                                     double       inHigh[],
+/* Generated */                                     double       inLow[],
+/* Generated */                                     double       inClose[],
+/* Generated */                                     MInteger     outBegIdx,
+/* Generated */                                     MInteger     outNbElement,
+/* Generated */                                     int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
 /* Generated */                                    int    endIdx,
@@ -150,19 +151,19 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outInteger )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -186,7 +187,7 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    /* Do the calculation using tight loops. */
@@ -194,13 +195,13 @@
    ShadowVeryShortPeriodTotal[3] = 0;
    ShadowVeryShortPeriodTotal[2] = 0;
    ShadowVeryShortPeriodTotal[1] = 0;
-   ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_ShadowVeryShort);
+   ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowVeryShort);
    
    i = ShadowVeryShortTrailingIdx;
    while( i < startIdx ) {
-        ShadowVeryShortPeriodTotal[3] += TA_CANDLERANGE( TA_ShadowVeryShort, i-3 );
-        ShadowVeryShortPeriodTotal[2] += TA_CANDLERANGE( TA_ShadowVeryShort, i-2 );
-        ShadowVeryShortPeriodTotal[1] += TA_CANDLERANGE( TA_ShadowVeryShort, i-1 );
+        ShadowVeryShortPeriodTotal[3] += TA_CANDLERANGE( ShadowVeryShort, i-3 );
+        ShadowVeryShortPeriodTotal[2] += TA_CANDLERANGE( ShadowVeryShort, i-2 );
+        ShadowVeryShortPeriodTotal[1] += TA_CANDLERANGE( ShadowVeryShort, i-1 );
         i++;
    }
    i = startIdx;
@@ -224,14 +225,14 @@
             TA_CANDLECOLOR(i-1) == -1 &&                                    // 3rd black
             TA_CANDLECOLOR(i) == -1 &&                                      // 4th black
                                                                             // 1st: marubozu
-            TA_LOWERSHADOW(i-3) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[3], i-3 ) &&
-            TA_UPPERSHADOW(i-3) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[3], i-3 ) &&
+            TA_LOWERSHADOW(i-3) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[3], i-3 ) &&
+            TA_UPPERSHADOW(i-3) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[3], i-3 ) &&
                                                                             // 2nd: marubozu
-            TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&
-            TA_UPPERSHADOW(i-2) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&
+            TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&
+            TA_UPPERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&
             TA_REALBODYGAPDOWN(i-1,i-2) &&                                  // 3rd: opens gapping down
                                                                             //      and HAS an upper shadow
-            TA_UPPERSHADOW(i-1) > TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&
+            TA_UPPERSHADOW(i-1) > TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&
             inHigh[i-1] > inClose[i-2] &&                                   //      that extends into the prior body
             inHigh[i] > inHigh[i-1] && inLow[i] < inLow[i-1]                // 4th: engulfs the 3rd including the shadows
           )
@@ -242,8 +243,8 @@
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         for (totIdx = 3; totIdx >= 1; --totIdx)
-            ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( TA_ShadowVeryShort, i-totIdx ) 
-                                                - TA_CANDLERANGE( TA_ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
+            ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx ) 
+                                                - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
         i++; 
         ShadowVeryShortTrailingIdx++;
    } while( i <= endIdx );
@@ -252,7 +253,7 @@
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -265,25 +266,25 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLCONCEALBABYSWALL( int    startIdx,
-/* Generated */                                                        int    endIdx,
-/* Generated */                                                        cli::array<float>^ inOpen,
-/* Generated */                                                        cli::array<float>^ inHigh,
-/* Generated */                                                        cli::array<float>^ inLow,
-/* Generated */                                                        cli::array<float>^ inClose,
-/* Generated */                                                        [Out]int%    outBegIdx,
-/* Generated */                                                        [Out]int%    outNbElement,
-/* Generated */                                                        cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlConcealBabysWall( int    startIdx,
+/* Generated */                                                     int    endIdx,
+/* Generated */                                                     cli::array<float>^ inOpen,
+/* Generated */                                                     cli::array<float>^ inHigh,
+/* Generated */                                                     cli::array<float>^ inLow,
+/* Generated */                                                     cli::array<float>^ inClose,
+/* Generated */                                                     [Out]int%    outBegIdx,
+/* Generated */                                                     [Out]int%    outNbElement,
+/* Generated */                                                     cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLCONCEALBABYSWALL( int    startIdx,
-/* Generated */                                        int    endIdx,
-/* Generated */                                        float        inOpen[],
-/* Generated */                                        float        inHigh[],
-/* Generated */                                        float        inLow[],
-/* Generated */                                        float        inClose[],
-/* Generated */                                        MInteger     outBegIdx,
-/* Generated */                                        MInteger     outNbElement,
-/* Generated */                                        int           outInteger[] )
+/* Generated */ public RetCode cdlConcealBabysWall( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     float        inOpen[],
+/* Generated */                                     float        inHigh[],
+/* Generated */                                     float        inLow[],
+/* Generated */                                     float        inClose[],
+/* Generated */                                     MInteger     outBegIdx,
+/* Generated */                                     MInteger     outNbElement,
+/* Generated */                                     int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
 /* Generated */                                      int    endIdx,
@@ -300,16 +301,16 @@
 /* Generated */     int i, outIdx, totIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outInteger )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    lookbackTotal = LOOKBACK_CALL(CDLCONCEALBABYSWALL)();
@@ -319,17 +320,17 @@
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    ShadowVeryShortPeriodTotal[3] = 0;
 /* Generated */    ShadowVeryShortPeriodTotal[2] = 0;
 /* Generated */    ShadowVeryShortPeriodTotal[1] = 0;
-/* Generated */    ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_ShadowVeryShort);
+/* Generated */    ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowVeryShort);
 /* Generated */    i = ShadowVeryShortTrailingIdx;
 /* Generated */    while( i < startIdx ) {
-/* Generated */         ShadowVeryShortPeriodTotal[3] += TA_CANDLERANGE( TA_ShadowVeryShort, i-3 );
-/* Generated */         ShadowVeryShortPeriodTotal[2] += TA_CANDLERANGE( TA_ShadowVeryShort, i-2 );
-/* Generated */         ShadowVeryShortPeriodTotal[1] += TA_CANDLERANGE( TA_ShadowVeryShort, i-1 );
+/* Generated */         ShadowVeryShortPeriodTotal[3] += TA_CANDLERANGE( ShadowVeryShort, i-3 );
+/* Generated */         ShadowVeryShortPeriodTotal[2] += TA_CANDLERANGE( ShadowVeryShort, i-2 );
+/* Generated */         ShadowVeryShortPeriodTotal[1] += TA_CANDLERANGE( ShadowVeryShort, i-1 );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = startIdx;
@@ -341,14 +342,14 @@
 /* Generated */             TA_CANDLECOLOR(i-1) == -1 &&                                    // 3rd black
 /* Generated */             TA_CANDLECOLOR(i) == -1 &&                                      // 4th black
 /* Generated */                                                                             // 1st: marubozu
-/* Generated */             TA_LOWERSHADOW(i-3) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[3], i-3 ) &&
-/* Generated */             TA_UPPERSHADOW(i-3) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[3], i-3 ) &&
+/* Generated */             TA_LOWERSHADOW(i-3) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[3], i-3 ) &&
+/* Generated */             TA_UPPERSHADOW(i-3) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[3], i-3 ) &&
 /* Generated */                                                                             // 2nd: marubozu
-/* Generated */             TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&
-/* Generated */             TA_UPPERSHADOW(i-2) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&
+/* Generated */             TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&
+/* Generated */             TA_UPPERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&
 /* Generated */             TA_REALBODYGAPDOWN(i-1,i-2) &&                                  // 3rd: opens gapping down
 /* Generated */                                                                             //      and HAS an upper shadow
-/* Generated */             TA_UPPERSHADOW(i-1) > TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&
+/* Generated */             TA_UPPERSHADOW(i-1) > TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&
 /* Generated */             inHigh[i-1] > inClose[i-2] &&                                   //      that extends into the prior body
 /* Generated */             inHigh[i] > inHigh[i-1] && inLow[i] < inLow[i-1]                // 4th: engulfs the 3rd including the shadows
 /* Generated */           )
@@ -356,14 +357,14 @@
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         for (totIdx = 3; totIdx >= 1; --totIdx)
-/* Generated */             ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( TA_ShadowVeryShort, i-totIdx ) 
-/* Generated */                                                 - TA_CANDLERANGE( TA_ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
+/* Generated */             ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx ) 
+/* Generated */                                                 - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
 /* Generated */         i++; 
 /* Generated */         ShadowVeryShortTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

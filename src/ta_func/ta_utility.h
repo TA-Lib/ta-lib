@@ -297,28 +297,28 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define TA_CANDLECOLOR(IDX)     ( inClose[IDX] >= inOpen[IDX] ? 1 : -1 )
 
 #if defined( _MANAGED )
-   #define TA_CANDLERANGETYPE(SET) (TA_Globals->candleSettings[(int)NAMESPACE(TA_CandleSettingType)SET]->rangeType)
-   #define TA_CANDLEAVGPERIOD(SET) (TA_Globals->candleSettings[(int)NAMESPACE(TA_CandleSettingType)SET]->avgPeriod)
-   #define TA_CANDLEFACTOR(SET)    (TA_Globals->candleSettings[(int)NAMESPACE(TA_CandleSettingType)SET]->factor)
+   #define TA_CANDLERANGETYPE(SET) (Globals->candleSettings[(int)CandleSettingType::SET]->rangeType)
+   #define TA_CANDLEAVGPERIOD(SET) (Globals->candleSettings[(int)CandleSettingType::SET]->avgPeriod)
+   #define TA_CANDLEFACTOR(SET)    (Globals->candleSettings[(int)CandleSettingType::SET]->factor)
 #elif defined( _JAVA )
-   #define TA_CANDLERANGETYPE(SET) (this.candleSettings[TA_CandleSettingType.SET.ordinal()].rangeType)
-   #define TA_CANDLEAVGPERIOD(SET) (this.candleSettings[TA_CandleSettingType.SET.ordinal()].avgPeriod)
-   #define TA_CANDLEFACTOR(SET)    (this.candleSettings[TA_CandleSettingType.SET.ordinal()].factor)
+   #define TA_CANDLERANGETYPE(SET) (this.candleSettings[CandleSettingType.SET.ordinal()].rangeType)
+   #define TA_CANDLEAVGPERIOD(SET) (this.candleSettings[CandleSettingType.SET.ordinal()].avgPeriod)
+   #define TA_CANDLEFACTOR(SET)    (this.candleSettings[CandleSettingType.SET.ordinal()].factor)
 #else
-   #define TA_CANDLERANGETYPE(SET) (TA_Globals->candleSettings[SET].rangeType)
-   #define TA_CANDLEAVGPERIOD(SET) (TA_Globals->candleSettings[SET].avgPeriod)
-   #define TA_CANDLEFACTOR(SET)    (TA_Globals->candleSettings[SET].factor)
+   #define TA_CANDLERANGETYPE(SET) (TA_Globals->candleSettings[TA_##SET].rangeType)
+   #define TA_CANDLEAVGPERIOD(SET) (TA_Globals->candleSettings[TA_##SET].avgPeriod)
+   #define TA_CANDLEFACTOR(SET)    (TA_Globals->candleSettings[TA_##SET].factor)
 #endif
 
 #define TA_CANDLERANGE(SET,IDX) \
-    ( TA_CANDLERANGETYPE(SET) == NAMESPACE(TA_RangeType)TA_RangeType_RealBody ? TA_REALBODY(IDX) : \
-    ( TA_CANDLERANGETYPE(SET) == NAMESPACE(TA_RangeType)TA_RangeType_HighLow  ? TA_HIGHLOWRANGE(IDX) : \
-    ( TA_CANDLERANGETYPE(SET) == NAMESPACE(TA_RangeType)TA_RangeType_Shadows  ? TA_UPPERSHADOW(IDX) + TA_LOWERSHADOW(IDX) : \
+    ( TA_CANDLERANGETYPE(SET) == ENUM_VALUE(RangeType,TA_RangeType_RealBody,RealBody) ? TA_REALBODY(IDX) : \
+    ( TA_CANDLERANGETYPE(SET) == ENUM_VALUE(RangeType,TA_RangeType_HighLow,HighLow)   ? TA_HIGHLOWRANGE(IDX) : \
+    ( TA_CANDLERANGETYPE(SET) == ENUM_VALUE(RangeType,TA_RangeType_Shadows,Shadows)   ? TA_UPPERSHADOW(IDX) + TA_LOWERSHADOW(IDX) : \
       0 ) ) )
 #define TA_CANDLEAVERAGE(SET,SUM,IDX) \
     ( TA_CANDLEFACTOR(SET) \
         * ( TA_CANDLEAVGPERIOD(SET) != 0.0? SUM / TA_CANDLEAVGPERIOD(SET) : TA_CANDLERANGE(SET,IDX) ) \
-        / ( TA_CANDLERANGETYPE(SET) == NAMESPACE(TA_RangeType)TA_RangeType_Shadows ? 2.0 : 1.0 ) \
+        / ( TA_CANDLERANGETYPE(SET) == ENUM_VALUE(RangeType,TA_RangeType_Shadows,Shadows) ? 2.0 : 1.0 ) \
     )
 #define TA_REALBODYGAPUP(IDX2,IDX1)     ( min(inOpen[IDX2],inClose[IDX2]) > max(inOpen[IDX1],inClose[IDX1]) )
 #define TA_REALBODYGAPDOWN(IDX2,IDX1)   ( max(inOpen[IDX2],inClose[IDX2]) < min(inOpen[IDX1],inClose[IDX1]) )

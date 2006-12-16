@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -54,11 +54,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -77,10 +78,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::CDLIDENTICAL3CROWS_Lookback( void )
+/* Generated */ int Core::CdlIdentical3CrowsLookback( void )
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int CDLIDENTICAL3CROWS_Lookback(  )
+/* Generated */ public int cdlIdentical3CrowsLookback(  )
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_CDLIDENTICAL3CROWS_Lookback( void )
@@ -95,7 +96,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-    return max( TA_CANDLEAVGPERIOD(TA_ShadowVeryShort), TA_CANDLEAVGPERIOD(TA_Equal)
+    return max( TA_CANDLEAVGPERIOD(ShadowVeryShort), TA_CANDLEAVGPERIOD(Equal)
             ) + 2;
 }
 
@@ -109,25 +110,25 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLIDENTICAL3CROWS( int    startIdx,
-/* Generated */                                                       int    endIdx,
-/* Generated */                                                       cli::array<double>^ inOpen,
-/* Generated */                                                       cli::array<double>^ inHigh,
-/* Generated */                                                       cli::array<double>^ inLow,
-/* Generated */                                                       cli::array<double>^ inClose,
-/* Generated */                                                       [Out]int%    outBegIdx,
-/* Generated */                                                       [Out]int%    outNbElement,
-/* Generated */                                                       cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlIdentical3Crows( int    startIdx,
+/* Generated */                                                    int    endIdx,
+/* Generated */                                                    cli::array<double>^ inOpen,
+/* Generated */                                                    cli::array<double>^ inHigh,
+/* Generated */                                                    cli::array<double>^ inLow,
+/* Generated */                                                    cli::array<double>^ inClose,
+/* Generated */                                                    [Out]int%    outBegIdx,
+/* Generated */                                                    [Out]int%    outNbElement,
+/* Generated */                                                    cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLIDENTICAL3CROWS( int    startIdx,
-/* Generated */                                       int    endIdx,
-/* Generated */                                       double       inOpen[],
-/* Generated */                                       double       inHigh[],
-/* Generated */                                       double       inLow[],
-/* Generated */                                       double       inClose[],
-/* Generated */                                       MInteger     outBegIdx,
-/* Generated */                                       MInteger     outNbElement,
-/* Generated */                                       int           outInteger[] )
+/* Generated */ public RetCode cdlIdentical3Crows( int    startIdx,
+/* Generated */                                    int    endIdx,
+/* Generated */                                    double       inOpen[],
+/* Generated */                                    double       inHigh[],
+/* Generated */                                    double       inLow[],
+/* Generated */                                    double       inClose[],
+/* Generated */                                    MInteger     outBegIdx,
+/* Generated */                                    MInteger     outNbElement,
+/* Generated */                                    int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CDLIDENTICAL3CROWS( int    startIdx,
 /* Generated */                                   int    endIdx,
@@ -152,19 +153,19 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outInteger )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -188,7 +189,7 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    /* Do the calculation using tight loops. */
@@ -196,23 +197,23 @@
    ShadowVeryShortPeriodTotal[2] = 0;
    ShadowVeryShortPeriodTotal[1] = 0;
    ShadowVeryShortPeriodTotal[0] = 0;
-   ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_ShadowVeryShort);
+   ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowVeryShort);
    EqualPeriodTotal[2] = 0;
    EqualPeriodTotal[1] = 0;
    EqualPeriodTotal[0] = 0;
-   EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_Equal);
+   EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Equal);
    
    i = ShadowVeryShortTrailingIdx;
    while( i < startIdx ) {
-        ShadowVeryShortPeriodTotal[2] += TA_CANDLERANGE( TA_ShadowVeryShort, i-2 );
-        ShadowVeryShortPeriodTotal[1] += TA_CANDLERANGE( TA_ShadowVeryShort, i-1 );
-        ShadowVeryShortPeriodTotal[0] += TA_CANDLERANGE( TA_ShadowVeryShort, i );
+        ShadowVeryShortPeriodTotal[2] += TA_CANDLERANGE( ShadowVeryShort, i-2 );
+        ShadowVeryShortPeriodTotal[1] += TA_CANDLERANGE( ShadowVeryShort, i-1 );
+        ShadowVeryShortPeriodTotal[0] += TA_CANDLERANGE( ShadowVeryShort, i );
         i++;
    }
    i = EqualTrailingIdx;
    while( i < startIdx ) {
-        EqualPeriodTotal[2] += TA_CANDLERANGE( TA_Equal, i-2 );
-        EqualPeriodTotal[1] += TA_CANDLERANGE( TA_Equal, i-1 );
+        EqualPeriodTotal[2] += TA_CANDLERANGE( Equal, i-2 );
+        EqualPeriodTotal[1] += TA_CANDLERANGE( Equal, i-1 );
         i++;
    }
    i = startIdx;
@@ -223,7 +224,7 @@
     * - each candle must have no or very short lower shadow
     * - each candle after the first must open at or very close to the prior candle's close
     * The meaning of "very short" is specified with TA_SetCandleSettings;
-    * the meaning of "very close" is specified with TA_SetCandleSettings (TA_Equal);
+    * the meaning of "very close" is specified with TA_SetCandleSettings (Equal);
     * outInteger is negative (-1 to -100): identical three crows is always bearish; 
     * the user should consider that identical 3 crows is significant when it appears after a mature advance or at high levels, 
     * while this function does not consider it
@@ -233,21 +234,21 @@
    {
         if( TA_CANDLECOLOR(i-2) == -1 &&                                    // 1st black
                                                                             // very short lower shadow
-            TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&     
+            TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&     
             TA_CANDLECOLOR(i-1) == -1 &&                                    // 2nd black
                                                                             // very short lower shadow
-            TA_LOWERSHADOW(i-1) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&     
+            TA_LOWERSHADOW(i-1) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&     
             TA_CANDLECOLOR(i) == -1 &&                                      // 3rd black
                                                                             // very short lower shadow
-            TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&         
+            TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&         
             inClose[i-2] > inClose[i-1] &&                                  // three declining
             inClose[i-1] > inClose[i] &&
                                                                             // 2nd black opens very close to 1st close
-            inOpen[i-1] <= inClose[i-2] + TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal[2], i-2 ) && 
-            inOpen[i-1] >= inClose[i-2] - TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal[2], i-2 ) &&
+            inOpen[i-1] <= inClose[i-2] + TA_CANDLEAVERAGE( Equal, EqualPeriodTotal[2], i-2 ) && 
+            inOpen[i-1] >= inClose[i-2] - TA_CANDLEAVERAGE( Equal, EqualPeriodTotal[2], i-2 ) &&
                                                                             // 3rd black opens very close to 2nd close 
-            inOpen[i] <= inClose[i-1] + TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal[1], i-1 ) &&   
-            inOpen[i] >= inClose[i-1] - TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal[1], i-1 )
+            inOpen[i] <= inClose[i-1] + TA_CANDLEAVERAGE( Equal, EqualPeriodTotal[1], i-1 ) &&   
+            inOpen[i] >= inClose[i-1] - TA_CANDLEAVERAGE( Equal, EqualPeriodTotal[1], i-1 )
           )
             outInteger[outIdx++] = -100;
         else
@@ -256,11 +257,11 @@
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         for (totIdx = 2; totIdx >= 0; --totIdx)
-            ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( TA_ShadowVeryShort, i-totIdx ) 
-                                                - TA_CANDLERANGE( TA_ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
+            ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx ) 
+                                                - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
         for (totIdx = 2; totIdx >= 1; --totIdx)
-            EqualPeriodTotal[totIdx] += TA_CANDLERANGE( TA_Equal, i-totIdx ) 
-                                      - TA_CANDLERANGE( TA_Equal, EqualTrailingIdx-totIdx );
+            EqualPeriodTotal[totIdx] += TA_CANDLERANGE( Equal, i-totIdx ) 
+                                      - TA_CANDLERANGE( Equal, EqualTrailingIdx-totIdx );
         i++; 
         ShadowVeryShortTrailingIdx++;
         EqualTrailingIdx++;
@@ -270,7 +271,7 @@
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -283,25 +284,25 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLIDENTICAL3CROWS( int    startIdx,
-/* Generated */                                                       int    endIdx,
-/* Generated */                                                       cli::array<float>^ inOpen,
-/* Generated */                                                       cli::array<float>^ inHigh,
-/* Generated */                                                       cli::array<float>^ inLow,
-/* Generated */                                                       cli::array<float>^ inClose,
-/* Generated */                                                       [Out]int%    outBegIdx,
-/* Generated */                                                       [Out]int%    outNbElement,
-/* Generated */                                                       cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlIdentical3Crows( int    startIdx,
+/* Generated */                                                    int    endIdx,
+/* Generated */                                                    cli::array<float>^ inOpen,
+/* Generated */                                                    cli::array<float>^ inHigh,
+/* Generated */                                                    cli::array<float>^ inLow,
+/* Generated */                                                    cli::array<float>^ inClose,
+/* Generated */                                                    [Out]int%    outBegIdx,
+/* Generated */                                                    [Out]int%    outNbElement,
+/* Generated */                                                    cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLIDENTICAL3CROWS( int    startIdx,
-/* Generated */                                       int    endIdx,
-/* Generated */                                       float        inOpen[],
-/* Generated */                                       float        inHigh[],
-/* Generated */                                       float        inLow[],
-/* Generated */                                       float        inClose[],
-/* Generated */                                       MInteger     outBegIdx,
-/* Generated */                                       MInteger     outNbElement,
-/* Generated */                                       int           outInteger[] )
+/* Generated */ public RetCode cdlIdentical3Crows( int    startIdx,
+/* Generated */                                    int    endIdx,
+/* Generated */                                    float        inOpen[],
+/* Generated */                                    float        inHigh[],
+/* Generated */                                    float        inLow[],
+/* Generated */                                    float        inClose[],
+/* Generated */                                    MInteger     outBegIdx,
+/* Generated */                                    MInteger     outNbElement,
+/* Generated */                                    int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLIDENTICAL3CROWS( int    startIdx,
 /* Generated */                                     int    endIdx,
@@ -319,16 +320,16 @@
 /* Generated */     int i, outIdx, totIdx, ShadowVeryShortTrailingIdx, EqualTrailingIdx, lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outInteger )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    lookbackTotal = LOOKBACK_CALL(CDLIDENTICAL3CROWS)();
@@ -338,27 +339,27 @@
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    ShadowVeryShortPeriodTotal[2] = 0;
 /* Generated */    ShadowVeryShortPeriodTotal[1] = 0;
 /* Generated */    ShadowVeryShortPeriodTotal[0] = 0;
-/* Generated */    ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_ShadowVeryShort);
+/* Generated */    ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowVeryShort);
 /* Generated */    EqualPeriodTotal[2] = 0;
 /* Generated */    EqualPeriodTotal[1] = 0;
 /* Generated */    EqualPeriodTotal[0] = 0;
-/* Generated */    EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_Equal);
+/* Generated */    EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Equal);
 /* Generated */    i = ShadowVeryShortTrailingIdx;
 /* Generated */    while( i < startIdx ) {
-/* Generated */         ShadowVeryShortPeriodTotal[2] += TA_CANDLERANGE( TA_ShadowVeryShort, i-2 );
-/* Generated */         ShadowVeryShortPeriodTotal[1] += TA_CANDLERANGE( TA_ShadowVeryShort, i-1 );
-/* Generated */         ShadowVeryShortPeriodTotal[0] += TA_CANDLERANGE( TA_ShadowVeryShort, i );
+/* Generated */         ShadowVeryShortPeriodTotal[2] += TA_CANDLERANGE( ShadowVeryShort, i-2 );
+/* Generated */         ShadowVeryShortPeriodTotal[1] += TA_CANDLERANGE( ShadowVeryShort, i-1 );
+/* Generated */         ShadowVeryShortPeriodTotal[0] += TA_CANDLERANGE( ShadowVeryShort, i );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = EqualTrailingIdx;
 /* Generated */    while( i < startIdx ) {
-/* Generated */         EqualPeriodTotal[2] += TA_CANDLERANGE( TA_Equal, i-2 );
-/* Generated */         EqualPeriodTotal[1] += TA_CANDLERANGE( TA_Equal, i-1 );
+/* Generated */         EqualPeriodTotal[2] += TA_CANDLERANGE( Equal, i-2 );
+/* Generated */         EqualPeriodTotal[1] += TA_CANDLERANGE( Equal, i-1 );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = startIdx;
@@ -367,38 +368,38 @@
 /* Generated */    {
 /* Generated */         if( TA_CANDLECOLOR(i-2) == -1 &&                                    // 1st black
 /* Generated */                                                                             // very short lower shadow
-/* Generated */             TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&     
+/* Generated */             TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&     
 /* Generated */             TA_CANDLECOLOR(i-1) == -1 &&                                    // 2nd black
 /* Generated */                                                                             // very short lower shadow
-/* Generated */             TA_LOWERSHADOW(i-1) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&     
+/* Generated */             TA_LOWERSHADOW(i-1) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&     
 /* Generated */             TA_CANDLECOLOR(i) == -1 &&                                      // 3rd black
 /* Generated */                                                                             // very short lower shadow
-/* Generated */             TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&         
+/* Generated */             TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&         
 /* Generated */             inClose[i-2] > inClose[i-1] &&                                  // three declining
 /* Generated */             inClose[i-1] > inClose[i] &&
 /* Generated */                                                                             // 2nd black opens very close to 1st close
-/* Generated */             inOpen[i-1] <= inClose[i-2] + TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal[2], i-2 ) && 
-/* Generated */             inOpen[i-1] >= inClose[i-2] - TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal[2], i-2 ) &&
+/* Generated */             inOpen[i-1] <= inClose[i-2] + TA_CANDLEAVERAGE( Equal, EqualPeriodTotal[2], i-2 ) && 
+/* Generated */             inOpen[i-1] >= inClose[i-2] - TA_CANDLEAVERAGE( Equal, EqualPeriodTotal[2], i-2 ) &&
 /* Generated */                                                                             // 3rd black opens very close to 2nd close 
-/* Generated */             inOpen[i] <= inClose[i-1] + TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal[1], i-1 ) &&   
-/* Generated */             inOpen[i] >= inClose[i-1] - TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal[1], i-1 )
+/* Generated */             inOpen[i] <= inClose[i-1] + TA_CANDLEAVERAGE( Equal, EqualPeriodTotal[1], i-1 ) &&   
+/* Generated */             inOpen[i] >= inClose[i-1] - TA_CANDLEAVERAGE( Equal, EqualPeriodTotal[1], i-1 )
 /* Generated */           )
 /* Generated */             outInteger[outIdx++] = -100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         for (totIdx = 2; totIdx >= 0; --totIdx)
-/* Generated */             ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( TA_ShadowVeryShort, i-totIdx ) 
-/* Generated */                                                 - TA_CANDLERANGE( TA_ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
+/* Generated */             ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx ) 
+/* Generated */                                                 - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
 /* Generated */         for (totIdx = 2; totIdx >= 1; --totIdx)
-/* Generated */             EqualPeriodTotal[totIdx] += TA_CANDLERANGE( TA_Equal, i-totIdx ) 
-/* Generated */                                       - TA_CANDLERANGE( TA_Equal, EqualTrailingIdx-totIdx );
+/* Generated */             EqualPeriodTotal[totIdx] += TA_CANDLERANGE( Equal, i-totIdx ) 
+/* Generated */                                       - TA_CANDLERANGE( Equal, EqualTrailingIdx-totIdx );
 /* Generated */         i++; 
 /* Generated */         ShadowVeryShortTrailingIdx++;
 /* Generated */         EqualTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

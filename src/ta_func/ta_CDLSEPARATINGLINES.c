@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -54,11 +54,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -77,10 +78,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::CDLSEPARATINGLINES_Lookback( void )
+/* Generated */ int Core::CdlSeperatingLinesLookback( void )
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int CDLSEPARATINGLINES_Lookback(  )
+/* Generated */ public int cdlSeperatingLinesLookback(  )
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_CDLSEPARATINGLINES_Lookback( void )
@@ -95,8 +96,8 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-    return max( max( TA_CANDLEAVGPERIOD(TA_ShadowVeryShort), TA_CANDLEAVGPERIOD(TA_BodyLong) ), 
-                TA_CANDLEAVGPERIOD(TA_Equal)
+    return max( max( TA_CANDLEAVGPERIOD(ShadowVeryShort), TA_CANDLEAVGPERIOD(BodyLong) ), 
+                TA_CANDLEAVGPERIOD(Equal)
             ) + 1;
 }
 
@@ -110,25 +111,25 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLSEPARATINGLINES( int    startIdx,
-/* Generated */                                                       int    endIdx,
-/* Generated */                                                       cli::array<double>^ inOpen,
-/* Generated */                                                       cli::array<double>^ inHigh,
-/* Generated */                                                       cli::array<double>^ inLow,
-/* Generated */                                                       cli::array<double>^ inClose,
-/* Generated */                                                       [Out]int%    outBegIdx,
-/* Generated */                                                       [Out]int%    outNbElement,
-/* Generated */                                                       cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlSeperatingLines( int    startIdx,
+/* Generated */                                                    int    endIdx,
+/* Generated */                                                    cli::array<double>^ inOpen,
+/* Generated */                                                    cli::array<double>^ inHigh,
+/* Generated */                                                    cli::array<double>^ inLow,
+/* Generated */                                                    cli::array<double>^ inClose,
+/* Generated */                                                    [Out]int%    outBegIdx,
+/* Generated */                                                    [Out]int%    outNbElement,
+/* Generated */                                                    cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLSEPARATINGLINES( int    startIdx,
-/* Generated */                                       int    endIdx,
-/* Generated */                                       double       inOpen[],
-/* Generated */                                       double       inHigh[],
-/* Generated */                                       double       inLow[],
-/* Generated */                                       double       inClose[],
-/* Generated */                                       MInteger     outBegIdx,
-/* Generated */                                       MInteger     outNbElement,
-/* Generated */                                       int           outInteger[] )
+/* Generated */ public RetCode cdlSeperatingLines( int    startIdx,
+/* Generated */                                    int    endIdx,
+/* Generated */                                    double       inOpen[],
+/* Generated */                                    double       inHigh[],
+/* Generated */                                    double       inLow[],
+/* Generated */                                    double       inClose[],
+/* Generated */                                    MInteger     outBegIdx,
+/* Generated */                                    MInteger     outNbElement,
+/* Generated */                                    int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CDLSEPARATINGLINES( int    startIdx,
 /* Generated */                                   int    endIdx,
@@ -152,19 +153,19 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outInteger )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -188,31 +189,31 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
    ShadowVeryShortPeriodTotal = 0;
-   ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_ShadowVeryShort);
+   ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowVeryShort);
    BodyLongPeriodTotal = 0;
-   BodyLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_BodyLong);
+   BodyLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyLong);
    EqualPeriodTotal = 0;
-   EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_Equal);
+   EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Equal);
 
    i = ShadowVeryShortTrailingIdx;
    while( i < startIdx ) {
-        ShadowVeryShortPeriodTotal += TA_CANDLERANGE( TA_ShadowVeryShort, i );
+        ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i );
         i++;
    }
    i = BodyLongTrailingIdx;
    while( i < startIdx ) {
-        BodyLongPeriodTotal += TA_CANDLERANGE( TA_BodyLong, i );
+        BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i );
         i++;
    }
    i = EqualTrailingIdx;
    while( i < startIdx ) {
-        EqualPeriodTotal += TA_CANDLERANGE( TA_Equal, i-1 );
+        EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 );
         i++;
    }
    i = startIdx;
@@ -230,16 +231,16 @@
    do
    {
         if( TA_CANDLECOLOR(i-1) == -TA_CANDLECOLOR(i) &&                                        // opposite candles
-            inOpen[i] <= inOpen[i-1] + TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal, i-1 ) &&   // same open
-            inOpen[i] >= inOpen[i-1] - TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal, i-1 ) &&
-            TA_REALBODY(i) > TA_CANDLEAVERAGE( TA_BodyLong, BodyLongPeriodTotal, i ) &&         // belt hold: long body
+            inOpen[i] <= inOpen[i-1] + TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 ) &&   // same open
+            inOpen[i] >= inOpen[i-1] - TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 ) &&
+            TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i ) &&         // belt hold: long body
             ( 
               ( TA_CANDLECOLOR(i) == 1 &&                                               // with no lower shadow if bullish
-                TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
+                TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
               )
               ||
               ( TA_CANDLECOLOR(i) == -1 &&                                              // with no upper shadow if bearish
-                TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
+                TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
               )
             )
           )
@@ -249,10 +250,10 @@
         /* add the current range and subtract the first range: this is done after the pattern recognition 
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
-        ShadowVeryShortPeriodTotal += TA_CANDLERANGE( TA_ShadowVeryShort, i ) 
-                                    - TA_CANDLERANGE( TA_ShadowVeryShort, ShadowVeryShortTrailingIdx );
-        BodyLongPeriodTotal += TA_CANDLERANGE( TA_BodyLong, i ) - TA_CANDLERANGE( TA_BodyLong, BodyLongTrailingIdx );
-        EqualPeriodTotal += TA_CANDLERANGE( TA_Equal, i-1 ) - TA_CANDLERANGE( TA_Equal, EqualTrailingIdx-1 );
+        ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i ) 
+                                    - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx );
+        BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
+        EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
         i++;
         ShadowVeryShortTrailingIdx++;
         BodyLongTrailingIdx++;
@@ -263,7 +264,7 @@
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -276,25 +277,25 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLSEPARATINGLINES( int    startIdx,
-/* Generated */                                                       int    endIdx,
-/* Generated */                                                       cli::array<float>^ inOpen,
-/* Generated */                                                       cli::array<float>^ inHigh,
-/* Generated */                                                       cli::array<float>^ inLow,
-/* Generated */                                                       cli::array<float>^ inClose,
-/* Generated */                                                       [Out]int%    outBegIdx,
-/* Generated */                                                       [Out]int%    outNbElement,
-/* Generated */                                                       cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlSeperatingLines( int    startIdx,
+/* Generated */                                                    int    endIdx,
+/* Generated */                                                    cli::array<float>^ inOpen,
+/* Generated */                                                    cli::array<float>^ inHigh,
+/* Generated */                                                    cli::array<float>^ inLow,
+/* Generated */                                                    cli::array<float>^ inClose,
+/* Generated */                                                    [Out]int%    outBegIdx,
+/* Generated */                                                    [Out]int%    outNbElement,
+/* Generated */                                                    cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLSEPARATINGLINES( int    startIdx,
-/* Generated */                                       int    endIdx,
-/* Generated */                                       float        inOpen[],
-/* Generated */                                       float        inHigh[],
-/* Generated */                                       float        inLow[],
-/* Generated */                                       float        inClose[],
-/* Generated */                                       MInteger     outBegIdx,
-/* Generated */                                       MInteger     outNbElement,
-/* Generated */                                       int           outInteger[] )
+/* Generated */ public RetCode cdlSeperatingLines( int    startIdx,
+/* Generated */                                    int    endIdx,
+/* Generated */                                    float        inOpen[],
+/* Generated */                                    float        inHigh[],
+/* Generated */                                    float        inLow[],
+/* Generated */                                    float        inClose[],
+/* Generated */                                    MInteger     outBegIdx,
+/* Generated */                                    MInteger     outNbElement,
+/* Generated */                                    int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLSEPARATINGLINES( int    startIdx,
 /* Generated */                                     int    endIdx,
@@ -311,16 +312,16 @@
 /* Generated */     int i, outIdx, ShadowVeryShortTrailingIdx, BodyLongTrailingIdx, EqualTrailingIdx, lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outInteger )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    lookbackTotal = LOOKBACK_CALL(CDLSEPARATINGLINES)();
@@ -330,27 +331,27 @@
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    ShadowVeryShortPeriodTotal = 0;
-/* Generated */    ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_ShadowVeryShort);
+/* Generated */    ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowVeryShort);
 /* Generated */    BodyLongPeriodTotal = 0;
-/* Generated */    BodyLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_BodyLong);
+/* Generated */    BodyLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyLong);
 /* Generated */    EqualPeriodTotal = 0;
-/* Generated */    EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_Equal);
+/* Generated */    EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Equal);
 /* Generated */    i = ShadowVeryShortTrailingIdx;
 /* Generated */    while( i < startIdx ) {
-/* Generated */         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( TA_ShadowVeryShort, i );
+/* Generated */         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = BodyLongTrailingIdx;
 /* Generated */    while( i < startIdx ) {
-/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( TA_BodyLong, i );
+/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = EqualTrailingIdx;
 /* Generated */    while( i < startIdx ) {
-/* Generated */         EqualPeriodTotal += TA_CANDLERANGE( TA_Equal, i-1 );
+/* Generated */         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = startIdx;
@@ -358,26 +359,26 @@
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( TA_CANDLECOLOR(i-1) == -TA_CANDLECOLOR(i) &&                                        // opposite candles
-/* Generated */             inOpen[i] <= inOpen[i-1] + TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal, i-1 ) &&   // same open
-/* Generated */             inOpen[i] >= inOpen[i-1] - TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal, i-1 ) &&
-/* Generated */             TA_REALBODY(i) > TA_CANDLEAVERAGE( TA_BodyLong, BodyLongPeriodTotal, i ) &&         // belt hold: long body
+/* Generated */             inOpen[i] <= inOpen[i-1] + TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 ) &&   // same open
+/* Generated */             inOpen[i] >= inOpen[i-1] - TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 ) &&
+/* Generated */             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i ) &&         // belt hold: long body
 /* Generated */             ( 
 /* Generated */               ( TA_CANDLECOLOR(i) == 1 &&                                               // with no lower shadow if bullish
-/* Generated */                 TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
+/* Generated */                 TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
 /* Generated */               )
 /* Generated */               ||
 /* Generated */               ( TA_CANDLECOLOR(i) == -1 &&                                              // with no upper shadow if bearish
-/* Generated */                 TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( TA_ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
+/* Generated */                 TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
 /* Generated */               )
 /* Generated */             )
 /* Generated */           )
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
-/* Generated */         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( TA_ShadowVeryShort, i ) 
-/* Generated */                                     - TA_CANDLERANGE( TA_ShadowVeryShort, ShadowVeryShortTrailingIdx );
-/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( TA_BodyLong, i ) - TA_CANDLERANGE( TA_BodyLong, BodyLongTrailingIdx );
-/* Generated */         EqualPeriodTotal += TA_CANDLERANGE( TA_Equal, i-1 ) - TA_CANDLERANGE( TA_Equal, EqualTrailingIdx-1 );
+/* Generated */         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i ) 
+/* Generated */                                     - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx );
+/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
+/* Generated */         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
 /* Generated */         i++;
 /* Generated */         ShadowVeryShortTrailingIdx++;
 /* Generated */         BodyLongTrailingIdx++;
@@ -385,7 +386,7 @@
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

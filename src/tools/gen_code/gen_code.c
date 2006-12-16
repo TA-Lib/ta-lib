@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -61,6 +61,7 @@
  *  012806 MF    Add call to Java post-processing.
  *  093006 MF    Add code generation for TA_FunctionDescription
  *  110206 AC    Change volume and open interest to double
+ *  120108 MF    Add generation of java_defs.h
  */
 
 /* Description:
@@ -147,6 +148,7 @@ FileHandle *gOutCore_Java;     /* For Core.Java */
 FileHandle *gOutProjFile;      /* For .NET project file */
 FileHandle *gOutMSVCProjFile;  /* For MSVC project file */
 FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
+FileHandle *gOutJavaDefs_H;    /* For "java_defs.h" */
 
 /* Why these file are not generated from a unix platform?
  *
@@ -159,7 +161,8 @@ FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
  * in gen_code, then Java code could also be generated from unix.
  */
 static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
-static void genJavaCode( const TA_FuncInfo *funcInfo );
+static void genJavaCodePhase1( const TA_FuncInfo *funcInfo );
+static void genJavaCodePhase2( const TA_FuncInfo *funcInfo );
 #endif
 
 
@@ -172,7 +175,10 @@ typedef void (*TA_ForEachGroup)( const char *groupName,
 static unsigned int forEachGroup( TA_ForEachGroup forEachGroupfunc,
                                   void *opaqueData );
 
-static void doForEachFunction( const TA_FuncInfo *funcInfo,
+static void doForEachFunctionPhase1( const TA_FuncInfo *funcInfo,
+                               void *opaqueData );
+
+static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
                                void *opaqueData );
 
 static void doForEachFunctionXml( const TA_FuncInfo *funcInfo,
@@ -256,8 +262,6 @@ static void printFuncHeaderDoc( FILE *out,
                                 const TA_FuncInfo *funcInfo,
                                 const char *prefix );
 
-
-static void addFuncEnumeration( FILE *out );
 
 static void extractTALogic( FILE *inFile, FILE *outFile );
 
@@ -373,10 +377,11 @@ int main(int argc, char* argv[])
          printf( "     8) ta-lib/dotnet/src/Core/TA-Lib-Core.vcproj (Win32 only)\n" );
          printf( "     9) ta-lib/dotnet/src/Core/TA-Lib-Core.h (Win32 only)\n" );
          printf( "    10) ta-lib/c/src/ta_abstract/excel_glue.c (Win32 only)\n" );
-         printf( "    11) ta-lib/c/ide/msvc/lib_proj/ta_func/ta_func.dsp (Win32 only)\n" );
-         printf( "    12) ta-lib/java/src/com/tictactec/ta/lib/Core.java (Win32 only)\n" );
-         printf( "    13) ta-lib/ta_func_api.xml\n" );
-         printf( "    14) ta-lib/c/src/ta_abstract/ta_func_api.c\n" );
+         printf( "    11) ta-lib/c/src/ta_abstract/java_defs.h (Win32 only)\n" );
+         printf( "    12) ta-lib/c/ide/msvc/lib_proj/ta_func/ta_func.dsp (Win32 only)\n" );
+         printf( "    13) ta-lib/java/src/com/tictactec/ta/lib/Core.java (Win32 only)\n" );
+         printf( "    14) ta-lib/ta_func_api.xml\n" );
+         printf( "    15) ta-lib/c/src/ta_abstract/ta_func_api.c\n" );
          printf( "\n" );
          printf( "  The function header, parameters and validation code of all TA\n" );
          printf( "  function in c/src/ta_func are also updated.\n" );
@@ -831,6 +836,18 @@ static int genCode(int argc, char* argv[])
          return -1;
       }
 
+      /* Create "java_defs.h" */
+      gOutJavaDefs_H = fileOpen( "..\\src\\ta_abstract\\ta_java_defs.h",
+                             "..\\src\\ta_abstract\\templates\\ta_java_defs.h.template",
+                             FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+                              
+
+      if( gOutJavaDefs_H == NULL )
+      {
+         printf( "\nCannot access [%s]\n", gToOpen );
+         return -1;
+      }
+
       /* Re-open the .NET project template. */
       gOutProjFile = fileOpen( FILE_NET_PROJ, FILE_NET_PROJ_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
       if( gOutProjFile == NULL )
@@ -867,15 +884,15 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
-   /* Process each function. */
-   retCode = TA_ForEachFunc( doForEachFunction, NULL );
+   /* Process each functions. Two phase. */
+   TA_ForEachFunc( doForEachFunctionPhase1, NULL );
+   TA_ForEachFunc( doForEachFunctionPhase2, NULL );
 
    /* Seperate generation of xml description file */
    fprintf(gOutFunc_XML->file, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");
    fprintf(gOutFunc_XML->file, "<FinancialFunctions>\n");
    retCode = TA_ForEachFunc( doForEachFunctionXml, NULL );
    fprintf(gOutFunc_XML->file, "</FinancialFunctions>\n");
-
 
    /* Append some "hard coded" prototype for ta_func */
    appendToFunc( gOutFunc_H->file );
@@ -895,6 +912,7 @@ static int genCode(int argc, char* argv[])
       fileClose( gOutProjFile );
       fileClose( gOutMSVCProjFile );
       fileClose( gOutExcelGlue_C );
+      fileClose( gOutJavaDefs_H );
       fileDelete( FILE_CORE_JAVA_TMP );
    #endif
 
@@ -1408,7 +1426,16 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 	fprintf(gOutFunc_XML->file, "\n");
 }
 
-static void doForEachFunction( const TA_FuncInfo *funcInfo,
+static void doForEachFunctionPhase1( const TA_FuncInfo *funcInfo,
+                               void *opaqueData )
+{
+   #ifdef _MSC_VER
+      /* Run the func file through the pre-processor to generate the Java code. */
+      genJavaCodePhase1( funcInfo );      
+   #endif
+}
+
+static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
                                void *opaqueData )
 {
    static const char *prevGroup = NULL;
@@ -1498,14 +1525,14 @@ static void doForEachFunction( const TA_FuncInfo *funcInfo,
    printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0 );
    printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0 );
    fprintf( gOutDotNet_H->file, "\n" );
-   fprintf( gOutDotNet_H->file, "         #define TA_%s Core::%s\n", funcInfo->name, funcInfo->name );
-   fprintf( gOutDotNet_H->file, "         #define TA_%s_Lookback Core::%s_Lookback\n\n", funcInfo->name, funcInfo->name );
+   fprintf( gOutDotNet_H->file, "         #define TA_%s Core::%s\n", funcInfo->name, funcInfo->camelCaseName );
+   fprintf( gOutDotNet_H->file, "         #define TA_%s_Lookback Core::%sLookback\n\n", funcInfo->name, funcInfo->camelCaseName );
 
    doFuncFile( funcInfo );
 
    #ifdef _MSC_VER
       /* Run the func file through the pre-processor to generate the Java code. */
-      genJavaCode( funcInfo );   
+      genJavaCodePhase2( funcInfo );   
    #endif
 }
 
@@ -1518,7 +1545,7 @@ static void doForEachUnstableFunction( const TA_FuncInfo *funcInfo,
 
    if( funcInfo->flags & TA_FUNC_FLG_UNST_PER )
    {
-      print( gOutDefs_H->file, "    /* %03d */  TA_FUNC_UNST_%s,\n", *i, funcInfo->name );
+      print( gOutDefs_H->file, "    /* %03d */  ENUM_DEFINE( TA_FUNC_UNST_%s, %s),\n", *i, funcInfo->name, funcInfo->camelCaseName );
       (*i)++;
    }
 }
@@ -1653,12 +1680,15 @@ static void printFunc( FILE *out,
    const char *outputIntArrayType;
    const char *outputIntParam;
    const char *arrayBracket;
+   const char *funcName;
    int excludeFromManaged;
 
    const char *startIdxString;
    const char *endIdxString;
    const char *outNbElementString;
    const char *outBegIdxString;
+
+   char funcNameBuffer[1024]; /* Not safe, but 1024 is realistic, */
 
    if( managedCPPCode )
    {
@@ -1675,6 +1705,7 @@ static void printFunc( FILE *out,
       endIdxString          = "endIdx";
       outNbElementString    = "outNbElement";
       outBegIdxString       = "outBegIdx";
+      funcName              = funcInfo->camelCaseName;
    }
    else if( outputForSWIG )
    {
@@ -1691,6 +1722,7 @@ static void printFunc( FILE *out,
       endIdxString          = "       END_IDX";
       outNbElementString    = "OUT_SIZE";
       outBegIdxString       = "BEG_IDX";
+      funcName              = funcInfo->name;
    }
    else if( outputForJava )
    {
@@ -1707,7 +1739,11 @@ static void printFunc( FILE *out,
       endIdxString          = "endIdx";
       outNbElementString    = "outNbElement";
       outBegIdxString       = "outBegIdx";
+      funcName              = funcNameBuffer;
 
+      /* For Java, first letter is always lowercase. */
+      strcpy( funcNameBuffer, funcInfo->camelCaseName );
+      funcNameBuffer[0] = tolower(funcNameBuffer[0]);      
    }
    else
    {
@@ -1724,6 +1760,7 @@ static void printFunc( FILE *out,
       endIdxString          = "endIdx";
       outNbElementString    = "outNbElement";
       outBegIdxString       = "outBegIdx";
+      funcName              = funcInfo->name;
    }
 
    typeString = "";
@@ -1735,23 +1772,23 @@ static void printFunc( FILE *out,
       {  
          if( managedCPPCode )
          {       
-            sprintf( gTempBuf, "%s%sint %s%s_Lookback( ",
+            sprintf( gTempBuf, "%s%sint %s%sLookback( ",
                      prefix? prefix:"",
                      managedCPPDeclaration? "         static ":"",
                      managedCPPDeclaration? "":"Core::",
-                     funcInfo->name );
+                     funcName );
          }
          else if( outputForJava )
          {         
-            sprintf( gTempBuf, "%spublic int %s_Lookback( ",
+            sprintf( gTempBuf, "%spublic int %sLookback( ",
                      prefix? prefix:"",
-                     funcInfo->name );
+                     funcName );
          }
          else
          {
             sprintf( gTempBuf, "%sint TA_%s_Lookback( ",
                      prefix? prefix:"",
-                     funcInfo->name );
+                     funcName );
          }
          print( out, gTempBuf );
          indent = strlen(gTempBuf) - 2;
@@ -1760,19 +1797,19 @@ static void printFunc( FILE *out,
       {
          if( managedCPPCode )
          {
-            sprintf( gTempBuf, "%s%senum class %sTA_RetCode %s%s( int    %s,\n",
+            sprintf( gTempBuf, "%s%senum class %sRetCode %s%s( int    %s,\n",
                      prefix? prefix:"",
                      managedCPPDeclaration? "         static ":"",
                      managedCPPDeclaration? "":"Core::",
                      managedCPPDeclaration? "":"Core::",
-                     funcInfo->name,
+                     funcName,
                      startIdxString );
          }
          else if( outputForJava )
          {
-               sprintf( gTempBuf, "%spublic TA_RetCode %s( int    %s,\n",
+               sprintf( gTempBuf, "%spublic RetCode %s( int    %s,\n",
                         prefix? prefix:"",                        
-                        funcInfo->name,
+                        funcName,
                         startIdxString );
          }
          else
@@ -1780,12 +1817,12 @@ static void printFunc( FILE *out,
             if( inputIsSinglePrecision )
                sprintf( gTempBuf, "%sTA_RetCode TA_S_%s( int    %s,\n",
                         prefix? prefix:"",
-                        funcInfo->name,
+                        funcName,
                         startIdxString );
             else  
                sprintf( gTempBuf, "%sTA_RetCode TA_%s( int    %s,\n",
                         prefix? prefix:"",                        
-                        funcInfo->name,
+                        funcName,
                         startIdxString );
          }
          print( out, gTempBuf );
@@ -1802,16 +1839,16 @@ static void printFunc( FILE *out,
    }
    else if( frame )
    {
-      indent = strlen(funcInfo->name);
+      indent = strlen(funcName);
       if( lookbackSignature )
       {
-         print( out, "%sTA_%s_Lookback(", prefix == NULL? "" : prefix, funcInfo->name );
+         print( out, "%sTA_%s_Lookback(", prefix == NULL? "" : prefix, funcName );
          indent += 12;
 
       }
       else
       {  
-         print( out, "%sTA_%s(\n", prefix == NULL? "" : prefix, funcInfo->name );
+         print( out, "%sTA_%s(\n", prefix == NULL? "" : prefix, funcName );
          indent += 4;
       }
    }
@@ -1855,7 +1892,7 @@ static void printFunc( FILE *out,
 
          if( retCode != TA_SUCCESS )
          {
-            printf( "[%s] invalid 'input' information (%d,%d)\n", funcInfo->name, i, paramNb );
+            printf( "[%s] invalid 'input' information (%d,%d)\n", funcName, i, paramNb );
             return;
          }
 
@@ -1883,7 +1920,7 @@ static void printFunc( FILE *out,
 
             if( j == 0 )
             {
-               printf( "[%s] invalid 'price input' information (%d,%d)\n", funcInfo->name, i, paramNb );
+               printf( "[%s] invalid 'price input' information (%d,%d)\n", funcName, i, paramNb );
                return;
             }
 
@@ -1938,7 +1975,7 @@ static void printFunc( FILE *out,
 
                fprintf( out, "\n" );
                printIndent( out, indent );
-               fprintf( out, "   return NAMESPACE(TA_RetCode)TA_BAD_PARAM;\n" );
+               fprintf( out, "   return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);\n" );
                print( out, "\n" );
             }
             else
@@ -2040,7 +2077,7 @@ static void printFunc( FILE *out,
             if( !paramName )
                paramName = "inParam";
             printf( "[%s,%s,%d] invalid 'input' type(%d)\n",
-                    funcInfo->name, paramName, paramNb,
+                    funcName, paramName, paramNb,
                     inputParamInfo->type );
             return;
          }
@@ -2049,7 +2086,7 @@ static void printFunc( FILE *out,
          {
             printIndent( out, indent );
             if( validationCode )
-               fprintf( out, "if( !%s ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;\n", inputParamInfo->paramName );
+               fprintf( out, "if( !%s ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);\n", inputParamInfo->paramName );
             else
             {
                if( frame )
@@ -2095,7 +2132,7 @@ static void printFunc( FILE *out,
 
       if( retCode != TA_SUCCESS )
       {
-         printf( "[%s] invalid 'optional input' information\n", funcInfo->name );
+         printf( "[%s] invalid 'optional input' information\n", funcName );
          return;
       }
 
@@ -2115,7 +2152,7 @@ static void printFunc( FILE *out,
       case TA_OptInput_IntegerList:
          if( (optInputParamInfo->dataSet == TA_DEF_UI_MA_Method.dataSet) && !frame )
          {
-            typeString = "TA_MAType";
+            typeString = managedCPPCode||outputForJava? "MAType":"TA_MAType";
             defaultParamName = outputForSWIG? "OPT_MATYPE":"optInMAType";
             excludeFromManaged = 1;
          }
@@ -2129,7 +2166,7 @@ static void printFunc( FILE *out,
          if( !paramName )
             paramName = "optInParam";
          printf( "[%s,%s,%d] invalid 'optional input' type(%d)\n",
-                 funcInfo->name, paramName, paramNb,
+                 funcName, paramName, paramNb,
                  optInputParamInfo->type );
          return;
       }
@@ -2304,7 +2341,7 @@ static void printFunc( FILE *out,
 
          if( retCode != TA_SUCCESS )
          {
-            printf( "[%s] invalid 'output' information\n", funcInfo->name );
+            printf( "[%s] invalid 'output' information\n", funcName );
             return;
          }
 
@@ -2324,7 +2361,7 @@ static void printFunc( FILE *out,
             if( !paramName )
                paramName = "outParam";
             printf( "[%s,%s,%d] invalid 'output' type(%d)\n",
-                    funcInfo->name, paramName, paramNb,
+                    funcName, paramName, paramNb,
                     outputParamInfo->type );
             return;
          }
@@ -2335,7 +2372,7 @@ static void printFunc( FILE *out,
          if( validationCode )
          {
             print( out, "   if( !%s )\n", paramName );
-            print( out, "      return NAMESPACE(TA_RetCode)TA_BAD_PARAM;\n" );
+            print( out, "      return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);\n" );
             print( out, "\n" );
          }
          else
@@ -2682,7 +2719,6 @@ static void doDefsFile( void )
    out = gOutDefs_H->file;
    
    genPrefix = 1;
-   addFuncEnumeration( out );
    addUnstablePeriodEnum( out );
    print( out, "\n" );
    genPrefix = 0;
@@ -2863,11 +2899,12 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "\n" );
    print( out, "#if defined( _MANAGED )\n" );
    print( out, "   #include \"TA-Lib-Core.h\"\n" );
-   print( out, "   #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)\n" );
+   print( out, "   #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)\n" );
    print( out, "   namespace TicTacTec { namespace TA { namespace Lib {\n" );
    print( out, "#elif defined( _JAVA )\n" );
    print( out, "   #include \"ta_defs.h\"\n" );
-   print( out, "   #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)\n" );
+   print( out, "   #include \"ta_java_defs.h\"\n" );
+   print( out, "   #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)\n" );
    print( out, "#else\n" );
    print( out, "   #include <string.h>\n" );
    print( out, "   #include <math.h>\n" );
@@ -2916,6 +2953,13 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "#if defined( _MANAGED )\n" );
    printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
    print( out, "#elif defined( _JAVA )\n" );
+
+   /* Handle special case to avoid duplicate definition of min,max */
+   if( strcmp( funcInfo->camelCaseName, "Min" ) == 0 )
+      print( out, "#undef min\n" );
+   else if( strcmp( funcInfo->camelCaseName, "Max" ) == 0 )
+      print( out, "#undef max\n" );
+
    printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 );
    print( out, "#else\n" );
    printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
@@ -2930,9 +2974,9 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "\n" );
    print( out, "   /* Validate the requested output range. */\n" );
    print( out, "   if( startIdx < 0 )\n" );
-   print( out, "      return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;\n" );
+   print( out, "      return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);\n" );
    print( out, "   if( (endIdx < 0) || (endIdx < startIdx))\n" );
-   print( out, "      return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;\n" );
+   print( out, "      return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);\n" );
    print( out, "\n" );
    /* Generate the code for checking the parameters.
     * Also generates the code for setting up the
@@ -3026,7 +3070,7 @@ static void printOptInputValidation( FILE *out,
    if( lookbackValidationCode )
       print( out, "      return -1;\n" );
    else
-      print( out, "      return NAMESPACE(TA_RetCode)TA_BAD_PARAM;\n" );
+      print( out, "      return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);\n" );
 
    print( out, "\n" );
 }
@@ -3251,7 +3295,7 @@ static int addUnstablePeriodEnum( FILE *out )
    unsigned int id;
 
    print( out, "\n" );
-   print( out, "ENUM_BEGIN( TA_FuncUnstId )\n");
+   print( out, "ENUM_BEGIN( FuncUnstId )\n");
 
    /* Enumerate the function having an "unstable period". Give
     * to each a unique identifier.
@@ -3259,9 +3303,9 @@ static int addUnstablePeriodEnum( FILE *out )
    id = 0;
    retCode = TA_ForEachFunc( doForEachUnstableFunction, &id );
 
-   print( out, "               TA_FUNC_UNST_ALL,\n");
-   print( out, "               TA_FUNC_UNST_NONE=-1\n" );
-   print( out, "ENUM_END( TA_FuncUnstId )\n");
+   print( out, "               ENUM_DEFINE( TA_FUNC_UNST_ALL, FuncUnstAll),\n");
+   print( out, "               ENUM_DEFINE( TA_FUNC_UNST_NONE, FuncUnstNone) = -1\n" );
+   print( out, "ENUM_END( FuncUnstId )\n");
 
    if( retCode != TA_SUCCESS )
       return -1;
@@ -3319,7 +3363,7 @@ static int gen_retcode( void )
    {
       if( !step1Done )
       {
-         if( strstr( gTempBuf, "TA-LIB Error Code" ) != NULL )
+         if( strstr( gTempBuf, "ENUM_BEGIN( RetCode )" ) != NULL )
             step1Done = 1;
       }
       else
@@ -3530,26 +3574,6 @@ static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo )
 }
 #endif
 
-static void addFuncEnumeration( FILE *out )
-{
-   TA_IntegerList *intList;
-   unsigned int j;
-
-   print( out, "\n" );
-   /* Add the TA_MAType enumeration */
-   intList = (TA_IntegerList *)TA_DEF_UI_MA_Method.dataSet;   
-   print( out, "ENUM_BEGIN( TA_MAType )\n" );
-   for( j=0; j < intList->nbElement; j++ )
-   {
-      strcpy( gTempBuf, intList->data[j].string );
-      cnvtChar( gTempBuf, ' ', '_' );
-      trimWhitespace( gTempBuf );
-      cnvtToUpperCase( gTempBuf );
-      print( out, "   TA_MAType_%-10s=%d%s", gTempBuf, intList->data[j].value,
-                     j < (intList->nbElement)-1?",\n":"\n");
-   }
-   print( out, "ENUM_END( TA_MAType )\n" );
-}
 
 static void extractTALogic( FILE *inFile, FILE *outFile )
 {
@@ -3802,21 +3826,49 @@ static void appendToFunc( FILE *out )
 }
 
 #ifdef _MSC_VER
-void genJavaCode( const TA_FuncInfo *funcInfo )
+void genJavaCodePhase1( const TA_FuncInfo *funcInfo )
+{
+   fprintf( gOutJavaDefs_H->file, "#define TA_%s_Lookback %c%sLookback\n", funcInfo->name, tolower(funcInfo->camelCaseName[0]), &funcInfo->camelCaseName[1] );
+   fprintf( gOutJavaDefs_H->file, "#define TA_%s %c%s\n", funcInfo->name, tolower(funcInfo->camelCaseName[0]), &funcInfo->camelCaseName[1] );
+}
+
+void genJavaCodePhase2( const TA_FuncInfo *funcInfo )
 {
    FILE *logicTmp;
    char buffer[500];
    int idx, again;
+   static int firstTime = 1;
 
-   sprintf( buffer, "..\\src\\tools\\gen_code\\mcpp -c -+ -z -P -I..\\src\\ta_common -I..\\include -D _JAVA ..\\src\\ta_func\\TA_%s.c >..\\temp\\CoreJavaCode.tmp ", funcInfo->name);
+   if( firstTime == 1 )
+   {
+      /* Clean-up jus tin case. */
+      fileDelete( "..\\temp\\CoreJavaCode1.tmp" );
+      fileDelete( "..\\temp\\CoreJavaCode2.tmp" );
+      firstTime = 0;
+   }
+
+   init_gToOpen( "..\\temp\\CoreJavaCode1.tmp", NULL );
+   logicTmp = fopen( gToOpen, "w" );
+   if( !logicTmp )
+   {
+      printf( "Cannot open CoreJavaCode1.tmp\n" );
+      return;
+   }
+   fprintf( logicTmp, "#include \"ta_java_defs.h\"\n" );
+   fclose(logicTmp);
+   
+   sprintf( buffer, "..\\src\\tools\\gen_code\\mcpp -c -+ -z -P -I..\\src\\ta_common -I..\\src\\ta_abstract -I..\\include -D _JAVA ..\\src\\ta_func\\TA_%s.c >>..\\temp\\CoreJavaCode1.tmp ", funcInfo->name);
+   system( buffer );
+
+   sprintf( buffer, "..\\src\\tools\\gen_code\\mcpp -c -+ -z -P -I..\\src\\ta_common -I..\\src\\ta_abstract -I..\\include -D _JAVA ..\\temp\\CoreJavaCode1.tmp >..\\temp\\CoreJavaCode2.tmp " );
    system( buffer );
 
    /* Append the output of the C pre-processor to the Core.Java file. */
-   init_gToOpen( "..\\temp\\CoreJavaCode.tmp", NULL );
+   init_gToOpen( "..\\temp\\CoreJavaCode2.tmp", NULL );
    logicTmp = fopen( gToOpen, "r" );
    if( !logicTmp )
    {
-      printf( "Cannot open CoreJavaCode.tmp\n" );
+      printf( "Cannot open CoreJavaCode2.tmp\n" );
       return;
    }
    while( fgets(gTempBuf,BUFFER_SIZE,logicTmp) )
@@ -3837,7 +3889,8 @@ void genJavaCode( const TA_FuncInfo *funcInfo )
    /* Clean-up */
    fclose(logicTmp);
    print( gOutCore_Java->file, "\n" );   
-   fileDelete( "..\\temp\\CoreJavaCode.tmp" );
+   fileDelete( "..\\temp\\CoreJavaCode1.tmp" );
+   fileDelete( "..\\temp\\CoreJavaCode2.tmp" );
 }
 #endif
 

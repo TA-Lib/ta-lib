@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -56,11 +56,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -79,10 +80,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::MFI_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
+/* Generated */ int Core::MfiLookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int MFI_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
+/* Generated */ public int mfiLookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_MFI_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
@@ -104,7 +105,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-   return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MFI);
+   return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MFI,Mfi);
 }
 
 #if defined( _MANAGED )
@@ -141,27 +142,27 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::MFI( int    startIdx,
-/* Generated */                                        int    endIdx,
-/* Generated */                                        cli::array<double>^ inHigh,
-/* Generated */                                        cli::array<double>^ inLow,
-/* Generated */                                        cli::array<double>^ inClose,
-/* Generated */                                        cli::array<double>^ inVolume,
-/* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                        [Out]int%    outBegIdx,
-/* Generated */                                        [Out]int%    outNbElement,
-/* Generated */                                        cli::array<double>^  outReal )
+/* Generated */ enum class Core::RetCode Core::Mfi( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     cli::array<double>^ inHigh,
+/* Generated */                                     cli::array<double>^ inLow,
+/* Generated */                                     cli::array<double>^ inClose,
+/* Generated */                                     cli::array<double>^ inVolume,
+/* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNbElement,
+/* Generated */                                     cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode MFI( int    startIdx,
-/* Generated */                        int    endIdx,
-/* Generated */                        double       inHigh[],
-/* Generated */                        double       inLow[],
-/* Generated */                        double       inClose[],
-/* Generated */                        double       inVolume[],
-/* Generated */                        int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                        MInteger     outBegIdx,
-/* Generated */                        MInteger     outNbElement,
-/* Generated */                        double        outReal[] )
+/* Generated */ public RetCode mfi( int    startIdx,
+/* Generated */                     int    endIdx,
+/* Generated */                     double       inHigh[],
+/* Generated */                     double       inLow[],
+/* Generated */                     double       inClose[],
+/* Generated */                     double       inVolume[],
+/* Generated */                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                     MInteger     outBegIdx,
+/* Generated */                     MInteger     outNbElement,
+/* Generated */                     double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MFI( int    startIdx,
 /* Generated */                    int    endIdx,
@@ -189,25 +190,25 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow||!inClose||!inVolume)
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
 /* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -222,7 +223,7 @@
    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
    
    /* Adjust startIdx to account for the lookback period. */
-   lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MFI);
+   lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MFI,Mfi);
 
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
@@ -231,7 +232,7 @@
    if( startIdx > endIdx )
    {
       CIRCBUF_DESTROY(mflow);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    outIdx = 0; /* Index into the output. */
@@ -350,7 +351,7 @@
    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -363,27 +364,27 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::MFI( int    startIdx,
-/* Generated */                                        int    endIdx,
-/* Generated */                                        cli::array<float>^ inHigh,
-/* Generated */                                        cli::array<float>^ inLow,
-/* Generated */                                        cli::array<float>^ inClose,
-/* Generated */                                        cli::array<float>^ inVolume,
-/* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                        [Out]int%    outBegIdx,
-/* Generated */                                        [Out]int%    outNbElement,
-/* Generated */                                        cli::array<double>^  outReal )
+/* Generated */ enum class Core::RetCode Core::Mfi( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     cli::array<float>^ inHigh,
+/* Generated */                                     cli::array<float>^ inLow,
+/* Generated */                                     cli::array<float>^ inClose,
+/* Generated */                                     cli::array<float>^ inVolume,
+/* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNbElement,
+/* Generated */                                     cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode MFI( int    startIdx,
-/* Generated */                        int    endIdx,
-/* Generated */                        float        inHigh[],
-/* Generated */                        float        inLow[],
-/* Generated */                        float        inClose[],
-/* Generated */                        float        inVolume[],
-/* Generated */                        int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                        MInteger     outBegIdx,
-/* Generated */                        MInteger     outNbElement,
-/* Generated */                        double        outReal[] )
+/* Generated */ public RetCode mfi( int    startIdx,
+/* Generated */                     int    endIdx,
+/* Generated */                     float        inHigh[],
+/* Generated */                     float        inLow[],
+/* Generated */                     float        inClose[],
+/* Generated */                     float        inVolume[],
+/* Generated */                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                     MInteger     outBegIdx,
+/* Generated */                     MInteger     outNbElement,
+/* Generated */                     double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MFI( int    startIdx,
 /* Generated */                      int    endIdx,
@@ -403,32 +404,32 @@
 /* Generated */    CIRCBUF_PROLOG_CLASS( mflow, MoneyFlow, 50 ); 
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose||!inVolume)
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
 /* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    CIRCBUF_INIT_CLASS( mflow, MoneyFlow, optInTimePeriod );   
 /* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */    lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MFI);
+/* Generated */    lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MFI,Mfi);
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       CIRCBUF_DESTROY(mflow);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    outIdx = 0; 
 /* Generated */    today = startIdx-lookbackTotal;
@@ -519,7 +520,7 @@
 /* Generated */    CIRCBUF_DESTROY(mflow);
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

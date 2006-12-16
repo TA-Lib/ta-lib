@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -54,11 +54,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -77,10 +78,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::CDL3LINESTRIKE_Lookback( void )
+/* Generated */ int Core::Cdl3LineStrikeLookback( void )
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int CDL3LINESTRIKE_Lookback(  )
+/* Generated */ public int cdl3LineStrikeLookback(  )
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_CDL3LINESTRIKE_Lookback( void )
@@ -95,7 +96,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-    return TA_CANDLEAVGPERIOD(TA_Near) + 3;
+    return TA_CANDLEAVGPERIOD(Near) + 3;
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -108,25 +109,25 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDL3LINESTRIKE( int    startIdx,
-/* Generated */                                                   int    endIdx,
-/* Generated */                                                   cli::array<double>^ inOpen,
-/* Generated */                                                   cli::array<double>^ inHigh,
-/* Generated */                                                   cli::array<double>^ inLow,
-/* Generated */                                                   cli::array<double>^ inClose,
-/* Generated */                                                   [Out]int%    outBegIdx,
-/* Generated */                                                   [Out]int%    outNbElement,
-/* Generated */                                                   cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::Cdl3LineStrike( int    startIdx,
+/* Generated */                                                int    endIdx,
+/* Generated */                                                cli::array<double>^ inOpen,
+/* Generated */                                                cli::array<double>^ inHigh,
+/* Generated */                                                cli::array<double>^ inLow,
+/* Generated */                                                cli::array<double>^ inClose,
+/* Generated */                                                [Out]int%    outBegIdx,
+/* Generated */                                                [Out]int%    outNbElement,
+/* Generated */                                                cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDL3LINESTRIKE( int    startIdx,
-/* Generated */                                   int    endIdx,
-/* Generated */                                   double       inOpen[],
-/* Generated */                                   double       inHigh[],
-/* Generated */                                   double       inLow[],
-/* Generated */                                   double       inClose[],
-/* Generated */                                   MInteger     outBegIdx,
-/* Generated */                                   MInteger     outNbElement,
-/* Generated */                                   int           outInteger[] )
+/* Generated */ public RetCode cdl3LineStrike( int    startIdx,
+/* Generated */                                int    endIdx,
+/* Generated */                                double       inOpen[],
+/* Generated */                                double       inHigh[],
+/* Generated */                                double       inLow[],
+/* Generated */                                double       inClose[],
+/* Generated */                                MInteger     outBegIdx,
+/* Generated */                                MInteger     outNbElement,
+/* Generated */                                int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -150,19 +151,19 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outInteger )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -186,19 +187,19 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
    NearPeriodTotal[3] = 0;
    NearPeriodTotal[2] = 0;
-   NearTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_Near);
+   NearTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Near);
    
    i = NearTrailingIdx;
    while( i < startIdx ) {
-        NearPeriodTotal[3] += TA_CANDLERANGE( TA_Near, i-3 );
-        NearPeriodTotal[2] += TA_CANDLERANGE( TA_Near, i-2 );
+        NearPeriodTotal[3] += TA_CANDLERANGE( Near, i-3 );
+        NearPeriodTotal[2] += TA_CANDLERANGE( Near, i-2 );
         i++;
    }
    i = startIdx;
@@ -221,11 +222,11 @@
             TA_CANDLECOLOR(i-2) == TA_CANDLECOLOR(i-1) &&
             TA_CANDLECOLOR(i) == -TA_CANDLECOLOR(i-1) &&                                    // 4th opposite color
                                                                                             // 2nd opens within/near 1st rb
-            inOpen[i-2] >= min( inOpen[i-3], inClose[i-3] ) - TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal[3], i-3 ) &&
-            inOpen[i-2] <= max( inOpen[i-3], inClose[i-3] ) + TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal[3], i-3 ) &&
+            inOpen[i-2] >= min( inOpen[i-3], inClose[i-3] ) - TA_CANDLEAVERAGE( Near, NearPeriodTotal[3], i-3 ) &&
+            inOpen[i-2] <= max( inOpen[i-3], inClose[i-3] ) + TA_CANDLEAVERAGE( Near, NearPeriodTotal[3], i-3 ) &&
                                                                                             // 3rd opens within/near 2nd rb
-            inOpen[i-1] >= min( inOpen[i-2], inClose[i-2] ) - TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal[2], i-2 ) &&
-            inOpen[i-1] <= max( inOpen[i-2], inClose[i-2] ) + TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal[2], i-2 ) &&
+            inOpen[i-1] >= min( inOpen[i-2], inClose[i-2] ) - TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
+            inOpen[i-1] <= max( inOpen[i-2], inClose[i-2] ) + TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
             (
                 (   // if three white
                     TA_CANDLECOLOR(i-1) == 1 &&
@@ -248,8 +249,8 @@
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         for (totIdx = 3; totIdx >= 2; --totIdx)
-            NearPeriodTotal[totIdx] += TA_CANDLERANGE( TA_Near, i-totIdx ) 
-                                     - TA_CANDLERANGE( TA_Near, NearTrailingIdx-totIdx );
+            NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx ) 
+                                     - TA_CANDLERANGE( Near, NearTrailingIdx-totIdx );
         i++; 
         NearTrailingIdx++;
    } while( i <= endIdx );
@@ -258,7 +259,7 @@
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -271,25 +272,25 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDL3LINESTRIKE( int    startIdx,
-/* Generated */                                                   int    endIdx,
-/* Generated */                                                   cli::array<float>^ inOpen,
-/* Generated */                                                   cli::array<float>^ inHigh,
-/* Generated */                                                   cli::array<float>^ inLow,
-/* Generated */                                                   cli::array<float>^ inClose,
-/* Generated */                                                   [Out]int%    outBegIdx,
-/* Generated */                                                   [Out]int%    outNbElement,
-/* Generated */                                                   cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::Cdl3LineStrike( int    startIdx,
+/* Generated */                                                int    endIdx,
+/* Generated */                                                cli::array<float>^ inOpen,
+/* Generated */                                                cli::array<float>^ inHigh,
+/* Generated */                                                cli::array<float>^ inLow,
+/* Generated */                                                cli::array<float>^ inClose,
+/* Generated */                                                [Out]int%    outBegIdx,
+/* Generated */                                                [Out]int%    outNbElement,
+/* Generated */                                                cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDL3LINESTRIKE( int    startIdx,
-/* Generated */                                   int    endIdx,
-/* Generated */                                   float        inOpen[],
-/* Generated */                                   float        inHigh[],
-/* Generated */                                   float        inLow[],
-/* Generated */                                   float        inClose[],
-/* Generated */                                   MInteger     outBegIdx,
-/* Generated */                                   MInteger     outNbElement,
-/* Generated */                                   int           outInteger[] )
+/* Generated */ public RetCode cdl3LineStrike( int    startIdx,
+/* Generated */                                int    endIdx,
+/* Generated */                                float        inOpen[],
+/* Generated */                                float        inHigh[],
+/* Generated */                                float        inLow[],
+/* Generated */                                float        inClose[],
+/* Generated */                                MInteger     outBegIdx,
+/* Generated */                                MInteger     outNbElement,
+/* Generated */                                int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
 /* Generated */                                 int    endIdx,
@@ -306,16 +307,16 @@
 /* Generated */     int i, outIdx, totIdx, NearTrailingIdx, lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outInteger )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    lookbackTotal = LOOKBACK_CALL(CDL3LINESTRIKE)();
@@ -325,15 +326,15 @@
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    NearPeriodTotal[3] = 0;
 /* Generated */    NearPeriodTotal[2] = 0;
-/* Generated */    NearTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_Near);
+/* Generated */    NearTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Near);
 /* Generated */    i = NearTrailingIdx;
 /* Generated */    while( i < startIdx ) {
-/* Generated */         NearPeriodTotal[3] += TA_CANDLERANGE( TA_Near, i-3 );
-/* Generated */         NearPeriodTotal[2] += TA_CANDLERANGE( TA_Near, i-2 );
+/* Generated */         NearPeriodTotal[3] += TA_CANDLERANGE( Near, i-3 );
+/* Generated */         NearPeriodTotal[2] += TA_CANDLERANGE( Near, i-2 );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = startIdx;
@@ -344,11 +345,11 @@
 /* Generated */             TA_CANDLECOLOR(i-2) == TA_CANDLECOLOR(i-1) &&
 /* Generated */             TA_CANDLECOLOR(i) == -TA_CANDLECOLOR(i-1) &&                                    // 4th opposite color
 /* Generated */                                                                                             // 2nd opens within/near 1st rb
-/* Generated */             inOpen[i-2] >= min( inOpen[i-3], inClose[i-3] ) - TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal[3], i-3 ) &&
-/* Generated */             inOpen[i-2] <= max( inOpen[i-3], inClose[i-3] ) + TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal[3], i-3 ) &&
+/* Generated */             inOpen[i-2] >= min( inOpen[i-3], inClose[i-3] ) - TA_CANDLEAVERAGE( Near, NearPeriodTotal[3], i-3 ) &&
+/* Generated */             inOpen[i-2] <= max( inOpen[i-3], inClose[i-3] ) + TA_CANDLEAVERAGE( Near, NearPeriodTotal[3], i-3 ) &&
 /* Generated */                                                                                             // 3rd opens within/near 2nd rb
-/* Generated */             inOpen[i-1] >= min( inOpen[i-2], inClose[i-2] ) - TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal[2], i-2 ) &&
-/* Generated */             inOpen[i-1] <= max( inOpen[i-2], inClose[i-2] ) + TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal[2], i-2 ) &&
+/* Generated */             inOpen[i-1] >= min( inOpen[i-2], inClose[i-2] ) - TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
+/* Generated */             inOpen[i-1] <= max( inOpen[i-2], inClose[i-2] ) + TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
 /* Generated */             (
 /* Generated */                 (   // if three white
 /* Generated */                     TA_CANDLECOLOR(i-1) == 1 &&
@@ -368,14 +369,14 @@
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         for (totIdx = 3; totIdx >= 2; --totIdx)
-/* Generated */             NearPeriodTotal[totIdx] += TA_CANDLERANGE( TA_Near, i-totIdx ) 
-/* Generated */                                      - TA_CANDLERANGE( TA_Near, NearTrailingIdx-totIdx );
+/* Generated */             NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx ) 
+/* Generated */                                      - TA_CANDLERANGE( Near, NearTrailingIdx-totIdx );
 /* Generated */         i++; 
 /* Generated */         NearTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

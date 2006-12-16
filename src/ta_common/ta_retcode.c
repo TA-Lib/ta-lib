@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -63,12 +63,10 @@ static TA_InternalRetCodeInfo retCodeInfoTable[] = {
          {11,"TA_OUTPUT_NOT_ALL_INITIALIZE","No Info"},
          {12,"TA_OUT_OF_RANGE_START_INDEX","No Info"},
          {13,"TA_OUT_OF_RANGE_END_INDEX","No Info"},
-         {14,"TA_MEM_LEAK","No Info"},
-         {15,"TA_FATAL_ERR","No Info"},
-         {16,"TA_INVALID_LIST_TYPE","No Info"},
-         {17,"TA_BAD_OBJECT","No Info"},
-         {18,"TA_NOT_SUPPORTED","No Info"},
-         {5000,"TA_INTERNAL_ERROR","Internal Error - Contact TA-Lib.org"},
+         {14,"TA_INVALID_LIST_TYPE","No Info"},
+         {15,"TA_BAD_OBJECT","No Info"},
+         {16,"TA_NOT_SUPPORTED","No Info"},
+         {5000,"TA_INTERNAL_ERROR","No Info"},
          {0xFFFF,"TA_UNKNOWN_ERR","Unknown Error"}
 };
 

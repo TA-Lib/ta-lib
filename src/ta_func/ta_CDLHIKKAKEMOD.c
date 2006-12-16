@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -54,11 +54,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -77,10 +78,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::CDLHIKKAKEMOD_Lookback( void )
+/* Generated */ int Core::CdlHikkakeModLookback( void )
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int CDLHIKKAKEMOD_Lookback(  )
+/* Generated */ public int cdlHikkakeModLookback(  )
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_CDLHIKKAKEMOD_Lookback( void )
@@ -95,7 +96,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-    return max( 1, TA_CANDLEAVGPERIOD(TA_Near) ) + 5;
+    return max( 1, TA_CANDLEAVGPERIOD(Near) ) + 5;
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -108,25 +109,25 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLHIKKAKEMOD( int    startIdx,
-/* Generated */                                                  int    endIdx,
-/* Generated */                                                  cli::array<double>^ inOpen,
-/* Generated */                                                  cli::array<double>^ inHigh,
-/* Generated */                                                  cli::array<double>^ inLow,
-/* Generated */                                                  cli::array<double>^ inClose,
-/* Generated */                                                  [Out]int%    outBegIdx,
-/* Generated */                                                  [Out]int%    outNbElement,
-/* Generated */                                                  cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlHikkakeMod( int    startIdx,
+/* Generated */                                               int    endIdx,
+/* Generated */                                               cli::array<double>^ inOpen,
+/* Generated */                                               cli::array<double>^ inHigh,
+/* Generated */                                               cli::array<double>^ inLow,
+/* Generated */                                               cli::array<double>^ inClose,
+/* Generated */                                               [Out]int%    outBegIdx,
+/* Generated */                                               [Out]int%    outNbElement,
+/* Generated */                                               cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLHIKKAKEMOD( int    startIdx,
-/* Generated */                                  int    endIdx,
-/* Generated */                                  double       inOpen[],
-/* Generated */                                  double       inHigh[],
-/* Generated */                                  double       inLow[],
-/* Generated */                                  double       inClose[],
-/* Generated */                                  MInteger     outBegIdx,
-/* Generated */                                  MInteger     outNbElement,
-/* Generated */                                  int           outInteger[] )
+/* Generated */ public RetCode cdlHikkakeMod( int    startIdx,
+/* Generated */                               int    endIdx,
+/* Generated */                               double       inOpen[],
+/* Generated */                               double       inHigh[],
+/* Generated */                               double       inLow[],
+/* Generated */                               double       inClose[],
+/* Generated */                               MInteger     outBegIdx,
+/* Generated */                               MInteger     outNbElement,
+/* Generated */                               int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,
 /* Generated */                              int    endIdx,
@@ -150,19 +151,19 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outInteger )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -186,16 +187,16 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
    NearPeriodTotal = 0;
-   NearTrailingIdx = startIdx - 3 - TA_CANDLEAVGPERIOD(TA_Near);
+   NearTrailingIdx = startIdx - 3 - TA_CANDLEAVGPERIOD(Near);
    i = NearTrailingIdx;
    while( i < startIdx - 3 ) {
-        NearPeriodTotal += TA_CANDLERANGE( TA_Near, i-2 );
+        NearPeriodTotal += TA_CANDLERANGE( Near, i-2 );
         i++;
    }
 
@@ -208,12 +209,12 @@
         if( inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] &&             // 2nd: lower high and higher low than 1st
             inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 3rd: lower high and higher low than 2nd
             ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&             // (bull) 4th: lower high and lower low
-                inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal, i-2 )  
+                inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )  
                                                                                 // (bull) 2nd: close near the low
               )
               ||
               ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&             // (bear) 4th: higher high and higher low
-                inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal, i-2 )
+                inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
                                                                                 // (bull) 2nd: close near the top
               )
             )
@@ -229,7 +230,7 @@
                 )
             ) 
                 patternIdx = 0;
-        NearPeriodTotal += TA_CANDLERANGE( TA_Near, i-2 ) - TA_CANDLERANGE( TA_Near, NearTrailingIdx-2 );
+        NearPeriodTotal += TA_CANDLERANGE( Near, i-2 ) - TA_CANDLERANGE( Near, NearTrailingIdx-2 );
         NearTrailingIdx++;
         i++; 
    }
@@ -258,12 +259,12 @@
         if( inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] &&             // 2nd: lower high and higher low than 1st
             inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 3rd: lower high and higher low than 2nd
             ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&             // (bull) 4th: lower high and lower low
-                inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal, i-2 )  
+                inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )  
                                                                                 // (bull) 2nd: close near the low
               )
               ||
               ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&             // (bear) 4th: higher high and higher low
-                inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal, i-2 )
+                inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
                                                                                 // (bull) 2nd: close near the top
               )
             )
@@ -283,7 +284,7 @@
                 patternIdx = 0;
             } else
                 outInteger[outIdx++] = 0;
-        NearPeriodTotal += TA_CANDLERANGE( TA_Near, i-2 ) - TA_CANDLERANGE( TA_Near, NearTrailingIdx-2 );
+        NearPeriodTotal += TA_CANDLERANGE( Near, i-2 ) - TA_CANDLERANGE( Near, NearTrailingIdx-2 );
         NearTrailingIdx++;
         i++; 
    } while( i <= endIdx );
@@ -292,7 +293,7 @@
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -305,25 +306,25 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLHIKKAKEMOD( int    startIdx,
-/* Generated */                                                  int    endIdx,
-/* Generated */                                                  cli::array<float>^ inOpen,
-/* Generated */                                                  cli::array<float>^ inHigh,
-/* Generated */                                                  cli::array<float>^ inLow,
-/* Generated */                                                  cli::array<float>^ inClose,
-/* Generated */                                                  [Out]int%    outBegIdx,
-/* Generated */                                                  [Out]int%    outNbElement,
-/* Generated */                                                  cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlHikkakeMod( int    startIdx,
+/* Generated */                                               int    endIdx,
+/* Generated */                                               cli::array<float>^ inOpen,
+/* Generated */                                               cli::array<float>^ inHigh,
+/* Generated */                                               cli::array<float>^ inLow,
+/* Generated */                                               cli::array<float>^ inClose,
+/* Generated */                                               [Out]int%    outBegIdx,
+/* Generated */                                               [Out]int%    outNbElement,
+/* Generated */                                               cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLHIKKAKEMOD( int    startIdx,
-/* Generated */                                  int    endIdx,
-/* Generated */                                  float        inOpen[],
-/* Generated */                                  float        inHigh[],
-/* Generated */                                  float        inLow[],
-/* Generated */                                  float        inClose[],
-/* Generated */                                  MInteger     outBegIdx,
-/* Generated */                                  MInteger     outNbElement,
-/* Generated */                                  int           outInteger[] )
+/* Generated */ public RetCode cdlHikkakeMod( int    startIdx,
+/* Generated */                               int    endIdx,
+/* Generated */                               float        inOpen[],
+/* Generated */                               float        inHigh[],
+/* Generated */                               float        inLow[],
+/* Generated */                               float        inClose[],
+/* Generated */                               MInteger     outBegIdx,
+/* Generated */                               MInteger     outNbElement,
+/* Generated */                               int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
 /* Generated */                                int    endIdx,
@@ -340,16 +341,16 @@
 /* Generated */     int i, outIdx, NearTrailingIdx, lookbackTotal, patternIdx, patternResult;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outInteger )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    lookbackTotal = LOOKBACK_CALL(CDLHIKKAKEMOD)();
@@ -359,13 +360,13 @@
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    NearPeriodTotal = 0;
-/* Generated */    NearTrailingIdx = startIdx - 3 - TA_CANDLEAVGPERIOD(TA_Near);
+/* Generated */    NearTrailingIdx = startIdx - 3 - TA_CANDLEAVGPERIOD(Near);
 /* Generated */    i = NearTrailingIdx;
 /* Generated */    while( i < startIdx - 3 ) {
-/* Generated */         NearPeriodTotal += TA_CANDLERANGE( TA_Near, i-2 );
+/* Generated */         NearPeriodTotal += TA_CANDLERANGE( Near, i-2 );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    patternIdx = 0;
@@ -375,12 +376,12 @@
 /* Generated */         if( inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] &&             // 2nd: lower high and higher low than 1st
 /* Generated */             inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 3rd: lower high and higher low than 2nd
 /* Generated */             ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&             // (bull) 4th: lower high and lower low
-/* Generated */                 inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal, i-2 )  
+/* Generated */                 inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )  
 /* Generated */                                                                                 // (bull) 2nd: close near the low
 /* Generated */               )
 /* Generated */               ||
 /* Generated */               ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&             // (bear) 4th: higher high and higher low
-/* Generated */                 inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal, i-2 )
+/* Generated */                 inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
 /* Generated */                                                                                 // (bull) 2nd: close near the top
 /* Generated */               )
 /* Generated */             )
@@ -395,7 +396,7 @@
 /* Generated */                 )
 /* Generated */             ) 
 /* Generated */                 patternIdx = 0;
-/* Generated */         NearPeriodTotal += TA_CANDLERANGE( TA_Near, i-2 ) - TA_CANDLERANGE( TA_Near, NearTrailingIdx-2 );
+/* Generated */         NearPeriodTotal += TA_CANDLERANGE( Near, i-2 ) - TA_CANDLERANGE( Near, NearTrailingIdx-2 );
 /* Generated */         NearTrailingIdx++;
 /* Generated */         i++; 
 /* Generated */    }
@@ -406,12 +407,12 @@
 /* Generated */         if( inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] &&             // 2nd: lower high and higher low than 1st
 /* Generated */             inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 3rd: lower high and higher low than 2nd
 /* Generated */             ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&             // (bull) 4th: lower high and lower low
-/* Generated */                 inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal, i-2 )  
+/* Generated */                 inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )  
 /* Generated */                                                                                 // (bull) 2nd: close near the low
 /* Generated */               )
 /* Generated */               ||
 /* Generated */               ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&             // (bear) 4th: higher high and higher low
-/* Generated */                 inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( TA_Near, NearPeriodTotal, i-2 )
+/* Generated */                 inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
 /* Generated */                                                                                 // (bull) 2nd: close near the top
 /* Generated */               )
 /* Generated */             )
@@ -430,13 +431,13 @@
 /* Generated */                 patternIdx = 0;
 /* Generated */             } else
 /* Generated */                 outInteger[outIdx++] = 0;
-/* Generated */         NearPeriodTotal += TA_CANDLERANGE( TA_Near, i-2 ) - TA_CANDLERANGE( TA_Near, NearTrailingIdx-2 );
+/* Generated */         NearPeriodTotal += TA_CANDLERANGE( Near, i-2 ) - TA_CANDLERANGE( Near, NearTrailingIdx-2 );
 /* Generated */         NearTrailingIdx++;
 /* Generated */         i++; 
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

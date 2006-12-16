@@ -81,12 +81,15 @@
  * Depending of the language/platform, the globals might be in reality
  * a private member variable of an object...
  */
-#if defined( _JAVA )
-   #define TA_GLOBALS_UNSTABLE_PERIOD(x) (this.unstablePeriod[TA_FuncUnstId.x.ordinal()])
-   #define TA_GLOBALS_COMPATIBILITY      (this.compatibility)
+#if defined( _MANAGED )
+   #define TA_GLOBALS_UNSTABLE_PERIOD(x,y) (Globals->unstablePeriod[(int)(FuncUnstId::y)])
+   #define TA_GLOBALS_COMPATIBILITY        (Globals->compatibility)
+#elif defined( _JAVA )
+   #define TA_GLOBALS_UNSTABLE_PERIOD(x,y) (this.unstablePeriod[FuncUnstId.y.ordinal()])
+   #define TA_GLOBALS_COMPATIBILITY        (this.compatibility)
 #else
-   #define TA_GLOBALS_UNSTABLE_PERIOD(x) (TA_Globals->unstablePeriod[(int)NAMESPACE(TA_FuncUnstId)x])
-   #define TA_GLOBALS_COMPATIBILITY      (TA_Globals->compatibility)
+   #define TA_GLOBALS_UNSTABLE_PERIOD(x,y) (TA_Globals->unstablePeriod[x])
+   #define TA_GLOBALS_COMPATIBILITY        (TA_Globals->compatibility)
 #endif
 
 
@@ -206,24 +209,24 @@
 #define CIRCBUF_INIT(Id,Type,Size) \
    { \
       if( Size <= 0 ) \
-         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
+         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
       Id = gcnew cli::array<Type>(Size); \
       if( !Id ) \
-         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
+         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
       maxIdx_##Id = (Size-1); \
    }
 
 #define CIRCBUF_INIT_CLASS(Id,Type,Size) \
    { \
       if( Size <= 0 ) \
-         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
+         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
       Id = gcnew cli::array<Type^>(Size); \
       for( int _##Id##_index=0; _##Id##_index<Id->Length; _##Id##_index++) \
       { \
          Id[_##Id##_index]=gcnew Type(); \
       } \
       if( !Id ) \
-         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
+         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
       maxIdx_##Id = (Size-1); \
    }
 
@@ -231,7 +234,7 @@
    { \
       Id = gcnew cli::array<Type>(maxIdx_##Id+1); \
       if( !Id ) \
-         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
+         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
    }
 
 #define CIRCBUF_DESTROY(Id)
@@ -253,7 +256,7 @@
 #define CIRCBUF_INIT(Id,Type,Size) \
    { \
       if( Size <= 0 ) \
-         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
+         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
       Id = new Type[Size]; \
       maxIdx_##Id = (Size-1); \
    }
@@ -261,7 +264,7 @@
 #define CIRCBUF_INIT_CLASS(Id,Type,Size) \
    { \
       if( Size <= 0 ) \
-         return NAMESPACE(TA_RetCode)TA_ALLOC_ERR; \
+         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr); \
       Id = new Type[Size]; \
       for( int _##Id##_index=0; _##Id##_index<Id.length; _##Id##_index++) \
       { \

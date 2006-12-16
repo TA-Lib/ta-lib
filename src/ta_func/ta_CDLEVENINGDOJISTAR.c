@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -54,11 +54,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -77,10 +78,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::CDLEVENINGDOJISTAR_Lookback( double        optInPenetration )  /* From 0 to TA_REAL_MAX */
+/* Generated */ int Core::CdlEveningDojiStarLookback( double        optInPenetration )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int CDLEVENINGDOJISTAR_Lookback( double        optInPenetration )  /* From 0 to TA_REAL_MAX */
+/* Generated */ public int cdlEveningDojiStarLookback( double        optInPenetration )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_CDLEVENINGDOJISTAR_Lookback( double        optInPenetration )  /* From 0 to TA_REAL_MAX */
@@ -103,8 +104,8 @@
    /* insert lookback code here. */
     UNUSED_VARIABLE(optInPenetration);
 
-    return max( max( TA_CANDLEAVGPERIOD(TA_BodyDoji), TA_CANDLEAVGPERIOD(TA_BodyLong) ), 
-                TA_CANDLEAVGPERIOD(TA_BodyShort) 
+    return max( max( TA_CANDLEAVGPERIOD(BodyDoji), TA_CANDLEAVGPERIOD(BodyLong) ), 
+                TA_CANDLEAVGPERIOD(BodyShort) 
             ) + 2;
 }
 
@@ -124,27 +125,27 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLEVENINGDOJISTAR( int    startIdx,
-/* Generated */                                                       int    endIdx,
-/* Generated */                                                       cli::array<double>^ inOpen,
-/* Generated */                                                       cli::array<double>^ inHigh,
-/* Generated */                                                       cli::array<double>^ inLow,
-/* Generated */                                                       cli::array<double>^ inClose,
-/* Generated */                                                       double        optInPenetration, /* From 0 to TA_REAL_MAX */
-/* Generated */                                                       [Out]int%    outBegIdx,
-/* Generated */                                                       [Out]int%    outNbElement,
-/* Generated */                                                       cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlEveningDojiStar( int    startIdx,
+/* Generated */                                                    int    endIdx,
+/* Generated */                                                    cli::array<double>^ inOpen,
+/* Generated */                                                    cli::array<double>^ inHigh,
+/* Generated */                                                    cli::array<double>^ inLow,
+/* Generated */                                                    cli::array<double>^ inClose,
+/* Generated */                                                    double        optInPenetration, /* From 0 to TA_REAL_MAX */
+/* Generated */                                                    [Out]int%    outBegIdx,
+/* Generated */                                                    [Out]int%    outNbElement,
+/* Generated */                                                    cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLEVENINGDOJISTAR( int    startIdx,
-/* Generated */                                       int    endIdx,
-/* Generated */                                       double       inOpen[],
-/* Generated */                                       double       inHigh[],
-/* Generated */                                       double       inLow[],
-/* Generated */                                       double       inClose[],
-/* Generated */                                       double        optInPenetration, /* From 0 to TA_REAL_MAX */
-/* Generated */                                       MInteger     outBegIdx,
-/* Generated */                                       MInteger     outNbElement,
-/* Generated */                                       int           outInteger[] )
+/* Generated */ public RetCode cdlEveningDojiStar( int    startIdx,
+/* Generated */                                    int    endIdx,
+/* Generated */                                    double       inOpen[],
+/* Generated */                                    double       inHigh[],
+/* Generated */                                    double       inLow[],
+/* Generated */                                    double       inClose[],
+/* Generated */                                    double        optInPenetration, /* From 0 to TA_REAL_MAX */
+/* Generated */                                    MInteger     outBegIdx,
+/* Generated */                                    MInteger     outNbElement,
+/* Generated */                                    int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CDLEVENINGDOJISTAR( int    startIdx,
 /* Generated */                                   int    endIdx,
@@ -169,24 +170,24 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    if( optInPenetration == TA_REAL_DEFAULT )
 /* Generated */       optInPenetration = 3.000000e-1;
 /* Generated */    else if( (optInPenetration < 0.000000e+0) ||/* Generated */  (optInPenetration > 3.000000e+37) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outInteger )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -210,7 +211,7 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    /* Do the calculation using tight loops. */
@@ -218,23 +219,23 @@
    BodyLongPeriodTotal = 0;
    BodyDojiPeriodTotal = 0;
    BodyShortPeriodTotal = 0;
-   BodyLongTrailingIdx = startIdx -2 - TA_CANDLEAVGPERIOD(TA_BodyLong);
-   BodyDojiTrailingIdx = startIdx -1 - TA_CANDLEAVGPERIOD(TA_BodyDoji);
-   BodyShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_BodyShort);
+   BodyLongTrailingIdx = startIdx -2 - TA_CANDLEAVGPERIOD(BodyLong);
+   BodyDojiTrailingIdx = startIdx -1 - TA_CANDLEAVGPERIOD(BodyDoji);
+   BodyShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyShort);
    
    i = BodyLongTrailingIdx;
    while( i < startIdx-2 ) {
-        BodyLongPeriodTotal += TA_CANDLERANGE( TA_BodyLong, i );
+        BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i );
         i++;
    }
    i = BodyDojiTrailingIdx;
    while( i < startIdx-1 ) {
-        BodyDojiPeriodTotal += TA_CANDLERANGE( TA_BodyDoji, i );
+        BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i );
         i++;
    }
    i = BodyShortTrailingIdx;
    while( i < startIdx ) {
-        BodyShortPeriodTotal += TA_CANDLERANGE( TA_BodyShort, i );
+        BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i );
         i++;
    }
    i = startIdx;
@@ -255,11 +256,11 @@
    outIdx = 0;
    do
    {
-        if( TA_REALBODY(i-2) > TA_CANDLEAVERAGE( TA_BodyLong, BodyLongPeriodTotal, i-2 ) &&         // 1st: long
+        if( TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) &&         // 1st: long
             TA_CANDLECOLOR(i-2) == 1 &&                                                             //           white
-            TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( TA_BodyDoji, BodyDojiPeriodTotal, i-1 ) &&        // 2nd: doji
+            TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i-1 ) &&        // 2nd: doji
             TA_REALBODYGAPUP(i-1,i-2) &&                                                            //           gapping up
-            TA_REALBODY(i) > TA_CANDLEAVERAGE( TA_BodyShort, BodyShortPeriodTotal, i ) &&           // 3rd: longer than short
+            TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i ) &&           // 3rd: longer than short
             TA_CANDLECOLOR(i) == -1 &&                                                              //          black real body
             inClose[i] < inClose[i-2] - TA_REALBODY(i-2) * optInPenetration                         //               closing well within 1st rb
           )
@@ -269,9 +270,9 @@
         /* add the current range and subtract the first range: this is done after the pattern recognition 
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
-        BodyLongPeriodTotal += TA_CANDLERANGE( TA_BodyLong, i-2 ) - TA_CANDLERANGE( TA_BodyLong, BodyLongTrailingIdx );
-        BodyDojiPeriodTotal += TA_CANDLERANGE( TA_BodyDoji, i-1 ) - TA_CANDLERANGE( TA_BodyDoji, BodyDojiTrailingIdx );
-        BodyShortPeriodTotal += TA_CANDLERANGE( TA_BodyShort, i ) - TA_CANDLERANGE( TA_BodyShort, BodyShortTrailingIdx );
+        BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
+        BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i-1 ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
+        BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );
         i++; 
         BodyLongTrailingIdx++;
         BodyDojiTrailingIdx++;
@@ -282,7 +283,7 @@
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -295,27 +296,27 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLEVENINGDOJISTAR( int    startIdx,
-/* Generated */                                                       int    endIdx,
-/* Generated */                                                       cli::array<float>^ inOpen,
-/* Generated */                                                       cli::array<float>^ inHigh,
-/* Generated */                                                       cli::array<float>^ inLow,
-/* Generated */                                                       cli::array<float>^ inClose,
-/* Generated */                                                       double        optInPenetration, /* From 0 to TA_REAL_MAX */
-/* Generated */                                                       [Out]int%    outBegIdx,
-/* Generated */                                                       [Out]int%    outNbElement,
-/* Generated */                                                       cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlEveningDojiStar( int    startIdx,
+/* Generated */                                                    int    endIdx,
+/* Generated */                                                    cli::array<float>^ inOpen,
+/* Generated */                                                    cli::array<float>^ inHigh,
+/* Generated */                                                    cli::array<float>^ inLow,
+/* Generated */                                                    cli::array<float>^ inClose,
+/* Generated */                                                    double        optInPenetration, /* From 0 to TA_REAL_MAX */
+/* Generated */                                                    [Out]int%    outBegIdx,
+/* Generated */                                                    [Out]int%    outNbElement,
+/* Generated */                                                    cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLEVENINGDOJISTAR( int    startIdx,
-/* Generated */                                       int    endIdx,
-/* Generated */                                       float        inOpen[],
-/* Generated */                                       float        inHigh[],
-/* Generated */                                       float        inLow[],
-/* Generated */                                       float        inClose[],
-/* Generated */                                       double        optInPenetration, /* From 0 to TA_REAL_MAX */
-/* Generated */                                       MInteger     outBegIdx,
-/* Generated */                                       MInteger     outNbElement,
-/* Generated */                                       int           outInteger[] )
+/* Generated */ public RetCode cdlEveningDojiStar( int    startIdx,
+/* Generated */                                    int    endIdx,
+/* Generated */                                    float        inOpen[],
+/* Generated */                                    float        inHigh[],
+/* Generated */                                    float        inLow[],
+/* Generated */                                    float        inClose[],
+/* Generated */                                    double        optInPenetration, /* From 0 to TA_REAL_MAX */
+/* Generated */                                    MInteger     outBegIdx,
+/* Generated */                                    MInteger     outNbElement,
+/* Generated */                                    int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLEVENINGDOJISTAR( int    startIdx,
 /* Generated */                                     int    endIdx,
@@ -333,20 +334,20 @@
 /* Generated */     int i, outIdx, BodyDojiTrailingIdx, BodyLongTrailingIdx, BodyShortTrailingIdx, lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( optInPenetration == TA_REAL_DEFAULT )
 /* Generated */        optInPenetration = 3.000000e-1;
 /* Generated */     else if( (optInPenetration < 0.000000e+0) ||  (optInPenetration > 3.000000e+37) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outInteger )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    lookbackTotal = LOOKBACK_CALL(CDLEVENINGDOJISTAR)(optInPenetration);
@@ -356,47 +357,47 @@
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    BodyLongPeriodTotal = 0;
 /* Generated */    BodyDojiPeriodTotal = 0;
 /* Generated */    BodyShortPeriodTotal = 0;
-/* Generated */    BodyLongTrailingIdx = startIdx -2 - TA_CANDLEAVGPERIOD(TA_BodyLong);
-/* Generated */    BodyDojiTrailingIdx = startIdx -1 - TA_CANDLEAVGPERIOD(TA_BodyDoji);
-/* Generated */    BodyShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_BodyShort);
+/* Generated */    BodyLongTrailingIdx = startIdx -2 - TA_CANDLEAVGPERIOD(BodyLong);
+/* Generated */    BodyDojiTrailingIdx = startIdx -1 - TA_CANDLEAVGPERIOD(BodyDoji);
+/* Generated */    BodyShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyShort);
 /* Generated */    i = BodyLongTrailingIdx;
 /* Generated */    while( i < startIdx-2 ) {
-/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( TA_BodyLong, i );
+/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = BodyDojiTrailingIdx;
 /* Generated */    while( i < startIdx-1 ) {
-/* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( TA_BodyDoji, i );
+/* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = BodyShortTrailingIdx;
 /* Generated */    while( i < startIdx ) {
-/* Generated */         BodyShortPeriodTotal += TA_CANDLERANGE( TA_BodyShort, i );
+/* Generated */         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = startIdx;
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */         if( TA_REALBODY(i-2) > TA_CANDLEAVERAGE( TA_BodyLong, BodyLongPeriodTotal, i-2 ) &&         // 1st: long
+/* Generated */         if( TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) &&         // 1st: long
 /* Generated */             TA_CANDLECOLOR(i-2) == 1 &&                                                             //           white
-/* Generated */             TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( TA_BodyDoji, BodyDojiPeriodTotal, i-1 ) &&        // 2nd: doji
+/* Generated */             TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i-1 ) &&        // 2nd: doji
 /* Generated */             TA_REALBODYGAPUP(i-1,i-2) &&                                                            //           gapping up
-/* Generated */             TA_REALBODY(i) > TA_CANDLEAVERAGE( TA_BodyShort, BodyShortPeriodTotal, i ) &&           // 3rd: longer than short
+/* Generated */             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i ) &&           // 3rd: longer than short
 /* Generated */             TA_CANDLECOLOR(i) == -1 &&                                                              //          black real body
 /* Generated */             inClose[i] < inClose[i-2] - TA_REALBODY(i-2) * optInPenetration                         //               closing well within 1st rb
 /* Generated */           )
 /* Generated */             outInteger[outIdx++] = -100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
-/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( TA_BodyLong, i-2 ) - TA_CANDLERANGE( TA_BodyLong, BodyLongTrailingIdx );
-/* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( TA_BodyDoji, i-1 ) - TA_CANDLERANGE( TA_BodyDoji, BodyDojiTrailingIdx );
-/* Generated */         BodyShortPeriodTotal += TA_CANDLERANGE( TA_BodyShort, i ) - TA_CANDLERANGE( TA_BodyShort, BodyShortTrailingIdx );
+/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
+/* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i-1 ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
+/* Generated */         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );
 /* Generated */         i++; 
 /* Generated */         BodyLongTrailingIdx++;
 /* Generated */         BodyDojiTrailingIdx++;
@@ -404,7 +405,7 @@
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

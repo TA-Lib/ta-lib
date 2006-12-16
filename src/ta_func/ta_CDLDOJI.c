@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -54,11 +54,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -77,10 +78,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::CDLDOJI_Lookback( void )
+/* Generated */ int Core::CdlDojiLookback( void )
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int CDLDOJI_Lookback(  )
+/* Generated */ public int cdlDojiLookback(  )
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_CDLDOJI_Lookback( void )
@@ -95,7 +96,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-    return TA_CANDLEAVGPERIOD(TA_BodyDoji);
+    return TA_CANDLEAVGPERIOD(BodyDoji);
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -108,25 +109,25 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLDOJI( int    startIdx,
-/* Generated */                                            int    endIdx,
-/* Generated */                                            cli::array<double>^ inOpen,
-/* Generated */                                            cli::array<double>^ inHigh,
-/* Generated */                                            cli::array<double>^ inLow,
-/* Generated */                                            cli::array<double>^ inClose,
-/* Generated */                                            [Out]int%    outBegIdx,
-/* Generated */                                            [Out]int%    outNbElement,
-/* Generated */                                            cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlDoji( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         cli::array<double>^ inOpen,
+/* Generated */                                         cli::array<double>^ inHigh,
+/* Generated */                                         cli::array<double>^ inLow,
+/* Generated */                                         cli::array<double>^ inClose,
+/* Generated */                                         [Out]int%    outBegIdx,
+/* Generated */                                         [Out]int%    outNbElement,
+/* Generated */                                         cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLDOJI( int    startIdx,
-/* Generated */                            int    endIdx,
-/* Generated */                            double       inOpen[],
-/* Generated */                            double       inHigh[],
-/* Generated */                            double       inLow[],
-/* Generated */                            double       inClose[],
-/* Generated */                            MInteger     outBegIdx,
-/* Generated */                            MInteger     outNbElement,
-/* Generated */                            int           outInteger[] )
+/* Generated */ public RetCode cdlDoji( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         double       inOpen[],
+/* Generated */                         double       inHigh[],
+/* Generated */                         double       inLow[],
+/* Generated */                         double       inClose[],
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CDLDOJI( int    startIdx,
 /* Generated */                        int    endIdx,
@@ -150,19 +151,19 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outInteger )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -186,17 +187,17 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
    BodyDojiPeriodTotal = 0;
-   BodyDojiTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_BodyDoji);
+   BodyDojiTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyDoji);
    
    i = BodyDojiTrailingIdx;
    while( i < startIdx ) {
-        BodyDojiPeriodTotal += TA_CANDLERANGE( TA_BodyDoji, i );
+        BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i );
         i++;
    }
 
@@ -211,14 +212,14 @@
    outIdx = 0;
    do
    {
-        if( TA_REALBODY(i) <= TA_CANDLEAVERAGE( TA_BodyDoji, BodyDojiPeriodTotal, i ) )
+        if( TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) )
             outInteger[outIdx++] = 100;
         else
             outInteger[outIdx++] = 0;
         /* add the current range and subtract the first range: this is done after the pattern recognition 
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
-        BodyDojiPeriodTotal += TA_CANDLERANGE( TA_BodyDoji, i ) - TA_CANDLERANGE( TA_BodyDoji, BodyDojiTrailingIdx );
+        BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
         i++; 
         BodyDojiTrailingIdx++;
    } while( i <= endIdx );
@@ -227,7 +228,7 @@
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -240,25 +241,25 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLDOJI( int    startIdx,
-/* Generated */                                            int    endIdx,
-/* Generated */                                            cli::array<float>^ inOpen,
-/* Generated */                                            cli::array<float>^ inHigh,
-/* Generated */                                            cli::array<float>^ inLow,
-/* Generated */                                            cli::array<float>^ inClose,
-/* Generated */                                            [Out]int%    outBegIdx,
-/* Generated */                                            [Out]int%    outNbElement,
-/* Generated */                                            cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlDoji( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         cli::array<float>^ inOpen,
+/* Generated */                                         cli::array<float>^ inHigh,
+/* Generated */                                         cli::array<float>^ inLow,
+/* Generated */                                         cli::array<float>^ inClose,
+/* Generated */                                         [Out]int%    outBegIdx,
+/* Generated */                                         [Out]int%    outNbElement,
+/* Generated */                                         cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLDOJI( int    startIdx,
-/* Generated */                            int    endIdx,
-/* Generated */                            float        inOpen[],
-/* Generated */                            float        inHigh[],
-/* Generated */                            float        inLow[],
-/* Generated */                            float        inClose[],
-/* Generated */                            MInteger     outBegIdx,
-/* Generated */                            MInteger     outNbElement,
-/* Generated */                            int           outInteger[] )
+/* Generated */ public RetCode cdlDoji( int    startIdx,
+/* Generated */                         int    endIdx,
+/* Generated */                         float        inOpen[],
+/* Generated */                         float        inHigh[],
+/* Generated */                         float        inLow[],
+/* Generated */                         float        inClose[],
+/* Generated */                         MInteger     outBegIdx,
+/* Generated */                         MInteger     outNbElement,
+/* Generated */                         int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLDOJI( int    startIdx,
 /* Generated */                          int    endIdx,
@@ -275,16 +276,16 @@
 /* Generated */     int i, outIdx, BodyDojiTrailingIdx, lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outInteger )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    lookbackTotal = LOOKBACK_CALL(CDLDOJI)();
@@ -294,29 +295,29 @@
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    BodyDojiPeriodTotal = 0;
-/* Generated */    BodyDojiTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_BodyDoji);
+/* Generated */    BodyDojiTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyDoji);
 /* Generated */    i = BodyDojiTrailingIdx;
 /* Generated */    while( i < startIdx ) {
-/* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( TA_BodyDoji, i );
+/* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */         if( TA_REALBODY(i) <= TA_CANDLEAVERAGE( TA_BodyDoji, BodyDojiPeriodTotal, i ) )
+/* Generated */         if( TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) )
 /* Generated */             outInteger[outIdx++] = 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
-/* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( TA_BodyDoji, i ) - TA_CANDLERANGE( TA_BodyDoji, BodyDojiTrailingIdx );
+/* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
 /* Generated */         i++; 
 /* Generated */         BodyDojiTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

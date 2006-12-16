@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -54,11 +54,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -77,10 +78,10 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::CDLCOUNTERATTACK_Lookback( void )
+/* Generated */ int Core::CdlCounterAttackLookback( void )
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int CDLCOUNTERATTACK_Lookback(  )
+/* Generated */ public int cdlCounterAttackLookback(  )
 /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_CDLCOUNTERATTACK_Lookback( void )
@@ -95,7 +96,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-    return max( TA_CANDLEAVGPERIOD(TA_Equal), TA_CANDLEAVGPERIOD(TA_BodyLong)
+    return max( TA_CANDLEAVGPERIOD(Equal), TA_CANDLEAVGPERIOD(BodyLong)
             ) + 1;
 }
 
@@ -109,25 +110,25 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLCOUNTERATTACK( int    startIdx,
-/* Generated */                                                     int    endIdx,
-/* Generated */                                                     cli::array<double>^ inOpen,
-/* Generated */                                                     cli::array<double>^ inHigh,
-/* Generated */                                                     cli::array<double>^ inLow,
-/* Generated */                                                     cli::array<double>^ inClose,
-/* Generated */                                                     [Out]int%    outBegIdx,
-/* Generated */                                                     [Out]int%    outNbElement,
-/* Generated */                                                     cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlCounterAttack( int    startIdx,
+/* Generated */                                                  int    endIdx,
+/* Generated */                                                  cli::array<double>^ inOpen,
+/* Generated */                                                  cli::array<double>^ inHigh,
+/* Generated */                                                  cli::array<double>^ inLow,
+/* Generated */                                                  cli::array<double>^ inClose,
+/* Generated */                                                  [Out]int%    outBegIdx,
+/* Generated */                                                  [Out]int%    outNbElement,
+/* Generated */                                                  cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLCOUNTERATTACK( int    startIdx,
-/* Generated */                                     int    endIdx,
-/* Generated */                                     double       inOpen[],
-/* Generated */                                     double       inHigh[],
-/* Generated */                                     double       inLow[],
-/* Generated */                                     double       inClose[],
-/* Generated */                                     MInteger     outBegIdx,
-/* Generated */                                     MInteger     outNbElement,
-/* Generated */                                     int           outInteger[] )
+/* Generated */ public RetCode cdlCounterAttack( int    startIdx,
+/* Generated */                                  int    endIdx,
+/* Generated */                                  double       inOpen[],
+/* Generated */                                  double       inHigh[],
+/* Generated */                                  double       inLow[],
+/* Generated */                                  double       inClose[],
+/* Generated */                                  MInteger     outBegIdx,
+/* Generated */                                  MInteger     outNbElement,
+/* Generated */                                  int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CDLCOUNTERATTACK( int    startIdx,
 /* Generated */                                 int    endIdx,
@@ -152,19 +153,19 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outInteger )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -188,26 +189,26 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-      return NAMESPACE(TA_RetCode)TA_SUCCESS;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
    EqualPeriodTotal = 0;
-   EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_Equal);
+   EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Equal);
    BodyLongPeriodTotal[1] = 0;
    BodyLongPeriodTotal[0] = 0;
-   BodyLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_BodyLong);
+   BodyLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyLong);
 
    i = EqualTrailingIdx;
    while( i < startIdx ) {
-        EqualPeriodTotal += TA_CANDLERANGE( TA_Equal, i-1 );
+        EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 );
         i++;
    }
    i = BodyLongTrailingIdx;
    while( i < startIdx ) {
-        BodyLongPeriodTotal[1] += TA_CANDLERANGE( TA_BodyLong, i-1 );
-        BodyLongPeriodTotal[0] += TA_CANDLERANGE( TA_BodyLong, i );
+        BodyLongPeriodTotal[1] += TA_CANDLERANGE( BodyLong, i-1 );
+        BodyLongPeriodTotal[0] += TA_CANDLERANGE( BodyLong, i );
         i++;
    }
    i = startIdx;
@@ -224,10 +225,10 @@
    do
    {
         if( TA_CANDLECOLOR(i-1) == -TA_CANDLECOLOR(i) &&                                        // opposite candles
-            TA_REALBODY(i-1) > TA_CANDLEAVERAGE( TA_BodyLong, BodyLongPeriodTotal[1], i-1 ) &&     // 1st long
-            TA_REALBODY(i) > TA_CANDLEAVERAGE( TA_BodyLong, BodyLongPeriodTotal[0], i ) &&         // 2nd long
-            inClose[i] <= inClose[i-1] + TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal, i-1 ) && // equal closes
-            inClose[i] >= inClose[i-1] - TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal, i-1 )
+            TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal[1], i-1 ) &&     // 1st long
+            TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal[0], i ) &&         // 2nd long
+            inClose[i] <= inClose[i-1] + TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 ) && // equal closes
+            inClose[i] >= inClose[i-1] - TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 )
           )
             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
         else
@@ -235,10 +236,10 @@
         /* add the current range and subtract the first range: this is done after the pattern recognition 
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
-        EqualPeriodTotal += TA_CANDLERANGE( TA_Equal, i-1 ) - TA_CANDLERANGE( TA_Equal, EqualTrailingIdx-1 );
+        EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
         for (totIdx = 1; totIdx >= 0; --totIdx)
-            BodyLongPeriodTotal[totIdx] += TA_CANDLERANGE( TA_BodyLong, i-totIdx ) 
-                                         - TA_CANDLERANGE( TA_BodyLong, BodyLongTrailingIdx-totIdx );
+            BodyLongPeriodTotal[totIdx] += TA_CANDLERANGE( BodyLong, i-totIdx ) 
+                                         - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-totIdx );
         i++;
         EqualTrailingIdx++;
         BodyLongTrailingIdx++;
@@ -248,7 +249,7 @@
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -261,25 +262,25 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::CDLCOUNTERATTACK( int    startIdx,
-/* Generated */                                                     int    endIdx,
-/* Generated */                                                     cli::array<float>^ inOpen,
-/* Generated */                                                     cli::array<float>^ inHigh,
-/* Generated */                                                     cli::array<float>^ inLow,
-/* Generated */                                                     cli::array<float>^ inClose,
-/* Generated */                                                     [Out]int%    outBegIdx,
-/* Generated */                                                     [Out]int%    outNbElement,
-/* Generated */                                                     cli::array<int>^  outInteger )
+/* Generated */ enum class Core::RetCode Core::CdlCounterAttack( int    startIdx,
+/* Generated */                                                  int    endIdx,
+/* Generated */                                                  cli::array<float>^ inOpen,
+/* Generated */                                                  cli::array<float>^ inHigh,
+/* Generated */                                                  cli::array<float>^ inLow,
+/* Generated */                                                  cli::array<float>^ inClose,
+/* Generated */                                                  [Out]int%    outBegIdx,
+/* Generated */                                                  [Out]int%    outNbElement,
+/* Generated */                                                  cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode CDLCOUNTERATTACK( int    startIdx,
-/* Generated */                                     int    endIdx,
-/* Generated */                                     float        inOpen[],
-/* Generated */                                     float        inHigh[],
-/* Generated */                                     float        inLow[],
-/* Generated */                                     float        inClose[],
-/* Generated */                                     MInteger     outBegIdx,
-/* Generated */                                     MInteger     outNbElement,
-/* Generated */                                     int           outInteger[] )
+/* Generated */ public RetCode cdlCounterAttack( int    startIdx,
+/* Generated */                                  int    endIdx,
+/* Generated */                                  float        inOpen[],
+/* Generated */                                  float        inHigh[],
+/* Generated */                                  float        inLow[],
+/* Generated */                                  float        inClose[],
+/* Generated */                                  MInteger     outBegIdx,
+/* Generated */                                  MInteger     outNbElement,
+/* Generated */                                  int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLCOUNTERATTACK( int    startIdx,
 /* Generated */                                   int    endIdx,
@@ -297,16 +298,16 @@
 /* Generated */     int i, outIdx, totIdx, EqualTrailingIdx, BodyLongTrailingIdx, lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outInteger )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    lookbackTotal = LOOKBACK_CALL(CDLCOUNTERATTACK)();
@@ -316,22 +317,22 @@
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */       return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    EqualPeriodTotal = 0;
-/* Generated */    EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_Equal);
+/* Generated */    EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Equal);
 /* Generated */    BodyLongPeriodTotal[1] = 0;
 /* Generated */    BodyLongPeriodTotal[0] = 0;
-/* Generated */    BodyLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(TA_BodyLong);
+/* Generated */    BodyLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyLong);
 /* Generated */    i = EqualTrailingIdx;
 /* Generated */    while( i < startIdx ) {
-/* Generated */         EqualPeriodTotal += TA_CANDLERANGE( TA_Equal, i-1 );
+/* Generated */         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = BodyLongTrailingIdx;
 /* Generated */    while( i < startIdx ) {
-/* Generated */         BodyLongPeriodTotal[1] += TA_CANDLERANGE( TA_BodyLong, i-1 );
-/* Generated */         BodyLongPeriodTotal[0] += TA_CANDLERANGE( TA_BodyLong, i );
+/* Generated */         BodyLongPeriodTotal[1] += TA_CANDLERANGE( BodyLong, i-1 );
+/* Generated */         BodyLongPeriodTotal[0] += TA_CANDLERANGE( BodyLong, i );
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = startIdx;
@@ -339,25 +340,25 @@
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( TA_CANDLECOLOR(i-1) == -TA_CANDLECOLOR(i) &&                                        // opposite candles
-/* Generated */             TA_REALBODY(i-1) > TA_CANDLEAVERAGE( TA_BodyLong, BodyLongPeriodTotal[1], i-1 ) &&     // 1st long
-/* Generated */             TA_REALBODY(i) > TA_CANDLEAVERAGE( TA_BodyLong, BodyLongPeriodTotal[0], i ) &&         // 2nd long
-/* Generated */             inClose[i] <= inClose[i-1] + TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal, i-1 ) && // equal closes
-/* Generated */             inClose[i] >= inClose[i-1] - TA_CANDLEAVERAGE( TA_Equal, EqualPeriodTotal, i-1 )
+/* Generated */             TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal[1], i-1 ) &&     // 1st long
+/* Generated */             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal[0], i ) &&         // 2nd long
+/* Generated */             inClose[i] <= inClose[i-1] + TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 ) && // equal closes
+/* Generated */             inClose[i] >= inClose[i-1] - TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 )
 /* Generated */           )
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
-/* Generated */         EqualPeriodTotal += TA_CANDLERANGE( TA_Equal, i-1 ) - TA_CANDLERANGE( TA_Equal, EqualTrailingIdx-1 );
+/* Generated */         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
 /* Generated */         for (totIdx = 1; totIdx >= 0; --totIdx)
-/* Generated */             BodyLongPeriodTotal[totIdx] += TA_CANDLERANGE( TA_BodyLong, i-totIdx ) 
-/* Generated */                                          - TA_CANDLERANGE( TA_BodyLong, BodyLongTrailingIdx-totIdx );
+/* Generated */             BodyLongPeriodTotal[totIdx] += TA_CANDLERANGE( BodyLong, i-totIdx ) 
+/* Generated */                                          - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-totIdx );
 /* Generated */         i++;
 /* Generated */         EqualTrailingIdx++;
 /* Generated */         BodyLongTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

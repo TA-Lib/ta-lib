@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -57,11 +57,12 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
 /* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
-/* Generated */    #define TA_INTERNAL_ERROR(Id) (NAMESPACE(TA_RetCode)TA_INTERNAL_ERROR)
+/* Generated */    #include "ta_java_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -80,15 +81,15 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */ int Core::BbandsLookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                         double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                         double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                         MAType        optInMAType ) /* Generated */ 
+/* Generated */ #elif defined( _JAVA )
+/* Generated */ public int bbandsLookback( int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                          double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                          double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                          TA_MAType     optInMAType ) /* Generated */ 
-/* Generated */ #elif defined( _JAVA )
-/* Generated */ public int BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                           double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                           double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                           TA_MAType     optInMAType ) /* Generated */ 
+/* Generated */                          MAType        optInMAType ) /* Generated */ 
 /* Generated */ #else
 /* Generated */ int TA_BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                       double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
@@ -160,31 +161,31 @@
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::BBANDS( int    startIdx,
-/* Generated */                                           int    endIdx,
-/* Generated */                                           cli::array<double>^ inReal,
-/* Generated */                                           int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                           double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                           double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                           TA_MAType     optInMAType,
-/* Generated */                                           [Out]int%    outBegIdx,
-/* Generated */                                           [Out]int%    outNbElement,
-/* Generated */                                           cli::array<double>^  outRealUpperBand,
-/* Generated */                                           cli::array<double>^  outRealMiddleBand,
-/* Generated */                                           cli::array<double>^  outRealLowerBand )
+/* Generated */ enum class Core::RetCode Core::Bbands( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        cli::array<double>^ inReal,
+/* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                        double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                        double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                        MAType        optInMAType,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
+/* Generated */                                        cli::array<double>^  outRealUpperBand,
+/* Generated */                                        cli::array<double>^  outRealMiddleBand,
+/* Generated */                                        cli::array<double>^  outRealLowerBand )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode BBANDS( int    startIdx,
-/* Generated */                           int    endIdx,
-/* Generated */                           double       inReal[],
-/* Generated */                           int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                           double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                           double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                           TA_MAType     optInMAType,
-/* Generated */                           MInteger     outBegIdx,
-/* Generated */                           MInteger     outNbElement,
-/* Generated */                           double        outRealUpperBand[],
-/* Generated */                           double        outRealMiddleBand[],
-/* Generated */                           double        outRealLowerBand[] )
+/* Generated */ public RetCode bbands( int    startIdx,
+/* Generated */                        int    endIdx,
+/* Generated */                        double       inReal[],
+/* Generated */                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                        double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                        double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                        MAType        optInMAType,
+/* Generated */                        MInteger     outBegIdx,
+/* Generated */                        MInteger     outNbElement,
+/* Generated */                        double        outRealUpperBand[],
+/* Generated */                        double        outRealMiddleBand[],
+/* Generated */                        double        outRealLowerBand[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_BBANDS( int    startIdx,
 /* Generated */                       int    endIdx,
@@ -202,7 +203,7 @@
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
    /* Insert local variables here. */
-   TA_RetCode retCode;
+   ENUM_DECLARATION(RetCode) retCode;
    int i;
    double tempReal, tempReal2;
    ARRAY_REF(tempBuffer1);
@@ -214,45 +215,45 @@
 /* Generated */ 
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */       return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */    if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 5;
 /* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    if( optInNbDevUp == TA_REAL_DEFAULT )
 /* Generated */       optInNbDevUp = 2.000000e+0;
 /* Generated */    else if( (optInNbDevUp < -3.000000e+37) ||/* Generated */  (optInNbDevUp > 3.000000e+37) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    if( optInNbDevDn == TA_REAL_DEFAULT )
 /* Generated */       optInNbDevDn = 2.000000e+0;
 /* Generated */    else if( (optInNbDevDn < -3.000000e+37) ||/* Generated */  (optInNbDevDn > 3.000000e+37) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInMAType = 0;
 /* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outRealUpperBand )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    if( !outRealMiddleBand )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    if( !outRealLowerBand )
-/* Generated */       return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -297,7 +298,7 @@
        * (like using the input buffer in two output!)
        */
       if( (tempBuffer1 == inReal) || (tempBuffer2 == inReal) )
-         return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+         return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
    #endif
 
 
@@ -309,14 +310,14 @@
                                 optInTimePeriod, optInMAType,
                                 outBegIdx, outNbElement, tempBuffer1 );
 
-   if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
+   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       return retCode;
    }
 
    /* Calculate the standard deviation into tempBuffer2. */
-   if( optInMAType == NAMESPACE(TA_MAType)TA_MAType_SMA )
+   if( optInMAType == ENUM_VALUE(MAType,TA_MAType_SMA,Sma) )
    {
       /* A small speed optimization by re-using the
        * already calculated SMA.
@@ -332,7 +333,7 @@
                                        optInTimePeriod, 1.0,
                                        outBegIdx, outNbElement, tempBuffer2 );
 
-      if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
+      if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
       {
          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
          return retCode;
@@ -415,7 +416,7 @@
       }
    }
    
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -428,31 +429,31 @@
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ enum class Core::TA_RetCode Core::BBANDS( int    startIdx,
-/* Generated */                                           int    endIdx,
-/* Generated */                                           cli::array<float>^ inReal,
-/* Generated */                                           int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                                           double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                           double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                                           TA_MAType     optInMAType,
-/* Generated */                                           [Out]int%    outBegIdx,
-/* Generated */                                           [Out]int%    outNbElement,
-/* Generated */                                           cli::array<double>^  outRealUpperBand,
-/* Generated */                                           cli::array<double>^  outRealMiddleBand,
-/* Generated */                                           cli::array<double>^  outRealLowerBand )
+/* Generated */ enum class Core::RetCode Core::Bbands( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        cli::array<float>^ inReal,
+/* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                        double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                        double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                        MAType        optInMAType,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNbElement,
+/* Generated */                                        cli::array<double>^  outRealUpperBand,
+/* Generated */                                        cli::array<double>^  outRealMiddleBand,
+/* Generated */                                        cli::array<double>^  outRealLowerBand )
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public TA_RetCode BBANDS( int    startIdx,
-/* Generated */                           int    endIdx,
-/* Generated */                           float        inReal[],
-/* Generated */                           int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                           double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                           double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                           TA_MAType     optInMAType,
-/* Generated */                           MInteger     outBegIdx,
-/* Generated */                           MInteger     outNbElement,
-/* Generated */                           double        outRealUpperBand[],
-/* Generated */                           double        outRealMiddleBand[],
-/* Generated */                           double        outRealLowerBand[] )
+/* Generated */ public RetCode bbands( int    startIdx,
+/* Generated */                        int    endIdx,
+/* Generated */                        float        inReal[],
+/* Generated */                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                        double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                        double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                        MAType        optInMAType,
+/* Generated */                        MInteger     outBegIdx,
+/* Generated */                        MInteger     outNbElement,
+/* Generated */                        double        outRealUpperBand[],
+/* Generated */                        double        outRealMiddleBand[],
+/* Generated */                        double        outRealLowerBand[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_BBANDS( int    startIdx,
 /* Generated */                         int    endIdx,
@@ -468,44 +469,44 @@
 /* Generated */                         double        outRealLowerBand[] )
 /* Generated */ #endif
 /* Generated */ {
-/* Generated */    TA_RetCode retCode;
+/* Generated */    ENUM_DECLARATION(RetCode) retCode;
 /* Generated */    int i;
 /* Generated */    double tempReal, tempReal2;
 /* Generated */    ARRAY_REF(tempBuffer1);
 /* Generated */    ARRAY_REF(tempBuffer2);
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_START_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
-/* Generated */        return NAMESPACE(TA_RetCode)TA_OUT_OF_RANGE_END_INDEX;
+/* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */     if( !inReal ) return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 5;
 /* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( optInNbDevUp == TA_REAL_DEFAULT )
 /* Generated */        optInNbDevUp = 2.000000e+0;
 /* Generated */     else if( (optInNbDevUp < -3.000000e+37) ||  (optInNbDevUp > 3.000000e+37) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( optInNbDevDn == TA_REAL_DEFAULT )
 /* Generated */        optInNbDevDn = 2.000000e+0;
 /* Generated */     else if( (optInNbDevDn < -3.000000e+37) ||  (optInNbDevDn > 3.000000e+37) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInMAType = 0;
 /* Generated */     else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outRealUpperBand )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( !outRealMiddleBand )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( !outRealLowerBand )
-/* Generated */        return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT)
@@ -533,17 +534,17 @@
 /* Generated */          tempBuffer2 = outRealUpperBand;
 /* Generated */       }
 /* Generated */       if( (tempBuffer1 == inReal) || (tempBuffer2 == inReal) )
-/* Generated */          return NAMESPACE(TA_RetCode)TA_BAD_PARAM;
+/* Generated */          return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif
 /* Generated */    retCode = FUNCTION_CALL(MA)( startIdx, endIdx, inReal,
 /* Generated */                                 optInTimePeriod, optInMAType,
 /* Generated */                                 outBegIdx, outNbElement, tempBuffer1 );
-/* Generated */    if( (retCode != NAMESPACE(TA_RetCode)TA_SUCCESS ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
+/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    if( optInMAType == NAMESPACE(TA_MAType)TA_MAType_SMA )
+/* Generated */    if( optInMAType == ENUM_VALUE(MAType,TA_MAType_SMA,Sma) )
 /* Generated */    {
 /* Generated */        FUNCTION_CALL(INT_stddev_using_precalc_ma)( inReal, tempBuffer1, 
 /* Generated */                                                    (int)VALUE_HANDLE_DEREF(outBegIdx), (int)VALUE_HANDLE_DEREF(outNbElement),
@@ -554,7 +555,7 @@
 /* Generated */       retCode = FUNCTION_CALL(STDDEV)( (int)VALUE_HANDLE_DEREF(outBegIdx), endIdx, inReal,
 /* Generated */                                        optInTimePeriod, 1.0,
 /* Generated */                                        outBegIdx, outNbElement, tempBuffer2 );
-/* Generated */       if( retCode != NAMESPACE(TA_RetCode)TA_SUCCESS )
+/* Generated */       if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */       {
 /* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */          return retCode;
@@ -619,7 +620,7 @@
 /* Generated */          outRealLowerBand[i] = tempReal2 - (tempReal * optInNbDevDn);
 /* Generated */       }
 /* Generated */    }
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
