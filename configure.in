@@ -43,5 +43,5 @@ TALIB_LIBRARY_VERSION=0:0:0
 
 AC_SUBST(TALIB_LIBRARY_VERSION)
 
-AC_CONFIG_FILES([Makefile src/Makefile src/ta_abstract/Makefile src/ta_common/Makefile src/ta_func/Makefile src/tools/Makefile src/tools/ta_regtest/Makefile ta-lib-config ta-lib.spec ta-lib.dpkg])
+AC_CONFIG_FILES([Makefile src/Makefile src/ta_abstract/Makefile src/ta_common/Makefile src/ta_func/Makefile src/tools/Makefile src/tools/gen_code/Makefile src/tools/ta_regtest/Makefile ta-lib-config ta-lib.spec ta-lib.dpkg])
 AC_OUTPUT
