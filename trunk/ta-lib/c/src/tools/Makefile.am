@@ -1,2 +1,2 @@
 AUTOMAKE_OPTIONS = foreign 1.4
-SUBDIRS = ta_regtest
+SUBDIRS = gen_code ta_regtest
