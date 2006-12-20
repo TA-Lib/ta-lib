@@ -102,6 +102,10 @@ libta_func_la_SOURCES = ta_AD.c \
 	ta_MIDPOINT.c \
 	ta_MIDPRICE.c \
 	ta_MIN.c \
+	ta_MINMAX.c \
+	ta_MAXINDEX.c \
+	ta_MINMAXINDEX.c \
+	ta_MININDEX.c \
 	ta_MINUS_DI.c \
 	ta_MINUS_DM.c \
 	ta_MOM.c \
@@ -144,5 +148,4 @@ libta_func_la_LDFLAGS = -version-info $(TALIB_LIBRARY_VERSION)
 libta_funcdir=$(includedir)/ta-lib/
 libta_func_HEADERS = ../../include/ta_defs.h \
 	../../include/ta_libc.h \
-	../../include/ta_func.h \
-	../../include/func_list.txt 
+	../../include/ta_func.h

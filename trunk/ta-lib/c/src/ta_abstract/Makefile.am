@@ -5,6 +5,7 @@ AM_CPPFLAGS = -I../ta_common/ -Iframes/
 libta_abstract_la_SOURCES = ta_group_idx.c \
 	ta_def_ui.c \
 	ta_abstract.c \
+	ta_func_api.c \
 	frames/ta_frame.c \
 	tables/table_a.c \
 	tables/table_b.c \
