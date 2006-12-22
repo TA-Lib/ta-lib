@@ -1,6 +1,5 @@
 
-lib_LTLIBRARIES = libta_abstract.la
-AM_CPPFLAGS = -I../ta_common/ -Iframes/
+lib_LTLIBRARIES = libta_abstract.la libta_abstract_gc.la
 
 libta_abstract_la_SOURCES = ta_group_idx.c \
 	ta_def_ui.c \
@@ -33,8 +32,16 @@ libta_abstract_la_SOURCES = ta_group_idx.c \
 	tables/table_x.c \
 	tables/table_y.c \
 	tables/table_z.c
+	
+libta_abstract_gc_la_SOURCES = $(libta_abstract_la_SOURCES)
 
 libta_abstract_la_LDFLAGS = -version-info $(TALIB_LIBRARY_VERSION)
+libta_abstract_gc_la_LDFLAGS = $(libta_abstract_la_LDFLAGS)
+
+libta_abstract_la_CPPFLAGS = -I../ta_common/ -Iframes/
+
+# The 'gc' version is a minimal version used to just to compile gen_code
+libta_abstract_gc_la_CPPFLAGS = -DTA_GEN_CODE $(libta_abstract_la_CPPFLAGS)
 
 libta_abstractdir=$(includedir)/ta-lib/
 libta_abstract_HEADERS = ../../include/ta_defs.h \
