@@ -57,6 +57,7 @@ extern const TA_FuncDef TA_DEF_AROON;
 extern const TA_FuncDef TA_DEF_AROONOSC;
 extern const TA_FuncDef TA_DEF_ATR;
 extern const TA_FuncDef TA_DEF_AVGPRICE;
+extern const TA_FuncDef TA_DEF_BETA;
 extern const TA_FuncDef TA_DEF_BBANDS;
 extern const TA_FuncDef TA_DEF_BOP;
 extern const TA_FuncDef TA_DEF_CCI;
@@ -344,6 +345,7 @@ NULL };
 #define SIZE_GROUP_7 ((sizeof(TA_PerGroupFunc_7)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_8[] = {
+&TA_DEF_BETA,
 &TA_DEF_CORREL,
 &TA_DEF_LINEARREG,
 &TA_DEF_LINEARREG_ANGLE,

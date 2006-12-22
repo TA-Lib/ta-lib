@@ -143,12 +143,40 @@ DEF_FUNCTION( BOP,                   /* name */
              );
 /* BOP END */
 
+/* BETA BEGIN */
+static const TA_InputParameterInfo    *TA_BETA_Inputs[]    =
+{
+    &TA_DEF_UI_Input_Real0,
+    &TA_DEF_UI_Input_Real1,
+    NULL
+};
+
+static const TA_OutputParameterInfo   *TA_BETA_Outputs[]   =
+{
+    &TA_DEF_UI_Output_Real,
+    NULL
+};
+
+static const TA_OptInputParameterInfo *TA_BETA_OptInputs[] =
+{
+  NULL
+};
+
+DEF_FUNCTION( BETA,                      /* name */
+              TA_GroupId_Statistic,     /* groupId */
+              "Beta", /* hint */
+              "Beta",                /* CamelCase name */
+              0                        /* flags */
+            );
+/* BETA END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableB[] =
 {
+   ADD_TO_TABLE(BETA),
    ADD_TO_TABLE(BBANDS),
    ADD_TO_TABLE(BOP),
    NULL
