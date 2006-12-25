@@ -145,7 +145,7 @@
     double x; /* the 'x' value, which is the last change between values in inReal0 */
     double y; /* the 'y' value, which is the last change between values in inReal1 */
     double n = 0.0f;
-    int lookbackTotal, i;
+    int i;
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -267,7 +267,7 @@
 /* Generated */     double x; 
 /* Generated */     double y; 
 /* Generated */     double n = 0.0f;
-/* Generated */     int lookbackTotal, i;
+/* Generated */     int i;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
