@@ -61,7 +61,8 @@
  *  012806 MF    Add call to Java post-processing.
  *  093006 MF    Add code generation for TA_FunctionDescription
  *  110206 AC    Change volume and open interest to double
- *  120108 MF    Add generation of java_defs.h
+ *  120106 MF    Add generation of java_defs.h
+ *  122406 MF    Add generation of Makefile.am
  */
 
 /* Description:
@@ -141,6 +142,7 @@ FileHandle *gOutDotNet_H;      /* For .NET interface file */
 FileHandle *gOutFunc_SWG;      /* For SWIG */
 FileHandle *gOutFunc_XML;      /* For "ta_func_api.xml" */
 FileHandle *gOutFuncAPI_C;     /* For "ta_func_api.c" */
+FileHandle *gOutMakefile_AM;   /* For "Makefile.am" */
 
 #ifdef _MSC_VER
 /* The following files are generated only on Windows platform. */
@@ -825,6 +827,18 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
+   /* Create the "Makefile.am" */
+   gOutMakefile_AM = fileOpen( "..\\src\\ta_func\\Makefile.am",
+                               "..\\src\\ta_abstract\\templates\\Makefile.am.template",
+                               FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+
+   if( gOutMakefile_AM == NULL )
+   {
+      printf( "\nCannot access [%s]\n", gToOpen );
+      return -1;
+   }
+
+
    #ifdef _MSC_VER
       /* Create "excel_glue.c" */
       gOutExcelGlue_C = fileOpen( "..\\src\\ta_abstract\\excel_glue.c",
@@ -907,6 +921,8 @@ static int genCode(int argc, char* argv[])
    fileClose( gOutFrame_H );
    fileClose( gOutFrame_C );
    fileClose( gOutFunc_XML );
+   fileClose( gOutMakefile_AM );
+
 
    #ifdef _MSC_VER
       fileClose( gOutCore_Java );
@@ -1487,6 +1503,8 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
    fprintf( gOutFrame_H->file, ";\n\n" );
    printCallFrame( gOutFrame_C->file, funcInfo );
 
+   /* Add this function to the Makefile.am */
+   fprintf( gOutMakefile_AM->file, "\tta_%s.c \\\n", funcInfo->name );
    
    #ifdef _MSC_VER
       /* Add the entry in the .NET project file. */
@@ -1518,7 +1536,6 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
 
       /* Generate the excel glue code */
       printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
-
    #endif
 
    /* Generate the functions declaration for the .NET interface. */
