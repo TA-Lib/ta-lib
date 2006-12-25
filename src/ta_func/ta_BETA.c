@@ -288,11 +288,11 @@
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
-/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)  = startIdx+1;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)  = startIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = (startIdx-endIdx-1);
 /* Generated */    last_price_x = inReal0[startIdx];
 /* Generated */    last_price_y = inReal1[startIdx];
-/* Generated */    for( i = startIdx; i <= endIdx; i++ )
+/* Generated */    for( i = startIdx+1; i <= endIdx; i++ )
 /* Generated */    {
 /* Generated */        x = (inReal0[i]-last_price_x)/last_price_x;
 /* Generated */        y = (inReal1[i]-last_price_y)/last_price_y;
