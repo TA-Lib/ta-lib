@@ -2,7 +2,8 @@
 lib_LTLIBRARIES = libta_func.la
 AM_CPPFLAGS = -I../ta_common/
 
-libta_func_la_SOURCES = ta_AD.c \
+libta_func_la_SOURCES = ta_utility.c \
+	ta_AD.c \
 	ta_ADOSC.c \
 	ta_ADX.c \
 	ta_ADXR.c \
@@ -98,25 +99,23 @@ libta_func_la_SOURCES = ta_AD.c \
 	ta_MACDFIX.c \
 	ta_MAMA.c \
 	ta_MAX.c \
+	ta_MAXINDEX.c \
 	ta_MEDPRICE.c \
 	ta_MFI.c \
 	ta_MIDPOINT.c \
 	ta_MIDPRICE.c \
 	ta_MIN.c \
-	ta_MINMAX.c \
-	ta_MAXINDEX.c \
-	ta_MINMAXINDEX.c \
 	ta_MININDEX.c \
+	ta_MINMAX.c \
+	ta_MINMAXINDEX.c \
 	ta_MINUS_DI.c \
 	ta_MINUS_DM.c \
 	ta_MOM.c \
 	ta_NATR.c \
-	ta_NVI.c \
 	ta_OBV.c \
 	ta_PLUS_DI.c \
 	ta_PLUS_DM.c \
 	ta_PPO.c \
-	ta_PVI.c \
 	ta_ROC.c \
 	ta_ROCP.c \
 	ta_ROCR.c \
@@ -142,7 +141,6 @@ libta_func_la_SOURCES = ta_AD.c \
 	ta_WCLPRICE.c \
 	ta_WILLR.c \
 	ta_WMA.c \
-	ta_utility.c
 
 libta_func_la_LDFLAGS = -version-info $(TALIB_LIBRARY_VERSION)
 
