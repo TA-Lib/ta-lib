@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Michael Williamson
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -95,7 +95,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-   return 0;
+   return 1;
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -142,10 +142,11 @@
     double S_y = 0.0f; /* sum of y */
     double last_price_x = 0.0f; /* the last price read from inReal0 */
     double last_price_y = 0.0f; /* the last price read from inReal1 */
+    double tmp_price = 0.0f; /* temporary variable */
     double x; /* the 'x' value, which is the last change between values in inReal0 */
     double y; /* the 'y' value, which is the last change between values in inReal1 */
     double n = 0.0f;
-    int i;
+    int i, outIdx;
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -184,6 +185,12 @@
     *   value is the Alpha value (see TA_ALPHA) which is the Y-intercept of the same linear regression.
     */
 
+   /* Move up the start index if there is not enough initial data.
+    * Always one price bar gets consumed.
+    */
+   if( startIdx < 1 )
+      startIdx = 1;      
+
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
@@ -191,20 +198,20 @@
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
-
-   VALUE_HANDLE_DEREF(outBegIdx)  = startIdx;
+   VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
    
-   /* Since when calculating the 'changes' we lose one element, the output size
-    is one smaller than the input size. */
-   VALUE_HANDLE_DEREF(outNbElement) = (startIdx-endIdx-1);
-
-   last_price_x = inReal0[startIdx];
-   last_price_y = inReal1[startIdx];
-
-   for( i = startIdx+1; i <= endIdx; i++ )
+   outIdx = 0;
+   last_price_x = inReal0[startIdx-1];
+   last_price_y = inReal1[startIdx-1];
+   for( i = startIdx; i <= endIdx; i++ )
    {
-       x = (inReal0[i]-last_price_x)/last_price_x;
-       y = (inReal1[i]-last_price_y)/last_price_y;
+       tmp_price = inReal0[i];
+       x = (tmp_price-last_price_x)/last_price_x;
+       last_price_x = tmp_price;
+
+       tmp_price = inReal1[i];
+       y = (tmp_price-last_price_y)/last_price_y;
+       last_price_y = tmp_price;
        
        S_xx += x*x;
        S_yy += y*y;
@@ -213,11 +220,10 @@
        S_y += y;
        n += 1.0f;
        
-       outReal[i-1] = (n * S_xy - S_x * S_y) / (n * S_xx - S_x * S_x);
-
-       last_price_x = inReal0[i];
-       last_price_y = inReal1[i];
+       outReal[outIdx++] = (n * S_xy - S_x * S_y) / (n * S_xx - S_x * S_x);       
    }
+
+   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
@@ -264,10 +270,11 @@
 /* Generated */     double S_y = 0.0f; 
 /* Generated */     double last_price_x = 0.0f; 
 /* Generated */     double last_price_y = 0.0f; 
+/* Generated */     double tmp_price = 0.0f; 
 /* Generated */     double x; 
 /* Generated */     double y; 
 /* Generated */     double n = 0.0f;
-/* Generated */     int i;
+/* Generated */     int i, outIdx;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -282,30 +289,35 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
+/* Generated */    if( startIdx < 1 )
+/* Generated */       startIdx = 1;      
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
-/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)  = startIdx;
-/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = (startIdx-endIdx-1);
-/* Generated */    last_price_x = inReal0[startIdx];
-/* Generated */    last_price_y = inReal1[startIdx];
-/* Generated */    for( i = startIdx+1; i <= endIdx; i++ )
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
+/* Generated */    outIdx = 0;
+/* Generated */    last_price_x = inReal0[startIdx-1];
+/* Generated */    last_price_y = inReal1[startIdx-1];
+/* Generated */    for( i = startIdx; i <= endIdx; i++ )
 /* Generated */    {
-/* Generated */        x = (inReal0[i]-last_price_x)/last_price_x;
-/* Generated */        y = (inReal1[i]-last_price_y)/last_price_y;
+/* Generated */        tmp_price = inReal0[i];
+/* Generated */        x = (tmp_price-last_price_x)/last_price_x;
+/* Generated */        last_price_x = tmp_price;
+/* Generated */        tmp_price = inReal1[i];
+/* Generated */        y = (tmp_price-last_price_y)/last_price_y;
+/* Generated */        last_price_y = tmp_price;
 /* Generated */        S_xx += x*x;
 /* Generated */        S_yy += y*y;
 /* Generated */        S_xy += x*y;
 /* Generated */        S_x += x;
 /* Generated */        S_y += y;
 /* Generated */        n += 1.0f;
-/* Generated */        outReal[i-1] = (n * S_xy - S_x * S_y) / (n * S_xx - S_x * S_x);
-/* Generated */        last_price_x = inReal0[i];
-/* Generated */        last_price_y = inReal1[i];
+/* Generated */        outReal[outIdx++] = (n * S_xy - S_x * S_y) / (n * S_xx - S_x * S_x);       
 /* Generated */    }
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
