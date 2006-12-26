@@ -31,6 +31,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_AROONOSC.c \
 		..\..\..\..\..\src\ta_func\ta_ATR.c \
 		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c \
+		..\..\..\..\..\src\ta_func\ta_BETA.c \
 		..\..\..\..\..\src\ta_func\ta_BBANDS.c \
 		..\..\..\..\..\src\ta_func\ta_BOP.c \
 		..\..\..\..\..\src\ta_func\ta_CCI.c \
@@ -169,6 +170,7 @@ OBJECTS =	..\..\..\..\..\temp\cdd\ta_utility.obj \
 		..\..\..\..\..\temp\cdd\ta_AROONOSC.obj \
 		..\..\..\..\..\temp\cdd\ta_ATR.obj \
 		..\..\..\..\..\temp\cdd\ta_AVGPRICE.obj \
+		..\..\..\..\..\temp\cdd\ta_BETA.obj \
 		..\..\..\..\..\temp\cdd\ta_BBANDS.obj \
 		..\..\..\..\..\temp\cdd\ta_BOP.obj \
 		..\..\..\..\..\temp\cdd\ta_CCI.obj \
@@ -352,6 +354,7 @@ clean:
 	-del ..\..\..\..\..\temp\cdd\ta_AROONOSC.obj
 	-del ..\..\..\..\..\temp\cdd\ta_ATR.obj
 	-del ..\..\..\..\..\temp\cdd\ta_AVGPRICE.obj
+	-del ..\..\..\..\..\temp\cdd\ta_BETA.obj
 	-del ..\..\..\..\..\temp\cdd\ta_BBANDS.obj
 	-del ..\..\..\..\..\temp\cdd\ta_BOP.obj
 	-del ..\..\..\..\..\temp\cdd\ta_CCI.obj
@@ -528,6 +531,9 @@ clean:
 
 ..\..\..\..\..\temp\cdd\ta_AVGPRICE.obj: ..\..\..\..\..\src\ta_func\ta_AVGPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_AVGPRICE.obj ..\..\..\..\..\src\ta_func\ta_AVGPRICE.c
+
+..\..\..\..\..\temp\cdd\ta_BETA.obj: ..\..\..\..\..\src\ta_func\ta_BETA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_BETA.obj ..\..\..\..\..\src\ta_func\ta_BETA.c
 
 ..\..\..\..\..\temp\cdd\ta_BBANDS.obj: ..\..\..\..\..\src\ta_func\ta_BBANDS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdd\ta_BBANDS.obj ..\..\..\..\..\src\ta_func\ta_BBANDS.c
