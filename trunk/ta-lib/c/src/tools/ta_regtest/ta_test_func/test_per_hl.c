@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,15 +43,14 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  020203 MF   First version.
- *
+ *  122506 MF   Add TA_BETA tests.
  */
 
 /* Description:
  *
- *     Test functions which have the following
- *     characterisic: 
- *      - have one parameter being a period.
+ *     Test functions which have the following characterisic: 
  *      - two inputs are needed (high and low are used here).
+ *      - has zero or one parameter being a period.
  */
 
 /**** Headers ****/
@@ -78,6 +77,7 @@ TA_AROON_UP_TEST,
 TA_AROON_DOWN_TEST,
 TA_AROONOSC_TEST,
 TA_CORREL_TEST,
+TA_BETA_TEST
 } TA_TestId;
 
 typedef struct
@@ -103,7 +103,7 @@ typedef struct
 {
    const TA_Test *test;
    const TA_Real *high;
-   const TA_Real *low;
+   const TA_Real *low;   
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
@@ -115,11 +115,22 @@ static ErrorNumber do_test( const TA_History *history,
 static TA_Test tableTest[] =
 {
    /*****************/
+   /* BETA TEST     */
+   /*****************/
+
+   /* Uncomment following to enable tons of tests. Replace 999.99 with the first
+    * value you are expecting.
+    */
+
+   /*{ 1, TA_BETA_TEST,  0, 251, 0, TA_SUCCESS,      0, 999.99,  1,  252-1 }, */
+
+   /*****************/
    /* CORREL TEST   */
    /*****************/
    { 1, TA_CORREL_TEST,  0, 251, 20, TA_SUCCESS,      0, 0.9401569,  19,  252-19 }, /* First Value */
    { 0, TA_CORREL_TEST,  0, 251, 20, TA_SUCCESS,      1, 0.9471812,  19,  252-19 },
    { 0, TA_CORREL_TEST,  0, 251, 20, TA_SUCCESS, 252-20, 0.8866901,  19,  252-19 }, /* Last Value */
+
    
    /*******************/
    /* AROON UP TEST   */
@@ -311,6 +322,17 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
       *lookback = TA_CORREL_Lookback( testParam->test->optInTimePeriod );
       break;
 
+   case TA_BETA_TEST:
+      retCode = TA_BETA( startIdx,
+                         endIdx,
+                         testParam->high,
+                         testParam->low,                         
+                         outBegIdx,
+                         outNbElement,
+                         outputBuffer );
+      *lookback = TA_BETA_Lookback();
+      break;
+
    default:
       retCode = TA_INTERNAL_ERROR(132);
    }
@@ -389,6 +411,17 @@ static ErrorNumber do_test( const TA_History *history,
                          );
       break;
 
+   case TA_BETA_TEST:
+      retCode = TA_BETA( test->startIdx,
+                         test->endIdx,
+                         gBuffer[0].in,
+                         gBuffer[1].in,                         
+                         &outBegIdx,
+                         &outNbElement,
+                         gBuffer[0].out0
+                         );
+      break;
+
    default:
       retCode = TA_INTERNAL_ERROR(133);
    }
@@ -457,6 +490,17 @@ static ErrorNumber do_test( const TA_History *history,
                            &outBegIdx,
                            &outNbElement,
                            gBuffer[0].in
+                         );
+      break;
+
+   case TA_BETA_TEST:
+      retCode = TA_BETA( test->startIdx,
+                         test->endIdx,
+                         gBuffer[0].in,
+                         gBuffer[1].in,                         
+                         &outBegIdx,
+                         &outNbElement,
+                         gBuffer[0].in
                          );
       break;
 
@@ -538,6 +582,17 @@ static ErrorNumber do_test( const TA_History *history,
                            &outBegIdx,
                            &outNbElement,
                            gBuffer[1].in
+                         );
+      break;
+
+   case TA_BETA_TEST:
+      retCode = TA_BETA( test->startIdx,
+                         test->endIdx,
+                         gBuffer[0].in,
+                         gBuffer[1].in,                           
+                         &outBegIdx,
+                         &outNbElement,
+                         gBuffer[1].in
                          );
       break;
 
