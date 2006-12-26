@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2004, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
- *
+ *  122506 MF   Add tests for MININDEX,MAXINDEX,MINMAX and MINMAXINDEX.
  */
 
 /* Description:
@@ -58,6 +58,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "ta_memory.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -71,7 +72,11 @@
 /**** Local declarations.              ****/
 typedef enum {
 TA_MIN_TEST,
-TA_MAX_TEST
+TA_MAX_TEST,
+TA_MINMAX_TEST,
+TA_MININDEX_TEST,
+TA_MAXINDEX_TEST,
+TA_MINMAXINDEX_TEST
 } TA_TestId;
 
 typedef struct
@@ -209,6 +214,15 @@ static TA_Test tableTest[] =
    { 0, TA_MAX_TEST, 0, 251, 2, TA_SUCCESS,      5, 95.0,  1,  252-1 },
    { 0, TA_MAX_TEST, 0, 251, 2, TA_SUCCESS, 252-2, 109.69, 1,  252-1 },  /* Last Value */
 
+  /*************************************/
+  /*  MINMAX and INDEX Functions tests */
+  /*************************************/
+
+   /* Note: for now only range tests done on these */
+   { 1, TA_MINMAX_TEST, 0, 251, 14, TA_SUCCESS, 0, 91.125,  13,  252-13 },
+   { 1, TA_MINMAXINDEX_TEST, 0, 251, 14, TA_SUCCESS, 0, 91.125,  13,  252-13 },
+   { 1, TA_MININDEX_TEST, 0, 251, 14, TA_SUCCESS, 0, 91.125,  13,  252-13 },
+   { 1, TA_MAXINDEX_TEST, 0, 251, 14, TA_SUCCESS, 0, 91.125,  13,  252-13 }
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
@@ -266,8 +280,7 @@ ErrorNumber test_func_minmax( TA_History *history )
    /* Do tests against a local reference which is the non-optimized implementation */
    for( i=0; i < NB_TEST_REF; i++ )
    {
-      retValue = testCompareToReference(
-                                         tableRefTest[i].input,
+      retValue = testCompareToReference( tableRefTest[i].input,
                                          tableRefTest[i].nbElement );
       if( retValue != 0 )
       {
@@ -295,6 +308,13 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 {
    TA_RetCode retCode;
    TA_RangeTestParam *testParam;
+   TA_Real *dummyBufferReal;
+   TA_Real *out1Real;
+   TA_Real *out2Real;
+
+   TA_Integer *dummyBufferInt;
+   TA_Integer *out1Int;
+   TA_Integer *out2Int;
   
    (void)outputNb;
    (void)outputBufferInt;
@@ -303,8 +323,39 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    testParam = (TA_RangeTestParam *)opaqueData;   
 
-   if( testParam->test->theFunction == TA_MIN_TEST )
+   dummyBufferReal = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
+   if( !dummyBufferReal )
+     return TA_ALLOC_ERR;
+
+   dummyBufferInt = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Integer));
+   if( !dummyBufferInt )
    {
+      TA_Free( dummyBufferReal );
+      return TA_ALLOC_ERR;
+   }
+
+   switch( outputNb )
+   {
+   case 0:
+      out1Real = outputBuffer;
+      out2Real = dummyBufferReal; 
+      out1Int  = outputBufferInt;
+      out2Int  = dummyBufferInt; 
+      break;
+   case 1:
+      out1Real = dummyBufferReal;
+      out2Real = outputBuffer;      
+      out1Int  = dummyBufferInt;
+      out2Int  = outputBufferInt;
+      break;
+   default:
+      TA_Free( dummyBufferReal );
+      return TA_BAD_PARAM;
+   }
+
+   switch( testParam->test->theFunction )
+   {
+   case TA_MIN_TEST:   
       retCode = TA_MIN( startIdx,
                         endIdx,
                         testParam->close,
@@ -313,9 +364,9 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         outNbElement,
                         outputBuffer );
       *lookback  = TA_MIN_Lookback( testParam->test->optInTimePeriod );
-   }
-   else if( testParam->test->theFunction == TA_MAX_TEST )
-   {
+      break;
+   
+   case TA_MAX_TEST:   
       retCode = TA_MAX( startIdx,
                         endIdx,
                         testParam->close,
@@ -324,9 +375,62 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         outNbElement,                        
                         outputBuffer );
       *lookback = TA_MAX_Lookback( testParam->test->optInTimePeriod );
-   }
-   else
+      break;
+
+   case TA_MINMAX_TEST:
+      retCode = TA_MINMAX( startIdx,
+                        endIdx,
+                        testParam->close,
+                        testParam->test->optInTimePeriod,
+                        outBegIdx,
+                        outNbElement,                        
+                        out1Real, out2Real );
+      *lookback = TA_MINMAX_Lookback( testParam->test->optInTimePeriod );            
+      break;
+
+   case TA_MINMAXINDEX_TEST:
+      retCode = TA_MINMAXINDEX( startIdx,
+                        endIdx,
+                        testParam->close,
+                        testParam->test->optInTimePeriod,
+                        outBegIdx,
+                        outNbElement,                        
+                        out1Int, out2Int );
+      *lookback = TA_MINMAXINDEX_Lookback( testParam->test->optInTimePeriod );
+      *isOutputInteger = 1;
+      break;
+
+   case TA_MININDEX_TEST:
+      retCode = TA_MININDEX( startIdx,
+                        endIdx,
+                        testParam->close,
+                        testParam->test->optInTimePeriod,
+                        outBegIdx,
+                        outNbElement,                        
+                        out1Int );
+      *lookback = TA_MININDEX_Lookback( testParam->test->optInTimePeriod );
+      *isOutputInteger = 1;
+      break;
+
+   case TA_MAXINDEX_TEST:
+      retCode = TA_MAXINDEX( startIdx,
+                        endIdx,
+                        testParam->close,
+                        testParam->test->optInTimePeriod,
+                        outBegIdx,
+                        outNbElement,                        
+                        out1Int );
+      *lookback = TA_MAXINDEX_Lookback( testParam->test->optInTimePeriod );
+      *isOutputInteger = 1;
+      break;
+
+   default:
       retCode = TA_INTERNAL_ERROR(129);
+      break;
+   }
+
+   TA_Free( dummyBufferReal );
+   TA_Free( dummyBufferInt );
 
    return retCode;
 }
@@ -349,6 +453,22 @@ static ErrorNumber do_test( const TA_History *history,
 
    CLEAR_EXPECTED_VALUE(0);
 
+   /* Do a systematic test of most of the
+    * possible startIdx/endIdx range.
+    */
+   testParam.test  = test;
+   testParam.close = history->close;
+
+   if( test->doRangeTestFlag )
+   {
+      errNb = doRangeTest( rangeTestFunction, 
+                           TA_FUNC_UNST_NONE,
+                           (void *)&testParam, 1, 0 );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+   }
+
+
    /* Make a simple first call. */
    if( test->theFunction == TA_MIN_TEST )
    {
@@ -369,6 +489,11 @@ static ErrorNumber do_test( const TA_History *history,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
+   }
+   else
+   {
+      /* For now, tests only MIN and MAX. Only range check tests implemented. */
+      return TA_TEST_PASS;    
    }
 
    errNb = checkDataSame( gBuffer[0].in, history->open,history->nbBars );
@@ -418,20 +543,6 @@ static ErrorNumber do_test( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   /* Do a systematic test of most of the
-    * possible startIdx/endIdx range.
-    */
-   testParam.test  = test;
-   testParam.close = history->close;
-
-   if( test->doRangeTestFlag )
-   {
-      errNb = doRangeTest( rangeTestFunction, 
-                           TA_FUNC_UNST_NONE,
-                           (void *)&testParam, 1, 0 );
-      if( errNb != TA_TEST_PASS )
-         return errNb;
-   }
 
    return TA_TEST_PASS;
 }
