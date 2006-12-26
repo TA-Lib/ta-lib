@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -46,6 +46,7 @@
  *  063001 MF   First version (initial framework only).
  *  090404 MF   Add test_candlestick
  *  110206 AC   Change volume and open interest to double
+ *  122506 MF   Add MININDEX,MAXINDEX,MINMAX and MINMAXINDEX.
  */
 
 /* Description:
@@ -191,7 +192,7 @@ static int testTAFunction_ALL( void )
    /* Make tests for each TA functions. */
    #define DO_TEST(func,str) \
       { \
-      printf( "%40s: Testing....", str ); \
+      printf( "%50s: Testing....", str ); \
       fflush(stdout); \
       showFeedback(); \
       TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT ); \
@@ -206,22 +207,22 @@ static int testTAFunction_ALL( void )
    DO_TEST( test_func_per_ohlc, "BOP,AVGPRICE" );
    DO_TEST( test_func_rsi,      "RSI,CMO" );
    DO_TEST( test_func_1in_1out, "DCPERIOD/PHASE,TRENDLINE/MODE" );
+   DO_TEST( test_func_minmax,   "MIN,MAX,MININDEX,MAXINDEX,MINMAX,MINMAXINDEX" );
    DO_TEST( test_func_po,       "PO,APO" );
    DO_TEST( test_func_adx,      "ADX,ADXR,DI,DM,DX" );
    DO_TEST( test_func_sar,      "SAR,SAREXT" );
-   DO_TEST( test_candlestick,   "All Candlesticks" );
-   DO_TEST( test_func_ma,       "All Moving Averages" );
    DO_TEST( test_func_stoch,    "STOCH,STOCHF,STOCHRSI" );
    DO_TEST( test_func_per_hl,   "AROON,CORREL" );
    DO_TEST( test_func_per_hlcv, "MFI,AD,ADOSC" );
    DO_TEST( test_func_1in_2out, "PHASOR,SINE" );   
    DO_TEST( test_func_per_ema,  "TRIX" );
-   DO_TEST( test_func_minmax,   "MIN,MAX" );
    DO_TEST( test_func_macd,     "MACD,MACDFIX,MACDEXT" );
    DO_TEST( test_func_mom_roc,  "MOM,ROC,ROCP,ROCR,ROCR100" );
    DO_TEST( test_func_trange,   "TRANGE,ATR" );
    DO_TEST( test_func_stddev,   "STDDEV,VAR" );
    DO_TEST( test_func_bbands,   "BBANDS" );
+   DO_TEST( test_func_ma,       "All Moving Averages" );
+   DO_TEST( test_candlestick,   "All Candlesticks" );
 
    return TA_TEST_PASS; /* All test succeed. */
 }
