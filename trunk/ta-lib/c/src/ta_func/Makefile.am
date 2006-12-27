@@ -140,7 +140,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_VAR.c \
 	ta_WCLPRICE.c \
 	ta_WILLR.c \
-	ta_WMA.c \
+	ta_WMA.c
 
 libta_func_la_LDFLAGS = -version-info $(TALIB_LIBRARY_VERSION)
 
