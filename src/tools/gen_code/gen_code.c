@@ -903,6 +903,9 @@ static int genCode(int argc, char* argv[])
    TA_ForEachFunc( doForEachFunctionPhase1, NULL );
    TA_ForEachFunc( doForEachFunctionPhase2, NULL );
 
+   /* Leave empty line for Makefile.am */
+   fprintf( gOutMakefile_AM->file, "\n" );
+
    /* Seperate generation of xml description file */
    fprintf(gOutFunc_XML->file, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");
    fprintf(gOutFunc_XML->file, "<FinancialFunctions>\n");
@@ -1455,7 +1458,7 @@ static void doForEachFunctionPhase1( const TA_FuncInfo *funcInfo,
 static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
                                void *opaqueData )
 {
-   static const char *prevGroup = NULL;
+   static int firstTime = 1;
 
    (void)opaqueData; /* Get ride of compiler warning */
 
@@ -1504,7 +1507,10 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
    printCallFrame( gOutFrame_C->file, funcInfo );
 
    /* Add this function to the Makefile.am */
-   fprintf( gOutMakefile_AM->file, "\tta_%s.c \\\n", funcInfo->name );
+   if( firstTime )
+      fprintf( gOutMakefile_AM->file, "\tta_%s.c", funcInfo->name );
+   else
+      fprintf( gOutMakefile_AM->file, " \\\n\tta_%s.c", funcInfo->name );
    
    #ifdef _MSC_VER
       /* Add the entry in the .NET project file. */
@@ -1552,6 +1558,8 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
       /* Run the func file through the pre-processor to generate the Java code. */
       genJavaCodePhase2( funcInfo );   
    #endif
+
+   firstTime = 0;
 }
 
 static void doForEachUnstableFunction( const TA_FuncInfo *funcInfo,
