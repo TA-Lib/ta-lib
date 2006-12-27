@@ -142,7 +142,7 @@
     double S_y = 0.0f; /* sum of y */
     double last_price_x = 0.0f; /* the last price read from inReal0 */
     double last_price_y = 0.0f; /* the last price read from inReal1 */
-    double tmp_price = 0.0f; /* temporary variable */
+    double tmp_real = 0.0f; /* temporary variable */
     double x; /* the 'x' value, which is the last change between values in inReal0 */
     double y; /* the 'y' value, which is the last change between values in inReal1 */
     double n = 0.0f;
@@ -205,13 +205,19 @@
    last_price_y = inReal1[startIdx-1];
    for( i = startIdx; i <= endIdx; i++ )
    {
-       tmp_price = inReal0[i];
-       x = (tmp_price-last_price_x)/last_price_x;
-       last_price_x = tmp_price;
+       tmp_real = inReal0[i];
+       if( !TA_IS_ZERO(last_price_x) )
+          x = (tmp_real-last_price_x)/last_price_x;
+       else
+          x = 0.0;
+       last_price_x = tmp_real;
 
-       tmp_price = inReal1[i];
-       y = (tmp_price-last_price_y)/last_price_y;
-       last_price_y = tmp_price;
+       tmp_real = inReal1[i];
+       if( !TA_IS_ZERO(last_price_y) )
+          y = (tmp_real-last_price_y)/last_price_y;
+       else
+          y = 0.0;
+       last_price_y = tmp_real;
        
        S_xx += x*x;
        S_yy += y*y;
@@ -220,7 +226,11 @@
        S_y += y;
        n += 1.0f;
        
-       outReal[outIdx++] = (n * S_xy - S_x * S_y) / (n * S_xx - S_x * S_x);       
+       tmp_real = (n * S_xx) - (S_x * S_x);
+       if( !TA_IS_ZERO(tmp_real) )
+          outReal[outIdx++] = ((n * S_xy) - (S_x * S_y)) / tmp_real;       
+       else
+          outReal[outIdx++] = 0.0;
    }
 
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
@@ -270,7 +280,7 @@
 /* Generated */     double S_y = 0.0f; 
 /* Generated */     double last_price_x = 0.0f; 
 /* Generated */     double last_price_y = 0.0f; 
-/* Generated */     double tmp_price = 0.0f; 
+/* Generated */     double tmp_real = 0.0f; 
 /* Generated */     double x; 
 /* Generated */     double y; 
 /* Generated */     double n = 0.0f;
@@ -303,19 +313,29 @@
 /* Generated */    last_price_y = inReal1[startIdx-1];
 /* Generated */    for( i = startIdx; i <= endIdx; i++ )
 /* Generated */    {
-/* Generated */        tmp_price = inReal0[i];
-/* Generated */        x = (tmp_price-last_price_x)/last_price_x;
-/* Generated */        last_price_x = tmp_price;
-/* Generated */        tmp_price = inReal1[i];
-/* Generated */        y = (tmp_price-last_price_y)/last_price_y;
-/* Generated */        last_price_y = tmp_price;
+/* Generated */        tmp_real = inReal0[i];
+/* Generated */        if( !TA_IS_ZERO(last_price_x) )
+/* Generated */           x = (tmp_real-last_price_x)/last_price_x;
+/* Generated */        else
+/* Generated */           x = 0.0;
+/* Generated */        last_price_x = tmp_real;
+/* Generated */        tmp_real = inReal1[i];
+/* Generated */        if( !TA_IS_ZERO(last_price_y) )
+/* Generated */           y = (tmp_real-last_price_y)/last_price_y;
+/* Generated */        else
+/* Generated */           y = 0.0;
+/* Generated */        last_price_y = tmp_real;
 /* Generated */        S_xx += x*x;
 /* Generated */        S_yy += y*y;
 /* Generated */        S_xy += x*y;
 /* Generated */        S_x += x;
 /* Generated */        S_y += y;
 /* Generated */        n += 1.0f;
-/* Generated */        outReal[outIdx++] = (n * S_xy - S_x * S_y) / (n * S_xx - S_x * S_x);       
+/* Generated */        tmp_real = (n * S_xx) - (S_x * S_x);
+/* Generated */        if( !TA_IS_ZERO(tmp_real) )
+/* Generated */           outReal[outIdx++] = ((n * S_xy) - (S_x * S_y)) / tmp_real;       
+/* Generated */        else
+/* Generated */           outReal[outIdx++] = 0.0;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
