@@ -62,7 +62,7 @@
  *  093006 MF    Add code generation for TA_FunctionDescription
  *  110206 AC    Change volume and open interest to double
  *  120106 MF    Add generation of java_defs.h
- *  122406 MF    Add generation of Makefile.am
+ *  122406 MF    Add generation of Makefile.am 
  */
 
 /* Description:
@@ -1322,14 +1322,14 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 				doubleRange= (TA_RealRange*)optInputInfo->dataSet;
 				fprintf(gOutFunc_XML->file, "				<Type>Double</Type>\n");
 				fprintf(gOutFunc_XML->file, "				<Range>\n");
-				fprintf(gOutFunc_XML->file, "					<Minimum>%f</Minimum>\n", doubleRange->min);
-				fprintf(gOutFunc_XML->file, "					<Maximum>%f</Maximum>\n", doubleRange->max);
+				fprintf(gOutFunc_XML->file, "					<Minimum>%s</Minimum>\n", doubleToStr(doubleRange->min));
+				fprintf(gOutFunc_XML->file, "					<Maximum>%s</Maximum>\n", doubleToStr(doubleRange->max));
 				fprintf(gOutFunc_XML->file, "					<Precision>%d</Precision>\n", doubleRange->precision);
-				fprintf(gOutFunc_XML->file, "					<SuggestedStart>%f</SuggestedStart>\n", doubleRange->suggested_start);
-				fprintf(gOutFunc_XML->file, "					<SuggestedEnd>%f</SuggestedEnd>\n", doubleRange->suggested_end);
-				fprintf(gOutFunc_XML->file, "					<SuggestedIncrement>%f</SuggestedIncrement>\n", doubleRange->suggested_increment);
+				fprintf(gOutFunc_XML->file, "					<SuggestedStart>%s</SuggestedStart>\n", doubleToStr(doubleRange->suggested_start));
+				fprintf(gOutFunc_XML->file, "					<SuggestedEnd>%s</SuggestedEnd>\n", doubleToStr(doubleRange->suggested_end));
+				fprintf(gOutFunc_XML->file, "					<SuggestedIncrement>%s</SuggestedIncrement>\n", doubleToStr(doubleRange->suggested_increment));
 				fprintf(gOutFunc_XML->file, "				</Range>\n");
-				fprintf(gOutFunc_XML->file, "				<DefaultValue>%f</DefaultValue>\n", optInputInfo->defaultValue);
+				fprintf(gOutFunc_XML->file, "				<DefaultValue>%s</DefaultValue>\n", doubleToStr(optInputInfo->defaultValue));
 			}
 			else if(optInputInfo->type == TA_OptInput_IntegerRange)
 			{
