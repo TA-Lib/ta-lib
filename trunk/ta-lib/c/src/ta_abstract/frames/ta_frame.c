@@ -262,14 +262,14 @@
 /* Generated */              endIdx,
 /* Generated */              params->in[0].data.inReal, /* inReal0 */
 /* Generated */              params->in[1].data.inReal, /* inReal1 */
+/* Generated */              params->optIn[0].data.optInInteger, /* optInTimePeriod*/
 /* Generated */              outBegIdx, 
 /* Generated */              outNbElement, 
 /* Generated */              params->out[0].data.outReal /*  outReal */ );
 /* Generated */ }
 /* Generated */ unsigned int TA_BETA_FramePPLB( const TA_ParamHolderPriv *params )
 /* Generated */ {
-/* Generated */    (void)params;
-/* Generated */    return TA_BETA_Lookback( );
+/* Generated */    return TA_BETA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_BBANDS_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
