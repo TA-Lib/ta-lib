@@ -251,26 +251,6 @@
 /* Generated */    (void)params;
 /* Generated */    return TA_AVGPRICE_Lookback( );
 /* Generated */ }
-/* Generated */ TA_RetCode TA_BETA_FramePP( const TA_ParamHolderPriv *params,
-/* Generated */                           int            startIdx,
-/* Generated */                           int            endIdx,
-/* Generated */                           int           *outBegIdx,
-/* Generated */                           int           *outNbElement )
-/* Generated */ {
-/* Generated */    return TA_BETA(
-/* Generated */              startIdx,
-/* Generated */              endIdx,
-/* Generated */              params->in[0].data.inReal, /* inReal0 */
-/* Generated */              params->in[1].data.inReal, /* inReal1 */
-/* Generated */              params->optIn[0].data.optInInteger, /* optInTimePeriod*/
-/* Generated */              outBegIdx, 
-/* Generated */              outNbElement, 
-/* Generated */              params->out[0].data.outReal /*  outReal */ );
-/* Generated */ }
-/* Generated */ unsigned int TA_BETA_FramePPLB( const TA_ParamHolderPriv *params )
-/* Generated */ {
-/* Generated */    return TA_BETA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
-/* Generated */ }
 /* Generated */ TA_RetCode TA_BBANDS_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
@@ -297,6 +277,26 @@
 /* Generated */                        params->optIn[1].data.optInReal, /* optInNbDevUp*/
 /* Generated */                        params->optIn[2].data.optInReal, /* optInNbDevDn*/
 /* Generated */                        params->optIn[3].data.optInInteger /* optInMAType*/ );
+/* Generated */ }
+/* Generated */ TA_RetCode TA_BETA_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNbElement )
+/* Generated */ {
+/* Generated */    return TA_BETA(
+/* Generated */              startIdx,
+/* Generated */              endIdx,
+/* Generated */              params->in[0].data.inReal, /* inReal0 */
+/* Generated */              params->in[1].data.inReal, /* inReal1 */
+/* Generated */              params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+/* Generated */              outBegIdx, 
+/* Generated */              outNbElement, 
+/* Generated */              params->out[0].data.outReal /*  outReal */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_BETA_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    return TA_BETA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 /* Generated */ }
 /* Generated */ TA_RetCode TA_BOP_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,

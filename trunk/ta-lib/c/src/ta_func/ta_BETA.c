@@ -94,13 +94,13 @@
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-/* Generated */       optInTimePeriod = 60;
+/* Generated */       optInTimePeriod = 5;
 /* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return -1;
 /* Generated */ 
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
-   return optInTimePeriod + 1;
+   return optInTimePeriod - 1;
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -160,6 +160,7 @@
     double tmp_real = 0.0f; /* temporary variable */
     double x; /* the 'x' value, which is the last change between values in inReal0 */
     double y; /* the 'y' value, which is the last change between values in inReal1 */
+    double n = 0.0f;
     int i, outIdx;
     int trailingIdx, nbInitialElementNeeded;
 
@@ -208,10 +209,10 @@
     */
 
    /* Validate the calculation method type and
-    * identify the minimum number of price bar needed
-    * to calculate at least one output.
+    * identify the minimum number of input
+    * consume before the first value is output..
     */
-   nbInitialElementNeeded = (optInTimePeriod+1);
+   nbInitialElementNeeded = optInTimePeriod-1;
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -225,16 +226,19 @@
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
-   }
+   }   
 
-   outIdx = startIdx;
-   trailingIdx = startIdx + 1;
-   last_price_x = inReal0[startIdx];
-   last_price_y = inReal1[startIdx];
-   trailing_last_price_x = last_price_x;
-   trailing_last_price_y = last_price_y;
+   /* Consume first input. */
+   trailingIdx = startIdx-nbInitialElementNeeded;
+   last_price_x = inReal0[trailingIdx];
+   last_price_y = inReal1[trailingIdx];
+   trailingIdx++;  
+   trailing_last_price_x = inReal0[trailingIdx];
+   trailing_last_price_y = inReal1[trailingIdx];
 
-   for( i = startIdx+1; i <= endIdx; i++ )
+   /* Process remaining of lookback until ready to output the first value. */
+   i = trailingIdx;
+   while( i < startIdx )
    {
        tmp_real = inReal0[i];
        if( !TA_IS_ZERO(last_price_x) )
@@ -243,7 +247,33 @@
           x = 0.0;
        last_price_x = tmp_real;
 
-       tmp_real = inReal1[i];
+       tmp_real = inReal1[i++];
+       if( !TA_IS_ZERO(last_price_y) )
+          y = (tmp_real-last_price_y)/last_price_y;
+       else
+          y = 0.0;
+       last_price_y = tmp_real;
+
+       S_xx += x*x;
+       S_yy += y*y;
+       S_xy += x*y;
+       S_x += x;
+       S_y += y;      
+   }
+   
+
+   outIdx = 0; /* First output always start at index zero */
+   n = (double)optInTimePeriod;
+   do
+   {
+       tmp_real = inReal0[i];
+       if( !TA_IS_ZERO(last_price_x) )
+          x = (tmp_real-last_price_x)/last_price_x;
+       else
+          x = 0.0;
+       last_price_x = tmp_real;
+
+       tmp_real = inReal1[i++];
        if( !TA_IS_ZERO(last_price_y) )
           y = (tmp_real-last_price_y)/last_price_y;
        else
@@ -256,39 +286,36 @@
        S_x += x;
        S_y += y;
 
-       if( i >= nbInitialElementNeeded )
-       {
-            /* don't generate output until we get enough data */
-            tmp_real = (nbInitialElementNeeded * S_xx) - (S_x * S_x);
-            if( !TA_IS_ZERO(tmp_real) )
-                outReal[outIdx++] = ((nbInitialElementNeeded * S_xy) - (S_x * S_y)) / tmp_real;
-            else
-                outReal[outIdx++] = 0.0;
+       /* don't generate output until we get enough data */
+       tmp_real = (n * S_xx) - (S_x * S_x);
+       if( !TA_IS_ZERO(tmp_real) )
+          outReal[outIdx++] = ((n * S_xy) - (S_x * S_y)) / tmp_real;
+       else
+          outReal[outIdx++] = 0.0;
 
-            /* trailingIdx starts at start + 1 and trailing_last is the element at start. */
+       /* trailingIdx starts at start + 1 and trailing_last is the element at start. */
 
-            /* remove the trailing summation */
-            tmp_real = inReal0[trailingIdx];
-            if( !TA_IS_ZERO(trailing_last_price_x) )
-                x = (tmp_real-trailing_last_price_x)/trailing_last_price_x;
-            else
-                x = 0.0;
-            trailing_last_price_x = tmp_real;
+       /* remove the trailing summation */
+       tmp_real = inReal0[trailingIdx];
+       if( !TA_IS_ZERO(trailing_last_price_x) )
+          x = (tmp_real-trailing_last_price_x)/trailing_last_price_x;
+       else
+          x = 0.0;
+       trailing_last_price_x = tmp_real;
 
-            tmp_real = inReal1[trailingIdx++];
-            if( !TA_IS_ZERO(trailing_last_price_y) )
-                y = (tmp_real-trailing_last_price_y)/trailing_last_price_y;
-            else
-                y = 0.0;
-            trailing_last_price_y = tmp_real;
+       tmp_real = inReal1[trailingIdx++];
+       if( !TA_IS_ZERO(trailing_last_price_y) )
+          y = (tmp_real-trailing_last_price_y)/trailing_last_price_y;
+       else
+          y = 0.0;
+       trailing_last_price_y = tmp_real;
 
-            S_xx -= x*x;
-            S_yy -= y*y;
-            S_xy -= x*y;
-            S_x -= x;
-            S_y -= y;
-       }
-   }
+       S_xx -= x*x;
+       S_yy -= y*y;
+       S_xy -= x*y;
+       S_x -= x;
+       S_y -= y;       
+   } while( i <= endIdx );
 
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
@@ -342,11 +369,13 @@
 /* Generated */     double S_y = 0.0f; 
 /* Generated */     double last_price_x = 0.0f; 
 /* Generated */     double last_price_y = 0.0f; 
+/* Generated */     double trailing_last_price_x = 0.0f; 
+/* Generated */     double trailing_last_price_y = 0.0f; 
 /* Generated */     double tmp_real = 0.0f; 
 /* Generated */     double x; 
 /* Generated */     double y; 
-/* Generated */     double n = 0.0f;
 /* Generated */     int i, outIdx;
+/* Generated */     int trailingIdx, nbInitialElementNeeded;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -356,24 +385,32 @@
 /* Generated */     if( !inReal0 ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( !inReal1 ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
+/* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */        optInTimePeriod = 5;
+/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    if( startIdx < 1 )
-/* Generated */       startIdx = 1;      
+/* Generated */    nbInitialElementNeeded = optInTimePeriod-1;
+/* Generated */    if( startIdx < nbInitialElementNeeded )
+/* Generated */       startIdx = nbInitialElementNeeded;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
-/* Generated */    }
-/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
-/* Generated */    outIdx = 0;
-/* Generated */    last_price_x = inReal0[startIdx-1];
-/* Generated */    last_price_y = inReal1[startIdx-1];
-/* Generated */    for( i = startIdx; i <= endIdx; i++ )
+/* Generated */    }   
+/* Generated */    trailingIdx = startIdx-nbInitialElementNeeded;
+/* Generated */    last_price_x = inReal0[trailingIdx];
+/* Generated */    last_price_y = inReal1[trailingIdx];
+/* Generated */    trailingIdx++;  
+/* Generated */    trailing_last_price_x = inReal0[trailingIdx];
+/* Generated */    trailing_last_price_y = inReal1[trailingIdx];
+/* Generated */    i = trailingIdx;
+/* Generated */    while( i < startIdx )
 /* Generated */    {
 /* Generated */        tmp_real = inReal0[i];
 /* Generated */        if( !TA_IS_ZERO(last_price_x) )
@@ -381,7 +418,28 @@
 /* Generated */        else
 /* Generated */           x = 0.0;
 /* Generated */        last_price_x = tmp_real;
-/* Generated */        tmp_real = inReal1[i];
+/* Generated */        tmp_real = inReal1[i++];
+/* Generated */        if( !TA_IS_ZERO(last_price_y) )
+/* Generated */           y = (tmp_real-last_price_y)/last_price_y;
+/* Generated */        else
+/* Generated */           y = 0.0;
+/* Generated */        last_price_y = tmp_real;
+/* Generated */        S_xx += x*x;
+/* Generated */        S_yy += y*y;
+/* Generated */        S_xy += x*y;
+/* Generated */        S_x += x;
+/* Generated */        S_y += y;      
+/* Generated */    }
+/* Generated */    outIdx = 0; 
+/* Generated */    do
+/* Generated */    {
+/* Generated */        tmp_real = inReal0[i];
+/* Generated */        if( !TA_IS_ZERO(last_price_x) )
+/* Generated */           x = (tmp_real-last_price_x)/last_price_x;
+/* Generated */        else
+/* Generated */           x = 0.0;
+/* Generated */        last_price_x = tmp_real;
+/* Generated */        tmp_real = inReal1[i++];
 /* Generated */        if( !TA_IS_ZERO(last_price_y) )
 /* Generated */           y = (tmp_real-last_price_y)/last_price_y;
 /* Generated */        else
@@ -392,14 +450,31 @@
 /* Generated */        S_xy += x*y;
 /* Generated */        S_x += x;
 /* Generated */        S_y += y;
-/* Generated */        n += 1.0f;
-/* Generated */        tmp_real = (n * S_xx) - (S_x * S_x);
+/* Generated */        tmp_real = (nbInitialElementNeeded * S_xx) - (S_x * S_x);
 /* Generated */        if( !TA_IS_ZERO(tmp_real) )
-/* Generated */           outReal[outIdx++] = ((n * S_xy) - (S_x * S_y)) / tmp_real;       
+/* Generated */           outReal[outIdx++] = ((nbInitialElementNeeded * S_xy) - (S_x * S_y)) / tmp_real;
 /* Generated */        else
 /* Generated */           outReal[outIdx++] = 0.0;
-/* Generated */    }
+/* Generated */        tmp_real = inReal0[trailingIdx];
+/* Generated */        if( !TA_IS_ZERO(trailing_last_price_x) )
+/* Generated */           x = (tmp_real-trailing_last_price_x)/trailing_last_price_x;
+/* Generated */        else
+/* Generated */           x = 0.0;
+/* Generated */        trailing_last_price_x = tmp_real;
+/* Generated */        tmp_real = inReal1[trailingIdx++];
+/* Generated */        if( !TA_IS_ZERO(trailing_last_price_y) )
+/* Generated */           y = (tmp_real-trailing_last_price_y)/trailing_last_price_y;
+/* Generated */        else
+/* Generated */           y = 0.0;
+/* Generated */        trailing_last_price_y = tmp_real;
+/* Generated */        S_xx -= x*x;
+/* Generated */        S_yy -= y*y;
+/* Generated */        S_xy -= x*y;
+/* Generated */        S_x -= x;
+/* Generated */        S_y -= y;       
+/* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 

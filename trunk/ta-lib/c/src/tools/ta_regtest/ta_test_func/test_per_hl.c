@@ -122,7 +122,7 @@ static TA_Test tableTest[] =
     * value you are expecting.
     */
 
-   /*{ 1, TA_BETA_TEST,  0, 251, 0, TA_SUCCESS,      0, 999.99,  1,  252-1 }, */
+   /*{ 1, TA_BETA_TEST,  0, 251, 5, TA_SUCCESS,      0, 2.203528,  4,  252-4 },*/
 
    /*****************/
    /* CORREL TEST   */

@@ -177,8 +177,8 @@ DEF_FUNCTION( BETA,                      /* name */
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableB[] =
 {
-   ADD_TO_TABLE(BETA),
    ADD_TO_TABLE(BBANDS),
+   ADD_TO_TABLE(BETA),
    ADD_TO_TABLE(BOP),
    NULL
 };
