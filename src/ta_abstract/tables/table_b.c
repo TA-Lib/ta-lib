@@ -159,6 +159,7 @@ static const TA_OutputParameterInfo   *TA_BETA_Outputs[]   =
 
 static const TA_OptInputParameterInfo *TA_BETA_OptInputs[] =
 {
+  &TA_DEF_UI_TimePeriod_5,
   NULL
 };
 

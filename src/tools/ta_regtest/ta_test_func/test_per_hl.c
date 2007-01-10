@@ -326,11 +326,12 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
       retCode = TA_BETA( startIdx,
                          endIdx,
                          testParam->high,
-                         testParam->low,                         
+                         testParam->low,
+                         testParam->test->optInTimePeriod, /* time period */
                          outBegIdx,
                          outNbElement,
                          outputBuffer );
-      *lookback = TA_BETA_Lookback();
+      *lookback = TA_BETA_Lookback(testParam->test->optInTimePeriod);
       break;
 
    default:
@@ -415,7 +416,8 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_BETA( test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
-                         gBuffer[1].in,                         
+                         gBuffer[1].in,
+                         test->optInTimePeriod,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[0].out0
@@ -497,7 +499,8 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_BETA( test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
-                         gBuffer[1].in,                         
+                         gBuffer[1].in,
+                         test->optInTimePeriod,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[0].in
@@ -589,7 +592,8 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_BETA( test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
-                         gBuffer[1].in,                           
+                         gBuffer[1].in,
+                         test->optInTimePeriod,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[1].in

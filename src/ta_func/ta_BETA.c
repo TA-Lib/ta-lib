@@ -77,13 +77,13 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::BetaLookback( void )
+/* Generated */ int Core::BetaLookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int betaLookback(  )
+/* Generated */ public int betaLookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_BETA_Lookback( void )
+/* Generated */ int TA_BETA_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -91,11 +91,16 @@
    /* insert local variable here */
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
-/* Generated */ /* No parameters to validate. */
+/* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 60;
+/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
-
-   /* insert lookback code here. */
-   return 1;
+   return optInTimePeriod + 1;
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -105,6 +110,12 @@
  * Input  = double, double
  * Output = double
  * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Number of period
+ * 
+ * 
  */
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
@@ -112,6 +123,7 @@
 /* Generated */                                      int    endIdx,
 /* Generated */                                      cli::array<double>^ inReal0,
 /* Generated */                                      cli::array<double>^ inReal1,
+/* Generated */                                      int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                      [Out]int%    outBegIdx,
 /* Generated */                                      [Out]int%    outNbElement,
 /* Generated */                                      cli::array<double>^  outReal )
@@ -120,6 +132,7 @@
 /* Generated */                      int    endIdx,
 /* Generated */                      double       inReal0[],
 /* Generated */                      double       inReal1[],
+/* Generated */                      int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                      MInteger     outBegIdx,
 /* Generated */                      MInteger     outNbElement,
 /* Generated */                      double        outReal[] )
@@ -128,13 +141,13 @@
 /* Generated */                     int    endIdx,
 /* Generated */                     const double inReal0[],
 /* Generated */                     const double inReal1[],
+/* Generated */                     int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                     int          *outBegIdx,
 /* Generated */                     int          *outNbElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
-	/* insert local variable here */
     double S_xx = 0.0f; /* sum of x * x */
     double S_yy = 0.0f; /* sum of y * y */
     double S_xy = 0.0f; /* sum of x * y */
@@ -142,11 +155,14 @@
     double S_y = 0.0f; /* sum of y */
     double last_price_x = 0.0f; /* the last price read from inReal0 */
     double last_price_y = 0.0f; /* the last price read from inReal1 */
+    double trailing_last_price_x = 0.0f; /* same as last_price_x except used to remove elements from the trailing summation */
+    double trailing_last_price_y = 0.0f; /* same as last_price_y except used to remove elements from the trailing summation */
     double tmp_real = 0.0f; /* temporary variable */
     double x; /* the 'x' value, which is the last change between values in inReal0 */
     double y; /* the 'y' value, which is the last change between values in inReal1 */
-    double n = 0.0f;
     int i, outIdx;
+    int trailingIdx, nbInitialElementNeeded;
+
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -162,6 +178,12 @@
 /* Generated */    if( !inReal0 ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    if( !inReal1 ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */    /* min/max are checked for optInTimePeriod. */
+/* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+/* Generated */       optInTimePeriod = 5;
+/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
+/* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
@@ -172,7 +194,7 @@
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
-                   
+
    /** DESCRIPTION OF ALGORITHM:
     *   The Beta 'algorithm' is a measure of a stocks volatility vs from index. The stock prices
     *   are given in inReal0 and the index prices are give in inReal1. The size of these vectors
@@ -185,11 +207,17 @@
     *   value is the Alpha value (see TA_ALPHA) which is the Y-intercept of the same linear regression.
     */
 
-   /* Move up the start index if there is not enough initial data.
-    * Always one price bar gets consumed.
+   /* Validate the calculation method type and
+    * identify the minimum number of price bar needed
+    * to calculate at least one output.
     */
-   if( startIdx < 1 )
-      startIdx = 1;      
+   nbInitialElementNeeded = (optInTimePeriod+1);
+
+   /* Move up the start index if there is not
+    * enough initial data.
+    */
+   if( startIdx < nbInitialElementNeeded )
+      startIdx = nbInitialElementNeeded;
 
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
@@ -198,12 +226,15 @@
       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
-   VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
-   
-   outIdx = 0;
-   last_price_x = inReal0[startIdx-1];
-   last_price_y = inReal1[startIdx-1];
-   for( i = startIdx; i <= endIdx; i++ )
+
+   outIdx = startIdx;
+   trailingIdx = startIdx + 1;
+   last_price_x = inReal0[startIdx];
+   last_price_y = inReal1[startIdx];
+   trailing_last_price_x = last_price_x;
+   trailing_last_price_y = last_price_y;
+
+   for( i = startIdx+1; i <= endIdx; i++ )
    {
        tmp_real = inReal0[i];
        if( !TA_IS_ZERO(last_price_x) )
@@ -218,22 +249,50 @@
        else
           y = 0.0;
        last_price_y = tmp_real;
-       
+
        S_xx += x*x;
        S_yy += y*y;
        S_xy += x*y;
        S_x += x;
        S_y += y;
-       n += 1.0f;
-       
-       tmp_real = (n * S_xx) - (S_x * S_x);
-       if( !TA_IS_ZERO(tmp_real) )
-          outReal[outIdx++] = ((n * S_xy) - (S_x * S_y)) / tmp_real;       
-       else
-          outReal[outIdx++] = 0.0;
+
+       if( i >= nbInitialElementNeeded )
+       {
+            /* don't generate output until we get enough data */
+            tmp_real = (nbInitialElementNeeded * S_xx) - (S_x * S_x);
+            if( !TA_IS_ZERO(tmp_real) )
+                outReal[outIdx++] = ((nbInitialElementNeeded * S_xy) - (S_x * S_y)) / tmp_real;
+            else
+                outReal[outIdx++] = 0.0;
+
+            /* trailingIdx starts at start + 1 and trailing_last is the element at start. */
+
+            /* remove the trailing summation */
+            tmp_real = inReal0[trailingIdx];
+            if( !TA_IS_ZERO(trailing_last_price_x) )
+                x = (tmp_real-trailing_last_price_x)/trailing_last_price_x;
+            else
+                x = 0.0;
+            trailing_last_price_x = tmp_real;
+
+            tmp_real = inReal1[trailingIdx++];
+            if( !TA_IS_ZERO(trailing_last_price_y) )
+                y = (tmp_real-trailing_last_price_y)/trailing_last_price_y;
+            else
+                y = 0.0;
+            trailing_last_price_y = tmp_real;
+
+            S_xx -= x*x;
+            S_yy -= y*y;
+            S_xy -= x*y;
+            S_x -= x;
+            S_y -= y;
+       }
    }
 
+   /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+   VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
@@ -252,6 +311,7 @@
 /* Generated */                                      int    endIdx,
 /* Generated */                                      cli::array<float>^ inReal0,
 /* Generated */                                      cli::array<float>^ inReal1,
+/* Generated */                                      int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                      [Out]int%    outBegIdx,
 /* Generated */                                      [Out]int%    outNbElement,
 /* Generated */                                      cli::array<double>^  outReal )
@@ -260,6 +320,7 @@
 /* Generated */                      int    endIdx,
 /* Generated */                      float        inReal0[],
 /* Generated */                      float        inReal1[],
+/* Generated */                      int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                      MInteger     outBegIdx,
 /* Generated */                      MInteger     outNbElement,
 /* Generated */                      double        outReal[] )
@@ -268,6 +329,7 @@
 /* Generated */                       int    endIdx,
 /* Generated */                       const float  inReal0[],
 /* Generated */                       const float  inReal1[],
+/* Generated */                       int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                       int          *outBegIdx,
 /* Generated */                       int          *outNbElement,
 /* Generated */                       double        outReal[] )
