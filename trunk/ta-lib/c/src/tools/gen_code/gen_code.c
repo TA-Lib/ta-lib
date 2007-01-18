@@ -39,6 +39,7 @@
  *  ST       Steve Thames  (steve@softlife.com)
  *  AC       Angelo Ciceri
  *  RM       Robert Meier  (talib@meierlim.com)
+ *  CM		 Craig Miller  (c-miller@users.sourceforge.net)
  *
  * Change history:
  *
@@ -62,7 +63,8 @@
  *  093006 MF    Add code generation for TA_FunctionDescription
  *  110206 AC    Change volume and open interest to double
  *  120106 MF    Add generation of java_defs.h
- *  122406 MF    Add generation of Makefile.am 
+ *  122406 MF    Add generation of Makefile.am
+ *  011707 CM    Add ta_pragma.h handles VC8 warnings, type conversion of strlen handles VC warning
  */
 
 /* Description:
@@ -81,6 +83,7 @@
  *       directory. You must run "gen_code" from ta-lib/c/bin.
  *       
  */
+#include "ta_pragma.h"		//this must be the first inclusion
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -1817,7 +1820,7 @@ static void printFunc( FILE *out,
                      funcName );
          }
          print( out, gTempBuf );
-         indent = strlen(gTempBuf) - 2;
+         indent = (unsigned int)strlen(gTempBuf) - 2;
       }
       else
       {
@@ -1852,7 +1855,7 @@ static void printFunc( FILE *out,
                         startIdxString );
          }
          print( out, gTempBuf );
-         indent = strlen(gTempBuf);
+         indent = (unsigned int)strlen(gTempBuf);
          
          if( outputForSWIG ) 
             indent -= 25;
@@ -1865,7 +1868,7 @@ static void printFunc( FILE *out,
    }
    else if( frame )
    {
-      indent = strlen(funcName);
+      indent = (unsigned int)strlen(funcName);
       if( lookbackSignature )
       {
          print( out, "%sTA_%s_Lookback(", prefix == NULL? "" : prefix, funcName );
@@ -1889,7 +1892,7 @@ static void printFunc( FILE *out,
    }
 
    if( prefix )
-      indent += strlen(prefix);
+      indent += (unsigned int)strlen(prefix);
    if( frame )
       indent -= 5;
 
@@ -3468,7 +3471,7 @@ const char *doubleToStr( double value )
    /* Remove extra "0" added by Microsoft in the
     * exponential part.
     */
-   length = strlen( gTempDoubleToStr );
+   length = (int)strlen( gTempDoubleToStr );
    outIdx = 0;
    for( i=0; i < length; i++ )
    {
@@ -3525,7 +3528,7 @@ static char *trimWhitespace( char *str )
    while( isspace(*str) ) str++;
    if( *str == '\0' ) return str;
 
-   for( i=strlen(str)-1; i >= 0; i-- )
+   for( i=(int)strlen(str)-1; i >= 0; i-- )
    {
       if( !isspace(str[i]) )
          return str;
@@ -3612,7 +3615,7 @@ static void extractTALogic( FILE *inFile, FILE *outFile )
    /* Find the begining of the function */
    while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
    {
-      length = strlen(gTempBuf);
+      length = (int)strlen(gTempBuf);
       if( length > BUFFER_SIZE )
          return;
 
@@ -3628,7 +3631,7 @@ static void extractTALogic( FILE *inFile, FILE *outFile )
    commentFirstCharFound = 0;
    while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
    {
-      length = strlen(gTempBuf);
+      length = (int)strlen(gTempBuf);
       if( length > BUFFER_SIZE )
          return;
 
