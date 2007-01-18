@@ -1,0 +1,392 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gen_code", "gen_code\gen_code.vcproj", "{79D18ABF-C93A-441A-A22B-D58813BB2701}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115} = {E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ta_abstract", "ta_abstract\ta_abstract.vcproj", "{FDE2592B-DF64-4308-B644-92E79E071986}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115} = {E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ta_common", "ta_common\ta_common.vcproj", "{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ta_func", "ta_func\ta_func.vcproj", "{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115} = {E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ta_libc", "ta_libc\ta_libc.vcproj", "{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115} = {E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}
+		{FDE2592B-DF64-4308-B644-92E79E071986} = {FDE2592B-DF64-4308-B644-92E79E071986}
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2} = {B9DBB4A6-C675-4486-B916-0B0DCC049BB2}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ta_regtest", "ta_regtest\ta_regtest.vcproj", "{271698C6-3436-4D9B-87DB-F865325B00C5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115} = {E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}
+		{FDE2592B-DF64-4308-B644-92E79E071986} = {FDE2592B-DF64-4308-B644-92E79E071986}
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2} = {B9DBB4A6-C675-4486-B916-0B0DCC049BB2}
+		{79D18ABF-C93A-441A-A22B-D58813BB2701} = {79D18ABF-C93A-441A-A22B-D58813BB2701}
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021} = {B7BA9CEF-8430-4BCB-8EEE-5C351800A021}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "documents", "documents", "{9D831F2E-888C-43E9-B3B7-80BC57555396}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\CHANGELOG.TXT = ..\..\..\..\CHANGELOG.TXT
+		..\..\..\..\HISTORY.TXT = ..\..\..\..\HISTORY.TXT
+		..\..\..\..\LICENSE.TXT = ..\..\..\..\LICENSE.TXT
+		..\..\..\..\LICENSE_EXCEL.TXT = ..\..\..\..\LICENSE_EXCEL.TXT
+		..\..\..\..\README.TXT = ..\..\..\..\README.TXT
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "makefiles", "makefiles", "{E2C97B41-4496-410A-A794-E5D26DF55C02}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gen_code", "gen_code", "{83C319D3-A8BA-4D05-B580-67EB19D8A6B1}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\gen_make\gen_code\gen_code.pro = ..\..\..\make\gen_make\gen_code\gen_code.pro
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ta_abstract", "ta_abstract", "{948F58C2-3C1A-4DBB-99EC-E6A4A72F458E}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\gen_make\ta_abstract\make_pro.pl = ..\..\..\make\gen_make\ta_abstract\make_pro.pl
+		..\..\..\make\gen_make\ta_abstract\ta_abstract.pro = ..\..\..\make\gen_make\ta_abstract\ta_abstract.pro
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ta_common", "ta_common", "{38600B48-D2FF-435B-B8C9-336185A22F03}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\gen_make\ta_common\ta_common.pro = ..\..\..\make\gen_make\ta_common\ta_common.pro
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ta_func", "ta_func", "{080C76C5-454A-460E-A1A3-20FFB8B03454}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\gen_make\ta_func\make_pro.pl = ..\..\..\make\gen_make\ta_func\make_pro.pl
+		..\..\..\make\gen_make\ta_func\ta_func.pro = ..\..\..\make\gen_make\ta_func\ta_func.pro
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ta_libc", "ta_libc", "{5E9AF7F5-0AB2-4C31-930B-6F24060A7724}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\gen_make\ta_libc\make_pro.pl = ..\..\..\make\gen_make\ta_libc\make_pro.pl
+		..\..\..\make\gen_make\ta_libc\ta_libc.pro = ..\..\..\make\gen_make\ta_libc\ta_libc.pro
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ta_regtest", "ta_regtest", "{3EF81AD6-C4E6-4A59-B542-1AF27303864E}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\gen_make\ta_regtest\ta_regtest.pro = ..\..\..\make\gen_make\ta_regtest\ta_regtest.pro
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cdd", "cdd", "{67268CF3-5893-4DD2-97F7-4F6F282A7359}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cdd\win32\msvc\ta_common\Makefile = ..\..\..\make\cdd\win32\msvc\ta_common\Makefile
+		..\..\..\make\gen_make\ta_common\ta_common.pro = ..\..\..\make\gen_make\ta_common\ta_common.pro
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cdr", "cdr", "{A6662AC1-0863-487F-9B5F-AE439AD991BB}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cdr\win32\msvc\ta_common\Makefile = ..\..\..\make\cdr\win32\msvc\ta_common\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cmd", "cmd", "{83045683-F9AB-40B8-A43A-29F58C05C442}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cmd\win32\msvc\ta_common\Makefile = ..\..\..\make\cmd\win32\msvc\ta_common\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cmr", "cmr", "{4980937C-C25E-427B-8CB6-C9CEC1F09599}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cmr\win32\msvc\ta_common\Makefile = ..\..\..\make\cmr\win32\msvc\ta_common\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csd", "csd", "{B048AEFF-143F-4287-BD43-848F17DA1886}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\csd\win32\msvc\ta_common\Makefile = ..\..\..\make\csd\win32\msvc\ta_common\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csr", "csr", "{5972AB34-A5D2-4AB9-ACDD-E3384C9F0CAE}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\csr\win32\msvc\ta_common\Makefile = ..\..\..\make\csr\win32\msvc\ta_common\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cdd", "cdd", "{453FF03A-1F22-40BA-99AA-AB92F5C969D7}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cdd\win32\msvc\ta_func\Makefile = ..\..\..\make\cdd\win32\msvc\ta_func\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cdr", "cdr", "{049EB91B-3AF3-48D9-AC43-DA190016D655}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cdr\win32\msvc\ta_func\Makefile = ..\..\..\make\cdr\win32\msvc\ta_func\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cmd", "cmd", "{304349A9-F7E6-4EC8-89E3-883D69C49723}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cmd\win32\msvc\ta_func\Makefile = ..\..\..\make\cmd\win32\msvc\ta_func\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cmr", "cmr", "{ADDE8BAE-40DF-43FD-A5A3-693340FB6BB9}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cmr\win32\msvc\ta_func\Makefile = ..\..\..\make\cmr\win32\msvc\ta_func\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csd", "csd", "{C49499BB-C9E3-4348-A054-4940C81F894C}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\csd\win32\msvc\ta_func\Makefile = ..\..\..\make\csd\win32\msvc\ta_func\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csr", "csr", "{9B72D7D4-D63F-4F27-B09A-BA3DFD97EE6B}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\csr\win32\msvc\ta_func\Makefile = ..\..\..\make\csr\win32\msvc\ta_func\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cdd", "cdd", "{F59E562B-9875-473E-9983-B827D4199D1B}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cdd\win32\msvc\ta_abstract\Makefile = ..\..\..\make\cdd\win32\msvc\ta_abstract\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cdr", "cdr", "{34166D06-4967-4A9C-B925-49692663C5D2}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cdr\win32\msvc\ta_abstract\Makefile = ..\..\..\make\cdr\win32\msvc\ta_abstract\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cmr", "cmr", "{EB779918-8B17-4578-9ED6-AF2FCCAAD1E8}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cmr\win32\msvc\ta_abstract\Makefile = ..\..\..\make\cmr\win32\msvc\ta_abstract\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cmd", "cmd", "{46E6AB47-61D6-4B7C-9C47-0F3929EDD04A}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cmd\win32\msvc\ta_abstract\Makefile = ..\..\..\make\cmd\win32\msvc\ta_abstract\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csd", "csd", "{A89ACA49-BB62-45ED-A84F-B3023526046F}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\csd\win32\msvc\ta_abstract\Makefile = ..\..\..\make\csd\win32\msvc\ta_abstract\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csr", "csr", "{754C96FF-C1CF-44F3-B64C-5B93305C7BA8}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\csr\win32\msvc\ta_abstract\Makefile = ..\..\..\make\csr\win32\msvc\ta_abstract\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cdd", "cdd", "{AD633A91-1907-4F9C-B04A-76B3832AB888}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cdd\win32\msvc\ta_libc\Makefile = ..\..\..\make\cdd\win32\msvc\ta_libc\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cdr", "cdr", "{D4523762-D5C6-4033-961F-B8EA0A38CE16}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cdr\win32\msvc\ta_libc\Makefile = ..\..\..\make\cdr\win32\msvc\ta_libc\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cmd", "cmd", "{FA5FFE47-F73F-463F-B349-A8935E92543A}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cmd\win32\msvc\ta_libc\Makefile = ..\..\..\make\cmd\win32\msvc\ta_libc\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cmr", "cmr", "{664A9B0C-65C5-4D70-917C-69FB41485146}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cmr\win32\msvc\ta_libc\Makefile = ..\..\..\make\cmr\win32\msvc\ta_libc\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csd", "csd", "{F33AB1FE-834B-4B1C-B2F8-FF82EE0DFE10}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\csd\win32\msvc\ta_libc\Makefile = ..\..\..\make\csd\win32\msvc\ta_libc\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csr", "csr", "{0C997300-E4C4-41C2-875A-57F64C726A5A}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\csr\win32\msvc\ta_libc\Makefile = ..\..\..\make\csr\win32\msvc\ta_libc\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cdd", "cdd", "{DE1F15E6-DE92-439E-A666-E15FF880A725}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cdd\win32\msvc\gen_code\Makefile = ..\..\..\make\cdd\win32\msvc\gen_code\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cdr", "cdr", "{A1029960-C169-4A08-8158-CFBF2D7284B2}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cdr\win32\msvc\gen_code\Makefile = ..\..\..\make\cdr\win32\msvc\gen_code\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cmd", "cmd", "{66EB7CF6-5C64-43E7-8E9F-509F8C28F46E}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cmd\win32\msvc\gen_code\Makefile = ..\..\..\make\cmd\win32\msvc\gen_code\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cmr", "cmr", "{11CB6347-2860-4D5C-8177-A2A411986E0F}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cmr\win32\msvc\gen_code\Makefile = ..\..\..\make\cmr\win32\msvc\gen_code\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csd", "csd", "{ACD34E4C-A421-471E-9353-39253DEC6879}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\csd\win32\msvc\gen_code\Makefile = ..\..\..\make\csd\win32\msvc\gen_code\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csr", "csr", "{3E6B20FA-EF1C-4341-8690-F699C9E9A766}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\csr\win32\msvc\gen_code\Makefile = ..\..\..\make\csr\win32\msvc\gen_code\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cdd", "cdd", "{9C96ACCE-9BBB-4F15-A426-51611F8F2F2A}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cdd\win32\msvc\ta_regtest\Makefile = ..\..\..\make\cdd\win32\msvc\ta_regtest\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cdr", "cdr", "{98007B32-C2EF-4783-9EB3-12DFFBF95DB6}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cdr\win32\msvc\ta_regtest\Makefile = ..\..\..\make\cdr\win32\msvc\ta_regtest\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cmd", "cmd", "{E441DF23-9D1F-44A1-AC62-EA4334668E09}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cmd\win32\msvc\ta_regtest\Makefile = ..\..\..\make\cmd\win32\msvc\ta_regtest\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cmr", "cmr", "{BBF6FF1E-26C2-4758-8698-1EA54763FF6A}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\cmr\win32\msvc\ta_regtest\Makefile = ..\..\..\make\cmr\win32\msvc\ta_regtest\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csd", "csd", "{F2CC8A20-AF54-4973-B922-91ACD146A411}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\csd\win32\msvc\ta_regtest\Makefile = ..\..\..\make\csd\win32\msvc\ta_regtest\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csr", "csr", "{73BB37A1-1040-4D77-8E79-56682D7E49C8}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\make\csr\win32\msvc\ta_regtest\Makefile = ..\..\..\make\csr\win32\msvc\ta_regtest\Makefile
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		cdd|Win32 = cdd|Win32
+		cdr|Win32 = cdr|Win32
+		cmd|Win32 = cmd|Win32
+		cmr|Win32 = cmr|Win32
+		csd|Win32 = csd|Win32
+		csr|Win32 = csr|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{79D18ABF-C93A-441A-A22B-D58813BB2701}.cdd|Win32.ActiveCfg = cdd|Win32
+		{79D18ABF-C93A-441A-A22B-D58813BB2701}.cdd|Win32.Build.0 = cdd|Win32
+		{79D18ABF-C93A-441A-A22B-D58813BB2701}.cdr|Win32.ActiveCfg = cdr|Win32
+		{79D18ABF-C93A-441A-A22B-D58813BB2701}.cdr|Win32.Build.0 = cdr|Win32
+		{79D18ABF-C93A-441A-A22B-D58813BB2701}.cmd|Win32.ActiveCfg = cmd|Win32
+		{79D18ABF-C93A-441A-A22B-D58813BB2701}.cmd|Win32.Build.0 = cmd|Win32
+		{79D18ABF-C93A-441A-A22B-D58813BB2701}.cmr|Win32.ActiveCfg = cmr|Win32
+		{79D18ABF-C93A-441A-A22B-D58813BB2701}.cmr|Win32.Build.0 = cmr|Win32
+		{79D18ABF-C93A-441A-A22B-D58813BB2701}.csd|Win32.ActiveCfg = csd|Win32
+		{79D18ABF-C93A-441A-A22B-D58813BB2701}.csd|Win32.Build.0 = csd|Win32
+		{79D18ABF-C93A-441A-A22B-D58813BB2701}.csr|Win32.ActiveCfg = csr|Win32
+		{79D18ABF-C93A-441A-A22B-D58813BB2701}.csr|Win32.Build.0 = csr|Win32
+		{FDE2592B-DF64-4308-B644-92E79E071986}.cdd|Win32.ActiveCfg = cdd|Win32
+		{FDE2592B-DF64-4308-B644-92E79E071986}.cdd|Win32.Build.0 = cdd|Win32
+		{FDE2592B-DF64-4308-B644-92E79E071986}.cdr|Win32.ActiveCfg = cdr|Win32
+		{FDE2592B-DF64-4308-B644-92E79E071986}.cdr|Win32.Build.0 = cdr|Win32
+		{FDE2592B-DF64-4308-B644-92E79E071986}.cmd|Win32.ActiveCfg = cmd|Win32
+		{FDE2592B-DF64-4308-B644-92E79E071986}.cmd|Win32.Build.0 = cmd|Win32
+		{FDE2592B-DF64-4308-B644-92E79E071986}.cmr|Win32.ActiveCfg = cmr|Win32
+		{FDE2592B-DF64-4308-B644-92E79E071986}.cmr|Win32.Build.0 = cmr|Win32
+		{FDE2592B-DF64-4308-B644-92E79E071986}.csd|Win32.ActiveCfg = csd|Win32
+		{FDE2592B-DF64-4308-B644-92E79E071986}.csd|Win32.Build.0 = csd|Win32
+		{FDE2592B-DF64-4308-B644-92E79E071986}.csr|Win32.ActiveCfg = csr|Win32
+		{FDE2592B-DF64-4308-B644-92E79E071986}.csr|Win32.Build.0 = csr|Win32
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}.cdd|Win32.ActiveCfg = cdd|Win32
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}.cdd|Win32.Build.0 = cdd|Win32
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}.cdr|Win32.ActiveCfg = cdr|Win32
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}.cdr|Win32.Build.0 = cdr|Win32
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}.cmd|Win32.ActiveCfg = cmd|Win32
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}.cmd|Win32.Build.0 = cmd|Win32
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}.cmr|Win32.ActiveCfg = cmr|Win32
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}.cmr|Win32.Build.0 = cmr|Win32
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}.csd|Win32.ActiveCfg = csd|Win32
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}.csd|Win32.Build.0 = csd|Win32
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}.csr|Win32.ActiveCfg = csr|Win32
+		{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}.csr|Win32.Build.0 = csr|Win32
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}.cdd|Win32.ActiveCfg = cdd|Win32
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}.cdd|Win32.Build.0 = cdd|Win32
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}.cdr|Win32.ActiveCfg = cdr|Win32
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}.cdr|Win32.Build.0 = cdr|Win32
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}.cmd|Win32.ActiveCfg = cmd|Win32
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}.cmd|Win32.Build.0 = cmd|Win32
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}.cmr|Win32.ActiveCfg = cmr|Win32
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}.cmr|Win32.Build.0 = cmr|Win32
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}.csd|Win32.ActiveCfg = csd|Win32
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}.csd|Win32.Build.0 = csd|Win32
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}.csr|Win32.ActiveCfg = csr|Win32
+		{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}.csr|Win32.Build.0 = csr|Win32
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}.cdd|Win32.ActiveCfg = cdd|Win32
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}.cdd|Win32.Build.0 = cdd|Win32
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}.cdr|Win32.ActiveCfg = cdr|Win32
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}.cdr|Win32.Build.0 = cdr|Win32
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}.cmd|Win32.ActiveCfg = cmd|Win32
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}.cmd|Win32.Build.0 = cmd|Win32
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}.cmr|Win32.ActiveCfg = cmr|Win32
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}.cmr|Win32.Build.0 = cmr|Win32
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}.csd|Win32.ActiveCfg = csd|Win32
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}.csd|Win32.Build.0 = csd|Win32
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}.csr|Win32.ActiveCfg = csr|Win32
+		{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}.csr|Win32.Build.0 = csr|Win32
+		{271698C6-3436-4D9B-87DB-F865325B00C5}.cdd|Win32.ActiveCfg = cdd|Win32
+		{271698C6-3436-4D9B-87DB-F865325B00C5}.cdd|Win32.Build.0 = cdd|Win32
+		{271698C6-3436-4D9B-87DB-F865325B00C5}.cdr|Win32.ActiveCfg = cdr|Win32
+		{271698C6-3436-4D9B-87DB-F865325B00C5}.cdr|Win32.Build.0 = cdr|Win32
+		{271698C6-3436-4D9B-87DB-F865325B00C5}.cmd|Win32.ActiveCfg = cmd|Win32
+		{271698C6-3436-4D9B-87DB-F865325B00C5}.cmd|Win32.Build.0 = cmd|Win32
+		{271698C6-3436-4D9B-87DB-F865325B00C5}.cmr|Win32.ActiveCfg = cmr|Win32
+		{271698C6-3436-4D9B-87DB-F865325B00C5}.cmr|Win32.Build.0 = cmr|Win32
+		{271698C6-3436-4D9B-87DB-F865325B00C5}.csd|Win32.ActiveCfg = csd|Win32
+		{271698C6-3436-4D9B-87DB-F865325B00C5}.csd|Win32.Build.0 = csd|Win32
+		{271698C6-3436-4D9B-87DB-F865325B00C5}.csr|Win32.ActiveCfg = csr|Win32
+		{271698C6-3436-4D9B-87DB-F865325B00C5}.csr|Win32.Build.0 = csr|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{83C319D3-A8BA-4D05-B580-67EB19D8A6B1} = {E2C97B41-4496-410A-A794-E5D26DF55C02}
+		{948F58C2-3C1A-4DBB-99EC-E6A4A72F458E} = {E2C97B41-4496-410A-A794-E5D26DF55C02}
+		{38600B48-D2FF-435B-B8C9-336185A22F03} = {E2C97B41-4496-410A-A794-E5D26DF55C02}
+		{080C76C5-454A-460E-A1A3-20FFB8B03454} = {E2C97B41-4496-410A-A794-E5D26DF55C02}
+		{5E9AF7F5-0AB2-4C31-930B-6F24060A7724} = {E2C97B41-4496-410A-A794-E5D26DF55C02}
+		{3EF81AD6-C4E6-4A59-B542-1AF27303864E} = {E2C97B41-4496-410A-A794-E5D26DF55C02}
+		{DE1F15E6-DE92-439E-A666-E15FF880A725} = {83C319D3-A8BA-4D05-B580-67EB19D8A6B1}
+		{A1029960-C169-4A08-8158-CFBF2D7284B2} = {83C319D3-A8BA-4D05-B580-67EB19D8A6B1}
+		{66EB7CF6-5C64-43E7-8E9F-509F8C28F46E} = {83C319D3-A8BA-4D05-B580-67EB19D8A6B1}
+		{11CB6347-2860-4D5C-8177-A2A411986E0F} = {83C319D3-A8BA-4D05-B580-67EB19D8A6B1}
+		{ACD34E4C-A421-471E-9353-39253DEC6879} = {83C319D3-A8BA-4D05-B580-67EB19D8A6B1}
+		{3E6B20FA-EF1C-4341-8690-F699C9E9A766} = {83C319D3-A8BA-4D05-B580-67EB19D8A6B1}
+		{F59E562B-9875-473E-9983-B827D4199D1B} = {948F58C2-3C1A-4DBB-99EC-E6A4A72F458E}
+		{34166D06-4967-4A9C-B925-49692663C5D2} = {948F58C2-3C1A-4DBB-99EC-E6A4A72F458E}
+		{EB779918-8B17-4578-9ED6-AF2FCCAAD1E8} = {948F58C2-3C1A-4DBB-99EC-E6A4A72F458E}
+		{46E6AB47-61D6-4B7C-9C47-0F3929EDD04A} = {948F58C2-3C1A-4DBB-99EC-E6A4A72F458E}
+		{A89ACA49-BB62-45ED-A84F-B3023526046F} = {948F58C2-3C1A-4DBB-99EC-E6A4A72F458E}
+		{754C96FF-C1CF-44F3-B64C-5B93305C7BA8} = {948F58C2-3C1A-4DBB-99EC-E6A4A72F458E}
+		{67268CF3-5893-4DD2-97F7-4F6F282A7359} = {38600B48-D2FF-435B-B8C9-336185A22F03}
+		{A6662AC1-0863-487F-9B5F-AE439AD991BB} = {38600B48-D2FF-435B-B8C9-336185A22F03}
+		{83045683-F9AB-40B8-A43A-29F58C05C442} = {38600B48-D2FF-435B-B8C9-336185A22F03}
+		{4980937C-C25E-427B-8CB6-C9CEC1F09599} = {38600B48-D2FF-435B-B8C9-336185A22F03}
+		{B048AEFF-143F-4287-BD43-848F17DA1886} = {38600B48-D2FF-435B-B8C9-336185A22F03}
+		{5972AB34-A5D2-4AB9-ACDD-E3384C9F0CAE} = {38600B48-D2FF-435B-B8C9-336185A22F03}
+		{453FF03A-1F22-40BA-99AA-AB92F5C969D7} = {080C76C5-454A-460E-A1A3-20FFB8B03454}
+		{049EB91B-3AF3-48D9-AC43-DA190016D655} = {080C76C5-454A-460E-A1A3-20FFB8B03454}
+		{304349A9-F7E6-4EC8-89E3-883D69C49723} = {080C76C5-454A-460E-A1A3-20FFB8B03454}
+		{ADDE8BAE-40DF-43FD-A5A3-693340FB6BB9} = {080C76C5-454A-460E-A1A3-20FFB8B03454}
+		{C49499BB-C9E3-4348-A054-4940C81F894C} = {080C76C5-454A-460E-A1A3-20FFB8B03454}
+		{9B72D7D4-D63F-4F27-B09A-BA3DFD97EE6B} = {080C76C5-454A-460E-A1A3-20FFB8B03454}
+		{AD633A91-1907-4F9C-B04A-76B3832AB888} = {5E9AF7F5-0AB2-4C31-930B-6F24060A7724}
+		{D4523762-D5C6-4033-961F-B8EA0A38CE16} = {5E9AF7F5-0AB2-4C31-930B-6F24060A7724}
+		{FA5FFE47-F73F-463F-B349-A8935E92543A} = {5E9AF7F5-0AB2-4C31-930B-6F24060A7724}
+		{664A9B0C-65C5-4D70-917C-69FB41485146} = {5E9AF7F5-0AB2-4C31-930B-6F24060A7724}
+		{F33AB1FE-834B-4B1C-B2F8-FF82EE0DFE10} = {5E9AF7F5-0AB2-4C31-930B-6F24060A7724}
+		{0C997300-E4C4-41C2-875A-57F64C726A5A} = {5E9AF7F5-0AB2-4C31-930B-6F24060A7724}
+		{9C96ACCE-9BBB-4F15-A426-51611F8F2F2A} = {3EF81AD6-C4E6-4A59-B542-1AF27303864E}
+		{98007B32-C2EF-4783-9EB3-12DFFBF95DB6} = {3EF81AD6-C4E6-4A59-B542-1AF27303864E}
+		{E441DF23-9D1F-44A1-AC62-EA4334668E09} = {3EF81AD6-C4E6-4A59-B542-1AF27303864E}
+		{BBF6FF1E-26C2-4758-8698-1EA54763FF6A} = {3EF81AD6-C4E6-4A59-B542-1AF27303864E}
+		{F2CC8A20-AF54-4973-B922-91ACD146A411} = {3EF81AD6-C4E6-4A59-B542-1AF27303864E}
+		{73BB37A1-1040-4D77-8E79-56682D7E49C8} = {3EF81AD6-C4E6-4A59-B542-1AF27303864E}
+	EndGlobalSection
+EndGlobal
