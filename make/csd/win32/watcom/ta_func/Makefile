@@ -30,8 +30,8 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c &
 		..\..\..\..\..\src\ta_func\ta_AROONOSC.c &
 		..\..\..\..\..\src\ta_func\ta_ATR.c &
 		..\..\..\..\..\src\ta_func\ta_AVGPRICE.c &
-		..\..\..\..\..\src\ta_func\ta_BETA.c &
 		..\..\..\..\..\src\ta_func\ta_BBANDS.c &
+		..\..\..\..\..\src\ta_func\ta_BETA.c &
 		..\..\..\..\..\src\ta_func\ta_BOP.c &
 		..\..\..\..\..\src\ta_func\ta_CCI.c &
 		..\..\..\..\..\src\ta_func\ta_CDL2CROWS.c &
@@ -169,8 +169,8 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_utility.obj &
 		..\..\..\..\..\temp\csd\ta_AROONOSC.obj &
 		..\..\..\..\..\temp\csd\ta_ATR.obj &
 		..\..\..\..\..\temp\csd\ta_AVGPRICE.obj &
-		..\..\..\..\..\temp\csd\ta_BETA.obj &
 		..\..\..\..\..\temp\csd\ta_BBANDS.obj &
+		..\..\..\..\..\temp\csd\ta_BETA.obj &
 		..\..\..\..\..\temp\csd\ta_BOP.obj &
 		..\..\..\..\..\temp\csd\ta_CCI.obj &
 		..\..\..\..\..\temp\csd\ta_CDL2CROWS.obj &
@@ -335,8 +335,8 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_AROONOSC.obj
 	-del ..\..\..\..\..\temp\csd\ta_ATR.obj
 	-del ..\..\..\..\..\temp\csd\ta_AVGPRICE.obj
-	-del ..\..\..\..\..\temp\csd\ta_BETA.obj
 	-del ..\..\..\..\..\temp\csd\ta_BBANDS.obj
+	-del ..\..\..\..\..\temp\csd\ta_BETA.obj
 	-del ..\..\..\..\..\temp\csd\ta_BOP.obj
 	-del ..\..\..\..\..\temp\csd\ta_CCI.obj
 	-del ..\..\..\..\..\temp\csd\ta_CDL2CROWS.obj
@@ -510,11 +510,11 @@ clean:
 ..\..\..\..\..\temp\csd\ta_AVGPRICE.obj: ..\..\..\..\..\src\ta_func\ta_AVGPRICE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_AVGPRICE.obj ..\..\..\..\..\src\ta_func\ta_AVGPRICE.c
 
-..\..\..\..\..\temp\csd\ta_BETA.obj: ..\..\..\..\..\src\ta_func\ta_BETA.c
-	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_BETA.obj ..\..\..\..\..\src\ta_func\ta_BETA.c
-
 ..\..\..\..\..\temp\csd\ta_BBANDS.obj: ..\..\..\..\..\src\ta_func\ta_BBANDS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_BBANDS.obj ..\..\..\..\..\src\ta_func\ta_BBANDS.c
+
+..\..\..\..\..\temp\csd\ta_BETA.obj: ..\..\..\..\..\src\ta_func\ta_BETA.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_BETA.obj ..\..\..\..\..\src\ta_func\ta_BETA.c
 
 ..\..\..\..\..\temp\csd\ta_BOP.obj: ..\..\..\..\..\src\ta_func\ta_BOP.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\csd\ta_BOP.obj ..\..\..\..\..\src\ta_func\ta_BOP.c
