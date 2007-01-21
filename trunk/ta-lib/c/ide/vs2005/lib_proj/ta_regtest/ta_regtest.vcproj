@@ -48,6 +48,7 @@
 				AdditionalIncludeDirectories=".\..\..\..\..\src\ta_common;.\..\..\..\..\src\tools\ta_regtest;.\..\..\..\..\src\ta_func;.\..\..\..\..\include;.\..\..\..\..\src\ta_common\trio;.\..\..\..\..\src\ta_common\mt"
 				PreprocessorDefinitions="NO_DEBUG;NDEBUG;WIN32;_MBCS;_CONSOLE;QT_THREAD_SUPPORT"
 				StringPooling="true"
+				ExceptionHandling="0"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				PrecompiledHeaderFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).pch"
@@ -60,6 +61,7 @@
 				WarnAsError="true"
 				SuppressStartupBanner="true"
 				Detect64BitPortabilityProblems="true"
+				CompileAs="1"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -74,8 +76,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ta_libc_$(ConfigurationName).lib wininet.lib odbc32.lib odbccp32.lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName)_$(ConfigurationName).exe"
+				AdditionalDependencies="ta_libc_$(ConfigurationName).lib"
+				OutputFile=".\..\..\..\..\bin/$(ProjectName).exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\..\..\..\lib"
@@ -148,6 +150,7 @@
 				AdditionalIncludeDirectories=".\..\..\..\..\src\ta_common;.\..\..\..\..\src\tools\ta_regtest;.\..\..\..\..\src\ta_func;.\..\..\..\..\include;.\..\..\..\..\src\ta_common\trio;.\..\..\..\..\src\ta_common\mt"
 				PreprocessorDefinitions="TA_DEBUG;_DEBUG;WIN32;_MBCS;_CONSOLE;QT_THREAD_SUPPORT"
 				MinimalRebuild="true"
+				ExceptionHandling="0"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				PrecompiledHeaderFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).pch"
@@ -162,6 +165,7 @@
 				SuppressStartupBanner="true"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
+				CompileAs="1"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -176,111 +180,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ta_libc_$(ConfigurationName).lib wininet.lib odbc32.lib odbccp32.lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName)_$(ConfigurationName).exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=".\..\..\..\..\lib"
-				ManifestFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).intermediate.manifest"
-				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).pdb"
-				SubSystem="1"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-				OutputManifestFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).embed.manifest"
-				ManifestResourceFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).embed.manifest.res"
-				DependencyInformationFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).mt.dep"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-				OutputDocumentFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).xml"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-				SuppressStartupBanner="true"
-				OutputFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).bsc"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="csd|Win32"
-			OutputDirectory=".\..\..\..\..\bin"
-			IntermediateDirectory=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)"
-			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TypeLibraryName=".\..\..\..\..\bin/ta_regtest.tlb"
-				HeaderFileName=""
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=".\..\..\..\..\src\ta_common;.\..\..\..\..\src\tools\ta_regtest;.\..\..\..\..\src\ta_func;.\..\..\..\..\include;.\..\..\..\..\src\ta_common\trio;.\..\..\..\..\src\ta_common\mt"
-				PreprocessorDefinitions="TA_DEBUG;_DEBUG;TA_SINGLE_THREAD;WIN32;_MBCS;_CONSOLE"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).pch"
-				AssemblerListingLocation=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/"
-				ObjectFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/"
-				ProgramDataBaseFileName=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/"
-				XMLDocumentationFileName=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/"
-				BrowseInformation="1"
-				BrowseInformationFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/"
-				WarningLevel="3"
-				WarnAsError="true"
-				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="ta_libc_$(ConfigurationName).lib wininet.lib odbc32.lib odbccp32.lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName)_$(ConfigurationName).exe"
+				AdditionalDependencies="ta_libc_$(ConfigurationName).lib"
+				OutputFile=".\..\..\..\..\bin/$(ProjectName).exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\..\..\..\lib"
@@ -351,9 +252,10 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".\..\..\..\..\src\ta_common;.\..\..\..\..\src\tools\ta_regtest;.\..\..\..\..\src\ta_func;.\..\..\..\..\include;.\..\..\..\..\src\ta_common\trio;.\..\..\..\..\src\ta_common\mt"
+				AdditionalIncludeDirectories=".\..\..\..\..\src\ta_common;.\..\..\..\..\src\tools\ta_regtest;.\..\..\..\..\src\ta_func;.\..\..\..\..\include"
 				PreprocessorDefinitions="TA_DEBUG;_DEBUG;WIN32;_MBCS;_CONSOLE;QT_THREAD_SUPPORT"
 				MinimalRebuild="true"
+				ExceptionHandling="0"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				PrecompiledHeaderFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).pch"
@@ -368,6 +270,7 @@
 				SuppressStartupBanner="true"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
+				CompileAs="1"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -382,115 +285,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ta_libc_$(ConfigurationName).lib wininet.lib odbc32.lib odbccp32.lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName)_$(ConfigurationName).exe"
+				AdditionalDependencies="ta_libc_$(ConfigurationName).lib"
+				OutputFile=".\..\..\..\..\bin/$(ProjectName).exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\..\..\..\lib"
 				ManifestFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).intermediate.manifest"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).pdb"
-				SubSystem="1"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-				OutputManifestFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).embed.manifest"
-				ManifestResourceFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).embed.manifest.res"
-				DependencyInformationFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).mt.dep"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-				OutputDocumentFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).xml"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-				SuppressStartupBanner="true"
-				OutputFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).bsc"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="csr|Win32"
-			OutputDirectory=".\..\..\..\..\bin"
-			IntermediateDirectory=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)"
-			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TypeLibraryName=".\..\..\..\..\bin/ta_regtest.tlb"
-				HeaderFileName=""
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories=".\..\..\..\..\src\ta_common;.\..\..\..\..\src\tools\ta_regtest;.\..\..\..\..\src\ta_func;.\..\..\..\..\include;.\..\..\..\..\src\ta_common\trio;.\..\..\..\..\src\ta_common\mt"
-				PreprocessorDefinitions="NO_DEBUG;NDEBUG;TA_SINGLE_THREAD;WIN32;_MBCS;_CONSOLE"
-				StringPooling="true"
-				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).pch"
-				AssemblerListingLocation=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/"
-				ObjectFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/"
-				ProgramDataBaseFileName=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/"
-				XMLDocumentationFileName=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/"
-				BrowseInformationFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/"
-				WarningLevel="3"
-				WarnAsError="true"
-				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="true"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="ta_libc_$(ConfigurationName).lib wininet.lib odbc32.lib odbccp32.lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName)_$(ConfigurationName).exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=".\..\..\..\..\lib"
-				ManifestFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).intermediate.manifest"
 				ProgramDatabaseFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).pdb"
 				SubSystem="1"
 				TargetMachine="1"
@@ -560,6 +362,7 @@
 				AdditionalIncludeDirectories=".\..\..\..\..\src\ta_common;.\..\..\..\..\src\tools\ta_regtest;.\..\..\..\..\src\ta_func;.\..\..\..\..\include;.\..\..\..\..\src\ta_common\trio;.\..\..\..\..\src\ta_common\mt"
 				PreprocessorDefinitions="NO_DEBUG;NDEBUG;WIN32;_MBCS;_CONSOLE;QT_THREAD_SUPPORT"
 				StringPooling="true"
+				ExceptionHandling="0"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				PrecompiledHeaderFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/$(ProjectName)_$(ConfigurationName).pch"
@@ -572,6 +375,7 @@
 				WarnAsError="true"
 				SuppressStartupBanner="true"
 				Detect64BitPortabilityProblems="true"
+				CompileAs="1"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -586,8 +390,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ta_libc_$(ConfigurationName).lib wininet.lib odbc32.lib odbccp32.lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName)_$(ConfigurationName).exe"
+				AdditionalDependencies="ta_libc_$(ConfigurationName).lib"
+				OutputFile=".\..\..\..\..\bin/$(ProjectName).exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\..\..\..\lib"
@@ -2116,10 +1920,6 @@
 			>
 			<File
 				RelativePath="..\..\..\..\include\ta_libc.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\include\vs2005_setup.h"
 				>
 			</File>
 		</Filter>
