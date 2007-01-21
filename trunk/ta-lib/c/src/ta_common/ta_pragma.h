@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2006, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -57,8 +57,8 @@
  * 
  */
 
-#ifndef VS2005_SETUP_H
-#define VS2005_SETUP_H
+#ifndef TA_PRAGMA_H
+#define TA_PRAGMA_H
 
 #if (_MSC_VER >= 1400)       // VC8+ nmake and VS2005
   
@@ -84,4 +84,4 @@
 
 #endif   // VC8+
 
-#endif	//VS2005_SETUP_H
+#endif	//TA_PRAGMA_H
