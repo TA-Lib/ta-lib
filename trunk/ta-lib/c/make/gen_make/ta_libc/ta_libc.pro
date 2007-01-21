@@ -72,8 +72,8 @@ SOURCES = ../../../../../src/ta_common/ta_global.c \
           ../../../../../src/ta_func/ta_AROONOSC.c \
           ../../../../../src/ta_func/ta_ATR.c \
           ../../../../../src/ta_func/ta_AVGPRICE.c \
-          ../../../../../src/ta_func/ta_BETA.c \
           ../../../../../src/ta_func/ta_BBANDS.c \
+          ../../../../../src/ta_func/ta_BETA.c \
           ../../../../../src/ta_func/ta_BOP.c \
           ../../../../../src/ta_func/ta_CCI.c \
           ../../../../../src/ta_func/ta_CDL2CROWS.c \
