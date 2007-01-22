@@ -36,7 +36,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "documents", "documents", "{
 		..\..\..\..\CHANGELOG.TXT = ..\..\..\..\CHANGELOG.TXT
 		..\..\..\..\HISTORY.TXT = ..\..\..\..\HISTORY.TXT
 		..\..\..\..\LICENSE.TXT = ..\..\..\..\LICENSE.TXT
-		..\..\..\..\LICENSE_EXCEL.TXT = ..\..\..\..\LICENSE_EXCEL.TXT
 		..\..\..\..\README.TXT = ..\..\..\..\README.TXT
 	EndProjectSection
 EndProject

@@ -77,7 +77,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ta_common_$(ConfigurationName).lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName).exe"
+				OutputFile="$(OutDir)\$(ProjectName)_$(ConfigurationName).exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\..\..\..\lib"
@@ -115,6 +115,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Make a copy named ta_regtest.exe"
+				CommandLine="copy $(OutDir)\$(ProjectName)_$(ConfigurationName).exe $(OutDir)\$(ProjectName).exe"
 			/>
 		</Configuration>
 		<Configuration
@@ -181,7 +183,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ta_common_$(ConfigurationName).lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName).exe"
+				OutputFile="$(OutDir)\$(ProjectName)_$(ConfigurationName).exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\..\..\..\lib"
@@ -220,6 +222,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Make a copy named ta_regtest.exe"
+				CommandLine="copy $(OutDir)\$(ProjectName)_$(ConfigurationName).exe $(OutDir)\$(ProjectName).exe"
 			/>
 		</Configuration>
 		<Configuration
@@ -286,7 +290,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ta_common_$(ConfigurationName).lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName).exe"
+				OutputFile="$(OutDir)\$(ProjectName)_$(ConfigurationName).exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\..\..\..\lib"
@@ -325,6 +329,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Make a copy named ta_regtest.exe"
+				CommandLine="copy $(OutDir)\$(ProjectName)_$(ConfigurationName).exe $(OutDir)\$(ProjectName).exe"
 			/>
 		</Configuration>
 		<Configuration
@@ -390,7 +396,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ta_common_$(ConfigurationName).lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName).exe"
+				OutputFile="$(OutDir)\$(ProjectName)_$(ConfigurationName).exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\..\..\..\lib"
@@ -428,6 +434,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Make a copy named ta_regtest.exe"
+				CommandLine="copy $(OutDir)\$(ProjectName)_$(ConfigurationName).exe $(OutDir)\$(ProjectName).exe"
 			/>
 		</Configuration>
 	</Configurations>
@@ -448,25 +456,7 @@
 						RelativePath="..\..\..\..\src\tools\gen_code\gen_code.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -501,6 +491,24 @@
 								PreprocessorDefinitions=""
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
 					</File>
 				</Filter>
 			</Filter>
@@ -511,25 +519,7 @@
 					RelativePath="..\..\..\..\src\ta_abstract\ta_abstract.c"
 					>
 					<FileConfiguration
-						Name="csd|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="cmr|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="csr|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -557,6 +547,24 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="cdr|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="csd|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="csr|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -569,25 +577,7 @@
 					RelativePath="..\..\..\..\src\ta_abstract\ta_def_ui.c"
 					>
 					<FileConfiguration
-						Name="csd|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="cmr|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="csr|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -615,6 +605,24 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="cdr|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="csd|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="csr|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -634,25 +642,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_a.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -680,6 +670,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -692,25 +700,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_b.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -738,6 +728,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -750,25 +758,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_c.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -796,6 +786,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -808,25 +816,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_d.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -854,6 +844,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -866,25 +874,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_e.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -912,6 +902,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -924,25 +932,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_f.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -970,6 +960,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -982,25 +990,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_g.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1028,6 +1018,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1040,25 +1048,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_h.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1086,6 +1076,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1098,25 +1106,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_i.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1144,6 +1134,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1156,25 +1164,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_j.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1202,6 +1192,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1214,25 +1222,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_k.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1260,6 +1250,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1272,25 +1280,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_l.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1318,6 +1308,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1330,25 +1338,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_m.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1376,6 +1366,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1388,25 +1396,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_n.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1434,6 +1424,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1446,25 +1454,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_o.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1492,6 +1482,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1504,25 +1512,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_p.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1550,6 +1540,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1562,25 +1570,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_q.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1608,6 +1598,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1620,25 +1628,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_r.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1666,6 +1656,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1678,25 +1686,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_s.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1724,6 +1714,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1736,25 +1744,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_t.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1782,6 +1772,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1794,25 +1802,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_u.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1840,6 +1830,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1852,25 +1860,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_v.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1898,6 +1888,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1910,25 +1918,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_w.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1956,6 +1946,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1968,25 +1976,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_x.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -2014,6 +2004,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -2026,25 +2034,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_y.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -2072,6 +2062,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -2084,25 +2092,7 @@
 						RelativePath="..\..\..\..\src\ta_abstract\tables\table_z.c"
 						>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cmr|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -2130,6 +2120,24 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="cdr|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
