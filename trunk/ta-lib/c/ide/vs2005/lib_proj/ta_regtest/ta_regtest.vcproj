@@ -77,7 +77,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ta_libc_$(ConfigurationName).lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName).exe"
+				OutputFile="$(OutDir)\$(ProjectName)_$(ConfigurationName).exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\..\..\..\lib"
@@ -115,6 +115,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Make a copy named ta_regtest.exe"
+				CommandLine="copy $(OutDir)\$(ProjectName)_$(ConfigurationName).exe $(OutDir)\$(ProjectName).exe"
 			/>
 		</Configuration>
 		<Configuration
@@ -181,7 +183,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ta_libc_$(ConfigurationName).lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName).exe"
+				OutputFile="$(OutDir)\$(ProjectName)_$(ConfigurationName).exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\..\..\..\lib"
@@ -220,6 +222,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Make a copy named ta_regtest.exe"
+				CommandLine="copy $(OutDir)\$(ProjectName)_$(ConfigurationName).exe $(OutDir)\$(ProjectName).exe"
 			/>
 		</Configuration>
 		<Configuration
@@ -286,7 +290,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ta_libc_$(ConfigurationName).lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName).exe"
+				OutputFile="$(OutDir)\$(ProjectName)_$(ConfigurationName).exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\..\..\..\lib"
@@ -326,6 +330,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Make a copy named ta_regtest.exe"
+				CommandLine="copy $(OutDir)\$(ProjectName)_$(ConfigurationName).exe $(OutDir)\$(ProjectName).exe"
 			/>
 		</Configuration>
 		<Configuration
@@ -391,7 +397,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ta_libc_$(ConfigurationName).lib"
-				OutputFile=".\..\..\..\..\bin/$(ProjectName).exe"
+				OutputFile="$(OutDir)\$(ProjectName)_$(ConfigurationName).exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\..\..\..\lib"
@@ -429,6 +435,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Make a copy named ta_regtest.exe"
+				CommandLine="copy $(OutDir)\$(ProjectName)_$(ConfigurationName).exe $(OutDir)\$(ProjectName).exe"
 			/>
 		</Configuration>
 	</Configurations>
@@ -471,15 +479,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cdd|Win32"
 							>
 							<Tool
@@ -489,7 +488,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="csr|Win32"
+							Name="cdr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -498,7 +497,16 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="cdr|Win32"
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -537,15 +545,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cdd|Win32"
 							>
 							<Tool
@@ -555,7 +554,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="csr|Win32"
+							Name="cdr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -564,7 +563,16 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="cdr|Win32"
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -595,15 +603,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cdd|Win32"
 							>
 							<Tool
@@ -613,7 +612,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="csr|Win32"
+							Name="cdr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -622,7 +621,16 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="cdr|Win32"
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -653,15 +661,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cdd|Win32"
 							>
 							<Tool
@@ -671,7 +670,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="csr|Win32"
+							Name="cdr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -680,7 +679,16 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="cdr|Win32"
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -711,15 +719,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="csd|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="cdd|Win32"
 							>
 							<Tool
@@ -729,7 +728,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="csr|Win32"
+							Name="cdr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -738,7 +737,16 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="cdr|Win32"
+							Name="csd|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories=""
+								PreprocessorDefinitions=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="csr|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -772,15 +780,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -790,7 +789,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -799,7 +798,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -830,15 +838,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -848,7 +847,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -857,7 +856,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -888,15 +896,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -906,7 +905,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -915,7 +914,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -946,15 +954,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -964,7 +963,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -973,7 +972,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1004,15 +1012,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1022,7 +1021,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1031,7 +1030,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1062,15 +1070,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1080,7 +1079,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1089,7 +1088,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1120,15 +1128,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1138,7 +1137,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1147,7 +1146,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1178,15 +1186,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1196,7 +1195,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1205,7 +1204,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1236,15 +1244,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1254,7 +1253,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1263,7 +1262,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1294,15 +1302,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1312,7 +1311,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1321,7 +1320,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1352,15 +1360,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1370,7 +1369,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1379,7 +1378,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1410,15 +1418,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1428,7 +1427,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1437,7 +1436,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1468,15 +1476,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1486,7 +1485,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1495,7 +1494,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1526,15 +1534,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1544,7 +1543,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1553,7 +1552,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1584,15 +1592,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1602,7 +1601,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1611,7 +1610,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1642,15 +1650,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1660,7 +1659,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1669,7 +1668,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1700,15 +1708,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1718,7 +1717,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1727,7 +1726,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1758,15 +1766,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1776,7 +1775,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1785,7 +1784,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1816,15 +1824,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1834,7 +1833,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1843,7 +1842,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1874,15 +1882,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csd|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									AdditionalIncludeDirectories=""
-									PreprocessorDefinitions=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="cdd|Win32"
 								>
 								<Tool
@@ -1892,7 +1891,7 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="csr|Win32"
+								Name="cdr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1901,7 +1900,16 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="cdr|Win32"
+								Name="csd|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									AdditionalIncludeDirectories=""
+									PreprocessorDefinitions=""
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="csr|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
