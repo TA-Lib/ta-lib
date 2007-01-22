@@ -112,27 +112,6 @@
 		</Configuration>
 	</Configurations>
 	<References>
-		<ProjectReference
-			ReferencedProjectIdentifier="{FDE2592B-DF64-4308-B644-92E79E071986}"
-			CopyLocal="false"
-			CopyLocalDependencies="false"
-			CopyLocalSatelliteAssemblies="false"
-			RelativePathToProject=".\ta_abstract\ta_abstract.vcproj"
-		/>
-		<ProjectReference
-			ReferencedProjectIdentifier="{E3AB3A1B-0D33-4A51-A4F7-69EE5C079115}"
-			CopyLocal="false"
-			CopyLocalDependencies="false"
-			CopyLocalSatelliteAssemblies="false"
-			RelativePathToProject=".\ta_common\ta_common.vcproj"
-		/>
-		<ProjectReference
-			ReferencedProjectIdentifier="{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}"
-			CopyLocal="false"
-			CopyLocalDependencies="false"
-			CopyLocalSatelliteAssemblies="false"
-			RelativePathToProject=".\ta_func\ta_func.vcproj"
-		/>
 	</References>
 	<Files>
 		<Filter
@@ -142,103 +121,22 @@
 			<File
 				RelativePath="..\..\..\..\include\ta_abstract.h"
 				>
-				<FileConfiguration
-					Name="cmd|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cdd|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cmr|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cdr|Win32"
-					>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\include\ta_common.h"
 				>
-				<FileConfiguration
-					Name="cmd|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cdd|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cmr|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cdr|Win32"
-					>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\include\ta_defs.h"
 				>
-				<FileConfiguration
-					Name="cmd|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cdd|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cmr|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cdr|Win32"
-					>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\include\ta_func.h"
 				>
-				<FileConfiguration
-					Name="cmd|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cdd|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cmr|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cdr|Win32"
-					>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\include\ta_libc.h"
 				>
-				<FileConfiguration
-					Name="cmd|Win32"
-					>
-				</FileConfiguration>
-
-				<FileConfiguration
-					Name="cdd|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cmr|Win32"
-					>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="cdr|Win32"
-					>
-				</FileConfiguration>
 			</File>
 		</Filter>
 	</Files>
