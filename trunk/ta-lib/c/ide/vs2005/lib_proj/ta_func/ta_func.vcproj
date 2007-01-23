@@ -283,7 +283,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories=".\..\..\..\..\src\ta_common;.\..\..\..\..\include"
-				PreprocessorDefinitions="TA_DEBUG;_DEBUG;WIN32;_MBCS;_LIB;TA_FUNC_NO_RANGE_CHECK"
+				PreprocessorDefinitions="TA_DEBUG;_DEBUG;WIN32;_MBCS;_LIB;QT_THREAD_SUPPORT"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
