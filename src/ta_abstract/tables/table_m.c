@@ -357,7 +357,7 @@ DEF_FUNCTION( MAXINDEX,                  /* name */
               TA_GroupId_MathOperators,  /* groupId */
               "Index of highest value over a specified period", /* hint */
               "MaxIndex",                /* CamelCase name */
-              TA_FUNC_FLG_OVERLAP        /* flags */
+              0                          /* flags */
              );
 /* MAXINDEX END */
 
@@ -513,7 +513,7 @@ DEF_FUNCTION( MININDEX,                  /* name */
               TA_GroupId_MathOperators,  /* groupId */
               "Index of lowest value over a specified period", /* hint */
               "MinIndex",                /* CamelCase name */
-              TA_FUNC_FLG_OVERLAP        /* flags */
+              0                          /* flags */
              );
 /* MININDEX END */
 
@@ -579,7 +579,7 @@ DEF_FUNCTION( MINMAXINDEX,               /* name */
               TA_GroupId_MathOperators,  /* groupId */
               "Indexes of lowest and highest values over a specified period", /* hint */
               "MinMaxIndex",             /* CamelCase name */
-              TA_FUNC_FLG_OVERLAP        /* flags */
+              0                          /* flags */
              );
 /* MINMAXINDEX END */
 
