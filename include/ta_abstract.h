@@ -370,6 +370,8 @@ typedef int TA_OutputFlags;
 #define TA_OUT_POSITIVE          0x00000100 /* Output can be positive */
 #define TA_OUT_NEGATIVE          0x00000200 /* Output can be negative */
 #define TA_OUT_ZERO              0x00000400 /* Output can be zero */
+#define TA_OUT_UPPER_LIMIT       0x00000800 /* Indicates that the values represent an upper limit. */
+#define TA_OUT_LOWER_LIMIT       0x00001000 /* Indicates that the values represent a lower limit. */
 
 
 /* The following 3 structures will exist for each input, optional
