@@ -84,10 +84,10 @@ const TA_OutputParameterInfo TA_DEF_UI_Output_Real_BBANDS_Middle =
                                { TA_Output_Real, "outRealMiddleBand", TA_OUT_LINE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_BBANDS_Upper =
-                               { TA_Output_Real, "outRealUpperBand", TA_OUT_LINE };
+                               { TA_Output_Real, "outRealUpperBand", TA_OUT_UPPER_LIMIT };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_BBANDS_Lower =
-                                { TA_Output_Real, "outRealLowerBand", TA_OUT_LINE };
+                                { TA_Output_Real, "outRealLowerBand", TA_OUT_LOWER_LIMIT };
 
 static const TA_InputParameterInfo    *TA_BBANDS_Inputs[]    =
 {

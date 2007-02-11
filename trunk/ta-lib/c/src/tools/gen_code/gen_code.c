@@ -1438,6 +1438,14 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 			{
 				fprintf(gOutFunc_XML->file, "					<Flag>Zero</Flag>\n");
 			}
+			if(outputInfo->flags & TA_OUT_UPPER_LIMIT)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Upper Limit</Flag>\n");
+			}
+			if(outputInfo->flags & TA_OUT_LOWER_LIMIT)
+			{
+				fprintf(gOutFunc_XML->file, "					<Flag>Lower Limit</Flag>\n");
+			}
 
 			fprintf(gOutFunc_XML->file, "				</Flags>\n");
 		}
