@@ -126,6 +126,7 @@ SOURCES	= ../../../../../src/ta_func/ta_utility.c \
           ../../../../../src/ta_func/ta_MACDEXT.c \ 
           ../../../../../src/ta_func/ta_MACDFIX.c \ 
           ../../../../../src/ta_func/ta_MAMA.c \ 
+          ../../../../../src/ta_func/ta_MAVP.c \ 
           ../../../../../src/ta_func/ta_MAX.c \ 
           ../../../../../src/ta_func/ta_MAXINDEX.c \ 
           ../../../../../src/ta_func/ta_MEDPRICE.c \ 

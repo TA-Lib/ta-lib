@@ -157,6 +157,7 @@ SOURCES =	..\..\..\..\..\src\ta_common\ta_global.c \
 		..\..\..\..\..\src\ta_func\ta_MACDEXT.c \
 		..\..\..\..\..\src\ta_func\ta_MACDFIX.c \
 		..\..\..\..\..\src\ta_func\ta_MAMA.c \
+		..\..\..\..\..\src\ta_func\ta_MAVP.c \
 		..\..\..\..\..\src\ta_func\ta_MAX.c \
 		..\..\..\..\..\src\ta_func\ta_MAXINDEX.c \
 		..\..\..\..\..\src\ta_func\ta_MEDPRICE.c \
@@ -330,6 +331,7 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_global.obj \
 		..\..\..\..\..\temp\csd\ta_MACDEXT.obj \
 		..\..\..\..\..\temp\csd\ta_MACDFIX.obj \
 		..\..\..\..\..\temp\csd\ta_MAMA.obj \
+		..\..\..\..\..\temp\csd\ta_MAVP.obj \
 		..\..\..\..\..\temp\csd\ta_MAX.obj \
 		..\..\..\..\..\temp\csd\ta_MAXINDEX.obj \
 		..\..\..\..\..\temp\csd\ta_MEDPRICE.obj \
@@ -535,6 +537,7 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_MACDEXT.obj \
 +..\..\..\..\..\temp\csd\ta_MACDFIX.obj \
 +..\..\..\..\..\temp\csd\ta_MAMA.obj \
++..\..\..\..\..\temp\csd\ta_MAVP.obj \
 +..\..\..\..\..\temp\csd\ta_MAX.obj \
 +..\..\..\..\..\temp\csd\ta_MAXINDEX.obj \
 +..\..\..\..\..\temp\csd\ta_MEDPRICE.obj \
@@ -722,6 +725,7 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_MACDEXT.obj
 	-del ..\..\..\..\..\temp\csd\ta_MACDFIX.obj
 	-del ..\..\..\..\..\temp\csd\ta_MAMA.obj
+	-del ..\..\..\..\..\temp\csd\ta_MAVP.obj
 	-del ..\..\..\..\..\temp\csd\ta_MAX.obj
 	-del ..\..\..\..\..\temp\csd\ta_MAXINDEX.obj
 	-del ..\..\..\..\..\temp\csd\ta_MEDPRICE.obj
@@ -1166,6 +1170,9 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_MAMA.obj: ..\..\..\..\..\src\ta_func\ta_MAMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_MAMA.obj ..\..\..\..\..\src\ta_func\ta_MAMA.c
+
+..\..\..\..\..\temp\csd\ta_MAVP.obj: ..\..\..\..\..\src\ta_func\ta_MAVP.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_MAVP.obj ..\..\..\..\..\src\ta_func\ta_MAVP.c
 
 ..\..\..\..\..\temp\csd\ta_MAX.obj: ..\..\..\..\..\src\ta_func\ta_MAX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_MAX.obj ..\..\..\..\..\src\ta_func\ta_MAX.c

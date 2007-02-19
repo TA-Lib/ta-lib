@@ -2892,7 +2892,7 @@ int TA_LINEARREG_SLOPE_Lookback( int           optInTimePeriod );  /* From 2 to 
 
 
 /*
- * TA_MA - All Moving Average
+ * TA_MA - Moving average
  * 
  * Input  = double
  * Output = double
@@ -3115,6 +3115,52 @@ TA_RetCode TA_S_MAMA( int    startIdx,
 
 int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
                     double        optInSlowLimit );  /* From 0.01 to 0.99 */
+
+
+/*
+ * TA_MAVP - Moving average with variable period
+ * 
+ * Input  = double, int
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInMAType:
+ *    Type of Moving Average
+ * 
+ * optInMinPeriod:(From 2 to 100000)
+ *    Value less than minimum will be changed to Minimum period
+ * 
+ * optInMaxPeriod:(From 2 to 100000)
+ *    Value higher than maximum will be changed to Maximum period
+ * 
+ * 
+ */
+TA_RetCode TA_MAVP( int    startIdx,
+                    int    endIdx,
+                    const double inReal[],
+                    const int    inInteger[],
+                    TA_MAType     optInMAType,
+                    int           optInMinPeriod, /* From 2 to 100000 */
+                    int           optInMaxPeriod, /* From 2 to 100000 */
+                    int          *outBegIdx,
+                    int          *outNbElement,
+                    double        outReal[] );
+
+TA_RetCode TA_S_MAVP( int    startIdx,
+                      int    endIdx,
+                      const float  inReal[],
+                      const int    inInteger[],
+                      TA_MAType     optInMAType,
+                      int           optInMinPeriod, /* From 2 to 100000 */
+                      int           optInMaxPeriod, /* From 2 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNbElement,
+                      double        outReal[] );
+
+int TA_MAVP_Lookback( TA_MAType     optInMAType,
+                    int           optInMinPeriod, /* From 2 to 100000 */
+                    int           optInMaxPeriod );  /* From 2 to 100000 */
 
 
 /*

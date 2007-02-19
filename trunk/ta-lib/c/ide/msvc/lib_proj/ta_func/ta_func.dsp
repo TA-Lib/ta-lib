@@ -608,6 +608,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_MAMA.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_MAVP.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_MAX.c
 # End Source File
 # Begin Source File

@@ -237,6 +237,34 @@ const TA_RealRange TA_DEF_RealPositive =
  * Define from here the TA_OptInputParameterInfo.
  ****************************************************/
 
+const TA_OptInputParameterInfo TA_DEF_UI_MinPeriod =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInMinPeriod",        /* paramName */
+   0,                        /* flags */
+
+   "Minimum Period",            /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2, /* dataSet */
+   2, /* defaultValue */
+   "Value less than minimum will be changed to Minimum period", /* hint */
+
+   NULL /* helpFile */
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_MaxPeriod =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInMaxPeriod",        /* paramName */
+   0,                        /* flags */
+
+   "Maximum Period",            /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2, /* dataSet */
+   30, /* defaultValue */
+   "Value higher than maximum will be changed to Maximum period", /* hint */
+
+   NULL /* helpFile */
+};
+
 const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_30_MINIMUM2 =
 {
    TA_OptInput_IntegerRange, /* type */

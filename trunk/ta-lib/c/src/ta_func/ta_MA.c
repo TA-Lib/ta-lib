@@ -165,7 +165,7 @@
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /*
- * TA_MA - All Moving Average
+ * TA_MA - Moving average
  * 
  * Input  = double
  * Output = double

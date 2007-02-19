@@ -126,6 +126,9 @@ extern const TA_OptInputParameterInfo TA_DEF_UI_NbDeviation;
 extern const TA_OptInputParameterInfo TA_DEF_UI_Penetration_30;
 extern const TA_OptInputParameterInfo TA_DEF_UI_Penetration_50;
 
+extern const TA_OptInputParameterInfo TA_DEF_UI_MinPeriod;
+extern const TA_OptInputParameterInfo TA_DEF_UI_MaxPeriod;
+
 /* Re-usable ranges. */
 extern const TA_IntegerRange TA_DEF_TimePeriod_Positive;
 extern const TA_IntegerRange TA_DEF_TimePeriod_Positive_Minimum2;
