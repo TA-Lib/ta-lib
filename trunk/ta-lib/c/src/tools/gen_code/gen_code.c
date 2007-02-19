@@ -65,6 +65,7 @@
  *  120106 MF    Add generation of java_defs.h
  *  122406 MF    Add generation of Makefile.am
  *  011707 CM    Add ta_pragma.h handles VC8 warnings, type conversion of strlen handles VC warning
+ *  021807 MF    Add generation of VS2005 project file
  */
 
 /* Description:
@@ -152,6 +153,7 @@ FileHandle *gOutMakefile_AM;   /* For "Makefile.am" */
 FileHandle *gOutCore_Java;     /* For Core.Java */
 FileHandle *gOutProjFile;      /* For .NET project file */
 FileHandle *gOutMSVCProjFile;  /* For MSVC project file */
+FileHandle *gOutVS2005ProjFile;  /* For VS2005 project file */
 FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
 FileHandle *gOutJavaDefs_H;    /* For "java_defs.h" */
 
@@ -254,6 +256,8 @@ static int generateFuncAPI_C( void );
 #ifdef _MSC_VER
 static int createProjTemplate( FileHandle *in, FileHandle *out );
 static int createMSVCProjTemplate( FileHandle *in, FileHandle *out );
+static int createVS2005ProjTemplate( FileHandle *in, FileHandle *out );
+static void printVS2005FileNode( FILE *out, const char *name );
 #endif
 
 static void writeFuncFile( const TA_FuncInfo *funcInfo );
@@ -709,6 +713,29 @@ static int genCode(int argc, char* argv[])
       }
       fileClose(gOutMSVCProjFile);
       fileClose(tempFile);
+
+      /* Create VS2005 project files template */
+      #define FILE_VS2005_PROJ     "..\\..\\c\\ide\\vs2005\\lib_proj\\ta_func\\ta_func.vcproj"
+      #define FILE_VS2005_PROJ_TMP "..\\temp\\ta_func_vcproj.tmp"
+      gOutVS2005ProjFile = fileOpen( FILE_VS2005_PROJ, NULL, FILE_READ );
+      if( gOutVS2005ProjFile == NULL )   
+      {
+         printf( "\nCannot access [%s]\n", gToOpen );
+         return -1;
+      }
+      tempFile = fileOpen( FILE_VS2005_PROJ_TMP, NULL, FILE_WRITE|WRITE_ALWAYS );
+      if( tempFile == NULL )
+      {
+         printf( "Cannot create temporary VS2005 project file!\n" );
+         return -1;
+      }
+      if( createVS2005ProjTemplate( gOutVS2005ProjFile, tempFile ) != 0 )
+      {
+         printf( "Failed to parse and write the temporary VS2005 project file!\n" );
+         return -1;
+      }
+      fileClose(gOutVS2005ProjFile);
+      fileClose(tempFile);
    #endif
 
    #ifdef _MSC_VER
@@ -882,6 +909,14 @@ static int genCode(int argc, char* argv[])
          return -1;
       }
 
+      /* Re-open the VS2005 project template. */
+      gOutVS2005ProjFile = fileOpen( FILE_VS2005_PROJ, FILE_VS2005_PROJ_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+      if( gOutVS2005ProjFile == NULL )
+      {
+         printf( "Cannot update [%s]\n", FILE_VS2005_PROJ );
+         return -1;
+      }
+
    #endif
 
    #ifdef _MSC_VER
@@ -934,6 +969,7 @@ static int genCode(int argc, char* argv[])
       fileClose( gOutCore_Java );
       fileClose( gOutProjFile );
       fileClose( gOutMSVCProjFile );
+      fileClose( gOutVS2005ProjFile );
       fileClose( gOutExcelGlue_C );
       fileClose( gOutJavaDefs_H );
       fileDelete( FILE_CORE_JAVA_TMP );
@@ -1550,6 +1586,9 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
       fprintf( gOutMSVCProjFile->file, "\n" );
       fprintf( gOutMSVCProjFile->file, "SOURCE=..\\..\\..\\..\\src\\ta_func\\ta_%s.c\n", funcInfo->name );
       fprintf( gOutMSVCProjFile->file, "# End Source File\n" );
+
+      /* Add the entry in the VS2005 project file. */
+	  printVS2005FileNode( gOutVS2005ProjFile->file, funcInfo->name );
 
       /* Generate the excel glue code */
       printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
@@ -2872,6 +2911,132 @@ static int createMSVCProjTemplate( FileHandle *in, FileHandle *out )
    return 0;
 }
 
+static int createVS2005ProjTemplate( FileHandle *in, FileHandle *out )
+{
+   FILE *inFile;
+   FILE *outFile;
+   unsigned int skipSection;
+
+   inFile = in->file;
+   outFile = out->file;
+
+   skipSection = 0;
+
+   while( !skipSection && fgets( gTempBuf, BUFFER_SIZE, inFile ) )
+   {
+      if( strstr( gTempBuf, "<Files>") )
+         skipSection = 1;
+      else
+         fputs( gTempBuf, outFile );
+   }
+
+   if( !skipSection )
+   {
+      printf( "Unexpected end-of-file. Missing \"<Files>\"\n" );
+      return -1;
+   }
+
+
+   fputs( gTempBuf, outFile );
+
+   skipSection = 0;
+
+   while( !skipSection && fgets( gTempBuf, BUFFER_SIZE, inFile ) )
+   {
+      if( strstr( gTempBuf, "<File") )
+         skipSection = 1;
+      else
+         fputs( gTempBuf, outFile );
+   }
+
+   if( !skipSection )
+   {
+      printf( "Unexpected end-of-file. Missing \"<File\"\n" );
+      return -1;
+   }
+
+   fputs( "%%%GENCODE%%%\n", outFile );
+
+   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
+   {
+      if( strstr( gTempBuf, "</Filter>" ) )
+      {
+         /* Add the "non TA function" source files. */
+	     printVS2005FileNode( outFile, "utility" );
+         fprintf( outFile, "			</Filter>\n");
+         break;
+      }
+   }
+
+   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
+      fputs( gTempBuf, outFile );
+
+   return 0;
+}
+
+static void printVS2005FileNode( FILE *out, const char *name )
+{
+   fprintf( out, "				<File\n" );
+   fprintf( out, "					RelativePath=\"..\\..\\..\\..\\src\\ta_func\\ta_%s.c\"\n", name );
+   fprintf( out, "					>\n" );
+/*
+   fprintf( out, "					<FileConfiguration\n" );
+   fprintf( out, "						Name=\"cdd|Win32\"\n" );
+   fprintf( out, "						>\n" );
+   fprintf( out, "						<Tool\n" );
+   fprintf( out, "							Name=\"VCCLCompilerTool\"\n" );
+   fprintf( out, "							AdditionalIncludeDirectories=\"\"\n" );
+   fprintf( out, "							PreprocessorDefinitions=\"\"\n" );
+   fprintf( out, "						/>\n" );
+   fprintf( out, "					</FileConfiguration>\n" );
+   fprintf( out, "					<FileConfiguration\n" );
+   fprintf( out, "						Name=\"cdr|Win32\"\n" );
+   fprintf( out, "						>\n" );
+   fprintf( out, "						<Tool\n" );
+   fprintf( out, "							Name=\"VCCLCompilerTool\"\n" );
+   fprintf( out, "							AdditionalIncludeDirectories=\"\"\n" );
+   fprintf( out, "							PreprocessorDefinitions=\"\"\n" );
+   fprintf( out, "						/>\n" );
+   fprintf( out, "					</FileConfiguration>\n" );
+   fprintf( out, "					<FileConfiguration\n" );
+   fprintf( out, "						Name=\"cmr|Win32\"\n" );
+   fprintf( out, "						>\n" );
+   fprintf( out, "						<Tool\n" );
+   fprintf( out, "							Name=\"VCCLCompilerTool\"\n" );
+   fprintf( out, "							AdditionalIncludeDirectories=\"\"\n" );
+   fprintf( out, "							PreprocessorDefinitions=\"\"\n" );
+   fprintf( out, "						/>\n" );
+   fprintf( out, "					</FileConfiguration>\n" );
+   fprintf( out, "					<FileConfiguration\n" );
+   fprintf( out, "						Name=\"cmd|Win32\"\n" );
+   fprintf( out, "						>\n" );
+   fprintf( out, "						<Tool\n" );
+   fprintf( out, "							Name=\"VCCLCompilerTool\"\n" );
+   fprintf( out, "							AdditionalIncludeDirectories=\"\"\n" );
+   fprintf( out, "							PreprocessorDefinitions=\"\"\n" );
+   fprintf( out, "						/>\n" );
+   fprintf( out, "					</FileConfiguration>\n" );
+   fprintf( out, "					<FileConfiguration\n" );
+   fprintf( out, "						Name=\"csr|Win32\"\n" );
+   fprintf( out, "						>\n" );
+   fprintf( out, "						<Tool\n" );
+   fprintf( out, "							Name=\"VCCLCompilerTool\"\n" );
+   fprintf( out, "							AdditionalIncludeDirectories=\"\"\n" );
+   fprintf( out, "							PreprocessorDefinitions=\"\"\n" );
+   fprintf( out, "						/>\n" );
+   fprintf( out, "					</FileConfiguration>\n" );
+   fprintf( out, "					<FileConfiguration\n" );
+   fprintf( out, "						Name=\"csd|Win32\"\n" );
+   fprintf( out, "						>\n" );
+   fprintf( out, "						<Tool\n" );
+   fprintf( out, "							Name=\"VCCLCompilerTool\"\n" );
+   fprintf( out, "							AdditionalIncludeDirectories=\"\"\n" );
+   fprintf( out, "							PreprocessorDefinitions=\"\"\n" );
+   fprintf( out, "						/>\n" );
+   fprintf( out, "					</FileConfiguration>\n" );
+*/
+   fprintf( out, "				</File>\n" );
+}
 #endif
 
 static int createTemplate( FileHandle *in, FileHandle *out )
