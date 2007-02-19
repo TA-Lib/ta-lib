@@ -129,6 +129,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_MACDEXT.c \
 		../../../../../src/ta_func/ta_MACDFIX.c \
 		../../../../../src/ta_func/ta_MAMA.c \
+		../../../../../src/ta_func/ta_MAVP.c \
 		../../../../../src/ta_func/ta_MAX.c \
 		../../../../../src/ta_func/ta_MAXINDEX.c \
 		../../../../../src/ta_func/ta_MEDPRICE.c \
@@ -268,6 +269,7 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_MACDEXT.o \
 		../../../../../temp/cmd/ta_MACDFIX.o \
 		../../../../../temp/cmd/ta_MAMA.o \
+		../../../../../temp/cmd/ta_MAVP.o \
 		../../../../../temp/cmd/ta_MAX.o \
 		../../../../../temp/cmd/ta_MAXINDEX.o \
 		../../../../../temp/cmd/ta_MEDPRICE.o \
@@ -651,6 +653,9 @@ clean:
 
 ../../../../../temp/cmd/ta_MAMA.o: ../../../../../src/ta_func/ta_MAMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MAMA.o ../../../../../src/ta_func/ta_MAMA.c
+
+../../../../../temp/cmd/ta_MAVP.o: ../../../../../src/ta_func/ta_MAVP.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MAVP.o ../../../../../src/ta_func/ta_MAVP.c
 
 ../../../../../temp/cmd/ta_MAX.o: ../../../../../src/ta_func/ta_MAX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MAX.o ../../../../../src/ta_func/ta_MAX.c

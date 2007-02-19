@@ -727,6 +727,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_MAVP.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_MAX.c"
 					>
 				</File>

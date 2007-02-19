@@ -124,7 +124,7 @@ static const TA_OptInputParameterInfo *TA_MA_OptInputs[] =
 
 DEF_FUNCTION( MA,                         /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
-              "All Moving Average",       /* hint */
+              "Moving average",       /* hint */
               "MovingAverage",            /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
              );
@@ -308,6 +308,35 @@ DEF_FUNCTION( MAMA,                         /* name */
               TA_FUNC_FLG_UNST_PER|TA_FUNC_FLG_OVERLAP /* flags */
              );
 /* MAMA END */
+
+/* MAVP BEGIN */
+static const TA_InputParameterInfo    *TA_MAVP_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  &TA_DEF_UI_Input_Integer,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MAVP_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MAVP_OptInputs[] =
+{ &TA_DEF_UI_MA_Method,
+  &TA_DEF_UI_MinPeriod,
+  &TA_DEF_UI_MaxPeriod,
+  NULL
+};
+
+DEF_FUNCTION( MAVP,                         /* name */
+              TA_GroupId_OverlapStudies,  /* groupId */
+              "Moving average with variable period",  /* hint */
+              "MovingAverageVariablePeriod", /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP         /* flags */
+             );
+/* MAVP END */
 
 /* MAX BEGIN */
 static const TA_InputParameterInfo    *TA_MAX_Inputs[]    =
@@ -674,6 +703,7 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MACDEXT),
    ADD_TO_TABLE(MACDFIX),
    ADD_TO_TABLE(MAMA),
+   ADD_TO_TABLE(MAVP),
    ADD_TO_TABLE(MAX),
    ADD_TO_TABLE(MAXINDEX),
    ADD_TO_TABLE(MEDPRICE),

@@ -228,6 +228,8 @@
 #define TA_MACDFIX macdFix
 #define TA_MAMA_Lookback mamaLookback
 #define TA_MAMA mama
+#define TA_MAVP_Lookback movingAverageVariablePeriodLookback
+#define TA_MAVP movingAverageVariablePeriod
 #define TA_MAX_Lookback maxLookback
 #define TA_MAX max
 #define TA_MAXINDEX_Lookback maxIndexLookback
