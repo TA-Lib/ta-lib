@@ -231,7 +231,7 @@
    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
 
-   return NAMESPACE(TA_RetCode)TA_SUCCESS;
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
@@ -308,7 +308,7 @@
 /* Generated */  #endif 
 /* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
-/* Generated */    return NAMESPACE(TA_RetCode)TA_SUCCESS;
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
