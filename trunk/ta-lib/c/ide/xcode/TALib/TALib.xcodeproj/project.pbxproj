@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		3A1B2BC609E909F2000A8E98 /* ta_SUM.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A1B2BC509E909F2000A8E98 /* ta_SUM.c */; };
-		3A1FA1CA05F220F100605309 /* README_XCODE.TXT in Resources */ = {isa = PBXBuildFile; fileRef = 3A1FA1C905F220F100605309 /* README_XCODE.TXT */; };
 		3A2E9574082A714D00778A6E /* libcurl.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A2E9573082A714D00778A6E /* libcurl.3.dylib */; };
 		3A3370FE097E1DDC00082D6C /* ta_BOP.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A3370F9097E1DDC00082D6C /* ta_BOP.c */; };
 		3A3370FF097E1DDC00082D6C /* ta_CDLHIKKAKE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A3370FA097E1DDC00082D6C /* ta_CDLHIKKAKE.c */; };
@@ -21,7 +20,6 @@
 		3A35CD930735FAC1001993D0 /* ta_CDLMORNINGDOJISTAR.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A35CD8D0735FAC1001993D0 /* ta_CDLMORNINGDOJISTAR.c */; };
 		3A35CD940735FAC1001993D0 /* ta_CDLMORNINGSTAR.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A35CD8E0735FAC1001993D0 /* ta_CDLMORNINGSTAR.c */; };
 		3A35CD950735FAC1001993D0 /* ta_CDLTRISTAR.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A35CD8F0735FAC1001993D0 /* ta_CDLTRISTAR.c */; };
-		3A48BC5505E25FE500B42EE0 /* func_list.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3A48B5DF05E25FDC00B42EE0 /* func_list.txt */; };
 		3A48BC5605E25FE500B42EE0 /* ta_abstract.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A48B5E005E25FDC00B42EE0 /* ta_abstract.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		3A48BC5705E25FE500B42EE0 /* ta_common.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A48B5E105E25FDC00B42EE0 /* ta_common.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		3A48BC5905E25FE500B42EE0 /* ta_defs.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A48B5E305E25FDC00B42EE0 /* ta_defs.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -105,10 +103,6 @@
 		3A48BFC505E25FE600B42EE0 /* ta_WCLPRICE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A48BB2C05E25FE300B42EE0 /* ta_WCLPRICE.c */; };
 		3A48BFC605E25FE600B42EE0 /* ta_WILLR.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A48BB2D05E25FE300B42EE0 /* ta_WILLR.c */; };
 		3A48BFC705E25FE600B42EE0 /* ta_WMA.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A48BB2E05E25FE300B42EE0 /* ta_WMA.c */; };
-		3A48C06805E25FE600B42EE0 /* CHANGELOG.TXT in Resources */ = {isa = PBXBuildFile; fileRef = 3A48BC3B05E25FE400B42EE0 /* CHANGELOG.TXT */; };
-		3A48C06905E25FE600B42EE0 /* HISTORY.TXT in Resources */ = {isa = PBXBuildFile; fileRef = 3A48BC3C05E25FE400B42EE0 /* HISTORY.TXT */; };
-		3A48C06A05E25FE600B42EE0 /* LICENSE.TXT in Resources */ = {isa = PBXBuildFile; fileRef = 3A48BC3D05E25FE400B42EE0 /* LICENSE.TXT */; };
-		3A48C06B05E25FE600B42EE0 /* README.TXT in Resources */ = {isa = PBXBuildFile; fileRef = 3A48BC3E05E25FE400B42EE0 /* README.TXT */; };
 		3A59A19C05F09E97005A4582 /* ta_frame.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A59A17105F09E96005A4582 /* ta_frame.c */; };
 		3A59A19D05F09E97005A4582 /* ta_frame.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A59A17205F09E96005A4582 /* ta_frame.h */; };
 		3A59A19E05F09E97005A4582 /* ta_abstract.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A59A17305F09E96005A4582 /* ta_abstract.c */; };
@@ -147,7 +141,14 @@
 		3A742ECC06E8458C004F675D /* ta_CDLLONGLINE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A742EC806E8458B004F675D /* ta_CDLLONGLINE.c */; };
 		3A742ECD06E8458C004F675D /* ta_CDLSHORTLINE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A742EC906E8458B004F675D /* ta_CDLSHORTLINE.c */; };
 		3A742ECE06E8458C004F675D /* ta_CDLSPINNINGTOP.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A742ECA06E8458B004F675D /* ta_CDLSPINNINGTOP.c */; };
-		3AA3F93D05FB88980048BF36 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8D07F2C70486CC7A007CD1D0 /* Info.plist */; };
+		3A9C4D8B0BA735E500B6D766 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8D07F2C70486CC7A007CD1D0 /* Info.plist */; };
+		3A9C4D930BA7361A00B6D766 /* ta_BETA.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A9C4D8C0BA7361A00B6D766 /* ta_BETA.c */; };
+		3A9C4D940BA7361A00B6D766 /* ta_MAVP.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A9C4D8D0BA7361A00B6D766 /* ta_MAVP.c */; };
+		3A9C4D950BA7361A00B6D766 /* ta_MAXINDEX.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A9C4D8E0BA7361A00B6D766 /* ta_MAXINDEX.c */; };
+		3A9C4D960BA7361A00B6D766 /* ta_MININDEX.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A9C4D8F0BA7361A00B6D766 /* ta_MININDEX.c */; };
+		3A9C4D970BA7361A00B6D766 /* ta_MINMAX.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A9C4D900BA7361A00B6D766 /* ta_MINMAX.c */; };
+		3A9C4D980BA7361A00B6D766 /* ta_MINMAXINDEX.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A9C4D910BA7361A00B6D766 /* ta_MINMAXINDEX.c */; };
+		3A9C4D990BA7361A00B6D766 /* ta_NATR.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A9C4D920BA7361A00B6D766 /* ta_NATR.c */; };
 		3AC7C3F3080C313900D11B6F /* ta_CDL2CROWS.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AC7C3CD080C313900D11B6F /* ta_CDL2CROWS.c */; };
 		3AC7C3F4080C313900D11B6F /* ta_CDL3INSIDE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AC7C3CE080C313900D11B6F /* ta_CDL3INSIDE.c */; };
 		3AC7C3F5080C313900D11B6F /* ta_CDL3LINESTRIKE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AC7C3CF080C313900D11B6F /* ta_CDL3LINESTRIKE.c */; };
@@ -200,26 +201,6 @@
 		8D07F2C00486CC7A007CD1D0 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C1666FE841158C02AAC07 /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXBuildStyle section */
-		4F0BB7EC011F40E904CA0E50 /* Development */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				DEBUGGING_SYMBOLS = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-			};
-			name = Development;
-		};
-		4F0BB7ED011F40E904CA0E50 /* Deployment */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-			};
-			name = Deployment;
-		};
-/* End PBXBuildStyle section */
-
 /* Begin PBXFileReference section */
 		089C1667FE841158C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		3A1B2BC509E909F2000A8E98 /* ta_SUM.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_SUM.c; path = ../../../src/ta_func/ta_SUM.c; sourceTree = SOURCE_ROOT; };
@@ -237,7 +218,6 @@
 		3A35CD8D0735FAC1001993D0 /* ta_CDLMORNINGDOJISTAR.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDLMORNINGDOJISTAR.c; path = ../../../src/ta_func/ta_CDLMORNINGDOJISTAR.c; sourceTree = SOURCE_ROOT; };
 		3A35CD8E0735FAC1001993D0 /* ta_CDLMORNINGSTAR.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDLMORNINGSTAR.c; path = ../../../src/ta_func/ta_CDLMORNINGSTAR.c; sourceTree = SOURCE_ROOT; };
 		3A35CD8F0735FAC1001993D0 /* ta_CDLTRISTAR.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDLTRISTAR.c; path = ../../../src/ta_func/ta_CDLTRISTAR.c; sourceTree = SOURCE_ROOT; };
-		3A48B5DF05E25FDC00B42EE0 /* func_list.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = func_list.txt; path = ../../../include/func_list.txt; sourceTree = SOURCE_ROOT; };
 		3A48B5E005E25FDC00B42EE0 /* ta_abstract.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ta_abstract.h; sourceTree = "<group>"; };
 		3A48B5E105E25FDC00B42EE0 /* ta_common.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ta_common.h; sourceTree = "<group>"; };
 		3A48B5E305E25FDC00B42EE0 /* ta_defs.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ta_defs.h; sourceTree = "<group>"; };
@@ -362,6 +342,13 @@
 		3A742EC806E8458B004F675D /* ta_CDLLONGLINE.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDLLONGLINE.c; path = ../../../src/ta_func/ta_CDLLONGLINE.c; sourceTree = SOURCE_ROOT; };
 		3A742EC906E8458B004F675D /* ta_CDLSHORTLINE.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDLSHORTLINE.c; path = ../../../src/ta_func/ta_CDLSHORTLINE.c; sourceTree = SOURCE_ROOT; };
 		3A742ECA06E8458B004F675D /* ta_CDLSPINNINGTOP.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDLSPINNINGTOP.c; path = ../../../src/ta_func/ta_CDLSPINNINGTOP.c; sourceTree = SOURCE_ROOT; };
+		3A9C4D8C0BA7361A00B6D766 /* ta_BETA.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_BETA.c; sourceTree = "<group>"; };
+		3A9C4D8D0BA7361A00B6D766 /* ta_MAVP.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_MAVP.c; sourceTree = "<group>"; };
+		3A9C4D8E0BA7361A00B6D766 /* ta_MAXINDEX.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_MAXINDEX.c; sourceTree = "<group>"; };
+		3A9C4D8F0BA7361A00B6D766 /* ta_MININDEX.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_MININDEX.c; sourceTree = "<group>"; };
+		3A9C4D900BA7361A00B6D766 /* ta_MINMAX.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_MINMAX.c; sourceTree = "<group>"; };
+		3A9C4D910BA7361A00B6D766 /* ta_MINMAXINDEX.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_MINMAXINDEX.c; sourceTree = "<group>"; };
+		3A9C4D920BA7361A00B6D766 /* ta_NATR.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_NATR.c; sourceTree = "<group>"; };
 		3AC7C3CD080C313900D11B6F /* ta_CDL2CROWS.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDL2CROWS.c; path = ../../../src/ta_func/ta_CDL2CROWS.c; sourceTree = SOURCE_ROOT; };
 		3AC7C3CE080C313900D11B6F /* ta_CDL3INSIDE.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDL3INSIDE.c; path = ../../../src/ta_func/ta_CDL3INSIDE.c; sourceTree = SOURCE_ROOT; };
 		3AC7C3CF080C313900D11B6F /* ta_CDL3LINESTRIKE.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDL3LINESTRIKE.c; path = ../../../src/ta_func/ta_CDL3LINESTRIKE.c; sourceTree = SOURCE_ROOT; };
@@ -464,7 +451,6 @@
 				3A48BC3B05E25FE400B42EE0 /* CHANGELOG.TXT */,
 				3A48BC3C05E25FE400B42EE0 /* HISTORY.TXT */,
 				3A48BC3D05E25FE400B42EE0 /* LICENSE.TXT */,
-				3A48B5DF05E25FDC00B42EE0 /* func_list.txt */,
 				8D07F2C70486CC7A007CD1D0 /* Info.plist */,
 				089C1666FE841158C02AAC07 /* InfoPlist.strings */,
 			);
@@ -528,6 +514,13 @@
 		3A48BAE705E25FE300B42EE0 /* ta_func */ = {
 			isa = PBXGroup;
 			children = (
+				3A9C4D8C0BA7361A00B6D766 /* ta_BETA.c */,
+				3A9C4D8D0BA7361A00B6D766 /* ta_MAVP.c */,
+				3A9C4D8E0BA7361A00B6D766 /* ta_MAXINDEX.c */,
+				3A9C4D8F0BA7361A00B6D766 /* ta_MININDEX.c */,
+				3A9C4D900BA7361A00B6D766 /* ta_MINMAX.c */,
+				3A9C4D910BA7361A00B6D766 /* ta_MINMAXINDEX.c */,
+				3A9C4D920BA7361A00B6D766 /* ta_NATR.c */,
 				3A1B2BC509E909F2000A8E98 /* ta_SUM.c */,
 				3A3370F9097E1DDC00082D6C /* ta_BOP.c */,
 				3A3370FA097E1DDC00082D6C /* ta_CDLHIKKAKE.c */,
@@ -762,49 +755,6 @@
 			);
 			buildRules = (
 			);
-			buildSettings = {
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 0.1.1;
-				FRAMEWORK_SEARCH_PATHS = "";
-				FRAMEWORK_VERSION = A;
-				GCC_ENABLE_TRIGRAPHS = NO;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_PRECOMPILE_PREFIX_HEADER = NO;
-				GCC_PREFIX_HEADER = "";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					__UNIX__,
-					__unix__,
-					NO_DEBUG,
-					USE_NAMED_SEMAPHORES,
-					_REENTRANT,
-					QT_THREAD_SUPPORT,
-				);
-				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
-				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
-				GCC_WARN_UNKNOWN_PRAGMAS = NO;
-				HEADER_SEARCH_PATHS = (
-					/usr/include/malloc,
-					/usr/include,
-				);
-				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "@executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = /usr/lib;
-				LIBRARY_STYLE = DYNAMIC;
-				OTHER_CFLAGS = "-fno-strict-aliasing";
-				OTHER_LDFLAGS = (
-					"-seg1addr",
-					0x4f000000,
-				);
-				PREBINDING = YES;
-				PRODUCT_NAME = TALib;
-				SECTORDER_FLAGS = "";
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-				);
-				WRAPPER_EXTENSION = framework;
-			};
 			dependencies = (
 			);
 			name = TALib;
@@ -819,14 +769,6 @@
 		0867D690FE84028FC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 3A170940089D33AE00A96AC2 /* Build configuration list for PBXProject "TALib" */;
-			buildSettings = {
-				MACOSX_DEPLOYMENT_TARGET = 10.3;
-				SDKROOT = /Developer/SDKs/MacOSX10.3.9.sdk;
-			};
-			buildStyles = (
-				4F0BB7EC011F40E904CA0E50 /* Development */,
-				4F0BB7ED011F40E904CA0E50 /* Deployment */,
-			);
 			hasScannedForEncodings = 1;
 			mainGroup = 0867D691FE84028FC02AAC07 /* TALib */;
 			productRefGroup = 034768DDFF38A45A11DB9C8B /* Products */;
@@ -843,14 +785,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D07F2C00486CC7A007CD1D0 /* InfoPlist.strings in Resources */,
-				3A48BC5505E25FE500B42EE0 /* func_list.txt in Resources */,
 				3A48BF2A05E25FE600B42EE0 /* ta_retcode.csv in Resources */,
-				3A48C06805E25FE600B42EE0 /* CHANGELOG.TXT in Resources */,
-				3A48C06905E25FE600B42EE0 /* HISTORY.TXT in Resources */,
-				3A48C06A05E25FE600B42EE0 /* LICENSE.TXT in Resources */,
-				3A48C06B05E25FE600B42EE0 /* README.TXT in Resources */,
-				3A1FA1CA05F220F100605309 /* README_XCODE.TXT in Resources */,
-				3AA3F93D05FB88980048BF36 /* Info.plist in Resources */,
+				3A9C4D8B0BA735E500B6D766 /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1039,6 +975,13 @@
 				3A337101097E1DDC00082D6C /* ta_CMO.c in Sources */,
 				3A337102097E1DDC00082D6C /* ta_ULTOSC.c in Sources */,
 				3A1B2BC609E909F2000A8E98 /* ta_SUM.c in Sources */,
+				3A9C4D930BA7361A00B6D766 /* ta_BETA.c in Sources */,
+				3A9C4D940BA7361A00B6D766 /* ta_MAVP.c in Sources */,
+				3A9C4D950BA7361A00B6D766 /* ta_MAXINDEX.c in Sources */,
+				3A9C4D960BA7361A00B6D766 /* ta_MININDEX.c in Sources */,
+				3A9C4D970BA7361A00B6D766 /* ta_MINMAX.c in Sources */,
+				3A9C4D980BA7361A00B6D766 /* ta_MINMAXINDEX.c in Sources */,
+				3A9C4D990BA7361A00B6D766 /* ta_NATR.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1089,6 +1032,7 @@
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = /usr/lib;
 				LIBRARY_STYLE = DYNAMIC;
+				MACH_O_TYPE = mh_dylib;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				OTHER_LDFLAGS = (
 					"-seg1addr",
@@ -1137,6 +1081,7 @@
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = /usr/lib;
 				LIBRARY_STYLE = DYNAMIC;
+				MACH_O_TYPE = mh_dylib;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				OTHER_LDFLAGS = (
 					"-seg1addr",

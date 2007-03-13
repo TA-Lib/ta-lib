@@ -11,7 +11,7 @@ Where does the framework get built?
 ===================================
 Upon completion of a successful build, the framework TALib.framework
 should appear in the 'build' directory inside the TALib.xcode project
-directory.
+directory, or in your default Xcode build directory.
 
 Where should the framework be installed for use in an application?
 ==================================================================
@@ -22,7 +22,7 @@ to your application's target. See Xcode documentation for details.)
 
 If you wish to change the install path of the framework, to /Library/Frameworks
 for example, you can simply double click on the TALib target in Xcode, 
-select the 'Build' tab, and change the 'Installation Path' setting 
+select the 'Build' tab, and change the 'Installation Directory' setting 
 appropriately.
 
 What frameworks/libraries does the TALib framework use?
