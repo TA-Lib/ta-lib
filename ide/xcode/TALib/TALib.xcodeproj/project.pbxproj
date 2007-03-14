@@ -199,7 +199,44 @@
 		3ADCEAA3075875960004A780 /* ta_CDLSHOOTINGSTAR.c in Sources */ = {isa = PBXBuildFile; fileRef = 3ADCEA98075875960004A780 /* ta_CDLSHOOTINGSTAR.c */; };
 		3ADCEAA4075875960004A780 /* ta_CDLUPSIDEGAP2CROWS.c in Sources */ = {isa = PBXBuildFile; fileRef = 3ADCEA99075875960004A780 /* ta_CDLUPSIDEGAP2CROWS.c */; };
 		8D07F2C00486CC7A007CD1D0 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C1666FE841158C02AAC07 /* InfoPlist.strings */; };
+		CCF3217F0BA789CC0014ABA6 /* ta_regtest.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321630BA789CC0014ABA6 /* ta_regtest.c */; };
+		CCF321800BA789CC0014ABA6 /* test_1in_1out.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321650BA789CC0014ABA6 /* test_1in_1out.c */; };
+		CCF321810BA789CC0014ABA6 /* test_1in_2out.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321660BA789CC0014ABA6 /* test_1in_2out.c */; };
+		CCF321820BA789CC0014ABA6 /* test_adx.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321670BA789CC0014ABA6 /* test_adx.c */; };
+		CCF321830BA789CC0014ABA6 /* test_bbands.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321680BA789CC0014ABA6 /* test_bbands.c */; };
+		CCF321840BA789CC0014ABA6 /* test_candlestick.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321690BA789CC0014ABA6 /* test_candlestick.c */; };
+		CCF321850BA789CC0014ABA6 /* test_ma.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF3216A0BA789CC0014ABA6 /* test_ma.c */; };
+		CCF321860BA789CC0014ABA6 /* test_macd.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF3216B0BA789CC0014ABA6 /* test_macd.c */; };
+		CCF321870BA789CC0014ABA6 /* test_minmax.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF3216C0BA789CC0014ABA6 /* test_minmax.c */; };
+		CCF321880BA789CC0014ABA6 /* test_mom.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF3216D0BA789CC0014ABA6 /* test_mom.c */; };
+		CCF321890BA789CC0014ABA6 /* test_per_ema.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF3216E0BA789CC0014ABA6 /* test_per_ema.c */; };
+		CCF3218A0BA789CC0014ABA6 /* test_per_hl.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF3216F0BA789CC0014ABA6 /* test_per_hl.c */; };
+		CCF3218B0BA789CC0014ABA6 /* test_per_hlc.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321700BA789CC0014ABA6 /* test_per_hlc.c */; };
+		CCF3218C0BA789CC0014ABA6 /* test_per_hlcv.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321710BA789CC0014ABA6 /* test_per_hlcv.c */; };
+		CCF3218D0BA789CC0014ABA6 /* test_per_ohlc.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321720BA789CC0014ABA6 /* test_per_ohlc.c */; };
+		CCF3218E0BA789CC0014ABA6 /* test_po.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321730BA789CC0014ABA6 /* test_po.c */; };
+		CCF3218F0BA789CC0014ABA6 /* test_rsi.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321740BA789CC0014ABA6 /* test_rsi.c */; };
+		CCF321900BA789CC0014ABA6 /* test_sar.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321750BA789CC0014ABA6 /* test_sar.c */; };
+		CCF321910BA789CC0014ABA6 /* test_stddev.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321760BA789CC0014ABA6 /* test_stddev.c */; };
+		CCF321920BA789CC0014ABA6 /* test_stoch.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321770BA789CC0014ABA6 /* test_stoch.c */; };
+		CCF321930BA789CC0014ABA6 /* test_trange.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321780BA789CC0014ABA6 /* test_trange.c */; };
+		CCF321940BA789CC0014ABA6 /* test_abstract.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF3217B0BA789CC0014ABA6 /* test_abstract.c */; };
+		CCF321950BA789CC0014ABA6 /* test_data.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF3217C0BA789CC0014ABA6 /* test_data.c */; };
+		CCF321960BA789CC0014ABA6 /* test_internals.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF3217D0BA789CC0014ABA6 /* test_internals.c */; };
+		CCF321970BA789CC0014ABA6 /* test_util.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF3217E0BA789CC0014ABA6 /* test_util.c */; };
+		CCF3219E0BA78A290014ABA6 /* TALib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D07F2C80486CC7A007CD1D0 /* TALib.framework */; };
+		CCF321D20BA792540014ABA6 /* ta_func_api.c in Sources */ = {isa = PBXBuildFile; fileRef = CCF321D10BA792540014ABA6 /* ta_func_api.c */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CCF321500BA788D40014ABA6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0867D690FE84028FC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
+			remoteInfo = TALib;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		089C1667FE841158C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -400,6 +437,37 @@
 		3ADCEA99075875960004A780 /* ta_CDLUPSIDEGAP2CROWS.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDLUPSIDEGAP2CROWS.c; path = ../../../src/ta_func/ta_CDLUPSIDEGAP2CROWS.c; sourceTree = SOURCE_ROOT; };
 		8D07F2C70486CC7A007CD1D0 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8D07F2C80486CC7A007CD1D0 /* TALib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = TALib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		CCF3214B0BA7887D0014ABA6 /* Regression Tests */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = "Regression Tests"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CCF321610BA789CC0014ABA6 /* ReadMe.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = ReadMe.txt; path = ../../../src/tools/ta_regtest/ReadMe.txt; sourceTree = SOURCE_ROOT; };
+		CCF321620BA789CC0014ABA6 /* ta_error_number.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ta_error_number.h; path = ../../../src/tools/ta_regtest/ta_error_number.h; sourceTree = SOURCE_ROOT; };
+		CCF321630BA789CC0014ABA6 /* ta_regtest.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_regtest.c; path = ../../../src/tools/ta_regtest/ta_regtest.c; sourceTree = SOURCE_ROOT; };
+		CCF321650BA789CC0014ABA6 /* test_1in_1out.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_1in_1out.c; sourceTree = "<group>"; };
+		CCF321660BA789CC0014ABA6 /* test_1in_2out.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_1in_2out.c; sourceTree = "<group>"; };
+		CCF321670BA789CC0014ABA6 /* test_adx.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_adx.c; sourceTree = "<group>"; };
+		CCF321680BA789CC0014ABA6 /* test_bbands.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_bbands.c; sourceTree = "<group>"; };
+		CCF321690BA789CC0014ABA6 /* test_candlestick.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_candlestick.c; sourceTree = "<group>"; };
+		CCF3216A0BA789CC0014ABA6 /* test_ma.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_ma.c; sourceTree = "<group>"; };
+		CCF3216B0BA789CC0014ABA6 /* test_macd.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_macd.c; sourceTree = "<group>"; };
+		CCF3216C0BA789CC0014ABA6 /* test_minmax.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_minmax.c; sourceTree = "<group>"; };
+		CCF3216D0BA789CC0014ABA6 /* test_mom.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_mom.c; sourceTree = "<group>"; };
+		CCF3216E0BA789CC0014ABA6 /* test_per_ema.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_per_ema.c; sourceTree = "<group>"; };
+		CCF3216F0BA789CC0014ABA6 /* test_per_hl.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_per_hl.c; sourceTree = "<group>"; };
+		CCF321700BA789CC0014ABA6 /* test_per_hlc.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_per_hlc.c; sourceTree = "<group>"; };
+		CCF321710BA789CC0014ABA6 /* test_per_hlcv.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_per_hlcv.c; sourceTree = "<group>"; };
+		CCF321720BA789CC0014ABA6 /* test_per_ohlc.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_per_ohlc.c; sourceTree = "<group>"; };
+		CCF321730BA789CC0014ABA6 /* test_po.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_po.c; sourceTree = "<group>"; };
+		CCF321740BA789CC0014ABA6 /* test_rsi.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_rsi.c; sourceTree = "<group>"; };
+		CCF321750BA789CC0014ABA6 /* test_sar.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_sar.c; sourceTree = "<group>"; };
+		CCF321760BA789CC0014ABA6 /* test_stddev.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_stddev.c; sourceTree = "<group>"; };
+		CCF321770BA789CC0014ABA6 /* test_stoch.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_stoch.c; sourceTree = "<group>"; };
+		CCF321780BA789CC0014ABA6 /* test_trange.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = test_trange.c; sourceTree = "<group>"; };
+		CCF321790BA789CC0014ABA6 /* ta_test_func.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ta_test_func.h; path = ../../../src/tools/ta_regtest/ta_test_func.h; sourceTree = SOURCE_ROOT; };
+		CCF3217A0BA789CC0014ABA6 /* ta_test_priv.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ta_test_priv.h; path = ../../../src/tools/ta_regtest/ta_test_priv.h; sourceTree = SOURCE_ROOT; };
+		CCF3217B0BA789CC0014ABA6 /* test_abstract.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = test_abstract.c; path = ../../../src/tools/ta_regtest/test_abstract.c; sourceTree = SOURCE_ROOT; };
+		CCF3217C0BA789CC0014ABA6 /* test_data.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = test_data.c; path = ../../../src/tools/ta_regtest/test_data.c; sourceTree = SOURCE_ROOT; };
+		CCF3217D0BA789CC0014ABA6 /* test_internals.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = test_internals.c; path = ../../../src/tools/ta_regtest/test_internals.c; sourceTree = SOURCE_ROOT; };
+		CCF3217E0BA789CC0014ABA6 /* test_util.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = test_util.c; path = ../../../src/tools/ta_regtest/test_util.c; sourceTree = SOURCE_ROOT; };
+		CCF321D10BA792540014ABA6 /* ta_func_api.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_func_api.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -412,6 +480,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CCF321490BA7887D0014ABA6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CCF3219E0BA78A290014ABA6 /* TALib.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -419,6 +495,7 @@
 			isa = PBXGroup;
 			children = (
 				8D07F2C80486CC7A007CD1D0 /* TALib.framework */,
+				CCF3214B0BA7887D0014ABA6 /* Regression Tests */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -430,6 +507,7 @@
 				089C1665FE841158C02AAC07 /* Resources */,
 				0867D69AFE84028FC02AAC07 /* External Frameworks and Libraries */,
 				034768DDFF38A45A11DB9C8B /* Products */,
+				CCF321600BA789470014ABA6 /* Regression Tests */,
 			);
 			name = TALib;
 			sourceTree = "<group>";
@@ -669,6 +747,7 @@
 				3A59A17405F09E96005A4582 /* ta_def_ui.c */,
 				3A59A17505F09E96005A4582 /* ta_def_ui.h */,
 				3A59A17605F09E96005A4582 /* ta_frame_priv.h */,
+				CCF321D10BA792540014ABA6 /* ta_func_api.c */,
 				3A59A17705F09E96005A4582 /* ta_group_idx.c */,
 				3A59A17805F09E96005A4582 /* tables */,
 			);
@@ -718,6 +797,51 @@
 			path = tables;
 			sourceTree = "<group>";
 		};
+		CCF321600BA789470014ABA6 /* Regression Tests */ = {
+			isa = PBXGroup;
+			children = (
+				CCF321610BA789CC0014ABA6 /* ReadMe.txt */,
+				CCF321620BA789CC0014ABA6 /* ta_error_number.h */,
+				CCF321630BA789CC0014ABA6 /* ta_regtest.c */,
+				CCF321640BA789CC0014ABA6 /* ta_test_func */,
+				CCF321790BA789CC0014ABA6 /* ta_test_func.h */,
+				CCF3217A0BA789CC0014ABA6 /* ta_test_priv.h */,
+				CCF3217B0BA789CC0014ABA6 /* test_abstract.c */,
+				CCF3217C0BA789CC0014ABA6 /* test_data.c */,
+				CCF3217D0BA789CC0014ABA6 /* test_internals.c */,
+				CCF3217E0BA789CC0014ABA6 /* test_util.c */,
+			);
+			name = "Regression Tests";
+			sourceTree = "<group>";
+		};
+		CCF321640BA789CC0014ABA6 /* ta_test_func */ = {
+			isa = PBXGroup;
+			children = (
+				CCF321650BA789CC0014ABA6 /* test_1in_1out.c */,
+				CCF321660BA789CC0014ABA6 /* test_1in_2out.c */,
+				CCF321670BA789CC0014ABA6 /* test_adx.c */,
+				CCF321680BA789CC0014ABA6 /* test_bbands.c */,
+				CCF321690BA789CC0014ABA6 /* test_candlestick.c */,
+				CCF3216A0BA789CC0014ABA6 /* test_ma.c */,
+				CCF3216B0BA789CC0014ABA6 /* test_macd.c */,
+				CCF3216C0BA789CC0014ABA6 /* test_minmax.c */,
+				CCF3216D0BA789CC0014ABA6 /* test_mom.c */,
+				CCF3216E0BA789CC0014ABA6 /* test_per_ema.c */,
+				CCF3216F0BA789CC0014ABA6 /* test_per_hl.c */,
+				CCF321700BA789CC0014ABA6 /* test_per_hlc.c */,
+				CCF321710BA789CC0014ABA6 /* test_per_hlcv.c */,
+				CCF321720BA789CC0014ABA6 /* test_per_ohlc.c */,
+				CCF321730BA789CC0014ABA6 /* test_po.c */,
+				CCF321740BA789CC0014ABA6 /* test_rsi.c */,
+				CCF321750BA789CC0014ABA6 /* test_sar.c */,
+				CCF321760BA789CC0014ABA6 /* test_stddev.c */,
+				CCF321770BA789CC0014ABA6 /* test_stoch.c */,
+				CCF321780BA789CC0014ABA6 /* test_trange.c */,
+			);
+			name = ta_test_func;
+			path = ../../../src/tools/ta_regtest/ta_test_func;
+			sourceTree = SOURCE_ROOT;
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -763,6 +887,23 @@
 			productReference = 8D07F2C80486CC7A007CD1D0 /* TALib.framework */;
 			productType = "com.apple.product-type.framework";
 		};
+		CCF3214A0BA7887D0014ABA6 /* Regression Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CCF3214D0BA788B10014ABA6 /* Build configuration list for PBXNativeTarget "Regression Tests" */;
+			buildPhases = (
+				CCF321480BA7887D0014ABA6 /* Sources */,
+				CCF321490BA7887D0014ABA6 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CCF321510BA788D40014ABA6 /* PBXTargetDependency */,
+			);
+			name = "Regression Tests";
+			productName = "Regression Tests";
+			productReference = CCF3214B0BA7887D0014ABA6 /* Regression Tests */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -775,6 +916,7 @@
 			projectDirPath = "";
 			targets = (
 				8D07F2BC0486CC7A007CD1D0 /* TALib */,
+				CCF3214A0BA7887D0014ABA6 /* Regression Tests */,
 			);
 		};
 /* End PBXProject section */
@@ -982,10 +1124,51 @@
 				3A9C4D970BA7361A00B6D766 /* ta_MINMAX.c in Sources */,
 				3A9C4D980BA7361A00B6D766 /* ta_MINMAXINDEX.c in Sources */,
 				3A9C4D990BA7361A00B6D766 /* ta_NATR.c in Sources */,
+				CCF321D20BA792540014ABA6 /* ta_func_api.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CCF321480BA7887D0014ABA6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CCF3217F0BA789CC0014ABA6 /* ta_regtest.c in Sources */,
+				CCF321800BA789CC0014ABA6 /* test_1in_1out.c in Sources */,
+				CCF321810BA789CC0014ABA6 /* test_1in_2out.c in Sources */,
+				CCF321820BA789CC0014ABA6 /* test_adx.c in Sources */,
+				CCF321830BA789CC0014ABA6 /* test_bbands.c in Sources */,
+				CCF321840BA789CC0014ABA6 /* test_candlestick.c in Sources */,
+				CCF321850BA789CC0014ABA6 /* test_ma.c in Sources */,
+				CCF321860BA789CC0014ABA6 /* test_macd.c in Sources */,
+				CCF321870BA789CC0014ABA6 /* test_minmax.c in Sources */,
+				CCF321880BA789CC0014ABA6 /* test_mom.c in Sources */,
+				CCF321890BA789CC0014ABA6 /* test_per_ema.c in Sources */,
+				CCF3218A0BA789CC0014ABA6 /* test_per_hl.c in Sources */,
+				CCF3218B0BA789CC0014ABA6 /* test_per_hlc.c in Sources */,
+				CCF3218C0BA789CC0014ABA6 /* test_per_hlcv.c in Sources */,
+				CCF3218D0BA789CC0014ABA6 /* test_per_ohlc.c in Sources */,
+				CCF3218E0BA789CC0014ABA6 /* test_po.c in Sources */,
+				CCF3218F0BA789CC0014ABA6 /* test_rsi.c in Sources */,
+				CCF321900BA789CC0014ABA6 /* test_sar.c in Sources */,
+				CCF321910BA789CC0014ABA6 /* test_stddev.c in Sources */,
+				CCF321920BA789CC0014ABA6 /* test_stoch.c in Sources */,
+				CCF321930BA789CC0014ABA6 /* test_trange.c in Sources */,
+				CCF321940BA789CC0014ABA6 /* test_abstract.c in Sources */,
+				CCF321950BA789CC0014ABA6 /* test_data.c in Sources */,
+				CCF321960BA789CC0014ABA6 /* test_internals.c in Sources */,
+				CCF321970BA789CC0014ABA6 /* test_util.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CCF321510BA788D40014ABA6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8D07F2BC0486CC7A007CD1D0 /* TALib */;
+			targetProxy = CCF321500BA788D40014ABA6 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		089C1666FE841158C02AAC07 /* InfoPlist.strings */ = {
@@ -1102,12 +1285,58 @@
 		3A170941089D33AE00A96AC2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					ppc,
+					i386,
+				);
 			};
 			name = Debug;
 		};
 		3A170942089D33AE00A96AC2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					ppc,
+					i386,
+				);
+			};
+			name = Release;
+		};
+		CCF3214E0BA788B10014ABA6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					ppc,
+					i386,
+				);
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INSTALL_PATH = "$(HOME)/bin";
+				PREBINDING = NO;
+				PRODUCT_NAME = "Regression Tests";
+				ZERO_LINK = NO;
+			};
+			name = Debug;
+		};
+		CCF3214F0BA788B10014ABA6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					ppc,
+					i386,
+				);
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = "$(HOME)/bin";
+				PREBINDING = NO;
+				PRODUCT_NAME = "Regression Tests";
+				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -1128,6 +1357,15 @@
 			buildConfigurations = (
 				3A170941089D33AE00A96AC2 /* Debug */,
 				3A170942089D33AE00A96AC2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CCF3214D0BA788B10014ABA6 /* Build configuration list for PBXNativeTarget "Regression Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CCF3214E0BA788B10014ABA6 /* Debug */,
+				CCF3214F0BA788B10014ABA6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
