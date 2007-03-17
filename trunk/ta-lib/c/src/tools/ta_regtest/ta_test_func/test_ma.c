@@ -43,7 +43,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
- *
+ *  031707 MF   Add TA_MAVP tests.
  */
 
 /* Description:
@@ -102,11 +102,14 @@ typedef struct
 {
    const TA_Test *test;
    const TA_Real *close;
+   const TA_Real *mavpPeriod;
+   int   testMAVP; /* Boolean */
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
 static ErrorNumber do_test_ma( const TA_History *history,
-                               const TA_Test *test );
+                               const TA_Test *test,
+							   int testMAVP /* Boolean */ );
 
 /**** Local variables definitions.     ****/
 
@@ -376,12 +379,23 @@ ErrorNumber test_func_ma( TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
 
-      retValue = do_test_ma( history, &tableTest[i] );
+      retValue = do_test_ma( history, &tableTest[i], 0 );
       if( retValue != 0 )
       {
          printf( "TA_MA Failed Test #%d (Code=%d)\n", i, retValue );
          return retValue;
       }
+
+	  /* If TA_ANY_MA_TEST. repeat test with TA_MAVP */
+	  if( tableTest[i].id == TA_ANY_MA_TEST )
+	  {
+         retValue = do_test_ma( history, &tableTest[i], 1 );
+         if( retValue != 0 )
+         {
+            printf( "TA_MAVP Failed Test #%d (Code=%d)\n", i, retValue );
+            return retValue;
+	     }
+	  }
    }
 
    /* Re-initialize all the unstable period to zero. */
@@ -443,6 +457,23 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
      *lookback = TA_MAMA_Lookback( 0.5, 0.05 );
      break;
   default:
+	  if( testParam->testMAVP )
+	  {
+     retCode = TA_MAVP( startIdx,
+                      endIdx,
+                      testParam->close,
+					  testParam->mavpPeriod,
+                      2,testParam->test->optInTimePeriod,
+                      testParam->test->optInMAType_1,
+                      outBegIdx,
+                      outNbElement,
+                      outputBuffer );
+
+     *lookback = TA_MAVP_Lookback( 2, testParam->test->optInTimePeriod,
+                                 testParam->test->optInMAType_1 );
+	  }
+	  else
+	  {
      /* Test for the TA_MA function. All the MA can be done
       * through that function.
       */
@@ -457,6 +488,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
      *lookback = TA_MA_Lookback( testParam->test->optInTimePeriod,
                                  testParam->test->optInMAType_1 );
+	  }
      break;
   }
 
@@ -464,7 +496,8 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 }
 
 static ErrorNumber do_test_ma( const TA_History *history,
-                               const TA_Test *test )
+                               const TA_Test *test,
+							   int testMAVP )
 {
    TA_RetCode retCode;
    ErrorNumber errNb;
@@ -474,6 +507,12 @@ static ErrorNumber do_test_ma( const TA_History *history,
    TA_Integer temp, temp2;
    const TA_Real *referenceInput;
 
+   /* TA_MAVP is tested only for TA_ANY_MA_TEST */
+   if( testMAVP && (test->id != TA_ANY_MA_TEST) )
+   {
+      return TA_TEST_PASS;
+   }
+
    TA_SetCompatibility( test->compatibility );
 
    /* Set to NAN all the elements of the gBuffers.  */
@@ -482,6 +521,10 @@ static ErrorNumber do_test_ma( const TA_History *history,
    /* Build the input. */
    setInputBuffer( 0, history->close, history->nbBars );
    setInputBuffer( 1, history->close, history->nbBars );
+   if( testMAVP )
+   {
+      setInputBufferValue( 2, test->optInTimePeriod, history->nbBars );
+   }
 
    /* Re-initialize all the unstable period to zero. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
@@ -528,18 +571,35 @@ static ErrorNumber do_test_ma( const TA_History *history,
    else
       referenceInput = history->close;
 
+   
+
    /* Make a simple first call. */
    switch( test->id )
    {
    case TA_ANY_MA_TEST:
-      retCode = TA_MA( test->startIdx,
-                       test->endIdx,
-                       gBuffer[0].in,
-                       test->optInTimePeriod,
-                       test->optInMAType_1,
-                       &outBegIdx,
-                       &outNbElement,
-                       gBuffer[0].out0 );
+	  if(testMAVP)
+	  {
+         retCode = TA_MAVP( test->startIdx,
+                            test->endIdx,
+                            gBuffer[0].in,
+							gBuffer[2].in,
+							2, test->optInTimePeriod,
+                            test->optInMAType_1,
+                            &outBegIdx,
+                            &outNbElement,
+                            gBuffer[0].out0 );
+	  }
+	  else
+	  {
+         retCode = TA_MA( test->startIdx,
+                          test->endIdx,
+                          gBuffer[0].in,
+                          test->optInTimePeriod,
+                          test->optInMAType_1,
+                          &outBegIdx,
+                          &outNbElement,
+                          gBuffer[0].out0 );
+	  }
       break;
    case TA_MAMA_TEST:
       retCode = TA_MAMA( test->startIdx,
@@ -586,6 +646,20 @@ static ErrorNumber do_test_ma( const TA_History *history,
    switch( test->id )
    {
    case TA_ANY_MA_TEST:
+	  if(testMAVP)
+   	  {
+      retCode = TA_MAVP( test->startIdx,
+                       test->endIdx,
+                       gBuffer[1].in,
+					   gBuffer[2].in,
+                       2,test->optInTimePeriod,
+                       test->optInMAType_1,
+                       &outBegIdx,
+                       &outNbElement,
+                       gBuffer[1].in );
+	  }
+	  else
+	  {
       retCode = TA_MA( test->startIdx,
                        test->endIdx,
                        gBuffer[1].in,
@@ -594,6 +668,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
                        &outBegIdx,
                        &outNbElement,
                        gBuffer[1].in );
+	  }
       break;
    case TA_MAMA_TEST:
       retCode = TA_MAMA( test->startIdx,
@@ -697,6 +772,8 @@ static ErrorNumber do_test_ma( const TA_History *history,
     */
    testParam.test  = test;
    testParam.close = referenceInput;
+   testParam.testMAVP = testMAVP;
+   testParam.mavpPeriod = gBuffer[2].in;
 
    if( test->doRangeTestFlag )
    {

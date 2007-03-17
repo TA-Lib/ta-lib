@@ -313,7 +313,7 @@ DEF_FUNCTION( MAMA,                         /* name */
 static const TA_InputParameterInfo    *TA_MAVP_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
-  &TA_DEF_UI_Input_Integer,
+  &TA_DEF_UI_Input_Periods,
   NULL
 };
 
@@ -324,9 +324,10 @@ static const TA_OutputParameterInfo   *TA_MAVP_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_MAVP_OptInputs[] =
-{ &TA_DEF_UI_MA_Method,
+{ 
   &TA_DEF_UI_MinPeriod,
   &TA_DEF_UI_MaxPeriod,
+  &TA_DEF_UI_MA_Method,
   NULL
 };
 

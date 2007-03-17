@@ -76,20 +76,17 @@
 /* Generated */ #define INPUT_TYPE   double
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
-/* Generated */ int Core::MovingAverageVariablePeriodLookback( MAType        optInMAType,
-/* Generated */                                              int           optInMinPeriod, /* From 2 to 100000 */
-/* Generated */                                              int           optInMaxPeriod )  /* From 2 to 100000 */
-/* Generated */ 
+/* Generated */ int Core::MovingAverageVariablePeriodLookback( int           optInMinPeriod, /* From 2 to 100000 */
+/* Generated */                                              int           optInMaxPeriod, /* From 2 to 100000 */
+/* Generated */                                              MAType        optInMAType ) /* Generated */ 
 /* Generated */ #elif defined( _JAVA )
-/* Generated */ public int movingAverageVariablePeriodLookback( MAType        optInMAType,
-/* Generated */                                               int           optInMinPeriod, /* From 2 to 100000 */
-/* Generated */                                               int           optInMaxPeriod )  /* From 2 to 100000 */
-/* Generated */ 
+/* Generated */ public int movingAverageVariablePeriodLookback( int           optInMinPeriod, /* From 2 to 100000 */
+/* Generated */                                               int           optInMaxPeriod, /* From 2 to 100000 */
+/* Generated */                                               MAType        optInMAType ) /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_MAVP_Lookback( TA_MAType     optInMAType,
-/* Generated */                     int           optInMinPeriod, /* From 2 to 100000 */
-/* Generated */                     int           optInMaxPeriod )  /* From 2 to 100000 */
-/* Generated */ 
+/* Generated */ int TA_MAVP_Lookback( int           optInMinPeriod, /* From 2 to 100000 */
+/* Generated */                     int           optInMaxPeriod, /* From 2 to 100000 */
+/* Generated */                     TA_MAType     optInMAType ) /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -97,13 +94,6 @@
 
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
-/* Generated */       optInMAType = 0;
-/* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
-/* Generated */       return -1;
-/* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInMinPeriod. */
 /* Generated */    if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInMinPeriod = 2;
@@ -116,31 +106,36 @@
 /* Generated */    else if( ((int)optInMaxPeriod < 2) || ((int)optInMaxPeriod > 100000) )
 /* Generated */       return -1;
 /* Generated */ 
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
+/* Generated */       optInMAType = 0;
+/* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
+/* Generated */       return -1;
+/* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
-
-   /* insert lookback code here. */
-
-   return 0;
+   
+   return LOOKBACK_CALL(MA)(optInMaxPeriod, optInMAType);
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /*
  * TA_MAVP - Moving average with variable period
  * 
- * Input  = double, int
+ * Input  = double, double
  * Output = double
  * 
  * Optional Parameters
  * -------------------
- * optInMAType:
- *    Type of Moving Average
- * 
  * optInMinPeriod:(From 2 to 100000)
  *    Value less than minimum will be changed to Minimum period
  * 
  * optInMaxPeriod:(From 2 to 100000)
  *    Value higher than maximum will be changed to Maximum period
+ * 
+ * optInMAType:
+ *    Type of Moving Average
  * 
  * 
  */
@@ -149,10 +144,10 @@
 /* Generated */ enum class Core::RetCode Core::MovingAverageVariablePeriod( int    startIdx,
 /* Generated */                                                             int    endIdx,
 /* Generated */                                                             cli::array<double>^ inReal,
-/* Generated */                                                             cli::array<int>^ inInteger,
-/* Generated */                                                             MAType        optInMAType,
+/* Generated */                                                             cli::array<double>^ inPeriods,
 /* Generated */                                                             int           optInMinPeriod, /* From 2 to 100000 */
 /* Generated */                                                             int           optInMaxPeriod, /* From 2 to 100000 */
+/* Generated */                                                             MAType        optInMAType,
 /* Generated */                                                             [Out]int%    outBegIdx,
 /* Generated */                                                             [Out]int%    outNbElement,
 /* Generated */                                                             cli::array<double>^  outReal )
@@ -160,10 +155,10 @@
 /* Generated */ public RetCode movingAverageVariablePeriod( int    startIdx,
 /* Generated */                                             int    endIdx,
 /* Generated */                                             double       inReal[],
-/* Generated */                                             int          inInteger[],
-/* Generated */                                             MAType        optInMAType,
+/* Generated */                                             double       inPeriods[],
 /* Generated */                                             int           optInMinPeriod, /* From 2 to 100000 */
 /* Generated */                                             int           optInMaxPeriod, /* From 2 to 100000 */
+/* Generated */                                             MAType        optInMAType,
 /* Generated */                                             MInteger     outBegIdx,
 /* Generated */                                             MInteger     outNbElement,
 /* Generated */                                             double        outReal[] )
@@ -171,10 +166,10 @@
 /* Generated */ TA_RetCode TA_MAVP( int    startIdx,
 /* Generated */                     int    endIdx,
 /* Generated */                     const double inReal[],
-/* Generated */                     const int    inInteger[],
-/* Generated */                     TA_MAType     optInMAType,
+/* Generated */                     const double inPeriods[],
 /* Generated */                     int           optInMinPeriod, /* From 2 to 100000 */
 /* Generated */                     int           optInMaxPeriod, /* From 2 to 100000 */
+/* Generated */                     TA_MAType     optInMAType,
 /* Generated */                     int          *outBegIdx,
 /* Generated */                     int          *outNbElement,
 /* Generated */                     double        outReal[] )
@@ -182,6 +177,12 @@
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
    /* insert local variable here */
+   int i, j, lookbackTotal, outputSize, tempInt, curPeriod;
+   ARRAY_INT_REF(localPeriodArray);
+   ARRAY_REF(localOutputArray);
+   VALUE_HANDLE_INT(localBegIdx);
+   VALUE_HANDLE_INT(localNbElement);
+   ENUM_DECLARATION(RetCode) retCode;
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -195,14 +196,7 @@
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */    if( !inInteger ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
-/* Generated */       optInMAType = 0;
-/* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
-/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */ 
+/* Generated */    if( !inPeriods ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInMinPeriod. */
 /* Generated */    if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
@@ -217,6 +211,13 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
+/* Generated */       optInMAType = 0;
+/* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
+/* Generated */ 
+/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
@@ -227,10 +228,106 @@
 
    /* Insert TA function code here. */
 
-   /* Default return values */
-   VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-   VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+   /* Identify the minimum number of price bar needed
+    * to calculate at least one output.
+    */
+   lookbackTotal = LOOKBACK_CALL(MA)(optInMaxPeriod,optInMAType);
 
+   /* Move up the start index if there is not
+    * enough initial data.
+    */
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
+
+   /* Make sure there is still something to evaluate. */
+   if( startIdx > endIdx )
+   {
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+   }
+
+   /* Calculate exact output size */      
+   if( lookbackTotal > startIdx )
+      tempInt = lookbackTotal;
+   else
+	  tempInt = startIdx;
+   if( tempInt > endIdx )
+   {
+	  /* No output */
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);      
+   }   
+   outputSize = endIdx - tempInt + 1;
+
+   /* Allocate intermediate local buffer. */
+   ARRAY_ALLOC(localOutputArray,outputSize);
+   ARRAY_INT_ALLOC(localPeriodArray,outputSize);
+
+   /* Copy caller array of period into local buffer.
+    * At the same time, truncate to min/max.
+	*/
+   for( i=0; i < outputSize; i++ )
+   {
+      tempInt = (int)(inPeriods[startIdx+i]);
+	  if( tempInt < optInMinPeriod )
+		  tempInt = optInMinPeriod;
+	  else if( tempInt > optInMaxPeriod )
+          tempInt = optInMaxPeriod;
+      localPeriodArray[i] = tempInt;
+   }
+
+   /* Process each element of the input. 
+    * For each possible period value, the MA is calculated 
+	* only once.
+	* The outReal is then fill up for all element with
+	* the same period.
+	* A local flag (value 0) is set in localPeriodArray
+	* to avoid doing a second time the same calculation.
+	*/   
+   for( i=0; i < outputSize; i++ )
+   {
+	   curPeriod = localPeriodArray[i];
+	   if( curPeriod != 0 )
+	   {
+           /* TODO: This portion of the function can be slightly speed 
+            *       optimized by making the function without unstable period 
+	        *       start their calculation at 'startIdx+i' instead of startIdx.			
+	        */
+
+		   /* Calculation of the MA required. */
+		   retCode = FUNCTION_CALL(MA)( startIdx, endIdx, inReal,
+			                            curPeriod, optInMAType,
+									    VALUE_HANDLE_OUT(localBegIdx),VALUE_HANDLE_OUT(localNbElement),localOutputArray );
+
+           if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
+		   {
+              ARRAY_FREE(localOutputArray);
+			  ARRAY_INT_FREE(localPeriodArray);
+              VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+              VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+              return retCode;
+	       }
+		   
+		   outReal[i] = localOutputArray[i];
+		   for( j=i+1; j < outputSize; j++ )
+		   {
+			   if( localPeriodArray[j] == curPeriod )
+			   {
+				   localPeriodArray[j] = 0; /* Flag to avoid recalculation */
+				   outReal[j] = localOutputArray[j];
+			   }
+		   }		   
+	   }
+   }
+
+   ARRAY_FREE(localOutputArray);
+   ARRAY_INT_FREE(localPeriodArray);
+
+   /* Done. Inform the caller of the success. */
+   VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
+   VALUE_HANDLE_DEREF(outNbElement) = outputSize;
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
@@ -247,10 +344,10 @@
 /* Generated */ enum class Core::RetCode Core::MovingAverageVariablePeriod( int    startIdx,
 /* Generated */                                                             int    endIdx,
 /* Generated */                                                             cli::array<float>^ inReal,
-/* Generated */                                                             cli::array<int>^ inInteger,
-/* Generated */                                                             MAType        optInMAType,
+/* Generated */                                                             cli::array<float>^ inPeriods,
 /* Generated */                                                             int           optInMinPeriod, /* From 2 to 100000 */
 /* Generated */                                                             int           optInMaxPeriod, /* From 2 to 100000 */
+/* Generated */                                                             MAType        optInMAType,
 /* Generated */                                                             [Out]int%    outBegIdx,
 /* Generated */                                                             [Out]int%    outNbElement,
 /* Generated */                                                             cli::array<double>^  outReal )
@@ -258,10 +355,10 @@
 /* Generated */ public RetCode movingAverageVariablePeriod( int    startIdx,
 /* Generated */                                             int    endIdx,
 /* Generated */                                             float        inReal[],
-/* Generated */                                             int          inInteger[],
-/* Generated */                                             MAType        optInMAType,
+/* Generated */                                             float        inPeriods[],
 /* Generated */                                             int           optInMinPeriod, /* From 2 to 100000 */
 /* Generated */                                             int           optInMaxPeriod, /* From 2 to 100000 */
+/* Generated */                                             MAType        optInMAType,
 /* Generated */                                             MInteger     outBegIdx,
 /* Generated */                                             MInteger     outNbElement,
 /* Generated */                                             double        outReal[] )
@@ -269,15 +366,21 @@
 /* Generated */ TA_RetCode TA_S_MAVP( int    startIdx,
 /* Generated */                       int    endIdx,
 /* Generated */                       const float  inReal[],
-/* Generated */                       const int    inInteger[],
-/* Generated */                       TA_MAType     optInMAType,
+/* Generated */                       const float  inPeriods[],
 /* Generated */                       int           optInMinPeriod, /* From 2 to 100000 */
 /* Generated */                       int           optInMaxPeriod, /* From 2 to 100000 */
+/* Generated */                       TA_MAType     optInMAType,
 /* Generated */                       int          *outBegIdx,
 /* Generated */                       int          *outNbElement,
 /* Generated */                       double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
+/* Generated */    int i, j, lookbackTotal, outputSize, tempInt, curPeriod;
+/* Generated */    ARRAY_INT_REF(localPeriodArray);
+/* Generated */    ARRAY_REF(localOutputArray);
+/* Generated */    VALUE_HANDLE_INT(localBegIdx);
+/* Generated */    VALUE_HANDLE_INT(localNbElement);
+/* Generated */    ENUM_DECLARATION(RetCode) retCode;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -285,13 +388,7 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */     if( !inInteger ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */     #endif 
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
-/* Generated */     if( (int)optInMAType == TA_INTEGER_DEFAULT )
-/* Generated */        optInMAType = 0;
-/* Generated */     else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
-/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
+/* Generated */     if( !inPeriods ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInMinPeriod = 2;
@@ -302,12 +399,78 @@
 /* Generated */     else if( ((int)optInMaxPeriod < 2) || ((int)optInMaxPeriod > 100000) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     if( (int)optInMAType == TA_INTEGER_DEFAULT )
+/* Generated */        optInMAType = 0;
+/* Generated */     else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
+/* Generated */     #endif 
+/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */    lookbackTotal = LOOKBACK_CALL(MA)(optInMaxPeriod,optInMAType);
+/* Generated */    if( startIdx < lookbackTotal )
+/* Generated */       startIdx = lookbackTotal;
+/* Generated */    if( startIdx > endIdx )
+/* Generated */    {
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+/* Generated */    }
+/* Generated */    if( lookbackTotal > startIdx )
+/* Generated */       tempInt = lookbackTotal;
+/* Generated */    else
+/* Generated */ 	  tempInt = startIdx;
+/* Generated */    if( tempInt > endIdx )
+/* Generated */    {
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);      
+/* Generated */    }   
+/* Generated */    outputSize = endIdx - tempInt + 1;
+/* Generated */    ARRAY_ALLOC(localOutputArray,outputSize);
+/* Generated */    ARRAY_INT_ALLOC(localPeriodArray,outputSize);
+/* Generated */    for( i=0; i < outputSize; i++ )
+/* Generated */    {
+/* Generated */       tempInt = (int)(inPeriods[startIdx+i]);
+/* Generated */ 	  if( tempInt < optInMinPeriod )
+/* Generated */ 		  tempInt = optInMinPeriod;
+/* Generated */ 	  else if( tempInt > optInMaxPeriod )
+/* Generated */           tempInt = optInMaxPeriod;
+/* Generated */       localPeriodArray[i] = tempInt;
+/* Generated */    }
+/* Generated */    for( i=0; i < outputSize; i++ )
+/* Generated */    {
+/* Generated */ 	   curPeriod = localPeriodArray[i];
+/* Generated */ 	   if( curPeriod != 0 )
+/* Generated */ 	   {
+/* Generated */ 		   retCode = FUNCTION_CALL(MA)( startIdx, endIdx, inReal,
+/* Generated */ 			                            curPeriod, optInMAType,
+/* Generated */ 									    VALUE_HANDLE_OUT(localBegIdx),VALUE_HANDLE_OUT(localNbElement),localOutputArray );
+/* Generated */            if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
+/* Generated */ 		   {
+/* Generated */               ARRAY_FREE(localOutputArray);
+/* Generated */ 			  ARRAY_INT_FREE(localPeriodArray);
+/* Generated */               VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */               VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */               return retCode;
+/* Generated */ 	       }
+/* Generated */ 		   outReal[i] = localOutputArray[i];
+/* Generated */ 		   for( j=i+1; j < outputSize; j++ )
+/* Generated */ 		   {
+/* Generated */ 			   if( localPeriodArray[j] == curPeriod )
+/* Generated */ 			   {
+/* Generated */ 				   localPeriodArray[j] = 0; 
+/* Generated */ 				   outReal[j] = localOutputArray[j];
+/* Generated */ 			   }
+/* Generated */ 		   }		   
+/* Generated */ 	   }
+/* Generated */    }
+/* Generated */    ARRAY_FREE(localOutputArray);
+/* Generated */    ARRAY_INT_FREE(localPeriodArray);
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outputSize;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 

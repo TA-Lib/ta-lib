@@ -203,6 +203,7 @@ static int testTAFunction_ALL( void )
       printf( "done.\n" ); \
       fflush(stdout); \
       }
+   DO_TEST( test_func_ma,       "All Moving Averages" );
    DO_TEST( test_func_per_hl,   "AROON,CORREL,BETA" );
    DO_TEST( test_func_per_hlc,  "CCI,WILLR,ULTOSC,NATR" );
    DO_TEST( test_func_per_ohlc, "BOP,AVGPRICE" );
@@ -221,7 +222,6 @@ static int testTAFunction_ALL( void )
    DO_TEST( test_func_trange,   "TRANGE,ATR" );
    DO_TEST( test_func_stddev,   "STDDEV,VAR" );
    DO_TEST( test_func_bbands,   "BBANDS" );
-   DO_TEST( test_func_ma,       "All Moving Averages" );
    DO_TEST( test_candlestick,   "All Candlesticks" );
 
    return TA_TEST_PASS; /* All test succeed. */
