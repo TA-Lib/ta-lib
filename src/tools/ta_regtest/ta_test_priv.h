@@ -63,6 +63,9 @@ void clearAllBuffers( void );
 /* Initialize the 'gBuffer[i].in' with the provided data. */
 void setInputBuffer( unsigned int i, const TA_Real *data, unsigned int nbElement );
 
+/* Same as setInputBuffer but fill with a single value. */
+void setInputBufferValue( unsigned int i, const TA_Real data, unsigned int nbElement );
+
 /* Check that a buffer (within a TestBuffer) is not containing
  * NAN within the specified range (it also checks that all value
  * outside the range are untouched).
