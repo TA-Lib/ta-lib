@@ -39,7 +39,8 @@
  *  ST       Steve Thames  (steve@softlife.com)
  *  AC       Angelo Ciceri
  *  RM       Robert Meier  (talib@meierlim.com)
- *  CM		 Craig Miller  (c-miller@users.sourceforge.net)
+ *  CM       Craig Miller  (c-miller@users.sourceforge.net)
+ *  RG       Richard Gomes
  *
  * Change history:
  *
@@ -66,6 +67,7 @@
  *  122406 MF    Add generation of Makefile.am
  *  011707 CM    Add ta_pragma.h handles VC8 warnings, type conversion of strlen handles VC warning
  *  021807 MF    Add generation of VS2005 project file
+ *  040107 MF,RG Add generation of CoreAnnotated.java
  */
 
 /* Description:
@@ -84,7 +86,7 @@
  *       directory. You must run "gen_code" from ta-lib/c/bin.
  *       
  */
-#include "ta_pragma.h"		//this must be the first inclusion
+#include "ta_pragma.h"		/* this must be the first inclusion */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -150,12 +152,13 @@ FileHandle *gOutMakefile_AM;   /* For "Makefile.am" */
 
 #ifdef _MSC_VER
 /* The following files are generated only on Windows platform. */
-FileHandle *gOutCore_Java;     /* For Core.Java */
-FileHandle *gOutProjFile;      /* For .NET project file */
-FileHandle *gOutMSVCProjFile;  /* For MSVC project file */
+FileHandle *gOutCore_Java;       /* For Core.Java */
+FileHandle *gOutProjFile;        /* For .NET project file */
+FileHandle *gOutMSVCProjFile;    /* For MSVC project file */
 FileHandle *gOutVS2005ProjFile;  /* For VS2005 project file */
-FileHandle *gOutExcelGlue_C;   /* For "excel_glue.c" */
-FileHandle *gOutJavaDefs_H;    /* For "java_defs.h" */
+FileHandle *gOutExcelGlue_C;     /* For "excel_glue.c" */
+FileHandle *gOutJavaDefs_H;      /* For "java_defs.h" */
+FileHandle *gOutFunc_Annotation; /* For "CoreAnnotated.java" */
 
 /* Why these file are not generated from a unix platform?
  *
@@ -170,6 +173,9 @@ FileHandle *gOutJavaDefs_H;    /* For "java_defs.h" */
 static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
 static void genJavaCodePhase1( const TA_FuncInfo *funcInfo );
 static void genJavaCodePhase2( const TA_FuncInfo *funcInfo );
+
+/* To generate CoreAnnotated.java */
+static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo);
 #endif
 
 
@@ -390,8 +396,9 @@ int main(int argc, char* argv[])
          printf( "    11) ta-lib/c/src/ta_abstract/java_defs.h (Win32 only)\n" );
          printf( "    12) ta-lib/c/ide/msvc/lib_proj/ta_func/ta_func.dsp (Win32 only)\n" );
          printf( "    13) ta-lib/java/src/com/tictactec/ta/lib/Core.java (Win32 only)\n" );
-         printf( "    14) ta-lib/ta_func_api.xml\n" );
-         printf( "    15) ta-lib/c/src/ta_abstract/ta_func_api.c\n" );
+         printf( "    14) ta-lib/java/src/com/tictactec/ta/lib/CoreAnnotated.java (Win32 only)\n" );
+         printf( "    15) ta-lib/ta_func_api.xml\n" );
+         printf( "    16) ta-lib/c/src/ta_abstract/ta_func_api.c\n" );
          printf( "\n" );
          printf( "  The function header, parameters and validation code of all TA\n" );
          printf( "  function in c/src/ta_func are also updated.\n" );
@@ -917,6 +924,16 @@ static int genCode(int argc, char* argv[])
          return -1;
       }
 
+      /* Create "CoreAnnotated.java" */
+      gOutFunc_Annotation = fileOpen( "..\\..\\java\\src\\com\\tictactec\\ta\\lib\\CoreAnnotated.java",
+                                      "..\\src\\ta_abstract\\templates\\CoreAnnotated.java.template", 
+                                      FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+
+      if(gOutFunc_Annotation == NULL)
+      {
+	      printf( "\nCannot access CoreAnnotated.java" );
+      }
+
    #endif
 
    #ifdef _MSC_VER
@@ -964,7 +981,6 @@ static int genCode(int argc, char* argv[])
    fileClose( gOutFunc_XML );
    fileClose( gOutMakefile_AM );
 
-
    #ifdef _MSC_VER
       fileClose( gOutCore_Java );
       fileClose( gOutProjFile );
@@ -972,6 +988,7 @@ static int genCode(int argc, char* argv[])
       fileClose( gOutVS2005ProjFile );
       fileClose( gOutExcelGlue_C );
       fileClose( gOutJavaDefs_H );
+      fileClose( gOutFunc_Annotation );
       fileDelete( FILE_CORE_JAVA_TMP );
    #endif
 
@@ -1022,7 +1039,7 @@ static int genCode(int argc, char* argv[])
    /* Convert the xml description file into a format embedded in the library. */
    if( generateFuncAPI_C() != 1 )
    {
-      return -1; // Failed.
+      return -1; /*  Failed. */
    }
 
 
@@ -1117,7 +1134,7 @@ static unsigned int forEachGroup( TA_ForEachGroup forEachGroupFunc,
    return i;
 }
 
-//Replaces reserved xml characters with the appropriate escape sequence.
+/* Replaces reserved xml characters with the appropriate escape sequence. */
 static void ReplaceReservedXmlCharacters(const char *input, char *output )
 {
 	char *currentPosition;
@@ -1130,11 +1147,12 @@ static void ReplaceReservedXmlCharacters(const char *input, char *output )
 
 	strcpy(output, input);
 
-	//Replace '&' with "&amp;"
-	//Note1: '&' has to be processed first as otherwise we replace the
-	//       '&' in the escaped characters.
-	//Note2: We assume that the input string does not have any escaped
-	//       characters already.
+	/*Replace '&' with "&amp;"
+	 *Note1: '&' has to be processed first as otherwise we replace the
+	 *       '&' in the escaped characters.
+	 *Note2: We assume that the input string does not have any escaped
+	 *       characters already.
+     */
 	currentPosition = output;
 	while((currentPosition = strchr(currentPosition, '&')) != NULL)
 	{
@@ -1146,7 +1164,7 @@ static void ReplaceReservedXmlCharacters(const char *input, char *output )
 		sprintf(currentPosition, "&amp;%s", tempString);
 	}
 
-	//Replace '<' with "&lt;"
+	/* Replace '<' with "&lt;" */
 	currentPosition = output;
 	while((currentPosition = strchr(currentPosition, '<')) != NULL)
 	{
@@ -1158,7 +1176,7 @@ static void ReplaceReservedXmlCharacters(const char *input, char *output )
 		sprintf(currentPosition, "&lt;%s", tempString);
 	}
 
-	//Replace '>' with "&gt;"
+	/* Replace '>' with "&gt;" */
 	currentPosition = output;
 	while((currentPosition = strchr(currentPosition, '>')) != NULL)
 	{
@@ -1170,7 +1188,7 @@ static void ReplaceReservedXmlCharacters(const char *input, char *output )
 		sprintf(currentPosition, "&gt;%s", tempString);
 	}
 
-	//Replace ''' with "&apos;"
+    /* Replace ''' with "&apos;" */
 	currentPosition = output;
 	while((currentPosition = strchr(currentPosition, '\'')) != NULL)
 	{
@@ -1182,7 +1200,7 @@ static void ReplaceReservedXmlCharacters(const char *input, char *output )
 		sprintf(currentPosition, "&apos;%s", tempString);
 	}
 
-	//Replace '"' with "&quot;"
+	/* Replace '"' with "&quot;" */
 	currentPosition = output;
 	while((currentPosition = strchr(currentPosition, '"')) != NULL)
 	{
@@ -1205,7 +1223,7 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 	char tempString[8*1024];
 	unsigned int i;
 
-	//General stuff about function
+	/* General stuff about function */
 	fprintf(gOutFunc_XML->file, "	<!-- %s -->\n", funcInfo->name);
 	fprintf(gOutFunc_XML->file, "	<FinancialFunction>\n");
     fprintf(gOutFunc_XML->file, "		<Abbreviation>%s</Abbreviation>\n", (funcInfo->name == NULL)? "" : funcInfo->name);
@@ -1214,7 +1232,7 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
     fprintf(gOutFunc_XML->file, "		<ShortDescription>%s</ShortDescription>\n", (funcInfo->hint == NULL)? "" : tempString);
     fprintf(gOutFunc_XML->file, "		<GroupId>%s</GroupId>\n", funcInfo->group);
 
-	//Optional function flags
+	/* Optional function flags */
 	if(funcInfo->flags & (TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_VOLUME | TA_FUNC_FLG_CANDLESTICK | TA_FUNC_FLG_UNST_PER))
 	{
 	    fprintf(gOutFunc_XML->file, "		<Flags>\n");
@@ -1239,7 +1257,7 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 	}
 
 
-	//Required input arguments
+	/* Required input arguments */
     fprintf(gOutFunc_XML->file, "		<RequiredInputArguments>\n");
 	for(i=0; i<funcInfo->nbInput; i++)
 	{
@@ -1317,7 +1335,7 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 	}
     fprintf(gOutFunc_XML->file, "		</RequiredInputArguments>\n");
 
-	//Optional input arguments
+	/* Optional input arguments */
 	if(funcInfo->nbOptInput > 0)
 	{
 
@@ -1407,7 +1425,7 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 		fprintf(gOutFunc_XML->file, "		</OptionalInputArguments>\n");
 	}
 
-	//Output arguments
+	/* Output arguments */
 	fprintf(gOutFunc_XML->file, "		<OutputArguments>\n");
 	for(i=0; i<funcInfo->nbOutput; i++)
 	{
@@ -1592,6 +1610,9 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
 
       /* Generate the excel glue code */
       printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
+
+      /* Generate CoreAnnotated */
+      printJavaFunctionAnnotation( funcInfo );
    #endif
 
    /* Generate the functions declaration for the .NET interface. */
@@ -4152,4 +4173,361 @@ static void convertFileToCArray( FILE *in, FILE *out )
        c = getc(in);
    }
  
+}
+
+static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
+{
+	TA_RetCode retCode;
+	TA_InputParameterInfo *inputInfo;
+	TA_OptInputParameterInfo *optInputInfo;
+	TA_OutputParameterInfo *outputInfo;
+    TA_RealRange *doubleRange;
+    TA_IntegerRange *integerRange;
+    TA_IntegerList *intList;
+	unsigned int i, j;
+    #define FUNCNAME_SIZE 100
+	char funcName[FUNCNAME_SIZE];
+	   
+    memset(funcName, 0, FUNCNAME_SIZE);
+    if( strlen(funcInfo->name) > (FUNCNAME_SIZE-1) )
+    {
+        printf( "\n*** Error buffer size exceeded (printJavaFunctionAnnotation)\n" );
+        strcpy( funcName, "1A2"); /* Substitute name. Will cause Java compilation to fail */
+    }
+    else
+    {	   
+	   if (funcInfo->camelCaseName==NULL) {
+	      strcpy(funcName, funcInfo->name);
+		  for (i=0; funcName[i]; i++) {
+			funcName[i] = tolower(funcName[i]);
+		  }
+	   } else {
+	     strcpy(funcName, funcInfo->camelCaseName);
+         funcName[0] = tolower(funcName[0]);
+	   }
+    }
+
+
+	/*
+	 * Generate Lookback method
+	 */
+    fprintf(gOutFunc_Annotation->file, "public int %sLookback(\n", funcName);
+	for(i=0; i<funcInfo->nbOptInput; i++)
+	{
+		retCode = TA_GetOptInputParameterInfo( funcInfo->handle, i, (void*)&optInputInfo );
+		if(optInputInfo->type == TA_OptInput_RealRange)
+		{
+			fprintf(gOutFunc_Annotation->file, "        double %s", optInputInfo->paramName);
+		}
+		else if(optInputInfo->type == TA_OptInput_IntegerRange)
+		{
+			fprintf(gOutFunc_Annotation->file, "        int %s", optInputInfo->paramName);
+		}
+		else if(optInputInfo->type == TA_OptInput_IntegerList)
+		{
+			fprintf(gOutFunc_Annotation->file, "        MAType %s", optInputInfo->paramName);
+		}
+		else
+		{
+			printf( "Unexpected error 1 (doForEachFunctionAnnotation)\n");
+		}
+		if (i<funcInfo->nbOptInput-1) fprintf(gOutFunc_Annotation->file, ",\n");
+	}
+    fprintf(gOutFunc_Annotation->file, ") {\n");
+    fprintf(gOutFunc_Annotation->file, "    return super.%sLookback(\n", funcName);
+	for(i=0; i<funcInfo->nbOptInput; i++)
+	{
+		retCode = TA_GetOptInputParameterInfo( funcInfo->handle, i, (void*)&optInputInfo );
+		fprintf(gOutFunc_Annotation->file, "        %s", optInputInfo->paramName);
+		if (i<funcInfo->nbOptInput-1) fprintf(gOutFunc_Annotation->file, ",\n");
+	}    
+    fprintf(gOutFunc_Annotation->file, "); }\n\n");
+
+	/*
+	 * Annotate Function
+	 */
+    fprintf(gOutFunc_Annotation->file, "@FuncInfo(\n");
+    fprintf(gOutFunc_Annotation->file, "        name  = \"%s\",\n", funcInfo->name);
+    fprintf(gOutFunc_Annotation->file, "        group = \"%s\",\n", funcInfo->group);
+    fprintf(gOutFunc_Annotation->file, "        flags = %d,\n", funcInfo->flags); /* TODO: should be like: FuncFlags.TA_FUNC_FLG_OVERLAP | FuncFlags.TA_FUNC_FLG_UNST_PER */
+    /*fprintf(gOutFunc_Annotation->file, "        hint     = \"%s\",\n", funcInfo->hint);*/
+    /*fprintf(gOutFunc_Annotation->file, "        helpFile = \"%s\",\n", funcInfo->helpFile);*/
+    fprintf(gOutFunc_Annotation->file, "        nbInput    = %d,\n", funcInfo->nbInput);
+    fprintf(gOutFunc_Annotation->file, "        nbOptInput = %d,\n", funcInfo->nbOptInput);
+    fprintf(gOutFunc_Annotation->file, "        nbOutput   = %d\n", funcInfo->nbOutput);
+    fprintf(gOutFunc_Annotation->file, ")\n");
+    fprintf(gOutFunc_Annotation->file, "public RetCode %s(\n", funcName);
+    
+    fprintf(gOutFunc_Annotation->file, "            int startIdx,\n");
+	fprintf(gOutFunc_Annotation->file, "            int endIdx,\n");
+    
+
+	/*
+	 * Anotate Input parameters
+	 */
+	for(i=0; i<funcInfo->nbInput; i++)
+	{
+		char idx = ' ';
+		/*if (funcInfo->nbInput>1) idx='0'+i;*/ /* TODO: compile Java code and see if it is necessary to distinguish parameters*/
+
+		retCode = TA_GetInputParameterInfo( funcInfo->handle, i, (void*)&inputInfo);
+		if(inputInfo->type == TA_Input_Price)
+		{
+			fprintf(gOutFunc_Annotation->file, "            @InputParameterInfo(\n");
+	        fprintf(gOutFunc_Annotation->file, "                paramName = \"%s\",\n", inputInfo->paramName);
+	        fprintf(gOutFunc_Annotation->file, "                flags     = %d,\n", inputInfo->flags);
+		    /*fprintf(gOutFunc_Annotation->file, "                hint     = \"%s\",\n", inputInfo->hint);*/
+		    /*fprintf(gOutFunc_Annotation->file, "                helpFile = \"%s\",\n", inputInfo->helpFile);*/
+	        fprintf(gOutFunc_Annotation->file, "                type = InputParameterType.TA_Input_Price\n");
+	        fprintf(gOutFunc_Annotation->file, "            )\n");
+
+			if(inputInfo->flags & TA_IN_PRICE_OPEN)
+			{
+				fprintf(gOutFunc_Annotation->file, "            double inOpen%c[],\n",idx);
+			}
+			if(inputInfo->flags & TA_IN_PRICE_HIGH)
+			{
+				fprintf(gOutFunc_Annotation->file, "            double inHigh%c[],\n",idx);
+			}
+			if(inputInfo->flags & TA_IN_PRICE_LOW)
+			{
+				fprintf(gOutFunc_Annotation->file, "            double inLow%c[],\n",idx);
+			}
+			if(inputInfo->flags & TA_IN_PRICE_CLOSE)
+			{
+				fprintf(gOutFunc_Annotation->file, "            double inClose%c[],\n",idx);
+			}
+			if(inputInfo->flags & TA_IN_PRICE_VOLUME)
+			{
+				fprintf(gOutFunc_Annotation->file, "            double inVolume%c[],\n",idx);
+			}
+			if(inputInfo->flags & TA_IN_PRICE_OPENINTEREST)
+			{
+				fprintf(gOutFunc_Annotation->file, "            double inOpenInterest%c[],\n",idx); /* FIXME: does it exist? */
+			}
+			if(inputInfo->flags & TA_IN_PRICE_TIMESTAMP)
+			{
+				fprintf(gOutFunc_Annotation->file, "            long inTimestamp%c[],\n",idx); /* FIXME: does it exist? */
+			}
+		}
+		else
+		{
+			if(inputInfo->type == TA_Input_Real)
+			{
+				fprintf(gOutFunc_Annotation->file, "            @InputParameterInfo(\n");
+		        fprintf(gOutFunc_Annotation->file, "                paramName = \"%s\",\n", inputInfo->paramName);
+		        fprintf(gOutFunc_Annotation->file, "                flags     = %d,\n", inputInfo->flags);
+		        fprintf(gOutFunc_Annotation->file, "                type = InputParameterType.TA_Input_Real\n");
+		        fprintf(gOutFunc_Annotation->file, "            )\n");
+				fprintf(gOutFunc_Annotation->file, "            double %s[],\n", inputInfo->paramName);
+			}
+			else if(inputInfo->type == TA_Input_Integer)
+			{
+				fprintf(gOutFunc_Annotation->file, "            @InputParameterInfo(\n");
+		        fprintf(gOutFunc_Annotation->file, "                paramName = \"%s\",\n", inputInfo->paramName);
+		        fprintf(gOutFunc_Annotation->file, "                flags     = %d,\n", inputInfo->flags);
+		        fprintf(gOutFunc_Annotation->file, "                type = InputParameterType.TA_Input_Integer\n");
+		        fprintf(gOutFunc_Annotation->file, "            )\n");
+				fprintf(gOutFunc_Annotation->file, "            int %s[],\n", inputInfo->paramName);
+			}
+			else
+			{
+			    printf( "Unexpected error 2(doForEachFunctionAnnotation)\n"); /*  FIXME: fatal error! */
+			}
+		}
+	}
+
+
+
+	/*
+	 * Annotate Optional input parameters
+	 */
+	for(i=0; i<funcInfo->nbOptInput; i++)
+	{
+		retCode = TA_GetOptInputParameterInfo( funcInfo->handle, i, (void*)&optInputInfo );
+		fprintf(gOutFunc_Annotation->file, "            @OptInputParameterInfo(\n");
+        fprintf(gOutFunc_Annotation->file, "                paramName    = \"%s\",\n", optInputInfo->paramName);
+		fprintf(gOutFunc_Annotation->file, "                displayName  = \"%s\",\n", optInputInfo->displayName);
+        fprintf(gOutFunc_Annotation->file, "                flags        = %d,\n", optInputInfo->flags);
+	    /*fprintf(gOutFunc_Annotation->file, "                hint     = \"%s\",\n", optInputInfo->hint);*/
+	    /*fprintf(gOutFunc_Annotation->file, "                helpFile = \"%s\",\n", optInputInfo->helpFile);*/
+		if(optInputInfo->type == TA_OptInput_RealRange)
+		{
+	        fprintf(gOutFunc_Annotation->file, "                type    = OptInputParameterType.TA_OptInput_RealRange,\n");
+	        fprintf(gOutFunc_Annotation->file, "                dataSet = com.tictactec.ta.lib.meta.annotation.RealRange.class\n");
+	        fprintf(gOutFunc_Annotation->file, "            )\n");			
+			doubleRange= (TA_RealRange*)optInputInfo->dataSet;
+			fprintf(gOutFunc_Annotation->file, "            @RealRange(\n");
+        	fprintf(gOutFunc_Annotation->file, "                    paramName    = \"%s\",\n", optInputInfo->paramName);
+		    fprintf(gOutFunc_Annotation->file, "                    defaultValue = %.5f,\n", (double)optInputInfo->defaultValue);
+			fprintf(gOutFunc_Annotation->file, "                    min          = %.5f,\n", doubleRange->min);
+			fprintf(gOutFunc_Annotation->file, "                    max          = %.5f,\n", doubleRange->max);
+			fprintf(gOutFunc_Annotation->file, "                    precision    = %d,\n", doubleRange->precision);
+			fprintf(gOutFunc_Annotation->file, "                    suggested_start     = %.5f,\n", doubleRange->suggested_start);
+			fprintf(gOutFunc_Annotation->file, "                    suggested_end       = %.5f,\n", doubleRange->suggested_end);
+			fprintf(gOutFunc_Annotation->file, "                    suggested_increment = %.5f\n",  doubleRange->suggested_increment);
+			fprintf(gOutFunc_Annotation->file, "            )\n");
+			fprintf(gOutFunc_Annotation->file, "            double %s,\n", optInputInfo->paramName);
+		}
+		else if(optInputInfo->type == TA_OptInput_IntegerRange)
+		{
+	        fprintf(gOutFunc_Annotation->file, "                type    = OptInputParameterType.TA_OptInput_IntegerRange,\n");
+	        fprintf(gOutFunc_Annotation->file, "                dataSet = com.tictactec.ta.lib.meta.annotation.IntegerRange.class\n");
+	        fprintf(gOutFunc_Annotation->file, "            )\n");			
+			integerRange= (TA_IntegerRange*)optInputInfo->dataSet;
+			fprintf(gOutFunc_Annotation->file, "            @IntegerRange(\n");
+        	fprintf(gOutFunc_Annotation->file, "                    paramName    = \"%s\",\n", optInputInfo->paramName);
+		    fprintf(gOutFunc_Annotation->file, "                    defaultValue = %d,\n", (int)optInputInfo->defaultValue);
+			fprintf(gOutFunc_Annotation->file, "                    min          = %d,\n", integerRange->min);
+			fprintf(gOutFunc_Annotation->file, "                    max          = %d,\n", integerRange->max);
+			fprintf(gOutFunc_Annotation->file, "                    suggested_start     = %d,\n", integerRange->suggested_start);
+			fprintf(gOutFunc_Annotation->file, "                    suggested_end       = %d,\n", integerRange->suggested_end);
+			fprintf(gOutFunc_Annotation->file, "                    suggested_increment = %d\n",  integerRange->suggested_increment);
+			fprintf(gOutFunc_Annotation->file, "            )\n");
+			fprintf(gOutFunc_Annotation->file, "            int %s,\n", optInputInfo->paramName);
+		}
+		else if(optInputInfo->type == TA_OptInput_IntegerList)
+		{
+	        fprintf(gOutFunc_Annotation->file, "                type    = OptInputParameterType.TA_OptInput_IntegerList,\n");
+	        fprintf(gOutFunc_Annotation->file, "                dataSet = com.tictactec.ta.lib.meta.annotation.IntegerList.class\n");
+	        fprintf(gOutFunc_Annotation->file, "            )\n");
+			intList = (TA_IntegerList*) optInputInfo->dataSet;
+			/*if( intList != (TA_IntegerList*) TA_DEF_UI_MA_Method.dataSet )
+			 *{
+			 *
+			 *}
+             */
+			fprintf(gOutFunc_Annotation->file, "            @IntegerList(\n");
+        	fprintf(gOutFunc_Annotation->file, "                    paramName    = \"%s\",\n", optInputInfo->paramName);
+		    fprintf(gOutFunc_Annotation->file, "                    defaultValue = %d,\n", (int)optInputInfo->defaultValue);
+
+			if (intList->nbElement>0) {
+				fprintf(gOutFunc_Annotation->file, "                    value  = { ");
+				for (j=0; j<intList->nbElement-1; j++) {
+					fprintf(gOutFunc_Annotation->file, "%d, ", intList->data[j].value);
+				}
+				fprintf(gOutFunc_Annotation->file, "%d },\n", intList->data[intList->nbElement-1].value);
+				fprintf(gOutFunc_Annotation->file, "                    string = { ");
+				for (j=0; j<intList->nbElement-1; j++) {
+					fprintf(gOutFunc_Annotation->file, "\"%s\", ", intList->data[j].string);
+				}
+				fprintf(gOutFunc_Annotation->file, "\"%s\" }\n", intList->data[intList->nbElement-1].string);
+			}
+			
+			fprintf(gOutFunc_Annotation->file, "            )\n");
+			fprintf(gOutFunc_Annotation->file, "            MAType %s,\n", optInputInfo->paramName);
+		}
+		else
+		{
+           printf( "Unexpected error 2(doForEachFunctionAnnotation)\n"); /*  FIXME: fatal error! */
+		}
+	}
+
+	fprintf(gOutFunc_Annotation->file, "            MInteger     outBegIdx,\n");
+	fprintf(gOutFunc_Annotation->file, "            MInteger     outNbElement,\n");
+
+
+	/*
+	 * Annotate Output parameters
+	 */
+	for(i=0; i<funcInfo->nbOutput; i++)
+	{
+		retCode = TA_GetOutputParameterInfo( funcInfo->handle, i, (void*)&outputInfo );
+		if(outputInfo->type == TA_Output_Integer)
+		{
+			fprintf(gOutFunc_Annotation->file, "            @OutputParameterInfo(\n");
+	        fprintf(gOutFunc_Annotation->file, "                paramName = \"%s\",\n", outputInfo->paramName);
+	        fprintf(gOutFunc_Annotation->file, "                flags     = %d,\n", outputInfo->flags);
+		    /*fprintf(gOutFunc_Annotation->file, "                hint     = \"%s\",\n", outputInfo->hint);*/
+		    /*fprintf(gOutFunc_Annotation->file, "                helpFile = \"%s\",\n", outputInfo->helpFile);*/
+	        fprintf(gOutFunc_Annotation->file, "                type = OutputParameterType.TA_Output_Integer\n");
+	        fprintf(gOutFunc_Annotation->file, "            )\n");
+			fprintf(gOutFunc_Annotation->file, "            int %s[]\n", outputInfo->paramName);
+		}
+		else if(outputInfo->type == TA_Output_Real)
+		{
+			fprintf(gOutFunc_Annotation->file, "            @OutputParameterInfo(\n");
+	        fprintf(gOutFunc_Annotation->file, "                paramName = \"%s\",\n", outputInfo->paramName);
+	        fprintf(gOutFunc_Annotation->file, "                flags     = %d,\n", outputInfo->flags);
+	        fprintf(gOutFunc_Annotation->file, "                type = OutputParameterType.TA_Output_Real\n");
+	        fprintf(gOutFunc_Annotation->file, "            )\n");
+			fprintf(gOutFunc_Annotation->file, "            double %s[]", outputInfo->paramName);
+		}
+		else
+		{
+				printf( "Unexpected error 3(doForEachFunctionAnnotation)\n"); /*  FIXME: fatal error!*/
+		}
+
+		if (i<funcInfo->nbOutput-1) {
+			fprintf(gOutFunc_Annotation->file, ",");
+		}
+		fprintf(gOutFunc_Annotation->file, "\n");
+
+	}
+
+    fprintf(gOutFunc_Annotation->file, ") {\n");
+    fprintf(gOutFunc_Annotation->file, "    return super.%s (\n", funcName);
+
+	fprintf(gOutFunc_Annotation->file, "        startIdx,\n");
+	fprintf(gOutFunc_Annotation->file, "        endIdx,\n");
+    
+	for(i=0; i<funcInfo->nbInput; i++)
+	{
+		retCode = TA_GetInputParameterInfo(funcInfo->handle, i, (void*)&inputInfo);
+		if(inputInfo->type == TA_Input_Price)
+		{
+			char idx = ' ';
+			/*if (funcInfo->nbInput>1) idx='0'+i;*/ /* TODO: compile Java code and see if it is necessary to distinguish parameters */
+		
+			if(inputInfo->flags & TA_IN_PRICE_OPEN)
+			{
+				fprintf(gOutFunc_Annotation->file, "        inOpen%c,\n", idx);
+			}
+			if(inputInfo->flags & TA_IN_PRICE_HIGH)
+			{
+				fprintf(gOutFunc_Annotation->file, "        inHigh%c,\n", idx);
+			}
+			if(inputInfo->flags & TA_IN_PRICE_LOW)
+			{
+				fprintf(gOutFunc_Annotation->file, "        inLow%c,\n", idx);
+			}
+			if(inputInfo->flags & TA_IN_PRICE_CLOSE)
+			{
+				fprintf(gOutFunc_Annotation->file, "        inClose%c,\n", idx);
+			}
+			if(inputInfo->flags & TA_IN_PRICE_VOLUME)
+			{
+				fprintf(gOutFunc_Annotation->file, "        inVolume%c,\n", idx);
+			}
+			if(inputInfo->flags & TA_IN_PRICE_OPENINTEREST)
+			{
+				fprintf(gOutFunc_Annotation->file, "        inOpenInterest%c,\n", idx); /*  FIXME: does it exist?*/
+			}
+			if(inputInfo->flags & TA_IN_PRICE_TIMESTAMP)
+			{
+				fprintf(gOutFunc_Annotation->file, "        inTimestamp%c,\n", idx); /* FIXME: does it exist? */
+			}
+		} else {
+			fprintf(gOutFunc_Annotation->file, "        %s,\n", inputInfo->paramName);
+		}
+	}
+	
+	for(i=0; i<funcInfo->nbOptInput; i++)
+	{
+		retCode = TA_GetOptInputParameterInfo(funcInfo->handle, i, (void*)&optInputInfo);
+        fprintf(gOutFunc_Annotation->file, "        %s,\n", optInputInfo->paramName);
+	}
+
+	fprintf(gOutFunc_Annotation->file, "        outBegIdx,\n");
+	fprintf(gOutFunc_Annotation->file, "        outNbElement,\n");
+
+	for(i=0; i<funcInfo->nbOutput-1; i++)
+	{
+		retCode = TA_GetOutputParameterInfo(funcInfo->handle, i, (void*)&outputInfo);
+        fprintf(gOutFunc_Annotation->file, "        %s,\n", outputInfo->paramName);
+	}
+	retCode = TA_GetOutputParameterInfo(funcInfo->handle, funcInfo->nbOutput-1, (void*)&outputInfo);
+    fprintf(gOutFunc_Annotation->file, "        %s\n", outputInfo->paramName);
+
+    fprintf(gOutFunc_Annotation->file, "); }\n\n\n");
 }
