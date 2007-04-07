@@ -4175,6 +4175,7 @@ static void convertFileToCArray( FILE *in, FILE *out )
  
 }
 
+#ifdef _MSC_VER
 static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
 {
 	TA_RetCode retCode;
@@ -4531,3 +4532,4 @@ static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
 
     fprintf(gOutFunc_Annotation->file, "); }\n\n\n");
 }
+#endif
