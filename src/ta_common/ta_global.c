@@ -47,21 +47,11 @@
  *  082004 AC   Add TA_SetCandleSettings, TA_RestoreCandleDefaultSettings
  *              and call to TA_RestoreCandleDefaultSettings in TA_Initialize
  *  041106 MF   Add prefix to theGlobals to avoid clash with other libs.
+ *  040707 MF   Change global initialization to eliminate Mac OS X link error.
  */
 
 /* Description:
  *   Provides initialization / shutdown functionality for all modules.
- *
- *   Since not all module are used/link in the application,
- *   the ta_common simply provides the mechanism for the module
- *   to optionnaly "register" its initialization/shutdown
- *   function.
- *
- *   This whole mechanism helps the initialization of "module globals"
- *   while actually not using true globals. The fact of not having "true"
- *   globals helps to make TA-LIB re-entrant.
- *
- *   This also allows to clearly define the shutdown sequence.
  */
 
 /**** Headers ****/
@@ -83,7 +73,7 @@
 /**** Global variables definitions.    ****/
 
 /* The entry point for all globals */
-TA_LibcPriv ta_theGlobals;
+TA_LibcPriv ta_theGlobals = {0};
 TA_LibcPriv *TA_Globals = &ta_theGlobals;
 
 /**** Local declarations.              ****/
@@ -108,9 +98,6 @@ TA_RetCode TA_Initialize( void )
 
    /* Set the default value to global variables */
    TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-
-   /* Seeds random generator */
-   srand( (unsigned)time( NULL ) );
 
    return TA_SUCCESS;
 }
