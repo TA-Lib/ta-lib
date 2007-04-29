@@ -56,7 +56,7 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
-/* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
+/* Generated */    namespace TicTacTec { namespace TA { namespace Library {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #include "ta_java_defs.h"
@@ -142,7 +142,7 @@
 /* Generated */                                          int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                          double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                                          [Out]int%    outBegIdx,
-/* Generated */                                          [Out]int%    outNbElement,
+/* Generated */                                          [Out]int%    outNBElement,
 /* Generated */                                          cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode variance( int    startIdx,
@@ -151,7 +151,7 @@
 /* Generated */                          int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                          double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                          MInteger     outBegIdx,
-/* Generated */                          MInteger     outNbElement,
+/* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_VAR( int    startIdx,
@@ -160,7 +160,7 @@
 /* Generated */                    int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                    double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                    int          *outBegIdx,
-/* Generated */                    int          *outNbElement,
+/* Generated */                    int          *outNBElement,
 /* Generated */                    double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -177,9 +177,9 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */    #endif /* !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 5;
@@ -191,11 +191,11 @@
 /* Generated */    else if( (optInNbDev < -3.000000e+37) ||/* Generated */  (optInNbDev > 3.000000e+37) )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
+/* Generated */    #endif /* !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -203,7 +203,7 @@
    /* Insert TA function code here. */
    return FUNCTION_CALL(INT_VAR)( startIdx, endIdx, inReal,
                                   optInTimePeriod, /* From 1 to TA_INTEGER_MAX */                      
-                                  outBegIdx, outNbElement, outReal );
+                                  outBegIdx, outNBElement, outReal );
 }
 
 
@@ -213,7 +213,7 @@ enum class Core::RetCode Core::TA_INT_VAR( int    startIdx,
 							               cli::array<INPUT_TYPE>^ inReal,
                                            int    optInTimePeriod,                       
                                            [Out]int% outBegIdx,
-                                           [Out]int% outNbElement,
+                                           [Out]int% outNBElement,
 										   cli::array<double>^ outReal )
 #elif defined( _JAVA )
 public RetCode TA_INT_VAR( int        startIdx,
@@ -221,7 +221,7 @@ public RetCode TA_INT_VAR( int        startIdx,
                            INPUT_TYPE inReal[],
                            int        optInTimePeriod, /* From 1 to TA_INTEGER_MAX */                       
                            MInteger   outBegIdx,
-                           MInteger   outNbElement,
+                           MInteger   outNBElement,
                            double     outReal[] )
 #else
 TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
@@ -229,7 +229,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
                                const INPUT_TYPE *inReal,
                                int    optInTimePeriod, /* From 1 to TA_INTEGER_MAX */                       
                                int   *outBegIdx,
-                               int   *outNbElement,
+                               int   *outNBElement,
                                double      *outReal )
 #endif
 {
@@ -252,7 +252,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
    if( startIdx > endIdx )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
@@ -306,7 +306,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
    } while( i <= endIdx );
 
    /* All done. Indicate the output limits and return. */
-   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+   VALUE_HANDLE_DEREF(outNBElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
@@ -328,7 +328,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */                                          int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                          double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                                          [Out]int%    outBegIdx,
-/* Generated */                                          [Out]int%    outNbElement,
+/* Generated */                                          [Out]int%    outNBElement,
 /* Generated */                                          cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode variance( int    startIdx,
@@ -337,7 +337,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */                          int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                          double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                          MInteger     outBegIdx,
-/* Generated */                          MInteger     outNbElement,
+/* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_VAR( int    startIdx,
@@ -346,7 +346,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */                      int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                      double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                      int          *outBegIdx,
-/* Generated */                      int          *outNbElement,
+/* Generated */                      int          *outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
@@ -355,7 +355,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -366,14 +366,14 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */        optInNbDev = 1.000000e+0;
 /* Generated */     else if( (optInNbDev < -3.000000e+37) ||  (optInNbDev > 3.000000e+37) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    return FUNCTION_CALL(INT_VAR)( startIdx, endIdx, inReal,
 /* Generated */                                   optInTimePeriod,                       
-/* Generated */                                   outBegIdx, outNbElement, outReal );
+/* Generated */                                   outBegIdx, outNBElement, outReal );
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::TA_INT_VAR( int    startIdx,
@@ -381,7 +381,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */ 							               cli::array<INPUT_TYPE>^ inReal,
 /* Generated */                                            int    optInTimePeriod,                       
 /* Generated */                                            [Out]int% outBegIdx,
-/* Generated */                                            [Out]int% outNbElement,
+/* Generated */                                            [Out]int% outNBElement,
 /* Generated */ 										   cli::array<double>^ outReal )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode TA_INT_VAR( int        startIdx,
@@ -389,7 +389,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */                            INPUT_TYPE inReal[],
 /* Generated */                            int        optInTimePeriod,                        
 /* Generated */                            MInteger   outBegIdx,
-/* Generated */                            MInteger   outNbElement,
+/* Generated */                            MInteger   outNBElement,
 /* Generated */                            double     outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
@@ -397,7 +397,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */                                const INPUT_TYPE *inReal,
 /* Generated */                                int    optInTimePeriod,                        
 /* Generated */                                int   *outBegIdx,
-/* Generated */                                int   *outNbElement,
+/* Generated */                                int   *outNBElement,
 /* Generated */                                double      *outReal )
 /* Generated */ #endif
 /* Generated */ {
@@ -409,7 +409,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    periodTotal1 = 0;
@@ -440,7 +440,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */       periodTotal2 -= tempReal;
 /* Generated */       outReal[outIdx++] = meanValue2-meanValue1*meanValue1;
 /* Generated */    } while( i <= endIdx );
-/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }

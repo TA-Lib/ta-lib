@@ -56,7 +56,7 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
-/* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
+/* Generated */    namespace TicTacTec { namespace TA { namespace Library {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #include "ta_java_defs.h"
@@ -116,7 +116,7 @@
 /* Generated */                                          int    endIdx,
 /* Generated */                                          cli::array<double>^ inReal,
 /* Generated */                                          [Out]int%    outBegIdx,
-/* Generated */                                          [Out]int%    outNbElement,
+/* Generated */                                          [Out]int%    outNBElement,
 /* Generated */                                          cli::array<double>^  outInPhase,
 /* Generated */                                          cli::array<double>^  outQuadrature )
 /* Generated */ #elif defined( _JAVA )
@@ -124,7 +124,7 @@
 /* Generated */                          int    endIdx,
 /* Generated */                          double       inReal[],
 /* Generated */                          MInteger     outBegIdx,
-/* Generated */                          MInteger     outNbElement,
+/* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outInPhase[],
 /* Generated */                          double        outQuadrature[] )
 /* Generated */ #else
@@ -132,7 +132,7 @@
 /* Generated */                          int    endIdx,
 /* Generated */                          const double inReal[],
 /* Generated */                          int          *outBegIdx,
-/* Generated */                          int          *outNbElement,
+/* Generated */                          int          *outNBElement,
 /* Generated */                          double        outInPhase[],
 /* Generated */                          double        outQuadrature[] )
 /* Generated */ #endif
@@ -181,17 +181,17 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #endif /* !defined(_JAVA)*/
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !outInPhase )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    if( !outQuadrature )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
+/* Generated */    #endif /* !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -216,7 +216,7 @@
    if( startIdx > endIdx )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
@@ -380,7 +380,7 @@
    }
 
    /* Default return values */
-   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+   VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
@@ -399,7 +399,7 @@
 /* Generated */                                          int    endIdx,
 /* Generated */                                          cli::array<float>^ inReal,
 /* Generated */                                          [Out]int%    outBegIdx,
-/* Generated */                                          [Out]int%    outNbElement,
+/* Generated */                                          [Out]int%    outNBElement,
 /* Generated */                                          cli::array<double>^  outInPhase,
 /* Generated */                                          cli::array<double>^  outQuadrature )
 /* Generated */ #elif defined( _JAVA )
@@ -407,7 +407,7 @@
 /* Generated */                          int    endIdx,
 /* Generated */                          float        inReal[],
 /* Generated */                          MInteger     outBegIdx,
-/* Generated */                          MInteger     outNbElement,
+/* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outInPhase[],
 /* Generated */                          double        outQuadrature[] )
 /* Generated */ #else
@@ -415,7 +415,7 @@
 /* Generated */                            int    endIdx,
 /* Generated */                            const float  inReal[],
 /* Generated */                            int          *outBegIdx,
-/* Generated */                            int          *outNbElement,
+/* Generated */                            int          *outNBElement,
 /* Generated */                            double        outInPhase[],
 /* Generated */                            double        outQuadrature[] )
 /* Generated */ #endif
@@ -445,10 +445,10 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outInPhase )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( !outQuadrature )
@@ -462,7 +462,7 @@
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
@@ -562,7 +562,7 @@
 /* Generated */       period = (0.2*period) + (0.8 * tempReal);
 /* Generated */       today++;
 /* Generated */    }
-/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 

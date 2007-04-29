@@ -51,7 +51,7 @@
    #using <mscorlib.dll>
    #include "TA-Lib-Core.h"
    #include "ta_memory.h"
-namespace TicTacTec { namespace TA { namespace Lib {
+namespace TicTacTec { namespace TA { namespace Library {
 #else
    #include "ta_utility.h"
    #include "ta_func.h"

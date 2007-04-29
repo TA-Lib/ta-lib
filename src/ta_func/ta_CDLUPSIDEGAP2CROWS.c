@@ -55,7 +55,7 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
-/* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
+/* Generated */    namespace TicTacTec { namespace TA { namespace Library {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #include "ta_java_defs.h"
@@ -116,7 +116,7 @@
 /* Generated */                                                    cli::array<double>^ inLow,
 /* Generated */                                                    cli::array<double>^ inClose,
 /* Generated */                                                    [Out]int%    outBegIdx,
-/* Generated */                                                    [Out]int%    outNbElement,
+/* Generated */                                                    [Out]int%    outNBElement,
 /* Generated */                                                    cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode cdlUpsideGap2Crows( int    startIdx,
@@ -126,7 +126,7 @@
 /* Generated */                                    double       inLow[],
 /* Generated */                                    double       inClose[],
 /* Generated */                                    MInteger     outBegIdx,
-/* Generated */                                    MInteger     outNbElement,
+/* Generated */                                    MInteger     outNBElement,
 /* Generated */                                    int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_CDLUPSIDEGAP2CROWS( int    startIdx,
@@ -136,7 +136,7 @@
 /* Generated */                                   const double inLow[],
 /* Generated */                                   const double inClose[],
 /* Generated */                                   int          *outBegIdx,
-/* Generated */                                   int          *outNbElement,
+/* Generated */                                   int          *outNBElement,
 /* Generated */                                   int           outInteger[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -155,17 +155,17 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #endif /* !defined(_JAVA)*/
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !outInteger )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
+/* Generated */    #endif /* !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -186,7 +186,7 @@
    if( startIdx > endIdx )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
@@ -247,7 +247,7 @@
    } while( i <= endIdx );
 
    /* All done. Indicate the output limits and return. */
-   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+   VALUE_HANDLE_DEREF(outNBElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
@@ -270,7 +270,7 @@
 /* Generated */                                                    cli::array<float>^ inLow,
 /* Generated */                                                    cli::array<float>^ inClose,
 /* Generated */                                                    [Out]int%    outBegIdx,
-/* Generated */                                                    [Out]int%    outNbElement,
+/* Generated */                                                    [Out]int%    outNBElement,
 /* Generated */                                                    cli::array<int>^  outInteger )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode cdlUpsideGap2Crows( int    startIdx,
@@ -280,7 +280,7 @@
 /* Generated */                                    float        inLow[],
 /* Generated */                                    float        inClose[],
 /* Generated */                                    MInteger     outBegIdx,
-/* Generated */                                    MInteger     outNbElement,
+/* Generated */                                    MInteger     outNBElement,
 /* Generated */                                    int           outInteger[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLUPSIDEGAP2CROWS( int    startIdx,
@@ -290,7 +290,7 @@
 /* Generated */                                     const float  inLow[],
 /* Generated */                                     const float  inClose[],
 /* Generated */                                     int          *outBegIdx,
-/* Generated */                                     int          *outNbElement,
+/* Generated */                                     int          *outNBElement,
 /* Generated */                                     int           outInteger[] )
 /* Generated */ #endif
 /* Generated */ {
@@ -301,11 +301,11 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outInteger )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
@@ -316,7 +316,7 @@
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    BodyLongPeriodTotal = 0;
@@ -355,7 +355,7 @@
 /* Generated */         BodyLongTrailingIdx++;
 /* Generated */         BodyShortTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
-/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }

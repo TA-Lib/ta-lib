@@ -58,7 +58,7 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
-/* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
+/* Generated */    namespace TicTacTec { namespace TA { namespace Library {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #include "ta_java_defs.h"
@@ -188,7 +188,7 @@
 /* Generated */                                               int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                               MAType        optInMAType,
 /* Generated */                                               [Out]int%    outBegIdx,
-/* Generated */                                               [Out]int%    outNbElement,
+/* Generated */                                               [Out]int%    outNBElement,
 /* Generated */                                               cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode movingAverage( int    startIdx,
@@ -197,7 +197,7 @@
 /* Generated */                               int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                               MAType        optInMAType,
 /* Generated */                               MInteger     outBegIdx,
-/* Generated */                               MInteger     outNbElement,
+/* Generated */                               MInteger     outNBElement,
 /* Generated */                               double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_MA( int    startIdx,
@@ -206,7 +206,7 @@
 /* Generated */                   int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                   TA_MAType     optInMAType,
 /* Generated */                   int          *outBegIdx,
-/* Generated */                   int          *outNbElement,
+/* Generated */                   int          *outNBElement,
 /* Generated */                   double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -228,9 +228,9 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */    #endif /* !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
@@ -244,11 +244,11 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
+/* Generated */    #endif /* !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -256,7 +256,7 @@
    if( optInTimePeriod == 1 )
    {
       nbElement = endIdx-startIdx+1;
-      VALUE_HANDLE_DEREF(outNbElement) = nbElement;      
+      VALUE_HANDLE_DEREF(outNBElement) = nbElement;      
       for( todayIdx=startIdx, outIdx=0; outIdx < nbElement; outIdx++, todayIdx++ )
          outReal[outIdx] = inReal[todayIdx];
       VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
@@ -269,38 +269,38 @@
    {
    case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
       retCode = FUNCTION_CALL(INT_SMA)( startIdx, endIdx, inReal, optInTimePeriod,
-                                        outBegIdx, outNbElement, outReal );
+                                        outBegIdx, outNBElement, outReal );
       break;
 
    case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
       retCode = FUNCTION_CALL(INT_EMA)( startIdx, endIdx, inReal,
                                         optInTimePeriod, PER_TO_K(optInTimePeriod),
-                                        outBegIdx, outNbElement, outReal );
+                                        outBegIdx, outNBElement, outReal );
       break;
 
    case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
       retCode = FUNCTION_CALL(WMA)( startIdx, endIdx, inReal, optInTimePeriod,
-                                    outBegIdx, outNbElement, outReal );
+                                    outBegIdx, outNBElement, outReal );
       break;
 
    case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
       retCode = FUNCTION_CALL(DEMA)( startIdx, endIdx, inReal, optInTimePeriod,
-                                     outBegIdx, outNbElement, outReal );
+                                     outBegIdx, outNBElement, outReal );
       break;
 
    case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
       retCode = FUNCTION_CALL(TEMA)( startIdx, endIdx, inReal, optInTimePeriod,
-                                     outBegIdx, outNbElement, outReal );
+                                     outBegIdx, outNBElement, outReal );
       break;
 
    case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
       retCode = FUNCTION_CALL(TRIMA)( startIdx, endIdx, inReal, optInTimePeriod,
-                                      outBegIdx, outNbElement, outReal );
+                                      outBegIdx, outNBElement, outReal );
       break;
 
    case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
       retCode = FUNCTION_CALL(KAMA)( startIdx, endIdx, inReal, optInTimePeriod,
-                                     outBegIdx, outNbElement, outReal );
+                                     outBegIdx, outNBElement, outReal );
       break;
 
    case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
@@ -315,7 +315,7 @@
       #endif
 
       retCode = FUNCTION_CALL(MAMA)( startIdx, endIdx, inReal, 0.5, 0.05,                           
-                                     outBegIdx, outNbElement,
+                                     outBegIdx, outNBElement,
                                      outReal, dummyBuffer );
                          
       ARRAY_FREE( dummyBuffer );
@@ -324,7 +324,7 @@
    case ENUM_CASE(MAType, TA_MAType_T3, T3 ):
       retCode = FUNCTION_CALL(T3)( startIdx, endIdx, inReal,
                                    optInTimePeriod, 0.7,
-                                   outBegIdx, outNbElement, outReal );
+                                   outBegIdx, outNBElement, outReal );
       break;
 
    default: 
@@ -351,7 +351,7 @@
 /* Generated */                                               int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                               MAType        optInMAType,
 /* Generated */                                               [Out]int%    outBegIdx,
-/* Generated */                                               [Out]int%    outNbElement,
+/* Generated */                                               [Out]int%    outNBElement,
 /* Generated */                                               cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode movingAverage( int    startIdx,
@@ -360,7 +360,7 @@
 /* Generated */                               int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                               MAType        optInMAType,
 /* Generated */                               MInteger     outBegIdx,
-/* Generated */                               MInteger     outNbElement,
+/* Generated */                               MInteger     outNBElement,
 /* Generated */                               double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MA( int    startIdx,
@@ -369,7 +369,7 @@
 /* Generated */                     int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                     TA_MAType     optInMAType,
 /* Generated */                     int          *outBegIdx,
-/* Generated */                     int          *outNbElement,
+/* Generated */                     int          *outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
@@ -382,7 +382,7 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -395,7 +395,7 @@
 /* Generated */     else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
@@ -403,7 +403,7 @@
 /* Generated */    if( optInTimePeriod == 1 )
 /* Generated */    {
 /* Generated */       nbElement = endIdx-startIdx+1;
-/* Generated */       VALUE_HANDLE_DEREF(outNbElement) = nbElement;      
+/* Generated */       VALUE_HANDLE_DEREF(outNBElement) = nbElement;      
 /* Generated */       for( todayIdx=startIdx, outIdx=0; outIdx < nbElement; outIdx++, todayIdx++ )
 /* Generated */          outReal[outIdx] = inReal[todayIdx];
 /* Generated */       VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
@@ -413,32 +413,32 @@
 /* Generated */    {
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
 /* Generated */       retCode = FUNCTION_CALL(INT_SMA)( startIdx, endIdx, inReal, optInTimePeriod,
-/* Generated */                                         outBegIdx, outNbElement, outReal );
+/* Generated */                                         outBegIdx, outNBElement, outReal );
 /* Generated */       break;
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
 /* Generated */       retCode = FUNCTION_CALL(INT_EMA)( startIdx, endIdx, inReal,
 /* Generated */                                         optInTimePeriod, PER_TO_K(optInTimePeriod),
-/* Generated */                                         outBegIdx, outNbElement, outReal );
+/* Generated */                                         outBegIdx, outNBElement, outReal );
 /* Generated */       break;
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
 /* Generated */       retCode = FUNCTION_CALL(WMA)( startIdx, endIdx, inReal, optInTimePeriod,
-/* Generated */                                     outBegIdx, outNbElement, outReal );
+/* Generated */                                     outBegIdx, outNBElement, outReal );
 /* Generated */       break;
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_DEMA, Dema):
 /* Generated */       retCode = FUNCTION_CALL(DEMA)( startIdx, endIdx, inReal, optInTimePeriod,
-/* Generated */                                      outBegIdx, outNbElement, outReal );
+/* Generated */                                      outBegIdx, outNBElement, outReal );
 /* Generated */       break;
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_TEMA, Tema):
 /* Generated */       retCode = FUNCTION_CALL(TEMA)( startIdx, endIdx, inReal, optInTimePeriod,
-/* Generated */                                      outBegIdx, outNbElement, outReal );
+/* Generated */                                      outBegIdx, outNBElement, outReal );
 /* Generated */       break;
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_TRIMA, Trima):
 /* Generated */       retCode = FUNCTION_CALL(TRIMA)( startIdx, endIdx, inReal, optInTimePeriod,
-/* Generated */                                       outBegIdx, outNbElement, outReal );
+/* Generated */                                       outBegIdx, outNBElement, outReal );
 /* Generated */       break;
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_KAMA, Kama):
 /* Generated */       retCode = FUNCTION_CALL(KAMA)( startIdx, endIdx, inReal, optInTimePeriod,
-/* Generated */                                      outBegIdx, outNbElement, outReal );
+/* Generated */                                      outBegIdx, outNBElement, outReal );
 /* Generated */       break;
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
 /* Generated */       ARRAY_ALLOC(dummyBuffer, (endIdx-startIdx+1) );
@@ -447,14 +447,14 @@
 /* Generated */             return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
 /* Generated */       #endif
 /* Generated */       retCode = FUNCTION_CALL(MAMA)( startIdx, endIdx, inReal, 0.5, 0.05,                           
-/* Generated */                                      outBegIdx, outNbElement,
+/* Generated */                                      outBegIdx, outNBElement,
 /* Generated */                                      outReal, dummyBuffer );
 /* Generated */       ARRAY_FREE( dummyBuffer );
 /* Generated */       break;
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_T3, T3 ):
 /* Generated */       retCode = FUNCTION_CALL(T3)( startIdx, endIdx, inReal,
 /* Generated */                                    optInTimePeriod, 0.7,
-/* Generated */                                    outBegIdx, outNbElement, outReal );
+/* Generated */                                    outBegIdx, outNBElement, outReal );
 /* Generated */       break;
 /* Generated */    default: 
 /* Generated */       retCode = ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);

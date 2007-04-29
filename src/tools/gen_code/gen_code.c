@@ -1800,7 +1800,7 @@ static void printFunc( FILE *out,
       arrayBracket          = "";
       startIdxString        = "startIdx";
       endIdxString          = "endIdx";
-      outNbElementString    = "outNbElement";
+      outNbElementString    = "outNBElement";
       outBegIdxString       = "outBegIdx";
       funcName              = funcInfo->camelCaseName;
    }
@@ -1834,7 +1834,7 @@ static void printFunc( FILE *out,
       arrayBracket          = "[]";
       startIdxString        = "startIdx";
       endIdxString          = "endIdx";
-      outNbElementString    = "outNbElement";
+      outNbElementString    = "outNBElement";
       outBegIdxString       = "outBegIdx";
       funcName              = funcNameBuffer;
 
@@ -1855,7 +1855,7 @@ static void printFunc( FILE *out,
       arrayBracket          = "[]";
       startIdxString        = "startIdx";
       endIdxString          = "endIdx";
-      outNbElementString    = "outNbElement";
+      outNbElementString    = "outNBElement";
       outBegIdxString       = "outBegIdx";
       funcName              = funcInfo->name;
    }
@@ -1978,7 +1978,7 @@ static void printFunc( FILE *out,
       if( validationCode )
       {
          printIndent( out, indent );
-         fprintf( out, "#if !defined(_MANAGED) && !defined(_JAVA)\n" );
+         fprintf( out, "#if !defined(_JAVA)\n" );
       }
 
       paramNb = 0;
@@ -2210,7 +2210,7 @@ static void printFunc( FILE *out,
       if( validationCode )
       {
          printIndent( out, indent );
-         fprintf( out, "#endif /* !defined(_MANAGED) && !defined(_JAVA)*/\n" );
+         fprintf( out, "#endif /* !defined(_JAVA)*/\n" );
       }
    }
 
@@ -2424,8 +2424,8 @@ static void printFunc( FILE *out,
 
       if( validationCode )
       {
-         printIndent( out, indent );
-         fprintf( out, "#if !defined(_MANAGED) && !defined(_JAVA)\n" );
+         printIndent( out, indent );         
+         fprintf( out, "#if !defined(_JAVA)\n" );
       }
 
       for( i=0; i < funcInfo->nbOutput; i++ )
@@ -2510,7 +2510,7 @@ static void printFunc( FILE *out,
       if( validationCode )
       {
          printIndent( out, indent );
-         fprintf( out, "#endif /* !defined(_MANAGED) && !defined(_JAVA) */\n" );
+         fprintf( out, "#endif /* !defined(_JAVA) */\n" );
       }
 
    }
@@ -2549,7 +2549,7 @@ static void printFrameHeader( FILE *out, const TA_FuncInfo *funcInfo, unsigned i
       print( out, "                          int            startIdx,\n" );
       print( out, "                          int            endIdx,\n" );
       print( out, "                          int           *outBegIdx,\n" );
-      print( out, "                          int           *outNbElement )\n" );
+      print( out, "                          int           *outNBElement )\n" );
    }
 }
 
@@ -3123,7 +3123,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "#if defined( _MANAGED )\n" );
    print( out, "   #include \"TA-Lib-Core.h\"\n" );
    print( out, "   #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)\n" );
-   print( out, "   namespace TicTacTec { namespace TA { namespace Lib {\n" );
+   print( out, "   namespace TicTacTec { namespace TA { namespace Library {\n" );
    print( out, "#elif defined( _JAVA )\n" );
    print( out, "   #include \"ta_defs.h\"\n" );
    print( out, "   #include \"ta_java_defs.h\"\n" );
@@ -4425,7 +4425,7 @@ static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
 	}
 
 	fprintf(gOutFunc_Annotation->file, "            MInteger     outBegIdx,\n");
-	fprintf(gOutFunc_Annotation->file, "            MInteger     outNbElement,\n");
+	fprintf(gOutFunc_Annotation->file, "            MInteger     outNBElement,\n");
 
 
 	/*
@@ -4520,7 +4520,7 @@ static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
 	}
 
 	fprintf(gOutFunc_Annotation->file, "        outBegIdx,\n");
-	fprintf(gOutFunc_Annotation->file, "        outNbElement,\n");
+	fprintf(gOutFunc_Annotation->file, "        outNBElement,\n");
 
 	for(i=0; i<funcInfo->nbOutput-1; i++)
 	{

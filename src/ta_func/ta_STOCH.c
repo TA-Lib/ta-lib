@@ -56,7 +56,7 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
-/* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
+/* Generated */    namespace TicTacTec { namespace TA { namespace Library {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #include "ta_java_defs.h"
@@ -192,7 +192,7 @@
 /* Generated */                                       int           optInSlowD_Period, /* From 1 to 100000 */
 /* Generated */                                       MAType        optInSlowD_MAType,
 /* Generated */                                       [Out]int%    outBegIdx,
-/* Generated */                                       [Out]int%    outNbElement,
+/* Generated */                                       [Out]int%    outNBElement,
 /* Generated */                                       cli::array<double>^  outSlowK,
 /* Generated */                                       cli::array<double>^  outSlowD )
 /* Generated */ #elif defined( _JAVA )
@@ -207,7 +207,7 @@
 /* Generated */                       int           optInSlowD_Period, /* From 1 to 100000 */
 /* Generated */                       MAType        optInSlowD_MAType,
 /* Generated */                       MInteger     outBegIdx,
-/* Generated */                       MInteger     outNbElement,
+/* Generated */                       MInteger     outNBElement,
 /* Generated */                       double        outSlowK[],
 /* Generated */                       double        outSlowD[] )
 /* Generated */ #else
@@ -222,7 +222,7 @@
 /* Generated */                      int           optInSlowD_Period, /* From 1 to 100000 */
 /* Generated */                      TA_MAType     optInSlowD_MAType,
 /* Generated */                      int          *outBegIdx,
-/* Generated */                      int          *outNbElement,
+/* Generated */                      int          *outNBElement,
 /* Generated */                      double        outSlowK[],
 /* Generated */                      double        outSlowD[] )
 /* Generated */ #endif
@@ -249,12 +249,12 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow||!inClose)
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */    #endif /* !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInFastK_Period. */
 /* Generated */    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastK_Period = 5;
@@ -287,14 +287,14 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !outSlowK )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    if( !outSlowD )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
+/* Generated */    #endif /* !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -349,7 +349,7 @@
    {
       /* Succeed... but no data in the output. */
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
@@ -487,10 +487,10 @@
    retCode = FUNCTION_CALL_DOUBLE(MA)( 0, outIdx-1,
                                        tempBuffer, optInSlowK_Period,
                                        optInSlowK_MAType, 
-                                       outBegIdx, outNbElement, tempBuffer );
+                                       outBegIdx, outNBElement, tempBuffer );
 
 
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
+   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
    {
       #if defined(USE_SINGLE_PRECISION_INPUT)
          ARRAY_FREE( tempBuffer ); 
@@ -499,24 +499,24 @@
       #endif
       /* Something wrong happen? No further data? */
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return retCode; 
    }
 
    /* Calculate the %D which is simply a moving average of
     * the already smoothed %K.
     */
-   retCode = FUNCTION_CALL_DOUBLE(MA)( 0, (int)VALUE_HANDLE_DEREF(outNbElement)-1,
+   retCode = FUNCTION_CALL_DOUBLE(MA)( 0, (int)VALUE_HANDLE_DEREF(outNBElement)-1,
                                        tempBuffer, optInSlowD_Period,
                                        optInSlowD_MAType,
-                                       outBegIdx, outNbElement, outSlowD );
+                                       outBegIdx, outNBElement, outSlowD );
 
    /* Copy tempBuffer into the caller buffer. 
     * (Calculation could not be done directly in the
     *  caller buffer because more input data then the
     *  requested range was needed for doing %D).
     */
-   ARRAY_MEMMOVE( outSlowK, 0, tempBuffer,lookbackDSlow,(int)VALUE_HANDLE_DEREF(outNbElement));
+   ARRAY_MEMMOVE( outSlowK, 0, tempBuffer,lookbackDSlow,(int)VALUE_HANDLE_DEREF(outNBElement));
 
    /* Don't need K anymore, free it if it was allocated here. */
    #if defined(USE_SINGLE_PRECISION_INPUT)
@@ -529,7 +529,7 @@
    {
       /* Something wrong happen while processing %D? */
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return retCode;
    }
 
@@ -563,7 +563,7 @@
 /* Generated */                                       int           optInSlowD_Period, /* From 1 to 100000 */
 /* Generated */                                       MAType        optInSlowD_MAType,
 /* Generated */                                       [Out]int%    outBegIdx,
-/* Generated */                                       [Out]int%    outNbElement,
+/* Generated */                                       [Out]int%    outNBElement,
 /* Generated */                                       cli::array<double>^  outSlowK,
 /* Generated */                                       cli::array<double>^  outSlowD )
 /* Generated */ #elif defined( _JAVA )
@@ -578,7 +578,7 @@
 /* Generated */                       int           optInSlowD_Period, /* From 1 to 100000 */
 /* Generated */                       MAType        optInSlowD_MAType,
 /* Generated */                       MInteger     outBegIdx,
-/* Generated */                       MInteger     outNbElement,
+/* Generated */                       MInteger     outNBElement,
 /* Generated */                       double        outSlowK[],
 /* Generated */                       double        outSlowD[] )
 /* Generated */ #else
@@ -593,7 +593,7 @@
 /* Generated */                        int           optInSlowD_Period, /* From 1 to 100000 */
 /* Generated */                        TA_MAType     optInSlowD_MAType,
 /* Generated */                        int          *outBegIdx,
-/* Generated */                        int          *outNbElement,
+/* Generated */                        int          *outNBElement,
 /* Generated */                        double        outSlowK[],
 /* Generated */                        double        outSlowD[] )
 /* Generated */ #endif
@@ -612,7 +612,7 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
@@ -640,7 +640,7 @@
 /* Generated */     else if( ((int)optInSlowD_MAType < 0) || ((int)optInSlowD_MAType > 8) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outSlowK )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( !outSlowD )
@@ -656,7 +656,7 @@
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    outIdx = 0;
@@ -748,8 +748,8 @@
 /* Generated */    retCode = FUNCTION_CALL_DOUBLE(MA)( 0, outIdx-1,
 /* Generated */                                        tempBuffer, optInSlowK_Period,
 /* Generated */                                        optInSlowK_MAType, 
-/* Generated */                                        outBegIdx, outNbElement, tempBuffer );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
+/* Generated */                                        outBegIdx, outNBElement, tempBuffer );
+/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
 /* Generated */    {
 /* Generated */       #if defined(USE_SINGLE_PRECISION_INPUT)
 /* Generated */          ARRAY_FREE( tempBuffer ); 
@@ -757,14 +757,14 @@
 /* Generated */          ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
 /* Generated */       #endif
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return retCode; 
 /* Generated */    }
-/* Generated */    retCode = FUNCTION_CALL_DOUBLE(MA)( 0, (int)VALUE_HANDLE_DEREF(outNbElement)-1,
+/* Generated */    retCode = FUNCTION_CALL_DOUBLE(MA)( 0, (int)VALUE_HANDLE_DEREF(outNBElement)-1,
 /* Generated */                                        tempBuffer, optInSlowD_Period,
 /* Generated */                                        optInSlowD_MAType,
-/* Generated */                                        outBegIdx, outNbElement, outSlowD );
-/* Generated */    ARRAY_MEMMOVE( outSlowK, 0, tempBuffer,lookbackDSlow,(int)VALUE_HANDLE_DEREF(outNbElement));
+/* Generated */                                        outBegIdx, outNBElement, outSlowD );
+/* Generated */    ARRAY_MEMMOVE( outSlowK, 0, tempBuffer,lookbackDSlow,(int)VALUE_HANDLE_DEREF(outNBElement));
 /* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT)
 /* Generated */       ARRAY_FREE( tempBuffer ); 
 /* Generated */    #else
@@ -773,7 +773,7 @@
 /* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
