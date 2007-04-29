@@ -56,7 +56,7 @@
 /* Generated */    #using <mscorlib.dll>
 /* Generated */    #include "Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR)
-/* Generated */    namespace TA { namespace Lib {
+/* Generated */    namespace TA { namespace Library {
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -102,7 +102,7 @@
 /* Generated */                                  double       inClose __gc [],
 /* Generated */                                  int          inVolume __gc [],
 /* Generated */                                  [OutAttribute]Int32 REF(outBegIdx),
-/* Generated */                                  [OutAttribute]Int32 REF(outNbElement),
+/* Generated */                                  [OutAttribute]Int32 REF(outNBElement),
 /* Generated */                                  double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_PVI( int    startIdx,
@@ -110,7 +110,7 @@
 /* Generated */                    const double inClose[],
 /* Generated */                    const int    inVolume[],
 /* Generated */                    int          *outBegIdx,
-/* Generated */                    int          *outNbElement,
+/* Generated */                    int          *outNBElement,
 /* Generated */                    double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -143,7 +143,7 @@
 
    /* Default return values */
    *outBegIdx    = 0;
-   *outNbElement = 0;
+   *outNBElement = 0;
 
    return TA_SUCCESS;
 }
@@ -163,7 +163,7 @@
 /* Generated */                                  float        inClose __gc [],
 /* Generated */                                  int          inVolume __gc [],
 /* Generated */                                  [OutAttribute]Int32 REF(outBegIdx),
-/* Generated */                                  [OutAttribute]Int32 REF(outNbElement),
+/* Generated */                                  [OutAttribute]Int32 REF(outNBElement),
 /* Generated */                                  double        outReal __gc [] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_PVI( int    startIdx,
@@ -171,7 +171,7 @@
 /* Generated */                      const float  inClose[],
 /* Generated */                      const int    inVolume[],
 /* Generated */                      int          *outBegIdx,
-/* Generated */                      int          *outNbElement,
+/* Generated */                      int          *outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
@@ -186,7 +186,7 @@
 /* Generated */        return TA_BAD_PARAM;
 /* Generated */  #endif 
 /* Generated */    *outBegIdx    = 0;
-/* Generated */    *outNbElement = 0;
+/* Generated */    *outNBElement = 0;
 /* Generated */    return TA_SUCCESS;
 /* Generated */ }
 /* Generated */ 

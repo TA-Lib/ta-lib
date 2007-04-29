@@ -56,7 +56,7 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
-/* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
+/* Generated */    namespace TicTacTec { namespace TA { namespace Library {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #include "ta_java_defs.h"
@@ -129,7 +129,7 @@
 /* Generated */                                      cli::array<double>^ inReal,
 /* Generated */                                      int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                      [Out]int%    outBegIdx,
-/* Generated */                                      [Out]int%    outNbElement,
+/* Generated */                                      [Out]int%    outNBElement,
 /* Generated */                                      cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode trix( int    startIdx,
@@ -137,7 +137,7 @@
 /* Generated */                      double       inReal[],
 /* Generated */                      int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                      MInteger     outBegIdx,
-/* Generated */                      MInteger     outNbElement,
+/* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_TRIX( int    startIdx,
@@ -145,7 +145,7 @@
 /* Generated */                     const double inReal[],
 /* Generated */                     int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                     int          *outBegIdx,
-/* Generated */                     int          *outNbElement,
+/* Generated */                     int          *outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -170,20 +170,20 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */    #endif /* !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
 /* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
+/* Generated */    #endif /* !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -201,7 +201,7 @@
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success); 
    }
@@ -217,7 +217,7 @@
    #if !defined( _JAVA )
       if( !tempBuffer )
       {
-         VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+         VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
       }
@@ -235,7 +235,7 @@
     */
    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(nbElement) == 0) )
    {
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       ARRAY_FREE( tempBuffer );
       return retCode;
@@ -255,7 +255,7 @@
     */
    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(nbElement) == 0) )
    {
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       ARRAY_FREE( tempBuffer );
       return retCode;
@@ -273,7 +273,7 @@
     */
    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(nbElement) == 0) )
    {
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       ARRAY_FREE( tempBuffer );
       return retCode;
@@ -283,16 +283,16 @@
    nbElementToOutput -= emaLookback;
    retCode = FUNCTION_CALL_DOUBLE(ROC)( 0, nbElementToOutput,
                                         tempBuffer,
-                                        1,  VALUE_HANDLE_OUT(begIdx), outNbElement,
+                                        1,  VALUE_HANDLE_OUT(begIdx), outNBElement,
                                         outReal );
 
    ARRAY_FREE( tempBuffer );
    /* Verify for failure or if not enough data after
     * calculating the rate-of-change.
     */
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
+   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
    {
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       return retCode;
    }
@@ -315,7 +315,7 @@
 /* Generated */                                      cli::array<float>^ inReal,
 /* Generated */                                      int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                                      [Out]int%    outBegIdx,
-/* Generated */                                      [Out]int%    outNbElement,
+/* Generated */                                      [Out]int%    outNBElement,
 /* Generated */                                      cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode trix( int    startIdx,
@@ -323,7 +323,7 @@
 /* Generated */                      float        inReal[],
 /* Generated */                      int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                      MInteger     outBegIdx,
-/* Generated */                      MInteger     outNbElement,
+/* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_TRIX( int    startIdx,
@@ -331,7 +331,7 @@
 /* Generated */                       const float  inReal[],
 /* Generated */                       int           optInTimePeriod, /* From 1 to 100000 */
 /* Generated */                       int          *outBegIdx,
-/* Generated */                       int          *outNbElement,
+/* Generated */                       int          *outNBElement,
 /* Generated */                       double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
@@ -348,14 +348,14 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
 /* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
@@ -367,7 +367,7 @@
 /* Generated */       startIdx = totalLookback;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success); 
 /* Generated */    }
@@ -377,7 +377,7 @@
 /* Generated */    #if !defined( _JAVA )
 /* Generated */       if( !tempBuffer )
 /* Generated */       {
-/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
 /* Generated */       }
@@ -389,7 +389,7 @@
 /* Generated */ 								     tempBuffer );
 /* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(nbElement) == 0) )
 /* Generated */    {
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       ARRAY_FREE( tempBuffer );
 /* Generated */       return retCode;
@@ -402,7 +402,7 @@
 /* Generated */ 						                    tempBuffer );
 /* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(nbElement) == 0) )
 /* Generated */    {
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       ARRAY_FREE( tempBuffer );
 /* Generated */       return retCode;
@@ -414,7 +414,7 @@
 /* Generated */ 						                    tempBuffer );
 /* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(nbElement) == 0) )
 /* Generated */    {
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       ARRAY_FREE( tempBuffer );
 /* Generated */       return retCode;
@@ -422,12 +422,12 @@
 /* Generated */    nbElementToOutput -= emaLookback;
 /* Generated */    retCode = FUNCTION_CALL_DOUBLE(ROC)( 0, nbElementToOutput,
 /* Generated */                                         tempBuffer,
-/* Generated */                                         1,  VALUE_HANDLE_OUT(begIdx), outNbElement,
+/* Generated */                                         1,  VALUE_HANDLE_OUT(begIdx), outNBElement,
 /* Generated */                                         outReal );
 /* Generated */    ARRAY_FREE( tempBuffer );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNbElement) == 0) )
+/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
 /* Generated */    {
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       return retCode;
 /* Generated */    }

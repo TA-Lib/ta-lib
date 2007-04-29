@@ -57,7 +57,7 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
-/* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
+/* Generated */    namespace TicTacTec { namespace TA { namespace Library {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #include "ta_java_defs.h"
@@ -165,7 +165,7 @@
 /* Generated */                                      double        optInFastLimit, /* From 0.01 to 0.99 */
 /* Generated */                                      double        optInSlowLimit, /* From 0.01 to 0.99 */
 /* Generated */                                      [Out]int%    outBegIdx,
-/* Generated */                                      [Out]int%    outNbElement,
+/* Generated */                                      [Out]int%    outNBElement,
 /* Generated */                                      cli::array<double>^  outMAMA,
 /* Generated */                                      cli::array<double>^  outFAMA )
 /* Generated */ #elif defined( _JAVA )
@@ -175,7 +175,7 @@
 /* Generated */                      double        optInFastLimit, /* From 0.01 to 0.99 */
 /* Generated */                      double        optInSlowLimit, /* From 0.01 to 0.99 */
 /* Generated */                      MInteger     outBegIdx,
-/* Generated */                      MInteger     outNbElement,
+/* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outMAMA[],
 /* Generated */                      double        outFAMA[] )
 /* Generated */ #else
@@ -185,7 +185,7 @@
 /* Generated */                     double        optInFastLimit, /* From 0.01 to 0.99 */
 /* Generated */                     double        optInSlowLimit, /* From 0.01 to 0.99 */
 /* Generated */                     int          *outBegIdx,
-/* Generated */                     int          *outNbElement,
+/* Generated */                     int          *outNBElement,
 /* Generated */                     double        outMAMA[],
 /* Generated */                     double        outFAMA[] )
 /* Generated */ #endif
@@ -234,9 +234,9 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */    #endif /* !defined(_JAVA)*/
 /* Generated */    if( optInFastLimit == TA_REAL_DEFAULT )
 /* Generated */       optInFastLimit = 5.000000e-1;
 /* Generated */    else if( (optInFastLimit < 1.000000e-2) ||/* Generated */  (optInFastLimit > 9.900000e-1) )
@@ -247,14 +247,14 @@
 /* Generated */    else if( (optInSlowLimit < 1.000000e-2) ||/* Generated */  (optInSlowLimit > 9.900000e-1) )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !outMAMA )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    if( !outFAMA )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
+/* Generated */    #endif /* !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -279,7 +279,7 @@
    if( startIdx > endIdx )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
@@ -475,7 +475,7 @@
    }
 
    /* Default return values */
-   VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+   VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
@@ -496,7 +496,7 @@
 /* Generated */                                      double        optInFastLimit, /* From 0.01 to 0.99 */
 /* Generated */                                      double        optInSlowLimit, /* From 0.01 to 0.99 */
 /* Generated */                                      [Out]int%    outBegIdx,
-/* Generated */                                      [Out]int%    outNbElement,
+/* Generated */                                      [Out]int%    outNBElement,
 /* Generated */                                      cli::array<double>^  outMAMA,
 /* Generated */                                      cli::array<double>^  outFAMA )
 /* Generated */ #elif defined( _JAVA )
@@ -506,7 +506,7 @@
 /* Generated */                      double        optInFastLimit, /* From 0.01 to 0.99 */
 /* Generated */                      double        optInSlowLimit, /* From 0.01 to 0.99 */
 /* Generated */                      MInteger     outBegIdx,
-/* Generated */                      MInteger     outNbElement,
+/* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outMAMA[],
 /* Generated */                      double        outFAMA[] )
 /* Generated */ #else
@@ -516,7 +516,7 @@
 /* Generated */                       double        optInFastLimit, /* From 0.01 to 0.99 */
 /* Generated */                       double        optInSlowLimit, /* From 0.01 to 0.99 */
 /* Generated */                       int          *outBegIdx,
-/* Generated */                       int          *outNbElement,
+/* Generated */                       int          *outNBElement,
 /* Generated */                       double        outMAMA[],
 /* Generated */                       double        outFAMA[] )
 /* Generated */ #endif
@@ -546,7 +546,7 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( optInFastLimit == TA_REAL_DEFAULT )
@@ -557,7 +557,7 @@
 /* Generated */        optInSlowLimit = 5.000000e-2;
 /* Generated */     else if( (optInSlowLimit < 1.000000e-2) ||  (optInSlowLimit > 9.900000e-1) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outMAMA )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( !outFAMA )
@@ -571,7 +571,7 @@
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
@@ -693,7 +693,7 @@
 /* Generated */       period = (0.2*period) + (0.8 * tempReal);
 /* Generated */       today++;
 /* Generated */    }
-/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = outIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 

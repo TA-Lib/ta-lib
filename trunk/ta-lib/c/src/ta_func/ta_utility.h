@@ -33,7 +33,7 @@ TA_RetCode TA_INT_SMA( int           startIdx,
                        const double *inReal,
                        int           optInTimePeriod, /* From 1 to 200 */
                        int          *outBegIdx,
-                       int          *outNbElement,
+                       int          *outNBElement,
                        double       *outReal );
 
 TA_RetCode TA_S_INT_SMA( int          startIdx,
@@ -41,7 +41,7 @@ TA_RetCode TA_S_INT_SMA( int          startIdx,
                          const float *inReal,
                          int          optInTimePeriod, /* From 1 to 200 */
                          int         *outBegIdx,
-                         int         *outNbElement,
+                         int         *outNBElement,
                          double      *outReal );
 #endif
 
@@ -56,7 +56,7 @@ TA_RetCode TA_INT_EMA( int           startIdx,
                        int           optInTimePeriod, /* From 1 to 200 */
                        double        optInK_1,
                        int          *outBegIdx,
-                       int          *outNbElement,
+                       int          *outNBElement,
                        double       *outReal );
 
 TA_RetCode TA_S_INT_EMA( int          startIdx,
@@ -65,7 +65,7 @@ TA_RetCode TA_S_INT_EMA( int          startIdx,
                          int          optInTimePeriod, /* From 1 to 200 */
                          double       optInK_1,
                          int         *outBegIdx,
-                         int         *outNbElement,
+                         int         *outNBElement,
                          double      *outReal );
 #endif
 
@@ -81,7 +81,7 @@ TA_RetCode TA_INT_MACD( int           startIdx,
                         int           optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
                         int           optInSignalPeriod_2, /* From 1 to 200 */
                         int          *outBegIdx,
-                        int          *outNbElement,
+                        int          *outNBElement,
                         double        outRealMACD_0[],
                         double        outRealMACDSignal_1[],
                         double        outRealMACDHist_2[] );
@@ -93,7 +93,7 @@ TA_RetCode TA_S_INT_MACD( int          startIdx,
                           int          optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
                           int          optInSignalPeriod_2, /* From 1 to 200 */
                           int         *outBegIdx,
-                          int         *outNbElement,
+                          int         *outNBElement,
                           double       outRealMACD_0[],
                           double       outRealMACDSignal_1[],
                           double       outRealMACDHist_2[] );
@@ -112,7 +112,7 @@ TA_RetCode TA_INT_PO( int           startIdx,
                       int           optInSlowPeriod, /* From 1 to 200 */
                       TA_MAType     optInMethod_2,
                       int          *outBegIdx,
-                      int          *outNbElement,
+                      int          *outNBElement,
                       double       *outReal,
                       double       *tempBuffer,
                       int  doPercentageOutput );
@@ -124,7 +124,7 @@ TA_RetCode TA_S_INT_PO( int           startIdx,
                         int           optInSlowPeriod, /* From 1 to 200 */
                         TA_MAType     optInMethod_2,
                         int          *outBegIdx,
-                        int          *outNbElement,
+                        int          *outNBElement,
                         double       *outReal,
                         double       *tempBuffer,
                         int  doPercentageOutput );
@@ -137,7 +137,7 @@ TA_RetCode TA_INT_VAR( int           startIdx,
                        const double *inReal,
                        int           optInTimePeriod,                       
                        int          *outBegIdx,
-                       int          *outNbElement,
+                       int          *outNBElement,
                        double       *outReal );
 
 TA_RetCode TA_S_INT_VAR( int           startIdx,
@@ -145,7 +145,7 @@ TA_RetCode TA_S_INT_VAR( int           startIdx,
                          const float  *inReal,
                          int           optInTimePeriod,                       
                          int          *outBegIdx,
-                         int          *outNbElement,
+                         int          *outNBElement,
                          double       *outReal );
 #endif
 

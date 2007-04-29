@@ -56,7 +56,7 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
-/* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
+/* Generated */    namespace TicTacTec { namespace TA { namespace Library {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #include "ta_java_defs.h"
@@ -202,7 +202,7 @@
 /* Generated */                                         int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                                         MAType        optInSignalMAType,
 /* Generated */                                         [Out]int%    outBegIdx,
-/* Generated */                                         [Out]int%    outNbElement,
+/* Generated */                                         [Out]int%    outNBElement,
 /* Generated */                                         cli::array<double>^  outMACD,
 /* Generated */                                         cli::array<double>^  outMACDSignal,
 /* Generated */                                         cli::array<double>^  outMACDHist )
@@ -217,7 +217,7 @@
 /* Generated */                         int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                         MAType        optInSignalMAType,
 /* Generated */                         MInteger     outBegIdx,
-/* Generated */                         MInteger     outNbElement,
+/* Generated */                         MInteger     outNBElement,
 /* Generated */                         double        outMACD[],
 /* Generated */                         double        outMACDSignal[],
 /* Generated */                         double        outMACDHist[] )
@@ -232,7 +232,7 @@
 /* Generated */                        int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                        TA_MAType     optInSignalMAType,
 /* Generated */                        int          *outBegIdx,
-/* Generated */                        int          *outNbElement,
+/* Generated */                        int          *outNBElement,
 /* Generated */                        double        outMACD[],
 /* Generated */                        double        outMACDSignal[],
 /* Generated */                        double        outMACDHist[] )
@@ -262,9 +262,9 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */    #endif /* !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInFastPeriod. */
 /* Generated */    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastPeriod = 12;
@@ -304,7 +304,7 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !outMACD )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
@@ -314,7 +314,7 @@
 /* Generated */    if( !outMACDHist )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
+/* Generated */    #endif /* !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -356,7 +356,7 @@
    if( startIdx > endIdx )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
@@ -367,7 +367,7 @@
       if( !fastMABuffer )
       {
          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-         VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+         VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
       }
    #endif
@@ -377,7 +377,7 @@
       if( !slowMABuffer )
       { 
          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-         VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+         VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
          ARRAY_FREE( fastMABuffer );
          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
       }
@@ -399,7 +399,7 @@
    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       ARRAY_FREE( fastMABuffer );
       ARRAY_FREE( slowMABuffer );
       return retCode;
@@ -414,7 +414,7 @@
    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       ARRAY_FREE( fastMABuffer );
       ARRAY_FREE( slowMABuffer );
       return retCode;
@@ -427,7 +427,7 @@
        (VALUE_HANDLE_GET(outNbElement1) != (endIdx-startIdx)+1+lookbackSignal) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       ARRAY_FREE( fastMABuffer );
       ARRAY_FREE( slowMABuffer );
       return TA_INTERNAL_ERROR(119);
@@ -451,7 +451,7 @@
    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return retCode;
    }
 
@@ -461,7 +461,7 @@
 
    /* All done! Indicate the output limits and return success. */
    VALUE_HANDLE_DEREF(outBegIdx)     = startIdx;
-   VALUE_HANDLE_DEREF(outNbElement)  = VALUE_HANDLE_GET(outNbElement2);
+   VALUE_HANDLE_DEREF(outNBElement)  = VALUE_HANDLE_GET(outNbElement2);
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
@@ -487,7 +487,7 @@
 /* Generated */                                         int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                                         MAType        optInSignalMAType,
 /* Generated */                                         [Out]int%    outBegIdx,
-/* Generated */                                         [Out]int%    outNbElement,
+/* Generated */                                         [Out]int%    outNBElement,
 /* Generated */                                         cli::array<double>^  outMACD,
 /* Generated */                                         cli::array<double>^  outMACDSignal,
 /* Generated */                                         cli::array<double>^  outMACDHist )
@@ -502,7 +502,7 @@
 /* Generated */                         int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                         MAType        optInSignalMAType,
 /* Generated */                         MInteger     outBegIdx,
-/* Generated */                         MInteger     outNbElement,
+/* Generated */                         MInteger     outNBElement,
 /* Generated */                         double        outMACD[],
 /* Generated */                         double        outMACDSignal[],
 /* Generated */                         double        outMACDHist[] )
@@ -517,7 +517,7 @@
 /* Generated */                          int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                          TA_MAType     optInSignalMAType,
 /* Generated */                          int          *outBegIdx,
-/* Generated */                          int          *outNbElement,
+/* Generated */                          int          *outNBElement,
 /* Generated */                          double        outMACD[],
 /* Generated */                          double        outMACDSignal[],
 /* Generated */                          double        outMACDHist[] )
@@ -539,7 +539,7 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
@@ -572,7 +572,7 @@
 /* Generated */     else if( ((int)optInSignalMAType < 0) || ((int)optInSignalMAType > 8) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outMACD )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( !outMACDSignal )
@@ -601,7 +601,7 @@
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    tempInteger = (endIdx-startIdx)+1+lookbackSignal;
@@ -610,7 +610,7 @@
 /* Generated */       if( !fastMABuffer )
 /* Generated */       {
 /* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
 /* Generated */       }
 /* Generated */    #endif
@@ -619,7 +619,7 @@
 /* Generated */       if( !slowMABuffer )
 /* Generated */       { 
 /* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */          ARRAY_FREE( fastMABuffer );
 /* Generated */          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
 /* Generated */       }
@@ -632,7 +632,7 @@
 /* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       ARRAY_FREE( fastMABuffer );
 /* Generated */       ARRAY_FREE( slowMABuffer );
 /* Generated */       return retCode;
@@ -644,7 +644,7 @@
 /* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       ARRAY_FREE( fastMABuffer );
 /* Generated */       ARRAY_FREE( slowMABuffer );
 /* Generated */       return retCode;
@@ -655,7 +655,7 @@
 /* Generated */        (VALUE_HANDLE_GET(outNbElement1) != (endIdx-startIdx)+1+lookbackSignal) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       ARRAY_FREE( fastMABuffer );
 /* Generated */       ARRAY_FREE( slowMABuffer );
 /* Generated */       return TA_INTERNAL_ERROR(119);
@@ -671,13 +671,13 @@
 /* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    for( i=0; i < VALUE_HANDLE_GET(outNbElement2); i++ )
 /* Generated */       outMACDHist[i] = outMACD[i]-outMACDSignal[i];
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)     = startIdx;
-/* Generated */    VALUE_HANDLE_DEREF(outNbElement)  = VALUE_HANDLE_GET(outNbElement2);
+/* Generated */    VALUE_HANDLE_DEREF(outNBElement)  = VALUE_HANDLE_GET(outNbElement2);
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 

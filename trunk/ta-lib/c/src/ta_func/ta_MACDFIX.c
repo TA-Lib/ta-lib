@@ -56,7 +56,7 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
-/* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
+/* Generated */    namespace TicTacTec { namespace TA { namespace Library {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #include "ta_java_defs.h"
@@ -135,7 +135,7 @@
 /* Generated */                                         cli::array<double>^ inReal,
 /* Generated */                                         int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                                         [Out]int%    outBegIdx,
-/* Generated */                                         [Out]int%    outNbElement,
+/* Generated */                                         [Out]int%    outNBElement,
 /* Generated */                                         cli::array<double>^  outMACD,
 /* Generated */                                         cli::array<double>^  outMACDSignal,
 /* Generated */                                         cli::array<double>^  outMACDHist )
@@ -145,7 +145,7 @@
 /* Generated */                         double       inReal[],
 /* Generated */                         int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                         MInteger     outBegIdx,
-/* Generated */                         MInteger     outNbElement,
+/* Generated */                         MInteger     outNBElement,
 /* Generated */                         double        outMACD[],
 /* Generated */                         double        outMACDSignal[],
 /* Generated */                         double        outMACDHist[] )
@@ -155,7 +155,7 @@
 /* Generated */                        const double inReal[],
 /* Generated */                        int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                        int          *outBegIdx,
-/* Generated */                        int          *outNbElement,
+/* Generated */                        int          *outNBElement,
 /* Generated */                        double        outMACD[],
 /* Generated */                        double        outMACDSignal[],
 /* Generated */                        double        outMACDHist[] )
@@ -174,16 +174,16 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
+/* Generated */    #endif /* !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInSignalPeriod. */
 /* Generated */    if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInSignalPeriod = 9;
 /* Generated */    else if( ((int)optInSignalPeriod < 1) || ((int)optInSignalPeriod > 100000) )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !outMACD )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
@@ -193,7 +193,7 @@
 /* Generated */    if( !outMACDHist )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
+/* Generated */    #endif /* !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -205,7 +205,7 @@
                                    0, /* 0 indicate fix 26 == 0.075 for optInSlowPeriod */
                                    optInSignalPeriod,
                                    outBegIdx,
-                                   outNbElement,
+                                   outNBElement,
                                    outMACD,
                                    outMACDSignal,
                                    outMACDHist );
@@ -226,7 +226,7 @@
 /* Generated */                                         cli::array<float>^ inReal,
 /* Generated */                                         int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                                         [Out]int%    outBegIdx,
-/* Generated */                                         [Out]int%    outNbElement,
+/* Generated */                                         [Out]int%    outNBElement,
 /* Generated */                                         cli::array<double>^  outMACD,
 /* Generated */                                         cli::array<double>^  outMACDSignal,
 /* Generated */                                         cli::array<double>^  outMACDHist )
@@ -236,7 +236,7 @@
 /* Generated */                         float        inReal[],
 /* Generated */                         int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                         MInteger     outBegIdx,
-/* Generated */                         MInteger     outNbElement,
+/* Generated */                         MInteger     outNBElement,
 /* Generated */                         double        outMACD[],
 /* Generated */                         double        outMACDSignal[],
 /* Generated */                         double        outMACDHist[] )
@@ -246,7 +246,7 @@
 /* Generated */                          const float  inReal[],
 /* Generated */                          int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                          int          *outBegIdx,
-/* Generated */                          int          *outNbElement,
+/* Generated */                          int          *outNBElement,
 /* Generated */                          double        outMACD[],
 /* Generated */                          double        outMACDSignal[],
 /* Generated */                          double        outMACDHist[] )
@@ -257,14 +257,14 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInSignalPeriod = 9;
 /* Generated */     else if( ((int)optInSignalPeriod < 1) || ((int)optInSignalPeriod > 100000) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outMACD )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( !outMACDSignal )
@@ -278,7 +278,7 @@
 /* Generated */                                    0, 
 /* Generated */                                    optInSignalPeriod,
 /* Generated */                                    outBegIdx,
-/* Generated */                                    outNbElement,
+/* Generated */                                    outNBElement,
 /* Generated */                                    outMACD,
 /* Generated */                                    outMACDSignal,
 /* Generated */                                    outMACDHist );

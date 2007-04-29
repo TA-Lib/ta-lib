@@ -56,7 +56,7 @@
 /* Generated */ #if defined( _MANAGED )
 /* Generated */    #include "TA-Lib-Core.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode::InternalError)
-/* Generated */    namespace TicTacTec { namespace TA { namespace Lib {
+/* Generated */    namespace TicTacTec { namespace TA { namespace Library {
 /* Generated */ #elif defined( _JAVA )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #include "ta_java_defs.h"
@@ -119,7 +119,7 @@
 /* Generated */                                    cli::array<double>^ inClose,
 /* Generated */                                    cli::array<double>^ inVolume,
 /* Generated */                                    [Out]int%    outBegIdx,
-/* Generated */                                    [Out]int%    outNbElement,
+/* Generated */                                    [Out]int%    outNBElement,
 /* Generated */                                    cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode ad( int    startIdx,
@@ -129,7 +129,7 @@
 /* Generated */                    double       inClose[],
 /* Generated */                    double       inVolume[],
 /* Generated */                    MInteger     outBegIdx,
-/* Generated */                    MInteger     outNbElement,
+/* Generated */                    MInteger     outNBElement,
 /* Generated */                    double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_AD( int    startIdx,
@@ -139,7 +139,7 @@
 /* Generated */                   const double inClose[],
 /* Generated */                   const double inVolume[],
 /* Generated */                   int          *outBegIdx,
-/* Generated */                   int          *outNbElement,
+/* Generated */                   int          *outNBElement,
 /* Generated */                   double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -160,17 +160,17 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow||!inClose||!inVolume)
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
-/* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */    #endif /* !defined(_JAVA)*/
+/* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !outReal )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
-/* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA) */
+/* Generated */    #endif /* !defined(_JAVA) */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -194,7 +194,7 @@
 
    /* Default return values */
    nbBar = endIdx-startIdx+1;
-   VALUE_HANDLE_DEREF(outNbElement) = nbBar;
+   VALUE_HANDLE_DEREF(outNBElement) = nbBar;
    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
    currentBar = startIdx;
    outIdx = 0;
@@ -236,7 +236,7 @@
 /* Generated */                                    cli::array<float>^ inClose,
 /* Generated */                                    cli::array<float>^ inVolume,
 /* Generated */                                    [Out]int%    outBegIdx,
-/* Generated */                                    [Out]int%    outNbElement,
+/* Generated */                                    [Out]int%    outNBElement,
 /* Generated */                                    cli::array<double>^  outReal )
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode ad( int    startIdx,
@@ -246,7 +246,7 @@
 /* Generated */                    float        inClose[],
 /* Generated */                    float        inVolume[],
 /* Generated */                    MInteger     outBegIdx,
-/* Generated */                    MInteger     outNbElement,
+/* Generated */                    MInteger     outNBElement,
 /* Generated */                    double        outReal[] )
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_AD( int    startIdx,
@@ -256,7 +256,7 @@
 /* Generated */                     const float  inClose[],
 /* Generated */                     const float  inVolume[],
 /* Generated */                     int          *outBegIdx,
-/* Generated */                     int          *outNbElement,
+/* Generated */                     int          *outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
@@ -268,17 +268,17 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose||!inVolume)
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
-/* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
+/* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    nbBar = endIdx-startIdx+1;
-/* Generated */    VALUE_HANDLE_DEREF(outNbElement) = nbBar;
+/* Generated */    VALUE_HANDLE_DEREF(outNBElement) = nbBar;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */    currentBar = startIdx;
 /* Generated */    outIdx = 0;
