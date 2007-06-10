@@ -162,7 +162,7 @@ static TA_Test tableTest[] =
 
    { 1, TA_MFI_TEST,  0, 251, 100, TA_SUCCESS,       0,  50.0166,  100,  252-100 }, /* First Value */
    { 0, TA_MFI_TEST,  0, 251, 100, TA_SUCCESS,       1,  50.2648,  100,  252-100 },
-   { 0, TA_MFI_TEST,  0, 251, 100, TA_SUCCESS, 252-101,  48.8421,  100,  252-100 } /* Last Value */
+   { 0, TA_MFI_TEST,  0, 251, 100, TA_SUCCESS, 252-101,  48.4264,  100,  252-100 } /* Last Value */
 
 };
 
