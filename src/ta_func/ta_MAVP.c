@@ -140,7 +140,18 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::MovingAverageVariablePeriod( int    startIdx,
+/* Generated */                                                             int    endIdx,
+/* Generated */                                                             SubArray^    inReal,
+/* Generated */                                                             SubArray^    inPeriods,
+/* Generated */                                                             int           optInMinPeriod, /* From 2 to 100000 */
+/* Generated */                                                             int           optInMaxPeriod, /* From 2 to 100000 */
+/* Generated */                                                             MAType        optInMAType,
+/* Generated */                                                             [Out]int%    outBegIdx,
+/* Generated */                                                             [Out]int%    outNBElement,
+/* Generated */                                                             cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::MovingAverageVariablePeriod( int    startIdx,
 /* Generated */                                                             int    endIdx,
 /* Generated */                                                             cli::array<double>^ inReal,

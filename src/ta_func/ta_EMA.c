@@ -122,7 +122,15 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Ema( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     SubArray^    inReal,
+/* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNBElement,
+/* Generated */                                     cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Ema( int    startIdx,
 /* Generated */                                     int    endIdx,
 /* Generated */                                     cli::array<double>^ inReal,
@@ -183,7 +191,7 @@
 
    /* Simply call the internal implementation of the EMA. */
    return FUNCTION_CALL(INT_EMA)( startIdx, endIdx, inReal, 
-                                  optInTimePeriod, /* From 1 to 200 */
+                                  optInTimePeriod,
                                   PER_TO_K( optInTimePeriod ),
                                   outBegIdx, outNBElement, outReal );
 }
@@ -202,7 +210,16 @@
  *
  * The macro PER_TO_K is equivalent to the above formula.
  */
-#if defined( _MANAGED )
+#if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined(USE_SINGLE_PRECISION_INPUT)
+ enum class Core::RetCode Core::TA_INT_EMA( int            startIdx,
+                                            int           endIdx, 
+                                            SubArray^     inReal,
+                                            int           optInTimePeriod,
+                                            double        optInK_1,
+                                            [Out]int% outBegIdx,
+                                            [Out]int% outNBElement,
+                                            cli::array<double>^ outReal )
+#elif defined( _MANAGED )
  enum class Core::RetCode Core::TA_INT_EMA( int           startIdx,
                                             int           endIdx,
 								            cli::array<INPUT_TYPE>^ inReal,
@@ -388,11 +405,20 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    return FUNCTION_CALL(INT_EMA)( startIdx, endIdx, inReal, 
-/* Generated */                                   optInTimePeriod, 
+/* Generated */                                   optInTimePeriod,
 /* Generated */                                   PER_TO_K( optInTimePeriod ),
 /* Generated */                                   outBegIdx, outNBElement, outReal );
 /* Generated */ }
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined(USE_SINGLE_PRECISION_INPUT)
+/* Generated */  enum class Core::RetCode Core::TA_INT_EMA( int            startIdx,
+/* Generated */                                             int           endIdx, 
+/* Generated */                                             SubArray^     inReal,
+/* Generated */                                             int           optInTimePeriod,
+/* Generated */                                             double        optInK_1,
+/* Generated */                                             [Out]int% outBegIdx,
+/* Generated */                                             [Out]int% outNBElement,
+/* Generated */                                             cli::array<double>^ outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */  enum class Core::RetCode Core::TA_INT_EMA( int           startIdx,
 /* Generated */                                             int           endIdx,
 /* Generated */ 								            cli::array<INPUT_TYPE>^ inReal,

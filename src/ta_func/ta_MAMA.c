@@ -158,7 +158,17 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Mama( int    startIdx,
+/* Generated */                                      int    endIdx,
+/* Generated */                                      SubArray^    inReal,
+/* Generated */                                      double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                                      double        optInSlowLimit, /* From 0.01 to 0.99 */
+/* Generated */                                      [Out]int%    outBegIdx,
+/* Generated */                                      [Out]int%    outNBElement,
+/* Generated */                                      cli::array<double>^  outMAMA,
+/* Generated */                                      cli::array<double>^  outFAMA )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Mama( int    startIdx,
 /* Generated */                                      int    endIdx,
 /* Generated */                                      cli::array<double>^ inReal,

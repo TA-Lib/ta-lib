@@ -127,7 +127,15 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Cmo( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     SubArray^    inReal,
+/* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNBElement,
+/* Generated */                                     cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Cmo( int    startIdx,
 /* Generated */                                     int    endIdx,
 /* Generated */                                     cli::array<double>^ inReal,
@@ -226,7 +234,11 @@
       VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
       i = (endIdx-startIdx)+1;
       VALUE_HANDLE_DEREF(outNBElement) = i;
-      ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, i );
+      #if defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+        ARRAY_MEMMOVE( outReal, 0, (inReal->mDataArray), (inReal->mOffset)+startIdx, i );
+      #else
+        ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, i );
+      #endif
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
@@ -468,7 +480,11 @@
 /* Generated */       VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */       i = (endIdx-startIdx)+1;
 /* Generated */       VALUE_HANDLE_DEREF(outNBElement) = i;
-/* Generated */       ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, i );
+/* Generated */       #if defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+/* Generated */         ARRAY_MEMMOVE( outReal, 0, (inReal->mDataArray), (inReal->mOffset)+startIdx, i );
+/* Generated */       #else
+/* Generated */         ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, i );
+/* Generated */       #endif
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    today = startIdx-lookbackTotal;

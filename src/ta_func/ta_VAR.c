@@ -135,7 +135,16 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Variance( int    startIdx,
+/* Generated */                                          int    endIdx,
+/* Generated */                                          SubArray^    inReal,
+/* Generated */                                          int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                          double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                          [Out]int%    outBegIdx,
+/* Generated */                                          [Out]int%    outNBElement,
+/* Generated */                                          cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Variance( int    startIdx,
 /* Generated */                                          int    endIdx,
 /* Generated */                                          cli::array<double>^ inReal,
@@ -207,7 +216,15 @@
 }
 
 
-#if defined( _MANAGED )
+#if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+enum class Core::RetCode Core::TA_INT_VAR( int    startIdx,
+                                           int    endIdx,
+							               SubArray^ inReal,
+                                           int    optInTimePeriod,                       
+                                           [Out]int% outBegIdx,
+                                           [Out]int% outNBElement,
+										   cli::array<double>^ outReal )
+#elif defined( _MANAGED ) 
 enum class Core::RetCode Core::TA_INT_VAR( int    startIdx,
                                            int    endIdx,
 							               cli::array<INPUT_TYPE>^ inReal,
@@ -375,7 +392,15 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */                                   optInTimePeriod,                       
 /* Generated */                                   outBegIdx, outNBElement, outReal );
 /* Generated */ }
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+/* Generated */ enum class Core::RetCode Core::TA_INT_VAR( int    startIdx,
+/* Generated */                                            int    endIdx,
+/* Generated */ 							               SubArray^ inReal,
+/* Generated */                                            int    optInTimePeriod,                       
+/* Generated */                                            [Out]int% outBegIdx,
+/* Generated */                                            [Out]int% outNBElement,
+/* Generated */ 										   cli::array<double>^ outReal )
+/* Generated */ #elif defined( _MANAGED ) 
 /* Generated */ enum class Core::RetCode Core::TA_INT_VAR( int    startIdx,
 /* Generated */                                            int    endIdx,
 /* Generated */ 							               cli::array<INPUT_TYPE>^ inReal,

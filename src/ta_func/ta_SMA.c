@@ -123,7 +123,15 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Sma( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     SubArray^    inReal,
+/* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNBElement,
+/* Generated */                                     cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Sma( int    startIdx,
 /* Generated */                                     int    endIdx,
 /* Generated */                                     cli::array<double>^ inReal,
@@ -185,7 +193,15 @@
                                  outBegIdx, outNBElement, outReal ); 
 }
 
-#if defined( _MANAGED )
+#if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined(USE_SINGLE_PRECISION_INPUT)
+ enum class Core::RetCode Core::TA_INT_SMA( int     startIdx,
+                                               int     endIdx,
+									           SubArray^ inReal, 
+								               int     optInTimePeriod,
+								               [Out]int% outBegIdx, 
+								               [Out]int% outNBElement,
+											   cli::array<double>^  outReal)
+#elif defined( _MANAGED )
  enum class Core::RetCode Core::TA_INT_SMA( int     startIdx,
                                                int     endIdx,
 									           cli::array<INPUT_TYPE>^ inReal, 
@@ -322,7 +338,15 @@ TA_RetCode TA_PREFIX(INT_SMA)( int    startIdx,
 /* Generated */                                  inReal, optInTimePeriod,
 /* Generated */                                  outBegIdx, outNBElement, outReal ); 
 /* Generated */ }
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined(USE_SINGLE_PRECISION_INPUT)
+/* Generated */  enum class Core::RetCode Core::TA_INT_SMA( int     startIdx,
+/* Generated */                                                int     endIdx,
+/* Generated */ 									           SubArray^ inReal, 
+/* Generated */ 								               int     optInTimePeriod,
+/* Generated */ 								               [Out]int% outBegIdx, 
+/* Generated */ 								               [Out]int% outNBElement,
+/* Generated */ 											   cli::array<double>^  outReal)
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */  enum class Core::RetCode Core::TA_INT_SMA( int     startIdx,
 /* Generated */                                                int     endIdx,
 /* Generated */ 									           cli::array<INPUT_TYPE>^ inReal, 

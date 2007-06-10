@@ -122,7 +122,15 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Wma( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     SubArray^    inReal,
+/* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNBElement,
+/* Generated */                                     cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Wma( int    startIdx,
 /* Generated */                                     int    endIdx,
 /* Generated */                                     cli::array<double>^ inReal,
@@ -208,7 +216,13 @@
    {      
       VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
       VALUE_HANDLE_DEREF(outNBElement) = endIdx-startIdx+1;
-      ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );	  	  
+
+      #if defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+        ARRAY_MEMMOVE( outReal, 0, (inReal->mDataArray), (inReal->mOffset)+startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );
+      #else
+        ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );	  	  
+      #endif
+
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
@@ -361,7 +375,11 @@
 /* Generated */    {      
 /* Generated */       VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */       VALUE_HANDLE_DEREF(outNBElement) = endIdx-startIdx+1;
-/* Generated */       ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );	  	  
+/* Generated */       #if defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+/* Generated */         ARRAY_MEMMOVE( outReal, 0, (inReal->mDataArray), (inReal->mOffset)+startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );
+/* Generated */       #else
+/* Generated */         ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );	  	  
+/* Generated */       #endif
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    divider = (optInTimePeriod*(optInTimePeriod+1))>>1;

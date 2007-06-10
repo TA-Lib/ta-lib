@@ -148,7 +148,17 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Apo( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     SubArray^    inReal,
+/* Generated */                                     int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                     int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                     MAType        optInMAType,
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNBElement,
+/* Generated */                                     cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Apo( int    startIdx,
 /* Generated */                                     int    endIdx,
 /* Generated */                                     cli::array<double>^ inReal,
@@ -237,8 +247,8 @@
 
    retCode = FUNCTION_CALL(INT_PO)( startIdx, endIdx,                        
                                     inReal,
-                                    optInFastPeriod, /* From 1 to 200 */
-                                    optInSlowPeriod, /* From 1 to 200 */
+                                    optInFastPeriod, 
+                                    optInSlowPeriod, 
                                     optInMAType,
                                     outBegIdx,
                                     outNBElement,
@@ -255,13 +265,25 @@
  *
  * A buffer must be provided for intermediate processing.
  */
+#if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+ enum class Core::RetCode Core::TA_INT_PO( int    startIdx,
+                                           int    endIdx,
+									       SubArray^ inReal,
+                                           int    optInFastPeriod, 
+                                           int    optInSlowPeriod, 
+										   MAType    optInMethod_2,
+                                           [Out]int% outBegIdx,
+                                           [Out]int% outNBElement,
+										   cli::array<double>^ outReal,
+                                           cli::array<double>^ tempBuffer,
+                                           int  doPercentageOutput )
 
-#if defined( _MANAGED )
+#elif defined( _MANAGED )
  enum class Core::RetCode Core::TA_INT_PO( int    startIdx,
                                            int    endIdx,
 									       cli::array<INPUT_TYPE>^ inReal,
-                                           int    optInFastPeriod, /* From 1 to 200 */
-                                           int    optInSlowPeriod, /* From 1 to 200 */
+                                           int    optInFastPeriod, 
+                                           int    optInSlowPeriod, 
 										   MAType    optInMethod_2,
                                            [Out]int% outBegIdx,
                                            [Out]int% outNBElement,
@@ -272,8 +294,8 @@
 RetCode TA_INT_PO( int        startIdx,
                    int        endIdx,
                    INPUT_TYPE inReal[],
-                   int        optInFastPeriod, /* From 1 to 200 */
-                   int        optInSlowPeriod, /* From 1 to 200 */
+                   int        optInFastPeriod, 
+                   int        optInSlowPeriod, 
                    MAType  optInMethod_2,
                    MInteger   outBegIdx,
                    MInteger   outNBElement,
@@ -285,8 +307,8 @@ RetCode TA_INT_PO( int        startIdx,
 TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
                               int    endIdx,
                               const INPUT_TYPE *inReal,
-                              int    optInFastPeriod, /* From 1 to 200 */
-                              int    optInSlowPeriod, /* From 1 to 200 */
+                              int    optInFastPeriod, 
+                              int    optInSlowPeriod, 
                               TA_MAType optInMethod_2,
                               int   *outBegIdx,
                               int   *outNBElement,
@@ -320,7 +342,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
    /* Calculate the fast MA into the tempBuffer. */
    retCode = FUNCTION_CALL(MA)( startIdx, endIdx,
                                 inReal,
-                                optInFastPeriod, /* From 1 to 200 */
+                                optInFastPeriod, 
                                 optInMethod_2,                    
                                 VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2),
 							    tempBuffer );
@@ -330,7 +352,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
       /* Calculate the slow MA into the output. */
       retCode = FUNCTION_CALL(MA)( startIdx, endIdx,                       
                                    inReal,
-                                   optInSlowPeriod, /* From 1 to 200 */
+                                   optInSlowPeriod, 
                                    optInMethod_2,
                                    VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1),
 							       outReal );
@@ -459,7 +481,19 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */    ARRAY_FREE( tempBuffer );
 /* Generated */    return retCode;
 /* Generated */ }
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+/* Generated */  enum class Core::RetCode Core::TA_INT_PO( int    startIdx,
+/* Generated */                                            int    endIdx,
+/* Generated */ 									       SubArray^ inReal,
+/* Generated */                                            int    optInFastPeriod, 
+/* Generated */                                            int    optInSlowPeriod, 
+/* Generated */ 										   MAType    optInMethod_2,
+/* Generated */                                            [Out]int% outBegIdx,
+/* Generated */                                            [Out]int% outNBElement,
+/* Generated */ 										   cli::array<double>^ outReal,
+/* Generated */                                            cli::array<double>^ tempBuffer,
+/* Generated */                                            int  doPercentageOutput )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */  enum class Core::RetCode Core::TA_INT_PO( int    startIdx,
 /* Generated */                                            int    endIdx,
 /* Generated */ 									       cli::array<INPUT_TYPE>^ inReal,

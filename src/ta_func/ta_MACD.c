@@ -168,7 +168,19 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Macd( int    startIdx,
+/* Generated */                                      int    endIdx,
+/* Generated */                                      SubArray^    inReal,
+/* Generated */                                      int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                      int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                      int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                      [Out]int%    outBegIdx,
+/* Generated */                                      [Out]int%    outNBElement,
+/* Generated */                                      cli::array<double>^  outMACD,
+/* Generated */                                      cli::array<double>^  outMACDSignal,
+/* Generated */                                      cli::array<double>^  outMACDHist )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Macd( int    startIdx,
 /* Generated */                                      int    endIdx,
 /* Generated */                                      cli::array<double>^ inReal,
@@ -268,13 +280,25 @@
                                    outMACDHist );
 }
 
-#if defined( _MANAGED )
+#if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+ enum class Core::RetCode Core::TA_INT_MACD( int    startIdx,
+                                             int    endIdx,
+											 SubArray^ inReal,
+                                             int    optInFastPeriod, /* 0 is fix 12 */
+                                             int    optInSlowPeriod, /* 0 is fix 26 */
+                                             int    optInSignalPeriod_2,
+                                             [Out]int% outBegIdx,
+                                             [Out]int% outNBElement,
+											 cli::array<double>^ outMACD,
+                                             cli::array<double>^ outMACDSignal,
+                                             cli::array<double>^ outMACDHist )
+#elif defined( _MANAGED )
  enum class Core::RetCode Core::TA_INT_MACD( int    startIdx,
                                              int    endIdx,
 											 cli::array<INPUT_TYPE>^ inReal,
-                                             int    optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
-                                             int    optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
-                                             int    optInSignalPeriod_2, /* From 1 to 200 */
+                                             int    optInFastPeriod, /* 0 is fix 12 */
+                                             int    optInSlowPeriod, /* 0 is fix 26 */
+                                             int    optInSignalPeriod_2,
                                              [Out]int% outBegIdx,
                                              [Out]int% outNBElement,
 											 cli::array<double>^ outMACD,
@@ -284,9 +308,9 @@
 RetCode TA_INT_MACD( int        startIdx,
                      int        endIdx,
                      INPUT_TYPE inReal[],
-                     int        optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
-                     int        optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
-                     int        optInSignalPeriod_2, /* From 1 to 200 */
+                     int        optInFastPeriod, /* 0 is fix 12 */
+                     int        optInSlowPeriod, /* 0 is fix 26 */
+                     int        optInSignalPeriod_2,
                      MInteger   outBegIdx,
                      MInteger   outNBElement,
                      double     outMACD[],
@@ -297,9 +321,9 @@ RetCode TA_INT_MACD( int        startIdx,
 TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
                                 int    endIdx,
                                 const INPUT_TYPE inReal[],
-                                int    optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
-                                int    optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
-                                int    optInSignalPeriod_2, /* From 1 to 200 */
+                                int    optInFastPeriod, /* 0 is fix 12 */
+                                int    optInSlowPeriod, /* 0 is fix 26 */
+                                int    optInSignalPeriod_2,
                                 int   *outBegIdx,
                                 int   *outNBElement,
                                 double       outMACD[],
@@ -585,13 +609,25 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                    outMACDSignal,
 /* Generated */                                    outMACDHist );
 /* Generated */ }
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+/* Generated */  enum class Core::RetCode Core::TA_INT_MACD( int    startIdx,
+/* Generated */                                              int    endIdx,
+/* Generated */ 											 SubArray^ inReal,
+/* Generated */                                              int    optInFastPeriod, 
+/* Generated */                                              int    optInSlowPeriod, 
+/* Generated */                                              int    optInSignalPeriod_2,
+/* Generated */                                              [Out]int% outBegIdx,
+/* Generated */                                              [Out]int% outNBElement,
+/* Generated */ 											 cli::array<double>^ outMACD,
+/* Generated */                                              cli::array<double>^ outMACDSignal,
+/* Generated */                                              cli::array<double>^ outMACDHist )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */  enum class Core::RetCode Core::TA_INT_MACD( int    startIdx,
 /* Generated */                                              int    endIdx,
 /* Generated */ 											 cli::array<INPUT_TYPE>^ inReal,
 /* Generated */                                              int    optInFastPeriod, 
 /* Generated */                                              int    optInSlowPeriod, 
-/* Generated */                                              int    optInSignalPeriod_2, 
+/* Generated */                                              int    optInSignalPeriod_2,
 /* Generated */                                              [Out]int% outBegIdx,
 /* Generated */                                              [Out]int% outNBElement,
 /* Generated */ 											 cli::array<double>^ outMACD,
@@ -603,7 +639,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                      INPUT_TYPE inReal[],
 /* Generated */                      int        optInFastPeriod, 
 /* Generated */                      int        optInSlowPeriod, 
-/* Generated */                      int        optInSignalPeriod_2, 
+/* Generated */                      int        optInSignalPeriod_2,
 /* Generated */                      MInteger   outBegIdx,
 /* Generated */                      MInteger   outNBElement,
 /* Generated */                      double     outMACD[],
@@ -615,7 +651,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                 const INPUT_TYPE inReal[],
 /* Generated */                                 int    optInFastPeriod, 
 /* Generated */                                 int    optInSlowPeriod, 
-/* Generated */                                 int    optInSignalPeriod_2, 
+/* Generated */                                 int    optInSignalPeriod_2,
 /* Generated */                                 int   *outBegIdx,
 /* Generated */                                 int   *outNBElement,
 /* Generated */                                 double       outMACD[],

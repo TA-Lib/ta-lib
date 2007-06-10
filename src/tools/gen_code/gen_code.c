@@ -219,7 +219,9 @@ static void printFunc( FILE *out,
                        unsigned int inputIsSinglePrecision, /* Boolean */
                        unsigned int outputForSWIG,          /* Boolean */
                        unsigned int outputForJava,          /* Boolean */
-                       unsigned int lookbackValidationCode  /* Boolean */
+                       unsigned int lookbackValidationCode, /* Boolean */
+					   unsigned int useSubArrayObject,      /* Boolean */
+					   unsigned int arrayToSubArrayCnvt     /* Boolean */
                      );
 
 static void printCallFrame  ( FILE *out, const TA_FuncInfo *funcInfo );
@@ -1549,19 +1551,19 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
    printDefines( gOutFunc_SWG->file, funcInfo );
 
    /* Generate the function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
    fprintf( gOutFunc_H->file, "\n" );
 
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
    fprintf( gOutFunc_H->file, "\n" );
 
    /* Generate the SWIG interface. */
-   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0 );
+   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 );
    fprintf( gOutFunc_SWG->file, "\n" );
 
    /* Generate the corresponding lookback function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0 );
-   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
 
    /* Create the frame definition (ta_frame.c) and declaration (ta_frame.h) */
    genPrefix = 1;
@@ -1597,6 +1599,22 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
       fprintf( gOutProjFile->file, "							UsePrecompiledHeader=\"0\"\n" );
       fprintf( gOutProjFile->file, "							CompileAs=\"2\"/>\n" );
       fprintf( gOutProjFile->file, "					</FileConfiguration>\n" );
+      fprintf( gOutProjFile->file, "					<FileConfiguration\n" );
+      fprintf( gOutProjFile->file, "						Name=\"Debug SubArray|Win32\">\n" );
+      fprintf( gOutProjFile->file, "						<Tool\n" );
+      fprintf( gOutProjFile->file, "							Name=\"VCCLCompilerTool\"\n" );
+      fprintf( gOutProjFile->file, "							AdditionalIncludeDirectories=\"\"\n" );
+      fprintf( gOutProjFile->file, "							UsePrecompiledHeader=\"0\"\n" );
+      fprintf( gOutProjFile->file, "							CompileAs=\"2\"/>\n" );
+      fprintf( gOutProjFile->file, "					</FileConfiguration>\n" );
+      fprintf( gOutProjFile->file, "					<FileConfiguration\n" );
+      fprintf( gOutProjFile->file, "						Name=\"Release SubArray|Win32\">\n" );
+      fprintf( gOutProjFile->file, "						<Tool\n" );
+      fprintf( gOutProjFile->file, "							Name=\"VCCLCompilerTool\"\n" );
+      fprintf( gOutProjFile->file, "							AdditionalIncludeDirectories=\"\"\n" );
+      fprintf( gOutProjFile->file, "							UsePrecompiledHeader=\"0\"\n" );
+      fprintf( gOutProjFile->file, "							CompileAs=\"2\"/>\n" );
+      fprintf( gOutProjFile->file, "					</FileConfiguration>\n" );
       fprintf( gOutProjFile->file, "				</File>\n" );
 
       /* Add the entry in the MSVC project file. */
@@ -1616,9 +1634,23 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
    #endif
 
    /* Generate the functions declaration for the .NET interface. */
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0 );
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0 );
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0 );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0 );
+
+   fprintf( gOutDotNet_H->file, "         #if defined( _MANAGED ) && defined( USE_SUBARRAY )\n" );   
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0 );
+   fprintf( gOutDotNet_H->file, "\n" );
+
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
+// { return Ad(startIdx,endIdx,gcnew SubArray(inHigh,0), gcnew SubArray(inLow,0), gcnew SubArray(inClose,0), gcnew SubArray(inVolume,0), outBegIdx, outNBElement, outReal ); } 
+   fprintf( gOutDotNet_H->file, "         { return " );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1 );
+   fprintf( gOutDotNet_H->file, "         }\n" );
+
+   fprintf( gOutDotNet_H->file, "         #elif defined( _MANAGED )\n" );
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
+   fprintf( gOutDotNet_H->file, "         #endif\n" );
+
+   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0 );
    fprintf( gOutDotNet_H->file, "\n" );
    fprintf( gOutDotNet_H->file, "         #define TA_%s Core::%s\n", funcInfo->name, funcInfo->camelCaseName );
    fprintf( gOutDotNet_H->file, "         #define TA_%s_Lookback Core::%sLookback\n\n", funcInfo->name, funcInfo->camelCaseName );
@@ -1759,11 +1791,14 @@ static void printFunc( FILE *out,
                        unsigned int inputIsSinglePrecision, /* Boolean */
                        unsigned int outputForSWIG, /* Boolean */
                        unsigned int outputForJava, /* Boolean */
-                       unsigned int lookbackValidationCode  /* Boolean */
+                       unsigned int lookbackValidationCode, /* Boolean */
+					   unsigned int useSubArrayObject,      /* Boolean */
+					   unsigned int arrayToSubArrayCnvt     /* Boolean */
                       )
 {
    TA_RetCode retCode;
-   unsigned int i, j, k, indent, lastParam;
+   unsigned int i, j, k, lastParam;
+   int indent;
    unsigned int paramNb;
    const char *paramName;
    const char *defaultParamName;
@@ -1787,12 +1822,31 @@ static void printFunc( FILE *out,
 
    char funcNameBuffer[1024]; /* Not safe, but 1024 is realistic, */
 
-   if( managedCPPCode )
+   if( arrayToSubArrayCnvt )
    {
-      if( inputIsSinglePrecision )
-         inputDoubleArrayType  = "cli::array<float>^";         
-      else
-         inputDoubleArrayType  = "cli::array<double>^";
+      inputIntArrayType     = " ";
+	  inputDoubleArrayType  = " ";
+      outputDoubleArrayType = " ";
+      outputIntArrayType    = " ";
+      outputIntParam        = " ";
+      arrayBracket          = " ";
+      startIdxString        = "startIdx";
+      endIdxString          = "endIdx";
+      outNbElementString    = "outNBElement";
+      outBegIdxString       = "outBegIdx";
+      funcName              = funcInfo->camelCaseName;
+   }
+   else if( managedCPPCode )
+   {
+	  if( inputIsSinglePrecision )
+	  {
+          inputDoubleArrayType  = "cli::array<float>^";
+	  }
+	  else
+	  {
+		  inputDoubleArrayType  = useSubArrayObject? "SubArray^":"cli::array<double>^";         
+	  }
+
       inputIntArrayType     = "cli::array<int>^";
       outputDoubleArrayType = "cli::array<double>^";
       outputIntArrayType    = "cli::array<int>^";
@@ -1892,7 +1946,11 @@ static void printFunc( FILE *out,
       }
       else
       {
-         if( managedCPPCode )
+         if( arrayToSubArrayCnvt )
+		 {			 
+			 sprintf( gTempBuf, "%s%s( %s, ", prefix? prefix:"", funcName, startIdxString );
+		 }
+         else if( managedCPPCode )
          {
             sprintf( gTempBuf, "%s%senum class %sRetCode %s%s( int    %s,\n",
                      prefix? prefix:"",
@@ -1930,8 +1988,13 @@ static void printFunc( FILE *out,
          else
             indent -= 17;
 
+		 if( indent < 0 ) indent = 0;		 
+
          printIndent( out, indent );
-         fprintf( out, "int    %s,\n", endIdxString );
+		 if( arrayToSubArrayCnvt )
+            fprintf( out, "%s,\n", endIdxString );
+		 else
+			fprintf( out, "int    %s,\n", endIdxString );
       }
    }
    else if( frame )
@@ -2086,7 +2149,8 @@ static void printFunc( FILE *out,
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",
                          outputForSWIG?"":" ",
-                         outputForSWIG? "IN_ARRAY /* inOpen */":"inOpen",
+                         outputForSWIG? "IN_ARRAY /* inOpen */":
+						 arrayToSubArrayCnvt? "gcnew SubArray(inOpen,0)" : "inOpen",
                          prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
@@ -2100,7 +2164,8 @@ static void printFunc( FILE *out,
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",                           
                          outputForSWIG?"":" ",
-                         outputForSWIG? "IN_ARRAY /* inHigh */":"inHigh",
+                         outputForSWIG? "IN_ARRAY /* inHigh */":
+						 arrayToSubArrayCnvt? "gcnew SubArray(inHigh,0)" : "inHigh",
                          prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
@@ -2114,7 +2179,8 @@ static void printFunc( FILE *out,
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",
                          outputForSWIG?"":" ",
-                         outputForSWIG? "IN_ARRAY /* inLow */":"inLow",
+                         outputForSWIG? "IN_ARRAY /* inLow */":
+						 arrayToSubArrayCnvt? "gcnew SubArray(inLow,0)" : "inLow",
                          prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
@@ -2128,7 +2194,8 @@ static void printFunc( FILE *out,
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",                           
                          outputForSWIG?"":" ",
-                         outputForSWIG? "IN_ARRAY /* inClose */":"inClose",
+                         outputForSWIG? "IN_ARRAY /* inClose */":
+						 arrayToSubArrayCnvt? "gcnew SubArray(inClose,0)" : "inClose",
                          prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
@@ -2142,7 +2209,8 @@ static void printFunc( FILE *out,
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",
                          outputForSWIG?"":" ",
-                         outputForSWIG? "IN_ARRAY /* inVolume */":"inVolume",
+                         outputForSWIG? "IN_ARRAY /* inVolume */":
+						 arrayToSubArrayCnvt? "gcnew SubArray(inVolume,0)" : "inVolume",
                          prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
@@ -2156,7 +2224,8 @@ static void printFunc( FILE *out,
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",
                          outputForSWIG?"":" ",
-                         outputForSWIG? "IN_ARRAY /* inOpenInterest */":"inOpenInterest",
+                         outputForSWIG? "IN_ARRAY /* inOpenInterest */":
+						 arrayToSubArrayCnvt? "gcnew SubArray(inOpenInterest,0)" : "inOpenInterest",
                          prototype? arrayBracket : "" );
                   fprintf( out, "%s\n", frame? " */":"," );
                }
@@ -2164,7 +2233,8 @@ static void printFunc( FILE *out,
             break;
          case TA_Input_Real:
             typeString = inputDoubleArrayType;                         
-            defaultParamName = outputForSWIG? "IN_ARRAY":"inReal";
+            defaultParamName = outputForSWIG? "IN_ARRAY":
+				arrayToSubArrayCnvt? "gcnew SubArray(inReal,0)" : "inReal";
             break;
          case TA_Input_Integer:
             typeString = inputIntArrayType;
@@ -2186,6 +2256,7 @@ static void printFunc( FILE *out,
                fprintf( out, "if( !%s ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);\n", inputParamInfo->paramName );
             else
             {
+				
                if( frame )
                   fprintf( out, "params->in[%d].data.%s, /*", paramNb, defaultParamName );
                if( outputForSWIG )
@@ -2196,11 +2267,22 @@ static void printFunc( FILE *out,
                            prototype? arrayBracket : "",
                            inputParamInfo->paramName );
                else
+			   {
+				   if( arrayToSubArrayCnvt )
+				   {
+                  fprintf( out, "%-*sgcnew SubArray(%s,0)",
+                           prototype? 12 : 0, "",                          
+                           inputParamInfo->paramName );
+				   }
+				   else
+				   {
                   fprintf( out, "%-*s %s%s",
                            prototype? 12 : 0,
                            prototype? typeString : "",
                            inputParamInfo->paramName,
                            prototype? arrayBracket : "" );
+				   }
+			   }
                fprintf( out, "%s\n", frame? " */":"," );
             }
          }
@@ -2267,6 +2349,9 @@ static void printFunc( FILE *out,
                  optInputParamInfo->type );
          return;
       }
+
+	  if( arrayToSubArrayCnvt )
+	     typeString = "";
 
       if( !paramName )
          paramName = defaultParamName;
@@ -2523,14 +2608,14 @@ static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
 
    printFrameHeader( out, funcInfo, 0 );
    print( out, "{\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "}\n" );
 
    printFrameHeader( out, funcInfo, 1 );
    print( out, "{\n" );
    if( funcInfo->nbOptInput == 0 )
       print( out, "   (void)params;\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "}\n" );
    
    genPrefix = 0;
@@ -2737,13 +2822,13 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    print( gOutFunc_C->file, "#endif\n" );
    print( gOutFunc_C->file, "#undef   INPUT_TYPE\n" );
    print( gOutFunc_C->file, "#define  INPUT_TYPE float\n" );
-   
+
    print( gOutFunc_C->file, "#if defined( _MANAGED )\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0 );
    print( gOutFunc_C->file, "#elif defined( _JAVA )\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 );
    print( gOutFunc_C->file, "#else\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
    print( gOutFunc_C->file, "#endif\n" );
 
    /* Insert the internal logic of the function */
@@ -3146,11 +3231,11 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "#define INPUT_TYPE   double\n" );
    print( out, "\n" );
    print( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "#elif defined( _JAVA )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0 );
    print( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "#endif\n" );
 
    genPrefix = 0;
@@ -3159,7 +3244,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    genPrefix = 1;
    if( funcInfo->nbOptInput != 0 )
       print( out, "#ifndef TA_FUNC_NO_RANGE_CHECK\n" );
-   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1 );
+   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 );
    if( funcInfo->nbOptInput != 0 )     
      print( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
    else   
@@ -3173,8 +3258,10 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    printFuncHeaderDoc( out, funcInfo, " * " );
    fprintf( out, " */\n" );
    print( out, "\n" );
-   print( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
+   print( out, "#if defined( _MANAGED ) && defined( USE_SUBARRAY )\n" );   
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0 );
+   print( out, "#elif defined( _MANAGED )\n" );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "#elif defined( _JAVA )\n" );
 
    /* Handle special case to avoid duplicate definition of min,max */
@@ -3183,9 +3270,9 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    else if( strcmp( funcInfo->camelCaseName, "Max" ) == 0 )
       print( out, "#undef max\n" );
 
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 );
    print( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "#endif\n" );
 
    genPrefix = 0;
@@ -3205,7 +3292,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
     * Also generates the code for setting up the
     * default values.
     */
-   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
 
    print( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
    print( out, "\n" );
