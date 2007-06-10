@@ -36,16 +36,17 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  BT       BobTrader (TADoc.org forum user).
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  120802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  062704 MF   Prevent divide by zero.
- *  121705 MF   Java port related changes.
+ *  120802 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  062704 MF    Prevent divide by zero.
+ *  121705 MF    Java port related changes.
+ *  060907 MF,BT Fix #1727704. MFI logic bug when no price movement
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -269,12 +270,17 @@
          negSumMF += tempValue1;
          CIRCBUF_REF(mflow[mflow_Idx])positive = 0.0;
       }
-      else
+      else if( tempValue2 > 0 )
       {
          CIRCBUF_REF(mflow[mflow_Idx])positive = tempValue1;
          posSumMF += tempValue1;
          CIRCBUF_REF(mflow[mflow_Idx])negative = 0.0;
       }
+	  else
+	  {
+         CIRCBUF_REF(mflow[mflow_Idx])positive = 0.0;
+         CIRCBUF_REF(mflow[mflow_Idx])negative = 0.0;
+	  }
 
       CIRCBUF_NEXT(mflow);
    }
@@ -312,12 +318,17 @@
             negSumMF += tempValue1;
             CIRCBUF_REF(mflow[mflow_Idx])positive = 0.0;
          }
-         else
+         else if( tempValue2 > 0 )
          {
             CIRCBUF_REF(mflow[mflow_Idx])positive = tempValue1;
             posSumMF += tempValue1;
             CIRCBUF_REF(mflow[mflow_Idx])negative = 0.0;
          }
+	     else
+	     {
+            CIRCBUF_REF(mflow[mflow_Idx])positive = 0.0;
+            CIRCBUF_REF(mflow[mflow_Idx])negative = 0.0;
+	     }
 
          CIRCBUF_NEXT(mflow);
       }
@@ -341,12 +352,17 @@
          negSumMF += tempValue1;
          CIRCBUF_REF(mflow[mflow_Idx])positive = 0.0;
       }
-      else
+      else if( tempValue2 > 0 )
       {
          CIRCBUF_REF(mflow[mflow_Idx])positive = tempValue1;
          posSumMF += tempValue1;
          CIRCBUF_REF(mflow[mflow_Idx])negative = 0.0;
       }
+      else
+	  {
+         CIRCBUF_REF(mflow[mflow_Idx])positive = 0.0;
+         CIRCBUF_REF(mflow[mflow_Idx])negative = 0.0;
+	  }
 
       tempValue1 = posSumMF+negSumMF;
       if( tempValue1 < 1.0 )
