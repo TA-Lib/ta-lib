@@ -136,7 +136,16 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::StdDev( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        SubArray^    inReal,
+/* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                        double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNBElement,
+/* Generated */                                        cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::StdDev( int    startIdx,
 /* Generated */                                        int    endIdx,
 /* Generated */                                        cli::array<double>^ inReal,
@@ -259,7 +268,14 @@
  *       average. Still the function is put here because it is 
  *       closely related.
  */
-#if defined( _MANAGED )
+#if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined(USE_SINGLE_PRECISION_INPUT)
+void Core::TA_INT_stddev_using_precalc_ma( SubArray^ inReal,
+										cli::array<double>^ inMovAvg,
+                                        int inMovAvgBegIdx,                                    
+                                        int inMovAvgNbElement,
+                                        int timePeriod,
+										cli::array<double>^ output)
+#elif defined( _MANAGED )
 void Core::TA_INT_stddev_using_precalc_ma( cli::array<INPUT_TYPE>^ inReal,
 										cli::array<double>^ inMovAvg,
                                         int inMovAvgBegIdx,                                    
@@ -413,7 +429,14 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */    }
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined(USE_SINGLE_PRECISION_INPUT)
+/* Generated */ void Core::TA_INT_stddev_using_precalc_ma( SubArray^ inReal,
+/* Generated */ 										cli::array<double>^ inMovAvg,
+/* Generated */                                         int inMovAvgBegIdx,                                    
+/* Generated */                                         int inMovAvgNbElement,
+/* Generated */                                         int timePeriod,
+/* Generated */ 										cli::array<double>^ output)
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ void Core::TA_INT_stddev_using_precalc_ma( cli::array<INPUT_TYPE>^ inReal,
 /* Generated */ 										cli::array<double>^ inMovAvg,
 /* Generated */                                         int inMovAvgBegIdx,                                    

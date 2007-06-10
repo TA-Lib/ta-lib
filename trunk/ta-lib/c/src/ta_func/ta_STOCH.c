@@ -180,7 +180,22 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Stoch( int    startIdx,
+/* Generated */                                       int    endIdx,
+/* Generated */                                       SubArray^    inHigh,
+/* Generated */                                       SubArray^    inLow,
+/* Generated */                                       SubArray^    inClose,
+/* Generated */                                       int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                       int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                                       MAType        optInSlowK_MAType,
+/* Generated */                                       int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                                       MAType        optInSlowD_MAType,
+/* Generated */                                       [Out]int%    outBegIdx,
+/* Generated */                                       [Out]int%    outNBElement,
+/* Generated */                                       cli::array<double>^  outSlowK,
+/* Generated */                                       cli::array<double>^  outSlowD )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Stoch( int    startIdx,
 /* Generated */                                       int    endIdx,
 /* Generated */                                       cli::array<double>^ inHigh,
@@ -388,7 +403,7 @@
       bufferIsAllocated = 0;
    #endif
 
-   #if defined(USE_SINGLE_PRECISION_INPUT)
+   #if defined(USE_SINGLE_PRECISION_INPUT) || defined( USE_SUBARRAY )
       /* Always alloc, since output is of different type and
        * its allocated size is not guarantee to be as large as
        * the input.
@@ -667,7 +682,7 @@
 /* Generated */    #if !defined( _MANAGED ) && !defined(USE_SINGLE_PRECISION_INPUT) && !defined( _JAVA )
 /* Generated */       bufferIsAllocated = 0;
 /* Generated */    #endif
-/* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT)
+/* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT) || defined( USE_SUBARRAY )
 /* Generated */       ARRAY_ALLOC( tempBuffer, endIdx-today+1 );
 /* Generated */    #else
 /* Generated */       if( (outSlowK == inHigh) || 

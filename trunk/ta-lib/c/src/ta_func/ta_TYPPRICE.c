@@ -113,7 +113,16 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::TypPrice( int    startIdx,
+/* Generated */                                          int    endIdx,
+/* Generated */                                          SubArray^    inHigh,
+/* Generated */                                          SubArray^    inLow,
+/* Generated */                                          SubArray^    inClose,
+/* Generated */                                          [Out]int%    outBegIdx,
+/* Generated */                                          [Out]int%    outNBElement,
+/* Generated */                                          cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::TypPrice( int    startIdx,
 /* Generated */                                          int    endIdx,
 /* Generated */                                          cli::array<double>^ inHigh,

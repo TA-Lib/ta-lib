@@ -31,7 +31,7 @@
 TA_RetCode TA_INT_SMA( int           startIdx,
                        int           endIdx,
                        const double *inReal,
-                       int           optInTimePeriod, /* From 1 to 200 */
+                       int           optInTimePeriod, 
                        int          *outBegIdx,
                        int          *outNBElement,
                        double       *outReal );
@@ -39,7 +39,7 @@ TA_RetCode TA_INT_SMA( int           startIdx,
 TA_RetCode TA_S_INT_SMA( int          startIdx,
                          int          endIdx,
                          const float *inReal,
-                         int          optInTimePeriod, /* From 1 to 200 */
+                         int          optInTimePeriod, 
                          int         *outBegIdx,
                          int         *outNBElement,
                          double      *outReal );
@@ -53,7 +53,7 @@ TA_RetCode TA_S_INT_SMA( int          startIdx,
 TA_RetCode TA_INT_EMA( int           startIdx,
                        int           endIdx,
                        const double *inReal,
-                       int           optInTimePeriod, /* From 1 to 200 */
+                       int           optInTimePeriod, 
                        double        optInK_1,
                        int          *outBegIdx,
                        int          *outNBElement,
@@ -62,7 +62,7 @@ TA_RetCode TA_INT_EMA( int           startIdx,
 TA_RetCode TA_S_INT_EMA( int          startIdx,
                          int          endIdx,
                          const float *inReal,
-                         int          optInTimePeriod, /* From 1 to 200 */
+                         int          optInTimePeriod, 
                          double       optInK_1,
                          int         *outBegIdx,
                          int         *outNBElement,
@@ -77,9 +77,9 @@ TA_RetCode TA_S_INT_EMA( int          startIdx,
 TA_RetCode TA_INT_MACD( int           startIdx,
                         int           endIdx,
                         const double  inReal[],
-                        int           optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
-                        int           optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
-                        int           optInSignalPeriod_2, /* From 1 to 200 */
+                        int           optInFastPeriod, /* 0 is fix 12 */
+                        int           optInSlowPeriod, /* 0 is fix 26 */
+                        int           optInSignalPeriod_2, 
                         int          *outBegIdx,
                         int          *outNBElement,
                         double        outRealMACD_0[],
@@ -89,9 +89,9 @@ TA_RetCode TA_INT_MACD( int           startIdx,
 TA_RetCode TA_S_INT_MACD( int          startIdx,
                           int          endIdx,
                           const float  inReal[],
-                          int          optInFastPeriod, /* From 1 to 200, 0 is fix 12 */
-                          int          optInSlowPeriod, /* From 1 to 200, 0 is fix 26 */
-                          int          optInSignalPeriod_2, /* From 1 to 200 */
+                          int          optInFastPeriod, /* 0 is fix 12 */
+                          int          optInSlowPeriod, /* 0 is fix 26 */
+                          int          optInSignalPeriod_2, 
                           int         *outBegIdx,
                           int         *outNBElement,
                           double       outRealMACD_0[],
@@ -108,8 +108,8 @@ TA_RetCode TA_S_INT_MACD( int          startIdx,
 TA_RetCode TA_INT_PO( int           startIdx,
                       int           endIdx,
                       const double *inReal,
-                      int           optInFastPeriod, /* From 1 to 200 */
-                      int           optInSlowPeriod, /* From 1 to 200 */
+                      int           optInFastPeriod, 
+                      int           optInSlowPeriod, 
                       TA_MAType     optInMethod_2,
                       int          *outBegIdx,
                       int          *outNBElement,
@@ -120,8 +120,8 @@ TA_RetCode TA_INT_PO( int           startIdx,
 TA_RetCode TA_S_INT_PO( int           startIdx,
                         int           endIdx,
                         const float  *inReal,
-                        int           optInFastPeriod, /* From 1 to 200 */
-                        int           optInSlowPeriod, /* From 1 to 200 */
+                        int           optInFastPeriod, 
+                        int           optInSlowPeriod, 
                         TA_MAType     optInMethod_2,
                         int          *outBegIdx,
                         int          *outNBElement,

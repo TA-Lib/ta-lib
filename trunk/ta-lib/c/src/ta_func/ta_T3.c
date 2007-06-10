@@ -138,7 +138,16 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::T3( int    startIdx,
+/* Generated */                                    int    endIdx,
+/* Generated */                                    SubArray^    inReal,
+/* Generated */                                    int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                    double        optInVFactor, /* From 0 to 1 */
+/* Generated */                                    [Out]int%    outBegIdx,
+/* Generated */                                    [Out]int%    outNBElement,
+/* Generated */                                    cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::T3( int    startIdx,
 /* Generated */                                    int    endIdx,
 /* Generated */                                    cli::array<double>^ inReal,

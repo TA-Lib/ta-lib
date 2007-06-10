@@ -160,7 +160,20 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Bbands( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        SubArray^    inReal,
+/* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                        double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                        double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                        MAType        optInMAType,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNBElement,
+/* Generated */                                        cli::array<double>^  outRealUpperBand,
+/* Generated */                                        cli::array<double>^  outRealMiddleBand,
+/* Generated */                                        cli::array<double>^  outRealLowerBand )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Bbands( int    startIdx,
 /* Generated */                                        int    endIdx,
 /* Generated */                                        cli::array<double>^ inReal,
@@ -270,7 +283,7 @@
     * Whenever possible, make the tempBuffer1 be the
     * middle band output. This will save one copy operation.
     */
-   #if defined(USE_SINGLE_PRECISION_INPUT)
+   #if defined(USE_SINGLE_PRECISION_INPUT) || defined( USE_SUBARRAY )
       tempBuffer1 = outRealMiddleBand;
       tempBuffer2 = outRealLowerBand;
    #else
@@ -509,7 +522,7 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT)
+/* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT) || defined( USE_SUBARRAY )
 /* Generated */       tempBuffer1 = outRealMiddleBand;
 /* Generated */       tempBuffer2 = outRealLowerBand;
 /* Generated */    #else

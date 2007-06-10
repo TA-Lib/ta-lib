@@ -122,7 +122,18 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::CdlDarkCloudCover( int    startIdx,
+/* Generated */                                                   int    endIdx,
+/* Generated */                                                   SubArray^    inOpen,
+/* Generated */                                                   SubArray^    inHigh,
+/* Generated */                                                   SubArray^    inLow,
+/* Generated */                                                   SubArray^    inClose,
+/* Generated */                                                   double        optInPenetration, /* From 0 to TA_REAL_MAX */
+/* Generated */                                                   [Out]int%    outBegIdx,
+/* Generated */                                                   [Out]int%    outNBElement,
+/* Generated */                                                   cli::array<int>^  outInteger )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::CdlDarkCloudCover( int    startIdx,
 /* Generated */                                                   int    endIdx,
 /* Generated */                                                   cli::array<double>^ inOpen,

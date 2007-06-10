@@ -147,7 +147,17 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Ppo( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     SubArray^    inReal,
+/* Generated */                                     int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                     int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                     MAType        optInMAType,
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNBElement,
+/* Generated */                                     cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Ppo( int    startIdx,
 /* Generated */                                     int    endIdx,
 /* Generated */                                     cli::array<double>^ inReal,
@@ -235,8 +245,8 @@
    #endif
 
    retCode = FUNCTION_CALL(INT_PO)( startIdx, endIdx, inReal,
-                                    optInFastPeriod, /* From 1 to 200 */
-                                    optInSlowPeriod, /* From 1 to 200 */
+                                    optInFastPeriod,
+                                    optInSlowPeriod,
                                     optInMAType,
                                     outBegIdx,
                                     outNBElement,
@@ -325,8 +335,8 @@
 /* Generated */          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
 /* Generated */    #endif
 /* Generated */    retCode = FUNCTION_CALL(INT_PO)( startIdx, endIdx, inReal,
-/* Generated */                                     optInFastPeriod, 
-/* Generated */                                     optInSlowPeriod, 
+/* Generated */                                     optInFastPeriod,
+/* Generated */                                     optInSlowPeriod,
 /* Generated */                                     optInMAType,
 /* Generated */                                     outBegIdx,
 /* Generated */                                     outNBElement,

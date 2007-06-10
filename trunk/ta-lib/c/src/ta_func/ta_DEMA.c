@@ -126,7 +126,15 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Dema( int    startIdx,
+/* Generated */                                      int    endIdx,
+/* Generated */                                      SubArray^    inReal,
+/* Generated */                                      int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                      [Out]int%    outBegIdx,
+/* Generated */                                      [Out]int%    outNBElement,
+/* Generated */                                      cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Dema( int    startIdx,
 /* Generated */                                      int    endIdx,
 /* Generated */                                      cli::array<double>^ inReal,
@@ -238,7 +246,7 @@
     * When possible, re-use the outputBuffer for temp
     * calculation.
     */
-   #if defined(USE_SINGLE_PRECISION_INPUT)
+   #if defined(USE_SINGLE_PRECISION_INPUT) || defined( USE_SUBARRAY )
       tempInt = lookbackTotal+(endIdx-startIdx)+1;
       ARRAY_ALLOC(firstEMA, tempInt );
       #if !defined( _JAVA )
@@ -402,7 +410,7 @@
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success); 
-/* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT)
+/* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT) || defined( USE_SUBARRAY )
 /* Generated */       tempInt = lookbackTotal+(endIdx-startIdx)+1;
 /* Generated */       ARRAY_ALLOC(firstEMA, tempInt );
 /* Generated */       #if !defined( _JAVA )

@@ -47,6 +47,7 @@
  *  040503 MF   Add T3
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  111603 MF   Allow period of 1. Just copy input into output.
+ *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -181,7 +182,16 @@
  * 
  */
 /* Generated */ 
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::MovingAverage( int    startIdx,
+/* Generated */                                               int    endIdx,
+/* Generated */                                               SubArray^    inReal,
+/* Generated */                                               int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                               MAType        optInMAType,
+/* Generated */                                               [Out]int%    outBegIdx,
+/* Generated */                                               [Out]int%    outNBElement,
+/* Generated */                                               cli::array<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::MovingAverage( int    startIdx,
 /* Generated */                                               int    endIdx,
 /* Generated */                                               cli::array<double>^ inReal,
@@ -262,20 +272,17 @@
       VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
-   /* Simply call the internal implementation of the
-    * requested moving average.
-    */
+   /* Simply forward the job to the corresponding TA function. */
    switch( optInMAType )
    {
    case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
-      retCode = FUNCTION_CALL(INT_SMA)( startIdx, endIdx, inReal, optInTimePeriod,
-                                        outBegIdx, outNBElement, outReal );
+      retCode = FUNCTION_CALL(SMA)( startIdx, endIdx, inReal, optInTimePeriod,
+                                    outBegIdx, outNBElement, outReal );
       break;
 
    case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
-      retCode = FUNCTION_CALL(INT_EMA)( startIdx, endIdx, inReal,
-                                        optInTimePeriod, PER_TO_K(optInTimePeriod),
-                                        outBegIdx, outNBElement, outReal );
+      retCode = FUNCTION_CALL(EMA)( startIdx, endIdx, inReal, optInTimePeriod,                                     
+                                    outBegIdx, outNBElement, outReal );
       break;
 
    case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
@@ -412,13 +419,12 @@
 /* Generated */    switch( optInMAType )
 /* Generated */    {
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_SMA, Sma):
-/* Generated */       retCode = FUNCTION_CALL(INT_SMA)( startIdx, endIdx, inReal, optInTimePeriod,
-/* Generated */                                         outBegIdx, outNBElement, outReal );
+/* Generated */       retCode = FUNCTION_CALL(SMA)( startIdx, endIdx, inReal, optInTimePeriod,
+/* Generated */                                     outBegIdx, outNBElement, outReal );
 /* Generated */       break;
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_EMA, Ema):
-/* Generated */       retCode = FUNCTION_CALL(INT_EMA)( startIdx, endIdx, inReal,
-/* Generated */                                         optInTimePeriod, PER_TO_K(optInTimePeriod),
-/* Generated */                                         outBegIdx, outNBElement, outReal );
+/* Generated */       retCode = FUNCTION_CALL(EMA)( startIdx, endIdx, inReal, optInTimePeriod,                                     
+/* Generated */                                     outBegIdx, outNBElement, outReal );
 /* Generated */       break;
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_WMA, Wma):
 /* Generated */       retCode = FUNCTION_CALL(WMA)( startIdx, endIdx, inReal, optInTimePeriod,
