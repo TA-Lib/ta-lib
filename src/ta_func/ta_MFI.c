@@ -476,12 +476,17 @@
 /* Generated */          negSumMF += tempValue1;
 /* Generated */          CIRCBUF_REF(mflow[mflow_Idx])positive = 0.0;
 /* Generated */       }
-/* Generated */       else
+/* Generated */       else if( tempValue2 > 0 )
 /* Generated */       {
 /* Generated */          CIRCBUF_REF(mflow[mflow_Idx])positive = tempValue1;
 /* Generated */          posSumMF += tempValue1;
 /* Generated */          CIRCBUF_REF(mflow[mflow_Idx])negative = 0.0;
 /* Generated */       }
+/* Generated */ 	  else
+/* Generated */ 	  {
+/* Generated */          CIRCBUF_REF(mflow[mflow_Idx])positive = 0.0;
+/* Generated */          CIRCBUF_REF(mflow[mflow_Idx])negative = 0.0;
+/* Generated */ 	  }
 /* Generated */       CIRCBUF_NEXT(mflow);
 /* Generated */    }
 /* Generated */    if( today > startIdx )
@@ -508,12 +513,17 @@
 /* Generated */             negSumMF += tempValue1;
 /* Generated */             CIRCBUF_REF(mflow[mflow_Idx])positive = 0.0;
 /* Generated */          }
-/* Generated */          else
+/* Generated */          else if( tempValue2 > 0 )
 /* Generated */          {
 /* Generated */             CIRCBUF_REF(mflow[mflow_Idx])positive = tempValue1;
 /* Generated */             posSumMF += tempValue1;
 /* Generated */             CIRCBUF_REF(mflow[mflow_Idx])negative = 0.0;
 /* Generated */          }
+/* Generated */ 	     else
+/* Generated */ 	     {
+/* Generated */             CIRCBUF_REF(mflow[mflow_Idx])positive = 0.0;
+/* Generated */             CIRCBUF_REF(mflow[mflow_Idx])negative = 0.0;
+/* Generated */ 	     }
 /* Generated */          CIRCBUF_NEXT(mflow);
 /* Generated */       }
 /* Generated */    }
@@ -531,12 +541,17 @@
 /* Generated */          negSumMF += tempValue1;
 /* Generated */          CIRCBUF_REF(mflow[mflow_Idx])positive = 0.0;
 /* Generated */       }
-/* Generated */       else
+/* Generated */       else if( tempValue2 > 0 )
 /* Generated */       {
 /* Generated */          CIRCBUF_REF(mflow[mflow_Idx])positive = tempValue1;
 /* Generated */          posSumMF += tempValue1;
 /* Generated */          CIRCBUF_REF(mflow[mflow_Idx])negative = 0.0;
 /* Generated */       }
+/* Generated */       else
+/* Generated */ 	  {
+/* Generated */          CIRCBUF_REF(mflow[mflow_Idx])positive = 0.0;
+/* Generated */          CIRCBUF_REF(mflow[mflow_Idx])negative = 0.0;
+/* Generated */ 	  }
 /* Generated */       tempValue1 = posSumMF+negSumMF;
 /* Generated */       if( tempValue1 < 1.0 )
 /* Generated */          outReal[outIdx++] = 0.0;
