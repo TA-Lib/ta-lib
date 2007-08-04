@@ -1225,6 +1225,8 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 	char tempString[8*1024];
 	unsigned int i;
 
+    (void)opaqueData;
+
 	/* General stuff about function */
 	fprintf(gOutFunc_XML->file, "	<!-- %s -->\n", funcInfo->name);
 	fprintf(gOutFunc_XML->file, "	<FinancialFunction>\n");
@@ -1516,9 +1518,13 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
 static void doForEachFunctionPhase1( const TA_FuncInfo *funcInfo,
                                void *opaqueData )
 {
+	(void)opaqueData;
+
    #ifdef _MSC_VER
       /* Run the func file through the pre-processor to generate the Java code. */
       genJavaCodePhase1( funcInfo );      
+   #else
+	  (void)funcInfo;
    #endif
 }
 

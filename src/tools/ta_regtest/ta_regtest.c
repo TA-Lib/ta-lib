@@ -54,6 +54,10 @@
  */
 
 /**** Headers ****/
+#ifdef WIN32
+   #include "windows.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,7 +74,10 @@
 /* None */
 
 /**** Global variables definitions.    ****/
-/* None */
+int nbProfiledCall;
+double timeInProfiledCall;
+double worstProfiledCall;
+int insufficientClockPrecision;
 
 /**** Local declarations.              ****/
 /* None */
@@ -85,10 +92,20 @@ static ErrorNumber test_with_simulator( void );
 /**** Global functions definitions.   ****/
 int main( int argc, char **argv )
 {
+#ifdef WIN32
+	LARGE_INTEGER QPFrequency;
+#endif
+   double freq;
+
    ErrorNumber retValue;
 
    (void)argv;
 
+   insufficientClockPrecision = 0;
+   timeInProfiledCall = 0.0;
+   worstProfiledCall = 0.0;
+   nbProfiledCall = 0;
+   
    printf( "\n" );
    printf( "ta_regtest V%s - Regression Tests of TA-Lib code\n", TA_GetVersionString() );
    printf( "\n" );
@@ -136,7 +153,29 @@ int main( int argc, char **argv )
    if( retValue != TA_TEST_PASS )
       return retValue;
 
-   printf( "\n* All tests succeed. Enjoy the library. *\n" );
+   if( insufficientClockPrecision != 0 )
+   {
+	   printf( "\nWarning: Code profiling not supported for this platform.\n" );
+   }
+   else if( nbProfiledCall > 0 )
+   {
+      printf( "\nNumber profiled functions           = %d functions", nbProfiledCall );	  
+
+#ifdef WIN32
+      QueryPerformanceFrequency(&QPFrequency);
+	  freq = (double)QPFrequency.QuadPart;
+	  printf( "\nTotal execution time                = %g milliseconds", (timeInProfiledCall/freq)*1000.0 );
+      printf( "\nWorst single function call          = %g milliseconds", (worstProfiledCall/freq)*1000.0 );
+	  printf( "\nAverage execution time per function = %g nanoseconds\n", ((timeInProfiledCall/freq)*1000000.0)/((double)nbProfiledCall) );
+#else
+      freq = (double)CLOCKS_PER_SEC;
+	  printf( "\nTotal execution time                = %g milliseconds", timeInProfiledCall/freq/1000.0 );
+      printf( "\nWorst single function call          = %g milliseconds", worstProfiledCall/freq/1000.0 );
+	  printf( "\nAverage execution time per function = %g nanoseconds\n", (timeInProfiledCall/freq/1000000.0)/((double)nbProfiledCall) );
+#endif	  
+   }
+
+   printf( "\n* All tests succeeded. Enjoy the library. *\n" );
 
    return TA_TEST_PASS; /* Everything succeed !!! */
 }
@@ -224,5 +263,5 @@ static int testTAFunction_ALL( void )
    DO_TEST( test_func_bbands,   "BBANDS" );
    DO_TEST( test_candlestick,   "All Candlesticks" );
 
-   return TA_TEST_PASS; /* All test succeed. */
+   return TA_TEST_PASS; /* All tests succeeded. */
 }
