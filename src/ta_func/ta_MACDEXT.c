@@ -115,7 +115,7 @@
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInFastMAType == TA_INTEGER_DEFAULT )
-/* Generated */       optInFastMAType = 0;
+/* Generated */       optInFastMAType = (TA_MAType)0;
 /* Generated */    else if( ((int)optInFastMAType < 0) || ((int)optInFastMAType > 8) )
 /* Generated */       return -1;
 /* Generated */ 
@@ -128,7 +128,7 @@
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInSlowMAType == TA_INTEGER_DEFAULT )
-/* Generated */       optInSlowMAType = 0;
+/* Generated */       optInSlowMAType = (TA_MAType)0;
 /* Generated */    else if( ((int)optInSlowMAType < 0) || ((int)optInSlowMAType > 8) )
 /* Generated */       return -1;
 /* Generated */ 
@@ -141,7 +141,7 @@
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInSignalMAType == TA_INTEGER_DEFAULT )
-/* Generated */       optInSignalMAType = 0;
+/* Generated */       optInSignalMAType = (TA_MAType)0;
 /* Generated */    else if( ((int)optInSignalMAType < 0) || ((int)optInSignalMAType > 8) )
 /* Generated */       return -1;
 /* Generated */ 
@@ -288,7 +288,7 @@
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInFastMAType == TA_INTEGER_DEFAULT )
-/* Generated */       optInFastMAType = 0;
+/* Generated */       optInFastMAType = (TA_MAType)0;
 /* Generated */    else if( ((int)optInFastMAType < 0) || ((int)optInFastMAType > 8) )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
@@ -301,7 +301,7 @@
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInSlowMAType == TA_INTEGER_DEFAULT )
-/* Generated */       optInSlowMAType = 0;
+/* Generated */       optInSlowMAType = (TA_MAType)0;
 /* Generated */    else if( ((int)optInSlowMAType < 0) || ((int)optInSlowMAType > 8) )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
@@ -314,7 +314,7 @@
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInSignalMAType == TA_INTEGER_DEFAULT )
-/* Generated */       optInSignalMAType = 0;
+/* Generated */       optInSignalMAType = (TA_MAType)0;
 /* Generated */    else if( ((int)optInSignalMAType < 0) || ((int)optInSignalMAType > 8) )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
@@ -563,7 +563,7 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInFastMAType == TA_INTEGER_DEFAULT )
-/* Generated */        optInFastMAType = 0;
+/* Generated */        optInFastMAType = (TA_MAType)0;
 /* Generated */     else if( ((int)optInFastMAType < 0) || ((int)optInFastMAType > 8) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
@@ -573,7 +573,7 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInSlowMAType == TA_INTEGER_DEFAULT )
-/* Generated */        optInSlowMAType = 0;
+/* Generated */        optInSlowMAType = (TA_MAType)0;
 /* Generated */     else if( ((int)optInSlowMAType < 0) || ((int)optInSlowMAType > 8) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
@@ -583,7 +583,7 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInSignalMAType == TA_INTEGER_DEFAULT )
-/* Generated */        optInSignalMAType = 0;
+/* Generated */        optInSignalMAType = (TA_MAType)0;
 /* Generated */     else if( ((int)optInSignalMAType < 0) || ((int)optInSignalMAType > 8) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 

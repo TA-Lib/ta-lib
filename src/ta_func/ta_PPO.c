@@ -112,7 +112,7 @@
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
-/* Generated */       optInMAType = 0;
+/* Generated */       optInMAType = (TA_MAType)0;
 /* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
 /* Generated */       return -1;
 /* Generated */ 
@@ -221,7 +221,7 @@
 /* Generated */ 
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
-/* Generated */       optInMAType = 0;
+/* Generated */       optInMAType = (TA_MAType)0;
 /* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
@@ -320,7 +320,7 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInMAType == TA_INTEGER_DEFAULT )
-/* Generated */        optInMAType = 0;
+/* Generated */        optInMAType = (TA_MAType)0;
 /* Generated */     else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
