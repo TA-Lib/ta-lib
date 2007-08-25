@@ -1820,6 +1820,7 @@ static void printFunc( FILE *out,
    const char *arrayBracket;
    const char *funcName;
    int excludeFromManaged;
+   int isMAType;
 
    const char *startIdxString;
    const char *endIdxString;
@@ -2323,6 +2324,12 @@ static void printFunc( FILE *out,
 
       paramName = optInputParamInfo->paramName;
 
+	  /* Boolean to detect special TA_MAType enumeration. */
+	  if( optInputParamInfo->dataSet == TA_DEF_UI_MA_Method.dataSet )
+	     isMAType = 1;
+	  else
+         isMAType = 0;
+
       switch( optInputParamInfo->type )
       {
       case TA_OptInput_RealRange:
@@ -2335,8 +2342,9 @@ static void printFunc( FILE *out,
          defaultParamName = outputForSWIG? "OPT_INT":"optInInteger";
          break;
       case TA_OptInput_IntegerList:
-         if( (optInputParamInfo->dataSet == TA_DEF_UI_MA_Method.dataSet) && !frame )
+         if( isMAType && !frame )
          {
+
             typeString = managedCPPCode||outputForJava? "MAType":"TA_MAType";
             defaultParamName = outputForSWIG? "OPT_MATYPE":"optInMAType";
             excludeFromManaged = 1;
@@ -2385,7 +2393,8 @@ static void printFunc( FILE *out,
 
          if( frame )
          {
-            fprintf( out, "params->optIn[%d].data.%s%s /*",
+            fprintf( out, "%sparams->optIn[%d].data.%s%s /*",
+				     isMAType?"(TA_MAType)":"",
                      paramNb, defaultParamName,
                      lookbackSignature&&lastParam?"":"," );
          }
@@ -3317,6 +3326,7 @@ static void printOptInputValidation( FILE *out,
    int minInt, maxInt;
    double minReal, maxReal;
    unsigned int i;
+   int isMAType;
 
    const TA_RealList     *realList;
    const TA_IntegerList  *integerList;
@@ -3362,6 +3372,12 @@ static void printOptInputValidation( FILE *out,
       break;
    }
 
+  /* Boolean to detect special TA_MAType enumeration. */
+  if( optInputParamInfo->dataSet == TA_DEF_UI_MA_Method.dataSet )
+     isMAType = 1;
+  else
+     isMAType = 0;
+
    switch( optInputParamInfo->type )
    {
    case TA_OptInput_RealList:
@@ -3376,7 +3392,7 @@ static void printOptInputValidation( FILE *out,
       print( out, "   /* min/max are checked for %s. */\n", name );
    case TA_OptInput_IntegerList:
       print( out, "   if( (int)%s == TA_INTEGER_DEFAULT )\n", name );
-      print( out, "      %s = %d;\n", name, (int)optInputParamInfo->defaultValue );
+	  print( out, "      %s = %s%d;\n", name, isMAType?"(TA_MAType)":"", (int)optInputParamInfo->defaultValue );
       print( out, "   else if( ((int)%s < %d) || ((int)%s > %d) )\n",
               name, minInt,
               name, maxInt );
@@ -3695,7 +3711,7 @@ static int gen_retcode( void )
          if( ptr1 && !ptr2 )
          {
             ptr1 += 2;
-            retCodeValue = atoi(ptr1);
+            retCodeValue = (TA_RetCode)atoi(ptr1);
             ptr1 = strstr( ptr1, "TA_" );
             if( !ptr1 )
             {
@@ -3731,7 +3747,7 @@ static int gen_retcode( void )
 
             strcpy( gTempBuf, retCodeEnum );
             ptr1 = trimWhitespace( gTempBuf );
-            fprintf( gOutRetCode_C->file, "         {%d,\"%s\",", retCodeValue, ptr1 );                     
+            fprintf( gOutRetCode_C->file, "         {(TA_RetCode)%d,\"%s\",", retCodeValue, ptr1 );                     
             fprintf( gOutRetCode_CSV->file, "%d,%s", retCodeValue, ptr1 );
             strcpy( gTempBuf, retCodeInfo );
             ptr1 = trimWhitespace( gTempBuf );
