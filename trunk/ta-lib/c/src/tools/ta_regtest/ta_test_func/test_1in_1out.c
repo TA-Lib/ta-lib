@@ -77,7 +77,8 @@ typedef enum {
   TA_HT_DCPERIOD_TEST,
   TA_HT_DCPHASE_TEST,
   TA_HT_TRENDLINE_TEST,
-  TA_HT_TRENDMODE_TEST
+  TA_HT_TRENDMODE_TEST,
+  TA_SIN_TEST
 } TA_TestId;
 
 typedef struct
@@ -132,6 +133,12 @@ static TA_Test tableTest[] =
    { 1, TA_HT_DCPERIOD_TEST, 0, 0, 251, TA_SUCCESS,      0, 15.5527, 32,  252-32 }, /* First Value */
    { 0, TA_HT_DCPERIOD_TEST, 0, 0, 251, TA_SUCCESS, 252-33, 18.6140, 32,  252-32 }  /* Last Value */
 
+   /*********************************/
+   /* Trigonometric and Vector Math */
+   /*********************************/
+   { 1, TA_SIN_TEST, 0, 0, 251, TA_SUCCESS, 0, -0.38371, 0,  252 }, /* First Value */
+   { 0, TA_SIN_TEST, 0, 0, 251, TA_SUCCESS, 251, 0.870319, 0,  252 }  /* Last Value */
+
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
@@ -166,7 +173,7 @@ ErrorNumber test_func_1in_1out( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return 0; 
+   return TA_TEST_PASS; 
 }
 
 /**** Local functions definitions.     ****/
@@ -267,6 +274,15 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
       FREE_INT_BUFFER( outputBuffer, *outNbElement );
       break;
+   case TA_SIN_TEST:
+      retCode = TA_SIN( startIdx,
+                        endIdx,
+                        testParam->price,
+                        outBegIdx,
+                        outNbElement,                          
+                        outputBuffer );
+      *lookback = TA_SIN_Lookback();
+      break;
    default:
       retCode = TA_INTERNAL_ERROR(132);
    }
@@ -353,6 +369,14 @@ static ErrorNumber do_test( const TA_History *history,
                                  &intBuffer[1] );
       FREE_INT_BUFFER( gBuffer[0].out0, outNbElement );
       break;
+   case TA_SIN_TEST:
+      retCode = TA_SIN( test->startIdx,
+                        test->endIdx,
+                        gBuffer[0].in,
+                        &outBegIdx,
+                        &outNbElement,
+                        gBuffer[0].out0 );
+	   break;
    default:
       retCode = TA_INTERNAL_ERROR(133);
    }
@@ -410,7 +434,15 @@ static ErrorNumber do_test( const TA_History *history,
                                 );
       FREE_INT_BUFFER( gBuffer[0].in, outNbElement );
       break;
-
+   case TA_SIN_TEST:
+      retCode = TA_SIN( test->startIdx,
+                        test->endIdx,
+                        gBuffer[0].in,
+                        &outBegIdx,
+                        &outNbElement,
+                        gBuffer[0].in
+                        );
+      break;
    default:
       retCode = TA_INTERNAL_ERROR(134);
    }
