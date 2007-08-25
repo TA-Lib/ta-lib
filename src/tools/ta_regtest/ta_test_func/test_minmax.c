@@ -827,5 +827,5 @@ static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement )
       }  
    }
 
-   return TA_SUCCESS;
+   return TA_TEST_PASS;
 }

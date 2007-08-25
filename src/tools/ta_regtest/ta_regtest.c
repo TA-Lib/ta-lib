@@ -83,7 +83,7 @@ int insufficientClockPrecision;
 /* None */
 
 /**** Local functions declarations.    ****/
-static int testTAFunction_ALL( void );
+static ErrorNumber testTAFunction_ALL( void );
 static ErrorNumber test_with_simulator( void );
 
 /**** Local variables definitions.     ****/
@@ -129,7 +129,7 @@ int main( int argc, char **argv )
       return TA_REGTEST_BAD_USER_PARAM;
    }
 
-   /* Some tests are using randomness. */
+   /* Some tests are using randomness. */ 
    srand( (unsigned)time( NULL ) );
 
    /* Test utility like List/Stack/Dictionary/Memory Allocation etc... */
@@ -159,7 +159,7 @@ int main( int argc, char **argv )
    }
    else if( nbProfiledCall > 0 )
    {
-      printf( "\nNumber profiled functions           = %d functions", nbProfiledCall );	  
+      printf( "\nNumber profiled function call       = %d function calls", nbProfiledCall );	  
 
 #ifdef WIN32
       QueryPerformanceFrequency(&QPFrequency);
@@ -212,7 +212,7 @@ extern TA_Real      TA_SREF_low_daily_ref_0_PRIV[];
 extern TA_Real      TA_SREF_close_daily_ref_0_PRIV[];
 extern TA_Real      TA_SREF_volume_daily_ref_0_PRIV[];
 
-static int testTAFunction_ALL( void )
+static ErrorNumber testTAFunction_ALL( void )
 {
    ErrorNumber retValue;
    TA_History history;
@@ -242,12 +242,12 @@ static int testTAFunction_ALL( void )
       printf( "done.\n" ); \
       fflush(stdout); \
       }
+   DO_TEST( test_func_1in_1out, "MATH,VECTOR,DCPERIOD/PHASE,TRENDLINE/MODE" );   
    DO_TEST( test_func_ma,       "All Moving Averages" );
    DO_TEST( test_func_per_hl,   "AROON,CORREL,BETA" );
    DO_TEST( test_func_per_hlc,  "CCI,WILLR,ULTOSC,NATR" );
    DO_TEST( test_func_per_ohlc, "BOP,AVGPRICE" );
    DO_TEST( test_func_rsi,      "RSI,CMO" );
-   DO_TEST( test_func_1in_1out, "DCPERIOD/PHASE,TRENDLINE/MODE" );
    DO_TEST( test_func_minmax,   "MIN,MAX,MININDEX,MAXINDEX,MINMAX,MINMAXINDEX" );
    DO_TEST( test_func_po,       "PO,APO" );
    DO_TEST( test_func_adx,      "ADX,ADXR,DI,DM,DX" );

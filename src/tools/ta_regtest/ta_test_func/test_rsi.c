@@ -293,7 +293,7 @@ static ErrorNumber do_test( const TA_History *history,
    /* Set to NAN all the elements of the gBuffers.  */
    clearAllBuffers();
 
-   TA_SetCompatibility( test->compatibility );
+   TA_SetCompatibility( (TA_Compatibility)test->compatibility );
 
    /* Build the input. */
    setInputBuffer( 0, history->close, history->nbBars );
