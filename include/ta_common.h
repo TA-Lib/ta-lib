@@ -43,7 +43,7 @@
  *
  * NEXT AVAILABLE NUMBER: 181
  */
-#define TA_INTERNAL_ERROR(Id) (TA_INTERNAL_ERROR+Id)
+#define TA_INTERNAL_ERROR(Id) ((TA_RetCode)(TA_INTERNAL_ERROR+Id))
 
 #ifdef __cplusplus
 extern "C" {
