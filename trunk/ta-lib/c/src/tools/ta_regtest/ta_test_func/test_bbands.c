@@ -285,7 +285,7 @@ ErrorNumber test_func_bbands( TA_History *history )
    }
 
    /* All test succeed. */
-   return 0; 
+   return TA_TEST_PASS; 
 }
 
 /**** Local functions definitions.     ****/
@@ -351,14 +351,14 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         testParam->test->optInTimePeriod,
                         testParam->test->optInNbDevUp,
                         testParam->test->optInNbDevDn,
-                        testParam->test->optInMethod_3,
+                        (TA_MAType)testParam->test->optInMethod_3,
                         outBegIdx, outNbElement,
                         out1, out2, out3 );
 
    *lookback = TA_BBANDS_Lookback( testParam->test->optInTimePeriod,
                                    testParam->test->optInNbDevUp,
                                    testParam->test->optInNbDevDn,
-                                   testParam->test->optInMethod_3 );
+                                   (TA_MAType)testParam->test->optInMethod_3 );
 
    TA_Free(  dummyBuffer1 );
    TA_Free(  dummyBuffer2 );
@@ -389,7 +389,7 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 2, history->close, history->nbBars );
    setInputBuffer( 3, history->close, history->nbBars );
 
-   TA_SetCompatibility( test->compatibility );
+   TA_SetCompatibility( (TA_Compatibility)test->compatibility );
 
    /* Make a simple first call. */
    retCode = TA_BBANDS( test->startIdx,
@@ -398,7 +398,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->optInTimePeriod,
                         test->optInNbDevUp,
                         test->optInNbDevDn,
-                        test->optInMethod_3,
+                        (TA_MAType)test->optInMethod_3,
 
                         &outBegIdx, &outNbElement,
                         gBuffer[0].out0, 
@@ -424,7 +424,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->optInTimePeriod,
                         test->optInNbDevUp,
                         test->optInNbDevDn,
-                        test->optInMethod_3,
+                        (TA_MAType)test->optInMethod_3,
                         &outBegIdx, &outNbElement,
                         gBuffer[1].in, gBuffer[1].out1, gBuffer[1].out2 );                        
 
@@ -453,7 +453,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->optInTimePeriod,
                         test->optInNbDevUp,
                         test->optInNbDevDn,
-                        test->optInMethod_3,
+                        (TA_MAType)test->optInMethod_3,
                         &outBegIdx, &outNbElement,
                         gBuffer[2].out1, 
                         gBuffer[2].in,
@@ -484,7 +484,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->optInTimePeriod,
                         test->optInNbDevUp,
                         test->optInNbDevDn,
-                        test->optInMethod_3,
+                        (TA_MAType)test->optInMethod_3,
                         &outBegIdx, &outNbElement,
                         gBuffer[3].out0, 
                         gBuffer[3].out1,

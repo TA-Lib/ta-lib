@@ -197,7 +197,7 @@ ErrorNumber test_func_macd( TA_History *history )
    }
 
    /* All test succeed. */
-   return 0; 
+   return TA_TEST_PASS; 
 }
 
 /**** Local functions definitions.     ****/
@@ -325,7 +325,7 @@ static ErrorNumber do_test( const TA_History *history,
    if( retCode != TA_SUCCESS )
       return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
 
-   TA_SetCompatibility( test->compatibility );
+   TA_SetCompatibility( (TA_Compatibility)test->compatibility );
 
    /* Set to NAN all the elements of the gBuffers.  */
    clearAllBuffers();

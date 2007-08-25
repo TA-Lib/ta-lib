@@ -158,7 +158,7 @@ ErrorNumber test_func_per_ema( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return 0; 
+   return TA_TEST_PASS; 
 }
 
 /**** Local functions definitions.     ****/

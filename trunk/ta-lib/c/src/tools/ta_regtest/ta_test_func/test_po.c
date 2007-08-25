@@ -236,7 +236,7 @@ ErrorNumber test_func_po( TA_History *history )
    }
 
    /* All test succeed. */
-   return 0; 
+   return TA_TEST_PASS; 
 }
 
 /**** Local functions definitions.     ****/
@@ -268,14 +268,14 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         testParam->close,
                         testParam->test->optInFastPeriod,
                         testParam->test->optInSlowPeriod,
-                        testParam->test->optInMethod_2,
+                        (TA_MAType)testParam->test->optInMethod_2,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
 
      *lookback = TA_PPO_Lookback( testParam->test->optInFastPeriod,
                       testParam->test->optInSlowPeriod,
-                      testParam->test->optInMethod_2 );                      
+                      (TA_MAType)testParam->test->optInMethod_2 );                      
    }
    else
    {
@@ -284,7 +284,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         testParam->close,
                         testParam->test->optInFastPeriod,
                         testParam->test->optInSlowPeriod,
-                        testParam->test->optInMethod_2,
+                        (TA_MAType)testParam->test->optInMethod_2,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
@@ -292,7 +292,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
      *lookback = TA_APO_Lookback( testParam->test->optInFastPeriod,
                       testParam->test->optInSlowPeriod,
-                      testParam->test->optInMethod_2 );
+                      (TA_MAType)testParam->test->optInMethod_2 );
    }
 
   return retCode;
@@ -312,7 +312,7 @@ static ErrorNumber do_test( const TA_History *history,
    /* Set to NAN all the elements of the gBuffers.  */
    clearAllBuffers();
 
-   TA_SetCompatibility( test->compatibility );
+   TA_SetCompatibility( (TA_Compatibility)test->compatibility );
 
    /* Build the input. */
    setInputBuffer( 0, history->close, history->nbBars );
@@ -328,7 +328,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[0].in,
                         test->optInFastPeriod,
                         test->optInSlowPeriod,
-                        test->optInMethod_2,
+                        (TA_MAType)test->optInMethod_2,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -340,7 +340,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[0].in,
                         test->optInFastPeriod,
                         test->optInSlowPeriod,
-                        test->optInMethod_2,
+                        (TA_MAType)test->optInMethod_2,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -371,7 +371,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[1].in,
                         test->optInFastPeriod,
                         test->optInSlowPeriod,
-                        test->optInMethod_2,
+                        (TA_MAType)test->optInMethod_2,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -383,7 +383,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[1].in,
                         test->optInFastPeriod,
                         test->optInSlowPeriod,
-                        test->optInMethod_2,
+                        (TA_MAType)test->optInMethod_2,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );

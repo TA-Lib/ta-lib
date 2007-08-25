@@ -402,7 +402,7 @@ ErrorNumber test_func_ma( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return 0; 
+   return TA_TEST_PASS; 
 }
 
 /**** Local functions definitions.     ****/
@@ -464,13 +464,13 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                       testParam->close,
 					  testParam->mavpPeriod,
                       2,testParam->test->optInTimePeriod,
-                      testParam->test->optInMAType_1,
+                      (TA_MAType)testParam->test->optInMAType_1,
                       outBegIdx,
                       outNbElement,
                       outputBuffer );
 
      *lookback = TA_MAVP_Lookback( 2, testParam->test->optInTimePeriod,
-                                 testParam->test->optInMAType_1 );
+                                 (TA_MAType)testParam->test->optInMAType_1 );
 	  }
 	  else
 	  {
@@ -481,13 +481,13 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                       endIdx,
                       testParam->close,
                       testParam->test->optInTimePeriod,
-                      testParam->test->optInMAType_1,
+                      (TA_MAType)testParam->test->optInMAType_1,
                       outBegIdx,
                       outNbElement,
                       outputBuffer );
 
      *lookback = TA_MA_Lookback( testParam->test->optInTimePeriod,
-                                 testParam->test->optInMAType_1 );
+                                 (TA_MAType)testParam->test->optInMAType_1 );
 	  }
      break;
   }
@@ -513,7 +513,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
       return TA_TEST_PASS;
    }
 
-   TA_SetCompatibility( test->compatibility );
+   TA_SetCompatibility( (TA_Compatibility)test->compatibility );
 
    /* Set to NAN all the elements of the gBuffers.  */
    clearAllBuffers();
@@ -584,7 +584,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
                             gBuffer[0].in,
 							gBuffer[2].in,
 							2, test->optInTimePeriod,
-                            test->optInMAType_1,
+                            (TA_MAType)test->optInMAType_1,
                             &outBegIdx,
                             &outNbElement,
                             gBuffer[0].out0 );
@@ -595,7 +595,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
                           test->endIdx,
                           gBuffer[0].in,
                           test->optInTimePeriod,
-                          test->optInMAType_1,
+                          (TA_MAType)test->optInMAType_1,
                           &outBegIdx,
                           &outNbElement,
                           gBuffer[0].out0 );
@@ -653,7 +653,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
                        gBuffer[1].in,
 					   gBuffer[2].in,
                        2,test->optInTimePeriod,
-                       test->optInMAType_1,
+                       (TA_MAType)test->optInMAType_1,
                        &outBegIdx,
                        &outNbElement,
                        gBuffer[1].in );
@@ -664,7 +664,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
                        test->endIdx,
                        gBuffer[1].in,
                        test->optInTimePeriod,
-                       test->optInMAType_1,
+                       (TA_MAType)test->optInMAType_1,
                        &outBegIdx,
                        &outNbElement,
                        gBuffer[1].in );
@@ -758,7 +758,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
          return TA_TEST_TFRR_BAD_MA_TYPE;
       }
    
-      temp2 = TA_MA_Lookback( test->optInTimePeriod, test->optInMAType_1 );
+      temp2 = TA_MA_Lookback( test->optInTimePeriod, (TA_MAType)test->optInMAType_1 );
    
       if( temp != temp2 )
       {

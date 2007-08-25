@@ -266,9 +266,9 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
                             testParam->close,
                             testParam->test->optInPeriod_0,
                             testParam->test->optInPeriod_1,
-                            testParam->test->optInMAType_1,
+                            (TA_MAType)testParam->test->optInMAType_1,
                             testParam->test->optInPeriod_2,
-                            testParam->test->optInMAType_2,
+                            (TA_MAType)testParam->test->optInMAType_2,
                             outBegIdx, outNbElement,
                             outputBuffer,
                             dummyOutput );
@@ -283,9 +283,9 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
                             testParam->close,
                             testParam->test->optInPeriod_0,
                             testParam->test->optInPeriod_1,
-                            testParam->test->optInMAType_1,
+                            (TA_MAType)testParam->test->optInMAType_1,
                             testParam->test->optInPeriod_2,
-                            testParam->test->optInMAType_2,
+                            (TA_MAType)testParam->test->optInMAType_2,
                             outBegIdx, outNbElement,
                             dummyOutput, 
                             outputBuffer );
@@ -293,9 +293,9 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
 
       *lookback = TA_STOCH_Lookback( testParam->test->optInPeriod_0,
                             testParam->test->optInPeriod_1,
-                            testParam->test->optInMAType_1,
+                            (TA_MAType)testParam->test->optInMAType_1,
                             testParam->test->optInPeriod_2,
-                            testParam->test->optInMAType_2 );
+                            (TA_MAType)testParam->test->optInMAType_2 );
       break;
   case TEST_STOCHF:
      if( outputNb == 0 )
@@ -307,7 +307,7 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
                              testParam->close,
                              testParam->test->optInPeriod_0,
                              testParam->test->optInPeriod_1,
-                             testParam->test->optInMAType_1,
+                             (TA_MAType)testParam->test->optInMAType_1,
                              outBegIdx, outNbElement,
                              outputBuffer,
                              dummyOutput );
@@ -322,7 +322,7 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
                              testParam->close,
                              testParam->test->optInPeriod_0,
                              testParam->test->optInPeriod_1,
-                             testParam->test->optInMAType_1,
+                             (TA_MAType)testParam->test->optInMAType_1,
                              outBegIdx, outNbElement,
                              dummyOutput, 
                              outputBuffer );
@@ -330,7 +330,7 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
 
       *lookback = TA_STOCHF_Lookback( testParam->test->optInPeriod_0,
                              testParam->test->optInPeriod_1,
-                             testParam->test->optInMAType_1 );
+                             (TA_MAType)testParam->test->optInMAType_1 );
       break;
       
    case TEST_STOCHRSI:
@@ -342,7 +342,7 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
                             testParam->test->optInPeriod_0,
                             testParam->test->optInPeriod_1,
                             testParam->test->optInPeriod_2,
-                            testParam->test->optInMAType_2,
+                            (TA_MAType)testParam->test->optInMAType_2,
                             outBegIdx, outNbElement,
                             outputBuffer,
                             dummyOutput );
@@ -356,7 +356,7 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
                             testParam->test->optInPeriod_0,
                             testParam->test->optInPeriod_1,
                             testParam->test->optInPeriod_2,
-                            testParam->test->optInMAType_2,
+                            (TA_MAType)testParam->test->optInMAType_2,
                             outBegIdx, outNbElement,
                             dummyOutput, 
                             outputBuffer );
@@ -365,7 +365,7 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
       *lookback = TA_STOCHRSI_Lookback( testParam->test->optInPeriod_0,
                             testParam->test->optInPeriod_1,
                             testParam->test->optInPeriod_2,
-                            testParam->test->optInMAType_2 );
+                            (TA_MAType)testParam->test->optInMAType_2 );
       break;
    }
 
@@ -420,9 +420,9 @@ static ErrorNumber do_test( const TA_History *history,
                           gBuffer[2].in,
                           test->optInPeriod_0,
                           test->optInPeriod_1,
-                          test->optInMAType_1,
+                          (TA_MAType)test->optInMAType_1,
                           test->optInPeriod_2,
-                          test->optInMAType_2,
+                          (TA_MAType)test->optInMAType_2,
                           &outBegIdx, &outNbElement,
                           gBuffer[0].out0, 
                           gBuffer[0].out1 );
@@ -435,7 +435,7 @@ static ErrorNumber do_test( const TA_History *history,
                            gBuffer[2].in,
                            test->optInPeriod_0,
                            test->optInPeriod_1,
-                           test->optInMAType_1,
+                           (TA_MAType)test->optInMAType_1,
                            &outBegIdx, &outNbElement,
                            gBuffer[0].out0, 
                            gBuffer[0].out1 );
@@ -447,7 +447,7 @@ static ErrorNumber do_test( const TA_History *history,
                              test->optInPeriod_0,
                              test->optInPeriod_1,
                              test->optInPeriod_2,
-                             test->optInMAType_2,
+                             (TA_MAType)test->optInMAType_2,
                              &outBegIdx, &outNbElement,
                              gBuffer[0].out0, 
                              gBuffer[0].out1 );
@@ -531,9 +531,9 @@ static ErrorNumber do_test( const TA_History *history,
                           gBuffer[2].in,
                           test->optInPeriod_0,
                           test->optInPeriod_1,
-                          test->optInMAType_1,
+                          (TA_MAType)test->optInMAType_1,
                           test->optInPeriod_2,
-                          test->optInMAType_2,
+                          (TA_MAType)test->optInMAType_2,
                           &outBegIdx, &outNbElement,
                           gBuffer[0].in, 
                           gBuffer[1].in );
@@ -546,7 +546,7 @@ static ErrorNumber do_test( const TA_History *history,
                            gBuffer[2].in,
                            test->optInPeriod_0,
                            test->optInPeriod_1,
-                           test->optInMAType_1,
+                           (TA_MAType)test->optInMAType_1,
                            &outBegIdx, &outNbElement,
                            gBuffer[0].in, 
                            gBuffer[1].in );
@@ -558,7 +558,7 @@ static ErrorNumber do_test( const TA_History *history,
                              test->optInPeriod_0,
                              test->optInPeriod_1,
                              test->optInPeriod_2,
-                             test->optInMAType_2,
+                             (TA_MAType)test->optInMAType_2,
                              &outBegIdx, &outNbElement,
                              gBuffer[0].in, 
                              gBuffer[1].in );
@@ -636,15 +636,15 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
                      TA_Real       outSlowD_1[] )
 {
    TA_RetCode retCode;
-   TA_Real Lt, Ht, tmp, *tempBuffer;
-   TA_Integer outIdx;
-   TA_Integer lookbackTotal, lookbackK, lookbackKSlow, lookbackDSlow;
-   TA_Integer trailingIdx, today, i, bufferIsAllocated;
+   double Lt, Ht, tmp, *tempBuffer;
+   int outIdx;
+   int lookbackTotal, lookbackK, lookbackKSlow, lookbackDSlow;
+   int trailingIdx, today, i, bufferIsAllocated;
 
    /* Identify the lookback needed. */
    lookbackK      = optInPeriod_0-1;
-   lookbackKSlow  = TA_MA_Lookback( optInPeriod_1, optInMAType_1 );
-   lookbackDSlow  = TA_MA_Lookback( optInPeriod_2, optInMAType_2 );
+   lookbackKSlow  = TA_MA_Lookback( optInPeriod_1, (TA_MAType)optInMAType_1 );
+   lookbackDSlow  = TA_MA_Lookback( optInPeriod_2, (TA_MAType)optInMAType_2 );
    lookbackTotal  = lookbackK + lookbackDSlow + lookbackKSlow;
 
    /* Move up the start index if there is not
@@ -742,7 +742,7 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
     */
    retCode = TA_MA( 0, outIdx-1,
                     tempBuffer, optInPeriod_1,
-                    optInMAType_1,
+                    (TA_MAType)optInMAType_1,
                     outBegIdx, outNbElement, tempBuffer );
 
 
@@ -761,7 +761,7 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
     */
    retCode = TA_MA( 0, (*outNbElement)-1,
                     tempBuffer, optInPeriod_2,
-                    optInMAType_2,
+                    (TA_MAType)optInMAType_2,
                     outBegIdx, outNbElement, outSlowD_1 );
 
    /* Copy tempBuffer into the caller buffer. 
