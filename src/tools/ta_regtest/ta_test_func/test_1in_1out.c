@@ -131,7 +131,7 @@ static TA_Test tableTest[] =
    { 0, TA_HT_DCPHASE_TEST, 0, 0, 251, TA_SUCCESS, 252-64, 47.2765, 63,  252-63 }, /* Last Value */
 
    { 1, TA_HT_DCPERIOD_TEST, 0, 0, 251, TA_SUCCESS,      0, 15.5527, 32,  252-32 }, /* First Value */
-   { 0, TA_HT_DCPERIOD_TEST, 0, 0, 251, TA_SUCCESS, 252-33, 18.6140, 32,  252-32 }  /* Last Value */
+   { 0, TA_HT_DCPERIOD_TEST, 0, 0, 251, TA_SUCCESS, 252-33, 18.6140, 32,  252-32 },  /* Last Value */
 
    /*********************************/
    /* Trigonometric and Vector Math */
