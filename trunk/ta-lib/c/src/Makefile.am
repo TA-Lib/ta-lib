@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign 1.4
-SUBDIRS = ta_abstract ta_common ta_func tools
+SUBDIRS = ta_abstract ta_common ta_func
 
 lib_LTLIBRARIES = libta_lib.la
 
