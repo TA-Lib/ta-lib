@@ -260,7 +260,7 @@ static const TA_OutputParameterInfo   *TA_##NAME##_Outputs[]   = \
   NULL \
 }; \
 	static const TA_OptInputParameterInfo *TA_##NAME##_OptInputs[] = { NULL }; \
-DEF_FUNCTION( ##NAME##, /* name */ \
+DEF_FUNCTION( NAME, /* name */ \
               TA_GroupId_MathOperators, /* groupId */ \
               HINT, /* hint */ \
               CAMELCASENAME,  /* CamelCase name */ \

@@ -714,6 +714,8 @@ static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement )
 
    ErrorNumber errNb;
 
+   outBegIdxRef = outNbElementRef = -1;
+
    /* Do a systematic tests, even for failure cases. */
    for( testNb=0; testNb <= 1; testNb++ ) /* 0=TA_MIN, 1=TA_MAX */
    {      
