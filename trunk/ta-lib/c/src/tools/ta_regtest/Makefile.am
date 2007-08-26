@@ -34,7 +34,5 @@ ta_regtest_CPPFLAGS = -I../../ta_func \
 		      -I../../ta_common/mt \
 		      -I../../ta_common \
 		      -I../../ta_abstract
-ta_regtest_LDFLAGS = -L../../ta_func -lta_func \
-		     -L../../ta_common -lta_common \
-		     -L../../ta_abstract -lta_abstract \
+ta_regtest_LDFLAGS = -L../.. -lta_lib \
 		     -lm
