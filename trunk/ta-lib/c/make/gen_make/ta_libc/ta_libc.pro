@@ -184,6 +184,7 @@ SOURCES = ../../../../../src/ta_common/ta_global.c \
           ../../../../../src/ta_func/ta_RSI.c \
           ../../../../../src/ta_func/ta_SAR.c \
           ../../../../../src/ta_func/ta_SAREXT.c \
+          ../../../../../src/ta_func/ta_SIN.c \
           ../../../../../src/ta_func/ta_SMA.c \
           ../../../../../src/ta_func/ta_STDDEV.c \
           ../../../../../src/ta_func/ta_STOCH.c \

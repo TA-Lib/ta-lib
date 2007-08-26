@@ -169,6 +169,7 @@ extern const TA_FuncDef TA_DEF_ROCR100;
 extern const TA_FuncDef TA_DEF_RSI;
 extern const TA_FuncDef TA_DEF_SAR;
 extern const TA_FuncDef TA_DEF_SAREXT;
+extern const TA_FuncDef TA_DEF_SIN;
 extern const TA_FuncDef TA_DEF_SMA;
 extern const TA_FuncDef TA_DEF_STDDEV;
 extern const TA_FuncDef TA_DEF_STOCH;
@@ -195,6 +196,7 @@ const TA_FuncDef *TA_PerGroupFunc_0[] = {
 &TA_DEF_MININDEX,
 &TA_DEF_MINMAX,
 &TA_DEF_MINMAXINDEX,
+&TA_DEF_SIN,
 &TA_DEF_SUM,
 NULL };
 #define SIZE_GROUP_0 ((sizeof(TA_PerGroupFunc_0)/sizeof(const TA_FuncDef *))-1)

@@ -280,6 +280,8 @@
 #define TA_SAR sar
 #define TA_SAREXT_Lookback sarExtLookback
 #define TA_SAREXT sarExt
+#define TA_SIN_Lookback sinLookback
+#define TA_SIN sin
 #define TA_SMA_Lookback smaLookback
 #define TA_SMA sma
 #define TA_STDDEV_Lookback stdDevLookback

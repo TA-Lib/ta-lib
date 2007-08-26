@@ -297,6 +297,11 @@ DEF_FUNCTION( SAREXT,                     /* name */
 
 /* SAREXT END */
 
+
+/* SIN BEGIN */
+DEF_MATH_UNARY_OPERATOR( SIN, "Trigonometric Sin", "Sin" )
+/* SIN END */
+
 /* SMA BEGIN */
 static const TA_InputParameterInfo    *TA_SMA_Inputs[]    =
 {
@@ -587,6 +592,7 @@ const TA_FuncDef *TA_DEF_TableS[] =
 {
    ADD_TO_TABLE(SAR),
    ADD_TO_TABLE(SAREXT),
+   ADD_TO_TABLE(SIN),
    ADD_TO_TABLE(SMA),
    ADD_TO_TABLE(STDDEV),
    ADD_TO_TABLE(STOCH),

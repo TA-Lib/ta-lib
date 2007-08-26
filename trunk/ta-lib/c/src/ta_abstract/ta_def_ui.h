@@ -245,5 +245,27 @@ typedef struct
 
 #define ADD_TO_TABLE(name) &TA_DEF_##name
 
+/* Utility Macro to quickly define Math operator operating on one array
+ * with no optional parameter.
+ */
+#define DEF_MATH_UNARY_OPERATOR(NAME,HINT,CAMELCASENAME) \
+	static const TA_InputParameterInfo    *TA_##NAME##_Inputs[]    = \
+{ \
+  &TA_DEF_UI_Input_Real, \
+  NULL \
+}; \
+static const TA_OutputParameterInfo   *TA_##NAME##_Outputs[]   = \
+{ \
+  &TA_DEF_UI_Output_Real, \
+  NULL \
+}; \
+	static const TA_OptInputParameterInfo *TA_##NAME##_OptInputs[] = { NULL }; \
+DEF_FUNCTION( ##NAME##, /* name */ \
+              TA_GroupId_MathOperators, /* groupId */ \
+              HINT, /* hint */ \
+              CAMELCASENAME,  /* CamelCase name */ \
+              0        /* flags */ \
+             );
+
 #endif
 

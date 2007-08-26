@@ -4042,6 +4042,30 @@ int TA_SAREXT_Lookback( double        optInStartValue, /* From TA_REAL_MIN to TA
 
 
 /*
+ * TA_SIN - Trigonometric Sin
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ */
+TA_RetCode TA_SIN( int    startIdx,
+                   int    endIdx,
+                   const double inReal[],
+                   int          *outBegIdx,
+                   int          *outNBElement,
+                   double        outReal[] );
+
+TA_RetCode TA_S_SIN( int    startIdx,
+                     int    endIdx,
+                     const float  inReal[],
+                     int          *outBegIdx,
+                     int          *outNBElement,
+                     double        outReal[] );
+
+int TA_SIN_Lookback( void );
+
+
+/*
  * TA_SMA - Simple Moving Average
  * 
  * Input  = double

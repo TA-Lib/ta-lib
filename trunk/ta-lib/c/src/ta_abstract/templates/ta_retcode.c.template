@@ -50,7 +50,7 @@ typedef struct
 
 static TA_InternalRetCodeInfo retCodeInfoTable[] = {
 %%%GENCODE%%%
-         {0xFFFF,"TA_UNKNOWN_ERR","Unknown Error"}
+         {(TA_RetCode)0xFFFF,"TA_UNKNOWN_ERR","Unknown Error"}
 };
 
 #define NB_RET_CODE_INFO (sizeof(retCodeInfoTable)/sizeof(TA_InternalRetCodeInfo))
