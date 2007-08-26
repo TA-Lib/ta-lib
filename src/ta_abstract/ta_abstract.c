@@ -276,6 +276,7 @@ TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
    }
 
    *table = NULL;
+   stringPtr = NULL;
 
    /* Get information on the group. */
    retCode = getGroupId( group, &groupId );
