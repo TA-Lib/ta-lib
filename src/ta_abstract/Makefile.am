@@ -1,5 +1,5 @@
 
-lib_LTLIBRARIES = libta_abstract.la libta_abstract_gc.la
+noinst_LTLIBRARIES = libta_abstract.la libta_abstract_gc.la
 
 libta_abstract_la_SOURCES = ta_group_idx.c \
 	ta_def_ui.c \
