@@ -215,7 +215,7 @@
 				XMLDocumentationFileName=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/"
 				BrowseInformationFile=".\..\..\..\..\temp\$(ConfigurationName)\$(ProjectName)/"
 				WarningLevel="3"
-				WarnAsError="true"
+				WarnAsError="false"
 				SuppressStartupBanner="true"
 				Detect64BitPortabilityProblems="true"
 			/>
@@ -828,6 +828,10 @@
 				</File>
 				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_SAREXT.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_SIN.c"
 					>
 				</File>
 				<File

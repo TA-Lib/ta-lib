@@ -189,6 +189,7 @@ SOURCES =	../../../../../src/ta_common/ta_global.c \
 		../../../../../src/ta_func/ta_RSI.c \
 		../../../../../src/ta_func/ta_SAR.c \
 		../../../../../src/ta_func/ta_SAREXT.c \
+		../../../../../src/ta_func/ta_SIN.c \
 		../../../../../src/ta_func/ta_SMA.c \
 		../../../../../src/ta_func/ta_STDDEV.c \
 		../../../../../src/ta_func/ta_STOCH.c \
@@ -363,6 +364,7 @@ OBJECTS =	../../../../../temp/csr/ta_global.o \
 		../../../../../temp/csr/ta_RSI.o \
 		../../../../../temp/csr/ta_SAR.o \
 		../../../../../temp/csr/ta_SAREXT.o \
+		../../../../../temp/csr/ta_SIN.o \
 		../../../../../temp/csr/ta_SMA.o \
 		../../../../../temp/csr/ta_STDDEV.o \
 		../../../../../temp/csr/ta_STOCH.o \
@@ -901,6 +903,9 @@ clean:
 
 ../../../../../temp/csr/ta_SAREXT.o: ../../../../../src/ta_func/ta_SAREXT.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_SAREXT.o ../../../../../src/ta_func/ta_SAREXT.c
+
+../../../../../temp/csr/ta_SIN.o: ../../../../../src/ta_func/ta_SIN.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_SIN.o ../../../../../src/ta_func/ta_SIN.c
 
 ../../../../../temp/csr/ta_SMA.o: ../../../../../src/ta_func/ta_SMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/csr/ta_SMA.o ../../../../../src/ta_func/ta_SMA.c

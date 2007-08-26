@@ -142,6 +142,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c \
 		..\..\..\..\..\src\ta_func\ta_RSI.c \
 		..\..\..\..\..\src\ta_func\ta_SAR.c \
 		..\..\..\..\..\src\ta_func\ta_SAREXT.c \
+		..\..\..\..\..\src\ta_func\ta_SIN.c \
 		..\..\..\..\..\src\ta_func\ta_SMA.c \
 		..\..\..\..\..\src\ta_func\ta_STDDEV.c \
 		..\..\..\..\..\src\ta_func\ta_STOCH.c \
@@ -282,6 +283,7 @@ OBJECTS =	..\..\..\..\..\temp\csd\ta_utility.obj \
 		..\..\..\..\..\temp\csd\ta_RSI.obj \
 		..\..\..\..\..\temp\csd\ta_SAR.obj \
 		..\..\..\..\..\temp\csd\ta_SAREXT.obj \
+		..\..\..\..\..\temp\csd\ta_SIN.obj \
 		..\..\..\..\..\temp\csd\ta_SMA.obj \
 		..\..\..\..\..\temp\csd\ta_STDDEV.obj \
 		..\..\..\..\..\temp\csd\ta_STOCH.obj \
@@ -449,6 +451,7 @@ $(TARGET): $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\csd\ta_RSI.obj \
 +..\..\..\..\..\temp\csd\ta_SAR.obj \
 +..\..\..\..\..\temp\csd\ta_SAREXT.obj \
++..\..\..\..\..\temp\csd\ta_SIN.obj \
 +..\..\..\..\..\temp\csd\ta_SMA.obj \
 +..\..\..\..\..\temp\csd\ta_STDDEV.obj \
 +..\..\..\..\..\temp\csd\ta_STOCH.obj \
@@ -602,6 +605,7 @@ clean:
 	-del ..\..\..\..\..\temp\csd\ta_RSI.obj
 	-del ..\..\..\..\..\temp\csd\ta_SAR.obj
 	-del ..\..\..\..\..\temp\csd\ta_SAREXT.obj
+	-del ..\..\..\..\..\temp\csd\ta_SIN.obj
 	-del ..\..\..\..\..\temp\csd\ta_SMA.obj
 	-del ..\..\..\..\..\temp\csd\ta_STDDEV.obj
 	-del ..\..\..\..\..\temp\csd\ta_STOCH.obj
@@ -1001,6 +1005,9 @@ clean:
 
 ..\..\..\..\..\temp\csd\ta_SAREXT.obj: ..\..\..\..\..\src\ta_func\ta_SAREXT.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_SAREXT.obj ..\..\..\..\..\src\ta_func\ta_SAREXT.c
+
+..\..\..\..\..\temp\csd\ta_SIN.obj: ..\..\..\..\..\src\ta_func\ta_SIN.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_SIN.obj ..\..\..\..\..\src\ta_func\ta_SIN.c
 
 ..\..\..\..\..\temp\csd\ta_SMA.obj: ..\..\..\..\..\src\ta_func\ta_SMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\csd\ta_SMA.obj ..\..\..\..\..\src\ta_func\ta_SMA.c

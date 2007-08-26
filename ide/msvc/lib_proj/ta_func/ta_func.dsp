@@ -712,6 +712,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_SAREXT.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_SIN.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_SMA.c
 # End Source File
 # Begin Source File
