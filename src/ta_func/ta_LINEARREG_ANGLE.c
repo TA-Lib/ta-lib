@@ -247,7 +247,7 @@
        SumXY += (double)i * tempValue1;
      }
      m = ( optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-     outReal[outIdx++] = atan(m) * ( 180.0 / PI );
+     outReal[outIdx++] = std_atan(m) * ( 180.0 / PI );
      today++;
    }
 
@@ -339,7 +339,7 @@
 /* Generated */        SumXY += (double)i * tempValue1;
 /* Generated */      }
 /* Generated */      m = ( optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-/* Generated */      outReal[outIdx++] = atan(m) * ( 180.0 / PI );
+/* Generated */      outReal[outIdx++] = std_atan(m) * ( 180.0 / PI );
 /* Generated */      today++;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;

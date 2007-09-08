@@ -225,7 +225,7 @@
    iTrend1 = iTrend2 = iTrend3 = 0.0;
 
    /* Constant */
-   tempReal = atan(1);
+   tempReal = std_atan(1);
    rad2Deg = 45.0/tempReal;
 
    /* Identify the minimum number of price bar needed
@@ -387,7 +387,7 @@
       prevI2 = I2;
       tempReal = period;
       if( (Im != 0.0) && (Re != 0.0) )
-         period = 360.0 / (atan(Im/Re)*rad2Deg);
+         period = 360.0 / (std_atan(Im/Re)*rad2Deg);
       tempReal2 = 1.5*tempReal;
       if( period > tempReal2)
          period = tempReal2;
@@ -510,7 +510,7 @@
 /* Generated */  #endif 
 /* Generated */    CIRCBUF_INIT_LOCAL_ONLY(smoothPrice,double);
 /* Generated */    iTrend1 = iTrend2 = iTrend3 = 0.0;
-/* Generated */    tempReal = atan(1);
+/* Generated */    tempReal = std_atan(1);
 /* Generated */    rad2Deg = 45.0/tempReal;
 /* Generated */    lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_TRENDLINE,HtTrendline);
 /* Generated */    if( startIdx < lookbackTotal )
@@ -598,7 +598,7 @@
 /* Generated */       prevI2 = I2;
 /* Generated */       tempReal = period;
 /* Generated */       if( (Im != 0.0) && (Re != 0.0) )
-/* Generated */          period = 360.0 / (atan(Im/Re)*rad2Deg);
+/* Generated */          period = 360.0 / (std_atan(Im/Re)*rad2Deg);
 /* Generated */       tempReal2 = 1.5*tempReal;
 /* Generated */       if( period > tempReal2)
 /* Generated */          period = tempReal2;

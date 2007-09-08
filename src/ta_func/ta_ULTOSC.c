@@ -302,10 +302,10 @@
       trueLow = min( tempLT, tempCY );            \
       closeMinusTrueLow = inClose[day] - trueLow; \
       trueRange = tempHT - tempLT;                \
-      tempDouble = fabs( tempCY - tempHT );       \
+      tempDouble = std_fabs( tempCY - tempHT );       \
       if( tempDouble > trueRange )                 \
          trueRange = tempDouble;                  \
-      tempDouble = fabs( tempCY - tempLT  );      \
+      tempDouble = std_fabs( tempCY - tempLT  );      \
       if( tempDouble > trueRange )                 \
          trueRange = tempDouble;                  \
    }
@@ -510,10 +510,10 @@
 /* Generated */       trueLow = min( tempLT, tempCY );            \
 /* Generated */       closeMinusTrueLow = inClose[day] - trueLow; \
 /* Generated */       trueRange = tempHT - tempLT;                \
-/* Generated */       tempDouble = fabs( tempCY - tempHT );       \
+/* Generated */       tempDouble = std_fabs( tempCY - tempHT );       \
 /* Generated */       if( tempDouble > trueRange )                 \
 /* Generated */          trueRange = tempDouble;                  \
-/* Generated */       tempDouble = fabs( tempCY - tempLT  );      \
+/* Generated */       tempDouble = std_fabs( tempCY - tempLT  );      \
 /* Generated */       if( tempDouble > trueRange )                 \
 /* Generated */          trueRange = tempDouble;                  \
 /* Generated */    }

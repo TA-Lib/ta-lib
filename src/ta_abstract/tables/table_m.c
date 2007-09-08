@@ -693,6 +693,10 @@ DEF_FUNCTION( MOM,                     /* name */
              );
 /* MOM END */
 
+/* MULT BEGIN */
+DEF_MATH_BINARY_OPERATOR( MULT, "Vector Arithmetic Mult", "Mult" )
+/* MULT END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -718,6 +722,7 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MINUS_DI),
    ADD_TO_TABLE(MINUS_DM),
    ADD_TO_TABLE(MOM),
+   ADD_TO_TABLE(MULT),
    NULL
 };
 

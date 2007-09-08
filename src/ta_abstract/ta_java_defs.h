@@ -38,8 +38,12 @@
  * likely the case), just ignore this file.
  */
  
+#define TA_ACOS_Lookback acosLookback
+#define TA_ACOS acos
 #define TA_AD_Lookback adLookback
 #define TA_AD ad
+#define TA_ADD_Lookback addLookback
+#define TA_ADD add
 #define TA_ADOSC_Lookback adOscLookback
 #define TA_ADOSC adOsc
 #define TA_ADX_Lookback adxLookback
@@ -52,6 +56,10 @@
 #define TA_AROON aroon
 #define TA_AROONOSC_Lookback aroonOscLookback
 #define TA_AROONOSC aroonOsc
+#define TA_ASIN_Lookback asinLookback
+#define TA_ASIN asin
+#define TA_ATAN_Lookback atanLookback
+#define TA_ATAN atan
 #define TA_ATR_Lookback atrLookback
 #define TA_ATR atr
 #define TA_AVGPRICE_Lookback avgPriceLookback
@@ -186,16 +194,28 @@
 #define TA_CDLUPSIDEGAP2CROWS cdlUpsideGap2Crows
 #define TA_CDLXSIDEGAP3METHODS_Lookback cdlXSideGap3MethodsLookback
 #define TA_CDLXSIDEGAP3METHODS cdlXSideGap3Methods
+#define TA_CEIL_Lookback ceilLookback
+#define TA_CEIL ceil
 #define TA_CMO_Lookback cmoLookback
 #define TA_CMO cmo
 #define TA_CORREL_Lookback correlLookback
 #define TA_CORREL correl
+#define TA_COS_Lookback cosLookback
+#define TA_COS cos
+#define TA_COSH_Lookback coshLookback
+#define TA_COSH cosh
 #define TA_DEMA_Lookback demaLookback
 #define TA_DEMA dema
+#define TA_DIV_Lookback divLookback
+#define TA_DIV div
 #define TA_DX_Lookback dxLookback
 #define TA_DX dx
 #define TA_EMA_Lookback emaLookback
 #define TA_EMA ema
+#define TA_EXP_Lookback expLookback
+#define TA_EXP exp
+#define TA_FLOOR_Lookback floorLookback
+#define TA_FLOOR floor
 #define TA_HT_DCPERIOD_Lookback htDcPeriodLookback
 #define TA_HT_DCPERIOD htDcPeriod
 #define TA_HT_DCPHASE_Lookback htDcPhaseLookback
@@ -218,6 +238,10 @@
 #define TA_LINEARREG_INTERCEPT linearRegIntercept
 #define TA_LINEARREG_SLOPE_Lookback linearRegSlopeLookback
 #define TA_LINEARREG_SLOPE linearRegSlope
+#define TA_LN_Lookback lnLookback
+#define TA_LN ln
+#define TA_LOG10_Lookback log10Lookback
+#define TA_LOG10 log10
 #define TA_MA_Lookback movingAverageLookback
 #define TA_MA movingAverage
 #define TA_MACD_Lookback macdLookback
@@ -256,6 +280,8 @@
 #define TA_MINUS_DM minusDM
 #define TA_MOM_Lookback momLookback
 #define TA_MOM mom
+#define TA_MULT_Lookback multLookback
+#define TA_MULT mult
 #define TA_NATR_Lookback natrLookback
 #define TA_NATR natr
 #define TA_OBV_Lookback obvLookback
@@ -282,8 +308,12 @@
 #define TA_SAREXT sarExt
 #define TA_SIN_Lookback sinLookback
 #define TA_SIN sin
+#define TA_SINH_Lookback sinhLookback
+#define TA_SINH sinh
 #define TA_SMA_Lookback smaLookback
 #define TA_SMA sma
+#define TA_SQRT_Lookback sqrtLookback
+#define TA_SQRT sqrt
 #define TA_STDDEV_Lookback stdDevLookback
 #define TA_STDDEV stdDev
 #define TA_STOCH_Lookback stochLookback
@@ -292,10 +322,16 @@
 #define TA_STOCHF stochF
 #define TA_STOCHRSI_Lookback stochRsiLookback
 #define TA_STOCHRSI stochRsi
+#define TA_SUB_Lookback subLookback
+#define TA_SUB sub
 #define TA_SUM_Lookback sumLookback
 #define TA_SUM sum
 #define TA_T3_Lookback t3Lookback
 #define TA_T3 t3
+#define TA_TAN_Lookback tanLookback
+#define TA_TAN tan
+#define TA_TANH_Lookback tanhLookback
+#define TA_TANH tanh
 #define TA_TEMA_Lookback temaLookback
 #define TA_TEMA tema
 #define TA_TRANGE_Lookback trueRangeLookback

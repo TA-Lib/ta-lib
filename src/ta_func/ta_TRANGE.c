@@ -218,11 +218,11 @@
       tempCY = inClose[today-1];
       greatest = tempHT - tempLT; /* val1 */
 
-      val2 = fabs( tempCY - tempHT );
+      val2 = std_fabs( tempCY - tempHT );
       if( val2 > greatest )
          greatest = val2;
 
-      val3 = fabs( tempCY - tempLT  );
+      val3 = std_fabs( tempCY - tempLT  );
       if( val3 > greatest )
          greatest = val3;
 
@@ -307,10 +307,10 @@
 /* Generated */       tempHT = inHigh[today];
 /* Generated */       tempCY = inClose[today-1];
 /* Generated */       greatest = tempHT - tempLT; 
-/* Generated */       val2 = fabs( tempCY - tempHT );
+/* Generated */       val2 = std_fabs( tempCY - tempHT );
 /* Generated */       if( val2 > greatest )
 /* Generated */          greatest = val2;
-/* Generated */       val3 = fabs( tempCY - tempLT  );
+/* Generated */       val3 = std_fabs( tempCY - tempLT  );
 /* Generated */       if( val3 > greatest )
 /* Generated */          greatest = val3;
 /* Generated */       outReal[outIdx++] = greatest;

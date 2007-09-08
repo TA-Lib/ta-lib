@@ -180,10 +180,10 @@
 
    #define TRUE_RANGE(TH,TL,YC,OUT) {\
       OUT = TH-TL; \
-      tempReal2 = fabs(TH-YC); \
+      tempReal2 = std_fabs(TH-YC); \
       if( tempReal2 > OUT ) \
          OUT = tempReal2; \
-      tempReal2 = fabs(TL-YC); \
+      tempReal2 = std_fabs(TL-YC); \
       if( tempReal2 > OUT ) \
          OUT = tempReal2; \
    }
@@ -438,7 +438,7 @@
          /* This loop is just to accumulate the initial DX */
          tempReal = minusDI+plusDI;
          if( !TA_IS_ZERO(tempReal) )
-            sumDX  += round_pos( 100.0 * (fabs(minusDI-plusDI)/tempReal) );
+            sumDX  += round_pos( 100.0 * (std_fabs(minusDI-plusDI)/tempReal) );
       }
    }
 
@@ -486,7 +486,7 @@
          tempReal = minusDI+plusDI;
          if( !TA_IS_ZERO(tempReal) )
          {
-            tempReal = round_pos(100.0*(fabs(minusDI-plusDI)/tempReal));
+            tempReal = round_pos(100.0*(std_fabs(minusDI-plusDI)/tempReal));
             /* Calculate the ADX */
             prevADX = round_pos(((prevADX*(optInTimePeriod-1))+tempReal)/optInTimePeriod);
          }
@@ -537,7 +537,7 @@
          tempReal = minusDI+plusDI;
          if( !TA_IS_ZERO(tempReal) )
          {
-            tempReal = round_pos(100.0*(fabs(minusDI-plusDI)/tempReal));
+            tempReal = round_pos(100.0*(std_fabs(minusDI-plusDI)/tempReal));
             /* Calculate the ADX */
             prevADX = round_pos(((prevADX*(optInTimePeriod-1))+tempReal)/optInTimePeriod);
          }
@@ -601,10 +601,10 @@
 /* Generated */    int i;
 /* Generated */    #define TRUE_RANGE(TH,TL,YC,OUT) {\
 /* Generated */       OUT = TH-TL; \
-/* Generated */       tempReal2 = fabs(TH-YC); \
+/* Generated */       tempReal2 = std_fabs(TH-YC); \
 /* Generated */       if( tempReal2 > OUT ) \
 /* Generated */          OUT = tempReal2; \
-/* Generated */       tempReal2 = fabs(TL-YC); \
+/* Generated */       tempReal2 = std_fabs(TL-YC); \
 /* Generated */       if( tempReal2 > OUT ) \
 /* Generated */          OUT = tempReal2; \
 /* Generated */    }
@@ -698,7 +698,7 @@
 /* Generated */          plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
 /* Generated */          tempReal = minusDI+plusDI;
 /* Generated */          if( !TA_IS_ZERO(tempReal) )
-/* Generated */             sumDX  += round_pos( 100.0 * (fabs(minusDI-plusDI)/tempReal) );
+/* Generated */             sumDX  += round_pos( 100.0 * (std_fabs(minusDI-plusDI)/tempReal) );
 /* Generated */       }
 /* Generated */    }
 /* Generated */    prevADX = round_pos( sumDX / optInTimePeriod );
@@ -732,7 +732,7 @@
 /* Generated */          tempReal = minusDI+plusDI;
 /* Generated */          if( !TA_IS_ZERO(tempReal) )
 /* Generated */          {
-/* Generated */             tempReal = round_pos(100.0*(fabs(minusDI-plusDI)/tempReal));
+/* Generated */             tempReal = round_pos(100.0*(std_fabs(minusDI-plusDI)/tempReal));
 /* Generated */             prevADX = round_pos(((prevADX*(optInTimePeriod-1))+tempReal)/optInTimePeriod);
 /* Generated */          }
 /* Generated */       }
@@ -768,7 +768,7 @@
 /* Generated */          tempReal = minusDI+plusDI;
 /* Generated */          if( !TA_IS_ZERO(tempReal) )
 /* Generated */          {
-/* Generated */             tempReal = round_pos(100.0*(fabs(minusDI-plusDI)/tempReal));
+/* Generated */             tempReal = round_pos(100.0*(std_fabs(minusDI-plusDI)/tempReal));
 /* Generated */             prevADX = round_pos(((prevADX*(optInTimePeriod-1))+tempReal)/optInTimePeriod);
 /* Generated */          }
 /* Generated */       }

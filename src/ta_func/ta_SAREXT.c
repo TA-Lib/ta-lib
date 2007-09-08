@@ -533,7 +533,7 @@
    else /* if optInStartValue < 0 => Start Short at specified value. */
    {
       ep  = inLow[todayIdx];
-      sar = fabs(optInStartValue);
+      sar = std_fabs(optInStartValue);
    }
 
    SAR_ROUNDING(sar);
@@ -878,7 +878,7 @@
 /* Generated */    else 
 /* Generated */    {
 /* Generated */       ep  = inLow[todayIdx];
-/* Generated */       sar = fabs(optInStartValue);
+/* Generated */       sar = std_fabs(optInStartValue);
 /* Generated */    }
 /* Generated */    SAR_ROUNDING(sar);
 /* Generated */    newLow  = inLow[todayIdx];

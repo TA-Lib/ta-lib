@@ -48,6 +48,10 @@
  *
  ****************************************************************************/
 
+/* ACOS BEGIN */
+DEF_MATH_UNARY_OPERATOR( ACOS, "Vector Trigonometric ACos", "Acos" )
+/* ACOS END */
+
 /* AD BEGIN */
 static const TA_InputParameterInfo    *TA_AD_Inputs[]    =
 {
@@ -73,6 +77,10 @@ DEF_FUNCTION( AD,                         /* name */
               0                             /* flags */
              );
 /* AD END */
+
+/* ADD BEGIN */
+DEF_MATH_BINARY_OPERATOR( ADD, "Vector Arithmetic Add", "Add" )
+/* ADD END */
 
 /* ADOSC BEGIN */
 static const TA_OptInputParameterInfo TA_DEF_UI_FastADOSC_Period =
@@ -273,6 +281,14 @@ DEF_FUNCTION( AROONOSC,                       /* name */
 
 /* AROONOSC END */
 
+/* ASIN BEGIN */
+DEF_MATH_UNARY_OPERATOR( ASIN, "Vector Trigonometric ASin", "Asin" )
+/* ASIN END */
+
+/* ATAN BEGIN */
+DEF_MATH_UNARY_OPERATOR( ATAN, "Vector Trigonometric ATan", "Atan" )
+/* ATAN END */
+
 /* ATR BEGIN */
 static const TA_InputParameterInfo    *TA_ATR_Inputs[]    =
 {
@@ -328,13 +344,17 @@ DEF_FUNCTION( AVGPRICE,                   /* name */
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableA[] =
 {
+   ADD_TO_TABLE(ACOS),
    ADD_TO_TABLE(AD),
+   ADD_TO_TABLE(ADD),
    ADD_TO_TABLE(ADOSC),
    ADD_TO_TABLE(ADX),
    ADD_TO_TABLE(ADXR),
    ADD_TO_TABLE(APO),
    ADD_TO_TABLE(AROON),
    ADD_TO_TABLE(AROONOSC),
+   ADD_TO_TABLE(ASIN),
+   ADD_TO_TABLE(ATAN),
    ADD_TO_TABLE(ATR),
    ADD_TO_TABLE(AVGPRICE),
    NULL

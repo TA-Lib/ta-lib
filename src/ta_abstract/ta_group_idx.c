@@ -48,13 +48,17 @@
 #include "ta_def_ui.h"
 #include "ta_abstract.h"
 
+extern const TA_FuncDef TA_DEF_ACOS;
 extern const TA_FuncDef TA_DEF_AD;
+extern const TA_FuncDef TA_DEF_ADD;
 extern const TA_FuncDef TA_DEF_ADOSC;
 extern const TA_FuncDef TA_DEF_ADX;
 extern const TA_FuncDef TA_DEF_ADXR;
 extern const TA_FuncDef TA_DEF_APO;
 extern const TA_FuncDef TA_DEF_AROON;
 extern const TA_FuncDef TA_DEF_AROONOSC;
+extern const TA_FuncDef TA_DEF_ASIN;
+extern const TA_FuncDef TA_DEF_ATAN;
 extern const TA_FuncDef TA_DEF_ATR;
 extern const TA_FuncDef TA_DEF_AVGPRICE;
 extern const TA_FuncDef TA_DEF_BBANDS;
@@ -122,11 +126,17 @@ extern const TA_FuncDef TA_DEF_CDLTRISTAR;
 extern const TA_FuncDef TA_DEF_CDLUNIQUE3RIVER;
 extern const TA_FuncDef TA_DEF_CDLUPSIDEGAP2CROWS;
 extern const TA_FuncDef TA_DEF_CDLXSIDEGAP3METHODS;
+extern const TA_FuncDef TA_DEF_CEIL;
 extern const TA_FuncDef TA_DEF_CMO;
 extern const TA_FuncDef TA_DEF_CORREL;
+extern const TA_FuncDef TA_DEF_COS;
+extern const TA_FuncDef TA_DEF_COSH;
 extern const TA_FuncDef TA_DEF_DEMA;
+extern const TA_FuncDef TA_DEF_DIV;
 extern const TA_FuncDef TA_DEF_DX;
 extern const TA_FuncDef TA_DEF_EMA;
+extern const TA_FuncDef TA_DEF_EXP;
+extern const TA_FuncDef TA_DEF_FLOOR;
 extern const TA_FuncDef TA_DEF_HT_DCPERIOD;
 extern const TA_FuncDef TA_DEF_HT_DCPHASE;
 extern const TA_FuncDef TA_DEF_HT_PHASOR;
@@ -138,6 +148,8 @@ extern const TA_FuncDef TA_DEF_LINEARREG;
 extern const TA_FuncDef TA_DEF_LINEARREG_ANGLE;
 extern const TA_FuncDef TA_DEF_LINEARREG_INTERCEPT;
 extern const TA_FuncDef TA_DEF_LINEARREG_SLOPE;
+extern const TA_FuncDef TA_DEF_LN;
+extern const TA_FuncDef TA_DEF_LOG10;
 extern const TA_FuncDef TA_DEF_MA;
 extern const TA_FuncDef TA_DEF_MACD;
 extern const TA_FuncDef TA_DEF_MACDEXT;
@@ -157,6 +169,7 @@ extern const TA_FuncDef TA_DEF_MINMAXINDEX;
 extern const TA_FuncDef TA_DEF_MINUS_DI;
 extern const TA_FuncDef TA_DEF_MINUS_DM;
 extern const TA_FuncDef TA_DEF_MOM;
+extern const TA_FuncDef TA_DEF_MULT;
 extern const TA_FuncDef TA_DEF_NATR;
 extern const TA_FuncDef TA_DEF_OBV;
 extern const TA_FuncDef TA_DEF_PLUS_DI;
@@ -170,13 +183,18 @@ extern const TA_FuncDef TA_DEF_RSI;
 extern const TA_FuncDef TA_DEF_SAR;
 extern const TA_FuncDef TA_DEF_SAREXT;
 extern const TA_FuncDef TA_DEF_SIN;
+extern const TA_FuncDef TA_DEF_SINH;
 extern const TA_FuncDef TA_DEF_SMA;
+extern const TA_FuncDef TA_DEF_SQRT;
 extern const TA_FuncDef TA_DEF_STDDEV;
 extern const TA_FuncDef TA_DEF_STOCH;
 extern const TA_FuncDef TA_DEF_STOCHF;
 extern const TA_FuncDef TA_DEF_STOCHRSI;
+extern const TA_FuncDef TA_DEF_SUB;
 extern const TA_FuncDef TA_DEF_SUM;
 extern const TA_FuncDef TA_DEF_T3;
+extern const TA_FuncDef TA_DEF_TAN;
+extern const TA_FuncDef TA_DEF_TANH;
 extern const TA_FuncDef TA_DEF_TEMA;
 extern const TA_FuncDef TA_DEF_TRANGE;
 extern const TA_FuncDef TA_DEF_TRIMA;
@@ -190,18 +208,36 @@ extern const TA_FuncDef TA_DEF_WILLR;
 extern const TA_FuncDef TA_DEF_WMA;
 
 const TA_FuncDef *TA_PerGroupFunc_0[] = {
+&TA_DEF_ADD,
+&TA_DEF_DIV,
 &TA_DEF_MAX,
 &TA_DEF_MAXINDEX,
 &TA_DEF_MIN,
 &TA_DEF_MININDEX,
 &TA_DEF_MINMAX,
 &TA_DEF_MINMAXINDEX,
-&TA_DEF_SIN,
+&TA_DEF_MULT,
+&TA_DEF_SUB,
 &TA_DEF_SUM,
 NULL };
 #define SIZE_GROUP_0 ((sizeof(TA_PerGroupFunc_0)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_1[] = {
+&TA_DEF_ACOS,
+&TA_DEF_ASIN,
+&TA_DEF_ATAN,
+&TA_DEF_CEIL,
+&TA_DEF_COS,
+&TA_DEF_COSH,
+&TA_DEF_EXP,
+&TA_DEF_FLOOR,
+&TA_DEF_LN,
+&TA_DEF_LOG10,
+&TA_DEF_SIN,
+&TA_DEF_SINH,
+&TA_DEF_SQRT,
+&TA_DEF_TAN,
+&TA_DEF_TANH,
 NULL };
 #define SIZE_GROUP_1 ((sizeof(TA_PerGroupFunc_1)/sizeof(const TA_FuncDef *))-1)
 

@@ -271,7 +271,7 @@
        */
       tempReal2 = 0;
       for( j=0; j < optInTimePeriod; j++ )
-         tempReal2 += fabs(circBuffer[j]-theAverage);
+         tempReal2 += std_fabs(circBuffer[j]-theAverage);
 
       /* And finally, the CCI... */
       tempReal = lastValue-theAverage;
@@ -392,7 +392,7 @@
 /* Generated */       theAverage /= optInTimePeriod;
 /* Generated */       tempReal2 = 0;
 /* Generated */       for( j=0; j < optInTimePeriod; j++ )
-/* Generated */          tempReal2 += fabs(circBuffer[j]-theAverage);
+/* Generated */          tempReal2 += std_fabs(circBuffer[j]-theAverage);
 /* Generated */       tempReal = lastValue-theAverage;
 /* Generated */       if( (tempReal != 0.0) && (tempReal2 != 0.0) )
 /* Generated */       {

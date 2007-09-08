@@ -88,6 +88,14 @@ DEF_FUNCTION( T3,                       /* name */
              );
 /* T3 END */
 
+/* TAN BEGIN */
+DEF_MATH_UNARY_OPERATOR( TAN, "Vector Trigonometric Tan", "Tan" )
+/* TAN END */
+
+/* TANH BEGIN */
+DEF_MATH_UNARY_OPERATOR( TANH, "Vector Trigonometric Tanh", "Tanh" )
+/* TANH END */
+
 /* TEMA BEGIN */
 static const TA_InputParameterInfo    *TA_TEMA_Inputs[]    =
 {
@@ -245,6 +253,8 @@ DEF_FUNCTION( TYPPRICE,                   /* name */
 const TA_FuncDef *TA_DEF_TableT[] =
 {
    ADD_TO_TABLE(T3),
+   ADD_TO_TABLE(TAN),
+   ADD_TO_TABLE(TANH),
    ADD_TO_TABLE(TEMA),
    ADD_TO_TABLE(TRANGE),
    ADD_TO_TABLE(TRIMA),

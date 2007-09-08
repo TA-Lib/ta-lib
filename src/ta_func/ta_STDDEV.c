@@ -234,7 +234,7 @@
       {
          tempReal = outReal[i];
          if( !TA_IS_ZERO_OR_NEG(tempReal) )
-            outReal[i] = sqrt(tempReal) * optInNbDev;
+            outReal[i] = std_sqrt(tempReal) * optInNbDev;
          else
             outReal[i] = (double)0.0;
       }
@@ -245,7 +245,7 @@
       {
          tempReal = outReal[i];
          if( !TA_IS_ZERO_OR_NEG(tempReal) )
-            outReal[i] = sqrt(tempReal);
+            outReal[i] = std_sqrt(tempReal);
          else
             outReal[i] = (double)0.0;
       }
@@ -332,7 +332,7 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
       meanValue2 -= tempReal;
       
       if( !TA_IS_ZERO_OR_NEG(meanValue2) )
-         output[outIdx] = sqrt(meanValue2);
+         output[outIdx] = std_sqrt(meanValue2);
       else
          output[outIdx] = (double)0.0;
    }
@@ -411,7 +411,7 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */       {
 /* Generated */          tempReal = outReal[i];
 /* Generated */          if( !TA_IS_ZERO_OR_NEG(tempReal) )
-/* Generated */             outReal[i] = sqrt(tempReal) * optInNbDev;
+/* Generated */             outReal[i] = std_sqrt(tempReal) * optInNbDev;
 /* Generated */          else
 /* Generated */             outReal[i] = (double)0.0;
 /* Generated */       }
@@ -422,7 +422,7 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */       {
 /* Generated */          tempReal = outReal[i];
 /* Generated */          if( !TA_IS_ZERO_OR_NEG(tempReal) )
-/* Generated */             outReal[i] = sqrt(tempReal);
+/* Generated */             outReal[i] = std_sqrt(tempReal);
 /* Generated */          else
 /* Generated */             outReal[i] = (double)0.0;
 /* Generated */       }
@@ -484,7 +484,7 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */       tempReal *= tempReal;
 /* Generated */       meanValue2 -= tempReal;
 /* Generated */       if( !TA_IS_ZERO_OR_NEG(meanValue2) )
-/* Generated */          output[outIdx] = sqrt(meanValue2);
+/* Generated */          output[outIdx] = std_sqrt(meanValue2);
 /* Generated */       else
 /* Generated */          output[outIdx] = (double)0.0;
 /* Generated */    }

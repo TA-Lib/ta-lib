@@ -144,7 +144,6 @@ FileHandle *gOutRetCode_C;     /* For "ta_retcode.c" */
 FileHandle *gOutRetCode_CSV;   /* For "ta_retcode.csv" */
 FileHandle *gOutFuncList_TXT;  /* For "ta_func_list.txt" */
 FileHandle *gOutDefs_H;        /* For "ta_defs.h" */
-FileHandle *gOutDotNet_H;      /* For .NET interface file */
 FileHandle *gOutFunc_SWG;      /* For SWIG */
 FileHandle *gOutFunc_XML;      /* For "ta_func_api.xml" */
 FileHandle *gOutFuncAPI_C;     /* For "ta_func_api.c" */
@@ -152,6 +151,7 @@ FileHandle *gOutMakefile_AM;   /* For "Makefile.am" */
 
 #ifdef _MSC_VER
 /* The following files are generated only on Windows platform. */
+FileHandle *gOutDotNet_H;      /* For .NET interface file */
 FileHandle *gOutCore_Java;       /* For Core.Java */
 FileHandle *gOutProjFile;        /* For .NET project file */
 FileHandle *gOutMSVCProjFile;    /* For MSVC project file */
@@ -774,6 +774,7 @@ static int genCode(int argc, char* argv[])
    #endif
 
    /* Create the .NET interface file template */
+   #ifdef _MSC_VER
    #define FILE_NET_HEADER     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.h"
    #define FILE_NET_HEADER_TMP "..\\temp\\dotneth.tmp"
    gOutDotNet_H = fileOpen( FILE_NET_HEADER, NULL, FILE_READ );
@@ -795,6 +796,7 @@ static int genCode(int argc, char* argv[])
    }
    fileClose(gOutDotNet_H);
    fileClose(tempFile);
+   #endif
 
    /* Create ta_retcode.c */
    if( gen_retcode() != 0 )
@@ -949,12 +951,14 @@ static int genCode(int argc, char* argv[])
    #endif
 
    /* Re-open the .NET interface template. */
+   #ifdef _MSC_VER
    gOutDotNet_H = fileOpen( FILE_NET_HEADER, FILE_NET_HEADER_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
    if( gOutDotNet_H == NULL )
    {
       printf( "Cannot update [%s]\n", FILE_NET_HEADER );
       return -1;
    }
+   #endif
 
    /* Process each functions. Two phase. */
    TA_ForEachFunc( doForEachFunctionPhase1, NULL );
@@ -974,7 +978,6 @@ static int genCode(int argc, char* argv[])
    appendToFunc( gOutFunc_SWG->file );
 
    /* Close all files who were updated with the list of TA functions. */
-   fileClose( gOutDotNet_H );
    fileClose( gOutFuncList_TXT );
    fileClose( gOutFunc_H );
    fileClose( gOutFunc_SWG );
@@ -984,6 +987,7 @@ static int genCode(int argc, char* argv[])
    fileClose( gOutMakefile_AM );
 
    #ifdef _MSC_VER
+      fileClose( gOutDotNet_H );
       fileClose( gOutCore_Java );
       fileClose( gOutProjFile );
       fileClose( gOutMSVCProjFile );
@@ -1100,8 +1104,8 @@ static int genCode(int argc, char* argv[])
    #ifdef _MSC_VER   
       fileDelete( FILE_NET_PROJ_TMP );
       fileDelete( FILE_MSVC_PROJ_TMP );
+      fileDelete( FILE_NET_HEADER_TMP );   
    #endif
-   fileDelete( FILE_NET_HEADER_TMP );   
 
    printf( "\n** Update completed with success **\n");
 
@@ -1637,29 +1641,29 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
 
       /* Generate CoreAnnotated */
       printJavaFunctionAnnotation( funcInfo );
+
+      /* Generate the functions declaration for the .NET interface. */
+      printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0 );
+
+	  fprintf( gOutDotNet_H->file, "         #if defined( _MANAGED ) && defined( USE_SUBARRAY )\n" );   
+	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0 );
+	  fprintf( gOutDotNet_H->file, "\n" );
+
+	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
+
+	  fprintf( gOutDotNet_H->file, "         { return " );
+	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1 );
+	  fprintf( gOutDotNet_H->file, "         }\n" );
+
+	  fprintf( gOutDotNet_H->file, "         #elif defined( _MANAGED )\n" );
+	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
+	  fprintf( gOutDotNet_H->file, "         #endif\n" );
+
+	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0 );
+	  fprintf( gOutDotNet_H->file, "\n" );
+	  fprintf( gOutDotNet_H->file, "         #define TA_%s Core::%s\n", funcInfo->name, funcInfo->camelCaseName );
+	  fprintf( gOutDotNet_H->file, "         #define TA_%s_Lookback Core::%sLookback\n\n", funcInfo->name, funcInfo->camelCaseName );
    #endif
-
-   /* Generate the functions declaration for the .NET interface. */
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0 );
-
-   fprintf( gOutDotNet_H->file, "         #if defined( _MANAGED ) && defined( USE_SUBARRAY )\n" );   
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0 );
-   fprintf( gOutDotNet_H->file, "\n" );
-
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
-// { return Ad(startIdx,endIdx,gcnew SubArray(inHigh,0), gcnew SubArray(inLow,0), gcnew SubArray(inClose,0), gcnew SubArray(inVolume,0), outBegIdx, outNBElement, outReal ); } 
-   fprintf( gOutDotNet_H->file, "         { return " );
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1 );
-   fprintf( gOutDotNet_H->file, "         }\n" );
-
-   fprintf( gOutDotNet_H->file, "         #elif defined( _MANAGED )\n" );
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
-   fprintf( gOutDotNet_H->file, "         #endif\n" );
-
-   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0 );
-   fprintf( gOutDotNet_H->file, "\n" );
-   fprintf( gOutDotNet_H->file, "         #define TA_%s Core::%s\n", funcInfo->name, funcInfo->camelCaseName );
-   fprintf( gOutDotNet_H->file, "         #define TA_%s_Lookback Core::%sLookback\n\n", funcInfo->name, funcInfo->camelCaseName );
 
    doFuncFile( funcInfo );
 
