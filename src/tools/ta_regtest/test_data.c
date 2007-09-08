@@ -1,6 +1,13 @@
 /* Input price data used to do regression tests. */
 #include "ta_libc.h"
 
+/* Market data used for profiling (10000 price bars). */
+#include "ta_gDataOpen.c"
+#include "ta_gDataHigh.c"
+#include "ta_gDataLow.c"
+#include "ta_gDataClose.c"
+
+/* Market data used for regression tests (252 price bars). */
 TA_Real TA_SREF_open_daily_ref_0_PRIV[252] = {92.500000,91.500000,95.155000,93.970000,95.500000,94.500000,95.000000,91.500000,91.815000,91.125000,93.875000,
 97.500000,98.815000,92.000000,91.125000,91.875000,93.405000,89.750000,89.345000,92.250000,89.780000,
 87.940000,87.595000,85.220000,83.500000,83.500000,81.250000,85.125000,88.125000,87.500000,85.250000,
