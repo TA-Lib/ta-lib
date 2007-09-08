@@ -73,7 +73,7 @@
 /**** Global variables definitions.    ****/
 
 /* The entry point for all globals */
-TA_LibcPriv ta_theGlobals = {0,{{0,0,0}},0,0,0,0,0,{0},{{0,0,0,0}}};
+TA_LibcPriv ta_theGlobals = {0,{{0,0,0}},0,0,0,0,(TA_Compatibility)0,{0},{{(TA_CandleSettingType)0,(TA_RangeType)0,0,0}}};
 
 TA_LibcPriv *TA_Globals = &ta_theGlobals;
 
