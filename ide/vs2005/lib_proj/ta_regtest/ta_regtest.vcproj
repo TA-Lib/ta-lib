@@ -116,7 +116,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Make a copy named ta_regtest.exe"
-				CommandLine="copy $(OutDir)\$(ProjectName)_$(ConfigurationName).exe $(OutDir)\$(ProjectName).exe"
+				CommandLine="copy $(OutDir)\$(ProjectName)_$(ConfigurationName).exe $(OutDir)\$(ProjectName).exe&#x0D;&#x0A;copy $(OutDir)\$(ProjectName)_$(ConfigurationName).exe $(OutDir)\$(ProjectName)_vs2005.exe"
 			/>
 		</Configuration>
 		<Configuration
