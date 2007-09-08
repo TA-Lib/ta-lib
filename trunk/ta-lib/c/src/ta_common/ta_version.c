@@ -39,8 +39,8 @@
  * Should be modified only by TA-Lib.org
  */
 #define MAJOR "0"
-#define MINOR "3"
-#define BUILD "1"
+#define MINOR "4"
+#define BUILD "0"
 
 /* Nothing to modify below this line. */
 
