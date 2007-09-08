@@ -78,6 +78,7 @@ int nbProfiledCall;
 double timeInProfiledCall;
 double worstProfiledCall;
 int insufficientClockPrecision;
+int doExtensiveProfiling;
 
 /**** Local declarations.              ****/
 /* None */
@@ -85,6 +86,7 @@ int insufficientClockPrecision;
 /**** Local functions declarations.    ****/
 static ErrorNumber testTAFunction_ALL( void );
 static ErrorNumber test_with_simulator( void );
+static void printUsage(void);
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -105,27 +107,29 @@ int main( int argc, char **argv )
    timeInProfiledCall = 0.0;
    worstProfiledCall = 0.0;
    nbProfiledCall = 0;
-   
+   doExtensiveProfiling = 0;
+
    printf( "\n" );
    printf( "ta_regtest V%s - Regression Tests of TA-Lib code\n", TA_GetVersionString() );
    printf( "\n" );
 
-   if( argc > 1 )
+   if( argc == 2 )
    {
-      printf( "Usage: ta_regtest\n" );
-      printf( "\n" );
-      printf( "   No parameter needed.\n" );
-      printf( "\n" );
-      printf( "   This tool will execute a series of tests to\n" );
-      printf( "   make sure that the library is behaving as\n" );
-      printf( "   expected.\n\n");
+	   /* Detect option to perform extended profiling. */
+	   if( (argv[1][0] == '-') && (argv[1][1] == 'p') && (argv[1][2] == '\0'))
+	   {
+		   doExtensiveProfiling = 1;
+	   }
+	   else
+	   {
+		   printUsage();
+		   return TA_REGTEST_BAD_USER_PARAM;
+	   }
+   }
 
-      printf( "   ** Must be run from the 'bin' directory.\n\n" );
-
-      printf( "   On success, the exit code is 0.\n" );
-      printf( "   On failure, the exit code is a number that can be\n" );
-      printf( "   found in c/src/tools/ta_regtest/ta_error_number.h\n" );
-
+   if( argc > 2 )
+   {
+      printUsage();
       return TA_REGTEST_BAD_USER_PARAM;
    }
 
@@ -148,34 +152,37 @@ int main( int argc, char **argv )
       return retValue;
    }
 
-   /* Perform all the tests using the TA_SIMULATOR data */
-   retValue = test_with_simulator();
-   if( retValue != TA_TEST_PASS )
-      return retValue;
+   /* Perform all regresstions tests (except when ta_regtest is executed for profiling only). */
+   if( !doExtensiveProfiling )
+   {
+      retValue = test_with_simulator();
+      if( retValue != TA_TEST_PASS )
+         return retValue;
 
-   if( insufficientClockPrecision != 0 )
-   {
-	   printf( "\nWarning: Code profiling not supported for this platform.\n" );
-   }
-   else if( nbProfiledCall > 0 )
-   {
-      printf( "\nNumber profiled function call       = %d function calls", nbProfiledCall );	  
+      if( insufficientClockPrecision != 0 )
+      {
+   	   printf( "\nWarning: Code profiling not supported for this platform.\n" );
+      }
+      else if( nbProfiledCall > 0 )
+      {
+         printf( "\nNumber profiled function call       = %d function calls", nbProfiledCall );	  
 
 #ifdef WIN32
-      QueryPerformanceFrequency(&QPFrequency);
-	  freq = (double)QPFrequency.QuadPart;
-	  printf( "\nTotal execution time                = %g milliseconds", (timeInProfiledCall/freq)*1000.0 );
-      printf( "\nWorst single function call          = %g milliseconds", (worstProfiledCall/freq)*1000.0 );
-	  printf( "\nAverage execution time per function = %g nanoseconds\n", ((timeInProfiledCall/freq)*1000000.0)/((double)nbProfiledCall) );
+         QueryPerformanceFrequency(&QPFrequency);
+         freq = (double)QPFrequency.QuadPart;
+         printf( "\nTotal execution time                = %g milliseconds", (timeInProfiledCall/freq)*1000.0 );
+         printf( "\nWorst single function call          = %g milliseconds", (worstProfiledCall/freq)*1000.0 );
+         printf( "\nAverage execution time per function = %g nanoseconds\n", ((timeInProfiledCall/freq)*1000000.0)/((double)nbProfiledCall) );
 #else
-      freq = (double)CLOCKS_PER_SEC;
-	  printf( "\nTotal execution time                = %g milliseconds", timeInProfiledCall/freq/1000.0 );
-      printf( "\nWorst single function call          = %g milliseconds", worstProfiledCall/freq/1000.0 );
-	  printf( "\nAverage execution time per function = %g nanoseconds\n", (timeInProfiledCall/freq/1000000.0)/((double)nbProfiledCall) );
+         freq = (double)CLOCKS_PER_SEC;
+         printf( "\nTotal execution time                = %g milliseconds", timeInProfiledCall/freq/1000.0 );
+         printf( "\nWorst single function call          = %g milliseconds", worstProfiledCall/freq/1000.0 );
+         printf( "\nAverage execution time per function = %g nanoseconds\n", (timeInProfiledCall/freq/1000000.0)/((double)nbProfiledCall) );
 #endif	  
+      }   
+      printf( "\n* All tests succeeded. Enjoy the library. *\n" );
    }
 
-   printf( "\n* All tests succeeded. Enjoy the library. *\n" );
 
    return TA_TEST_PASS; /* Everything succeed !!! */
 }
@@ -264,4 +271,26 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_candlestick,   "All Candlesticks" );
 
    return TA_TEST_PASS; /* All tests succeeded. */
+}
+
+static void printUsage(void)
+{
+      printf( "Usage: ta_regtest [-p]\n" );
+      printf( "\n" );
+      printf( "   No parameter needed for regression testing.\n" );
+      printf( "\n" );
+      printf( "   This tool will execute a series of tests to\n" );
+      printf( "   make sure that the library is behaving as\n" );
+      printf( "   expected.\n");
+	  printf( "\n" );
+      printf( "   ** Must be run from the 'bin' directory.\n" );
+      printf( "\n" );
+	  printf( "   OPTION:\n" );
+      printf( "    -p Only generate profiling data on stdout. This is\n" );
+      printf( "       intended only for the TA-Lib developers. It is\n" );
+      printf( "       not further documented for general use.\n" );
+      printf( "\n" );
+      printf( "   On success, the exit code is 0.\n" );
+      printf( "   On failure, the exit code is a number that can be\n" );
+      printf( "   found in c/src/tools/ta_regtest/ta_error_number.h\n" );
 }

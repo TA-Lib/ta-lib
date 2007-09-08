@@ -47,14 +47,22 @@
  *  030104 MF   Add tests for TA_GetLookback
  *  062504 MF   Add test_default_calls.
  *  110206 AC   Change volume and open interest to double
+ *  082607 MF   Add profiling feature.
  */
 
 /* Description:
  *         Regression testing of the functionality provided
  *         by the ta_abstract module.
+ *
+ *         Also perform call to all functions for the purpose 
+ *         of profiling (doExtensiveProfiling option).
  */
 
 /**** Headers ****/
+#ifdef WIN32
+   #include "windows.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -65,13 +73,32 @@
 /* None */
 
 /**** External variables declarations. ****/
-/* None */
+extern int doExtensiveProfiling;
+
+extern double gDataOpen[];
+extern double gDataHigh[];
+extern double gDataLow[];
+extern double gDataClose[];
+
+extern int nbProfiledCall;
+extern double timeInProfiledCall;
+extern double worstProfiledCall;
+extern int insufficientClockPrecision;
 
 /**** Global variables definitions.    ****/
 /* None */
 
 /**** Local declarations.              ****/
-/* None */
+typedef enum 
+{
+	PROFILING_10000,
+	PROFILING_8000,
+	PROFILING_5000,
+    PROFILING_2000,
+	PROFILING_1000,
+	PROFILING_500,
+	PROFILING_100
+} ProfilingType;
 
 /**** Local functions declarations.    ****/
 static ErrorNumber testLookback(TA_ParamHolder *paramHolder );
@@ -79,6 +106,7 @@ static ErrorNumber test_default_calls(void);
 static ErrorNumber callWithDefaults( const char *funcName,
 									 const double *input,
 									 const int *input_int, int size );
+static ErrorNumber callAndProfile( const char *funcName, ProfilingType type );
 
 /**** Local variables definitions.     ****/
 static double inputNegData[100];
@@ -269,6 +297,7 @@ static ErrorNumber testLookback( TA_ParamHolder *paramHolder )
 
 static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
 {
+	static int nbFunctionDone = 0;
    ErrorNumber *errorNumber;
    errorNumber = (ErrorNumber *)opaqueData;
    if( *errorNumber != TA_TEST_PASS )
@@ -288,6 +317,26 @@ static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
    CALL( inputRandDblEpsilon );
 #undef CALL
 
+#define CALL(x) { \
+	*errorNumber = callAndProfile( funcInfo->name, x ); \
+	if( *errorNumber != TA_TEST_PASS ) { \
+	   printf( "Failed for [%s][%s]\n", funcInfo->name, #x ); \
+       return; \
+	} \
+}
+   if( doExtensiveProfiling /*&& (nbFunctionDone<5)*/ )
+   {
+	   nbFunctionDone++;
+	   printf( "%s ", funcInfo->name );
+       CALL( PROFILING_100 );
+       CALL( PROFILING_500 );
+	   CALL( PROFILING_1000 );
+       CALL( PROFILING_2000 );
+       CALL( PROFILING_5000 );
+       CALL( PROFILING_8000 );
+	   CALL( PROFILING_10000 );
+	   printf( "\n" );
+   }
 }
 
 static ErrorNumber callWithDefaults( const char *funcName, const double *input, const int *input_int, int size )
@@ -473,6 +522,221 @@ static ErrorNumber test_default_calls(void)
        inputRandFltEpsilon_int[i] = sign?1:-1;
    }
 
+   if( doExtensiveProfiling )
+   {
+		   printf( "\n[PROFILING START]\n" );
+   }
+
    TA_ForEachFunc( testDefault, &errNumber );
+
+   if( doExtensiveProfiling )
+   {
+		   printf( "[PROFILING END]\n" );
+   }
+   
+
    return errNumber;
+}
+
+static ErrorNumber callAndProfile( const char *funcName, ProfilingType type )
+{
+   TA_ParamHolder *paramHolder;
+   const TA_FuncHandle *handle;
+   const TA_FuncInfo *funcInfo;
+   const TA_InputParameterInfo *inputInfo;
+   const TA_OutputParameterInfo *outputInfo;
+
+   TA_RetCode retCode;
+   int h, i, j, k;   
+   int outBegIdx, outNbElement;
+
+   /* Variables to control iteration and corresponding input size */
+   int nbInnerLoop, nbOuterLoop;
+   int stepSize;
+   int inputSize;
+
+   /* Variables measuring the execution time */
+#ifdef WIN32
+   LARGE_INTEGER startClock;
+   LARGE_INTEGER endClock;
+#else
+   clock_t startClock;
+   clock_t endClock;
+#endif
+   double clockDelta;
+   int nbProfiledCallLocal;
+   double timeInProfiledCallLocal;
+   double worstProfiledCallLocal;
+
+   nbProfiledCallLocal = 0;
+   timeInProfiledCallLocal = 0.0;
+   worstProfiledCallLocal = 0.0;
+
+   switch( type )
+   {
+   case PROFILING_10000:
+	   nbInnerLoop = 1;
+	   nbOuterLoop = 100;
+	   stepSize = 10000;
+	   inputSize = 10000;
+	   break;
+   case PROFILING_8000:
+	   nbInnerLoop = 2;
+	   nbOuterLoop = 50;
+	   stepSize = 2000;
+	   inputSize = 8000;
+       break;
+   case PROFILING_5000:
+	   nbInnerLoop = 2;
+	   nbOuterLoop = 50;
+	   stepSize = 5000;
+	   inputSize = 5000;
+	   break;
+   case PROFILING_2000:
+	   nbInnerLoop = 5;
+	   nbOuterLoop = 20;
+	   stepSize = 2000;
+	   inputSize = 2000;
+	   break;
+   case PROFILING_1000:
+	   nbInnerLoop = 10;
+	   nbOuterLoop = 10;
+	   stepSize = 1000;
+	   inputSize = 1000;
+	   break;
+   case PROFILING_500:
+	   nbInnerLoop = 20;
+	   nbOuterLoop = 5;
+	   stepSize = 500;
+	   inputSize = 500;
+	   break;
+   case PROFILING_100:
+	   nbInnerLoop = 100;
+	   nbOuterLoop = 1;
+	   stepSize = 100;
+	   inputSize = 100;
+	   break;
+   }
+
+   retCode = TA_GetFuncHandle( funcName, &handle );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Can't get the function handle [%d]\n", retCode );
+      return TA_ABS_TST_FAIL_GETFUNCHANDLE;   
+   }
+                             
+   retCode = TA_ParamHolderAlloc( handle, &paramHolder );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Can't allocate the param holder [%d]\n", retCode );
+      return TA_ABS_TST_FAIL_PARAMHOLDERALLOC;
+   }
+
+   TA_GetFuncInfo( handle, &funcInfo );
+
+   for( i=0; i < (int)funcInfo->nbOutput; i++ )
+   {
+      TA_GetOutputParameterInfo( handle, i, &outputInfo );
+	  switch(outputInfo->type)
+	  {
+	  case TA_Output_Real:
+	     TA_SetOutputParamRealPtr(paramHolder,i,&output[i][0]);         
+         for( j=0; j < 2000; j++ )
+            output[i][j] = TA_REAL_MIN;
+		 break;
+	  case TA_Output_Integer:
+	     TA_SetOutputParamIntegerPtr(paramHolder,i,&output_int[i][0]);
+         for( j=0; j < 2000; j++ )
+            output_int[i][j] = TA_INTEGER_MIN;
+		 break;
+	  }
+   }
+
+   for( h=0; h < 2; h++ )
+   {
+   for( i=0; i < nbOuterLoop; i++ )
+   {
+	   for( j=0; j < nbInnerLoop; j++ )
+	   {
+		   /* Prepare input. */
+		   for( k=0; k < (int)funcInfo->nbInput; k++ )
+		   {
+			  TA_GetInputParameterInfo( handle, k, &inputInfo );
+			  switch(inputInfo->type)
+			  {
+			  case TA_Input_Price:
+				 TA_SetInputParamPricePtr( paramHolder, k,
+					 inputInfo->flags&TA_IN_PRICE_OPEN?&gDataOpen[j*stepSize]:NULL,
+					 inputInfo->flags&TA_IN_PRICE_HIGH?&gDataHigh[j*stepSize]:NULL,
+					 inputInfo->flags&TA_IN_PRICE_LOW?&gDataLow[j*stepSize]:NULL,
+					 inputInfo->flags&TA_IN_PRICE_CLOSE?&gDataClose[j*stepSize]:NULL,
+					 inputInfo->flags&TA_IN_PRICE_VOLUME?&gDataClose[j*stepSize]:NULL, NULL );
+				 break;
+			  case TA_Input_Real:
+				 TA_SetInputParamRealPtr( paramHolder, k, &gDataClose[j*stepSize] );
+				 break;
+			  case TA_Input_Integer:
+				 printf( "\nError: Integer input not yet supported for profiling.\n" );
+				 return TA_ABS_TST_FAIL_CALLFUNC_1;
+				 break;
+			  }
+		   }
+
+           #ifdef WIN32
+              QueryPerformanceCounter(&startClock);
+           #else
+              startClock = clock();
+           #endif
+
+		   /* Do the function call. */
+		   retCode = TA_CallFunc(paramHolder,0,inputSize-1,&outBegIdx,&outNbElement);
+		   if( retCode != TA_SUCCESS )
+		   {
+		      printf( "TA_CallFunc() failed zero data test [%d]\n", retCode );
+		      TA_ParamHolderFree( paramHolder );
+		      return TA_ABS_TST_FAIL_CALLFUNC_1;
+		   }
+
+		   #ifdef WIN32
+			   QueryPerformanceCounter(&endClock);
+			   clockDelta = (double)((__int64)endClock.QuadPart - (__int64) startClock.QuadPart);
+		   #else
+			   endClock = clock();
+			   clockDelta = (double)(endClock - startClock);
+		   #endif
+
+		   /* Setup global profiling info. */
+		   if( clockDelta <= 0 )
+		   {
+			   printf( "Error: Insufficient timer precision to perform benchmarking on this platform.\n" );
+			   return TA_ABS_TST_FAIL_CALLFUNC_1;
+		   }
+		   else
+		   {	   
+			   if( clockDelta > worstProfiledCall )
+			      worstProfiledCall = clockDelta;
+			   timeInProfiledCall += clockDelta;
+			   nbProfiledCall++;
+		   }
+
+		   /* Setup local profiling info for this particular function. */
+		   if( clockDelta > worstProfiledCallLocal )
+			   worstProfiledCallLocal = clockDelta;
+		   timeInProfiledCallLocal += clockDelta;
+		   nbProfiledCallLocal++;
+	   }
+   }
+   }
+
+   /* Output statistic (remove worst call, average the others. */
+   printf( "%g ", (timeInProfiledCallLocal-worstProfiledCallLocal)/(double)(nbProfiledCallLocal-1));
+
+   retCode = TA_ParamHolderFree( paramHolder );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "TA_ParamHolderFree failed [%d]\n", retCode );
+      return TA_ABS_TST_FAIL_PARAMHOLDERFREE;
+   }
+
+   return TA_TEST_PASS;
 }
