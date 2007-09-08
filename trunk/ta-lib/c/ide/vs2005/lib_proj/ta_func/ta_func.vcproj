@@ -347,7 +347,15 @@
 				Name="ta_func"
 				>
 				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_ACOS.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_AD.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_ADD.c"
 					>
 				</File>
 				<File
@@ -372,6 +380,14 @@
 				</File>
 				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_AROONOSC.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_ASIN.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_ATAN.c"
 					>
 				</File>
 				<File
@@ -643,6 +659,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_CEIL.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_CMO.c"
 					>
 				</File>
@@ -651,7 +671,19 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_COS.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_COSH.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_DEMA.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_DIV.c"
 					>
 				</File>
 				<File
@@ -660,6 +692,14 @@
 				</File>
 				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_EMA.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_EXP.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_FLOOR.c"
 					>
 				</File>
 				<File
@@ -704,6 +744,14 @@
 				</File>
 				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_LN.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_LOG10.c"
 					>
 				</File>
 				<File
@@ -783,6 +831,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_MULT.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_NATR.c"
 					>
 				</File>
@@ -835,7 +887,15 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_SINH.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_SMA.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_SQRT.c"
 					>
 				</File>
 				<File
@@ -855,11 +915,23 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_SUB.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_SUM.c"
 					>
 				</File>
 				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_T3.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_TAN.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_TANH.c"
 					>
 				</File>
 				<File

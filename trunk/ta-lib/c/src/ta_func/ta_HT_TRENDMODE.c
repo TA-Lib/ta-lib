@@ -235,7 +235,7 @@
    prevLeadSine = leadSine = 0.0;
 
    /* The following could be replaced by constant eventually. */
-   tempReal = atan(1);
+   tempReal = std_atan(1);
    rad2Deg = 45.0/tempReal;
    deg2Rad = 1.0/rad2Deg;
    constDeg2RadBy360 = tempReal*8.0;
@@ -400,7 +400,7 @@
       prevI2 = I2;
       tempReal = period;
       if( (Im != 0.0) && (Re != 0.0) )
-         period = 360.0 / (atan(Im/Re)*rad2Deg);
+         period = 360.0 / (std_atan(Im/Re)*rad2Deg);
       tempReal2 = 1.5*tempReal;
       if( period > tempReal2)
          period = tempReal2;
@@ -430,17 +430,17 @@
       {
          tempReal  = ((double)i*constDeg2RadBy360)/(double)DCPeriodInt;
          tempReal2 = smoothPrice[idx];
-         realPart += sin(tempReal)*tempReal2;
-         imagPart += cos(tempReal)*tempReal2;
+         realPart += std_sin(tempReal)*tempReal2;
+         imagPart += std_cos(tempReal)*tempReal2;
          if( idx == 0 )
             idx = SMOOTH_PRICE_SIZE-1;
          else
             idx--;
       }
 
-      tempReal = fabs(imagPart);
+      tempReal = std_fabs(imagPart);
       if( tempReal > 0.0 )
-         DCPhase = atan(realPart/imagPart)*rad2Deg;
+         DCPhase = std_atan(realPart/imagPart)*rad2Deg;
       else if( tempReal <= 0.01 )
       {
          if( realPart < 0.0 )
@@ -459,8 +459,8 @@
        
       prevSine     = sine;
       prevLeadSine = leadSine;
-      sine     = sin(DCPhase*deg2Rad);
-      leadSine = sin((DCPhase+45)*deg2Rad);
+      sine     = std_sin(DCPhase*deg2Rad);
+      leadSine = std_sin((DCPhase+45)*deg2Rad);
 
       /* Compute Trendline */
       DCPeriod    = smoothPeriod+0.5;
@@ -506,7 +506,7 @@
       }
 
       tempReal = smoothPrice[smoothPrice_Idx];
-      if( (trendline != 0.0) && (fabs( (tempReal - trendline)/trendline ) >= 0.015) )
+      if( (trendline != 0.0) && (std_fabs( (tempReal - trendline)/trendline ) >= 0.015) )
          trend = 1;
 
       if( today >= startIdx )
@@ -604,7 +604,7 @@
 /* Generated */    prevDCPhase  = DCPhase  = 0.0;
 /* Generated */    prevSine     = sine     = 0.0;
 /* Generated */    prevLeadSine = leadSine = 0.0;
-/* Generated */    tempReal = atan(1);
+/* Generated */    tempReal = std_atan(1);
 /* Generated */    rad2Deg = 45.0/tempReal;
 /* Generated */    deg2Rad = 1.0/rad2Deg;
 /* Generated */    constDeg2RadBy360 = tempReal*8.0;
@@ -695,7 +695,7 @@
 /* Generated */       prevI2 = I2;
 /* Generated */       tempReal = period;
 /* Generated */       if( (Im != 0.0) && (Re != 0.0) )
-/* Generated */          period = 360.0 / (atan(Im/Re)*rad2Deg);
+/* Generated */          period = 360.0 / (std_atan(Im/Re)*rad2Deg);
 /* Generated */       tempReal2 = 1.5*tempReal;
 /* Generated */       if( period > tempReal2)
 /* Generated */          period = tempReal2;
@@ -718,16 +718,16 @@
 /* Generated */       {
 /* Generated */          tempReal  = ((double)i*constDeg2RadBy360)/(double)DCPeriodInt;
 /* Generated */          tempReal2 = smoothPrice[idx];
-/* Generated */          realPart += sin(tempReal)*tempReal2;
-/* Generated */          imagPart += cos(tempReal)*tempReal2;
+/* Generated */          realPart += std_sin(tempReal)*tempReal2;
+/* Generated */          imagPart += std_cos(tempReal)*tempReal2;
 /* Generated */          if( idx == 0 )
 /* Generated */             idx = SMOOTH_PRICE_SIZE-1;
 /* Generated */          else
 /* Generated */             idx--;
 /* Generated */       }
-/* Generated */       tempReal = fabs(imagPart);
+/* Generated */       tempReal = std_fabs(imagPart);
 /* Generated */       if( tempReal > 0.0 )
-/* Generated */          DCPhase = atan(realPart/imagPart)*rad2Deg;
+/* Generated */          DCPhase = std_atan(realPart/imagPart)*rad2Deg;
 /* Generated */       else if( tempReal <= 0.01 )
 /* Generated */       {
 /* Generated */          if( realPart < 0.0 )
@@ -743,8 +743,8 @@
 /* Generated */          DCPhase -= 360.0;
 /* Generated */       prevSine     = sine;
 /* Generated */       prevLeadSine = leadSine;
-/* Generated */       sine     = sin(DCPhase*deg2Rad);
-/* Generated */       leadSine = sin((DCPhase+45)*deg2Rad);
+/* Generated */       sine     = std_sin(DCPhase*deg2Rad);
+/* Generated */       leadSine = std_sin((DCPhase+45)*deg2Rad);
 /* Generated */       DCPeriod    = smoothPeriod+0.5;
 /* Generated */       DCPeriodInt = (int)DCPeriod;
 /* Generated */       idx = today;
@@ -774,7 +774,7 @@
 /* Generated */          trend = 0;
 /* Generated */       }
 /* Generated */       tempReal = smoothPrice[smoothPrice_Idx];
-/* Generated */       if( (trendline != 0.0) && (fabs( (tempReal - trendline)/trendline ) >= 0.015) )
+/* Generated */       if( (trendline != 0.0) && (std_fabs( (tempReal - trendline)/trendline ) >= 0.015) )
 /* Generated */          trend = 1;
 /* Generated */       if( today >= startIdx )
 /* Generated */       {

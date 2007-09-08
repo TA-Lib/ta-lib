@@ -236,7 +236,7 @@
                 inClose[i] < inOpen[i-1] &&                                 //      and closes under the white rb
                 inClose[i] > max(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
                                                                             // size of 2 rb near the same
-                fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
+                std_fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
             ) ||
             (
                 TA_REALBODYGAPDOWN(i-1,i-2) &&                              // downside gap
@@ -246,7 +246,7 @@
                 inClose[i] > inOpen[i-1] &&                                 //      and closes above the black rb
                 inClose[i] < min(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
                                                                             // size of 2 rb near the same
-                fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
+                std_fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
             )
         )
             outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;
@@ -353,7 +353,7 @@
 /* Generated */                 inClose[i] < inOpen[i-1] &&                                 //      and closes under the white rb
 /* Generated */                 inClose[i] > max(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
 /* Generated */                                                                             // size of 2 rb near the same
-/* Generated */                 fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
+/* Generated */                 std_fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
 /* Generated */             ) ||
 /* Generated */             (
 /* Generated */                 TA_REALBODYGAPDOWN(i-1,i-2) &&                              // downside gap
@@ -363,7 +363,7 @@
 /* Generated */                 inClose[i] > inOpen[i-1] &&                                 //      and closes above the black rb
 /* Generated */                 inClose[i] < min(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
 /* Generated */                                                                             // size of 2 rb near the same
-/* Generated */                 fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
+/* Generated */                 std_fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
 /* Generated */             )
 /* Generated */         )
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;

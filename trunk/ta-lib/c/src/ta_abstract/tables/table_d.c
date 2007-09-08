@@ -74,6 +74,10 @@ DEF_FUNCTION( DEMA,                       /* name */
              );
 /* DEMA END */
 
+/* DIV BEGIN */
+DEF_MATH_BINARY_OPERATOR( DIV, "Vector Arithmetic Div", "Div" )
+/* DIV END */
+
 /* DX BEGIN */
 static const TA_InputParameterInfo    *TA_DX_Inputs[]    =
 {
@@ -107,6 +111,7 @@ DEF_FUNCTION( DX,                           /* name */
 const TA_FuncDef *TA_DEF_TableD[] =
 {
    ADD_TO_TABLE(DEMA),
+   ADD_TO_TABLE(DIV),
    ADD_TO_TABLE(DX),
    NULL
 };

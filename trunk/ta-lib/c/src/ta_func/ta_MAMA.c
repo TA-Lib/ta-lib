@@ -272,7 +272,7 @@
    /* Insert TA function code here. */
 
    /* Constant */
-   rad2Deg = 180.0 / (4.0 * atan(1));
+   rad2Deg = 180.0 / (4.0 * std_atan(1));
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -401,7 +401,7 @@
 
          /* Put Alpha in tempReal2 */
          if( I1ForEvenPrev3 != 0.0 )
-            tempReal2 = (atan(Q1/I1ForEvenPrev3)*rad2Deg);
+            tempReal2 = (std_atan(Q1/I1ForEvenPrev3)*rad2Deg);
          else
             tempReal2 = 0.0;
       }
@@ -427,7 +427,7 @@
 
          /* Put Alpha in tempReal2 */
          if( I1ForOddPrev3 != 0.0 )
-            tempReal2 = (atan(Q1/I1ForOddPrev3)*rad2Deg);
+            tempReal2 = (std_atan(Q1/I1ForOddPrev3)*rad2Deg);
          else
             tempReal2 = 0.0;
       }
@@ -467,7 +467,7 @@
       prevI2 = I2;
       tempReal = period;
       if( (Im != 0.0) && (Re != 0.0) )
-         period = 360.0 / (atan(Im/Re)*rad2Deg);
+         period = 360.0 / (std_atan(Im/Re)*rad2Deg);
       tempReal2 = 1.5*tempReal;
       if( period > tempReal2)
          period = tempReal2;
@@ -574,7 +574,7 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    rad2Deg = 180.0 / (4.0 * atan(1));
+/* Generated */    rad2Deg = 180.0 / (4.0 * std_atan(1));
 /* Generated */    lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA,Mama);
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
@@ -642,7 +642,7 @@
 /* Generated */          I1ForOddPrev3 = I1ForOddPrev2;
 /* Generated */          I1ForOddPrev2 = detrender;
 /* Generated */          if( I1ForEvenPrev3 != 0.0 )
-/* Generated */             tempReal2 = (atan(Q1/I1ForEvenPrev3)*rad2Deg);
+/* Generated */             tempReal2 = (std_atan(Q1/I1ForEvenPrev3)*rad2Deg);
 /* Generated */          else
 /* Generated */             tempReal2 = 0.0;
 /* Generated */       }
@@ -657,7 +657,7 @@
 /* Generated */          I1ForEvenPrev3 = I1ForEvenPrev2;
 /* Generated */          I1ForEvenPrev2 = detrender;
 /* Generated */          if( I1ForOddPrev3 != 0.0 )
-/* Generated */             tempReal2 = (atan(Q1/I1ForOddPrev3)*rad2Deg);
+/* Generated */             tempReal2 = (std_atan(Q1/I1ForOddPrev3)*rad2Deg);
 /* Generated */          else
 /* Generated */             tempReal2 = 0.0;
 /* Generated */       }
@@ -689,7 +689,7 @@
 /* Generated */       prevI2 = I2;
 /* Generated */       tempReal = period;
 /* Generated */       if( (Im != 0.0) && (Re != 0.0) )
-/* Generated */          period = 360.0 / (atan(Im/Re)*rad2Deg);
+/* Generated */          period = 360.0 / (std_atan(Im/Re)*rad2Deg);
 /* Generated */       tempReal2 = 1.5*tempReal;
 /* Generated */       if( period > tempReal2)
 /* Generated */          period = tempReal2;

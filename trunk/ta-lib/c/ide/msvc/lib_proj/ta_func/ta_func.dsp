@@ -228,7 +228,15 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_ACOS.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_AD.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_ADD.c
 # End Source File
 # Begin Source File
 
@@ -253,6 +261,14 @@ SOURCE=..\..\..\..\src\ta_func\ta_AROON.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_AROONOSC.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_ASIN.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_ATAN.c
 # End Source File
 # Begin Source File
 
@@ -524,6 +540,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_CDLXSIDEGAP3METHODS.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_CEIL.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_CMO.c
 # End Source File
 # Begin Source File
@@ -532,7 +552,19 @@ SOURCE=..\..\..\..\src\ta_func\ta_CORREL.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_COS.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_COSH.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_DEMA.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_DIV.c
 # End Source File
 # Begin Source File
 
@@ -541,6 +573,14 @@ SOURCE=..\..\..\..\src\ta_func\ta_DX.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_EMA.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_EXP.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_FLOOR.c
 # End Source File
 # Begin Source File
 
@@ -585,6 +625,14 @@ SOURCE=..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_LN.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_LOG10.c
 # End Source File
 # Begin Source File
 
@@ -664,6 +712,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_MOM.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_MULT.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_NATR.c
 # End Source File
 # Begin Source File
@@ -716,7 +768,15 @@ SOURCE=..\..\..\..\src\ta_func\ta_SIN.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_SINH.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_SMA.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_SQRT.c
 # End Source File
 # Begin Source File
 
@@ -736,11 +796,23 @@ SOURCE=..\..\..\..\src\ta_func\ta_STOCHRSI.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_SUB.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_SUM.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\..\src\ta_func\ta_T3.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_TAN.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\ta_func\ta_TANH.c
 # End Source File
 # Begin Source File
 

@@ -170,36 +170,69 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
                                        double       *output );
 #endif
 
+   /* Provides an equivalent to standard "math.h" functions. */
 #if defined( _MANAGED )
-   /* Provides the equivalent of some standard "math.h" function for 
-    * the Managed C++ port.
-    */
-   #define floor Math::Floor
-   #define ceil  Math::Ceil
-   #define fabs  Math::Abs
-   #define atan  Math::Atan
-   #define cos   Math::Cos
-   #define sin   Math::Sin
-   #define sqrt  Math::Sqrt
+   #define std_floor Math::Floor
+   #define std_ceil  Math::Ceiling
+   #define std_fabs  Math::Abs
+   #define std_atan  Math::Atan
+   #define std_cos   Math::Cos
+   #define std_sin   Math::Sin
+   #define std_sqrt  Math::Sqrt
+   #define std_tanh  Math::Tanh
+   #define std_tan   Math::Tan
+   #define std_sinh  Math::Sinh
+   #define std_log10 Math::Log10
+   #define std_log   Math::Log
+   #define std_exp   Math::Exp
+   #define std_cosh  Math::Cosh   
+   #define std_asin  Math::Asin
+   #define std_acos  Math::Acos
 #elif defined( _JAVA )
-   #define floor Math.floor
-   #define ceil  Math.ceil
-   #define fabs  Math.abs
-   #define atan  Math.atan
-   #define cos   Math.cos
-   #define sin   Math.sin
-   #define sqrt  Math.sqrt
+   #define std_floor Math.floor
+   #define std_ceil  Math.ceil
+   #define std_fabs  Math.abs
+   #define std_atan  Math.atan
+   #define std_cos   Math.cos
+   #define std_sin   Math.sin
+   #define std_sqrt  Math.sqrt
+   #define std_tanh  Math.tanh
+   #define std_tan   Math.tan
+   #define std_sinh  Math.sinh
+   #define std_log10 Math.log10
+   #define std_log   Math.log
+   #define std_exp   Math.exp
+   #define std_cosh  Math.cosh   
+   #define std_asin  Math.asin
+   #define std_acos  Math.acos
+#else
+   #define std_floor floor
+   #define std_ceil  ceil
+   #define std_fabs  fabs
+   #define std_atan  atan
+   #define std_cos   cos
+   #define std_sin   sin
+   #define std_sqrt  sqrt
+   #define std_tanh  tanh
+   #define std_tan   tan
+   #define std_sinh  sinh
+   #define std_log10 log10
+   #define std_log   log
+   #define std_exp   exp
+   #define std_cosh  cosh   
+   #define std_asin  asin
+   #define std_acos  acos
 #endif
 
 /* Rounding macro for doubles. Works only with positive numbers. */
-#define round_pos(x) (floor((x)+0.5))
+#define round_pos(x) (std_floor((x)+0.5))
 
 /* Rounding macro for doubles. Works only with negative numbers. */
-#define round_neg(x) (ceil((x)-0.5))
+#define round_neg(x) (std_ceil((x)-0.5))
 
 /* Rounding with a precision of 2 digit after the dot */
-#define round_pos_2(x) ((floor((x*100.0)+0.5))/100.0)
-#define round_neg_2(x) ((ceil((x*100.0)-0.5))/100.0)
+#define round_pos_2(x) ((std_floor((x*100.0)+0.5))/100.0)
+#define round_neg_2(x) ((std_ceil((x*100.0)-0.5))/100.0)
 
 /* In the context of TA-Lib, floating point are often 
  * compared within an acceptable error range.
@@ -290,7 +323,7 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
  * Don't use i++ or func(i) with these macros !
  */
 
-#define TA_REALBODY(IDX)        ( fabs( inClose[IDX] - inOpen[IDX] ) )
+#define TA_REALBODY(IDX)        ( std_fabs( inClose[IDX] - inOpen[IDX] ) )
 #define TA_UPPERSHADOW(IDX)     ( inHigh[IDX] - ( inClose[IDX] >= inOpen[IDX] ? inClose[IDX] : inOpen[IDX] ) )
 #define TA_LOWERSHADOW(IDX)     ( ( inClose[IDX] >= inOpen[IDX] ? inOpen[IDX] : inClose[IDX] ) - inLow[IDX] )
 #define TA_HIGHLOWRANGE(IDX)    ( inHigh[IDX] - inLow[IDX] )

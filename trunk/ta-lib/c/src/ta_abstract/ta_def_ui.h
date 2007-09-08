@@ -261,6 +261,26 @@ static const TA_OutputParameterInfo   *TA_##NAME##_Outputs[]   = \
 }; \
 	static const TA_OptInputParameterInfo *TA_##NAME##_OptInputs[] = { NULL }; \
 DEF_FUNCTION( NAME, /* name */ \
+              TA_GroupId_MathTransform, /* groupId */ \
+              HINT, /* hint */ \
+              CAMELCASENAME,  /* CamelCase name */ \
+              0        /* flags */ \
+             );
+
+#define DEF_MATH_BINARY_OPERATOR(NAME,HINT,CAMELCASENAME) \
+	static const TA_InputParameterInfo    *TA_##NAME##_Inputs[]    = \
+{ \
+  &TA_DEF_UI_Input_Real0, \
+  &TA_DEF_UI_Input_Real1, \
+  NULL \
+}; \
+static const TA_OutputParameterInfo   *TA_##NAME##_Outputs[]   = \
+{ \
+  &TA_DEF_UI_Output_Real, \
+  NULL \
+}; \
+	static const TA_OptInputParameterInfo *TA_##NAME##_OptInputs[] = { NULL }; \
+DEF_FUNCTION( NAME, /* name */ \
               TA_GroupId_MathOperators, /* groupId */ \
               HINT, /* hint */ \
               CAMELCASENAME,  /* CamelCase name */ \

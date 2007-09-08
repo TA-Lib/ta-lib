@@ -74,6 +74,10 @@ DEF_FUNCTION( EMA,                        /* name */
              );
 /* EMA END */
 
+/* EXP BEGIN */
+DEF_MATH_UNARY_OPERATOR( EXP, "Vector Arithmetic Exp", "Exp" )
+/* EXP END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -81,6 +85,7 @@ DEF_FUNCTION( EMA,                        /* name */
 const TA_FuncDef *TA_DEF_TableE[] =
 {
    ADD_TO_TABLE(EMA),
+   ADD_TO_TABLE(EXP),
    NULL
 };
 

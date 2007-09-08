@@ -1,15 +1,19 @@
 
-noinst_LTLIBRARIES = libta_func.la
+lib_LTLIBRARIES = libta_func.la
 AM_CPPFLAGS = -I../ta_common/
 
 libta_func_la_SOURCES = ta_utility.c \
+	ta_ACOS.c \
 	ta_AD.c \
+	ta_ADD.c \
 	ta_ADOSC.c \
 	ta_ADX.c \
 	ta_ADXR.c \
 	ta_APO.c \
 	ta_AROON.c \
 	ta_AROONOSC.c \
+	ta_ASIN.c \
+	ta_ATAN.c \
 	ta_ATR.c \
 	ta_AVGPRICE.c \
 	ta_BBANDS.c \
@@ -77,11 +81,17 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_CDLUNIQUE3RIVER.c \
 	ta_CDLUPSIDEGAP2CROWS.c \
 	ta_CDLXSIDEGAP3METHODS.c \
+	ta_CEIL.c \
 	ta_CMO.c \
 	ta_CORREL.c \
+	ta_COS.c \
+	ta_COSH.c \
 	ta_DEMA.c \
+	ta_DIV.c \
 	ta_DX.c \
 	ta_EMA.c \
+	ta_EXP.c \
+	ta_FLOOR.c \
 	ta_HT_DCPERIOD.c \
 	ta_HT_DCPHASE.c \
 	ta_HT_PHASOR.c \
@@ -93,6 +103,8 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_LINEARREG_ANGLE.c \
 	ta_LINEARREG_INTERCEPT.c \
 	ta_LINEARREG_SLOPE.c \
+	ta_LN.c \
+	ta_LOG10.c \
 	ta_MA.c \
 	ta_MACD.c \
 	ta_MACDEXT.c \
@@ -112,6 +124,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_MINUS_DI.c \
 	ta_MINUS_DM.c \
 	ta_MOM.c \
+	ta_MULT.c \
 	ta_NATR.c \
 	ta_OBV.c \
 	ta_PLUS_DI.c \
@@ -125,13 +138,18 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_SAR.c \
 	ta_SAREXT.c \
 	ta_SIN.c \
+	ta_SINH.c \
 	ta_SMA.c \
+	ta_SQRT.c \
 	ta_STDDEV.c \
 	ta_STOCH.c \
 	ta_STOCHF.c \
 	ta_STOCHRSI.c \
+	ta_SUB.c \
 	ta_SUM.c \
 	ta_T3.c \
+	ta_TAN.c \
+	ta_TANH.c \
 	ta_TEMA.c \
 	ta_TRANGE.c \
 	ta_TRIMA.c \

@@ -152,6 +152,14 @@ DEF_FUNCTION( LINEARREG_INTERCEPT,           /* name */
              );
 /* LINEARREG_INTERCEPT END */
 
+/* LN BEGIN */
+DEF_MATH_UNARY_OPERATOR( LN, "Vector Log Natural", "Ln" )
+/* LN END */
+
+/* LOG10 BEGIN */
+DEF_MATH_UNARY_OPERATOR( LOG10, "Vector Log10", "Log10" )
+/* LOG10 END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -162,6 +170,8 @@ const TA_FuncDef *TA_DEF_TableL[] =
    ADD_TO_TABLE(LINEARREG_ANGLE),
    ADD_TO_TABLE(LINEARREG_INTERCEPT),
    ADD_TO_TABLE(LINEARREG_SLOPE),
+   ADD_TO_TABLE(LN),
+   ADD_TO_TABLE(LOG10),
    NULL
 };
 

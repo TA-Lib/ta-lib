@@ -34,13 +34,17 @@ CXXFLAGS += $(CUSERFLAGS)
 
 HEADERS =	
 SOURCES =	../../../../../src/ta_func/ta_utility.c \
+		../../../../../src/ta_func/ta_ACOS.c \
 		../../../../../src/ta_func/ta_AD.c \
+		../../../../../src/ta_func/ta_ADD.c \
 		../../../../../src/ta_func/ta_ADOSC.c \
 		../../../../../src/ta_func/ta_ADX.c \
 		../../../../../src/ta_func/ta_ADXR.c \
 		../../../../../src/ta_func/ta_APO.c \
 		../../../../../src/ta_func/ta_AROON.c \
 		../../../../../src/ta_func/ta_AROONOSC.c \
+		../../../../../src/ta_func/ta_ASIN.c \
+		../../../../../src/ta_func/ta_ATAN.c \
 		../../../../../src/ta_func/ta_ATR.c \
 		../../../../../src/ta_func/ta_AVGPRICE.c \
 		../../../../../src/ta_func/ta_BBANDS.c \
@@ -108,11 +112,17 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_CDLUNIQUE3RIVER.c \
 		../../../../../src/ta_func/ta_CDLUPSIDEGAP2CROWS.c \
 		../../../../../src/ta_func/ta_CDLXSIDEGAP3METHODS.c \
+		../../../../../src/ta_func/ta_CEIL.c \
 		../../../../../src/ta_func/ta_CMO.c \
 		../../../../../src/ta_func/ta_CORREL.c \
+		../../../../../src/ta_func/ta_COS.c \
+		../../../../../src/ta_func/ta_COSH.c \
 		../../../../../src/ta_func/ta_DEMA.c \
+		../../../../../src/ta_func/ta_DIV.c \
 		../../../../../src/ta_func/ta_DX.c \
 		../../../../../src/ta_func/ta_EMA.c \
+		../../../../../src/ta_func/ta_EXP.c \
+		../../../../../src/ta_func/ta_FLOOR.c \
 		../../../../../src/ta_func/ta_HT_DCPERIOD.c \
 		../../../../../src/ta_func/ta_HT_DCPHASE.c \
 		../../../../../src/ta_func/ta_HT_PHASOR.c \
@@ -124,6 +134,8 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_LINEARREG_ANGLE.c \
 		../../../../../src/ta_func/ta_LINEARREG_INTERCEPT.c \
 		../../../../../src/ta_func/ta_LINEARREG_SLOPE.c \
+		../../../../../src/ta_func/ta_LN.c \
+		../../../../../src/ta_func/ta_LOG10.c \
 		../../../../../src/ta_func/ta_MA.c \
 		../../../../../src/ta_func/ta_MACD.c \
 		../../../../../src/ta_func/ta_MACDEXT.c \
@@ -143,6 +155,7 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_MINUS_DI.c \
 		../../../../../src/ta_func/ta_MINUS_DM.c \
 		../../../../../src/ta_func/ta_MOM.c \
+		../../../../../src/ta_func/ta_MULT.c \
 		../../../../../src/ta_func/ta_NATR.c \
 		../../../../../src/ta_func/ta_OBV.c \
 		../../../../../src/ta_func/ta_PLUS_DI.c \
@@ -156,13 +169,18 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_SAR.c \
 		../../../../../src/ta_func/ta_SAREXT.c \
 		../../../../../src/ta_func/ta_SIN.c \
+		../../../../../src/ta_func/ta_SINH.c \
 		../../../../../src/ta_func/ta_SMA.c \
+		../../../../../src/ta_func/ta_SQRT.c \
 		../../../../../src/ta_func/ta_STDDEV.c \
 		../../../../../src/ta_func/ta_STOCH.c \
 		../../../../../src/ta_func/ta_STOCHF.c \
 		../../../../../src/ta_func/ta_STOCHRSI.c \
+		../../../../../src/ta_func/ta_SUB.c \
 		../../../../../src/ta_func/ta_SUM.c \
 		../../../../../src/ta_func/ta_T3.c \
+		../../../../../src/ta_func/ta_TAN.c \
+		../../../../../src/ta_func/ta_TANH.c \
 		../../../../../src/ta_func/ta_TEMA.c \
 		../../../../../src/ta_func/ta_TRANGE.c \
 		../../../../../src/ta_func/ta_TRIMA.c \
@@ -175,13 +193,17 @@ SOURCES =	../../../../../src/ta_func/ta_utility.c \
 		../../../../../src/ta_func/ta_WILLR.c \
 		../../../../../src/ta_func/ta_WMA.c
 OBJECTS =	../../../../../temp/cmd/ta_utility.o \
+		../../../../../temp/cmd/ta_ACOS.o \
 		../../../../../temp/cmd/ta_AD.o \
+		../../../../../temp/cmd/ta_ADD.o \
 		../../../../../temp/cmd/ta_ADOSC.o \
 		../../../../../temp/cmd/ta_ADX.o \
 		../../../../../temp/cmd/ta_ADXR.o \
 		../../../../../temp/cmd/ta_APO.o \
 		../../../../../temp/cmd/ta_AROON.o \
 		../../../../../temp/cmd/ta_AROONOSC.o \
+		../../../../../temp/cmd/ta_ASIN.o \
+		../../../../../temp/cmd/ta_ATAN.o \
 		../../../../../temp/cmd/ta_ATR.o \
 		../../../../../temp/cmd/ta_AVGPRICE.o \
 		../../../../../temp/cmd/ta_BBANDS.o \
@@ -249,11 +271,17 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_CDLUNIQUE3RIVER.o \
 		../../../../../temp/cmd/ta_CDLUPSIDEGAP2CROWS.o \
 		../../../../../temp/cmd/ta_CDLXSIDEGAP3METHODS.o \
+		../../../../../temp/cmd/ta_CEIL.o \
 		../../../../../temp/cmd/ta_CMO.o \
 		../../../../../temp/cmd/ta_CORREL.o \
+		../../../../../temp/cmd/ta_COS.o \
+		../../../../../temp/cmd/ta_COSH.o \
 		../../../../../temp/cmd/ta_DEMA.o \
+		../../../../../temp/cmd/ta_DIV.o \
 		../../../../../temp/cmd/ta_DX.o \
 		../../../../../temp/cmd/ta_EMA.o \
+		../../../../../temp/cmd/ta_EXP.o \
+		../../../../../temp/cmd/ta_FLOOR.o \
 		../../../../../temp/cmd/ta_HT_DCPERIOD.o \
 		../../../../../temp/cmd/ta_HT_DCPHASE.o \
 		../../../../../temp/cmd/ta_HT_PHASOR.o \
@@ -265,6 +293,8 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_LINEARREG_ANGLE.o \
 		../../../../../temp/cmd/ta_LINEARREG_INTERCEPT.o \
 		../../../../../temp/cmd/ta_LINEARREG_SLOPE.o \
+		../../../../../temp/cmd/ta_LN.o \
+		../../../../../temp/cmd/ta_LOG10.o \
 		../../../../../temp/cmd/ta_MA.o \
 		../../../../../temp/cmd/ta_MACD.o \
 		../../../../../temp/cmd/ta_MACDEXT.o \
@@ -284,6 +314,7 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_MINUS_DI.o \
 		../../../../../temp/cmd/ta_MINUS_DM.o \
 		../../../../../temp/cmd/ta_MOM.o \
+		../../../../../temp/cmd/ta_MULT.o \
 		../../../../../temp/cmd/ta_NATR.o \
 		../../../../../temp/cmd/ta_OBV.o \
 		../../../../../temp/cmd/ta_PLUS_DI.o \
@@ -297,13 +328,18 @@ OBJECTS =	../../../../../temp/cmd/ta_utility.o \
 		../../../../../temp/cmd/ta_SAR.o \
 		../../../../../temp/cmd/ta_SAREXT.o \
 		../../../../../temp/cmd/ta_SIN.o \
+		../../../../../temp/cmd/ta_SINH.o \
 		../../../../../temp/cmd/ta_SMA.o \
+		../../../../../temp/cmd/ta_SQRT.o \
 		../../../../../temp/cmd/ta_STDDEV.o \
 		../../../../../temp/cmd/ta_STOCH.o \
 		../../../../../temp/cmd/ta_STOCHF.o \
 		../../../../../temp/cmd/ta_STOCHRSI.o \
+		../../../../../temp/cmd/ta_SUB.o \
 		../../../../../temp/cmd/ta_SUM.o \
 		../../../../../temp/cmd/ta_T3.o \
+		../../../../../temp/cmd/ta_TAN.o \
+		../../../../../temp/cmd/ta_TANH.o \
 		../../../../../temp/cmd/ta_TEMA.o \
 		../../../../../temp/cmd/ta_TRANGE.o \
 		../../../../../temp/cmd/ta_TRIMA.o \
@@ -371,8 +407,14 @@ clean:
 ../../../../../temp/cmd/ta_utility.o: ../../../../../src/ta_func/ta_utility.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_utility.o ../../../../../src/ta_func/ta_utility.c
 
+../../../../../temp/cmd/ta_ACOS.o: ../../../../../src/ta_func/ta_ACOS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ACOS.o ../../../../../src/ta_func/ta_ACOS.c
+
 ../../../../../temp/cmd/ta_AD.o: ../../../../../src/ta_func/ta_AD.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_AD.o ../../../../../src/ta_func/ta_AD.c
+
+../../../../../temp/cmd/ta_ADD.o: ../../../../../src/ta_func/ta_ADD.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ADD.o ../../../../../src/ta_func/ta_ADD.c
 
 ../../../../../temp/cmd/ta_ADOSC.o: ../../../../../src/ta_func/ta_ADOSC.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ADOSC.o ../../../../../src/ta_func/ta_ADOSC.c
@@ -391,6 +433,12 @@ clean:
 
 ../../../../../temp/cmd/ta_AROONOSC.o: ../../../../../src/ta_func/ta_AROONOSC.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_AROONOSC.o ../../../../../src/ta_func/ta_AROONOSC.c
+
+../../../../../temp/cmd/ta_ASIN.o: ../../../../../src/ta_func/ta_ASIN.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ASIN.o ../../../../../src/ta_func/ta_ASIN.c
+
+../../../../../temp/cmd/ta_ATAN.o: ../../../../../src/ta_func/ta_ATAN.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ATAN.o ../../../../../src/ta_func/ta_ATAN.c
 
 ../../../../../temp/cmd/ta_ATR.o: ../../../../../src/ta_func/ta_ATR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_ATR.o ../../../../../src/ta_func/ta_ATR.c
@@ -593,20 +641,38 @@ clean:
 ../../../../../temp/cmd/ta_CDLXSIDEGAP3METHODS.o: ../../../../../src/ta_func/ta_CDLXSIDEGAP3METHODS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_CDLXSIDEGAP3METHODS.o ../../../../../src/ta_func/ta_CDLXSIDEGAP3METHODS.c
 
+../../../../../temp/cmd/ta_CEIL.o: ../../../../../src/ta_func/ta_CEIL.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_CEIL.o ../../../../../src/ta_func/ta_CEIL.c
+
 ../../../../../temp/cmd/ta_CMO.o: ../../../../../src/ta_func/ta_CMO.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_CMO.o ../../../../../src/ta_func/ta_CMO.c
 
 ../../../../../temp/cmd/ta_CORREL.o: ../../../../../src/ta_func/ta_CORREL.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_CORREL.o ../../../../../src/ta_func/ta_CORREL.c
 
+../../../../../temp/cmd/ta_COS.o: ../../../../../src/ta_func/ta_COS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_COS.o ../../../../../src/ta_func/ta_COS.c
+
+../../../../../temp/cmd/ta_COSH.o: ../../../../../src/ta_func/ta_COSH.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_COSH.o ../../../../../src/ta_func/ta_COSH.c
+
 ../../../../../temp/cmd/ta_DEMA.o: ../../../../../src/ta_func/ta_DEMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_DEMA.o ../../../../../src/ta_func/ta_DEMA.c
+
+../../../../../temp/cmd/ta_DIV.o: ../../../../../src/ta_func/ta_DIV.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_DIV.o ../../../../../src/ta_func/ta_DIV.c
 
 ../../../../../temp/cmd/ta_DX.o: ../../../../../src/ta_func/ta_DX.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_DX.o ../../../../../src/ta_func/ta_DX.c
 
 ../../../../../temp/cmd/ta_EMA.o: ../../../../../src/ta_func/ta_EMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_EMA.o ../../../../../src/ta_func/ta_EMA.c
+
+../../../../../temp/cmd/ta_EXP.o: ../../../../../src/ta_func/ta_EXP.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_EXP.o ../../../../../src/ta_func/ta_EXP.c
+
+../../../../../temp/cmd/ta_FLOOR.o: ../../../../../src/ta_func/ta_FLOOR.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_FLOOR.o ../../../../../src/ta_func/ta_FLOOR.c
 
 ../../../../../temp/cmd/ta_HT_DCPERIOD.o: ../../../../../src/ta_func/ta_HT_DCPERIOD.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_HT_DCPERIOD.o ../../../../../src/ta_func/ta_HT_DCPERIOD.c
@@ -640,6 +706,12 @@ clean:
 
 ../../../../../temp/cmd/ta_LINEARREG_SLOPE.o: ../../../../../src/ta_func/ta_LINEARREG_SLOPE.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_LINEARREG_SLOPE.o ../../../../../src/ta_func/ta_LINEARREG_SLOPE.c
+
+../../../../../temp/cmd/ta_LN.o: ../../../../../src/ta_func/ta_LN.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_LN.o ../../../../../src/ta_func/ta_LN.c
+
+../../../../../temp/cmd/ta_LOG10.o: ../../../../../src/ta_func/ta_LOG10.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_LOG10.o ../../../../../src/ta_func/ta_LOG10.c
 
 ../../../../../temp/cmd/ta_MA.o: ../../../../../src/ta_func/ta_MA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MA.o ../../../../../src/ta_func/ta_MA.c
@@ -698,6 +770,9 @@ clean:
 ../../../../../temp/cmd/ta_MOM.o: ../../../../../src/ta_func/ta_MOM.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MOM.o ../../../../../src/ta_func/ta_MOM.c
 
+../../../../../temp/cmd/ta_MULT.o: ../../../../../src/ta_func/ta_MULT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_MULT.o ../../../../../src/ta_func/ta_MULT.c
+
 ../../../../../temp/cmd/ta_NATR.o: ../../../../../src/ta_func/ta_NATR.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_NATR.o ../../../../../src/ta_func/ta_NATR.c
 
@@ -737,8 +812,14 @@ clean:
 ../../../../../temp/cmd/ta_SIN.o: ../../../../../src/ta_func/ta_SIN.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_SIN.o ../../../../../src/ta_func/ta_SIN.c
 
+../../../../../temp/cmd/ta_SINH.o: ../../../../../src/ta_func/ta_SINH.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_SINH.o ../../../../../src/ta_func/ta_SINH.c
+
 ../../../../../temp/cmd/ta_SMA.o: ../../../../../src/ta_func/ta_SMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_SMA.o ../../../../../src/ta_func/ta_SMA.c
+
+../../../../../temp/cmd/ta_SQRT.o: ../../../../../src/ta_func/ta_SQRT.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_SQRT.o ../../../../../src/ta_func/ta_SQRT.c
 
 ../../../../../temp/cmd/ta_STDDEV.o: ../../../../../src/ta_func/ta_STDDEV.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_STDDEV.o ../../../../../src/ta_func/ta_STDDEV.c
@@ -752,11 +833,20 @@ clean:
 ../../../../../temp/cmd/ta_STOCHRSI.o: ../../../../../src/ta_func/ta_STOCHRSI.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_STOCHRSI.o ../../../../../src/ta_func/ta_STOCHRSI.c
 
+../../../../../temp/cmd/ta_SUB.o: ../../../../../src/ta_func/ta_SUB.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_SUB.o ../../../../../src/ta_func/ta_SUB.c
+
 ../../../../../temp/cmd/ta_SUM.o: ../../../../../src/ta_func/ta_SUM.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_SUM.o ../../../../../src/ta_func/ta_SUM.c
 
 ../../../../../temp/cmd/ta_T3.o: ../../../../../src/ta_func/ta_T3.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_T3.o ../../../../../src/ta_func/ta_T3.c
+
+../../../../../temp/cmd/ta_TAN.o: ../../../../../src/ta_func/ta_TAN.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_TAN.o ../../../../../src/ta_func/ta_TAN.c
+
+../../../../../temp/cmd/ta_TANH.o: ../../../../../src/ta_func/ta_TANH.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_TANH.o ../../../../../src/ta_func/ta_TANH.c
 
 ../../../../../temp/cmd/ta_TEMA.o: ../../../../../src/ta_func/ta_TEMA.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmd/ta_TEMA.o ../../../../../src/ta_func/ta_TEMA.c

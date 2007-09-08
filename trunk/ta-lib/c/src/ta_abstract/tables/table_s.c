@@ -299,8 +299,12 @@ DEF_FUNCTION( SAREXT,                     /* name */
 
 
 /* SIN BEGIN */
-DEF_MATH_UNARY_OPERATOR( SIN, "Trigonometric Sin", "Sin" )
+DEF_MATH_UNARY_OPERATOR( SIN, "Vector Trigonometric Sin", "Sin" )
 /* SIN END */
+
+/* SINH BEGIN */
+DEF_MATH_UNARY_OPERATOR( SINH, "Vector Trigonometric Sinh", "Sinh" )
+/* SINH END */
 
 /* SMA BEGIN */
 static const TA_InputParameterInfo    *TA_SMA_Inputs[]    =
@@ -328,6 +332,14 @@ DEF_FUNCTION( SMA,                        /* name */
              );
 
 /* SMA END */
+
+/* SQRT BEGIN */
+DEF_MATH_UNARY_OPERATOR( SQRT, "Vector Square Root", "Sqrt" )
+/* SQRT END */
+
+/* SUB BEGIN */
+DEF_MATH_BINARY_OPERATOR( SUB, "Vector Arithmetic Substraction", "Sub" )
+/* SUB END */
 
 /* SUM BEGIN */
 static const TA_InputParameterInfo    *TA_SUM_Inputs[]    =
@@ -593,11 +605,14 @@ const TA_FuncDef *TA_DEF_TableS[] =
    ADD_TO_TABLE(SAR),
    ADD_TO_TABLE(SAREXT),
    ADD_TO_TABLE(SIN),
+   ADD_TO_TABLE(SINH),
    ADD_TO_TABLE(SMA),
+   ADD_TO_TABLE(SQRT),
    ADD_TO_TABLE(STDDEV),
    ADD_TO_TABLE(STOCH),
    ADD_TO_TABLE(STOCHF),
    ADD_TO_TABLE(STOCHRSI),
+   ADD_TO_TABLE(SUB),
    ADD_TO_TABLE(SUM),
    NULL
 };

@@ -48,7 +48,10 @@
  *
  ****************************************************************************/
 
-/* None */
+/* Floor BEGIN */
+DEF_MATH_UNARY_OPERATOR( FLOOR, "Vector Floor", "Floor" )
+/* Floor END */
+
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
@@ -56,6 +59,7 @@
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableF[] =
 {
+   ADD_TO_TABLE(FLOOR),
    NULL
 };
 

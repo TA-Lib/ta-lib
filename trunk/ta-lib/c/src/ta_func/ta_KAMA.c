@@ -234,7 +234,7 @@
    {      
       tempReal  = inReal[today++];
       tempReal -= inReal[today];
-      sumROC1  += fabs(tempReal);
+      sumROC1  += std_fabs(tempReal);
    }
 
    /* At this point sumROC1 represent the 
@@ -260,7 +260,7 @@
    if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1))
       tempReal = 1.0;
    else
-      tempReal = fabs(periodROC/sumROC1);
+      tempReal = std_fabs(periodROC/sumROC1);
 
    /* Calculate the smoothing constant */
    tempReal  = (tempReal*constDiff)+constMax;
@@ -288,8 +288,8 @@
        *  - Remove trailing ROC1 
        *  - Add new ROC1
        */
-      sumROC1 -= fabs(trailingValue-tempReal2);
-      sumROC1 += fabs(tempReal-inReal[today-1]);
+      sumROC1 -= std_fabs(trailingValue-tempReal2);
+      sumROC1 += std_fabs(tempReal-inReal[today-1]);
 
       /* Save the trailing value. Do this because inReal
        * and outReal can be pointers to the same buffer. 
@@ -300,7 +300,7 @@
       if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
          tempReal = 1.0;
       else
-         tempReal = fabs(periodROC/sumROC1);
+         tempReal = std_fabs(periodROC/sumROC1);
 
       /* Calculate the smoothing constant */
       tempReal  = (tempReal*constDiff)+constMax;
@@ -328,8 +328,8 @@
        *  - Remove trailing ROC1 
        *  - Add new ROC1
        */
-      sumROC1 -= fabs(trailingValue-tempReal2);
-      sumROC1 += fabs(tempReal-inReal[today-1]);
+      sumROC1 -= std_fabs(trailingValue-tempReal2);
+      sumROC1 += std_fabs(tempReal-inReal[today-1]);
 
       /* Save the trailing value. Do this because inReal
        * and outReal can be pointers to the same buffer. 
@@ -340,7 +340,7 @@
       if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
          tempReal = 1.0;
       else
-         tempReal = fabs(periodROC / sumROC1);
+         tempReal = std_fabs(periodROC / sumROC1);
 
       /* Calculate the smoothing constant */
       tempReal  = (tempReal*constDiff)+constMax;
@@ -436,7 +436,7 @@
 /* Generated */    {      
 /* Generated */       tempReal  = inReal[today++];
 /* Generated */       tempReal -= inReal[today];
-/* Generated */       sumROC1  += fabs(tempReal);
+/* Generated */       sumROC1  += std_fabs(tempReal);
 /* Generated */    }
 /* Generated */    prevKAMA = inReal[today-1];
 /* Generated */    tempReal  = inReal[today];
@@ -446,7 +446,7 @@
 /* Generated */    if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1))
 /* Generated */       tempReal = 1.0;
 /* Generated */    else
-/* Generated */       tempReal = fabs(periodROC/sumROC1);
+/* Generated */       tempReal = std_fabs(periodROC/sumROC1);
 /* Generated */    tempReal  = (tempReal*constDiff)+constMax;
 /* Generated */    tempReal *= tempReal;
 /* Generated */    prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
@@ -455,13 +455,13 @@
 /* Generated */       tempReal  = inReal[today];
 /* Generated */       tempReal2 = inReal[trailingIdx++];
 /* Generated */       periodROC = tempReal-tempReal2;
-/* Generated */       sumROC1 -= fabs(trailingValue-tempReal2);
-/* Generated */       sumROC1 += fabs(tempReal-inReal[today-1]);
+/* Generated */       sumROC1 -= std_fabs(trailingValue-tempReal2);
+/* Generated */       sumROC1 += std_fabs(tempReal-inReal[today-1]);
 /* Generated */       trailingValue = tempReal2;
 /* Generated */       if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
 /* Generated */          tempReal = 1.0;
 /* Generated */       else
-/* Generated */          tempReal = fabs(periodROC/sumROC1);
+/* Generated */          tempReal = std_fabs(periodROC/sumROC1);
 /* Generated */       tempReal  = (tempReal*constDiff)+constMax;
 /* Generated */       tempReal *= tempReal;
 /* Generated */       prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
@@ -474,13 +474,13 @@
 /* Generated */       tempReal  = inReal[today];
 /* Generated */       tempReal2 = inReal[trailingIdx++];
 /* Generated */       periodROC = tempReal-tempReal2;
-/* Generated */       sumROC1 -= fabs(trailingValue-tempReal2);
-/* Generated */       sumROC1 += fabs(tempReal-inReal[today-1]);
+/* Generated */       sumROC1 -= std_fabs(trailingValue-tempReal2);
+/* Generated */       sumROC1 += std_fabs(tempReal-inReal[today-1]);
 /* Generated */       trailingValue = tempReal2;
 /* Generated */       if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
 /* Generated */          tempReal = 1.0;
 /* Generated */       else
-/* Generated */          tempReal = fabs(periodROC / sumROC1);
+/* Generated */          tempReal = std_fabs(periodROC / sumROC1);
 /* Generated */       tempReal  = (tempReal*constDiff)+constMax;
 /* Generated */       tempReal *= tempReal;
 /* Generated */       prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;

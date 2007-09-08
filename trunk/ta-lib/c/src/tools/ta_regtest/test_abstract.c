@@ -61,6 +61,8 @@
 /**** Headers ****/
 #ifdef WIN32
    #include "windows.h"
+#else
+   #include "time.h"
 #endif
 
 #include <stdio.h>
@@ -310,11 +312,21 @@ static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
        return; \
 	} \
 }
-   CALL( inputNegData );
-   CALL( inputZeroData );
+   /* Do not test value outside the ]0..1[ domain for the "Math" groups. */
+   if( (strlen(funcInfo->group) < 4) || 
+	   !((tolower(funcInfo->group[0]) == 'm') && 
+	     (tolower(funcInfo->group[1]) == 'a') &&
+	     (tolower(funcInfo->group[2]) == 't') &&
+	     (tolower(funcInfo->group[3]) == 'h')))
+   {	   
+      CALL( inputNegData );
+      CALL( inputZeroData );
+      CALL( inputRandFltEpsilon );
+      CALL( inputRandDblEpsilon );
+   }
+
    CALL( inputRandomData );
-   CALL( inputRandFltEpsilon );
-   CALL( inputRandDblEpsilon );
+
 #undef CALL
 
 #define CALL(x) { \
@@ -487,6 +499,7 @@ static ErrorNumber test_default_calls(void)
    ErrorNumber errNumber;
    unsigned int i;
    unsigned int sign;
+   double tempDouble;
 
    errNumber = TA_TEST_PASS;
 
@@ -504,7 +517,13 @@ static ErrorNumber test_default_calls(void)
 
    for( i=0; i < sizeof(inputRandomData)/sizeof(double); i++ )
    {
-      inputRandomData[i] = (double)rand()/97.234;
+      /* Make 100% sure input range is ]0..1[ */
+	  tempDouble = (double)rand() / ((double)(RAND_MAX)+(double)(1));
+      while( (tempDouble <= 0.0) || (tempDouble >= 1.0) ) 
+	  {
+		  tempDouble = (double)rand() / ((double)(RAND_MAX)+(double)(1));
+	  }
+      inputRandomData[i] = tempDouble;
       inputRandomData_int[i] = (int)inputRandomData[i];
    }
 

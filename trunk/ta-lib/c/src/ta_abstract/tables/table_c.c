@@ -1730,6 +1730,10 @@ DEF_FUNCTION( CDLXSIDEGAP3METHODS,            /* name */
 
 /* CDLXSIDEGAP3METHODS END */
 
+/* CEIL BEGIN */
+DEF_MATH_UNARY_OPERATOR( CEIL, "Vector Ceil", "Ceil" )
+/* CEIL END */
+
 /* CMO BEGIN */
 static const TA_InputParameterInfo    *TA_CMO_Inputs[]    =
 {
@@ -1783,6 +1787,14 @@ DEF_FUNCTION( CORREL,                      /* name */
               0                        /* flags */
              );
 /* CORREL END */
+
+/* COS BEGIN */
+DEF_MATH_UNARY_OPERATOR( COS, "Vector Trigonometric Cos", "Cos" )
+/* COS END */
+
+/* COSH BEGIN */
+DEF_MATH_UNARY_OPERATOR( COSH, "Vector Trigonometric Cosh", "Cosh" )
+/* COSH END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
@@ -1852,8 +1864,11 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLUNIQUE3RIVER), 
    ADD_TO_TABLE(CDLUPSIDEGAP2CROWS), 
    ADD_TO_TABLE(CDLXSIDEGAP3METHODS), 
+   ADD_TO_TABLE(CEIL),
    ADD_TO_TABLE(CMO),
    ADD_TO_TABLE(CORREL),
+   ADD_TO_TABLE(COS),
+   ADD_TO_TABLE(COSH),
    NULL
 };
 
