@@ -1,5 +1,5 @@
 
-lib_LTLIBRARIES = libta_func.la
+noinst_lib_LTLIBRARIES = libta_func.la
 AM_CPPFLAGS = -I../ta_common/
 
 libta_func_la_SOURCES = ta_utility.c \
