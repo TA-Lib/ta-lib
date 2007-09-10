@@ -149,6 +149,25 @@
 		3A9C4D970BA7361A00B6D766 /* ta_MINMAX.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A9C4D900BA7361A00B6D766 /* ta_MINMAX.c */; };
 		3A9C4D980BA7361A00B6D766 /* ta_MINMAXINDEX.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A9C4D910BA7361A00B6D766 /* ta_MINMAXINDEX.c */; };
 		3A9C4D990BA7361A00B6D766 /* ta_NATR.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A9C4D920BA7361A00B6D766 /* ta_NATR.c */; };
+		3AA0ADE00C95AB080072E088 /* ta_CEIL.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADD10C95AB080072E088 /* ta_CEIL.c */; };
+		3AA0ADE10C95AB080072E088 /* ta_COS.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADD20C95AB080072E088 /* ta_COS.c */; };
+		3AA0ADE20C95AB080072E088 /* ta_COSH.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADD30C95AB080072E088 /* ta_COSH.c */; };
+		3AA0ADE30C95AB080072E088 /* ta_DIV.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADD40C95AB080072E088 /* ta_DIV.c */; };
+		3AA0ADE40C95AB080072E088 /* ta_EXP.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADD50C95AB080072E088 /* ta_EXP.c */; };
+		3AA0ADE50C95AB080072E088 /* ta_FLOOR.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADD60C95AB080072E088 /* ta_FLOOR.c */; };
+		3AA0ADE60C95AB080072E088 /* ta_LN.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADD70C95AB080072E088 /* ta_LN.c */; };
+		3AA0ADE70C95AB080072E088 /* ta_LOG10.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADD80C95AB080072E088 /* ta_LOG10.c */; };
+		3AA0ADE80C95AB080072E088 /* ta_MULT.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADD90C95AB080072E088 /* ta_MULT.c */; };
+		3AA0ADE90C95AB080072E088 /* ta_SIN.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADDA0C95AB080072E088 /* ta_SIN.c */; };
+		3AA0ADEA0C95AB080072E088 /* ta_SINH.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADDB0C95AB080072E088 /* ta_SINH.c */; };
+		3AA0ADEB0C95AB080072E088 /* ta_SQRT.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADDC0C95AB080072E088 /* ta_SQRT.c */; };
+		3AA0ADEC0C95AB080072E088 /* ta_SUB.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADDD0C95AB080072E088 /* ta_SUB.c */; };
+		3AA0ADED0C95AB080072E088 /* ta_TAN.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADDE0C95AB080072E088 /* ta_TAN.c */; };
+		3AA0ADEE0C95AB080072E088 /* ta_TANH.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADDF0C95AB080072E088 /* ta_TANH.c */; };
+		3AA0ADFB0C95AC010072E088 /* ta_ACOS.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADF70C95AC010072E088 /* ta_ACOS.c */; };
+		3AA0ADFC0C95AC010072E088 /* ta_ADD.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADF80C95AC010072E088 /* ta_ADD.c */; };
+		3AA0ADFD0C95AC010072E088 /* ta_ASIN.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADF90C95AC010072E088 /* ta_ASIN.c */; };
+		3AA0ADFE0C95AC010072E088 /* ta_ATAN.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0ADFA0C95AC010072E088 /* ta_ATAN.c */; };
 		3AC7C3F3080C313900D11B6F /* ta_CDL2CROWS.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AC7C3CD080C313900D11B6F /* ta_CDL2CROWS.c */; };
 		3AC7C3F4080C313900D11B6F /* ta_CDL3INSIDE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AC7C3CE080C313900D11B6F /* ta_CDL3INSIDE.c */; };
 		3AC7C3F5080C313900D11B6F /* ta_CDL3LINESTRIKE.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AC7C3CF080C313900D11B6F /* ta_CDL3LINESTRIKE.c */; };
@@ -386,6 +405,25 @@
 		3A9C4D900BA7361A00B6D766 /* ta_MINMAX.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_MINMAX.c; sourceTree = "<group>"; };
 		3A9C4D910BA7361A00B6D766 /* ta_MINMAXINDEX.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_MINMAXINDEX.c; sourceTree = "<group>"; };
 		3A9C4D920BA7361A00B6D766 /* ta_NATR.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_NATR.c; sourceTree = "<group>"; };
+		3AA0ADD10C95AB080072E088 /* ta_CEIL.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_CEIL.c; sourceTree = "<group>"; };
+		3AA0ADD20C95AB080072E088 /* ta_COS.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_COS.c; sourceTree = "<group>"; };
+		3AA0ADD30C95AB080072E088 /* ta_COSH.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_COSH.c; sourceTree = "<group>"; };
+		3AA0ADD40C95AB080072E088 /* ta_DIV.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_DIV.c; sourceTree = "<group>"; };
+		3AA0ADD50C95AB080072E088 /* ta_EXP.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_EXP.c; sourceTree = "<group>"; };
+		3AA0ADD60C95AB080072E088 /* ta_FLOOR.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_FLOOR.c; sourceTree = "<group>"; };
+		3AA0ADD70C95AB080072E088 /* ta_LN.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_LN.c; sourceTree = "<group>"; };
+		3AA0ADD80C95AB080072E088 /* ta_LOG10.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_LOG10.c; sourceTree = "<group>"; };
+		3AA0ADD90C95AB080072E088 /* ta_MULT.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_MULT.c; sourceTree = "<group>"; };
+		3AA0ADDA0C95AB080072E088 /* ta_SIN.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_SIN.c; sourceTree = "<group>"; };
+		3AA0ADDB0C95AB080072E088 /* ta_SINH.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_SINH.c; sourceTree = "<group>"; };
+		3AA0ADDC0C95AB080072E088 /* ta_SQRT.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_SQRT.c; sourceTree = "<group>"; };
+		3AA0ADDD0C95AB080072E088 /* ta_SUB.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_SUB.c; sourceTree = "<group>"; };
+		3AA0ADDE0C95AB080072E088 /* ta_TAN.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_TAN.c; sourceTree = "<group>"; };
+		3AA0ADDF0C95AB080072E088 /* ta_TANH.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_TANH.c; sourceTree = "<group>"; };
+		3AA0ADF70C95AC010072E088 /* ta_ACOS.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_ACOS.c; sourceTree = "<group>"; };
+		3AA0ADF80C95AC010072E088 /* ta_ADD.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_ADD.c; sourceTree = "<group>"; };
+		3AA0ADF90C95AC010072E088 /* ta_ASIN.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_ASIN.c; sourceTree = "<group>"; };
+		3AA0ADFA0C95AC010072E088 /* ta_ATAN.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ta_ATAN.c; sourceTree = "<group>"; };
 		3AC7C3CD080C313900D11B6F /* ta_CDL2CROWS.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDL2CROWS.c; path = ../../../src/ta_func/ta_CDL2CROWS.c; sourceTree = SOURCE_ROOT; };
 		3AC7C3CE080C313900D11B6F /* ta_CDL3INSIDE.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDL3INSIDE.c; path = ../../../src/ta_func/ta_CDL3INSIDE.c; sourceTree = SOURCE_ROOT; };
 		3AC7C3CF080C313900D11B6F /* ta_CDL3LINESTRIKE.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = ta_CDL3LINESTRIKE.c; path = ../../../src/ta_func/ta_CDL3LINESTRIKE.c; sourceTree = SOURCE_ROOT; };
@@ -592,6 +630,25 @@
 		3A48BAE705E25FE300B42EE0 /* ta_func */ = {
 			isa = PBXGroup;
 			children = (
+				3AA0ADF70C95AC010072E088 /* ta_ACOS.c */,
+				3AA0ADF80C95AC010072E088 /* ta_ADD.c */,
+				3AA0ADF90C95AC010072E088 /* ta_ASIN.c */,
+				3AA0ADFA0C95AC010072E088 /* ta_ATAN.c */,
+				3AA0ADD10C95AB080072E088 /* ta_CEIL.c */,
+				3AA0ADD20C95AB080072E088 /* ta_COS.c */,
+				3AA0ADD30C95AB080072E088 /* ta_COSH.c */,
+				3AA0ADD40C95AB080072E088 /* ta_DIV.c */,
+				3AA0ADD50C95AB080072E088 /* ta_EXP.c */,
+				3AA0ADD60C95AB080072E088 /* ta_FLOOR.c */,
+				3AA0ADD70C95AB080072E088 /* ta_LN.c */,
+				3AA0ADD80C95AB080072E088 /* ta_LOG10.c */,
+				3AA0ADD90C95AB080072E088 /* ta_MULT.c */,
+				3AA0ADDA0C95AB080072E088 /* ta_SIN.c */,
+				3AA0ADDB0C95AB080072E088 /* ta_SINH.c */,
+				3AA0ADDC0C95AB080072E088 /* ta_SQRT.c */,
+				3AA0ADDD0C95AB080072E088 /* ta_SUB.c */,
+				3AA0ADDE0C95AB080072E088 /* ta_TAN.c */,
+				3AA0ADDF0C95AB080072E088 /* ta_TANH.c */,
 				3A9C4D8C0BA7361A00B6D766 /* ta_BETA.c */,
 				3A9C4D8D0BA7361A00B6D766 /* ta_MAVP.c */,
 				3A9C4D8E0BA7361A00B6D766 /* ta_MAXINDEX.c */,
@@ -1125,6 +1182,25 @@
 				3A9C4D980BA7361A00B6D766 /* ta_MINMAXINDEX.c in Sources */,
 				3A9C4D990BA7361A00B6D766 /* ta_NATR.c in Sources */,
 				CCF321D20BA792540014ABA6 /* ta_func_api.c in Sources */,
+				3AA0ADE00C95AB080072E088 /* ta_CEIL.c in Sources */,
+				3AA0ADE10C95AB080072E088 /* ta_COS.c in Sources */,
+				3AA0ADE20C95AB080072E088 /* ta_COSH.c in Sources */,
+				3AA0ADE30C95AB080072E088 /* ta_DIV.c in Sources */,
+				3AA0ADE40C95AB080072E088 /* ta_EXP.c in Sources */,
+				3AA0ADE50C95AB080072E088 /* ta_FLOOR.c in Sources */,
+				3AA0ADE60C95AB080072E088 /* ta_LN.c in Sources */,
+				3AA0ADE70C95AB080072E088 /* ta_LOG10.c in Sources */,
+				3AA0ADE80C95AB080072E088 /* ta_MULT.c in Sources */,
+				3AA0ADE90C95AB080072E088 /* ta_SIN.c in Sources */,
+				3AA0ADEA0C95AB080072E088 /* ta_SINH.c in Sources */,
+				3AA0ADEB0C95AB080072E088 /* ta_SQRT.c in Sources */,
+				3AA0ADEC0C95AB080072E088 /* ta_SUB.c in Sources */,
+				3AA0ADED0C95AB080072E088 /* ta_TAN.c in Sources */,
+				3AA0ADEE0C95AB080072E088 /* ta_TANH.c in Sources */,
+				3AA0ADFB0C95AC010072E088 /* ta_ACOS.c in Sources */,
+				3AA0ADFC0C95AC010072E088 /* ta_ADD.c in Sources */,
+				3AA0ADFD0C95AC010072E088 /* ta_ASIN.c in Sources */,
+				3AA0ADFE0C95AC010072E088 /* ta_ATAN.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
