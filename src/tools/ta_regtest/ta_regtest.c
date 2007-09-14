@@ -172,12 +172,12 @@ int main( int argc, char **argv )
          freq = (double)QPFrequency.QuadPart;
          printf( "\nTotal execution time                = %g milliseconds", (timeInProfiledCall/freq)*1000.0 );
          printf( "\nWorst single function call          = %g milliseconds", (worstProfiledCall/freq)*1000.0 );
-         printf( "\nAverage execution time per function = %g nanoseconds\n", ((timeInProfiledCall/freq)*1000000.0)/((double)nbProfiledCall) );
+         printf( "\nAverage execution time per function = %g microseconds\n", ((timeInProfiledCall/freq)*1000000.0)/((double)nbProfiledCall) );
 #else
          freq = (double)CLOCKS_PER_SEC;
          printf( "\nTotal execution time                = %g milliseconds", timeInProfiledCall/freq/1000.0 );
          printf( "\nWorst single function call          = %g milliseconds", worstProfiledCall/freq/1000.0 );
-         printf( "\nAverage execution time per function = %g nanoseconds\n", (timeInProfiledCall/freq/1000000.0)/((double)nbProfiledCall) );
+         printf( "\nAverage execution time per function = %g microseconds\n", (timeInProfiledCall/freq/1000000.0)/((double)nbProfiledCall) );
 #endif	  
       }   
       printf( "\n* All tests succeeded. Enjoy the library. *\n" );
