@@ -667,9 +667,9 @@ static int genCode(int argc, char* argv[])
 {
    TA_RetCode retCode;
    unsigned int nbGroup;
-   FileHandle *tempFile;
 
    #ifdef _MSC_VER
+   FileHandle *tempFile;
    FileHandle *tempFileOut;
    #endif
 
