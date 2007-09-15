@@ -358,4 +358,8 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define TA_CANDLEGAPUP(IDX2,IDX1)       ( inLow[IDX2] > inHigh[IDX1] )
 #define TA_CANDLEGAPDOWN(IDX2,IDX1)     ( inHigh[IDX2] < inLow[IDX1] )
 
+#ifdef TA_LIB_PRO
+/* Section for code distributed with TA-Lib Pro only. */
+#endif
+
 #endif
