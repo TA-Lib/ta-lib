@@ -282,6 +282,20 @@ const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_30_MINIMUM2 =
    NULL /* helpFile */
 };
 
+const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_20_MINIMUM2 =
+{
+   TA_OptInput_IntegerRange, /* type */
+   "optInTimePeriod",        /* paramName */
+   0,                        /* flags */
+
+   "Time Period",            /* displayName */
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2, /* dataSet */
+   20, /* defaultValue */
+   "Number of period", /* hint */
+
+   NULL /* helpFile */
+};
+
 const TA_OptInputParameterInfo TA_DEF_UI_TimePeriod_21_MINIMUM2 =
 {
    TA_OptInput_IntegerRange, /* type */

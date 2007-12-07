@@ -48,6 +48,7 @@
 #include "ta_def_ui.h"
 #include "ta_abstract.h"
 
+extern const TA_FuncDef TA_DEF_ACCBANDS;
 extern const TA_FuncDef TA_DEF_ACOS;
 extern const TA_FuncDef TA_DEF_AD;
 extern const TA_FuncDef TA_DEF_ADD;
@@ -242,6 +243,7 @@ NULL };
 #define SIZE_GROUP_1 ((sizeof(TA_PerGroupFunc_1)/sizeof(const TA_FuncDef *))-1)
 
 const TA_FuncDef *TA_PerGroupFunc_2[] = {
+&TA_DEF_ACCBANDS,
 &TA_DEF_BBANDS,
 &TA_DEF_DEMA,
 &TA_DEF_EMA,

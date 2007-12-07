@@ -48,6 +48,45 @@
  *
  ****************************************************************************/
 
+/* ACCBANDS BEGIN */
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ACCBANDS_Middle =
+                               { TA_Output_Real, "outRealMiddleBand", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ACCBANDS_Upper =
+                               { TA_Output_Real, "outRealUpperBand", TA_OUT_UPPER_LIMIT };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ACCBANDS_Lower =
+                                { TA_Output_Real, "outRealLowerBand", TA_OUT_LOWER_LIMIT };
+
+static const TA_InputParameterInfo    *TA_ACCBANDS_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ACCBANDS_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_ACCBANDS_Upper,
+  &TA_DEF_UI_Output_Real_ACCBANDS_Middle,
+  &TA_DEF_UI_Output_Real_ACCBANDS_Lower,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ACCBANDS_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_20_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( ACCBANDS,                    /* name */
+              TA_GroupId_OverlapStudies,   /* groupId */
+              "Acceleration Bands",        /* hint */
+              "Accbands",                  /* CamelCase name */
+              TA_FUNC_FLG_OVERLAP          /* flags */
+             );
+/* ACCBANDS END */
+
+
 /* ACOS BEGIN */
 DEF_MATH_UNARY_OPERATOR( ACOS, "Vector Trigonometric ACos", "Acos" )
 /* ACOS END */
@@ -344,6 +383,7 @@ DEF_FUNCTION( AVGPRICE,                   /* name */
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableA[] =
 {
+   ADD_TO_TABLE(ACCBANDS),
    ADD_TO_TABLE(ACOS),
    ADD_TO_TABLE(AD),
    ADD_TO_TABLE(ADD),

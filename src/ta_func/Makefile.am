@@ -3,6 +3,7 @@ noinst_LTLIBRARIES = libta_func.la
 AM_CPPFLAGS = -I../ta_common/
 
 libta_func_la_SOURCES = ta_utility.c \
+	ta_ACCBANDS.c \
 	ta_ACOS.c \
 	ta_AD.c \
 	ta_ADD.c \

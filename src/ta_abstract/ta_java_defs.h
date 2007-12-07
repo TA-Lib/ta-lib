@@ -38,6 +38,8 @@
  * likely the case), just ignore this file.
  */
  
+#define TA_ACCBANDS_Lookback accbandsLookback
+#define TA_ACCBANDS accbands
 #define TA_ACOS_Lookback acosLookback
 #define TA_ACOS acos
 #define TA_AD_Lookback adLookback

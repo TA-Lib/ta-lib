@@ -56,6 +56,29 @@
 
 /* NEVER CALL directly these functions! Use TA_CallFunc. */
 
+/* Generated */ TA_RetCode TA_ACCBANDS_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNBElement )
+/* Generated */ {
+/* Generated */    return TA_ACCBANDS(
+/* Generated */                  startIdx,
+/* Generated */                  endIdx,
+/* Generated */                  params->in[0].data.inPrice.high, /* inHigh */
+/* Generated */                  params->in[0].data.inPrice.low, /* inLow */
+/* Generated */                  params->in[0].data.inPrice.close, /* inClose */
+/* Generated */                  params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+/* Generated */                  outBegIdx, 
+/* Generated */                  outNBElement, 
+/* Generated */                  params->out[0].data.outReal, /*  outRealUpperBand */
+/* Generated */                  params->out[1].data.outReal, /*  outRealMiddleBand */
+/* Generated */                  params->out[2].data.outReal /*  outRealLowerBand */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_ACCBANDS_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    return TA_ACCBANDS_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_ACOS_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,
