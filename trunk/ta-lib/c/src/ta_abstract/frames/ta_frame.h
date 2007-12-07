@@ -51,6 +51,15 @@
 #endif
 
 
+/* Generated */ TA_RetCode TA_ACCBANDS_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNBElement )
+;
+/* Generated */ unsigned int TA_ACCBANDS_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 /* Generated */ TA_RetCode TA_ACOS_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,

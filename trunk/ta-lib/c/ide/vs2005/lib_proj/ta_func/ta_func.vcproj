@@ -347,6 +347,10 @@
 				Name="ta_func"
 				>
 				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_ACCBANDS.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_ACOS.c"
 					>
 				</File>
