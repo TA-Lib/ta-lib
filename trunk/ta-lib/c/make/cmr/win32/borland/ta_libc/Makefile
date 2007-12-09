@@ -62,6 +62,7 @@ SOURCES =	..\..\..\..\..\src\ta_common\ta_global.c \
 		..\..\..\..\..\src\ta_abstract\tables\table_y.c \
 		..\..\..\..\..\src\ta_abstract\tables\table_z.c \
 		..\..\..\..\..\src\ta_func\ta_utility.c \
+		..\..\..\..\..\src\ta_func\ta_ACCBANDS.c \
 		..\..\..\..\..\src\ta_func\ta_ACOS.c \
 		..\..\..\..\..\src\ta_func\ta_AD.c \
 		..\..\..\..\..\src\ta_func\ta_ADD.c \
@@ -255,6 +256,7 @@ OBJECTS =	..\..\..\..\..\temp\cmr\ta_global.obj \
 		..\..\..\..\..\temp\cmr\table_y.obj \
 		..\..\..\..\..\temp\cmr\table_z.obj \
 		..\..\..\..\..\temp\cmr\ta_utility.obj \
+		..\..\..\..\..\temp\cmr\ta_ACCBANDS.obj \
 		..\..\..\..\..\temp\cmr\ta_ACOS.obj \
 		..\..\..\..\..\temp\cmr\ta_AD.obj \
 		..\..\..\..\..\temp\cmr\ta_ADD.obj \
@@ -480,6 +482,7 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 +..\..\..\..\..\temp\cmr\table_y.obj \
 +..\..\..\..\..\temp\cmr\table_z.obj \
 +..\..\..\..\..\temp\cmr\ta_utility.obj \
++..\..\..\..\..\temp\cmr\ta_ACCBANDS.obj \
 +..\..\..\..\..\temp\cmr\ta_ACOS.obj \
 +..\..\..\..\..\temp\cmr\ta_AD.obj \
 +..\..\..\..\..\temp\cmr\ta_ADD.obj \
@@ -687,6 +690,7 @@ clean:
 	-del ..\..\..\..\..\temp\cmr\table_y.obj
 	-del ..\..\..\..\..\temp\cmr\table_z.obj
 	-del ..\..\..\..\..\temp\cmr\ta_utility.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ACCBANDS.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ACOS.obj
 	-del ..\..\..\..\..\temp\cmr\ta_AD.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ADD.obj
@@ -961,6 +965,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_utility.obj: ..\..\..\..\..\src\ta_func\ta_utility.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_utility.obj ..\..\..\..\..\src\ta_func\ta_utility.c
+
+..\..\..\..\..\temp\cmr\ta_ACCBANDS.obj: ..\..\..\..\..\src\ta_func\ta_ACCBANDS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ACCBANDS.obj ..\..\..\..\..\src\ta_func\ta_ACCBANDS.c
 
 ..\..\..\..\..\temp\cmr\ta_ACOS.obj: ..\..\..\..\..\src\ta_func\ta_ACOS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o..\..\..\..\..\temp\cmr\ta_ACOS.obj ..\..\..\..\..\src\ta_func\ta_ACOS.c

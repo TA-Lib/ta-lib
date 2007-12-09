@@ -68,6 +68,7 @@ SOURCES =	../../../../../src/ta_common/ta_global.c \
 		../../../../../src/ta_abstract/tables/table_y.c \
 		../../../../../src/ta_abstract/tables/table_z.c \
 		../../../../../src/ta_func/ta_utility.c \
+		../../../../../src/ta_func/ta_ACCBANDS.c \
 		../../../../../src/ta_func/ta_ACOS.c \
 		../../../../../src/ta_func/ta_AD.c \
 		../../../../../src/ta_func/ta_ADD.c \
@@ -261,6 +262,7 @@ OBJECTS =	../../../../../temp/cmr/ta_global.o \
 		../../../../../temp/cmr/table_y.o \
 		../../../../../temp/cmr/table_z.o \
 		../../../../../temp/cmr/ta_utility.o \
+		../../../../../temp/cmr/ta_ACCBANDS.o \
 		../../../../../temp/cmr/ta_ACOS.o \
 		../../../../../temp/cmr/ta_AD.o \
 		../../../../../temp/cmr/ta_ADD.o \
@@ -576,6 +578,9 @@ clean:
 
 ../../../../../temp/cmr/ta_utility.o: ../../../../../src/ta_func/ta_utility.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_utility.o ../../../../../src/ta_func/ta_utility.c
+
+../../../../../temp/cmr/ta_ACCBANDS.o: ../../../../../src/ta_func/ta_ACCBANDS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_ACCBANDS.o ../../../../../src/ta_func/ta_ACCBANDS.c
 
 ../../../../../temp/cmr/ta_ACOS.o: ../../../../../src/ta_func/ta_ACOS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ../../../../../temp/cmr/ta_ACOS.o ../../../../../src/ta_func/ta_ACOS.c

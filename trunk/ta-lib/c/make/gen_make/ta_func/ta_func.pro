@@ -31,6 +31,7 @@ DESTDIR     = ../../../../../lib
 
 # Files to process
 SOURCES	= ../../../../../src/ta_func/ta_utility.c \ 
+          ../../../../../src/ta_func/ta_ACCBANDS.c \ 
           ../../../../../src/ta_func/ta_ACOS.c \ 
           ../../../../../src/ta_func/ta_AD.c \ 
           ../../../../../src/ta_func/ta_ADD.c \ 

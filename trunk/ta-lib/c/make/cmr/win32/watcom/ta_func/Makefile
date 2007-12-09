@@ -21,6 +21,7 @@ ZIP	=	zip -r -9
 
 HEADERS =	
 SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c &
+		..\..\..\..\..\src\ta_func\ta_ACCBANDS.c &
 		..\..\..\..\..\src\ta_func\ta_ACOS.c &
 		..\..\..\..\..\src\ta_func\ta_AD.c &
 		..\..\..\..\..\src\ta_func\ta_ADD.c &
@@ -180,6 +181,7 @@ SOURCES =	..\..\..\..\..\src\ta_func\ta_utility.c &
 		..\..\..\..\..\src\ta_func\ta_WILLR.c &
 		..\..\..\..\..\src\ta_func\ta_WMA.c
 OBJECTS =	..\..\..\..\..\temp\cmr\ta_utility.obj &
+		..\..\..\..\..\temp\cmr\ta_ACCBANDS.obj &
 		..\..\..\..\..\temp\cmr\ta_ACOS.obj &
 		..\..\..\..\..\temp\cmr\ta_AD.obj &
 		..\..\..\..\..\temp\cmr\ta_ADD.obj &
@@ -366,6 +368,7 @@ dist:
 
 clean:
 	-del ..\..\..\..\..\temp\cmr\ta_utility.obj
+	-del ..\..\..\..\..\temp\cmr\ta_ACCBANDS.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ACOS.obj
 	-del ..\..\..\..\..\temp\cmr\ta_AD.obj
 	-del ..\..\..\..\..\temp\cmr\ta_ADD.obj
@@ -542,6 +545,9 @@ clean:
 
 ..\..\..\..\..\temp\cmr\ta_utility.obj: ..\..\..\..\..\src\ta_func\ta_utility.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmr\ta_utility.obj ..\..\..\..\..\src\ta_func\ta_utility.c
+
+..\..\..\..\..\temp\cmr\ta_ACCBANDS.obj: ..\..\..\..\..\src\ta_func\ta_ACCBANDS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmr\ta_ACCBANDS.obj ..\..\..\..\..\src\ta_func\ta_ACCBANDS.c
 
 ..\..\..\..\..\temp\cmr\ta_ACOS.obj: ..\..\..\..\..\src\ta_func\ta_ACOS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -fo=..\..\..\..\..\temp\cmr\ta_ACOS.obj ..\..\..\..\..\src\ta_func\ta_ACOS.c

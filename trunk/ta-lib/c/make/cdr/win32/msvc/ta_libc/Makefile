@@ -56,6 +56,7 @@ SOURCES =	..\..\..\..\..\src\ta_common\ta_global.c \
 		..\..\..\..\..\src\ta_abstract\tables\table_y.c \
 		..\..\..\..\..\src\ta_abstract\tables\table_z.c \
 		..\..\..\..\..\src\ta_func\ta_utility.c \
+		..\..\..\..\..\src\ta_func\ta_ACCBANDS.c \
 		..\..\..\..\..\src\ta_func\ta_ACOS.c \
 		..\..\..\..\..\src\ta_func\ta_AD.c \
 		..\..\..\..\..\src\ta_func\ta_ADD.c \
@@ -249,6 +250,7 @@ OBJECTS =	..\..\..\..\..\temp\cdr\ta_global.obj \
 		..\..\..\..\..\temp\cdr\table_y.obj \
 		..\..\..\..\..\temp\cdr\table_z.obj \
 		..\..\..\..\..\temp\cdr\ta_utility.obj \
+		..\..\..\..\..\temp\cdr\ta_ACCBANDS.obj \
 		..\..\..\..\..\temp\cdr\ta_ACOS.obj \
 		..\..\..\..\..\temp\cdr\ta_AD.obj \
 		..\..\..\..\..\temp\cdr\ta_ADD.obj \
@@ -487,6 +489,7 @@ clean:
 	-del ..\..\..\..\..\temp\cdr\table_y.obj
 	-del ..\..\..\..\..\temp\cdr\table_z.obj
 	-del ..\..\..\..\..\temp\cdr\ta_utility.obj
+	-del ..\..\..\..\..\temp\cdr\ta_ACCBANDS.obj
 	-del ..\..\..\..\..\temp\cdr\ta_ACOS.obj
 	-del ..\..\..\..\..\temp\cdr\ta_AD.obj
 	-del ..\..\..\..\..\temp\cdr\ta_ADD.obj
@@ -760,6 +763,9 @@ clean:
 
 ..\..\..\..\..\temp\cdr\ta_utility.obj: ..\..\..\..\..\src\ta_func\ta_utility.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdr\ta_utility.obj ..\..\..\..\..\src\ta_func\ta_utility.c
+
+..\..\..\..\..\temp\cdr\ta_ACCBANDS.obj: ..\..\..\..\..\src\ta_func\ta_ACCBANDS.c
+	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdr\ta_ACCBANDS.obj ..\..\..\..\..\src\ta_func\ta_ACCBANDS.c
 
 ..\..\..\..\..\temp\cdr\ta_ACOS.obj: ..\..\..\..\..\src\ta_func\ta_ACOS.c
 	$(CC) -c $(CFLAGS) $(INCPATH) -Fo..\..\..\..\..\temp\cdr\ta_ACOS.obj ..\..\..\..\..\src\ta_func\ta_ACOS.c
