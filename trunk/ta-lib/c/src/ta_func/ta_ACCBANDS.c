@@ -456,7 +456,7 @@
 /* Generated */ 		   tempBuffer2[j] = inHigh[i];
 /* Generated */ 		}
 /* Generated */    }
-/* Generated */    retCode = FUNCTION_CALL(SMA)( startIdx, endIdx, inClose,
+/* Generated */    retCode = FUNCTION_CALL_DOUBLE(SMA)( startIdx, endIdx, inClose,
 /* Generated */                                 optInTimePeriod, 
 /* Generated */                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), outRealMiddleBand );
 /* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
@@ -467,7 +467,7 @@
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    retCode = FUNCTION_CALL(SMA)( 0, bufferSize-1, tempBuffer1,
+/* Generated */    retCode = FUNCTION_CALL_DOUBLE(SMA)( 0, bufferSize-1, tempBuffer1,
 /* Generated */                                 optInTimePeriod,
 /* Generated */                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), 
 /* Generated */ 								outRealUpperBand );
@@ -479,7 +479,7 @@
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    retCode = FUNCTION_CALL(SMA)( 0, bufferSize-1, tempBuffer2,
+/* Generated */    retCode = FUNCTION_CALL_DOUBLE(SMA)( 0, bufferSize-1, tempBuffer2,
 /* Generated */                                 optInTimePeriod,
 /* Generated */                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), 
 /* Generated */ 								outRealLowerBand );
