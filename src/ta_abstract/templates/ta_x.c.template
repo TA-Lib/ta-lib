@@ -73,7 +73,7 @@
 
    /* Default return values */
    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-   VALUE_HANDLE_DEREF_TO_ZERO(outNbElement);
+   VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
