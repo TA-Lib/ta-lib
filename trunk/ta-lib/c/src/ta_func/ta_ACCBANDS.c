@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -36,12 +36,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  RM       Robert Meier
+ *  MF       Mario Fortier
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  120307 RM     Initial Version
+ *  120907 MF     Handling of a few limit cases
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -102,7 +104,7 @@
 
    /* insert lookback code here. */
 
-   return optInTimePeriod - 1;
+   return LOOKBACK_CALL(SMA)( optInTimePeriod );
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -175,7 +177,9 @@
    ENUM_DECLARATION(RetCode) retCode;
    ARRAY_REF( tempBuffer1 );
    ARRAY_REF( tempBuffer2 );
-   int i;
+   VALUE_HANDLE_INT(outBegIdxDummy);
+   VALUE_HANDLE_INT(outNbElementDummy);
+   int i, j, outputSize, bufferSize, lookbackTotal;
    double tempReal;
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -215,52 +219,118 @@
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
-   ARRAY_ALLOC(tempBuffer1, endIdx-startIdx+1 );
-   ARRAY_ALLOC(tempBuffer2, endIdx-startIdx+1 );
+   /* Identify the minimum number of price bar needed
+    * to calculate at least one output.
+    */
+   lookbackTotal = LOOKBACK_CALL(SMA)( optInTimePeriod );
 
-   //Calculate the middle band, which is a moving average of the close.
-   retCode = FUNCTION_CALL(MA)( startIdx, endIdx, inClose,
-                                optInTimePeriod, ENUM_VALUE(MAType, TA_MAType_SMA, Sma),
-                                outBegIdx, outNBElement, outRealMiddleBand );
+   /* Move up the start index if there is not
+    * enough initial data.
+    */
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
 
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
+   /* Make sure there is still something to evaluate. */
+   if( startIdx > endIdx )
    {
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+   }
+
+   /* Buffer will contains also the lookback required for SMA
+    * to satisfy the caller requested startIdx/endIdx.
+	*/
+   outputSize = endIdx-startIdx+1;
+   bufferSize = outputSize+lookbackTotal;
+   ARRAY_ALLOC(tempBuffer1, bufferSize );
+   #if !defined(_JAVA)      
+      if( !tempBuffer1 )
+	  {
+         VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+         VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
+	  }
+   #endif
+
+   ARRAY_ALLOC(tempBuffer2, bufferSize );
+   #if !defined(_JAVA)      
+      if( !tempBuffer2 )
+	  {
+		 ARRAY_FREE(tempBuffer1);
+         VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+         VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+         return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
+	  }
+   #endif
+
+   /* Calculate the upper/lower band at the same time (no SMA yet).
+    * Must start calculation back enough to cover the lookback 
+    * required later for the SMA.
+	*/   
+   for(j=0, i=startIdx-lookbackTotal; i<=endIdx; i++, j++)
+   {
+	    tempReal = inHigh[i]+inLow[i];
+	    if( !TA_IS_ZERO(tempReal) )
+		{
+		   tempReal = 4*(inHigh[i]-inLow[i])/tempReal;
+		   tempBuffer1[j] = inHigh[i]*(1+tempReal);
+		   tempBuffer2[j] = inHigh[i]*(1-tempReal);
+		}
+		else
+		{
+		   tempBuffer1[j] = inHigh[i];
+		   tempBuffer2[j] = inHigh[i];
+		}
+   }
+
+   /* Calculate the middle band, which is a moving average of the close. */
+   retCode = FUNCTION_CALL(SMA)( startIdx, endIdx, inClose,
+                                optInTimePeriod, 
+                                VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), outRealMiddleBand );
+
+   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
+   {
+      ARRAY_FREE( tempBuffer1 ); 
+      ARRAY_FREE( tempBuffer2 );
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return retCode;
    }
 
-   //Calculate the upper/lower band at the same time (no SMA yet)
-   for(i=startIdx; i<=endIdx/*(int)VALUE_HANDLE_DEREF(outNBElement)*/; i++)
-   {
-		tempReal = 4*(inHigh[i]-inLow[i])/(inHigh[i]+inLow[i]);
-		tempBuffer1[i] = inHigh[i]*(1+tempReal);
-		tempBuffer2[i] = inHigh[i]*(1-tempReal);
-   }
+   /* Now let's take the SMA for the upper band. */
+   retCode = FUNCTION_CALL(SMA)( 0, bufferSize-1, tempBuffer1,
+                                optInTimePeriod,
+                                VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), 
+								outRealUpperBand );
 
-   //Now let's take the SMA for the upper band
-   retCode = FUNCTION_CALL(MA)( startIdx, endIdx, tempBuffer1,
-                                optInTimePeriod, ENUM_VALUE(MAType, TA_MAType_SMA, Sma),
-                                outBegIdx, outNBElement, outRealUpperBand );
-
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
+   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
    {
+      ARRAY_FREE( tempBuffer1 ); 
+      ARRAY_FREE( tempBuffer2 ); 
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return retCode;
    }
 
-   //Now let's take the SMA for the lower band
-   retCode = FUNCTION_CALL(MA)( startIdx, endIdx, tempBuffer2,
-                                optInTimePeriod, ENUM_VALUE(MAType, TA_MAType_SMA, Sma),
-                                outBegIdx, outNBElement, outRealLowerBand );
-
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
-   {
-      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
-      return retCode;
-   }
+   /* Now let's take the SMA for the lower band. */
+   retCode = FUNCTION_CALL(SMA)( 0, bufferSize-1, tempBuffer2,
+                                optInTimePeriod,
+                                VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), 
+								outRealLowerBand );
 
    ARRAY_FREE( tempBuffer1 ); 
    ARRAY_FREE( tempBuffer2 ); 
+
+   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
+   {
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+      return retCode;
+   }
+
+   VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+   VALUE_HANDLE_DEREF(outNBElement) = outputSize;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
@@ -312,6 +382,13 @@
 /* Generated */                           double        outRealLowerBand[] )
 /* Generated */ #endif
 /* Generated */ {
+/* Generated */    ENUM_DECLARATION(RetCode) retCode;
+/* Generated */    ARRAY_REF( tempBuffer1 );
+/* Generated */    ARRAY_REF( tempBuffer2 );
+/* Generated */    VALUE_HANDLE_INT(outBegIdxDummy);
+/* Generated */    VALUE_HANDLE_INT(outNbElementDummy);
+/* Generated */    int i, j, outputSize, bufferSize, lookbackTotal;
+/* Generated */    double tempReal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -334,8 +411,88 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+/* Generated */    lookbackTotal = LOOKBACK_CALL(SMA)( optInTimePeriod );
+/* Generated */    if( startIdx < lookbackTotal )
+/* Generated */       startIdx = lookbackTotal;
+/* Generated */    if( startIdx > endIdx )
+/* Generated */    {
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+/* Generated */    }
+/* Generated */    outputSize = endIdx-startIdx+1;
+/* Generated */    bufferSize = outputSize+lookbackTotal;
+/* Generated */    ARRAY_ALLOC(tempBuffer1, bufferSize );
+/* Generated */    #if !defined(_JAVA)      
+/* Generated */       if( !tempBuffer1 )
+/* Generated */ 	  {
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+/* Generated */          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
+/* Generated */ 	  }
+/* Generated */    #endif
+/* Generated */    ARRAY_ALLOC(tempBuffer2, bufferSize );
+/* Generated */    #if !defined(_JAVA)      
+/* Generated */       if( !tempBuffer2 )
+/* Generated */ 	  {
+/* Generated */ 		 ARRAY_FREE(tempBuffer1);
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+/* Generated */          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
+/* Generated */ 	  }
+/* Generated */    #endif
+/* Generated */    for(j=0, i=startIdx-lookbackTotal; i<=endIdx; i++, j++)
+/* Generated */    {
+/* Generated */ 	    tempReal = inHigh[i]+inLow[i];
+/* Generated */ 	    if( !TA_IS_ZERO(tempReal) )
+/* Generated */ 		{
+/* Generated */ 		   tempReal = 4*(inHigh[i]-inLow[i])/tempReal;
+/* Generated */ 		   tempBuffer1[j] = inHigh[i]*(1+tempReal);
+/* Generated */ 		   tempBuffer2[j] = inHigh[i]*(1-tempReal);
+/* Generated */ 		}
+/* Generated */ 		else
+/* Generated */ 		{
+/* Generated */ 		   tempBuffer1[j] = inHigh[i];
+/* Generated */ 		   tempBuffer2[j] = inHigh[i];
+/* Generated */ 		}
+/* Generated */    }
+/* Generated */    retCode = FUNCTION_CALL(SMA)( startIdx, endIdx, inClose,
+/* Generated */                                 optInTimePeriod, 
+/* Generated */                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), outRealMiddleBand );
+/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
+/* Generated */    {
+/* Generated */       ARRAY_FREE( tempBuffer1 ); 
+/* Generated */       ARRAY_FREE( tempBuffer2 );
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+/* Generated */       return retCode;
+/* Generated */    }
+/* Generated */    retCode = FUNCTION_CALL(SMA)( 0, bufferSize-1, tempBuffer1,
+/* Generated */                                 optInTimePeriod,
+/* Generated */                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), 
+/* Generated */ 								outRealUpperBand );
+/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
+/* Generated */    {
+/* Generated */       ARRAY_FREE( tempBuffer1 ); 
+/* Generated */       ARRAY_FREE( tempBuffer2 ); 
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+/* Generated */       return retCode;
+/* Generated */    }
+/* Generated */    retCode = FUNCTION_CALL(SMA)( 0, bufferSize-1, tempBuffer2,
+/* Generated */                                 optInTimePeriod,
+/* Generated */                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), 
+/* Generated */ 								outRealLowerBand );
+/* Generated */    ARRAY_FREE( tempBuffer1 ); 
+/* Generated */    ARRAY_FREE( tempBuffer2 ); 
+/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
+/* Generated */    {
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+/* Generated */       return retCode;
+/* Generated */    }
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+/* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outputSize;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
