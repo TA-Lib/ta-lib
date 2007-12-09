@@ -63,6 +63,7 @@ SOURCES = ../../../../../src/ta_common/ta_global.c \
           ../../../../../src/ta_abstract/tables/table_y.c \
           ../../../../../src/ta_abstract/tables/table_z.c \
           ../../../../../src/ta_func/ta_utility.c \
+          ../../../../../src/ta_func/ta_ACCBANDS.c \
           ../../../../../src/ta_func/ta_ACOS.c \
           ../../../../../src/ta_func/ta_AD.c \
           ../../../../../src/ta_func/ta_ADD.c \
