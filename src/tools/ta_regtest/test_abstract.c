@@ -697,8 +697,7 @@ static ErrorNumber callAndProfile( const char *funcName, ProfilingType type )
 				 break;
 			  case TA_Input_Integer:
 				 printf( "\nError: Integer input not yet supported for profiling.\n" );
-				 return TA_ABS_TST_FAIL_CALLFUNC_1;
-				 break;
+				 return TA_ABS_TST_FAIL_CALLFUNC_1;				 
 			  }
 		   }
 
