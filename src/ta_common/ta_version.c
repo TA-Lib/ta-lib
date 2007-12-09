@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -39,7 +39,7 @@
  * Should be modified only by TA-Lib.org
  */
 #define MAJOR "0"
-#define MINOR "4"
+#define MINOR "5"
 #define BUILD "0"
 
 /* Nothing to modify below this line. */
