@@ -285,7 +285,7 @@
    }
 
    /* Calculate the middle band, which is a moving average of the close. */
-   retCode = FUNCTION_CALL(SMA)( startIdx, endIdx, inClose,
+   retCode = FUNCTION_CALL_DOUBLE(SMA)( startIdx, endIdx, inClose,
                                 optInTimePeriod, 
                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), outRealMiddleBand );
 
@@ -299,7 +299,7 @@
    }
 
    /* Now let's take the SMA for the upper band. */
-   retCode = FUNCTION_CALL(SMA)( 0, bufferSize-1, tempBuffer1,
+   retCode = FUNCTION_CALL_DOUBLE(SMA)( 0, bufferSize-1, tempBuffer1,
                                 optInTimePeriod,
                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), 
 								outRealUpperBand );
@@ -314,7 +314,7 @@
    }
 
    /* Now let's take the SMA for the lower band. */
-   retCode = FUNCTION_CALL(SMA)( 0, bufferSize-1, tempBuffer2,
+   retCode = FUNCTION_CALL_DOUBLE(SMA)( 0, bufferSize-1, tempBuffer2,
                                 optInTimePeriod,
                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), 
 								outRealLowerBand );
