@@ -275,12 +275,12 @@
 		{
 		   tempReal = 4*(inHigh[i]-inLow[i])/tempReal;
 		   tempBuffer1[j] = inHigh[i]*(1+tempReal);
-		   tempBuffer2[j] = inHigh[i]*(1-tempReal);
+		   tempBuffer2[j] = inLow[i]*(1-tempReal);
 		}
 		else
 		{
 		   tempBuffer1[j] = inHigh[i];
-		   tempBuffer2[j] = inHigh[i];
+		   tempBuffer2[j] = inLow[i];
 		}
    }
 
