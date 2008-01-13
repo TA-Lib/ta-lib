@@ -285,7 +285,7 @@
    }
 
    /* Calculate the middle band, which is a moving average of the close. */
-   retCode = FUNCTION_CALL_DOUBLE(SMA)( startIdx, endIdx, inClose,
+   retCode = FUNCTION_CALL(SMA)( startIdx, endIdx, inClose,
                                 optInTimePeriod, 
                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), outRealMiddleBand );
 
@@ -448,15 +448,15 @@
 /* Generated */ 		{
 /* Generated */ 		   tempReal = 4*(inHigh[i]-inLow[i])/tempReal;
 /* Generated */ 		   tempBuffer1[j] = inHigh[i]*(1+tempReal);
-/* Generated */ 		   tempBuffer2[j] = inHigh[i]*(1-tempReal);
+/* Generated */ 		   tempBuffer2[j] = inLow[i]*(1-tempReal);
 /* Generated */ 		}
 /* Generated */ 		else
 /* Generated */ 		{
 /* Generated */ 		   tempBuffer1[j] = inHigh[i];
-/* Generated */ 		   tempBuffer2[j] = inHigh[i];
+/* Generated */ 		   tempBuffer2[j] = inLow[i];
 /* Generated */ 		}
 /* Generated */    }
-/* Generated */    retCode = FUNCTION_CALL_DOUBLE(SMA)( startIdx, endIdx, inClose,
+/* Generated */    retCode = FUNCTION_CALL(SMA)( startIdx, endIdx, inClose,
 /* Generated */                                 optInTimePeriod, 
 /* Generated */                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), outRealMiddleBand );
 /* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
