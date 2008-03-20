@@ -280,8 +280,12 @@
             TA_CANDLECOLOR(i) == 1 &&                                                       // 3rd white
             inClose[i] > inClose[i-1] && inClose[i-1] > inClose[i-2] &&                     // consecutive higher closes
             inOpen[i-1] > inOpen[i-2] &&                                                    // 2nd opens within/near 1st real body
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#else
             inOpen[i-1] <= inClose[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
             inOpen[i] > inOpen[i-1] &&                                                      // 3rd opens within/near 2nd real body
+#endif
             inOpen[i] <= inClose[i-1] + TA_CANDLEAVERAGE( Near, NearPeriodTotal[1], i-1 ) &&
             TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) && // 1st: long real body
             TA_UPPERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[2], i-2 ) &&
@@ -353,6 +357,7 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
+/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -477,8 +482,11 @@
 /* Generated */             TA_CANDLECOLOR(i) == 1 &&                                                       // 3rd white
 /* Generated */             inClose[i] > inClose[i-1] && inClose[i-1] > inClose[i-2] &&                     // consecutive higher closes
 /* Generated */             inOpen[i-1] > inOpen[i-2] &&                                                    // 2nd opens within/near 1st real body
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #else
 /* Generated */             inOpen[i-1] <= inClose[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
 /* Generated */             inOpen[i] > inOpen[i-1] &&                                                      // 3rd opens within/near 2nd real body
+/* Generated */ #endif
 /* Generated */             inOpen[i] <= inClose[i-1] + TA_CANDLEAVERAGE( Near, NearPeriodTotal[1], i-1 ) &&
 /* Generated */             TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) && // 1st: long real body
 /* Generated */             TA_UPPERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[2], i-2 ) &&

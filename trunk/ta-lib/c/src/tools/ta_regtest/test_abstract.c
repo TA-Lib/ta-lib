@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -296,6 +296,31 @@ static ErrorNumber testLookback( TA_ParamHolder *paramHolder )
   return TA_TEST_PASS;
 }
 
+/* Some processings are a bit different for functions under 
+ * the Math Operator and Math Transform category.
+ */
+static int isMath( const TA_FuncInfo *funcInfo )
+{
+   int notMath;
+   notMath = (strlen(funcInfo->group) < 4) || 
+	   !((tolower(funcInfo->group[0]) == 'm') && 
+	     (tolower(funcInfo->group[1]) == 'a') &&
+	     (tolower(funcInfo->group[2]) == 't') &&
+	     (tolower(funcInfo->group[3]) == 'h'));
+
+   return !notMath;
+}
+
+static int isCandlePattern( const TA_FuncInfo *funcInfo )
+{
+   int notCandlePattern;
+   notCandlePattern = (strlen(funcInfo->group) < 3) || 
+	   !((tolower(funcInfo->name[0]) == 'c') && 
+	     (tolower(funcInfo->name[1]) == 'd') &&
+	     (tolower(funcInfo->name[2]) == 'l'));
+
+   return !notCandlePattern;
+}
 
 static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
 {
@@ -305,6 +330,9 @@ static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
    if( *errorNumber != TA_TEST_PASS )
       return;
 
+   if( !isCandlePattern(funcInfo) )
+	   return;
+
 #define CALL(x) { \
 	*errorNumber = callWithDefaults( funcInfo->name, x, x##_int, sizeof(x)/sizeof(double) ); \
 	if( *errorNumber != TA_TEST_PASS ) { \
@@ -313,11 +341,7 @@ static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
 	} \
 }
    /* Do not test value outside the ]0..1[ domain for the "Math" groups. */
-   if( (strlen(funcInfo->group) < 4) || 
-	   !((tolower(funcInfo->group[0]) == 'm') && 
-	     (tolower(funcInfo->group[1]) == 'a') &&
-	     (tolower(funcInfo->group[2]) == 't') &&
-	     (tolower(funcInfo->group[3]) == 'h')))
+   if( !isMath(funcInfo) )
    {	   
       CALL( inputNegData );
       CALL( inputZeroData );

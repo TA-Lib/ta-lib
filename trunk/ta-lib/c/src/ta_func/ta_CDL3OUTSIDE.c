@@ -225,7 +225,13 @@
               inClose[i] < inClose[i-1]                                         // third candle lower
             )
           )
+       {
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#else
             outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;
+#endif
+        }
         else
             outInteger[outIdx++] = 0;
         i++; 
@@ -241,6 +247,7 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
+/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -317,7 +324,12 @@
 /* Generated */               inClose[i] < inClose[i-1]                                         // third candle lower
 /* Generated */             )
 /* Generated */           )
+/* Generated */        {
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #else
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;
+/* Generated */ #endif
+/* Generated */         }
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         i++; 

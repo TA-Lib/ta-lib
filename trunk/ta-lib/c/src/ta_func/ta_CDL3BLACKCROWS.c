@@ -230,6 +230,9 @@
    outIdx = 0;
    do
    {
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#else
         if( TA_CANDLECOLOR(i-3) == 1 &&                                         // white
             TA_CANDLECOLOR(i-2) == -1 &&                                        // 1st black
             TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&     
@@ -246,6 +249,7 @@
             inClose[i-2] > inClose[i-1] &&                                      // three declining
             inClose[i-1] > inClose[i]                                           // three declining
           )
+#endif
             outInteger[outIdx++] = -100;
         else
             outInteger[outIdx++] = 0;
@@ -269,6 +273,7 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
+/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -347,6 +352,8 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #else
 /* Generated */         if( TA_CANDLECOLOR(i-3) == 1 &&                                         // white
 /* Generated */             TA_CANDLECOLOR(i-2) == -1 &&                                        // 1st black
 /* Generated */             TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&     
@@ -363,6 +370,7 @@
 /* Generated */             inClose[i-2] > inClose[i-1] &&                                      // three declining
 /* Generated */             inClose[i-1] > inClose[i]                                           // three declining
 /* Generated */           )
+/* Generated */ #endif
 /* Generated */             outInteger[outIdx++] = -100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;

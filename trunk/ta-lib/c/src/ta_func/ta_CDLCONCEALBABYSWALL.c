@@ -153,7 +153,11 @@
 {
    /* Insert local variables here. */
     ARRAY_LOCAL(ShadowVeryShortPeriodTotal,4);
-    int i, outIdx, totIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
+	int i, outIdx, totIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
+
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -228,8 +232,16 @@
     * this function does not consider it
     */
    outIdx = 0;
+
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
+
    do
    {
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#else
         if( TA_CANDLECOLOR(i-3) == -1 &&                                    // 1st black
             TA_CANDLECOLOR(i-2) == -1 &&                                    // 2nd black
             TA_CANDLECOLOR(i-1) == -1 &&                                    // 3rd black
@@ -249,6 +261,7 @@
             outInteger[outIdx++] = 100;
         else
             outInteger[outIdx++] = 0;
+#endif
         /* add the current range and subtract the first range: this is done after the pattern recognition 
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
@@ -269,6 +282,7 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
+/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -308,7 +322,9 @@
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */     ARRAY_LOCAL(ShadowVeryShortPeriodTotal,4);
-/* Generated */     int i, outIdx, totIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
+/* Generated */ 	int i, outIdx, totIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #endif
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -345,8 +361,12 @@
 /* Generated */    }
 /* Generated */    i = startIdx;
 /* Generated */    outIdx = 0;
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #endif
 /* Generated */    do
 /* Generated */    {
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #else
 /* Generated */         if( TA_CANDLECOLOR(i-3) == -1 &&                                    // 1st black
 /* Generated */             TA_CANDLECOLOR(i-2) == -1 &&                                    // 2nd black
 /* Generated */             TA_CANDLECOLOR(i-1) == -1 &&                                    // 3rd black
@@ -366,6 +386,7 @@
 /* Generated */             outInteger[outIdx++] = 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
+/* Generated */ #endif
 /* Generated */         for (totIdx = 3; totIdx >= 1; --totIdx)
 /* Generated */             ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx ) 
 /* Generated */                                                 - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
