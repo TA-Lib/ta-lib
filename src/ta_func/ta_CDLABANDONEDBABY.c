@@ -269,6 +269,9 @@
    outIdx = 0;
    do
    {
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#else
         if( TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) &&         // 1st: long
             TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i-1 ) &&        // 2nd: doji
             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i ) &&           // 3rd: longer than short
@@ -288,9 +291,14 @@
               )
             )
           )
+		{
             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
+		}
         else
+		{
             outInteger[outIdx++] = 0;
+		}
+#endif
         /* add the current range and subtract the first range: this is done after the pattern recognition 
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
@@ -313,6 +321,7 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
+/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -408,6 +417,8 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #else
 /* Generated */         if( TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) &&         // 1st: long
 /* Generated */             TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i-1 ) &&        // 2nd: doji
 /* Generated */             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i ) &&           // 3rd: longer than short
@@ -427,9 +438,14 @@
 /* Generated */               )
 /* Generated */             )
 /* Generated */           )
+/* Generated */ 		{
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
+/* Generated */ 		}
 /* Generated */         else
+/* Generated */ 		{
 /* Generated */             outInteger[outIdx++] = 0;
+/* Generated */ 		}
+/* Generated */ #endif
 /* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
 /* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i-1 ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
 /* Generated */         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );

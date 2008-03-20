@@ -228,6 +228,10 @@
    }
    i = startIdx;
 
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
+
    /* Proceed with the calculation for the requested range.
     * Must have:
     * - three consecutive and declining black candlesticks
@@ -242,6 +246,9 @@
    outIdx = 0;
    do
    {
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#else
         if( TA_CANDLECOLOR(i-2) == -1 &&                                    // 1st black
                                                                             // very short lower shadow
             TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&     
@@ -263,6 +270,7 @@
             outInteger[outIdx++] = -100;
         else
             outInteger[outIdx++] = 0;
+#endif
         /* add the current range and subtract the first range: this is done after the pattern recognition 
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
@@ -287,6 +295,7 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
+/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -373,9 +382,13 @@
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = startIdx;
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #endif
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #else
 /* Generated */         if( TA_CANDLECOLOR(i-2) == -1 &&                                    // 1st black
 /* Generated */                                                                             // very short lower shadow
 /* Generated */             TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&     
@@ -397,6 +410,7 @@
 /* Generated */             outInteger[outIdx++] = -100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
+/* Generated */ #endif
 /* Generated */         for (totIdx = 2; totIdx >= 0; --totIdx)
 /* Generated */             ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx ) 
 /* Generated */                                                 - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );

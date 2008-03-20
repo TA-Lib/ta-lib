@@ -249,6 +249,9 @@
    outIdx = 0;
    do
    {
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#else
         if( TA_CANDLECOLOR(i-1) == 1 &&                                                     // 1st: white
             TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-1 ) && //      long
             TA_CANDLECOLOR(i) == -1 &&                                                      // 2nd: black
@@ -256,6 +259,7 @@
             inClose[i] > inOpen[i-1] &&                                                     //      close within prior body
             inClose[i] < inClose[i-1] - TA_REALBODY(i-1) * optInPenetration
           )
+#endif
             outInteger[outIdx++] = -100;
         else
             outInteger[outIdx++] = 0;
@@ -277,6 +281,7 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
+/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -358,6 +363,8 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #else
 /* Generated */         if( TA_CANDLECOLOR(i-1) == 1 &&                                                     // 1st: white
 /* Generated */             TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-1 ) && //      long
 /* Generated */             TA_CANDLECOLOR(i) == -1 &&                                                      // 2nd: black
@@ -365,6 +372,7 @@
 /* Generated */             inClose[i] > inOpen[i-1] &&                                                     //      close within prior body
 /* Generated */             inClose[i] < inClose[i-1] - TA_REALBODY(i-1) * optInPenetration
 /* Generated */           )
+/* Generated */ #endif
 /* Generated */             outInteger[outIdx++] = -100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;

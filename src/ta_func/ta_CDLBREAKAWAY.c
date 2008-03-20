@@ -227,6 +227,9 @@
    outIdx = 0;
    do
    {
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#else
         if( TA_REALBODY(i-4) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-4 ) &&     // 1st long
             TA_CANDLECOLOR(i-4) == TA_CANDLECOLOR(i-3) &&                   // 1st, 2nd, 4th same color, 5th opposite
             TA_CANDLECOLOR(i-3) == TA_CANDLECOLOR(i-1) &&
@@ -247,6 +250,7 @@
               ) 
             )
           )
+#endif
             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
         else
             outInteger[outIdx++] = 0;
@@ -269,6 +273,7 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
+/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -343,6 +348,8 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #else
 /* Generated */         if( TA_REALBODY(i-4) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-4 ) &&     // 1st long
 /* Generated */             TA_CANDLECOLOR(i-4) == TA_CANDLECOLOR(i-3) &&                   // 1st, 2nd, 4th same color, 5th opposite
 /* Generated */             TA_CANDLECOLOR(i-3) == TA_CANDLECOLOR(i-1) &&
@@ -363,6 +370,7 @@
 /* Generated */               ) 
 /* Generated */             )
 /* Generated */           )
+/* Generated */ #endif
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;

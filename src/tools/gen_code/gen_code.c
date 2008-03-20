@@ -68,6 +68,7 @@
  *  011707 CM    Add ta_pragma.h handles VC8 warnings, type conversion of strlen handles VC warning
  *  021807 MF    Add generation of VS2005 project file
  *  040107 MF,RG Add generation of CoreAnnotated.java
+ *  091307 MF    Add generation of Intel C++ compiler project file (TA-Lib Pro only)
  */
 
 /* Description:
@@ -156,6 +157,15 @@ FileHandle *gOutCore_Java;       /* For Core.Java */
 FileHandle *gOutProjFile;        /* For .NET project file */
 FileHandle *gOutMSVCProjFile;    /* For MSVC project file */
 FileHandle *gOutVS2005ProjFile;  /* For VS2005 project file */
+
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+/* Begin Proprietary */
+FileHandle *gOutVS2005IProjFile; /* For VS2005 project file embedded in Intel project file. */
+FileHandle *gOutIntelProjFile;   /* For Intel C++ Compiler project file */
+/* End Proprietary */
+#endif
+
 FileHandle *gOutExcelGlue_C;     /* For "excel_glue.c" */
 FileHandle *gOutJavaDefs_H;      /* For "java_defs.h" */
 FileHandle *gOutFunc_Annotation; /* For "CoreAnnotated.java" */
@@ -266,6 +276,8 @@ static int createProjTemplate( FileHandle *in, FileHandle *out );
 static int createMSVCProjTemplate( FileHandle *in, FileHandle *out );
 static int createVS2005ProjTemplate( FileHandle *in, FileHandle *out );
 static void printVS2005FileNode( FILE *out, const char *name );
+static int createIntelProjTemplate( FileHandle *in, FileHandle *out );
+static void printIntelFileNode( FILE *out, const char *name );
 #endif
 
 static void writeFuncFile( const TA_FuncInfo *funcInfo );
@@ -401,6 +413,7 @@ int main(int argc, char* argv[])
          printf( "    14) ta-lib/java/src/com/tictactec/ta/lib/CoreAnnotated.java (Win32 only)\n" );
          printf( "    15) ta-lib/ta_func_api.xml\n" );
          printf( "    16) ta-lib/c/src/ta_abstract/ta_func_api.c\n" );
+         printf( "    17) ... and more ...");
          printf( "\n" );
          printf( "  The function header, parameters and validation code of all TA\n" );
          printf( "  function in c/src/ta_func are also updated.\n" );
@@ -501,7 +514,7 @@ static  FileHandle *fileOpen( const char *fileToOpen,
    retValue = TA_Malloc( sizeof(FileHandle) );
    if( !retValue )
    {
-      printf( "Memmory alloc error line %d", __LINE__ );
+      printf( "Memory alloc error line %d", __LINE__ );
       return (FileHandle *)NULL;
    }
 
@@ -667,9 +680,9 @@ static int genCode(int argc, char* argv[])
 {
    TA_RetCode retCode;
    unsigned int nbGroup;
+   FileHandle *tempFile;
 
    #ifdef _MSC_VER
-   FileHandle *tempFile;
    FileHandle *tempFileOut;
    #endif
 
@@ -745,9 +758,11 @@ static int genCode(int argc, char* argv[])
       }
       fileClose(gOutVS2005ProjFile);
       fileClose(tempFile);
-   #endif
 
-   #ifdef _MSC_VER
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
+
    /* Create Java template for Core.java */
    #define FILE_CORE_JAVA     "..\\..\\java\\src\\com\\tictactec\\ta\\lib\\Core.java"
    #define FILE_CORE_JAVA_TMP "..\\temp\\CoreJava.tmp"
@@ -928,6 +943,10 @@ static int genCode(int argc, char* argv[])
          return -1;
       }
 
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
+
       /* Create "CoreAnnotated.java" */
       gOutFunc_Annotation = fileOpen( "..\\..\\java\\src\\com\\tictactec\\ta\\lib\\CoreAnnotated.java",
                                       "..\\src\\ta_abstract\\templates\\CoreAnnotated.java.template", 
@@ -989,13 +1008,18 @@ static int genCode(int argc, char* argv[])
    #ifdef _MSC_VER
       fileClose( gOutDotNet_H );
       fileClose( gOutCore_Java );
+      fileClose( gOutVS2005ProjFile );
       fileClose( gOutProjFile );
       fileClose( gOutMSVCProjFile );
-      fileClose( gOutVS2005ProjFile );
       fileClose( gOutExcelGlue_C );
       fileClose( gOutJavaDefs_H );
       fileClose( gOutFunc_Annotation );
       fileDelete( FILE_CORE_JAVA_TMP );
+
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
+
    #endif
 
    if( retCode != TA_SUCCESS )
@@ -1635,6 +1659,11 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
 
       /* Add the entry in the VS2005 project file. */
 	  printVS2005FileNode( gOutVS2005ProjFile->file, funcInfo->name );
+
+
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
 
       /* Generate the excel glue code */
       printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
@@ -2835,6 +2864,7 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    /* Duplicate the function, but using float this time */
    print( gOutFunc_C->file, "\n" );
    print( gOutFunc_C->file, "#define  USE_SINGLE_PRECISION_INPUT\n" );
+   print( gOutFunc_C->file, "#undef  TA_LIB_PRO\n" );
    print( gOutFunc_C->file, "#if !defined( _MANAGED ) && !defined( _JAVA )\n" );
    print( gOutFunc_C->file, "   #undef   TA_PREFIX\n" );
    print( gOutFunc_C->file, "   #define  TA_PREFIX(x) TA_S_##x\n" );
@@ -3034,6 +3064,74 @@ static int createMSVCProjTemplate( FileHandle *in, FileHandle *out )
       fputs( gTempBuf, outFile );
 
    return 0;
+}
+
+static int createIntelProjTemplate( FileHandle *in, FileHandle *out )
+{
+   FILE *inFile;
+   FILE *outFile;
+   unsigned int skipSection;
+
+   inFile = in->file;
+   outFile = out->file;
+
+   skipSection = 0;
+
+   while( !skipSection && fgets( gTempBuf, BUFFER_SIZE, inFile ) )
+   {
+      if( strstr( gTempBuf, "<Files>") )
+         skipSection = 1;
+      else
+         fputs( gTempBuf, outFile );
+   }
+
+   if( !skipSection )
+   {
+      printf( "Unexpected end-of-file. Missing \"<Files>\"\n" );
+      return -1;
+   }
+
+   fputs( gTempBuf, outFile );
+
+   skipSection = 0;
+
+   while( !skipSection && fgets( gTempBuf, BUFFER_SIZE, inFile ) )
+   {
+      if( strstr( gTempBuf, "<File") )
+         skipSection = 1;
+      else
+         fputs( gTempBuf, outFile );
+   }
+
+   if( !skipSection )
+   {
+      printf( "Unexpected end-of-file. Missing \"<File\"\n" );
+      return -1;
+   }
+
+   fputs( "%%%GENCODE%%%\n", outFile );
+
+   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
+   {
+      if( strstr( gTempBuf, "</Files>" ) )
+      {
+         /* Add the "non TA function" source files. */
+	     printIntelFileNode( outFile, "utility" );
+         fprintf( outFile, "			</Files>\n");
+         break;
+      }
+   }
+
+   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
+      fputs( gTempBuf, outFile );
+
+   return 0;
+}
+
+static void printIntelFileNode( FILE *out, const char *name )
+{
+	/* For now, same format as VS2005 works. */
+	printVS2005FileNode(out,name);
 }
 
 static int createVS2005ProjTemplate( FileHandle *in, FileHandle *out )

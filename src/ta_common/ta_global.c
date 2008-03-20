@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -64,6 +64,10 @@
 #include "ta_global.h"
 #include "ta_func.h"
 
+#ifdef TA_LIB_PRO
+/* Section for code distributed with TA-Lib Pro only. */
+#endif
+
 /**** External functions declarations. ****/
 /* None */
 
@@ -94,6 +98,10 @@ TA_RetCode TA_Initialize( void )
     */
    memset( TA_Globals, 0, sizeof( TA_LibcPriv ) );
    TA_Globals->magicNb = TA_LIBC_PRIV_MAGIC_NB;	  
+
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
 
    /*** At this point, TA_Shutdown can be called to clean-up. ***/
 

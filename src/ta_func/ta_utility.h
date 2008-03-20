@@ -328,6 +328,9 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define TA_LOWERSHADOW(IDX)     ( ( inClose[IDX] >= inOpen[IDX] ? inOpen[IDX] : inClose[IDX] ) - inLow[IDX] )
 #define TA_HIGHLOWRANGE(IDX)    ( inHigh[IDX] - inLow[IDX] )
 #define TA_CANDLECOLOR(IDX)     ( inClose[IDX] >= inOpen[IDX] ? 1 : -1 )
+#ifdef TA_LIB_PRO
+/* Section for code distributed with TA-Lib Pro only. */
+#endif
 
 #if defined( _MANAGED )
    #define TA_CANDLERANGETYPE(SET) (Globals->candleSettings[(int)CandleSettingType::SET]->rangeType)

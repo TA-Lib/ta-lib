@@ -154,6 +154,9 @@
    /* Insert local variables here. */
     double BodyDojiPeriodTotal;
     int i, outIdx, BodyDojiTrailingIdx, lookbackTotal;
+#ifdef TA_LIB_PRO
+	      /* Section for code distributed with TA-Lib Pro only. */
+#endif
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -211,6 +214,10 @@
         i++;
    }
 
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
+
    /* Proceed with the calculation for the requested range.
     *
     * Must have:
@@ -220,6 +227,9 @@
     * neither bullish nor bearish when considered alone
     */
    outIdx = 0;
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#else
    do
    {
         if( TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) )
@@ -233,6 +243,7 @@
         i++; 
         BodyDojiTrailingIdx++;
    } while( i <= endIdx );
+#endif
 
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
@@ -244,6 +255,7 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
+/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -284,6 +296,8 @@
 /* Generated */ {
 /* Generated */     double BodyDojiPeriodTotal;
 /* Generated */     int i, outIdx, BodyDojiTrailingIdx, lookbackTotal;
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #endif
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -314,7 +328,11 @@
 /* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i );
 /* Generated */         i++;
 /* Generated */    }
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #endif
 /* Generated */    outIdx = 0;
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #else
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) )
@@ -325,6 +343,7 @@
 /* Generated */         i++; 
 /* Generated */         BodyDojiTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
+/* Generated */ #endif
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
