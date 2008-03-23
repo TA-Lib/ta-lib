@@ -12,7 +12,7 @@
 #  012908 JS     Enhancement + add x86_64 support 
 
 
-%define ta_ver 0.4.0
+%define ta_ver 0.5.0
 
 Summary: Technical Analysis Library
 Name: ta-lib
