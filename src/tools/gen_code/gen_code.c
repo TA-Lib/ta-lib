@@ -160,10 +160,6 @@ FileHandle *gOutVS2005ProjFile;  /* For VS2005 project file */
 
 #ifdef TA_LIB_PRO
       /* Section for code distributed with TA-Lib Pro only. */
-/* Begin Proprietary */
-FileHandle *gOutVS2005IProjFile; /* For VS2005 project file embedded in Intel project file. */
-FileHandle *gOutIntelProjFile;   /* For Intel C++ Compiler project file */
-/* End Proprietary */
 #endif
 
 FileHandle *gOutExcelGlue_C;     /* For "excel_glue.c" */
@@ -276,8 +272,9 @@ static int createProjTemplate( FileHandle *in, FileHandle *out );
 static int createMSVCProjTemplate( FileHandle *in, FileHandle *out );
 static int createVS2005ProjTemplate( FileHandle *in, FileHandle *out );
 static void printVS2005FileNode( FILE *out, const char *name );
-static int createIntelProjTemplate( FileHandle *in, FileHandle *out );
-static void printIntelFileNode( FILE *out, const char *name );
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
 #endif
 
 static void writeFuncFile( const TA_FuncInfo *funcInfo );
@@ -3066,73 +3063,9 @@ static int createMSVCProjTemplate( FileHandle *in, FileHandle *out )
    return 0;
 }
 
-static int createIntelProjTemplate( FileHandle *in, FileHandle *out )
-{
-   FILE *inFile;
-   FILE *outFile;
-   unsigned int skipSection;
-
-   inFile = in->file;
-   outFile = out->file;
-
-   skipSection = 0;
-
-   while( !skipSection && fgets( gTempBuf, BUFFER_SIZE, inFile ) )
-   {
-      if( strstr( gTempBuf, "<Files>") )
-         skipSection = 1;
-      else
-         fputs( gTempBuf, outFile );
-   }
-
-   if( !skipSection )
-   {
-      printf( "Unexpected end-of-file. Missing \"<Files>\"\n" );
-      return -1;
-   }
-
-   fputs( gTempBuf, outFile );
-
-   skipSection = 0;
-
-   while( !skipSection && fgets( gTempBuf, BUFFER_SIZE, inFile ) )
-   {
-      if( strstr( gTempBuf, "<File") )
-         skipSection = 1;
-      else
-         fputs( gTempBuf, outFile );
-   }
-
-   if( !skipSection )
-   {
-      printf( "Unexpected end-of-file. Missing \"<File\"\n" );
-      return -1;
-   }
-
-   fputs( "%%%GENCODE%%%\n", outFile );
-
-   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
-   {
-      if( strstr( gTempBuf, "</Files>" ) )
-      {
-         /* Add the "non TA function" source files. */
-	     printIntelFileNode( outFile, "utility" );
-         fprintf( outFile, "			</Files>\n");
-         break;
-      }
-   }
-
-   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
-      fputs( gTempBuf, outFile );
-
-   return 0;
-}
-
-static void printIntelFileNode( FILE *out, const char *name )
-{
-	/* For now, same format as VS2005 works. */
-	printVS2005FileNode(out,name);
-}
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
 
 static int createVS2005ProjTemplate( FileHandle *in, FileHandle *out )
 {
