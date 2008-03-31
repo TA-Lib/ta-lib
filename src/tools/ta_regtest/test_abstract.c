@@ -330,8 +330,8 @@ static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
    if( *errorNumber != TA_TEST_PASS )
       return;
 
-   if( !isCandlePattern(funcInfo) )
-	   return;
+/*   if( !isCandlePattern(funcInfo) )
+	   return;*/
 
 #define CALL(x) { \
 	*errorNumber = callWithDefaults( funcInfo->name, x, x##_int, sizeof(x)/sizeof(double) ); \
