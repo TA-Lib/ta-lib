@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -225,6 +225,9 @@
    outIdx = 0;
    do
    {
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#else
         if(                                                             
             TA_CANDLECOLOR(i-4) == -1 && TA_CANDLECOLOR(i-3) == -1 && TA_CANDLECOLOR(i-2) == -1 &&  // 3 black candlesticks
             inOpen[i-4] > inOpen[i-3] && inOpen[i-3] > inOpen[i-2] &&           // with consecutively lower opens
@@ -238,6 +241,7 @@
             outInteger[outIdx++] = 100;
         else
             outInteger[outIdx++] = 0;
+#endif
         /* add the current range and subtract the first range: this is done after the pattern recognition 
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
@@ -332,6 +336,8 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #else
 /* Generated */         if(                                                             
 /* Generated */             TA_CANDLECOLOR(i-4) == -1 && TA_CANDLECOLOR(i-3) == -1 && TA_CANDLECOLOR(i-2) == -1 &&  // 3 black candlesticks
 /* Generated */             inOpen[i-4] > inOpen[i-3] && inOpen[i-3] > inOpen[i-2] &&           // with consecutively lower opens
@@ -345,6 +351,7 @@
 /* Generated */             outInteger[outIdx++] = 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
+/* Generated */ #endif
 /* Generated */         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i-1 ) 
 /* Generated */                                     - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-1 );
 /* Generated */         i++; 

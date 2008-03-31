@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -237,6 +237,10 @@
     * outInteger is positive (1 to 100) or negative (-1 to -100)
     */
    outIdx = 0;
+
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#else
    do
    {
         if( // 1st long, then 3 small, 5th long
@@ -273,11 +277,12 @@
             BodyPeriodTotal[totIdx] += TA_CANDLERANGE( BodyShort, i-totIdx ) 
                                      - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx-totIdx );
         BodyPeriodTotal[0] += TA_CANDLERANGE( BodyLong, i ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
+
         i++; 
         BodyShortTrailingIdx++;
         BodyLongTrailingIdx++;
    } while( i <= endIdx );
-
+#endif
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
@@ -374,6 +379,8 @@
 /* Generated */    }
 /* Generated */    i = startIdx;
 /* Generated */    outIdx = 0;
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #else
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( // 1st long, then 3 small, 5th long
@@ -411,6 +418,7 @@
 /* Generated */         BodyShortTrailingIdx++;
 /* Generated */         BodyLongTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
+/* Generated */ #endif
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);

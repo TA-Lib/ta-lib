@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -264,6 +264,9 @@
    outIdx = 0;
    do
    {
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#else
         if( // 1st long, then 3 small
             TA_REALBODY(i-4) > TA_CANDLEAVERAGE( BodyLong, BodyPeriodTotal[4], i-4 ) &&
             TA_REALBODY(i-3) < TA_CANDLEAVERAGE( BodyShort, BodyPeriodTotal[3], i-3 ) &&
@@ -292,6 +295,7 @@
             outInteger[outIdx++] = 100;
         else
             outInteger[outIdx++] = 0;
+#endif
         /* add the current range and subtract the first range: this is done after the pattern recognition 
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
@@ -408,6 +412,8 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
+/* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ #else
 /* Generated */         if( // 1st long, then 3 small
 /* Generated */             TA_REALBODY(i-4) > TA_CANDLEAVERAGE( BodyLong, BodyPeriodTotal[4], i-4 ) &&
 /* Generated */             TA_REALBODY(i-3) < TA_CANDLEAVERAGE( BodyShort, BodyPeriodTotal[3], i-3 ) &&
@@ -436,6 +442,7 @@
 /* Generated */             outInteger[outIdx++] = 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
+/* Generated */ #endif
 /* Generated */         BodyPeriodTotal[4] += TA_CANDLERANGE( BodyLong, i-4 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-4 );
 /* Generated */         for (totIdx = 3; totIdx >= 1; --totIdx)
 /* Generated */             BodyPeriodTotal[totIdx] += TA_CANDLERANGE( BodyShort, i-totIdx ) 
