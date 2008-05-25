@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -69,6 +69,7 @@
  *  021807 MF    Add generation of VS2005 project file
  *  040107 MF,RG Add generation of CoreAnnotated.java
  *  091307 MF    Add generation of Intel C++ compiler project file (TA-Lib Pro only)
+ *  052508 MF    Add generation of VS2008 project file
  */
 
 /* Description:
@@ -157,6 +158,7 @@ FileHandle *gOutCore_Java;       /* For Core.Java */
 FileHandle *gOutProjFile;        /* For .NET project file */
 FileHandle *gOutMSVCProjFile;    /* For MSVC project file */
 FileHandle *gOutVS2005ProjFile;  /* For VS2005 project file */
+FileHandle *gOutVS2008ProjFile;  /* For VS2008 project file */
 
 #ifdef TA_LIB_PRO
       /* Section for code distributed with TA-Lib Pro only. */
@@ -735,7 +737,7 @@ static int genCode(int argc, char* argv[])
 
       /* Create VS2005 project files template */
       #define FILE_VS2005_PROJ     "..\\..\\c\\ide\\vs2005\\lib_proj\\ta_func\\ta_func.vcproj"
-      #define FILE_VS2005_PROJ_TMP "..\\temp\\ta_func_vcproj.tmp"
+      #define FILE_VS2005_PROJ_TMP "..\\temp\\ta_func_vcproj05.tmp"
       gOutVS2005ProjFile = fileOpen( FILE_VS2005_PROJ, NULL, FILE_READ );
       if( gOutVS2005ProjFile == NULL )   
       {
@@ -754,6 +756,30 @@ static int genCode(int argc, char* argv[])
          return -1;
       }
       fileClose(gOutVS2005ProjFile);
+      fileClose(tempFile);
+
+      /* Create VS2008 project files template */
+      #define FILE_VS2008_PROJ     "..\\..\\c\\ide\\vs2008\\lib_proj\\ta_func\\ta_func.vcproj"
+      #define FILE_VS2008_PROJ_TMP "..\\temp\\ta_func_vcproj08.tmp"
+      gOutVS2008ProjFile = fileOpen( FILE_VS2008_PROJ, NULL, FILE_READ );
+      if( gOutVS2008ProjFile == NULL )   
+      {
+         printf( "\nCannot access [%s]\n", gToOpen );
+         return -1;
+      }
+      tempFile = fileOpen( FILE_VS2008_PROJ_TMP, NULL, FILE_WRITE|WRITE_ALWAYS );
+      if( tempFile == NULL )
+      {
+         printf( "Cannot create temporary VS2008 project file!\n" );
+         return -1;      
+	  }
+	  /* VS2008 Project file the same as VS2005 for creating the template. */
+      if( createVS2005ProjTemplate( gOutVS2008ProjFile, tempFile ) != 0 )
+      {
+         printf( "Failed to parse and write the temporary VS2008 project file!\n" );
+         return -1;
+      }
+      fileClose(gOutVS2008ProjFile);
       fileClose(tempFile);
 
 #ifdef TA_LIB_PRO
@@ -940,6 +966,14 @@ static int genCode(int argc, char* argv[])
          return -1;
       }
 
+      /* Re-open the VS2008 project template. */
+      gOutVS2008ProjFile = fileOpen( FILE_VS2008_PROJ, FILE_VS2008_PROJ_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+      if( gOutVS2008ProjFile == NULL )
+      {
+         printf( "Cannot update [%s]\n", FILE_VS2008_PROJ );
+         return -1;
+      }
+
 #ifdef TA_LIB_PRO
       /* Section for code distributed with TA-Lib Pro only. */
 #endif
@@ -1006,6 +1040,7 @@ static int genCode(int argc, char* argv[])
       fileClose( gOutDotNet_H );
       fileClose( gOutCore_Java );
       fileClose( gOutVS2005ProjFile );
+      fileClose( gOutVS2008ProjFile );
       fileClose( gOutProjFile );
       fileClose( gOutMSVCProjFile );
       fileClose( gOutExcelGlue_C );
@@ -1656,6 +1691,9 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
 
       /* Add the entry in the VS2005 project file. */
 	  printVS2005FileNode( gOutVS2005ProjFile->file, funcInfo->name );
+
+	  /* Add the entry in the VS2008 project file. Same format as VS2005. */
+	  printVS2005FileNode( gOutVS2008ProjFile->file, funcInfo->name );
 
 
 #ifdef TA_LIB_PRO
@@ -3067,8 +3105,10 @@ static int createMSVCProjTemplate( FileHandle *in, FileHandle *out )
       /* Section for code distributed with TA-Lib Pro only. */
 #endif
 
+
 static int createVS2005ProjTemplate( FileHandle *in, FileHandle *out )
 {
+   // This function works also for VS2008
    FILE *inFile;
    FILE *outFile;
    unsigned int skipSection;
@@ -3132,6 +3172,7 @@ static int createVS2005ProjTemplate( FileHandle *in, FileHandle *out )
 
 static void printVS2005FileNode( FILE *out, const char *name )
 {
+   // This function works also for VS2008
    fprintf( out, "				<File\n" );
    fprintf( out, "					RelativePath=\"..\\..\\..\\..\\src\\ta_func\\ta_%s.c\"\n", name );
    fprintf( out, "					>\n" );
