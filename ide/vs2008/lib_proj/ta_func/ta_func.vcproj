@@ -968,10 +968,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\src\ta_func\ta_utility.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_VAR.c"
 					>
 				</File>
@@ -985,6 +981,10 @@
 				</File>
 				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_WMA.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_utility.c"
 					>
 				</File>
 			</Filter>
