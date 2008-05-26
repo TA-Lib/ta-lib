@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -125,11 +125,11 @@
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */ enum class Core::RetCode Core::Ema( int    startIdx,
 /* Generated */                                     int    endIdx,
-/* Generated */                                     SubArray^    inReal,
+/* Generated */                                     SubArray<double>^ inReal,
 /* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                     [Out]int%    outBegIdx,
 /* Generated */                                     [Out]int%    outNBElement,
-/* Generated */                                     cli::array<double>^  outReal )
+/* Generated */                                     SubArray<double>^  outReal )
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Ema( int    startIdx,
 /* Generated */                                     int    endIdx,
@@ -196,6 +196,9 @@
                                   outBegIdx, outNBElement, outReal );
 }
 
+#if defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined(USE_SINGLE_PRECISION_INPUT)
+  // No INT function
+#else
 /* Internal implementation can be called from any other TA function.
  *
  * Faster because there is no parameter check, but it is a double
@@ -210,15 +213,15 @@
  *
  * The macro PER_TO_K is equivalent to the above formula.
  */
-#if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined(USE_SINGLE_PRECISION_INPUT)
+#if defined( _MANAGED ) && defined( USE_SUBARRAY )
  enum class Core::RetCode Core::TA_INT_EMA( int            startIdx,
                                             int           endIdx, 
-                                            SubArray^     inReal,
+                                            SubArray<double>^     inReal,
                                             int           optInTimePeriod,
                                             double        optInK_1,
                                             [Out]int% outBegIdx,
                                             [Out]int% outNBElement,
-                                            cli::array<double>^ outReal )
+                                            SubArray<double>^ outReal )
 #elif defined( _MANAGED )
  enum class Core::RetCode Core::TA_INT_EMA( int           startIdx,
                                             int           endIdx,
@@ -351,6 +354,7 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
+#endif // Not defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined(USE_SINGLE_PRECISION_INPUT)
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -362,7 +366,15 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */ #endif
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Ema( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     SubArray<float>^ inReal,
+/* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNBElement,
+/* Generated */                                     SubArray<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Ema( int    startIdx,
 /* Generated */                                     int    endIdx,
 /* Generated */                                     cli::array<float>^ inReal,
@@ -410,15 +422,18 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */                                   PER_TO_K( optInTimePeriod ),
 /* Generated */                                   outBegIdx, outNBElement, outReal );
 /* Generated */ }
-/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined(USE_SINGLE_PRECISION_INPUT)
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined(USE_SINGLE_PRECISION_INPUT)
+/* Generated */   // No INT function
+/* Generated */ #else
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */  enum class Core::RetCode Core::TA_INT_EMA( int            startIdx,
 /* Generated */                                             int           endIdx, 
-/* Generated */                                             SubArray^     inReal,
+/* Generated */                                             SubArray<double>^     inReal,
 /* Generated */                                             int           optInTimePeriod,
 /* Generated */                                             double        optInK_1,
 /* Generated */                                             [Out]int% outBegIdx,
 /* Generated */                                             [Out]int% outNBElement,
-/* Generated */                                             cli::array<double>^ outReal )
+/* Generated */                                             SubArray<double>^ outReal )
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */  enum class Core::RetCode Core::TA_INT_EMA( int           startIdx,
 /* Generated */                                             int           endIdx,
@@ -486,6 +501,7 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
+/* Generated */ #endif // Not defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined(USE_SINGLE_PRECISION_INPUT)
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ }}} // Close namespace TicTacTec.TA.Lib

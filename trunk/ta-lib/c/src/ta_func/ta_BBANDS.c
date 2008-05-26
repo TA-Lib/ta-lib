@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -163,16 +163,16 @@
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */ enum class Core::RetCode Core::Bbands( int    startIdx,
 /* Generated */                                        int    endIdx,
-/* Generated */                                        SubArray^    inReal,
+/* Generated */                                        SubArray<double>^ inReal,
 /* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                        double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                                        double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                                        MAType        optInMAType,
 /* Generated */                                        [Out]int%    outBegIdx,
 /* Generated */                                        [Out]int%    outNBElement,
-/* Generated */                                        cli::array<double>^  outRealUpperBand,
-/* Generated */                                        cli::array<double>^  outRealMiddleBand,
-/* Generated */                                        cli::array<double>^  outRealLowerBand )
+/* Generated */                                        SubArray<double>^  outRealUpperBand,
+/* Generated */                                        SubArray<double>^  outRealMiddleBand,
+/* Generated */                                        SubArray<double>^  outRealLowerBand )
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Bbands( int    startIdx,
 /* Generated */                                        int    endIdx,
@@ -442,7 +442,20 @@
 /* Generated */ #endif
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Bbands( int    startIdx,
+/* Generated */                                        int    endIdx,
+/* Generated */                                        SubArray<float>^ inReal,
+/* Generated */                                        int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                        double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                        double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                        MAType        optInMAType,
+/* Generated */                                        [Out]int%    outBegIdx,
+/* Generated */                                        [Out]int%    outNBElement,
+/* Generated */                                        SubArray<double>^  outRealUpperBand,
+/* Generated */                                        SubArray<double>^  outRealMiddleBand,
+/* Generated */                                        SubArray<double>^  outRealLowerBand )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Bbands( int    startIdx,
 /* Generated */                                        int    endIdx,
 /* Generated */                                        cli::array<float>^ inReal,

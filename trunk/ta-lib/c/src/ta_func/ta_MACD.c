@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -171,15 +171,15 @@
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */ enum class Core::RetCode Core::Macd( int    startIdx,
 /* Generated */                                      int    endIdx,
-/* Generated */                                      SubArray^    inReal,
+/* Generated */                                      SubArray<double>^ inReal,
 /* Generated */                                      int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                      int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                                      int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                                      [Out]int%    outBegIdx,
 /* Generated */                                      [Out]int%    outNBElement,
-/* Generated */                                      cli::array<double>^  outMACD,
-/* Generated */                                      cli::array<double>^  outMACDSignal,
-/* Generated */                                      cli::array<double>^  outMACDHist )
+/* Generated */                                      SubArray<double>^  outMACD,
+/* Generated */                                      SubArray<double>^  outMACDSignal,
+/* Generated */                                      SubArray<double>^  outMACDHist )
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Macd( int    startIdx,
 /* Generated */                                      int    endIdx,
@@ -280,18 +280,22 @@
                                    outMACDHist );
 }
 
-#if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+#if defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined(USE_SINGLE_PRECISION_INPUT)
+  // No INT function
+#else
+
+#if defined( _MANAGED ) && defined( USE_SUBARRAY )
  enum class Core::RetCode Core::TA_INT_MACD( int    startIdx,
                                              int    endIdx,
-											 SubArray^ inReal,
+											 SubArray<double>^ inReal,
                                              int    optInFastPeriod, /* 0 is fix 12 */
                                              int    optInSlowPeriod, /* 0 is fix 26 */
                                              int    optInSignalPeriod_2,
                                              [Out]int% outBegIdx,
                                              [Out]int% outNBElement,
-											 cli::array<double>^ outMACD,
-                                             cli::array<double>^ outMACDSignal,
-                                             cli::array<double>^ outMACDHist )
+											 SubArray<double>^ outMACD,
+                                             SubArray<double>^ outMACDSignal,
+                                             SubArray<double>^ outMACDHist )
 #elif defined( _MANAGED )
  enum class Core::RetCode Core::TA_INT_MACD( int    startIdx,
                                              int    endIdx,
@@ -521,7 +525,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
-
+#endif // Not defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined( USE_SINGLE_PRECISION_INPUT )
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -533,7 +537,19 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */ #endif
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Macd( int    startIdx,
+/* Generated */                                      int    endIdx,
+/* Generated */                                      SubArray<float>^ inReal,
+/* Generated */                                      int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                      int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                      int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                      [Out]int%    outBegIdx,
+/* Generated */                                      [Out]int%    outNBElement,
+/* Generated */                                      SubArray<double>^  outMACD,
+/* Generated */                                      SubArray<double>^  outMACDSignal,
+/* Generated */                                      SubArray<double>^  outMACDHist )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Macd( int    startIdx,
 /* Generated */                                      int    endIdx,
 /* Generated */                                      cli::array<float>^ inReal,
@@ -610,18 +626,21 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                                    outMACDSignal,
 /* Generated */                                    outMACDHist );
 /* Generated */ }
-/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined(USE_SINGLE_PRECISION_INPUT)
+/* Generated */   // No INT function
+/* Generated */ #else
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */  enum class Core::RetCode Core::TA_INT_MACD( int    startIdx,
 /* Generated */                                              int    endIdx,
-/* Generated */ 											 SubArray^ inReal,
+/* Generated */ 											 SubArray<double>^ inReal,
 /* Generated */                                              int    optInFastPeriod, 
 /* Generated */                                              int    optInSlowPeriod, 
 /* Generated */                                              int    optInSignalPeriod_2,
 /* Generated */                                              [Out]int% outBegIdx,
 /* Generated */                                              [Out]int% outNBElement,
-/* Generated */ 											 cli::array<double>^ outMACD,
-/* Generated */                                              cli::array<double>^ outMACDSignal,
-/* Generated */                                              cli::array<double>^ outMACDHist )
+/* Generated */ 											 SubArray<double>^ outMACD,
+/* Generated */                                              SubArray<double>^ outMACDSignal,
+/* Generated */                                              SubArray<double>^ outMACDHist )
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */  enum class Core::RetCode Core::TA_INT_MACD( int    startIdx,
 /* Generated */                                              int    endIdx,
@@ -776,6 +795,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement)  = VALUE_HANDLE_GET(outNbElement2);
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
+/* Generated */ #endif // Not defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined( USE_SINGLE_PRECISION_INPUT )
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ }}} // Close namespace TicTacTec.TA.Lib

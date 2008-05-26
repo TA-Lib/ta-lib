@@ -125,15 +125,15 @@
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */ enum class Core::RetCode Core::Accbands( int    startIdx,
 /* Generated */                                          int    endIdx,
-/* Generated */                                          SubArray^    inHigh,
-/* Generated */                                          SubArray^    inLow,
-/* Generated */                                          SubArray^    inClose,
+/* Generated */                                          SubArray<double>^ inHigh,
+/* Generated */                                          SubArray<double>^ inLow,
+/* Generated */                                          SubArray<double>^ inClose,
 /* Generated */                                          int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                          [Out]int%    outBegIdx,
 /* Generated */                                          [Out]int%    outNBElement,
-/* Generated */                                          cli::array<double>^  outRealUpperBand,
-/* Generated */                                          cli::array<double>^  outRealMiddleBand,
-/* Generated */                                          cli::array<double>^  outRealLowerBand )
+/* Generated */                                          SubArray<double>^  outRealUpperBand,
+/* Generated */                                          SubArray<double>^  outRealMiddleBand,
+/* Generated */                                          SubArray<double>^  outRealLowerBand )
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Accbands( int    startIdx,
 /* Generated */                                          int    endIdx,
@@ -345,7 +345,19 @@
 /* Generated */ #endif
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Accbands( int    startIdx,
+/* Generated */                                          int    endIdx,
+/* Generated */                                          SubArray<float>^ inHigh,
+/* Generated */                                          SubArray<float>^ inLow,
+/* Generated */                                          SubArray<float>^ inClose,
+/* Generated */                                          int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                          [Out]int%    outBegIdx,
+/* Generated */                                          [Out]int%    outNBElement,
+/* Generated */                                          SubArray<double>^  outRealUpperBand,
+/* Generated */                                          SubArray<double>^  outRealMiddleBand,
+/* Generated */                                          SubArray<double>^  outRealLowerBand )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Accbands( int    startIdx,
 /* Generated */                                          int    endIdx,
 /* Generated */                                          cli::array<float>^ inHigh,
