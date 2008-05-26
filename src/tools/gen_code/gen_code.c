@@ -1710,20 +1710,32 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
       printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0 );
 
 	  fprintf( gOutDotNet_H->file, "         #if defined( _MANAGED ) && defined( USE_SUBARRAY )\n" );   
+
+	  // SubArray<double> declaration
 	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0 );
 	  fprintf( gOutDotNet_H->file, "\n" );
 
-	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
+	  // SubArray<float> declaration
+	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0 );
+	  fprintf( gOutDotNet_H->file, "\n" );
 
+	  // cli_array<double> to SubArray<double> conversion 
+	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
 	  fprintf( gOutDotNet_H->file, "         { return " );
 	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1 );
 	  fprintf( gOutDotNet_H->file, "         }\n" );
 
+	  // cli_array<float> to SubArray<float> conversion 
+	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0 );
+	  fprintf( gOutDotNet_H->file, "         { return " );
+	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1 );
+	  fprintf( gOutDotNet_H->file, "         }\n" );
+
 	  fprintf( gOutDotNet_H->file, "         #elif defined( _MANAGED )\n" );
 	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
+	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0 );
 	  fprintf( gOutDotNet_H->file, "         #endif\n" );
 
-	  printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0 );
 	  fprintf( gOutDotNet_H->file, "\n" );
 	  fprintf( gOutDotNet_H->file, "         #define TA_%s Core::%s\n", funcInfo->name, funcInfo->camelCaseName );
 	  fprintf( gOutDotNet_H->file, "         #define TA_%s_Lookback Core::%sLookback\n\n", funcInfo->name, funcInfo->camelCaseName );
@@ -1899,10 +1911,17 @@ static void printFunc( FILE *out,
 
    if( arrayToSubArrayCnvt )
    {
-      inputIntArrayType     = " ";
-	  inputDoubleArrayType  = " ";
-      outputDoubleArrayType = " ";
-      outputIntArrayType    = " ";
+      inputIntArrayType     = "int";
+      if( inputIsSinglePrecision )
+	  {
+	      inputDoubleArrayType = "float";
+	  }
+	  else
+	  {
+		  inputDoubleArrayType  = "double";
+	  }
+      outputDoubleArrayType = "double";
+      outputIntArrayType    = "int";
       outputIntParam        = " ";
       arrayBracket          = " ";
       startIdxString        = "startIdx";
@@ -1915,16 +1934,16 @@ static void printFunc( FILE *out,
    {
 	  if( inputIsSinglePrecision )
 	  {
-          inputDoubleArrayType  = "cli::array<float>^";
+          inputDoubleArrayType  = useSubArrayObject? "SubArray<float>^":"cli::array<float>^";
 	  }
 	  else
 	  {
-		  inputDoubleArrayType  = useSubArrayObject? "SubArray^":"cli::array<double>^";         
+		  inputDoubleArrayType  = useSubArrayObject? "SubArray<double>^":"cli::array<double>^";         
 	  }
 
-      inputIntArrayType     = "cli::array<int>^";
-      outputDoubleArrayType = "cli::array<double>^";
-      outputIntArrayType    = "cli::array<int>^";
+	  inputIntArrayType     = useSubArrayObject? "SubArray<int>^"   : "cli::array<int>^";
+      outputDoubleArrayType = useSubArrayObject? "SubArray<double>^": "cli::array<double>^";
+      outputIntArrayType    = useSubArrayObject? "SubArray<int>^"   : "cli::array<int>^";
       outputIntParam        = "[Out]int%";
       arrayBracket          = "";
       startIdxString        = "startIdx";
@@ -2220,13 +2239,19 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.open, /*", paramNb );
+				  if( arrayToSubArrayCnvt )
+				  {
+                     fprintf( out, "              gcnew SubArrayFrom1D<%s>(inOpen,0)", inputDoubleArrayType );
+				  }
+				  else
+				  {
                   fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",
                          outputForSWIG?"":" ",
-                         outputForSWIG? "IN_ARRAY /* inOpen */":
-						 arrayToSubArrayCnvt? "gcnew SubArray(inOpen,0)" : "inOpen",
+                         outputForSWIG? "IN_ARRAY /* inOpen */": "inOpen",						 
                          prototype? arrayBracket : "" );
+				  }
                   fprintf( out, "%s\n", frame? " */":"," );
                }
 
@@ -2235,13 +2260,19 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.high, /*", paramNb );
-                  fprintf( out, "%-*s%s%s%s",
+				  if( arrayToSubArrayCnvt )
+				  {
+                     fprintf( out, "              gcnew SubArrayFrom1D<%s>(inHigh,0)", inputDoubleArrayType );
+				  }
+				  else
+				  {
+                     fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",                           
                          outputForSWIG?"":" ",
-                         outputForSWIG? "IN_ARRAY /* inHigh */":
-						 arrayToSubArrayCnvt? "gcnew SubArray(inHigh,0)" : "inHigh",
+                         outputForSWIG? "IN_ARRAY /* inHigh */":"inHigh",
                          prototype? arrayBracket : "" );
+				  }
                   fprintf( out, "%s\n", frame? " */":"," );
                }
 
@@ -2250,13 +2281,20 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.low, /*", paramNb );
-                  fprintf( out, "%-*s%s%s%s",
+                  if( arrayToSubArrayCnvt )
+				  {
+					  fprintf( out, "              gcnew SubArrayFrom1D<%s>(inLow,0)", inputDoubleArrayType );
+				  }
+				  else
+				  {
+					  fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",
                          outputForSWIG?"":" ",
-                         outputForSWIG? "IN_ARRAY /* inLow */":
-						 arrayToSubArrayCnvt? "gcnew SubArray(inLow,0)" : "inLow",
+                         outputForSWIG? "IN_ARRAY /* inLow */": "inLow",
                          prototype? arrayBracket : "" );
+				  }
+
                   fprintf( out, "%s\n", frame? " */":"," );
                }
 
@@ -2265,13 +2303,20 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.close, /*", paramNb );
-                  fprintf( out, "%-*s%s%s%s",
+                  if( arrayToSubArrayCnvt )
+				  {
+					  fprintf( out, "              gcnew SubArrayFrom1D<%s>(inClose,0)", inputDoubleArrayType );
+				  }
+				  else
+				  {
+					  fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",                           
                          outputForSWIG?"":" ",
-                         outputForSWIG? "IN_ARRAY /* inClose */":
-						 arrayToSubArrayCnvt? "gcnew SubArray(inClose,0)" : "inClose",
+                         outputForSWIG? "IN_ARRAY /* inClose */": "inClose",
                          prototype? arrayBracket : "" );
+				  }
+
                   fprintf( out, "%s\n", frame? " */":"," );
                }
 
@@ -2280,13 +2325,20 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.volume, /*", paramNb );
-                  fprintf( out, "%-*s%s%s%s",
+                  if( arrayToSubArrayCnvt )
+				  {
+					  fprintf( out, "              gcnew SubArrayFrom1D<%s>(inVolume,0)", inputDoubleArrayType );
+				  }
+				  else
+				  {
+					  fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",
                          outputForSWIG?"":" ",
-                         outputForSWIG? "IN_ARRAY /* inVolume */":
-						 arrayToSubArrayCnvt? "gcnew SubArray(inVolume,0)" : "inVolume",
+                         outputForSWIG? "IN_ARRAY /* inVolume */": "inVolume",
                          prototype? arrayBracket : "" );
+				  }
+
                   fprintf( out, "%s\n", frame? " */":"," );
                }
 
@@ -2295,21 +2347,27 @@ static void printFunc( FILE *out,
                   printIndent( out, indent );
                   if( frame )
                      fprintf( out, "params->in[%d].data.inPrice.openInterest, /*", paramNb );
-                  fprintf( out, "%-*s%s%s%s",
+                  if( arrayToSubArrayCnvt )
+				  {
+					  fprintf( out, "              gcnew SubArrayFrom1D<%s>(inOpenInterest,0)", inputDoubleArrayType );
+				  }
+				  else
+				  {
+					  fprintf( out, "%-*s%s%s%s",
                          prototype? 12 : 0,
                          prototype? inputDoubleArrayType : "",
                          outputForSWIG?"":" ",
-                         outputForSWIG? "IN_ARRAY /* inOpenInterest */":
-						 arrayToSubArrayCnvt? "gcnew SubArray(inOpenInterest,0)" : "inOpenInterest",
+                         outputForSWIG? "IN_ARRAY /* inOpenInterest */": "inOpenInterest",
                          prototype? arrayBracket : "" );
+				  }
+
                   fprintf( out, "%s\n", frame? " */":"," );
                }
             }
             break;
          case TA_Input_Real:
             typeString = inputDoubleArrayType;                         
-            defaultParamName = outputForSWIG? "IN_ARRAY":
-				arrayToSubArrayCnvt? "gcnew SubArray(inReal,0)" : "inReal";
+            defaultParamName = outputForSWIG? "IN_ARRAY":"inReal";
             break;
          case TA_Input_Integer:
             typeString = inputIntArrayType;
@@ -2345,13 +2403,14 @@ static void printFunc( FILE *out,
 			   {
 				   if( arrayToSubArrayCnvt )
 				   {
-                  fprintf( out, "%-*sgcnew SubArray(%s,0)",
+                      fprintf( out, "              %-*sgcnew SubArrayFrom1D<%s>(%s,0)",
                            prototype? 12 : 0, "",                          
+						   typeString,
                            inputParamInfo->paramName );
 				   }
 				   else
 				   {
-                  fprintf( out, "%-*s %s%s",
+                      fprintf( out, "%-*s %s%s",
                            prototype? 12 : 0,
                            prototype? typeString : "",
                            inputParamInfo->paramName,
@@ -2655,12 +2714,18 @@ static void printFunc( FILE *out,
                         defaultParamName,
                         prototype? arrayBracket : "",
                         paramName );
-            else
+            else if( arrayToSubArrayCnvt )            
+			{
+               fprintf( out, "                gcnew SubArrayFrom1D<%s>(%s,0)", typeString, paramName );
+			}
+			else
+			{
                fprintf( out, "%-*s  %s%s",
                         prototype? 12 : 0,
                         prototype? typeString : "",                     
                         paramName,
                         prototype? arrayBracket : "" );
+			}
 
             if( !lastParam )
                fprintf( out, "%s\n", frame? " */":"," );
@@ -2907,8 +2972,10 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    print( gOutFunc_C->file, "#undef   INPUT_TYPE\n" );
    print( gOutFunc_C->file, "#define  INPUT_TYPE float\n" );
 
-   print( gOutFunc_C->file, "#if defined( _MANAGED )\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0 );
+   print( gOutFunc_C->file, "#if defined( _MANAGED ) && defined( USE_SUBARRAY )\n" );   
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0 );  
+   print( gOutFunc_C->file, "#elif defined( _MANAGED )\n" );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0 );   
    print( gOutFunc_C->file, "#elif defined( _JAVA )\n" );
    printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 );
    print( gOutFunc_C->file, "#else\n" );

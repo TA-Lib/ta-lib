@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -194,7 +194,7 @@
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */ enum class Core::RetCode Core::MacdExt( int    startIdx,
 /* Generated */                                         int    endIdx,
-/* Generated */                                         SubArray^    inReal,
+/* Generated */                                         SubArray<double>^ inReal,
 /* Generated */                                         int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                         MAType        optInFastMAType,
 /* Generated */                                         int           optInSlowPeriod, /* From 2 to 100000 */
@@ -203,9 +203,9 @@
 /* Generated */                                         MAType        optInSignalMAType,
 /* Generated */                                         [Out]int%    outBegIdx,
 /* Generated */                                         [Out]int%    outNBElement,
-/* Generated */                                         cli::array<double>^  outMACD,
-/* Generated */                                         cli::array<double>^  outMACDSignal,
-/* Generated */                                         cli::array<double>^  outMACDHist )
+/* Generated */                                         SubArray<double>^  outMACD,
+/* Generated */                                         SubArray<double>^  outMACDSignal,
+/* Generated */                                         SubArray<double>^  outMACDHist )
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::MacdExt( int    startIdx,
 /* Generated */                                         int    endIdx,
@@ -492,7 +492,22 @@
 /* Generated */ #endif
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::MacdExt( int    startIdx,
+/* Generated */                                         int    endIdx,
+/* Generated */                                         SubArray<float>^ inReal,
+/* Generated */                                         int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                         MAType        optInFastMAType,
+/* Generated */                                         int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                         MAType        optInSlowMAType,
+/* Generated */                                         int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                         MAType        optInSignalMAType,
+/* Generated */                                         [Out]int%    outBegIdx,
+/* Generated */                                         [Out]int%    outNBElement,
+/* Generated */                                         SubArray<double>^  outMACD,
+/* Generated */                                         SubArray<double>^  outMACDSignal,
+/* Generated */                                         SubArray<double>^  outMACDHist )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::MacdExt( int    startIdx,
 /* Generated */                                         int    endIdx,
 /* Generated */                                         cli::array<float>^ inReal,

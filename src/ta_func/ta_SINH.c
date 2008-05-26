@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -110,10 +110,10 @@
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */ enum class Core::RetCode Core::Sinh( int    startIdx,
 /* Generated */                                      int    endIdx,
-/* Generated */                                      SubArray^    inReal,
+/* Generated */                                      SubArray<double>^ inReal,
 /* Generated */                                      [Out]int%    outBegIdx,
 /* Generated */                                      [Out]int%    outNBElement,
-/* Generated */                                      cli::array<double>^  outReal )
+/* Generated */                                      SubArray<double>^  outReal )
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Sinh( int    startIdx,
 /* Generated */                                      int    endIdx,
@@ -194,7 +194,14 @@
 /* Generated */ #endif
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Sinh( int    startIdx,
+/* Generated */                                      int    endIdx,
+/* Generated */                                      SubArray<float>^ inReal,
+/* Generated */                                      [Out]int%    outBegIdx,
+/* Generated */                                      [Out]int%    outNBElement,
+/* Generated */                                      SubArray<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Sinh( int    startIdx,
 /* Generated */                                      int    endIdx,
 /* Generated */                                      cli::array<float>^ inReal,

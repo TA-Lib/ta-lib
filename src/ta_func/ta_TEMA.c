@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -130,11 +130,11 @@
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */ enum class Core::RetCode Core::Tema( int    startIdx,
 /* Generated */                                      int    endIdx,
-/* Generated */                                      SubArray^    inReal,
+/* Generated */                                      SubArray<double>^ inReal,
 /* Generated */                                      int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                      [Out]int%    outBegIdx,
 /* Generated */                                      [Out]int%    outNBElement,
-/* Generated */                                      cli::array<double>^  outReal )
+/* Generated */                                      SubArray<double>^  outReal )
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Tema( int    startIdx,
 /* Generated */                                      int    endIdx,
@@ -274,7 +274,7 @@
 
    /* Allocate a temporary buffer for storing the EMA2 */
    ARRAY_ALLOC(secondEMA,VALUE_HANDLE_GET(firstEMANbElement));
-   #if !defined( _JAVA )
+   #if !defined( _JAVA ) && !defined( USE_SUBARRAY )
       if( !secondEMA )
       {
          ARRAY_FREE( firstEMA );
@@ -353,7 +353,15 @@
 /* Generated */ #endif
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Tema( int    startIdx,
+/* Generated */                                      int    endIdx,
+/* Generated */                                      SubArray<float>^ inReal,
+/* Generated */                                      int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                      [Out]int%    outBegIdx,
+/* Generated */                                      [Out]int%    outNBElement,
+/* Generated */                                      SubArray<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Tema( int    startIdx,
 /* Generated */                                      int    endIdx,
 /* Generated */                                      cli::array<float>^ inReal,
@@ -433,7 +441,7 @@
 /* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    ARRAY_ALLOC(secondEMA,VALUE_HANDLE_GET(firstEMANbElement));
-/* Generated */    #if !defined( _JAVA )
+/* Generated */    #if !defined( _JAVA ) && !defined( USE_SUBARRAY )
 /* Generated */       if( !secondEMA )
 /* Generated */       {
 /* Generated */          ARRAY_FREE( firstEMA );

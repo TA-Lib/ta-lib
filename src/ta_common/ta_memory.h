@@ -29,7 +29,15 @@
  * 
  * (Use ARRAY_REF and ARRAY_INT_REF for double/integer arrays).
  */
-#if defined( _MANAGED )
+#if defined( _MANAGED ) && defined( USE_SUBARRAY )
+   #define ARRAY_VTYPE_REF(type,name)             SubArray<type>^ name
+   #define ARRAY_VTYPE_LOCAL(type,name,size)      SubArray<type>^ name = gcnew SubArrayFrom1D<type>(gcnew cli::array<type>(size),0)
+   #define ARRAY_VTYPE_ALLOC(type,name,size)      name = gcnew SubArrayFrom1D<type>(gcnew cli::array<type>(size),0)
+   #define ARRAY_VTYPE_COPY(type,dest,src,size)   SubArray<type>::Copy( src, 0, dest, 0, size )
+   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) SubArray<type>::Copy( src, srcIdx, dest, destIdx, size )
+   #define ARRAY_VTYPE_FREE(type,name)
+   #define ARRAY_VTYPE_FREE_COND(type,cond,name)   
+#elif defined( _MANAGED )
    #define ARRAY_VTYPE_REF(type,name)             cli::array<type>^ name
    #define ARRAY_VTYPE_LOCAL(type,name,size)      cli::array<type>^ name = gcnew cli::array<type>(size)
    #define ARRAY_VTYPE_ALLOC(type,name,size)      name = gcnew cli::array<type>(size)
@@ -72,6 +80,19 @@
 #define ARRAY_INT_MEMMOVE(dest,destIdx,src,srcIdx,size) ARRAY_VTYPE_MEMMOVE(int,dest,destIdx,src,srcIdx,size)
 #define ARRAY_INT_FREE(name)            ARRAY_VTYPE_FREE(int,name)
 #define ARRAY_INT_FREE_COND(cond,name)  ARRAY_VTYPE_FREE_COND(int,cond,name)
+
+/* ARRAY: Macros to manipulate arrays of mix type. 
+ * This is just a loop doing an element by element copy.
+ */
+#define ARRAY_MEMMOVEMIX_VAR int mmmixi, mmmixdestIdx, mmmixsrcIdx
+#define ARRAY_MEMMOVEMIX(dest,destIdx,src,srcIdx,size) { \
+            for( mmmixi=0, mmmixdestIdx=destIdx, mmmixsrcIdx=srcIdx; \
+                mmmixi < size; \
+                mmmixi++, mmmixdestIdx++, mmmixsrcIdx++ ) \
+              { \
+                  dest[mmmixdestIdx] = src[mmmixsrcIdx]; \
+              } \
+            }
 
 /* Access to "Globals"
  *

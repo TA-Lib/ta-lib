@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -151,13 +151,13 @@
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */ enum class Core::RetCode Core::Apo( int    startIdx,
 /* Generated */                                     int    endIdx,
-/* Generated */                                     SubArray^    inReal,
+/* Generated */                                     SubArray<double>^ inReal,
 /* Generated */                                     int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                     int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                                     MAType        optInMAType,
 /* Generated */                                     [Out]int%    outBegIdx,
 /* Generated */                                     [Out]int%    outNBElement,
-/* Generated */                                     cli::array<double>^  outReal )
+/* Generated */                                     SubArray<double>^  outReal )
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Apo( int    startIdx,
 /* Generated */                                     int    endIdx,
@@ -265,17 +265,21 @@
  *
  * A buffer must be provided for intermediate processing.
  */
-#if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+#if defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined(USE_SINGLE_PRECISION_INPUT)
+  // No INT fucntion
+#else
+
+#if defined( _MANAGED ) && defined( USE_SUBARRAY )
  enum class Core::RetCode Core::TA_INT_PO( int    startIdx,
                                            int    endIdx,
-									       SubArray^ inReal,
+									       SubArray<double>^ inReal,
                                            int    optInFastPeriod, 
                                            int    optInSlowPeriod, 
 										   MAType    optInMethod_2,
                                            [Out]int% outBegIdx,
                                            [Out]int% outNBElement,
-										   cli::array<double>^ outReal,
-                                           cli::array<double>^ tempBuffer,
+										   SubArray<double>^ outReal,
+                                           SubArray<double>^ tempBuffer,
                                            int  doPercentageOutput )
 
 #elif defined( _MANAGED )
@@ -392,6 +396,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 
    return retCode;
 }
+#endif // Not defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined( USE_SINGLE_PRECISION_INPUT )
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -403,7 +408,17 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */ #endif
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Apo( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     SubArray<float>^ inReal,
+/* Generated */                                     int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                     int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                     MAType        optInMAType,
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNBElement,
+/* Generated */                                     SubArray<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Apo( int    startIdx,
 /* Generated */                                     int    endIdx,
 /* Generated */                                     cli::array<float>^ inReal,
@@ -482,17 +497,20 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */    ARRAY_FREE( tempBuffer );
 /* Generated */    return retCode;
 /* Generated */ }
-/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined(USE_SINGLE_PRECISION_INPUT)
+/* Generated */   // No INT fucntion
+/* Generated */ #else
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */  enum class Core::RetCode Core::TA_INT_PO( int    startIdx,
 /* Generated */                                            int    endIdx,
-/* Generated */ 									       SubArray^ inReal,
+/* Generated */ 									       SubArray<double>^ inReal,
 /* Generated */                                            int    optInFastPeriod, 
 /* Generated */                                            int    optInSlowPeriod, 
 /* Generated */ 										   MAType    optInMethod_2,
 /* Generated */                                            [Out]int% outBegIdx,
 /* Generated */                                            [Out]int% outNBElement,
-/* Generated */ 										   cli::array<double>^ outReal,
-/* Generated */                                            cli::array<double>^ tempBuffer,
+/* Generated */ 										   SubArray<double>^ outReal,
+/* Generated */                                            SubArray<double>^ tempBuffer,
 /* Generated */                                            int  doPercentageOutput )
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */  enum class Core::RetCode Core::TA_INT_PO( int    startIdx,
@@ -590,6 +608,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */    }
 /* Generated */    return retCode;
 /* Generated */ }
+/* Generated */ #endif // Not defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined( USE_SINGLE_PRECISION_INPUT )
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ }}} // Close namespace TicTacTec.TA.Lib

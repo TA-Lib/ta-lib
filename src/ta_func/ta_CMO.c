@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -130,11 +130,11 @@
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */ enum class Core::RetCode Core::Cmo( int    startIdx,
 /* Generated */                                     int    endIdx,
-/* Generated */                                     SubArray^    inReal,
+/* Generated */                                     SubArray<double>^ inReal,
 /* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                     [Out]int%    outBegIdx,
 /* Generated */                                     [Out]int%    outNBElement,
-/* Generated */                                     cli::array<double>^  outReal )
+/* Generated */                                     SubArray<double>^  outReal )
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Cmo( int    startIdx,
 /* Generated */                                     int    endIdx,
@@ -168,6 +168,10 @@
    int today, lookbackTotal, unstablePeriod, i;
    double prevGain, prevLoss, prevValue, savePrevValue;
    double tempValue1, tempValue2, tempValue3, tempValue4;
+
+   #if defined( USE_SINGLE_PRECISION_INPUT )
+      ARRAY_MEMMOVEMIX_VAR;
+   #endif		
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -234,8 +238,8 @@
       VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
       i = (endIdx-startIdx)+1;
       VALUE_HANDLE_DEREF(outNBElement) = i;
-      #if defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
-        ARRAY_MEMMOVE( outReal, 0, (inReal->mDataArray), (inReal->mOffset)+startIdx, i );
+      #if defined( USE_SINGLE_PRECISION_INPUT )
+        ARRAY_MEMMOVEMIX( outReal, 0, inReal, startIdx, i );
       #else
         ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, i );
       #endif
@@ -421,7 +425,15 @@
 /* Generated */ #endif
 /* Generated */ #undef   INPUT_TYPE
 /* Generated */ #define  INPUT_TYPE float
-/* Generated */ #if defined( _MANAGED )
+/* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
+/* Generated */ enum class Core::RetCode Core::Cmo( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                     SubArray<float>^ inReal,
+/* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                     [Out]int%    outBegIdx,
+/* Generated */                                     [Out]int%    outNBElement,
+/* Generated */                                     SubArray<double>^  outReal )
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Cmo( int    startIdx,
 /* Generated */                                     int    endIdx,
 /* Generated */                                     cli::array<float>^ inReal,
@@ -451,6 +463,9 @@
 /* Generated */    int today, lookbackTotal, unstablePeriod, i;
 /* Generated */    double prevGain, prevLoss, prevValue, savePrevValue;
 /* Generated */    double tempValue1, tempValue2, tempValue3, tempValue4;
+/* Generated */    #if defined( USE_SINGLE_PRECISION_INPUT )
+/* Generated */       ARRAY_MEMMOVEMIX_VAR;
+/* Generated */    #endif		
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -481,8 +496,8 @@
 /* Generated */       VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */       i = (endIdx-startIdx)+1;
 /* Generated */       VALUE_HANDLE_DEREF(outNBElement) = i;
-/* Generated */       #if defined( USE_SUBARRAY ) && !defined( USE_SINGLE_PRECISION_INPUT )
-/* Generated */         ARRAY_MEMMOVE( outReal, 0, (inReal->mDataArray), (inReal->mOffset)+startIdx, i );
+/* Generated */       #if defined( USE_SINGLE_PRECISION_INPUT )
+/* Generated */         ARRAY_MEMMOVEMIX( outReal, 0, inReal, startIdx, i );
 /* Generated */       #else
 /* Generated */         ARRAY_MEMMOVE( outReal, 0, inReal, startIdx, i );
 /* Generated */       #endif
