@@ -61,7 +61,7 @@
 				WarningLevel="3"
 				WarnAsError="true"
 				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				CompileAs="1"
 			/>
 			<Tool
