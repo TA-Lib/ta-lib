@@ -70,6 +70,7 @@
  *  040107 MF,RG Add generation of CoreAnnotated.java
  *  091307 MF    Add generation of Intel C++ compiler project file (TA-Lib Pro only)
  *  052508 MF    Add generation of VS2008 project file
+ *  061608 MF    Add code to preserve proprietary code marker for TA-Lib pro.
  */
 
 /* Description:
@@ -965,6 +966,7 @@ static int genCode(int argc, char* argv[])
          printf( "Cannot update [%s]\n", FILE_VS2005_PROJ );
          return -1;
       }
+
 
       /* Re-open the VS2008 project template. */
       gOutVS2008ProjFile = fileOpen( FILE_VS2008_PROJ, FILE_VS2008_PROJ_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
@@ -4140,9 +4142,25 @@ static void extractTALogic( FILE *inFile, FILE *outFile )
          }
       }
 
-      if( nbCodeChar != 0 )
+      /* Preserve markers for proprietary code. */
+      #define BEG_PROP_MARKER "* Begin Proprietary *"
+	  #define END_PROP_MARKER "* End Proprietary *"
+	  if( strstr( gTempBuf, BEG_PROP_MARKER ) )
+	  {
+         fputs( "/* Generated */ /", outFile );
+         fputs( BEG_PROP_MARKER, outFile );
+         fputs( "/\n", outFile );
+	  }
+	  else if( strstr( gTempBuf, END_PROP_MARKER ) )
+	  {
+         fputs( "/* Generated */ /", outFile );
+         fputs( END_PROP_MARKER, outFile );
+         fputs( "/\n", outFile );
+	  }
+      else if( nbCodeChar != 0 )
       {
          gTempBuf2[outIdx] = '\0';
+		 /* Write the code */
          fputs( "/* Generated */ ", outFile );
          fputs( gTempBuf2, outFile );
       }
