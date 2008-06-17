@@ -228,7 +228,6 @@
    {
 #ifdef TA_LIB_PRO
       /* Section for code distributed with TA-Lib Pro only. */
-/* End Proprietary */
 #else
         if( TA_CANDLECOLOR(i-2) == 1 &&                                                         // 1st: white
             TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) &&     //      long

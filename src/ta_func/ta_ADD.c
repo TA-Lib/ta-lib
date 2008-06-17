@@ -239,6 +239,8 @@
 /* Generated */ {
 /* Generated */    int outIdx;
 /* Generated */ #ifdef TA_LIB_PRO
+/* Generated */ /* Begin Proprietary */
+/* Generated */ /* End Proprietary */
 /* Generated */ #else
 /* Generated */    int i;
 /* Generated */ #endif
