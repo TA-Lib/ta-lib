@@ -12,10 +12,6 @@ AM_INIT_AUTOMAKE([ta-lib], [SVN])
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
-# Checks for libraries.
-AC_CHECK_LIB([dl], [dlopen])
-AC_CHECK_LIB([pthread], [pthread_create])
-
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([float.h inttypes.h limits.h locale.h stddef.h stdint.h stdlib.h string.h unistd.h wchar.h wctype.h])
