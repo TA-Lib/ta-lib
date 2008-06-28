@@ -311,6 +311,8 @@ static int isMath( const TA_FuncInfo *funcInfo )
    return !notMath;
 }
 
+#if 0
+// Unused for now
 static int isCandlePattern( const TA_FuncInfo *funcInfo )
 {
    int notCandlePattern;
@@ -321,6 +323,7 @@ static int isCandlePattern( const TA_FuncInfo *funcInfo )
 
    return !notCandlePattern;
 }
+#endif
 
 static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
 {
