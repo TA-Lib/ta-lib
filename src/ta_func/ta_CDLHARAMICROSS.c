@@ -43,6 +43,8 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  102404 AC   Creation           
+ *  040309 AC   Increased flexibility to allow real bodies matching
+ *              on one end (Greg Morris - "Candlestick charting explained")
  *
  */
 
@@ -239,11 +241,18 @@
       /* Section for code distributed with TA-Lib Pro only. */
 #else
         if( TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-1 ) &&         // 1st: long
-            TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) &&            // 2nd: doji
-            max( inClose[i], inOpen[i] ) < max( inClose[i-1], inOpen[i-1] ) &&                      //      engulfed by 1st
-            min( inClose[i], inOpen[i] ) > min( inClose[i-1], inOpen[i-1] )
-          )
-            outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 100;
+            TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) )             // 2nd: doji
+            if ( max( inClose[i], inOpen[i] ) < max( inClose[i-1], inOpen[i-1] ) &&              // 2nd is engulfed by 1st
+                 min( inClose[i], inOpen[i] ) > min( inClose[i-1], inOpen[i-1] )
+               )
+                outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 100;
+            else 
+                if ( max( inClose[i], inOpen[i] ) <= max( inClose[i-1], inOpen[i-1] ) &&         // 2nd is engulfed by 1st
+                     min( inClose[i], inOpen[i] ) >= min( inClose[i-1], inOpen[i-1] )            // (one end of real body can match;
+                   )                                                                             // engulfing guaranteed by "long" and "doji")
+                    outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 80;
+                else
+                    outInteger[outIdx++] = 0;
         else
             outInteger[outIdx++] = 0;
 #endif
@@ -364,11 +373,18 @@
 /* Generated */ #ifdef TA_LIB_PRO
 /* Generated */ #else
 /* Generated */         if( TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-1 ) &&         // 1st: long
-/* Generated */             TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) &&            // 2nd: doji
-/* Generated */             max( inClose[i], inOpen[i] ) < max( inClose[i-1], inOpen[i-1] ) &&                      //      engulfed by 1st
-/* Generated */             min( inClose[i], inOpen[i] ) > min( inClose[i-1], inOpen[i-1] )
-/* Generated */           )
-/* Generated */             outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 100;
+/* Generated */             TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) )             // 2nd: doji
+/* Generated */             if ( max( inClose[i], inOpen[i] ) < max( inClose[i-1], inOpen[i-1] ) &&              // 2nd is engulfed by 1st
+/* Generated */                  min( inClose[i], inOpen[i] ) > min( inClose[i-1], inOpen[i-1] )
+/* Generated */                )
+/* Generated */                 outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 100;
+/* Generated */             else 
+/* Generated */                 if ( max( inClose[i], inOpen[i] ) <= max( inClose[i-1], inOpen[i-1] ) &&         // 2nd is engulfed by 1st
+/* Generated */                      min( inClose[i], inOpen[i] ) >= min( inClose[i-1], inOpen[i-1] )            // (one end of real body can match;
+/* Generated */                    )                                                                             // engulfing guaranteed by "long" and "doji")
+/* Generated */                     outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 80;
+/* Generated */                 else
+/* Generated */                     outInteger[outIdx++] = 0;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */ #endif

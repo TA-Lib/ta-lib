@@ -43,6 +43,8 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  102404 AC   Creation           
+ *  040309 AC   Increased flexibility to allow real bodies matching
+ *              on one end (Greg Morris - "Candlestick charting explained")
  *
  */
 
@@ -207,8 +209,11 @@
     * Must have:
     * - first: black (white) real body
     * - second: white (black) real body that engulfs the prior real body
-    * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-    * the user should consider that an engulfing must appear in a downtrend if bullish or in an uptrend if bearish,
+    * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
+    * - 100 is returned when the second candle's real body begins before and ends after the first candle's real body
+    * - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
+    *   "Candlestick charting explained")
+    * The user should consider that an engulfing must appear in a downtrend if bullish or in an uptrend if bearish,
     * while this function does not consider it
     */
    outIdx = 0;
@@ -218,16 +223,23 @@
    do
    {
         if( ( TA_CANDLECOLOR(i) == 1 && TA_CANDLECOLOR(i-1) == -1 &&            // white engulfs black
-              inClose[i] > inOpen[i-1] && inOpen[i] < inClose[i-1]
+              ( ( inClose[i] >= inOpen[i-1] && inOpen[i] < inClose[i-1] ) ||
+                ( inClose[i] > inOpen[i-1] && inOpen[i] <= inClose[i-1] )
+              )
             )
             ||
             ( TA_CANDLECOLOR(i) == -1 && TA_CANDLECOLOR(i-1) == 1 &&            // black engulfs white
-              inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-1]
+              ( ( inOpen[i] >= inClose[i-1] && inClose[i] < inOpen[i-1] ) ||
+                ( inOpen[i] > inClose[i-1] && inClose[i] <= inOpen[i-1] )
+              )
             )
           )
-            outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
+            if( inOpen[i] != inClose[i-1] && inClose[i] != inOpen[i-1] )
+                outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
+            else
+                outInteger[outIdx++] = TA_CANDLECOLOR(i) * 80;
         else
-            outInteger[outIdx++] = 0;
+            outInteger[outIdx++] = 0; 
         i++; 
    } while( i <= endIdx );
 #endif
@@ -321,16 +333,23 @@
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( ( TA_CANDLECOLOR(i) == 1 && TA_CANDLECOLOR(i-1) == -1 &&            // white engulfs black
-/* Generated */               inClose[i] > inOpen[i-1] && inOpen[i] < inClose[i-1]
+/* Generated */               ( ( inClose[i] >= inOpen[i-1] && inOpen[i] < inClose[i-1] ) ||
+/* Generated */                 ( inClose[i] > inOpen[i-1] && inOpen[i] <= inClose[i-1] )
+/* Generated */               )
 /* Generated */             )
 /* Generated */             ||
 /* Generated */             ( TA_CANDLECOLOR(i) == -1 && TA_CANDLECOLOR(i-1) == 1 &&            // black engulfs white
-/* Generated */               inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-1]
+/* Generated */               ( ( inOpen[i] >= inClose[i-1] && inClose[i] < inOpen[i-1] ) ||
+/* Generated */                 ( inOpen[i] > inClose[i-1] && inClose[i] <= inOpen[i-1] )
+/* Generated */               )
 /* Generated */             )
 /* Generated */           )
-/* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
+/* Generated */             if( inOpen[i] != inClose[i-1] && inClose[i] != inOpen[i-1] )
+/* Generated */                 outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
+/* Generated */             else
+/* Generated */                 outInteger[outIdx++] = TA_CANDLECOLOR(i) * 80;
 /* Generated */         else
-/* Generated */             outInteger[outIdx++] = 0;
+/* Generated */             outInteger[outIdx++] = 0; 
 /* Generated */         i++; 
 /* Generated */    } while( i <= endIdx );
 /* Generated */ #endif

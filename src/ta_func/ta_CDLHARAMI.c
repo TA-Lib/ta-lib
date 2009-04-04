@@ -43,6 +43,8 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  102404 AC   Creation           
+ *  040309 AC   Increased flexibility to allow real bodies matching
+ *              on one end (Greg Morris - "Candlestick charting explained")
  *
  */
 
@@ -226,10 +228,13 @@
    /* Proceed with the calculation for the requested range.
     * Must have:
     * - first candle: long white (black) real body
-    * - second candle: short real body totally engulfed by the first
+    * - second candle: short real body totally engulfed by the first 
     * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-    * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish; 
-    * the user should consider that a harami is significant when it appears in a downtrend if bullish or 
+    * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
+    * - 100 is returned when the first candle's real body begins before and ends after the second candle's real body
+    * - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
+    *   "Candlestick charting explained")
+    * The user should consider that a harami is significant when it appears in a downtrend if bullish or 
     * in an uptrend when bearish, while this function does not consider the trend
     */
    outIdx = 0;
@@ -239,11 +244,19 @@
       /* Section for code distributed with TA-Lib Pro only. */
 #else
 	    if( TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-1 ) &&         // 1st: long
-            TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i ) &&          // 2nd: short
-            max( inClose[i], inOpen[i] ) < max( inClose[i-1], inOpen[i-1] ) &&                      //      engulfed by 1st
-            min( inClose[i], inOpen[i] ) > min( inClose[i-1], inOpen[i-1] )
+            TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i )             // 2nd: short
           )
-            outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 100;
+            if ( max( inClose[i], inOpen[i] ) < max( inClose[i-1], inOpen[i-1] ) &&              // 2nd is engulfed by 1st
+                 min( inClose[i], inOpen[i] ) > min( inClose[i-1], inOpen[i-1] )
+               )
+                outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 100;
+            else 
+                if ( max( inClose[i], inOpen[i] ) <= max( inClose[i-1], inOpen[i-1] ) &&         // 2nd is engulfed by 1st
+                     min( inClose[i], inOpen[i] ) >= min( inClose[i-1], inOpen[i-1] )            // (one end of real body can match;
+                   )                                                                             // engulfing guaranteed by "long" and "short")
+                    outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 80;
+                else
+                    outInteger[outIdx++] = 0;
         else
             outInteger[outIdx++] = 0;
 #endif        
@@ -364,11 +377,19 @@
 /* Generated */ #ifdef TA_LIB_PRO
 /* Generated */ #else
 /* Generated */ 	    if( TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-1 ) &&         // 1st: long
-/* Generated */             TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i ) &&          // 2nd: short
-/* Generated */             max( inClose[i], inOpen[i] ) < max( inClose[i-1], inOpen[i-1] ) &&                      //      engulfed by 1st
-/* Generated */             min( inClose[i], inOpen[i] ) > min( inClose[i-1], inOpen[i-1] )
+/* Generated */             TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i )             // 2nd: short
 /* Generated */           )
-/* Generated */             outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 100;
+/* Generated */             if ( max( inClose[i], inOpen[i] ) < max( inClose[i-1], inOpen[i-1] ) &&              // 2nd is engulfed by 1st
+/* Generated */                  min( inClose[i], inOpen[i] ) > min( inClose[i-1], inOpen[i-1] )
+/* Generated */                )
+/* Generated */                 outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 100;
+/* Generated */             else 
+/* Generated */                 if ( max( inClose[i], inOpen[i] ) <= max( inClose[i-1], inOpen[i-1] ) &&         // 2nd is engulfed by 1st
+/* Generated */                      min( inClose[i], inOpen[i] ) >= min( inClose[i-1], inOpen[i-1] )            // (one end of real body can match;
+/* Generated */                    )                                                                             // engulfing guaranteed by "long" and "short")
+/* Generated */                     outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 80;
+/* Generated */                 else
+/* Generated */                     outInteger[outIdx++] = 0;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */ #endif        
