@@ -71,6 +71,7 @@
  *  091307 MF    Add generation of Intel C++ compiler project file (TA-Lib Pro only)
  *  052508 MF    Add generation of VS2008 project file
  *  061608 MF    Add code to preserve proprietary code marker for TA-Lib pro.
+ *  071808 MF    Add generation for Add-Ins express product (TA-Lib Pro only).
  */
 
 /* Description:
@@ -208,6 +209,10 @@ static void doForEachFunctionXml( const TA_FuncInfo *funcInfo,
 
 static void doForEachUnstableFunction( const TA_FuncInfo *funcInfo,
                                        void *opaqueData );
+
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
 
 static void doDefsFile( void );
 
@@ -680,9 +685,9 @@ static int genCode(int argc, char* argv[])
 {
    TA_RetCode retCode;
    unsigned int nbGroup;
+   FileHandle *tempFile;
 
    #ifdef _MSC_VER
-   FileHandle *tempFile;
    FileHandle *tempFileOut;
    #endif
 
@@ -1028,6 +1033,10 @@ static int genCode(int argc, char* argv[])
    /* Append some "hard coded" prototype for ta_func */
    appendToFunc( gOutFunc_H->file );
    appendToFunc( gOutFunc_SWG->file );
+
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
 
    /* Close all files who were updated with the list of TA functions. */
    fileClose( gOutFuncList_TXT );
@@ -4802,4 +4811,8 @@ static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
 
     fprintf(gOutFunc_Annotation->file, "); }\n\n\n");
 }
+#ifdef TA_LIB_PRO
+      /* Section for code distributed with TA-Lib Pro only. */
+#endif
+
 #endif
