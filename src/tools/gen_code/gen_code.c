@@ -110,6 +110,45 @@
 #include "ta_abstract.h"
 #include "ta_memory.h"
 
+#if defined(__WIN32__) || defined(WIN32)
+# define TA_FS_SLASH "\\"
+# define TA_MCPP_EXE "..\\src\\tools\\gen_code\\mcpp.exe"
+#else
+# define TA_FS_SLASH "/"
+/* XXX resolve this dynamically or take as param */
+# define TA_MCPP_EXE "/usr/bin/mcpp"
+#endif
+
+static char *ta_fs_path(int count, ...) {
+    char *path = (char *)malloc(16000); /* XXX quick and dirty */
+    char *p; 
+    va_list argp;
+    int j;
+
+    va_start(argp, count);
+
+    p = path;
+    for (j = 0; j < count; j++) {
+        int i;
+        char *part;
+
+        part = va_arg(argp, char *); 
+        i = strlen(part);
+
+        memmove(p, part, i); 
+        p += i;  
+
+        memmove(p, TA_FS_SLASH, 1); 
+        p++;
+    }   
+    *--p = '\0';
+
+    va_end(argp);
+
+    return path;
+}
+
+
 extern int mcpp_main( int argc, char ** argv);
 
 #define BUFFER_SIZE 16000
@@ -153,10 +192,13 @@ FileHandle *gOutFunc_XML;      /* For "ta_func_api.xml" */
 FileHandle *gOutFuncAPI_C;     /* For "ta_func_api.c" */
 FileHandle *gOutMakefile_AM;   /* For "Makefile.am" */
 
+FileHandle *gOutCore_Java;       /* For Core.Java */
+FileHandle *gOutJavaDefs_H;      /* For "java_defs.h" */
+FileHandle *gOutFunc_Annotation; /* For "CoreAnnotated.java" */
+
 #ifdef _MSC_VER
 /* The following files are generated only on Windows platform. */
 FileHandle *gOutDotNet_H;      /* For .NET interface file */
-FileHandle *gOutCore_Java;       /* For Core.Java */
 FileHandle *gOutProjFile;        /* For .NET project file */
 FileHandle *gOutMSVCProjFile;    /* For MSVC project file */
 FileHandle *gOutVS2005ProjFile;  /* For VS2005 project file */
@@ -167,26 +209,15 @@ FileHandle *gOutVS2008ProjFile;  /* For VS2008 project file */
 #endif
 
 FileHandle *gOutExcelGlue_C;     /* For "excel_glue.c" */
-FileHandle *gOutJavaDefs_H;      /* For "java_defs.h" */
-FileHandle *gOutFunc_Annotation; /* For "CoreAnnotated.java" */
 
-/* Why these file are not generated from a unix platform?
- *
- * The reason is obvious for .NET, Excel and MSVC related files.
- * 
- * For the Java code, the reason is that I use a C preprocessor 
- * called MCPP and for now I have ported it only on windows.
- * (see the mcpp.exe included in the package).
- * If someone get the mcpp or an equivalent to be integrated
- * in gen_code, then Java code could also be generated from unix.
- */
 static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
+#endif
+
 static void genJavaCodePhase1( const TA_FuncInfo *funcInfo );
 static void genJavaCodePhase2( const TA_FuncInfo *funcInfo );
 
 /* To generate CoreAnnotated.java */
 static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo);
-#endif
 
 
 typedef void (*TA_ForEachGroup)( const char *groupName,
@@ -477,29 +508,9 @@ int main(int argc, char* argv[])
  */
 static void init_gToOpen( const char *filePath, const char *suffix )
 {
-   
-   char *ptr;
-   #ifdef WIN32
-      const int sepChar = (int)'\\';
-   #else
-      const int sepChar = (int)'/';
-   #endif
-
-
    strcpy( gToOpen, filePath );
    if( suffix )
       strcat( gToOpen, suffix );
-
-   /* Replace all directory separator with the
-    * one applicable for this OS.
-    */
-   ptr = gToOpen;
-   while( *ptr != '\0' )
-   {
-      if( (*ptr == '\\') || (*ptr == '/') )
-         *ptr = (char)sepChar;
-      ptr++;
-   }
 }
 
 
@@ -687,17 +698,15 @@ static int genCode(int argc, char* argv[])
    unsigned int nbGroup;
    FileHandle *tempFile;
 
-   #ifdef _MSC_VER
    FileHandle *tempFileOut;
-   #endif
 
    (void)argc; /* Get ride of compiler warning */
    (void)argv; /* Get ride of compiler warning */
 
    #ifdef _MSC_VER
       /* Create .NET project files template */
-      #define FILE_NET_PROJ     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.vcproj"
-      #define FILE_NET_PROJ_TMP "..\\temp\\dotnetproj.tmp"
+      #define FILE_NET_PROJ ta_fs_path(6, "..", "..", "dotnet", "src", "Core", "TA-Lib-Core.vcproj")
+      #define FILE_NET_PROJ_TMP ta_fs_path(3, "..", "temp", "dotnetproj.tmp")
       gOutProjFile = fileOpen( FILE_NET_PROJ, NULL, FILE_READ );
       if( gOutProjFile == NULL )   
       {
@@ -719,8 +728,8 @@ static int genCode(int argc, char* argv[])
       fileClose(tempFile);
 
       /* Create MSVC project files template */
-      #define FILE_MSVC_PROJ     "..\\..\\c\\ide\\msvc\\lib_proj\\ta_func\\ta_func.dsp"
-      #define FILE_MSVC_PROJ_TMP "..\\temp\\ta_func_dsp.tmp"
+      #define FILE_MSVC_PROJ     ta_fs_path(8, "..", "..", "c", "ide", "msvc", "lib_proj", "ta_func", "ta_func.dsp")
+      #define FILE_MSVC_PROJ_TMP ta_fs_path(3, "..", "temp", "ta_func_dsp.tmp")
       gOutMSVCProjFile = fileOpen( FILE_MSVC_PROJ, NULL, FILE_READ );
       if( gOutMSVCProjFile == NULL )   
       {
@@ -742,8 +751,8 @@ static int genCode(int argc, char* argv[])
       fileClose(tempFile);
 
       /* Create VS2005 project files template */
-      #define FILE_VS2005_PROJ     "..\\..\\c\\ide\\vs2005\\lib_proj\\ta_func\\ta_func.vcproj"
-      #define FILE_VS2005_PROJ_TMP "..\\temp\\ta_func_vcproj05.tmp"
+      #define FILE_VS2005_PROJ     ta_fs_path(8, "..", "..", "c", "ide", "vs2005", "lib_proj", "ta_func", "ta_func.vcproj")
+      #define FILE_VS2005_PROJ_TMP ta_fs_path(3, "..", "temp", "ta_func_vcproj05.tmp")
       gOutVS2005ProjFile = fileOpen( FILE_VS2005_PROJ, NULL, FILE_READ );
       if( gOutVS2005ProjFile == NULL )   
       {
@@ -765,8 +774,8 @@ static int genCode(int argc, char* argv[])
       fileClose(tempFile);
 
       /* Create VS2008 project files template */
-      #define FILE_VS2008_PROJ     "..\\..\\c\\ide\\vs2008\\lib_proj\\ta_func\\ta_func.vcproj"
-      #define FILE_VS2008_PROJ_TMP "..\\temp\\ta_func_vcproj08.tmp"
+      #define FILE_VS2008_PROJ     ta_fs_path(8, "..", "..", "c", "ide", "vs2008", "lib_proj", "ta_func", "ta_func.vcproj")
+      #define FILE_VS2008_PROJ_TMP ta_fs_path(3, "..", "temp", "ta_func_vcproj08.tmp")
       gOutVS2008ProjFile = fileOpen( FILE_VS2008_PROJ, NULL, FILE_READ );
       if( gOutVS2008ProjFile == NULL )   
       {
@@ -792,10 +801,12 @@ static int genCode(int argc, char* argv[])
       /* Section for code distributed with TA-Lib Pro only. */
 #endif
 
+   #endif
+
    /* Create Java template for Core.java */
-   #define FILE_CORE_JAVA     "..\\..\\java\\src\\com\\tictactec\\ta\\lib\\Core.java"
-   #define FILE_CORE_JAVA_TMP "..\\temp\\CoreJava.tmp"
-   #define FILE_CORE_JAVA_UNF "..\\temp\\CoreJavaUnformated.tmp"
+   #define FILE_CORE_JAVA     ta_fs_path(9, "..", "..", "java", "src", "com", "tictactec", "ta", "lib", "Core.java")
+   #define FILE_CORE_JAVA_TMP ta_fs_path(3, "..", "temp", "CoreJava.tmp")
+   #define FILE_CORE_JAVA_UNF ta_fs_path(3, "..", "temp", "CoreJavaUnformated.tmp")
    gOutCore_Java = fileOpen( FILE_CORE_JAVA, NULL, FILE_READ );
    if( gOutCore_Java == NULL )   
    {
@@ -815,12 +826,11 @@ static int genCode(int argc, char* argv[])
    }
    fileClose(gOutCore_Java);
    fileClose(tempFile);
-   #endif
 
    /* Create the .NET interface file template */
    #ifdef _MSC_VER
-   #define FILE_NET_HEADER     "..\\..\\dotnet\\src\\Core\\TA-Lib-Core.h"
-   #define FILE_NET_HEADER_TMP "..\\temp\\dotneth.tmp"
+   #define FILE_NET_HEADER     ta_fs_path(6, "..", "..", "dotnet", "src", "Core", "TA-Lib-Core.h")
+   #define FILE_NET_HEADER_TMP ta_fs_path(3, "..", "temp", "dotneth.tmp")
    gOutDotNet_H = fileOpen( FILE_NET_HEADER, NULL, FILE_READ );
    if( gOutDotNet_H == NULL )   
    {
@@ -850,8 +860,8 @@ static int genCode(int argc, char* argv[])
    }
 
    /* Create "ta_func.h" */
-   gOutFunc_H = fileOpen( "..\\include\\ta_func.h",
-                          "..\\src\\ta_abstract\\templates\\ta_func.h.template",
+   gOutFunc_H = fileOpen( ta_fs_path(3, "..", "include", "ta_func.h"),
+                          ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_func.h.template"),
                           FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
    if( gOutFunc_H == NULL )
@@ -860,7 +870,7 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
-   gOutFunc_XML = fileOpen( "..\\..\\ta_func_api.xml", NULL, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+   gOutFunc_XML = fileOpen( ta_fs_path(3, "..", "..", "ta_func_api.xml"), NULL, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
    if(gOutFunc_XML == NULL)
    {
 	   printf( "\nCannot access ta_func_api.xml" );
@@ -868,8 +878,8 @@ static int genCode(int argc, char* argv[])
 
 
    /* Create "ta_func.swg" */
-   gOutFunc_SWG = fileOpen( "..\\..\\swig\\src\\interface\\ta_func.swg",
-                          "..\\src\\ta_abstract\\templates\\ta_func.swg.template",
+   gOutFunc_SWG = fileOpen( ta_fs_path(6, "..", "..", "swig", "src", "interface", "ta_func.swg"),
+                            ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_func.swg.template"),
                           FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
    if( gOutFunc_SWG == NULL )
@@ -879,7 +889,7 @@ static int genCode(int argc, char* argv[])
    }
 
    /* Create the "ta_func_list.txt" */
-   gOutFuncList_TXT = fileOpen( "..\\..\\ta_func_list.txt",
+   gOutFuncList_TXT = fileOpen( ta_fs_path(3, "..", "..", "ta_func_list.txt"),
                                 NULL,
                                 FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
@@ -891,8 +901,8 @@ static int genCode(int argc, char* argv[])
 
 
    /* Create the "ta_frame.h" */
-   gOutFrame_H = fileOpen( "..\\src\\ta_abstract\\frames\\ta_frame.h",
-                           "..\\src\\ta_abstract\\templates\\ta_frame.h.template",
+   gOutFrame_H = fileOpen( ta_fs_path(5, "..", "src", "ta_abstract", "frames", "ta_frame.h"),
+                           ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_frame.h.template"),
                            FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
    if( gOutFrame_H == NULL )
@@ -902,8 +912,8 @@ static int genCode(int argc, char* argv[])
    }
 
    /* Create the "ta_frame.c" */
-   gOutFrame_C = fileOpen( "..\\src\\ta_abstract\\frames\\ta_frame.c",
-                           "..\\src\\ta_abstract\\templates\\ta_frame.c.template",
+   gOutFrame_C = fileOpen( ta_fs_path(5, "..", "src", "ta_abstract", "frames", "ta_frame.c"),
+                           ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_frame.c.template"),
                            FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
    if( gOutFrame_C == NULL )
@@ -913,8 +923,8 @@ static int genCode(int argc, char* argv[])
    }
 
    /* Create the "Makefile.am" */
-   gOutMakefile_AM = fileOpen( "..\\src\\ta_func\\Makefile.am",
-                               "..\\src\\ta_abstract\\templates\\Makefile.am.template",
+   gOutMakefile_AM = fileOpen( ta_fs_path(4, "..", "src", "ta_func", "Makefile.am"),
+                               ta_fs_path(5, "..", "src", "ta_abstract", "templates", "Makefile.am.template"),
                                FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
    if( gOutMakefile_AM == NULL )
@@ -923,26 +933,26 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
+      /* Create "java_defs.h" */
+      gOutJavaDefs_H = fileOpen( ta_fs_path(4, "..", "src", "ta_abstract", "ta_java_defs.h"),
+                             ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_java_defs.h.template"),
+                             FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+                              
 
-   #ifdef _MSC_VER
-      /* Create "excel_glue.c" */
-      gOutExcelGlue_C = fileOpen( "..\\src\\ta_abstract\\excel_glue.c",
-                              "..\\src\\ta_abstract\\templates\\excel_glue.c.template",
-                              FILE_WRITE|WRITE_ON_CHANGE_ONLY );
-
-      if( gOutExcelGlue_C == NULL )
+      if( gOutJavaDefs_H == NULL )
       {
          printf( "\nCannot access [%s]\n", gToOpen );
          return -1;
       }
 
-      /* Create "java_defs.h" */
-      gOutJavaDefs_H = fileOpen( "..\\src\\ta_abstract\\ta_java_defs.h",
-                             "..\\src\\ta_abstract\\templates\\ta_java_defs.h.template",
-                             FILE_WRITE|WRITE_ON_CHANGE_ONLY );
-                              
 
-      if( gOutJavaDefs_H == NULL )
+   #ifdef _MSC_VER
+      /* Create "excel_glue.c" */
+      gOutExcelGlue_C = fileOpen( ta_fs_path(4, "..", "src", "ta_abstract", "excel_glue.c"),
+                              ta_fs_path(5, "..", "src", "ta_abstract", "templates", "excel_glue.c.template"),
+                              FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+
+      if( gOutExcelGlue_C == NULL )
       {
          printf( "\nCannot access [%s]\n", gToOpen );
          return -1;
@@ -985,9 +995,11 @@ static int genCode(int argc, char* argv[])
       /* Section for code distributed with TA-Lib Pro only. */
 #endif
 
+   #endif
+
       /* Create "CoreAnnotated.java" */
-      gOutFunc_Annotation = fileOpen( "..\\..\\java\\src\\com\\tictactec\\ta\\lib\\CoreAnnotated.java",
-                                      "..\\src\\ta_abstract\\templates\\CoreAnnotated.java.template", 
+      gOutFunc_Annotation = fileOpen( ta_fs_path(9, "..", "..", "java", "src", "com", "tictactec", "ta", "lib", "CoreAnnotated.java"),
+                                      ta_fs_path(5, "..", "src", "ta_abstract", "templates", "CoreAnnotated.java.template"), 
                                       FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
       if(gOutFunc_Annotation == NULL)
@@ -995,9 +1007,6 @@ static int genCode(int argc, char* argv[])
 	      printf( "\nCannot access CoreAnnotated.java" );
       }
 
-   #endif
-
-   #ifdef _MSC_VER
    /* Re-open the Core.java template. */
    gOutCore_Java = fileOpen( FILE_CORE_JAVA_UNF, FILE_CORE_JAVA_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
    if( gOutCore_Java == NULL )
@@ -1005,7 +1014,6 @@ static int genCode(int argc, char* argv[])
       printf( "Cannot update [%s]\n", FILE_CORE_JAVA_UNF );
       return -1;
    }
-   #endif
 
    /* Re-open the .NET interface template. */
    #ifdef _MSC_VER
@@ -1046,18 +1054,18 @@ static int genCode(int argc, char* argv[])
    fileClose( gOutFrame_C );
    fileClose( gOutFunc_XML );
    fileClose( gOutMakefile_AM );
+   fileClose( gOutCore_Java );
+   fileClose( gOutJavaDefs_H );
+   fileClose( gOutFunc_Annotation );
+   fileDelete( FILE_CORE_JAVA_TMP );
 
    #ifdef _MSC_VER
       fileClose( gOutDotNet_H );
-      fileClose( gOutCore_Java );
       fileClose( gOutVS2005ProjFile );
       fileClose( gOutVS2008ProjFile );
       fileClose( gOutProjFile );
       fileClose( gOutMSVCProjFile );
       fileClose( gOutExcelGlue_C );
-      fileClose( gOutJavaDefs_H );
-      fileClose( gOutFunc_Annotation );
-      fileDelete( FILE_CORE_JAVA_TMP );
 
 #ifdef TA_LIB_PRO
       /* Section for code distributed with TA-Lib Pro only. */
@@ -1073,8 +1081,8 @@ static int genCode(int argc, char* argv[])
 
    /* Create the "ta_group_idx.c" file. */
    genPrefix = 1;
-   gOutGroupIdx_C = fileOpen( "..\\src\\ta_abstract\\ta_group_idx.c",
-                              "..\\src\\ta_abstract\\templates\\ta_group_idx.c.template",
+   gOutGroupIdx_C = fileOpen( ta_fs_path(4, "..", "src", "ta_abstract", "ta_group_idx.c"),
+                              ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_group_idx.c.template"),
                               FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
    if( gOutGroupIdx_C == NULL )
@@ -1119,15 +1127,18 @@ static int genCode(int argc, char* argv[])
    /* Run Java Post-Processing.   
     * On Success, the Java program create a file named "java_success". 
     */
-   #ifndef _MSC_VER   
-      printf( "\nWarning: Java code update supported only for MSVC compiler for now.\n" );
-   #else
       printf( "\nPost-Processing Java Code\n" );
-      #define JAVA_SUCCESS_FILE     "..\\temp\\java_success"
-      #define JAVA_PRETTY_TEMP_FILE "..\\temp\\CoreJavaPretty.tmp"
-      fileDelete( JAVA_SUCCESS_FILE );      
-      system( "javac -cp . -d . \"..\\src\\tools\\gen_code\\java\\PrettyCode.java" );
-      system( "javac -cp . -d . \"..\\src\\tools\\gen_code\\java\\Main.java" );
+      # define JAVA_SUCCESS_FILE     ta_fs_path(3, "..", "temp", "java_success")
+      #define JAVA_PRETTY_TEMP_FILE ta_fs_path(3, "..", "temp", "CoreJavaPretty.tmp")
+      fileDelete( JAVA_SUCCESS_FILE );
+
+#ifdef _MSC_VER 
+      system( "javac -cp . -d . \".." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "PrettyCode.java" );
+      system( "javac -cp . -d . \".." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "Main.java" );
+#else
+      system( "javac -cp . -d . .." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "PrettyCode.java" );
+      system( "javac -cp . -d . .." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "Main.java" );
+#endif
       system( "java -cp . Main" );
       tempFile = fileOpen(JAVA_SUCCESS_FILE,NULL,FILE_READ );
       fileDelete( FILE_CORE_JAVA_UNF );
@@ -1165,7 +1176,6 @@ static int genCode(int argc, char* argv[])
       }
       fileDelete( JAVA_SUCCESS_FILE );
       fileDelete( JAVA_PRETTY_TEMP_FILE );
-   #endif
 
    /* Remove temporary files. */
    #ifdef _MSC_VER   
@@ -1591,12 +1601,8 @@ static void doForEachFunctionPhase1( const TA_FuncInfo *funcInfo,
 {
 	(void)opaqueData;
 
-   #ifdef _MSC_VER
       /* Run the func file through the pre-processor to generate the Java code. */
       genJavaCodePhase1( funcInfo );      
-   #else
-	  (void)funcInfo;
-   #endif
 }
 
 static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
@@ -1654,12 +1660,12 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
    if( firstTime )
       fprintf( gOutMakefile_AM->file, "\tta_%s.c", funcInfo->name );
    else
-      fprintf( gOutMakefile_AM->file, " \\\n\tta_%s.c", funcInfo->name );
+      fprintf( gOutMakefile_AM->file, " " TA_FS_SLASH "\n\tta_%s.c", funcInfo->name );
    
    #ifdef _MSC_VER
       /* Add the entry in the .NET project file. */
       fprintf( gOutProjFile->file, "				<File\n" );
-      fprintf( gOutProjFile->file, "					RelativePath=\"..\\..\\..\\c\\src\\ta_func\\ta_%s.c\">\n", funcInfo->name );
+      fprintf( gOutProjFile->file, "					RelativePath=\".." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH "c" TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_%s.c\">\n", funcInfo->name );
       fprintf( gOutProjFile->file, "					<FileConfiguration\n" );
       fprintf( gOutProjFile->file, "						Name=\"Debug|Win32\">\n" );
       fprintf( gOutProjFile->file, "						<Tool\n" );
@@ -1697,7 +1703,7 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
       /* Add the entry in the MSVC project file. */
       fprintf( gOutMSVCProjFile->file, "# Begin Source File\n" );
       fprintf( gOutMSVCProjFile->file, "\n" );
-      fprintf( gOutMSVCProjFile->file, "SOURCE=..\\..\\..\\..\\src\\ta_func\\ta_%s.c\n", funcInfo->name );
+      fprintf( gOutMSVCProjFile->file, "SOURCE=.." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_%s.c\n", funcInfo->name );
       fprintf( gOutMSVCProjFile->file, "# End Source File\n" );
 
       /* Add the entry in the VS2005 project file. */
@@ -1713,10 +1719,12 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
 
       /* Generate the excel glue code */
       printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
+	#endif
 
       /* Generate CoreAnnotated */
       printJavaFunctionAnnotation( funcInfo );
 
+   #ifdef _MSC_VER
       /* Generate the functions declaration for the .NET interface. */
       printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0 );
 
@@ -1754,10 +1762,8 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
 
    doFuncFile( funcInfo );
 
-   #ifdef _MSC_VER
       /* Run the func file through the pre-processor to generate the Java code. */
       genJavaCodePhase2( funcInfo );   
-   #endif
 
    firstTime = 0;
 }
@@ -2885,13 +2891,13 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    FILE *logicTmp;
    char localBuf1[500];
 
-   #define TEMPLATE_PASS1   "..\\temp\\pass1.tmp"
-   #define TEMPLATE_PASS2   "..\\temp\\pass2.tmp"
-   #define TEMPLATE_DEFAULT "..\\src\\ta_abstract\\templates\\ta_x.c.template"
-   #define LOGIC_TEMP       "..\\temp\\logic.tmp"
+   #define TEMPLATE_PASS1   ".." TA_FS_SLASH "temp" TA_FS_SLASH "pass1.tmp"
+   #define TEMPLATE_PASS2   ".." TA_FS_SLASH "temp" TA_FS_SLASH "pass2.tmp"
+   #define TEMPLATE_DEFAULT ".." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract" TA_FS_SLASH "templates" TA_FS_SLASH "ta_x.c.template"
+   #define LOGIC_TEMP       ".." TA_FS_SLASH "temp" TA_FS_SLASH "logic.tmp"
 
    /* Check if the file already exist. */
-   sprintf( localBuf1, "..\\src\\ta_func\\ta_%s.c", funcInfo->name );
+   sprintf( localBuf1, ".." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_%s.c", funcInfo->name );
 
    gOutFunc_C = fileOpen( localBuf1, NULL, FILE_READ);
    if( gOutFunc_C == NULL )
@@ -3024,8 +3030,8 @@ static void doDefsFile( void )
    FileHandle *tempFile;
    FILE *out;
    
-   #define FILE_TA_DEFS_H    "..\\include\\ta_defs.h"
-   #define FILE_TA_DEFS_TMP  "..\\temp\\ta_defs.tmp"
+   #define FILE_TA_DEFS_H    ".." TA_FS_SLASH "include" TA_FS_SLASH "ta_defs.h"
+   #define FILE_TA_DEFS_TMP  ".." TA_FS_SLASH "temp" TA_FS_SLASH "ta_defs.tmp"
 
    /* Check if the file already exist. If not, this is an error. */
    gOutDefs_H = fileOpen( FILE_TA_DEFS_H, NULL, FILE_READ );
@@ -3166,7 +3172,7 @@ static int createMSVCProjTemplate( FileHandle *in, FileHandle *out )
          /* Add the "non TA function" source files. */
          fprintf( outFile, "# Begin Source File\n");
          fprintf( outFile, "\n");
-         fprintf( outFile, "SOURCE=..\\..\\..\\..\\src\\ta_func\\ta_utility.c\n");
+         fprintf( outFile, "SOURCE=.." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_utility.c\n");
          fprintf( outFile, "# End Source File\n");
          fprintf( outFile, "# End Group\n");
          break;
@@ -3252,7 +3258,7 @@ static void printVS2005FileNode( FILE *out, const char *name )
 {
    // This function works also for VS2008
    fprintf( out, "				<File\n" );
-   fprintf( out, "					RelativePath=\"..\\..\\..\\..\\src\\ta_func\\ta_%s.c\"\n", name );
+   fprintf( out, "					RelativePath=\".." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_%s.c\"\n", name );
    fprintf( out, "					>\n" );
 /*
    fprintf( out, "					<FileConfiguration\n" );
@@ -3434,10 +3440,11 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "#elif defined( _JAVA )\n" );
 
    /* Handle special case to avoid duplicate definition of min,max */
-   if( strcmp( funcInfo->camelCaseName, "Min" ) == 0 )
+   if( strcmp( funcInfo->camelCaseName, "Min" ) == 0 ) {
       print( out, "#undef min\n" );
-   else if( strcmp( funcInfo->camelCaseName, "Max" ) == 0 )
+   } else if( strcmp( funcInfo->camelCaseName, "Max" ) == 0 ) {
       print( out, "#undef max\n" );
+   }
 
    printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 );
    print( out, "#else\n" );
@@ -3811,8 +3818,8 @@ static int gen_retcode( void )
    retValue = -1;
 
    /* Create "ta_retcode.c" */
-   gOutRetCode_C = fileOpen( "..\\src\\ta_common\\ta_retcode.c",
-                             "..\\src\\ta_abstract\\templates\\ta_retcode.c.template",
+   gOutRetCode_C = fileOpen( ta_fs_path(4, "..", "src", "ta_common", "ta_retcode.c"),
+                             ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_retcode.c.template"),
                              FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
    if( gOutRetCode_C == NULL )
@@ -3822,7 +3829,7 @@ static int gen_retcode( void )
    }
 
    /* Create "ta_retcode.csv" */
-   gOutRetCode_CSV = fileOpen( "..\\src\\ta_common\\ta_retcode.csv",
+   gOutRetCode_CSV = fileOpen( ta_fs_path(4, "..", "src", "ta_common", "ta_retcode.csv"),
                                NULL,
                                FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
@@ -3833,7 +3840,7 @@ static int gen_retcode( void )
       return -1;
    }
 
-   inHdr = fileOpen( "..\\include\\ta_defs.h",
+   inHdr = fileOpen( ta_fs_path(3, "..", "include", "ta_defs.h"),
                      NULL,
                      FILE_READ );
    if( inHdr == NULL )
@@ -4327,7 +4334,6 @@ static void appendToFunc( FILE *out )
    fprintf( out, "TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType );\n" );
 }
 
-#ifdef _MSC_VER
 void genJavaCodePhase1( const TA_FuncInfo *funcInfo )
 {
    fprintf( gOutJavaDefs_H->file, "#define TA_%s_Lookback %c%sLookback\n", funcInfo->name, tolower(funcInfo->camelCaseName[0]), &funcInfo->camelCaseName[1] );
@@ -4344,12 +4350,12 @@ void genJavaCodePhase2( const TA_FuncInfo *funcInfo )
    if( firstTime == 1 )
    {
       /* Clean-up jus tin case. */
-      fileDelete( "..\\temp\\CoreJavaCode1.tmp" );
-      fileDelete( "..\\temp\\CoreJavaCode2.tmp" );
+      fileDelete( ta_fs_path(3, "..", "temp", "CoreJavaCode1.tmp") );
+      fileDelete( ta_fs_path(3, "..", "temp", "CoreJavaCode2.tmp") );
       firstTime = 0;
    }
 
-   init_gToOpen( "..\\temp\\CoreJavaCode1.tmp", NULL );
+   init_gToOpen(ta_fs_path(3, "..", "temp", "CoreJavaCode1.tmp"), NULL );
    logicTmp = fopen( gToOpen, "w" );
    if( !logicTmp )
    {
@@ -4359,14 +4365,24 @@ void genJavaCodePhase2( const TA_FuncInfo *funcInfo )
    fprintf( logicTmp, "#include \"ta_java_defs.h\"\n" );
    fclose(logicTmp);
    
-   sprintf( buffer, "..\\src\\tools\\gen_code\\mcpp -c -+ -z -P -I..\\src\\ta_common -I..\\src\\ta_abstract -I..\\include -D _JAVA ..\\src\\ta_func\\TA_%s.c >>..\\temp\\CoreJavaCode1.tmp ", funcInfo->name);
+#ifdef _MSC_VER
+   sprintf( buffer, TA_MCPP_EXE " -c -+ -z -P -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_common -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract -I.." TA_FS_SLASH "include -D _JAVA .." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "TA_%s.c >>.." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode1.tmp ", funcInfo->name);
    system( buffer );
 
-   sprintf( buffer, "..\\src\\tools\\gen_code\\mcpp -c -+ -z -P -I..\\src\\ta_common -I..\\src\\ta_abstract -I..\\include -D _JAVA ..\\temp\\CoreJavaCode1.tmp >..\\temp\\CoreJavaCode2.tmp " );
+   sprintf( buffer, TA_MCPP_EXE " -c -+ -z -P -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_common -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract -I.." TA_FS_SLASH "include -D _JAVA .." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode1.tmp >.." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode2.tmp " );
    system( buffer );
+#else
+   /* The options are the quite same, but on linux it still outputs the #include lines,
+	didn't find anything better that to cut them with the sed ... a hack for now. */
+   sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_common -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract -I.." TA_FS_SLASH "include -D _JAVA .." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_%s.c | sed '/^#include/d' >> .." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode1.tmp ", funcInfo->name);
+   system( buffer );
+
+   sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_common -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract -I.." TA_FS_SLASH "include -D _JAVA .." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode1.tmp | sed '/^#include/d' > .." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode2.tmp " );
+   system( buffer );
+#endif
 
    /* Append the output of the C pre-processor to the Core.Java file. */
-   init_gToOpen( "..\\temp\\CoreJavaCode2.tmp", NULL );
+   init_gToOpen( ta_fs_path(3, "..", "temp", "CoreJavaCode2.tmp"), NULL );
    logicTmp = fopen( gToOpen, "r" );
    if( !logicTmp )
    {
@@ -4391,10 +4407,9 @@ void genJavaCodePhase2( const TA_FuncInfo *funcInfo )
    /* Clean-up */
    fclose(logicTmp);
    print( gOutCore_Java->file, "\n" );   
-   fileDelete( "..\\temp\\CoreJavaCode1.tmp" );
-   fileDelete( "..\\temp\\CoreJavaCode2.tmp" );
+   fileDelete( ta_fs_path(3, "..", "temp", "CoreJavaCode1.tmp") );
+   fileDelete( ta_fs_path(3, "..", "temp", "CoreJavaCode2.tmp") );
 }
-#endif
 
 
 static int generateFuncAPI_C()
@@ -4403,9 +4418,9 @@ static int generateFuncAPI_C()
    FILE *out;
    FILE *in;
 
-   #define FILE_INPUT           "..\\..\\ta_func_api.xml"
-   #define FILE_OUTPUT          "..\\src\\ta_abstract\\ta_func_api.c"
-   #define FILE_OUTPUT_TEMPLATE "..\\src\\ta_abstract\\templates\\ta_func_api.c.template"
+   #define FILE_INPUT           ta_fs_path(3, "..", "..", "ta_func_api.xml")
+   #define FILE_OUTPUT          ta_fs_path(4, "..", "src", "ta_abstract", "ta_func_api.c")
+   #define FILE_OUTPUT_TEMPLATE ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_func_api.c.template")
 
    inFile = fileOpen( FILE_INPUT, NULL, FILE_READ );
    if( inFile == NULL )   
@@ -4454,7 +4469,6 @@ static void convertFileToCArray( FILE *in, FILE *out )
  
 }
 
-#ifdef _MSC_VER
 static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
 {
 	TA_RetCode retCode;
@@ -4815,4 +4829,3 @@ static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
       /* Section for code distributed with TA-Lib Pro only. */
 #endif
 
-#endif
