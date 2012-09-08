@@ -377,6 +377,33 @@ DEF_FUNCTION( AVGPRICE,                   /* name */
              );
 /* AVGPRICE END */
 
+/* AVGDEV BEGIN */
+static const TA_InputParameterInfo *TA_AVGDEV_Inputs[] = 
+{
+	&TA_DEF_UI_Input_Real,
+	NULL
+};
+
+static const TA_OutputParameterInfo *TA_AVGDEV_Outputs[] =
+{
+	&TA_DEF_UI_Output_Real,
+	NULL
+};
+
+static const TA_OptInputParameterInfo *TA_AVGDEV_OptInputs[] = 
+{
+	&TA_DEF_UI_TimePeriod_14,
+	NULL
+};
+
+DEF_FUNCTION( AVGDEV,                      /* name */
+				TA_GroupId_PriceTransform, /* groupId*/
+				"Average Deviation",       /* hint */
+				"AvgDev",                  /* CamelCase name*/
+				TA_FUNC_FLG_OVERLAP        /* flags */
+				);
+/* AVGDEV END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -397,6 +424,7 @@ const TA_FuncDef *TA_DEF_TableA[] =
    ADD_TO_TABLE(ATAN),
    ADD_TO_TABLE(ATR),
    ADD_TO_TABLE(AVGPRICE),
+   ADD_TO_TABLE(AVGDEV),
    NULL
 };
 

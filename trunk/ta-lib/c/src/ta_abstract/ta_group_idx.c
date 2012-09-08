@@ -62,6 +62,7 @@ extern const TA_FuncDef TA_DEF_ASIN;
 extern const TA_FuncDef TA_DEF_ATAN;
 extern const TA_FuncDef TA_DEF_ATR;
 extern const TA_FuncDef TA_DEF_AVGPRICE;
+extern const TA_FuncDef TA_DEF_AVGDEV;
 extern const TA_FuncDef TA_DEF_BBANDS;
 extern const TA_FuncDef TA_DEF_BETA;
 extern const TA_FuncDef TA_DEF_BOP;
@@ -401,6 +402,7 @@ NULL };
 
 const TA_FuncDef *TA_PerGroupFunc_9[] = {
 &TA_DEF_AVGPRICE,
+&TA_DEF_AVGDEV,
 &TA_DEF_MEDPRICE,
 &TA_DEF_TYPPRICE,
 &TA_DEF_WCLPRICE,

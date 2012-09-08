@@ -66,6 +66,8 @@
 #define TA_ATR atr
 #define TA_AVGPRICE_Lookback avgPriceLookback
 #define TA_AVGPRICE avgPrice
+#define TA_AVGDEV_Lookback avgDevLookback
+#define TA_AVGDEV avgDev
 #define TA_BBANDS_Lookback bbandsLookback
 #define TA_BBANDS bbands
 #define TA_BETA_Lookback betaLookback

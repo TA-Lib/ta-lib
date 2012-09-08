@@ -284,6 +284,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_AVGPRICE.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_AVGDEV.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_BBANDS.c
 # End Source File
 # Begin Source File
