@@ -404,6 +404,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_AVGDEV.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_BBANDS.c"
 					>
 				</File>

@@ -351,6 +351,25 @@
 /* Generated */    (void)params;
 /* Generated */    return TA_AVGPRICE_Lookback( );
 /* Generated */ }
+/* Generated */ TA_RetCode TA_AVGDEV_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNBElement )
+/* Generated */ {
+/* Generated */    return TA_AVGDEV(
+/* Generated */                startIdx,
+/* Generated */                endIdx,
+/* Generated */                params->in[0].data.inReal, /* inReal */
+/* Generated */                params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+/* Generated */                outBegIdx, 
+/* Generated */                outNBElement, 
+/* Generated */                params->out[0].data.outReal /*  outReal */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_AVGDEV_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    return TA_AVGDEV_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_BBANDS_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,

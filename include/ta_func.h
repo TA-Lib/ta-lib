@@ -517,6 +517,38 @@ int TA_AVGPRICE_Lookback( void );
 
 
 /*
+ * TA_AVGDEV - Average Deviation
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_AVGDEV( int    startIdx,
+                      int    endIdx,
+                      const double inReal[],
+                      int           optInTimePeriod, /* From 1 to 100000 */
+                      int          *outBegIdx,
+                      int          *outNBElement,
+                      double        outReal[] );
+
+TA_RetCode TA_S_AVGDEV( int    startIdx,
+                        int    endIdx,
+                        const float  inReal[],
+                        int           optInTimePeriod, /* From 1 to 100000 */
+                        int          *outBegIdx,
+                        int          *outNBElement,
+                        double        outReal[] );
+
+int TA_AVGDEV_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+
+
+/*
  * TA_BBANDS - Bollinger Bands
  * 
  * Input  = double
