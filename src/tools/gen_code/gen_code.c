@@ -41,6 +41,7 @@
  *  RM       Robert Meier  (talib@meierlim.com)
  *  CM       Craig Miller  (c-miller@users.sourceforge.net)
  *  RG       Richard Gomes
+ *  AB       Anatoliy Belsky (ab@php.net)
  *
  * Change history:
  *
@@ -72,6 +73,7 @@
  *  052508 MF    Add generation of VS2008 project file
  *  061608 MF    Add code to preserve proprietary code marker for TA-Lib pro.
  *  071808 MF    Add generation for Add-Ins express product (TA-Lib Pro only).
+ *  082712 AB    Implemented java code generation on linux.
  */
 
 /* Description:
