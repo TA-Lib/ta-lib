@@ -102,7 +102,7 @@
 
    /* insert lookback code here. */
 
-   return 0;
+   return optInTimePeriod-1;
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -156,6 +156,7 @@
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
    /* insert local variable here */
+	int today, outIdx;
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -187,11 +188,42 @@
 
    /* Insert TA function code here. */
 
+   today = startIdx + optInTimePeriod - 1;
 
+   /* Make sure there is still something to evaluate. */
+   if( today > endIdx )
+   {
+      VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+      VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+   }
 
-   /* Default return values */
-   VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-   VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+   /* Process the initial DM and TR */
+   VALUE_HANDLE_DEREF(outBegIdx) = today;
+
+   outIdx = 0;
+
+   do {
+	   	double todaySum, todayDev;
+		int i = today;
+
+		todaySum = 0.0;
+		for (i = 0; i < optInTimePeriod; i++) {
+			todaySum += inReal[i];
+		}
+
+		todayDev = 0.0;
+		for (i = 0; i < optInTimePeriod; i++) {
+			todayDev += std_fabs(inReal[i] - todaySum/optInTimePeriod);
+		}
+		outReal[outIdx] = todayDev/optInTimePeriod;
+
+		outIdx++;
+
+   } while (++today <= endIdx);
+
+   
+   VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }

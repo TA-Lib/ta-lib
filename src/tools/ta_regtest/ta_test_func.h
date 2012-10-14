@@ -22,6 +22,7 @@ ErrorNumber test_func_per     ( TA_History *history );
 ErrorNumber test_func_sar     ( TA_History *history );
 ErrorNumber test_func_1in_1out( TA_History *history );
 ErrorNumber test_func_1in_2out( TA_History *history );
+ErrorNumber test_func_avgdev  ( TA_History *history );
 
 
 #endif
