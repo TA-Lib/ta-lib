@@ -1,0 +1,139 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="cdd|Win32">
+      <Configuration>cdd</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="cdr|Win32">
+      <Configuration>cdr</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="cmd|Win32">
+      <Configuration>cmd</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="cmr|Win32">
+      <Configuration>cmr</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B7BA9CEF-8430-4BCB-8EEE-5C351800A021}</ProjectGuid>
+    <RootNamespace>ta_libc</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">.\..\..\..\..\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">.\..\..\..\..\temp\$(Configuration)\$(ProjectName)\</IntDir>
+    <NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">lib /OUT:$(OutDir)ta_libc_$(Configuration).lib $(OutDir)ta_abstract_$(Configuration).lib $(OutDir)ta_common_$(Configuration).lib $(OutDir)ta_func_$(Configuration).lib</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">lib /OUT:$(OutDir)ta_libc_$(Configuration).lib $(OutDir)ta_abstract_$(Configuration).lib $(OutDir)ta_common_$(Configuration).lib $(OutDir)ta_func_$(Configuration).lib</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">del $(OutDir)ta_libc_$(Configuration).lib</NMakeCleanCommandLine>
+    <NMakeOutput Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">$(OutDir)ta_libc_$(Configuration).lib</NMakeOutput>
+    <NMakePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeAssemblySearchPath Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">$(NMakeAssemblySearchPath)</NMakeAssemblySearchPath>
+    <NMakeForcedUsingAssemblies Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">$(NMakeForcedUsingAssemblies)</NMakeForcedUsingAssemblies>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">.\..\..\..\..\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">.\..\..\..\..\temp\$(Configuration)\$(ProjectName)\</IntDir>
+    <NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">lib /OUT:$(OutDir)ta_libc_$(Configuration).lib $(OutDir)ta_abstract_$(Configuration).lib $(OutDir)ta_common_$(Configuration).lib $(OutDir)ta_func_$(Configuration).lib</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">lib /OUT:$(OutDir)ta_libc_$(Configuration).lib $(OutDir)ta_abstract_$(Configuration).lib $(OutDir)ta_common_$(Configuration).lib $(OutDir)ta_func_$(Configuration).lib</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">del $(OutDir)ta_libc_$(Configuration).lib</NMakeCleanCommandLine>
+    <NMakeOutput Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">$(OutDir)ta_libc_$(Configuration).lib</NMakeOutput>
+    <NMakePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeAssemblySearchPath Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">$(NMakeAssemblySearchPath)</NMakeAssemblySearchPath>
+    <NMakeForcedUsingAssemblies Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">$(NMakeForcedUsingAssemblies)</NMakeForcedUsingAssemblies>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">.\..\..\..\..\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">.\..\..\..\..\temp\$(Configuration)\$(ProjectName)\</IntDir>
+    <NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">lib /OUT:$(OutDir)ta_libc_$(Configuration).lib $(OutDir)ta_abstract_$(Configuration).lib $(OutDir)ta_common_$(Configuration).lib $(OutDir)ta_func_$(Configuration).lib</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">lib /OUT:$(OutDir)ta_libc_$(Configuration).lib $(OutDir)ta_abstract_$(Configuration).lib $(OutDir)ta_common_$(Configuration).lib $(OutDir)ta_func_$(Configuration).lib</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">del $(OutDir)ta_libc_$(Configuration).lib</NMakeCleanCommandLine>
+    <NMakeOutput Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">$(OutDir)ta_libc_$(Configuration).lib</NMakeOutput>
+    <NMakePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeAssemblySearchPath Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">$(NMakeAssemblySearchPath)</NMakeAssemblySearchPath>
+    <NMakeForcedUsingAssemblies Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">$(NMakeForcedUsingAssemblies)</NMakeForcedUsingAssemblies>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">.\..\..\..\..\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">.\..\..\..\..\temp\$(Configuration)\$(ProjectName)\</IntDir>
+    <NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">lib /OUT:$(OutDir)ta_libc_$(Configuration).lib $(OutDir)ta_abstract_$(Configuration).lib $(OutDir)ta_common_$(Configuration).lib $(OutDir)ta_func_$(Configuration).lib</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">lib /OUT:$(OutDir)ta_libc_$(Configuration).lib $(OutDir)ta_abstract_$(Configuration).lib $(OutDir)ta_common_$(Configuration).lib $(OutDir)ta_func_$(Configuration).lib</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">del $(OutDir)ta_libc_$(Configuration).lib</NMakeCleanCommandLine>
+    <NMakeOutput Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">$(OutDir)ta_libc_$(Configuration).lib</NMakeOutput>
+    <NMakePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeAssemblySearchPath Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">$(NMakeAssemblySearchPath)</NMakeAssemblySearchPath>
+    <NMakeForcedUsingAssemblies Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">$(NMakeForcedUsingAssemblies)</NMakeForcedUsingAssemblies>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\include\ta_abstract.h" />
+    <ClInclude Include="..\..\..\..\include\ta_common.h" />
+    <ClInclude Include="..\..\..\..\include\ta_defs.h" />
+    <ClInclude Include="..\..\..\..\include\ta_func.h" />
+    <ClInclude Include="..\..\..\..\include\ta_libc.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ta_abstract\ta_abstract.vcxproj">
+      <Project>{fde2592b-df64-4308-b644-92e79e071986}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\ta_common\ta_common.vcxproj">
+      <Project>{e3ab3a1b-0d33-4a51-a4f7-69ee5c079115}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\ta_func\ta_func.vcxproj">
+      <Project>{b9dbb4a6-c675-4486-b916-0b0dcc049bb2}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

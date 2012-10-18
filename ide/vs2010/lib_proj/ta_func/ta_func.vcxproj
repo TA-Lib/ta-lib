@@ -1,0 +1,408 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="cdd|Win32">
+      <Configuration>cdd</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="cdr|Win32">
+      <Configuration>cdr</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="cmd|Win32">
+      <Configuration>cmd</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="cmr|Win32">
+      <Configuration>cmr</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B9DBB4A6-C675-4486-B916-0B0DCC049BB2}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">.\..\..\..\..\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">.\..\..\..\..\temp\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">.\..\..\..\..\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">.\..\..\..\..\temp\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">.\..\..\..\..\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">.\..\..\..\..\temp\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">.\..\..\..\..\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">.\..\..\..\..\temp\$(Configuration)\$(ProjectName)\</IntDir>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='cdd|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>.\..\..\..\..\src\ta_common;.\..\..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TA_DEBUG;_DEBUG;WIN32;_MBCS;_LIB;QT_THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</AssemblerListingLocation>
+      <ObjectFileName>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</XMLDocumentationFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <BrowseInformationFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</BrowseInformationFile>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>.\..\..\..\..\lib/$(ProjectName)_$(Configuration).lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Xdcmake>
+      <OutputFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/$(ProjectName)_$(Configuration).xml</OutputFile>
+    </Xdcmake>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/$(ProjectName)_$(Configuration).bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='cdr|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>.\..\..\..\..\src\ta_common;.\..\..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NO_DEBUG;NDEBUG;WIN32;_MBCS;_LIB;QT_THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</AssemblerListingLocation>
+      <ObjectFileName>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</XMLDocumentationFileName>
+      <BrowseInformationFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</BrowseInformationFile>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>.\..\..\..\..\lib/$(ProjectName)_$(Configuration).lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Xdcmake>
+      <OutputFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/$(ProjectName)_$(Configuration).xml</OutputFile>
+    </Xdcmake>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/$(ProjectName)_$(Configuration).bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='cmr|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>.\..\..\..\..\src\ta_common;.\..\..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NO_DEBUG;NDEBUG;WIN32;_MBCS;_LIB;QT_THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</AssemblerListingLocation>
+      <ObjectFileName>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</XMLDocumentationFileName>
+      <BrowseInformationFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</BrowseInformationFile>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>.\..\..\..\..\lib/$(ProjectName)_$(Configuration).lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Xdcmake>
+      <OutputFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/$(ProjectName)_$(Configuration).xml</OutputFile>
+    </Xdcmake>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/$(ProjectName)_$(Configuration).bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='cmd|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>.\..\..\..\..\src\ta_common;.\..\..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TA_DEBUG;_DEBUG;WIN32;_MBCS;_LIB;QT_THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</AssemblerListingLocation>
+      <ObjectFileName>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</XMLDocumentationFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <BrowseInformationFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/</BrowseInformationFile>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>.\..\..\..\..\lib/$(ProjectName)_$(Configuration).lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Xdcmake>
+      <OutputFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/$(ProjectName)_$(Configuration).xml</OutputFile>
+    </Xdcmake>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\..\..\..\..\temp\$(Configuration)\$(ProjectName)/$(ProjectName)_$(Configuration).bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ACCBANDS.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ACOS.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_AD.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ADD.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ADOSC.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ADX.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ADXR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_APO.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_AROON.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_AROONOSC.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ASIN.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ATAN.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ATR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_AVGDEV.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_AVGPRICE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_BBANDS.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_BETA.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_BOP.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CCI.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDL2CROWS.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDL3BLACKCROWS.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDL3INSIDE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDL3LINESTRIKE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDL3OUTSIDE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDL3STARSINSOUTH.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDL3WHITESOLDIERS.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLABANDONEDBABY.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLADVANCEBLOCK.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLBELTHOLD.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLBREAKAWAY.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLCLOSINGMARUBOZU.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLCONCEALBABYSWALL.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLCOUNTERATTACK.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLDARKCLOUDCOVER.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLDOJI.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLDOJISTAR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLDRAGONFLYDOJI.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLENGULFING.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLEVENINGDOJISTAR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLEVENINGSTAR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLGAPSIDESIDEWHITE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLGRAVESTONEDOJI.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLHAMMER.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLHANGINGMAN.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLHARAMI.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLHARAMICROSS.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLHIGHWAVE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLHIKKAKE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLHIKKAKEMOD.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLHOMINGPIGEON.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLIDENTICAL3CROWS.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLINNECK.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLINVERTEDHAMMER.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLKICKING.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLKICKINGBYLENGTH.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLLADDERBOTTOM.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLLONGLEGGEDDOJI.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLLONGLINE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLMARUBOZU.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLMATCHINGLOW.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLMATHOLD.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLMORNINGDOJISTAR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLMORNINGSTAR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLONNECK.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLPIERCING.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLRICKSHAWMAN.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLRISEFALL3METHODS.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLSEPARATINGLINES.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLSHOOTINGSTAR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLSHORTLINE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLSPINNINGTOP.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLSTALLEDPATTERN.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLSTICKSANDWICH.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLTAKURI.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLTASUKIGAP.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLTHRUSTING.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLTRISTAR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLUNIQUE3RIVER.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLUPSIDEGAP2CROWS.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CDLXSIDEGAP3METHODS.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CEIL.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CMO.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_CORREL.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_COS.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_COSH.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_DEMA.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_DIV.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_DX.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_EMA.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_EXP.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_FLOOR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_HT_DCPERIOD.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_HT_DCPHASE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_HT_PHASOR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_HT_SINE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_HT_TRENDLINE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_KAMA.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_LINEARREG.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_LINEARREG_ANGLE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_LINEARREG_INTERCEPT.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_LINEARREG_SLOPE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_LN.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_LOG10.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MA.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MACD.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MACDEXT.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MACDFIX.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MAMA.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MAVP.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MAX.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MAXINDEX.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MEDPRICE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MFI.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MIDPOINT.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MIDPRICE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MIN.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MININDEX.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MINMAX.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MINMAXINDEX.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MINUS_DI.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MINUS_DM.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MOM.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_MULT.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_NATR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_OBV.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_PLUS_DI.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_PLUS_DM.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_PPO.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ROC.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ROCP.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ROCR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ROCR100.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_RSI.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_SAR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_SAREXT.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_SIN.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_SINH.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_SMA.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_SQRT.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_STDDEV.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_STOCH.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_STOCHF.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_STOCHRSI.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_SUB.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_SUM.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_T3.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_TAN.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_TANH.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_TEMA.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_TRANGE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_TRIMA.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_TRIX.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_TSF.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_TYPPRICE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_ULTOSC.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_VAR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_WCLPRICE.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_WILLR.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_WMA.c" />
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_utility.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\include\ta_common.h" />
+    <ClInclude Include="..\..\..\..\include\ta_func.h" />
+    <ClInclude Include="..\..\..\..\src\ta_common\ta_global.h" />
+    <ClInclude Include="..\..\..\..\src\ta_common\ta_memory.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ta_common\ta_common.vcxproj">
+      <Project>{e3ab3a1b-0d33-4a51-a4f7-69ee5c079115}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
