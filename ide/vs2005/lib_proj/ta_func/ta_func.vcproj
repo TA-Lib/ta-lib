@@ -735,6 +735,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\..\src\ta_func\ta_IMI.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\..\src\ta_func\ta_KAMA.c"
 					>
 				</File>

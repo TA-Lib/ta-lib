@@ -3048,6 +3048,40 @@ int TA_HT_TRENDMODE_Lookback( void );
 
 
 /*
+ * TA_IMI - Intraday Momentum Index
+ * 
+ * Input  = double, double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Number of period
+ * 
+ * 
+ */
+TA_RetCode TA_IMI( int    startIdx,
+                   int    endIdx,
+                   const double inReal[],
+                   const double inReal[],
+                   int           optInTimePeriod, /* From 2 to 100000 */
+                   int          *outBegIdx,
+                   int          *outNBElement,
+                   double        outReal[] );
+
+TA_RetCode TA_S_IMI( int    startIdx,
+                     int    endIdx,
+                     const float  inReal[],
+                     const float  inReal[],
+                     int           optInTimePeriod, /* From 2 to 100000 */
+                     int          *outBegIdx,
+                     int          *outNBElement,
+                     double        outReal[] );
+
+int TA_IMI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+/*
  * TA_KAMA - Kaufman Adaptive Moving Average
  * 
  * Input  = double

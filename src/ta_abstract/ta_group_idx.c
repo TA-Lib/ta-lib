@@ -145,6 +145,7 @@ extern const TA_FuncDef TA_DEF_HT_PHASOR;
 extern const TA_FuncDef TA_DEF_HT_SINE;
 extern const TA_FuncDef TA_DEF_HT_TRENDLINE;
 extern const TA_FuncDef TA_DEF_HT_TRENDMODE;
+extern const TA_FuncDef TA_DEF_IMI;
 extern const TA_FuncDef TA_DEF_KAMA;
 extern const TA_FuncDef TA_DEF_LINEARREG;
 extern const TA_FuncDef TA_DEF_LINEARREG_ANGLE;
@@ -282,6 +283,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_CCI,
 &TA_DEF_CMO,
 &TA_DEF_DX,
+&TA_DEF_IMI,
 &TA_DEF_MACD,
 &TA_DEF_MACDEXT,
 &TA_DEF_MACDFIX,
