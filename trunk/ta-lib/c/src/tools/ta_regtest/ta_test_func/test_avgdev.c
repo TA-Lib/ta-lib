@@ -104,12 +104,8 @@ static TA_Test tableTest[] =
    /*      AVGDEV TEST      */
    /*************************/
    { 1, 0, 251, 5, TA_SUCCESS,     0, 1.0184,  4,  252-4 }, /* First Value */
-   /*{ 0, 0, 251, 5, TA_SUCCESS,     1, 0.4462,  4,  252-4 }, 
-   { 0, 0, 251, 5, TA_SUCCESS, 252-5, 0.7144,  4,  252-4 },*/ /* Last Value */
-
-   /*{ 1, 0, 251, 5, TA_SUCCESS,     0, 1.9285,  4,  252-4 },*/ /* First Value */
-   /*{ 0, 0, 251, 5, TA_SUCCESS,     1, 0.66937, 4,  252-4 }, 
-   { 0, 0, 251, 5, TA_SUCCESS, 252-5, 1.075,   4,  252-4 }*/ /* Last Value */
+   { 0, 0, 251, 5, TA_SUCCESS,     1, 0.3684,  4,  252-4 }, 
+   { 0, 0, 251, 5, TA_SUCCESS, 252-5, 0.5952,  4,  252-4 }, /* Last Value */
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
@@ -163,7 +159,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    *isOutputInteger = 0;
   
    testParam = (TA_RangeTestParam *)opaqueData;   
-
+   
    retCode = TA_AVGDEV(
                         startIdx,
                         endIdx,

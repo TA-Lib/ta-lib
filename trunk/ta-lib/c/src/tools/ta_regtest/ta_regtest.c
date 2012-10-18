@@ -267,9 +267,9 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_mom_roc,  "MOM,ROC,ROCP,ROCR,ROCR100" );
    DO_TEST( test_func_trange,   "TRANGE,ATR" );
    DO_TEST( test_func_stddev,   "STDDEV,VAR" );
+   DO_TEST( test_func_avgdev,   "AVGDEV" );
    DO_TEST( test_func_bbands,   "BBANDS" );
    DO_TEST( test_candlestick,   "All Candlesticks" );
-   DO_TEST( test_func_avgdev,   "AVGDEV" );
 
    return TA_TEST_PASS; /* All tests succeeded. */
 }
