@@ -3050,7 +3050,7 @@ int TA_HT_TRENDMODE_Lookback( void );
 /*
  * TA_IMI - Intraday Momentum Index
  * 
- * Input  = double, double
+ * Input  = Open, Close
  * Output = double
  * 
  * Optional Parameters
@@ -3062,8 +3062,8 @@ int TA_HT_TRENDMODE_Lookback( void );
  */
 TA_RetCode TA_IMI( int    startIdx,
                    int    endIdx,
-                   const double inReal[],
-                   const double inReal[],
+                   const double inOpen[],
+                   const double inClose[],
                    int           optInTimePeriod, /* From 2 to 100000 */
                    int          *outBegIdx,
                    int          *outNBElement,
@@ -3071,8 +3071,8 @@ TA_RetCode TA_IMI( int    startIdx,
 
 TA_RetCode TA_S_IMI( int    startIdx,
                      int    endIdx,
-                     const float  inReal[],
-                     const float  inReal[],
+                     const float  inOpen[],
+                     const float  inClose[],
                      int           optInTimePeriod, /* From 2 to 100000 */
                      int          *outBegIdx,
                      int          *outNBElement,

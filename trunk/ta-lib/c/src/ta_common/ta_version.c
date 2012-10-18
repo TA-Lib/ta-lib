@@ -39,16 +39,21 @@
  * Should be modified only by TA-Lib.org
  */
 #define MAJOR "0"
-#define MINOR "5"
+#define MINOR "6"
 #define BUILD "0"
+#define EXTRA "dev"
 
 /* Nothing to modify below this line. */
 
-#define TA_VERSION_STRING(maj,min,build,date,time) maj"."min"."build" ("date" "time")"
+#define TA_VERSION_DT "(" __DATE__ " " __TIME__ ")"
 
 const char  *TA_GetVersionString( void )
 {
-    return TA_VERSION_STRING(MAJOR,MINOR,BUILD,__DATE__,__TIME__);
+	if (sizeof(EXTRA) > 0) {
+		return MAJOR "." MINOR "." BUILD "-" EXTRA " " TA_VERSION_DT;
+	} else {
+		return MAJOR "." MINOR "." BUILD " " TA_VERSION_DT;
+	}
 }
 
 const char *TA_GetVersionMajor( void )
@@ -64,6 +69,11 @@ const char *TA_GetVersionMinor( void )
 const char *TA_GetVersionBuild( void )
 {
    return BUILD;
+}
+
+const char *TA_GetVersionExtra( void )
+{
+   return EXTRA;
 }
 
 const char *TA_GetVersionDate( void )
