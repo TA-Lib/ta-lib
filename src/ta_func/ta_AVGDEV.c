@@ -273,6 +273,7 @@
 /* Generated */                         double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
+/* Generated */ 	int today, outIdx, lookback;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -283,16 +284,42 @@
 /* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
-/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
-/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+/* Generated */ 	lookback = optInTimePeriod - 1;
+/* Generated */ 	if (startIdx < lookback) {
+/* Generated */ 		startIdx = lookback;
+/* Generated */ 	}
+/* Generated */ 	today = startIdx;
+/* Generated */ 	if( today > endIdx ) {
+/* Generated */ 	    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */ 		VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+/* Generated */ 		return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+/* Generated */ 	}
+/* Generated */ 	VALUE_HANDLE_DEREF(outBegIdx) = today;
+/* Generated */ 	outIdx = 0;
+/* Generated */ 	while (today <= endIdx) {
+/* Generated */ 	   	double todaySum, todayDev;
+/* Generated */ 		int i;
+/* Generated */ 		todaySum = 0.0;
+/* Generated */ 		for (i = 0; i < optInTimePeriod; i++) {
+/* Generated */ 			todaySum += inReal[today-i];
+/* Generated */ 		}
+/* Generated */ 		todayDev = 0.0;
+/* Generated */ 		for (i = 0; i < optInTimePeriod; i++) {
+/* Generated */ 			todayDev += std_fabs(inReal[today-i] - todaySum/optInTimePeriod);
+/* Generated */ 		}
+/* Generated */ 		outReal[outIdx] = todayDev/optInTimePeriod;
+/* Generated */ 		outIdx++;
+/* Generated */ 		today++;
+/* Generated */ 	}
+/* Generated */ 	VALUE_HANDLE_DEREF(outNBElement) = outIdx;
+/* Generated */ 	return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
