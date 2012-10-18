@@ -51,8 +51,7 @@
 /* IMI BEGIN */
 static const TA_InputParameterInfo    *TA_IMI_Inputs[]    =
 {
-  &TA_DEF_UI_Input_Real,
-  &TA_DEF_UI_Input_Real,
+  &TA_DEF_UI_Input_Price_OC,
   NULL
 };
 

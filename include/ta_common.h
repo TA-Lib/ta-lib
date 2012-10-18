@@ -76,6 +76,7 @@ const char *TA_GetVersionString( void );
 const char *TA_GetVersionMajor ( void );
 const char *TA_GetVersionMinor ( void );
 const char *TA_GetVersionBuild ( void );
+const char *TA_GetVersionExtra ( void );
 const char *TA_GetVersionDate  ( void );
 const char *TA_GetVersionTime  ( void );
 

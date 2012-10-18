@@ -2140,8 +2140,8 @@
 /* Generated */    return TA_IMI(
 /* Generated */             startIdx,
 /* Generated */             endIdx,
-/* Generated */             params->in[0].data.inReal, /* inReal */
-/* Generated */             params->in[1].data.inReal, /* inReal */
+/* Generated */             params->in[0].data.inPrice.open, /* inOpen */
+/* Generated */             params->in[0].data.inPrice.close, /* inClose */
 /* Generated */             params->optIn[0].data.optInInteger, /* optInTimePeriod*/
 /* Generated */             outBegIdx, 
 /* Generated */             outNBElement, 

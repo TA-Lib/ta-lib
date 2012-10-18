@@ -91,6 +91,7 @@ extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_HLCV;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_OHLC;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_HLC;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_HL;
+extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_OC;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_CV;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_V;
 extern const TA_InputParameterInfo TA_DEF_UI_Input_Periods;

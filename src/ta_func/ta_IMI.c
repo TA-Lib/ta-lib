@@ -35,13 +35,13 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
- *  MF       Mario Fortier (Replace when you are the original author)
+ *  AB       Anatoliy Belsky
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  XXXXXX MF     Initial Version
+ *  181012 AB    Initial Version
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -109,7 +109,7 @@
 /*
  * TA_IMI - Intraday Momentum Index
  * 
- * Input  = double, double
+ * Input  = Open, Close
  * Output = double
  * 
  * Optional Parameters
@@ -123,8 +123,8 @@
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */ enum class Core::RetCode Core::Imi( int    startIdx,
 /* Generated */                                     int    endIdx,
-/* Generated */                                     SubArray<double>^ inReal,
-/* Generated */                                     SubArray<double>^ inReal,
+/* Generated */                                     SubArray<double>^ inOpen,
+/* Generated */                                     SubArray<double>^ inClose,
 /* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                     [Out]int%    outBegIdx,
 /* Generated */                                     [Out]int%    outNBElement,
@@ -132,8 +132,8 @@
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Imi( int    startIdx,
 /* Generated */                                     int    endIdx,
-/* Generated */                                     cli::array<double>^ inReal,
-/* Generated */                                     cli::array<double>^ inReal,
+/* Generated */                                     cli::array<double>^ inOpen,
+/* Generated */                                     cli::array<double>^ inClose,
 /* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                     [Out]int%    outBegIdx,
 /* Generated */                                     [Out]int%    outNBElement,
@@ -141,8 +141,8 @@
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode imi( int    startIdx,
 /* Generated */                     int    endIdx,
-/* Generated */                     double       inReal[],
-/* Generated */                     double       inReal[],
+/* Generated */                     double       inOpen[],
+/* Generated */                     double       inClose[],
 /* Generated */                     int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                     MInteger     outBegIdx,
 /* Generated */                     MInteger     outNBElement,
@@ -150,8 +150,8 @@
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_IMI( int    startIdx,
 /* Generated */                    int    endIdx,
-/* Generated */                    const double inReal[],
-/* Generated */                    const double inReal[],
+/* Generated */                    const double inOpen[],
+/* Generated */                    const double inClose[],
 /* Generated */                    int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                    int          *outBegIdx,
 /* Generated */                    int          *outNBElement,
@@ -172,8 +172,10 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
 /* Generated */    #if !defined(_JAVA)
-/* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
+/* Generated */    /* Verify required price component. */
+/* Generated */    if(!inOpen||!inClose)
+/* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
+/* Generated */ 
 /* Generated */    #endif /* !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -212,8 +214,8 @@
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */ enum class Core::RetCode Core::Imi( int    startIdx,
 /* Generated */                                     int    endIdx,
-/* Generated */                                     SubArray<float>^ inReal,
-/* Generated */                                     SubArray<float>^ inReal,
+/* Generated */                                     SubArray<float>^ inOpen,
+/* Generated */                                     SubArray<float>^ inClose,
 /* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                     [Out]int%    outBegIdx,
 /* Generated */                                     [Out]int%    outNBElement,
@@ -221,8 +223,8 @@
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::Imi( int    startIdx,
 /* Generated */                                     int    endIdx,
-/* Generated */                                     cli::array<float>^ inReal,
-/* Generated */                                     cli::array<float>^ inReal,
+/* Generated */                                     cli::array<float>^ inOpen,
+/* Generated */                                     cli::array<float>^ inClose,
 /* Generated */                                     int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                     [Out]int%    outBegIdx,
 /* Generated */                                     [Out]int%    outNBElement,
@@ -230,8 +232,8 @@
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public RetCode imi( int    startIdx,
 /* Generated */                     int    endIdx,
-/* Generated */                     float        inReal[],
-/* Generated */                     float        inReal[],
+/* Generated */                     float        inOpen[],
+/* Generated */                     float        inClose[],
 /* Generated */                     int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                     MInteger     outBegIdx,
 /* Generated */                     MInteger     outNBElement,
@@ -239,8 +241,8 @@
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_IMI( int    startIdx,
 /* Generated */                      int    endIdx,
-/* Generated */                      const float  inReal[],
-/* Generated */                      const float  inReal[],
+/* Generated */                      const float  inOpen[],
+/* Generated */                      const float  inClose[],
 /* Generated */                      int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                      int          *outBegIdx,
 /* Generated */                      int          *outNBElement,
@@ -253,8 +255,8 @@
 /* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
-/* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
-/* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
+/* Generated */     if(!inOpen||!inClose)
+/* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
