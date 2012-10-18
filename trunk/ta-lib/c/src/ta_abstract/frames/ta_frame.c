@@ -2131,6 +2131,26 @@
 /* Generated */    (void)params;
 /* Generated */    return TA_HT_TRENDMODE_Lookback( );
 /* Generated */ }
+/* Generated */ TA_RetCode TA_IMI_FramePP( const TA_ParamHolderPriv *params,
+/* Generated */                           int            startIdx,
+/* Generated */                           int            endIdx,
+/* Generated */                           int           *outBegIdx,
+/* Generated */                           int           *outNBElement )
+/* Generated */ {
+/* Generated */    return TA_IMI(
+/* Generated */             startIdx,
+/* Generated */             endIdx,
+/* Generated */             params->in[0].data.inReal, /* inReal */
+/* Generated */             params->in[1].data.inReal, /* inReal */
+/* Generated */             params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+/* Generated */             outBegIdx, 
+/* Generated */             outNBElement, 
+/* Generated */             params->out[0].data.outReal /*  outReal */ );
+/* Generated */ }
+/* Generated */ unsigned int TA_IMI_FramePPLB( const TA_ParamHolderPriv *params )
+/* Generated */ {
+/* Generated */    return TA_IMI_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+/* Generated */ }
 /* Generated */ TA_RetCode TA_KAMA_FramePP( const TA_ParamHolderPriv *params,
 /* Generated */                           int            startIdx,
 /* Generated */                           int            endIdx,

@@ -616,6 +616,10 @@ SOURCE=..\..\..\..\src\ta_func\ta_HT_TRENDMODE.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\ta_func\ta_IMI.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\ta_func\ta_KAMA.c
 # End Source File
 # Begin Source File

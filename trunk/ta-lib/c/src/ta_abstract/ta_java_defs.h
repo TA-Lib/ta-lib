@@ -232,6 +232,8 @@
 #define TA_HT_TRENDLINE htTrendline
 #define TA_HT_TRENDMODE_Lookback htTrendModeLookback
 #define TA_HT_TRENDMODE htTrendMode
+#define TA_IMI_Lookback imiLookback
+#define TA_IMI imi
 #define TA_KAMA_Lookback kamaLookback
 #define TA_KAMA kama
 #define TA_LINEARREG_Lookback linearRegLookback

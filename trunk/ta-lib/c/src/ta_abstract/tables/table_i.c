@@ -48,7 +48,34 @@
  *
  ****************************************************************************/
 
-/* None */
+/* IMI BEGIN */
+static const TA_InputParameterInfo    *TA_IMI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_IMI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_IMI_OptInputs[] =
+{
+  &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( IMI,                        /* name */
+              TA_GroupId_MomentumIndicators,  /* groupId */
+              "Intraday Momentum Index",  /* hint */
+              "Imi",                      /* CamelCase name */
+              TA_FUNC_FLG_UNST_PER        /* flags */
+             );
+
+/* IMI END */
 
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
@@ -56,6 +83,7 @@
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableI[] =
 {
+   ADD_TO_TABLE(IMI),
    NULL
 };
 

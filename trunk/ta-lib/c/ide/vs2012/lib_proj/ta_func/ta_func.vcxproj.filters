@@ -497,6 +497,9 @@
     <ClCompile Include="..\..\..\..\src\ta_func\ta_utility.c">
       <Filter>src\ta_func</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\src\ta_func\ta_IMI.c">
+      <Filter>src\ta_func</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\include\ta_common.h">
