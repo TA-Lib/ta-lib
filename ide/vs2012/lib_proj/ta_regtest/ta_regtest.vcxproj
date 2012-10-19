@@ -341,6 +341,7 @@ copy $(OutDir)$(ProjectName)_$(Configuration).exe $(OutDir)$(ProjectName)_vs2005
   <ItemGroup>
     <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_regtest.c" />
     <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_avgdev.c" />
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_imi.c" />
     <ClCompile Include="..\..\..\..\src\tools\ta_regtest\test_abstract.c" />
     <ClCompile Include="..\..\..\..\src\tools\ta_regtest\test_data.c" />
     <ClCompile Include="..\..\..\..\src\tools\ta_regtest\test_internals.c" />
@@ -365,6 +366,7 @@ copy $(OutDir)$(ProjectName)_$(Configuration).exe $(OutDir)$(ProjectName)_vs2005
     <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_stddev.c" />
     <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_stoch.c" />
     <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_trange.c" />
+    <ClCompile Include="test_imi.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\gen_code\gen_code.vcxproj">
