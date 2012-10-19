@@ -102,7 +102,7 @@
 
    /* insert lookback code here. */
 
-   return 0;
+   return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_IMI, Imi) - 1;
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -160,6 +160,7 @@
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
    /* insert local variable here */
+	int lookback, outIdx = 0;
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -194,9 +195,42 @@
 
    /* Insert TA function code here. */
 
-   /* Default return values */
-   VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-   VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+   lookback = LOOKBACK_CALL(IMI)( optInTimePeriod );
+
+   if(startIdx < lookback)
+      startIdx = lookback;
+
+   /* Make sure there is still something to evaluate. */
+   if( startIdx > endIdx ) {
+		VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+		VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+		return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+   }
+
+   VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
+
+   while (startIdx <= endIdx) {
+		double upsum = .0, downsum = .0;
+		int i;
+
+		for (i = startIdx - lookback; i <= startIdx; i++) {
+			double close = inClose[i];
+			double open = inOpen[i];
+
+			if (close > open) {
+				upsum += (close - open);
+			} else {
+				downsum += (open - close);
+			}
+
+			outReal[outIdx] = 100.0*(upsum/(upsum + downsum));
+		}
+
+		startIdx++;
+		outIdx++;
+   }
+
+   VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
