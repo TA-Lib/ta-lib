@@ -112,9 +112,6 @@
     <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_avgdev.c">
       <Filter>src\tools\ta_regtest\ta_test_func</Filter>
     </ClCompile>
-    <ClCompile Include="test_imi.c">
-      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_imi.c">
       <Filter>src\tools\ta_regtest\ta_test_func</Filter>
     </ClCompile>
