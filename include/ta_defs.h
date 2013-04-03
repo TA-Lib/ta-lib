@@ -133,6 +133,8 @@
   #define NAMESPACE(x) x::
   #define UNUSED_VARIABLE(x) (void)x
 
+  #define TA_LIB_API
+
 #elif defined( _JAVA )
   #define CMJ(c,managed,java) java
 
@@ -157,6 +159,8 @@
   #define CONSTANT_DOUBLE(x) final double x
   #define NAMESPACE(x) x.
   #define UNUSED_VARIABLE(x)
+
+  #define TA_LIB_API
 
 #else
 
@@ -183,6 +187,18 @@
   #define CONSTANT_DOUBLE(x) const double x
   #define NAMESPACE(x)
   #define UNUSED_VARIABLE(x) (void)x
+
+  #ifdef _WIN32
+    #ifdef TA_LIB_SHARED
+        #define TA_LIB_API __declspec(dllexport)
+    #else
+        #define TA_LIB_API
+    #endif
+  #elif defined(__GNUC__) && __GNUC__ >= 4
+    #define TA_LIB_API __attribute__ ((visibility("default")))
+  #else
+    #define TA_LIB_API
+  #endif
 #endif
 
 /* Abstraction of function calls within the library.
