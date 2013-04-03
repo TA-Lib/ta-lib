@@ -93,12 +93,12 @@
 /* Generated */                           int           optInSignalPeriod, /* From 1 to 100000 */
 /* Generated */                           MAType        optInSignalMAType ) /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_MACDEXT_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                        TA_MAType     optInFastMAType,
-/* Generated */                        int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                        TA_MAType     optInSlowMAType,
-/* Generated */                        int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                        TA_MAType     optInSignalMAType ) /* Generated */ 
+/* Generated */ TA_LIB_API int TA_MACDEXT_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                              TA_MAType     optInFastMAType,
+/* Generated */                                              int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                              TA_MAType     optInSlowMAType,
+/* Generated */                                              int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                              TA_MAType     optInSignalMAType ) /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -237,20 +237,20 @@
 /* Generated */                         double        outMACDSignal[],
 /* Generated */                         double        outMACDHist[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_MACDEXT( int    startIdx,
-/* Generated */                        int    endIdx,
-/* Generated */                        const double inReal[],
-/* Generated */                        int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                        TA_MAType     optInFastMAType,
-/* Generated */                        int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                        TA_MAType     optInSlowMAType,
-/* Generated */                        int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                        TA_MAType     optInSignalMAType,
-/* Generated */                        int          *outBegIdx,
-/* Generated */                        int          *outNBElement,
-/* Generated */                        double        outMACD[],
-/* Generated */                        double        outMACDSignal[],
-/* Generated */                        double        outMACDHist[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
+/* Generated */                                   int    endIdx,
+/* Generated */                                              const double inReal[],
+/* Generated */                                              int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                              TA_MAType     optInFastMAType,
+/* Generated */                                              int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                              TA_MAType     optInSlowMAType,
+/* Generated */                                              int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                              TA_MAType     optInSignalMAType,
+/* Generated */                                              int          *outBegIdx,
+/* Generated */                                              int          *outNBElement,
+/* Generated */                                              double        outMACD[],
+/* Generated */                                              double        outMACDSignal[],
+/* Generated */                                              double        outMACDHist[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

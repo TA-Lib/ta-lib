@@ -87,7 +87,7 @@
 /* Generated */ public int obvLookback(  )
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_OBV_Lookback( void )
+/* Generated */ TA_LIB_API int TA_OBV_Lookback( void )
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -138,13 +138,13 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_OBV( int    startIdx,
-/* Generated */                    int    endIdx,
-/* Generated */                    const double inReal[],
-/* Generated */                    const double inVolume[],
-/* Generated */                    int          *outBegIdx,
-/* Generated */                    int          *outNBElement,
-/* Generated */                    double        outReal[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_OBV( int    startIdx,
+/* Generated */                               int    endIdx,
+/* Generated */                                          const double inReal[],
+/* Generated */                                          const double inVolume[],
+/* Generated */                                          int          *outBegIdx,
+/* Generated */                                          int          *outNBElement,
+/* Generated */                                          double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

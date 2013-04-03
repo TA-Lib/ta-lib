@@ -91,11 +91,11 @@
 /* Generated */                         int           optInSlowD_Period, /* From 1 to 100000 */
 /* Generated */                         MAType        optInSlowD_MAType ) /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_STOCH_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
-/* Generated */                      int           optInSlowK_Period, /* From 1 to 100000 */
-/* Generated */                      TA_MAType     optInSlowK_MAType,
-/* Generated */                      int           optInSlowD_Period, /* From 1 to 100000 */
-/* Generated */                      TA_MAType     optInSlowD_MAType ) /* Generated */ 
+/* Generated */ TA_LIB_API int TA_STOCH_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                            int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                                            TA_MAType     optInSlowK_MAType,
+/* Generated */                                            int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                                            TA_MAType     optInSlowD_MAType ) /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -226,20 +226,20 @@
 /* Generated */                       double        outSlowK[],
 /* Generated */                       double        outSlowD[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_STOCH( int    startIdx,
-/* Generated */                      int    endIdx,
-/* Generated */                      const double inHigh[],
-/* Generated */                      const double inLow[],
-/* Generated */                      const double inClose[],
-/* Generated */                      int           optInFastK_Period, /* From 1 to 100000 */
-/* Generated */                      int           optInSlowK_Period, /* From 1 to 100000 */
-/* Generated */                      TA_MAType     optInSlowK_MAType,
-/* Generated */                      int           optInSlowD_Period, /* From 1 to 100000 */
-/* Generated */                      TA_MAType     optInSlowD_MAType,
-/* Generated */                      int          *outBegIdx,
-/* Generated */                      int          *outNBElement,
-/* Generated */                      double        outSlowK[],
-/* Generated */                      double        outSlowD[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
+/* Generated */                                 int    endIdx,
+/* Generated */                                            const double inHigh[],
+/* Generated */                                            const double inLow[],
+/* Generated */                                            const double inClose[],
+/* Generated */                                            int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                            int           optInSlowK_Period, /* From 1 to 100000 */
+/* Generated */                                            TA_MAType     optInSlowK_MAType,
+/* Generated */                                            int           optInSlowD_Period, /* From 1 to 100000 */
+/* Generated */                                            TA_MAType     optInSlowD_MAType,
+/* Generated */                                            int          *outBegIdx,
+/* Generated */                                            int          *outNBElement,
+/* Generated */                                            double        outSlowK[],
+/* Generated */                                            double        outSlowD[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

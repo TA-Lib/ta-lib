@@ -82,7 +82,7 @@
 /* Generated */ public int imiLookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_IMI_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
+/* Generated */ TA_LIB_API int TA_IMI_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -148,14 +148,14 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_IMI( int    startIdx,
-/* Generated */                    int    endIdx,
-/* Generated */                    const double inOpen[],
-/* Generated */                    const double inClose[],
-/* Generated */                    int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                    int          *outBegIdx,
-/* Generated */                    int          *outNBElement,
-/* Generated */                    double        outReal[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_IMI( int    startIdx,
+/* Generated */                               int    endIdx,
+/* Generated */                                          const double inOpen[],
+/* Generated */                                          const double inClose[],
+/* Generated */                                          int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                          int          *outBegIdx,
+/* Generated */                                          int          *outNBElement,
+/* Generated */                                          double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
@@ -283,6 +283,7 @@
 /* Generated */                      double        outReal[] )
 /* Generated */ #endif
 /* Generated */ {
+/* Generated */ 	int lookback, outIdx = 0;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -301,8 +302,32 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */    VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+/* Generated */    lookback = LOOKBACK_CALL(IMI)( optInTimePeriod );
+/* Generated */    if(startIdx < lookback)
+/* Generated */       startIdx = lookback;
+/* Generated */    if( startIdx > endIdx ) {
+/* Generated */ 		VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
+/* Generated */ 		VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
+/* Generated */ 		return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+/* Generated */    }
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
+/* Generated */    while (startIdx <= endIdx) {
+/* Generated */ 		double upsum = .0, downsum = .0;
+/* Generated */ 		int i;
+/* Generated */ 		for (i = startIdx - lookback; i <= startIdx; i++) {
+/* Generated */ 			double close = inClose[i];
+/* Generated */ 			double open = inOpen[i];
+/* Generated */ 			if (close > open) {
+/* Generated */ 				upsum += (close - open);
+/* Generated */ 			} else {
+/* Generated */ 				downsum += (open - close);
+/* Generated */ 			}
+/* Generated */ 			outReal[outIdx] = 100.0*(upsum/(upsum + downsum));
+/* Generated */ 		}
+/* Generated */ 		startIdx++;
+/* Generated */ 		outIdx++;
+/* Generated */    }
+/* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 

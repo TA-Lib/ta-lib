@@ -82,7 +82,7 @@
 /* Generated */ public int multLookback(  )
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_MULT_Lookback( void )
+/* Generated */ TA_LIB_API int TA_MULT_Lookback( void )
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -132,13 +132,13 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_MULT( int    startIdx,
-/* Generated */                     int    endIdx,
-/* Generated */                     const double inReal0[],
-/* Generated */                     const double inReal1[],
-/* Generated */                     int          *outBegIdx,
-/* Generated */                     int          *outNBElement,
-/* Generated */                     double        outReal[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_MULT( int    startIdx,
+/* Generated */                                int    endIdx,
+/* Generated */                                           const double inReal0[],
+/* Generated */                                           const double inReal1[],
+/* Generated */                                           int          *outBegIdx,
+/* Generated */                                           int          *outNBElement,
+/* Generated */                                           double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

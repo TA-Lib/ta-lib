@@ -88,8 +88,8 @@
 /* Generated */                        double        optInSlowLimit )  /* From 0.01 to 0.99 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
-/* Generated */                     double        optInSlowLimit )  /* From 0.01 to 0.99 */
+/* Generated */ TA_LIB_API int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                                           double        optInSlowLimit )  /* From 0.01 to 0.99 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -189,15 +189,15 @@
 /* Generated */                      double        outMAMA[],
 /* Generated */                      double        outFAMA[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_MAMA( int    startIdx,
-/* Generated */                     int    endIdx,
-/* Generated */                     const double inReal[],
-/* Generated */                     double        optInFastLimit, /* From 0.01 to 0.99 */
-/* Generated */                     double        optInSlowLimit, /* From 0.01 to 0.99 */
-/* Generated */                     int          *outBegIdx,
-/* Generated */                     int          *outNBElement,
-/* Generated */                     double        outMAMA[],
-/* Generated */                     double        outFAMA[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_MAMA( int    startIdx,
+/* Generated */                                int    endIdx,
+/* Generated */                                           const double inReal[],
+/* Generated */                                           double        optInFastLimit, /* From 0.01 to 0.99 */
+/* Generated */                                           double        optInSlowLimit, /* From 0.01 to 0.99 */
+/* Generated */                                           int          *outBegIdx,
+/* Generated */                                           int          *outNBElement,
+/* Generated */                                           double        outMAMA[],
+/* Generated */                                           double        outFAMA[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

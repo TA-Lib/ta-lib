@@ -91,10 +91,10 @@
 /* Generated */                          double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                          MAType        optInMAType ) /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                       double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       TA_MAType     optInMAType ) /* Generated */ 
+/* Generated */ TA_LIB_API int TA_BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                             double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             TA_MAType     optInMAType ) /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -200,18 +200,18 @@
 /* Generated */                        double        outRealMiddleBand[],
 /* Generated */                        double        outRealLowerBand[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_BBANDS( int    startIdx,
-/* Generated */                       int    endIdx,
-/* Generated */                       const double inReal[],
-/* Generated */                       int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                       double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       TA_MAType     optInMAType,
-/* Generated */                       int          *outBegIdx,
-/* Generated */                       int          *outNBElement,
-/* Generated */                       double        outRealUpperBand[],
-/* Generated */                       double        outRealMiddleBand[],
-/* Generated */                       double        outRealLowerBand[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
+/* Generated */                                  int    endIdx,
+/* Generated */                                             const double inReal[],
+/* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                             double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             TA_MAType     optInMAType,
+/* Generated */                                             int          *outBegIdx,
+/* Generated */                                             int          *outNBElement,
+/* Generated */                                             double        outRealUpperBand[],
+/* Generated */                                             double        outRealMiddleBand[],
+/* Generated */                                             double        outRealLowerBand[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

@@ -88,8 +88,8 @@
 /* Generated */                          double        optInNbDev )  /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                       double        optInNbDev )  /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */ TA_LIB_API int TA_STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                             double        optInNbDev )  /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -164,14 +164,14 @@
 /* Generated */                        MInteger     outNBElement,
 /* Generated */                        double        outReal[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_STDDEV( int    startIdx,
-/* Generated */                       int    endIdx,
-/* Generated */                       const double inReal[],
-/* Generated */                       int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                       double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       int          *outBegIdx,
-/* Generated */                       int          *outNBElement,
-/* Generated */                       double        outReal[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
+/* Generated */                                  int    endIdx,
+/* Generated */                                             const double inReal[],
+/* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                             double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             int          *outBegIdx,
+/* Generated */                                             int          *outNBElement,
+/* Generated */                                             double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

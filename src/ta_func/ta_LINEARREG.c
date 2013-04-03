@@ -84,7 +84,7 @@
 /* Generated */ public int linearRegLookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_LINEARREG_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
+/* Generated */ TA_LIB_API int TA_LINEARREG_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -146,13 +146,13 @@
 /* Generated */                           MInteger     outNBElement,
 /* Generated */                           double        outReal[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_LINEARREG( int    startIdx,
-/* Generated */                          int    endIdx,
-/* Generated */                          const double inReal[],
-/* Generated */                          int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                          int          *outBegIdx,
-/* Generated */                          int          *outNBElement,
-/* Generated */                          double        outReal[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_LINEARREG( int    startIdx,
+/* Generated */                                     int    endIdx,
+/* Generated */                                                const double inReal[],
+/* Generated */                                                int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                                int          *outBegIdx,
+/* Generated */                                                int          *outNBElement,
+/* Generated */                                                double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

@@ -85,7 +85,7 @@
 /* Generated */ public int macdFixLookback( int           optInSignalPeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_MACDFIX_Lookback( int           optInSignalPeriod )  /* From 1 to 100000 */
+/* Generated */ TA_LIB_API int TA_MACDFIX_Lookback( int           optInSignalPeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -160,15 +160,15 @@
 /* Generated */                         double        outMACDSignal[],
 /* Generated */                         double        outMACDHist[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_MACDFIX( int    startIdx,
-/* Generated */                        int    endIdx,
-/* Generated */                        const double inReal[],
-/* Generated */                        int           optInSignalPeriod, /* From 1 to 100000 */
-/* Generated */                        int          *outBegIdx,
-/* Generated */                        int          *outNBElement,
-/* Generated */                        double        outMACD[],
-/* Generated */                        double        outMACDSignal[],
-/* Generated */                        double        outMACDHist[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
+/* Generated */                                   int    endIdx,
+/* Generated */                                              const double inReal[],
+/* Generated */                                              int           optInSignalPeriod, /* From 1 to 100000 */
+/* Generated */                                              int          *outBegIdx,
+/* Generated */                                              int          *outNBElement,
+/* Generated */                                              double        outMACD[],
+/* Generated */                                              double        outMACDSignal[],
+/* Generated */                                              double        outMACDHist[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

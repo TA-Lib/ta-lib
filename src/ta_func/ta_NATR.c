@@ -82,7 +82,7 @@
 /* Generated */ public int natrLookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_NATR_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
+/* Generated */ TA_LIB_API int TA_NATR_Lookback( int           optInTimePeriod )  /* From 1 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -158,15 +158,15 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_NATR( int    startIdx,
-/* Generated */                     int    endIdx,
-/* Generated */                     const double inHigh[],
-/* Generated */                     const double inLow[],
-/* Generated */                     const double inClose[],
-/* Generated */                     int           optInTimePeriod, /* From 1 to 100000 */
-/* Generated */                     int          *outBegIdx,
-/* Generated */                     int          *outNBElement,
-/* Generated */                     double        outReal[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
+/* Generated */                                int    endIdx,
+/* Generated */                                           const double inHigh[],
+/* Generated */                                           const double inLow[],
+/* Generated */                                           const double inClose[],
+/* Generated */                                           int           optInTimePeriod, /* From 1 to 100000 */
+/* Generated */                                           int          *outBegIdx,
+/* Generated */                                           int          *outNBElement,
+/* Generated */                                           double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

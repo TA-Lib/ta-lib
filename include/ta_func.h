@@ -66,31 +66,31 @@ extern "C" {
  * 
  * 
  */
-TA_RetCode TA_ACCBANDS( int    startIdx,
-                        int    endIdx,
-                        const double inHigh[],
-                        const double inLow[],
-                        const double inClose[],
-                        int           optInTimePeriod, /* From 2 to 100000 */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outRealUpperBand[],
-                        double        outRealMiddleBand[],
-                        double        outRealLowerBand[] );
+TA_LIB_API TA_RetCode TA_ACCBANDS( int    startIdx,
+                                   int    endIdx,
+                                              const double inHigh[],
+                                              const double inLow[],
+                                              const double inClose[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outRealUpperBand[],
+                                              double        outRealMiddleBand[],
+                                              double        outRealLowerBand[] );
 
-TA_RetCode TA_S_ACCBANDS( int    startIdx,
-                          int    endIdx,
-                          const float  inHigh[],
-                          const float  inLow[],
-                          const float  inClose[],
-                          int           optInTimePeriod, /* From 2 to 100000 */
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          double        outRealUpperBand[],
-                          double        outRealMiddleBand[],
-                          double        outRealLowerBand[] );
+TA_LIB_API TA_RetCode TA_S_ACCBANDS( int    startIdx,
+                                     int    endIdx,
+                                                const float  inHigh[],
+                                                const float  inLow[],
+                                                const float  inClose[],
+                                                int           optInTimePeriod, /* From 2 to 100000 */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outRealUpperBand[],
+                                                double        outRealMiddleBand[],
+                                                double        outRealLowerBand[] );
 
-int TA_ACCBANDS_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_ACCBANDS_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -100,21 +100,21 @@ int TA_ACCBANDS_Lookback( int           optInTimePeriod );  /* From 2 to 100000 
  * Output = double
  * 
  */
-TA_RetCode TA_ACOS( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_ACOS( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_ACOS( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ACOS( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_ACOS_Lookback( void );
+TA_LIB_API int TA_ACOS_Lookback( void );
 
 
 /*
@@ -124,27 +124,27 @@ int TA_ACOS_Lookback( void );
  * Output = double
  * 
  */
-TA_RetCode TA_AD( int    startIdx,
-                  int    endIdx,
-                  const double inHigh[],
-                  const double inLow[],
-                  const double inClose[],
-                  const double inVolume[],
-                  int          *outBegIdx,
-                  int          *outNBElement,
-                  double        outReal[] );
+TA_LIB_API TA_RetCode TA_AD( int    startIdx,
+                             int    endIdx,
+                                        const double inHigh[],
+                                        const double inLow[],
+                                        const double inClose[],
+                                        const double inVolume[],
+                                        int          *outBegIdx,
+                                        int          *outNBElement,
+                                        double        outReal[] );
 
-TA_RetCode TA_S_AD( int    startIdx,
-                    int    endIdx,
-                    const float  inHigh[],
-                    const float  inLow[],
-                    const float  inClose[],
-                    const float  inVolume[],
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_AD( int    startIdx,
+                               int    endIdx,
+                                          const float  inHigh[],
+                                          const float  inLow[],
+                                          const float  inClose[],
+                                          const float  inVolume[],
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-int TA_AD_Lookback( void );
+TA_LIB_API int TA_AD_Lookback( void );
 
 
 /*
@@ -154,23 +154,23 @@ int TA_AD_Lookback( void );
  * Output = double
  * 
  */
-TA_RetCode TA_ADD( int    startIdx,
-                   int    endIdx,
-                   const double inReal0[],
-                   const double inReal1[],
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_ADD( int    startIdx,
+                              int    endIdx,
+                                         const double inReal0[],
+                                         const double inReal1[],
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_ADD( int    startIdx,
-                     int    endIdx,
-                     const float  inReal0[],
-                     const float  inReal1[],
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ADD( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal0[],
+                                           const float  inReal1[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_ADD_Lookback( void );
+TA_LIB_API int TA_ADD_Lookback( void );
 
 
 /*
@@ -189,32 +189,32 @@ int TA_ADD_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_ADOSC( int    startIdx,
-                     int    endIdx,
-                     const double inHigh[],
-                     const double inLow[],
-                     const double inClose[],
-                     const double inVolume[],
-                     int           optInFastPeriod, /* From 2 to 100000 */
-                     int           optInSlowPeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_ADOSC( int    startIdx,
+                                int    endIdx,
+                                           const double inHigh[],
+                                           const double inLow[],
+                                           const double inClose[],
+                                           const double inVolume[],
+                                           int           optInFastPeriod, /* From 2 to 100000 */
+                                           int           optInSlowPeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-TA_RetCode TA_S_ADOSC( int    startIdx,
-                       int    endIdx,
-                       const float  inHigh[],
-                       const float  inLow[],
-                       const float  inClose[],
-                       const float  inVolume[],
-                       int           optInFastPeriod, /* From 2 to 100000 */
-                       int           optInSlowPeriod, /* From 2 to 100000 */
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ADOSC( int    startIdx,
+                                  int    endIdx,
+                                             const float  inHigh[],
+                                             const float  inLow[],
+                                             const float  inClose[],
+                                             const float  inVolume[],
+                                             int           optInFastPeriod, /* From 2 to 100000 */
+                                             int           optInSlowPeriod, /* From 2 to 100000 */
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outReal[] );
 
-int TA_ADOSC_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
-                     int           optInSlowPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_ADOSC_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+                                           int           optInSlowPeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -230,27 +230,27 @@ int TA_ADOSC_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_ADX( int    startIdx,
-                   int    endIdx,
-                   const double inHigh[],
-                   const double inLow[],
-                   const double inClose[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_ADX( int    startIdx,
+                              int    endIdx,
+                                         const double inHigh[],
+                                         const double inLow[],
+                                         const double inClose[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_ADX( int    startIdx,
-                     int    endIdx,
-                     const float  inHigh[],
-                     const float  inLow[],
-                     const float  inClose[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ADX( int    startIdx,
+                                int    endIdx,
+                                           const float  inHigh[],
+                                           const float  inLow[],
+                                           const float  inClose[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_ADX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_ADX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -266,27 +266,27 @@ int TA_ADX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_ADXR( int    startIdx,
-                    int    endIdx,
-                    const double inHigh[],
-                    const double inLow[],
-                    const double inClose[],
-                    int           optInTimePeriod, /* From 2 to 100000 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_ADXR( int    startIdx,
+                               int    endIdx,
+                                          const double inHigh[],
+                                          const double inLow[],
+                                          const double inClose[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_ADXR( int    startIdx,
-                      int    endIdx,
-                      const float  inHigh[],
-                      const float  inLow[],
-                      const float  inClose[],
-                      int           optInTimePeriod, /* From 2 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ADXR( int    startIdx,
+                                 int    endIdx,
+                                            const float  inHigh[],
+                                            const float  inLow[],
+                                            const float  inClose[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_ADXR_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_ADXR_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -308,29 +308,29 @@ int TA_ADXR_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_APO( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInFastPeriod, /* From 2 to 100000 */
-                   int           optInSlowPeriod, /* From 2 to 100000 */
-                   TA_MAType     optInMAType,
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_APO( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInFastPeriod, /* From 2 to 100000 */
+                                         int           optInSlowPeriod, /* From 2 to 100000 */
+                                         TA_MAType     optInMAType,
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_APO( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInFastPeriod, /* From 2 to 100000 */
-                     int           optInSlowPeriod, /* From 2 to 100000 */
-                     TA_MAType     optInMAType,
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_APO( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInFastPeriod, /* From 2 to 100000 */
+                                           int           optInSlowPeriod, /* From 2 to 100000 */
+                                           TA_MAType     optInMAType,
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_APO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
-                   int           optInSlowPeriod, /* From 2 to 100000 */
-                   TA_MAType     optInMAType ); 
+TA_LIB_API int TA_APO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+                                         int           optInSlowPeriod, /* From 2 to 100000 */
+                                         TA_MAType     optInMAType ); 
 
 /*
  * TA_AROON - Aroon
@@ -345,27 +345,27 @@ int TA_APO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_AROON( int    startIdx,
-                     int    endIdx,
-                     const double inHigh[],
-                     const double inLow[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outAroonDown[],
-                     double        outAroonUp[] );
+TA_LIB_API TA_RetCode TA_AROON( int    startIdx,
+                                int    endIdx,
+                                           const double inHigh[],
+                                           const double inLow[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outAroonDown[],
+                                           double        outAroonUp[] );
 
-TA_RetCode TA_S_AROON( int    startIdx,
-                       int    endIdx,
-                       const float  inHigh[],
-                       const float  inLow[],
-                       int           optInTimePeriod, /* From 2 to 100000 */
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outAroonDown[],
-                       double        outAroonUp[] );
+TA_LIB_API TA_RetCode TA_S_AROON( int    startIdx,
+                                  int    endIdx,
+                                             const float  inHigh[],
+                                             const float  inLow[],
+                                             int           optInTimePeriod, /* From 2 to 100000 */
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outAroonDown[],
+                                             double        outAroonUp[] );
 
-int TA_AROON_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_AROON_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -381,25 +381,25 @@ int TA_AROON_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_AROONOSC( int    startIdx,
-                        int    endIdx,
-                        const double inHigh[],
-                        const double inLow[],
-                        int           optInTimePeriod, /* From 2 to 100000 */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_AROONOSC( int    startIdx,
+                                   int    endIdx,
+                                              const double inHigh[],
+                                              const double inLow[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-TA_RetCode TA_S_AROONOSC( int    startIdx,
-                          int    endIdx,
-                          const float  inHigh[],
-                          const float  inLow[],
-                          int           optInTimePeriod, /* From 2 to 100000 */
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_AROONOSC( int    startIdx,
+                                     int    endIdx,
+                                                const float  inHigh[],
+                                                const float  inLow[],
+                                                int           optInTimePeriod, /* From 2 to 100000 */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
 
-int TA_AROONOSC_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_AROONOSC_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -409,21 +409,21 @@ int TA_AROONOSC_Lookback( int           optInTimePeriod );  /* From 2 to 100000 
  * Output = double
  * 
  */
-TA_RetCode TA_ASIN( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_ASIN( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_ASIN( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ASIN( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_ASIN_Lookback( void );
+TA_LIB_API int TA_ASIN_Lookback( void );
 
 
 /*
@@ -433,21 +433,21 @@ int TA_ASIN_Lookback( void );
  * Output = double
  * 
  */
-TA_RetCode TA_ATAN( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_ATAN( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_ATAN( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ATAN( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_ATAN_Lookback( void );
+TA_LIB_API int TA_ATAN_Lookback( void );
 
 
 /*
@@ -463,27 +463,27 @@ int TA_ATAN_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_ATR( int    startIdx,
-                   int    endIdx,
-                   const double inHigh[],
-                   const double inLow[],
-                   const double inClose[],
-                   int           optInTimePeriod, /* From 1 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_ATR( int    startIdx,
+                              int    endIdx,
+                                         const double inHigh[],
+                                         const double inLow[],
+                                         const double inClose[],
+                                         int           optInTimePeriod, /* From 1 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_ATR( int    startIdx,
-                     int    endIdx,
-                     const float  inHigh[],
-                     const float  inLow[],
-                     const float  inClose[],
-                     int           optInTimePeriod, /* From 1 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ATR( int    startIdx,
+                                int    endIdx,
+                                           const float  inHigh[],
+                                           const float  inLow[],
+                                           const float  inClose[],
+                                           int           optInTimePeriod, /* From 1 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_ATR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ATR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -493,27 +493,27 @@ int TA_ATR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_AVGPRICE( int    startIdx,
-                        int    endIdx,
-                        const double inOpen[],
-                        const double inHigh[],
-                        const double inLow[],
-                        const double inClose[],
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_AVGPRICE( int    startIdx,
+                                   int    endIdx,
+                                              const double inOpen[],
+                                              const double inHigh[],
+                                              const double inLow[],
+                                              const double inClose[],
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-TA_RetCode TA_S_AVGPRICE( int    startIdx,
-                          int    endIdx,
-                          const float  inOpen[],
-                          const float  inHigh[],
-                          const float  inLow[],
-                          const float  inClose[],
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_AVGPRICE( int    startIdx,
+                                     int    endIdx,
+                                                const float  inOpen[],
+                                                const float  inHigh[],
+                                                const float  inLow[],
+                                                const float  inClose[],
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
 
-int TA_AVGPRICE_Lookback( void );
+TA_LIB_API int TA_AVGPRICE_Lookback( void );
 
 
 /*
@@ -529,23 +529,23 @@ int TA_AVGPRICE_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_AVGDEV( int    startIdx,
-                      int    endIdx,
-                      const double inReal[],
-                      int           optInTimePeriod, /* From 2 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_AVGDEV( int    startIdx,
+                                 int    endIdx,
+                                            const double inReal[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-TA_RetCode TA_S_AVGDEV( int    startIdx,
-                        int    endIdx,
-                        const float  inReal[],
-                        int           optInTimePeriod, /* From 2 to 100000 */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_AVGDEV( int    startIdx,
+                                   int    endIdx,
+                                              const float  inReal[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-int TA_AVGDEV_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_AVGDEV_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -570,36 +570,36 @@ int TA_AVGDEV_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_BBANDS( int    startIdx,
-                      int    endIdx,
-                      const double inReal[],
-                      int           optInTimePeriod, /* From 2 to 100000 */
-                      double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-                      double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-                      TA_MAType     optInMAType,
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outRealUpperBand[],
-                      double        outRealMiddleBand[],
-                      double        outRealLowerBand[] );
+TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
+                                 int    endIdx,
+                                            const double inReal[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                            double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                            TA_MAType     optInMAType,
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outRealUpperBand[],
+                                            double        outRealMiddleBand[],
+                                            double        outRealLowerBand[] );
 
-TA_RetCode TA_S_BBANDS( int    startIdx,
-                        int    endIdx,
-                        const float  inReal[],
-                        int           optInTimePeriod, /* From 2 to 100000 */
-                        double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        TA_MAType     optInMAType,
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outRealUpperBand[],
-                        double        outRealMiddleBand[],
-                        double        outRealLowerBand[] );
+TA_LIB_API TA_RetCode TA_S_BBANDS( int    startIdx,
+                                   int    endIdx,
+                                              const float  inReal[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                              double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                              TA_MAType     optInMAType,
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outRealUpperBand[],
+                                              double        outRealMiddleBand[],
+                                              double        outRealLowerBand[] );
 
-int TA_BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
-                      double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-                      double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
-                      TA_MAType     optInMAType ); 
+TA_LIB_API int TA_BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                                            double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                            double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                            TA_MAType     optInMAType ); 
 
 /*
  * TA_BETA - Beta
@@ -614,25 +614,25 @@ int TA_BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_BETA( int    startIdx,
-                    int    endIdx,
-                    const double inReal0[],
-                    const double inReal1[],
-                    int           optInTimePeriod, /* From 1 to 100000 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
+                               int    endIdx,
+                                          const double inReal0[],
+                                          const double inReal1[],
+                                          int           optInTimePeriod, /* From 1 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_BETA( int    startIdx,
-                      int    endIdx,
-                      const float  inReal0[],
-                      const float  inReal1[],
-                      int           optInTimePeriod, /* From 1 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_BETA( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal0[],
+                                            const float  inReal1[],
+                                            int           optInTimePeriod, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_BETA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_BETA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -642,27 +642,27 @@ int TA_BETA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_BOP( int    startIdx,
-                   int    endIdx,
-                   const double inOpen[],
-                   const double inHigh[],
-                   const double inLow[],
-                   const double inClose[],
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_BOP( int    startIdx,
+                              int    endIdx,
+                                         const double inOpen[],
+                                         const double inHigh[],
+                                         const double inLow[],
+                                         const double inClose[],
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_BOP( int    startIdx,
-                     int    endIdx,
-                     const float  inOpen[],
-                     const float  inHigh[],
-                     const float  inLow[],
-                     const float  inClose[],
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_BOP( int    startIdx,
+                                int    endIdx,
+                                           const float  inOpen[],
+                                           const float  inHigh[],
+                                           const float  inLow[],
+                                           const float  inClose[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_BOP_Lookback( void );
+TA_LIB_API int TA_BOP_Lookback( void );
 
 
 /*
@@ -678,27 +678,27 @@ int TA_BOP_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_CCI( int    startIdx,
-                   int    endIdx,
-                   const double inHigh[],
-                   const double inLow[],
-                   const double inClose[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_CCI( int    startIdx,
+                              int    endIdx,
+                                         const double inHigh[],
+                                         const double inLow[],
+                                         const double inClose[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_CCI( int    startIdx,
-                     int    endIdx,
-                     const float  inHigh[],
-                     const float  inLow[],
-                     const float  inClose[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_CCI( int    startIdx,
+                                int    endIdx,
+                                           const float  inHigh[],
+                                           const float  inLow[],
+                                           const float  inClose[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_CCI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_CCI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -708,27 +708,27 @@ int TA_CCI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * Output = int
  * 
  */
-TA_RetCode TA_CDL2CROWS( int    startIdx,
-                         int    endIdx,
-                         const double inOpen[],
-                         const double inHigh[],
-                         const double inLow[],
-                         const double inClose[],
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDL2CROWS( int    startIdx,
+                                    int    endIdx,
+                                               const double inOpen[],
+                                               const double inHigh[],
+                                               const double inLow[],
+                                               const double inClose[],
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               int           outInteger[] );
 
-TA_RetCode TA_S_CDL2CROWS( int    startIdx,
-                           int    endIdx,
-                           const float  inOpen[],
-                           const float  inHigh[],
-                           const float  inLow[],
-                           const float  inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDL2CROWS( int    startIdx,
+                                      int    endIdx,
+                                                 const float  inOpen[],
+                                                 const float  inHigh[],
+                                                 const float  inLow[],
+                                                 const float  inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-int TA_CDL2CROWS_Lookback( void );
+TA_LIB_API int TA_CDL2CROWS_Lookback( void );
 
 
 /*
@@ -738,27 +738,27 @@ int TA_CDL2CROWS_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDL3BLACKCROWS( int    startIdx,
-                              int    endIdx,
-                              const double inOpen[],
-                              const double inHigh[],
-                              const double inLow[],
-                              const double inClose[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS( int    startIdx,
+                                         int    endIdx,
+                                                    const double inOpen[],
+                                                    const double inHigh[],
+                                                    const double inLow[],
+                                                    const double inClose[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-TA_RetCode TA_S_CDL3BLACKCROWS( int    startIdx,
-                                int    endIdx,
-                                const float  inOpen[],
-                                const float  inHigh[],
-                                const float  inLow[],
-                                const float  inClose[],
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDL3BLACKCROWS( int    startIdx,
+                                           int    endIdx,
+                                                      const float  inOpen[],
+                                                      const float  inHigh[],
+                                                      const float  inLow[],
+                                                      const float  inClose[],
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-int TA_CDL3BLACKCROWS_Lookback( void );
+TA_LIB_API int TA_CDL3BLACKCROWS_Lookback( void );
 
 
 /*
@@ -768,27 +768,27 @@ int TA_CDL3BLACKCROWS_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDL3INSIDE( int    startIdx,
-                          int    endIdx,
-                          const double inOpen[],
-                          const double inHigh[],
-                          const double inLow[],
-                          const double inClose[],
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDL3INSIDE( int    startIdx,
+                                     int    endIdx,
+                                                const double inOpen[],
+                                                const double inHigh[],
+                                                const double inLow[],
+                                                const double inClose[],
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                int           outInteger[] );
 
-TA_RetCode TA_S_CDL3INSIDE( int    startIdx,
-                            int    endIdx,
-                            const float  inOpen[],
-                            const float  inHigh[],
-                            const float  inLow[],
-                            const float  inClose[],
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDL3INSIDE( int    startIdx,
+                                       int    endIdx,
+                                                  const float  inOpen[],
+                                                  const float  inHigh[],
+                                                  const float  inLow[],
+                                                  const float  inClose[],
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  int           outInteger[] );
 
-int TA_CDL3INSIDE_Lookback( void );
+TA_LIB_API int TA_CDL3INSIDE_Lookback( void );
 
 
 /*
@@ -798,27 +798,27 @@ int TA_CDL3INSIDE_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
-                              int    endIdx,
-                              const double inOpen[],
-                              const double inHigh[],
-                              const double inLow[],
-                              const double inClose[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
+                                         int    endIdx,
+                                                    const double inOpen[],
+                                                    const double inHigh[],
+                                                    const double inLow[],
+                                                    const double inClose[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
-                                int    endIdx,
-                                const float  inOpen[],
-                                const float  inHigh[],
-                                const float  inLow[],
-                                const float  inClose[],
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
+                                           int    endIdx,
+                                                      const float  inOpen[],
+                                                      const float  inHigh[],
+                                                      const float  inLow[],
+                                                      const float  inClose[],
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-int TA_CDL3LINESTRIKE_Lookback( void );
+TA_LIB_API int TA_CDL3LINESTRIKE_Lookback( void );
 
 
 /*
@@ -828,27 +828,27 @@ int TA_CDL3LINESTRIKE_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDL3OUTSIDE( int    startIdx,
-                           int    endIdx,
-                           const double inOpen[],
-                           const double inHigh[],
-                           const double inLow[],
-                           const double inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDL3OUTSIDE( int    startIdx,
+                                      int    endIdx,
+                                                 const double inOpen[],
+                                                 const double inHigh[],
+                                                 const double inLow[],
+                                                 const double inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-TA_RetCode TA_S_CDL3OUTSIDE( int    startIdx,
-                             int    endIdx,
-                             const float  inOpen[],
-                             const float  inHigh[],
-                             const float  inLow[],
-                             const float  inClose[],
-                             int          *outBegIdx,
-                             int          *outNBElement,
-                             int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDL3OUTSIDE( int    startIdx,
+                                        int    endIdx,
+                                                   const float  inOpen[],
+                                                   const float  inHigh[],
+                                                   const float  inLow[],
+                                                   const float  inClose[],
+                                                   int          *outBegIdx,
+                                                   int          *outNBElement,
+                                                   int           outInteger[] );
 
-int TA_CDL3OUTSIDE_Lookback( void );
+TA_LIB_API int TA_CDL3OUTSIDE_Lookback( void );
 
 
 /*
@@ -858,27 +858,27 @@ int TA_CDL3OUTSIDE_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDL3STARSINSOUTH( int    startIdx,
-                                int    endIdx,
-                                const double inOpen[],
-                                const double inHigh[],
-                                const double inLow[],
-                                const double inClose[],
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH( int    startIdx,
+                                           int    endIdx,
+                                                      const double inOpen[],
+                                                      const double inHigh[],
+                                                      const double inLow[],
+                                                      const double inClose[],
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-TA_RetCode TA_S_CDL3STARSINSOUTH( int    startIdx,
-                                  int    endIdx,
-                                  const float  inOpen[],
-                                  const float  inHigh[],
-                                  const float  inLow[],
-                                  const float  inClose[],
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDL3STARSINSOUTH( int    startIdx,
+                                             int    endIdx,
+                                                        const float  inOpen[],
+                                                        const float  inHigh[],
+                                                        const float  inLow[],
+                                                        const float  inClose[],
+                                                        int          *outBegIdx,
+                                                        int          *outNBElement,
+                                                        int           outInteger[] );
 
-int TA_CDL3STARSINSOUTH_Lookback( void );
+TA_LIB_API int TA_CDL3STARSINSOUTH_Lookback( void );
 
 
 /*
@@ -888,27 +888,27 @@ int TA_CDL3STARSINSOUTH_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDL3WHITESOLDIERS( int    startIdx,
-                                 int    endIdx,
-                                 const double inOpen[],
-                                 const double inHigh[],
-                                 const double inLow[],
-                                 const double inClose[],
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS( int    startIdx,
+                                            int    endIdx,
+                                                       const double inOpen[],
+                                                       const double inHigh[],
+                                                       const double inLow[],
+                                                       const double inClose[],
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       int           outInteger[] );
 
-TA_RetCode TA_S_CDL3WHITESOLDIERS( int    startIdx,
-                                   int    endIdx,
-                                   const float  inOpen[],
-                                   const float  inHigh[],
-                                   const float  inLow[],
-                                   const float  inClose[],
-                                   int          *outBegIdx,
-                                   int          *outNBElement,
-                                   int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDL3WHITESOLDIERS( int    startIdx,
+                                              int    endIdx,
+                                                         const float  inOpen[],
+                                                         const float  inHigh[],
+                                                         const float  inLow[],
+                                                         const float  inClose[],
+                                                         int          *outBegIdx,
+                                                         int          *outNBElement,
+                                                         int           outInteger[] );
 
-int TA_CDL3WHITESOLDIERS_Lookback( void );
+TA_LIB_API int TA_CDL3WHITESOLDIERS_Lookback( void );
 
 
 /*
@@ -924,29 +924,29 @@ int TA_CDL3WHITESOLDIERS_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_CDLABANDONEDBABY( int    startIdx,
-                                int    endIdx,
-                                const double inOpen[],
-                                const double inHigh[],
-                                const double inLow[],
-                                const double inClose[],
-                                double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY( int    startIdx,
+                                           int    endIdx,
+                                                      const double inOpen[],
+                                                      const double inHigh[],
+                                                      const double inLow[],
+                                                      const double inClose[],
+                                                      double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-TA_RetCode TA_S_CDLABANDONEDBABY( int    startIdx,
-                                  int    endIdx,
-                                  const float  inOpen[],
-                                  const float  inHigh[],
-                                  const float  inLow[],
-                                  const float  inClose[],
-                                  double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLABANDONEDBABY( int    startIdx,
+                                             int    endIdx,
+                                                        const float  inOpen[],
+                                                        const float  inHigh[],
+                                                        const float  inLow[],
+                                                        const float  inClose[],
+                                                        double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                        int          *outBegIdx,
+                                                        int          *outNBElement,
+                                                        int           outInteger[] );
 
-int TA_CDLABANDONEDBABY_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLABANDONEDBABY_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
 
 
 /*
@@ -956,27 +956,27 @@ int TA_CDLABANDONEDBABY_Lookback( double        optInPenetration );  /* From 0 t
  * Output = int
  * 
  */
-TA_RetCode TA_CDLADVANCEBLOCK( int    startIdx,
-                               int    endIdx,
-                               const double inOpen[],
-                               const double inHigh[],
-                               const double inLow[],
-                               const double inClose[],
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK( int    startIdx,
+                                          int    endIdx,
+                                                     const double inOpen[],
+                                                     const double inHigh[],
+                                                     const double inLow[],
+                                                     const double inClose[],
+                                                     int          *outBegIdx,
+                                                     int          *outNBElement,
+                                                     int           outInteger[] );
 
-TA_RetCode TA_S_CDLADVANCEBLOCK( int    startIdx,
-                                 int    endIdx,
-                                 const float  inOpen[],
-                                 const float  inHigh[],
-                                 const float  inLow[],
-                                 const float  inClose[],
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLADVANCEBLOCK( int    startIdx,
+                                            int    endIdx,
+                                                       const float  inOpen[],
+                                                       const float  inHigh[],
+                                                       const float  inLow[],
+                                                       const float  inClose[],
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       int           outInteger[] );
 
-int TA_CDLADVANCEBLOCK_Lookback( void );
+TA_LIB_API int TA_CDLADVANCEBLOCK_Lookback( void );
 
 
 /*
@@ -986,27 +986,27 @@ int TA_CDLADVANCEBLOCK_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLBELTHOLD( int    startIdx,
-                           int    endIdx,
-                           const double inOpen[],
-                           const double inHigh[],
-                           const double inLow[],
-                           const double inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLBELTHOLD( int    startIdx,
+                                      int    endIdx,
+                                                 const double inOpen[],
+                                                 const double inHigh[],
+                                                 const double inLow[],
+                                                 const double inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-TA_RetCode TA_S_CDLBELTHOLD( int    startIdx,
-                             int    endIdx,
-                             const float  inOpen[],
-                             const float  inHigh[],
-                             const float  inLow[],
-                             const float  inClose[],
-                             int          *outBegIdx,
-                             int          *outNBElement,
-                             int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLBELTHOLD( int    startIdx,
+                                        int    endIdx,
+                                                   const float  inOpen[],
+                                                   const float  inHigh[],
+                                                   const float  inLow[],
+                                                   const float  inClose[],
+                                                   int          *outBegIdx,
+                                                   int          *outNBElement,
+                                                   int           outInteger[] );
 
-int TA_CDLBELTHOLD_Lookback( void );
+TA_LIB_API int TA_CDLBELTHOLD_Lookback( void );
 
 
 /*
@@ -1016,27 +1016,27 @@ int TA_CDLBELTHOLD_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLBREAKAWAY( int    startIdx,
-                            int    endIdx,
-                            const double inOpen[],
-                            const double inHigh[],
-                            const double inLow[],
-                            const double inClose[],
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLBREAKAWAY( int    startIdx,
+                                       int    endIdx,
+                                                  const double inOpen[],
+                                                  const double inHigh[],
+                                                  const double inLow[],
+                                                  const double inClose[],
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  int           outInteger[] );
 
-TA_RetCode TA_S_CDLBREAKAWAY( int    startIdx,
-                              int    endIdx,
-                              const float  inOpen[],
-                              const float  inHigh[],
-                              const float  inLow[],
-                              const float  inClose[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLBREAKAWAY( int    startIdx,
+                                         int    endIdx,
+                                                    const float  inOpen[],
+                                                    const float  inHigh[],
+                                                    const float  inLow[],
+                                                    const float  inClose[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-int TA_CDLBREAKAWAY_Lookback( void );
+TA_LIB_API int TA_CDLBREAKAWAY_Lookback( void );
 
 
 /*
@@ -1046,27 +1046,27 @@ int TA_CDLBREAKAWAY_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLCLOSINGMARUBOZU( int    startIdx,
-                                  int    endIdx,
-                                  const double inOpen[],
-                                  const double inHigh[],
-                                  const double inLow[],
-                                  const double inClose[],
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU( int    startIdx,
+                                             int    endIdx,
+                                                        const double inOpen[],
+                                                        const double inHigh[],
+                                                        const double inLow[],
+                                                        const double inClose[],
+                                                        int          *outBegIdx,
+                                                        int          *outNBElement,
+                                                        int           outInteger[] );
 
-TA_RetCode TA_S_CDLCLOSINGMARUBOZU( int    startIdx,
-                                    int    endIdx,
-                                    const float  inOpen[],
-                                    const float  inHigh[],
-                                    const float  inLow[],
-                                    const float  inClose[],
-                                    int          *outBegIdx,
-                                    int          *outNBElement,
-                                    int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLCLOSINGMARUBOZU( int    startIdx,
+                                               int    endIdx,
+                                                          const float  inOpen[],
+                                                          const float  inHigh[],
+                                                          const float  inLow[],
+                                                          const float  inClose[],
+                                                          int          *outBegIdx,
+                                                          int          *outNBElement,
+                                                          int           outInteger[] );
 
-int TA_CDLCLOSINGMARUBOZU_Lookback( void );
+TA_LIB_API int TA_CDLCLOSINGMARUBOZU_Lookback( void );
 
 
 /*
@@ -1076,27 +1076,27 @@ int TA_CDLCLOSINGMARUBOZU_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
-                                   int    endIdx,
-                                   const double inOpen[],
-                                   const double inHigh[],
-                                   const double inLow[],
-                                   const double inClose[],
-                                   int          *outBegIdx,
-                                   int          *outNBElement,
-                                   int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
+                                              int    endIdx,
+                                                         const double inOpen[],
+                                                         const double inHigh[],
+                                                         const double inLow[],
+                                                         const double inClose[],
+                                                         int          *outBegIdx,
+                                                         int          *outNBElement,
+                                                         int           outInteger[] );
 
-TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
-                                     int    endIdx,
-                                     const float  inOpen[],
-                                     const float  inHigh[],
-                                     const float  inLow[],
-                                     const float  inClose[],
-                                     int          *outBegIdx,
-                                     int          *outNBElement,
-                                     int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
+                                                int    endIdx,
+                                                           const float  inOpen[],
+                                                           const float  inHigh[],
+                                                           const float  inLow[],
+                                                           const float  inClose[],
+                                                           int          *outBegIdx,
+                                                           int          *outNBElement,
+                                                           int           outInteger[] );
 
-int TA_CDLCONCEALBABYSWALL_Lookback( void );
+TA_LIB_API int TA_CDLCONCEALBABYSWALL_Lookback( void );
 
 
 /*
@@ -1106,27 +1106,27 @@ int TA_CDLCONCEALBABYSWALL_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLCOUNTERATTACK( int    startIdx,
-                                int    endIdx,
-                                const double inOpen[],
-                                const double inHigh[],
-                                const double inLow[],
-                                const double inClose[],
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK( int    startIdx,
+                                           int    endIdx,
+                                                      const double inOpen[],
+                                                      const double inHigh[],
+                                                      const double inLow[],
+                                                      const double inClose[],
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-TA_RetCode TA_S_CDLCOUNTERATTACK( int    startIdx,
-                                  int    endIdx,
-                                  const float  inOpen[],
-                                  const float  inHigh[],
-                                  const float  inLow[],
-                                  const float  inClose[],
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLCOUNTERATTACK( int    startIdx,
+                                             int    endIdx,
+                                                        const float  inOpen[],
+                                                        const float  inHigh[],
+                                                        const float  inLow[],
+                                                        const float  inClose[],
+                                                        int          *outBegIdx,
+                                                        int          *outNBElement,
+                                                        int           outInteger[] );
 
-int TA_CDLCOUNTERATTACK_Lookback( void );
+TA_LIB_API int TA_CDLCOUNTERATTACK_Lookback( void );
 
 
 /*
@@ -1142,29 +1142,29 @@ int TA_CDLCOUNTERATTACK_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_CDLDARKCLOUDCOVER( int    startIdx,
-                                 int    endIdx,
-                                 const double inOpen[],
-                                 const double inHigh[],
-                                 const double inLow[],
-                                 const double inClose[],
-                                 double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER( int    startIdx,
+                                            int    endIdx,
+                                                       const double inOpen[],
+                                                       const double inHigh[],
+                                                       const double inLow[],
+                                                       const double inClose[],
+                                                       double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       int           outInteger[] );
 
-TA_RetCode TA_S_CDLDARKCLOUDCOVER( int    startIdx,
-                                   int    endIdx,
-                                   const float  inOpen[],
-                                   const float  inHigh[],
-                                   const float  inLow[],
-                                   const float  inClose[],
-                                   double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                                   int          *outBegIdx,
-                                   int          *outNBElement,
-                                   int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLDARKCLOUDCOVER( int    startIdx,
+                                              int    endIdx,
+                                                         const float  inOpen[],
+                                                         const float  inHigh[],
+                                                         const float  inLow[],
+                                                         const float  inClose[],
+                                                         double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                         int          *outBegIdx,
+                                                         int          *outNBElement,
+                                                         int           outInteger[] );
 
-int TA_CDLDARKCLOUDCOVER_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLDARKCLOUDCOVER_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
 
 
 /*
@@ -1174,27 +1174,27 @@ int TA_CDLDARKCLOUDCOVER_Lookback( double        optInPenetration );  /* From 0 
  * Output = int
  * 
  */
-TA_RetCode TA_CDLDOJI( int    startIdx,
-                       int    endIdx,
-                       const double inOpen[],
-                       const double inHigh[],
-                       const double inLow[],
-                       const double inClose[],
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLDOJI( int    startIdx,
+                                  int    endIdx,
+                                             const double inOpen[],
+                                             const double inHigh[],
+                                             const double inLow[],
+                                             const double inClose[],
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             int           outInteger[] );
 
-TA_RetCode TA_S_CDLDOJI( int    startIdx,
-                         int    endIdx,
-                         const float  inOpen[],
-                         const float  inHigh[],
-                         const float  inLow[],
-                         const float  inClose[],
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLDOJI( int    startIdx,
+                                    int    endIdx,
+                                               const float  inOpen[],
+                                               const float  inHigh[],
+                                               const float  inLow[],
+                                               const float  inClose[],
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               int           outInteger[] );
 
-int TA_CDLDOJI_Lookback( void );
+TA_LIB_API int TA_CDLDOJI_Lookback( void );
 
 
 /*
@@ -1204,27 +1204,27 @@ int TA_CDLDOJI_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLDOJISTAR( int    startIdx,
-                           int    endIdx,
-                           const double inOpen[],
-                           const double inHigh[],
-                           const double inLow[],
-                           const double inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLDOJISTAR( int    startIdx,
+                                      int    endIdx,
+                                                 const double inOpen[],
+                                                 const double inHigh[],
+                                                 const double inLow[],
+                                                 const double inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-TA_RetCode TA_S_CDLDOJISTAR( int    startIdx,
-                             int    endIdx,
-                             const float  inOpen[],
-                             const float  inHigh[],
-                             const float  inLow[],
-                             const float  inClose[],
-                             int          *outBegIdx,
-                             int          *outNBElement,
-                             int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLDOJISTAR( int    startIdx,
+                                        int    endIdx,
+                                                   const float  inOpen[],
+                                                   const float  inHigh[],
+                                                   const float  inLow[],
+                                                   const float  inClose[],
+                                                   int          *outBegIdx,
+                                                   int          *outNBElement,
+                                                   int           outInteger[] );
 
-int TA_CDLDOJISTAR_Lookback( void );
+TA_LIB_API int TA_CDLDOJISTAR_Lookback( void );
 
 
 /*
@@ -1234,27 +1234,27 @@ int TA_CDLDOJISTAR_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLDRAGONFLYDOJI( int    startIdx,
-                                int    endIdx,
-                                const double inOpen[],
-                                const double inHigh[],
-                                const double inLow[],
-                                const double inClose[],
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI( int    startIdx,
+                                           int    endIdx,
+                                                      const double inOpen[],
+                                                      const double inHigh[],
+                                                      const double inLow[],
+                                                      const double inClose[],
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-TA_RetCode TA_S_CDLDRAGONFLYDOJI( int    startIdx,
-                                  int    endIdx,
-                                  const float  inOpen[],
-                                  const float  inHigh[],
-                                  const float  inLow[],
-                                  const float  inClose[],
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLDRAGONFLYDOJI( int    startIdx,
+                                             int    endIdx,
+                                                        const float  inOpen[],
+                                                        const float  inHigh[],
+                                                        const float  inLow[],
+                                                        const float  inClose[],
+                                                        int          *outBegIdx,
+                                                        int          *outNBElement,
+                                                        int           outInteger[] );
 
-int TA_CDLDRAGONFLYDOJI_Lookback( void );
+TA_LIB_API int TA_CDLDRAGONFLYDOJI_Lookback( void );
 
 
 /*
@@ -1264,27 +1264,27 @@ int TA_CDLDRAGONFLYDOJI_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLENGULFING( int    startIdx,
-                            int    endIdx,
-                            const double inOpen[],
-                            const double inHigh[],
-                            const double inLow[],
-                            const double inClose[],
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLENGULFING( int    startIdx,
+                                       int    endIdx,
+                                                  const double inOpen[],
+                                                  const double inHigh[],
+                                                  const double inLow[],
+                                                  const double inClose[],
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  int           outInteger[] );
 
-TA_RetCode TA_S_CDLENGULFING( int    startIdx,
-                              int    endIdx,
-                              const float  inOpen[],
-                              const float  inHigh[],
-                              const float  inLow[],
-                              const float  inClose[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLENGULFING( int    startIdx,
+                                         int    endIdx,
+                                                    const float  inOpen[],
+                                                    const float  inHigh[],
+                                                    const float  inLow[],
+                                                    const float  inClose[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-int TA_CDLENGULFING_Lookback( void );
+TA_LIB_API int TA_CDLENGULFING_Lookback( void );
 
 
 /*
@@ -1300,29 +1300,29 @@ int TA_CDLENGULFING_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_CDLEVENINGDOJISTAR( int    startIdx,
-                                  int    endIdx,
-                                  const double inOpen[],
-                                  const double inHigh[],
-                                  const double inLow[],
-                                  const double inClose[],
-                                  double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR( int    startIdx,
+                                             int    endIdx,
+                                                        const double inOpen[],
+                                                        const double inHigh[],
+                                                        const double inLow[],
+                                                        const double inClose[],
+                                                        double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                        int          *outBegIdx,
+                                                        int          *outNBElement,
+                                                        int           outInteger[] );
 
-TA_RetCode TA_S_CDLEVENINGDOJISTAR( int    startIdx,
-                                    int    endIdx,
-                                    const float  inOpen[],
-                                    const float  inHigh[],
-                                    const float  inLow[],
-                                    const float  inClose[],
-                                    double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                                    int          *outBegIdx,
-                                    int          *outNBElement,
-                                    int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLEVENINGDOJISTAR( int    startIdx,
+                                               int    endIdx,
+                                                          const float  inOpen[],
+                                                          const float  inHigh[],
+                                                          const float  inLow[],
+                                                          const float  inClose[],
+                                                          double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                          int          *outBegIdx,
+                                                          int          *outNBElement,
+                                                          int           outInteger[] );
 
-int TA_CDLEVENINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLEVENINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
 
 
 /*
@@ -1338,29 +1338,29 @@ int TA_CDLEVENINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0
  * 
  * 
  */
-TA_RetCode TA_CDLEVENINGSTAR( int    startIdx,
-                              int    endIdx,
-                              const double inOpen[],
-                              const double inHigh[],
-                              const double inLow[],
-                              const double inClose[],
-                              double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR( int    startIdx,
+                                         int    endIdx,
+                                                    const double inOpen[],
+                                                    const double inHigh[],
+                                                    const double inLow[],
+                                                    const double inClose[],
+                                                    double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-TA_RetCode TA_S_CDLEVENINGSTAR( int    startIdx,
-                                int    endIdx,
-                                const float  inOpen[],
-                                const float  inHigh[],
-                                const float  inLow[],
-                                const float  inClose[],
-                                double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLEVENINGSTAR( int    startIdx,
+                                           int    endIdx,
+                                                      const float  inOpen[],
+                                                      const float  inHigh[],
+                                                      const float  inLow[],
+                                                      const float  inClose[],
+                                                      double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-int TA_CDLEVENINGSTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLEVENINGSTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
 
 
 /*
@@ -1370,27 +1370,27 @@ int TA_CDLEVENINGSTAR_Lookback( double        optInPenetration );  /* From 0 to 
  * Output = int
  * 
  */
-TA_RetCode TA_CDLGAPSIDESIDEWHITE( int    startIdx,
-                                   int    endIdx,
-                                   const double inOpen[],
-                                   const double inHigh[],
-                                   const double inLow[],
-                                   const double inClose[],
-                                   int          *outBegIdx,
-                                   int          *outNBElement,
-                                   int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE( int    startIdx,
+                                              int    endIdx,
+                                                         const double inOpen[],
+                                                         const double inHigh[],
+                                                         const double inLow[],
+                                                         const double inClose[],
+                                                         int          *outBegIdx,
+                                                         int          *outNBElement,
+                                                         int           outInteger[] );
 
-TA_RetCode TA_S_CDLGAPSIDESIDEWHITE( int    startIdx,
-                                     int    endIdx,
-                                     const float  inOpen[],
-                                     const float  inHigh[],
-                                     const float  inLow[],
-                                     const float  inClose[],
-                                     int          *outBegIdx,
-                                     int          *outNBElement,
-                                     int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLGAPSIDESIDEWHITE( int    startIdx,
+                                                int    endIdx,
+                                                           const float  inOpen[],
+                                                           const float  inHigh[],
+                                                           const float  inLow[],
+                                                           const float  inClose[],
+                                                           int          *outBegIdx,
+                                                           int          *outNBElement,
+                                                           int           outInteger[] );
 
-int TA_CDLGAPSIDESIDEWHITE_Lookback( void );
+TA_LIB_API int TA_CDLGAPSIDESIDEWHITE_Lookback( void );
 
 
 /*
@@ -1400,27 +1400,27 @@ int TA_CDLGAPSIDESIDEWHITE_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLGRAVESTONEDOJI( int    startIdx,
-                                 int    endIdx,
-                                 const double inOpen[],
-                                 const double inHigh[],
-                                 const double inLow[],
-                                 const double inClose[],
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI( int    startIdx,
+                                            int    endIdx,
+                                                       const double inOpen[],
+                                                       const double inHigh[],
+                                                       const double inLow[],
+                                                       const double inClose[],
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       int           outInteger[] );
 
-TA_RetCode TA_S_CDLGRAVESTONEDOJI( int    startIdx,
-                                   int    endIdx,
-                                   const float  inOpen[],
-                                   const float  inHigh[],
-                                   const float  inLow[],
-                                   const float  inClose[],
-                                   int          *outBegIdx,
-                                   int          *outNBElement,
-                                   int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLGRAVESTONEDOJI( int    startIdx,
+                                              int    endIdx,
+                                                         const float  inOpen[],
+                                                         const float  inHigh[],
+                                                         const float  inLow[],
+                                                         const float  inClose[],
+                                                         int          *outBegIdx,
+                                                         int          *outNBElement,
+                                                         int           outInteger[] );
 
-int TA_CDLGRAVESTONEDOJI_Lookback( void );
+TA_LIB_API int TA_CDLGRAVESTONEDOJI_Lookback( void );
 
 
 /*
@@ -1430,27 +1430,27 @@ int TA_CDLGRAVESTONEDOJI_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLHAMMER( int    startIdx,
-                         int    endIdx,
-                         const double inOpen[],
-                         const double inHigh[],
-                         const double inLow[],
-                         const double inClose[],
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLHAMMER( int    startIdx,
+                                    int    endIdx,
+                                               const double inOpen[],
+                                               const double inHigh[],
+                                               const double inLow[],
+                                               const double inClose[],
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               int           outInteger[] );
 
-TA_RetCode TA_S_CDLHAMMER( int    startIdx,
-                           int    endIdx,
-                           const float  inOpen[],
-                           const float  inHigh[],
-                           const float  inLow[],
-                           const float  inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLHAMMER( int    startIdx,
+                                      int    endIdx,
+                                                 const float  inOpen[],
+                                                 const float  inHigh[],
+                                                 const float  inLow[],
+                                                 const float  inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-int TA_CDLHAMMER_Lookback( void );
+TA_LIB_API int TA_CDLHAMMER_Lookback( void );
 
 
 /*
@@ -1460,27 +1460,27 @@ int TA_CDLHAMMER_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLHANGINGMAN( int    startIdx,
-                             int    endIdx,
-                             const double inOpen[],
-                             const double inHigh[],
-                             const double inLow[],
-                             const double inClose[],
-                             int          *outBegIdx,
-                             int          *outNBElement,
-                             int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLHANGINGMAN( int    startIdx,
+                                        int    endIdx,
+                                                   const double inOpen[],
+                                                   const double inHigh[],
+                                                   const double inLow[],
+                                                   const double inClose[],
+                                                   int          *outBegIdx,
+                                                   int          *outNBElement,
+                                                   int           outInteger[] );
 
-TA_RetCode TA_S_CDLHANGINGMAN( int    startIdx,
-                               int    endIdx,
-                               const float  inOpen[],
-                               const float  inHigh[],
-                               const float  inLow[],
-                               const float  inClose[],
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLHANGINGMAN( int    startIdx,
+                                          int    endIdx,
+                                                     const float  inOpen[],
+                                                     const float  inHigh[],
+                                                     const float  inLow[],
+                                                     const float  inClose[],
+                                                     int          *outBegIdx,
+                                                     int          *outNBElement,
+                                                     int           outInteger[] );
 
-int TA_CDLHANGINGMAN_Lookback( void );
+TA_LIB_API int TA_CDLHANGINGMAN_Lookback( void );
 
 
 /*
@@ -1490,27 +1490,27 @@ int TA_CDLHANGINGMAN_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLHARAMI( int    startIdx,
-                         int    endIdx,
-                         const double inOpen[],
-                         const double inHigh[],
-                         const double inLow[],
-                         const double inClose[],
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLHARAMI( int    startIdx,
+                                    int    endIdx,
+                                               const double inOpen[],
+                                               const double inHigh[],
+                                               const double inLow[],
+                                               const double inClose[],
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               int           outInteger[] );
 
-TA_RetCode TA_S_CDLHARAMI( int    startIdx,
-                           int    endIdx,
-                           const float  inOpen[],
-                           const float  inHigh[],
-                           const float  inLow[],
-                           const float  inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLHARAMI( int    startIdx,
+                                      int    endIdx,
+                                                 const float  inOpen[],
+                                                 const float  inHigh[],
+                                                 const float  inLow[],
+                                                 const float  inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-int TA_CDLHARAMI_Lookback( void );
+TA_LIB_API int TA_CDLHARAMI_Lookback( void );
 
 
 /*
@@ -1520,27 +1520,27 @@ int TA_CDLHARAMI_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLHARAMICROSS( int    startIdx,
-                              int    endIdx,
-                              const double inOpen[],
-                              const double inHigh[],
-                              const double inLow[],
-                              const double inClose[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLHARAMICROSS( int    startIdx,
+                                         int    endIdx,
+                                                    const double inOpen[],
+                                                    const double inHigh[],
+                                                    const double inLow[],
+                                                    const double inClose[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-TA_RetCode TA_S_CDLHARAMICROSS( int    startIdx,
-                                int    endIdx,
-                                const float  inOpen[],
-                                const float  inHigh[],
-                                const float  inLow[],
-                                const float  inClose[],
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLHARAMICROSS( int    startIdx,
+                                           int    endIdx,
+                                                      const float  inOpen[],
+                                                      const float  inHigh[],
+                                                      const float  inLow[],
+                                                      const float  inClose[],
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-int TA_CDLHARAMICROSS_Lookback( void );
+TA_LIB_API int TA_CDLHARAMICROSS_Lookback( void );
 
 
 /*
@@ -1550,27 +1550,27 @@ int TA_CDLHARAMICROSS_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLHIGHWAVE( int    startIdx,
-                           int    endIdx,
-                           const double inOpen[],
-                           const double inHigh[],
-                           const double inLow[],
-                           const double inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLHIGHWAVE( int    startIdx,
+                                      int    endIdx,
+                                                 const double inOpen[],
+                                                 const double inHigh[],
+                                                 const double inLow[],
+                                                 const double inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-TA_RetCode TA_S_CDLHIGHWAVE( int    startIdx,
-                             int    endIdx,
-                             const float  inOpen[],
-                             const float  inHigh[],
-                             const float  inLow[],
-                             const float  inClose[],
-                             int          *outBegIdx,
-                             int          *outNBElement,
-                             int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLHIGHWAVE( int    startIdx,
+                                        int    endIdx,
+                                                   const float  inOpen[],
+                                                   const float  inHigh[],
+                                                   const float  inLow[],
+                                                   const float  inClose[],
+                                                   int          *outBegIdx,
+                                                   int          *outNBElement,
+                                                   int           outInteger[] );
 
-int TA_CDLHIGHWAVE_Lookback( void );
+TA_LIB_API int TA_CDLHIGHWAVE_Lookback( void );
 
 
 /*
@@ -1580,27 +1580,27 @@ int TA_CDLHIGHWAVE_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLHIKKAKE( int    startIdx,
-                          int    endIdx,
-                          const double inOpen[],
-                          const double inHigh[],
-                          const double inLow[],
-                          const double inClose[],
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE( int    startIdx,
+                                     int    endIdx,
+                                                const double inOpen[],
+                                                const double inHigh[],
+                                                const double inLow[],
+                                                const double inClose[],
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                int           outInteger[] );
 
-TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
-                            int    endIdx,
-                            const float  inOpen[],
-                            const float  inHigh[],
-                            const float  inLow[],
-                            const float  inClose[],
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
+                                       int    endIdx,
+                                                  const float  inOpen[],
+                                                  const float  inHigh[],
+                                                  const float  inLow[],
+                                                  const float  inClose[],
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  int           outInteger[] );
 
-int TA_CDLHIKKAKE_Lookback( void );
+TA_LIB_API int TA_CDLHIKKAKE_Lookback( void );
 
 
 /*
@@ -1610,27 +1610,27 @@ int TA_CDLHIKKAKE_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,
-                             int    endIdx,
-                             const double inOpen[],
-                             const double inHigh[],
-                             const double inLow[],
-                             const double inClose[],
-                             int          *outBegIdx,
-                             int          *outNBElement,
-                             int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,
+                                        int    endIdx,
+                                                   const double inOpen[],
+                                                   const double inHigh[],
+                                                   const double inLow[],
+                                                   const double inClose[],
+                                                   int          *outBegIdx,
+                                                   int          *outNBElement,
+                                                   int           outInteger[] );
 
-TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
-                               int    endIdx,
-                               const float  inOpen[],
-                               const float  inHigh[],
-                               const float  inLow[],
-                               const float  inClose[],
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
+                                          int    endIdx,
+                                                     const float  inOpen[],
+                                                     const float  inHigh[],
+                                                     const float  inLow[],
+                                                     const float  inClose[],
+                                                     int          *outBegIdx,
+                                                     int          *outNBElement,
+                                                     int           outInteger[] );
 
-int TA_CDLHIKKAKEMOD_Lookback( void );
+TA_LIB_API int TA_CDLHIKKAKEMOD_Lookback( void );
 
 
 /*
@@ -1640,27 +1640,27 @@ int TA_CDLHIKKAKEMOD_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLHOMINGPIGEON( int    startIdx,
-                               int    endIdx,
-                               const double inOpen[],
-                               const double inHigh[],
-                               const double inLow[],
-                               const double inClose[],
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON( int    startIdx,
+                                          int    endIdx,
+                                                     const double inOpen[],
+                                                     const double inHigh[],
+                                                     const double inLow[],
+                                                     const double inClose[],
+                                                     int          *outBegIdx,
+                                                     int          *outNBElement,
+                                                     int           outInteger[] );
 
-TA_RetCode TA_S_CDLHOMINGPIGEON( int    startIdx,
-                                 int    endIdx,
-                                 const float  inOpen[],
-                                 const float  inHigh[],
-                                 const float  inLow[],
-                                 const float  inClose[],
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLHOMINGPIGEON( int    startIdx,
+                                            int    endIdx,
+                                                       const float  inOpen[],
+                                                       const float  inHigh[],
+                                                       const float  inLow[],
+                                                       const float  inClose[],
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       int           outInteger[] );
 
-int TA_CDLHOMINGPIGEON_Lookback( void );
+TA_LIB_API int TA_CDLHOMINGPIGEON_Lookback( void );
 
 
 /*
@@ -1670,27 +1670,27 @@ int TA_CDLHOMINGPIGEON_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLIDENTICAL3CROWS( int    startIdx,
-                                  int    endIdx,
-                                  const double inOpen[],
-                                  const double inHigh[],
-                                  const double inLow[],
-                                  const double inClose[],
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS( int    startIdx,
+                                             int    endIdx,
+                                                        const double inOpen[],
+                                                        const double inHigh[],
+                                                        const double inLow[],
+                                                        const double inClose[],
+                                                        int          *outBegIdx,
+                                                        int          *outNBElement,
+                                                        int           outInteger[] );
 
-TA_RetCode TA_S_CDLIDENTICAL3CROWS( int    startIdx,
-                                    int    endIdx,
-                                    const float  inOpen[],
-                                    const float  inHigh[],
-                                    const float  inLow[],
-                                    const float  inClose[],
-                                    int          *outBegIdx,
-                                    int          *outNBElement,
-                                    int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLIDENTICAL3CROWS( int    startIdx,
+                                               int    endIdx,
+                                                          const float  inOpen[],
+                                                          const float  inHigh[],
+                                                          const float  inLow[],
+                                                          const float  inClose[],
+                                                          int          *outBegIdx,
+                                                          int          *outNBElement,
+                                                          int           outInteger[] );
 
-int TA_CDLIDENTICAL3CROWS_Lookback( void );
+TA_LIB_API int TA_CDLIDENTICAL3CROWS_Lookback( void );
 
 
 /*
@@ -1700,27 +1700,27 @@ int TA_CDLIDENTICAL3CROWS_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLINNECK( int    startIdx,
-                         int    endIdx,
-                         const double inOpen[],
-                         const double inHigh[],
-                         const double inLow[],
-                         const double inClose[],
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLINNECK( int    startIdx,
+                                    int    endIdx,
+                                               const double inOpen[],
+                                               const double inHigh[],
+                                               const double inLow[],
+                                               const double inClose[],
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               int           outInteger[] );
 
-TA_RetCode TA_S_CDLINNECK( int    startIdx,
-                           int    endIdx,
-                           const float  inOpen[],
-                           const float  inHigh[],
-                           const float  inLow[],
-                           const float  inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLINNECK( int    startIdx,
+                                      int    endIdx,
+                                                 const float  inOpen[],
+                                                 const float  inHigh[],
+                                                 const float  inLow[],
+                                                 const float  inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-int TA_CDLINNECK_Lookback( void );
+TA_LIB_API int TA_CDLINNECK_Lookback( void );
 
 
 /*
@@ -1730,27 +1730,27 @@ int TA_CDLINNECK_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLINVERTEDHAMMER( int    startIdx,
-                                 int    endIdx,
-                                 const double inOpen[],
-                                 const double inHigh[],
-                                 const double inLow[],
-                                 const double inClose[],
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER( int    startIdx,
+                                            int    endIdx,
+                                                       const double inOpen[],
+                                                       const double inHigh[],
+                                                       const double inLow[],
+                                                       const double inClose[],
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       int           outInteger[] );
 
-TA_RetCode TA_S_CDLINVERTEDHAMMER( int    startIdx,
-                                   int    endIdx,
-                                   const float  inOpen[],
-                                   const float  inHigh[],
-                                   const float  inLow[],
-                                   const float  inClose[],
-                                   int          *outBegIdx,
-                                   int          *outNBElement,
-                                   int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLINVERTEDHAMMER( int    startIdx,
+                                              int    endIdx,
+                                                         const float  inOpen[],
+                                                         const float  inHigh[],
+                                                         const float  inLow[],
+                                                         const float  inClose[],
+                                                         int          *outBegIdx,
+                                                         int          *outNBElement,
+                                                         int           outInteger[] );
 
-int TA_CDLINVERTEDHAMMER_Lookback( void );
+TA_LIB_API int TA_CDLINVERTEDHAMMER_Lookback( void );
 
 
 /*
@@ -1760,27 +1760,27 @@ int TA_CDLINVERTEDHAMMER_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLKICKING( int    startIdx,
-                          int    endIdx,
-                          const double inOpen[],
-                          const double inHigh[],
-                          const double inLow[],
-                          const double inClose[],
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLKICKING( int    startIdx,
+                                     int    endIdx,
+                                                const double inOpen[],
+                                                const double inHigh[],
+                                                const double inLow[],
+                                                const double inClose[],
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                int           outInteger[] );
 
-TA_RetCode TA_S_CDLKICKING( int    startIdx,
-                            int    endIdx,
-                            const float  inOpen[],
-                            const float  inHigh[],
-                            const float  inLow[],
-                            const float  inClose[],
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLKICKING( int    startIdx,
+                                       int    endIdx,
+                                                  const float  inOpen[],
+                                                  const float  inHigh[],
+                                                  const float  inLow[],
+                                                  const float  inClose[],
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  int           outInteger[] );
 
-int TA_CDLKICKING_Lookback( void );
+TA_LIB_API int TA_CDLKICKING_Lookback( void );
 
 
 /*
@@ -1790,27 +1790,27 @@ int TA_CDLKICKING_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLKICKINGBYLENGTH( int    startIdx,
-                                  int    endIdx,
-                                  const double inOpen[],
-                                  const double inHigh[],
-                                  const double inLow[],
-                                  const double inClose[],
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH( int    startIdx,
+                                             int    endIdx,
+                                                        const double inOpen[],
+                                                        const double inHigh[],
+                                                        const double inLow[],
+                                                        const double inClose[],
+                                                        int          *outBegIdx,
+                                                        int          *outNBElement,
+                                                        int           outInteger[] );
 
-TA_RetCode TA_S_CDLKICKINGBYLENGTH( int    startIdx,
-                                    int    endIdx,
-                                    const float  inOpen[],
-                                    const float  inHigh[],
-                                    const float  inLow[],
-                                    const float  inClose[],
-                                    int          *outBegIdx,
-                                    int          *outNBElement,
-                                    int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLKICKINGBYLENGTH( int    startIdx,
+                                               int    endIdx,
+                                                          const float  inOpen[],
+                                                          const float  inHigh[],
+                                                          const float  inLow[],
+                                                          const float  inClose[],
+                                                          int          *outBegIdx,
+                                                          int          *outNBElement,
+                                                          int           outInteger[] );
 
-int TA_CDLKICKINGBYLENGTH_Lookback( void );
+TA_LIB_API int TA_CDLKICKINGBYLENGTH_Lookback( void );
 
 
 /*
@@ -1820,27 +1820,27 @@ int TA_CDLKICKINGBYLENGTH_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLLADDERBOTTOM( int    startIdx,
-                               int    endIdx,
-                               const double inOpen[],
-                               const double inHigh[],
-                               const double inLow[],
-                               const double inClose[],
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM( int    startIdx,
+                                          int    endIdx,
+                                                     const double inOpen[],
+                                                     const double inHigh[],
+                                                     const double inLow[],
+                                                     const double inClose[],
+                                                     int          *outBegIdx,
+                                                     int          *outNBElement,
+                                                     int           outInteger[] );
 
-TA_RetCode TA_S_CDLLADDERBOTTOM( int    startIdx,
-                                 int    endIdx,
-                                 const float  inOpen[],
-                                 const float  inHigh[],
-                                 const float  inLow[],
-                                 const float  inClose[],
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLLADDERBOTTOM( int    startIdx,
+                                            int    endIdx,
+                                                       const float  inOpen[],
+                                                       const float  inHigh[],
+                                                       const float  inLow[],
+                                                       const float  inClose[],
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       int           outInteger[] );
 
-int TA_CDLLADDERBOTTOM_Lookback( void );
+TA_LIB_API int TA_CDLLADDERBOTTOM_Lookback( void );
 
 
 /*
@@ -1850,27 +1850,27 @@ int TA_CDLLADDERBOTTOM_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLLONGLEGGEDDOJI( int    startIdx,
-                                 int    endIdx,
-                                 const double inOpen[],
-                                 const double inHigh[],
-                                 const double inLow[],
-                                 const double inClose[],
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI( int    startIdx,
+                                            int    endIdx,
+                                                       const double inOpen[],
+                                                       const double inHigh[],
+                                                       const double inLow[],
+                                                       const double inClose[],
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       int           outInteger[] );
 
-TA_RetCode TA_S_CDLLONGLEGGEDDOJI( int    startIdx,
-                                   int    endIdx,
-                                   const float  inOpen[],
-                                   const float  inHigh[],
-                                   const float  inLow[],
-                                   const float  inClose[],
-                                   int          *outBegIdx,
-                                   int          *outNBElement,
-                                   int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLLONGLEGGEDDOJI( int    startIdx,
+                                              int    endIdx,
+                                                         const float  inOpen[],
+                                                         const float  inHigh[],
+                                                         const float  inLow[],
+                                                         const float  inClose[],
+                                                         int          *outBegIdx,
+                                                         int          *outNBElement,
+                                                         int           outInteger[] );
 
-int TA_CDLLONGLEGGEDDOJI_Lookback( void );
+TA_LIB_API int TA_CDLLONGLEGGEDDOJI_Lookback( void );
 
 
 /*
@@ -1880,27 +1880,27 @@ int TA_CDLLONGLEGGEDDOJI_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLLONGLINE( int    startIdx,
-                           int    endIdx,
-                           const double inOpen[],
-                           const double inHigh[],
-                           const double inLow[],
-                           const double inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLLONGLINE( int    startIdx,
+                                      int    endIdx,
+                                                 const double inOpen[],
+                                                 const double inHigh[],
+                                                 const double inLow[],
+                                                 const double inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-TA_RetCode TA_S_CDLLONGLINE( int    startIdx,
-                             int    endIdx,
-                             const float  inOpen[],
-                             const float  inHigh[],
-                             const float  inLow[],
-                             const float  inClose[],
-                             int          *outBegIdx,
-                             int          *outNBElement,
-                             int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLLONGLINE( int    startIdx,
+                                        int    endIdx,
+                                                   const float  inOpen[],
+                                                   const float  inHigh[],
+                                                   const float  inLow[],
+                                                   const float  inClose[],
+                                                   int          *outBegIdx,
+                                                   int          *outNBElement,
+                                                   int           outInteger[] );
 
-int TA_CDLLONGLINE_Lookback( void );
+TA_LIB_API int TA_CDLLONGLINE_Lookback( void );
 
 
 /*
@@ -1910,27 +1910,27 @@ int TA_CDLLONGLINE_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLMARUBOZU( int    startIdx,
-                           int    endIdx,
-                           const double inOpen[],
-                           const double inHigh[],
-                           const double inLow[],
-                           const double inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLMARUBOZU( int    startIdx,
+                                      int    endIdx,
+                                                 const double inOpen[],
+                                                 const double inHigh[],
+                                                 const double inLow[],
+                                                 const double inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-TA_RetCode TA_S_CDLMARUBOZU( int    startIdx,
-                             int    endIdx,
-                             const float  inOpen[],
-                             const float  inHigh[],
-                             const float  inLow[],
-                             const float  inClose[],
-                             int          *outBegIdx,
-                             int          *outNBElement,
-                             int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLMARUBOZU( int    startIdx,
+                                        int    endIdx,
+                                                   const float  inOpen[],
+                                                   const float  inHigh[],
+                                                   const float  inLow[],
+                                                   const float  inClose[],
+                                                   int          *outBegIdx,
+                                                   int          *outNBElement,
+                                                   int           outInteger[] );
 
-int TA_CDLMARUBOZU_Lookback( void );
+TA_LIB_API int TA_CDLMARUBOZU_Lookback( void );
 
 
 /*
@@ -1940,27 +1940,27 @@ int TA_CDLMARUBOZU_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLMATCHINGLOW( int    startIdx,
-                              int    endIdx,
-                              const double inOpen[],
-                              const double inHigh[],
-                              const double inLow[],
-                              const double inClose[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW( int    startIdx,
+                                         int    endIdx,
+                                                    const double inOpen[],
+                                                    const double inHigh[],
+                                                    const double inLow[],
+                                                    const double inClose[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-TA_RetCode TA_S_CDLMATCHINGLOW( int    startIdx,
-                                int    endIdx,
-                                const float  inOpen[],
-                                const float  inHigh[],
-                                const float  inLow[],
-                                const float  inClose[],
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLMATCHINGLOW( int    startIdx,
+                                           int    endIdx,
+                                                      const float  inOpen[],
+                                                      const float  inHigh[],
+                                                      const float  inLow[],
+                                                      const float  inClose[],
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-int TA_CDLMATCHINGLOW_Lookback( void );
+TA_LIB_API int TA_CDLMATCHINGLOW_Lookback( void );
 
 
 /*
@@ -1976,29 +1976,29 @@ int TA_CDLMATCHINGLOW_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_CDLMATHOLD( int    startIdx,
-                          int    endIdx,
-                          const double inOpen[],
-                          const double inHigh[],
-                          const double inLow[],
-                          const double inClose[],
-                          double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLMATHOLD( int    startIdx,
+                                     int    endIdx,
+                                                const double inOpen[],
+                                                const double inHigh[],
+                                                const double inLow[],
+                                                const double inClose[],
+                                                double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                int           outInteger[] );
 
-TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
-                            int    endIdx,
-                            const float  inOpen[],
-                            const float  inHigh[],
-                            const float  inLow[],
-                            const float  inClose[],
-                            double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
+                                       int    endIdx,
+                                                  const float  inOpen[],
+                                                  const float  inHigh[],
+                                                  const float  inLow[],
+                                                  const float  inClose[],
+                                                  double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  int           outInteger[] );
 
-int TA_CDLMATHOLD_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLMATHOLD_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
 
 
 /*
@@ -2014,29 +2014,29 @@ int TA_CDLMATHOLD_Lookback( double        optInPenetration );  /* From 0 to TA_R
  * 
  * 
  */
-TA_RetCode TA_CDLMORNINGDOJISTAR( int    startIdx,
-                                  int    endIdx,
-                                  const double inOpen[],
-                                  const double inHigh[],
-                                  const double inLow[],
-                                  const double inClose[],
-                                  double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR( int    startIdx,
+                                             int    endIdx,
+                                                        const double inOpen[],
+                                                        const double inHigh[],
+                                                        const double inLow[],
+                                                        const double inClose[],
+                                                        double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                        int          *outBegIdx,
+                                                        int          *outNBElement,
+                                                        int           outInteger[] );
 
-TA_RetCode TA_S_CDLMORNINGDOJISTAR( int    startIdx,
-                                    int    endIdx,
-                                    const float  inOpen[],
-                                    const float  inHigh[],
-                                    const float  inLow[],
-                                    const float  inClose[],
-                                    double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                                    int          *outBegIdx,
-                                    int          *outNBElement,
-                                    int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLMORNINGDOJISTAR( int    startIdx,
+                                               int    endIdx,
+                                                          const float  inOpen[],
+                                                          const float  inHigh[],
+                                                          const float  inLow[],
+                                                          const float  inClose[],
+                                                          double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                          int          *outBegIdx,
+                                                          int          *outNBElement,
+                                                          int           outInteger[] );
 
-int TA_CDLMORNINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLMORNINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
 
 
 /*
@@ -2052,29 +2052,29 @@ int TA_CDLMORNINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0
  * 
  * 
  */
-TA_RetCode TA_CDLMORNINGSTAR( int    startIdx,
-                              int    endIdx,
-                              const double inOpen[],
-                              const double inHigh[],
-                              const double inLow[],
-                              const double inClose[],
-                              double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR( int    startIdx,
+                                         int    endIdx,
+                                                    const double inOpen[],
+                                                    const double inHigh[],
+                                                    const double inLow[],
+                                                    const double inClose[],
+                                                    double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-TA_RetCode TA_S_CDLMORNINGSTAR( int    startIdx,
-                                int    endIdx,
-                                const float  inOpen[],
-                                const float  inHigh[],
-                                const float  inLow[],
-                                const float  inClose[],
-                                double        optInPenetration, /* From 0 to TA_REAL_MAX */
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLMORNINGSTAR( int    startIdx,
+                                           int    endIdx,
+                                                      const float  inOpen[],
+                                                      const float  inHigh[],
+                                                      const float  inLow[],
+                                                      const float  inClose[],
+                                                      double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-int TA_CDLMORNINGSTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLMORNINGSTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
 
 
 /*
@@ -2084,27 +2084,27 @@ int TA_CDLMORNINGSTAR_Lookback( double        optInPenetration );  /* From 0 to 
  * Output = int
  * 
  */
-TA_RetCode TA_CDLONNECK( int    startIdx,
-                         int    endIdx,
-                         const double inOpen[],
-                         const double inHigh[],
-                         const double inLow[],
-                         const double inClose[],
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLONNECK( int    startIdx,
+                                    int    endIdx,
+                                               const double inOpen[],
+                                               const double inHigh[],
+                                               const double inLow[],
+                                               const double inClose[],
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               int           outInteger[] );
 
-TA_RetCode TA_S_CDLONNECK( int    startIdx,
-                           int    endIdx,
-                           const float  inOpen[],
-                           const float  inHigh[],
-                           const float  inLow[],
-                           const float  inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLONNECK( int    startIdx,
+                                      int    endIdx,
+                                                 const float  inOpen[],
+                                                 const float  inHigh[],
+                                                 const float  inLow[],
+                                                 const float  inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-int TA_CDLONNECK_Lookback( void );
+TA_LIB_API int TA_CDLONNECK_Lookback( void );
 
 
 /*
@@ -2114,27 +2114,27 @@ int TA_CDLONNECK_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLPIERCING( int    startIdx,
-                           int    endIdx,
-                           const double inOpen[],
-                           const double inHigh[],
-                           const double inLow[],
-                           const double inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLPIERCING( int    startIdx,
+                                      int    endIdx,
+                                                 const double inOpen[],
+                                                 const double inHigh[],
+                                                 const double inLow[],
+                                                 const double inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-TA_RetCode TA_S_CDLPIERCING( int    startIdx,
-                             int    endIdx,
-                             const float  inOpen[],
-                             const float  inHigh[],
-                             const float  inLow[],
-                             const float  inClose[],
-                             int          *outBegIdx,
-                             int          *outNBElement,
-                             int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLPIERCING( int    startIdx,
+                                        int    endIdx,
+                                                   const float  inOpen[],
+                                                   const float  inHigh[],
+                                                   const float  inLow[],
+                                                   const float  inClose[],
+                                                   int          *outBegIdx,
+                                                   int          *outNBElement,
+                                                   int           outInteger[] );
 
-int TA_CDLPIERCING_Lookback( void );
+TA_LIB_API int TA_CDLPIERCING_Lookback( void );
 
 
 /*
@@ -2144,27 +2144,27 @@ int TA_CDLPIERCING_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLRICKSHAWMAN( int    startIdx,
-                              int    endIdx,
-                              const double inOpen[],
-                              const double inHigh[],
-                              const double inLow[],
-                              const double inClose[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN( int    startIdx,
+                                         int    endIdx,
+                                                    const double inOpen[],
+                                                    const double inHigh[],
+                                                    const double inLow[],
+                                                    const double inClose[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-TA_RetCode TA_S_CDLRICKSHAWMAN( int    startIdx,
-                                int    endIdx,
-                                const float  inOpen[],
-                                const float  inHigh[],
-                                const float  inLow[],
-                                const float  inClose[],
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLRICKSHAWMAN( int    startIdx,
+                                           int    endIdx,
+                                                      const float  inOpen[],
+                                                      const float  inHigh[],
+                                                      const float  inLow[],
+                                                      const float  inClose[],
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-int TA_CDLRICKSHAWMAN_Lookback( void );
+TA_LIB_API int TA_CDLRICKSHAWMAN_Lookback( void );
 
 
 /*
@@ -2174,27 +2174,27 @@ int TA_CDLRICKSHAWMAN_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLRISEFALL3METHODS( int    startIdx,
-                                   int    endIdx,
-                                   const double inOpen[],
-                                   const double inHigh[],
-                                   const double inLow[],
-                                   const double inClose[],
-                                   int          *outBegIdx,
-                                   int          *outNBElement,
-                                   int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS( int    startIdx,
+                                              int    endIdx,
+                                                         const double inOpen[],
+                                                         const double inHigh[],
+                                                         const double inLow[],
+                                                         const double inClose[],
+                                                         int          *outBegIdx,
+                                                         int          *outNBElement,
+                                                         int           outInteger[] );
 
-TA_RetCode TA_S_CDLRISEFALL3METHODS( int    startIdx,
-                                     int    endIdx,
-                                     const float  inOpen[],
-                                     const float  inHigh[],
-                                     const float  inLow[],
-                                     const float  inClose[],
-                                     int          *outBegIdx,
-                                     int          *outNBElement,
-                                     int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLRISEFALL3METHODS( int    startIdx,
+                                                int    endIdx,
+                                                           const float  inOpen[],
+                                                           const float  inHigh[],
+                                                           const float  inLow[],
+                                                           const float  inClose[],
+                                                           int          *outBegIdx,
+                                                           int          *outNBElement,
+                                                           int           outInteger[] );
 
-int TA_CDLRISEFALL3METHODS_Lookback( void );
+TA_LIB_API int TA_CDLRISEFALL3METHODS_Lookback( void );
 
 
 /*
@@ -2204,27 +2204,27 @@ int TA_CDLRISEFALL3METHODS_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLSEPARATINGLINES( int    startIdx,
-                                  int    endIdx,
-                                  const double inOpen[],
-                                  const double inHigh[],
-                                  const double inLow[],
-                                  const double inClose[],
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES( int    startIdx,
+                                             int    endIdx,
+                                                        const double inOpen[],
+                                                        const double inHigh[],
+                                                        const double inLow[],
+                                                        const double inClose[],
+                                                        int          *outBegIdx,
+                                                        int          *outNBElement,
+                                                        int           outInteger[] );
 
-TA_RetCode TA_S_CDLSEPARATINGLINES( int    startIdx,
-                                    int    endIdx,
-                                    const float  inOpen[],
-                                    const float  inHigh[],
-                                    const float  inLow[],
-                                    const float  inClose[],
-                                    int          *outBegIdx,
-                                    int          *outNBElement,
-                                    int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLSEPARATINGLINES( int    startIdx,
+                                               int    endIdx,
+                                                          const float  inOpen[],
+                                                          const float  inHigh[],
+                                                          const float  inLow[],
+                                                          const float  inClose[],
+                                                          int          *outBegIdx,
+                                                          int          *outNBElement,
+                                                          int           outInteger[] );
 
-int TA_CDLSEPARATINGLINES_Lookback( void );
+TA_LIB_API int TA_CDLSEPARATINGLINES_Lookback( void );
 
 
 /*
@@ -2234,27 +2234,27 @@ int TA_CDLSEPARATINGLINES_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLSHOOTINGSTAR( int    startIdx,
-                               int    endIdx,
-                               const double inOpen[],
-                               const double inHigh[],
-                               const double inLow[],
-                               const double inClose[],
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR( int    startIdx,
+                                          int    endIdx,
+                                                     const double inOpen[],
+                                                     const double inHigh[],
+                                                     const double inLow[],
+                                                     const double inClose[],
+                                                     int          *outBegIdx,
+                                                     int          *outNBElement,
+                                                     int           outInteger[] );
 
-TA_RetCode TA_S_CDLSHOOTINGSTAR( int    startIdx,
-                                 int    endIdx,
-                                 const float  inOpen[],
-                                 const float  inHigh[],
-                                 const float  inLow[],
-                                 const float  inClose[],
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLSHOOTINGSTAR( int    startIdx,
+                                            int    endIdx,
+                                                       const float  inOpen[],
+                                                       const float  inHigh[],
+                                                       const float  inLow[],
+                                                       const float  inClose[],
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       int           outInteger[] );
 
-int TA_CDLSHOOTINGSTAR_Lookback( void );
+TA_LIB_API int TA_CDLSHOOTINGSTAR_Lookback( void );
 
 
 /*
@@ -2264,27 +2264,27 @@ int TA_CDLSHOOTINGSTAR_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLSHORTLINE( int    startIdx,
-                            int    endIdx,
-                            const double inOpen[],
-                            const double inHigh[],
-                            const double inLow[],
-                            const double inClose[],
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLSHORTLINE( int    startIdx,
+                                       int    endIdx,
+                                                  const double inOpen[],
+                                                  const double inHigh[],
+                                                  const double inLow[],
+                                                  const double inClose[],
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  int           outInteger[] );
 
-TA_RetCode TA_S_CDLSHORTLINE( int    startIdx,
-                              int    endIdx,
-                              const float  inOpen[],
-                              const float  inHigh[],
-                              const float  inLow[],
-                              const float  inClose[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLSHORTLINE( int    startIdx,
+                                         int    endIdx,
+                                                    const float  inOpen[],
+                                                    const float  inHigh[],
+                                                    const float  inLow[],
+                                                    const float  inClose[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-int TA_CDLSHORTLINE_Lookback( void );
+TA_LIB_API int TA_CDLSHORTLINE_Lookback( void );
 
 
 /*
@@ -2294,27 +2294,27 @@ int TA_CDLSHORTLINE_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLSPINNINGTOP( int    startIdx,
-                              int    endIdx,
-                              const double inOpen[],
-                              const double inHigh[],
-                              const double inLow[],
-                              const double inClose[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP( int    startIdx,
+                                         int    endIdx,
+                                                    const double inOpen[],
+                                                    const double inHigh[],
+                                                    const double inLow[],
+                                                    const double inClose[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-TA_RetCode TA_S_CDLSPINNINGTOP( int    startIdx,
-                                int    endIdx,
-                                const float  inOpen[],
-                                const float  inHigh[],
-                                const float  inLow[],
-                                const float  inClose[],
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLSPINNINGTOP( int    startIdx,
+                                           int    endIdx,
+                                                      const float  inOpen[],
+                                                      const float  inHigh[],
+                                                      const float  inLow[],
+                                                      const float  inClose[],
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-int TA_CDLSPINNINGTOP_Lookback( void );
+TA_LIB_API int TA_CDLSPINNINGTOP_Lookback( void );
 
 
 /*
@@ -2324,27 +2324,27 @@ int TA_CDLSPINNINGTOP_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLSTALLEDPATTERN( int    startIdx,
-                                 int    endIdx,
-                                 const double inOpen[],
-                                 const double inHigh[],
-                                 const double inLow[],
-                                 const double inClose[],
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN( int    startIdx,
+                                            int    endIdx,
+                                                       const double inOpen[],
+                                                       const double inHigh[],
+                                                       const double inLow[],
+                                                       const double inClose[],
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       int           outInteger[] );
 
-TA_RetCode TA_S_CDLSTALLEDPATTERN( int    startIdx,
-                                   int    endIdx,
-                                   const float  inOpen[],
-                                   const float  inHigh[],
-                                   const float  inLow[],
-                                   const float  inClose[],
-                                   int          *outBegIdx,
-                                   int          *outNBElement,
-                                   int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLSTALLEDPATTERN( int    startIdx,
+                                              int    endIdx,
+                                                         const float  inOpen[],
+                                                         const float  inHigh[],
+                                                         const float  inLow[],
+                                                         const float  inClose[],
+                                                         int          *outBegIdx,
+                                                         int          *outNBElement,
+                                                         int           outInteger[] );
 
-int TA_CDLSTALLEDPATTERN_Lookback( void );
+TA_LIB_API int TA_CDLSTALLEDPATTERN_Lookback( void );
 
 
 /*
@@ -2354,27 +2354,27 @@ int TA_CDLSTALLEDPATTERN_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLSTICKSANDWICH( int    startIdx,
-                                int    endIdx,
-                                const double inOpen[],
-                                const double inHigh[],
-                                const double inLow[],
-                                const double inClose[],
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH( int    startIdx,
+                                           int    endIdx,
+                                                      const double inOpen[],
+                                                      const double inHigh[],
+                                                      const double inLow[],
+                                                      const double inClose[],
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      int           outInteger[] );
 
-TA_RetCode TA_S_CDLSTICKSANDWICH( int    startIdx,
-                                  int    endIdx,
-                                  const float  inOpen[],
-                                  const float  inHigh[],
-                                  const float  inLow[],
-                                  const float  inClose[],
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLSTICKSANDWICH( int    startIdx,
+                                             int    endIdx,
+                                                        const float  inOpen[],
+                                                        const float  inHigh[],
+                                                        const float  inLow[],
+                                                        const float  inClose[],
+                                                        int          *outBegIdx,
+                                                        int          *outNBElement,
+                                                        int           outInteger[] );
 
-int TA_CDLSTICKSANDWICH_Lookback( void );
+TA_LIB_API int TA_CDLSTICKSANDWICH_Lookback( void );
 
 
 /*
@@ -2384,27 +2384,27 @@ int TA_CDLSTICKSANDWICH_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLTAKURI( int    startIdx,
-                         int    endIdx,
-                         const double inOpen[],
-                         const double inHigh[],
-                         const double inLow[],
-                         const double inClose[],
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLTAKURI( int    startIdx,
+                                    int    endIdx,
+                                               const double inOpen[],
+                                               const double inHigh[],
+                                               const double inLow[],
+                                               const double inClose[],
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               int           outInteger[] );
 
-TA_RetCode TA_S_CDLTAKURI( int    startIdx,
-                           int    endIdx,
-                           const float  inOpen[],
-                           const float  inHigh[],
-                           const float  inLow[],
-                           const float  inClose[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLTAKURI( int    startIdx,
+                                      int    endIdx,
+                                                 const float  inOpen[],
+                                                 const float  inHigh[],
+                                                 const float  inLow[],
+                                                 const float  inClose[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outInteger[] );
 
-int TA_CDLTAKURI_Lookback( void );
+TA_LIB_API int TA_CDLTAKURI_Lookback( void );
 
 
 /*
@@ -2414,27 +2414,27 @@ int TA_CDLTAKURI_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLTASUKIGAP( int    startIdx,
-                            int    endIdx,
-                            const double inOpen[],
-                            const double inHigh[],
-                            const double inLow[],
-                            const double inClose[],
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLTASUKIGAP( int    startIdx,
+                                       int    endIdx,
+                                                  const double inOpen[],
+                                                  const double inHigh[],
+                                                  const double inLow[],
+                                                  const double inClose[],
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  int           outInteger[] );
 
-TA_RetCode TA_S_CDLTASUKIGAP( int    startIdx,
-                              int    endIdx,
-                              const float  inOpen[],
-                              const float  inHigh[],
-                              const float  inLow[],
-                              const float  inClose[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLTASUKIGAP( int    startIdx,
+                                         int    endIdx,
+                                                    const float  inOpen[],
+                                                    const float  inHigh[],
+                                                    const float  inLow[],
+                                                    const float  inClose[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-int TA_CDLTASUKIGAP_Lookback( void );
+TA_LIB_API int TA_CDLTASUKIGAP_Lookback( void );
 
 
 /*
@@ -2444,27 +2444,27 @@ int TA_CDLTASUKIGAP_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLTHRUSTING( int    startIdx,
-                            int    endIdx,
-                            const double inOpen[],
-                            const double inHigh[],
-                            const double inLow[],
-                            const double inClose[],
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLTHRUSTING( int    startIdx,
+                                       int    endIdx,
+                                                  const double inOpen[],
+                                                  const double inHigh[],
+                                                  const double inLow[],
+                                                  const double inClose[],
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  int           outInteger[] );
 
-TA_RetCode TA_S_CDLTHRUSTING( int    startIdx,
-                              int    endIdx,
-                              const float  inOpen[],
-                              const float  inHigh[],
-                              const float  inLow[],
-                              const float  inClose[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLTHRUSTING( int    startIdx,
+                                         int    endIdx,
+                                                    const float  inOpen[],
+                                                    const float  inHigh[],
+                                                    const float  inLow[],
+                                                    const float  inClose[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-int TA_CDLTHRUSTING_Lookback( void );
+TA_LIB_API int TA_CDLTHRUSTING_Lookback( void );
 
 
 /*
@@ -2474,27 +2474,27 @@ int TA_CDLTHRUSTING_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLTRISTAR( int    startIdx,
-                          int    endIdx,
-                          const double inOpen[],
-                          const double inHigh[],
-                          const double inLow[],
-                          const double inClose[],
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLTRISTAR( int    startIdx,
+                                     int    endIdx,
+                                                const double inOpen[],
+                                                const double inHigh[],
+                                                const double inLow[],
+                                                const double inClose[],
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                int           outInteger[] );
 
-TA_RetCode TA_S_CDLTRISTAR( int    startIdx,
-                            int    endIdx,
-                            const float  inOpen[],
-                            const float  inHigh[],
-                            const float  inLow[],
-                            const float  inClose[],
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLTRISTAR( int    startIdx,
+                                       int    endIdx,
+                                                  const float  inOpen[],
+                                                  const float  inHigh[],
+                                                  const float  inLow[],
+                                                  const float  inClose[],
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  int           outInteger[] );
 
-int TA_CDLTRISTAR_Lookback( void );
+TA_LIB_API int TA_CDLTRISTAR_Lookback( void );
 
 
 /*
@@ -2504,27 +2504,27 @@ int TA_CDLTRISTAR_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLUNIQUE3RIVER( int    startIdx,
-                               int    endIdx,
-                               const double inOpen[],
-                               const double inHigh[],
-                               const double inLow[],
-                               const double inClose[],
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER( int    startIdx,
+                                          int    endIdx,
+                                                     const double inOpen[],
+                                                     const double inHigh[],
+                                                     const double inLow[],
+                                                     const double inClose[],
+                                                     int          *outBegIdx,
+                                                     int          *outNBElement,
+                                                     int           outInteger[] );
 
-TA_RetCode TA_S_CDLUNIQUE3RIVER( int    startIdx,
-                                 int    endIdx,
-                                 const float  inOpen[],
-                                 const float  inHigh[],
-                                 const float  inLow[],
-                                 const float  inClose[],
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLUNIQUE3RIVER( int    startIdx,
+                                            int    endIdx,
+                                                       const float  inOpen[],
+                                                       const float  inHigh[],
+                                                       const float  inLow[],
+                                                       const float  inClose[],
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       int           outInteger[] );
 
-int TA_CDLUNIQUE3RIVER_Lookback( void );
+TA_LIB_API int TA_CDLUNIQUE3RIVER_Lookback( void );
 
 
 /*
@@ -2534,27 +2534,27 @@ int TA_CDLUNIQUE3RIVER_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLUPSIDEGAP2CROWS( int    startIdx,
-                                  int    endIdx,
-                                  const double inOpen[],
-                                  const double inHigh[],
-                                  const double inLow[],
-                                  const double inClose[],
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS( int    startIdx,
+                                             int    endIdx,
+                                                        const double inOpen[],
+                                                        const double inHigh[],
+                                                        const double inLow[],
+                                                        const double inClose[],
+                                                        int          *outBegIdx,
+                                                        int          *outNBElement,
+                                                        int           outInteger[] );
 
-TA_RetCode TA_S_CDLUPSIDEGAP2CROWS( int    startIdx,
-                                    int    endIdx,
-                                    const float  inOpen[],
-                                    const float  inHigh[],
-                                    const float  inLow[],
-                                    const float  inClose[],
-                                    int          *outBegIdx,
-                                    int          *outNBElement,
-                                    int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLUPSIDEGAP2CROWS( int    startIdx,
+                                               int    endIdx,
+                                                          const float  inOpen[],
+                                                          const float  inHigh[],
+                                                          const float  inLow[],
+                                                          const float  inClose[],
+                                                          int          *outBegIdx,
+                                                          int          *outNBElement,
+                                                          int           outInteger[] );
 
-int TA_CDLUPSIDEGAP2CROWS_Lookback( void );
+TA_LIB_API int TA_CDLUPSIDEGAP2CROWS_Lookback( void );
 
 
 /*
@@ -2564,27 +2564,27 @@ int TA_CDLUPSIDEGAP2CROWS_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_CDLXSIDEGAP3METHODS( int    startIdx,
-                                   int    endIdx,
-                                   const double inOpen[],
-                                   const double inHigh[],
-                                   const double inLow[],
-                                   const double inClose[],
-                                   int          *outBegIdx,
-                                   int          *outNBElement,
-                                   int           outInteger[] );
+TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS( int    startIdx,
+                                              int    endIdx,
+                                                         const double inOpen[],
+                                                         const double inHigh[],
+                                                         const double inLow[],
+                                                         const double inClose[],
+                                                         int          *outBegIdx,
+                                                         int          *outNBElement,
+                                                         int           outInteger[] );
 
-TA_RetCode TA_S_CDLXSIDEGAP3METHODS( int    startIdx,
-                                     int    endIdx,
-                                     const float  inOpen[],
-                                     const float  inHigh[],
-                                     const float  inLow[],
-                                     const float  inClose[],
-                                     int          *outBegIdx,
-                                     int          *outNBElement,
-                                     int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_CDLXSIDEGAP3METHODS( int    startIdx,
+                                                int    endIdx,
+                                                           const float  inOpen[],
+                                                           const float  inHigh[],
+                                                           const float  inLow[],
+                                                           const float  inClose[],
+                                                           int          *outBegIdx,
+                                                           int          *outNBElement,
+                                                           int           outInteger[] );
 
-int TA_CDLXSIDEGAP3METHODS_Lookback( void );
+TA_LIB_API int TA_CDLXSIDEGAP3METHODS_Lookback( void );
 
 
 /*
@@ -2594,21 +2594,21 @@ int TA_CDLXSIDEGAP3METHODS_Lookback( void );
  * Output = double
  * 
  */
-TA_RetCode TA_CEIL( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_CEIL( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_CEIL( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_CEIL( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_CEIL_Lookback( void );
+TA_LIB_API int TA_CEIL_Lookback( void );
 
 
 /*
@@ -2624,23 +2624,23 @@ int TA_CEIL_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_CMO( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_CMO( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_CMO( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_CMO_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_CMO_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -2656,25 +2656,25 @@ int TA_CMO_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_CORREL( int    startIdx,
-                      int    endIdx,
-                      const double inReal0[],
-                      const double inReal1[],
-                      int           optInTimePeriod, /* From 1 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_CORREL( int    startIdx,
+                                 int    endIdx,
+                                            const double inReal0[],
+                                            const double inReal1[],
+                                            int           optInTimePeriod, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-TA_RetCode TA_S_CORREL( int    startIdx,
-                        int    endIdx,
-                        const float  inReal0[],
-                        const float  inReal1[],
-                        int           optInTimePeriod, /* From 1 to 100000 */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_CORREL( int    startIdx,
+                                   int    endIdx,
+                                              const float  inReal0[],
+                                              const float  inReal1[],
+                                              int           optInTimePeriod, /* From 1 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-int TA_CORREL_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_CORREL_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -2684,21 +2684,21 @@ int TA_CORREL_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_COS( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_COS( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_COS( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_COS( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_COS_Lookback( void );
+TA_LIB_API int TA_COS_Lookback( void );
 
 
 /*
@@ -2708,21 +2708,21 @@ int TA_COS_Lookback( void );
  * Output = double
  * 
  */
-TA_RetCode TA_COSH( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_COSH( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_COSH( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_COSH( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_COSH_Lookback( void );
+TA_LIB_API int TA_COSH_Lookback( void );
 
 
 /*
@@ -2738,23 +2738,23 @@ int TA_COSH_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_DEMA( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int           optInTimePeriod, /* From 2 to 100000 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_DEMA( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_DEMA( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int           optInTimePeriod, /* From 2 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_DEMA( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_DEMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_DEMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -2764,23 +2764,23 @@ int TA_DEMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_DIV( int    startIdx,
-                   int    endIdx,
-                   const double inReal0[],
-                   const double inReal1[],
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_DIV( int    startIdx,
+                              int    endIdx,
+                                         const double inReal0[],
+                                         const double inReal1[],
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_DIV( int    startIdx,
-                     int    endIdx,
-                     const float  inReal0[],
-                     const float  inReal1[],
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_DIV( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal0[],
+                                           const float  inReal1[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_DIV_Lookback( void );
+TA_LIB_API int TA_DIV_Lookback( void );
 
 
 /*
@@ -2796,27 +2796,27 @@ int TA_DIV_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_DX( int    startIdx,
-                  int    endIdx,
-                  const double inHigh[],
-                  const double inLow[],
-                  const double inClose[],
-                  int           optInTimePeriod, /* From 2 to 100000 */
-                  int          *outBegIdx,
-                  int          *outNBElement,
-                  double        outReal[] );
+TA_LIB_API TA_RetCode TA_DX( int    startIdx,
+                             int    endIdx,
+                                        const double inHigh[],
+                                        const double inLow[],
+                                        const double inClose[],
+                                        int           optInTimePeriod, /* From 2 to 100000 */
+                                        int          *outBegIdx,
+                                        int          *outNBElement,
+                                        double        outReal[] );
 
-TA_RetCode TA_S_DX( int    startIdx,
-                    int    endIdx,
-                    const float  inHigh[],
-                    const float  inLow[],
-                    const float  inClose[],
-                    int           optInTimePeriod, /* From 2 to 100000 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_DX( int    startIdx,
+                               int    endIdx,
+                                          const float  inHigh[],
+                                          const float  inLow[],
+                                          const float  inClose[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-int TA_DX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_DX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -2832,23 +2832,23 @@ int TA_DX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_EMA( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_EMA( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_EMA( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_EMA( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_EMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_EMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -2858,21 +2858,21 @@ int TA_EMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_EXP( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_EXP( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_EXP( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_EXP( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_EXP_Lookback( void );
+TA_LIB_API int TA_EXP_Lookback( void );
 
 
 /*
@@ -2882,21 +2882,21 @@ int TA_EXP_Lookback( void );
  * Output = double
  * 
  */
-TA_RetCode TA_FLOOR( int    startIdx,
-                     int    endIdx,
-                     const double inReal[],
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_FLOOR( int    startIdx,
+                                int    endIdx,
+                                           const double inReal[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-TA_RetCode TA_S_FLOOR( int    startIdx,
-                       int    endIdx,
-                       const float  inReal[],
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_FLOOR( int    startIdx,
+                                  int    endIdx,
+                                             const float  inReal[],
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outReal[] );
 
-int TA_FLOOR_Lookback( void );
+TA_LIB_API int TA_FLOOR_Lookback( void );
 
 
 /*
@@ -2906,21 +2906,21 @@ int TA_FLOOR_Lookback( void );
  * Output = double
  * 
  */
-TA_RetCode TA_HT_DCPERIOD( int    startIdx,
-                           int    endIdx,
-                           const double inReal[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           double        outReal[] );
+TA_LIB_API TA_RetCode TA_HT_DCPERIOD( int    startIdx,
+                                      int    endIdx,
+                                                 const double inReal[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 double        outReal[] );
 
-TA_RetCode TA_S_HT_DCPERIOD( int    startIdx,
-                             int    endIdx,
-                             const float  inReal[],
-                             int          *outBegIdx,
-                             int          *outNBElement,
-                             double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_HT_DCPERIOD( int    startIdx,
+                                        int    endIdx,
+                                                   const float  inReal[],
+                                                   int          *outBegIdx,
+                                                   int          *outNBElement,
+                                                   double        outReal[] );
 
-int TA_HT_DCPERIOD_Lookback( void );
+TA_LIB_API int TA_HT_DCPERIOD_Lookback( void );
 
 
 /*
@@ -2930,21 +2930,21 @@ int TA_HT_DCPERIOD_Lookback( void );
  * Output = double
  * 
  */
-TA_RetCode TA_HT_DCPHASE( int    startIdx,
-                          int    endIdx,
-                          const double inReal[],
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          double        outReal[] );
+TA_LIB_API TA_RetCode TA_HT_DCPHASE( int    startIdx,
+                                     int    endIdx,
+                                                const double inReal[],
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
 
-TA_RetCode TA_S_HT_DCPHASE( int    startIdx,
-                            int    endIdx,
-                            const float  inReal[],
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_HT_DCPHASE( int    startIdx,
+                                       int    endIdx,
+                                                  const float  inReal[],
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  double        outReal[] );
 
-int TA_HT_DCPHASE_Lookback( void );
+TA_LIB_API int TA_HT_DCPHASE_Lookback( void );
 
 
 /*
@@ -2954,23 +2954,23 @@ int TA_HT_DCPHASE_Lookback( void );
  * Output = double, double
  * 
  */
-TA_RetCode TA_HT_PHASOR( int    startIdx,
-                         int    endIdx,
-                         const double inReal[],
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         double        outInPhase[],
-                         double        outQuadrature[] );
+TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
+                                    int    endIdx,
+                                               const double inReal[],
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outInPhase[],
+                                               double        outQuadrature[] );
 
-TA_RetCode TA_S_HT_PHASOR( int    startIdx,
-                           int    endIdx,
-                           const float  inReal[],
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           double        outInPhase[],
-                           double        outQuadrature[] );
+TA_LIB_API TA_RetCode TA_S_HT_PHASOR( int    startIdx,
+                                      int    endIdx,
+                                                 const float  inReal[],
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 double        outInPhase[],
+                                                 double        outQuadrature[] );
 
-int TA_HT_PHASOR_Lookback( void );
+TA_LIB_API int TA_HT_PHASOR_Lookback( void );
 
 
 /*
@@ -2980,23 +2980,23 @@ int TA_HT_PHASOR_Lookback( void );
  * Output = double, double
  * 
  */
-TA_RetCode TA_HT_SINE( int    startIdx,
-                       int    endIdx,
-                       const double inReal[],
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outSine[],
-                       double        outLeadSine[] );
+TA_LIB_API TA_RetCode TA_HT_SINE( int    startIdx,
+                                  int    endIdx,
+                                             const double inReal[],
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outSine[],
+                                             double        outLeadSine[] );
 
-TA_RetCode TA_S_HT_SINE( int    startIdx,
-                         int    endIdx,
-                         const float  inReal[],
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         double        outSine[],
-                         double        outLeadSine[] );
+TA_LIB_API TA_RetCode TA_S_HT_SINE( int    startIdx,
+                                    int    endIdx,
+                                               const float  inReal[],
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outSine[],
+                                               double        outLeadSine[] );
 
-int TA_HT_SINE_Lookback( void );
+TA_LIB_API int TA_HT_SINE_Lookback( void );
 
 
 /*
@@ -3006,21 +3006,21 @@ int TA_HT_SINE_Lookback( void );
  * Output = double
  * 
  */
-TA_RetCode TA_HT_TRENDLINE( int    startIdx,
-                            int    endIdx,
-                            const double inReal[],
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            double        outReal[] );
+TA_LIB_API TA_RetCode TA_HT_TRENDLINE( int    startIdx,
+                                       int    endIdx,
+                                                  const double inReal[],
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  double        outReal[] );
 
-TA_RetCode TA_S_HT_TRENDLINE( int    startIdx,
-                              int    endIdx,
-                              const float  inReal[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_HT_TRENDLINE( int    startIdx,
+                                         int    endIdx,
+                                                    const float  inReal[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    double        outReal[] );
 
-int TA_HT_TRENDLINE_Lookback( void );
+TA_LIB_API int TA_HT_TRENDLINE_Lookback( void );
 
 
 /*
@@ -3030,21 +3030,21 @@ int TA_HT_TRENDLINE_Lookback( void );
  * Output = int
  * 
  */
-TA_RetCode TA_HT_TRENDMODE( int    startIdx,
-                            int    endIdx,
-                            const double inReal[],
-                            int          *outBegIdx,
-                            int          *outNBElement,
-                            int           outInteger[] );
+TA_LIB_API TA_RetCode TA_HT_TRENDMODE( int    startIdx,
+                                       int    endIdx,
+                                                  const double inReal[],
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  int           outInteger[] );
 
-TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
-                              int    endIdx,
-                              const float  inReal[],
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
+                                         int    endIdx,
+                                                    const float  inReal[],
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    int           outInteger[] );
 
-int TA_HT_TRENDMODE_Lookback( void );
+TA_LIB_API int TA_HT_TRENDMODE_Lookback( void );
 
 
 /*
@@ -3060,25 +3060,25 @@ int TA_HT_TRENDMODE_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_IMI( int    startIdx,
-                   int    endIdx,
-                   const double inOpen[],
-                   const double inClose[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_IMI( int    startIdx,
+                              int    endIdx,
+                                         const double inOpen[],
+                                         const double inClose[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_IMI( int    startIdx,
-                     int    endIdx,
-                     const float  inOpen[],
-                     const float  inClose[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_IMI( int    startIdx,
+                                int    endIdx,
+                                           const float  inOpen[],
+                                           const float  inClose[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_IMI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_IMI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3094,23 +3094,23 @@ int TA_IMI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_KAMA( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int           optInTimePeriod, /* From 2 to 100000 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_KAMA( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int           optInTimePeriod, /* From 2 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_KAMA( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_KAMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_KAMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3126,23 +3126,23 @@ int TA_KAMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_LINEARREG( int    startIdx,
-                         int    endIdx,
-                         const double inReal[],
-                         int           optInTimePeriod, /* From 2 to 100000 */
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         double        outReal[] );
+TA_LIB_API TA_RetCode TA_LINEARREG( int    startIdx,
+                                    int    endIdx,
+                                               const double inReal[],
+                                               int           optInTimePeriod, /* From 2 to 100000 */
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outReal[] );
 
-TA_RetCode TA_S_LINEARREG( int    startIdx,
-                           int    endIdx,
-                           const float  inReal[],
-                           int           optInTimePeriod, /* From 2 to 100000 */
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_LINEARREG( int    startIdx,
+                                      int    endIdx,
+                                                 const float  inReal[],
+                                                 int           optInTimePeriod, /* From 2 to 100000 */
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 double        outReal[] );
 
-int TA_LINEARREG_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_LINEARREG_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3158,23 +3158,23 @@ int TA_LINEARREG_Lookback( int           optInTimePeriod );  /* From 2 to 100000
  * 
  * 
  */
-TA_RetCode TA_LINEARREG_ANGLE( int    startIdx,
-                               int    endIdx,
-                               const double inReal[],
-                               int           optInTimePeriod, /* From 2 to 100000 */
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] );
+TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE( int    startIdx,
+                                          int    endIdx,
+                                                     const double inReal[],
+                                                     int           optInTimePeriod, /* From 2 to 100000 */
+                                                     int          *outBegIdx,
+                                                     int          *outNBElement,
+                                                     double        outReal[] );
 
-TA_RetCode TA_S_LINEARREG_ANGLE( int    startIdx,
-                                 int    endIdx,
-                                 const float  inReal[],
-                                 int           optInTimePeriod, /* From 2 to 100000 */
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_LINEARREG_ANGLE( int    startIdx,
+                                            int    endIdx,
+                                                       const float  inReal[],
+                                                       int           optInTimePeriod, /* From 2 to 100000 */
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       double        outReal[] );
 
-int TA_LINEARREG_ANGLE_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_LINEARREG_ANGLE_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3190,23 +3190,23 @@ int TA_LINEARREG_ANGLE_Lookback( int           optInTimePeriod );  /* From 2 to 
  * 
  * 
  */
-TA_RetCode TA_LINEARREG_INTERCEPT( int    startIdx,
-                                   int    endIdx,
-                                   const double inReal[],
-                                   int           optInTimePeriod, /* From 2 to 100000 */
-                                   int          *outBegIdx,
-                                   int          *outNBElement,
-                                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT( int    startIdx,
+                                              int    endIdx,
+                                                         const double inReal[],
+                                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                                         int          *outBegIdx,
+                                                         int          *outNBElement,
+                                                         double        outReal[] );
 
-TA_RetCode TA_S_LINEARREG_INTERCEPT( int    startIdx,
-                                     int    endIdx,
-                                     const float  inReal[],
-                                     int           optInTimePeriod, /* From 2 to 100000 */
-                                     int          *outBegIdx,
-                                     int          *outNBElement,
-                                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_LINEARREG_INTERCEPT( int    startIdx,
+                                                int    endIdx,
+                                                           const float  inReal[],
+                                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                                           int          *outBegIdx,
+                                                           int          *outNBElement,
+                                                           double        outReal[] );
 
-int TA_LINEARREG_INTERCEPT_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_LINEARREG_INTERCEPT_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3222,23 +3222,23 @@ int TA_LINEARREG_INTERCEPT_Lookback( int           optInTimePeriod );  /* From 2
  * 
  * 
  */
-TA_RetCode TA_LINEARREG_SLOPE( int    startIdx,
-                               int    endIdx,
-                               const double inReal[],
-                               int           optInTimePeriod, /* From 2 to 100000 */
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] );
+TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE( int    startIdx,
+                                          int    endIdx,
+                                                     const double inReal[],
+                                                     int           optInTimePeriod, /* From 2 to 100000 */
+                                                     int          *outBegIdx,
+                                                     int          *outNBElement,
+                                                     double        outReal[] );
 
-TA_RetCode TA_S_LINEARREG_SLOPE( int    startIdx,
-                                 int    endIdx,
-                                 const float  inReal[],
-                                 int           optInTimePeriod, /* From 2 to 100000 */
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_LINEARREG_SLOPE( int    startIdx,
+                                            int    endIdx,
+                                                       const float  inReal[],
+                                                       int           optInTimePeriod, /* From 2 to 100000 */
+                                                       int          *outBegIdx,
+                                                       int          *outNBElement,
+                                                       double        outReal[] );
 
-int TA_LINEARREG_SLOPE_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_LINEARREG_SLOPE_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3248,21 +3248,21 @@ int TA_LINEARREG_SLOPE_Lookback( int           optInTimePeriod );  /* From 2 to 
  * Output = double
  * 
  */
-TA_RetCode TA_LN( int    startIdx,
-                  int    endIdx,
-                  const double inReal[],
-                  int          *outBegIdx,
-                  int          *outNBElement,
-                  double        outReal[] );
+TA_LIB_API TA_RetCode TA_LN( int    startIdx,
+                             int    endIdx,
+                                        const double inReal[],
+                                        int          *outBegIdx,
+                                        int          *outNBElement,
+                                        double        outReal[] );
 
-TA_RetCode TA_S_LN( int    startIdx,
-                    int    endIdx,
-                    const float  inReal[],
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_LN( int    startIdx,
+                               int    endIdx,
+                                          const float  inReal[],
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-int TA_LN_Lookback( void );
+TA_LIB_API int TA_LN_Lookback( void );
 
 
 /*
@@ -3272,21 +3272,21 @@ int TA_LN_Lookback( void );
  * Output = double
  * 
  */
-TA_RetCode TA_LOG10( int    startIdx,
-                     int    endIdx,
-                     const double inReal[],
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_LOG10( int    startIdx,
+                                int    endIdx,
+                                           const double inReal[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-TA_RetCode TA_S_LOG10( int    startIdx,
-                       int    endIdx,
-                       const float  inReal[],
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_LOG10( int    startIdx,
+                                  int    endIdx,
+                                             const float  inReal[],
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outReal[] );
 
-int TA_LOG10_Lookback( void );
+TA_LIB_API int TA_LOG10_Lookback( void );
 
 
 /*
@@ -3305,26 +3305,26 @@ int TA_LOG10_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_MA( int    startIdx,
-                  int    endIdx,
-                  const double inReal[],
-                  int           optInTimePeriod, /* From 1 to 100000 */
-                  TA_MAType     optInMAType,
-                  int          *outBegIdx,
-                  int          *outNBElement,
-                  double        outReal[] );
+TA_LIB_API TA_RetCode TA_MA( int    startIdx,
+                             int    endIdx,
+                                        const double inReal[],
+                                        int           optInTimePeriod, /* From 1 to 100000 */
+                                        TA_MAType     optInMAType,
+                                        int          *outBegIdx,
+                                        int          *outNBElement,
+                                        double        outReal[] );
 
-TA_RetCode TA_S_MA( int    startIdx,
-                    int    endIdx,
-                    const float  inReal[],
-                    int           optInTimePeriod, /* From 1 to 100000 */
-                    TA_MAType     optInMAType,
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_MA( int    startIdx,
+                               int    endIdx,
+                                          const float  inReal[],
+                                          int           optInTimePeriod, /* From 1 to 100000 */
+                                          TA_MAType     optInMAType,
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-int TA_MA_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
-                  TA_MAType     optInMAType ); 
+TA_LIB_API int TA_MA_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
+                                        TA_MAType     optInMAType ); 
 
 /*
  * TA_MACD - Moving Average Convergence/Divergence
@@ -3345,33 +3345,33 @@ int TA_MA_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_MACD( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int           optInFastPeriod, /* From 2 to 100000 */
-                    int           optInSlowPeriod, /* From 2 to 100000 */
-                    int           optInSignalPeriod, /* From 1 to 100000 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outMACD[],
-                    double        outMACDSignal[],
-                    double        outMACDHist[] );
+TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int           optInFastPeriod, /* From 2 to 100000 */
+                                          int           optInSlowPeriod, /* From 2 to 100000 */
+                                          int           optInSignalPeriod, /* From 1 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outMACD[],
+                                          double        outMACDSignal[],
+                                          double        outMACDHist[] );
 
-TA_RetCode TA_S_MACD( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int           optInFastPeriod, /* From 2 to 100000 */
-                      int           optInSlowPeriod, /* From 2 to 100000 */
-                      int           optInSignalPeriod, /* From 1 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outMACD[],
-                      double        outMACDSignal[],
-                      double        outMACDHist[] );
+TA_LIB_API TA_RetCode TA_S_MACD( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int           optInFastPeriod, /* From 2 to 100000 */
+                                            int           optInSlowPeriod, /* From 2 to 100000 */
+                                            int           optInSignalPeriod, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outMACD[],
+                                            double        outMACDSignal[],
+                                            double        outMACDHist[] );
 
-int TA_MACD_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
-                    int           optInSlowPeriod, /* From 2 to 100000 */
-                    int           optInSignalPeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_MACD_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+                                          int           optInSlowPeriod, /* From 2 to 100000 */
+                                          int           optInSignalPeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -3402,42 +3402,42 @@ int TA_MACD_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_MACDEXT( int    startIdx,
-                       int    endIdx,
-                       const double inReal[],
-                       int           optInFastPeriod, /* From 2 to 100000 */
-                       TA_MAType     optInFastMAType,
-                       int           optInSlowPeriod, /* From 2 to 100000 */
-                       TA_MAType     optInSlowMAType,
-                       int           optInSignalPeriod, /* From 1 to 100000 */
-                       TA_MAType     optInSignalMAType,
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outMACD[],
-                       double        outMACDSignal[],
-                       double        outMACDHist[] );
+TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
+                                  int    endIdx,
+                                             const double inReal[],
+                                             int           optInFastPeriod, /* From 2 to 100000 */
+                                             TA_MAType     optInFastMAType,
+                                             int           optInSlowPeriod, /* From 2 to 100000 */
+                                             TA_MAType     optInSlowMAType,
+                                             int           optInSignalPeriod, /* From 1 to 100000 */
+                                             TA_MAType     optInSignalMAType,
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outMACD[],
+                                             double        outMACDSignal[],
+                                             double        outMACDHist[] );
 
-TA_RetCode TA_S_MACDEXT( int    startIdx,
-                         int    endIdx,
-                         const float  inReal[],
-                         int           optInFastPeriod, /* From 2 to 100000 */
-                         TA_MAType     optInFastMAType,
-                         int           optInSlowPeriod, /* From 2 to 100000 */
-                         TA_MAType     optInSlowMAType,
-                         int           optInSignalPeriod, /* From 1 to 100000 */
-                         TA_MAType     optInSignalMAType,
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         double        outMACD[],
-                         double        outMACDSignal[],
-                         double        outMACDHist[] );
+TA_LIB_API TA_RetCode TA_S_MACDEXT( int    startIdx,
+                                    int    endIdx,
+                                               const float  inReal[],
+                                               int           optInFastPeriod, /* From 2 to 100000 */
+                                               TA_MAType     optInFastMAType,
+                                               int           optInSlowPeriod, /* From 2 to 100000 */
+                                               TA_MAType     optInSlowMAType,
+                                               int           optInSignalPeriod, /* From 1 to 100000 */
+                                               TA_MAType     optInSignalMAType,
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outMACD[],
+                                               double        outMACDSignal[],
+                                               double        outMACDHist[] );
 
-int TA_MACDEXT_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
-                       TA_MAType     optInFastMAType,
-                       int           optInSlowPeriod, /* From 2 to 100000 */
-                       TA_MAType     optInSlowMAType,
-                       int           optInSignalPeriod, /* From 1 to 100000 */
-                       TA_MAType     optInSignalMAType ); 
+TA_LIB_API int TA_MACDEXT_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+                                             TA_MAType     optInFastMAType,
+                                             int           optInSlowPeriod, /* From 2 to 100000 */
+                                             TA_MAType     optInSlowMAType,
+                                             int           optInSignalPeriod, /* From 1 to 100000 */
+                                             TA_MAType     optInSignalMAType ); 
 
 /*
  * TA_MACDFIX - Moving Average Convergence/Divergence Fix 12/26
@@ -3452,27 +3452,27 @@ int TA_MACDEXT_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_MACDFIX( int    startIdx,
-                       int    endIdx,
-                       const double inReal[],
-                       int           optInSignalPeriod, /* From 1 to 100000 */
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outMACD[],
-                       double        outMACDSignal[],
-                       double        outMACDHist[] );
+TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
+                                  int    endIdx,
+                                             const double inReal[],
+                                             int           optInSignalPeriod, /* From 1 to 100000 */
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outMACD[],
+                                             double        outMACDSignal[],
+                                             double        outMACDHist[] );
 
-TA_RetCode TA_S_MACDFIX( int    startIdx,
-                         int    endIdx,
-                         const float  inReal[],
-                         int           optInSignalPeriod, /* From 1 to 100000 */
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         double        outMACD[],
-                         double        outMACDSignal[],
-                         double        outMACDHist[] );
+TA_LIB_API TA_RetCode TA_S_MACDFIX( int    startIdx,
+                                    int    endIdx,
+                                               const float  inReal[],
+                                               int           optInSignalPeriod, /* From 1 to 100000 */
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outMACD[],
+                                               double        outMACDSignal[],
+                                               double        outMACDHist[] );
 
-int TA_MACDFIX_Lookback( int           optInSignalPeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_MACDFIX_Lookback( int           optInSignalPeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -3491,28 +3491,28 @@ int TA_MACDFIX_Lookback( int           optInSignalPeriod );  /* From 1 to 100000
  * 
  * 
  */
-TA_RetCode TA_MAMA( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    double        optInFastLimit, /* From 0.01 to 0.99 */
-                    double        optInSlowLimit, /* From 0.01 to 0.99 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outMAMA[],
-                    double        outFAMA[] );
+TA_LIB_API TA_RetCode TA_MAMA( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          double        optInFastLimit, /* From 0.01 to 0.99 */
+                                          double        optInSlowLimit, /* From 0.01 to 0.99 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outMAMA[],
+                                          double        outFAMA[] );
 
-TA_RetCode TA_S_MAMA( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      double        optInFastLimit, /* From 0.01 to 0.99 */
-                      double        optInSlowLimit, /* From 0.01 to 0.99 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outMAMA[],
-                      double        outFAMA[] );
+TA_LIB_API TA_RetCode TA_S_MAMA( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            double        optInFastLimit, /* From 0.01 to 0.99 */
+                                            double        optInSlowLimit, /* From 0.01 to 0.99 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outMAMA[],
+                                            double        outFAMA[] );
 
-int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
-                    double        optInSlowLimit );  /* From 0.01 to 0.99 */
+TA_LIB_API int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
+                                          double        optInSlowLimit );  /* From 0.01 to 0.99 */
 
 
 /*
@@ -3534,31 +3534,31 @@ int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
  * 
  * 
  */
-TA_RetCode TA_MAVP( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    const double inPeriods[],
-                    int           optInMinPeriod, /* From 2 to 100000 */
-                    int           optInMaxPeriod, /* From 2 to 100000 */
-                    TA_MAType     optInMAType,
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          const double inPeriods[],
+                                          int           optInMinPeriod, /* From 2 to 100000 */
+                                          int           optInMaxPeriod, /* From 2 to 100000 */
+                                          TA_MAType     optInMAType,
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_MAVP( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      const float  inPeriods[],
-                      int           optInMinPeriod, /* From 2 to 100000 */
-                      int           optInMaxPeriod, /* From 2 to 100000 */
-                      TA_MAType     optInMAType,
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_MAVP( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            const float  inPeriods[],
+                                            int           optInMinPeriod, /* From 2 to 100000 */
+                                            int           optInMaxPeriod, /* From 2 to 100000 */
+                                            TA_MAType     optInMAType,
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_MAVP_Lookback( int           optInMinPeriod, /* From 2 to 100000 */
-                    int           optInMaxPeriod, /* From 2 to 100000 */
-                    TA_MAType     optInMAType ); 
+TA_LIB_API int TA_MAVP_Lookback( int           optInMinPeriod, /* From 2 to 100000 */
+                                          int           optInMaxPeriod, /* From 2 to 100000 */
+                                          TA_MAType     optInMAType ); 
 
 /*
  * TA_MAX - Highest value over a specified period
@@ -3573,23 +3573,23 @@ int TA_MAVP_Lookback( int           optInMinPeriod, /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_MAX( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_MAX( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_MAX( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_MAX( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_MAX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MAX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3605,23 +3605,23 @@ int TA_MAX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_MAXINDEX( int    startIdx,
-                        int    endIdx,
-                        const double inReal[],
-                        int           optInTimePeriod, /* From 2 to 100000 */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        int           outInteger[] );
+TA_LIB_API TA_RetCode TA_MAXINDEX( int    startIdx,
+                                   int    endIdx,
+                                              const double inReal[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              int           outInteger[] );
 
-TA_RetCode TA_S_MAXINDEX( int    startIdx,
-                          int    endIdx,
-                          const float  inReal[],
-                          int           optInTimePeriod, /* From 2 to 100000 */
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_MAXINDEX( int    startIdx,
+                                     int    endIdx,
+                                                const float  inReal[],
+                                                int           optInTimePeriod, /* From 2 to 100000 */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                int           outInteger[] );
 
-int TA_MAXINDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MAXINDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3631,23 +3631,23 @@ int TA_MAXINDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 
  * Output = double
  * 
  */
-TA_RetCode TA_MEDPRICE( int    startIdx,
-                        int    endIdx,
-                        const double inHigh[],
-                        const double inLow[],
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_MEDPRICE( int    startIdx,
+                                   int    endIdx,
+                                              const double inHigh[],
+                                              const double inLow[],
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-TA_RetCode TA_S_MEDPRICE( int    startIdx,
-                          int    endIdx,
-                          const float  inHigh[],
-                          const float  inLow[],
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_MEDPRICE( int    startIdx,
+                                     int    endIdx,
+                                                const float  inHigh[],
+                                                const float  inLow[],
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
 
-int TA_MEDPRICE_Lookback( void );
+TA_LIB_API int TA_MEDPRICE_Lookback( void );
 
 
 /*
@@ -3663,29 +3663,29 @@ int TA_MEDPRICE_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_MFI( int    startIdx,
-                   int    endIdx,
-                   const double inHigh[],
-                   const double inLow[],
-                   const double inClose[],
-                   const double inVolume[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
+                              int    endIdx,
+                                         const double inHigh[],
+                                         const double inLow[],
+                                         const double inClose[],
+                                         const double inVolume[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_MFI( int    startIdx,
-                     int    endIdx,
-                     const float  inHigh[],
-                     const float  inLow[],
-                     const float  inClose[],
-                     const float  inVolume[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_MFI( int    startIdx,
+                                int    endIdx,
+                                           const float  inHigh[],
+                                           const float  inLow[],
+                                           const float  inClose[],
+                                           const float  inVolume[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_MFI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MFI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3701,23 +3701,23 @@ int TA_MFI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_MIDPOINT( int    startIdx,
-                        int    endIdx,
-                        const double inReal[],
-                        int           optInTimePeriod, /* From 2 to 100000 */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_MIDPOINT( int    startIdx,
+                                   int    endIdx,
+                                              const double inReal[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-TA_RetCode TA_S_MIDPOINT( int    startIdx,
-                          int    endIdx,
-                          const float  inReal[],
-                          int           optInTimePeriod, /* From 2 to 100000 */
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_MIDPOINT( int    startIdx,
+                                     int    endIdx,
+                                                const float  inReal[],
+                                                int           optInTimePeriod, /* From 2 to 100000 */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
 
-int TA_MIDPOINT_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MIDPOINT_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3733,25 +3733,25 @@ int TA_MIDPOINT_Lookback( int           optInTimePeriod );  /* From 2 to 100000 
  * 
  * 
  */
-TA_RetCode TA_MIDPRICE( int    startIdx,
-                        int    endIdx,
-                        const double inHigh[],
-                        const double inLow[],
-                        int           optInTimePeriod, /* From 2 to 100000 */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_MIDPRICE( int    startIdx,
+                                   int    endIdx,
+                                              const double inHigh[],
+                                              const double inLow[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-TA_RetCode TA_S_MIDPRICE( int    startIdx,
-                          int    endIdx,
-                          const float  inHigh[],
-                          const float  inLow[],
-                          int           optInTimePeriod, /* From 2 to 100000 */
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_MIDPRICE( int    startIdx,
+                                     int    endIdx,
+                                                const float  inHigh[],
+                                                const float  inLow[],
+                                                int           optInTimePeriod, /* From 2 to 100000 */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
 
-int TA_MIDPRICE_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MIDPRICE_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3767,23 +3767,23 @@ int TA_MIDPRICE_Lookback( int           optInTimePeriod );  /* From 2 to 100000 
  * 
  * 
  */
-TA_RetCode TA_MIN( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_MIN( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_MIN( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_MIN_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MIN_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3799,23 +3799,23 @@ int TA_MIN_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_MININDEX( int    startIdx,
-                        int    endIdx,
-                        const double inReal[],
-                        int           optInTimePeriod, /* From 2 to 100000 */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        int           outInteger[] );
+TA_LIB_API TA_RetCode TA_MININDEX( int    startIdx,
+                                   int    endIdx,
+                                              const double inReal[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              int           outInteger[] );
 
-TA_RetCode TA_S_MININDEX( int    startIdx,
-                          int    endIdx,
-                          const float  inReal[],
-                          int           optInTimePeriod, /* From 2 to 100000 */
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          int           outInteger[] );
+TA_LIB_API TA_RetCode TA_S_MININDEX( int    startIdx,
+                                     int    endIdx,
+                                                const float  inReal[],
+                                                int           optInTimePeriod, /* From 2 to 100000 */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                int           outInteger[] );
 
-int TA_MININDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MININDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3831,25 +3831,25 @@ int TA_MININDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 
  * 
  * 
  */
-TA_RetCode TA_MINMAX( int    startIdx,
-                      int    endIdx,
-                      const double inReal[],
-                      int           optInTimePeriod, /* From 2 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outMin[],
-                      double        outMax[] );
+TA_LIB_API TA_RetCode TA_MINMAX( int    startIdx,
+                                 int    endIdx,
+                                            const double inReal[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outMin[],
+                                            double        outMax[] );
 
-TA_RetCode TA_S_MINMAX( int    startIdx,
-                        int    endIdx,
-                        const float  inReal[],
-                        int           optInTimePeriod, /* From 2 to 100000 */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outMin[],
-                        double        outMax[] );
+TA_LIB_API TA_RetCode TA_S_MINMAX( int    startIdx,
+                                   int    endIdx,
+                                              const float  inReal[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outMin[],
+                                              double        outMax[] );
 
-int TA_MINMAX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MINMAX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3865,25 +3865,25 @@ int TA_MINMAX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_MINMAXINDEX( int    startIdx,
-                           int    endIdx,
-                           const double inReal[],
-                           int           optInTimePeriod, /* From 2 to 100000 */
-                           int          *outBegIdx,
-                           int          *outNBElement,
-                           int           outMinIdx[],
-                           int           outMaxIdx[] );
+TA_LIB_API TA_RetCode TA_MINMAXINDEX( int    startIdx,
+                                      int    endIdx,
+                                                 const double inReal[],
+                                                 int           optInTimePeriod, /* From 2 to 100000 */
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 int           outMinIdx[],
+                                                 int           outMaxIdx[] );
 
-TA_RetCode TA_S_MINMAXINDEX( int    startIdx,
-                             int    endIdx,
-                             const float  inReal[],
-                             int           optInTimePeriod, /* From 2 to 100000 */
-                             int          *outBegIdx,
-                             int          *outNBElement,
-                             int           outMinIdx[],
-                             int           outMaxIdx[] );
+TA_LIB_API TA_RetCode TA_S_MINMAXINDEX( int    startIdx,
+                                        int    endIdx,
+                                                   const float  inReal[],
+                                                   int           optInTimePeriod, /* From 2 to 100000 */
+                                                   int          *outBegIdx,
+                                                   int          *outNBElement,
+                                                   int           outMinIdx[],
+                                                   int           outMaxIdx[] );
 
-int TA_MINMAXINDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MINMAXINDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -3899,27 +3899,27 @@ int TA_MINMAXINDEX_Lookback( int           optInTimePeriod );  /* From 2 to 1000
  * 
  * 
  */
-TA_RetCode TA_MINUS_DI( int    startIdx,
-                        int    endIdx,
-                        const double inHigh[],
-                        const double inLow[],
-                        const double inClose[],
-                        int           optInTimePeriod, /* From 1 to 100000 */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_MINUS_DI( int    startIdx,
+                                   int    endIdx,
+                                              const double inHigh[],
+                                              const double inLow[],
+                                              const double inClose[],
+                                              int           optInTimePeriod, /* From 1 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-TA_RetCode TA_S_MINUS_DI( int    startIdx,
-                          int    endIdx,
-                          const float  inHigh[],
-                          const float  inLow[],
-                          const float  inClose[],
-                          int           optInTimePeriod, /* From 1 to 100000 */
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_MINUS_DI( int    startIdx,
+                                     int    endIdx,
+                                                const float  inHigh[],
+                                                const float  inLow[],
+                                                const float  inClose[],
+                                                int           optInTimePeriod, /* From 1 to 100000 */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
 
-int TA_MINUS_DI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_MINUS_DI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -3935,25 +3935,25 @@ int TA_MINUS_DI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 
  * 
  * 
  */
-TA_RetCode TA_MINUS_DM( int    startIdx,
-                        int    endIdx,
-                        const double inHigh[],
-                        const double inLow[],
-                        int           optInTimePeriod, /* From 1 to 100000 */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_MINUS_DM( int    startIdx,
+                                   int    endIdx,
+                                              const double inHigh[],
+                                              const double inLow[],
+                                              int           optInTimePeriod, /* From 1 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-TA_RetCode TA_S_MINUS_DM( int    startIdx,
-                          int    endIdx,
-                          const float  inHigh[],
-                          const float  inLow[],
-                          int           optInTimePeriod, /* From 1 to 100000 */
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_MINUS_DM( int    startIdx,
+                                     int    endIdx,
+                                                const float  inHigh[],
+                                                const float  inLow[],
+                                                int           optInTimePeriod, /* From 1 to 100000 */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
 
-int TA_MINUS_DM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_MINUS_DM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -3969,23 +3969,23 @@ int TA_MINUS_DM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 
  * 
  * 
  */
-TA_RetCode TA_MOM( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInTimePeriod, /* From 1 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_MOM( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 1 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_MOM( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInTimePeriod, /* From 1 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_MOM( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 1 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_MOM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_MOM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -3995,23 +3995,23 @@ int TA_MOM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_MULT( int    startIdx,
-                    int    endIdx,
-                    const double inReal0[],
-                    const double inReal1[],
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_MULT( int    startIdx,
+                               int    endIdx,
+                                          const double inReal0[],
+                                          const double inReal1[],
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_MULT( int    startIdx,
-                      int    endIdx,
-                      const float  inReal0[],
-                      const float  inReal1[],
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_MULT( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal0[],
+                                            const float  inReal1[],
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_MULT_Lookback( void );
+TA_LIB_API int TA_MULT_Lookback( void );
 
 
 /*
@@ -4027,27 +4027,27 @@ int TA_MULT_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_NATR( int    startIdx,
-                    int    endIdx,
-                    const double inHigh[],
-                    const double inLow[],
-                    const double inClose[],
-                    int           optInTimePeriod, /* From 1 to 100000 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
+                               int    endIdx,
+                                          const double inHigh[],
+                                          const double inLow[],
+                                          const double inClose[],
+                                          int           optInTimePeriod, /* From 1 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_NATR( int    startIdx,
-                      int    endIdx,
-                      const float  inHigh[],
-                      const float  inLow[],
-                      const float  inClose[],
-                      int           optInTimePeriod, /* From 1 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_NATR( int    startIdx,
+                                 int    endIdx,
+                                            const float  inHigh[],
+                                            const float  inLow[],
+                                            const float  inClose[],
+                                            int           optInTimePeriod, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_NATR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_NATR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -4057,23 +4057,23 @@ int TA_NATR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_OBV( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   const double inVolume[],
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_OBV( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         const double inVolume[],
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_OBV( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     const float  inVolume[],
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_OBV( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           const float  inVolume[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_OBV_Lookback( void );
+TA_LIB_API int TA_OBV_Lookback( void );
 
 
 /*
@@ -4089,27 +4089,27 @@ int TA_OBV_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_PLUS_DI( int    startIdx,
-                       int    endIdx,
-                       const double inHigh[],
-                       const double inLow[],
-                       const double inClose[],
-                       int           optInTimePeriod, /* From 1 to 100000 */
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outReal[] );
+TA_LIB_API TA_RetCode TA_PLUS_DI( int    startIdx,
+                                  int    endIdx,
+                                             const double inHigh[],
+                                             const double inLow[],
+                                             const double inClose[],
+                                             int           optInTimePeriod, /* From 1 to 100000 */
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outReal[] );
 
-TA_RetCode TA_S_PLUS_DI( int    startIdx,
-                         int    endIdx,
-                         const float  inHigh[],
-                         const float  inLow[],
-                         const float  inClose[],
-                         int           optInTimePeriod, /* From 1 to 100000 */
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_PLUS_DI( int    startIdx,
+                                    int    endIdx,
+                                               const float  inHigh[],
+                                               const float  inLow[],
+                                               const float  inClose[],
+                                               int           optInTimePeriod, /* From 1 to 100000 */
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outReal[] );
 
-int TA_PLUS_DI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_PLUS_DI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -4125,25 +4125,25 @@ int TA_PLUS_DI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 *
  * 
  * 
  */
-TA_RetCode TA_PLUS_DM( int    startIdx,
-                       int    endIdx,
-                       const double inHigh[],
-                       const double inLow[],
-                       int           optInTimePeriod, /* From 1 to 100000 */
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outReal[] );
+TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
+                                  int    endIdx,
+                                             const double inHigh[],
+                                             const double inLow[],
+                                             int           optInTimePeriod, /* From 1 to 100000 */
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outReal[] );
 
-TA_RetCode TA_S_PLUS_DM( int    startIdx,
-                         int    endIdx,
-                         const float  inHigh[],
-                         const float  inLow[],
-                         int           optInTimePeriod, /* From 1 to 100000 */
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_PLUS_DM( int    startIdx,
+                                    int    endIdx,
+                                               const float  inHigh[],
+                                               const float  inLow[],
+                                               int           optInTimePeriod, /* From 1 to 100000 */
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outReal[] );
 
-int TA_PLUS_DM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_PLUS_DM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -4165,29 +4165,29 @@ int TA_PLUS_DM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 *
  * 
  * 
  */
-TA_RetCode TA_PPO( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInFastPeriod, /* From 2 to 100000 */
-                   int           optInSlowPeriod, /* From 2 to 100000 */
-                   TA_MAType     optInMAType,
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_PPO( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInFastPeriod, /* From 2 to 100000 */
+                                         int           optInSlowPeriod, /* From 2 to 100000 */
+                                         TA_MAType     optInMAType,
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_PPO( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInFastPeriod, /* From 2 to 100000 */
-                     int           optInSlowPeriod, /* From 2 to 100000 */
-                     TA_MAType     optInMAType,
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_PPO( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInFastPeriod, /* From 2 to 100000 */
+                                           int           optInSlowPeriod, /* From 2 to 100000 */
+                                           TA_MAType     optInMAType,
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_PPO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
-                   int           optInSlowPeriod, /* From 2 to 100000 */
-                   TA_MAType     optInMAType ); 
+TA_LIB_API int TA_PPO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+                                         int           optInSlowPeriod, /* From 2 to 100000 */
+                                         TA_MAType     optInMAType ); 
 
 /*
  * TA_ROC - Rate of change : ((price/prevPrice)-1)*100
@@ -4202,23 +4202,23 @@ int TA_PPO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_ROC( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInTimePeriod, /* From 1 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_ROC( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 1 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_ROC( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInTimePeriod, /* From 1 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ROC( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 1 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_ROC_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ROC_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -4234,23 +4234,23 @@ int TA_ROC_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_ROCP( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int           optInTimePeriod, /* From 1 to 100000 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_ROCP( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int           optInTimePeriod, /* From 1 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_ROCP( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int           optInTimePeriod, /* From 1 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ROCP( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int           optInTimePeriod, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_ROCP_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ROCP_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -4266,23 +4266,23 @@ int TA_ROCP_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_ROCR( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int           optInTimePeriod, /* From 1 to 100000 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_ROCR( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int           optInTimePeriod, /* From 1 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_ROCR( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int           optInTimePeriod, /* From 1 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ROCR( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int           optInTimePeriod, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_ROCR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ROCR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -4298,23 +4298,23 @@ int TA_ROCR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_ROCR100( int    startIdx,
-                       int    endIdx,
-                       const double inReal[],
-                       int           optInTimePeriod, /* From 1 to 100000 */
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outReal[] );
+TA_LIB_API TA_RetCode TA_ROCR100( int    startIdx,
+                                  int    endIdx,
+                                             const double inReal[],
+                                             int           optInTimePeriod, /* From 1 to 100000 */
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outReal[] );
 
-TA_RetCode TA_S_ROCR100( int    startIdx,
-                         int    endIdx,
-                         const float  inReal[],
-                         int           optInTimePeriod, /* From 1 to 100000 */
-                         int          *outBegIdx,
-                         int          *outNBElement,
-                         double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ROCR100( int    startIdx,
+                                    int    endIdx,
+                                               const float  inReal[],
+                                               int           optInTimePeriod, /* From 1 to 100000 */
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outReal[] );
 
-int TA_ROCR100_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ROCR100_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -4330,23 +4330,23 @@ int TA_ROCR100_Lookback( int           optInTimePeriod );  /* From 1 to 100000 *
  * 
  * 
  */
-TA_RetCode TA_RSI( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_RSI( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_RSI( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_RSI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_RSI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -4365,28 +4365,28 @@ int TA_RSI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_SAR( int    startIdx,
-                   int    endIdx,
-                   const double inHigh[],
-                   const double inLow[],
-                   double        optInAcceleration, /* From 0 to TA_REAL_MAX */
-                   double        optInMaximum, /* From 0 to TA_REAL_MAX */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
+                              int    endIdx,
+                                         const double inHigh[],
+                                         const double inLow[],
+                                         double        optInAcceleration, /* From 0 to TA_REAL_MAX */
+                                         double        optInMaximum, /* From 0 to TA_REAL_MAX */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_SAR( int    startIdx,
-                     int    endIdx,
-                     const float  inHigh[],
-                     const float  inLow[],
-                     double        optInAcceleration, /* From 0 to TA_REAL_MAX */
-                     double        optInMaximum, /* From 0 to TA_REAL_MAX */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_SAR( int    startIdx,
+                                int    endIdx,
+                                           const float  inHigh[],
+                                           const float  inLow[],
+                                           double        optInAcceleration, /* From 0 to TA_REAL_MAX */
+                                           double        optInMaximum, /* From 0 to TA_REAL_MAX */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_SAR_Lookback( double        optInAcceleration, /* From 0 to TA_REAL_MAX */
-                   double        optInMaximum );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_SAR_Lookback( double        optInAcceleration, /* From 0 to TA_REAL_MAX */
+                                         double        optInMaximum );  /* From 0 to TA_REAL_MAX */
 
 
 /*
@@ -4423,46 +4423,46 @@ int TA_SAR_Lookback( double        optInAcceleration, /* From 0 to TA_REAL_MAX *
  * 
  * 
  */
-TA_RetCode TA_SAREXT( int    startIdx,
-                      int    endIdx,
-                      const double inHigh[],
-                      const double inLow[],
-                      double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
-                      double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
-                      double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
-                      double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
-                      double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
-                      double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
-                      double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
-                      double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_SAREXT( int    startIdx,
+                                 int    endIdx,
+                                            const double inHigh[],
+                                            const double inLow[],
+                                            double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                            double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
+                                            double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
+                                            double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
+                                            double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
+                                            double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
+                                            double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
+                                            double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-TA_RetCode TA_S_SAREXT( int    startIdx,
-                        int    endIdx,
-                        const float  inHigh[],
-                        const float  inLow[],
-                        double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
-                        double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
-                        double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
-                        double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
-                        double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
-                        double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
-                        double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_SAREXT( int    startIdx,
+                                   int    endIdx,
+                                              const float  inHigh[],
+                                              const float  inLow[],
+                                              double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                              double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
+                                              double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
+                                              double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
+                                              double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
+                                              double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
+                                              double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
+                                              double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-int TA_SAREXT_Lookback( double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
-                      double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
-                      double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
-                      double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
-                      double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
-                      double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
-                      double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
-                      double        optInAccelerationMaxShort );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_SAREXT_Lookback( double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                            double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
+                                            double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
+                                            double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
+                                            double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
+                                            double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
+                                            double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
+                                            double        optInAccelerationMaxShort );  /* From 0 to TA_REAL_MAX */
 
 
 /*
@@ -4472,21 +4472,21 @@ int TA_SAREXT_Lookback( double        optInStartValue, /* From TA_REAL_MIN to TA
  * Output = double
  * 
  */
-TA_RetCode TA_SIN( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_SIN( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_SIN( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_SIN( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_SIN_Lookback( void );
+TA_LIB_API int TA_SIN_Lookback( void );
 
 
 /*
@@ -4496,21 +4496,21 @@ int TA_SIN_Lookback( void );
  * Output = double
  * 
  */
-TA_RetCode TA_SINH( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_SINH( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_SINH( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_SINH( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_SINH_Lookback( void );
+TA_LIB_API int TA_SINH_Lookback( void );
 
 
 /*
@@ -4526,23 +4526,23 @@ int TA_SINH_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_SMA( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_SMA( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_SMA( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_SMA( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_SMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_SMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -4552,21 +4552,21 @@ int TA_SMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_SQRT( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_SQRT( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_SQRT( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_SQRT( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_SQRT_Lookback( void );
+TA_LIB_API int TA_SQRT_Lookback( void );
 
 
 /*
@@ -4585,26 +4585,26 @@ int TA_SQRT_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_STDDEV( int    startIdx,
-                      int    endIdx,
-                      const double inReal[],
-                      int           optInTimePeriod, /* From 2 to 100000 */
-                      double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
+                                 int    endIdx,
+                                            const double inReal[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-TA_RetCode TA_S_STDDEV( int    startIdx,
-                        int    endIdx,
-                        const float  inReal[],
-                        int           optInTimePeriod, /* From 2 to 100000 */
-                        double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_STDDEV( int    startIdx,
+                                   int    endIdx,
+                                              const float  inReal[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-int TA_STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
-                      double        optInNbDev );  /* From TA_REAL_MIN to TA_REAL_MAX */
+TA_LIB_API int TA_STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                                            double        optInNbDev );  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 
 /*
@@ -4632,41 +4632,41 @@ int TA_STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_STOCH( int    startIdx,
-                     int    endIdx,
-                     const double inHigh[],
-                     const double inLow[],
-                     const double inClose[],
-                     int           optInFastK_Period, /* From 1 to 100000 */
-                     int           optInSlowK_Period, /* From 1 to 100000 */
-                     TA_MAType     optInSlowK_MAType,
-                     int           optInSlowD_Period, /* From 1 to 100000 */
-                     TA_MAType     optInSlowD_MAType,
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outSlowK[],
-                     double        outSlowD[] );
+TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
+                                int    endIdx,
+                                           const double inHigh[],
+                                           const double inLow[],
+                                           const double inClose[],
+                                           int           optInFastK_Period, /* From 1 to 100000 */
+                                           int           optInSlowK_Period, /* From 1 to 100000 */
+                                           TA_MAType     optInSlowK_MAType,
+                                           int           optInSlowD_Period, /* From 1 to 100000 */
+                                           TA_MAType     optInSlowD_MAType,
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outSlowK[],
+                                           double        outSlowD[] );
 
-TA_RetCode TA_S_STOCH( int    startIdx,
-                       int    endIdx,
-                       const float  inHigh[],
-                       const float  inLow[],
-                       const float  inClose[],
-                       int           optInFastK_Period, /* From 1 to 100000 */
-                       int           optInSlowK_Period, /* From 1 to 100000 */
-                       TA_MAType     optInSlowK_MAType,
-                       int           optInSlowD_Period, /* From 1 to 100000 */
-                       TA_MAType     optInSlowD_MAType,
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outSlowK[],
-                       double        outSlowD[] );
+TA_LIB_API TA_RetCode TA_S_STOCH( int    startIdx,
+                                  int    endIdx,
+                                             const float  inHigh[],
+                                             const float  inLow[],
+                                             const float  inClose[],
+                                             int           optInFastK_Period, /* From 1 to 100000 */
+                                             int           optInSlowK_Period, /* From 1 to 100000 */
+                                             TA_MAType     optInSlowK_MAType,
+                                             int           optInSlowD_Period, /* From 1 to 100000 */
+                                             TA_MAType     optInSlowD_MAType,
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outSlowK[],
+                                             double        outSlowD[] );
 
-int TA_STOCH_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
-                     int           optInSlowK_Period, /* From 1 to 100000 */
-                     TA_MAType     optInSlowK_MAType,
-                     int           optInSlowD_Period, /* From 1 to 100000 */
-                     TA_MAType     optInSlowD_MAType ); 
+TA_LIB_API int TA_STOCH_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
+                                           int           optInSlowK_Period, /* From 1 to 100000 */
+                                           TA_MAType     optInSlowK_MAType,
+                                           int           optInSlowD_Period, /* From 1 to 100000 */
+                                           TA_MAType     optInSlowD_MAType ); 
 
 /*
  * TA_STOCHF - Stochastic Fast
@@ -4687,35 +4687,35 @@ int TA_STOCH_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_STOCHF( int    startIdx,
-                      int    endIdx,
-                      const double inHigh[],
-                      const double inLow[],
-                      const double inClose[],
-                      int           optInFastK_Period, /* From 1 to 100000 */
-                      int           optInFastD_Period, /* From 1 to 100000 */
-                      TA_MAType     optInFastD_MAType,
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outFastK[],
-                      double        outFastD[] );
+TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
+                                 int    endIdx,
+                                            const double inHigh[],
+                                            const double inLow[],
+                                            const double inClose[],
+                                            int           optInFastK_Period, /* From 1 to 100000 */
+                                            int           optInFastD_Period, /* From 1 to 100000 */
+                                            TA_MAType     optInFastD_MAType,
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outFastK[],
+                                            double        outFastD[] );
 
-TA_RetCode TA_S_STOCHF( int    startIdx,
-                        int    endIdx,
-                        const float  inHigh[],
-                        const float  inLow[],
-                        const float  inClose[],
-                        int           optInFastK_Period, /* From 1 to 100000 */
-                        int           optInFastD_Period, /* From 1 to 100000 */
-                        TA_MAType     optInFastD_MAType,
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outFastK[],
-                        double        outFastD[] );
+TA_LIB_API TA_RetCode TA_S_STOCHF( int    startIdx,
+                                   int    endIdx,
+                                              const float  inHigh[],
+                                              const float  inLow[],
+                                              const float  inClose[],
+                                              int           optInFastK_Period, /* From 1 to 100000 */
+                                              int           optInFastD_Period, /* From 1 to 100000 */
+                                              TA_MAType     optInFastD_MAType,
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outFastK[],
+                                              double        outFastD[] );
 
-int TA_STOCHF_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
-                      int           optInFastD_Period, /* From 1 to 100000 */
-                      TA_MAType     optInFastD_MAType ); 
+TA_LIB_API int TA_STOCHF_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
+                                            int           optInFastD_Period, /* From 1 to 100000 */
+                                            TA_MAType     optInFastD_MAType ); 
 
 /*
  * TA_STOCHRSI - Stochastic Relative Strength Index
@@ -4739,34 +4739,34 @@ int TA_STOCHF_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_STOCHRSI( int    startIdx,
-                        int    endIdx,
-                        const double inReal[],
-                        int           optInTimePeriod, /* From 2 to 100000 */
-                        int           optInFastK_Period, /* From 1 to 100000 */
-                        int           optInFastD_Period, /* From 1 to 100000 */
-                        TA_MAType     optInFastD_MAType,
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outFastK[],
-                        double        outFastD[] );
+TA_LIB_API TA_RetCode TA_STOCHRSI( int    startIdx,
+                                   int    endIdx,
+                                              const double inReal[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              int           optInFastK_Period, /* From 1 to 100000 */
+                                              int           optInFastD_Period, /* From 1 to 100000 */
+                                              TA_MAType     optInFastD_MAType,
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outFastK[],
+                                              double        outFastD[] );
 
-TA_RetCode TA_S_STOCHRSI( int    startIdx,
-                          int    endIdx,
-                          const float  inReal[],
-                          int           optInTimePeriod, /* From 2 to 100000 */
-                          int           optInFastK_Period, /* From 1 to 100000 */
-                          int           optInFastD_Period, /* From 1 to 100000 */
-                          TA_MAType     optInFastD_MAType,
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          double        outFastK[],
-                          double        outFastD[] );
+TA_LIB_API TA_RetCode TA_S_STOCHRSI( int    startIdx,
+                                     int    endIdx,
+                                                const float  inReal[],
+                                                int           optInTimePeriod, /* From 2 to 100000 */
+                                                int           optInFastK_Period, /* From 1 to 100000 */
+                                                int           optInFastD_Period, /* From 1 to 100000 */
+                                                TA_MAType     optInFastD_MAType,
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outFastK[],
+                                                double        outFastD[] );
 
-int TA_STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
-                        int           optInFastK_Period, /* From 1 to 100000 */
-                        int           optInFastD_Period, /* From 1 to 100000 */
-                        TA_MAType     optInFastD_MAType ); 
+TA_LIB_API int TA_STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                                              int           optInFastK_Period, /* From 1 to 100000 */
+                                              int           optInFastD_Period, /* From 1 to 100000 */
+                                              TA_MAType     optInFastD_MAType ); 
 
 /*
  * TA_SUB - Vector Arithmetic Substraction
@@ -4775,23 +4775,23 @@ int TA_STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_SUB( int    startIdx,
-                   int    endIdx,
-                   const double inReal0[],
-                   const double inReal1[],
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_SUB( int    startIdx,
+                              int    endIdx,
+                                         const double inReal0[],
+                                         const double inReal1[],
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_SUB( int    startIdx,
-                     int    endIdx,
-                     const float  inReal0[],
-                     const float  inReal1[],
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_SUB( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal0[],
+                                           const float  inReal1[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_SUB_Lookback( void );
+TA_LIB_API int TA_SUB_Lookback( void );
 
 
 /*
@@ -4807,23 +4807,23 @@ int TA_SUB_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_SUM( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_SUM( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_SUM( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_SUM( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_SUM_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_SUM_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -4842,26 +4842,26 @@ int TA_SUM_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_T3( int    startIdx,
-                  int    endIdx,
-                  const double inReal[],
-                  int           optInTimePeriod, /* From 2 to 100000 */
-                  double        optInVFactor, /* From 0 to 1 */
-                  int          *outBegIdx,
-                  int          *outNBElement,
-                  double        outReal[] );
+TA_LIB_API TA_RetCode TA_T3( int    startIdx,
+                             int    endIdx,
+                                        const double inReal[],
+                                        int           optInTimePeriod, /* From 2 to 100000 */
+                                        double        optInVFactor, /* From 0 to 1 */
+                                        int          *outBegIdx,
+                                        int          *outNBElement,
+                                        double        outReal[] );
 
-TA_RetCode TA_S_T3( int    startIdx,
-                    int    endIdx,
-                    const float  inReal[],
-                    int           optInTimePeriod, /* From 2 to 100000 */
-                    double        optInVFactor, /* From 0 to 1 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_T3( int    startIdx,
+                               int    endIdx,
+                                          const float  inReal[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          double        optInVFactor, /* From 0 to 1 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-int TA_T3_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
-                  double        optInVFactor );  /* From 0 to 1 */
+TA_LIB_API int TA_T3_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                                        double        optInVFactor );  /* From 0 to 1 */
 
 
 /*
@@ -4871,21 +4871,21 @@ int TA_T3_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_TAN( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_TAN( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_TAN( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_TAN( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_TAN_Lookback( void );
+TA_LIB_API int TA_TAN_Lookback( void );
 
 
 /*
@@ -4895,21 +4895,21 @@ int TA_TAN_Lookback( void );
  * Output = double
  * 
  */
-TA_RetCode TA_TANH( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_TANH( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_TANH( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_TANH( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_TANH_Lookback( void );
+TA_LIB_API int TA_TANH_Lookback( void );
 
 
 /*
@@ -4925,23 +4925,23 @@ int TA_TANH_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_TEMA( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int           optInTimePeriod, /* From 2 to 100000 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_TEMA( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_TEMA( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int           optInTimePeriod, /* From 2 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_TEMA( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_TEMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_TEMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -4951,25 +4951,25 @@ int TA_TEMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_TRANGE( int    startIdx,
-                      int    endIdx,
-                      const double inHigh[],
-                      const double inLow[],
-                      const double inClose[],
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_TRANGE( int    startIdx,
+                                 int    endIdx,
+                                            const double inHigh[],
+                                            const double inLow[],
+                                            const double inClose[],
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-TA_RetCode TA_S_TRANGE( int    startIdx,
-                        int    endIdx,
-                        const float  inHigh[],
-                        const float  inLow[],
-                        const float  inClose[],
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_TRANGE( int    startIdx,
+                                   int    endIdx,
+                                              const float  inHigh[],
+                                              const float  inLow[],
+                                              const float  inClose[],
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-int TA_TRANGE_Lookback( void );
+TA_LIB_API int TA_TRANGE_Lookback( void );
 
 
 /*
@@ -4985,23 +4985,23 @@ int TA_TRANGE_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_TRIMA( int    startIdx,
-                     int    endIdx,
-                     const double inReal[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_TRIMA( int    startIdx,
+                                int    endIdx,
+                                           const double inReal[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-TA_RetCode TA_S_TRIMA( int    startIdx,
-                       int    endIdx,
-                       const float  inReal[],
-                       int           optInTimePeriod, /* From 2 to 100000 */
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_TRIMA( int    startIdx,
+                                  int    endIdx,
+                                             const float  inReal[],
+                                             int           optInTimePeriod, /* From 2 to 100000 */
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outReal[] );
 
-int TA_TRIMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_TRIMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -5017,23 +5017,23 @@ int TA_TRIMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_TRIX( int    startIdx,
-                    int    endIdx,
-                    const double inReal[],
-                    int           optInTimePeriod, /* From 1 to 100000 */
-                    int          *outBegIdx,
-                    int          *outNBElement,
-                    double        outReal[] );
+TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int           optInTimePeriod, /* From 1 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
 
-TA_RetCode TA_S_TRIX( int    startIdx,
-                      int    endIdx,
-                      const float  inReal[],
-                      int           optInTimePeriod, /* From 1 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_TRIX( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int           optInTimePeriod, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-int TA_TRIX_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_TRIX_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 /*
@@ -5049,23 +5049,23 @@ int TA_TRIX_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_TSF( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_TSF( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_TSF( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_TSF( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_TSF_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_TSF_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -5075,25 +5075,25 @@ int TA_TSF_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_TYPPRICE( int    startIdx,
-                        int    endIdx,
-                        const double inHigh[],
-                        const double inLow[],
-                        const double inClose[],
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_TYPPRICE( int    startIdx,
+                                   int    endIdx,
+                                              const double inHigh[],
+                                              const double inLow[],
+                                              const double inClose[],
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-TA_RetCode TA_S_TYPPRICE( int    startIdx,
-                          int    endIdx,
-                          const float  inHigh[],
-                          const float  inLow[],
-                          const float  inClose[],
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_TYPPRICE( int    startIdx,
+                                     int    endIdx,
+                                                const float  inHigh[],
+                                                const float  inLow[],
+                                                const float  inClose[],
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
 
-int TA_TYPPRICE_Lookback( void );
+TA_LIB_API int TA_TYPPRICE_Lookback( void );
 
 
 /*
@@ -5115,33 +5115,33 @@ int TA_TYPPRICE_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_ULTOSC( int    startIdx,
-                      int    endIdx,
-                      const double inHigh[],
-                      const double inLow[],
-                      const double inClose[],
-                      int           optInTimePeriod1, /* From 1 to 100000 */
-                      int           optInTimePeriod2, /* From 1 to 100000 */
-                      int           optInTimePeriod3, /* From 1 to 100000 */
-                      int          *outBegIdx,
-                      int          *outNBElement,
-                      double        outReal[] );
+TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
+                                 int    endIdx,
+                                            const double inHigh[],
+                                            const double inLow[],
+                                            const double inClose[],
+                                            int           optInTimePeriod1, /* From 1 to 100000 */
+                                            int           optInTimePeriod2, /* From 1 to 100000 */
+                                            int           optInTimePeriod3, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
 
-TA_RetCode TA_S_ULTOSC( int    startIdx,
-                        int    endIdx,
-                        const float  inHigh[],
-                        const float  inLow[],
-                        const float  inClose[],
-                        int           optInTimePeriod1, /* From 1 to 100000 */
-                        int           optInTimePeriod2, /* From 1 to 100000 */
-                        int           optInTimePeriod3, /* From 1 to 100000 */
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_ULTOSC( int    startIdx,
+                                   int    endIdx,
+                                              const float  inHigh[],
+                                              const float  inLow[],
+                                              const float  inClose[],
+                                              int           optInTimePeriod1, /* From 1 to 100000 */
+                                              int           optInTimePeriod2, /* From 1 to 100000 */
+                                              int           optInTimePeriod3, /* From 1 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-int TA_ULTOSC_Lookback( int           optInTimePeriod1, /* From 1 to 100000 */
-                      int           optInTimePeriod2, /* From 1 to 100000 */
-                      int           optInTimePeriod3 );  /* From 1 to 100000 */
+TA_LIB_API int TA_ULTOSC_Lookback( int           optInTimePeriod1, /* From 1 to 100000 */
+                                            int           optInTimePeriod2, /* From 1 to 100000 */
+                                            int           optInTimePeriod3 );  /* From 1 to 100000 */
 
 
 /*
@@ -5160,26 +5160,26 @@ int TA_ULTOSC_Lookback( int           optInTimePeriod1, /* From 1 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_VAR( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInTimePeriod, /* From 1 to 100000 */
-                   double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_VAR( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 1 to 100000 */
+                                         double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_VAR( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInTimePeriod, /* From 1 to 100000 */
-                     double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_VAR( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 1 to 100000 */
+                                           double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_VAR_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
-                   double        optInNbDev );  /* From TA_REAL_MIN to TA_REAL_MAX */
+TA_LIB_API int TA_VAR_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
+                                         double        optInNbDev );  /* From TA_REAL_MIN to TA_REAL_MAX */
 
 
 /*
@@ -5189,25 +5189,25 @@ int TA_VAR_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
  * Output = double
  * 
  */
-TA_RetCode TA_WCLPRICE( int    startIdx,
-                        int    endIdx,
-                        const double inHigh[],
-                        const double inLow[],
-                        const double inClose[],
-                        int          *outBegIdx,
-                        int          *outNBElement,
-                        double        outReal[] );
+TA_LIB_API TA_RetCode TA_WCLPRICE( int    startIdx,
+                                   int    endIdx,
+                                              const double inHigh[],
+                                              const double inLow[],
+                                              const double inClose[],
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
 
-TA_RetCode TA_S_WCLPRICE( int    startIdx,
-                          int    endIdx,
-                          const float  inHigh[],
-                          const float  inLow[],
-                          const float  inClose[],
-                          int          *outBegIdx,
-                          int          *outNBElement,
-                          double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_WCLPRICE( int    startIdx,
+                                     int    endIdx,
+                                                const float  inHigh[],
+                                                const float  inLow[],
+                                                const float  inClose[],
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
 
-int TA_WCLPRICE_Lookback( void );
+TA_LIB_API int TA_WCLPRICE_Lookback( void );
 
 
 /*
@@ -5223,27 +5223,27 @@ int TA_WCLPRICE_Lookback( void );
  * 
  * 
  */
-TA_RetCode TA_WILLR( int    startIdx,
-                     int    endIdx,
-                     const double inHigh[],
-                     const double inLow[],
-                     const double inClose[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_WILLR( int    startIdx,
+                                int    endIdx,
+                                           const double inHigh[],
+                                           const double inLow[],
+                                           const double inClose[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-TA_RetCode TA_S_WILLR( int    startIdx,
-                       int    endIdx,
-                       const float  inHigh[],
-                       const float  inLow[],
-                       const float  inClose[],
-                       int           optInTimePeriod, /* From 2 to 100000 */
-                       int          *outBegIdx,
-                       int          *outNBElement,
-                       double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_WILLR( int    startIdx,
+                                  int    endIdx,
+                                             const float  inHigh[],
+                                             const float  inLow[],
+                                             const float  inClose[],
+                                             int           optInTimePeriod, /* From 2 to 100000 */
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outReal[] );
 
-int TA_WILLR_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_WILLR_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /*
@@ -5259,23 +5259,23 @@ int TA_WILLR_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
  * 
  * 
  */
-TA_RetCode TA_WMA( int    startIdx,
-                   int    endIdx,
-                   const double inReal[],
-                   int           optInTimePeriod, /* From 2 to 100000 */
-                   int          *outBegIdx,
-                   int          *outNBElement,
-                   double        outReal[] );
+TA_LIB_API TA_RetCode TA_WMA( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
 
-TA_RetCode TA_S_WMA( int    startIdx,
-                     int    endIdx,
-                     const float  inReal[],
-                     int           optInTimePeriod, /* From 2 to 100000 */
-                     int          *outBegIdx,
-                     int          *outNBElement,
-                     double        outReal[] );
+TA_LIB_API TA_RetCode TA_S_WMA( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
 
-int TA_WMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_WMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
 
 /* Some TA functions takes a certain amount of input data

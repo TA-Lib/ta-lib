@@ -85,7 +85,7 @@
 /* Generated */ public int aroonLookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_AROON_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
+/* Generated */ TA_LIB_API int TA_AROON_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -153,15 +153,15 @@
 /* Generated */                       double        outAroonDown[],
 /* Generated */                       double        outAroonUp[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_AROON( int    startIdx,
-/* Generated */                      int    endIdx,
-/* Generated */                      const double inHigh[],
-/* Generated */                      const double inLow[],
-/* Generated */                      int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                      int          *outBegIdx,
-/* Generated */                      int          *outNBElement,
-/* Generated */                      double        outAroonDown[],
-/* Generated */                      double        outAroonUp[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_AROON( int    startIdx,
+/* Generated */                                 int    endIdx,
+/* Generated */                                            const double inHigh[],
+/* Generated */                                            const double inLow[],
+/* Generated */                                            int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                            int          *outBegIdx,
+/* Generated */                                            int          *outNBElement,
+/* Generated */                                            double        outAroonDown[],
+/* Generated */                                            double        outAroonUp[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

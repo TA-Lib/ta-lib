@@ -83,7 +83,7 @@
 /* Generated */ public int minMaxLookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_MINMAX_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
+/* Generated */ TA_LIB_API int TA_MINMAX_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -149,14 +149,14 @@
 /* Generated */                        double        outMin[],
 /* Generated */                        double        outMax[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_MINMAX( int    startIdx,
-/* Generated */                       int    endIdx,
-/* Generated */                       const double inReal[],
-/* Generated */                       int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                       int          *outBegIdx,
-/* Generated */                       int          *outNBElement,
-/* Generated */                       double        outMin[],
-/* Generated */                       double        outMax[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_MINMAX( int    startIdx,
+/* Generated */                                  int    endIdx,
+/* Generated */                                             const double inReal[],
+/* Generated */                                             int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                             int          *outBegIdx,
+/* Generated */                                             int          *outNBElement,
+/* Generated */                                             double        outMin[],
+/* Generated */                                             double        outMax[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
