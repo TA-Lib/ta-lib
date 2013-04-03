@@ -85,7 +85,7 @@
 /* Generated */ public int htSineLookback(  )
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_HT_SINE_Lookback( void )
+/* Generated */ TA_LIB_API int TA_HT_SINE_Lookback( void )
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -143,13 +143,13 @@
 /* Generated */                        double        outSine[],
 /* Generated */                        double        outLeadSine[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_HT_SINE( int    startIdx,
-/* Generated */                        int    endIdx,
-/* Generated */                        const double inReal[],
-/* Generated */                        int          *outBegIdx,
-/* Generated */                        int          *outNBElement,
-/* Generated */                        double        outSine[],
-/* Generated */                        double        outLeadSine[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_HT_SINE( int    startIdx,
+/* Generated */                                   int    endIdx,
+/* Generated */                                              const double inReal[],
+/* Generated */                                              int          *outBegIdx,
+/* Generated */                                              int          *outNBElement,
+/* Generated */                                              double        outSine[],
+/* Generated */                                              double        outLeadSine[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

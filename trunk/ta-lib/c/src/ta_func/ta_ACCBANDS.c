@@ -84,7 +84,7 @@
 /* Generated */ public int accbandsLookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_ACCBANDS_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
+/* Generated */ TA_LIB_API int TA_ACCBANDS_Lookback( int           optInTimePeriod )  /* From 2 to 100000 */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -159,17 +159,17 @@
 /* Generated */                          double        outRealMiddleBand[],
 /* Generated */                          double        outRealLowerBand[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_ACCBANDS( int    startIdx,
-/* Generated */                         int    endIdx,
-/* Generated */                         const double inHigh[],
-/* Generated */                         const double inLow[],
-/* Generated */                         const double inClose[],
-/* Generated */                         int           optInTimePeriod, /* From 2 to 100000 */
-/* Generated */                         int          *outBegIdx,
-/* Generated */                         int          *outNBElement,
-/* Generated */                         double        outRealUpperBand[],
-/* Generated */                         double        outRealMiddleBand[],
-/* Generated */                         double        outRealLowerBand[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_ACCBANDS( int    startIdx,
+/* Generated */                                    int    endIdx,
+/* Generated */                                               const double inHigh[],
+/* Generated */                                               const double inLow[],
+/* Generated */                                               const double inClose[],
+/* Generated */                                               int           optInTimePeriod, /* From 2 to 100000 */
+/* Generated */                                               int          *outBegIdx,
+/* Generated */                                               int          *outNBElement,
+/* Generated */                                               double        outRealUpperBand[],
+/* Generated */                                               double        outRealMiddleBand[],
+/* Generated */                                               double        outRealLowerBand[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

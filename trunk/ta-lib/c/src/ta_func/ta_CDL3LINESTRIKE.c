@@ -84,7 +84,7 @@
 /* Generated */ public int cdl3LineStrikeLookback(  )
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_CDL3LINESTRIKE_Lookback( void )
+/* Generated */ TA_LIB_API int TA_CDL3LINESTRIKE_Lookback( void )
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -139,15 +139,15 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
-/* Generated */                               int    endIdx,
-/* Generated */                               const double inOpen[],
-/* Generated */                               const double inHigh[],
-/* Generated */                               const double inLow[],
-/* Generated */                               const double inClose[],
-/* Generated */                               int          *outBegIdx,
-/* Generated */                               int          *outNBElement,
-/* Generated */                               int           outInteger[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
+/* Generated */                                          int    endIdx,
+/* Generated */                                                     const double inOpen[],
+/* Generated */                                                     const double inHigh[],
+/* Generated */                                                     const double inLow[],
+/* Generated */                                                     const double inClose[],
+/* Generated */                                                     int          *outBegIdx,
+/* Generated */                                                     int          *outNBElement,
+/* Generated */                                                     int           outInteger[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

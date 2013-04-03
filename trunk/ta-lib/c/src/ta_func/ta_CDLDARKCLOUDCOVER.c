@@ -84,7 +84,7 @@
 /* Generated */ public int cdlDarkCloudCoverLookback( double        optInPenetration )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_CDLDARKCLOUDCOVER_Lookback( double        optInPenetration )  /* From 0 to TA_REAL_MAX */
+/* Generated */ TA_LIB_API int TA_CDLDARKCLOUDCOVER_Lookback( double        optInPenetration )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -156,16 +156,16 @@
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_CDLDARKCLOUDCOVER( int    startIdx,
-/* Generated */                                  int    endIdx,
-/* Generated */                                  const double inOpen[],
-/* Generated */                                  const double inHigh[],
-/* Generated */                                  const double inLow[],
-/* Generated */                                  const double inClose[],
-/* Generated */                                  double        optInPenetration, /* From 0 to TA_REAL_MAX */
-/* Generated */                                  int          *outBegIdx,
-/* Generated */                                  int          *outNBElement,
-/* Generated */                                  int           outInteger[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER( int    startIdx,
+/* Generated */                                             int    endIdx,
+/* Generated */                                                        const double inOpen[],
+/* Generated */                                                        const double inHigh[],
+/* Generated */                                                        const double inLow[],
+/* Generated */                                                        const double inClose[],
+/* Generated */                                                        double        optInPenetration, /* From 0 to TA_REAL_MAX */
+/* Generated */                                                        int          *outBegIdx,
+/* Generated */                                                        int          *outNBElement,
+/* Generated */                                                        int           outInteger[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

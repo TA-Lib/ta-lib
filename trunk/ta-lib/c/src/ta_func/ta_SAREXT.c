@@ -111,14 +111,14 @@
 /* Generated */                          double        optInAccelerationMaxShort )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_SAREXT_Lookback( double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationMaxShort )  /* From 0 to TA_REAL_MAX */
+/* Generated */ TA_LIB_API int TA_SAREXT_Lookback( double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationMaxShort )  /* From 0 to TA_REAL_MAX */
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -272,21 +272,21 @@
 /* Generated */                        MInteger     outNBElement,
 /* Generated */                        double        outReal[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_SAREXT( int    startIdx,
-/* Generated */                       int    endIdx,
-/* Generated */                       const double inHigh[],
-/* Generated */                       const double inLow[],
-/* Generated */                       double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
-/* Generated */                       double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                       double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
-/* Generated */                       int          *outBegIdx,
-/* Generated */                       int          *outNBElement,
-/* Generated */                       double        outReal[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_SAREXT( int    startIdx,
+/* Generated */                                  int    endIdx,
+/* Generated */                                             const double inHigh[],
+/* Generated */                                             const double inLow[],
+/* Generated */                                             double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
+/* Generated */                                             double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
+/* Generated */                                             int          *outBegIdx,
+/* Generated */                                             int          *outNBElement,
+/* Generated */                                             double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

@@ -41,7 +41,7 @@
  *  RM       Robert Meier  (talib@meierlim.com)
  *  CM       Craig Miller  (c-miller@users.sourceforge.net)
  *  RG       Richard Gomes
- *  AB       Anatoliy Belsky (ab@php.net)
+ *  AB       Anatol Belski (ab@php.net)
  *
  * Change history:
  *
@@ -1636,10 +1636,10 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
    printDefines( gOutFunc_SWG->file, funcInfo );
 
    /* Generate the function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, "TA_LIB_API ", funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
    fprintf( gOutFunc_H->file, "\n" );
 
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, "TA_LIB_API ", funcInfo, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
    fprintf( gOutFunc_H->file, "\n" );
 
    /* Generate the SWIG interface. */
@@ -1647,7 +1647,7 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
    fprintf( gOutFunc_SWG->file, "\n" );
 
    /* Generate the corresponding lookback function prototype. */
-   printFunc( gOutFunc_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_H->file, "TA_LIB_API ", funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
    printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
 
    /* Create the frame definition (ta_frame.c) and declaration (ta_frame.h) */
@@ -3412,7 +3412,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "#elif defined( _JAVA )\n" );
    printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0 );
    print( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, "TA_LIB_API ", funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "#endif\n" );
 
    genPrefix = 0;
@@ -3450,7 +3450,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
 
    printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 );
    print( out, "#else\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, "TA_LIB_API ", funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
    print( out, "#endif\n" );
 
    genPrefix = 0;

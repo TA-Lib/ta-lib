@@ -88,9 +88,9 @@
 /* Generated */                       int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                       MAType        optInMAType ) /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_PPO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                    int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                    TA_MAType     optInMAType ) /* Generated */ 
+/* Generated */ TA_LIB_API int TA_PPO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                          int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                          TA_MAType     optInMAType ) /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -178,15 +178,15 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_PPO( int    startIdx,
-/* Generated */                    int    endIdx,
-/* Generated */                    const double inReal[],
-/* Generated */                    int           optInFastPeriod, /* From 2 to 100000 */
-/* Generated */                    int           optInSlowPeriod, /* From 2 to 100000 */
-/* Generated */                    TA_MAType     optInMAType,
-/* Generated */                    int          *outBegIdx,
-/* Generated */                    int          *outNBElement,
-/* Generated */                    double        outReal[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_PPO( int    startIdx,
+/* Generated */                               int    endIdx,
+/* Generated */                                          const double inReal[],
+/* Generated */                                          int           optInFastPeriod, /* From 2 to 100000 */
+/* Generated */                                          int           optInSlowPeriod, /* From 2 to 100000 */
+/* Generated */                                          TA_MAType     optInMAType,
+/* Generated */                                          int          *outBegIdx,
+/* Generated */                                          int          *outNBElement,
+/* Generated */                                          double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

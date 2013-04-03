@@ -86,7 +86,7 @@
 /* Generated */ public int typPriceLookback(  )
 /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_TYPPRICE_Lookback( void )
+/* Generated */ TA_LIB_API int TA_TYPPRICE_Lookback( void )
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -141,14 +141,14 @@
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_TYPPRICE( int    startIdx,
-/* Generated */                         int    endIdx,
-/* Generated */                         const double inHigh[],
-/* Generated */                         const double inLow[],
-/* Generated */                         const double inClose[],
-/* Generated */                         int          *outBegIdx,
-/* Generated */                         int          *outNBElement,
-/* Generated */                         double        outReal[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_TYPPRICE( int    startIdx,
+/* Generated */                                    int    endIdx,
+/* Generated */                                               const double inHigh[],
+/* Generated */                                               const double inLow[],
+/* Generated */                                               const double inClose[],
+/* Generated */                                               int          *outBegIdx,
+/* Generated */                                               int          *outNBElement,
+/* Generated */                                               double        outReal[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {

@@ -88,9 +88,9 @@
 /* Generated */                          int           optInFastD_Period, /* From 1 to 100000 */
 /* Generated */                          MAType        optInFastD_MAType ) /* Generated */ 
 /* Generated */ #else
-/* Generated */ int TA_STOCHF_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
-/* Generated */                       int           optInFastD_Period, /* From 1 to 100000 */
-/* Generated */                       TA_MAType     optInFastD_MAType ) /* Generated */ 
+/* Generated */ TA_LIB_API int TA_STOCHF_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                             int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                                             TA_MAType     optInFastD_MAType ) /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 {
@@ -193,18 +193,18 @@
 /* Generated */                        double        outFastK[],
 /* Generated */                        double        outFastD[] )
 /* Generated */ #else
-/* Generated */ TA_RetCode TA_STOCHF( int    startIdx,
-/* Generated */                       int    endIdx,
-/* Generated */                       const double inHigh[],
-/* Generated */                       const double inLow[],
-/* Generated */                       const double inClose[],
-/* Generated */                       int           optInFastK_Period, /* From 1 to 100000 */
-/* Generated */                       int           optInFastD_Period, /* From 1 to 100000 */
-/* Generated */                       TA_MAType     optInFastD_MAType,
-/* Generated */                       int          *outBegIdx,
-/* Generated */                       int          *outNBElement,
-/* Generated */                       double        outFastK[],
-/* Generated */                       double        outFastD[] )
+/* Generated */ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
+/* Generated */                                  int    endIdx,
+/* Generated */                                             const double inHigh[],
+/* Generated */                                             const double inLow[],
+/* Generated */                                             const double inClose[],
+/* Generated */                                             int           optInFastK_Period, /* From 1 to 100000 */
+/* Generated */                                             int           optInFastD_Period, /* From 1 to 100000 */
+/* Generated */                                             TA_MAType     optInFastD_MAType,
+/* Generated */                                             int          *outBegIdx,
+/* Generated */                                             int          *outNBElement,
+/* Generated */                                             double        outFastK[],
+/* Generated */                                             double        outFastD[] )
 /* Generated */ #endif
 /**** END GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 {
