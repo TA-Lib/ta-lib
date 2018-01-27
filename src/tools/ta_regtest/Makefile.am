@@ -27,6 +27,8 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_po.c \
 	ta_test_func/test_per_hl.c \
 	ta_test_func/test_trange.c \
+	ta_test_func/test_imi.c \
+	ta_test_func/test_avgdev.c \
 	test_internals.c
 
 ta_regtest_CPPFLAGS = -I../../ta_func \

@@ -3,12 +3,14 @@
 
 AC_PREREQ(2.59)
 AC_COPYRIGHT([(c) TicTacTec 2005, 2006])
-AC_INIT([ta-lib], [SVN], [http://sourceforge.net/tracker/?group_id=8903&atid=108903])
+AC_INIT([ta-lib], [git], [https://github.com/TA-Lib/ta-lib])
+AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_SRCDIR([src/ta_func/ta_AD.c])
 AC_CONFIG_HEADER([include/ta_config.h])
-AM_INIT_AUTOMAKE([ta-lib], [SVN])
+AM_INIT_AUTOMAKE([foreign subdir-objects -Wall -Werror])
 
 # Checks for programs.
+AM_PROG_AR
 AC_PROG_CC
 AC_PROG_LIBTOOL
 

@@ -32,10 +32,9 @@ libta_abstract_la_SOURCES = ta_group_idx.c \
 	tables/table_x.c \
 	tables/table_y.c \
 	tables/table_z.c
-	
+
 libta_abstract_gc_la_SOURCES = $(libta_abstract_la_SOURCES)
 
-libta_abstract_la_LDFLAGS = -version-info $(TALIB_LIBRARY_VERSION)
 libta_abstract_gc_la_LDFLAGS = $(libta_abstract_la_LDFLAGS)
 
 libta_abstract_la_CPPFLAGS = -I../ta_common/ -Iframes/
