@@ -704,6 +704,7 @@ static int genCode(int argc, char* argv[])
 
    (void)argc; /* Get ride of compiler warning */
    (void)argv; /* Get ride of compiler warning */
+   int ret;
 
    #ifdef _MSC_VER
       /* Create .NET project files template */
@@ -1135,13 +1136,13 @@ static int genCode(int argc, char* argv[])
       fileDelete( JAVA_SUCCESS_FILE );
 
 #ifdef _MSC_VER 
-      system( "javac -cp . -d . \".." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "PrettyCode.java" );
-      system( "javac -cp . -d . \".." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "Main.java" );
+      ret = system( "javac -cp . -d . \".." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "PrettyCode.java" );
+      ret = system( "javac -cp . -d . \".." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "Main.java" );
 #else
-      system( "javac -cp . -d . .." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "PrettyCode.java" );
-      system( "javac -cp . -d . .." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "Main.java" );
+      ret = system( "javac -cp . -d . .." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "PrettyCode.java" );
+      ret = system( "javac -cp . -d . .." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "Main.java" );
 #endif
-      system( "java -cp . Main" );
+      ret = system( "java -cp . Main" );
       tempFile = fileOpen(JAVA_SUCCESS_FILE,NULL,FILE_READ );
       fileDelete( FILE_CORE_JAVA_UNF );
 
@@ -4348,6 +4349,7 @@ void genJavaCodePhase2( const TA_FuncInfo *funcInfo )
    char buffer[500];
    int idx, again;
    static int firstTime = 1;
+   int ret;
 
    if( firstTime == 1 )
    {
@@ -4369,18 +4371,18 @@ void genJavaCodePhase2( const TA_FuncInfo *funcInfo )
    
 #ifdef _MSC_VER
    sprintf( buffer, TA_MCPP_EXE " -c -+ -z -P -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_common -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract -I.." TA_FS_SLASH "include -D _JAVA .." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "TA_%s.c >>.." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode1.tmp ", funcInfo->name);
-   system( buffer );
+   ret = system( buffer );
 
    sprintf( buffer, TA_MCPP_EXE " -c -+ -z -P -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_common -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract -I.." TA_FS_SLASH "include -D _JAVA .." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode1.tmp >.." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode2.tmp " );
-   system( buffer );
+   ret = system( buffer );
 #else
    /* The options are the quite same, but on linux it still outputs the #include lines,
 	didn't find anything better that to cut them with the sed ... a hack for now. */
    sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_common -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract -I.." TA_FS_SLASH "include -D _JAVA .." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_%s.c | sed '/^#include/d' >> .." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode1.tmp ", funcInfo->name);
-   system( buffer );
+   ret = system( buffer );
 
    sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_common -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract -I.." TA_FS_SLASH "include -D _JAVA .." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode1.tmp | sed '/^#include/d' > .." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode2.tmp " );
-   system( buffer );
+   ret = system( buffer );
 #endif
 
    /* Append the output of the C pre-processor to the Core.Java file. */
