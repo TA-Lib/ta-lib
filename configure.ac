@@ -3,12 +3,14 @@
 
 AC_PREREQ(2.59)
 AC_COPYRIGHT([(c) TicTacTec 2005, 2006])
-AC_INIT([ta-lib], [SVN], [http://sourceforge.net/tracker/?group_id=8903&atid=108903])
+AC_INIT([ta-lib], [git], [https://github.com/TA-Lib/ta-lib])
+AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_SRCDIR([src/ta_func/ta_AD.c])
 AC_CONFIG_HEADER([include/ta_config.h])
-AM_INIT_AUTOMAKE([ta-lib], [SVN])
+AM_INIT_AUTOMAKE([foreign subdir-objects -Wall -Werror])
 
 # Checks for programs.
+AM_PROG_AR
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
@@ -39,5 +41,5 @@ TALIB_LIBRARY_VERSION=0:0:0
 
 AC_SUBST(TALIB_LIBRARY_VERSION)
 
-AC_CONFIG_FILES([Makefile src/Makefile src/ta_abstract/Makefile src/ta_common/Makefile src/ta_func/Makefile src/tools/Makefile src/tools/gen_code/Makefile src/tools/ta_regtest/Makefile ta-lib-config ta-lib.spec ta-lib.dpkg])
+AC_CONFIG_FILES([Makefile src/Makefile src/ta_abstract/Makefile src/ta_common/Makefile src/ta_func/Makefile src/tools/Makefile src/tools/gen_code/Makefile src/tools/ta_regtest/Makefile ta-lib.pc ta-lib.spec ta-lib.dpkg])
 AC_OUTPUT

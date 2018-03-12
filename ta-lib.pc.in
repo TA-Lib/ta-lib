@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@/ta-lib
+
+Name: ta-lib
+Description: TA-Lib : Technical Analysis Library
+URL: https://github.com/TA-Lib/ta-lib
+Version: @PACKAGE_VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir} -lta_lib

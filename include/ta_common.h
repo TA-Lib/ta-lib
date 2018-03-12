@@ -34,7 +34,7 @@
 #define TA_COMMON_H
 
 /* The following macros are used to return internal errors.
- * The Id can be from 1 to 999 and translate to the user 
+ * The Id can be from 1 to 999 and translate to the user
  * as the return code 5000 to 5999.
  *
  * Everytime you wish to add a new fatal error code,
@@ -60,11 +60,11 @@ extern "C" {
 /* Some functions to get the version of TA-Lib.
  *
  * Format is "Major.Minor.Patch (Month Day Year Hour:Min:Sec)"
- * 
+ *
  * Example: "1.2.0 (Jan 17 2004 23:59:59)"
  *
  * Major increments indicates an "Highly Recommended" update.
- * 
+ *
  * Minor increments indicates arbitrary milestones in the
  * development of the next major version.
  *
@@ -84,7 +84,7 @@ const char *TA_GetVersionTime  ( void );
 typedef double TA_Real;
 typedef int    TA_Integer;
 
-/* General purpose structure containing an array of string. 
+/* General purpose structure containing an array of string.
  *
  * Example of usage:
  *    void printStringTable( TA_StringTable *table )
@@ -103,7 +103,7 @@ typedef struct TA_StringTable
    /* Hidden data for internal use by TA-Lib. Do not modify. */
    void *hiddenData;
 } TA_StringTable;
-/* End-user can get additional information related to a TA_RetCode. 
+/* End-user can get additional information related to a TA_RetCode.
  *
  * Example:
  *        TA_RetCodeInfo info;
@@ -125,12 +125,12 @@ typedef struct TA_StringTable
 typedef struct TA_RetCodeInfo
 {
    const char *enumStr; /* Like "TA_IP_SOCKETERROR"     */
-   const char *infoStr; /* Like "Error creating socket" */      
+   const char *infoStr; /* Like "Error creating socket" */
 } TA_RetCodeInfo;
 
 /* Info is always returned, even when 'theRetCode' is invalid. */
 void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo );
- 
+
 /* TA_Initialize() initialize the ressources used by TA-Lib. This
  * function must be called once prior to any other functions declared in
  * this file.

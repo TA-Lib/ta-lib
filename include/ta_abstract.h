@@ -78,7 +78,7 @@ extern "C" {
  *        well within Perl... see the project SWIG if you are
  *        interested by such things.
  *
- * The abstract interface is used within TA-Lib to perform at least 
+ * The abstract interface is used within TA-Lib to perform at least
  * the following:
  *   - used by gen_code to generate all the glue code.
  *   - used by the Excel interface to call all the TA functions.
@@ -140,7 +140,7 @@ TA_RetCode TA_GroupTableFree ( TA_StringTable *table );
  *      TA_FuncTableFree( table );
  *   }
  */
-TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table );                              
+TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table );
 TA_RetCode TA_FuncTableFree ( TA_StringTable *table );
 
 /* Using the name, you can obtain an handle unique to this function.
@@ -180,7 +180,7 @@ TA_RetCode TA_GetFuncHandle( const char *name,
 typedef int TA_FuncFlags;
 #define TA_FUNC_FLG_OVERLAP   0x01000000 /* Output scale same as input data. */
 #define TA_FUNC_FLG_VOLUME    0x04000000 /* Output shall be over the volume data. */
-#define TA_FUNC_FLG_UNST_PER  0x08000000 /* Indicate if this function have an unstable 
+#define TA_FUNC_FLG_UNST_PER  0x08000000 /* Indicate if this function have an unstable
                                           * initial period. Some additional code exist
                                           * for these functions for allowing to set that
                                           * unstable period. See Documentation.
@@ -316,7 +316,7 @@ typedef enum
    TA_Output_Integer
 } TA_OutputParameterType;
 
-/* When the input is a TA_Input_Price, the following 
+/* When the input is a TA_Input_Price, the following
  * TA_InputFlags indicates the required components.
  * These can be combined for functions requiring more
  * than one component.
@@ -353,7 +353,7 @@ typedef int TA_OptInputFlags;
 #define TA_OPTIN_IS_DEGREE    0x00200000 /* Input is a degree (0-360). */
 #define TA_OPTIN_IS_CURRENCY  0x00400000 /* Input is a currency. */
 #define TA_OPTIN_ADVANCED     0x01000000
- 
+
 
 /* The following are flags giving hint on what
  * could be done with the output.
@@ -469,14 +469,14 @@ typedef struct TA_ParamHolder
 {
   /* Implementation is hidden. */
   void *hiddenData;
-} TA_ParamHolder; 
+} TA_ParamHolder;
 
 TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
                                 TA_ParamHolder **allocatedParams );
 
 TA_RetCode TA_ParamHolderFree( TA_ParamHolder *params );
 
-/* Setup the values of the data input parameters. 
+/* Setup the values of the data input parameters.
  *
  * paramIndex is zero for the first input.
  */
@@ -526,7 +526,7 @@ TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *params,
                                      unsigned int paramIndex,
                                      TA_Real        *out );
 
-/* Once the optional parameter are set, it is possible to 
+/* Once the optional parameter are set, it is possible to
  * get the lookback for this call. This information can be
  * used to calculate the optimal size for the output buffers.
  * (See the documentation for method to calculate the output size).
@@ -534,7 +534,7 @@ TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *params,
 TA_RetCode TA_GetLookback( const TA_ParamHolder *params,
                            TA_Integer *lookback );
 
-/* Finally, call the TA function with the parameters. 
+/* Finally, call the TA function with the parameters.
  *
  * The TA function who is going to be called was specified
  * when the TA_ParamHolderAlloc was done.
@@ -556,4 +556,3 @@ const char *TA_FunctionDescriptionXML( void );
 #endif
 
 #endif
-
