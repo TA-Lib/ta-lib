@@ -43,17 +43,17 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112405 MF   First version.
- *              
+ *
  */
 
 /* Description:
  *
  *     Test functions which have the following
- *     characterisic: 
- *      - have one output 
+ *     characteristic:
+ *      - have one output
  *      - zero or one parameter being a period.
  *      - the input is open, high, low and close.
- *     
+ *
  */
 
 /**** Headers ****/
@@ -88,7 +88,7 @@ typedef struct
    TA_Integer startIdx;
    TA_Integer endIdx;
    TA_Integer optInTimePeriod;
-   
+
    TA_RetCode expectedRetCode;
 
    TA_Integer oneOfTheExpectedOutRealIndex0;
@@ -119,7 +119,7 @@ static TA_Test tableTest[] =
    /* AVGPRICE TEST   */
    /*******************/
    { 0, TA_AVGPRICE_TEST,  0, 251, 0, TA_SUCCESS,   0,  92.0,  0,  252 },
-   { 1, TA_AVGPRICE_TEST,  0, 251, 0, TA_SUCCESS,   1,  93.17, 0,  252 }, 
+   { 1, TA_AVGPRICE_TEST,  0, 251, 0, TA_SUCCESS,   1,  93.17, 0,  252 },
 
    /*************/
    /* BOP TEST  */
@@ -163,7 +163,7 @@ ErrorNumber test_func_per_ohlc( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -183,10 +183,10 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    (void)outputNb;
    (void)outputBufferInt;
-  
+
    *isOutputInteger = 0;
 
-   testParam = (TA_RangeTestParam *)opaqueData;   
+   testParam = (TA_RangeTestParam *)opaqueData;
 
    switch( testParam->test->theFunction )
    {
@@ -196,7 +196,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         testParam->open,
                         testParam->high,
                         testParam->low,
-                        testParam->close,                        
+                        testParam->close,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
@@ -238,7 +238,7 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 1, history->high,   history->nbBars );
    setInputBuffer( 2, history->low, history->nbBars );
    setInputBuffer( 3, history->close, history->nbBars );
-      
+
    /* Make a simple first call. */
    switch( test->theFunction )
    {
@@ -248,7 +248,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[0].in,
                         gBuffer[1].in,
                         gBuffer[2].in,
-                        gBuffer[3].in,                        
+                        gBuffer[3].in,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -515,7 +515,7 @@ static ErrorNumber do_test( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( rangeTestFunction, 
+      errNb = doRangeTest( rangeTestFunction,
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )

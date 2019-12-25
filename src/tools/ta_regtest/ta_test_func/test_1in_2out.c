@@ -49,7 +49,7 @@
 /* Description:
  *
  *     Test functions which have the following
- *     characterisic: 
+ *     characteristic: 
  *      - have one input and two outputs
  *      - there is no optional parameters
  */

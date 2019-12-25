@@ -50,7 +50,7 @@
  */
 
 /* Description:
- *         Regression testing of some internal utility like: 
+ *         Regression testing of some internal utility like:
  *            - collections: List/Stack/Circular buffer.
  *            - Memory allocation mechanism.
  *            etc...
@@ -110,7 +110,7 @@ ErrorNumber test_internals( void )
 static ErrorNumber testCircularBuffer( void )
 {
    TA_RetCode retCode;
-   int i; 
+   int i;
    int buffer[20];
    ErrorNumber retValue;
 
@@ -122,8 +122,8 @@ static ErrorNumber testCircularBuffer( void )
       return retValue;
    }
 
-   /* The following function is supose to fill
-    * the buffer with the value 0 to 8 sequentialy,
+   /* The following function is suppose to fill
+    * the buffer with the value 0 to 8 sequentially,
     * if somehow it is not 0 to 8, there is a bug!
     */
    memset( buffer, 0xFF, sizeof(buffer) );

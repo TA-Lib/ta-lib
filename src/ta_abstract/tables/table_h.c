@@ -62,7 +62,7 @@ static const TA_OutputParameterInfo   *TA_HT_DCPERIOD_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_HT_DCPERIOD_OptInputs[] =
-{ 
+{
   NULL
 };
 
@@ -88,7 +88,7 @@ static const TA_OutputParameterInfo   *TA_HT_DCPHASE_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_HT_DCPHASE_OptInputs[] =
-{ 
+{
   NULL
 };
 
@@ -121,7 +121,7 @@ static const TA_OutputParameterInfo   *TA_HT_PHASOR_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_HT_PHASOR_OptInputs[] =
-{ 
+{
   NULL
 };
 
@@ -154,7 +154,7 @@ static const TA_OutputParameterInfo   *TA_HT_SINE_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_HT_SINE_OptInputs[] =
-{ 
+{
   NULL
 };
 
@@ -180,7 +180,7 @@ static const TA_OutputParameterInfo   *TA_HT_TRENDLINE_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_HT_TRENDLINE_OptInputs[] =
-{ 
+{
   NULL
 };
 
@@ -206,7 +206,7 @@ static const TA_OutputParameterInfo   *TA_HT_TRENDMODE_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_HT_TRENDMODE_OptInputs[] =
-{ 
+{
   NULL
 };
 

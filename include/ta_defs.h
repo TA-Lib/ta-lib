@@ -233,7 +233,7 @@
 
 ENUM_BEGIN( RetCode )
     /*      0 */  ENUM_DEFINE( TA_SUCCESS, Success ),            /* No error */
-    /*      1 */  ENUM_DEFINE( TA_LIB_NOT_INITIALIZE, LibNotInitialize ), /* TA_Initialize was not sucessfully called */
+    /*      1 */  ENUM_DEFINE( TA_LIB_NOT_INITIALIZE, LibNotInitialize ), /* TA_Initialize was not successfully called */
     /*      2 */  ENUM_DEFINE( TA_BAD_PARAM, BadParam ), /* A parameter is out of range */
     /*      3 */  ENUM_DEFINE( TA_ALLOC_ERR, AllocErr ), /* Possibly out-of-memory */
     /*      4 */  ENUM_DEFINE( TA_GROUP_NOT_FOUND, GroupNotFound ),

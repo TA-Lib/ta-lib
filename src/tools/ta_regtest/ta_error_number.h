@@ -249,7 +249,7 @@ typedef enum
   TA_CSI_CRS_NBBARSBAD           = 807,
   TA_CSI_CRS_PRICEBARBAD         = 808,
   TA_CSI_HISTORYALLOC_4_FAILED   = 809,
-  TA_CSI_HISTORYALLOC_5_FAILED   = 810, 
+  TA_CSI_HISTORYALLOC_5_FAILED   = 810,
 
   /* Error code related to test_candlestick */
   TA_TSTCDL_GETFUNCHANDLE_FAIL   = 900,
@@ -262,7 +262,7 @@ typedef enum
   TA_TSTCDL_CALLFUNC_FAIL        = 907,
   TA_TSTCDL_GETLOOKBACK_FAIL     = 908,
   TA_TSTCDL_PARAMHOLDERFREE_FAIL = 909,
-   
+
   /* Error code related to test_merge */
   TA_TSTMERGE_AC_ADDFAILED_1          = 1000,
   TA_TSTMERGE_AC_ADDFAILED_2          = 1001,
@@ -283,9 +283,9 @@ typedef enum
   TA_TSTMERGE_ASCII_BAD_PATTERN_LOW   = 1016,
   TA_TSTMERGE_ASCII_BAD_PATTERN_HIGH  = 1017,
   TA_TSTMERGE_ASCII_BAD_PATTERN_CLOSE = 1018,
-  TA_TSTMERGE_ASCII_BAD_PATTERN_TS    = 1019,  
+  TA_TSTMERGE_ASCII_BAD_PATTERN_TS    = 1019,
 
-  /* Error code related to bug fix documentented on SourceForge. */
+  /* Error code related to bug fix documented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,
   TA_TEST_FAIL_BUG1359452_3  = 2003,

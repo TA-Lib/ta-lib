@@ -219,7 +219,7 @@ ErrorNumber test_func_rsi( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -239,10 +239,10 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    (void)outputNb;
    (void)outputBufferInt;
-  
+
    *isOutputInteger = 0;
 
-   testParam = (TA_RangeTestParam *)opaqueData;   
+   testParam = (TA_RangeTestParam *)opaqueData;
 
 
    switch( testParam->test->theFunction )
@@ -287,7 +287,7 @@ static ErrorNumber do_test( const TA_History *history,
    const TA_FuncHandle *funcHandle;
    const TA_FuncInfo *funcInfo;
    TA_ParamHolder *params;
-   
+
    retCode = TA_SUCCESS;
 
    /* Set to NAN all the elements of the gBuffers.  */
@@ -298,7 +298,7 @@ static ErrorNumber do_test( const TA_History *history,
    /* Build the input. */
    setInputBuffer( 0, history->close, history->nbBars );
    setInputBuffer( 1, history->close, history->nbBars );
-   
+
    /* Set the unstable period requested for that test. */
    switch( test->theFunction )
    {
@@ -413,7 +413,7 @@ static ErrorNumber do_test( const TA_History *history,
       printf( "Fail: TA_GetFuncInfo with retCode = %d\n", retCode );
       return TA_ABS_TST_FAIL_GETFUNCINFO;
    }
-                             
+
    retCode = TA_ParamHolderAlloc( funcHandle, &params );
    if( retCode != TA_SUCCESS )
    {
@@ -453,7 +453,7 @@ static ErrorNumber do_test( const TA_History *history,
       printf( "Fail: TA_CallFunc with retCode = %d\n", retCode );
       return TA_ABS_TST_FAIL_CALLFUNC;
    }
-                           
+
    retCode = TA_ParamHolderFree( params );
    if( retCode != TA_SUCCESS )
    {
@@ -487,12 +487,12 @@ static ErrorNumber do_test( const TA_History *history,
       switch( test->theFunction )
       {
       case TA_RSI_TEST:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_RSI,
                               (void *)&testParam, 1, 0 );
          break;
       case TA_CMO_TEST:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_CMO,
                               (void *)&testParam, 1, 0 );
          break;

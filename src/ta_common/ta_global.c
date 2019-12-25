@@ -97,7 +97,7 @@ TA_RetCode TA_Initialize( void )
     * variables of all other modules...
     */
    memset( TA_Globals, 0, sizeof( TA_LibcPriv ) );
-   TA_Globals->magicNb = TA_LIBC_PRIV_MAGIC_NB;	  
+   TA_Globals->magicNb = TA_LIBC_PRIV_MAGIC_NB;
 
 #ifdef TA_LIB_PRO
       /* Section for code distributed with TA-Lib Pro only. */
@@ -122,9 +122,9 @@ TA_RetCode TA_Shutdown( void )
    return TA_SUCCESS;
 }
 
-TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType, 
-                                 TA_RangeType rangeType, 
-                                 int avgPeriod, 
+TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
+                                 TA_RangeType rangeType,
+                                 int avgPeriod,
                                  double factor )
 {
     /*printf("setcdlset:%d  ",settingType);*/

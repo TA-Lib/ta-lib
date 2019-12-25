@@ -6,7 +6,7 @@
       #include "ta_common.h"
    #endif
 
-   #include <stdlib.h> 
+   #include <stdlib.h>
 
    /* Interface macros */
    #define TA_Malloc(a)       malloc(a)
@@ -20,13 +20,13 @@
 
 /* ARRAY : Macros to manipulate arrays of value type.
  *
- * Using temporary array of double and integer are often needed for the 
+ * Using temporary array of double and integer are often needed for the
  * TA functions.
  *
  * These macros allow basic operations to alloc/copy/free array of value type.
  *
  * These macros works in plain old C/C++, managed C++.and Java.
- * 
+ *
  * (Use ARRAY_REF and ARRAY_INT_REF for double/integer arrays).
  */
 #if defined( _MANAGED ) && defined( USE_SUBARRAY )
@@ -36,7 +36,7 @@
    #define ARRAY_VTYPE_COPY(type,dest,src,size)   SubArray<type>::Copy( src, 0, dest, 0, size )
    #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) SubArray<type>::Copy( src, srcIdx, dest, destIdx, size )
    #define ARRAY_VTYPE_FREE(type,name)
-   #define ARRAY_VTYPE_FREE_COND(type,cond,name)   
+   #define ARRAY_VTYPE_FREE_COND(type,cond,name)
 #elif defined( _MANAGED )
    #define ARRAY_VTYPE_REF(type,name)             cli::array<type>^ name
    #define ARRAY_VTYPE_LOCAL(type,name,size)      cli::array<type>^ name = gcnew cli::array<type>(size)
@@ -44,7 +44,7 @@
    #define ARRAY_VTYPE_COPY(type,dest,src,size)   cli::array<type>::Copy( src, 0, dest, 0, size )
    #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) cli::array<type>::Copy( src, srcIdx, dest, destIdx, size )
    #define ARRAY_VTYPE_FREE(type,name)
-   #define ARRAY_VTYPE_FREE_COND(type,cond,name)   
+   #define ARRAY_VTYPE_FREE_COND(type,cond,name)
 #elif defined( _JAVA )
    #define ARRAY_VTYPE_REF(type,name)             type []name
    #define ARRAY_VTYPE_LOCAL(type,name,size)      type []name = new type[size]
@@ -81,7 +81,7 @@
 #define ARRAY_INT_FREE(name)            ARRAY_VTYPE_FREE(int,name)
 #define ARRAY_INT_FREE_COND(cond,name)  ARRAY_VTYPE_FREE_COND(int,cond,name)
 
-/* ARRAY: Macros to manipulate arrays of mix type. 
+/* ARRAY: Macros to manipulate arrays of mix type.
  * This is just a loop doing an element by element copy.
  */
 #define ARRAY_MEMMOVEMIX_VAR int mmmixi, mmmixdestIdx, mmmixsrcIdx
@@ -124,20 +124,20 @@
  * one value (if not consume, the value is lost).
  *
  * The CIRCBUF size is unlimited, so it will automatically allocate and
- * de-allocate memory as needed. In C/C++. when small enough, CIRCBUF will 
+ * de-allocate memory as needed. In C/C++. when small enough, CIRCBUF will
  * instead use a buffer "allocated" on the stack (automatic variable).
- * 
+ *
  * Multiple CIRCBUF can be used within the same function. To make that
  * possible the first parameter of the MACRO is an "Id" that can be
  * any string.
  *
  * The macros offer the advantage to work in C/C++ and managed C++.
- * 
+ *
  * CIRCBUF_PROLOG(Id,Type,Size);
  *          Will declare all the needed variables. 2 variables are
- *          important: 
+ *          important:
  *                 1) 'Id' will be a ptr of the specified Type.
- *                 2) 'Id'_Idx indicates from where to consume and 
+ *                 2) 'Id'_Idx indicates from where to consume and
  *                     to add the data.
  *
  *          Important: You must consume the oldest data before
@@ -212,7 +212,7 @@
  * The value 0 to 2 are displayed by the 2nd loop.
  * The value 3 to 7 are displayed by the 3rd loop.
  *
- * Because the size 5 is greater than the 
+ * Because the size 5 is greater than the
  * value provided in CIRCBUF_PROLOG, a buffer will
  * be dynamically allocated (and freed).
  */

@@ -93,7 +93,7 @@ DEF_FUNCTION( WILLR,          /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Williams' %R", /* hint */
               "WillR",        /* CamelCase name */
-              0               /* flags */              
+              0               /* flags */
              );
 /* WILLR END */
 
@@ -119,7 +119,7 @@ DEF_FUNCTION( WMA,                        /* name */
               TA_GroupId_OverlapStudies,  /* groupId */
               "Weighted Moving Average",  /* hint */
               "Wma",                      /* CamelCase name */
-              TA_FUNC_FLG_OVERLAP         /* flags */              
+              TA_FUNC_FLG_OVERLAP         /* flags */
              );
 
 /* WMA END */

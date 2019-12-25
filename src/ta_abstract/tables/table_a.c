@@ -163,7 +163,7 @@ static const TA_OutputParameterInfo   *TA_ADOSC_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_ADOSC_OptInputs[] =
-{  
+{
   &TA_DEF_UI_FastADOSC_Period,
   &TA_DEF_UI_SlowADOSC_Period,
   NULL
@@ -224,7 +224,7 @@ static const TA_OptInputParameterInfo *TA_ADXR_OptInputs[] =
 DEF_FUNCTION( ADXR,                         /* name */
               TA_GroupId_MomentumIndicators,   /* groupId */
               "Average Directional Movement Index Rating", /* hint */
-			  "Adxr",                      /* CamelCase name */
+              "Adxr",                      /* CamelCase name */
               TA_FUNC_FLG_UNST_PER          /* flags */
              );
 /* ADXR END */
@@ -277,8 +277,8 @@ static const TA_OutputParameterInfo   *TA_AROON_Outputs[]   =
   NULL
 };
 
-static const TA_OptInputParameterInfo *TA_AROON_OptInputs[] = 
-{ 
+static const TA_OptInputParameterInfo *TA_AROON_OptInputs[] =
+{
   &TA_DEF_UI_TimePeriod_14_MINIMUM2,
   NULL
 };
@@ -287,7 +287,7 @@ DEF_FUNCTION( AROON,                          /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Aroon",                        /* hint */
               "Aroon",                        /* CamelCase name */
-              0                               /* flags */              
+              0                               /* flags */
              );
 
 /* AROON END */
@@ -305,8 +305,8 @@ static const TA_OutputParameterInfo   *TA_AROONOSC_Outputs[]   =
   NULL
 };
 
-static const TA_OptInputParameterInfo *TA_AROONOSC_OptInputs[] = 
-{ 
+static const TA_OptInputParameterInfo *TA_AROONOSC_OptInputs[] =
+{
   &TA_DEF_UI_TimePeriod_14_MINIMUM2,
   NULL
 };
@@ -314,7 +314,7 @@ static const TA_OptInputParameterInfo *TA_AROONOSC_OptInputs[] =
 DEF_FUNCTION( AROONOSC,                       /* name */
               TA_GroupId_MomentumIndicators,  /* groupId */
               "Aroon Oscillator",             /* hint */
-			  "AroonOsc",                     /* CamelCase name */
+              "AroonOsc",                     /* CamelCase name */
               0                               /* flags */
              );
 
@@ -378,30 +378,30 @@ DEF_FUNCTION( AVGPRICE,                   /* name */
 /* AVGPRICE END */
 
 /* AVGDEV BEGIN */
-static const TA_InputParameterInfo *TA_AVGDEV_Inputs[] = 
+static const TA_InputParameterInfo *TA_AVGDEV_Inputs[] =
 {
-	&TA_DEF_UI_Input_Real,
-	NULL
+    &TA_DEF_UI_Input_Real,
+    NULL
 };
 
 static const TA_OutputParameterInfo *TA_AVGDEV_Outputs[] =
 {
-	&TA_DEF_UI_Output_Real,
-	NULL
+    &TA_DEF_UI_Output_Real,
+    NULL
 };
 
-static const TA_OptInputParameterInfo *TA_AVGDEV_OptInputs[] = 
+static const TA_OptInputParameterInfo *TA_AVGDEV_OptInputs[] =
 {
-	&TA_DEF_UI_TimePeriod_14_MINIMUM2,
-	NULL
+    &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+    NULL
 };
 
 DEF_FUNCTION( AVGDEV,                      /* name */
-				TA_GroupId_PriceTransform, /* groupId*/
-				"Average Deviation",       /* hint */
-				"AvgDev",                  /* CamelCase name*/
-				TA_FUNC_FLG_OVERLAP        /* flags */
-				);
+                TA_GroupId_PriceTransform, /* groupId*/
+                "Average Deviation",       /* hint */
+                "AvgDev",                  /* CamelCase name*/
+                TA_FUNC_FLG_OVERLAP        /* flags */
+                );
 /* AVGDEV END */
 
 /****************************************************************************

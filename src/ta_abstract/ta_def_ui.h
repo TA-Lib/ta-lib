@@ -251,7 +251,7 @@ typedef struct
  * with no optional parameter.
  */
 #define DEF_MATH_UNARY_OPERATOR(NAME,HINT,CAMELCASENAME) \
-	static const TA_InputParameterInfo    *TA_##NAME##_Inputs[]    = \
+    static const TA_InputParameterInfo    *TA_##NAME##_Inputs[]    = \
 { \
   &TA_DEF_UI_Input_Real, \
   NULL \
@@ -261,7 +261,7 @@ static const TA_OutputParameterInfo   *TA_##NAME##_Outputs[]   = \
   &TA_DEF_UI_Output_Real, \
   NULL \
 }; \
-	static const TA_OptInputParameterInfo *TA_##NAME##_OptInputs[] = { NULL }; \
+    static const TA_OptInputParameterInfo *TA_##NAME##_OptInputs[] = { NULL }; \
 DEF_FUNCTION( NAME, /* name */ \
               TA_GroupId_MathTransform, /* groupId */ \
               HINT, /* hint */ \
@@ -270,7 +270,7 @@ DEF_FUNCTION( NAME, /* name */ \
              );
 
 #define DEF_MATH_BINARY_OPERATOR(NAME,HINT,CAMELCASENAME) \
-	static const TA_InputParameterInfo    *TA_##NAME##_Inputs[]    = \
+    static const TA_InputParameterInfo    *TA_##NAME##_Inputs[]    = \
 { \
   &TA_DEF_UI_Input_Real0, \
   &TA_DEF_UI_Input_Real1, \
@@ -281,7 +281,7 @@ static const TA_OutputParameterInfo   *TA_##NAME##_Outputs[]   = \
   &TA_DEF_UI_Output_Real, \
   NULL \
 }; \
-	static const TA_OptInputParameterInfo *TA_##NAME##_OptInputs[] = { NULL }; \
+    static const TA_OptInputParameterInfo *TA_##NAME##_OptInputs[] = { NULL }; \
 DEF_FUNCTION( NAME, /* name */ \
               TA_GroupId_MathOperators, /* groupId */ \
               HINT, /* hint */ \

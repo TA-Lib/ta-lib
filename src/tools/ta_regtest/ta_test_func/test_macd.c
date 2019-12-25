@@ -76,7 +76,7 @@ TA_MACDEXT_TEST
 } TA_TestId;
 
 typedef struct
-{ 
+{
    TA_Integer doRangeTestFlag;
    TA_TestId  testId;
 
@@ -92,7 +92,7 @@ typedef struct
 
    TA_Integer expectedBegIdx;
    TA_Integer expectedNbElement;
-   
+
    TA_Integer oneOfTheExpectedOutRealIndex0;
    TA_Real    oneOfTheExpectedOutReal0;
 
@@ -103,7 +103,7 @@ typedef struct
    TA_Real    oneOfTheExpectedOutReal2;
 
 } TA_Test;
-                                                                      
+
 typedef struct
 {
    const TA_Test *test;
@@ -121,13 +121,13 @@ static TA_Test tableTest[] =
    /*********************/
    /*   MACD - CLASSIC  */
    /*********************/
-   { 0, TA_MACD_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/  
+   { 0, TA_MACD_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9738,  /* MACD */
                                                           0, -2.7071,  /* Signal */
                                                           0, (-1.9738)-(-2.7071) }, /* Histogram */
 
    /* Test period inversion */
-   { 0, TA_MACD_TEST, 0, 251, 26, 12, 9, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/  
+   { 0, TA_MACD_TEST, 0, 251, 26, 12, 9, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9738,  /* MACD */
                                                           0, -2.7071,  /* Signal */
                                                           0, (-1.9738)-(-2.7071) }, /* Histogram */
@@ -139,7 +139,7 @@ static TA_Test tableTest[] =
    /*******************************/
    /*   MACDEXT - MIMIC CLASSIC   */
    /*******************************/
-   { 0, TA_MACDEXT_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/  
+   { 0, TA_MACDEXT_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9738,  /* MACD */
                                                           0, -2.7071,  /* Signal */
                                                           0, (-1.9738)-(-2.7071)}, /* Histogram */
@@ -151,17 +151,17 @@ static TA_Test tableTest[] =
    /***************************/
    /*   MACD FIX - METASTOCK  */
    /***************************/
-   { 1, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/  
+   { 1, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.2185,  /* MACD */
                                                           0, -1.7119,  /* Signal */
                                                           0, (-1.2185)-(-1.7119) }, /* Histogram */
 
-   { 0, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 33, 252-33, 
+   { 0, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 33, 252-33,
                                                         252-34,  0.8764, /* MACD */
                                                         252-34,  1.3533,   /* Signal */
                                                         252-34,  (0.8764)-(1.3533)}, /* Histogram */
    /* Test period inversion */
-   { 0, TA_MACDFIX_TEST, 0, 251, 26, 12, 9, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 33, 252-33, 
+   { 0, TA_MACDFIX_TEST, 0, 251, 26, 12, 9, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 33, 252-33,
                                                         252-34,  0.8764, /* MACD */
                                                         252-34,  1.3533,   /* Signal */
                                                         252-34,  (0.8764)-(1.3533)} /* Histogram */
@@ -197,7 +197,7 @@ ErrorNumber test_func_macd( TA_History *history )
    }
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -221,7 +221,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    *isOutputInteger = 0;
 
-   testParam = (TA_RangeTestParam *)opaqueData;   
+   testParam = (TA_RangeTestParam *)opaqueData;
 
    dummyBuffer1 = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
    if( !dummyBuffer1 )
@@ -335,7 +335,7 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 1, history->close, history->nbBars );
    setInputBuffer( 2, history->close, history->nbBars );
    setInputBuffer( 3, history->close, history->nbBars );
-      
+
    CLEAR_EXPECTED_VALUE(0);
    CLEAR_EXPECTED_VALUE(1);
    CLEAR_EXPECTED_VALUE(2);
@@ -349,7 +349,7 @@ static ErrorNumber do_test( const TA_History *history,
                             gBuffer[0].in,
                             test->optInSignalPeriod_2,
                             &outBegIdx, &outNbElement,
-                            gBuffer[0].out0, 
+                            gBuffer[0].out0,
                             gBuffer[0].out1,
                             gBuffer[0].out2 );
       break;
@@ -361,7 +361,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->optInSlowPeriod,
                         test->optInSignalPeriod_2,
                         &outBegIdx, &outNbElement,
-                        gBuffer[0].out0, 
+                        gBuffer[0].out0,
                         gBuffer[0].out1,
                         gBuffer[0].out2 );
       break;
@@ -376,7 +376,7 @@ static ErrorNumber do_test( const TA_History *history,
                             test->optInSignalPeriod_2,
                             TA_MAType_EMA,
                             &outBegIdx, &outNbElement,
-                            gBuffer[0].out0, 
+                            gBuffer[0].out0,
                             gBuffer[0].out1,
                             gBuffer[0].out2 );
       break;
@@ -405,7 +405,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[1].in,
                         test->optInSignalPeriod_2,
                         &outBegIdx, &outNbElement,
-                        gBuffer[1].in,   
+                        gBuffer[1].in,
                         gBuffer[1].out1,
                         gBuffer[1].out2 );
       break;
@@ -417,7 +417,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->optInSlowPeriod,
                         test->optInSignalPeriod_2,
                         &outBegIdx, &outNbElement,
-                        gBuffer[1].in,   
+                        gBuffer[1].in,
                         gBuffer[1].out1,
                         gBuffer[1].out2 );
       break;
@@ -432,10 +432,10 @@ static ErrorNumber do_test( const TA_History *history,
                             test->optInSignalPeriod_2,
                             TA_MAType_EMA,
                             &outBegIdx, &outNbElement,
-                            gBuffer[1].in,   
+                            gBuffer[1].in,
                             gBuffer[1].out1,
                             gBuffer[1].out2 );
-      break;   
+      break;
    }
 
    /* The previous call should have the same output
@@ -537,7 +537,7 @@ static ErrorNumber do_test( const TA_History *history,
                             gBuffer[3].in,
                             test->optInSignalPeriod_2,
                             &outBegIdx, &outNbElement,
-                            gBuffer[3].out1, 
+                            gBuffer[3].out1,
                             gBuffer[3].out2,
                             gBuffer[3].in );
       break;
@@ -549,7 +549,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->optInSlowPeriod,
                         test->optInSignalPeriod_2,
                         &outBegIdx, &outNbElement,
-                        gBuffer[3].out1, 
+                        gBuffer[3].out1,
                         gBuffer[3].out2,
                         gBuffer[3].in );
       break;
@@ -564,7 +564,7 @@ static ErrorNumber do_test( const TA_History *history,
                             test->optInSignalPeriod_2,
                             TA_MAType_EMA,
                             &outBegIdx, &outNbElement,
-                            gBuffer[3].out1, 
+                            gBuffer[3].out1,
                             gBuffer[3].out2,
                             gBuffer[3].in );
       break;
@@ -592,7 +592,7 @@ static ErrorNumber do_test( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( rangeTestFunction, 
+      errNb = doRangeTest( rangeTestFunction,
                            TA_FUNC_UNST_EMA,
                            (void *)&testParam, 3, 0 );
       if( errNb != TA_TEST_PASS )

@@ -51,12 +51,12 @@
 /* Description:
  *
  *     Test functions which have the following
- *     characterisic: 
+ *     characteristic:
  *      - the inputs are high,low, close and volume.
  *      - have one output of type real.
  *      - might have an optional parameter.
- *        
- *     
+ *
+ *
  */
 
 /**** Headers ****/
@@ -93,7 +93,7 @@ typedef struct
    TA_Integer startIdx;
    TA_Integer endIdx;
    TA_Integer optInTimePeriod;
-   
+
    TA_RetCode expectedRetCode;
 
    TA_Integer oneOfTheExpectedOutRealIndex0;
@@ -199,7 +199,7 @@ ErrorNumber test_func_per_hlcv( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -219,10 +219,10 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    (void)outputNb;
    (void)outputBufferInt;
-  
+
    *isOutputInteger = 0;
 
-   testParam = (TA_RangeTestParam *)opaqueData;   
+   testParam = (TA_RangeTestParam *)opaqueData;
 
    switch( testParam->test->theFunction )
    {
@@ -308,7 +308,7 @@ static ErrorNumber do_test( const TA_History *history,
    /* Clear the unstable periods from previous tests. */
    retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_MFI, 0 );
    if( retCode != TA_SUCCESS )
-      return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;      
+      return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
 
    /* Make a simple first call. */
    switch( test->theFunction )
@@ -418,7 +418,7 @@ static ErrorNumber do_test( const TA_History *history,
                        history->volume,
                        3, 10,
                        &outBegIdx,
-                       &outNbElement,                       
+                       &outNbElement,
                        gBuffer[0].in );
       break;
    case TA_ADOSC_5_2_TEST:
@@ -624,14 +624,14 @@ static ErrorNumber do_test( const TA_History *history,
       switch( test->theFunction )
       {
       case TA_MFI_TEST:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_MFI,
                               (void *)&testParam, 1, 0 );
          if( errNb != TA_TEST_PASS )
             return errNb;
          break;
       case TA_AD_TEST:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_NONE,
                               (void *)&testParam, 1,
                               TA_DO_NOT_COMPARE );
@@ -640,7 +640,7 @@ static ErrorNumber do_test( const TA_History *history,
          break;
       case TA_ADOSC_3_10_TEST:
       case TA_ADOSC_5_2_TEST:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_EMA,
                               (void *)&testParam, 1,
                               TA_DO_NOT_COMPARE );
@@ -652,7 +652,7 @@ static ErrorNumber do_test( const TA_History *history,
       }
    }
 
-   /* Check for fix #1359452 - AD RAnge not working as expected. */
+   /* Check for fix #1359452 - AD Range not working as expected. */
    if( test->theFunction == TA_AD_TEST )
    {
       gBuffer[0].out0[0] = -1.0;
@@ -702,7 +702,7 @@ static ErrorNumber do_test( const TA_History *history,
       {
          printf( "Failed AD logic for fix #1359452\n" );
          return TA_TEST_FAIL_BUG1359452_5;
-      }       
+      }
    }
 
    return TA_TEST_PASS;

@@ -47,7 +47,7 @@
  */
 
 /* Description:
- *     Test functions for candlestick. 
+ *     Test functions for candlestick.
  */
 
 /**** Headers ****/
@@ -71,9 +71,9 @@
 #define MAX_OPTIN_PARAM    5
 #define MAX_TESTED_OUTPUT  3
 
-TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType, 
-                                 TA_RangeType rangeType, 
-                                 int avgPeriod, 
+TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
+                                 TA_RangeType rangeType,
+                                 int avgPeriod,
                                  double factor );
 
 typedef struct
@@ -113,7 +113,7 @@ typedef struct
 typedef struct
 {
    int index;
-   int value;  
+   int value;
 } TA_ExpectedOutput;
 
 
@@ -122,24 +122,24 @@ typedef struct
    /* Indicate which function will be called */
    const char *name;
 
-   /* Indicate if ranging test should be done. 
+   /* Indicate if ranging test should be done.
     * (These tests are very time consuming).
     */
    int doRangeTestFlag;
 
-   /* Range for the function call. 
-    * When both value are -1 a series of automated range 
+   /* Range for the function call.
+    * When both value are -1 a series of automated range
     * tests are performed.
     */
    TA_Integer startIdx;
    TA_Integer endIdx;
 
-   /* Up to 5 parameters depending of functions. 
+   /* Up to 5 parameters depending of functions.
     * Will be converted to integer when input is integer.
     */
    TA_Real params[MAX_OPTIN_PARAM];
 
-   /* The expected return code. */   
+   /* The expected return code. */
    TA_RetCode expectedRetCode;
 
    /* When return code is TA_SUCCESS, the following output's
@@ -151,7 +151,7 @@ typedef struct
 
 typedef struct
 {
-   /* Allows to pass key information as an 
+   /* Allows to pass key information as an
     * opaque parameter for doRangeTest.
     */
    const TA_Test *test;
@@ -177,7 +177,7 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
                                     const double *inClose,
                                     const double  optInArray[],
                                     int          *outBegIdx,
-                                    int          *outNbElement,                                    
+                                    int          *outNbElement,
                                     int           outInteger[],
                                     int          *lookback,
                                     TA_RetCode   *retCode );
@@ -260,12 +260,12 @@ ErrorNumber test_candlestick( TA_History *history )
    ErrorNumber retValue;
 
    /* Initialize all the unstable period with a large number that would
-    * break the logic if a candlestick unexpectably use a function affected
+    * break the logic if a candlestick unexpectedly use a function affected
     * by an unstable period.
     */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 20000 );
 
-   /* Perform sequentialy all the tests. */
+   /* Perform sequentially all the tests. */
    for( i=0; i < NB_TEST; i++ )
    {
       retValue = do_test( history, &tableTest[i] );
@@ -280,7 +280,7 @@ ErrorNumber test_candlestick( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All tests succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -288,7 +288,7 @@ ErrorNumber test_candlestick( TA_History *history )
 /* Abstract call for all candlestick functions.
  *
  * Call the function by 'name'.
- * 
+ *
  * Optional inputs are pass as an array of double.
  * Elements will be converted to integer as needed.
  *
@@ -308,7 +308,7 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
                                     const double *inClose,
                                     const double  optInArray[],
                                     int          *outBegIdx,
-                                    int          *outNbElement,                                    
+                                    int          *outNbElement,
                                     int           outInteger[],
                                     int          *lookback,
                                     TA_RetCode   *taFuncRetCode )
@@ -324,8 +324,8 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
    TA_RetCode retCode;
 
    (void)optInArray;
-   
-   /* Speed optimization if paramHolder is already initialized. */   
+
+   /* Speed optimization if paramHolder is already initialized. */
    paramHolder = *paramHolderPtr;
    if( !paramHolder )
    {
@@ -333,9 +333,9 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
       if( retCode != TA_SUCCESS )
       {
          printf( "Can't get the function handle [%d]\n", retCode );
-         return TA_TSTCDL_GETFUNCHANDLE_FAIL;   
+         return TA_TSTCDL_GETFUNCHANDLE_FAIL;
       }
-                             
+
       retCode = TA_ParamHolderAlloc( handle, &paramHolder );
       if( retCode != TA_SUCCESS )
       {
@@ -360,7 +360,7 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
          printf( "Candlestick are expected to use only OHLC as input.\n" );
          return TA_TSTCDL_INPUT_TYPE_WRONG;
       }
-   
+
       if( inputInfo->flags != (TA_IN_PRICE_OPEN |
                                TA_IN_PRICE_HIGH |
                                TA_IN_PRICE_LOW  |
@@ -369,9 +369,9 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
          printf( "Candlestick are expected to use only OHLC as input.\n" );
          return TA_TSTCDL_INPUT_FLAG_WRONG;
       }
-    
+
       /* Set the optional inputs. */
-   
+
       /* Verify that there is only one output. */
       if( funcInfo->nbOutput != 1 )
       {
@@ -386,7 +386,7 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
          return TA_TSTCDL_OUTPUT_TYPE_WRONG;
       }
 
-      /* !!!!!!!!!!!!! TO BE DONE !!!!!!!!!!!!!!!!!! 
+      /* !!!!!!!!!!!!! TO BE DONE !!!!!!!!!!!!!!!!!!
        * For now all candlestick functions will be called with default optional parameter.
        */
    }
@@ -406,7 +406,7 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
       printf( "TA_CallFunc() failed [%d]\n", *taFuncRetCode );
       TA_ParamHolderFree( paramHolder );
       return TA_TSTCDL_CALLFUNC_FAIL;
-   }      
+   }
 
    /* Do the lookback function call. */
    retCode = TA_GetLookback( paramHolder, lookback );
@@ -417,10 +417,10 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
       return TA_TSTCDL_GETLOOKBACK_FAIL;
    }
 
-   return TA_TEST_PASS;   
+   return TA_TEST_PASS;
 }
 
-/* rangeTestFunction is a different way to call any of 
+/* rangeTestFunction is a different way to call any of
  * the TA function.
  *
  * This is called by doRangeTest found in test_util.c
@@ -432,7 +432,7 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
  *   - output inconsistency for different start/end index.
  *   - ... many other limit cases...
  *
- * In the case of candlestick, the output is integer and 
+ * In the case of candlestick, the output is integer and
  * should be put in outputBufferInt, and outputBuffer is
  * ignored.
  */
@@ -473,11 +473,11 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
                             testParam1->close,
                             testParam2->params,
                             outBegIdx,
-                            outNbElement,                                    
+                            outNbElement,
                             outputBufferInt,
                             lookback,
                             &retCode );
- 
+
    if( errNb != TA_TEST_PASS )
       retCode = TA_INTERNAL_ERROR(168);
 
@@ -501,8 +501,8 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 1, history->high,  history->nbBars );
    setInputBuffer( 2, history->low,   history->nbBars );
    setInputBuffer( 3, history->close, history->nbBars );
-      
-   
+
+
 #if 0
    /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
    /* Test for specific value not yet implemented */
@@ -721,8 +721,8 @@ static ErrorNumber do_test( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      
-      errNb = doRangeTest( rangeTestFunction, 
+
+      errNb = doRangeTest( rangeTestFunction,
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
 
@@ -735,7 +735,7 @@ static ErrorNumber do_test( const TA_History *history,
             return TA_TSTCDL_PARAMHOLDERFREE_FAIL;
          }
       }
-       
+
       if( errNb != TA_TEST_PASS )
          return errNb;
    }

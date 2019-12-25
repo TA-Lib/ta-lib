@@ -49,7 +49,7 @@
 /* Description:
  *
  *     Test functions which have the following
- *     characterisic: 
+ *     characteristic:
  *      - have one input and one output
  *      - there is no optional parameters
  */
@@ -90,7 +90,7 @@ typedef struct
 
    TA_Integer startIdx;
    TA_Integer endIdx;
-   
+
    TA_RetCode expectedRetCode;
 
    TA_Integer oneOfTheExpectedOutRealIndex0;
@@ -173,7 +173,7 @@ ErrorNumber test_func_1in_1out( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -197,8 +197,8 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    (void)outputBufferInt;
 
    *isOutputInteger = 0;
-  
-   testParam = (TA_RangeTestParam *)opaqueData;   
+
+   testParam = (TA_RangeTestParam *)opaqueData;
 
    switch( testParam->test->theFunction )
    {
@@ -207,7 +207,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                                 endIdx,
                                 testParam->price,
                                 outBegIdx,
-                                outNbElement,                          
+                                outNbElement,
                                 outputBuffer );
       *lookback = TA_HT_DCPERIOD_Lookback();
       break;
@@ -279,7 +279,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         endIdx,
                         testParam->price,
                         outBegIdx,
-                        outNbElement,                          
+                        outNbElement,
                         outputBuffer );
       *lookback = TA_SIN_Lookback();
       break;
@@ -376,7 +376,7 @@ static ErrorNumber do_test( const TA_History *history,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
-	   break;
+       break;
    default:
       retCode = TA_INTERNAL_ERROR(133);
    }
@@ -390,7 +390,7 @@ static ErrorNumber do_test( const TA_History *history,
 
    outBegIdx = outNbElement = 0;
 
-   /* Make another call where the input and the output 
+   /* Make another call where the input and the output
     * are the same buffer.
     */
    switch( test->theFunction )
@@ -470,31 +470,31 @@ static ErrorNumber do_test( const TA_History *history,
       switch( test->theFunction )
       {
       case TA_HT_DCPERIOD_TEST:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_HT_DCPERIOD,
                               (void *)&testParam, 1, 0 );
          break;
 
       case TA_HT_DCPHASE_TEST:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_HT_DCPHASE,
                               (void *)&testParam, 1, 360 );
          break;
 
       case TA_HT_TRENDLINE_TEST:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_HT_TRENDLINE,
                               (void *)&testParam, 1, 0 );
          break;
 
       case TA_HT_TRENDMODE_TEST:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_HT_TRENDMODE,
                               (void *)&testParam, 1, 0 );
          break;
 
       default:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_NONE,
                               (void *)&testParam, 1, 0 );
       }
