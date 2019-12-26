@@ -164,7 +164,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -250,9 +250,9 @@
             TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&
             // gap
             (
-              ( TA_CANDLECOLOR(i-1) == -1 && TA_CANDLEGAPUP(i,i-1) )
+                TA_CANDLECOLOR(i-1) == -1 && TA_CANDLEGAPUP(i,i-1)
               ||
-              ( TA_CANDLECOLOR(i-1) == 1 && TA_CANDLEGAPDOWN(i,i-1) )
+                TA_CANDLECOLOR(i-1) == 1 && TA_CANDLEGAPDOWN(i,i-1)
             )
           )
             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
@@ -338,7 +338,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -393,9 +393,9 @@
 /* Generated */             TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&
 /* Generated */             // gap
 /* Generated */             (
-/* Generated */               ( TA_CANDLECOLOR(i-1) == -1 && TA_CANDLEGAPUP(i,i-1) )
+/* Generated */               TA_CANDLECOLOR(i-1) == -1 && TA_CANDLEGAPUP(i,i-1)
 /* Generated */               ||
-/* Generated */               ( TA_CANDLECOLOR(i-1) == 1 && TA_CANDLEGAPDOWN(i,i-1) )
+/* Generated */               TA_CANDLECOLOR(i-1) == 1 && TA_CANDLEGAPDOWN(i,i-1)
 /* Generated */             )
 /* Generated */           )
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;

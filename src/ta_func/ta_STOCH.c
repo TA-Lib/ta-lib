@@ -107,32 +107,32 @@
 /* Generated */    /* min/max are checked for optInFastK_Period. */
 /* Generated */    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastK_Period = 5;
-/* Generated */    else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
+/* Generated */    else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    /* min/max are checked for optInSlowK_Period. */
 /* Generated */    if( (int)optInSlowK_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowK_Period = 3;
-/* Generated */    else if( ((int)optInSlowK_Period < 1) || ((int)optInSlowK_Period > 100000) )
+/* Generated */    else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInSlowK_MAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowK_MAType = (TA_MAType)0;
-/* Generated */    else if( ((int)optInSlowK_MAType < 0) || ((int)optInSlowK_MAType > 8) )
+/* Generated */    else if( (int)optInSlowK_MAType < 0 || (int)optInSlowK_MAType > 8 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInSlowD_Period. */
 /* Generated */    if( (int)optInSlowD_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowD_Period = 3;
-/* Generated */    else if( ((int)optInSlowD_Period < 1) || ((int)optInSlowD_Period > 100000) )
+/* Generated */    else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInSlowD_MAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowD_MAType = (TA_MAType)0;
-/* Generated */    else if( ((int)optInSlowD_MAType < 0) || ((int)optInSlowD_MAType > 8) )
+/* Generated */    else if( (int)optInSlowD_MAType < 0 || (int)optInSlowD_MAType > 8 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -142,7 +142,7 @@
    /* insert lookback code here. */
 
    /* Account for the initial data needed for Fast-K. */
-   retValue = (optInFastK_Period - 1);
+   retValue = optInFastK_Period - 1;
 
    /* Add the smoothing being done for %K slow */
    retValue += LOOKBACK_CALL(MA)( optInSlowK_Period, optInSlowK_MAType );
@@ -261,7 +261,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -273,32 +273,32 @@
 /* Generated */    /* min/max are checked for optInFastK_Period. */
 /* Generated */    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastK_Period = 5;
-/* Generated */    else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
+/* Generated */    else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    /* min/max are checked for optInSlowK_Period. */
 /* Generated */    if( (int)optInSlowK_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowK_Period = 3;
-/* Generated */    else if( ((int)optInSlowK_Period < 1) || ((int)optInSlowK_Period > 100000) )
+/* Generated */    else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInSlowK_MAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowK_MAType = (TA_MAType)0;
-/* Generated */    else if( ((int)optInSlowK_MAType < 0) || ((int)optInSlowK_MAType > 8) )
+/* Generated */    else if( (int)optInSlowK_MAType < 0 || (int)optInSlowK_MAType > 8 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */    /* min/max are checked for optInSlowD_Period. */
 /* Generated */    if( (int)optInSlowD_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowD_Period = 3;
-/* Generated */    else if( ((int)optInSlowD_Period < 1) || ((int)optInSlowD_Period > 100000) )
+/* Generated */    else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInSlowD_MAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowD_MAType = (TA_MAType)0;
-/* Generated */    else if( ((int)optInSlowD_MAType < 0) || ((int)optInSlowD_MAType > 8) )
+/* Generated */    else if( (int)optInSlowD_MAType < 0 || (int)optInSlowD_MAType > 8 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -410,15 +410,15 @@
        */
       ARRAY_ALLOC( tempBuffer, endIdx-today+1 );
    #else
-      if( (outSlowK == inHigh) ||
-          (outSlowK == inLow)  ||
-          (outSlowK == inClose) )
+      if( outSlowK == inHigh ||
+          outSlowK == inLow  ||
+          outSlowK == inClose )
       {
          tempBuffer = outSlowK;
       }
-      else if( (outSlowD == inHigh) ||
-               (outSlowD == inLow)  ||
-               (outSlowD == inClose) )
+      else if( outSlowD == inHigh ||
+               outSlowD == inLow  ||
+               outSlowD == inClose )
       {
          tempBuffer = outSlowD;
       }
@@ -505,7 +505,7 @@
                                        outBegIdx, outNBElement, tempBuffer );
 
 
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_DEREF(outNBElement) == 0 )
    {
       #if defined(USE_SINGLE_PRECISION_INPUT)
          ARRAY_FREE( tempBuffer );
@@ -641,7 +641,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
@@ -649,26 +649,26 @@
 /* Generated */     #endif
 /* Generated */     if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastK_Period = 5;
-/* Generated */     else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
+/* Generated */     else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( (int)optInSlowK_Period == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowK_Period = 3;
-/* Generated */     else if( ((int)optInSlowK_Period < 1) || ((int)optInSlowK_Period > 100000) )
+/* Generated */     else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInSlowK_MAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowK_MAType = (TA_MAType)0;
-/* Generated */     else if( ((int)optInSlowK_MAType < 0) || ((int)optInSlowK_MAType > 8) )
+/* Generated */     else if( (int)optInSlowK_MAType < 0 || (int)optInSlowK_MAType > 8 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     if( (int)optInSlowD_Period == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowD_Period = 3;
-/* Generated */     else if( ((int)optInSlowD_Period < 1) || ((int)optInSlowD_Period > 100000) )
+/* Generated */     else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInSlowD_MAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowD_MAType = (TA_MAType)0;
-/* Generated */     else if( ((int)optInSlowD_MAType < 0) || ((int)optInSlowD_MAType > 8) )
+/* Generated */     else if( (int)optInSlowD_MAType < 0 || (int)optInSlowD_MAType > 8 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     #if !defined(_JAVA)
@@ -780,7 +780,7 @@
 /* Generated */                                        tempBuffer, optInSlowK_Period,
 /* Generated */                                        optInSlowK_MAType,
 /* Generated */                                        outBegIdx, outNBElement, tempBuffer );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_DEREF(outNBElement) == 0 )
 /* Generated */    {
 /* Generated */       #if defined(USE_SINGLE_PRECISION_INPUT)
 /* Generated */          ARRAY_FREE( tempBuffer );

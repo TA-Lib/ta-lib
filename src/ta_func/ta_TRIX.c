@@ -97,7 +97,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -105,7 +105,7 @@
 
    /* insert lookback code here. */
    emaLookback = LOOKBACK_CALL(EMA)( optInTimePeriod );
-   return (emaLookback*3) + LOOKBACK_CALL(ROCR)( 1 );
+   return emaLookback*3 + LOOKBACK_CALL(ROCR)( 1 );
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -175,7 +175,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -184,7 +184,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -201,7 +201,7 @@
    /* Adjust the startIdx to account for the lookback. */
    emaLookback   = LOOKBACK_CALL(EMA)( optInTimePeriod );
    rocLookback   = LOOKBACK_CALL(ROCR)( 1 );
-   totalLookback = (emaLookback*3) + rocLookback;
+   totalLookback = emaLookback*3 + rocLookback;
 
    if( startIdx < totalLookback )
       startIdx = totalLookback;
@@ -216,7 +216,7 @@
 
    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 
-   nbElementToOutput = (endIdx-startIdx)+1+totalLookback;
+   nbElementToOutput = endIdx-startIdx+1+totalLookback;
 
    /* Allocate a temporary buffer for performing
     * the calculation.
@@ -234,7 +234,7 @@
 
    /* Calculate the first EMA */
    k = PER_TO_K(optInTimePeriod);
-   retCode = FUNCTION_CALL(INT_EMA)( (startIdx-totalLookback), endIdx, inReal,
+   retCode = FUNCTION_CALL(INT_EMA)( startIdx-totalLookback, endIdx, inReal,
                                      optInTimePeriod, k,
                                      VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
                                      tempBuffer );
@@ -242,7 +242,7 @@
    /* Verify for failure or if not enough data after
     * calculating the EMA.
     */
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(nbElement) == 0) )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || VALUE_HANDLE_GET(nbElement) == 0 )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -262,7 +262,7 @@
    /* Verify for failure or if not enough data after
     * calculating the EMA.
     */
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(nbElement) == 0) )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || VALUE_HANDLE_GET(nbElement) == 0 )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -280,7 +280,7 @@
    /* Verify for failure or if not enough data after
     * calculating the EMA.
     */
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(nbElement) == 0) )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || VALUE_HANDLE_GET(nbElement) == 0 )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -299,7 +299,7 @@
    /* Verify for failure or if not enough data after
     * calculating the rate-of-change.
     */
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_DEREF(outNBElement) == 0 )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -364,14 +364,14 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
-/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
@@ -380,7 +380,7 @@
 /* Generated */  #endif
 /* Generated */    emaLookback   = LOOKBACK_CALL(EMA)( optInTimePeriod );
 /* Generated */    rocLookback   = LOOKBACK_CALL(ROCR)( 1 );
-/* Generated */    totalLookback = (emaLookback*3) + rocLookback;
+/* Generated */    totalLookback = emaLookback*3 + rocLookback;
 /* Generated */    if( startIdx < totalLookback )
 /* Generated */       startIdx = totalLookback;
 /* Generated */    if( startIdx > endIdx )
@@ -390,7 +390,7 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
-/* Generated */    nbElementToOutput = (endIdx-startIdx)+1+totalLookback;
+/* Generated */    nbElementToOutput = endIdx-startIdx+1+totalLookback;
 /* Generated */    ARRAY_ALLOC(tempBuffer, nbElementToOutput );
 /* Generated */    #if !defined( _JAVA ) && !defined( USE_SUBARRAY )
 /* Generated */       if( !tempBuffer )
@@ -401,11 +401,11 @@
 /* Generated */       }
 /* Generated */    #endif
 /* Generated */    k = PER_TO_K(optInTimePeriod);
-/* Generated */    retCode = FUNCTION_CALL(INT_EMA)( (startIdx-totalLookback), endIdx, inReal,
+/* Generated */    retCode = FUNCTION_CALL(INT_EMA)( startIdx-totalLookback, endIdx, inReal,
 /* Generated */                                      optInTimePeriod, k,
 /* Generated */                                      VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
 /* Generated */ 								     tempBuffer );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(nbElement) == 0) )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || VALUE_HANDLE_GET(nbElement) == 0 )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -418,7 +418,7 @@
 /* Generated */                                             optInTimePeriod, k,
 /* Generated */                                             VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
 /* Generated */ 						                    tempBuffer );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(nbElement) == 0) )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || VALUE_HANDLE_GET(nbElement) == 0 )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -430,7 +430,7 @@
 /* Generated */                                             optInTimePeriod, k,
 /* Generated */                                             VALUE_HANDLE_OUT(begIdx), VALUE_HANDLE_OUT(nbElement),
 /* Generated */ 						                    tempBuffer );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(nbElement) == 0) )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || VALUE_HANDLE_GET(nbElement) == 0 )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -443,7 +443,7 @@
 /* Generated */                                         1,  VALUE_HANDLE_OUT(begIdx), outNBElement,
 /* Generated */                                         outReal );
 /* Generated */    ARRAY_FREE( tempBuffer );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_DEREF(outNBElement) == 0 )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);

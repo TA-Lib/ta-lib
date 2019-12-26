@@ -72,7 +72,7 @@ DEF_FUNCTION( IMI,                        /* name */
               "Intraday Momentum Index",  /* hint */
               "Imi",                      /* CamelCase name */
               TA_FUNC_FLG_UNST_PER        /* flags */
-             );
+             )
 
 /* IMI END */
 
@@ -89,7 +89,7 @@ const TA_FuncDef *TA_DEF_TableI[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableISize =
-              ((sizeof(TA_DEF_TableI)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableI/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

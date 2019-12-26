@@ -162,7 +162,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -236,9 +236,9 @@
    {
         if(
             ( // upside or downside gap between the 1st candle and both the next 2 candles
-              ( TA_REALBODYGAPUP(i-1,i-2) && TA_REALBODYGAPUP(i,i-2) )
+              TA_REALBODYGAPUP(i-1,i-2) && TA_REALBODYGAPUP(i,i-2)
               ||
-              ( TA_REALBODYGAPDOWN(i-1,i-2) && TA_REALBODYGAPDOWN(i,i-2) )
+              TA_REALBODYGAPDOWN(i-1,i-2) && TA_REALBODYGAPDOWN(i,i-2)
             ) &&
             TA_CANDLECOLOR(i-1) == 1 &&                                                                 // 2nd: white
             TA_CANDLECOLOR(i) == 1 &&                                                                   // 3rd: white
@@ -247,7 +247,7 @@
             inOpen[i] >= inOpen[i-1] - TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 ) &&           // same open 2 and 3
             inOpen[i] <= inOpen[i-1] + TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 )
           )
-            outInteger[outIdx++] = ( TA_REALBODYGAPUP(i-1,i-2) ? 100 : -100 );
+            outInteger[outIdx++] = TA_REALBODYGAPUP(i-1,i-2) ? 100 : -100;
         else
             outInteger[outIdx++] = 0;
         /* add the current range and subtract the first range: this is done after the pattern recognition
@@ -324,7 +324,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -364,9 +364,9 @@
 /* Generated */    {
 /* Generated */         if(
 /* Generated */             ( // upside or downside gap between the 1st candle and both the next 2 candles
-/* Generated */               ( TA_REALBODYGAPUP(i-1,i-2) && TA_REALBODYGAPUP(i,i-2) )
+/* Generated */               TA_REALBODYGAPUP(i-1,i-2) && TA_REALBODYGAPUP(i,i-2)
 /* Generated */               ||
-/* Generated */               ( TA_REALBODYGAPDOWN(i-1,i-2) && TA_REALBODYGAPDOWN(i,i-2) )
+/* Generated */               TA_REALBODYGAPDOWN(i-1,i-2) && TA_REALBODYGAPDOWN(i,i-2)
 /* Generated */             ) &&
 /* Generated */             TA_CANDLECOLOR(i-1) == 1 &&                                                                 // 2nd: white
 /* Generated */             TA_CANDLECOLOR(i) == 1 &&                                                                   // 3rd: white
@@ -375,7 +375,7 @@
 /* Generated */             inOpen[i] >= inOpen[i-1] - TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 ) &&           // same open 2 and 3
 /* Generated */             inOpen[i] <= inOpen[i-1] + TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 )
 /* Generated */           )
-/* Generated */             outInteger[outIdx++] = ( TA_REALBODYGAPUP(i-1,i-2) ? 100 : -100 );
+/* Generated */             outInteger[outIdx++] = TA_REALBODYGAPUP(i-1,i-2) ? 100 : -100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         NearPeriodTotal += TA_CANDLERANGE( Near, i-1 ) - TA_CANDLERANGE( Near, NearTrailingIdx-1 );

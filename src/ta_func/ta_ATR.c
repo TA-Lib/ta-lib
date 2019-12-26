@@ -97,7 +97,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -191,7 +191,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -203,7 +203,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -251,7 +251,7 @@
    ARRAY_ALLOC(tempBuffer, lookbackTotal+(endIdx-startIdx)+1 );
 
    /* Do TRANGE in the intermediate buffer. */
-   retCode = FUNCTION_CALL(TRANGE)( (startIdx-lookbackTotal+1), endIdx,
+   retCode = FUNCTION_CALL(TRANGE)( startIdx-lookbackTotal+1, endIdx,
                                     inHigh, inLow, inClose,
                                     VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1),
                                     tempBuffer );
@@ -302,7 +302,7 @@
    outReal[0] = prevATR;
 
    /* Now do the number of requested ATR. */
-   nbATR = (endIdx - startIdx)+1;
+   nbATR = endIdx - startIdx+1;
 
    while( --nbATR != 0 )
    {
@@ -383,7 +383,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
@@ -391,7 +391,7 @@
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
-/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
@@ -412,7 +412,7 @@
 /* Generated */                                     outBegIdx, outNBElement, outReal );
 /* Generated */    }
 /* Generated */    ARRAY_ALLOC(tempBuffer, lookbackTotal+(endIdx-startIdx)+1 );
-/* Generated */    retCode = FUNCTION_CALL(TRANGE)( (startIdx-lookbackTotal+1), endIdx,
+/* Generated */    retCode = FUNCTION_CALL(TRANGE)( startIdx-lookbackTotal+1, endIdx,
 /* Generated */                                     inHigh, inLow, inClose,
 /* Generated */                                     VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1),
 /* Generated */ 								    tempBuffer );
@@ -443,7 +443,7 @@
 /* Generated */    }
 /* Generated */    outIdx = 1;
 /* Generated */    outReal[0] = prevATR;
-/* Generated */    nbATR = (endIdx - startIdx)+1;
+/* Generated */    nbATR = endIdx - startIdx+1;
 /* Generated */    while( --nbATR != 0 )
 /* Generated */    {
 /* Generated */       prevATR *= optInTimePeriod - 1;

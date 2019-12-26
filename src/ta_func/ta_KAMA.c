@@ -99,7 +99,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -177,7 +177,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -186,7 +186,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -257,19 +257,19 @@
    trailingValue = tempReal2;
 
    /* Calculate the efficiency ratio */
-   if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1))
+   if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1))
       tempReal = 1.0;
    else
       tempReal = std_fabs(periodROC/sumROC1);
 
    /* Calculate the smoothing constant */
-   tempReal  = (tempReal*constDiff)+constMax;
+   tempReal  = tempReal*constDiff+constMax;
    tempReal *= tempReal;
 
    /* Calculate the KAMA like an EMA, using the
     * smoothing constant as the adaptive factor.
     */
-   prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
+   prevKAMA = (inReal[today++]-prevKAMA)*tempReal + prevKAMA;
 
    /* 'today' keep track of where the processing is within the
     * input.
@@ -297,19 +297,19 @@
       trailingValue = tempReal2;
 
       /* Calculate the efficiency ratio */
-      if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
+      if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
          tempReal = 1.0;
       else
          tempReal = std_fabs(periodROC/sumROC1);
 
       /* Calculate the smoothing constant */
-      tempReal  = (tempReal*constDiff)+constMax;
+      tempReal  = tempReal*constDiff+constMax;
       tempReal *= tempReal;
 
       /* Calculate the KAMA like an EMA, using the
        * smoothing constant as the adaptive factor.
        */
-      prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
+      prevKAMA = (inReal[today++]-prevKAMA)*tempReal + prevKAMA;
    }
 
    /* Write the first value. */
@@ -337,19 +337,19 @@
       trailingValue = tempReal2;
 
       /* Calculate the efficiency ratio */
-      if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
+      if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
          tempReal = 1.0;
       else
          tempReal = std_fabs(periodROC / sumROC1);
 
       /* Calculate the smoothing constant */
-      tempReal  = (tempReal*constDiff)+constMax;
+      tempReal  = tempReal*constDiff+constMax;
       tempReal *= tempReal;
 
       /* Calculate the KAMA like an EMA, using the
        * smoothing constant as the adaptive factor.
        */
-      prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
+      prevKAMA = (inReal[today++]-prevKAMA)*tempReal + prevKAMA;
       outReal[outIdx++] = prevKAMA;
    }
 
@@ -412,14 +412,14 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
-/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
@@ -452,13 +452,13 @@
 /* Generated */    tempReal2 = inReal[trailingIdx++];
 /* Generated */    periodROC = tempReal-tempReal2;
 /* Generated */    trailingValue = tempReal2;
-/* Generated */    if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1))
+/* Generated */    if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1))
 /* Generated */       tempReal = 1.0;
 /* Generated */    else
 /* Generated */       tempReal = std_fabs(periodROC/sumROC1);
-/* Generated */    tempReal  = (tempReal*constDiff)+constMax;
+/* Generated */    tempReal  = tempReal*constDiff+constMax;
 /* Generated */    tempReal *= tempReal;
-/* Generated */    prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
+/* Generated */    prevKAMA = (inReal[today++]-prevKAMA)*tempReal + prevKAMA;
 /* Generated */    while( today <= startIdx )
 /* Generated */    {
 /* Generated */       tempReal  = inReal[today];
@@ -467,13 +467,13 @@
 /* Generated */       sumROC1 -= std_fabs(trailingValue-tempReal2);
 /* Generated */       sumROC1 += std_fabs(tempReal-inReal[today-1]);
 /* Generated */       trailingValue = tempReal2;
-/* Generated */       if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
+/* Generated */       if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
 /* Generated */          tempReal = 1.0;
 /* Generated */       else
 /* Generated */          tempReal = std_fabs(periodROC/sumROC1);
-/* Generated */       tempReal  = (tempReal*constDiff)+constMax;
+/* Generated */       tempReal  = tempReal*constDiff+constMax;
 /* Generated */       tempReal *= tempReal;
-/* Generated */       prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
+/* Generated */       prevKAMA = (inReal[today++]-prevKAMA)*tempReal + prevKAMA;
 /* Generated */    }
 /* Generated */    outReal[0] = prevKAMA;
 /* Generated */    outIdx = 1;
@@ -486,13 +486,13 @@
 /* Generated */       sumROC1 -= std_fabs(trailingValue-tempReal2);
 /* Generated */       sumROC1 += std_fabs(tempReal-inReal[today-1]);
 /* Generated */       trailingValue = tempReal2;
-/* Generated */       if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
+/* Generated */       if( sumROC1 <= periodROC || TA_IS_ZERO(sumROC1) )
 /* Generated */          tempReal = 1.0;
 /* Generated */       else
 /* Generated */          tempReal = std_fabs(periodROC / sumROC1);
-/* Generated */       tempReal  = (tempReal*constDiff)+constMax;
+/* Generated */       tempReal  = tempReal*constDiff+constMax;
 /* Generated */       tempReal *= tempReal;
-/* Generated */       prevKAMA = ((inReal[today++]-prevKAMA)*tempReal) + prevKAMA;
+/* Generated */       prevKAMA = (inReal[today++]-prevKAMA)*tempReal + prevKAMA;
 /* Generated */       outReal[outIdx++] = prevKAMA;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;

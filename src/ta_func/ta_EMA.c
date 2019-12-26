@@ -97,7 +97,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -166,7 +166,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -175,7 +175,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -337,7 +337,7 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
     * but do not write it in the output.
     */
    while( today <= startIdx )
-      prevMA = ((inReal[today++]-prevMA)*optInK_1) + prevMA;
+      prevMA = (inReal[today++]-prevMA)*optInK_1 + prevMA;
 
    /* Write the first value. */
    outReal[0] = prevMA;
@@ -346,7 +346,7 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
    /* Calculate the remaining range. */
    while( today <= endIdx )
    {
-      prevMA = ((inReal[today++]-prevMA)*optInK_1) + prevMA;
+      prevMA = (inReal[today++]-prevMA)*optInK_1 + prevMA;
       outReal[outIdx++] = prevMA;
    }
 
@@ -403,14 +403,14 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
-/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
@@ -490,12 +490,12 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */       today = 1;
 /* Generated */    }
 /* Generated */    while( today <= startIdx )
-/* Generated */       prevMA = ((inReal[today++]-prevMA)*optInK_1) + prevMA;
+/* Generated */       prevMA = (inReal[today++]-prevMA)*optInK_1 + prevMA;
 /* Generated */    outReal[0] = prevMA;
 /* Generated */    outIdx = 1;
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
-/* Generated */       prevMA = ((inReal[today++]-prevMA)*optInK_1) + prevMA;
+/* Generated */       prevMA = (inReal[today++]-prevMA)*optInK_1 + prevMA;
 /* Generated */       outReal[outIdx++] = prevMA;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;

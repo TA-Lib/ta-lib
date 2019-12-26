@@ -105,23 +105,23 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 5;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    if( optInNbDevUp == TA_REAL_DEFAULT )
 /* Generated */       optInNbDevUp = 2.000000e+0;
-/* Generated */    else if( (optInNbDevUp < -3.000000e+37) ||/* Generated */  (optInNbDevUp > 3.000000e+37) )
+/* Generated */    else if( optInNbDevUp < -3.000000e+37 ||/* Generated */  optInNbDevUp > 3.000000e+37 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    if( optInNbDevDn == TA_REAL_DEFAULT )
 /* Generated */       optInNbDevDn = 2.000000e+0;
-/* Generated */    else if( (optInNbDevDn < -3.000000e+37) ||/* Generated */  (optInNbDevDn > 3.000000e+37) )
+/* Generated */    else if( optInNbDevDn < -3.000000e+37 ||/* Generated */  optInNbDevDn > 3.000000e+37 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInMAType = (TA_MAType)0;
-/* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
+/* Generated */    else if( (int)optInMAType < 0 || (int)optInMAType > 8 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -229,7 +229,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -238,23 +238,23 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 5;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    if( optInNbDevUp == TA_REAL_DEFAULT )
 /* Generated */       optInNbDevUp = 2.000000e+0;
-/* Generated */    else if( (optInNbDevUp < -3.000000e+37) ||/* Generated */  (optInNbDevUp > 3.000000e+37) )
+/* Generated */    else if( optInNbDevUp < -3.000000e+37 ||/* Generated */  optInNbDevUp > 3.000000e+37 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    if( optInNbDevDn == TA_REAL_DEFAULT )
 /* Generated */       optInNbDevDn = 2.000000e+0;
-/* Generated */    else if( (optInNbDevDn < -3.000000e+37) ||/* Generated */  (optInNbDevDn > 3.000000e+37) )
+/* Generated */    else if( optInNbDevDn < -3.000000e+37 ||/* Generated */  optInNbDevDn > 3.000000e+37 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInMAType = (TA_MAType)0;
-/* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
+/* Generated */    else if( (int)optInMAType < 0 || (int)optInMAType > 8 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -310,7 +310,7 @@
       /* Check that the caller is not doing tricky things.
        * (like using the input buffer in two output!)
        */
-      if( (tempBuffer1 == inReal) || (tempBuffer2 == inReal) )
+      if( tempBuffer1 == inReal || tempBuffer2 == inReal )
          return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
    #endif
 
@@ -323,7 +323,7 @@
                                 optInTimePeriod, optInMAType,
                                 outBegIdx, outNBElement, tempBuffer1 );
 
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_DEREF(outNBElement) == 0 )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return retCode;
@@ -403,7 +403,7 @@
          tempReal  = tempBuffer2[i];
          tempReal2 = outRealMiddleBand[i];
          outRealUpperBand[i] = tempReal2 + tempReal;
-         outRealLowerBand[i] = tempReal2 - (tempReal * optInNbDevDn);
+         outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
       }
    }
    else if( optInNbDevDn == 1.0 )
@@ -414,7 +414,7 @@
          tempReal  = tempBuffer2[i];
          tempReal2 = outRealMiddleBand[i];
          outRealLowerBand[i] = tempReal2 - tempReal;
-         outRealUpperBand[i] = tempReal2 + (tempReal * optInNbDevUp);
+         outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
       }
    }
    else
@@ -424,8 +424,8 @@
       {
          tempReal  = tempBuffer2[i];
          tempReal2 = outRealMiddleBand[i];
-         outRealUpperBand[i] = tempReal2 + (tempReal * optInNbDevUp);
-         outRealLowerBand[i] = tempReal2 - (tempReal * optInNbDevDn);
+         outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+         outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
       }
    }
 
@@ -504,27 +504,27 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 5;
-/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( optInNbDevUp == TA_REAL_DEFAULT )
 /* Generated */        optInNbDevUp = 2.000000e+0;
-/* Generated */     else if( (optInNbDevUp < -3.000000e+37) ||  (optInNbDevUp > 3.000000e+37) )
+/* Generated */     else if( optInNbDevUp < -3.000000e+37 ||  optInNbDevUp > 3.000000e+37 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( optInNbDevDn == TA_REAL_DEFAULT )
 /* Generated */        optInNbDevDn = 2.000000e+0;
-/* Generated */     else if( (optInNbDevDn < -3.000000e+37) ||  (optInNbDevDn > 3.000000e+37) )
+/* Generated */     else if( optInNbDevDn < -3.000000e+37 ||  optInNbDevDn > 3.000000e+37 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInMAType = (TA_MAType)0;
-/* Generated */     else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
+/* Generated */     else if( (int)optInMAType < 0 || (int)optInMAType > 8 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     #if !defined(_JAVA)
@@ -566,7 +566,7 @@
 /* Generated */    retCode = FUNCTION_CALL(MA)( startIdx, endIdx, inReal,
 /* Generated */                                 optInTimePeriod, optInMAType,
 /* Generated */                                 outBegIdx, outNBElement, tempBuffer1 );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_DEREF(outNBElement) == 0 )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return retCode;
@@ -624,7 +624,7 @@
 /* Generated */          tempReal  = tempBuffer2[i];
 /* Generated */          tempReal2 = outRealMiddleBand[i];
 /* Generated */          outRealUpperBand[i] = tempReal2 + tempReal;
-/* Generated */          outRealLowerBand[i] = tempReal2 - (tempReal * optInNbDevDn);
+/* Generated */          outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
 /* Generated */       }
 /* Generated */    }
 /* Generated */    else if( optInNbDevDn == 1.0 )
@@ -634,7 +634,7 @@
 /* Generated */          tempReal  = tempBuffer2[i];
 /* Generated */          tempReal2 = outRealMiddleBand[i];
 /* Generated */          outRealLowerBand[i] = tempReal2 - tempReal;
-/* Generated */          outRealUpperBand[i] = tempReal2 + (tempReal * optInNbDevUp);
+/* Generated */          outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
 /* Generated */       }
 /* Generated */    }
 /* Generated */    else
@@ -643,8 +643,8 @@
 /* Generated */       {
 /* Generated */          tempReal  = tempBuffer2[i];
 /* Generated */          tempReal2 = outRealMiddleBand[i];
-/* Generated */          outRealUpperBand[i] = tempReal2 + (tempReal * optInNbDevUp);
-/* Generated */          outRealLowerBand[i] = tempReal2 - (tempReal * optInNbDevDn);
+/* Generated */          outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
+/* Generated */          outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
 /* Generated */       }
 /* Generated */    }
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);

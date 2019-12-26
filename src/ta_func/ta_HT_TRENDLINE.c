@@ -203,7 +203,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -327,7 +327,7 @@
     */
    while( today <= endIdx )
    {
-      adjustedPrevPeriod = (0.075*period)+0.54;
+      adjustedPrevPeriod = 0.075*period+0.54;
 
       todayValue = inReal[today];
       DO_PRICE_WMA(todayValue,smoothedValue);
@@ -337,7 +337,7 @@
        */
       smoothPrice[smoothPrice_Idx] = smoothedValue;
 
-      if( (today%2) == 0 )
+      if( today%2 == 0 )
       {
          /* Do the Hilbert Transforms for even price bar */
          DO_HILBERT_EVEN(detrender,smoothedValue);
@@ -347,8 +347,8 @@
          if( ++hilbertIdx == 3 )
             hilbertIdx = 0;
 
-         Q2 = (0.2*(Q1 + jI)) + (0.8*prevQ2);
-         I2 = (0.2*(I1ForEvenPrev3 - jQ)) + (0.8*prevI2);
+         Q2 = 0.2*(Q1 + jI) + 0.8*prevQ2;
+         I2 = 0.2*(I1ForEvenPrev3 - jQ) + 0.8*prevI2;
 
          /* The variable I1 is the detrender delayed for
           * 3 price bars.
@@ -367,8 +367,8 @@
          DO_HILBERT_ODD(jI,I1ForOddPrev3);
          DO_HILBERT_ODD(jQ,Q1);
 
-         Q2 = (0.2*(Q1 + jI)) + (0.8*prevQ2);
-         I2 = (0.2*(I1ForOddPrev3 - jQ)) + (0.8*prevI2);
+         Q2 = 0.2*(Q1 + jI) + 0.8*prevQ2;
+         I2 = 0.2*(I1ForOddPrev3 - jQ) + 0.8*prevI2;
 
          /* The variable I1 is the detrender delayed for
           * 3 price bars.
@@ -381,12 +381,12 @@
       }
 
       /* Adjust the period for next price bar */
-      Re = (0.2*((I2*prevI2)+(Q2*prevQ2)))+(0.8*Re);
-      Im = (0.2*((I2*prevQ2)-(Q2*prevI2)))+(0.8*Im);
+      Re = 0.2*(I2*prevI2+Q2*prevQ2)+0.8*Re;
+      Im = 0.2*(I2*prevQ2-Q2*prevI2)+0.8*Im;
       prevQ2 = Q2;
       prevI2 = I2;
       tempReal = period;
-      if( (Im != 0.0) && (Re != 0.0) )
+      if( Im != 0.0 && Re != 0.0 )
          period = 360.0 / (std_atan(Im/Re)*rad2Deg);
       tempReal2 = 1.5*tempReal;
       if( period > tempReal2)
@@ -398,9 +398,9 @@
          period = 6;
       else if( period > 50 )
          period = 50;
-      period = (0.2*period) + (0.8 * tempReal);
+      period = 0.2*period + 0.8 * tempReal;
 
-      smoothPeriod = (0.33*period)+(0.67*smoothPeriod);
+      smoothPeriod = 0.33*period+0.67*smoothPeriod;
 
       /* Compute Trendline */
       DCPeriod    = smoothPeriod+0.5;
@@ -506,7 +506,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
@@ -572,11 +572,11 @@
 /* Generated */       smoothPrice[i] = 0.0;
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
-/* Generated */       adjustedPrevPeriod = (0.075*period)+0.54;
+/* Generated */       adjustedPrevPeriod = 0.075*period+0.54;
 /* Generated */       todayValue = inReal[today];
 /* Generated */       DO_PRICE_WMA(todayValue,smoothedValue);
 /* Generated */       smoothPrice[smoothPrice_Idx] = smoothedValue;
-/* Generated */       if( (today%2) == 0 )
+/* Generated */       if( today%2 == 0 )
 /* Generated */       {
 /* Generated */          DO_HILBERT_EVEN(detrender,smoothedValue);
 /* Generated */          DO_HILBERT_EVEN(Q1,detrender);
@@ -584,8 +584,8 @@
 /* Generated */          DO_HILBERT_EVEN(jQ,Q1);
 /* Generated */          if( ++hilbertIdx == 3 )
 /* Generated */             hilbertIdx = 0;
-/* Generated */          Q2 = (0.2*(Q1 + jI)) + (0.8*prevQ2);
-/* Generated */          I2 = (0.2*(I1ForEvenPrev3 - jQ)) + (0.8*prevI2);
+/* Generated */          Q2 = 0.2*(Q1 + jI) + 0.8*prevQ2;
+/* Generated */          I2 = 0.2*(I1ForEvenPrev3 - jQ) + 0.8*prevI2;
 /* Generated */          I1ForOddPrev3 = I1ForOddPrev2;
 /* Generated */          I1ForOddPrev2 = detrender;
 /* Generated */       }
@@ -595,17 +595,17 @@
 /* Generated */          DO_HILBERT_ODD(Q1,detrender);
 /* Generated */          DO_HILBERT_ODD(jI,I1ForOddPrev3);
 /* Generated */          DO_HILBERT_ODD(jQ,Q1);
-/* Generated */          Q2 = (0.2*(Q1 + jI)) + (0.8*prevQ2);
-/* Generated */          I2 = (0.2*(I1ForOddPrev3 - jQ)) + (0.8*prevI2);
+/* Generated */          Q2 = 0.2*(Q1 + jI) + 0.8*prevQ2;
+/* Generated */          I2 = 0.2*(I1ForOddPrev3 - jQ) + 0.8*prevI2;
 /* Generated */          I1ForEvenPrev3 = I1ForEvenPrev2;
 /* Generated */          I1ForEvenPrev2 = detrender;
 /* Generated */       }
-/* Generated */       Re = (0.2*((I2*prevI2)+(Q2*prevQ2)))+(0.8*Re);
-/* Generated */       Im = (0.2*((I2*prevQ2)-(Q2*prevI2)))+(0.8*Im);
+/* Generated */       Re = 0.2*(I2*prevI2+Q2*prevQ2)+0.8*Re;
+/* Generated */       Im = 0.2*(I2*prevQ2-Q2*prevI2)+0.8*Im;
 /* Generated */       prevQ2 = Q2;
 /* Generated */       prevI2 = I2;
 /* Generated */       tempReal = period;
-/* Generated */       if( (Im != 0.0) && (Re != 0.0) )
+/* Generated */       if( Im != 0.0 && Re != 0.0 )
 /* Generated */          period = 360.0 / (std_atan(Im/Re)*rad2Deg);
 /* Generated */       tempReal2 = 1.5*tempReal;
 /* Generated */       if( period > tempReal2)
@@ -617,8 +617,8 @@
 /* Generated */          period = 6;
 /* Generated */       else if( period > 50 )
 /* Generated */          period = 50;
-/* Generated */       period = (0.2*period) + (0.8 * tempReal);
-/* Generated */       smoothPeriod = (0.33*period)+(0.67*smoothPeriod);
+/* Generated */       period = 0.2*period + 0.8 * tempReal;
+/* Generated */       smoothPeriod = 0.33*period+0.67*smoothPeriod;
 /* Generated */       DCPeriod    = smoothPeriod+0.5;
 /* Generated */       DCPeriodInt = (int)DCPeriod;
 /* Generated */       idx = today;

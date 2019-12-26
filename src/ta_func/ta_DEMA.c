@@ -97,7 +97,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -179,7 +179,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -188,7 +188,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -277,7 +277,7 @@
    /* Verify for failure or if not enough data after
     * calculating the first EMA.
     */
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success)) || (VALUE_HANDLE_GET(firstEMANbElement) == 0) )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || VALUE_HANDLE_GET(firstEMANbElement) == 0 )
    {
       ARRAY_FREE_COND( firstEMA != outReal, firstEMA );
       return retCode;
@@ -302,7 +302,7 @@
    /* Return empty output on failure or if not enough data after
     * calculating the second EMA.
     */
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success)) || (VALUE_HANDLE_GET(secondEMANbElement) == 0) )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || VALUE_HANDLE_GET(secondEMANbElement) == 0 )
    {
       #if defined(USE_SINGLE_PRECISION_INPUT)
          ARRAY_FREE( firstEMA );
@@ -320,7 +320,7 @@
    outIdx = 0;
    while( outIdx < VALUE_HANDLE_GET(secondEMANbElement) )
    {
-      outReal[outIdx] = (2.0*firstEMA[firstEMAIdx++]) - secondEMA[outIdx];
+      outReal[outIdx] = 2.0*firstEMA[firstEMAIdx++] - secondEMA[outIdx];
       outIdx++;
    }
 
@@ -397,14 +397,14 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
-/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
@@ -444,7 +444,7 @@
 /* Generated */                                      optInTimePeriod, k,
 /* Generated */                                      VALUE_HANDLE_OUT(firstEMABegIdx), VALUE_HANDLE_OUT(firstEMANbElement),
 /* Generated */ 								     firstEMA );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success)) || (VALUE_HANDLE_GET(firstEMANbElement) == 0) )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || VALUE_HANDLE_GET(firstEMANbElement) == 0 )
 /* Generated */    {
 /* Generated */       ARRAY_FREE_COND( firstEMA != outReal, firstEMA );
 /* Generated */       return retCode;
@@ -461,7 +461,7 @@
 /* Generated */                                             optInTimePeriod, k,
 /* Generated */                                             VALUE_HANDLE_OUT(secondEMABegIdx), VALUE_HANDLE_OUT(secondEMANbElement),
 /* Generated */ 						                    secondEMA );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success)) || (VALUE_HANDLE_GET(secondEMANbElement) == 0) )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || VALUE_HANDLE_GET(secondEMANbElement) == 0 )
 /* Generated */    {
 /* Generated */       #if defined(USE_SINGLE_PRECISION_INPUT)
 /* Generated */          ARRAY_FREE( firstEMA );
@@ -475,7 +475,7 @@
 /* Generated */    outIdx = 0;
 /* Generated */    while( outIdx < VALUE_HANDLE_GET(secondEMANbElement) )
 /* Generated */    {
-/* Generated */       outReal[outIdx] = (2.0*firstEMA[firstEMAIdx++]) - secondEMA[outIdx];
+/* Generated */       outReal[outIdx] = 2.0*firstEMA[firstEMAIdx++] - secondEMA[outIdx];
 /* Generated */       outIdx++;
 /* Generated */    }
 /* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT)

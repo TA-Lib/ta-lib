@@ -101,13 +101,13 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInMAType = (TA_MAType)0;
-/* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
+/* Generated */    else if( (int)optInMAType < 0 || (int)optInMAType > 8 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -235,7 +235,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -244,13 +244,13 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInMAType = (TA_MAType)0;
-/* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
+/* Generated */    else if( (int)optInMAType < 0 || (int)optInMAType > 8 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -314,7 +314,7 @@
       /* The optInTimePeriod is ignored and the FAMA output of the MAMA
        * is ignored.
        */
-      ARRAY_ALLOC(dummyBuffer, (endIdx-startIdx+1) );
+      ARRAY_ALLOC(dummyBuffer, endIdx-startIdx+1);
 
       #if !defined( _JAVA )
          if( !dummyBuffer )
@@ -397,19 +397,19 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
-/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInMAType = (TA_MAType)0;
-/* Generated */     else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
+/* Generated */     else if( (int)optInMAType < 0 || (int)optInMAType > 8 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     #if !defined(_JAVA)
@@ -457,7 +457,7 @@
 /* Generated */                                      outBegIdx, outNBElement, outReal );
 /* Generated */       break;
 /* Generated */    case ENUM_CASE(MAType, TA_MAType_MAMA, Mama):
-/* Generated */       ARRAY_ALLOC(dummyBuffer, (endIdx-startIdx+1) );
+/* Generated */       ARRAY_ALLOC(dummyBuffer, endIdx-startIdx+1);
 /* Generated */       #if !defined( _JAVA )
 /* Generated */          if( !dummyBuffer )
 /* Generated */             return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);

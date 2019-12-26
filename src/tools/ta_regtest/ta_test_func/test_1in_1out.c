@@ -330,7 +330,7 @@ static ErrorNumber do_test( const TA_History *history,
    }
 
    /* Make a simple first call. */
-   size = (test->endIdx-test->startIdx)+1;
+   size = test->endIdx-test->startIdx+1;
 
    switch( test->theFunction )
    {

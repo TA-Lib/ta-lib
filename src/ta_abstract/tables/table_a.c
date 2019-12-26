@@ -83,7 +83,7 @@ DEF_FUNCTION( ACCBANDS,                    /* name */
               "Acceleration Bands",        /* hint */
               "Accbands",                  /* CamelCase name */
               TA_FUNC_FLG_OVERLAP          /* flags */
-             );
+             )
 /* ACCBANDS END */
 
 
@@ -114,7 +114,7 @@ DEF_FUNCTION( AD,                         /* name */
               "Chaikin A/D Line", /* hint */
               "Ad",                         /* CamelCase name */
               0                             /* flags */
-             );
+             )
 /* AD END */
 
 /* ADD BEGIN */
@@ -174,7 +174,7 @@ DEF_FUNCTION( ADOSC,                         /* name */
               "Chaikin A/D Oscillator", /* hint */
               "AdOsc",                  /* CamelCase name */
               0                         /* flags */
-             );
+             )
 /* ADOSC END */
 
 /* ADX BEGIN */
@@ -200,7 +200,7 @@ DEF_FUNCTION( ADX,                          /* name */
               "Average Directional Movement Index", /* hint */
               "Adx",                         /* CamelCase name */
               TA_FUNC_FLG_UNST_PER          /* flags */
-             );
+             )
 /* ADX END */
 
 /* ADXR BEGIN */
@@ -226,7 +226,7 @@ DEF_FUNCTION( ADXR,                         /* name */
               "Average Directional Movement Index Rating", /* hint */
               "Adxr",                      /* CamelCase name */
               TA_FUNC_FLG_UNST_PER          /* flags */
-             );
+             )
 /* ADXR END */
 
 /* APO BEGIN */
@@ -254,7 +254,7 @@ DEF_FUNCTION( APO,                         /* name */
               "Absolute Price Oscillator", /* hint */
               "Apo",                       /* CamelCase name */
               0                            /* flags */
-             );
+             )
 /* APO END */
 
 /* AROON BEGIN */
@@ -288,7 +288,7 @@ DEF_FUNCTION( AROON,                          /* name */
               "Aroon",                        /* hint */
               "Aroon",                        /* CamelCase name */
               0                               /* flags */
-             );
+             )
 
 /* AROON END */
 
@@ -316,7 +316,7 @@ DEF_FUNCTION( AROONOSC,                       /* name */
               "Aroon Oscillator",             /* hint */
               "AroonOsc",                     /* CamelCase name */
               0                               /* flags */
-             );
+             )
 
 /* AROONOSC END */
 
@@ -351,7 +351,7 @@ DEF_FUNCTION( ATR,                        /* name */
               "Average True Range",       /* hint */
               "Atr",                      /* CamelCase name */
               TA_FUNC_FLG_UNST_PER        /* flags */
-             );
+             )
 /* ATR END */
 
 /* AVGPRICE BEGIN */
@@ -374,7 +374,7 @@ DEF_FUNCTION( AVGPRICE,                   /* name */
               "Average Price",            /* hint */
               "AvgPrice",                 /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 /* AVGPRICE END */
 
 /* AVGDEV BEGIN */
@@ -401,7 +401,7 @@ DEF_FUNCTION( AVGDEV,                      /* name */
                 "Average Deviation",       /* hint */
                 "AvgDev",                  /* CamelCase name*/
                 TA_FUNC_FLG_OVERLAP        /* flags */
-                );
+                )
 /* AVGDEV END */
 
 /****************************************************************************
@@ -431,7 +431,7 @@ const TA_FuncDef *TA_DEF_TableA[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableASize =
-              ((sizeof(TA_DEF_TableA)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableA/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

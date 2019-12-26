@@ -102,19 +102,19 @@
 /* Generated */    /* min/max are checked for optInTimePeriod1. */
 /* Generated */    if( (int)optInTimePeriod1 == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod1 = 7;
-/* Generated */    else if( ((int)optInTimePeriod1 < 1) || ((int)optInTimePeriod1 > 100000) )
+/* Generated */    else if( (int)optInTimePeriod1 < 1 || (int)optInTimePeriod1 > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    /* min/max are checked for optInTimePeriod2. */
 /* Generated */    if( (int)optInTimePeriod2 == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod2 = 14;
-/* Generated */    else if( ((int)optInTimePeriod2 < 1) || ((int)optInTimePeriod2 > 100000) )
+/* Generated */    else if( (int)optInTimePeriod2 < 1 || (int)optInTimePeriod2 > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    /* min/max are checked for optInTimePeriod3. */
 /* Generated */    if( (int)optInTimePeriod3 == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod3 = 28;
-/* Generated */    else if( ((int)optInTimePeriod3 < 1) || ((int)optInTimePeriod3 > 100000) )
+/* Generated */    else if( (int)optInTimePeriod3 < 1 || (int)optInTimePeriod3 > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -220,7 +220,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -232,19 +232,19 @@
 /* Generated */    /* min/max are checked for optInTimePeriod1. */
 /* Generated */    if( (int)optInTimePeriod1 == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod1 = 7;
-/* Generated */    else if( ((int)optInTimePeriod1 < 1) || ((int)optInTimePeriod1 > 100000) )
+/* Generated */    else if( (int)optInTimePeriod1 < 1 || (int)optInTimePeriod1 > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    /* min/max are checked for optInTimePeriod2. */
 /* Generated */    if( (int)optInTimePeriod2 == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod2 = 14;
-/* Generated */    else if( ((int)optInTimePeriod2 < 1) || ((int)optInTimePeriod2 > 100000) )
+/* Generated */    else if( (int)optInTimePeriod2 < 1 || (int)optInTimePeriod2 > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    /* min/max are checked for optInTimePeriod3. */
 /* Generated */    if( (int)optInTimePeriod3 == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod3 = 28;
-/* Generated */    else if( ((int)optInTimePeriod3 < 1) || ((int)optInTimePeriod3 > 100000) )
+/* Generated */    else if( (int)optInTimePeriod3 < 1 || (int)optInTimePeriod3 > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -273,7 +273,7 @@
       longestIndex = 0;
       for ( j = 0; j < 3; ++j )
       {
-         if ( (usedFlag[j] == 0) && (periods[j] > longestPeriod) )
+         if ( usedFlag[j] == 0 && periods[j] > longestPeriod )
          {
             longestPeriod = periods[j];
             longestIndex = j;
@@ -463,7 +463,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
@@ -471,15 +471,15 @@
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod1 == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod1 = 7;
-/* Generated */     else if( ((int)optInTimePeriod1 < 1) || ((int)optInTimePeriod1 > 100000) )
+/* Generated */     else if( (int)optInTimePeriod1 < 1 || (int)optInTimePeriod1 > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( (int)optInTimePeriod2 == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod2 = 14;
-/* Generated */     else if( ((int)optInTimePeriod2 < 1) || ((int)optInTimePeriod2 > 100000) )
+/* Generated */     else if( (int)optInTimePeriod2 < 1 || (int)optInTimePeriod2 > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( (int)optInTimePeriod3 == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod3 = 28;
-/* Generated */     else if( ((int)optInTimePeriod3 < 1) || ((int)optInTimePeriod3 > 100000) )
+/* Generated */     else if( (int)optInTimePeriod3 < 1 || (int)optInTimePeriod3 > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
@@ -500,7 +500,7 @@
 /* Generated */       longestIndex = 0;
 /* Generated */       for ( j = 0; j < 3; ++j )
 /* Generated */       {
-/* Generated */          if ( (usedFlag[j] == 0) && (periods[j] > longestPeriod) )
+/* Generated */          if ( usedFlag[j] == 0 && periods[j] > longestPeriod )
 /* Generated */          {
 /* Generated */             longestPeriod = periods[j];
 /* Generated */             longestIndex = j;

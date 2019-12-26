@@ -161,7 +161,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -208,9 +208,9 @@
    while( i < startIdx ) {
         /* copy here the pattern recognition code below */
         if( inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 1st + 2nd: lower high and higher low
-            ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] )              // (bull) 3rd: lower high and lower low
+            ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]                  // (bull) 3rd: lower high and lower low
               ||
-              ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] )              // (bear) 3rd: higher high and higher low
+              inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]                  // (bear) 3rd: higher high and higher low
             )
         ) {
             patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
@@ -218,9 +218,9 @@
         } else
             /* search for confirmation if hikkake was no more than 3 bars ago */
             if( i <= patternIdx+3 &&
-                ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 2nd
+                ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1]        // close higher than the high of 2nd
                   ||
-                  ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 2nd
+                  patternResult < 0 && inClose[i] < inLow[patternIdx-1]         // close lower than the low of 2nd
                 )
             )
                 patternIdx = 0;
@@ -244,9 +244,9 @@
    do
    {
         if( inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 1st + 2nd: lower high and higher low
-            ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] )              // (bull) 3rd: lower high and lower low
+            ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]                  // (bull) 3rd: lower high and lower low
               ||
-              ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] )              // (bear) 3rd: higher high and higher low
+              inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]                  // (bear) 3rd: higher high and higher low
             )
         ) {
             patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
@@ -255,9 +255,9 @@
         } else
             /* search for confirmation if hikkake was no more than 3 bars ago */
             if( i <= patternIdx+3 &&
-                ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 2nd
+                ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1]    // close higher than the high of 2nd
                   ||
-                  ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 2nd
+                  patternResult < 0 && inClose[i] < inLow[patternIdx-1]     // close lower than the low of 2nd
                 )
             ) {
                 outInteger[outIdx++] = patternResult + 100 * ( patternResult > 0 ? 1 : -1 );
@@ -330,7 +330,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -355,18 +355,18 @@
 /* Generated */    i = startIdx - 3;
 /* Generated */    while( i < startIdx ) {
 /* Generated */         if( inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 1st + 2nd: lower high and higher low
-/* Generated */             ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] )              // (bull) 3rd: lower high and lower low
+/* Generated */             ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]                  // (bull) 3rd: lower high and lower low
 /* Generated */               ||
-/* Generated */               ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] )              // (bear) 3rd: higher high and higher low
+/* Generated */               inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]                  // (bear) 3rd: higher high and higher low
 /* Generated */             )
 /* Generated */         ) {
 /* Generated */             patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
 /* Generated */             patternIdx = i;
 /* Generated */         } else
 /* Generated */             if( i <= patternIdx+3 &&
-/* Generated */                 ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 2nd
+/* Generated */                 ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1]        // close higher than the high of 2nd
 /* Generated */                   ||
-/* Generated */                   ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 2nd
+/* Generated */                   patternResult < 0 && inClose[i] < inLow[patternIdx-1]         // close lower than the low of 2nd
 /* Generated */                 )
 /* Generated */             )
 /* Generated */                 patternIdx = 0;
@@ -377,9 +377,9 @@
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 1st + 2nd: lower high and higher low
-/* Generated */             ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] )              // (bull) 3rd: lower high and lower low
+/* Generated */             ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]                  // (bull) 3rd: lower high and lower low
 /* Generated */               ||
-/* Generated */               ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] )              // (bear) 3rd: higher high and higher low
+/* Generated */               inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]                  // (bear) 3rd: higher high and higher low
 /* Generated */             )
 /* Generated */         ) {
 /* Generated */             patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
@@ -387,9 +387,9 @@
 /* Generated */             outInteger[outIdx++] = patternResult;
 /* Generated */         } else
 /* Generated */             if( i <= patternIdx+3 &&
-/* Generated */                 ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 2nd
+/* Generated */                 ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1]        // close higher than the high of 2nd
 /* Generated */                   ||
-/* Generated */                   ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 2nd
+/* Generated */                   patternResult < 0 && inClose[i] < inLow[patternIdx-1]         // close lower than the low of 2nd
 /* Generated */                 )
 /* Generated */             ) {
 /* Generated */                 outInteger[outIdx++] = patternResult + 100 * ( patternResult > 0 ? 1 : -1 );

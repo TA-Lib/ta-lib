@@ -162,7 +162,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -218,15 +218,11 @@
         /* copy here the pattern recognition code below */
         if( inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] &&             // 2nd: lower high and higher low than 1st
             inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 3rd: lower high and higher low than 2nd
-            ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&             // (bull) 4th: lower high and lower low
-                inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
-                                                                                // (bull) 2nd: close near the low
-              )
+            ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&               // (bull) 4th: lower high and lower low
+              inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
               ||
-              ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&             // (bear) 4th: higher high and higher low
-                inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
-                                                                                // (bull) 2nd: close near the top
-              )
+              inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&               // (bear) 4th: higher high and higher low
+              inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
             )
         ) {
             patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
@@ -234,9 +230,9 @@
         } else
             /* search for confirmation if modified hikkake was no more than 3 bars ago */
             if( i <= patternIdx+3 &&
-                ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 3rd
+                ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1]        // close higher than the high of 3rd
                   ||
-                  ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 3rd
+                  patternResult < 0 && inClose[i] < inLow[patternIdx-1]         // close lower than the low of 3rd
                 )
             )
                 patternIdx = 0;
@@ -268,15 +264,11 @@
    {
         if( inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] &&             // 2nd: lower high and higher low than 1st
             inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 3rd: lower high and higher low than 2nd
-            ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&             // (bull) 4th: lower high and lower low
-                inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
-                                                                                // (bull) 2nd: close near the low
-              )
+            ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&               // (bull) 4th: lower high and lower low
+              inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
               ||
-              ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&             // (bear) 4th: higher high and higher low
-                inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
-                                                                                // (bull) 2nd: close near the top
-              )
+              inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&               // (bear) 4th: higher high and higher low
+              inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
             )
         ) {
             patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
@@ -285,9 +277,9 @@
         } else
             /* search for confirmation if modified hikkake was no more than 3 bars ago */
             if( i <= patternIdx+3 &&
-                ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 3rd
+                ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1]        // close higher than the high of 3rd
                   ||
-                  ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 3rd
+                  patternResult < 0 && inClose[i] < inLow[patternIdx-1]         // close lower than the low of 3rd
                 )
             ) {
                 outInteger[outIdx++] = patternResult + 100 * ( patternResult > 0 ? 1 : -1 );
@@ -363,7 +355,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -396,24 +388,20 @@
 /* Generated */    while( i < startIdx ) {
 /* Generated */         if( inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] &&             // 2nd: lower high and higher low than 1st
 /* Generated */             inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 3rd: lower high and higher low than 2nd
-/* Generated */             ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&             // (bull) 4th: lower high and lower low
-/* Generated */                 inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
-/* Generated */                                                                                 // (bull) 2nd: close near the low
-/* Generated */               )
+/* Generated */             ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&               // (bull) 4th: lower high and lower low
+/* Generated */               inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
 /* Generated */               ||
-/* Generated */               ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&             // (bear) 4th: higher high and higher low
-/* Generated */                 inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
-/* Generated */                                                                                 // (bull) 2nd: close near the top
-/* Generated */               )
+/* Generated */               inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&               // (bear) 4th: higher high and higher low
+/* Generated */               inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
 /* Generated */             )
 /* Generated */         ) {
 /* Generated */             patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
 /* Generated */             patternIdx = i;
 /* Generated */         } else
 /* Generated */             if( i <= patternIdx+3 &&
-/* Generated */                 ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 3rd
+/* Generated */                 ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1]        // close higher than the high of 3rd
 /* Generated */                   ||
-/* Generated */                   ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 3rd
+/* Generated */                   patternResult < 0 && inClose[i] < inLow[patternIdx-1]         // close lower than the low of 3rd
 /* Generated */                 )
 /* Generated */             )
 /* Generated */                 patternIdx = 0;
@@ -427,15 +415,11 @@
 /* Generated */    {
 /* Generated */         if( inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] &&             // 2nd: lower high and higher low than 1st
 /* Generated */             inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] &&             // 3rd: lower high and higher low than 2nd
-/* Generated */             ( ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&             // (bull) 4th: lower high and lower low
-/* Generated */                 inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
-/* Generated */                                                                                 // (bull) 2nd: close near the low
-/* Generated */               )
+/* Generated */             ( inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] &&               // (bull) 4th: lower high and lower low
+/* Generated */               inClose[i-2] <= inLow[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
 /* Generated */               ||
-/* Generated */               ( inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&             // (bear) 4th: higher high and higher low
-/* Generated */                 inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
-/* Generated */                                                                                 // (bull) 2nd: close near the top
-/* Generated */               )
+/* Generated */               inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1] &&               // (bear) 4th: higher high and higher low
+/* Generated */               inClose[i-2] >= inHigh[i-2] - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-2 )
 /* Generated */             )
 /* Generated */         ) {
 /* Generated */             patternResult = 100 * ( inHigh[i] < inHigh[i-1] ? 1 : -1 );
@@ -443,9 +427,9 @@
 /* Generated */             outInteger[outIdx++] = patternResult;
 /* Generated */         } else
 /* Generated */             if( i <= patternIdx+3 &&
-/* Generated */                 ( ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1] )    // close higher than the high of 3rd
+/* Generated */                 ( patternResult > 0 && inClose[i] > inHigh[patternIdx-1]        // close higher than the high of 3rd
 /* Generated */                   ||
-/* Generated */                   ( patternResult < 0 && inClose[i] < inLow[patternIdx-1] )     // close lower than the low of 3rd
+/* Generated */                   patternResult < 0 && inClose[i] < inLow[patternIdx-1]         // close lower than the low of 3rd
 /* Generated */                 )
 /* Generated */             ) {
 /* Generated */                 outInteger[outIdx++] = patternResult + 100 * ( patternResult > 0 ? 1 : -1 );

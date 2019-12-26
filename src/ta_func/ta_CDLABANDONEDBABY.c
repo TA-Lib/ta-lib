@@ -95,7 +95,7 @@
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */    if( optInPenetration == TA_REAL_DEFAULT )
 /* Generated */       optInPenetration = 3.000000e-1;
-/* Generated */    else if( (optInPenetration < 0.000000e+0) ||/* Generated */  (optInPenetration > 3.000000e+37) )
+/* Generated */    else if( optInPenetration < 0.000000e+0 ||/* Generated */  optInPenetration > 3.000000e+37 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -182,7 +182,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -193,7 +193,7 @@
 /* Generated */    #endif /* !defined(_JAVA)*/
 /* Generated */    if( optInPenetration == TA_REAL_DEFAULT )
 /* Generated */       optInPenetration = 3.000000e-1;
-/* Generated */    else if( (optInPenetration < 0.000000e+0) ||/* Generated */  (optInPenetration > 3.000000e+37) )
+/* Generated */    else if( optInPenetration < 0.000000e+0 ||/* Generated */  optInPenetration > 3.000000e+37 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -275,20 +275,17 @@
         if( TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) &&         // 1st: long
             TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i-1 ) &&        // 2nd: doji
             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i ) &&           // 3rd: longer than short
-            ( ( TA_CANDLECOLOR(i-2) == 1 &&                                                         // 1st white
+            ( TA_CANDLECOLOR(i-2) == 1 &&                                                           // 1st white
                 TA_CANDLECOLOR(i) == -1 &&                                                          // 3rd black
                 inClose[i] < inClose[i-2] - TA_REALBODY(i-2) * optInPenetration &&                  // 3rd closes well within 1st rb
                 TA_CANDLEGAPUP(i-1,i-2) &&                                                          // upside gap between 1st and 2nd
                 TA_CANDLEGAPDOWN(i,i-1)                                                             // downside gap between 2nd and 3rd
-              )
-              ||
-              (
+                ||
                 TA_CANDLECOLOR(i-2) == -1 &&                                                        // 1st black
-                TA_CANDLECOLOR(i) == 1 &&                                                           // 3rd white
-                inClose[i] > inClose[i-2] + TA_REALBODY(i-2) * optInPenetration &&                  // 3rd closes well within 1st rb
-                TA_CANDLEGAPDOWN(i-1,i-2) &&                                                        // downside gap between 1st and 2nd
-                TA_CANDLEGAPUP(i,i-1)                                                               // upside gap between 2nd and 3rd
-              )
+              TA_CANDLECOLOR(i) == 1 &&                                                           // 3rd white
+              inClose[i] > inClose[i-2] + TA_REALBODY(i-2) * optInPenetration &&                  // 3rd closes well within 1st rb
+              TA_CANDLEGAPDOWN(i-1,i-2) &&                                                        // downside gap between 1st and 2nd
+              TA_CANDLEGAPUP(i,i-1)                                                               // upside gap between 2nd and 3rd
             )
           )
         {
@@ -379,7 +376,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -387,7 +384,7 @@
 /* Generated */     #endif
 /* Generated */     if( optInPenetration == TA_REAL_DEFAULT )
 /* Generated */        optInPenetration = 3.000000e-1;
-/* Generated */     else if( (optInPenetration < 0.000000e+0) ||  (optInPenetration > 3.000000e+37) )
+/* Generated */     else if( optInPenetration < 0.000000e+0 ||  optInPenetration > 3.000000e+37 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outInteger )
@@ -433,20 +430,17 @@
 /* Generated */         if( TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) &&         // 1st: long
 /* Generated */             TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i-1 ) &&        // 2nd: doji
 /* Generated */             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i ) &&           // 3rd: longer than short
-/* Generated */             ( ( TA_CANDLECOLOR(i-2) == 1 &&                                                         // 1st white
+/* Generated */             ( TA_CANDLECOLOR(i-2) == 1 &&                                                           // 1st white
 /* Generated */                 TA_CANDLECOLOR(i) == -1 &&                                                          // 3rd black
 /* Generated */                 inClose[i] < inClose[i-2] - TA_REALBODY(i-2) * optInPenetration &&                  // 3rd closes well within 1st rb
 /* Generated */                 TA_CANDLEGAPUP(i-1,i-2) &&                                                          // upside gap between 1st and 2nd
 /* Generated */                 TA_CANDLEGAPDOWN(i,i-1)                                                             // downside gap between 2nd and 3rd
-/* Generated */               )
 /* Generated */               ||
-/* Generated */               (
 /* Generated */                 TA_CANDLECOLOR(i-2) == -1 &&                                                        // 1st black
 /* Generated */                 TA_CANDLECOLOR(i) == 1 &&                                                           // 3rd white
 /* Generated */                 inClose[i] > inClose[i-2] + TA_REALBODY(i-2) * optInPenetration &&                  // 3rd closes well within 1st rb
 /* Generated */                 TA_CANDLEGAPDOWN(i-1,i-2) &&                                                        // downside gap between 1st and 2nd
 /* Generated */                 TA_CANDLEGAPUP(i,i-1)                                                               // upside gap between 2nd and 3rd
-/* Generated */               )
 /* Generated */             )
 /* Generated */           )
 /* Generated */ 		{

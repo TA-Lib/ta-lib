@@ -161,7 +161,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -189,7 +189,7 @@
    {
       outReal[outIdx++] = ( inHigh [i] +
                             inLow  [i] +
-                           (inClose[i]*2.0) ) / 4.0;
+                            inClose[i]*2.0 ) / 4.0;
    }
 
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
@@ -250,7 +250,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
@@ -266,7 +266,7 @@
 /* Generated */    {
 /* Generated */       outReal[outIdx++] = ( inHigh [i] +
 /* Generated */ 		                    inLow  [i] +
-/* Generated */ 		                   (inClose[i]*2.0) ) / 4.0;
+/* Generated */ 		                    inClose[i]*2.0 ) / 4.0;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;

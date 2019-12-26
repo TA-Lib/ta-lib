@@ -62,7 +62,7 @@ const TA_FuncDef *TA_DEF_TableY[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableYSize =
-              ((sizeof(TA_DEF_TableY)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableY/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

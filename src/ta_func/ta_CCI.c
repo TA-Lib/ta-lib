@@ -99,14 +99,14 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-   return (optInTimePeriod-1);
+   return optInTimePeriod-1;
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -184,7 +184,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -196,7 +196,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -213,7 +213,7 @@
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = (optInTimePeriod-1);
+   lookbackTotal = optInTimePeriod-1;
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -276,7 +276,7 @@
       /* And finally, the CCI... */
       tempReal = lastValue-theAverage;
 
-      if( (tempReal != 0.0) && (tempReal2 != 0.0) )
+      if( tempReal != 0.0 && tempReal2 != 0.0 )
       {
          outReal[outIdx++] = tempReal/(0.015*(tempReal2/optInTimePeriod));
       }
@@ -357,7 +357,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
@@ -365,14 +365,14 @@
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
-/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */  #endif
-/* Generated */    lookbackTotal = (optInTimePeriod-1);
+/* Generated */    lookbackTotal = optInTimePeriod-1;
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
@@ -405,7 +405,7 @@
 /* Generated */       for( j=0; j < optInTimePeriod; j++ )
 /* Generated */          tempReal2 += std_fabs(circBuffer[j]-theAverage);
 /* Generated */       tempReal = lastValue-theAverage;
-/* Generated */       if( (tempReal != 0.0) && (tempReal2 != 0.0) )
+/* Generated */       if( tempReal != 0.0 && tempReal2 != 0.0 )
 /* Generated */       {
 /* Generated */          outReal[outIdx++] = tempReal/(0.015*(tempReal2/optInTimePeriod));
 /* Generated */       }

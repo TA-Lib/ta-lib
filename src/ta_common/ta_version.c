@@ -49,7 +49,7 @@
 
 const char  *TA_GetVersionString( void )
 {
-	if (sizeof(EXTRA) > 1) {
+	if (sizeof EXTRA > 1) {
 		return MAJOR "." MINOR "." BUILD "-" EXTRA " " TA_VERSION_DT;
 	} else {
 		return MAJOR "." MINOR "." BUILD " " TA_VERSION_DT;

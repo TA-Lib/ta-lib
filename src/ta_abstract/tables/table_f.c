@@ -66,7 +66,7 @@ const TA_FuncDef *TA_DEF_TableF[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableFSize =
-              ((sizeof(TA_DEF_TableF)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableF/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

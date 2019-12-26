@@ -383,8 +383,8 @@ ErrorNumber checkSameContent( TA_Real *buffer1,
           (!trio_isinf(theBuffer1[i])) &&
          */
 
-      if( (theBuffer1[i] != RESV_PATTERN_SUFFIX) &&
-          (theBuffer1[i] != RESV_PATTERN_PREFIX) )
+      if( theBuffer1[i] != RESV_PATTERN_SUFFIX &&
+          theBuffer1[i] != RESV_PATTERN_PREFIX )
       {
 
          if(!TA_REAL_EQ( theBuffer1[i], theBuffer2[i], 0.000001))
@@ -663,12 +663,12 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
             /* Randomly skip the test of some unstable period (limit case are
              * always tested though).
              */
-            if( (unstablePeriod > 5) && (unstablePeriod < 240) )
+            if( unstablePeriod > 5 && unstablePeriod < 240 )
             {
                /* Randomly skips from 0 to 239 tests. Never
                 * make unstablePeriod exceed 240.
                 */
-               temp = (rand() % 240);
+               temp = rand() % 240;
                unstablePeriod += temp;
                if( unstablePeriod > 240 )
                   unstablePeriod = 240;
@@ -679,12 +679,12 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
           * and kinda repetitive, skip the test of some fixSize (limit
           * case are always tested though).
           */
-         if( (fixSize > 5) && (fixSize < 240) )
+         if( fixSize > 5 && fixSize < 240 )
          {
             /* Randomly skips from 0 to 239 tests. Never
              * make fixSize exceed 240.
              */
-            temp = (rand() % 239);
+            temp = rand() % 239;
             fixSize += temp;
             if( fixSize > 240 )
                fixSize = 240;
@@ -748,7 +748,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
    }
 
    /* Test for a large number of possible startIdx */
-   for( startIdx=0; startIdx <= (MAX_RANGE_SIZE-fixSize); startIdx++ )
+   for( startIdx=0; startIdx <= MAX_RANGE_SIZE-fixSize; startIdx++ )
    {
       /* Call the TA function. */
       endIdx = startIdx+fixSize-1;
@@ -776,7 +776,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
          if( outputNbElement == 0 )
          {
             /* Trap cases where there is no output. */
-            if( (startIdx > lookback) || (endIdx > lookback) )
+            if( startIdx > lookback || endIdx > lookback )
             {
                /* Whenever startIdx is greater than lookback, some data
                 * shall be return. Same idea with endIdx.
@@ -802,7 +802,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
          else
          {
             /* Some output was returned. Are the returned index correct? */
-            if( (outputBegIdx < startIdx) || (outputBegIdx > endIdx) || (outputBegIdx < refOutBeg))
+            if( outputBegIdx < startIdx || outputBegIdx > endIdx || outputBegIdx < refOutBeg)
             {
                printf( "Fail: doRangeTestFixSize bad outBegIdx\n" );
                printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
@@ -812,7 +812,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                return TA_TESTUTIL_DRT_BAD_OUTBEGIDX;
             }
 
-            if( (outputNbElement > fixSize) || (outputNbElement > refOutNbElement) )
+            if( outputNbElement > fixSize || outputNbElement > refOutNbElement )
             {
                printf( "Fail: doRangeTestFixSize Incorrect outputNbElement\n" );
                printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
@@ -859,7 +859,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                      printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
                      printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
                      if( val1 != 0.0 )
-                        printf( "Fail: Diff %g %%\n", ((val2-val1)/val1)*100.0 );
+                        printf( "Fail: Diff %g %%\n", (val2-val1)/val1*100.0 );
                      TA_Free( outputBuffer );
                      TA_Free( outputBufferInt );
                      return TA_TESTUTIL_DRT_DATA_DIFF;
@@ -872,12 +872,12 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                if( outputNbElement > 30 )
                {
                   temp = outputNbElement-20;
-                  if( (i > 20) && (i < temp) )
+                  if( i > 20 && i < temp )
                   {
                      /* Randomly skips from 0 to 200 verification.
                       * Never make it skip the last 20 values.
                       */
-                     i += (rand() % 200);
+                     i += rand() % 200;
                      if( i > temp )
                         i = temp;
                   }
@@ -891,7 +891,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
             else
                outputSizeByOptimalLogic = endIdx-outputSizeByOptimalLogic+1;
 
-            if( (fixSize != outputNbElement) && (outputBuffer[1+outputSizeByOptimalLogic] != RESV_PATTERN_IMPROBABLE) )
+            if( fixSize != outputNbElement && outputBuffer[1+outputSizeByOptimalLogic] != RESV_PATTERN_IMPROBABLE )
             {
                printf( "Fail: doRangeTestFixSize out-of-bound output (%e)\n", outputBuffer[1+outputSizeByOptimalLogic] );
                printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
@@ -901,7 +901,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                return TA_TESTUTIL_DRT_OUT_OF_BOUND_OUT;
             }
 
-            if( (fixSize != outputNbElement) && (outputBufferInt[1+outputSizeByOptimalLogic] != RESV_PATTERN_IMPROBABLE_INT) )
+            if( fixSize != outputNbElement && outputBufferInt[1+outputSizeByOptimalLogic] != RESV_PATTERN_IMPROBABLE_INT )
             {
                printf( "Fail: doRangeTestFixSize out-of-bound output  (%d)\n", outputBufferInt[1+outputSizeByOptimalLogic] );
                printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
@@ -968,10 +968,10 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
          /* Skip some startIdx at random. Limit case are still
           * tested though.
           */
-         if( (startIdx > 30) && ((startIdx+100) <= (MAX_RANGE_SIZE-fixSize)) )
+         if( startIdx > 30 && startIdx+100 <= MAX_RANGE_SIZE-fixSize )
          {
             /* Randomly skips from 40 to 100 tests. */
-            temp = (rand() % 100)+40;
+            temp = rand() % 100+40;
             startIdx += temp;
          }
       }
@@ -1016,7 +1016,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
     *  insignificant at that level, so no tolerance
     *  check is being done).
     */
-    if( (val1 < 0.00001) && (val2 < 0.00001) )
+    if( val1 < 0.00001 && val2 < 0.00001 )
       return 1;
 
    /* When the function is unstable, the comparison
@@ -1092,9 +1092,9 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
        * than 1/1000
        */
       if( val1 > val2 )
-         difference = (val1-val2);
+         difference = val1-val2;
       else
-         difference = (val2-val1);
+         difference = val2-val1;
 
       difference *= 1000.0;
 
@@ -1116,9 +1116,9 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
        * than 1/1000
        */
       if( val1 > val2 )
-         difference = (val1-val2);
+         difference = val1-val2;
       else
-         difference = (val2-val1);
+         difference = val2-val1;
 
       difference *= 100.0;
 
@@ -1140,9 +1140,9 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
        * than 1/1000
        */
       if( val1 > val2 )
-         difference = (val1-val2);
+         difference = val1-val2;
       else
-         difference = (val2-val1);
+         difference = val2-val1;
 
       difference *= 10.0;
 
@@ -1184,7 +1184,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
          /* Pretend it is fine. */
          return 1;
       }
-      else if( (tempInt > 1) && (difference > 0.10) )
+      else if( tempInt > 1 && difference > 0.10 )
       {
          printf( "\nFail: Value diffferent by more than 10 percent over 1 degree (%d)\n", tempInt );
          return 0;

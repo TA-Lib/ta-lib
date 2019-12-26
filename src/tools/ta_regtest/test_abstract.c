@@ -302,11 +302,11 @@ static ErrorNumber testLookback( TA_ParamHolder *paramHolder )
 static int isMath( const TA_FuncInfo *funcInfo )
 {
    int notMath;
-   notMath = (strlen(funcInfo->group) < 4) ||
-       !((tolower(funcInfo->group[0]) == 'm') &&
-         (tolower(funcInfo->group[1]) == 'a') &&
-         (tolower(funcInfo->group[2]) == 't') &&
-         (tolower(funcInfo->group[3]) == 'h'));
+   notMath = strlen(funcInfo->group) < 4 ||
+       !(tolower(funcInfo->group[0]) == 'm' &&
+         tolower(funcInfo->group[1]) == 'a' &&
+         tolower(funcInfo->group[2]) == 't' &&
+         tolower(funcInfo->group[3]) == 'h');
 
    return !notMath;
 }
@@ -530,41 +530,41 @@ static ErrorNumber test_default_calls(void)
 
    errNumber = TA_TEST_PASS;
 
-   for( i=0; i < sizeof(inputNegData)/sizeof(double); i++ )
+   for( i=0; i < sizeof inputNegData/sizeof(double); i++ )
    {
-      inputNegData[i] = -((double)((int)i));
+      inputNegData[i] = -(double)(int)i;
       inputNegData_int[i] = -(int)i;
    }
 
-   for( i=0; i < sizeof(inputZeroData)/sizeof(double); i++ )
+   for( i=0; i < sizeof inputZeroData/sizeof(double); i++ )
    {
       inputZeroData[i] = 0.0;
       inputZeroData_int[i] = (int)inputZeroData[i];
    }
 
-   for( i=0; i < sizeof(inputRandomData)/sizeof(double); i++ )
+   for( i=0; i < sizeof inputRandomData/sizeof(double); i++ )
    {
       /* Make 100% sure input range is ]0..1[ */
-      tempDouble = (double)rand() / ((double)(RAND_MAX)+(double)(1));
-      while( (tempDouble <= 0.0) || (tempDouble >= 1.0) )
+      tempDouble = (double)rand() / ((double)RAND_MAX+(double)1);
+      while( tempDouble <= 0.0 || tempDouble >= 1.0 )
       {
-          tempDouble = (double)rand() / ((double)(RAND_MAX)+(double)(1));
+          tempDouble = (double)rand() / ((double)RAND_MAX+(double)1);
       }
       inputRandomData[i] = tempDouble;
       inputRandomData_int[i] = (int)inputRandomData[i];
    }
 
-   for( i=0; i < sizeof(inputRandFltEpsilon)/sizeof(double); i++ )
+   for( i=0; i < sizeof inputRandFltEpsilon/sizeof(double); i++ )
    {
        sign= (unsigned int)rand()%2;
-       inputRandFltEpsilon[i] = (sign?1.0:-1.0)*(FLT_EPSILON);
+       inputRandFltEpsilon[i] = (sign?1.0:-1.0)* FLT_EPSILON;
        inputRandFltEpsilon_int[i] = sign?TA_INTEGER_MIN:TA_INTEGER_MAX;
    }
 
-   for( i=0; i < sizeof(inputRandFltEpsilon)/sizeof(double); i++ )
+   for( i=0; i < sizeof inputRandFltEpsilon/sizeof(double); i++ )
    {
        sign= (unsigned int)rand()%2;
-       inputRandFltEpsilon[i] = (sign?1.0:-1.0)*(DBL_EPSILON);
+       inputRandFltEpsilon[i] = (sign?1.0:-1.0)* DBL_EPSILON;
        inputRandFltEpsilon_int[i] = sign?1:-1;
    }
 

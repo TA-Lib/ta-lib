@@ -161,7 +161,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -222,14 +222,12 @@
             inOpen[i] > min(inClose[i-1], inOpen[i-1]) &&
             inClose[i] < max(inClose[i-2], inOpen[i-2]) &&                  // 3rd closes within 1st rb
             inClose[i] > min(inClose[i-2], inOpen[i-2]) &&
-            ( (
+            (
                 TA_CANDLECOLOR(i-2) == 1 &&                                 // when 1st is white
                 TA_REALBODYGAPUP(i-1,i-2)                                   // upside gap
-              ) ||
-              (
+              ||
                 TA_CANDLECOLOR(i-2) == -1 &&                                // when 1st is black
                 TA_REALBODYGAPDOWN(i-1,i-2)                                 // downside gap
-              )
             )
         )
             outInteger[outIdx++] = TA_CANDLECOLOR(i-2) * 100;
@@ -304,7 +302,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -334,14 +332,12 @@
 /* Generated */             inOpen[i] > min(inClose[i-1], inOpen[i-1]) &&
 /* Generated */             inClose[i] < max(inClose[i-2], inOpen[i-2]) &&                  // 3rd closes within 1st rb
 /* Generated */             inClose[i] > min(inClose[i-2], inOpen[i-2]) &&
-/* Generated */             ( (
+/* Generated */             (
 /* Generated */                 TA_CANDLECOLOR(i-2) == 1 &&                                 // when 1st is white
 /* Generated */                 TA_REALBODYGAPUP(i-1,i-2)                                   // upside gap
-/* Generated */               ) ||
-/* Generated */               (
+/* Generated */               ||
 /* Generated */                 TA_CANDLECOLOR(i-2) == -1 &&                                // when 1st is black
 /* Generated */                 TA_REALBODYGAPDOWN(i-1,i-2)                                 // downside gap
-/* Generated */               )
 /* Generated */             )
 /* Generated */         )
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i-2) * 100;

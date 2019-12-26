@@ -70,7 +70,7 @@ DEF_FUNCTION( CCI,                           /* name */
               TA_GroupId_MomentumIndicators, /* groupId */
               "Commodity Channel Index",     /* hint */
               "Cci",                         /* CamelCase name */
-              0                              /* flags */             );
+              0                              /* flags */             )
 
 /* CCI END */
 
@@ -97,7 +97,7 @@ DEF_FUNCTION( CDL2CROWS,                      /* name */
               "Two Crows",                    /* hint */
               "Cdl2Crows",                    /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDL2CROWS END */
 
@@ -124,7 +124,7 @@ DEF_FUNCTION( CDL3BLACKCROWS,                 /* name */
               "Three Black Crows",            /* hint */
               "Cdl3BlackCrows",               /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-            );
+            )
 
 /* CDL3BLACKCROWS END */
 
@@ -151,7 +151,7 @@ DEF_FUNCTION( CDL3INSIDE,                     /* name */
               "Three Inside Up/Down",         /* hint */
               "Cdl3Inside",                   /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-            );
+            )
 
 /* CDL3INSIDE END */
 
@@ -178,7 +178,7 @@ DEF_FUNCTION( CDL3LINESTRIKE,                 /* name */
               "Three-Line Strike ",           /* hint */
               "Cdl3LineStrike",               /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-            );
+            )
 
 /* CDL3LINESTRIKE END */
 
@@ -205,7 +205,7 @@ DEF_FUNCTION( CDL3OUTSIDE,                    /* name */
               "Three Outside Up/Down",        /* hint */
               "Cdl3Outside",                  /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-            );
+            )
 
 /* CDL3OUTSIDE END */
 
@@ -232,7 +232,7 @@ DEF_FUNCTION( CDL3STARSINSOUTH,               /* name */
               "Three Stars In The South",     /* hint */
               "Cdl3StarsInSouth",             /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-            );
+            )
 
 /* CDL3STARSINSOUTH END */
 
@@ -259,7 +259,7 @@ DEF_FUNCTION( CDL3WHITESOLDIERS,              /* name */
               "Three Advancing White Soldiers", /* hint */
               "Cdl3WhiteSoldiers",            /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-            );
+            )
 
 /* CDL3WHITESOLDIERS END */
 
@@ -287,7 +287,7 @@ DEF_FUNCTION( CDLABANDONEDBABY,               /* name */
               "Abandoned Baby",               /* hint */
               "CdlAbandonedBaby",             /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-            );
+            )
 
 /* CDLABANDONEDBABY END */
 
@@ -314,7 +314,7 @@ DEF_FUNCTION( CDLADVANCEBLOCK,                /* name */
               "Advance Block",                /* hint */
               "CdlAdvanceBlock",              /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-            );
+            )
 
 /* CDLADVANCEBLOCK END */
 
@@ -341,7 +341,7 @@ DEF_FUNCTION( CDLBELTHOLD,                    /* name */
               "Belt-hold",                    /* hint */
               "CdlBeltHold",                  /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-            );
+            )
 
 /* CDLBELTHOLD END */
 
@@ -368,7 +368,7 @@ DEF_FUNCTION( CDLBREAKAWAY,                   /* name */
               "Breakaway",                    /* hint */
               "CdlBreakaway",                 /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-            );
+            )
 
 /* CDLBREAKAWAY END */
 
@@ -395,7 +395,7 @@ DEF_FUNCTION( CDLCLOSINGMARUBOZU,             /* name */
               "Closing Marubozu",             /* hint */
               "CdlClosingMarubozu",           /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-            );
+            )
 
 /* CDLCLOSINGMARUBOZU END */
 
@@ -422,7 +422,7 @@ DEF_FUNCTION( CDLCONCEALBABYSWALL,            /* name */
               "Concealing Baby Swallow",      /* hint */
               "CdlConcealBabysWall",          /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLCONCEALBABYSWALL END */
 
@@ -449,7 +449,7 @@ DEF_FUNCTION( CDLCOUNTERATTACK,               /* name */
               "Counterattack",                /* hint */
               "CdlCounterAttack",             /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLCOUNTERATTACK END */
 
@@ -477,7 +477,7 @@ DEF_FUNCTION( CDLDARKCLOUDCOVER,              /* name */
               "Dark Cloud Cover",             /* hint */
               "CdlDarkCloudCover",            /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLDARKCLOUDCOVER END */
 
@@ -504,7 +504,7 @@ DEF_FUNCTION( CDLDOJI,                        /* name */
               "Doji",                         /* hint */
               "CdlDoji",                      /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLDOJI END */
 
@@ -531,7 +531,7 @@ DEF_FUNCTION( CDLDOJISTAR,                    /* name */
               "Doji Star",                    /* hint */
               "CdlDojiStar",                  /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLDOJISTAR END */
 
@@ -558,7 +558,7 @@ DEF_FUNCTION( CDLDRAGONFLYDOJI,               /* name */
               "Dragonfly Doji",               /* hint */
               "CdlDragonflyDoji",             /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLDRAGONFLYDOJI END */
 
@@ -585,7 +585,7 @@ DEF_FUNCTION( CDLENGULFING,                   /* name */
               "Engulfing Pattern",            /* hint */
               "CdlEngulfing",                 /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLENGULFING END */
 
@@ -613,7 +613,7 @@ DEF_FUNCTION( CDLEVENINGDOJISTAR,             /* name */
               "Evening Doji Star",            /* hint */
               "CdlEveningDojiStar",           /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLEVENINGDOJISTAR END */
 
@@ -641,7 +641,7 @@ DEF_FUNCTION( CDLEVENINGSTAR,                 /* name */
               "Evening Star",                 /* hint */
               "CdlEveningStar",               /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLEVENINGSTAR END */
 
@@ -670,7 +670,7 @@ DEF_FUNCTION( CDLGAPSIDESIDEWHITE,            /* name */
               "Up/Down-gap side-by-side white lines",   /* hint */
               "CdlGapSideSideWhite",         /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK        /* flags */
-             );
+             )
 
 /* CDLGAPSIDESIDEWHITE END */
 
@@ -697,7 +697,7 @@ DEF_FUNCTION( CDLGRAVESTONEDOJI,              /* name */
               "Gravestone Doji",              /* hint */
               "CdlGravestoneDoji",            /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLGRAVESTONEDOJI END */
 
@@ -724,7 +724,7 @@ DEF_FUNCTION( CDLHAMMER,                      /* name */
               "Hammer",                       /* hint */
               "CdlHammer",                    /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLHAMMER END */
 
@@ -751,7 +751,7 @@ DEF_FUNCTION( CDLHANGINGMAN,                  /* name */
               "Hanging Man",                  /* hint */
               "CdlHangingMan",                /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLHANGINGMAN END */
 
@@ -778,7 +778,7 @@ DEF_FUNCTION( CDLHARAMI,                      /* name */
               "Harami Pattern",               /* hint */
               "CdlHarami",                    /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLHARAMI END */
 
@@ -805,7 +805,7 @@ DEF_FUNCTION( CDLHARAMICROSS,                 /* name */
               "Harami Cross Pattern",         /* hint */
               "CdlHaramiCross",               /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLHARAMICROSS END */
 
@@ -832,7 +832,7 @@ DEF_FUNCTION( CDLHIGHWAVE,                    /* name */
               "High-Wave Candle",             /* hint */
               "CdlHignWave",                  /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLHIGHWAVE END */
 
@@ -859,7 +859,7 @@ DEF_FUNCTION( CDLHIKKAKE,                     /* name */
               "Hikkake Pattern",              /* hint */
               "CdlHikkake",                   /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLHIKKAKE END */
 
@@ -886,7 +886,7 @@ DEF_FUNCTION( CDLHIKKAKEMOD,                  /* name */
               "Modified Hikkake Pattern",     /* hint */
               "CdlHikkakeMod",                /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLHIKKAKEMOD END */
 
@@ -913,7 +913,7 @@ DEF_FUNCTION( CDLHOMINGPIGEON,                /* name */
               "Homing Pigeon",                /* hint */
               "CdlHomingPigeon",              /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLHOMINGPIGEON END */
 
@@ -940,7 +940,7 @@ DEF_FUNCTION( CDLIDENTICAL3CROWS,             /* name */
               "Identical Three Crows",        /* hint */
               "CdlIdentical3Crows",           /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLIDENTICAL3CROWS END */
 
@@ -967,7 +967,7 @@ DEF_FUNCTION( CDLINNECK,                      /* name */
               "In-Neck Pattern",              /* hint */
               "CdlInNeck",                    /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLINNECK END */
 
@@ -994,7 +994,7 @@ DEF_FUNCTION( CDLINVERTEDHAMMER,              /* name */
               "Inverted Hammer",              /* hint */
               "CdlInvertedHammer",            /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLINVERTEDHAMMER END */
 
@@ -1021,7 +1021,7 @@ DEF_FUNCTION( CDLKICKING,                     /* name */
               "Kicking",                      /* hint */
               "CdlKicking",                   /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLKICKING END */
 
@@ -1048,7 +1048,7 @@ DEF_FUNCTION( CDLKICKINGBYLENGTH,             /* name */
               "Kicking - bull/bear determined by the longer marubozu",              /* hint */
               "CdlKickingByLength",           /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLKICKINGBYLENGTH END */
 
@@ -1075,7 +1075,7 @@ DEF_FUNCTION( CDLLADDERBOTTOM,                /* name */
               "Ladder Bottom",                /* hint */
               "CdlLadderBottom",              /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLLADDERBOTTOM END */
 
@@ -1102,7 +1102,7 @@ DEF_FUNCTION( CDLLONGLEGGEDDOJI,              /* name */
               "Long Legged Doji",             /* hint */
               "CdlLongLeggedDoji",            /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLLONGLEGGEDDOJI END */
 
@@ -1129,7 +1129,7 @@ DEF_FUNCTION( CDLLONGLINE,                    /* name */
               "Long Line Candle",             /* hint */
               "CdlLongLine",                  /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLLONGLINE END */
 
@@ -1156,7 +1156,7 @@ DEF_FUNCTION( CDLMARUBOZU,                    /* name */
               "Marubozu",                     /* hint */
               "CdlMarubozu",                 /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK        /* flags */
-             );
+             )
 
 /* CDLMARUBOZU END */
 
@@ -1183,7 +1183,7 @@ DEF_FUNCTION( CDLMATCHINGLOW,                 /* name */
               "Matching Low",                 /* hint */
               "CdlMatchingLow",               /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLMATCHINGLOW END */
 
@@ -1211,7 +1211,7 @@ DEF_FUNCTION( CDLMATHOLD,                     /* name */
               "Mat Hold",                     /* hint */
               "CdlMatHold",                   /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK        /* flags */
-             );
+             )
 
 /* CDLMATHOLD END */
 
@@ -1239,7 +1239,7 @@ DEF_FUNCTION( CDLMORNINGDOJISTAR,             /* name */
               "Morning Doji Star",            /* hint */
               "CdlMorningDojiStar",           /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLMORNINGDOJISTAR END */
 
@@ -1267,7 +1267,7 @@ DEF_FUNCTION( CDLMORNINGSTAR,                 /* name */
               "Morning Star",                 /* hint */
               "CdlMorningStar",               /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLMORNINGSTAR END */
 
@@ -1294,7 +1294,7 @@ DEF_FUNCTION( CDLONNECK,                      /* name */
               "On-Neck Pattern",              /* hint */
               "CdlOnNeck",                    /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLONNECK END */
 
@@ -1321,7 +1321,7 @@ DEF_FUNCTION( CDLPIERCING,                    /* name */
               "Piercing Pattern",             /* hint */
               "CdlPiercing",                  /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLPIERCING END */
 
@@ -1348,7 +1348,7 @@ DEF_FUNCTION( CDLRICKSHAWMAN,                 /* name */
               "Rickshaw Man",                 /* hint */
               "CdlRickshawMan",               /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLRICKSHAWMAN END */
 
@@ -1375,7 +1375,7 @@ DEF_FUNCTION( CDLRISEFALL3METHODS,            /* name */
               "Rising/Falling Three Methods", /* hint */
               "CdlRiseFall3Methods",          /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLRISEFALL3METHODS END */
 
@@ -1402,7 +1402,7 @@ DEF_FUNCTION( CDLSEPARATINGLINES,             /* name */
               "Separating Lines",             /* hint */
               "CdlSeperatingLines",           /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLSEPARATINGLINES END */
 
@@ -1429,7 +1429,7 @@ DEF_FUNCTION( CDLSHOOTINGSTAR,                /* name */
               "Shooting Star",                /* hint */
               "CdlShootingStar",              /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLSHOOTINGSTAR END */
 
@@ -1456,7 +1456,7 @@ DEF_FUNCTION( CDLSHORTLINE,                   /* name */
               "Short Line Candle",            /* hint */
               "CdlShortLine",                 /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLSHORTLINE END */
 
@@ -1483,7 +1483,7 @@ DEF_FUNCTION( CDLSPINNINGTOP,                 /* name */
               "Spinning Top",                 /* hint */
               "CdlSpinningTop",               /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLSPINNINGTOP END */
 
@@ -1510,7 +1510,7 @@ DEF_FUNCTION( CDLSTALLEDPATTERN,              /* name */
               "Stalled Pattern",              /* hint */
               "CdlStalledPattern",            /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLSTALLEDPATTERN END */
 
@@ -1537,7 +1537,7 @@ DEF_FUNCTION( CDLSTICKSANDWICH,               /* name */
               "Stick Sandwich",               /* hint */
               "CdlStickSandwhich",            /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLSTICKSANDWICH END */
 
@@ -1564,7 +1564,7 @@ DEF_FUNCTION( CDLTAKURI,                      /* name */
               "Takuri (Dragonfly Doji with very long lower shadow)",    /* hint */
               "CdlTakuri",                   /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK        /* flags */
-             );
+             )
 
 /* CDLTAKURI END */
 
@@ -1591,7 +1591,7 @@ DEF_FUNCTION( CDLTASUKIGAP,                   /* name */
               "Tasuki Gap",                   /* hint */
               "CdlTasukiGap",                 /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLTASUKIGAP END */
 
@@ -1618,7 +1618,7 @@ DEF_FUNCTION( CDLTHRUSTING,                   /* name */
               "Thrusting Pattern",            /* hint */
               "CdlThrusting",                 /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLTHRUSTING END */
 
@@ -1645,7 +1645,7 @@ DEF_FUNCTION( CDLTRISTAR,                     /* name */
               "Tristar Pattern",              /* hint */
               "CdlTristar",                   /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLTRISTAR END */
 
@@ -1672,7 +1672,7 @@ DEF_FUNCTION( CDLUNIQUE3RIVER,                /* name */
               "Unique 3 River",               /* hint */
               "CdlUnique3River",              /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLUNIQUE3RIVER END */
 
@@ -1699,7 +1699,7 @@ DEF_FUNCTION( CDLUPSIDEGAP2CROWS,             /* name */
               "Upside Gap Two Crows",         /* hint */
               "CdlUpsideGap2Crows",           /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
-             );
+             )
 
 /* CDLUPSIDEGAP2CROWS END */
 
@@ -1726,7 +1726,7 @@ DEF_FUNCTION( CDLXSIDEGAP3METHODS,            /* name */
               "Upside/Downside Gap Three Methods",    /* hint */
               "CdlXSideGap3Methods",         /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK        /* flags */
-             );
+             )
 
 /* CDLXSIDEGAP3METHODS END */
 
@@ -1758,7 +1758,7 @@ DEF_FUNCTION( CMO,                        /* name */
               "Chande Momentum Oscillator",  /* hint */
               "Cmo",                      /* CamelCase name */
               TA_FUNC_FLG_UNST_PER       /* flags */
-             );
+             )
 /* CMO END */
 
 /* CORREL BEGIN */
@@ -1785,7 +1785,7 @@ DEF_FUNCTION( CORREL,                      /* name */
               "Pearson's Correlation Coefficient (r)", /* hint */
               "Correl",                /* CamelCase name */
               0                        /* flags */
-             );
+             )
 /* CORREL END */
 
 /* COS BEGIN */
@@ -1875,7 +1875,7 @@ const TA_FuncDef *TA_DEF_TableC[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableCSize =
-              ((sizeof(TA_DEF_TableC)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableC/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

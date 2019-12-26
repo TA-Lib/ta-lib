@@ -106,25 +106,25 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    /* min/max are checked for optInFastK_Period. */
 /* Generated */    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastK_Period = 5;
-/* Generated */    else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
+/* Generated */    else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    /* min/max are checked for optInFastD_Period. */
 /* Generated */    if( (int)optInFastD_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastD_Period = 3;
-/* Generated */    else if( ((int)optInFastD_Period < 1) || ((int)optInFastD_Period > 100000) )
+/* Generated */    else if( (int)optInFastD_Period < 1 || (int)optInFastD_Period > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInFastD_MAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastD_MAType = (TA_MAType)0;
-/* Generated */    else if( ((int)optInFastD_MAType < 0) || ((int)optInFastD_MAType > 8) )
+/* Generated */    else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 8 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -228,7 +228,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -237,25 +237,25 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    /* min/max are checked for optInFastK_Period. */
 /* Generated */    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastK_Period = 5;
-/* Generated */    else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
+/* Generated */    else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    /* min/max are checked for optInFastD_Period. */
 /* Generated */    if( (int)optInFastD_Period == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastD_Period = 3;
-/* Generated */    else if( ((int)optInFastD_Period < 1) || ((int)optInFastD_Period > 100000) )
+/* Generated */    else if( (int)optInFastD_Period < 1 || (int)optInFastD_Period > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInFastD_MAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastD_MAType = (TA_MAType)0;
-/* Generated */    else if( ((int)optInFastD_MAType < 0) || ((int)optInFastD_MAType > 8) )
+/* Generated */    else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 8 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -318,7 +318,7 @@
 
    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 
-   tempArraySize = (endIdx - startIdx) + 1 + lookbackSTOCHF;
+   tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
 
    ARRAY_ALLOC( tempRSIBuffer, tempArraySize );
 
@@ -353,7 +353,7 @@
 
    ARRAY_FREE( tempRSIBuffer );
 
-   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || ((int)VALUE_HANDLE_DEREF(outNBElement)) == 0 )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_DEREF(outNBElement) == 0 )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
@@ -432,27 +432,27 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
-/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastK_Period = 5;
-/* Generated */     else if( ((int)optInFastK_Period < 1) || ((int)optInFastK_Period > 100000) )
+/* Generated */     else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( (int)optInFastD_Period == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastD_Period = 3;
-/* Generated */     else if( ((int)optInFastD_Period < 1) || ((int)optInFastD_Period > 100000) )
+/* Generated */     else if( (int)optInFastD_Period < 1 || (int)optInFastD_Period > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInFastD_MAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastD_MAType = (TA_MAType)0;
-/* Generated */     else if( ((int)optInFastD_MAType < 0) || ((int)optInFastD_MAType > 8) )
+/* Generated */     else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 8 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     #if !defined(_JAVA)
@@ -475,7 +475,7 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
-/* Generated */    tempArraySize = (endIdx - startIdx) + 1 + lookbackSTOCHF;
+/* Generated */    tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
 /* Generated */    ARRAY_ALLOC( tempRSIBuffer, tempArraySize );
 /* Generated */    retCode = FUNCTION_CALL(RSI)(startIdx-lookbackSTOCHF,
 /* Generated */                                 endIdx,
@@ -504,7 +504,7 @@
 /* Generated */                                           outFastK,
 /* Generated */                                           outFastD);
 /* Generated */    ARRAY_FREE( tempRSIBuffer );
-/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || ((int)VALUE_HANDLE_DEREF(outNBElement)) == 0 )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_DEREF(outNBElement) == 0 )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);

@@ -71,7 +71,7 @@ DEF_FUNCTION( NATR,                        /* name */
               "Normalized Average True Range", /* hint */
               "Natr",                     /* CamelCase name */
               TA_FUNC_FLG_UNST_PER        /* flags */
-             );
+             )
 /* NATR END */
 
 #if 0
@@ -117,7 +117,7 @@ const TA_FuncDef *TA_DEF_TableN[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableNSize =
-              ((sizeof(TA_DEF_TableN)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableN/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

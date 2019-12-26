@@ -106,12 +106,12 @@
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */    if( optInAcceleration == TA_REAL_DEFAULT )
 /* Generated */       optInAcceleration = 2.000000e-2;
-/* Generated */    else if( (optInAcceleration < 0.000000e+0) ||/* Generated */  (optInAcceleration > 3.000000e+37) )
+/* Generated */    else if( optInAcceleration < 0.000000e+0 ||/* Generated */  optInAcceleration > 3.000000e+37 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    if( optInMaximum == TA_REAL_DEFAULT )
 /* Generated */       optInMaximum = 2.000000e-1;
-/* Generated */    else if( (optInMaximum < 0.000000e+0) ||/* Generated */  (optInMaximum > 3.000000e+37) )
+/* Generated */    else if( optInMaximum < 0.000000e+0 ||/* Generated */  optInMaximum > 3.000000e+37 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -207,7 +207,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -218,12 +218,12 @@
 /* Generated */    #endif /* !defined(_JAVA)*/
 /* Generated */    if( optInAcceleration == TA_REAL_DEFAULT )
 /* Generated */       optInAcceleration = 2.000000e-2;
-/* Generated */    else if( (optInAcceleration < 0.000000e+0) ||/* Generated */  (optInAcceleration > 3.000000e+37) )
+/* Generated */    else if( optInAcceleration < 0.000000e+0 ||/* Generated */  optInAcceleration > 3.000000e+37 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    if( optInMaximum == TA_REAL_DEFAULT )
 /* Generated */       optInMaximum = 2.000000e-1;
-/* Generated */    else if( (optInMaximum < 0.000000e+0) ||/* Generated */  (optInMaximum > 3.000000e+37) )
+/* Generated */    else if( optInMaximum < 0.000000e+0 ||/* Generated */  optInMaximum > 3.000000e+37 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -562,7 +562,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow)
@@ -570,11 +570,11 @@
 /* Generated */     #endif
 /* Generated */     if( optInAcceleration == TA_REAL_DEFAULT )
 /* Generated */        optInAcceleration = 2.000000e-2;
-/* Generated */     else if( (optInAcceleration < 0.000000e+0) ||  (optInAcceleration > 3.000000e+37) )
+/* Generated */     else if( optInAcceleration < 0.000000e+0 ||  optInAcceleration > 3.000000e+37 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( optInMaximum == TA_REAL_DEFAULT )
 /* Generated */        optInMaximum = 2.000000e-1;
-/* Generated */     else if( (optInMaximum < 0.000000e+0) ||  (optInMaximum > 3.000000e+37) )
+/* Generated */     else if( optInMaximum < 0.000000e+0 ||  optInMaximum > 3.000000e+37 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )

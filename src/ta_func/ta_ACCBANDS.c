@@ -96,7 +96,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 20;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -189,7 +189,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -201,7 +201,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 20;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -289,7 +289,7 @@
                                 optInTimePeriod,
                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), outRealMiddleBand );
 
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize )
    {
       ARRAY_FREE( tempBuffer1 );
       ARRAY_FREE( tempBuffer2 );
@@ -304,7 +304,7 @@
                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy),
                                 outRealUpperBand );
 
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize )
    {
       ARRAY_FREE( tempBuffer1 );
       ARRAY_FREE( tempBuffer2 );
@@ -322,7 +322,7 @@
    ARRAY_FREE( tempBuffer1 );
    ARRAY_FREE( tempBuffer2 );
 
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize )
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
@@ -405,7 +405,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
@@ -413,7 +413,7 @@
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 20;
-/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outRealUpperBand )
@@ -472,7 +472,7 @@
 /* Generated */    retCode = FUNCTION_CALL(SMA)( startIdx, endIdx, inClose,
 /* Generated */                                 optInTimePeriod,
 /* Generated */                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy), outRealMiddleBand );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize )
 /* Generated */    {
 /* Generated */       ARRAY_FREE( tempBuffer1 );
 /* Generated */       ARRAY_FREE( tempBuffer2 );
@@ -484,7 +484,7 @@
 /* Generated */                                 optInTimePeriod,
 /* Generated */                                 VALUE_HANDLE_OUT(outBegIdxDummy), VALUE_HANDLE_OUT(outNbElementDummy),
 /* Generated */ 								outRealUpperBand );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize )
 /* Generated */    {
 /* Generated */       ARRAY_FREE( tempBuffer1 );
 /* Generated */       ARRAY_FREE( tempBuffer2 );
@@ -498,7 +498,7 @@
 /* Generated */ 								outRealLowerBand );
 /* Generated */    ARRAY_FREE( tempBuffer1 );
 /* Generated */    ARRAY_FREE( tempBuffer2 );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize) )
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || (int)VALUE_HANDLE_GET(outNbElementDummy) != outputSize )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);

@@ -240,15 +240,15 @@ static TA_Real testSerie10[] = {3,3,-3,2,-1,0,2};
 
 static TA_RefTest tableRefTest[] =
 {
-  {testSerie1, sizeof(testSerie1)/sizeof(TA_Real)},
-  {testSerie2, sizeof(testSerie2)/sizeof(TA_Real)},
-  {testSerie3, sizeof(testSerie3)/sizeof(TA_Real)},
-  {testSerie4, sizeof(testSerie4)/sizeof(TA_Real)},
-  {testSerie5, sizeof(testSerie5)/sizeof(TA_Real)},
-  {testSerie6, sizeof(testSerie6)/sizeof(TA_Real)},
-  {testSerie7, sizeof(testSerie7)/sizeof(TA_Real)},
-  {testSerie8, sizeof(testSerie8)/sizeof(TA_Real)},
-  {testSerie9, sizeof(testSerie10)/sizeof(TA_Real)}
+  {testSerie1, sizeof testSerie1/sizeof(TA_Real)},
+  {testSerie2, sizeof testSerie2/sizeof(TA_Real)},
+  {testSerie3, sizeof testSerie3/sizeof(TA_Real)},
+  {testSerie4, sizeof testSerie4/sizeof(TA_Real)},
+  {testSerie5, sizeof testSerie5/sizeof(TA_Real)},
+  {testSerie6, sizeof testSerie6/sizeof(TA_Real)},
+  {testSerie7, sizeof testSerie7/sizeof(TA_Real)},
+  {testSerie8, sizeof testSerie8/sizeof(TA_Real)},
+  {testSerie9, sizeof testSerie10/sizeof(TA_Real)}
 };
 
 #define NB_TEST_REF (sizeof(tableRefTest)/sizeof(TA_RefTest))
@@ -323,11 +323,11 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    testParam = (TA_RangeTestParam *)opaqueData;
 
-   dummyBufferReal = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
+   dummyBufferReal = TA_Malloc( ( endIdx-startIdx+1)*sizeof(TA_Real));
    if( !dummyBufferReal )
      return TA_ALLOC_ERR;
 
-   dummyBufferInt = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Integer));
+   dummyBufferInt = TA_Malloc( ( endIdx-startIdx+1)*sizeof(TA_Integer));
    if( !dummyBufferInt )
    {
       TA_Free( dummyBufferReal );
@@ -571,7 +571,7 @@ static TA_RetCode referenceMin( TA_Integer    startIdx,
     * to identify at least one output over the specified
     * period.
     */
-   nbInitialElementNeeded = (optInTimePeriod-1);
+   nbInitialElementNeeded = optInTimePeriod-1;
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -636,7 +636,7 @@ static TA_RetCode referenceMax( TA_Integer    startIdx,
    /* Validate the requested output range. */
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx < startIdx))
+   if( endIdx < 0 || endIdx < startIdx)
       return TA_OUT_OF_RANGE_END_INDEX;
 
    /* Validate the parameters. */
@@ -656,7 +656,7 @@ static TA_RetCode referenceMax( TA_Integer    startIdx,
     * to identify at least one output over the specified
     * period.
     */
-   nbInitialElementNeeded = (optInTimePeriod-1);
+   nbInitialElementNeeded = optInTimePeriod-1;
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -723,7 +723,7 @@ static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement )
       {
          for( startIdx=0; startIdx < nbElement; startIdx++ )
          {
-            for( endIdx=0; (endIdx < nbElement) && (startIdx <= endIdx); endIdx++ )
+            for( endIdx=0; endIdx < nbElement && startIdx <= endIdx; endIdx++ )
             {
                /* Set to NAN all the elements of the gBuffers.
                 * Note: These buffer are used as an attempt to detect

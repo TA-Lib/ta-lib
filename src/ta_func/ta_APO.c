@@ -101,19 +101,19 @@
 /* Generated */    /* min/max are checked for optInFastPeriod. */
 /* Generated */    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastPeriod = 12;
-/* Generated */    else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
+/* Generated */    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    /* min/max are checked for optInSlowPeriod. */
 /* Generated */    if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowPeriod = 26;
-/* Generated */    else if( ((int)optInSlowPeriod < 2) || ((int)optInSlowPeriod > 100000) )
+/* Generated */    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInMAType = (TA_MAType)0;
-/* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
+/* Generated */    else if( (int)optInMAType < 0 || (int)optInMAType > 8 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -202,7 +202,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -211,19 +211,19 @@
 /* Generated */    /* min/max are checked for optInFastPeriod. */
 /* Generated */    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInFastPeriod = 12;
-/* Generated */    else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
+/* Generated */    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    /* min/max are checked for optInSlowPeriod. */
 /* Generated */    if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInSlowPeriod = 26;
-/* Generated */    else if( ((int)optInSlowPeriod < 2) || ((int)optInSlowPeriod > 100000) )
+/* Generated */    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */    if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */       optInMAType = (TA_MAType)0;
-/* Generated */    else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
+/* Generated */    else if( (int)optInMAType < 0 || (int)optInMAType > 8 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
@@ -239,7 +239,7 @@
    /* Insert TA function code here. */
 
    /* Allocate an intermediate buffer. */
-   ARRAY_ALLOC(tempBuffer, (endIdx-startIdx+1) );
+   ARRAY_ALLOC(tempBuffer, endIdx-startIdx+1);
    #if !defined(_JAVA)
       if( !tempBuffer )
          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
@@ -371,7 +371,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
             {
                tempReal = outReal[i];
                if( !TA_IS_ZERO(tempReal) )
-                  outReal[i] = ((tempBuffer[j]-tempReal)/tempReal)*100.0;
+                  outReal[i] = (tempBuffer[j]-tempReal)/tempReal*100.0;
                else
                   outReal[i] = 0.0;
             }
@@ -455,23 +455,23 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInFastPeriod = 12;
-/* Generated */     else if( ((int)optInFastPeriod < 2) || ((int)optInFastPeriod > 100000) )
+/* Generated */     else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInSlowPeriod = 26;
-/* Generated */     else if( ((int)optInSlowPeriod < 2) || ((int)optInSlowPeriod > 100000) )
+/* Generated */     else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_MANAGED) && !defined(_JAVA)
 /* Generated */     if( (int)optInMAType == TA_INTEGER_DEFAULT )
 /* Generated */        optInMAType = (TA_MAType)0;
-/* Generated */     else if( ((int)optInMAType < 0) || ((int)optInMAType > 8) )
+/* Generated */     else if( (int)optInMAType < 0 || (int)optInMAType > 8 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     #if !defined(_JAVA)
@@ -479,7 +479,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */  #endif
-/* Generated */    ARRAY_ALLOC(tempBuffer, (endIdx-startIdx+1) );
+/* Generated */    ARRAY_ALLOC(tempBuffer, endIdx-startIdx+1);
 /* Generated */    #if !defined(_JAVA)
 /* Generated */       if( !tempBuffer )
 /* Generated */          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
@@ -587,7 +587,7 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */             {
 /* Generated */                tempReal = outReal[i];
 /* Generated */                if( !TA_IS_ZERO(tempReal) )
-/* Generated */                   outReal[i] = ((tempBuffer[j]-tempReal)/tempReal)*100.0;
+/* Generated */                   outReal[i] = (tempBuffer[j]-tempReal)/tempReal*100.0;
 /* Generated */                else
 /* Generated */                   outReal[i] = 0.0;
 /* Generated */             }

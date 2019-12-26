@@ -692,15 +692,15 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
     * we just save ourselves one memory allocation.
     */
    bufferIsAllocated = 0;
-   if( (outSlowK_0 == inHigh) ||
-       (outSlowK_0 == inLow)  ||
-       (outSlowK_0 == inClose) )
+   if( outSlowK_0 == inHigh ||
+       outSlowK_0 == inLow  ||
+       outSlowK_0 == inClose )
    {
       tempBuffer = outSlowK_0;
    }
-   else if( (outSlowD_1 == inHigh) ||
-            (outSlowD_1 == inLow)  ||
-            (outSlowD_1 == inClose) )
+   else if( outSlowD_1 == inHigh ||
+            outSlowD_1 == inLow  ||
+            outSlowD_1 == inClose )
    {
       tempBuffer = outSlowD_1;
    }
@@ -746,7 +746,7 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
                     outBegIdx, outNbElement, tempBuffer );
 
 
-   if( (retCode != TA_SUCCESS) || (*outNbElement == 0) )
+   if( retCode != TA_SUCCESS || *outNbElement == 0 )
    {
       if( bufferIsAllocated )
         TA_Free(  tempBuffer );
@@ -759,7 +759,7 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
    /* Calculate the %D which is simply a moving average of
     * the already smoothed %K.
     */
-   retCode = TA_MA( 0, (*outNbElement)-1,
+   retCode = TA_MA( 0, *outNbElement-1,
                     tempBuffer, optInPeriod_2,
                     (TA_MAType)optInMAType_2,
                     outBegIdx, outNbElement, outSlowD_1 );
@@ -769,7 +769,7 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
     *  caller buffer because more input data then the
     *  requested range was needed for doing %D).
     */
-   memmove( outSlowK_0, &tempBuffer[lookbackDSlow], (*outNbElement) * sizeof(TA_Real) );
+   memmove( outSlowK_0, &tempBuffer[lookbackDSlow], *outNbElement * sizeof(TA_Real) );
 
    /* Don't need K anymore, free it if it was allocated here. */
    if( bufferIsAllocated )

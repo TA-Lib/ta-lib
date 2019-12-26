@@ -119,7 +119,7 @@ int main( int argc, char **argv )
    if( argc == 2 )
    {
        /* Detect option to perform extended profiling. */
-       if( (argv[1][0] == '-') && (argv[1][1] == 'p') && (argv[1][2] == '\0'))
+       if( argv[1][0] == '-' && argv[1][1] == 'p' && argv[1][2] == '\0')
        {
            doExtensiveProfiling = 1;
        }
@@ -173,9 +173,9 @@ int main( int argc, char **argv )
 #ifdef WIN32
          QueryPerformanceFrequency(&QPFrequency);
          freq = (double)QPFrequency.QuadPart;
-         printf( "\nTotal execution time                = %g milliseconds", (timeInProfiledCall/freq)*1000.0 );
-         printf( "\nWorst single function call          = %g milliseconds", (worstProfiledCall/freq)*1000.0 );
-         printf( "\nAverage execution time per function = %g microseconds\n", ((timeInProfiledCall/freq)*1000000.0)/((double)nbProfiledCall) );
+         printf( "\nTotal execution time                = %g milliseconds", timeInProfiledCall/freq*1000.0 );
+         printf( "\nWorst single function call          = %g milliseconds", worstProfiledCall/freq*1000.0 );
+         printf( "\nAverage execution time per function = %g microseconds\n", timeInProfiledCall/freq*1000000.0/(double)nbProfiledCall );
 #else
          freq = (double)CLOCKS_PER_SEC;
          printf( "\nTotal execution time                = %g milliseconds", timeInProfiledCall/freq/1000.0 );

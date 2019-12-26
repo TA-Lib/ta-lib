@@ -68,7 +68,7 @@ DEF_FUNCTION( WCLPRICE,                   /* name */
               "Weighted Close Price",     /* hint */
               "WclPrice",                 /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 /* WCL END */
 
 /* WILLR BEGIN */
@@ -94,7 +94,7 @@ DEF_FUNCTION( WILLR,          /* name */
               "Williams' %R", /* hint */
               "WillR",        /* CamelCase name */
               0               /* flags */
-             );
+             )
 /* WILLR END */
 
 /* WMA BEGIN */
@@ -120,7 +120,7 @@ DEF_FUNCTION( WMA,                        /* name */
               "Weighted Moving Average",  /* hint */
               "Wma",                      /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 
 /* WMA END */
 
@@ -139,7 +139,7 @@ const TA_FuncDef *TA_DEF_TableW[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableWSize =
-              ((sizeof(TA_DEF_TableW)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableW/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

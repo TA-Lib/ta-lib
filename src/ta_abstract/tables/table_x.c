@@ -62,7 +62,7 @@ const TA_FuncDef *TA_DEF_TableX[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableXSize =
-              ((sizeof(TA_DEF_TableX)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableX/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

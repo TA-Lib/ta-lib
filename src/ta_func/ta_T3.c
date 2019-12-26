@@ -104,12 +104,12 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 5;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */    if( optInVFactor == TA_REAL_DEFAULT )
 /* Generated */       optInVFactor = 7.000000e-1;
-/* Generated */    else if( (optInVFactor < 0.000000e+0) ||/* Generated */  (optInVFactor > 1.000000e+0) )
+/* Generated */    else if( optInVFactor < 0.000000e+0 ||/* Generated */  optInVFactor > 1.000000e+0 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -193,7 +193,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -202,12 +202,12 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 5;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    if( optInVFactor == TA_REAL_DEFAULT )
 /* Generated */       optInVFactor = 7.000000e-1;
-/* Generated */    else if( (optInVFactor < 0.000000e+0) ||/* Generated */  (optInVFactor > 1.000000e+0) )
+/* Generated */    else if( optInVFactor < 0.000000e+0 ||/* Generated */  optInVFactor > 1.000000e+0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -266,7 +266,7 @@
    tempReal = e1;
    for( i=optInTimePeriod-1; i > 0 ; i-- )
    {
-      e1 = (k*inReal[today++])+(one_minus_k*e1);
+      e1 = k*inReal[today++]+one_minus_k*e1;
       tempReal += e1;
    }
    e2 = tempReal / optInTimePeriod;
@@ -275,8 +275,8 @@
    tempReal = e2;
    for( i=optInTimePeriod-1; i > 0 ; i-- )
    {
-      e1  = (k*inReal[today++])+(one_minus_k*e1);
-      e2  = (k*e1)+(one_minus_k*e2);
+      e1  = k*inReal[today++]+one_minus_k*e1;
+      e2  = k*e1+one_minus_k*e2;
       tempReal += e2;
    }
    e3 = tempReal / optInTimePeriod;
@@ -285,9 +285,9 @@
    tempReal = e3;
    for( i=optInTimePeriod-1; i > 0 ; i-- )
    {
-      e1  = (k*inReal[today++])+(one_minus_k*e1);
-      e2  = (k*e1)+(one_minus_k*e2);
-      e3  = (k*e2)+(one_minus_k*e3);
+      e1  = k*inReal[today++]+one_minus_k*e1;
+      e2  = k*e1+one_minus_k*e2;
+      e3  = k*e2+one_minus_k*e3;
       tempReal += e3;
    }
    e4 = tempReal / optInTimePeriod;
@@ -296,10 +296,10 @@
    tempReal = e4;
    for( i=optInTimePeriod-1; i > 0 ; i-- )
    {
-      e1  = (k*inReal[today++])+(one_minus_k*e1);
-      e2  = (k*e1)+(one_minus_k*e2);
-      e3  = (k*e2)+(one_minus_k*e3);
-      e4  = (k*e3)+(one_minus_k*e4);
+      e1  = k*inReal[today++]+one_minus_k*e1;
+      e2  = k*e1+one_minus_k*e2;
+      e3  = k*e2+one_minus_k*e3;
+      e4  = k*e3+one_minus_k*e4;
       tempReal += e4;
    }
    e5 = tempReal / optInTimePeriod;
@@ -308,11 +308,11 @@
    tempReal = e5;
    for( i=optInTimePeriod-1; i > 0 ; i-- )
    {
-      e1  = (k*inReal[today++])+(one_minus_k*e1);
-      e2  = (k*e1)+(one_minus_k*e2);
-      e3  = (k*e2)+(one_minus_k*e3);
-      e4  = (k*e3)+(one_minus_k*e4);
-      e5  = (k*e4)+(one_minus_k*e5);
+      e1  = k*inReal[today++]+one_minus_k*e1;
+      e2  = k*e1+one_minus_k*e2;
+      e3  = k*e2+one_minus_k*e3;
+      e4  = k*e3+one_minus_k*e4;
+      e5  = k*e4+one_minus_k*e5;
       tempReal += e5;
    }
    e6 = tempReal / optInTimePeriod;
@@ -321,12 +321,12 @@
    while( today <= startIdx )
    {
       /* Do the calculation but do not write the output */
-      e1  = (k*inReal[today++])+(one_minus_k*e1);
-      e2  = (k*e1)+(one_minus_k*e2);
-      e3  = (k*e2)+(one_minus_k*e3);
-      e4  = (k*e3)+(one_minus_k*e4);
-      e5  = (k*e4)+(one_minus_k*e5);
-      e6  = (k*e5)+(one_minus_k*e6);
+      e1  = k*inReal[today++]+one_minus_k*e1;
+      e2  = k*e1+one_minus_k*e2;
+      e3  = k*e2+one_minus_k*e3;
+      e4  = k*e3+one_minus_k*e4;
+      e5  = k*e4+one_minus_k*e5;
+      e6  = k*e5+one_minus_k*e6;
    }
 
    /* Calculate the constants */
@@ -343,12 +343,12 @@
    /* Calculate and output the remaining of the range. */
    while( today <= endIdx )
    {
-      e1  = (k*inReal[today++])+(one_minus_k*e1);
-      e2  = (k*e1)+(one_minus_k*e2);
-      e3  = (k*e2)+(one_minus_k*e3);
-      e4  = (k*e3)+(one_minus_k*e4);
-      e5  = (k*e4)+(one_minus_k*e5);
-      e6  = (k*e5)+(one_minus_k*e6);
+      e1  = k*inReal[today++]+one_minus_k*e1;
+      e2  = k*e1+one_minus_k*e2;
+      e3  = k*e2+one_minus_k*e3;
+      e4  = k*e3+one_minus_k*e4;
+      e5  = k*e4+one_minus_k*e5;
+      e6  = k*e5+one_minus_k*e6;
       outReal[outIdx++] = c1*e6+c2*e5+c3*e4+c4*e3;
    }
 
@@ -417,18 +417,18 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 5;
-/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     if( optInVFactor == TA_REAL_DEFAULT )
 /* Generated */        optInVFactor = 7.000000e-1;
-/* Generated */     else if( (optInVFactor < 0.000000e+0) ||  (optInVFactor > 1.000000e+0) )
+/* Generated */     else if( optInVFactor < 0.000000e+0 ||  optInVFactor > 1.000000e+0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
@@ -455,56 +455,56 @@
 /* Generated */    tempReal = e1;
 /* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- )
 /* Generated */    {
-/* Generated */       e1 = (k*inReal[today++])+(one_minus_k*e1);
+/* Generated */       e1 = k*inReal[today++]+one_minus_k*e1;
 /* Generated */       tempReal += e1;
 /* Generated */    }
 /* Generated */    e2 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e2;
 /* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- )
 /* Generated */    {
-/* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
-/* Generated */       e2  = (k*e1)+(one_minus_k*e2);
+/* Generated */       e1  = k*inReal[today++]+one_minus_k*e1;
+/* Generated */       e2  = k*e1+one_minus_k*e2;
 /* Generated */       tempReal += e2;
 /* Generated */    }
 /* Generated */    e3 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e3;
 /* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- )
 /* Generated */    {
-/* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
-/* Generated */       e2  = (k*e1)+(one_minus_k*e2);
-/* Generated */       e3  = (k*e2)+(one_minus_k*e3);
+/* Generated */       e1  = k*inReal[today++]+one_minus_k*e1;
+/* Generated */       e2  = k*e1+one_minus_k*e2;
+/* Generated */       e3  = k*e2+one_minus_k*e3;
 /* Generated */       tempReal += e3;
 /* Generated */    }
 /* Generated */    e4 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e4;
 /* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- )
 /* Generated */    {
-/* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
-/* Generated */       e2  = (k*e1)+(one_minus_k*e2);
-/* Generated */       e3  = (k*e2)+(one_minus_k*e3);
-/* Generated */       e4  = (k*e3)+(one_minus_k*e4);
+/* Generated */       e1  = k*inReal[today++]+one_minus_k*e1;
+/* Generated */       e2  = k*e1+one_minus_k*e2;
+/* Generated */       e3  = k*e2+one_minus_k*e3;
+/* Generated */       e4  = k*e3+one_minus_k*e4;
 /* Generated */       tempReal += e4;
 /* Generated */    }
 /* Generated */    e5 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e5;
 /* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- )
 /* Generated */    {
-/* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
-/* Generated */       e2  = (k*e1)+(one_minus_k*e2);
-/* Generated */       e3  = (k*e2)+(one_minus_k*e3);
-/* Generated */       e4  = (k*e3)+(one_minus_k*e4);
-/* Generated */       e5  = (k*e4)+(one_minus_k*e5);
+/* Generated */       e1  = k*inReal[today++]+one_minus_k*e1;
+/* Generated */       e2  = k*e1+one_minus_k*e2;
+/* Generated */       e3  = k*e2+one_minus_k*e3;
+/* Generated */       e4  = k*e3+one_minus_k*e4;
+/* Generated */       e5  = k*e4+one_minus_k*e5;
 /* Generated */       tempReal += e5;
 /* Generated */    }
 /* Generated */    e6 = tempReal / optInTimePeriod;
 /* Generated */    while( today <= startIdx )
 /* Generated */    {
-/* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
-/* Generated */       e2  = (k*e1)+(one_minus_k*e2);
-/* Generated */       e3  = (k*e2)+(one_minus_k*e3);
-/* Generated */       e4  = (k*e3)+(one_minus_k*e4);
-/* Generated */       e5  = (k*e4)+(one_minus_k*e5);
-/* Generated */       e6  = (k*e5)+(one_minus_k*e6);
+/* Generated */       e1  = k*inReal[today++]+one_minus_k*e1;
+/* Generated */       e2  = k*e1+one_minus_k*e2;
+/* Generated */       e3  = k*e2+one_minus_k*e3;
+/* Generated */       e4  = k*e3+one_minus_k*e4;
+/* Generated */       e5  = k*e4+one_minus_k*e5;
+/* Generated */       e6  = k*e5+one_minus_k*e6;
 /* Generated */    }
 /* Generated */    tempReal = optInVFactor * optInVFactor;
 /* Generated */    c1 = -(tempReal * optInVFactor);
@@ -515,12 +515,12 @@
 /* Generated */   	outReal[outIdx++] = c1*e6+c2*e5+c3*e4+c4*e3;
 /* Generated */    while( today <= endIdx )
 /* Generated */    {
-/* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
-/* Generated */       e2  = (k*e1)+(one_minus_k*e2);
-/* Generated */       e3  = (k*e2)+(one_minus_k*e3);
-/* Generated */       e4  = (k*e3)+(one_minus_k*e4);
-/* Generated */       e5  = (k*e4)+(one_minus_k*e5);
-/* Generated */       e6  = (k*e5)+(one_minus_k*e6);
+/* Generated */       e1  = k*inReal[today++]+one_minus_k*e1;
+/* Generated */       e2  = k*e1+one_minus_k*e2;
+/* Generated */       e3  = k*e2+one_minus_k*e3;
+/* Generated */       e4  = k*e3+one_minus_k*e4;
+/* Generated */       e5  = k*e4+one_minus_k*e5;
+/* Generated */       e6  = k*e5+one_minus_k*e6;
 /* Generated */       outReal[outIdx++] = c1*e6+c2*e5+c3*e4+c4*e3;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;

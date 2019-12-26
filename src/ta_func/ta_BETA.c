@@ -95,7 +95,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 5;
-/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -180,7 +180,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -190,7 +190,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 5;
-/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -308,9 +308,9 @@
        trailing_last_price_y = tmp_real;
 
        /* Write the output */
-       tmp_real = (n * S_xx) - (S_x * S_x);
+       tmp_real = n * S_xx - S_x * S_x;
        if( !TA_IS_ZERO(tmp_real) )
-          outReal[outIdx++] = ((n * S_xy) - (S_x * S_y)) / tmp_real;
+          outReal[outIdx++] = (n * S_xy - S_x * S_y) / tmp_real;
        else
           outReal[outIdx++] = 0.0;
 
@@ -393,7 +393,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal0 ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
@@ -401,7 +401,7 @@
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 5;
-/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
@@ -472,9 +472,9 @@
 /* Generated */        else
 /* Generated */           y = 0.0;
 /* Generated */        trailing_last_price_y = tmp_real;
-/* Generated */        tmp_real = (n * S_xx) - (S_x * S_x);
+/* Generated */        tmp_real = n * S_xx - S_x * S_x;
 /* Generated */        if( !TA_IS_ZERO(tmp_real) )
-/* Generated */           outReal[outIdx++] = ((n * S_xy) - (S_x * S_y)) / tmp_real;
+/* Generated */           outReal[outIdx++] = (n * S_xy - S_x * S_y) / tmp_real;
 /* Generated */        else
 /* Generated */           outReal[outIdx++] = 0.0;
 /* Generated */        S_xx -= x*x;

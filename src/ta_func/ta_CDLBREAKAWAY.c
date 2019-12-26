@@ -162,7 +162,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -235,19 +235,17 @@
             TA_CANDLECOLOR(i-3) == TA_CANDLECOLOR(i-1) &&
             TA_CANDLECOLOR(i-1) == -TA_CANDLECOLOR(i) &&
             (
-              ( TA_CANDLECOLOR(i-4) == -1 &&                                // when 1st is black:
-                TA_REALBODYGAPDOWN(i-3,i-4) &&                              // 2nd gaps down
-                inHigh[i-2] < inHigh[i-3] && inLow[i-2] < inLow[i-3] &&     // 3rd has lower high and low than 2nd
-                inHigh[i-1] < inHigh[i-2] && inLow[i-1] < inLow[i-2] &&     // 4th has lower high and low than 3rd
-                inClose[i] > inOpen[i-3] && inClose[i] < inClose[i-4]       // 5th closes inside the gap
-              )
+              TA_CANDLECOLOR(i-4) == -1 &&                                // when 1st is black:
+              TA_REALBODYGAPDOWN(i-3,i-4) &&                              // 2nd gaps down
+              inHigh[i-2] < inHigh[i-3] && inLow[i-2] < inLow[i-3] &&     // 3rd has lower high and low than 2nd
+              inHigh[i-1] < inHigh[i-2] && inLow[i-1] < inLow[i-2] &&     // 4th has lower high and low than 3rd
+              inClose[i] > inOpen[i-3] && inClose[i] < inClose[i-4]       // 5th closes inside the gap
               ||
-              ( TA_CANDLECOLOR(i-4) == 1 &&                                 // when 1st is white:
-                TA_REALBODYGAPUP(i-3,i-4) &&                                // 2nd gaps up
-                inHigh[i-2] > inHigh[i-3] && inLow[i-2] > inLow[i-3] &&     // 3rd has higher high and low than 2nd
-                inHigh[i-1] > inHigh[i-2] && inLow[i-1] > inLow[i-2] &&     // 4th has higher high and low than 3rd
-                inClose[i] < inOpen[i-3] && inClose[i] > inClose[i-4]       // 5th closes inside the gap
-              )
+              TA_CANDLECOLOR(i-4) == 1 &&                                 // when 1st is white:
+              TA_REALBODYGAPUP(i-3,i-4) &&                                // 2nd gaps up
+              inHigh[i-2] > inHigh[i-3] && inLow[i-2] > inLow[i-3] &&     // 3rd has higher high and low than 2nd
+              inHigh[i-1] > inHigh[i-2] && inLow[i-1] > inLow[i-2] &&     // 4th has higher high and low than 3rd
+              inClose[i] < inOpen[i-3] && inClose[i] > inClose[i-4]       // 5th closes inside the gap
             )
           )
 #endif
@@ -327,7 +325,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -365,19 +363,17 @@
 /* Generated */             TA_CANDLECOLOR(i-3) == TA_CANDLECOLOR(i-1) &&
 /* Generated */             TA_CANDLECOLOR(i-1) == -TA_CANDLECOLOR(i) &&
 /* Generated */             (
-/* Generated */               ( TA_CANDLECOLOR(i-4) == -1 &&                                // when 1st is black:
+/* Generated */                 TA_CANDLECOLOR(i-4) == -1 &&                                // when 1st is black:
 /* Generated */                 TA_REALBODYGAPDOWN(i-3,i-4) &&                              // 2nd gaps down
 /* Generated */                 inHigh[i-2] < inHigh[i-3] && inLow[i-2] < inLow[i-3] &&     // 3rd has lower high and low than 2nd
 /* Generated */                 inHigh[i-1] < inHigh[i-2] && inLow[i-1] < inLow[i-2] &&     // 4th has lower high and low than 3rd
 /* Generated */                 inClose[i] > inOpen[i-3] && inClose[i] < inClose[i-4]       // 5th closes inside the gap
-/* Generated */               )
 /* Generated */               ||
-/* Generated */               ( TA_CANDLECOLOR(i-4) == 1 &&                                 // when 1st is white:
+/* Generated */                 TA_CANDLECOLOR(i-4) == 1 &&                                 // when 1st is white:
 /* Generated */                 TA_REALBODYGAPUP(i-3,i-4) &&                                // 2nd gaps up
 /* Generated */                 inHigh[i-2] > inHigh[i-3] && inLow[i-2] > inLow[i-3] &&     // 3rd has higher high and low than 2nd
 /* Generated */                 inHigh[i-1] > inHigh[i-2] && inLow[i-1] > inLow[i-2] &&     // 4th has higher high and low than 3rd
 /* Generated */                 inClose[i] < inOpen[i-3] && inClose[i] > inClose[i-4]       // 5th closes inside the gap
-/* Generated */               )
 /* Generated */             )
 /* Generated */           )
 /* Generated */ #endif

@@ -162,7 +162,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -239,9 +239,9 @@
             TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i-1 ) &&      // 2nd: short
             max( inClose[i-1], inOpen[i-1] ) < max( inClose[i-2], inOpen[i-2] ) &&                  //      engulfed by 1st
             min( inClose[i-1], inOpen[i-1] ) > min( inClose[i-2], inOpen[i-2] ) &&
-            ( ( TA_CANDLECOLOR(i-2) == 1 && TA_CANDLECOLOR(i) == -1 && inClose[i] < inOpen[i-2] )   // 3rd: opposite to 1st
+            ( TA_CANDLECOLOR(i-2) == 1 && TA_CANDLECOLOR(i) == -1 && inClose[i] < inOpen[i-2]    // 3rd: opposite to 1st
               ||                                                                                    //      and closing out
-              ( TA_CANDLECOLOR(i-2) == -1 && TA_CANDLECOLOR(i) == 1 && inClose[i] > inOpen[i-2] )
+              TA_CANDLECOLOR(i-2) == -1 && TA_CANDLECOLOR(i) == 1 && inClose[i] > inOpen[i-2]
             )
           )
 #endif
@@ -322,7 +322,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -366,9 +366,9 @@
 /* Generated */             TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i-1 ) &&      // 2nd: short
 /* Generated */             max( inClose[i-1], inOpen[i-1] ) < max( inClose[i-2], inOpen[i-2] ) &&                  //      engulfed by 1st
 /* Generated */             min( inClose[i-1], inOpen[i-1] ) > min( inClose[i-2], inOpen[i-2] ) &&
-/* Generated */             ( ( TA_CANDLECOLOR(i-2) == 1 && TA_CANDLECOLOR(i) == -1 && inClose[i] < inOpen[i-2] )   // 3rd: opposite to 1st
+/* Generated */             ( TA_CANDLECOLOR(i-2) == 1 && TA_CANDLECOLOR(i) == -1 && inClose[i] < inOpen[i-2]    // 3rd: opposite to 1st
 /* Generated */               ||                                                                                    //      and closing out
-/* Generated */               ( TA_CANDLECOLOR(i-2) == -1 && TA_CANDLECOLOR(i) == 1 && inClose[i] > inOpen[i-2] )
+/* Generated */               TA_CANDLECOLOR(i-2) == -1 && TA_CANDLECOLOR(i) == 1 && inClose[i] > inOpen[i-2]
 /* Generated */             )
 /* Generated */           )
 /* Generated */ #endif

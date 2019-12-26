@@ -98,7 +98,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -174,7 +174,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -184,7 +184,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 30;
-/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -236,9 +236,9 @@
     */
    trailingX = inReal0[trailingIdx];
    trailingY = inReal1[trailingIdx++];
-   tempReal = (sumX2-((sumX*sumX)/optInTimePeriod)) * (sumY2-((sumY*sumY)/optInTimePeriod));
+   tempReal = (sumX2-sumX*sumX/optInTimePeriod) * (sumY2-sumY*sumY/optInTimePeriod);
    if( !TA_IS_ZERO_OR_NEG(tempReal) )
-      outReal[0] = (sumXY-((sumX*sumY)/optInTimePeriod)) / std_sqrt(tempReal);
+      outReal[0] = (sumXY-sumX*sumY/optInTimePeriod) / std_sqrt(tempReal);
    else
       outReal[0] = 0.0;
 
@@ -270,9 +270,9 @@
        */
       trailingX = inReal0[trailingIdx];
       trailingY = inReal1[trailingIdx++];
-      tempReal = (sumX2-((sumX*sumX)/optInTimePeriod)) * (sumY2-((sumY*sumY)/optInTimePeriod));
+      tempReal = (sumX2-sumX*sumX/optInTimePeriod) * (sumY2-sumY*sumY/optInTimePeriod);
       if( !TA_IS_ZERO_OR_NEG(tempReal) )
-         outReal[outIdx++] = (sumXY-((sumX*sumY)/optInTimePeriod)) / std_sqrt(tempReal);
+         outReal[outIdx++] = (sumXY-sumX*sumY/optInTimePeriod) / std_sqrt(tempReal);
       else
          outReal[outIdx++] = 0.0;
    }
@@ -336,7 +336,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal0 ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
@@ -344,7 +344,7 @@
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 30;
-/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
@@ -375,9 +375,9 @@
 /* Generated */    }
 /* Generated */    trailingX = inReal0[trailingIdx];
 /* Generated */    trailingY = inReal1[trailingIdx++];
-/* Generated */    tempReal = (sumX2-((sumX*sumX)/optInTimePeriod)) * (sumY2-((sumY*sumY)/optInTimePeriod));
+/* Generated */    tempReal = (sumX2-sumX*sumX/optInTimePeriod) * (sumY2-sumY*sumY/optInTimePeriod);
 /* Generated */    if( !TA_IS_ZERO_OR_NEG(tempReal) )
-/* Generated */       outReal[0] = (sumXY-((sumX*sumY)/optInTimePeriod)) / std_sqrt(tempReal);
+/* Generated */       outReal[0] = (sumXY-sumX*sumY/optInTimePeriod) / std_sqrt(tempReal);
 /* Generated */    else
 /* Generated */       outReal[0] = 0.0;
 /* Generated */    outIdx = 1;
@@ -397,9 +397,9 @@
 /* Generated */       sumY2 += y*y;
 /* Generated */       trailingX = inReal0[trailingIdx];
 /* Generated */       trailingY = inReal1[trailingIdx++];
-/* Generated */       tempReal = (sumX2-((sumX*sumX)/optInTimePeriod)) * (sumY2-((sumY*sumY)/optInTimePeriod));
+/* Generated */       tempReal = (sumX2-sumX*sumX/optInTimePeriod) * (sumY2-sumY*sumY/optInTimePeriod);
 /* Generated */       if( !TA_IS_ZERO_OR_NEG(tempReal) )
-/* Generated */          outReal[outIdx++] = (sumXY-((sumX*sumY)/optInTimePeriod)) / std_sqrt(tempReal);
+/* Generated */          outReal[outIdx++] = (sumXY-sumX*sumY/optInTimePeriod) / std_sqrt(tempReal);
 /* Generated */       else
 /* Generated */          outReal[outIdx++] = 0.0;
 /* Generated */    }

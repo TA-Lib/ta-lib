@@ -98,7 +98,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -181,7 +181,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -190,7 +190,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -241,7 +241,7 @@
    if( optInTimePeriod == 1 )
    {
       VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
-      i = (endIdx-startIdx)+1;
+      i = endIdx-startIdx+1;
       VALUE_HANDLE_DEREF(outNBElement) = i;
       #if defined( USE_SINGLE_PRECISION_INPUT )
         ARRAY_MEMMOVEMIX( outReal, 0, inReal, startIdx, i );
@@ -267,8 +267,8 @@
     * no need to calculate since this
     * first value will be surely skip.
     */
-   if( (unstablePeriod == 0) &&
-       (TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock)))
+   if( unstablePeriod == 0 &&
+       TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock))
    {
       /* Preserve prevValue because it may get
        * overwritten by the output.
@@ -374,8 +374,8 @@
          tempValue2 = tempValue1 - prevValue;
          prevValue  = tempValue1;
 
-         prevLoss *= (optInTimePeriod-1);
-         prevGain *= (optInTimePeriod-1);
+         prevLoss *= optInTimePeriod-1;
+         prevGain *= optInTimePeriod-1;
          if( tempValue2 < 0 )
             prevLoss -= tempValue2;
          else
@@ -397,8 +397,8 @@
       tempValue2 = tempValue1 - prevValue;
       prevValue  = tempValue1;
 
-      prevLoss *= (optInTimePeriod-1);
-      prevGain *= (optInTimePeriod-1);
+      prevLoss *= optInTimePeriod-1;
+      prevGain *= optInTimePeriod-1;
       if( tempValue2 < 0 )
          prevLoss -= tempValue2;
       else
@@ -474,14 +474,14 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
-/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
@@ -499,7 +499,7 @@
 /* Generated */    if( optInTimePeriod == 1 )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
-/* Generated */       i = (endIdx-startIdx)+1;
+/* Generated */       i = endIdx-startIdx+1;
 /* Generated */       VALUE_HANDLE_DEREF(outNBElement) = i;
 /* Generated */       #if defined( USE_SINGLE_PRECISION_INPUT )
 /* Generated */         ARRAY_MEMMOVEMIX( outReal, 0, inReal, startIdx, i );
@@ -511,8 +511,8 @@
 /* Generated */    today = startIdx-lookbackTotal;
 /* Generated */    prevValue = inReal[today];
 /* Generated */    unstablePeriod = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_RSI,Rsi);
-/* Generated */    if( (unstablePeriod == 0) &&
-/* Generated */        (TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock)))
+/* Generated */    if( unstablePeriod == 0 &&
+/* Generated */        TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_METASTOCK,Metastock))
 /* Generated */    {
 /* Generated */       savePrevValue = prevValue;
 /* Generated */       prevGain = 0.0;
@@ -573,8 +573,8 @@
 /* Generated */          tempValue1 = inReal[today];
 /* Generated */          tempValue2 = tempValue1 - prevValue;
 /* Generated */          prevValue  = tempValue1;
-/* Generated */          prevLoss *= (optInTimePeriod-1);
-/* Generated */          prevGain *= (optInTimePeriod-1);
+/* Generated */          prevLoss *= optInTimePeriod-1;
+/* Generated */          prevGain *= optInTimePeriod-1;
 /* Generated */          if( tempValue2 < 0 )
 /* Generated */             prevLoss -= tempValue2;
 /* Generated */          else
@@ -589,8 +589,8 @@
 /* Generated */       tempValue1 = inReal[today++];
 /* Generated */       tempValue2 = tempValue1 - prevValue;
 /* Generated */       prevValue  = tempValue1;
-/* Generated */       prevLoss *= (optInTimePeriod-1);
-/* Generated */       prevGain *= (optInTimePeriod-1);
+/* Generated */       prevLoss *= optInTimePeriod-1;
+/* Generated */       prevGain *= optInTimePeriod-1;
 /* Generated */       if( tempValue2 < 0 )
 /* Generated */          prevLoss -= tempValue2;
 /* Generated */       else

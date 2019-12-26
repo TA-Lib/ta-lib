@@ -162,7 +162,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -241,18 +241,17 @@
             inOpen[i-1] >= min( inOpen[i-2], inClose[i-2] ) - TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
             inOpen[i-1] <= max( inOpen[i-2], inClose[i-2] ) + TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
             (
-                (   // if three white
-                    TA_CANDLECOLOR(i-1) == 1 &&
-                    inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] &&           // consecutive higher closes
-                    inOpen[i] > inClose[i-1] &&                                             // 4th opens above prior close
-                    inClose[i] < inOpen[i-3]                                                // 4th closes below 1st open
-                ) ||
-                (   // if three black
-                    TA_CANDLECOLOR(i-1) == -1 &&
-                    inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] &&           // consecutive lower closes
-                    inOpen[i] < inClose[i-1] &&                                             // 4th opens below prior close
-                    inClose[i] > inOpen[i-3]                                                // 4th closes above 1st open
-                )
+                // if three white
+                TA_CANDLECOLOR(i-1) == 1 &&
+                inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] &&           // consecutive higher closes
+                inOpen[i] > inClose[i-1] &&                                             // 4th opens above prior close
+                inClose[i] < inOpen[i-3]                                                // 4th closes below 1st open
+                ||
+                // if three black
+                TA_CANDLECOLOR(i-1) == -1 &&
+                inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] &&           // consecutive lower closes
+                inOpen[i] < inClose[i-1] &&                                             // 4th opens below prior close
+                inClose[i] > inOpen[i-3]                                                // 4th closes above 1st open
             )
           )
             outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;
@@ -333,7 +332,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -378,18 +377,17 @@
 /* Generated */             inOpen[i-1] >= min( inOpen[i-2], inClose[i-2] ) - TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
 /* Generated */             inOpen[i-1] <= max( inOpen[i-2], inClose[i-2] ) + TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
 /* Generated */             (
-/* Generated */                 (   // if three white
+/* Generated */                     // if three white
 /* Generated */                     TA_CANDLECOLOR(i-1) == 1 &&
 /* Generated */                     inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] &&           // consecutive higher closes
 /* Generated */                     inOpen[i] > inClose[i-1] &&                                             // 4th opens above prior close
 /* Generated */                     inClose[i] < inOpen[i-3]                                                // 4th closes below 1st open
-/* Generated */                 ) ||
-/* Generated */                 (   // if three black
+/* Generated */                     ||
+/* Generated */                     // if three black
 /* Generated */                     TA_CANDLECOLOR(i-1) == -1 &&
 /* Generated */                     inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] &&           // consecutive lower closes
 /* Generated */                     inOpen[i] < inClose[i-1] &&                                             // 4th opens below prior close
 /* Generated */                     inClose[i] > inOpen[i-3]                                                // 4th closes above 1st open
-/* Generated */                 )
 /* Generated */             )
 /* Generated */           )
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;

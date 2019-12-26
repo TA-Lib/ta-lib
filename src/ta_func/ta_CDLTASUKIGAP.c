@@ -162,7 +162,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -228,26 +228,23 @@
    do
    {
         if(
-            (
-                TA_REALBODYGAPUP(i-1,i-2) &&                                // upside gap
-                TA_CANDLECOLOR(i-1) == 1 &&                                 // 1st: white
-                TA_CANDLECOLOR(i) == -1 &&                                  // 2nd: black
-                inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] &&      //      that opens within the white rb
-                inClose[i] < inOpen[i-1] &&                                 //      and closes under the white rb
-                inClose[i] > max(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
-                                                                            // size of 2 rb near the same
-                std_fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
-            ) ||
-            (
-                TA_REALBODYGAPDOWN(i-1,i-2) &&                              // downside gap
-                TA_CANDLECOLOR(i-1) == -1 &&                                // 1st: black
-                TA_CANDLECOLOR(i) == 1 &&                                   // 2nd: white
-                inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] &&      //      that opens within the black rb
-                inClose[i] > inOpen[i-1] &&                                 //      and closes above the black rb
-                inClose[i] < min(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
-                                                                            // size of 2 rb near the same
-                std_fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
-            )
+            TA_REALBODYGAPUP(i-1,i-2) &&                                // upside gap
+            TA_CANDLECOLOR(i-1) == 1 &&                                 // 1st: white
+            TA_CANDLECOLOR(i) == -1 &&                                  // 2nd: black
+            inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] &&      //      that opens within the white rb
+            inClose[i] < inOpen[i-1] &&                                 //      and closes under the white rb
+            inClose[i] > max(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
+            // size of 2 rb near the same
+            std_fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
+          ||
+            TA_REALBODYGAPDOWN(i-1,i-2) &&                              // downside gap
+            TA_CANDLECOLOR(i-1) == -1 &&                                // 1st: black
+            TA_CANDLECOLOR(i) == 1 &&                                   // 2nd: white
+            inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] &&      //      that opens within the black rb
+            inClose[i] > inOpen[i-1] &&                                 //      and closes above the black rb
+            inClose[i] < min(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
+            // size of 2 rb near the same
+            std_fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
         )
             outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;
         else
@@ -324,7 +321,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -356,7 +353,7 @@
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if(
-/* Generated */             (
+/* Generated */
 /* Generated */                 TA_REALBODYGAPUP(i-1,i-2) &&                                // upside gap
 /* Generated */                 TA_CANDLECOLOR(i-1) == 1 &&                                 // 1st: white
 /* Generated */                 TA_CANDLECOLOR(i) == -1 &&                                  // 2nd: black
@@ -365,8 +362,7 @@
 /* Generated */                 inClose[i] > max(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
 /* Generated */                                                                             // size of 2 rb near the same
 /* Generated */                 std_fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
-/* Generated */             ) ||
-/* Generated */             (
+/* Generated */               ||
 /* Generated */                 TA_REALBODYGAPDOWN(i-1,i-2) &&                              // downside gap
 /* Generated */                 TA_CANDLECOLOR(i-1) == -1 &&                                // 1st: black
 /* Generated */                 TA_CANDLECOLOR(i) == 1 &&                                   // 2nd: white
@@ -375,7 +371,6 @@
 /* Generated */                 inClose[i] < min(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
 /* Generated */                                                                             // size of 2 rb near the same
 /* Generated */                 std_fabs(TA_REALBODY(i-1) - TA_REALBODY(i)) < TA_CANDLEAVERAGE( Near, NearPeriodTotal, i-1 )
-/* Generated */             )
 /* Generated */         )
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;
 /* Generated */         else

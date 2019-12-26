@@ -311,11 +311,11 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
   testParam = (TA_RangeTestParam *)opaqueData;
 
-  dummyBuffer1 = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
+  dummyBuffer1 = TA_Malloc( ( endIdx-startIdx+1)*sizeof(TA_Real));
   if( !dummyBuffer1 )
      return TA_ALLOC_ERR;
 
-  dummyBuffer2 = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
+  dummyBuffer2 = TA_Malloc( ( endIdx-startIdx+1)*sizeof(TA_Real));
   if( !dummyBuffer2 )
   {
      TA_Free(  dummyBuffer1 );

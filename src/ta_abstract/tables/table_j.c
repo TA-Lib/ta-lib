@@ -62,7 +62,7 @@ const TA_FuncDef *TA_DEF_TableJ[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableJSize =
-              ((sizeof(TA_DEF_TableJ)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableJ/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

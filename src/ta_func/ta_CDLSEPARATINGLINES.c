@@ -164,7 +164,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -245,13 +245,11 @@
             inOpen[i] >= inOpen[i-1] - TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 ) &&
             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i ) &&         // belt hold: long body
             (
-              ( TA_CANDLECOLOR(i) == 1 &&                                               // with no lower shadow if bullish
-                TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
-              )
+              TA_CANDLECOLOR(i) == 1 &&                                               // with no lower shadow if bullish
+              TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
               ||
-              ( TA_CANDLECOLOR(i) == -1 &&                                              // with no upper shadow if bearish
-                TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
-              )
+              TA_CANDLECOLOR(i) == -1 &&                                              // with no upper shadow if bearish
+              TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
             )
           )
             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
@@ -334,7 +332,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -384,13 +382,11 @@
 /* Generated */             inOpen[i] >= inOpen[i-1] - TA_CANDLEAVERAGE( Equal, EqualPeriodTotal, i-1 ) &&
 /* Generated */             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i ) &&         // belt hold: long body
 /* Generated */             (
-/* Generated */               ( TA_CANDLECOLOR(i) == 1 &&                                               // with no lower shadow if bullish
+/* Generated */                 TA_CANDLECOLOR(i) == 1 &&                                               // with no lower shadow if bullish
 /* Generated */                 TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
-/* Generated */               )
 /* Generated */               ||
-/* Generated */               ( TA_CANDLECOLOR(i) == -1 &&                                              // with no upper shadow if bearish
+/* Generated */                 TA_CANDLECOLOR(i) == -1 &&                                              // with no upper shadow if bearish
 /* Generated */                 TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
-/* Generated */               )
 /* Generated */             )
 /* Generated */           )
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;

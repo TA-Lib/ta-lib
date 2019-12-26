@@ -72,7 +72,7 @@ DEF_FUNCTION( VAR,                      /* name */
               "Variance",               /* hint */
               "Variance",               /* CamelCase name */
               0                         /* flags */
-             );
+             )
 /* VAR END */
 
 /****************************************************************************
@@ -88,7 +88,7 @@ const TA_FuncDef *TA_DEF_TableV[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableVSize =
-              ((sizeof(TA_DEF_TableV)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableV/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

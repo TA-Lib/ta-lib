@@ -71,7 +71,7 @@ DEF_FUNCTION( HT_DCPERIOD,                   /* name */
               "Hilbert Transform - Dominant Cycle Period",  /* hint */
               "HtDcPeriod",                       /* CamelCase name */
               TA_FUNC_FLG_UNST_PER /* flags */
-             );
+             )
 /* HT_DCPERIOD END */
 
 /* HT_DCPHASE */
@@ -97,7 +97,7 @@ DEF_FUNCTION( HT_DCPHASE,                   /* name */
               "Hilbert Transform - Dominant Cycle Phase",  /* hint */
               "HtDcPhase",   /* CamelCase name */
               TA_FUNC_FLG_UNST_PER /* flags */
-             );
+             )
 /* HT_DCPHASE END */
 
 /* HT_PHASOR */
@@ -130,7 +130,7 @@ DEF_FUNCTION( HT_PHASOR,                   /* name */
               "Hilbert Transform - Phasor Components",  /* hint */
               "HtPhasor",                       /* CamelCase name */
               TA_FUNC_FLG_UNST_PER /* flags */
-             );
+             )
 /* HT_PHASOR END */
 
 /* HT_SINE */
@@ -163,7 +163,7 @@ DEF_FUNCTION( HT_SINE,                   /* name */
               "Hilbert Transform - SineWave",  /* hint */
               "HtSine",                       /* CamelCase name */
               TA_FUNC_FLG_UNST_PER /* flags */
-             );
+             )
 /* HT_SINE END */
 
 /* HT_TRENDLINE */
@@ -189,7 +189,7 @@ DEF_FUNCTION( HT_TRENDLINE,                   /* name */
               "Hilbert Transform - Instantaneous Trendline",  /* hint */
               "HtTrendline", /* CamelCase name */
               TA_FUNC_FLG_UNST_PER|TA_FUNC_FLG_OVERLAP /* flags */
-             );
+             )
 /* HT_TRENDLINE END */
 
 /* HT_TRENDMODE */
@@ -215,7 +215,7 @@ DEF_FUNCTION( HT_TRENDMODE,                   /* name */
               "Hilbert Transform - Trend vs Cycle Mode",  /* hint */
               "HtTrendMode",                       /* CamelCase name */
               TA_FUNC_FLG_UNST_PER /* flags */
-             );
+             )
 /* HT_TRENDMODE END */
 
 /****************************************************************************
@@ -236,7 +236,7 @@ const TA_FuncDef *TA_DEF_TableH[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableHSize =
-              ((sizeof(TA_DEF_TableH)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableH/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

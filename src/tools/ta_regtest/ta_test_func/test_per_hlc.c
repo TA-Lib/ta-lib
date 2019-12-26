@@ -267,11 +267,11 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    }
    else
    {
-       dummyBuffer1 = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
+       dummyBuffer1 = TA_Malloc( ( endIdx-startIdx+1)*sizeof(TA_Real));
        if( !dummyBuffer1 )
          return TA_ALLOC_ERR;
 
-       dummyBuffer2 = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
+       dummyBuffer2 = TA_Malloc( ( endIdx-startIdx+1)*sizeof(TA_Real));
        if( !dummyBuffer2 )
        {
           TA_Free( dummyBuffer1 );
@@ -398,11 +398,11 @@ static TA_RetCode do_call( const TA_Test *test,
    }
    else
    {
-       dummyBuffer1 = TA_Malloc( ((test->endIdx-test->startIdx)+1)*sizeof(TA_Real));
+       dummyBuffer1 = TA_Malloc( ( test->endIdx-test->startIdx+1)*sizeof(TA_Real));
        if( !dummyBuffer1 )
          return TA_ALLOC_ERR;
 
-       dummyBuffer2 = TA_Malloc( ((test->endIdx-test->startIdx)+1)*sizeof(TA_Real));
+       dummyBuffer2 = TA_Malloc( ( test->endIdx-test->startIdx+1)*sizeof(TA_Real));
        if( !dummyBuffer2 )
        {
           TA_Free( dummyBuffer1 );

@@ -380,7 +380,7 @@ int genPrefix = 0;
 void print( FILE *out, const char *text, ... )
 {
    va_list arglist;
-   memset(gTempBufForPrint,0,sizeof(gTempBufForPrint));
+   memset(gTempBufForPrint,0,sizeof gTempBufForPrint);
 
    va_start(arglist,text);
    vsprintf(gTempBufForPrint,text,arglist);
@@ -522,8 +522,8 @@ static  FileHandle *fileOpen( const char *fileToOpen,
 {
    FileHandle *retValue;
 
-   if( (fileToOpen == NULL) ||
-       ((flags&FILE_READ) && (templateFile != NULL)) )
+   if( fileToOpen == NULL ||
+       flags&FILE_READ && templateFile != NULL )
    {
       printf( "Internal error line %d", __LINE__ );
       return (FileHandle *)NULL;
@@ -671,7 +671,7 @@ static void fileClose( FileHandle *handle )
    if(handle->templateFile) fclose( handle->templateFile );
    if(handle->file)         fclose( handle->file );
 
-   if( !(handle->flags&FILE_READ) && !(handle->flags&WRITE_ALWAYS) && (handle->fileTarget != NULL))
+   if( !(handle->flags&FILE_READ) && !(handle->flags&WRITE_ALWAYS) && handle->fileTarget != NULL)
    {
       if( !areFileSame( handle->f1_name, handle->f2_name ) )
          copyFile( handle->f2_name, handle->f1_name );
@@ -1162,7 +1162,7 @@ static int genCode(int argc, char* argv[])
          tempFileOut = fileOpen( FILE_CORE_JAVA, NULL,
                                  FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
-         if( (tempFile == NULL) || (tempFileOut == NULL) )
+         if( tempFile == NULL || tempFileOut == NULL )
          {
             printf( "\nError: Java code update failed.\n" );
             return -1;
@@ -1210,7 +1210,7 @@ static unsigned int forEachGroup( TA_ForEachGroup forEachGroupFunc,
       forEachGroupFunc( table->string[i],
                         i,
                         i==0? 1:0,
-                        i==(table->size-1)? 1:0 );
+                        i==table->size-1? 1:0 );
    }
 
    retCode = TA_GroupTableFree( table );
@@ -1226,7 +1226,7 @@ static void ReplaceReservedXmlCharacters(const char *input, char *output )
     char *currentPosition;
     char tempString[8*1024];
 
-    if((input == NULL) || (output == NULL))
+    if(input == NULL || output == NULL)
     {
         return;
     }
@@ -1314,10 +1314,10 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
     /* General stuff about function */
     fprintf(gOutFunc_XML->file, "	<!-- %s -->\n", funcInfo->name);
     fprintf(gOutFunc_XML->file, "	<FinancialFunction>\n");
-    fprintf(gOutFunc_XML->file, "		<Abbreviation>%s</Abbreviation>\n", (funcInfo->name == NULL)? "" : funcInfo->name);
-    fprintf(gOutFunc_XML->file, "		<CamelCaseName>%s</CamelCaseName>\n", (funcInfo->camelCaseName == NULL)? "" : funcInfo->camelCaseName);
+    fprintf(gOutFunc_XML->file, "		<Abbreviation>%s</Abbreviation>\n", funcInfo->name == NULL? "" : funcInfo->name);
+    fprintf(gOutFunc_XML->file, "		<CamelCaseName>%s</CamelCaseName>\n", funcInfo->camelCaseName == NULL? "" : funcInfo->camelCaseName);
     ReplaceReservedXmlCharacters(funcInfo->hint, tempString);
-    fprintf(gOutFunc_XML->file, "		<ShortDescription>%s</ShortDescription>\n", (funcInfo->hint == NULL)? "" : tempString);
+    fprintf(gOutFunc_XML->file, "		<ShortDescription>%s</ShortDescription>\n", funcInfo->hint == NULL? "" : tempString);
     fprintf(gOutFunc_XML->file, "		<GroupId>%s</GroupId>\n", funcInfo->group);
 
     /* Optional function flags */
@@ -1435,7 +1435,7 @@ static void doForEachFunctionXml(const TA_FuncInfo *funcInfo,
             fprintf(gOutFunc_XML->file, "			<OptionalInputArgument>\n");
             fprintf(gOutFunc_XML->file, "				<Name>%s</Name>\n", optInputInfo->displayName);
             ReplaceReservedXmlCharacters(optInputInfo->hint, tempString);
-            fprintf(gOutFunc_XML->file, "				<ShortDescription>%s</ShortDescription>\n", (optInputInfo->hint == NULL)? "" : tempString);
+            fprintf(gOutFunc_XML->file, "				<ShortDescription>%s</ShortDescription>\n", optInputInfo->hint == NULL? "" : tempString);
             if(optInputInfo->flags != 0)
             {
                 fprintf(gOutFunc_XML->file, "				<Flags>\n");
@@ -2457,7 +2457,7 @@ static void printFunc( FILE *out,
    {
       excludeFromManaged = 0;
 
-      if( (i == (funcInfo->nbOptInput-1)) && lookbackSignature )
+      if( i == funcInfo->nbOptInput-1 && lookbackSignature )
          lastParam = 1;
 
       retCode = TA_GetOptInputParameterInfo( funcInfo->handle,
@@ -2535,7 +2535,7 @@ static void printFunc( FILE *out,
       }
       else
       {
-         if( !(lookbackSignature && (i == 0 )) )
+         if( !(lookbackSignature && i == 0) )
             printIndent( out, indent );
 
          if( frame )
@@ -2573,20 +2573,20 @@ static void printFunc( FILE *out,
                else
                   fprintf( out, "," );
 
-               if( ((TA_RealRange *)(optInputParamInfo->dataSet))->min == TA_REAL_MIN )
+               if( ((TA_RealRange *)optInputParamInfo->dataSet)->min == TA_REAL_MIN )
                   fprintf( out, " /* From TA_REAL_MIN" );
                else
                   fprintf( out, " /* From %.*g",
-                         ((TA_RealRange *)(optInputParamInfo->dataSet))->precision,
-                         ((TA_RealRange *)(optInputParamInfo->dataSet))->min );
+                         ((TA_RealRange *)optInputParamInfo->dataSet)->precision,
+                         ((TA_RealRange *)optInputParamInfo->dataSet)->min );
 
-               if( ((TA_RealRange *)(optInputParamInfo->dataSet))->max == TA_REAL_MAX )
+               if( ((TA_RealRange *)optInputParamInfo->dataSet)->max == TA_REAL_MAX )
                   fprintf( out, " to TA_REAL_MAX */\n" );
                else
                {
                   fprintf( out, " to %.*g%s */\n",
-                        ((TA_RealRange *)(optInputParamInfo->dataSet))->precision,
-                        ((TA_RealRange *)(optInputParamInfo->dataSet))->max,
+                        ((TA_RealRange *)optInputParamInfo->dataSet)->precision,
+                        ((TA_RealRange *)optInputParamInfo->dataSet)->max,
                         optInputParamInfo->flags & TA_OPTIN_IS_PERCENT? " %":"" );
                }
                break;
@@ -2596,20 +2596,20 @@ static void printFunc( FILE *out,
                else
                   fprintf( out, "," );
 
-               if( ((TA_IntegerRange *)(optInputParamInfo->dataSet))->min == TA_INTEGER_MIN )
+               if( ((TA_IntegerRange *)optInputParamInfo->dataSet)->min == TA_INTEGER_MIN )
                   fprintf( out, " /* From TA_INTEGER_MIN" );
                else
                {
                   fprintf( out, " /* From %d",
-                         ((TA_IntegerRange *)(optInputParamInfo->dataSet))->min );
+                         ((TA_IntegerRange *)optInputParamInfo->dataSet)->min );
                }
 
-               if( ((TA_IntegerRange *)(optInputParamInfo->dataSet))->max == TA_INTEGER_MAX )
+               if( ((TA_IntegerRange *)optInputParamInfo->dataSet)->max == TA_INTEGER_MAX )
                   fprintf( out, " to TA_INTEGER_MAX */\n" );
                else
                {
                   fprintf( out, " to %d */\n",
-                         ((TA_IntegerRange *)(optInputParamInfo->dataSet))->max );
+                         ((TA_IntegerRange *)optInputParamInfo->dataSet)->max );
                }
                break;
             default:
@@ -2624,7 +2624,7 @@ static void printFunc( FILE *out,
       paramNb++;
    }
 
-   if( lookbackSignature && (funcInfo->nbOptInput == 0) )
+   if( lookbackSignature && funcInfo->nbOptInput == 0 )
    {
       if( frame || outputForJava )
          fprintf( out, " )%s\n", semiColonNeeded? ";":"" );
@@ -2677,7 +2677,7 @@ static void printFunc( FILE *out,
 
       for( i=0; i < funcInfo->nbOutput; i++ )
       {
-         if( i == (funcInfo->nbOutput-1) )
+         if( i == funcInfo->nbOutput-1 )
             lastParam = 1;
 
          retCode = TA_GetOutputParameterInfo( funcInfo->handle,
@@ -3464,7 +3464,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "   /* Validate the requested output range. */\n" );
    print( out, "   if( startIdx < 0 )\n" );
    print( out, "      return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);\n" );
-   print( out, "   if( (endIdx < 0) || (endIdx < startIdx))\n" );
+   print( out, "   if( endIdx < 0 || endIdx < startIdx)\n" );
    print( out, "      return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);\n" );
    print( out, "\n" );
    /* Generate the code for checking the parameters.
@@ -3549,15 +3549,15 @@ static void printOptInputValidation( FILE *out,
    case TA_OptInput_RealRange:
       print( out, "   if( %s == TA_REAL_DEFAULT )\n", name  );
       print( out, "      %s = %s;\n", name, doubleToStr(optInputParamInfo->defaultValue) );
-      print( out, "   else if( (%s < %s) ||", name, doubleToStr(minReal) );
-      print( out, " (%s > %s) )\n", name, doubleToStr(maxReal) );
+      print( out, "   else if( %s < %s ||", name, doubleToStr(minReal) );
+      print( out, " %s > %s )\n", name, doubleToStr(maxReal) );
       break;
    case TA_OptInput_IntegerRange:
       print( out, "   /* min/max are checked for %s. */\n", name );
    case TA_OptInput_IntegerList:
       print( out, "   if( (int)%s == TA_INTEGER_DEFAULT )\n", name );
       print( out, "      %s = %s%d;\n", name, isMAType?"(TA_MAType)":"", (int)optInputParamInfo->defaultValue );
-      print( out, "   else if( ((int)%s < %d) || ((int)%s > %d) )\n",
+      print( out, "   else if( (int)%s < %d || (int)%s > %d )\n",
               name, minInt,
               name, maxInt );
       break;
@@ -3583,7 +3583,7 @@ static int skipToGenCode( const char *dstName, FILE *out, FILE *templateFile )
          headerWritten = 1;
          break;
       }
-      if( out && (fputs( gTempBuf, out ) == EOF) )
+      if( out && fputs( gTempBuf, out ) == EOF )
       {
          printf( "Cannot write to [%s]\n", dstName );
          return -1;
@@ -3738,40 +3738,40 @@ static void printFuncHeaderDoc( FILE *out,
          switch( optInputParamInfo->type )
          {
          case TA_OptInput_RealRange:
-               if( ((TA_RealRange *)(optInputParamInfo->dataSet))->min == TA_REAL_MIN )
+               if( ((TA_RealRange *)optInputParamInfo->dataSet)->min == TA_REAL_MIN )
                   fprintf( out, "(From TA_REAL_MIN" );
                else
                {
                   fprintf( out, "(From %.*g",
-                           ((TA_RealRange *)(optInputParamInfo->dataSet))->precision,
-                           ((TA_RealRange *)(optInputParamInfo->dataSet))->min );
+                           ((TA_RealRange *)optInputParamInfo->dataSet)->precision,
+                           ((TA_RealRange *)optInputParamInfo->dataSet)->min );
                }
 
-               if( ((TA_RealRange *)(optInputParamInfo->dataSet))->max == TA_REAL_MAX )
+               if( ((TA_RealRange *)optInputParamInfo->dataSet)->max == TA_REAL_MAX )
                   fprintf( out, " to TA_REAL_MAX)\n" );
                else
                {
                   fprintf( out, " to %.*g%s)\n",
-                          ((TA_RealRange *)(optInputParamInfo->dataSet))->precision,
-                          ((TA_RealRange *)(optInputParamInfo->dataSet))->max,
+                          ((TA_RealRange *)optInputParamInfo->dataSet)->precision,
+                          ((TA_RealRange *)optInputParamInfo->dataSet)->max,
                           optInputParamInfo->flags & TA_OPTIN_IS_PERCENT? " %":"" );
                }
                break;
          case TA_OptInput_IntegerRange:
-               if( ((TA_IntegerRange *)(optInputParamInfo->dataSet))->min == TA_INTEGER_MIN )
+               if( ((TA_IntegerRange *)optInputParamInfo->dataSet)->min == TA_INTEGER_MIN )
                   fprintf( out, "(From TA_INTEGER_MIN" );
                else
                {
                   fprintf( out, "(From %d",
-                           ((TA_IntegerRange *)(optInputParamInfo->dataSet))->min );
+                           ((TA_IntegerRange *)optInputParamInfo->dataSet)->min );
                }
 
-               if( ((TA_IntegerRange *)(optInputParamInfo->dataSet))->max == TA_INTEGER_MAX )
+               if( ((TA_IntegerRange *)optInputParamInfo->dataSet)->max == TA_INTEGER_MAX )
                   fprintf( out, " to TA_INTEGER_MAX)\n" );
                else
                {
                   fprintf( out, " to %d)\n",
-                          ((TA_IntegerRange *)(optInputParamInfo->dataSet))->max );
+                          ((TA_IntegerRange *)optInputParamInfo->dataSet)->max );
                }
                break;
          default:
@@ -3855,7 +3855,7 @@ static int gen_retcode( void )
    }
 
    step1Done = 0;
-   while( fgets( gTempBuf, sizeof( gTempBuf ), inHdr->file ) )
+   while( fgets( gTempBuf, sizeof gTempBuf, inHdr->file ) )
    {
       if( !step1Done )
       {
@@ -3943,23 +3943,23 @@ const char *doubleToStr( double value )
    for( i=0; i < length; i++ )
    {
       /* Will skip two leading zero in the exponent */
-      if( (i >= 2) &&
-          (toupper(gTempDoubleToStr[i-2]) == 'E') &&
-          ((gTempDoubleToStr[i-1] == '+')||(gTempDoubleToStr[i-1] == '-')) &&
-          (gTempDoubleToStr[i] == '0') &&
-          (gTempDoubleToStr[i+1] == '0') &&
-          (isdigit(gTempDoubleToStr[i+2])) )
+      if( i >= 2 &&
+          toupper(gTempDoubleToStr[i-2]) == 'E' &&
+          (gTempDoubleToStr[i-1] == '+'||gTempDoubleToStr[i-1] == '-') &&
+          gTempDoubleToStr[i] == '0' &&
+          gTempDoubleToStr[i+1] == '0' &&
+          isdigit(gTempDoubleToStr[i+2]) )
       {
          i++;
          continue;
       }
 
       /* Will skip one leading zero in the exponent */
-      if( (i >= 2) &&
-          (toupper(gTempDoubleToStr[i-2]) == 'E') &&
-          ((gTempDoubleToStr[i-1] == '+')||(gTempDoubleToStr[i-1] == '-')) &&
-          (gTempDoubleToStr[i] == '0') &&
-          (isdigit(gTempDoubleToStr[i+1])))
+      if( i >= 2 &&
+          toupper(gTempDoubleToStr[i-2]) == 'E' &&
+          (gTempDoubleToStr[i-1] == '+'||gTempDoubleToStr[i-1] == '-') &&
+          gTempDoubleToStr[i] == '0' &&
+          isdigit(gTempDoubleToStr[i+1]))
       {
          continue;
       }
@@ -4236,8 +4236,8 @@ static int areFileSame( const char *file1, const char *file2 )
       return 0;
    }
 
-   memset( gTempBuf,  0, sizeof(gTempBuf ) );
-   memset( gTempBuf2, 0, sizeof(gTempBuf2) );
+   memset( gTempBuf,  0, sizeof gTempBuf );
+   memset( gTempBuf2, 0, sizeof gTempBuf2 );
 
    while( fgets( gTempBuf, BUFFER_SIZE, f1 ) )
    {
@@ -4248,7 +4248,7 @@ static int areFileSame( const char *file1, const char *file2 )
          return 0;
       }
 
-      for( i=0; i < sizeof(gTempBuf); i++ )
+      for( i=0; i < sizeof gTempBuf; i++ )
       {
          if( gTempBuf[i] != gTempBuf2[i] )
          {
@@ -4257,11 +4257,11 @@ static int areFileSame( const char *file1, const char *file2 )
             return 0;
          }
          if( gTempBuf[i] == '\0' )
-            i = sizeof(gTempBuf);
+            i = sizeof gTempBuf;
       }
 
-      memset( gTempBuf,  0, sizeof(gTempBuf ) );
-      memset( gTempBuf2, 0, sizeof(gTempBuf2) );
+      memset( gTempBuf,  0, sizeof gTempBuf );
+      memset( gTempBuf2, 0, sizeof gTempBuf2 );
    }
 
    if( fgets( gTempBuf2, BUFFER_SIZE, f2 ) )
@@ -4404,7 +4404,7 @@ void genJavaCodePhase2( const TA_FuncInfo *funcInfo )
             again = 0;
          idx++;
       }
-      if( (again == 0) && (idx > 0) )
+      if( again == 0 && idx > 0 )
          fputs( gTempBuf, gOutCore_Java->file );
    }
 
@@ -4464,7 +4464,7 @@ static void convertFileToCArray( FILE *in, FILE *out )
        else
        {
           fprintf( out, ",0x%02X", (char)c );
-          if( (position % 20) == 0 )
+          if( position % 20 == 0 )
              fprintf( out, "\n" );
        }
        position++;
@@ -4487,7 +4487,7 @@ static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
     char funcName[FUNCNAME_SIZE];
 
     memset(funcName, 0, FUNCNAME_SIZE);
-    if( strlen(funcInfo->name) > (FUNCNAME_SIZE-1) )
+    if( strlen(funcInfo->name) > FUNCNAME_SIZE-1 )
     {
         printf( "\n*** Error buffer size exceeded (printJavaFunctionAnnotation)\n" );
         strcpy( funcName, "1A2"); /* Substitute name. Will cause Java compilation to fail */

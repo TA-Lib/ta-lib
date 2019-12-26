@@ -101,7 +101,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -199,7 +199,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -211,7 +211,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -365,7 +365,7 @@
          tempReal = inLow[today];
          diffM    = prevLow-tempReal;   /* Minus Delta */
          prevLow  = tempReal;
-         if( (diffP > 0) && (diffP > diffM) )
+         if( diffP > 0 && diffP > diffM )
          {
             /* Case 1 and 3: +DM=diffP,-DM=0 */
             TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
@@ -403,7 +403,7 @@
       tempReal = inLow[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if( (diffP > 0) && (diffP > diffM) )
+      if( diffP > 0 && diffP > diffM )
       {
          /* Case 1 and 3: +DM=diffP,-DM=0 */
          prevPlusDM += diffP;
@@ -430,20 +430,20 @@
       tempReal = inLow[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if( (diffP > 0) && (diffP > diffM) )
+      if( diffP > 0 && diffP > diffM )
       {
          /* Case 1 and 3: +DM=diffP,-DM=0 */
-         prevPlusDM = prevPlusDM - (prevPlusDM/optInTimePeriod) + diffP;
+         prevPlusDM = prevPlusDM - prevPlusDM/optInTimePeriod + diffP;
       }
       else
       {
          /* Case 2,4,5 and 7 */
-         prevPlusDM = prevPlusDM - (prevPlusDM/optInTimePeriod);
+         prevPlusDM = prevPlusDM - prevPlusDM/optInTimePeriod;
       }
 
       /* Calculate the prevTR */
       TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
-      prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
+      prevTR = prevTR - prevTR/optInTimePeriod + tempReal;
       prevClose = inClose[today];
    }
 
@@ -467,20 +467,20 @@
       tempReal = inLow[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if( (diffP > 0) && (diffP > diffM) )
+      if( diffP > 0 && diffP > diffM )
       {
          /* Case 1 and 3: +DM=diffP,-DM=0 */
-         prevPlusDM = prevPlusDM - (prevPlusDM/optInTimePeriod) + diffP;
+         prevPlusDM = prevPlusDM - prevPlusDM/optInTimePeriod + diffP;
       }
       else
       {
          /* Case 2,4,5 and 7 */
-         prevPlusDM = prevPlusDM - (prevPlusDM/optInTimePeriod);
+         prevPlusDM = prevPlusDM - prevPlusDM/optInTimePeriod;
       }
 
       /* Calculate the prevTR */
       TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
-      prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
+      prevTR = prevTR - prevTR/optInTimePeriod + tempReal;
       prevClose = inClose[today];
 
       /* Calculate the DI. The value is rounded (see Wilder book). */
@@ -565,7 +565,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
@@ -573,7 +573,7 @@
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
-/* Generated */     else if( ((int)optInTimePeriod < 1) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
@@ -611,7 +611,7 @@
 /* Generated */          tempReal = inLow[today];
 /* Generated */          diffM    = prevLow-tempReal;
 /* Generated */          prevLow  = tempReal;
-/* Generated */          if( (diffP > 0) && (diffP > diffM) )
+/* Generated */          if( diffP > 0 && diffP > diffM )
 /* Generated */          {
 /* Generated */             TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
 /* Generated */             if( TA_IS_ZERO(tempReal) )
@@ -643,7 +643,7 @@
 /* Generated */       tempReal = inLow[today];
 /* Generated */       diffM    = prevLow-tempReal;
 /* Generated */       prevLow  = tempReal;
-/* Generated */       if( (diffP > 0) && (diffP > diffM) )
+/* Generated */       if( diffP > 0 && diffP > diffM )
 /* Generated */       {
 /* Generated */          prevPlusDM += diffP;
 /* Generated */       }
@@ -661,16 +661,16 @@
 /* Generated */       tempReal = inLow[today];
 /* Generated */       diffM    = prevLow-tempReal;
 /* Generated */       prevLow  = tempReal;
-/* Generated */       if( (diffP > 0) && (diffP > diffM) )
+/* Generated */       if( diffP > 0 && diffP > diffM )
 /* Generated */       {
-/* Generated */          prevPlusDM = prevPlusDM - (prevPlusDM/optInTimePeriod) + diffP;
+/* Generated */          prevPlusDM = prevPlusDM - prevPlusDM/optInTimePeriod + diffP;
 /* Generated */       }
 /* Generated */       else
 /* Generated */       {
-/* Generated */          prevPlusDM = prevPlusDM - (prevPlusDM/optInTimePeriod);
+/* Generated */          prevPlusDM = prevPlusDM - prevPlusDM/optInTimePeriod;
 /* Generated */       }
 /* Generated */       TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
-/* Generated */       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
+/* Generated */       prevTR = prevTR - prevTR/optInTimePeriod + tempReal;
 /* Generated */       prevClose = inClose[today];
 /* Generated */    }
 /* Generated */    if( !TA_IS_ZERO(prevTR) )
@@ -687,16 +687,16 @@
 /* Generated */       tempReal = inLow[today];
 /* Generated */       diffM    = prevLow-tempReal;
 /* Generated */       prevLow  = tempReal;
-/* Generated */       if( (diffP > 0) && (diffP > diffM) )
+/* Generated */       if( diffP > 0 && diffP > diffM )
 /* Generated */       {
-/* Generated */          prevPlusDM = prevPlusDM - (prevPlusDM/optInTimePeriod) + diffP;
+/* Generated */          prevPlusDM = prevPlusDM - prevPlusDM/optInTimePeriod + diffP;
 /* Generated */       }
 /* Generated */       else
 /* Generated */       {
-/* Generated */          prevPlusDM = prevPlusDM - (prevPlusDM/optInTimePeriod);
+/* Generated */          prevPlusDM = prevPlusDM - prevPlusDM/optInTimePeriod;
 /* Generated */       }
 /* Generated */       TRUE_RANGE(prevHigh,prevLow,prevClose,tempReal);
-/* Generated */       prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
+/* Generated */       prevTR = prevTR - prevTR/optInTimePeriod + tempReal;
 /* Generated */       prevClose = inClose[today];
 /* Generated */       if( !TA_IS_ZERO(prevTR) )
 /* Generated */          outReal[outIdx++] = round_pos(100.0*(prevPlusDM/prevTR));

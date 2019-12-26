@@ -170,7 +170,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -293,31 +293,25 @@
             (
                 // ( 2 far smaller than 1 && 3 not longer than 2 )
                 // advance blocked with the 2nd, 3rd must not carry on the advance
-                (
-                    TA_REALBODY(i-1) < TA_REALBODY(i-2) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[2], i-2 ) &&
-                    TA_REALBODY(i) < TA_REALBODY(i-1) + TA_CANDLEAVERAGE( Near, NearPeriodTotal[1], i-1 )
-                ) ||
+                TA_REALBODY(i-1) < TA_REALBODY(i-2) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[2], i-2 ) &&
+                TA_REALBODY(i) < TA_REALBODY(i-1) + TA_CANDLEAVERAGE( Near, NearPeriodTotal[1], i-1 )
+                ||
                 // 3 far smaller than 2
                 // advance blocked with the 3rd
-                (
-                    TA_REALBODY(i) < TA_REALBODY(i-1) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[1], i-1 )
-                ) ||
+                TA_REALBODY(i) < TA_REALBODY(i-1) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[1], i-1 )
+                ||
                 // ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) )
                 // advance blocked with progressively smaller real bodies and some upper shadows
+                TA_REALBODY(i) < TA_REALBODY(i-1) &&
+                TA_REALBODY(i-1) < TA_REALBODY(i-2) &&
                 (
-                    TA_REALBODY(i) < TA_REALBODY(i-1) &&
-                    TA_REALBODY(i-1) < TA_REALBODY(i-2) &&
-                    (
-                        TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[0], i ) ||
-                        TA_UPPERSHADOW(i-1) > TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[1], i-1 )
-                    )
+                    TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[0], i ) ||
+                    TA_UPPERSHADOW(i-1) > TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[1], i-1 )
                 ) ||
                 // ( 3 smaller than 2 && 3 long upper shadow )
                 // advance blocked with 3rd candle's long upper shadow and smaller body
-                (
-                    TA_REALBODY(i) < TA_REALBODY(i-1) &&
-                    TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( ShadowLong, ShadowLongPeriodTotal[0], i )
-                )
+                TA_REALBODY(i) < TA_REALBODY(i-1) &&
+                TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( ShadowLong, ShadowLongPeriodTotal[0], i )
             )
           )
             outInteger[outIdx++] = -100;
@@ -416,7 +410,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -504,31 +498,26 @@
 /* Generated */             (
 /* Generated */                 // ( 2 far smaller than 1 && 3 not longer than 2 )
 /* Generated */                 // advance blocked with the 2nd, 3rd must not carry on the advance
-/* Generated */                 (
 /* Generated */                     TA_REALBODY(i-1) < TA_REALBODY(i-2) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[2], i-2 ) &&
 /* Generated */                     TA_REALBODY(i) < TA_REALBODY(i-1) + TA_CANDLEAVERAGE( Near, NearPeriodTotal[1], i-1 )
-/* Generated */                 ) ||
+/* Generated */                 ||
 /* Generated */                 // 3 far smaller than 2
 /* Generated */                 // advance blocked with the 3rd
-/* Generated */                 (
 /* Generated */                     TA_REALBODY(i) < TA_REALBODY(i-1) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[1], i-1 )
-/* Generated */                 ) ||
+/* Generated */                 ||
 /* Generated */                 // ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) )
 /* Generated */                 // advance blocked with progressively smaller real bodies and some upper shadows
-/* Generated */                 (
 /* Generated */                     TA_REALBODY(i) < TA_REALBODY(i-1) &&
 /* Generated */                     TA_REALBODY(i-1) < TA_REALBODY(i-2) &&
 /* Generated */                     (
 /* Generated */                         TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[0], i ) ||
 /* Generated */                         TA_UPPERSHADOW(i-1) > TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[1], i-1 )
 /* Generated */                     )
-/* Generated */                 ) ||
+/* Generated */                 ||
 /* Generated */                 // ( 3 smaller than 2 && 3 long upper shadow )
 /* Generated */                 // advance blocked with 3rd candle's long upper shadow and smaller body
-/* Generated */                 (
 /* Generated */                     TA_REALBODY(i) < TA_REALBODY(i-1) &&
 /* Generated */                     TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( ShadowLong, ShadowLongPeriodTotal[0], i )
-/* Generated */                 )
 /* Generated */             )
 /* Generated */           )
 /* Generated */             outInteger[outIdx++] = -100;

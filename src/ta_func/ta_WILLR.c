@@ -97,7 +97,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return -1;
 /* Generated */
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
@@ -105,7 +105,7 @@
 
    /* insert lookback code here. */
 
-   return (optInTimePeriod-1);
+   return optInTimePeriod-1;
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -179,7 +179,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -191,7 +191,7 @@
 /* Generated */    /* min/max are checked for optInTimePeriod. */
 /* Generated */    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */       optInTimePeriod = 14;
-/* Generated */    else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -209,7 +209,7 @@
     * to identify at least one output over the specified
     * period.
     */
-   nbInitialElementNeeded = (optInTimePeriod-1);
+   nbInitialElementNeeded = optInTimePeriod-1;
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -256,13 +256,13 @@
                lowest = tmp;
             }
          }
-         diff = (highest - lowest)/(-100.0);
+         diff = (highest - lowest)/-100.0;
       }
       else if( tmp <= lowest )
       {
          lowestIdx = today;
          lowest = tmp;
-         diff = (highest - lowest)/(-100.0);
+         diff = (highest - lowest)/-100.0;
       }
 
       /* Set the highest high */
@@ -281,13 +281,13 @@
                highest = tmp;
             }
          }
-         diff = (highest - lowest)/(-100.0);
+         diff = (highest - lowest)/-100.0;
       }
       else if( tmp >= highest )
       {
          highestIdx = today;
          highest = tmp;
-         diff = (highest - lowest)/(-100.0);
+         diff = (highest - lowest)/-100.0;
       }
 
       if( diff != 0.0 )
@@ -367,7 +367,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inHigh||!inLow||!inClose)
@@ -375,14 +375,14 @@
 /* Generated */     #endif
 /* Generated */     if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
 /* Generated */        optInTimePeriod = 14;
-/* Generated */     else if( ((int)optInTimePeriod < 2) || ((int)optInTimePeriod > 100000) )
+/* Generated */     else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if( !outReal )
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif
 /* Generated */  #endif
-/* Generated */    nbInitialElementNeeded = (optInTimePeriod-1);
+/* Generated */    nbInitialElementNeeded = optInTimePeriod-1;
 /* Generated */    if( startIdx < nbInitialElementNeeded )
 /* Generated */       startIdx = nbInitialElementNeeded;
 /* Generated */    if( startIdx > endIdx )
@@ -414,13 +414,13 @@
 /* Generated */                lowest = tmp;
 /* Generated */             }
 /* Generated */          }
-/* Generated */          diff = (highest - lowest)/(-100.0);
+/* Generated */          diff = (highest - lowest)/-100.0;
 /* Generated */       }
 /* Generated */       else if( tmp <= lowest )
 /* Generated */       {
 /* Generated */          lowestIdx = today;
 /* Generated */          lowest = tmp;
-/* Generated */          diff = (highest - lowest)/(-100.0);
+/* Generated */          diff = (highest - lowest)/-100.0;
 /* Generated */       }
 /* Generated */       tmp = inHigh[today];
 /* Generated */       if( highestIdx < trailingIdx )
@@ -437,13 +437,13 @@
 /* Generated */                highest = tmp;
 /* Generated */             }
 /* Generated */          }
-/* Generated */          diff = (highest - lowest)/(-100.0);
+/* Generated */          diff = (highest - lowest)/-100.0;
 /* Generated */       }
 /* Generated */       else if( tmp >= highest )
 /* Generated */       {
 /* Generated */          highestIdx = today;
 /* Generated */          highest = tmp;
-/* Generated */          diff = (highest - lowest)/(-100.0);
+/* Generated */          diff = (highest - lowest)/-100.0;
 /* Generated */       }
 /* Generated */       if( diff != 0.0 )
 /* Generated */          outReal[outIdx++] = (highest-inClose[today])/diff;

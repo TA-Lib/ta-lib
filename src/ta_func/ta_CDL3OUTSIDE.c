@@ -161,7 +161,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -215,16 +215,14 @@
    outIdx = 0;
    do
    {
-        if( ( TA_CANDLECOLOR(i-1) == 1 && TA_CANDLECOLOR(i-2) == -1 &&          // white engulfs black
-              inClose[i-1] > inOpen[i-2] && inOpen[i-1] < inClose[i-2] &&
-              inClose[i] > inClose[i-1]                                         // third candle higher
-            )
+        if( TA_CANDLECOLOR(i-1) == 1 && TA_CANDLECOLOR(i-2) == -1 &&          // white engulfs black
+            inClose[i-1] > inOpen[i-2] && inOpen[i-1] < inClose[i-2] &&
+            inClose[i] > inClose[i-1]                                         // third candle higher
             ||
-            ( TA_CANDLECOLOR(i-1) == -1 && TA_CANDLECOLOR(i-2) == 1 &&          // black engulfs white
-              inOpen[i-1] > inClose[i-2] && inClose[i-1] < inOpen[i-2] &&
-              inClose[i] < inClose[i-1]                                         // third candle lower
-            )
-          )
+            TA_CANDLECOLOR(i-1) == -1 && TA_CANDLECOLOR(i-2) == 1 &&          // black engulfs white
+            inOpen[i-1] > inClose[i-2] && inClose[i-1] < inOpen[i-2] &&
+            inClose[i] < inClose[i-1]                                         // third candle lower
+        )
        {
 #ifdef TA_LIB_PRO
       /* Section for code distributed with TA-Lib Pro only. */
@@ -300,7 +298,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -324,15 +322,13 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */         if( ( TA_CANDLECOLOR(i-1) == 1 && TA_CANDLECOLOR(i-2) == -1 &&          // white engulfs black
+/* Generated */         if( TA_CANDLECOLOR(i-1) == 1 && TA_CANDLECOLOR(i-2) == -1 &&          // white engulfs black
 /* Generated */               inClose[i-1] > inOpen[i-2] && inOpen[i-1] < inClose[i-2] &&
-/* Generated */               inClose[i] > inClose[i-1]                                         // third candle higher
-/* Generated */             )
+/* Generated */               inClose[i] > inClose[i-1]                                       // third candle higher
 /* Generated */             ||
-/* Generated */             ( TA_CANDLECOLOR(i-1) == -1 && TA_CANDLECOLOR(i-2) == 1 &&          // black engulfs white
+/* Generated */             TA_CANDLECOLOR(i-1) == -1 && TA_CANDLECOLOR(i-2) == 1 &&          // black engulfs white
 /* Generated */               inOpen[i-1] > inClose[i-2] && inClose[i-1] < inOpen[i-2] &&
-/* Generated */               inClose[i] < inClose[i-1]                                         // third candle lower
-/* Generated */             )
+/* Generated */               inClose[i] < inClose[i-1]                                       // third candle lower
 /* Generated */           )
 /* Generated */        {
 /* Generated */ #ifdef TA_LIB_PRO

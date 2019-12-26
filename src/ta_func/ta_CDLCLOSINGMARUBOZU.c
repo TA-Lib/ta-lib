@@ -167,7 +167,7 @@
 /* Generated */    /* Validate the requested output range. */
 /* Generated */    if( startIdx < 0 )
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */    if( endIdx < 0 || endIdx < startIdx)
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */
 /* Generated */    #if !defined(_JAVA)
@@ -242,14 +242,13 @@
 #else
         if( TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i ) &&             // long body
             (
-              ( // white body and very short lower shadow
+                // white body and very short lower shadow
                 TA_CANDLECOLOR(i) == 1 &&
                 TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
-              ) ||
-              ( // black body and very short upper shadow
+              ||
+                // black body and very short upper shadow
                 TA_CANDLECOLOR(i) == -1 &&
                 TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
-              )
             ) )
             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
         else
@@ -333,7 +332,7 @@
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
-/* Generated */     if( (endIdx < 0) || (endIdx < startIdx))
+/* Generated */     if( endIdx < 0 || endIdx < startIdx)
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */     #if !defined(_JAVA)
 /* Generated */     if(!inOpen||!inHigh||!inLow||!inClose)
@@ -376,14 +375,13 @@
 /* Generated */ #else
 /* Generated */         if( TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i ) &&             // long body
 /* Generated */             (
-/* Generated */               ( // white body and very short lower shadow
+/* Generated */                 // white body and very short lower shadow
 /* Generated */                 TA_CANDLECOLOR(i) == 1 &&
 /* Generated */                 TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
-/* Generated */               ) ||
-/* Generated */               ( // black body and very short upper shadow
+/* Generated */               ||
+/* Generated */                 // black body and very short upper shadow
 /* Generated */                 TA_CANDLECOLOR(i) == -1 &&
 /* Generated */                 TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal, i )
-/* Generated */               )
 /* Generated */             ) )
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
 /* Generated */         else

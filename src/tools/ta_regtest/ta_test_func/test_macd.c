@@ -124,13 +124,13 @@ static TA_Test tableTest[] =
    { 0, TA_MACD_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9738,  /* MACD */
                                                           0, -2.7071,  /* Signal */
-                                                          0, (-1.9738)-(-2.7071) }, /* Histogram */
+                                                          0, -1.9738- -2.7071 }, /* Histogram */
 
    /* Test period inversion */
    { 0, TA_MACD_TEST, 0, 251, 26, 12, 9, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9738,  /* MACD */
                                                           0, -2.7071,  /* Signal */
-                                                          0, (-1.9738)-(-2.7071) }, /* Histogram */
+                                                          0, -1.9738- -2.7071 }, /* Histogram */
 
    /***********************/
    /*   MACD - METASTOCK  */
@@ -142,7 +142,7 @@ static TA_Test tableTest[] =
    { 0, TA_MACDEXT_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9738,  /* MACD */
                                                           0, -2.7071,  /* Signal */
-                                                          0, (-1.9738)-(-2.7071)}, /* Histogram */
+                                                          0, -1.9738- -2.7071}, /* Histogram */
 
    /***************************/
    /*   MACD FIX - CLASSIC    */
@@ -154,17 +154,17 @@ static TA_Test tableTest[] =
    { 1, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.2185,  /* MACD */
                                                           0, -1.7119,  /* Signal */
-                                                          0, (-1.2185)-(-1.7119) }, /* Histogram */
+                                                          0, -1.2185- -1.7119 }, /* Histogram */
 
    { 0, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 33, 252-33,
                                                         252-34,  0.8764, /* MACD */
                                                         252-34,  1.3533,   /* Signal */
-                                                        252-34,  (0.8764)-(1.3533)}, /* Histogram */
+                                                        252-34,  0.8764-1.3533}, /* Histogram */
    /* Test period inversion */
    { 0, TA_MACDFIX_TEST, 0, 251, 26, 12, 9, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 33, 252-33,
                                                         252-34,  0.8764, /* MACD */
                                                         252-34,  1.3533,   /* Signal */
-                                                        252-34,  (0.8764)-(1.3533)} /* Histogram */
+                                                        252-34,  0.8764-1.3533} /* Histogram */
 
 };
 
@@ -223,11 +223,11 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    testParam = (TA_RangeTestParam *)opaqueData;
 
-   dummyBuffer1 = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
+   dummyBuffer1 = TA_Malloc( ( endIdx-startIdx+1)*sizeof(TA_Real));
    if( !dummyBuffer1 )
       return TA_ALLOC_ERR;
 
-   dummyBuffer2 = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
+   dummyBuffer2 = TA_Malloc( ( endIdx-startIdx+1)*sizeof(TA_Real));
    if( !dummyBuffer2 )
    {
       TA_Free(  dummyBuffer1 );
