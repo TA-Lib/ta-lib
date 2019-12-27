@@ -1,14 +1,6 @@
 #ifndef TA_GLOBAL_H
 #define TA_GLOBAL_H
 
-#ifndef TA_COMMON_H
-   #include "ta_common.h"
-#endif
-
-#ifndef TA_FUNC_H
-   #include "ta_func.h"
-#endif
-
 /* TA_CandleSetting is the one setting struct */
 typedef struct {
     TA_CandleSettingType    settingType;

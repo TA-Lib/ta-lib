@@ -52,8 +52,6 @@
     #define INT_MIN Integer.MIN_VALUE
     #define INT_MAX Integer.MAX_VALUE
   #else
-    #include <limits.h>
-
     /* Identify if 64 bits platform with __64BIT__.
      * Can also be done from compiler command line.
      */

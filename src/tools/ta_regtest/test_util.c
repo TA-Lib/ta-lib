@@ -56,9 +56,7 @@
 #endif
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <time.h>
 #include "ta_test_priv.h"
 #include "ta_utility.h"
 #include "ta_memory.h"

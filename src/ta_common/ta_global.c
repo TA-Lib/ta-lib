@@ -55,9 +55,7 @@
  */
 
 /**** Headers ****/
-#include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "ta_common.h"
 #include "ta_magic_nb.h"

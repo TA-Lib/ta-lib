@@ -52,7 +52,6 @@ extern "C" {
    #include "ta_defs.h"
 #endif
 
-
 /*
  * TA_ACCBANDS - Acceleration Bands
  *

@@ -31,9 +31,6 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stddef.h>
-#include <stdlib.h>
-
 /* Version number controlled manually.
  *
  * Should be modified only by TA-Lib.org

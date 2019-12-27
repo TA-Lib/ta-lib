@@ -61,11 +61,9 @@
 
 /**** Headers ****/
 #include <stdio.h>
-#include <string.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
-#include "ta_utility.h"
 #include "ta_memory.h"
 
 /**** External functions declarations. ****/

@@ -35,7 +35,6 @@
  * This file contains only TA functions starting with the letter 'J' *
  *********************************************************************/
 #include <stddef.h>
-#include "ta_abstract.h"
 #include "ta_def_ui.h"
 
 /* Follow the 3 steps defined below for adding a new TA Function to this

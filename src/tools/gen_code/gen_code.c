@@ -97,7 +97,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <string.h>
 #include <ctype.h>
 
 #if !defined(__WIN32__) && !defined(__MSDOS__) && !defined(WIN32)
