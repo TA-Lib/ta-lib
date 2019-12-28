@@ -272,11 +272,11 @@
     * the DO_PRICE_WMA macro.
     */
    #define DO_PRICE_WMA(varNewPrice,varToStoreSmoothedValue) { \
-      periodWMASub     += varNewPrice; \
+      periodWMASub     += (varNewPrice); \
       periodWMASub     -= trailingWMAValue; \
-      periodWMASum     += varNewPrice*4.0; \
+      periodWMASum     += (varNewPrice)*4.0; \
       trailingWMAValue  = inReal[trailingWMAIdx++]; \
-      varToStoreSmoothedValue = periodWMASum*0.1; \
+      (varToStoreSmoothedValue) = periodWMASum*0.1; \
       periodWMASum -= periodWMASub; \
    }
 
@@ -560,11 +560,11 @@
 /* Generated */    periodWMASum += tempReal*3.0;
 /* Generated */    trailingWMAValue = 0.0;
 /* Generated */    #define DO_PRICE_WMA(varNewPrice,varToStoreSmoothedValue) { \
-/* Generated */       periodWMASub     += varNewPrice; \
+/* Generated */       periodWMASub     += (varNewPrice); \
 /* Generated */       periodWMASub     -= trailingWMAValue; \
-/* Generated */       periodWMASum     += varNewPrice*4.0; \
+/* Generated */       periodWMASum     += (varNewPrice)*4.0; \
 /* Generated */       trailingWMAValue  = inReal[trailingWMAIdx++]; \
-/* Generated */       varToStoreSmoothedValue = periodWMASum*0.1; \
+/* Generated */       (varToStoreSmoothedValue) = periodWMASum*0.1; \
 /* Generated */       periodWMASum -= periodWMASub; \
 /* Generated */    }
 /* Generated */    i = 34;

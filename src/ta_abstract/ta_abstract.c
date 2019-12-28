@@ -908,7 +908,7 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
    { \
       if( paramInfo->flags & TA_IN_PRICE_##upperParam ) \
       { \
-         if( lowerParam == NULL ) \
+         if( (lowerParam) == NULL ) \
          { \
             return TA_BAD_PARAM; \
          } \

@@ -214,8 +214,8 @@
         int i;
 
         for (i = startIdx - lookback; i <= startIdx; i++) {
-            double close = inClose[i];
-            double open = inOpen[i];
+            const double close = inClose[i];
+            const double open = inOpen[i];
 
             if (close > open) {
                 upsum += close - open;
@@ -315,8 +315,8 @@
 /* Generated */ 		double upsum = .0, downsum = .0;
 /* Generated */ 		int i;
 /* Generated */ 		for (i = startIdx - lookback; i <= startIdx; i++) {
-/* Generated */ 			double close = inClose[i];
-/* Generated */ 			double open = inOpen[i];
+/* Generated */ 			const double close = inClose[i];
+/* Generated */             const double open = inOpen[i];
 /* Generated */ 			if (close > open) {
 /* Generated */ 				upsum += close - open;
 /* Generated */ 			} else {

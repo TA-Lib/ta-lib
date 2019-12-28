@@ -4564,7 +4564,7 @@ static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
      */
     for(i=0; i<funcInfo->nbInput; i++)
     {
-        char idx = ' ';
+        const char idx = ' ';
         /*if (funcInfo->nbInput>1) idx='0'+i;*/ /* TODO: compile Java code and see if it is necessary to distinguish parameters*/
 
         retCode = TA_GetInputParameterInfo( funcInfo->handle, i, (void*)&inputInfo);
@@ -4773,7 +4773,7 @@ static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
         retCode = TA_GetInputParameterInfo(funcInfo->handle, i, (void*)&inputInfo);
         if(inputInfo->type == TA_Input_Price)
         {
-            char idx = ' ';
+            const char idx = ' ';
             /*if (funcInfo->nbInput>1) idx='0'+i;*/ /* TODO: compile Java code and see if it is necessary to distinguish parameters */
 
             if(inputInfo->flags & TA_IN_PRICE_OPEN)

@@ -298,7 +298,7 @@
    {                                              \
       tempLT = inLow[day];                        \
       tempHT = inHigh[day];                       \
-      tempCY = inClose[day-1];                    \
+      tempCY = inClose[(day)-1];                    \
       trueLow = min( tempLT, tempCY );            \
       closeMinusTrueLow = inClose[day] - trueLow; \
       trueRange = tempHT - tempLT;                \
@@ -312,13 +312,13 @@
 
    #define PRIME_TOTALS(aTotal, bTotal, period)                 \
    {                                                            \
-      aTotal = 0;                                               \
-      bTotal = 0;                                               \
-      for ( i = startIdx-period+1; i < startIdx; ++i )          \
+      (aTotal) = 0;                                               \
+      (bTotal) = 0;                                               \
+      for ( i = startIdx-(period)+1; i < startIdx; ++i )          \
       {                                                         \
          CALC_TERMS(i);                                         \
-         aTotal += closeMinusTrueLow;                           \
-         bTotal += trueRange;                                   \
+         (aTotal) += closeMinusTrueLow;                           \
+         (bTotal) += trueRange;                                   \
       }                                                         \
    }
 
@@ -519,7 +519,7 @@
 /* Generated */    {                                              \
 /* Generated */       tempLT = inLow[day];                        \
 /* Generated */       tempHT = inHigh[day];                       \
-/* Generated */       tempCY = inClose[day-1];                    \
+/* Generated */       tempCY = inClose[(day)-1];                    \
 /* Generated */       trueLow = min( tempLT, tempCY );            \
 /* Generated */       closeMinusTrueLow = inClose[day] - trueLow; \
 /* Generated */       trueRange = tempHT - tempLT;                \
@@ -532,13 +532,13 @@
 /* Generated */    }
 /* Generated */    #define PRIME_TOTALS(aTotal, bTotal, period)                 \
 /* Generated */    {                                                            \
-/* Generated */       aTotal = 0;                                               \
-/* Generated */       bTotal = 0;                                               \
-/* Generated */       for ( i = startIdx-period+1; i < startIdx; ++i )          \
+/* Generated */       (aTotal) = 0;                                               \
+/* Generated */       (bTotal) = 0;                                               \
+/* Generated */       for ( i = startIdx-(period)+1; i < startIdx; ++i )          \
 /* Generated */       {                                                         \
 /* Generated */          CALC_TERMS(i);                                         \
-/* Generated */          aTotal += closeMinusTrueLow;                           \
-/* Generated */          bTotal += trueRange;                                   \
+/* Generated */          (aTotal) += closeMinusTrueLow;                           \
+/* Generated */          (bTotal) += trueRange;                                   \
 /* Generated */       }                                                         \
 /* Generated */    }
 /* Generated */    PRIME_TOTALS(a1Total, b1Total, optInTimePeriod1);

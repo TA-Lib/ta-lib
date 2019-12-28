@@ -199,9 +199,9 @@ typedef struct
    { \
       (const char * const)#name, \
       (const char * const)groupId##String, \
-      (const char * const)hint, \
-      (const char * const)camelCaseName, \
-      (const int)flags, \
+      (const char * const)(hint), \
+      (const char * const)(camelCaseName), \
+      (const int)(flags), \
       (sizeof(TA_##name##_Inputs)   / sizeof(TA_InputParameterInfo *))   - 1, \
       (sizeof(TA_##name##_OptInputs)/ sizeof(TA_OptInputParameterInfo *))- 1, \
       (sizeof(TA_##name##_Outputs)  / sizeof(TA_OutputParameterInfo *))  - 1, \
@@ -235,9 +235,9 @@ typedef struct
    { \
       (const char * const)#name, \
       (const char * const)groupId##String, \
-      (const char * const)hint, \
-      (const char * const)camelCaseName, \
-      (const int)flags, \
+      (const char * const)(hint), \
+      (const char * const)(camelCaseName), \
+      (const int)(flags), \
       (sizeof(TA_##name##_Inputs)   / sizeof(TA_InputParameterInfo *))   - 1, \
       (sizeof(TA_##name##_OptInputs)/ sizeof(TA_OptInputParameterInfo *))- 1, \
       (sizeof(TA_##name##_Outputs)  / sizeof(TA_OutputParameterInfo *))  - 1, \

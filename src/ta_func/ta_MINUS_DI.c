@@ -183,13 +183,13 @@
    int i;
 
    #define TRUE_RANGE(TH,TL,YC,OUT) {\
-      OUT = TH-TL; \
-      tempReal2 = std_fabs(TH-YC); \
-      if( tempReal2 > OUT ) \
-         OUT = tempReal2; \
-      tempReal2 = std_fabs(TL-YC); \
-      if( tempReal2 > OUT ) \
-         OUT = tempReal2; \
+      (OUT) = (TH)-(TL); \
+      tempReal2 = std_fabs((TH)-(YC)); \
+      if( tempReal2 > (OUT) ) \
+         (OUT) = tempReal2; \
+      tempReal2 = std_fabs((TL)-(YC)); \
+      if( tempReal2 > (OUT) ) \
+         (OUT) = tempReal2; \
    }
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -554,13 +554,13 @@
 /* Generated */    double tempReal, tempReal2, diffP, diffM;
 /* Generated */    int i;
 /* Generated */    #define TRUE_RANGE(TH,TL,YC,OUT) {\
-/* Generated */       OUT = TH-TL; \
-/* Generated */       tempReal2 = std_fabs(TH-YC); \
-/* Generated */       if( tempReal2 > OUT ) \
-/* Generated */          OUT = tempReal2; \
-/* Generated */       tempReal2 = std_fabs(TL-YC); \
-/* Generated */       if( tempReal2 > OUT ) \
-/* Generated */          OUT = tempReal2; \
+/* Generated */       (OUT) = (TH)-(TL); \
+/* Generated */       tempReal2 = std_fabs((TH)-(YC)); \
+/* Generated */       if( tempReal2 > (OUT) ) \
+/* Generated */          (OUT) = tempReal2; \
+/* Generated */       tempReal2 = std_fabs((TL)-(YC)); \
+/* Generated */       if( tempReal2 > (OUT) ) \
+/* Generated */          (OUT) = tempReal2; \
 /* Generated */    }
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )

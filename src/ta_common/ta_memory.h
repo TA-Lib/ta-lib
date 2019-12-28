@@ -58,7 +58,7 @@
    #define ARRAY_VTYPE_LOCAL(type,name,size)      type name[size]
    #define ARRAY_VTYPE_ALLOC(type,name,size)      name = (type *)TA_Malloc( sizeof(type)*(size))
    #define ARRAY_VTYPE_COPY(type,dest,src,size)   memcpy(dest,src,sizeof(type)*(size))
-   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) memmove( &dest[destIdx], &src[srcIdx], (size)*sizeof(type) )
+   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) memmove( &(dest)[destIdx], &(src)[srcIdx], (size)*sizeof(type) )
    #define ARRAY_VTYPE_FREE(type,name)            TA_Free(name)
    #define ARRAY_VTYPE_FREE_COND(type,cond,name)  if( cond ){ TA_Free(name); }
 #endif
@@ -86,11 +86,11 @@
  */
 #define ARRAY_MEMMOVEMIX_VAR int mmmixi, mmmixdestIdx, mmmixsrcIdx
 #define ARRAY_MEMMOVEMIX(dest,destIdx,src,srcIdx,size) { \
-            for( mmmixi=0, mmmixdestIdx=destIdx, mmmixsrcIdx=srcIdx; \
-                mmmixi < size; \
+            for( mmmixi=0, mmmixdestIdx=(destIdx), mmmixsrcIdx=srcIdx; \
+                mmmixi < (size); \
                 mmmixi++, mmmixdestIdx++, mmmixsrcIdx++ ) \
               { \
-                  dest[mmmixdestIdx] = src[mmmixsrcIdx]; \
+                  (dest)[mmmixdestIdx] = (src)[mmmixsrcIdx]; \
               } \
             }
 
@@ -308,7 +308,7 @@
 
 #define CIRCBUF_PROLOG(Id,Type,Size) Type local_##Id[Size]; \
                                   int Id##_Idx; \
-                                  Type *Id; \
+                                  Type *(Id); \
                                   int maxIdx_##Id
 
 /* Use this macro instead if the Type is a class or a struct. */
@@ -316,17 +316,17 @@
 
 #define CIRCBUF_INIT(Id,Type,Size) \
    { \
-      if( Size < 1 ) \
+      if( (Size) < 1 ) \
          return TA_INTERNAL_ERROR(137); \
-      if( (int)Size > (int)(sizeof(local_##Id)/sizeof(Type)) ) \
+      if( (int)(Size) > (int)(sizeof(local_##Id)/sizeof(Type)) ) \
       { \
-         Id = TA_Malloc( sizeof(Type)*Size ); \
-         if( !Id ) \
+         (Id) = TA_Malloc( sizeof(Type)*(Size) ); \
+         if( !(Id) ) \
             return TA_ALLOC_ERR; \
       } \
       else \
-         Id = &local_##Id[0]; \
-      maxIdx_##Id = (Size-1); \
+         (Id) = &local_##Id[0]; \
+      maxIdx_##Id = ((Size)-1); \
       Id##_Idx = 0; \
    }
 
@@ -334,14 +334,14 @@
 
 #define CIRCBUF_INIT_LOCAL_ONLY(Id,Type) \
    { \
-      Id = &local_##Id[0]; \
+      (Id) = &local_##Id[0]; \
       maxIdx_##Id = (int)(sizeof(local_##Id)/sizeof(Type))-1; \
       Id##_Idx = 0; \
    }
 
 #define CIRCBUF_DESTROY(Id) \
    { \
-      if( Id != &local_##Id[0] ) \
+      if( (Id) != &local_##Id[0] ) \
          TA_Free( Id ); \
    }
 

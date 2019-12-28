@@ -237,9 +237,9 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
       #define POST_SENTINEL ((TA_Integer)0xEFABCDFF)
       #define ALLOC_INT_BUFFER(varSize)  \
       { \
-         intBuffer = TA_Malloc(sizeof(TA_Integer)*(varSize+2)); \
+         intBuffer = TA_Malloc(sizeof(TA_Integer)*((varSize)+2)); \
          intBuffer[0]      = PRE_SENTINEL; \
-         intBuffer[varSize+1] = POST_SENTINEL; \
+         intBuffer[(varSize)+1] = POST_SENTINEL; \
       }
 
       size = endIdx-startIdx+1; \
@@ -264,8 +264,8 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
          } \
          else \
          { \
-            for( i=0; i < varNbElement; i++ ) \
-               destBuffer[i] = (double)intBuffer[i+1]; \
+            for( i=0; i < (varNbElement); i++ ) \
+               (destBuffer)[i] = (double)intBuffer[i+1]; \
          } \
          TA_Free( intBuffer ); \
       }

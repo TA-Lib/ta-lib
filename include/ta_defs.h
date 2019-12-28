@@ -172,11 +172,11 @@
   #define ENUM_END(w) } TA_##w;
 
   #define STRUCT_BEGIN(x) typedef struct {
-  #define STRUCT_END(x) } x;
+  #define STRUCT_END(x) } (x);
 
   #define VALUE_HANDLE_INT(name)           int name
-  #define VALUE_HANDLE_DEREF(name)         (*name)
-  #define VALUE_HANDLE_DEREF_TO_ZERO(name) (*name) = 0
+  #define VALUE_HANDLE_DEREF(name)         (*(name))
+  #define VALUE_HANDLE_DEREF_TO_ZERO(name) (*(name)) = 0
   #define VALUE_HANDLE_OUT(name)           &name
 
   #define VALUE_HANDLE_GET(name)          name
