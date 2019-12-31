@@ -85,7 +85,7 @@ DEF_FUNCTION( T3,                       /* name */
               "Triple Exponential Moving Average (T3)", /* hint */
               "T3",                       /* CamelCase name */
               TA_FUNC_FLG_OVERLAP|TA_FUNC_FLG_UNST_PER /* flags */
-             );
+             )
 /* T3 END */
 
 /* TAN BEGIN */
@@ -119,7 +119,7 @@ DEF_FUNCTION( TEMA,                       /* name */
               "Triple Exponential Moving Average", /* hint */
               "Tema",                     /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 /* TEMA END */
 
 /* TRANGE BEGIN */
@@ -142,7 +142,7 @@ DEF_FUNCTION( TRANGE,                     /* name */
               "True Range",               /* hint */
               "TrueRange",                /* CamelCase name */
               0                           /* flags */
-             );
+             )
 /* TRANGE END */
 
 /* TRIMA BEGIN */
@@ -168,7 +168,7 @@ DEF_FUNCTION( TRIMA,                       /* name */
               "Triangular Moving Average", /* hint */
               "Trima",                     /* CamelCase name */
               TA_FUNC_FLG_OVERLAP          /* flags */
-             );
+             )
 /* TRIMA END */
 
 /* TRIX BEGIN */
@@ -194,7 +194,7 @@ DEF_FUNCTION( TRIX,                       /* name */
               "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA", /* hint */
               "Trix",                     /* CamelCase name */
               0                           /* flags */
-             );
+             )
 /* TRIX END */
 
 /* TSF BEGIN */
@@ -220,7 +220,7 @@ DEF_FUNCTION( TSF,                   /* name */
               "Time Series Forecast",/* hint */
               "Tsf",                 /* CamelCase name */
               TA_FUNC_FLG_OVERLAP    /* flags */
-             );
+             )
 /* TSF END */
 
 /* TYPPRICE BEGIN */
@@ -243,7 +243,7 @@ DEF_FUNCTION( TYPPRICE,                   /* name */
               "Typical Price",            /* hint */
               "TypPrice",                 /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 /* TYPPRICE END */
 
 /****************************************************************************
@@ -267,7 +267,7 @@ const TA_FuncDef *TA_DEF_TableT[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableTSize =
-              ((sizeof(TA_DEF_TableT)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableT/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

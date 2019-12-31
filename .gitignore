@@ -1,4 +1,4 @@
-*.o
+ *.o
 *.lo
 *.la
 *.pc
@@ -22,5 +22,14 @@ configure
 compile
 autom4te.cache
 ar-lib
-gen_code
-ta_regtest
+
+# Visual Studio Files
+Debug
+Release
+*.suo
+*.vcxproj.user
+ipch
+*sdf
+.vs/
+*.[Cc]ache
+!?*.[Cc]ache/

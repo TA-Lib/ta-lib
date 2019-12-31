@@ -119,7 +119,7 @@ extern const unsigned int TA_DEF_TableASize, TA_DEF_TableBSize,
    #define min(a, b)  (((a) < (b)) ? (a) : (b))
 #endif
 
-typedef struct 
+typedef struct
 {
    unsigned int magicNumber;
 } TA_StringTablePriv;
@@ -186,7 +186,7 @@ TA_RetCode TA_GroupTableAlloc( TA_StringTable **table )
    }
 
    memset( stringTable, 0, sizeof(TA_StringTable) + sizeof(TA_StringTablePriv) );
-   stringTablePriv = (TA_StringTablePriv *)(((char *)stringTable)+sizeof(TA_StringTable));
+   stringTablePriv = (TA_StringTablePriv *)((char *)stringTable+sizeof(TA_StringTable));
    stringTablePriv->magicNumber = TA_STRING_TABLE_GROUP_MAGIC_NB;
 
    stringTable->size = TA_NB_GROUP_ID;
@@ -212,7 +212,7 @@ TA_RetCode TA_GroupTableFree( TA_StringTable *table )
       {
          return TA_INTERNAL_ERROR(1);
       }
-   
+
       if( stringTablePriv->magicNumber != TA_STRING_TABLE_GROUP_MAGIC_NB )
       {
          return TA_BAD_OBJECT;
@@ -236,10 +236,10 @@ TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
    {
       return TA_BAD_PARAM;
    }
-   
+
    /* Iterate the tables (each table is for one letter) */
    for( i=0; i < 26; i++ )
-   {   
+   {
       funcDefTable = TA_DEF_Tables[i];
 
       /* Identify the table size. */
@@ -250,9 +250,9 @@ TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData )
          if( !funcDef || !funcDef->funcInfo )
             return TA_INTERNAL_ERROR(3);
 
-         funcInfo = funcDef->funcInfo;      
+         funcInfo = funcDef->funcInfo;
          if( !funcInfo )
-            return TA_INTERNAL_ERROR(4);	
+            return TA_INTERNAL_ERROR(4);
          (*functionToCall)( funcInfo, opaqueData );
       }
    }
@@ -270,7 +270,7 @@ TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
    const char *stringPtr;
    TA_StringTablePriv *stringTablePriv;
 
-   if( (group == NULL) || (table == NULL ) )
+   if( group == NULL || table == NULL )
    {
       return TA_BAD_PARAM;
    }
@@ -301,7 +301,7 @@ TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
    }
 
    memset( stringTable, 0, sizeof(TA_StringTable) + sizeof(TA_StringTablePriv) );
-   stringTablePriv = (TA_StringTablePriv *)(((char *)stringTable)+sizeof(TA_StringTable));
+   stringTablePriv = (TA_StringTablePriv *)((char *)stringTable+sizeof(TA_StringTable));
    stringTablePriv->magicNumber = TA_STRING_TABLE_FUNC_MAGIC_NB;
    stringTable->hiddenData = stringTablePriv;
 
@@ -309,7 +309,7 @@ TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
    stringTable->size = groupSize;
    if( groupSize != 0 )
    {
-      stringTable->string = (const char **)TA_Malloc( (stringTable->size) *
+      stringTable->string = (const char **)TA_Malloc(stringTable->size *
                                                       sizeof(const char *) );
 
       if( stringTable->string == NULL )
@@ -320,7 +320,7 @@ TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
       }
 
       memset( (void *)stringTable->string, 0,
-              (stringTable->size) * sizeof(const char *) );
+              stringTable->size * sizeof(const char *) );
 
       for( i=0; i < stringTable->size; i++ )
       {
@@ -333,7 +333,7 @@ TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table )
             return TA_ALLOC_ERR;
          }
 
-         (stringTable->string)[i] = stringPtr;
+         stringTable->string[i] = stringPtr;
       }
    }
 
@@ -354,7 +354,7 @@ TA_RetCode TA_FuncTableFree( TA_StringTable *table )
       {
          return TA_INTERNAL_ERROR(3);
       }
-   
+
       if( stringTablePriv->magicNumber != TA_STRING_TABLE_FUNC_MAGIC_NB )
       {
          return TA_BAD_OBJECT;
@@ -380,7 +380,7 @@ TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
    /* A TA_FuncHandle is internally a TA_FuncDef. Let's find it
     * by using the alphabetical tables.
     */
-   if( (name == NULL) || (handle == NULL) )
+   if( name == NULL || handle == NULL )
    {
       return TA_BAD_PARAM;
    }
@@ -396,7 +396,7 @@ TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
 
    tmp = (char)tolower( firstChar );
 
-   if( (tmp < 'a') || (tmp > 'z') )
+   if( tmp < 'a' || tmp > 'z' )
    {
       return TA_FUNC_NOT_FOUND;
    }
@@ -419,10 +419,10 @@ TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
       if( !funcDef || !funcDef->funcInfo )
          return TA_INTERNAL_ERROR(3);
 
-      funcInfo = funcDef->funcInfo;      
+      funcInfo = funcDef->funcInfo;
       if( !funcInfo )
          return TA_INTERNAL_ERROR(4);
-      
+
       if( strcmp( funcInfo->name, name ) == 0 )
       {
          *handle = (TA_FuncHandle *)funcDef;
@@ -450,7 +450,7 @@ TA_RetCode TA_GetFuncInfo(  const TA_FuncHandle *handle,
       return TA_INVALID_HANDLE;
    }
 
-   *funcInfo = funcDef->funcInfo;  
+   *funcInfo = funcDef->funcInfo;
    if( !funcDef->funcInfo )
       return TA_INVALID_HANDLE;
 
@@ -465,7 +465,7 @@ TA_RetCode TA_GetInputParameterInfo( const TA_FuncHandle *handle,
    const TA_FuncInfo *funcInfo;
    const TA_InputParameterInfo **inputTable;
 
-   if( (handle == NULL) || (info == NULL) )
+   if( handle == NULL || info == NULL )
    {
       return TA_BAD_PARAM;
    }
@@ -494,7 +494,7 @@ TA_RetCode TA_GetInputParameterInfo( const TA_FuncHandle *handle,
 
    *info = inputTable[paramIndex];
 
-   if( !(*info) )
+   if( !*info )
       return TA_INTERNAL_ERROR(3);
 
    return TA_SUCCESS;
@@ -508,7 +508,7 @@ TA_RetCode TA_GetOptInputParameterInfo( const TA_FuncHandle *handle,
    const TA_FuncInfo *funcInfo;
    const TA_OptInputParameterInfo **inputTable;
 
-   if( (handle == NULL) || (info == NULL) )
+   if( handle == NULL || info == NULL )
    {
       return TA_BAD_PARAM;
    }
@@ -539,7 +539,7 @@ TA_RetCode TA_GetOptInputParameterInfo( const TA_FuncHandle *handle,
 
    *info = inputTable[paramIndex];
 
-   if( !(*info) )
+   if( !*info )
       return TA_INTERNAL_ERROR(4);
 
    return TA_SUCCESS;
@@ -549,12 +549,12 @@ TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
                                       unsigned int paramIndex,
                                       const TA_OutputParameterInfo **info )
 {
-   
+
    const TA_FuncDef  *funcDef;
    const TA_FuncInfo *funcInfo;
    const TA_OutputParameterInfo **outputTable;
 
-   if( (handle == NULL) || (info == NULL) )
+   if( handle == NULL || info == NULL )
    {
       return TA_BAD_PARAM;
    }
@@ -589,7 +589,7 @@ TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
 
    *info = outputTable[paramIndex];
 
-   if( !(*info) )
+   if( !*info )
    {
       return TA_INTERNAL_ERROR(5);
    }
@@ -600,7 +600,7 @@ TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
 TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
                                 TA_ParamHolder **allocatedParams )
 {
-   
+
    TA_FuncDef *funcDef;
    unsigned int allocSize, i;
    TA_ParamHolderInput    *input;
@@ -642,7 +642,7 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
    }
 
    memset( newParams, 0, sizeof(TA_ParamHolder) + sizeof(TA_ParamHolderPriv) );
-   newParamsPriv = (TA_ParamHolderPriv *)(((char *)newParams)+sizeof(TA_ParamHolder));
+   newParamsPriv = (TA_ParamHolderPriv *)((char *)newParams+sizeof(TA_ParamHolder));
    newParamsPriv->magicNumber = TA_PARAM_HOLDER_PRIV_MAGIC_NB;
    newParams->hiddenData = newParamsPriv;
 
@@ -653,7 +653,7 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
     */
    if( funcInfo->nbInput == 0 ) return TA_INTERNAL_ERROR(2);
 
-   allocSize = (funcInfo->nbInput) * sizeof(TA_ParamHolderInput);
+   allocSize = funcInfo->nbInput * sizeof(TA_ParamHolderInput);
    input = (TA_ParamHolderInput *)TA_Malloc( allocSize );
 
    if( !input )
@@ -669,7 +669,7 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
       optInput = NULL;
    else
    {
-      allocSize = (funcInfo->nbOptInput) * sizeof(TA_ParamHolderOptInput);
+      allocSize = funcInfo->nbOptInput * sizeof(TA_ParamHolderOptInput);
       optInput = (TA_ParamHolderOptInput *)TA_Malloc( allocSize );
 
       if( !optInput )
@@ -682,7 +682,7 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
    }
    newParamsPriv->optIn = optInput;
 
-   allocSize = (funcInfo->nbOutput) * sizeof(TA_ParamHolderOutput);
+   allocSize = sizeof(TA_ParamHolderOutput) * funcInfo->nbOutput;
    output = (TA_ParamHolderOutput *)TA_Malloc( allocSize );
    if( !output )
    {
@@ -722,7 +722,7 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
       newParamsPriv->outBitmap |= 1;
    }
 
-   /* Succcess, return the result to the caller. */
+   /* Success, return the result to the caller. */
    *allocatedParams = newParams;
 
    return TA_SUCCESS;
@@ -771,21 +771,21 @@ TA_RetCode TA_ParamHolderFree( TA_ParamHolder *paramsToFree )
 }
 
 
-TA_RetCode TA_SetInputParamIntegerPtr( TA_ParamHolder *param,                                       
+TA_RetCode TA_SetInputParamIntegerPtr( TA_ParamHolder *param,
                                        unsigned int paramIndex,
                                        const TA_Integer *value )
 {
-   
+
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_InputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
 
-   if( (param == NULL) || (value == NULL) )
+   if( param == NULL || value == NULL )
    {
       return TA_BAD_PARAM;
    }
 
-   paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
+   paramHolderPriv = (TA_ParamHolderPriv *)param->hiddenData;
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
       return TA_INVALID_PARAM_HOLDER;
@@ -798,7 +798,7 @@ TA_RetCode TA_SetInputParamIntegerPtr( TA_ParamHolder *param,
    if( paramIndex >= funcInfo->nbInput )
    {
       return TA_BAD_PARAM;
-   }   
+   }
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->in[paramIndex].inputInfo;
@@ -809,7 +809,7 @@ TA_RetCode TA_SetInputParamIntegerPtr( TA_ParamHolder *param,
    }
 
    /* keep a copy of the provided parameter. */
-   paramHolderPriv->in[paramIndex].data.inInteger = value; 
+   paramHolderPriv->in[paramIndex].data.inInteger = value;
 
    /* This parameter is now initialized, clear the corresponding bit. */
    paramHolderPriv->inBitmap &= ~(1<<paramIndex);
@@ -820,17 +820,17 @@ TA_RetCode TA_SetInputParamIntegerPtr( TA_ParamHolder *param,
 TA_RetCode TA_SetInputParamRealPtr( TA_ParamHolder *param,
                                     unsigned int paramIndex,
                                     const TA_Real *value )
-{   
+{
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_InputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
 
-   if( (param == NULL) || (value == NULL) )
+   if( param == NULL || value == NULL )
    {
       return TA_BAD_PARAM;
    }
 
-   paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
+   paramHolderPriv = (TA_ParamHolderPriv *)param->hiddenData;
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
       return TA_INVALID_PARAM_HOLDER;
@@ -843,7 +843,7 @@ TA_RetCode TA_SetInputParamRealPtr( TA_ParamHolder *param,
    if( paramIndex >= funcInfo->nbInput )
    {
       return TA_BAD_PARAM;
-   }   
+   }
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->in[paramIndex].inputInfo;
@@ -854,7 +854,7 @@ TA_RetCode TA_SetInputParamRealPtr( TA_ParamHolder *param,
    }
 
    /* keep a copy of the provided parameter. */
-   paramHolderPriv->in[paramIndex].data.inReal = value; 
+   paramHolderPriv->in[paramIndex].data.inReal = value;
 
    /* This parameter is now initialized, clear the corresponding bit. */
    paramHolderPriv->inBitmap &= ~(1<<paramIndex);
@@ -871,7 +871,7 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
                                      const TA_Real      *volume,
                                      const TA_Real      *openInterest )
 {
-   
+
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_InputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
@@ -881,7 +881,7 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
       return TA_BAD_PARAM;
    }
 
-   paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
+   paramHolderPriv = (TA_ParamHolderPriv *)param->hiddenData;
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
       return TA_INVALID_PARAM_HOLDER;
@@ -893,7 +893,7 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
    if( paramIndex >= funcInfo->nbInput )
    {
       return TA_BAD_PARAM;
-   }   
+   }
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->in[paramIndex].inputInfo;
@@ -908,7 +908,7 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
    { \
       if( paramInfo->flags & TA_IN_PRICE_##upperParam ) \
       { \
-         if( lowerParam == NULL ) \
+         if( (lowerParam) == NULL ) \
          { \
             return TA_BAD_PARAM; \
          } \
@@ -935,7 +935,7 @@ TA_RetCode TA_SetOptInputParamInteger( TA_ParamHolder *param,
                                        unsigned int paramIndex,
                                        TA_Integer value )
 {
-   
+
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_OptInputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
@@ -945,7 +945,7 @@ TA_RetCode TA_SetOptInputParamInteger( TA_ParamHolder *param,
       return TA_BAD_PARAM;
    }
 
-   paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
+   paramHolderPriv = (TA_ParamHolderPriv *)param->hiddenData;
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
       return TA_INVALID_PARAM_HOLDER;
@@ -957,19 +957,19 @@ TA_RetCode TA_SetOptInputParamInteger( TA_ParamHolder *param,
    if( paramIndex >= funcInfo->nbOptInput )
    {
       return TA_BAD_PARAM;
-   }   
+   }
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->optIn[paramIndex].optInputInfo;
    if( !paramInfo ) return TA_INTERNAL_ERROR(2);
-   if( (paramInfo->type != TA_OptInput_IntegerRange) &&
-       (paramInfo->type != TA_OptInput_IntegerList) )
+   if( paramInfo->type != TA_OptInput_IntegerRange &&
+       paramInfo->type != TA_OptInput_IntegerList )
    {
       return TA_INVALID_PARAM_HOLDER_TYPE;
    }
 
    /* keep a copy of the provided parameter. */
-   paramHolderPriv->optIn[paramIndex].data.optInInteger = value; 
+   paramHolderPriv->optIn[paramIndex].data.optInInteger = value;
 
    return TA_SUCCESS;
 }
@@ -977,7 +977,7 @@ TA_RetCode TA_SetOptInputParamInteger( TA_ParamHolder *param,
 TA_RetCode TA_SetOptInputParamReal( TA_ParamHolder *param,
                                     unsigned int paramIndex,
                                     TA_Real value )
-{   
+{
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_OptInputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
@@ -987,7 +987,7 @@ TA_RetCode TA_SetOptInputParamReal( TA_ParamHolder *param,
       return TA_BAD_PARAM;
    }
 
-   paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
+   paramHolderPriv = (TA_ParamHolderPriv *)param->hiddenData;
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
       return TA_INVALID_PARAM_HOLDER;
@@ -1000,19 +1000,19 @@ TA_RetCode TA_SetOptInputParamReal( TA_ParamHolder *param,
    if( paramIndex >= funcInfo->nbOptInput )
    {
       return TA_BAD_PARAM;
-   }   
+   }
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->optIn[paramIndex].optInputInfo;
    if( !paramInfo ) return TA_INTERNAL_ERROR(2);
-   if( (paramInfo->type != TA_OptInput_RealRange) &&
-       (paramInfo->type != TA_OptInput_RealList) )
+   if( paramInfo->type != TA_OptInput_RealRange &&
+       paramInfo->type != TA_OptInput_RealList )
    {
       return TA_INVALID_PARAM_HOLDER_TYPE;
    }
 
    /* keep a copy of the provided parameter. */
-   paramHolderPriv->optIn[paramIndex].data.optInReal = value; 
+   paramHolderPriv->optIn[paramIndex].data.optInReal = value;
 
    return TA_SUCCESS;
 }
@@ -1022,17 +1022,17 @@ TA_RetCode TA_SetOptInputParamReal( TA_ParamHolder *param,
 TA_RetCode TA_SetOutputParamIntegerPtr( TA_ParamHolder *param,
                                         unsigned int paramIndex,
                                         TA_Integer     *out )
-{   
+{
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_OutputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
 
-   if( (param == NULL) || (out == NULL) )
+   if( param == NULL || out == NULL )
    {
       return TA_BAD_PARAM;
    }
 
-   paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
+   paramHolderPriv = (TA_ParamHolderPriv *)param->hiddenData;
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
       return TA_INVALID_PARAM_HOLDER;
@@ -1045,7 +1045,7 @@ TA_RetCode TA_SetOutputParamIntegerPtr( TA_ParamHolder *param,
    if( paramIndex >= funcInfo->nbOutput )
    {
       return TA_BAD_PARAM;
-   }   
+   }
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->out[paramIndex].outputInfo;
@@ -1056,7 +1056,7 @@ TA_RetCode TA_SetOutputParamIntegerPtr( TA_ParamHolder *param,
    }
 
    /* keep a copy of the provided parameter. */
-   paramHolderPriv->out[paramIndex].data.outInteger = out; 
+   paramHolderPriv->out[paramIndex].data.outInteger = out;
 
    /* This parameter is now initialized, clear the corresponding bit. */
    paramHolderPriv->outBitmap &= ~(1<<paramIndex);
@@ -1067,17 +1067,17 @@ TA_RetCode TA_SetOutputParamIntegerPtr( TA_ParamHolder *param,
 TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *param,
                                      unsigned int paramIndex,
                                      TA_Real        *out )
-{   
+{
    TA_ParamHolderPriv *paramHolderPriv;
    const TA_OutputParameterInfo *paramInfo;
    const TA_FuncInfo *funcInfo;
 
-   if( (param == NULL) || (out == NULL) )
+   if( param == NULL || out == NULL )
    {
       return TA_BAD_PARAM;
    }
 
-   paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
+   paramHolderPriv = (TA_ParamHolderPriv *)param->hiddenData;
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
       return TA_INVALID_PARAM_HOLDER;
@@ -1090,7 +1090,7 @@ TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *param,
    if( paramIndex >= funcInfo->nbOutput )
    {
       return TA_BAD_PARAM;
-   }   
+   }
 
    /* Verify the type of the parameter. */
    paramInfo = paramHolderPriv->out[paramIndex].outputInfo;
@@ -1101,7 +1101,7 @@ TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *param,
    }
 
    /* keep a copy of the provided parameter. */
-   paramHolderPriv->out[paramIndex].data.outReal = out; 
+   paramHolderPriv->out[paramIndex].data.outReal = out;
 
    /* This parameter is now initialized, clear the corresponding bit. */
    paramHolderPriv->outBitmap &= ~(1<<paramIndex);
@@ -1110,19 +1110,19 @@ TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *param,
 }
 
 TA_RetCode TA_GetLookback( const TA_ParamHolder *param, TA_Integer *lookback )
-{   
+{
    const TA_ParamHolderPriv *paramHolderPriv;
 
    const TA_FuncDef *funcDef;
    const TA_FuncInfo *funcInfo;
    TA_FrameLookback lookbackFunction;
 
-   if( (param == NULL) || (lookback == NULL))
+   if( param == NULL || lookback == NULL)
    {
       return TA_BAD_PARAM;
    }
 
-   paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
+   paramHolderPriv = (TA_ParamHolderPriv *)param->hiddenData;
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
       return TA_INVALID_PARAM_HOLDER;
@@ -1149,7 +1149,7 @@ TA_RetCode TA_CallFunc( const TA_ParamHolder *param,
                         TA_Integer            endIdx,
                         TA_Integer           *outBegIdx,
                         TA_Integer           *outNbElement )
-{   
+{
    TA_RetCode retCode;
    const TA_ParamHolderPriv *paramHolderPriv;
 
@@ -1157,14 +1157,14 @@ TA_RetCode TA_CallFunc( const TA_ParamHolder *param,
    const TA_FuncInfo *funcInfo;
    TA_FrameFunction function;
 
-   if( (param == NULL) ||
-       (outBegIdx == NULL) ||
-       (outNbElement == NULL) )
+   if( param == NULL ||
+       outBegIdx == NULL ||
+       outNbElement == NULL )
    {
       return TA_BAD_PARAM;
    }
 
-   paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
+   paramHolderPriv = (TA_ParamHolderPriv *)param->hiddenData;
    if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
    {
       return TA_INVALID_PARAM_HOLDER;
@@ -1216,26 +1216,26 @@ static TA_RetCode getGroupSize( TA_GroupId groupId, unsigned int *groupSize )
 {
    #ifdef TA_GEN_CODE
       /* Code used only when compiled with gen_code. */
-      
+
       unsigned int i, j;
       const TA_FuncDef **funcDefTable;
       const TA_FuncDef *funcDef;
       unsigned int tableSize;
       unsigned int nbFuncFound;
 
-      if( groupId >= TA_NB_GROUP_ID ) return TA_INTERNAL_ERROR(2);     
+      if( groupId >= TA_NB_GROUP_ID ) return TA_INTERNAL_ERROR(2);
       if( !groupSize ) return TA_INTERNAL_ERROR(2);
 
       nbFuncFound = 0;
       for( i=0; i < 26; i++ )
       {
          funcDefTable = TA_DEF_Tables[i];
-         tableSize = *(TA_DEF_TablesSize[i]);
+         tableSize = *TA_DEF_TablesSize[i];
 
          for( j=0; j < tableSize; j++ )
          {
             funcDef = funcDefTable[j];
-            if( funcDef && (funcDef->groupId == groupId) )
+            if( funcDef && funcDef->groupId == groupId )
                nbFuncFound++;
          }
       }
@@ -1263,7 +1263,7 @@ static TA_RetCode getGroupSize( TA_GroupId groupId, unsigned int *groupSize )
 {
    #ifdef TA_GEN_CODE
       /* Code used only when compiled with gen_code. */
-      
+
       unsigned int curIdx;
       unsigned int i, j, found;
       const TA_FuncDef **funcDefTable;
@@ -1274,12 +1274,12 @@ static TA_RetCode getGroupSize( TA_GroupId groupId, unsigned int *groupSize )
 
       curIdx = 0;
       found = 0;
-      for( i=0; (i < 26) && !found; i++ )
+      for( i=0; i < 26 && !found; i++ )
       {
          funcDefTable = TA_DEF_Tables[i];
-         tableSize = *(TA_DEF_TablesSize[i]);
+         tableSize = *TA_DEF_TablesSize[i];
 
-         for( j=0; (j < tableSize) && !found; j++ )
+         for( j=0; j < tableSize && !found; j++ )
          {
             if( funcDefTable[j]->groupId == groupId )
             {
@@ -1296,7 +1296,7 @@ static TA_RetCode getGroupSize( TA_GroupId groupId, unsigned int *groupSize )
       }
 
       if( found != 1 ) return TA_INTERNAL_ERROR(2);
-      if( !(*stringPtr) ) return TA_INTERNAL_ERROR(2);
+      if( !*stringPtr ) return TA_INTERNAL_ERROR(2);
 
       return TA_SUCCESS;
    #else

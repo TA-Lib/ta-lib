@@ -6,7 +6,7 @@
  * These numbers are used solely to make sure that when a pointer is
  * provided, it is really pointing on the expected type of data.
  * It helps also for the detection of memory corruption.
- * This mechanism is simple, but add a non-negligeable level of
+ * This mechanism is simple, but add a non negligible level of
  * reliability at a very low cost (speed/memory wise).
  */
 #define TA_FUNC_DEF_MAGIC_NB            0xA201B201

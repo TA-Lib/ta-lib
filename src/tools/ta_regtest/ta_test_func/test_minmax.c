@@ -57,7 +57,6 @@
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
-#include "ta_utility.h"
 #include "ta_memory.h"
 
 /**** External functions declarations. ****/
@@ -89,7 +88,7 @@ typedef struct
    TA_Integer endIdx;
 
    TA_Integer optInTimePeriod;
- 
+
    TA_RetCode expectedRetCode;
 
    TA_Integer oneOfTheExpectedOutRealIndex0;
@@ -240,15 +239,15 @@ static TA_Real testSerie10[] = {3,3,-3,2,-1,0,2};
 
 static TA_RefTest tableRefTest[] =
 {
-  {testSerie1, sizeof(testSerie1)/sizeof(TA_Real)},
-  {testSerie2, sizeof(testSerie2)/sizeof(TA_Real)},
-  {testSerie3, sizeof(testSerie3)/sizeof(TA_Real)},
-  {testSerie4, sizeof(testSerie4)/sizeof(TA_Real)},
-  {testSerie5, sizeof(testSerie5)/sizeof(TA_Real)},
-  {testSerie6, sizeof(testSerie6)/sizeof(TA_Real)},
-  {testSerie7, sizeof(testSerie7)/sizeof(TA_Real)},
-  {testSerie8, sizeof(testSerie8)/sizeof(TA_Real)},
-  {testSerie9, sizeof(testSerie10)/sizeof(TA_Real)}
+  {testSerie1, sizeof testSerie1/sizeof(TA_Real)},
+  {testSerie2, sizeof testSerie2/sizeof(TA_Real)},
+  {testSerie3, sizeof testSerie3/sizeof(TA_Real)},
+  {testSerie4, sizeof testSerie4/sizeof(TA_Real)},
+  {testSerie5, sizeof testSerie5/sizeof(TA_Real)},
+  {testSerie6, sizeof testSerie6/sizeof(TA_Real)},
+  {testSerie7, sizeof testSerie7/sizeof(TA_Real)},
+  {testSerie8, sizeof testSerie8/sizeof(TA_Real)},
+  {testSerie9, sizeof testSerie10/sizeof(TA_Real)}
 };
 
 #define NB_TEST_REF (sizeof(tableRefTest)/sizeof(TA_RefTest))
@@ -291,7 +290,7 @@ ErrorNumber test_func_minmax( TA_History *history )
    }
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -315,19 +314,19 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    TA_Integer *dummyBufferInt;
    TA_Integer *out1Int;
    TA_Integer *out2Int;
-  
+
    (void)outputNb;
    (void)outputBufferInt;
 
    *isOutputInteger = 0;
 
-   testParam = (TA_RangeTestParam *)opaqueData;   
+   testParam = (TA_RangeTestParam *)opaqueData;
 
-   dummyBufferReal = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
+   dummyBufferReal = TA_Malloc( ( endIdx-startIdx+1)*sizeof(TA_Real));
    if( !dummyBufferReal )
      return TA_ALLOC_ERR;
 
-   dummyBufferInt = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Integer));
+   dummyBufferInt = TA_Malloc( ( endIdx-startIdx+1)*sizeof(TA_Integer));
    if( !dummyBufferInt )
    {
       TA_Free( dummyBufferReal );
@@ -338,13 +337,13 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    {
    case 0:
       out1Real = outputBuffer;
-      out2Real = dummyBufferReal; 
+      out2Real = dummyBufferReal;
       out1Int  = outputBufferInt;
-      out2Int  = dummyBufferInt; 
+      out2Int  = dummyBufferInt;
       break;
    case 1:
       out1Real = dummyBufferReal;
-      out2Real = outputBuffer;      
+      out2Real = outputBuffer;
       out1Int  = dummyBufferInt;
       out2Int  = outputBufferInt;
       break;
@@ -355,24 +354,24 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    switch( testParam->test->theFunction )
    {
-   case TA_MIN_TEST:   
+   case TA_MIN_TEST:
       retCode = TA_MIN( startIdx,
                         endIdx,
                         testParam->close,
-                        testParam->test->optInTimePeriod,                        
+                        testParam->test->optInTimePeriod,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
       *lookback  = TA_MIN_Lookback( testParam->test->optInTimePeriod );
       break;
-   
-   case TA_MAX_TEST:   
+
+   case TA_MAX_TEST:
       retCode = TA_MAX( startIdx,
                         endIdx,
                         testParam->close,
                         testParam->test->optInTimePeriod,
                         outBegIdx,
-                        outNbElement,                        
+                        outNbElement,
                         outputBuffer );
       *lookback = TA_MAX_Lookback( testParam->test->optInTimePeriod );
       break;
@@ -383,9 +382,9 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         testParam->close,
                         testParam->test->optInTimePeriod,
                         outBegIdx,
-                        outNbElement,                        
+                        outNbElement,
                         out1Real, out2Real );
-      *lookback = TA_MINMAX_Lookback( testParam->test->optInTimePeriod );            
+      *lookback = TA_MINMAX_Lookback( testParam->test->optInTimePeriod );
       break;
 
    case TA_MINMAXINDEX_TEST:
@@ -394,7 +393,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         testParam->close,
                         testParam->test->optInTimePeriod,
                         outBegIdx,
-                        outNbElement,                        
+                        outNbElement,
                         out1Int, out2Int );
       *lookback = TA_MINMAXINDEX_Lookback( testParam->test->optInTimePeriod );
       *isOutputInteger = 1;
@@ -406,7 +405,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         testParam->close,
                         testParam->test->optInTimePeriod,
                         outBegIdx,
-                        outNbElement,                        
+                        outNbElement,
                         out1Int );
       *lookback = TA_MININDEX_Lookback( testParam->test->optInTimePeriod );
       *isOutputInteger = 1;
@@ -418,7 +417,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         testParam->close,
                         testParam->test->optInTimePeriod,
                         outBegIdx,
-                        outNbElement,                        
+                        outNbElement,
                         out1Int );
       *lookback = TA_MAXINDEX_Lookback( testParam->test->optInTimePeriod );
       *isOutputInteger = 1;
@@ -461,7 +460,7 @@ static ErrorNumber do_test( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( rangeTestFunction, 
+      errNb = doRangeTest( rangeTestFunction,
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )
@@ -475,7 +474,7 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_MIN( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInTimePeriod,                        
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -485,7 +484,7 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_MAX( test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInTimePeriod,                        
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -493,7 +492,7 @@ static ErrorNumber do_test( const TA_History *history,
    else
    {
       /* For now, tests only MIN and MAX. Only range check tests implemented. */
-      return TA_TEST_PASS;    
+      return TA_TEST_PASS;
    }
 
    errNb = checkDataSame( gBuffer[0].in, history->open,history->nbBars );
@@ -513,7 +512,7 @@ static ErrorNumber do_test( const TA_History *history,
       retCode = TA_MIN( test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
-                        test->optInTimePeriod,                        
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -571,7 +570,7 @@ static TA_RetCode referenceMin( TA_Integer    startIdx,
     * to identify at least one output over the specified
     * period.
     */
-   nbInitialElementNeeded = (optInTimePeriod-1);
+   nbInitialElementNeeded = optInTimePeriod-1;
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -594,7 +593,7 @@ static TA_RetCode referenceMin( TA_Integer    startIdx,
    outIdx = 0;
    today       = startIdx;
    trailingIdx = startIdx-nbInitialElementNeeded;
-   
+
    while( today <= endIdx )
    {
       lowest = inReal[trailingIdx++];
@@ -636,7 +635,7 @@ static TA_RetCode referenceMax( TA_Integer    startIdx,
    /* Validate the requested output range. */
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx < startIdx))
+   if( endIdx < 0 || endIdx < startIdx)
       return TA_OUT_OF_RANGE_END_INDEX;
 
    /* Validate the parameters. */
@@ -656,7 +655,7 @@ static TA_RetCode referenceMax( TA_Integer    startIdx,
     * to identify at least one output over the specified
     * period.
     */
-   nbInitialElementNeeded = (optInTimePeriod-1);
+   nbInitialElementNeeded = optInTimePeriod-1;
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -679,7 +678,7 @@ static TA_RetCode referenceMax( TA_Integer    startIdx,
    outIdx = 0;
    today       = startIdx;
    trailingIdx = startIdx-nbInitialElementNeeded;
-   
+
    while( today <= endIdx )
    {
       highest = inReal[trailingIdx++];
@@ -718,13 +717,13 @@ static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement )
 
    /* Do a systematic tests, even for failure cases. */
    for( testNb=0; testNb <= 1; testNb++ ) /* 0=TA_MIN, 1=TA_MAX */
-   {      
+   {
       for( period=2; period <= nbElement; period++ )
       {
          for( startIdx=0; startIdx < nbElement; startIdx++ )
          {
-            for( endIdx=0; (endIdx < nbElement) && (startIdx <= endIdx); endIdx++ )
-            {            
+            for( endIdx=0; endIdx < nbElement && startIdx <= endIdx; endIdx++ )
+            {
                /* Set to NAN all the elements of the gBuffers.
                 * Note: These buffer are used as an attempt to detect
                 *       out-of-bound writing in the output.
@@ -736,10 +735,10 @@ static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement )
 
                /* Get the reference output. */
                if( testNb == 0 )
-                  retCodeRef = referenceMin( startIdx, endIdx, input, period, 
+                  retCodeRef = referenceMin( startIdx, endIdx, input, period,
                                              &outBegIdxRef, &outNbElementRef, gBuffer[0].out0 );
                else
-                  retCodeRef = referenceMax( startIdx, endIdx, input, period, 
+                  retCodeRef = referenceMax( startIdx, endIdx, input, period,
                                              &outBegIdxRef, &outNbElementRef, gBuffer[0].out0 );
 
                /* Verify that the input was preserved */
@@ -749,10 +748,10 @@ static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement )
 
                /* Get the TA-Lib implementation output. */
                if( testNb == 0 )
-                  retCode = TA_MIN( startIdx, endIdx, input, period, 
+                  retCode = TA_MIN( startIdx, endIdx, input, period,
                                     &outBegIdx, &outNbElement, gBuffer[1].out0 );
                else
-                  retCode = TA_MAX( startIdx, endIdx, input, period, 
+                  retCode = TA_MAX( startIdx, endIdx, input, period,
                                     &outBegIdx, &outNbElement, gBuffer[1].out0 );
 
                /* Verify that the input was preserved */
@@ -792,10 +791,10 @@ static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement )
                    * The output should still be the same.
                    */
                   if( testNb == 0 )
-                     retCode = TA_MIN( startIdx, endIdx, gBuffer[0].in, period, 
+                     retCode = TA_MIN( startIdx, endIdx, gBuffer[0].in, period,
                                        &outBegIdx, &outNbElement, gBuffer[0].in );
                   else
-                     retCode = TA_MAX( startIdx, endIdx, gBuffer[0].in, period, 
+                     retCode = TA_MAX( startIdx, endIdx, gBuffer[0].in, period,
                                        &outBegIdx, &outNbElement, gBuffer[0].in );
 
                   /* The reference and TA-LIB should have the same output. */
@@ -826,7 +825,7 @@ static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement )
                }
             }
          }
-      }  
+      }
    }
 
    return TA_TEST_PASS;

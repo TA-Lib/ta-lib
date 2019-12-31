@@ -54,7 +54,7 @@
  *         Regression testing of the functionality provided
  *         by the ta_abstract module.
  *
- *         Also perform call to all functions for the purpose 
+ *         Also perform call to all functions for the purpose
  *         of profiling (doExtensiveProfiling option).
  */
 
@@ -91,23 +91,23 @@ extern int insufficientClockPrecision;
 /* None */
 
 /**** Local declarations.              ****/
-typedef enum 
+typedef enum
 {
-	PROFILING_10000,
-	PROFILING_8000,
-	PROFILING_5000,
+    PROFILING_10000,
+    PROFILING_8000,
+    PROFILING_5000,
     PROFILING_2000,
-	PROFILING_1000,
-	PROFILING_500,
-	PROFILING_100
+    PROFILING_1000,
+    PROFILING_500,
+    PROFILING_100
 } ProfilingType;
 
 /**** Local functions declarations.    ****/
 static ErrorNumber testLookback(TA_ParamHolder *paramHolder );
 static ErrorNumber test_default_calls(void);
 static ErrorNumber callWithDefaults( const char *funcName,
-									 const double *input,
-									 const int *input_int, int size );
+                                     const double *input,
+                                     const int *input_int, int size );
 static ErrorNumber callAndProfile( const char *funcName, ProfilingType type );
 
 /**** Local variables definitions.     ****/
@@ -137,19 +137,19 @@ ErrorNumber test_abstract( void )
    const char *xmlArray;
 
    printf( "Testing Abstract interface\n" );
-   
+
    retValue = allocLib();
    if( retValue != TA_TEST_PASS )
-      return retValue;    
+      return retValue;
 
    /* Verify TA_GetLookback. */
    retCode = TA_GetFuncHandle( "STOCH", &handle );
    if( retCode != TA_SUCCESS )
    {
       printf( "Can't get the function handle [%d]\n", retCode );
-      return TA_ABS_TST_FAIL_GETFUNCHANDLE;   
+      return TA_ABS_TST_FAIL_GETFUNCHANDLE;
    }
-                             
+
    retCode = TA_ParamHolderAlloc( handle, &paramHolder );
    if( retCode != TA_SUCCESS )
    {
@@ -163,7 +163,7 @@ ErrorNumber test_abstract( void )
       printf( "testLookback() failed [%d]\n", retValue );
       TA_ParamHolderFree( paramHolder );
       return retValue;
-   }      
+   }
 
    retCode = TA_ParamHolderFree( paramHolder );
    if( retCode != TA_SUCCESS )
@@ -191,7 +191,7 @@ ErrorNumber test_abstract( void )
    retValue = freeLib();
    if( retValue != TA_TEST_PASS )
       return retValue;
-   
+
    /* Verify that the TA_FunctionDescription is null terminated
     * and as at least 500 characters (less is guaranteed bad...)
     */
@@ -202,7 +202,7 @@ ErrorNumber test_abstract( void )
          break;
    }
 
-   if( i < 500) 
+   if( i < 500)
    {
       printf( "TA_FunctionDescriptionXML failed. Size too small.\n" );
       return TA_ABS_TST_FAIL_FUNCTION_DESC_SMALL;
@@ -214,7 +214,7 @@ ErrorNumber test_abstract( void )
       return TA_ABS_TST_FAIL_FUNCTION_DESC_LARGE;
    }
 
-   return TA_TEST_PASS; /* Succcess. */
+   return TA_TEST_PASS; /* Success. */
 }
 
 /**** Local functions definitions.     ****/
@@ -292,21 +292,21 @@ static ErrorNumber testLookback( TA_ParamHolder *paramHolder )
      printf( "TA_GetLookback failed [%d != 7]\n", lookback );
      return TA_ABS_TST_FAIL_GETLOOKBACK_2;
   }
-  
+
   return TA_TEST_PASS;
 }
 
-/* Some processings are a bit different for functions under 
+/* Some processings are a bit different for functions under
  * the Math Operator and Math Transform category.
  */
 static int isMath( const TA_FuncInfo *funcInfo )
 {
    int notMath;
-   notMath = (strlen(funcInfo->group) < 4) || 
-	   !((tolower(funcInfo->group[0]) == 'm') && 
-	     (tolower(funcInfo->group[1]) == 'a') &&
-	     (tolower(funcInfo->group[2]) == 't') &&
-	     (tolower(funcInfo->group[3]) == 'h'));
+   notMath = strlen(funcInfo->group) < 4 ||
+       !(tolower(funcInfo->group[0]) == 'm' &&
+         tolower(funcInfo->group[1]) == 'a' &&
+         tolower(funcInfo->group[2]) == 't' &&
+         tolower(funcInfo->group[3]) == 'h');
 
    return !notMath;
 }
@@ -316,10 +316,10 @@ static int isMath( const TA_FuncInfo *funcInfo )
 static int isCandlePattern( const TA_FuncInfo *funcInfo )
 {
    int notCandlePattern;
-   notCandlePattern = (strlen(funcInfo->group) < 3) || 
-	   !((tolower(funcInfo->name[0]) == 'c') && 
-	     (tolower(funcInfo->name[1]) == 'd') &&
-	     (tolower(funcInfo->name[2]) == 'l'));
+   notCandlePattern = (strlen(funcInfo->group) < 3) ||
+       !((tolower(funcInfo->name[0]) == 'c') &&
+         (tolower(funcInfo->name[1]) == 'd') &&
+         (tolower(funcInfo->name[2]) == 'l'));
 
    return !notCandlePattern;
 }
@@ -327,25 +327,25 @@ static int isCandlePattern( const TA_FuncInfo *funcInfo )
 
 static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
 {
-	static int nbFunctionDone = 0;
+    static int nbFunctionDone = 0;
    ErrorNumber *errorNumber;
    errorNumber = (ErrorNumber *)opaqueData;
    if( *errorNumber != TA_TEST_PASS )
       return;
 
 /*   if( !isCandlePattern(funcInfo) )
-	   return;*/
+       return;*/
 
 #define CALL(x) { \
-	*errorNumber = callWithDefaults( funcInfo->name, x, x##_int, sizeof(x)/sizeof(double) ); \
-	if( *errorNumber != TA_TEST_PASS ) { \
-	   printf( "Failed for [%s][%s]\n", funcInfo->name, #x ); \
+    *errorNumber = callWithDefaults( funcInfo->name, x, x##_int, sizeof(x)/sizeof(double) ); \
+    if( *errorNumber != TA_TEST_PASS ) { \
+       printf( "Failed for [%s][%s]\n", funcInfo->name, #x ); \
        return; \
-	} \
+    } \
 }
    /* Do not test value outside the ]0..1[ domain for the "Math" groups. */
    if( !isMath(funcInfo) )
-   {	   
+   {
       CALL( inputNegData );
       CALL( inputZeroData );
       CALL( inputRandFltEpsilon );
@@ -357,24 +357,24 @@ static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
 #undef CALL
 
 #define CALL(x) { \
-	*errorNumber = callAndProfile( funcInfo->name, x ); \
-	if( *errorNumber != TA_TEST_PASS ) { \
-	   printf( "Failed for [%s][%s]\n", funcInfo->name, #x ); \
+    *errorNumber = callAndProfile( funcInfo->name, x ); \
+    if( *errorNumber != TA_TEST_PASS ) { \
+       printf( "Failed for [%s][%s]\n", funcInfo->name, #x ); \
        return; \
-	} \
+    } \
 }
    if( doExtensiveProfiling /*&& (nbFunctionDone<5)*/ )
    {
-	   nbFunctionDone++;
-	   printf( "%s ", funcInfo->name );
+       nbFunctionDone++;
+       printf( "%s ", funcInfo->name );
        CALL( PROFILING_100 );
        CALL( PROFILING_500 );
-	   CALL( PROFILING_1000 );
+       CALL( PROFILING_1000 );
        CALL( PROFILING_2000 );
        CALL( PROFILING_5000 );
        CALL( PROFILING_8000 );
-	   CALL( PROFILING_10000 );
-	   printf( "\n" );
+       CALL( PROFILING_10000 );
+       printf( "\n" );
    }
 }
 
@@ -395,9 +395,9 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
    if( retCode != TA_SUCCESS )
    {
       printf( "Can't get the function handle [%d]\n", retCode );
-      return TA_ABS_TST_FAIL_GETFUNCHANDLE;   
+      return TA_ABS_TST_FAIL_GETFUNCHANDLE;
    }
-                             
+
    retCode = TA_ParamHolderAlloc( handle, &paramHolder );
    if( retCode != TA_SUCCESS )
    {
@@ -410,41 +410,41 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
    for( i=0; i < funcInfo->nbInput; i++ )
    {
       TA_GetInputParameterInfo( handle, i, &inputInfo );
-	  switch(inputInfo->type)
-	  {
-	  case TA_Input_Price:
+      switch(inputInfo->type)
+      {
+      case TA_Input_Price:
          TA_SetInputParamPricePtr( paramHolder, i,
-			 inputInfo->flags&TA_IN_PRICE_OPEN?input:NULL,
-			 inputInfo->flags&TA_IN_PRICE_HIGH?input:NULL,
-			 inputInfo->flags&TA_IN_PRICE_LOW?input:NULL,
-			 inputInfo->flags&TA_IN_PRICE_CLOSE?input:NULL,
-			 inputInfo->flags&TA_IN_PRICE_VOLUME?input:NULL, NULL );
-		 break;
-	  case TA_Input_Real:
+             inputInfo->flags&TA_IN_PRICE_OPEN?input:NULL,
+             inputInfo->flags&TA_IN_PRICE_HIGH?input:NULL,
+             inputInfo->flags&TA_IN_PRICE_LOW?input:NULL,
+             inputInfo->flags&TA_IN_PRICE_CLOSE?input:NULL,
+             inputInfo->flags&TA_IN_PRICE_VOLUME?input:NULL, NULL );
+         break;
+      case TA_Input_Real:
          TA_SetInputParamRealPtr( paramHolder, i, input );
-		 break;
-	  case TA_Input_Integer:
+         break;
+      case TA_Input_Integer:
          TA_SetInputParamIntegerPtr( paramHolder, i, input_int );
          break;
-	  }
+      }
    }
 
    for( i=0; i < funcInfo->nbOutput; i++ )
    {
       TA_GetOutputParameterInfo( handle, i, &outputInfo );
-	  switch(outputInfo->type)
-	  {
-	  case TA_Output_Real:
-	     TA_SetOutputParamRealPtr(paramHolder,i,&output[i][0]);         
+      switch(outputInfo->type)
+      {
+      case TA_Output_Real:
+         TA_SetOutputParamRealPtr(paramHolder,i,&output[i][0]);
          for( j=0; j < 2000; j++ )
             output[i][j] = TA_REAL_MIN;
-		 break;
-	  case TA_Output_Integer:
-	     TA_SetOutputParamIntegerPtr(paramHolder,i,&output_int[i][0]);
+         break;
+      case TA_Output_Integer:
+         TA_SetOutputParamIntegerPtr(paramHolder,i,&output_int[i][0]);
          for( j=0; j < 2000; j++ )
             output_int[i][j] = TA_INTEGER_MIN;
-		 break;
-	  }
+         break;
+      }
    }
 
    /* Do the function call. */
@@ -454,7 +454,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
       printf( "TA_CallFunc() failed zero data test [%d]\n", retCode );
       TA_ParamHolderFree( paramHolder );
       return TA_ABS_TST_FAIL_CALLFUNC_1;
-   }      
+   }
 
    /* Verify consistency with Lookback */
    retCode = TA_GetLookback( paramHolder, &lookback );
@@ -464,33 +464,33 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
       TA_ParamHolderFree( paramHolder );
       return TA_ABS_TST_FAIL_CALLFUNC_2;
    }
-   
+
    if( outBegIdx != lookback )
    {
       printf( "TA_GetLookback() != outBegIdx [%d != %d]\n", lookback, outBegIdx );
       TA_ParamHolderFree( paramHolder );
       return TA_ABS_TST_FAIL_CALLFUNC_3;
-   }                       
+   }
 
-   /* TODO Add back nan/inf tests. 
+   /* TODO Add back nan/inf tests.
    for( i=0; i < funcInfo->nbOutput; i++ )
    {
-	  switch(outputInfo->type)
-	  {
-	  case TA_Output_Real:	     
-		for( j=0; j < outNbElement; j++ )
-		{
-			if( trio_isnan(output[i][j]) ||
+      switch(outputInfo->type)
+      {
+      case TA_Output_Real:
+        for( j=0; j < outNbElement; j++ )
+        {
+            if( trio_isnan(output[i][j]) ||
                 trio_isinf(output[i][j]))
-			{
-				printf( "Failed for output[%d][%d] = %e\n", i, j, output[i][j] );
-				return TA_ABS_TST_FAIL_INVALID_OUTPUT;
-			}
-		}
-		break;
-	  case TA_Output_Integer:	     
-		break;
-	  }
+            {
+                printf( "Failed for output[%d][%d] = %e\n", i, j, output[i][j] );
+                return TA_ABS_TST_FAIL_INVALID_OUTPUT;
+            }
+        }
+        break;
+      case TA_Output_Integer:
+        break;
+      }
    }*/
 
    /* Do another function call where startIdx == endIdx == 0.
@@ -530,56 +530,56 @@ static ErrorNumber test_default_calls(void)
 
    errNumber = TA_TEST_PASS;
 
-   for( i=0; i < sizeof(inputNegData)/sizeof(double); i++ )
+   for( i=0; i < sizeof inputNegData/sizeof(double); i++ )
    {
-      inputNegData[i] = -((double)((int)i));
-	  inputNegData_int[i] = -(int)i;
+      inputNegData[i] = -(double)(int)i;
+      inputNegData_int[i] = -(int)i;
    }
 
-   for( i=0; i < sizeof(inputZeroData)/sizeof(double); i++ )
+   for( i=0; i < sizeof inputZeroData/sizeof(double); i++ )
    {
       inputZeroData[i] = 0.0;
-	  inputZeroData_int[i] = (int)inputZeroData[i];
+      inputZeroData_int[i] = (int)inputZeroData[i];
    }
 
-   for( i=0; i < sizeof(inputRandomData)/sizeof(double); i++ )
+   for( i=0; i < sizeof inputRandomData/sizeof(double); i++ )
    {
       /* Make 100% sure input range is ]0..1[ */
-	  tempDouble = (double)rand() / ((double)(RAND_MAX)+(double)(1));
-      while( (tempDouble <= 0.0) || (tempDouble >= 1.0) ) 
-	  {
-		  tempDouble = (double)rand() / ((double)(RAND_MAX)+(double)(1));
-	  }
+      tempDouble = (double)rand() / ((double)RAND_MAX+(double)1);
+      while( tempDouble <= 0.0 || tempDouble >= 1.0 )
+      {
+          tempDouble = (double)rand() / ((double)RAND_MAX+(double)1);
+      }
       inputRandomData[i] = tempDouble;
       inputRandomData_int[i] = (int)inputRandomData[i];
    }
 
-   for( i=0; i < sizeof(inputRandFltEpsilon)/sizeof(double); i++ )
+   for( i=0; i < sizeof inputRandFltEpsilon/sizeof(double); i++ )
    {
        sign= (unsigned int)rand()%2;
-       inputRandFltEpsilon[i] = (sign?1.0:-1.0)*(FLT_EPSILON);
+       inputRandFltEpsilon[i] = (sign?1.0:-1.0)* FLT_EPSILON;
        inputRandFltEpsilon_int[i] = sign?TA_INTEGER_MIN:TA_INTEGER_MAX;
    }
 
-   for( i=0; i < sizeof(inputRandFltEpsilon)/sizeof(double); i++ )
+   for( i=0; i < sizeof inputRandFltEpsilon/sizeof(double); i++ )
    {
        sign= (unsigned int)rand()%2;
-       inputRandFltEpsilon[i] = (sign?1.0:-1.0)*(DBL_EPSILON);
+       inputRandFltEpsilon[i] = (sign?1.0:-1.0)* DBL_EPSILON;
        inputRandFltEpsilon_int[i] = sign?1:-1;
    }
 
    if( doExtensiveProfiling )
    {
-		   printf( "\n[PROFILING START]\n" );
+           printf( "\n[PROFILING START]\n" );
    }
 
    TA_ForEachFunc( testDefault, &errNumber );
 
    if( doExtensiveProfiling )
    {
-		   printf( "[PROFILING END]\n" );
+           printf( "[PROFILING END]\n" );
    }
-   
+
 
    return errNumber;
 }
@@ -593,7 +593,7 @@ static ErrorNumber callAndProfile( const char *funcName, ProfilingType type )
    const TA_OutputParameterInfo *outputInfo;
 
    TA_RetCode retCode;
-   int h, i, j, k;   
+   int h, i, j, k;
    int outBegIdx, outNbElement;
 
    /* Variables to control iteration and corresponding input size */
@@ -622,56 +622,56 @@ static ErrorNumber callAndProfile( const char *funcName, ProfilingType type )
    switch( type )
    {
    case PROFILING_10000:
-	   nbInnerLoop = 1;
-	   nbOuterLoop = 100;
-	   stepSize = 10000;
-	   inputSize = 10000;
-	   break;
+       nbInnerLoop = 1;
+       nbOuterLoop = 100;
+       stepSize = 10000;
+       inputSize = 10000;
+       break;
    case PROFILING_8000:
-	   nbInnerLoop = 2;
-	   nbOuterLoop = 50;
-	   stepSize = 2000;
-	   inputSize = 8000;
+       nbInnerLoop = 2;
+       nbOuterLoop = 50;
+       stepSize = 2000;
+       inputSize = 8000;
        break;
    case PROFILING_5000:
-	   nbInnerLoop = 2;
-	   nbOuterLoop = 50;
-	   stepSize = 5000;
-	   inputSize = 5000;
-	   break;
+       nbInnerLoop = 2;
+       nbOuterLoop = 50;
+       stepSize = 5000;
+       inputSize = 5000;
+       break;
    case PROFILING_2000:
-	   nbInnerLoop = 5;
-	   nbOuterLoop = 20;
-	   stepSize = 2000;
-	   inputSize = 2000;
-	   break;
+       nbInnerLoop = 5;
+       nbOuterLoop = 20;
+       stepSize = 2000;
+       inputSize = 2000;
+       break;
    case PROFILING_1000:
-	   nbInnerLoop = 10;
-	   nbOuterLoop = 10;
-	   stepSize = 1000;
-	   inputSize = 1000;
-	   break;
+       nbInnerLoop = 10;
+       nbOuterLoop = 10;
+       stepSize = 1000;
+       inputSize = 1000;
+       break;
    case PROFILING_500:
-	   nbInnerLoop = 20;
-	   nbOuterLoop = 5;
-	   stepSize = 500;
-	   inputSize = 500;
-	   break;
+       nbInnerLoop = 20;
+       nbOuterLoop = 5;
+       stepSize = 500;
+       inputSize = 500;
+       break;
    case PROFILING_100:
-	   nbInnerLoop = 100;
-	   nbOuterLoop = 1;
-	   stepSize = 100;
-	   inputSize = 100;
-	   break;
+       nbInnerLoop = 100;
+       nbOuterLoop = 1;
+       stepSize = 100;
+       inputSize = 100;
+       break;
    }
 
    retCode = TA_GetFuncHandle( funcName, &handle );
    if( retCode != TA_SUCCESS )
    {
       printf( "Can't get the function handle [%d]\n", retCode );
-      return TA_ABS_TST_FAIL_GETFUNCHANDLE;   
+      return TA_ABS_TST_FAIL_GETFUNCHANDLE;
    }
-                             
+
    retCode = TA_ParamHolderAlloc( handle, &paramHolder );
    if( retCode != TA_SUCCESS )
    {
@@ -684,49 +684,49 @@ static ErrorNumber callAndProfile( const char *funcName, ProfilingType type )
    for( i=0; i < (int)funcInfo->nbOutput; i++ )
    {
       TA_GetOutputParameterInfo( handle, i, &outputInfo );
-	  switch(outputInfo->type)
-	  {
-	  case TA_Output_Real:
-	     TA_SetOutputParamRealPtr(paramHolder,i,&output[i][0]);         
+      switch(outputInfo->type)
+      {
+      case TA_Output_Real:
+         TA_SetOutputParamRealPtr(paramHolder,i,&output[i][0]);
          for( j=0; j < 2000; j++ )
             output[i][j] = TA_REAL_MIN;
-		 break;
-	  case TA_Output_Integer:
-	     TA_SetOutputParamIntegerPtr(paramHolder,i,&output_int[i][0]);
+         break;
+      case TA_Output_Integer:
+         TA_SetOutputParamIntegerPtr(paramHolder,i,&output_int[i][0]);
          for( j=0; j < 2000; j++ )
             output_int[i][j] = TA_INTEGER_MIN;
-		 break;
-	  }
+         break;
+      }
    }
 
    for( h=0; h < 2; h++ )
    {
    for( i=0; i < nbOuterLoop; i++ )
    {
-	   for( j=0; j < nbInnerLoop; j++ )
-	   {
-		   /* Prepare input. */
-		   for( k=0; k < (int)funcInfo->nbInput; k++ )
-		   {
-			  TA_GetInputParameterInfo( handle, k, &inputInfo );
-			  switch(inputInfo->type)
-			  {
-			  case TA_Input_Price:
-				 TA_SetInputParamPricePtr( paramHolder, k,
-					 inputInfo->flags&TA_IN_PRICE_OPEN?&gDataOpen[j*stepSize]:NULL,
-					 inputInfo->flags&TA_IN_PRICE_HIGH?&gDataHigh[j*stepSize]:NULL,
-					 inputInfo->flags&TA_IN_PRICE_LOW?&gDataLow[j*stepSize]:NULL,
-					 inputInfo->flags&TA_IN_PRICE_CLOSE?&gDataClose[j*stepSize]:NULL,
-					 inputInfo->flags&TA_IN_PRICE_VOLUME?&gDataClose[j*stepSize]:NULL, NULL );
-				 break;
-			  case TA_Input_Real:
-				 TA_SetInputParamRealPtr( paramHolder, k, &gDataClose[j*stepSize] );
-				 break;
-			  case TA_Input_Integer:
-				 printf( "\nError: Integer input not yet supported for profiling.\n" );
-				 return TA_ABS_TST_FAIL_CALLFUNC_1;				 
-			  }
-		   }
+       for( j=0; j < nbInnerLoop; j++ )
+       {
+           /* Prepare input. */
+           for( k=0; k < (int)funcInfo->nbInput; k++ )
+           {
+              TA_GetInputParameterInfo( handle, k, &inputInfo );
+              switch(inputInfo->type)
+              {
+              case TA_Input_Price:
+                 TA_SetInputParamPricePtr( paramHolder, k,
+                     inputInfo->flags&TA_IN_PRICE_OPEN?&gDataOpen[j*stepSize]:NULL,
+                     inputInfo->flags&TA_IN_PRICE_HIGH?&gDataHigh[j*stepSize]:NULL,
+                     inputInfo->flags&TA_IN_PRICE_LOW?&gDataLow[j*stepSize]:NULL,
+                     inputInfo->flags&TA_IN_PRICE_CLOSE?&gDataClose[j*stepSize]:NULL,
+                     inputInfo->flags&TA_IN_PRICE_VOLUME?&gDataClose[j*stepSize]:NULL, NULL );
+                 break;
+              case TA_Input_Real:
+                 TA_SetInputParamRealPtr( paramHolder, k, &gDataClose[j*stepSize] );
+                 break;
+              case TA_Input_Integer:
+                 printf( "\nError: Integer input not yet supported for profiling.\n" );
+                 return TA_ABS_TST_FAIL_CALLFUNC_1;
+              }
+           }
 
            #ifdef WIN32
               QueryPerformanceCounter(&startClock);
@@ -734,43 +734,43 @@ static ErrorNumber callAndProfile( const char *funcName, ProfilingType type )
               startClock = clock();
            #endif
 
-		   /* Do the function call. */
-		   retCode = TA_CallFunc(paramHolder,0,inputSize-1,&outBegIdx,&outNbElement);
-		   if( retCode != TA_SUCCESS )
-		   {
-		      printf( "TA_CallFunc() failed zero data test [%d]\n", retCode );
-		      TA_ParamHolderFree( paramHolder );
-		      return TA_ABS_TST_FAIL_CALLFUNC_1;
-		   }
+           /* Do the function call. */
+           retCode = TA_CallFunc(paramHolder,0,inputSize-1,&outBegIdx,&outNbElement);
+           if( retCode != TA_SUCCESS )
+           {
+              printf( "TA_CallFunc() failed zero data test [%d]\n", retCode );
+              TA_ParamHolderFree( paramHolder );
+              return TA_ABS_TST_FAIL_CALLFUNC_1;
+           }
 
-		   #ifdef WIN32
-			   QueryPerformanceCounter(&endClock);
-			   clockDelta = (double)((__int64)endClock.QuadPart - (__int64) startClock.QuadPart);
-		   #else
-			   endClock = clock();
-			   clockDelta = (double)(endClock - startClock);
-		   #endif
+           #ifdef WIN32
+               QueryPerformanceCounter(&endClock);
+               clockDelta = (double)((__int64)endClock.QuadPart - (__int64) startClock.QuadPart);
+           #else
+               endClock = clock();
+               clockDelta = (double)(endClock - startClock);
+           #endif
 
-		   /* Setup global profiling info. */
-		   if( clockDelta <= 0 )
-		   {
-			   printf( "Error: Insufficient timer precision to perform benchmarking on this platform.\n" );
-			   return TA_ABS_TST_FAIL_CALLFUNC_1;
-		   }
-		   else
-		   {	   
-			   if( clockDelta > worstProfiledCall )
-			      worstProfiledCall = clockDelta;
-			   timeInProfiledCall += clockDelta;
-			   nbProfiledCall++;
-		   }
+           /* Setup global profiling info. */
+           if( clockDelta <= 0 )
+           {
+               printf( "Error: Insufficient timer precision to perform benchmarking on this platform.\n" );
+               return TA_ABS_TST_FAIL_CALLFUNC_1;
+           }
+           else
+           {
+               if( clockDelta > worstProfiledCall )
+                  worstProfiledCall = clockDelta;
+               timeInProfiledCall += clockDelta;
+               nbProfiledCall++;
+           }
 
-		   /* Setup local profiling info for this particular function. */
-		   if( clockDelta > worstProfiledCallLocal )
-			   worstProfiledCallLocal = clockDelta;
-		   timeInProfiledCallLocal += clockDelta;
-		   nbProfiledCallLocal++;
-	   }
+           /* Setup local profiling info for this particular function. */
+           if( clockDelta > worstProfiledCallLocal )
+               worstProfiledCallLocal = clockDelta;
+           timeInProfiledCallLocal += clockDelta;
+           nbProfiledCallLocal++;
+       }
    }
    }
 

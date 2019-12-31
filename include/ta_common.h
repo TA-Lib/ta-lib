@@ -37,20 +37,19 @@
  * The Id can be from 1 to 999 and translate to the user
  * as the return code 5000 to 5999.
  *
- * Everytime you wish to add a new fatal error code,
+ * Every time you wish to add a new fatal error code,
  * use the "NEXT AVAILABLE NUMBER" and increment the
  * number in this file.
  *
  * NEXT AVAILABLE NUMBER: 181
  */
-#define TA_INTERNAL_ERROR(Id) ((TA_RetCode)(TA_INTERNAL_ERROR+Id))
+#define TA_INTERNAL_ERROR(Id) ((TA_RetCode)(TA_INTERNAL_ERROR+(Id)))
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <stdio.h>
-#include <limits.h>
 #include <float.h>
 
 #ifndef TA_DEFS_H
@@ -120,7 +119,7 @@ typedef struct TA_StringTable
  *        }
  *
  * Would display:
- *        "Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not sucessfully called"
+ *        "Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called"
  */
 typedef struct TA_RetCodeInfo
 {
@@ -131,11 +130,11 @@ typedef struct TA_RetCodeInfo
 /* Info is always returned, even when 'theRetCode' is invalid. */
 void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo );
 
-/* TA_Initialize() initialize the ressources used by TA-Lib. This
+/* TA_Initialize() initialize the resources used by TA-Lib. This
  * function must be called once prior to any other functions declared in
  * this file.
  *
- * TA_Shutdown() allows to free all ressources used by TA-Lib. Following
+ * TA_Shutdown() allows to free all resources used by TA-Lib. Following
  * a shutdown, TA_Initialize() must be called again for re-using TA-Lib.
  *
  * TA_Shutdown() should be called prior to exiting the application code.

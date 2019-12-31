@@ -71,7 +71,7 @@ DEF_FUNCTION( EMA,                        /* name */
               "Exponential Moving Average", /* hint */
               "Ema",                       /* CamelCase name */
               TA_FUNC_FLG_OVERLAP|TA_FUNC_FLG_UNST_PER /* flags */
-             );
+             )
 /* EMA END */
 
 /* EXP BEGIN */
@@ -92,7 +92,7 @@ const TA_FuncDef *TA_DEF_TableE[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableESize =
-              ((sizeof(TA_DEF_TableE)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableE/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

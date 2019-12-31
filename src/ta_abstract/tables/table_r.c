@@ -71,7 +71,7 @@ DEF_FUNCTION( ROC,                     /* name */
               "Rate of change : ((price/prevPrice)-1)*100", /* hint */
               "Roc",            /* CamelCase name */
               0                 /* flags */
-             );
+             )
 /* ROC END */
 
 /* ROCP BEGIN */
@@ -97,7 +97,7 @@ DEF_FUNCTION( ROCP,                    /* name */
               "Rate of change Percentage: (price-prevPrice)/prevPrice", /* hint */
               "RocP",           /* CamelCase name */
               0                 /* flags */
-             );
+             )
 /* ROCP END */
 
 /* ROCR BEGIN */
@@ -123,7 +123,7 @@ DEF_FUNCTION( ROCR,                    /* name */
               "Rate of change ratio: (price/prevPrice)", /* hint */
               "RocR",           /* CamelCase name */
               0                 /* flags */
-             );
+             )
 /* ROCR END */
 
 /* ROCR100 BEGIN */
@@ -149,7 +149,7 @@ DEF_FUNCTION( ROCR100,                    /* name */
               "Rate of change ratio 100 scale: (price/prevPrice)*100", /* hint */
               "RocR100",       /* CamelCase name */
               0                /* flags */
-             );
+             )
 /* ROCR100 END */
 
 /* RSI BEGIN */
@@ -176,7 +176,7 @@ DEF_FUNCTION( RSI,                        /* name */
               "Relative Strength Index",  /* hint */
               "Rsi",                      /* CamelCase name */
               TA_FUNC_FLG_UNST_PER        /* flags */
-             );
+             )
 /* RSI END */
 
 /****************************************************************************
@@ -196,7 +196,7 @@ const TA_FuncDef *TA_DEF_TableR[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableRSize =
-              ((sizeof(TA_DEF_TableR)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableR/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

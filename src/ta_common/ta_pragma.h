@@ -45,27 +45,27 @@
  */
 
 /* Description:
- * 
+ *
  * Visual Studio 2005 has extended the C Run-Time Library by including "secure"
  * runtime functions and deprecating the previous function prototypes.  Since
  * we need to use the previous prototypes to maintain compatibility with other
- * platform compilers we are going to disable the deprecation warnings when 
+ * platform compilers we are going to disable the deprecation warnings when
  * compiling with Visual Studio 2005.
- * 
- * Note: this header must be the first inclusion referenced by the code file 
+ *
+ * Note: this header must be the first inclusion referenced by the code file
  * needing these settings!!!!!
- * 
+ *
  */
 
 #ifndef TA_PRAGMA_H
 #define TA_PRAGMA_H
 
 #if (_MSC_VER >= 1400)       // VC8+ nmake and VS2005
-  
+
 	#ifndef _CRT_SECURE_NO_DEPRECATE	//turn off MS 'safe' CRT library routines
 		#define _CRT_SECURE_NO_DEPRECATE 1
 	#endif
-	
+
 // There are additional macros that may be needed in the future, so we'll list them here
 	//#ifndef _CRT_SECURE_NO_WARNINGS	//turn off MS 'safe' CRT library routines
 	//	#define _CRT_SECURE_NO_WARNINGS 1

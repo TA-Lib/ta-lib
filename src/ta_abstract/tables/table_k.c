@@ -71,7 +71,7 @@ DEF_FUNCTION( KAMA,                       /* name */
               "Kaufman Adaptive Moving Average", /* hint */
               "Kama",                       /* CamelCase name */
               TA_FUNC_FLG_OVERLAP|TA_FUNC_FLG_UNST_PER        /* flags */
-             );
+             )
 /* KAMA END */
 
 
@@ -88,7 +88,7 @@ const TA_FuncDef *TA_DEF_TableK[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableKSize =
-              ((sizeof(TA_DEF_TableK)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableK/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

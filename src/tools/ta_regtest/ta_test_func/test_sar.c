@@ -53,11 +53,9 @@
 
 /**** Headers ****/
 #include <stdio.h>
-#include <string.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
-#include "ta_utility.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -124,8 +122,8 @@ static TA_Test tableTest[] =
    /**************************************/
    { 1, 0, (WILDER_NB_BAR-1), 0.02, 0.20, TA_SUCCESS,  0, 50.00,   1, (WILDER_NB_BAR-1) }, /* First Value */
    { 1, 0, (WILDER_NB_BAR-1), 0.02, 0.20, TA_SUCCESS,  1, 50.047,  1, (WILDER_NB_BAR-1) },
-   { 1, 0, (WILDER_NB_BAR-1), 0.02, 0.20, TA_SUCCESS,  4, 50.182,  1, (WILDER_NB_BAR-1) }, 
-   { 1, 0, (WILDER_NB_BAR-1), 0.02, 0.20, TA_SUCCESS, 35, 52.93,   1, (WILDER_NB_BAR-1) }, 
+   { 1, 0, (WILDER_NB_BAR-1), 0.02, 0.20, TA_SUCCESS,  4, 50.182,  1, (WILDER_NB_BAR-1) },
+   { 1, 0, (WILDER_NB_BAR-1), 0.02, 0.20, TA_SUCCESS, 35, 52.93,   1, (WILDER_NB_BAR-1) },
    { 1, 0, (WILDER_NB_BAR-1), 0.02, 0.20, TA_SUCCESS, 36, 50.00,   1, (WILDER_NB_BAR-1) } /* Last value */
 };
 
@@ -164,7 +162,7 @@ ErrorNumber test_func_sar( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/

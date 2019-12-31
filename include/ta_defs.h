@@ -52,8 +52,6 @@
     #define INT_MIN Integer.MIN_VALUE
     #define INT_MAX Integer.MAX_VALUE
   #else
-    #include <limits.h>
-
     /* Identify if 64 bits platform with __64BIT__.
      * Can also be done from compiler command line.
      */
@@ -174,11 +172,11 @@
   #define ENUM_END(w) } TA_##w;
 
   #define STRUCT_BEGIN(x) typedef struct {
-  #define STRUCT_END(x) } x;
+  #define STRUCT_END(x) } (x);
 
   #define VALUE_HANDLE_INT(name)           int name
-  #define VALUE_HANDLE_DEREF(name)         (*name)
-  #define VALUE_HANDLE_DEREF_TO_ZERO(name) (*name) = 0
+  #define VALUE_HANDLE_DEREF(name)         (*(name))
+  #define VALUE_HANDLE_DEREF_TO_ZERO(name) (*(name)) = 0
   #define VALUE_HANDLE_OUT(name)           &name
 
   #define VALUE_HANDLE_GET(name)          name
@@ -233,7 +231,7 @@
 
 ENUM_BEGIN( RetCode )
     /*      0 */  ENUM_DEFINE( TA_SUCCESS, Success ),            /* No error */
-    /*      1 */  ENUM_DEFINE( TA_LIB_NOT_INITIALIZE, LibNotInitialize ), /* TA_Initialize was not sucessfully called */
+    /*      1 */  ENUM_DEFINE( TA_LIB_NOT_INITIALIZE, LibNotInitialize ), /* TA_Initialize was not successfully called */
     /*      2 */  ENUM_DEFINE( TA_BAD_PARAM, BadParam ), /* A parameter is out of range */
     /*      3 */  ENUM_DEFINE( TA_ALLOC_ERR, AllocErr ), /* Possibly out-of-memory */
     /*      4 */  ENUM_DEFINE( TA_GROUP_NOT_FOUND, GroupNotFound ),

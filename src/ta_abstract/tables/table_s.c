@@ -119,7 +119,7 @@ DEF_FUNCTION( SAR,                        /* name */
               "Parabolic SAR",            /* hint */
               "Sar",                      /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 
 /* SAR END */
 
@@ -293,7 +293,7 @@ DEF_FUNCTION( SAREXT,                     /* name */
               "Parabolic SAR - Extended", /* hint */
               "SarExt",                   /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 
 /* SAREXT END */
 
@@ -329,7 +329,7 @@ DEF_FUNCTION( SMA,                        /* name */
               "Simple Moving Average",    /* hint */
               "Sma",                      /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 
 /* SMA END */
 
@@ -364,7 +364,7 @@ DEF_FUNCTION( SUM, /* name */
               "Summation", /* hint */
               "Sum",   /* CamelCase name */
               0        /* flags */
-             );
+             )
 /* SUM END */
 
 /* STDDEV BEGIN */
@@ -391,7 +391,7 @@ DEF_FUNCTION( STDDEV,                   /* name */
               "Standard Deviation",     /* hint */
               "StdDev",                 /* CamelCase name */
               0                         /* flags */
-             );
+             )
 /* STDDEV END */
 
 /* STOCH BEGIN */
@@ -498,7 +498,7 @@ DEF_FUNCTION( STOCH,                   /* name */
               "Stochastic",             /* hint */
               "Stoch",                  /* CamelCase name */
               0                         /* flags */
-             );
+             )
 /* STOCH END */
 
 /* STOCHF BEGIN */
@@ -561,7 +561,7 @@ DEF_FUNCTION( STOCHF,                   /* name */
               "Stochastic Fast",        /* hint */
               "StochF",                 /* CamelCase name */
               0                         /* flags */
-             );
+             )
 /* STOCHF END */
 
 /* STOCHRSI BEGIN */
@@ -592,7 +592,7 @@ DEF_FUNCTION( STOCHRSI,                        /* name */
               "Stochastic Relative Strength Index",  /* hint */
               "StochRsi",                 /* CamelCase name */
               TA_FUNC_FLG_UNST_PER        /* flags */
-             );
+             )
 
 /* STOCHRSI END */
 
@@ -620,7 +620,7 @@ const TA_FuncDef *TA_DEF_TableS[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableSSize =
-              ((sizeof(TA_DEF_TableS)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableS/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

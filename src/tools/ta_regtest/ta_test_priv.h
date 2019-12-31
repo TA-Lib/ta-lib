@@ -31,7 +31,7 @@ ErrorNumber allocLib( void );
 void reportError( const char *str, TA_RetCode retCode );
 
 /* Global Temporary Used by the ta_func_xxx function. */
- 
+
 
 typedef struct
 {
@@ -75,7 +75,7 @@ void setInputBufferValue( unsigned int i, const TA_Real data, unsigned int nbEle
 ErrorNumber checkForNAN( const TA_Real *buffer,
                          unsigned int nbElement );
 
-/* Check that the 'data' is equal to the provided 
+/* Check that the 'data' is equal to the provided
  * originalInput.
  *
  * The data must be one of the 'gBuffer[n].buffer'.
@@ -92,7 +92,7 @@ ErrorNumber checkDataSame( const TA_Real *data,
 /* Check that the content of the first buffer
  * is found in the second buffer (when the elements
  * in the first buffer is NAN, no check is done for
- * this paricular element).
+ * this particular element).
  *
  * Return TA_TEST_PASS if no difference are found.
  */
@@ -132,14 +132,14 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
 /* A systematic test can be done for most of the possible
  * range that a TA function can be called with. This test
  * is common to all TA function and can be easily done
- * with a RangeTestFunction. 
+ * with a RangeTestFunction.
  *
  * The RangeTestFunction is making abstraction of the
  * TA function (handles the inputs, the parameters etc...)
  * The RangeTestFunction must call the TA function for
  * the requested startIdx/endIdx range and put the output
  * in the provided buffer.
- * 
+ *
  * The RangeTestFunction must also set the outBegIdx and
  * outNbElement for verification.
  *
@@ -165,7 +165,7 @@ typedef TA_RetCode (*RangeTestFunction)( TA_Integer    startIdx,
 
 /* This is the function starting the range tests.
  * The parameter 'nbOutput' allows to repeat the
- * tests indepedently for each outputs.
+ * tests independently for each outputs.
  *
  * A lot of coherency tests are performed,
  * including comparing that the same value are
@@ -176,7 +176,7 @@ typedef TA_RetCode (*RangeTestFunction)( TA_Integer    startIdx,
  * have an unstable period, the comparison is
  * done using a tolerance algorithm (see test_util.c).
  *
- * Comparison can be ignored by specifiying 
+ * Comparison can be ignored by specifying
  * an integerTolerance == TA_DO_NOT_COMPARE
  *
  * Even without comparison, a lot of coherency

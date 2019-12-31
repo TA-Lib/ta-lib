@@ -35,7 +35,6 @@
  * This file contains only TA functions starting with the letter 'Z' *
  *********************************************************************/
 #include <stddef.h>
-#include "ta_abstract.h"
 #include "ta_def_ui.h"
 
 /* Follow the 3 steps defined below for adding a new TA Function to this
@@ -62,7 +61,7 @@ const TA_FuncDef *TA_DEF_TableZ[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableZSize =
-              ((sizeof(TA_DEF_TableZ)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableZ/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

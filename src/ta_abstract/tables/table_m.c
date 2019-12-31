@@ -127,7 +127,7 @@ DEF_FUNCTION( MA,                         /* name */
               "Moving average",       /* hint */
               "MovingAverage",            /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 /* MA END */
 
 /* MACD BEGIN */
@@ -166,7 +166,7 @@ DEF_FUNCTION( MACD,                       /* name */
               "Moving Average Convergence/Divergence", /* hint */
               "Macd",                     /* CamelCase name */
               0                           /* flags */
-             );
+             )
 /* MACD END */
 
 /* MACDEXT BEGIN */
@@ -199,7 +199,7 @@ DEF_FUNCTION( MACDEXT,                     /* name */
               "MACD with controllable MA type", /* hint */
               "MacdExt",                  /* CamelCase name */
               0                           /* flags */
-             );
+             )
 /* MACDEXT END */
 
 /* MACDFIX BEGIN */
@@ -227,7 +227,7 @@ DEF_FUNCTION( MACDFIX,                    /* name */
               "Moving Average Convergence/Divergence Fix 12/26", /* hint */
               "MacdFix",                  /* CamelCase name */
               0                           /* flags */
-             );
+             )
 /* MACDFIX END */
 
 /* MAMA BEGIN */
@@ -306,7 +306,7 @@ DEF_FUNCTION( MAMA,                         /* name */
               "MESA Adaptive Moving Average",       /* hint */
               "Mama",                       /* CamelCase name */
               TA_FUNC_FLG_UNST_PER|TA_FUNC_FLG_OVERLAP /* flags */
-             );
+             )
 /* MAMA END */
 
 /* MAVP BEGIN */
@@ -324,7 +324,7 @@ static const TA_OutputParameterInfo   *TA_MAVP_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_MAVP_OptInputs[] =
-{ 
+{
   &TA_DEF_UI_MinPeriod,
   &TA_DEF_UI_MaxPeriod,
   &TA_DEF_UI_MA_Method,
@@ -336,7 +336,7 @@ DEF_FUNCTION( MAVP,                         /* name */
               "Moving average with variable period",  /* hint */
               "MovingAverageVariablePeriod", /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 /* MAVP END */
 
 /* MAX BEGIN */
@@ -362,7 +362,7 @@ DEF_FUNCTION( MAX,                       /* name */
               "Highest value over a specified period", /* hint */
               "Max",                     /* CamelCase name */
               TA_FUNC_FLG_OVERLAP        /* flags */
-             );
+             )
 /* MAX END */
 
 /* MAXINDEX BEGIN */
@@ -388,7 +388,7 @@ DEF_FUNCTION( MAXINDEX,                  /* name */
               "Index of highest value over a specified period", /* hint */
               "MaxIndex",                /* CamelCase name */
               0                          /* flags */
-             );
+             )
 /* MAXINDEX END */
 
 /* MEDPRICE BEGIN */
@@ -411,7 +411,7 @@ DEF_FUNCTION( MEDPRICE,                   /* name */
               "Median Price",             /* hint */
               "MedPrice",                 /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 
 /* MEDPRICE END */
 
@@ -428,7 +428,7 @@ static const TA_OutputParameterInfo   *TA_MFI_Outputs[]   =
   NULL
 };
 
-static const TA_OptInputParameterInfo *TA_MFI_OptInputs[] = 
+static const TA_OptInputParameterInfo *TA_MFI_OptInputs[] =
 {
   &TA_DEF_UI_TimePeriod_14_MINIMUM2,
   NULL
@@ -439,7 +439,7 @@ DEF_FUNCTION( MFI,                   /* name */
               "Money Flow Index",         /* hint */
               "Mfi",                      /* CamelCase name */
               TA_FUNC_FLG_UNST_PER        /* flags */
-             );
+             )
 /* MFI END */
 
 /* MIDPRICE BEGIN */
@@ -455,7 +455,7 @@ static const TA_OutputParameterInfo   *TA_MIDPRICE_Outputs[]   =
   NULL
 };
 
-static const TA_OptInputParameterInfo *TA_MIDPRICE_OptInputs[] = 
+static const TA_OptInputParameterInfo *TA_MIDPRICE_OptInputs[] =
 { &TA_DEF_UI_TimePeriod_14_MINIMUM2,
   NULL
 };
@@ -465,7 +465,7 @@ DEF_FUNCTION( MIDPRICE,                    /* name */
               "Midpoint Price over period",/* hint */
               "MidPrice",                  /* CamelCase name */
               TA_FUNC_FLG_OVERLAP          /* flags */
-             );
+             )
 
 /* MIDPRICE END */
 
@@ -492,7 +492,7 @@ DEF_FUNCTION( MIDPOINT,                   /* name */
               "MidPoint over period",     /* hint */
               "MidPoint",                 /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 /* MIDPOINT END */
 
 /* MIN BEGIN */
@@ -518,7 +518,7 @@ DEF_FUNCTION( MIN,                       /* name */
               "Lowest value over a specified period", /* hint */
               "Min",                     /* CamelCase name */
               TA_FUNC_FLG_OVERLAP        /* flags */
-             );
+             )
 /* MIN END */
 
 /* MININDEX BEGIN */
@@ -544,7 +544,7 @@ DEF_FUNCTION( MININDEX,                  /* name */
               "Index of lowest value over a specified period", /* hint */
               "MinIndex",                /* CamelCase name */
               0                          /* flags */
-             );
+             )
 /* MININDEX END */
 
 /* MINMAX BEGIN */
@@ -577,7 +577,7 @@ DEF_FUNCTION( MINMAX,                    /* name */
               "Lowest and highest values over a specified period", /* hint */
               "MinMax",                  /* CamelCase name */
               TA_FUNC_FLG_OVERLAP        /* flags */
-             );
+             )
 /* MINMAX END */
 
 /* MINMAXINDEX BEGIN */
@@ -610,7 +610,7 @@ DEF_FUNCTION( MINMAXINDEX,               /* name */
               "Indexes of lowest and highest values over a specified period", /* hint */
               "MinMaxIndex",             /* CamelCase name */
               0                          /* flags */
-             );
+             )
 /* MINMAXINDEX END */
 
 /* MINUS_DI BEGIN */
@@ -635,8 +635,8 @@ DEF_FUNCTION( MINUS_DI,                      /* name */
               TA_GroupId_MomentumIndicators,    /* groupId */
               "Minus Directional Indicator", /* hint */
               "MinusDI",                     /* CamelCase name */
-              TA_FUNC_FLG_UNST_PER           /* flags */              
-             );
+              TA_FUNC_FLG_UNST_PER           /* flags */
+             )
 
 /* MINUS_DI END */
 
@@ -663,7 +663,7 @@ DEF_FUNCTION( MINUS_DM,                     /* name */
               "Minus Directional Movement", /* hint */
               "MinusDM",                    /* CamelCase name */
               TA_FUNC_FLG_UNST_PER          /* flags */
-             );
+             )
 
 /* MINUS_DM END */
 
@@ -690,7 +690,7 @@ DEF_FUNCTION( MOM,                     /* name */
               "Momentum",        /* hint */
               "Mom",             /* CamelCase name */
               0                  /* flags */
-             );
+             )
 /* MOM END */
 
 /* MULT BEGIN */
@@ -729,7 +729,7 @@ const TA_FuncDef *TA_DEF_TableM[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableMSize =
-              ((sizeof(TA_DEF_TableM)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableM/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

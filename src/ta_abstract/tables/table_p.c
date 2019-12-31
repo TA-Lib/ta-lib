@@ -71,7 +71,7 @@ DEF_FUNCTION( PLUS_DI,                     /* name */
               "Plus Directional Indicator", /* hint */
               "PlusDI",                     /* CamelCase name */
               TA_FUNC_FLG_UNST_PER          /* flags */
-             );
+             )
 
 /* PLUS_DI END */
 
@@ -98,7 +98,7 @@ DEF_FUNCTION( PLUS_DM,                       /* name */
               "Plus Directional Movement",   /* hint */
               "PlusDM",                      /* CamelCase name */
               TA_FUNC_FLG_UNST_PER           /* flags */
-             );
+             )
 
 /* PLUS_DM END */
 
@@ -127,7 +127,7 @@ DEF_FUNCTION( PPO,                           /* name */
               "Percentage Price Oscillator", /* hint */
               "Ppo",                         /* CamelCase name */
               0                              /* flags */
-             );
+             )
 /* PPO END */
 
 #if 0
@@ -176,7 +176,7 @@ const TA_FuncDef *TA_DEF_TableP[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TablePSize =
-              ((sizeof(TA_DEF_TableP)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableP/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

@@ -116,7 +116,7 @@ DEF_FUNCTION( ULTOSC,                         /* name */
               "Ultimate Oscillator",          /* hint */
               "UltOsc",                       /* CamelCase name */
               0                               /* flags */
-             );
+             )
 /* ULTOSC END */
 
 /****************************************************************************
@@ -132,7 +132,7 @@ const TA_FuncDef *TA_DEF_TableU[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableUSize =
-              ((sizeof(TA_DEF_TableU)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableU/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

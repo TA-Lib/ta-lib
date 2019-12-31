@@ -6,7 +6,7 @@
       #include "ta_common.h"
    #endif
 
-   #include <stdlib.h> 
+   #include <stdlib.h>
 
    /* Interface macros */
    #define TA_Malloc(a)       malloc(a)
@@ -20,13 +20,13 @@
 
 /* ARRAY : Macros to manipulate arrays of value type.
  *
- * Using temporary array of double and integer are often needed for the 
+ * Using temporary array of double and integer are often needed for the
  * TA functions.
  *
  * These macros allow basic operations to alloc/copy/free array of value type.
  *
  * These macros works in plain old C/C++, managed C++.and Java.
- * 
+ *
  * (Use ARRAY_REF and ARRAY_INT_REF for double/integer arrays).
  */
 #if defined( _MANAGED ) && defined( USE_SUBARRAY )
@@ -36,7 +36,7 @@
    #define ARRAY_VTYPE_COPY(type,dest,src,size)   SubArray<type>::Copy( src, 0, dest, 0, size )
    #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) SubArray<type>::Copy( src, srcIdx, dest, destIdx, size )
    #define ARRAY_VTYPE_FREE(type,name)
-   #define ARRAY_VTYPE_FREE_COND(type,cond,name)   
+   #define ARRAY_VTYPE_FREE_COND(type,cond,name)
 #elif defined( _MANAGED )
    #define ARRAY_VTYPE_REF(type,name)             cli::array<type>^ name
    #define ARRAY_VTYPE_LOCAL(type,name,size)      cli::array<type>^ name = gcnew cli::array<type>(size)
@@ -44,7 +44,7 @@
    #define ARRAY_VTYPE_COPY(type,dest,src,size)   cli::array<type>::Copy( src, 0, dest, 0, size )
    #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) cli::array<type>::Copy( src, srcIdx, dest, destIdx, size )
    #define ARRAY_VTYPE_FREE(type,name)
-   #define ARRAY_VTYPE_FREE_COND(type,cond,name)   
+   #define ARRAY_VTYPE_FREE_COND(type,cond,name)
 #elif defined( _JAVA )
    #define ARRAY_VTYPE_REF(type,name)             type []name
    #define ARRAY_VTYPE_LOCAL(type,name,size)      type []name = new type[size]
@@ -58,7 +58,7 @@
    #define ARRAY_VTYPE_LOCAL(type,name,size)      type name[size]
    #define ARRAY_VTYPE_ALLOC(type,name,size)      name = (type *)TA_Malloc( sizeof(type)*(size))
    #define ARRAY_VTYPE_COPY(type,dest,src,size)   memcpy(dest,src,sizeof(type)*(size))
-   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) memmove( &dest[destIdx], &src[srcIdx], (size)*sizeof(type) )
+   #define ARRAY_VTYPE_MEMMOVE(type,dest,destIdx,src,srcIdx,size) memmove( &(dest)[destIdx], &(src)[srcIdx], (size)*sizeof(type) )
    #define ARRAY_VTYPE_FREE(type,name)            TA_Free(name)
    #define ARRAY_VTYPE_FREE_COND(type,cond,name)  if( cond ){ TA_Free(name); }
 #endif
@@ -81,16 +81,16 @@
 #define ARRAY_INT_FREE(name)            ARRAY_VTYPE_FREE(int,name)
 #define ARRAY_INT_FREE_COND(cond,name)  ARRAY_VTYPE_FREE_COND(int,cond,name)
 
-/* ARRAY: Macros to manipulate arrays of mix type. 
+/* ARRAY: Macros to manipulate arrays of mix type.
  * This is just a loop doing an element by element copy.
  */
 #define ARRAY_MEMMOVEMIX_VAR int mmmixi, mmmixdestIdx, mmmixsrcIdx
 #define ARRAY_MEMMOVEMIX(dest,destIdx,src,srcIdx,size) { \
-            for( mmmixi=0, mmmixdestIdx=destIdx, mmmixsrcIdx=srcIdx; \
-                mmmixi < size; \
+            for( mmmixi=0, mmmixdestIdx=(destIdx), mmmixsrcIdx=srcIdx; \
+                mmmixi < (size); \
                 mmmixi++, mmmixdestIdx++, mmmixsrcIdx++ ) \
               { \
-                  dest[mmmixdestIdx] = src[mmmixsrcIdx]; \
+                  (dest)[mmmixdestIdx] = (src)[mmmixsrcIdx]; \
               } \
             }
 
@@ -124,20 +124,20 @@
  * one value (if not consume, the value is lost).
  *
  * The CIRCBUF size is unlimited, so it will automatically allocate and
- * de-allocate memory as needed. In C/C++. when small enough, CIRCBUF will 
+ * de-allocate memory as needed. In C/C++. when small enough, CIRCBUF will
  * instead use a buffer "allocated" on the stack (automatic variable).
- * 
+ *
  * Multiple CIRCBUF can be used within the same function. To make that
  * possible the first parameter of the MACRO is an "Id" that can be
  * any string.
  *
  * The macros offer the advantage to work in C/C++ and managed C++.
- * 
+ *
  * CIRCBUF_PROLOG(Id,Type,Size);
  *          Will declare all the needed variables. 2 variables are
- *          important: 
+ *          important:
  *                 1) 'Id' will be a ptr of the specified Type.
- *                 2) 'Id'_Idx indicates from where to consume and 
+ *                 2) 'Id'_Idx indicates from where to consume and
  *                     to add the data.
  *
  *          Important: You must consume the oldest data before
@@ -212,7 +212,7 @@
  * The value 0 to 2 are displayed by the 2nd loop.
  * The value 3 to 7 are displayed by the 3rd loop.
  *
- * Because the size 5 is greater than the 
+ * Because the size 5 is greater than the
  * value provided in CIRCBUF_PROLOG, a buffer will
  * be dynamically allocated (and freed).
  */
@@ -308,7 +308,7 @@
 
 #define CIRCBUF_PROLOG(Id,Type,Size) Type local_##Id[Size]; \
                                   int Id##_Idx; \
-                                  Type *Id; \
+                                  Type *(Id); \
                                   int maxIdx_##Id
 
 /* Use this macro instead if the Type is a class or a struct. */
@@ -316,17 +316,17 @@
 
 #define CIRCBUF_INIT(Id,Type,Size) \
    { \
-      if( Size < 1 ) \
+      if( (Size) < 1 ) \
          return TA_INTERNAL_ERROR(137); \
-      if( (int)Size > (int)(sizeof(local_##Id)/sizeof(Type)) ) \
+      if( (int)(Size) > (int)(sizeof(local_##Id)/sizeof(Type)) ) \
       { \
-         Id = TA_Malloc( sizeof(Type)*Size ); \
-         if( !Id ) \
+         (Id) = TA_Malloc( sizeof(Type)*(Size) ); \
+         if( !(Id) ) \
             return TA_ALLOC_ERR; \
       } \
       else \
-         Id = &local_##Id[0]; \
-      maxIdx_##Id = (Size-1); \
+         (Id) = &local_##Id[0]; \
+      maxIdx_##Id = ((Size)-1); \
       Id##_Idx = 0; \
    }
 
@@ -334,14 +334,14 @@
 
 #define CIRCBUF_INIT_LOCAL_ONLY(Id,Type) \
    { \
-      Id = &local_##Id[0]; \
+      (Id) = &local_##Id[0]; \
       maxIdx_##Id = (int)(sizeof(local_##Id)/sizeof(Type))-1; \
       Id##_Idx = 0; \
    }
 
 #define CIRCBUF_DESTROY(Id) \
    { \
-      if( Id != &local_##Id[0] ) \
+      if( (Id) != &local_##Id[0] ) \
          TA_Free( Id ); \
    }
 

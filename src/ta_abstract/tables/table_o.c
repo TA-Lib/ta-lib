@@ -70,7 +70,7 @@ DEF_FUNCTION( OBV,                          /* name */
               "On Balance Volume",          /* hint */
               "Obv",                        /* CamelCase name */
               0                             /* flags */
-             );
+             )
 /* OBV END */
 
 /****************************************************************************
@@ -86,7 +86,7 @@ const TA_FuncDef *TA_DEF_TableO[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableOSize =
-              ((sizeof(TA_DEF_TableO)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableO/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

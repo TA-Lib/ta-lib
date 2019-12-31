@@ -46,7 +46,6 @@
  */
 #include <stddef.h>
 #include "ta_def_ui.h"
-#include "ta_abstract.h"
 
 extern const TA_FuncDef TA_DEF_ACCBANDS;
 extern const TA_FuncDef TA_DEF_ACOS;

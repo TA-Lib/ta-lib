@@ -34,7 +34,7 @@
 
 /* TA_ParamHolderPriv is the private implementation of a TA_ParamHolder. */
 
-/* Definition in this header shall be used only internaly by the
+/* Definition in this header shall be used only internally by the
  * ta_abstract module.
  * End-user of the TA-LIB shall never attempt to access these
  * structure directly.

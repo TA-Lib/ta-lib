@@ -499,8 +499,8 @@ const TA_OptInputParameterInfo TA_DEF_UI_HorizontalShift =
    NULL /* helpFile */
 };
 
-/* Define the values available for the MA function. 
- * 
+/* Define the values available for the MA function.
+ *
  * Many TA function using the MA internally may wish to
  * re-use this parameter as one of their own. That way a
  * new MA will provide automatically a new way of calculating
@@ -523,7 +523,7 @@ static const TA_IntegerDataPair TA_MA_TypeDataPair[] =
 const TA_IntegerList TA_MA_TypeList =
 {
    &TA_MA_TypeDataPair[0],
-   sizeof(TA_MA_TypeDataPair)/sizeof(TA_IntegerDataPair)
+   sizeof TA_MA_TypeDataPair/sizeof(TA_IntegerDataPair)
 };
 
 const TA_OptInputParameterInfo TA_DEF_UI_MA_Method =

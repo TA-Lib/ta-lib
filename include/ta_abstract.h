@@ -43,7 +43,7 @@ extern "C" {
 #endif
 
 /* This file defines the interface for calling all the TA functions without
- * knowing at priori the parameters.
+ * knowing at prior the parameters.
  *
  * This capability is particularly useful for an application who needs
  * to support the complete list of TA functions without having to
@@ -61,8 +61,8 @@ extern "C" {
  *        output flags allows to get some hint about how the data shall be
  *        displayed).
  *        The same "abstract" logic apply to all the TA functions.
- *        Some TA Functions works only on volume, or can work indiferently
- *        with any time serie data (the open, close, another indicator...).
+ *        Some TA Functions works only on volume, or can work indifferently
+ *        with any time series data (the open, close, another indicator...).
  *        All the applicable functions to the currently selected/available
  *        data can be determined through this "virtual" interface.
  *
@@ -89,7 +89,7 @@ extern "C" {
  * TA function groups ("Market Strength", "Trend Indicator" etc...).
  *
  * On success, it becomes the responsibility of the caller to
- * call TA_GroupTableFree once the 'table' is no longuer needed.
+ * call TA_GroupTableFree once the 'table' is no longer needed.
  *
  * Example:
  * This code snippet will print out the name of all the supported
@@ -116,11 +116,11 @@ TA_RetCode TA_GroupTableFree ( TA_StringTable *table );
  * function provided in a certain group.
  *
  * On success, it becomes the responsibility of the caller to
- * call TA_FuncTableFree once the 'table' is no longuer needed.
+ * call TA_FuncTableFree once the 'table' is no longer needed.
  *
  * Passing NULL as the group string will return ALL the TA functions.
  * (Note: All TA_Functions have a unique string identifier even when in
- *        seperate group).
+ *        separate group).
  *
  * Example:
  * This code snippet will print out the name of all the supported
@@ -459,7 +459,7 @@ TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
  * will always be used in that case.
  *
  * If there is an attempts to set a parameter with the wrong function
- * (and thus the wrong type), TA_BAD_PARAM will be immediatly returned.
+ * (and thus the wrong type), TA_BAD_PARAM will be immediately returned.
  *
  * Although this mechanism looks complicated, it is written for being fairly solid.
  * If you provide a wrong parameter value, or wrong type, or wrong pointer etc. the
