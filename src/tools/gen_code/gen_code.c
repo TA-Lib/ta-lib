@@ -3613,9 +3613,9 @@ static void printFuncHeaderDoc( FILE *out,
    int first;
 
    fprintf( out, "%sTA_%s - %s\n", prefix, funcInfo->name, funcInfo->hint );
-   fprintf( out, prefix );
+   fprintf( out, "%s\n", prefix );
 
-   fprintf( out, "\n" );
+
    fprintf( out, "%sInput  = ", prefix );
    for( paramNb=0; paramNb < funcInfo->nbInput; paramNb++ )
    {
