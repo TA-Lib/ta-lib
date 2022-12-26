@@ -116,7 +116,7 @@ DEF_FUNCTION( BBANDS,                    /* name */
               "Bollinger Bands",         /* hint */
               "Bbands",                  /* CamelCase name */
               TA_FUNC_FLG_OVERLAP        /* flags */
-             );
+             )
 /* BBANDS END */
 
 
@@ -140,7 +140,7 @@ DEF_FUNCTION( BOP,                   /* name */
               "Balance Of Power",         /* hint */
               "Bop",                      /* CamelCase name */
               0                          /* flags */
-             );
+             )
 /* BOP END */
 
 /* BETA BEGIN */
@@ -168,7 +168,7 @@ DEF_FUNCTION( BETA,                      /* name */
               "Beta", /* hint */
               "Beta",                /* CamelCase name */
               0                        /* flags */
-            );
+            )
 /* BETA END */
 
 /****************************************************************************
@@ -186,7 +186,7 @@ const TA_FuncDef *TA_DEF_TableB[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableBSize =
-              ((sizeof(TA_DEF_TableB)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableB/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

@@ -50,7 +50,7 @@
  *     Test the momentum functions
  *
  * The interpretation of the rate of change varies widely depending
- * which software and/or books you are refering to.
+ * which software and/or books you are referring to.
  *
  * The following is the table of Rate-Of-Change implemented in TA-LIB:
  *       MOM     = (price - prevPrice)         [Momentum]
@@ -60,20 +60,20 @@
  *       ROCR100 = (price/prevPrice)*100       [Rate of change ratio 100 Scale]
  *
  * Here are the equivalent function in other software:
- *       TA-Lib  |   Tradestation   |    Metastock         
+ *       TA-Lib  |   Tradestation   |    Metastock
  *       =================================================
  *       MOM     |   Momentum       |    ROC (Point)
  *       ROC     |   ROC            |    ROC (Percent)
- *       ROCP    |   PercentChange  |    -     
+ *       ROCP    |   PercentChange  |    -
  *       ROCR    |   -              |    -
  *       ROCR100 |   -              |    MO
  *
  * The MOM function is the only one who is not normalized, and thus
- * should be avoided for comparing different time serie of prices.
- * 
+ * should be avoided for comparing different time series of prices.
+ *
  * ROC and ROCP are centered at zero and can have positive and negative
  * value. Here are some equivalence:
- *    ROC = ROCP/100 
+ *    ROC = ROCP/100
  *        = ((price-prevPrice)/prevPrice)/100
  *        = ((price/prevPrice)-1)*100
  *
@@ -83,11 +83,9 @@
 
 /**** Headers ****/
 #include <stdio.h>
-#include <string.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
-#include "ta_utility.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -115,7 +113,7 @@ typedef struct
    TA_Integer endIdx;
 
    TA_Integer optInTimePeriod;
- 
+
    TA_RetCode expectedRetCode;
 
    TA_Integer oneOfTheExpectedOutRealIndex0;
@@ -285,7 +283,7 @@ ErrorNumber test_func_mom_roc( TA_History *history )
    }
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -305,10 +303,10 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    (void)outputNb;
    (void)outputBufferInt;
-  
+
    *isOutputInteger = 0;
 
-   testParam = (TA_RangeTestParam *)opaqueData;   
+   testParam = (TA_RangeTestParam *)opaqueData;
    switch( testParam->test->theFunction )
    {
    case TA_MOM_TEST:
@@ -316,7 +314,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         startIdx,
                         endIdx,
                         testParam->close,
-                        testParam->test->optInTimePeriod,                        
+                        testParam->test->optInTimePeriod,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
@@ -328,7 +326,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         startIdx,
                         endIdx,
                         testParam->close,
-                        testParam->test->optInTimePeriod,                        
+                        testParam->test->optInTimePeriod,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
@@ -339,7 +337,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                          startIdx,
                          endIdx,
                          testParam->close,
-                         testParam->test->optInTimePeriod,                         
+                         testParam->test->optInTimePeriod,
                          outBegIdx,
                          outNbElement,
                          outputBuffer );
@@ -350,7 +348,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                             startIdx,
                             endIdx,
                             testParam->close,
-                            testParam->test->optInTimePeriod,                         
+                            testParam->test->optInTimePeriod,
                             outBegIdx,
                             outNbElement,
                             outputBuffer );
@@ -361,7 +359,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                          startIdx,
                          endIdx,
                          testParam->close,
-                         testParam->test->optInTimePeriod,                         
+                         testParam->test->optInTimePeriod,
                          outBegIdx,
                          outNbElement,
                          outputBuffer );
@@ -400,7 +398,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInTimePeriod,                        
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -411,7 +409,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInTimePeriod,                        
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -421,7 +419,7 @@ static ErrorNumber do_test( const TA_History *history,
                          test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
-                         test->optInTimePeriod,                         
+                         test->optInTimePeriod,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[0].out0 );
@@ -431,7 +429,7 @@ static ErrorNumber do_test( const TA_History *history,
                             test->startIdx,
                             test->endIdx,
                             gBuffer[0].in,
-                            test->optInTimePeriod,                         
+                            test->optInTimePeriod,
                             &outBegIdx,
                             &outNbElement,
                             gBuffer[0].out0 );
@@ -442,7 +440,7 @@ static ErrorNumber do_test( const TA_History *history,
                          test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
-                         test->optInTimePeriod,                         
+                         test->optInTimePeriod,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[0].out0 );
@@ -471,7 +469,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
-                        test->optInTimePeriod,                        
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -481,7 +479,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
-                        test->optInTimePeriod,                        
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -491,7 +489,7 @@ static ErrorNumber do_test( const TA_History *history,
                          test->startIdx,
                          test->endIdx,
                          gBuffer[1].in,
-                         test->optInTimePeriod,                         
+                         test->optInTimePeriod,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[1].in );
@@ -501,7 +499,7 @@ static ErrorNumber do_test( const TA_History *history,
                             test->startIdx,
                             test->endIdx,
                             gBuffer[1].in,
-                            test->optInTimePeriod,                         
+                            test->optInTimePeriod,
                             &outBegIdx,
                             &outNbElement,
                             gBuffer[1].in );
@@ -511,7 +509,7 @@ static ErrorNumber do_test( const TA_History *history,
                          test->startIdx,
                          test->endIdx,
                          gBuffer[1].in,
-                         test->optInTimePeriod,                         
+                         test->optInTimePeriod,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[1].in );
@@ -541,7 +539,7 @@ static ErrorNumber do_test( const TA_History *history,
    if( test->doRangeTestFlag )
    {
       errNb = doRangeTest(
-                           rangeTestFunction, 
+                           rangeTestFunction,
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )

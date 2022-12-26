@@ -52,11 +52,9 @@
 
 /**** Headers ****/
 #include <stdio.h>
-#include <string.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
-#include "ta_utility.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -122,7 +120,7 @@ static TA_Test tableTest[] =
    { TST_PLUS_DI,  1, 0, 0, 251, 1, TA_SUCCESS, 0,  0.478,  1,  252-1 },
    { TST_MINUS_DM, 1, 0, 0, 251, 1, TA_SUCCESS, 0,   0.0,      1,  252-1 },
    { TST_PLUS_DM,  1, 0, 0, 251, 1, TA_SUCCESS, 0,   1.69,     1,  252-1 },
-   
+
    /* Normal regression tests. */
    { TST_ADXR,1, 0, 0, 251, 14, TA_SUCCESS, 0,   19.8666,   40,  252-40 }, /* First Value */
    { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 1,   18.9092,   40,  252-40 },
@@ -149,8 +147,8 @@ static TA_Test tableTest[] =
    { TST_MINUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 21.1988,   14,  252-14 }, /* Last Value */
 
    { TST_DX, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   19.3689,   14,  252-14 }, /* First Value */
-   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 1,    9.7131,   14,  252-14 }, 
-   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 2,   17.2905,   14,  252-14 }, 
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 1,    9.7131,   14,  252-14 },
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 2,   17.2905,   14,  252-14 },
    { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 236, 10.6731,   14,  252-14 },
    { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 237,  0.4722,   14,  252-14 }, /* Last Value */
 
@@ -176,9 +174,9 @@ static TA_Test tableTest[] =
    { TST_MINUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 21.0,   14,  252-14 }, /* Last Value */
 
    { TST_DX, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   20.0,   14,  252-14 }, /* First Value */
-   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 1,    9.0,   14,  252-14 }, 
-   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 2,   18.0,   14,  252-14 }, 
-   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 236, 10.0,   14,  252-14 }, 
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 1,    9.0,   14,  252-14 },
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 2,   18.0,   14,  252-14 },
+   { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 236, 10.0,   14,  252-14 },
    { TST_DX, 0, 0, 0, 251, 14, TA_SUCCESS, 237,  0.0,   14,  252-14 }, /* Last Value */
 
    { TST_ADX, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   23.0,   27,  252-27 }, /* First Value */
@@ -221,7 +219,7 @@ ErrorNumber test_func_adx( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -241,10 +239,10 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    (void)outputNb;
    (void)outputBufferInt;
-  
+
    *isOutputInteger = 0;
 
-   testParam = (TA_RangeTestParam *)opaqueData;   
+   testParam = (TA_RangeTestParam *)opaqueData;
 
    switch( testParam->test->id )
    {
@@ -632,43 +630,43 @@ static ErrorNumber do_test( const TA_History *history,
       switch( test->id )
       {
       case TST_MINUS_DM:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_MINUS_DM,
                               (void *)&testParam, 1, 0 );
          break;
 
       case TST_MINUS_DI:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_MINUS_DI,
                               (void *)&testParam, 1, 2 );
          break;
 
       case TST_DX:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_DX,
                               (void *)&testParam, 1, 2 );
          break;
 
       case TST_ADX:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_ADX,
                               (void *)&testParam, 1, 2 );
          break;
 
       case TST_PLUS_DM:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_PLUS_DM,
                               (void *)&testParam, 1, 0 );
          break;
 
       case TST_PLUS_DI:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_PLUS_DI,
                               (void *)&testParam, 1, 2 );
          break;
 
       case TST_ADXR:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_ADX,
                               (void *)&testParam, 1, 2 );
          break;

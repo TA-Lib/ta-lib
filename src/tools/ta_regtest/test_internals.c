@@ -50,7 +50,7 @@
  */
 
 /* Description:
- *         Regression testing of some internal utility like: 
+ *         Regression testing of some internal utility like:
  *            - collections: List/Stack/Circular buffer.
  *            - Memory allocation mechanism.
  *            etc...
@@ -110,7 +110,7 @@ ErrorNumber test_internals( void )
 static ErrorNumber testCircularBuffer( void )
 {
    TA_RetCode retCode;
-   int i; 
+   int i;
    int buffer[20];
    ErrorNumber retValue;
 
@@ -122,18 +122,18 @@ static ErrorNumber testCircularBuffer( void )
       return retValue;
    }
 
-   /* The following function is supose to fill
-    * the buffer with the value 0 to 8 sequentialy,
+   /* The following function is suppose to fill
+    * the buffer with the value 0 to 8 sequentially,
     * if somehow it is not 0 to 8, there is a bug!
     */
-   memset( buffer, 0xFF, sizeof(buffer) );
+   memset( buffer, 0xFF, sizeof buffer );
    retCode = circBufferFillFrom0ToSize( 1, buffer );
    if( retCode != TA_SUCCESS )
    {
       printf( "\nFailed circular buffer test RetCode = %d\n", retCode );
       return TA_INTERNAL_CIRC_BUFF_FAIL_0;
    }
-   for( i=0; i < (1+3); i++ )
+   for( i=0; i < 1+3; i++ )
    {
       if( buffer[i] != i )
       {
@@ -142,14 +142,14 @@ static ErrorNumber testCircularBuffer( void )
       }
    }
 
-   memset( buffer, 0xFF, sizeof(buffer) );
+   memset( buffer, 0xFF, sizeof buffer );
    retCode = circBufferFillFrom0ToSize( 2, buffer );
    if( retCode != TA_SUCCESS )
    {
       printf( "\nFailed circular buffer test RetCode = %d\n", retCode );
       return TA_INTERNAL_CIRC_BUFF_FAIL_0;
    }
-   for( i=0; i < (2+3); i++ )
+   for( i=0; i < 2+3; i++ )
    {
       if( buffer[i] != i )
       {
@@ -158,14 +158,14 @@ static ErrorNumber testCircularBuffer( void )
       }
    }
 
-   memset( buffer, 0xFF, sizeof(buffer) );
+   memset( buffer, 0xFF, sizeof buffer );
    retCode = circBufferFillFrom0ToSize( 3, buffer );
    if( retCode != TA_SUCCESS )
    {
       printf( "\nFailed circular buffer test RetCode = %d\n", retCode );
       return TA_INTERNAL_CIRC_BUFF_FAIL_0;
    }
-   for( i=0; i < (3+3); i++ )
+   for( i=0; i < 3+3; i++ )
    {
       if( buffer[i] != i )
       {
@@ -174,14 +174,14 @@ static ErrorNumber testCircularBuffer( void )
       }
    }
 
-   memset( buffer, 0xFF, sizeof(buffer) );
+   memset( buffer, 0xFF, sizeof buffer );
    retCode = circBufferFillFrom0ToSize( 4, buffer );
    if( retCode != TA_SUCCESS )
    {
       printf( "\nFailed circular buffer test RetCode = %d\n", retCode );
       return TA_INTERNAL_CIRC_BUFF_FAIL_0;
    }
-   for( i=0; i < (4+3); i++ )
+   for( i=0; i < 4+3; i++ )
    {
       if( buffer[i] != i )
       {
@@ -190,14 +190,14 @@ static ErrorNumber testCircularBuffer( void )
       }
    }
 
-   memset( buffer, 0xFF, sizeof(buffer) );
+   memset( buffer, 0xFF, sizeof buffer );
    retCode = circBufferFillFrom0ToSize( 5, buffer );
    if( retCode != TA_SUCCESS )
    {
       printf( "\nFailed circular buffer test RetCode = %d\n", retCode );
       return TA_INTERNAL_CIRC_BUFF_FAIL_0;
    }
-   for( i=0; i < (5+3); i++ )
+   for( i=0; i < 5+3; i++ )
    {
       if( buffer[i] != i )
       {
@@ -206,14 +206,14 @@ static ErrorNumber testCircularBuffer( void )
       }
    }
 
-   memset( buffer, 0xFF, sizeof(buffer) );
+   memset( buffer, 0xFF, sizeof buffer );
    retCode = circBufferFillFrom0ToSize( 6, buffer );
    if( retCode != TA_SUCCESS )
    {
       printf( "\nFailed circular buffer test RetCode = %d\n", retCode );
       return TA_INTERNAL_CIRC_BUFF_FAIL_0;
    }
-   for( i=0; i < (6+3); i++ )
+   for( i=0; i < 6+3; i++ )
    {
       if( buffer[i] != i )
       {

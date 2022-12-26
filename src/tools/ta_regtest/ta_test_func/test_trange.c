@@ -52,11 +52,9 @@
 
 /**** Headers ****/
 #include <stdio.h>
-#include <string.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
-#include "ta_utility.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -152,7 +150,7 @@ ErrorNumber test_func_trange( TA_History *history )
       if( retValue != 0 )
       {
          printf( "%s Failed Test #%d (Code=%d)\n",
-                 tableTest[i].doAverage? "TA_ATR":"TA_TRANGE",              
+                 tableTest[i].doAverage? "TA_ATR":"TA_TRANGE",
                  i, retValue );
          return retValue;
       }
@@ -160,7 +158,7 @@ ErrorNumber test_func_trange( TA_History *history )
 
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -180,10 +178,10 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    (void)outputNb;
    (void)outputBufferInt;
-  
+
    *isOutputInteger = 0;
 
-   testParam = (TA_RangeTestParam *)opaqueData;   
+   testParam = (TA_RangeTestParam *)opaqueData;
 
 
    if( testParam->test->doAverage )
@@ -194,7 +192,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         testParam->high,
                         testParam->low,
                         testParam->close,
-                        testParam->test->optInTimePeriod,                        
+                        testParam->test->optInTimePeriod,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
@@ -207,7 +205,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                         endIdx,
                         testParam->high,
                         testParam->low,
-                        testParam->close,                        
+                        testParam->close,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
@@ -243,7 +241,7 @@ static ErrorNumber do_test( const TA_History *history,
                            gBuffer[0].in,
                            gBuffer[1].in,
                            gBuffer[2].in,
-                           test->optInTimePeriod,                           
+                           test->optInTimePeriod,
                            &outBegIdx,
                            &outNbElement,
                            gBuffer[0].out0 );
@@ -254,7 +252,7 @@ static ErrorNumber do_test( const TA_History *history,
                            test->endIdx,
                            gBuffer[0].in,
                            gBuffer[1].in,
-                           gBuffer[2].in,                           
+                           gBuffer[2].in,
                            &outBegIdx,
                            &outNbElement,
                            gBuffer[0].out0 );
@@ -270,12 +268,12 @@ static ErrorNumber do_test( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   errNb = checkExpectedValue( gBuffer[0].out0, 
+   errNb = checkExpectedValue( gBuffer[0].out0,
                                retCode, test->expectedRetCode,
                                outBegIdx, test->expectedBegIdx,
                                outNbElement, test->expectedNbElement,
                                test->oneOfTheExpectedOutReal,
-                               test->oneOfTheExpectedOutRealIndex );   
+                               test->oneOfTheExpectedOutRealIndex );
    if( errNb != TA_TEST_PASS )
       return errNb;
 
@@ -292,7 +290,7 @@ static ErrorNumber do_test( const TA_History *history,
                         gBuffer[0].in,
                         gBuffer[1].in,
                         gBuffer[2].in,
-                        test->optInTimePeriod,                           
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].in );
@@ -303,7 +301,7 @@ static ErrorNumber do_test( const TA_History *history,
                            test->endIdx,
                            gBuffer[0].in,
                            gBuffer[1].in,
-                           gBuffer[2].in,                           
+                           gBuffer[2].in,
                            &outBegIdx,
                            &outNbElement,
                            gBuffer[0].in );
@@ -319,12 +317,12 @@ static ErrorNumber do_test( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   errNb = checkExpectedValue( gBuffer[0].in, 
+   errNb = checkExpectedValue( gBuffer[0].in,
                                retCode, test->expectedRetCode,
                                outBegIdx, test->expectedBegIdx,
                                outNbElement, test->expectedNbElement,
                                test->oneOfTheExpectedOutReal,
-                               test->oneOfTheExpectedOutRealIndex );   
+                               test->oneOfTheExpectedOutRealIndex );
    if( errNb != TA_TEST_PASS )
       return errNb;
 
@@ -338,7 +336,7 @@ static ErrorNumber do_test( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( rangeTestFunction, 
+      errNb = doRangeTest( rangeTestFunction,
                            TA_FUNC_UNST_ATR,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )

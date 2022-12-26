@@ -52,11 +52,9 @@
 
 /**** Headers ****/
 #include <stdio.h>
-#include <string.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
-#include "ta_utility.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -104,7 +102,7 @@ static TA_Test tableTest[] =
    /*      AVGDEV TEST      */
    /*************************/
    { 1, 0, 251, 5, TA_SUCCESS,     0, 1.0184,  4,  252-4 }, /* First Value */
-   { 0, 0, 251, 5, TA_SUCCESS,     1, 0.3684,  4,  252-4 }, 
+   { 0, 0, 251, 5, TA_SUCCESS,     1, 0.3684,  4,  252-4 },
    { 0, 0, 251, 5, TA_SUCCESS, 252-5, 0.5952,  4,  252-4 }, /* Last Value */
 };
 
@@ -135,7 +133,7 @@ ErrorNumber test_func_avgdev( TA_History *history )
    }
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -157,14 +155,14 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    (void)outputBufferInt;
 
    *isOutputInteger = 0;
-  
-   testParam = (TA_RangeTestParam *)opaqueData;   
-   
+
+   testParam = (TA_RangeTestParam *)opaqueData;
+
    retCode = TA_AVGDEV(
                         startIdx,
                         endIdx,
                         testParam->close,
-                        testParam->test->optInTimePeriod,                   
+                        testParam->test->optInTimePeriod,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
@@ -190,13 +188,13 @@ static ErrorNumber do_test( const TA_History *history,
    /* Build the input. */
    setInputBuffer( 0, history->close, history->nbBars );
    setInputBuffer( 1, history->close, history->nbBars );
-   
+
    /* Make a simple first call. */
    retCode = TA_AVGDEV(
                         test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
-                        test->optInTimePeriod,                     
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -216,7 +214,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->startIdx,
                         test->endIdx,
                         gBuffer[1].in,
-                        test->optInTimePeriod,                     
+                        test->optInTimePeriod,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -244,7 +242,7 @@ static ErrorNumber do_test( const TA_History *history,
    if( test->doRangeTestFlag )
    {
       errNb = doRangeTest(
-                           rangeTestFunction, 
+                           rangeTestFunction,
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )

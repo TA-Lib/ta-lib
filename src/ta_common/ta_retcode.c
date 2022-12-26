@@ -41,7 +41,7 @@
  */
 #include <ta_common.h>
 
-typedef struct 
+typedef struct
 {
    TA_RetCode retCode;
    const char * const enumStr;
@@ -75,17 +75,17 @@ static TA_InternalRetCodeInfo retCodeInfoTable[] = {
 void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo )
 {
    unsigned int i;
-   
+
    /* Trap internal error code */
-   if( (theRetCode >= 5000) && (theRetCode <= 5999) )
+   if( theRetCode >= 5000 && theRetCode <= 5999 )
    {
       retCodeInfo->enumStr = "TA_INTERNAL_ERROR";
       retCodeInfo->infoStr = "Unexpected Internal Error - Contact TA-Lib.org";
       return;
    }
-   
+
    /* Check among all the error code defined in ta_common.h */
-   for( i=0; i < (NB_RET_CODE_INFO-1); i++ )
+   for( i=0; i < NB_RET_CODE_INFO-1; i++ )
    {
       if( theRetCode == retCodeInfoTable[i].retCode )
       {

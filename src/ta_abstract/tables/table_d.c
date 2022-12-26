@@ -71,7 +71,7 @@ DEF_FUNCTION( DEMA,                       /* name */
               "Double Exponential Moving Average", /* hint */
               "Dema",                     /* CamelCase name */
               TA_FUNC_FLG_OVERLAP         /* flags */
-             );
+             )
 /* DEMA END */
 
 /* DIV BEGIN */
@@ -101,7 +101,7 @@ DEF_FUNCTION( DX,                           /* name */
               "Directional Movement Index", /* hint */
               "Dx",                         /* CamelCase name */
               TA_FUNC_FLG_UNST_PER          /* flags */
-             );
+             )
 /* DX END */
 
 /****************************************************************************
@@ -119,7 +119,7 @@ const TA_FuncDef *TA_DEF_TableD[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableDSize =
-              ((sizeof(TA_DEF_TableD)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableD/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

@@ -71,7 +71,7 @@ DEF_FUNCTION( LINEARREG,           /* name */
               "Linear Regression", /* hint */
               "LinearReg",         /* CamelCase name */
               TA_FUNC_FLG_OVERLAP  /* flags */
-             );
+             )
 /* LINEARREG END */
 
 /* LINEARREG_SLOPE BEGIN */
@@ -97,7 +97,7 @@ DEF_FUNCTION( LINEARREG_SLOPE,     /* name */
               "Linear Regression Slope", /* hint */
               "LinearRegSlope",    /* CamelCase name */
               0                    /* flags */
-             );
+             )
 /* LINEARREG_SLOPE END */
 
 /* LINEARREG_ANGLE BEGIN */
@@ -123,7 +123,7 @@ DEF_FUNCTION( LINEARREG_ANGLE,           /* name */
               "Linear Regression Angle", /* hint */
               "LinearRegAngle",    /* CamelCase name */
               0                    /* flags */
-             );
+             )
 /* LINEARREG_ANGLE END */
 
 /* LINEARREG_INTERCEPT BEGIN */
@@ -149,7 +149,7 @@ DEF_FUNCTION( LINEARREG_INTERCEPT,           /* name */
               "Linear Regression Intercept", /* hint */
               "LinearRegIntercept",  /* CamelCase name */
               TA_FUNC_FLG_OVERLAP    /* flags */
-             );
+             )
 /* LINEARREG_INTERCEPT END */
 
 /* LN BEGIN */
@@ -178,7 +178,7 @@ const TA_FuncDef *TA_DEF_TableL[] =
 
 /* Do not modify the following line. */
 const unsigned int TA_DEF_TableLSize =
-              ((sizeof(TA_DEF_TableL)/sizeof(TA_FuncDef *))-1);
+              sizeof TA_DEF_TableL/sizeof(TA_FuncDef *)-1;
 
 
 /****************************************************************************

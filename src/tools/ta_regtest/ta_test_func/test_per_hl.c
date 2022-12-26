@@ -48,18 +48,16 @@
 
 /* Description:
  *
- *     Test functions which have the following characterisic: 
+ *     Test functions which have the following characteristic:
  *      - two inputs are needed (high and low are used here).
  *      - has zero or one parameter being a period.
  */
 
 /**** Headers ****/
 #include <stdio.h>
-#include <string.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
-#include "ta_utility.h"
 #include "ta_memory.h"
 
 /**** External functions declarations. ****/
@@ -89,7 +87,7 @@ typedef struct
    TA_Integer startIdx;
    TA_Integer endIdx;
    TA_Integer optInTimePeriod;
-   
+
    TA_RetCode expectedRetCode;
 
    TA_Integer oneOfTheExpectedOutRealIndex0;
@@ -103,7 +101,7 @@ typedef struct
 {
    const TA_Test *test;
    const TA_Real *high;
-   const TA_Real *low;   
+   const TA_Real *low;
 } TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
@@ -132,7 +130,7 @@ static TA_Test tableTest[] =
    { 0, TA_CORREL_TEST,  0, 251, 20, TA_SUCCESS,      1, 0.9471812,  19,  252-19 },
    { 0, TA_CORREL_TEST,  0, 251, 20, TA_SUCCESS, 252-20, 0.8866901,  19,  252-19 }, /* Last Value */
 
-   
+
    /*******************/
    /* AROON UP TEST   */
    /*******************/
@@ -241,7 +239,7 @@ ErrorNumber test_func_per_hl( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -262,10 +260,10 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
    (void)outputNb;
    (void)outputBufferInt;
-  
+
    *isOutputInteger = 0;
 
-   testParam = (TA_RangeTestParam *)opaqueData;   
+   testParam = (TA_RangeTestParam *)opaqueData;
 
    /* Allocate a buffer for the output who is going
     * to be ignored (make it slightly larger to play
@@ -281,7 +279,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                           testParam->low,
                           testParam->test->optInTimePeriod,
                           outBegIdx,
-                          outNbElement,                          
+                          outNbElement,
                           &dummyBuffer[20],
                           outputBuffer );
 
@@ -376,7 +374,7 @@ static ErrorNumber do_test( const TA_History *history,
                         );
       break;
 
-   case TA_AROON_DOWN_TEST:      
+   case TA_AROON_DOWN_TEST:
       retCode = TA_AROON( test->startIdx,
                           test->endIdx,
                           gBuffer[0].in,
@@ -441,12 +439,12 @@ static ErrorNumber do_test( const TA_History *history,
 
    outBegIdx = outNbElement = 0;
 
-   /* Make another call where one of the input and one of the output 
+   /* Make another call where one of the input and one of the output
     * are the same buffer.
     */
    switch( test->theFunction )
    {
-   case TA_AROON_UP_TEST:      
+   case TA_AROON_UP_TEST:
       retCode = TA_AROON( test->startIdx,
                           test->endIdx,
                           gBuffer[0].in,
@@ -459,7 +457,7 @@ static ErrorNumber do_test( const TA_History *history,
                         );
       break;
 
-   case TA_AROON_DOWN_TEST:      
+   case TA_AROON_DOWN_TEST:
       retCode = TA_AROON( test->startIdx,
                           test->endIdx,
                           gBuffer[0].in,
@@ -539,7 +537,7 @@ static ErrorNumber do_test( const TA_History *history,
     */
    switch( test->theFunction )
    {
-   case TA_AROON_UP_TEST:      
+   case TA_AROON_UP_TEST:
       retCode = TA_AROON( test->startIdx,
                           test->endIdx,
                           gBuffer[0].in,
@@ -552,7 +550,7 @@ static ErrorNumber do_test( const TA_History *history,
                         );
       break;
 
-   case TA_AROON_DOWN_TEST:      
+   case TA_AROON_DOWN_TEST:
       retCode = TA_AROON( test->startIdx,
                           test->endIdx,
                           gBuffer[0].in,
@@ -628,7 +626,7 @@ static ErrorNumber do_test( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( rangeTestFunction, 
+      errNb = doRangeTest( rangeTestFunction,
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )

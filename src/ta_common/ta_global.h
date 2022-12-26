@@ -1,14 +1,6 @@
 #ifndef TA_GLOBAL_H
 #define TA_GLOBAL_H
 
-#ifndef TA_COMMON_H
-   #include "ta_common.h"
-#endif
-
-#ifndef TA_FUNC_H
-   #include "ta_func.h"
-#endif
-
 /* TA_CandleSetting is the one setting struct */
 typedef struct {
     TA_CandleSettingType    settingType;
@@ -17,22 +9,22 @@ typedef struct {
     double                  factor;
 } TA_CandleSetting;
 
-/* This interface is used exclusively INTERNALY to the TA-LIB.
+/* This interface is used exclusively INTERNALLY to the TA-LIB.
  * There is nothing for the end-user here ;->
  */
 
-/* Provides functionality for managing global ressource
+/* Provides functionality for managing global resource
  * throughout the TA-LIB.
  *
  * Since not all module are used/link in the application,
  * the ta_common simply provides the mechanism for the module
- * to optionnaly "register" its initialization/shutdown
+ * to optionally "register" its initialization/shutdown
  * function.
  *
- * A function shall access its global variable by calling 
- * TA_GetGlobal. This function will appropriatly call the 
+ * A function shall access its global variable by calling
+ * TA_GetGlobal. This function will appropriately call the
  * initialization function if its global are not yet initialized.
- * 
+ *
  * The call of the init and shutdown function are guaranteed
  * to be multithread protected. It is also guarantee that
  * these function will always get called in alternance (in
@@ -43,7 +35,7 @@ typedef struct {
 typedef enum
 {
    /* Module will be shutdown in the order specified here. */
-   	
+
    TA_ABSTRACTION_GLOBAL_ID,
    TA_FUNC_GLOBAL_ID,
    TA_MEMORY_GLOBAL_ID, /* Must be last.        */
@@ -63,7 +55,7 @@ typedef struct
 TA_RetCode TA_GetGlobal( const TA_GlobalControl * const control,
                          void **global );
 
-/* Occasionaly, code tracing must be disable.
+/* Occasionally, code tracing must be disable.
  * Example:
  *  - The memory module needs to know if the tracing is
  *    still enabled or not when freeing memory on shutdown.
@@ -76,7 +68,7 @@ void TA_TraceDisable  ( void );
 
 /* If enabled by the user, use a local drive
  * for configuration and/or temporary file.
- * TA-LIB must NEVER assume such local drive 
+ * TA-LIB must NEVER assume such local drive
  * is available.
  */
 const char *TA_GetLocalCachePath( void );
@@ -111,7 +103,7 @@ typedef struct
 
 } TA_LibcPriv;
 
-/* The following global is used all over the place 
+/* The following global is used all over the place
  * and is the entry point for all other globals.
  */
 extern TA_LibcPriv *TA_Globals;

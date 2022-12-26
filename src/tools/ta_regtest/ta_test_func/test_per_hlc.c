@@ -43,29 +43,27 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  112400 MF   First version.
- *  061904 MF   Add test to detect cumulative errors in CCI algorithm 
+ *  061904 MF   Add test to detect cumulative errors in CCI algorithm
  *              when some values were close to zero (epsilon).
  *  021106 MF   Add tests for ULTOSC.
  *  042206 MF   Add tests for NATR
  *  120507 MF   Add tests for ACCBANDS
- *              
+ *
  */
 
 /* Description:
  *
- *     Test functions which have the following characteristic: 
+ *     Test functions which have the following characteristic:
  *      - the input arrays are high, low and close.
  *      - the only parameter is a period.
- *     
+ *
  */
 
 /**** Headers ****/
 #include <stdio.h>
-#include <string.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
-#include "ta_utility.h"
 #include "ta_memory.h"
 
 /**** External functions declarations. ****/
@@ -98,7 +96,7 @@ typedef struct
    TA_Integer optInTimePeriod1;
    TA_Integer optInTimePeriod2;
    TA_Integer optInTimePeriod3;
-   
+
    TA_RetCode expectedRetCode;
 
    TA_Integer oneOfTheExpectedOutRealIndex0;
@@ -168,7 +166,7 @@ static TA_Test tableTest[] =
    /* The following two should always be identical. */
    { 0, TA_CCI_TEST, 186,187,  2, 0, 0, TA_SUCCESS,   1, 0.0, 186,  2 },
    { 0, TA_CCI_TEST, 187,187,  2, 0, 0, TA_SUCCESS,   0, 0.0, 187,  1 },
- 
+
    /* Test period 2, 5 and 11 */
    { 0, TA_CCI_TEST, 0, 251,  2, 0, 0, TA_SUCCESS,  0, 66.666, 1,  252-1 },
    { 1, TA_CCI_TEST, 0, 251,  5, 0, 0, TA_SUCCESS,  0, 18.857, 4,  252-4 },
@@ -233,7 +231,7 @@ ErrorNumber test_func_per_hlc( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -252,54 +250,54 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    TA_RangeTestParam *testParam;
    TA_Real *dummyBuffer1, *dummyBuffer2;
    TA_Real *out1, *out2, *out3;
-   
+
    (void)outputBufferInt;
-  
+
    *isOutputInteger = 0;
 
-   testParam = (TA_RangeTestParam *)opaqueData;   
+   testParam = (TA_RangeTestParam *)opaqueData;
 
    if( testParam->test->theFunction != TA_ACCBANDS_TEST )
    {
-	   out1 = out2 = out3 = NULL;
-	   dummyBuffer1 = NULL;
-	   dummyBuffer2 = NULL;
+       out1 = out2 = out3 = NULL;
+       dummyBuffer1 = NULL;
+       dummyBuffer2 = NULL;
    }
    else
    {
-	   dummyBuffer1 = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
-	   if( !dummyBuffer1 )
-		 return TA_ALLOC_ERR;
+       dummyBuffer1 = TA_Malloc( ( endIdx-startIdx+1)*sizeof(TA_Real));
+       if( !dummyBuffer1 )
+         return TA_ALLOC_ERR;
 
-	   dummyBuffer2 = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
-	   if( !dummyBuffer2 )
-	   {
-		  TA_Free( dummyBuffer1 );
-		  return TA_ALLOC_ERR;
-	   }
-   
-	   switch( outputNb )
-	   {
-	   case 0:
-		  out1 = outputBuffer;
-		  out2 = dummyBuffer1;
-		  out3 = dummyBuffer2;
-		  break;
-	   case 1:
-		  out2 = outputBuffer;
-		  out1 = dummyBuffer1;
-		  out3 = dummyBuffer2;
-		  break;
-	   case 2:
-		  out3 = outputBuffer;
-		  out2 = dummyBuffer1;
-		  out1 = dummyBuffer2;
-		  break;
-	   default:
-		  TA_Free( dummyBuffer1 );
-		  TA_Free( dummyBuffer2 );
-		  return TA_BAD_PARAM;
-	   }
+       dummyBuffer2 = TA_Malloc( ( endIdx-startIdx+1)*sizeof(TA_Real));
+       if( !dummyBuffer2 )
+       {
+          TA_Free( dummyBuffer1 );
+          return TA_ALLOC_ERR;
+       }
+
+       switch( outputNb )
+       {
+       case 0:
+          out1 = outputBuffer;
+          out2 = dummyBuffer1;
+          out3 = dummyBuffer2;
+          break;
+       case 1:
+          out2 = outputBuffer;
+          out1 = dummyBuffer1;
+          out3 = dummyBuffer2;
+          break;
+       case 2:
+          out3 = outputBuffer;
+          out2 = dummyBuffer1;
+          out1 = dummyBuffer2;
+          break;
+       default:
+          TA_Free( dummyBuffer1 );
+          TA_Free( dummyBuffer2 );
+          return TA_BAD_PARAM;
+       }
    }
 
    switch( testParam->test->theFunction )
@@ -369,7 +367,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                           outNbElement,
                           out1, out2, out3 );
       *lookback = TA_ACCBANDS_Lookback( testParam->test->optInTimePeriod1 );
-	  break;
+      break;
 
    default:
       retCode = TA_INTERNAL_ERROR(132);
@@ -393,21 +391,21 @@ static TA_RetCode do_call( const TA_Test *test,
 
    if( test->theFunction != TA_ACCBANDS_TEST )
    {
-	   dummyBuffer1 = NULL;
-	   dummyBuffer2 = NULL;
+       dummyBuffer1 = NULL;
+       dummyBuffer2 = NULL;
    }
    else
    {
-	   dummyBuffer1 = TA_Malloc( ((test->endIdx-test->startIdx)+1)*sizeof(TA_Real));
-	   if( !dummyBuffer1 )
-		 return TA_ALLOC_ERR;
+       dummyBuffer1 = TA_Malloc( ( test->endIdx-test->startIdx+1)*sizeof(TA_Real));
+       if( !dummyBuffer1 )
+         return TA_ALLOC_ERR;
 
-	   dummyBuffer2 = TA_Malloc( ((test->endIdx-test->startIdx)+1)*sizeof(TA_Real));
-	   if( !dummyBuffer2 )
-	   {
-		  TA_Free( dummyBuffer1 );
-		  return TA_ALLOC_ERR;
-	   }
+       dummyBuffer2 = TA_Malloc( ( test->endIdx-test->startIdx+1)*sizeof(TA_Real));
+       if( !dummyBuffer2 )
+       {
+          TA_Free( dummyBuffer1 );
+          return TA_ALLOC_ERR;
+       }
    }
 
    switch( test->theFunction )
@@ -455,7 +453,7 @@ static TA_RetCode do_call( const TA_Test *test,
       break;
 
    case TA_ACCBANDS_TEST:
-	   /* TODO: replace dummy with real for more complete tests. */
+       /* TODO: replace dummy with real for more complete tests. */
       retCode = TA_ACCBANDS( test->startIdx,
                           test->endIdx,
                           high, low, close,
@@ -491,12 +489,12 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 0, history->high,  history->nbBars );
    setInputBuffer( 1, history->low,   history->nbBars );
    setInputBuffer( 2, history->close, history->nbBars );
-      
+
    /* Make a simple first call. */
    retCode = do_call( test,
                       gBuffer[0].in,
                       gBuffer[1].in,
-                      gBuffer[2].in,                  
+                      gBuffer[2].in,
                       &outBegIdx,
                       &outNbElement,
                       gBuffer[0].out0 );
@@ -522,7 +520,7 @@ static ErrorNumber do_test( const TA_History *history,
    retCode = do_call( test,
                       gBuffer[0].in,
                       gBuffer[1].in,
-                      gBuffer[2].in,                  
+                      gBuffer[2].in,
                       &outBegIdx,
                       &outNbElement,
                       gBuffer[0].in );
@@ -553,7 +551,7 @@ static ErrorNumber do_test( const TA_History *history,
    retCode = do_call( test,
                       gBuffer[0].in,
                       gBuffer[1].in,
-                      gBuffer[2].in,                  
+                      gBuffer[2].in,
                       &outBegIdx,
                       &outNbElement,
                       gBuffer[1].in );
@@ -584,7 +582,7 @@ static ErrorNumber do_test( const TA_History *history,
    retCode = do_call( test,
                       gBuffer[0].in,
                       gBuffer[1].in,
-                      gBuffer[2].in,                  
+                      gBuffer[2].in,
                       &outBegIdx,
                       &outNbElement,
                       gBuffer[2].in );
@@ -622,21 +620,21 @@ static ErrorNumber do_test( const TA_History *history,
       switch( test->theFunction )
       {
       case TA_NATR_TEST:
-		  /* Special case: Unstable period to test */
-         errNb = doRangeTest( rangeTestFunction, 
+          /* Special case: Unstable period to test */
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_NATR,
                               (void *)&testParam, 1, 0 );
          break;
 
-	  case TA_ACCBANDS_TEST:
-		  /* Special case: 3 outputs to test */
-         errNb = doRangeTest( rangeTestFunction, 
+      case TA_ACCBANDS_TEST:
+          /* Special case: 3 outputs to test */
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_NONE,
                               (void *)&testParam, 3, 0 );
          break;
 
       default:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_NONE,
                               (void *)&testParam, 1, 0 );
          break;

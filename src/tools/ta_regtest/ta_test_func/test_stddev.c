@@ -52,11 +52,9 @@
 
 /**** Headers ****/
 #include <stdio.h>
-#include <string.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
-#include "ta_utility.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -105,11 +103,11 @@ static TA_Test tableTest[] =
    /*      STDDEV TEST      */
    /*************************/
    { 1, 0, 251, 5, 1.0, TA_SUCCESS,     0, 1.2856,  4,  252-4 }, /* First Value */
-   { 0, 0, 251, 5, 1.0, TA_SUCCESS,     1, 0.4462,  4,  252-4 }, 
+   { 0, 0, 251, 5, 1.0, TA_SUCCESS,     1, 0.4462,  4,  252-4 },
    { 0, 0, 251, 5, 1.0, TA_SUCCESS, 252-5, 0.7144,  4,  252-4 }, /* Last Value */
 
    { 1, 0, 251, 5, 1.5, TA_SUCCESS,     0, 1.9285,  4,  252-4 }, /* First Value */
-   { 0, 0, 251, 5, 1.5, TA_SUCCESS,     1, 0.66937, 4,  252-4 }, 
+   { 0, 0, 251, 5, 1.5, TA_SUCCESS,     1, 0.66937, 4,  252-4 },
    { 0, 0, 251, 5, 1.5, TA_SUCCESS, 252-5, 1.075,   4,  252-4 } /* Last Value */
 };
 
@@ -140,7 +138,7 @@ ErrorNumber test_func_stddev( TA_History *history )
    }
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -162,15 +160,15 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    (void)outputBufferInt;
 
    *isOutputInteger = 0;
-  
-   testParam = (TA_RangeTestParam *)opaqueData;   
+
+   testParam = (TA_RangeTestParam *)opaqueData;
 
    retCode = TA_STDDEV(
                         startIdx,
                         endIdx,
                         testParam->close,
                         testParam->test->optInTimePeriod,
-                        testParam->test->optInNbDeviation_1,                        
+                        testParam->test->optInNbDeviation_1,
                         outBegIdx,
                         outNbElement,
                         outputBuffer );
@@ -197,14 +195,14 @@ static ErrorNumber do_test( const TA_History *history,
    /* Build the input. */
    setInputBuffer( 0, history->close, history->nbBars );
    setInputBuffer( 1, history->close, history->nbBars );
-   
+
    /* Make a simple first call. */
    retCode = TA_STDDEV(
                         test->startIdx,
                         test->endIdx,
                         gBuffer[0].in,
                         test->optInTimePeriod,
-                        test->optInNbDeviation_1,                        
+                        test->optInNbDeviation_1,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[0].out0 );
@@ -225,7 +223,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->endIdx,
                         gBuffer[1].in,
                         test->optInTimePeriod,
-                        test->optInNbDeviation_1,                        
+                        test->optInNbDeviation_1,
                         &outBegIdx,
                         &outNbElement,
                         gBuffer[1].in );
@@ -253,7 +251,7 @@ static ErrorNumber do_test( const TA_History *history,
    if( test->doRangeTestFlag )
    {
       errNb = doRangeTest(
-                           rangeTestFunction, 
+                           rangeTestFunction,
                            TA_FUNC_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )
