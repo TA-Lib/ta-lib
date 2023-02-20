@@ -24,3 +24,46 @@ autom4te.cache
 ar-lib
 gen_code
 ta_regtest
+
+**/.history/
+## File system
+.DS_Store
+desktop.ini
+
+## User stuff...
+/node_modules
+/__pycache__
+/venv
+/.venv
+
+# Build files (from mkdocs)
+/site
+/build
+/MANIFEST
+
+## Temporary files
+*~
+\#*
+\#*\#
+.#
+TODO
+tmp
+
+## Editors 
+*.swp
+*.swo
+Session.vim
+.cproject
+.idea
+*.iml
+.project
+.favorites.json
+.settings/
+.vscode/ltex.disabledRules.en-US.txt
+.vscode/ltex.dictionary.en-US.txt
+
+## MSVC Windows builds (debug info)
+*.pdb
+
+# Never ignore .gitkeep files
+!**/.gitkeep
