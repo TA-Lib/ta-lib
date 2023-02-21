@@ -1,0 +1,83 @@
+site_name: TA-Lib - Technical Analysis Library
+site_author: Mario Fortier
+site_description: >-
+  Open-Source library for technical analysis of time series and trading data
+
+# Repository
+repo_name: Github (Core C Library)
+repo_url: https://github.com/TA-Lib/ta-lib
+
+theme:
+  name: material
+  icon:
+    logo: material/cog-box
+    repo: fontawesome/brands/github
+  features:
+    # - announce.dismiss
+    - content.code.annotate
+    # - content.tabs.link
+    - content.tooltips
+    # - header.autohide
+    # - navigation.expand
+    - navigation.indexes
+    - navigation.instant
+    # - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    - navigation.footer
+    # - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  #- toc:
+  #    permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:materialx.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  #- pymdownx.magiclink:
+  #    repo_url_shorthand: true
+  #    user: squidfunk
+  #    repo: mkdocs-material
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - Home: index.md
+  - Install: install.md
+  - Docs:
+      - Functions List: functions.md
+      - C/C++ API: api.md
+      - Python, Rust and Other: wrappers.md
+      - FAQ: faq.md
+  - About Us: about.md
