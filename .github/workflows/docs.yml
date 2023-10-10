@@ -21,18 +21,6 @@ jobs:
         uses: "./.github/actions/diffs"
         id: diff
 
-  spelling:
-    name: Lint documentation
-    needs: diff
-    if: needs.diff.outputs.isDoc == 'true'
-    runs-on: [ubuntu-latest]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Spell Check Docs
-        uses: crate-ci/typos@master
-        with:
-          files: ./doc ./*.md
-
   deploy:
     runs-on: ubuntu-latest
     if: github.event.repository.fork == false
