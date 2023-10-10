@@ -78,6 +78,6 @@ nav:
   - Docs:
       - Functions List: functions.md
       - C/C++ API: api.md
-      - Python, Rust and Other: wrappers.md
+      - Wrappers: wrappers.md
       - FAQ: faq.md
   - About Us: about.md

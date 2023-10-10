@@ -31,10 +31,11 @@ ta_regtest
 desktop.ini
 
 ## User stuff...
-/node_modules
-/__pycache__
-/venv
-/.venv
+node_modules
+__pycache__
+venv
+.venv
+.env
 
 # Build files (from mkdocs)
 /site
@@ -49,7 +50,7 @@ desktop.ini
 TODO
 tmp
 
-## Editors 
+## Editors
 *.swp
 *.swo
 Session.vim
