@@ -1,5 +1,4 @@
 # TA-Lib - Technical Analysis Library
-GitHub repository is now the official home for TA-Lib
+This is now the official home for C/C++ TA-Lib (instead of SourceForge).
 
-## What's next for 2023?
-The SourceForge SVN is to be deprecated, the ta-lib.org and tadoc.org websites will be salvaged and consolidated here.
+More info [https://ta-lib.org](https://ta-lib.org)
