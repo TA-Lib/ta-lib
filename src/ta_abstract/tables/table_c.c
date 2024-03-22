@@ -1535,7 +1535,7 @@ static const TA_OptInputParameterInfo *TA_CDLSTICKSANDWICH_OptInputs[] =
 DEF_FUNCTION( CDLSTICKSANDWICH,               /* name */
               TA_GroupId_PatternRecognition,  /* groupId */
               "Stick Sandwich",               /* hint */
-			  "CdlStickSandwhich",            /* CamelCase name */
+			  "CdlStickSandwich",            /* CamelCase name */
               TA_FUNC_FLG_CANDLESTICK         /* flags */
              );
 

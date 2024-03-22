@@ -182,8 +182,8 @@
 #define TA_CDLSPINNINGTOP cdlSpinningTop
 #define TA_CDLSTALLEDPATTERN_Lookback cdlStalledPatternLookback
 #define TA_CDLSTALLEDPATTERN cdlStalledPattern
-#define TA_CDLSTICKSANDWICH_Lookback cdlStickSandwhichLookback
-#define TA_CDLSTICKSANDWICH cdlStickSandwhich
+#define TA_CDLSTICKSANDWICH_Lookback cdlStickSandwichLookback
+#define TA_CDLSTICKSANDWICH cdlStickSandwich
 #define TA_CDLTAKURI_Lookback cdlTakuriLookback
 #define TA_CDLTAKURI cdlTakuri
 #define TA_CDLTASUKIGAP_Lookback cdlTasukiGapLookback
