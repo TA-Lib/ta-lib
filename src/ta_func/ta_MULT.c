@@ -255,7 +255,7 @@
 /* Generated */ #else
 /* Generated */       for( i=startIdx, outIdx=0; i <= endIdx; i++, outIdx++ )
 /* Generated */       {
-/* Generated */          outReal[outIdx] = inReal0[i]*inReal1[i];
+/* Generated */          outReal[outIdx] = ((double)inReal0[i])*inReal1[i];
 /* Generated */       }    
 /* Generated */ #endif
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
