@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{ffb26843-0657-4a8c-a77b-46b8582b0796}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="src\tools">
+      <UniqueIdentifier>{fce0a3ab-d633-4c3d-a958-140d89fa630f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\tools\ta_regtest">
+      <UniqueIdentifier>{ef5a1236-7b54-4e96-aee3-96f408ef8678}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\tools\ta_regtest\ta_test_func">
+      <UniqueIdentifier>{8716e92f-6781-4e9b-815a-60969f3d621e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{34329f05-36f9-4d00-982c-23a6b784c8ae}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\src\tools\ta_regtest\ta_error_number.h">
+      <Filter>src\tools\ta_regtest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\tools\ta_regtest\ta_test_func.h">
+      <Filter>src\tools\ta_regtest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\tools\ta_regtest\ta_test_priv.h">
+      <Filter>src\tools\ta_regtest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\ta_libc.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_regtest.c">
+      <Filter>src\tools\ta_regtest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\test_abstract.c">
+      <Filter>src\tools\ta_regtest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\test_data.c">
+      <Filter>src\tools\ta_regtest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\test_internals.c">
+      <Filter>src\tools\ta_regtest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\test_util.c">
+      <Filter>src\tools\ta_regtest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_1out.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_1in_2out.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_adx.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_bbands.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_candlestick.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_ma.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_macd.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_minmax.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_mom.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ema.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hl.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlc.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_hlcv.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_per_ohlc.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_po.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_rsi.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_sar.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_stddev.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_stoch.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_trange.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_avgdev.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\tools\ta_regtest\ta_test_func\test_imi.c">
+      <Filter>src\tools\ta_regtest\ta_test_func</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
