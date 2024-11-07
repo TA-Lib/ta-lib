@@ -272,7 +272,7 @@ ENUM_END( MAType )
 
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
-/* Generated */
+/* Generated */ 
 /* Generated */ ENUM_BEGIN( FuncUnstId )
 /* Generated */     /* 000 */  ENUM_DEFINE( TA_FUNC_UNST_ADX, Adx),
 /* Generated */     /* 001 */  ENUM_DEFINE( TA_FUNC_UNST_ADXR, Adxr),
@@ -301,7 +301,7 @@ ENUM_END( MAType )
 /* Generated */                ENUM_DEFINE( TA_FUNC_UNST_ALL, FuncUnstAll),
 /* Generated */                ENUM_DEFINE( TA_FUNC_UNST_NONE, FuncUnstNone) = -1
 /* Generated */ ENUM_END( FuncUnstId )
-/* Generated */
+/* Generated */ 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 
 /* The TA_RangeType enum specifies the types of range that can be considered
