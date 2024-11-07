@@ -1,23 +1,28 @@
 # Instructions for TA-Lib maintainers
 **You do not need to do any of this if you are only a TA-Lib user.**
 
-# How to generate "./configure" script
-Dependencies to install:
-- automake
-- libtool
-- autogen
+Development is done on Ubuntu, but the library can still be used on any Linux distribution, Windows and macOS.
 
-On ubuntu, just do the following:
-```sudo apt install automake libtool autogen```
+## How to generate "./configure" script
+Install dependencies:
+```$ sudo apt install automake libtool autogen```
 
-... then execute:
-```
-$ mkdir -p m4
-$ autoreconf -i
-```
+Create/update all the "Makefile" related files:
+```$ autoreconf -i```
 
-# How to generate the .tar.gz
+## How to build gen_code
+Install dependencies:
+```$ sudo apt install mcpp```
+
+Build everything (includes gen_code):
 ```
+$ cd ta-lib
 $ ./configure
-$ make dist
+$ make
+```
+
+Must be in a specific directory to run it:
+```
+$ cd ta-lib/bin
+$ ./gen_code
 ```

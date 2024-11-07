@@ -24,11 +24,11 @@ autom4te.cache
 ar-lib
 **/.history/
 
-# Ignore the generated binaries, but keep the bin directory using a dummy HOLDER
+# Ignore the generated binaries, but keep the bin soft links.
 src/tools/gen_code/gen_code
 src/tools/ta_regtest/ta_regtest
-bin/*
 !bin/HOLDER
+!bin/gen_code
 
 ## File system
 .DS_Store
