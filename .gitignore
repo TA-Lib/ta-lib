@@ -53,6 +53,7 @@ venv
 .#
 TODO
 tmp
+temp/*.tmp
 
 ## Editors
 *.swp
