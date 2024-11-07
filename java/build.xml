@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<project name="ta-lib" basedir="." default="build">
+	<property name="debug" value="true"/>
+	<property name="dir.src" value="src/"/>
+	<property name="file.jar" value="ta-lib.jar"/>
+	<property name="dir.classes" value="classes"/>
+	<property name="junit.jar" value="junit.jar"/>
+	<path id="classpath.base">
+		<pathelement location="${dir.src}"/>
+		<pathelement location="${junit.jar}"/>
+	</path>
+	<path id="classpath.test">
+		<pathelement location="${file.jar}"/>
+		<pathelement location="${junit.jar}"/>
+	</path>
+	<target name="test" depends="build">
+		<echo message="Running ${ant.project.name} tests"/>
+		<junit>
+			<classpath refid="classpath.test"/>
+			<formatter type="brief" usefile="false"/>
+			<test name="com.tictactec.ta.lib.test.AllTests"/>
+		</junit>
+	</target>
+	<target name="build" description="Build ta-lib.">
+		<echo message="Building project ${ant.project.name}"/>
+		<mkdir dir="${dir.classes}"/>
+		<copy todir="${dir.classes}" includeEmptyDirs="false">
+			<fileset dir="${dir.src}" excludes="**/*.java"/>
+		</copy>
+		<javac srcdir="${dir.src}" destdir="${dir.classes}" debug="${debug}">
+			<classpath refid="classpath.base"/>
+		</javac>
+		<delete file="${file.jar}"/>
+		<jar destfile="${file.jar}" basedir="${dir.classes}"/>
+	</target>
+	<target name="clean" description="clean up all generated files.">
+		<echo message="Cleaning up project ${ant.project.name}"/>
+		<delete dir="${dir.classes}"/>
+		<delete file="${file.jar}"/>
+	</target>
+</project>
