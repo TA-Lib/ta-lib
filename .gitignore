@@ -22,10 +22,14 @@ configure
 compile
 autom4te.cache
 ar-lib
-gen_code
-ta_regtest
-
 **/.history/
+
+# Ignore the generated binaries, but keep the bin directory using a dummy HOLDER
+src/tools/gen_code/gen_code
+src/tools/ta_regtest/ta_regtest
+bin/*
+!bin/HOLDER
+
 ## File system
 .DS_Store
 desktop.ini
