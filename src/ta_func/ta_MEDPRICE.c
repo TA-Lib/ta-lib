@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -177,7 +177,7 @@
 
    /* Insert TA function code here. */
 
-   /* MEDPRICE = (High + Low ) / 2 
+   /* MEDPRICE = (High + Low ) / 2
     * This is the high and low of the same price bar.
     *
     * See MIDPRICE to use instead the highest high and lowest

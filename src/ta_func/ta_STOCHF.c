@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -122,10 +122,10 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-   
+
    /* Account for the initial data needed for Fast-K. */
    retValue = (optInFastK_Period - 1);
-         
+
    /* Add the smoothing being done for Fast-D */
    retValue += LOOKBACK_CALL(MA)( optInFastD_Period, optInFastD_MAType );
 
@@ -278,16 +278,16 @@
     *                    (Today's Close - LowestLow)
     *  FASTK(Kperiod) =  --------------------------- * 100
     *                     (HighestHigh - LowestLow)
-    *   
+    *
     *  FASTD(FastDperiod, MA type) = MA Smoothed FASTK over FastDperiod
-    * 
+    *
     *  SLOWK(SlowKperiod, MA type) = MA Smoothed FASTK over SlowKperiod
     *
     *  SLOWD(SlowDperiod, MA Type) = MA Smoothed SLOWK over SlowDperiod
     *
     * The HighestHigh and LowestLow are the extreme values among the
     * last 'Kperiod'.
-    *  
+    *
     * SLOWK and FASTD are equivalent when using the same period.
     *
     * The following shows how these four lines are made available in TA-LIB:
@@ -336,7 +336,7 @@
     */
    outIdx = 0;
 
-   /* Calculate just enough K for ending up with the caller 
+   /* Calculate just enough K for ending up with the caller
     * requested range. (The range of k must consider all
     * the lookback involve with the smoothing).
     */
@@ -362,8 +362,8 @@
        */
       ARRAY_ALLOC( tempBuffer, endIdx-today+1 );
    #else
-      if( (outFastK == inHigh) || 
-          (outFastK == inLow)  || 
+      if( (outFastK == inHigh) ||
+          (outFastK == inLow)  ||
           (outFastK == inClose) )
       {
          tempBuffer = outFastK;
@@ -443,7 +443,7 @@
         tempBuffer[outIdx++] = 0.0;
 
       trailingIdx++;
-      today++; 
+      today++;
    }
 
    /* Fast-K calculation completed. This K calculation is returned
@@ -451,24 +451,24 @@
     */
    retCode = FUNCTION_CALL_DOUBLE(MA)( 0, outIdx-1,
                                        tempBuffer, optInFastD_Period,
-                                       optInFastD_MAType, 
+                                       optInFastD_MAType,
                                        outBegIdx, outNBElement, outFastD );
 
 
    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement)) == 0 )
    {
       #if defined(USE_SINGLE_PRECISION_INPUT)
-         ARRAY_FREE( tempBuffer ); 
+         ARRAY_FREE( tempBuffer );
       #else
-         ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
+         ARRAY_FREE_COND( bufferIsAllocated, tempBuffer );
       #endif
       /* Something wrong happen? No further data? */
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
-      return retCode; 
+      return retCode;
    }
 
-   /* Copy tempBuffer into the caller buffer. 
+   /* Copy tempBuffer into the caller buffer.
     * (Calculation could not be done directly in the
     *  caller buffer because more input data then the
     *  requested range was needed for doing %D).
@@ -477,9 +477,9 @@
 
    /* Don't need K anymore, free it if it was allocated here. */
    #if defined(USE_SINGLE_PRECISION_INPUT)
-      ARRAY_FREE( tempBuffer ); 
+      ARRAY_FREE( tempBuffer );
    #else
-      ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
+      ARRAY_FREE_COND( bufferIsAllocated, tempBuffer );
    #endif
 
    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
@@ -622,8 +622,8 @@
 /* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT) || defined( USE_SUBARRAY )
 /* Generated */       ARRAY_ALLOC( tempBuffer, endIdx-today+1 );
 /* Generated */    #else
-/* Generated */       if( (outFastK == inHigh) || 
-/* Generated */           (outFastK == inLow)  || 
+/* Generated */       if( (outFastK == inHigh) ||
+/* Generated */           (outFastK == inLow)  ||
 /* Generated */           (outFastK == inClose) )
 /* Generated */       {
 /* Generated */          tempBuffer = outFastK;
@@ -695,28 +695,28 @@
 /* Generated */       else
 /* Generated */         tempBuffer[outIdx++] = 0.0;
 /* Generated */       trailingIdx++;
-/* Generated */       today++; 
+/* Generated */       today++;
 /* Generated */    }
 /* Generated */    retCode = FUNCTION_CALL_DOUBLE(MA)( 0, outIdx-1,
 /* Generated */                                        tempBuffer, optInFastD_Period,
-/* Generated */                                        optInFastD_MAType, 
+/* Generated */                                        optInFastD_MAType,
 /* Generated */                                        outBegIdx, outNBElement, outFastD );
 /* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement)) == 0 )
 /* Generated */    {
 /* Generated */       #if defined(USE_SINGLE_PRECISION_INPUT)
-/* Generated */          ARRAY_FREE( tempBuffer ); 
+/* Generated */          ARRAY_FREE( tempBuffer );
 /* Generated */       #else
-/* Generated */          ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
+/* Generated */          ARRAY_FREE_COND( bufferIsAllocated, tempBuffer );
 /* Generated */       #endif
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
-/* Generated */       return retCode; 
+/* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    ARRAY_MEMMOVE( outFastK, 0, tempBuffer, lookbackFastD, (int)VALUE_HANDLE_DEREF(outNBElement) );
 /* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT)
-/* Generated */       ARRAY_FREE( tempBuffer ); 
+/* Generated */       ARRAY_FREE( tempBuffer );
 /* Generated */    #else
-/* Generated */       ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
+/* Generated */       ARRAY_FREE_COND( bufferIsAllocated, tempBuffer );
 /* Generated */    #endif
 /* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {

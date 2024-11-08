@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -222,10 +222,10 @@
 
    /* Insert TA function code here. */
 
-   /* 
+   /*
     * The DM1 (one period) is base on the largest part of
     * today's range that is outside of yesterdays range.
-    * 
+    *
     * The following 7 cases explain how the +DM and -DM are
     * calculated on one period:
     *
@@ -234,8 +234,8 @@
     *     |                         | C|
     *     | +DM1 = (C-A)           B|  | +DM1 = 0
     *     | -DM1 = 0                   | -DM1 = (B-D)
-    * A|  |                           D| 
-    *  | D|                    
+    * A|  |                           D|
+    *  | D|
     * B|
     *
     * Case 3:                       Case 4:
@@ -243,11 +243,11 @@
     *     |                        A|  |
     *     | +DM1 = (C-A)            |  | +DM1 = 0
     *     | -DM1 = 0               B|  | -DM1 = (B-D)
-    * A|  |                            | 
+    * A|  |                            |
     *  |  |                           D|
     * B|  |
     *    D|
-    * 
+    *
     * Case 5:                      Case 6:
     * A|                           A| C|
     *  | C| +DM1 = 0                |  |  +DM1 = 0
@@ -257,7 +257,7 @@
     *
     *
     * Case 7:
-    * 
+    *
     *    C|
     * A|  |
     *  |  | +DM=0
@@ -274,18 +274,18 @@
     * equal the lows).
     *
     * When calculating the DM over a period > 1, the one-period DM
-    * for the desired period are initialy sum. In other word, 
-    * for a -DM14, sum the -DM1 for the first 14 days (that's 
+    * for the desired period are initialy sum. In other word,
+    * for a -DM14, sum the -DM1 for the first 14 days (that's
     * 13 values because there is no DM for the first day!)
     * Subsequent DM are calculated using the Wilder's
     * smoothing approach:
-    * 
+    *
     *                                    Previous -DM14
     *  Today's -DM14 = Previous -DM14 -  -------------- + Today's -DM1
     *                                         14
     *
     * Calculation of a -DI14 is as follow:
-    * 
+    *
     *               -DM14
     *     -DI14 =  --------
     *                TR14
@@ -300,7 +300,7 @@
     *    TA_TRANGE function on how to calculate the true range.
     *
     * Calculation of the DX14 is:
-    *    
+    *
     *    diffDI = ABS( (-DI14) - (+DI14) )
     *    sumDI  = (-DI14) + (+DI14)
     *
@@ -315,7 +315,7 @@
     *
     * This was understandable in the context that at the time the book
     * was written, most user were doing the calculation by hand.
-    * 
+    *
     * For a computer, rounding is unnecessary (and even problematic when inputs
     * are close to 1).
     *
@@ -474,7 +474,7 @@
          plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
          /* This loop is just to accumulate the initial DX */
          tempReal = minusDI+plusDI;
-         if( !TA_IS_ZERO(tempReal))         
+         if( !TA_IS_ZERO(tempReal))
             outReal[outIdx] = round_pos( 100.0 * (std_fabs(minusDI-plusDI)/tempReal) );
          else
             outReal[outIdx] = outReal[outIdx-1];
@@ -682,7 +682,7 @@
 /* Generated */          minusDI = round_pos(100.0*(prevMinusDM/prevTR));
 /* Generated */          plusDI  = round_pos(100.0*(prevPlusDM/prevTR));
 /* Generated */          tempReal = minusDI+plusDI;
-/* Generated */          if( !TA_IS_ZERO(tempReal))         
+/* Generated */          if( !TA_IS_ZERO(tempReal))
 /* Generated */             outReal[outIdx] = round_pos( 100.0 * (std_fabs(minusDI-plusDI)/tempReal) );
 /* Generated */          else
 /* Generated */             outReal[outIdx] = outReal[outIdx-1];

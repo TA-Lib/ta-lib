@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -209,7 +209,7 @@
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
-   
+
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
@@ -233,10 +233,10 @@
     * period.
     */
    CIRCBUF_INIT( circBuffer, double, optInTimePeriod );
-  
+
    /* Do the MA calculation using tight loops. */
 
-   /* Add-up the initial period, except for the last value. 
+   /* Add-up the initial period, except for the last value.
     * Fill up the circular buffer at the same time.
     */
    i=startIdx-lookbackTotal;
@@ -282,7 +282,7 @@
       }
       else
          outReal[outIdx++] = 0.0;
-      
+
       /* Move forward the circular buffer indexes. */
       CIRCBUF_NEXT(circBuffer);
 

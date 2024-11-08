@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -203,10 +203,10 @@
    /* Insert TA function code here. */
 
    /* For an explanation of this function, please read
-    * 
-    * Stocks & Commodities V. 12:1 (11-19): 
+    *
+    * Stocks & Commodities V. 12:1 (11-19):
     *   Smoothing Data With Faster Moving Averages
-    * Stocks & Commodities V. 12:2 (72-80): 
+    * Stocks & Commodities V. 12:2 (72-80):
     *   Smoothing Data With Less Lag
     *
     * Both magazine articles written by Patrick G. Mulloy
@@ -218,7 +218,7 @@
     * DEMA offers a moving average with less lags then the
     * traditional EMA.
     *
-    * Do not confuse a DEMA with the EMA2. Both are called 
+    * Do not confuse a DEMA with the EMA2. Both are called
     * "Double EMA" in the litterature, but EMA2 is a simple
     * EMA of an EMA, while DEMA is a compostie of a single
     * EMA with EMA2.
@@ -239,7 +239,7 @@
 
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
-      return ENUM_VALUE(RetCode,TA_SUCCESS,Success); 
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 
    /* Allocate a temporary buffer for the firstEMA.
     *
@@ -267,13 +267,13 @@
       }
    #endif
 
-   /* Calculate the first EMA */   
+   /* Calculate the first EMA */
    k = PER_TO_K(optInTimePeriod);
    retCode = FUNCTION_CALL(INT_EMA)( startIdx-lookbackEMA, endIdx, inReal,
                                      optInTimePeriod, k,
                                      VALUE_HANDLE_OUT(firstEMABegIdx), VALUE_HANDLE_OUT(firstEMANbElement),
 								     firstEMA );
-   
+
    /* Verify for failure or if not enough data after
     * calculating the first EMA.
     */
@@ -302,7 +302,7 @@
    /* Return empty output on failure or if not enough data after
     * calculating the second EMA.
     */
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success)) || (VALUE_HANDLE_GET(secondEMANbElement) == 0) )      
+   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success)) || (VALUE_HANDLE_GET(secondEMANbElement) == 0) )
    {
       #if defined(USE_SINGLE_PRECISION_INPUT)
          ARRAY_FREE( firstEMA );
@@ -318,7 +318,7 @@
     */
    firstEMAIdx = VALUE_HANDLE_GET(secondEMABegIdx);
    outIdx = 0;
-   while( outIdx < VALUE_HANDLE_GET(secondEMANbElement) ) 
+   while( outIdx < VALUE_HANDLE_GET(secondEMANbElement) )
    {
       outReal[outIdx] = (2.0*firstEMA[firstEMAIdx++]) - secondEMA[outIdx];
       outIdx++;
@@ -417,7 +417,7 @@
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
-/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success); 
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT) || defined( USE_SUBARRAY )
 /* Generated */       tempInt = lookbackTotal+(endIdx-startIdx)+1;
 /* Generated */       ARRAY_ALLOC(firstEMA, tempInt );
@@ -460,7 +460,7 @@
 /* Generated */                                             optInTimePeriod, k,
 /* Generated */                                             VALUE_HANDLE_OUT(secondEMABegIdx), VALUE_HANDLE_OUT(secondEMANbElement),
 /* Generated */ 						                    secondEMA );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success)) || (VALUE_HANDLE_GET(secondEMANbElement) == 0) )      
+/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success)) || (VALUE_HANDLE_GET(secondEMANbElement) == 0) )
 /* Generated */    {
 /* Generated */       #if defined(USE_SINGLE_PRECISION_INPUT)
 /* Generated */          ARRAY_FREE( firstEMA );
@@ -472,7 +472,7 @@
 /* Generated */    }
 /* Generated */    firstEMAIdx = VALUE_HANDLE_GET(secondEMABegIdx);
 /* Generated */    outIdx = 0;
-/* Generated */    while( outIdx < VALUE_HANDLE_GET(secondEMANbElement) ) 
+/* Generated */    while( outIdx < VALUE_HANDLE_GET(secondEMANbElement) )
 /* Generated */    {
 /* Generated */       outReal[outIdx] = (2.0*firstEMA[firstEMAIdx++]) - secondEMA[outIdx];
 /* Generated */       outIdx++;

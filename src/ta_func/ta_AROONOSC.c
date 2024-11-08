@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -241,7 +241,7 @@
    lowest      = 0.0;
    highest     = 0.0;
    factor      = (double)100.0/(double)optInTimePeriod;
-   
+
    while( today <= endIdx )
    {
       /* Keep track of the lowestIdx */
@@ -307,7 +307,7 @@
 
       outIdx++;
       trailingIdx++;
-      today++;  
+      today++;
    }
 
    /* Keep the outBegIdx relative to the
@@ -451,7 +451,7 @@
 /* Generated */       outReal[outIdx] = aroon;
 /* Generated */       outIdx++;
 /* Generated */       trailingIdx++;
-/* Generated */       today++;  
+/* Generated */       today++;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;

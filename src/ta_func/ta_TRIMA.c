@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -46,7 +46,7 @@
  *  031703 MF   Fix #701060. Correct logic when using a range with
  *              startIdx/endIdx. Thanks to Chris for reporting this.
  *  052603 MF   Adapt code to compile with .NET Managed C++
- *              
+ *
  */
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
@@ -262,7 +262,7 @@
     *
     * It is not clear to me if the Tradestation approach is a bug or a deliberate
     * decision to do things differently.
-    *    
+    *
     * Metastock Implementation
     * ========================
     * Output is the same as the generally accepted implementation.
@@ -279,7 +279,7 @@
     *
     * TRIMA at time 'd': ((1*a)+(2*b)+(2*c)+(1*d)) / 6
     * TRIMA at time 'e': ((1*b)+(2*c)+(2*d)+(1*e)) / 6
-    * 
+    *
     * To go from TRIMA 'd' to 'e', the following is done:
     *       1) 'a' and 'b' are substract from the numerator.
     *       2) 'd' is added to the numerator.
@@ -335,11 +335,11 @@
        *                = 3 * 4 = 12
        */
 
-      /* Note: entirely done with int and becomes double only 
+      /* Note: entirely done with int and becomes double only
        *       on assignement to the factor variable.
        */
       i = (optInTimePeriod>>1);
-      factor = (i+1)*(i+1); 
+      factor = (i+1)*(i+1);
       factor = 1.0/factor;
 
       /* Initialize all the variable before
@@ -367,7 +367,7 @@
 
       /* Write the first output */
       outIdx = 0;
-      tempReal = inReal[trailingIdx++]; 
+      tempReal = inReal[trailingIdx++];
       outReal[outIdx++] = numerator * factor;
       todayIdx++;
 
@@ -396,13 +396,13 @@
          numerator    += tempReal;
 
          /* Step (4) */
-         tempReal = inReal[trailingIdx++]; 
+         tempReal = inReal[trailingIdx++];
          outReal[outIdx++] = numerator * factor;
       }
    }
    else
    {
-      /* Even logic. 
+      /* Even logic.
        *
        * Very similar to the odd logic, except:
        *  - calculation of the factor is different.
@@ -411,7 +411,7 @@
        *  - Adjustment of numeratorAdd is different. See Step (2).
        */
       i = (optInTimePeriod>>1);
-      factor = i*(i+1); 
+      factor = i*(i+1);
       factor = 1.0/factor;
 
       /* Initialize all the variable before
@@ -441,7 +441,7 @@
 
       /* Write the first output */
       outIdx = 0;
-      tempReal = inReal[trailingIdx++]; 
+      tempReal = inReal[trailingIdx++];
       outReal[outIdx++] = numerator * factor;
       todayIdx++;
 
@@ -470,12 +470,12 @@
          numerator    += tempReal;
 
          /* Step (4) */
-         tempReal = inReal[trailingIdx++]; 
+         tempReal = inReal[trailingIdx++];
          outReal[outIdx++] = numerator * factor;
       }
 
    }
-   
+
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
@@ -561,7 +561,7 @@
 /* Generated */    if( (optInTimePeriod % 2) == 1 )
 /* Generated */    {
 /* Generated */       i = (optInTimePeriod>>1);
-/* Generated */       factor = (i+1)*(i+1); 
+/* Generated */       factor = (i+1)*(i+1);
 /* Generated */       factor = 1.0/factor;
 /* Generated */       trailingIdx = startIdx-lookbackTotal;
 /* Generated */       middleIdx   = trailingIdx + i;
@@ -583,7 +583,7 @@
 /* Generated */          numerator    += numeratorAdd;
 /* Generated */       }
 /* Generated */       outIdx = 0;
-/* Generated */       tempReal = inReal[trailingIdx++]; 
+/* Generated */       tempReal = inReal[trailingIdx++];
 /* Generated */       outReal[outIdx++] = numerator * factor;
 /* Generated */       todayIdx++;
 /* Generated */       while( todayIdx <= endIdx )
@@ -597,14 +597,14 @@
 /* Generated */          tempReal      = inReal[todayIdx++];
 /* Generated */          numeratorAdd += tempReal;
 /* Generated */          numerator    += tempReal;
-/* Generated */          tempReal = inReal[trailingIdx++]; 
+/* Generated */          tempReal = inReal[trailingIdx++];
 /* Generated */          outReal[outIdx++] = numerator * factor;
 /* Generated */       }
 /* Generated */    }
 /* Generated */    else
 /* Generated */    {
 /* Generated */       i = (optInTimePeriod>>1);
-/* Generated */       factor = i*(i+1); 
+/* Generated */       factor = i*(i+1);
 /* Generated */       factor = 1.0/factor;
 /* Generated */       trailingIdx = startIdx-lookbackTotal;
 /* Generated */       middleIdx   = trailingIdx + i - 1;
@@ -626,7 +626,7 @@
 /* Generated */          numerator    += numeratorAdd;
 /* Generated */       }
 /* Generated */       outIdx = 0;
-/* Generated */       tempReal = inReal[trailingIdx++]; 
+/* Generated */       tempReal = inReal[trailingIdx++];
 /* Generated */       outReal[outIdx++] = numerator * factor;
 /* Generated */       todayIdx++;
 /* Generated */       while( todayIdx <= endIdx )
@@ -640,7 +640,7 @@
 /* Generated */          tempReal      = inReal[todayIdx++];
 /* Generated */          numeratorAdd += tempReal;
 /* Generated */          numerator    += tempReal;
-/* Generated */          tempReal = inReal[trailingIdx++]; 
+/* Generated */          tempReal = inReal[trailingIdx++];
 /* Generated */          outReal[outIdx++] = numerator * factor;
 /* Generated */       }
 /* Generated */    }

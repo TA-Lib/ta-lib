@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -252,7 +252,7 @@
     *  - Calculate +DM and -DM between the first and
     *    second bar. The highest directional indication will
     *    indicate the assumed direction of the trade for the second
-    *    price bar. 
+    *    price bar.
     *  - In the case of a tie between +DM and -DM,
     *    the direction is LONG by default.
     *
@@ -293,7 +293,7 @@
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
-   }   
+   }
 
    /* Make sure the acceleration and maximum are coherent.
     * If not, correct the acceleration.
@@ -357,14 +357,14 @@
       prevLow  = newLow;
       prevHigh = newHigh;
       newLow  = inLow[todayIdx];
-      newHigh = inHigh[todayIdx];   
+      newHigh = inHigh[todayIdx];
       todayIdx++;
 
       SAR_ROUNDING(newLow);
       SAR_ROUNDING(newHigh);
 
       if( isLong == 1 )
-      {  
+      {
          /* Switch to short if the low penetrates the SAR value. */
          if( newLow <= sar )
          {
@@ -376,7 +376,7 @@
              * yesterday's and today's range.
              */
             if( sar < prevHigh )
-               sar = prevHigh;            
+               sar = prevHigh;
             if( sar < newHigh )
                sar = newHigh;
 
@@ -386,7 +386,7 @@
             /* Adjust af and ep */
             af = optInAcceleration;
             ep = newLow;
- 
+
             /* Calculate the new SAR */
             sar = sar + af * (ep - sar);
             SAR_ROUNDING( sar );
@@ -395,7 +395,7 @@
              * yesterday's and today's range.
              */
             if( sar < prevHigh )
-               sar = prevHigh;            
+               sar = prevHigh;
             if( sar < newHigh )
                sar = newHigh;
          }
@@ -405,7 +405,7 @@
 
             /* Output the SAR (was calculated in the previous iteration) */
             outReal[outIdx++] = sar;
- 
+
             /* Adjust af and ep. */
             if( newHigh > ep )
             {
@@ -423,7 +423,7 @@
              * yesterday's and today's range.
              */
             if( sar > prevLow )
-               sar = prevLow;            
+               sar = prevLow;
             if( sar > newLow )
                sar = newLow;
          }
@@ -441,7 +441,7 @@
              * yesterday's and today's range.
              */
             if( sar > prevLow )
-               sar = prevLow;            
+               sar = prevLow;
             if( sar > newLow )
                sar = newLow;
 
@@ -460,7 +460,7 @@
              * yesterday's and today's range.
              */
             if( sar > prevLow )
-               sar = prevLow;            
+               sar = prevLow;
             if( sar > newLow )
                sar = newLow;
          }
@@ -488,7 +488,7 @@
              * yesterday's and today's range.
              */
             if( sar < prevHigh )
-               sar = prevHigh;            
+               sar = prevHigh;
             if( sar < newHigh )
                sar = newHigh;
          }
@@ -587,7 +587,7 @@
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
-/* Generated */    }   
+/* Generated */    }
 /* Generated */    af = optInAcceleration;
 /* Generated */    if( af > optInMaximum )
 /* Generated */       af = optInAcceleration = optInMaximum;
@@ -629,18 +629,18 @@
 /* Generated */       prevLow  = newLow;
 /* Generated */       prevHigh = newHigh;
 /* Generated */       newLow  = inLow[todayIdx];
-/* Generated */       newHigh = inHigh[todayIdx];   
+/* Generated */       newHigh = inHigh[todayIdx];
 /* Generated */       todayIdx++;
 /* Generated */       SAR_ROUNDING(newLow);
 /* Generated */       SAR_ROUNDING(newHigh);
 /* Generated */       if( isLong == 1 )
-/* Generated */       {  
+/* Generated */       {
 /* Generated */          if( newLow <= sar )
 /* Generated */          {
 /* Generated */             isLong = 0;
 /* Generated */             sar = ep;
 /* Generated */             if( sar < prevHigh )
-/* Generated */                sar = prevHigh;            
+/* Generated */                sar = prevHigh;
 /* Generated */             if( sar < newHigh )
 /* Generated */                sar = newHigh;
 /* Generated */             outReal[outIdx++] = sar;
@@ -649,7 +649,7 @@
 /* Generated */             sar = sar + af * (ep - sar);
 /* Generated */             SAR_ROUNDING( sar );
 /* Generated */             if( sar < prevHigh )
-/* Generated */                sar = prevHigh;            
+/* Generated */                sar = prevHigh;
 /* Generated */             if( sar < newHigh )
 /* Generated */                sar = newHigh;
 /* Generated */          }
@@ -666,7 +666,7 @@
 /* Generated */             sar = sar + af * (ep - sar);
 /* Generated */             SAR_ROUNDING( sar );
 /* Generated */             if( sar > prevLow )
-/* Generated */                sar = prevLow;            
+/* Generated */                sar = prevLow;
 /* Generated */             if( sar > newLow )
 /* Generated */                sar = newLow;
 /* Generated */          }
@@ -678,7 +678,7 @@
 /* Generated */             isLong = 1;
 /* Generated */             sar = ep;
 /* Generated */             if( sar > prevLow )
-/* Generated */                sar = prevLow;            
+/* Generated */                sar = prevLow;
 /* Generated */             if( sar > newLow )
 /* Generated */                sar = newLow;
 /* Generated */             outReal[outIdx++] = sar;
@@ -687,7 +687,7 @@
 /* Generated */             sar = sar + af * (ep - sar);
 /* Generated */             SAR_ROUNDING( sar );
 /* Generated */             if( sar > prevLow )
-/* Generated */                sar = prevLow;            
+/* Generated */                sar = prevLow;
 /* Generated */             if( sar > newLow )
 /* Generated */                sar = newLow;
 /* Generated */          }
@@ -704,7 +704,7 @@
 /* Generated */             sar = sar + af * (ep - sar);
 /* Generated */             SAR_ROUNDING( sar );
 /* Generated */             if( sar < prevHigh )
-/* Generated */                sar = prevHigh;            
+/* Generated */                sar = prevHigh;
 /* Generated */             if( sar < newHigh )
 /* Generated */                sar = newHigh;
 /* Generated */          }

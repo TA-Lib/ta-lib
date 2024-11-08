@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -402,7 +402,7 @@ ErrorNumber test_func_ma( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -420,12 +420,12 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
   TA_RetCode retCode;
   TA_RangeTestParam *testParam;
   TA_Real *dummyBuffer;
-    
+
   (void)outputBufferInt;
 
   *isOutputInteger = 0;
 
-  testParam = (TA_RangeTestParam *)opaqueData;   
+  testParam = (TA_RangeTestParam *)opaqueData;
 
   switch( testParam->test->optInMAType_1 )
   {
@@ -436,7 +436,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
         retCode = TA_MAMA( startIdx,
                            endIdx,
                            testParam->close,
-                           0.5, 0.05,                      
+                           0.5, 0.05,
                            outBegIdx,
                            outNbElement,
                            outputBuffer,
@@ -447,7 +447,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
         retCode = TA_MAMA( startIdx,
                            endIdx,
                            testParam->close,
-                           0.5, 0.05,                      
+                           0.5, 0.05,
                            outBegIdx,
                            outNbElement,
                            &dummyBuffer[300],
@@ -528,7 +528,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
 
    /* Re-initialize all the unstable period to zero. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
-   
+
    /* Set the unstable period requested for that test. */
    switch( test->optInMAType_1 )
    {
@@ -571,7 +571,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
    else
       referenceInput = history->close;
 
-   
+
 
    /* Make a simple first call. */
    switch( test->id )
@@ -605,7 +605,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
       retCode = TA_MAMA( test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
-                         0.5, 0.05,                       
+                         0.5, 0.05,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[0].out0,
@@ -616,7 +616,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
       retCode = TA_MAMA( test->startIdx,
                          test->endIdx,
                          gBuffer[0].in,
-                         0.5, 0.05,                       
+                         0.5, 0.05,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[0].out2,
@@ -629,12 +629,12 @@ static ErrorNumber do_test_ma( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   errNb = checkExpectedValue( gBuffer[0].out0, 
+   errNb = checkExpectedValue( gBuffer[0].out0,
                                retCode, test->expectedRetCode,
                                outBegIdx, test->expectedBegIdx,
                                outNbElement, test->expectedNbElement,
                                test->oneOfTheExpectedOutReal,
-                               test->oneOfTheExpectedOutRealIndex );   
+                               test->oneOfTheExpectedOutRealIndex );
    if( errNb != TA_TEST_PASS )
       return errNb;
 
@@ -674,7 +674,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
       retCode = TA_MAMA( test->startIdx,
                          test->endIdx,
                          gBuffer[1].in,
-                         0.5, 0.05,                       
+                         0.5, 0.05,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[1].in,
@@ -684,7 +684,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
       retCode = TA_MAMA( test->startIdx,
                          test->endIdx,
                          gBuffer[1].in,
-                         0.5, 0.05,                       
+                         0.5, 0.05,
                          &outBegIdx,
                          &outNbElement,
                          gBuffer[0].out2,
@@ -702,12 +702,12 @@ static ErrorNumber do_test_ma( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   errNb = checkExpectedValue( gBuffer[1].in, 
+   errNb = checkExpectedValue( gBuffer[1].in,
                                retCode, test->expectedRetCode,
                                outBegIdx, test->expectedBegIdx,
                                outNbElement, test->expectedNbElement,
                                test->oneOfTheExpectedOutReal,
-                               test->oneOfTheExpectedOutRealIndex );   
+                               test->oneOfTheExpectedOutRealIndex );
    if( errNb != TA_TEST_PASS )
       return errNb;
 
@@ -721,50 +721,50 @@ static ErrorNumber do_test_ma( const TA_History *history,
       case TA_MAType_WMA:
          temp = TA_WMA_Lookback( test->optInTimePeriod );
          break;
-   
+
       case TA_MAType_SMA:
          temp = TA_SMA_Lookback( test->optInTimePeriod );
          break;
-   
+
       case TA_MAType_EMA:
          temp = TA_EMA_Lookback( test->optInTimePeriod );
          break;
-   
+
       case TA_MAType_DEMA:
          temp = TA_DEMA_Lookback( test->optInTimePeriod );
          break;
-   
+
       case TA_MAType_TEMA:
          temp = TA_TEMA_Lookback( test->optInTimePeriod );
          break;
-   
+
       case TA_MAType_KAMA:
          temp = TA_KAMA_Lookback( test->optInTimePeriod );
          break;
-   
+
       case TA_MAType_MAMA:
          temp = TA_MAMA_Lookback( 0.5, 0.05 );
          break;
-   
+
       case TA_MAType_TRIMA:
          temp = TA_TRIMA_Lookback( test->optInTimePeriod );
          break;
-   
+
       case TA_MAType_T3:
          temp = TA_T3_Lookback( test->optInTimePeriod, 0.7 );
          break;
-   
+
       default:
          return TA_TEST_TFRR_BAD_MA_TYPE;
       }
-   
+
       temp2 = TA_MA_Lookback( test->optInTimePeriod, (TA_MAType)test->optInMAType_1 );
-   
+
       if( temp != temp2 )
       {
          printf( "\nFailed for MA Type #%d for period %d\n", test->optInMAType_1, test->optInTimePeriod );
          return TA_TEST_TFFR_BAD_MA_LOOKBACK;
-      } 
+      }
    }
 
    /* Do a systematic test of most of the
@@ -782,27 +782,27 @@ static ErrorNumber do_test_ma( const TA_History *history,
       case TA_MAType_TEMA:
       case TA_MAType_DEMA:
       case TA_MAType_EMA:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_EMA,
                               (void *)&testParam, 1, 0 );
          break;
       case TA_MAType_T3:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_T3,
                               (void *)&testParam, 1, 0 );
          break;
       case TA_MAType_KAMA:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_KAMA,
                               (void *)&testParam, 1, 0 );
          break;
       case TA_MAType_MAMA:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_MAMA,
                               (void *)&testParam, 2, 0 );
          break;
       default:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_NONE,
                               (void *)&testParam, 1, 0 );
       }

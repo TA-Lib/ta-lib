@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  071804 AC   Creation           
+ *  071804 AC   Creation
  *
  */
 
@@ -204,7 +204,7 @@
    /* Add-up the initial period, except for the last value. */
    BodyPeriodTotal = 0;
    BodyTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyShort);
-   
+
    i = BodyTrailingIdx;
    while( i < startIdx ) {
         BodyPeriodTotal += TA_CANDLERANGE( BodyShort, i );
@@ -222,18 +222,18 @@
    outIdx = 0;
    do
    {
-        if( TA_REALBODY(i) < TA_CANDLEAVERAGE( BodyShort, BodyPeriodTotal, i ) && 
+        if( TA_REALBODY(i) < TA_CANDLEAVERAGE( BodyShort, BodyPeriodTotal, i ) &&
             TA_UPPERSHADOW(i) > TA_REALBODY(i) &&
             TA_LOWERSHADOW(i) > TA_REALBODY(i)
           )
             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyPeriodTotal += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyTrailingIdx );
-        i++; 
+        i++;
         BodyTrailingIdx++;
    } while( i <= endIdx );
 
@@ -330,7 +330,7 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */         if( TA_REALBODY(i) < TA_CANDLEAVERAGE( BodyShort, BodyPeriodTotal, i ) && 
+/* Generated */         if( TA_REALBODY(i) < TA_CANDLEAVERAGE( BodyShort, BodyPeriodTotal, i ) &&
 /* Generated */             TA_UPPERSHADOW(i) > TA_REALBODY(i) &&
 /* Generated */             TA_LOWERSHADOW(i) > TA_REALBODY(i)
 /* Generated */           )
@@ -338,7 +338,7 @@
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         BodyPeriodTotal += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyTrailingIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         BodyTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;

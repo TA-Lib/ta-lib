@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -46,7 +46,7 @@
  *  032003 MHL  Implementation of T3
  *  040503 MF   Adapt for compatibility with published code
  *              for TradeStation and Metastock.
- *              See "Smoothing Techniques For More Accurate Signals" 
+ *              See "Smoothing Techniques For More Accurate Signals"
  *              from Tim Tillson in Stock&Commodities V16:1 Page 33-37
  *  052603 MF   Adapt code to compile with .NET Managed C++
  */
@@ -223,7 +223,7 @@
 
    /* For an explanation of this function, please read:
     *
-    * Magazine articles written by Tim Tillson 
+    * Magazine articles written by Tim Tillson
     *
     * Essentially, a T3 of time serie 't' is:
     *   EMA1(x,Period) = EMA(x,Period)
@@ -247,7 +247,7 @@
    {
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-      return ENUM_VALUE(RetCode,TA_SUCCESS,Success); 
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
@@ -258,13 +258,13 @@
 
    /* Initialize e1 */
    tempReal = inReal[today++];
-   for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+   for( i=optInTimePeriod-1; i > 0 ; i-- )
       tempReal += inReal[today++];
    e1 = tempReal / optInTimePeriod;
 
    /* Initialize e2 */
    tempReal = e1;
-   for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+   for( i=optInTimePeriod-1; i > 0 ; i-- )
    {
       e1 = (k*inReal[today++])+(one_minus_k*e1);
       tempReal += e1;
@@ -273,7 +273,7 @@
 
    /* Initialize e3 */
    tempReal = e2;
-   for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+   for( i=optInTimePeriod-1; i > 0 ; i-- )
    {
       e1  = (k*inReal[today++])+(one_minus_k*e1);
       e2  = (k*e1)+(one_minus_k*e2);
@@ -283,7 +283,7 @@
 
    /* Initialize e4 */
    tempReal = e3;
-   for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+   for( i=optInTimePeriod-1; i > 0 ; i-- )
    {
       e1  = (k*inReal[today++])+(one_minus_k*e1);
       e2  = (k*e1)+(one_minus_k*e2);
@@ -294,7 +294,7 @@
 
    /* Initialize e5 */
    tempReal = e4;
-   for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+   for( i=optInTimePeriod-1; i > 0 ; i-- )
    {
       e1  = (k*inReal[today++])+(one_minus_k*e1);
       e2  = (k*e1)+(one_minus_k*e2);
@@ -306,7 +306,7 @@
 
    /* Initialize e6 */
    tempReal = e5;
-   for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+   for( i=optInTimePeriod-1; i > 0 ; i-- )
    {
       e1  = (k*inReal[today++])+(one_minus_k*e1);
       e2  = (k*e1)+(one_minus_k*e2);
@@ -441,25 +441,25 @@
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
-/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success); 
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */    today = startIdx - lookbackTotal;
 /* Generated */    k = 2.0/(optInTimePeriod+1.0);
 /* Generated */    one_minus_k = 1.0-k;
 /* Generated */    tempReal = inReal[today++];
-/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- )
 /* Generated */       tempReal += inReal[today++];
 /* Generated */    e1 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e1;
-/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- )
 /* Generated */    {
 /* Generated */       e1 = (k*inReal[today++])+(one_minus_k*e1);
 /* Generated */       tempReal += e1;
 /* Generated */    }
 /* Generated */    e2 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e2;
-/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- )
 /* Generated */    {
 /* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
 /* Generated */       e2  = (k*e1)+(one_minus_k*e2);
@@ -467,7 +467,7 @@
 /* Generated */    }
 /* Generated */    e3 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e3;
-/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- )
 /* Generated */    {
 /* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
 /* Generated */       e2  = (k*e1)+(one_minus_k*e2);
@@ -476,7 +476,7 @@
 /* Generated */    }
 /* Generated */    e4 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e4;
-/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- )
 /* Generated */    {
 /* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
 /* Generated */       e2  = (k*e1)+(one_minus_k*e2);
@@ -486,7 +486,7 @@
 /* Generated */    }
 /* Generated */    e5 = tempReal / optInTimePeriod;
 /* Generated */    tempReal = e5;
-/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- ) 
+/* Generated */    for( i=optInTimePeriod-1; i > 0 ; i-- )
 /* Generated */    {
 /* Generated */       e1  = (k*inReal[today++])+(one_minus_k*e1);
 /* Generated */       e2  = (k*e1)+(one_minus_k*e2);

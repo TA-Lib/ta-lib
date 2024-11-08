@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -499,8 +499,8 @@ const TA_OptInputParameterInfo TA_DEF_UI_HorizontalShift =
    NULL /* helpFile */
 };
 
-/* Define the values available for the MA function. 
- * 
+/* Define the values available for the MA function.
+ *
  * Many TA function using the MA internally may wish to
  * re-use this parameter as one of their own. That way a
  * new MA will provide automatically a new way of calculating

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -84,7 +84,7 @@ typedef struct
    TA_Integer startIdx;
    TA_Integer endIdx;
    TA_Integer optInTimePeriod;
-   
+
    TA_RetCode expectedRetCode;
 
    TA_Integer oneOfTheExpectedOutRealIndex;
@@ -158,7 +158,7 @@ ErrorNumber test_func_per_ema( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -180,8 +180,8 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    (void)outputBufferInt;
 
    *isOutputInteger = 0;
-  
-   testParam = (TA_RangeTestParam *)opaqueData;   
+
+   testParam = (TA_RangeTestParam *)opaqueData;
 
    switch( testParam->test->theFunction )
    {
@@ -197,7 +197,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
       break;
    default:
       retCode = TA_INTERNAL_ERROR(131);
-   } 
+   }
 
    return retCode;
 }
@@ -217,7 +217,7 @@ static ErrorNumber do_test_per_ema( const TA_History *history,
    /* Build the input. */
    setInputBuffer( 0, history->close, history->nbBars );
    setInputBuffer( 1, history->close, history->nbBars );
-   
+
    /* Set the unstable period requested for that test. */
    retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, test->unstablePeriod );
    if( retCode != TA_SUCCESS )
@@ -242,12 +242,12 @@ static ErrorNumber do_test_per_ema( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   errNb = checkExpectedValue( gBuffer[0].out0, 
+   errNb = checkExpectedValue( gBuffer[0].out0,
                                retCode, test->expectedRetCode,
                                outBegIdx, test->expectedBegIdx,
                                outNbElement, test->expectedNbElement,
                                test->oneOfTheExpectedOutReal,
-                               test->oneOfTheExpectedOutRealIndex );   
+                               test->oneOfTheExpectedOutRealIndex );
    if( errNb != TA_TEST_PASS )
       return errNb;
 
@@ -278,12 +278,12 @@ static ErrorNumber do_test_per_ema( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   errNb = checkExpectedValue( gBuffer[1].in, 
+   errNb = checkExpectedValue( gBuffer[1].in,
                                retCode, test->expectedRetCode,
                                outBegIdx, test->expectedBegIdx,
                                outNbElement, test->expectedNbElement,
                                test->oneOfTheExpectedOutReal,
-                               test->oneOfTheExpectedOutRealIndex );   
+                               test->oneOfTheExpectedOutRealIndex );
    if( errNb != TA_TEST_PASS )
       return errNb;
 
@@ -295,7 +295,7 @@ static ErrorNumber do_test_per_ema( const TA_History *history,
 
    if( test->doRangeTestFlag )
    {
-      errNb = doRangeTest( rangeTestFunction, 
+      errNb = doRangeTest( rangeTestFunction,
                            TA_FUNC_UNST_EMA,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -127,7 +127,7 @@
 
    /* The lookback is driven by the signal line output.
     *
-    * (must also account for the initial data consume 
+    * (must also account for the initial data consume
     *  by the slow period).
     */
 
@@ -267,7 +267,7 @@
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
-   /* Insert TA function code here. */  
+   /* Insert TA function code here. */
 
    return FUNCTION_CALL(INT_MACD)( startIdx, endIdx, inReal,
                                    optInFastPeriod,
@@ -348,7 +348,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    int i;
 
    /* !!! A lot of speed optimization could be done
-    * !!! with this function. 
+    * !!! with this function.
     * !!!
     * !!! A better approach would be to use TA_INT_EMA
     * !!! just to get the seeding values for the
@@ -362,7 +362,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
     * !!! advantage:
     * !!!   1) One mem allocation needed instead of two.
     * !!!   2) The mem allocation size will be only the
-    * !!!      signal lookback period instead of the 
+    * !!!      signal lookback period instead of the
     * !!!      whole range of data.
     * !!!   3) Processing will be done in a tight loop.
     * !!!      allowing to avoid a lot of memory store-load
@@ -400,7 +400,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
       k2 = (double)0.15; /* Fix 12 */
    }
 
-   lookbackSignal = LOOKBACK_CALL(EMA)( optInSignalPeriod_2 ); 
+   lookbackSignal = LOOKBACK_CALL(EMA)( optInSignalPeriod_2 );
 
    /* Move up the start index if there is not
     * enough initial data.
@@ -442,7 +442,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
       }
    #endif
 
-   /* Calculate the slow EMA. 
+   /* Calculate the slow EMA.
     *
     * Move back the startIdx to get enough data
     * for the signal period. That way, once the
@@ -478,8 +478,8 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
    }
 
    /* Parano tests. Will be removed eventually. */
-   if( (VALUE_HANDLE_GET(outBegIdx1) != tempInteger) || 
-       (VALUE_HANDLE_GET(outBegIdx2) != tempInteger) || 
+   if( (VALUE_HANDLE_GET(outBegIdx1) != tempInteger) ||
+       (VALUE_HANDLE_GET(outBegIdx2) != tempInteger) ||
        (VALUE_HANDLE_GET(outNbElement1) != VALUE_HANDLE_GET(outNbElement2)) ||
        (VALUE_HANDLE_GET(outNbElement1) != (endIdx-startIdx)+1+lookbackSignal) )
    {
@@ -500,7 +500,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 
    /* Calculate the signal/trigger line. */
    retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, VALUE_HANDLE_GET(outNbElement1)-1,
-                                            fastEMABuffer, optInSignalPeriod_2, PER_TO_K(optInSignalPeriod_2), 
+                                            fastEMABuffer, optInSignalPeriod_2, PER_TO_K(optInSignalPeriod_2),
                                             VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), outMACDSignal );
 
 
@@ -709,7 +709,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */       optInFastPeriod = 12;
 /* Generated */       k2 = (double)0.15; 
 /* Generated */    }
-/* Generated */    lookbackSignal = LOOKBACK_CALL(EMA)( optInSignalPeriod_2 ); 
+/* Generated */    lookbackSignal = LOOKBACK_CALL(EMA)( optInSignalPeriod_2 );
 /* Generated */    lookbackTotal =  lookbackSignal;
 /* Generated */    lookbackTotal += LOOKBACK_CALL(EMA)( optInSlowPeriod );
 /* Generated */    if( startIdx < lookbackTotal )
@@ -763,8 +763,8 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */       ARRAY_FREE( slowEMABuffer );
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    if( (VALUE_HANDLE_GET(outBegIdx1) != tempInteger) || 
-/* Generated */        (VALUE_HANDLE_GET(outBegIdx2) != tempInteger) || 
+/* Generated */    if( (VALUE_HANDLE_GET(outBegIdx1) != tempInteger) ||
+/* Generated */        (VALUE_HANDLE_GET(outBegIdx2) != tempInteger) ||
 /* Generated */        (VALUE_HANDLE_GET(outNbElement1) != VALUE_HANDLE_GET(outNbElement2)) ||
 /* Generated */        (VALUE_HANDLE_GET(outNbElement1) != (endIdx-startIdx)+1+lookbackSignal) )
 /* Generated */    {
@@ -778,7 +778,7 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */       fastEMABuffer[i] = fastEMABuffer[i] - slowEMABuffer[i];
 /* Generated */    ARRAY_MEMMOVE( outMACD, 0, fastEMABuffer, lookbackSignal, (endIdx-startIdx)+1 );
 /* Generated */    retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, VALUE_HANDLE_GET(outNbElement1)-1,
-/* Generated */                                             fastEMABuffer, optInSignalPeriod_2, PER_TO_K(optInSignalPeriod_2), 
+/* Generated */                                             fastEMABuffer, optInSignalPeriod_2, PER_TO_K(optInSignalPeriod_2),
 /* Generated */                                             VALUE_HANDLE_OUT(outBegIdx2), VALUE_HANDLE_OUT(outNbElement2), outMACDSignal );
 /* Generated */    ARRAY_FREE( fastEMABuffer );
 /* Generated */    ARRAY_FREE( slowEMABuffer );

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -210,10 +210,10 @@
    /* Insert TA function code here. */
 
    /* For an explanation of this function, please read:
-    * 
-    * Stocks & Commodities V. 12:1 (11-19): 
+    *
+    * Stocks & Commodities V. 12:1 (11-19):
     *   Smoothing Data With Faster Moving Averages
-    * Stocks & Commodities V. 12:2 (72-80): 
+    * Stocks & Commodities V. 12:2 (72-80):
     *   Smoothing Data With Less Lag
     *
     * Both magazine articles written by Patrick G. Mulloy
@@ -246,7 +246,7 @@
 
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
-      return ENUM_VALUE(RetCode,TA_SUCCESS,Success); 
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 
    /* Allocate a temporary buffer for the firstEMA. */
    tempInt = lookbackTotal+(endIdx-startIdx)+1;
@@ -256,13 +256,13 @@
          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
    #endif
 
-   /* Calculate the first EMA */   
+   /* Calculate the first EMA */
    k = PER_TO_K(optInTimePeriod);
    retCode = FUNCTION_CALL(INT_EMA)( startIdx-(lookbackEMA*2), endIdx, inReal,
                                      optInTimePeriod, k,
                                      VALUE_HANDLE_OUT(firstEMABegIdx), VALUE_HANDLE_OUT(firstEMANbElement),
 								     firstEMA );
-   
+
    /* Verify for failure or if not enough data after
     * calculating the first EMA.
     */
@@ -279,18 +279,18 @@
       {
          ARRAY_FREE( firstEMA );
          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
-      }   
+      }
    #endif
 
    retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, VALUE_HANDLE_GET(firstEMANbElement)-1, firstEMA,
                                             optInTimePeriod, k,
-                                            VALUE_HANDLE_OUT(secondEMABegIdx), VALUE_HANDLE_OUT(secondEMANbElement), 
+                                            VALUE_HANDLE_OUT(secondEMABegIdx), VALUE_HANDLE_OUT(secondEMANbElement),
 						                    secondEMA );
 
    /* Return empty output on failure or if not enough data after
     * calculating the second EMA.
     */
-   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(secondEMANbElement) == 0) )      
+   if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(secondEMANbElement) == 0) )
    {
       ARRAY_FREE( firstEMA );
       ARRAY_FREE( secondEMA );
@@ -325,7 +325,7 @@
     *  the value by using the EMA2 and EMA1.
     */
    outIdx = 0;
-   while( outIdx < VALUE_HANDLE_GET(thirdEMANbElement) ) 
+   while( outIdx < VALUE_HANDLE_GET(thirdEMANbElement) )
    {
       outReal[outIdx] += (3.0*firstEMA[firstEMAIdx++]) - (3.0*secondEMA[secondEMAIdx++]);
       outIdx++;
@@ -422,7 +422,7 @@
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
 /* Generated */    if( startIdx > endIdx )
-/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success); 
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    tempInt = lookbackTotal+(endIdx-startIdx)+1;
 /* Generated */    ARRAY_ALLOC(firstEMA,tempInt);
 /* Generated */    #if !defined( _JAVA )
@@ -445,13 +445,13 @@
 /* Generated */       {
 /* Generated */          ARRAY_FREE( firstEMA );
 /* Generated */          return ENUM_VALUE(RetCode,TA_ALLOC_ERR,AllocErr);
-/* Generated */       }   
+/* Generated */       }
 /* Generated */    #endif
 /* Generated */    retCode = FUNCTION_CALL_DOUBLE(INT_EMA)( 0, VALUE_HANDLE_GET(firstEMANbElement)-1, firstEMA,
 /* Generated */                                             optInTimePeriod, k,
-/* Generated */                                             VALUE_HANDLE_OUT(secondEMABegIdx), VALUE_HANDLE_OUT(secondEMANbElement), 
+/* Generated */                                             VALUE_HANDLE_OUT(secondEMABegIdx), VALUE_HANDLE_OUT(secondEMANbElement),
 /* Generated */ 						                    secondEMA );
-/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(secondEMANbElement) == 0) )      
+/* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || (VALUE_HANDLE_GET(secondEMANbElement) == 0) )
 /* Generated */    {
 /* Generated */       ARRAY_FREE( firstEMA );
 /* Generated */       ARRAY_FREE( secondEMA );
@@ -471,7 +471,7 @@
 /* Generated */    secondEMAIdx = VALUE_HANDLE_GET(thirdEMABegIdx);
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = firstEMAIdx + VALUE_HANDLE_GET(firstEMABegIdx);
 /* Generated */    outIdx = 0;
-/* Generated */    while( outIdx < VALUE_HANDLE_GET(thirdEMANbElement) ) 
+/* Generated */    while( outIdx < VALUE_HANDLE_GET(thirdEMANbElement) )
 /* Generated */    {
 /* Generated */       outReal[outIdx] += (3.0*firstEMA[firstEMAIdx++]) - (3.0*secondEMA[secondEMAIdx++]);
 /* Generated */       outIdx++;

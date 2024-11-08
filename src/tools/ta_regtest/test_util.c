@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -151,7 +151,7 @@ static const char *ta_g_wheel = "-\\|/";
 void showFeedback()
 {
    if( ta_g_wheel[ta_g_val] == '\0' )
-      ta_g_val = 0; 
+      ta_g_val = 0;
    putchar('\b');
    putchar(ta_g_wheel[ta_g_val]);
    fflush(stdout);
@@ -214,7 +214,7 @@ void initGlobalBuffer( void )
    gBuffer[0].out0 = &buf[0][1][TA_BUF_PREFIX];
    gBuffer[0].out1 = &buf[0][2][TA_BUF_PREFIX];
    gBuffer[0].out2 = &buf[0][3][TA_BUF_PREFIX];
-   
+
    gBuffer[1].in   = &buf[1][0][TA_BUF_PREFIX];
    gBuffer[1].out0 = &buf[1][1][TA_BUF_PREFIX];
    gBuffer[1].out1 = &buf[1][2][TA_BUF_PREFIX];
@@ -229,7 +229,7 @@ void initGlobalBuffer( void )
    gBuffer[3].out0 = &buf[3][1][TA_BUF_PREFIX];
    gBuffer[3].out1 = &buf[3][2][TA_BUF_PREFIX];
    gBuffer[3].out2 = &buf[3][3][TA_BUF_PREFIX];
-   
+
    gBuffer[4].in   = &buf[4][0][TA_BUF_PREFIX];
    gBuffer[4].out0 = &buf[4][1][TA_BUF_PREFIX];
    gBuffer[4].out1 = &buf[4][2][TA_BUF_PREFIX];
@@ -386,7 +386,7 @@ ErrorNumber checkSameContent( TA_Real *buffer1,
       if( (theBuffer1[i] != RESV_PATTERN_SUFFIX) &&
           (theBuffer1[i] != RESV_PATTERN_PREFIX) )
       {
-         
+
          if(!TA_REAL_EQ( theBuffer1[i], theBuffer2[i], 0.000001))
          {
             printf( "Fail: Large difference found between two value expected identical (%f,%f,%d)\n",
@@ -437,7 +437,7 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
                                 unsigned int outNbElement, unsigned int expectedNbElement,
                                 TA_Real oneOfTheExpectedOutReal,
                                 unsigned int oneOfTheExpectedOutRealIndex )
-{    
+{
    if( retCode != expectedRetCode )
    {
       printf( "Fail: RetCode %d different than expected %d\n", retCode, expectedRetCode );
@@ -449,8 +449,8 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
       /* An error did occured, but it
        * was expected. No need to go
        * further.
-       */      
-      return TA_TEST_PASS; 
+       */
+      return TA_TEST_PASS;
    }
 
    if( outNbElement > MAX_NB_TEST_ELEMENT )
@@ -490,7 +490,7 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
                  data[oneOfTheExpectedOutRealIndex] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
-   
+
       if( expectedBegIdx != outBegIdx )
       {
          printf( "Fail: outBegIdx expected %d but got %d\n", expectedBegIdx, outBegIdx );
@@ -575,7 +575,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
       TA_Free( refBuffer );
       return TA_TESTUTIL_DRT_ALLOC_ERR;
    }
-  
+
    if( unstId != TA_FUNC_UNST_NONE )
    {
       /* Caller wish to test for a range of unstable
@@ -586,7 +586,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
       TA_SetUnstablePeriod( unstId, 0 );
    }
 
-   outputIsInteger = 0;   
+   outputIsInteger = 0;
    retCode = CallTestFunction( testFunction, 0, MAX_RANGE_END, refBuffer, refBufferInt,
                            &refOutBeg, &refOutNbElement, &refLookback,
                            opaqueData, outputNb, &outputIsInteger );
@@ -609,7 +609,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
       TA_Free( refBufferInt );
       return TA_TESTUTIL_DRT_LOOKBACK_INCORRECT;
    }
-   
+
    temp = MAX_RANGE_SIZE-refLookback;
    if( temp != refOutNbElement )
    {
@@ -643,7 +643,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
          }
       }
       else
-      {         
+      {
          for( unstablePeriod=0; unstablePeriod <= MAX_RANGE_SIZE; unstablePeriod++ )
          {
             TA_SetUnstablePeriod( unstId, unstablePeriod );
@@ -676,7 +676,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
          }
 
          /* Because the tests with an unstable period are very intensive
-          * and kinda repetitive, skip the test of some fixSize (limit 
+          * and kinda repetitive, skip the test of some fixSize (limit
           * case are always tested though).
           */
          if( (fixSize > 5) && (fixSize < 240) )
@@ -756,8 +756,8 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                               &outputBuffer[1], &outputBufferInt[1],
                               &outputBegIdx, &outputNbElement, &lookback,
                               opaqueData, outputNb, &outputIsInteger );
-      
-      if( retCode != TA_SUCCESS ) 
+
+      if( retCode != TA_SUCCESS )
       {
           /* No call shall never fail here. When the range
            * is "out-of-range" the function shall still return
@@ -778,9 +778,9 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
             /* Trap cases where there is no output. */
             if( (startIdx > lookback) || (endIdx > lookback) )
             {
-               /* Whenever startIdx is greater than lookback, some data 
+               /* Whenever startIdx is greater than lookback, some data
                 * shall be return. Same idea with endIdx.
-                * 
+                *
                 * Note:
                 *  some output will never start at the startIdx, particularly
                 *  when a TA function have multiple output. Usually, the first output
@@ -793,7 +793,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                 *    exist for the %D output.
                 */
                printf( "Fail: doRangeTestFixSize data missing (%d,%d,%d)\n", startIdx, endIdx, lookback );
-                                                                                
+
                TA_Free( outputBuffer );
                TA_Free( outputBufferInt );
                return TA_TESTUTIL_DRT_MISSING_DATA;
@@ -840,7 +840,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                {
                   if( outputBufferInt[1+i] != refBufferInt[relativeIdx+i] )
                   {
-                     printf( "Fail: doRangeTestFixSize diff data for idx=%d (%d,%d)\n", i, 
+                     printf( "Fail: doRangeTestFixSize diff data for idx=%d (%d,%d)\n", i,
                               outputBufferInt[1+i], refBufferInt[relativeIdx+i] );
                      printf( "Fail: doRangeTestFixSize (%d,%d,%d,%d,%d)\n", startIdx, endIdx, outputBegIdx, outputNbElement, fixSize );
                      printf( "Fail: doRangeTestFixSize refOutBeg,refOutNbElement (%d,%d)\n", refOutBeg, refOutNbElement );
@@ -874,7 +874,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                   temp = outputNbElement-20;
                   if( (i > 20) && (i < temp) )
                   {
-                     /* Randomly skips from 0 to 200 verification. 
+                     /* Randomly skips from 0 to 200 verification.
                       * Never make it skip the last 20 values.
                       */
                      i += (rand() % 200);
@@ -965,10 +965,10 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
             }
          }
 
-         /* Skip some startIdx at random. Limit case are still 
+         /* Skip some startIdx at random. Limit case are still
           * tested though.
           */
-         if( (startIdx > 30) && ((startIdx+100) <= (MAX_RANGE_SIZE-fixSize)) )             
+         if( (startIdx > 30) && ((startIdx+100) <= (MAX_RANGE_SIZE-fixSize)) )
          {
             /* Randomly skips from 40 to 100 tests. */
             temp = (rand() % 100)+40;
@@ -1033,7 +1033,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
     * When dealing with an unstable period, the
     * first 100 values are ignored.
     *
-    * Following 100, the tolerance is 
+    * Following 100, the tolerance is
     * progressively reduced as follow:
     *
     *   1   == 0.5/1   == 50  %
@@ -1047,7 +1047,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
     *  can expect the output to not vary more
     *  than 0.005 %
     *
-    * The logic is sligthly different if the 
+    * The logic is sligthly different if the
     * output are rounded integer, but it is
     * the same idea.
     *
@@ -1059,12 +1059,12 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
     * Value 100     -> A tolerance of 1/100 is used.
     *
     * Value 1000    -> A tolerance of 1/1000 is used.
-    * 
+    *
     * Value 360     -> Useful when the output are
     *                  degrees. In that case, a fix
     *                  tolerance of 1 degree is used.
     *
-    * Value TA_DO_NOT_COMPARE -> 
+    * Value TA_DO_NOT_COMPARE ->
     *                  Indicate that NO COMPARISON take
     *                  place. This is useful for functions
     *                  that cannot be compare when changing
@@ -1188,7 +1188,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
       {
          printf( "\nFail: Value diffferent by more than 10 percent over 1 degree (%d)\n", tempInt );
          return 0;
-      }       
+      }
    }
    else if( integerTolerance )
    {
@@ -1237,7 +1237,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
       {
          printf( "\nFail: Value not equal (difference is %d)\n", tempInt );
          return 0; /* Value considered different */
-      } 
+      }
    }
    else
    {
@@ -1245,7 +1245,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
          difference = (val1-val2)/val1;
       else
          difference = (val2-val1)/val2;
-     
+
       temp = outputPosition+TA_GetUnstablePeriod(unstId)+1;
       if( temp <= periodToIgnore )
       {
@@ -1257,7 +1257,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
          temp -= periodToIgnore;
          tolerance = 0.5/temp;
       }
- 
+
       if( difference > tolerance )
       {
          printf( "\nFail: Value out of tolerance range (%g,%g)\n", difference, tolerance );
@@ -1306,7 +1306,7 @@ static TA_RetCode CallTestFunction( RangeTestFunction testFunction,
                   lookback,
                   opaqueData,
                   outputNb,
-                  isOutputInteger );   
+                  isOutputInteger );
 
 	/* Profile only functions producing at least 20 values. */
 	if( *outNbElement < 20 )
@@ -1324,15 +1324,15 @@ static TA_RetCode CallTestFunction( RangeTestFunction testFunction,
 
    if( clockDelta <= 0 )
    {
-	   insufficientClockPrecision = 1;	   
+	   insufficientClockPrecision = 1;
    }
    else
-   {	   
+   {
       if( clockDelta > worstProfiledCall )
          worstProfiledCall = clockDelta;
       timeInProfiledCall += clockDelta;
       nbProfiledCall++;
    }
-   
+
    return retCode;
 }

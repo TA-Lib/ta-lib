@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -273,10 +273,10 @@
    } while( --i != 0);
 
    /* Initialize the circular buffers used by the hilbert
-    * transform logic. 
+    * transform logic.
     * A buffer is used for odd day and another for even days.
     * This minimize the number of memory access and floating point
-    * operations needed (note also that by using static circular buffer, 
+    * operations needed (note also that by using static circular buffer,
     * no large dynamic memory allocation is needed for storing
     * intermediate calculation!).
     */
@@ -298,7 +298,7 @@
    /* The code is speed optimized and is most likely very
     * hard to follow if you do not already know well the
     * original algorithm.
-    * To understadn better, it is strongly suggested to look 
+    * To understadn better, it is strongly suggested to look
     * first at the Excel implementation in "test_MAMA.xls" included
     * in this package.
     */
@@ -328,14 +328,14 @@
          I2 = (0.2*(I1ForEvenPrev3 - jQ)) + (0.8*prevI2);
 
          /* The variable I1 is the detrender delayed for
-          * 3 price bars. 
+          * 3 price bars.
           *
           * Save the current detrender value for being
           * used by the "odd" logic later.
           */
          I1ForOddPrev3 = I1ForOddPrev2;
          I1ForOddPrev2 = detrender;
-      
+
       }
       else
       {
@@ -354,7 +354,7 @@
          I2 = (0.2*(I1ForOddPrev3 - jQ)) + (0.8*prevI2);
 
          /* The varaiable I1 is the detrender delayed for
-          * 3 price bars. 
+          * 3 price bars.
           *
           * Save the current detrender value for being
           * used by the "even" logic later.

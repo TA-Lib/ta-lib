@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -234,7 +234,7 @@
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
-   }   
+   }
 
    /* Consume first input. */
    trailingIdx = startIdx-nbInitialElementNeeded;
@@ -263,9 +263,9 @@
        S_xx += x*x;
        S_xy += x*y;
        S_x += x;
-       S_y += y;      
+       S_y += y;
    }
-   
+
 
    outIdx = 0; /* First output always start at index zero */
    n = (double)optInTimePeriod;
@@ -318,7 +318,7 @@
        S_xx -= x*x;
        S_xy -= x*y;
        S_x -= x;
-       S_y -= y;       
+       S_y -= y;
    } while( i <= endIdx );
 
    /* All done. Indicate the output limits and return. */
@@ -415,7 +415,7 @@
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
-/* Generated */    }   
+/* Generated */    }
 /* Generated */    trailingIdx = startIdx-nbInitialElementNeeded;
 /* Generated */    last_price_x = trailing_last_price_x = inReal0[trailingIdx];
 /* Generated */    last_price_y = trailing_last_price_y = inReal1[trailingIdx];
@@ -437,7 +437,7 @@
 /* Generated */        S_xx += x*x;
 /* Generated */        S_xy += x*y;
 /* Generated */        S_x += x;
-/* Generated */        S_y += y;      
+/* Generated */        S_y += y;
 /* Generated */    }
 /* Generated */    outIdx = 0; 
 /* Generated */    n = (double)optInTimePeriod;
@@ -479,7 +479,7 @@
 /* Generated */        S_xx -= x*x;
 /* Generated */        S_xy -= x*y;
 /* Generated */        S_x -= x;
-/* Generated */        S_y -= y;       
+/* Generated */        S_y -= y;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;

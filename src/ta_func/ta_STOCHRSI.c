@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -272,9 +272,9 @@
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
    /* Insert TA function code here. */
-  
+
    /* Stochastic RSI
-    * 
+    *
     * Reference: "Stochastic RSI and Dynamic Momentum Index"
     *            by Tushar Chande and Stanley Kroll
     *            Stock&Commodities V.11:5 (189-199)
@@ -282,10 +282,10 @@
     * The TA-Lib version offer flexibility beyond what is explain
     * in the Stock&Commodities article.
     *
-    * To calculate the "Unsmoothed stochastic RSI" with symetry like 
+    * To calculate the "Unsmoothed stochastic RSI" with symetry like
     * explain in the article, keep the optInTimePeriod and optInFastK_Period
     * equal. Example:
-    *        
+    *
     *    unsmoothed stoch RSI 14 : optInTimePeriod   = 14
     *                              optInFastK_Period = 14
     *                              optInFastD_Period = 'x'
@@ -322,12 +322,12 @@
 
    ARRAY_ALLOC( tempRSIBuffer, tempArraySize );
 
-   retCode = FUNCTION_CALL(RSI)(startIdx-lookbackSTOCHF, 
-                                endIdx, 
-                                inReal, 
-                                optInTimePeriod, 
+   retCode = FUNCTION_CALL(RSI)(startIdx-lookbackSTOCHF,
+                                endIdx,
+                                inReal,
+                                optInTimePeriod,
                                 VALUE_HANDLE_OUT(outBegIdx1),
-                                VALUE_HANDLE_OUT(outNbElement1), 
+                                VALUE_HANDLE_OUT(outNbElement1),
                                 tempRSIBuffer);
 
    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || VALUE_HANDLE_GET(outNbElement1) == 0 )
@@ -337,7 +337,7 @@
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return retCode;
    }
-   
+
    retCode = FUNCTION_CALL_DOUBLE(STOCHF)(0,
                                           tempArraySize-1,
                                           tempRSIBuffer,
@@ -350,7 +350,7 @@
                                           outNBElement,
                                           outFastK,
                                           outFastD);
- 
+
    ARRAY_FREE( tempRSIBuffer );
 
    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || ((int)VALUE_HANDLE_DEREF(outNBElement)) == 0 )
@@ -476,12 +476,12 @@
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx) = startIdx;
 /* Generated */    tempArraySize = (endIdx - startIdx) + 1 + lookbackSTOCHF;
 /* Generated */    ARRAY_ALLOC( tempRSIBuffer, tempArraySize );
-/* Generated */    retCode = FUNCTION_CALL(RSI)(startIdx-lookbackSTOCHF, 
-/* Generated */                                 endIdx, 
-/* Generated */                                 inReal, 
-/* Generated */                                 optInTimePeriod, 
+/* Generated */    retCode = FUNCTION_CALL(RSI)(startIdx-lookbackSTOCHF,
+/* Generated */                                 endIdx,
+/* Generated */                                 inReal,
+/* Generated */                                 optInTimePeriod,
 /* Generated */                                 VALUE_HANDLE_OUT(outBegIdx1),
-/* Generated */                                 VALUE_HANDLE_OUT(outNbElement1), 
+/* Generated */                                 VALUE_HANDLE_OUT(outNbElement1),
 /* Generated */                                 tempRSIBuffer);
 /* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) || VALUE_HANDLE_GET(outNbElement1) == 0 )
 /* Generated */    {

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -222,22 +222,22 @@
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
-      
+
    /* Initialize the variables by going through
     * the lookback period.
     */
    sumROC1 = 0.0;
-   today = startIdx-lookbackTotal;   
+   today = startIdx-lookbackTotal;
    trailingIdx = today;
    i = optInTimePeriod;
    while( i-- > 0 )
-   {      
+   {
       tempReal  = inReal[today++];
       tempReal -= inReal[today];
       sumROC1  += std_fabs(tempReal);
    }
 
-   /* At this point sumROC1 represent the 
+   /* At this point sumROC1 represent the
     * summation of the 1-day price difference
     * over the (optInTimePeriod-1)
     */
@@ -252,7 +252,7 @@
    periodROC = tempReal-tempReal2;
 
    /* Save the trailing value. Do this because inReal
-    * and outReal can be pointers to the same buffer. 
+    * and outReal can be pointers to the same buffer.
     */
    trailingValue = tempReal2;
 
@@ -275,9 +275,9 @@
     * input.
     */
 
-   /* Skip the unstable period. Do the whole processing 
+   /* Skip the unstable period. Do the whole processing
     * needed for KAMA, but do not write it in the output.
-    */   
+    */
    while( today <= startIdx )
    {
       tempReal  = inReal[today];
@@ -285,14 +285,14 @@
       periodROC = tempReal-tempReal2;
 
       /* Adjust sumROC1:
-       *  - Remove trailing ROC1 
+       *  - Remove trailing ROC1
        *  - Add new ROC1
        */
       sumROC1 -= std_fabs(trailingValue-tempReal2);
       sumROC1 += std_fabs(tempReal-inReal[today-1]);
 
       /* Save the trailing value. Do this because inReal
-       * and outReal can be pointers to the same buffer. 
+       * and outReal can be pointers to the same buffer.
        */
       trailingValue = tempReal2;
 
@@ -325,14 +325,14 @@
       periodROC = tempReal-tempReal2;
 
       /* Adjust sumROC1:
-       *  - Remove trailing ROC1 
+       *  - Remove trailing ROC1
        *  - Add new ROC1
        */
       sumROC1 -= std_fabs(trailingValue-tempReal2);
       sumROC1 += std_fabs(tempReal-inReal[today-1]);
 
       /* Save the trailing value. Do this because inReal
-       * and outReal can be pointers to the same buffer. 
+       * and outReal can be pointers to the same buffer.
        */
       trailingValue = tempReal2;
 
@@ -437,11 +437,11 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
 /* Generated */    sumROC1 = 0.0;
-/* Generated */    today = startIdx-lookbackTotal;   
+/* Generated */    today = startIdx-lookbackTotal;
 /* Generated */    trailingIdx = today;
 /* Generated */    i = optInTimePeriod;
 /* Generated */    while( i-- > 0 )
-/* Generated */    {      
+/* Generated */    {
 /* Generated */       tempReal  = inReal[today++];
 /* Generated */       tempReal -= inReal[today];
 /* Generated */       sumROC1  += std_fabs(tempReal);

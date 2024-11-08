@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -86,7 +86,7 @@ typedef struct
 
    TA_Integer expectedBegIdx;
    TA_Integer expectedNbElement;
-   
+
    TA_Integer oneOfTheExpectedOutRealIndex0;
    TA_Real    oneOfTheExpectedOutReal0;
 
@@ -102,7 +102,7 @@ typedef struct
 {
    const TA_Test *test;
    const TA_Real *close;
-} TA_RangeTestParam;                                                                      
+} TA_RangeTestParam;
 
 /**** Local functions declarations.    ****/
 static ErrorNumber do_test( const TA_History *history,
@@ -147,7 +147,7 @@ static TA_Test tableTest[] =
      0, 87.7086 }, /* Lower */
    /* With distinctive upper/lower multiplier. */
 
-   
+
    /******************************/
    /*   BBANDS - METASTOCK - SMA */
    /******************************/
@@ -236,7 +236,7 @@ static TA_Test tableTest[] =
      252-20, 114.5564,  /* Upper */
      252-20, 108.5265,  /* Middle */
      252-20, 102.4965}, /* Lower */
-  
+
    /* With distinctive upper/lower multiplier. */
    { 0, 0,  251, 20, 2.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
      19, 252-19,
@@ -285,7 +285,7 @@ ErrorNumber test_func_bbands( TA_History *history )
    }
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -309,7 +309,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 
   *isOutputInteger = 0;
 
-  testParam = (TA_RangeTestParam *)opaqueData;   
+  testParam = (TA_RangeTestParam *)opaqueData;
 
   dummyBuffer1 = TA_Malloc( ((endIdx-startIdx)+1)*sizeof(TA_Real));
   if( !dummyBuffer1 )
@@ -401,8 +401,8 @@ static ErrorNumber do_test( const TA_History *history,
                         (TA_MAType)test->optInMethod_3,
 
                         &outBegIdx, &outNbElement,
-                        gBuffer[0].out0, 
-                        gBuffer[0].out1, 
+                        gBuffer[0].out0,
+                        gBuffer[0].out1,
                         gBuffer[0].out2 );
 
    errNb = checkDataSame( gBuffer[0].in, history->close, history->nbBars );
@@ -426,7 +426,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->optInNbDevDn,
                         (TA_MAType)test->optInMethod_3,
                         &outBegIdx, &outNbElement,
-                        gBuffer[1].in, gBuffer[1].out1, gBuffer[1].out2 );                        
+                        gBuffer[1].in, gBuffer[1].out1, gBuffer[1].out2 );
 
    /* The previous call should have the same output
     * as this call.
@@ -455,7 +455,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->optInNbDevDn,
                         (TA_MAType)test->optInMethod_3,
                         &outBegIdx, &outNbElement,
-                        gBuffer[2].out1, 
+                        gBuffer[2].out1,
                         gBuffer[2].in,
                         gBuffer[2].out2 );
 
@@ -486,7 +486,7 @@ static ErrorNumber do_test( const TA_History *history,
                         test->optInNbDevDn,
                         (TA_MAType)test->optInMethod_3,
                         &outBegIdx, &outNbElement,
-                        gBuffer[3].out0, 
+                        gBuffer[3].out0,
                         gBuffer[3].out1,
                         gBuffer[3].in );
 
@@ -514,13 +514,13 @@ static ErrorNumber do_test( const TA_History *history,
    {
       if( test->optInMethod_3 == TA_MAType_EMA )
       {
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_EMA,
                               (void *)&testParam, 3, 0 );
       }
       else
       {
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_NONE,
                               (void *)&testParam, 3, 0 );
       }

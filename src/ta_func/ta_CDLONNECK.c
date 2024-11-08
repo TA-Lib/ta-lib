@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  121104 AC   Creation           
+ *  121104 AC   Creation
  *
  */
 
@@ -226,7 +226,7 @@
     * - second candle: white candle with open below previous day low and close equal to previous day low
     * The meaning of "equal" is specified with TA_SetCandleSettings
     * outInteger is negative (-1 to -100): on-neck is always bearish
-    * the user should consider that on-neck is significant when it appears in a downtrend, while this function 
+    * the user should consider that on-neck is significant when it appears in a downtrend, while this function
     * does not consider it
     */
    outIdx = 0;
@@ -242,11 +242,11 @@
             outInteger[outIdx++] = -100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
-        BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 ) 
+        BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 )
                              - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-1 );
         i++;
         EqualTrailingIdx++;
@@ -365,7 +365,7 @@
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
-/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 ) 
+/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 )
 /* Generated */                              - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-1 );
 /* Generated */         i++;
 /* Generated */         EqualTrailingIdx++;

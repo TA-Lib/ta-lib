@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  032005 AC   Creation           
+ *  032005 AC   Creation
  *
  */
 
@@ -219,7 +219,7 @@
     * - third candle: black candle with the close equal to the first candle's close
     * The meaning of "equal" is specified with TA_SetCandleSettings
     * outInteger is always positive (1 to 100): stick sandwich is always bullish;
-    * the user should consider that stick sandwich is significant when coming in a downtrend, 
+    * the user should consider that stick sandwich is significant when coming in a downtrend,
     * while this function does not consider it
     */
    outIdx = 0;
@@ -235,7 +235,7 @@
             outInteger[outIdx++] = 100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-2 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-2 );

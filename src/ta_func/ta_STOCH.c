@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -140,12 +140,12 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-   
+
    /* Account for the initial data needed for Fast-K. */
    retValue = (optInFastK_Period - 1);
-         
+
    /* Add the smoothing being done for %K slow */
-   retValue += LOOKBACK_CALL(MA)( optInSlowK_Period, optInSlowK_MAType );  
+   retValue += LOOKBACK_CALL(MA)( optInSlowK_Period, optInSlowK_MAType );
 
    /* Add the smoothing being done for %D slow. */
    retValue += LOOKBACK_CALL(MA)( optInSlowD_Period, optInSlowD_MAType );
@@ -325,16 +325,16 @@
     *                    (Today's Close - LowestLow)
     *  FASTK(Kperiod) =  --------------------------- * 100
     *                     (HighestHigh - LowestLow)
-    *   
+    *
     *  FASTD(FastDperiod, MA type) = MA Smoothed FASTK over FastDperiod
-    * 
+    *
     *  SLOWK(SlowKperiod, MA type) = MA Smoothed FASTK over SlowKperiod
     *
     *  SLOWD(SlowDperiod, MA Type) = MA Smoothed SLOWK over SlowDperiod
     *
     * The HighestHigh and LowestLow are the extreme values among the
     * last 'Kperiod'.
-    *  
+    *
     * SLOWK and FASTD are equivalent when using the same period.
     *
     * The following shows how these four lines are made available in TA-LIB:
@@ -384,7 +384,7 @@
     */
    outIdx = 0;
 
-   /* Calculate just enough K for ending up with the caller 
+   /* Calculate just enough K for ending up with the caller
     * requested range. (The range of k must consider all
     * the lookback involve with the smoothing).
     */
@@ -410,8 +410,8 @@
        */
       ARRAY_ALLOC( tempBuffer, endIdx-today+1 );
    #else
-      if( (outSlowK == inHigh) || 
-          (outSlowK == inLow)  || 
+      if( (outSlowK == inHigh) ||
+          (outSlowK == inLow)  ||
           (outSlowK == inClose) )
       {
          tempBuffer = outSlowK;
@@ -491,31 +491,31 @@
         tempBuffer[outIdx++] = 0.0;
 
       trailingIdx++;
-      today++; 
+      today++;
    }
 
    /* Un-smoothed K calculation completed. This K calculation is not returned
     * to the caller. It is always smoothed and then return.
-    * Some documentation will refer to the smoothed version as being 
+    * Some documentation will refer to the smoothed version as being
     * "K-Slow", but often this end up to be shorten to "K".
     */
    retCode = FUNCTION_CALL_DOUBLE(MA)( 0, outIdx-1,
                                        tempBuffer, optInSlowK_Period,
-                                       optInSlowK_MAType, 
+                                       optInSlowK_MAType,
                                        outBegIdx, outNBElement, tempBuffer );
 
 
    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
    {
       #if defined(USE_SINGLE_PRECISION_INPUT)
-         ARRAY_FREE( tempBuffer ); 
+         ARRAY_FREE( tempBuffer );
       #else
-         ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
+         ARRAY_FREE_COND( bufferIsAllocated, tempBuffer );
       #endif
       /* Something wrong happen? No further data? */
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
-      return retCode; 
+      return retCode;
    }
 
    /* Calculate the %D which is simply a moving average of
@@ -526,7 +526,7 @@
                                        optInSlowD_MAType,
                                        outBegIdx, outNBElement, outSlowD );
 
-   /* Copy tempBuffer into the caller buffer. 
+   /* Copy tempBuffer into the caller buffer.
     * (Calculation could not be done directly in the
     *  caller buffer because more input data then the
     *  requested range was needed for doing %D).
@@ -535,9 +535,9 @@
 
    /* Don't need K anymore, free it if it was allocated here. */
    #if defined(USE_SINGLE_PRECISION_INPUT)
-      ARRAY_FREE( tempBuffer ); 
+      ARRAY_FREE( tempBuffer );
    #else
-      ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
+      ARRAY_FREE_COND( bufferIsAllocated, tempBuffer );
    #endif
 
    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
@@ -700,8 +700,8 @@
 /* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT) || defined( USE_SUBARRAY )
 /* Generated */       ARRAY_ALLOC( tempBuffer, endIdx-today+1 );
 /* Generated */    #else
-/* Generated */       if( (outSlowK == inHigh) || 
-/* Generated */           (outSlowK == inLow)  || 
+/* Generated */       if( (outSlowK == inHigh) ||
+/* Generated */           (outSlowK == inLow)  ||
 /* Generated */           (outSlowK == inClose) )
 /* Generated */       {
 /* Generated */          tempBuffer = outSlowK;
@@ -773,22 +773,22 @@
 /* Generated */       else
 /* Generated */         tempBuffer[outIdx++] = 0.0;
 /* Generated */       trailingIdx++;
-/* Generated */       today++; 
+/* Generated */       today++;
 /* Generated */    }
 /* Generated */    retCode = FUNCTION_CALL_DOUBLE(MA)( 0, outIdx-1,
 /* Generated */                                        tempBuffer, optInSlowK_Period,
-/* Generated */                                        optInSlowK_MAType, 
+/* Generated */                                        optInSlowK_MAType,
 /* Generated */                                        outBegIdx, outNBElement, tempBuffer );
 /* Generated */    if( (retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) ) || ((int)VALUE_HANDLE_DEREF(outNBElement) == 0) )
 /* Generated */    {
 /* Generated */       #if defined(USE_SINGLE_PRECISION_INPUT)
-/* Generated */          ARRAY_FREE( tempBuffer ); 
+/* Generated */          ARRAY_FREE( tempBuffer );
 /* Generated */       #else
-/* Generated */          ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
+/* Generated */          ARRAY_FREE_COND( bufferIsAllocated, tempBuffer );
 /* Generated */       #endif
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
-/* Generated */       return retCode; 
+/* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    retCode = FUNCTION_CALL_DOUBLE(MA)( 0, (int)VALUE_HANDLE_DEREF(outNBElement)-1,
 /* Generated */                                        tempBuffer, optInSlowD_Period,
@@ -796,9 +796,9 @@
 /* Generated */                                        outBegIdx, outNBElement, outSlowD );
 /* Generated */    ARRAY_MEMMOVE( outSlowK, 0, tempBuffer,lookbackDSlow,(int)VALUE_HANDLE_DEREF(outNBElement));
 /* Generated */    #if defined(USE_SINGLE_PRECISION_INPUT)
-/* Generated */       ARRAY_FREE( tempBuffer ); 
+/* Generated */       ARRAY_FREE( tempBuffer );
 /* Generated */    #else
-/* Generated */       ARRAY_FREE_COND( bufferIsAllocated, tempBuffer ); 
+/* Generated */       ARRAY_FREE_COND( bufferIsAllocated, tempBuffer );
 /* Generated */    #endif
 /* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {

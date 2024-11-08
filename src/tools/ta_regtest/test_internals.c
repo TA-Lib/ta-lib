@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -50,7 +50,7 @@
  */
 
 /* Description:
- *         Regression testing of some internal utility like: 
+ *         Regression testing of some internal utility like:
  *            - collections: List/Stack/Circular buffer.
  *            - Memory allocation mechanism.
  *            etc...
@@ -110,7 +110,7 @@ ErrorNumber test_internals( void )
 static ErrorNumber testCircularBuffer( void )
 {
    TA_RetCode retCode;
-   int i; 
+   int i;
    int buffer[20];
    ErrorNumber retValue;
 

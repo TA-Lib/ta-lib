@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -244,7 +244,7 @@
        SumY += tempValue1 = inReal[today - i];
        SumXY += (double)i * tempValue1;
      }
-     m = ( optInTimePeriod * SumXY - SumX * SumY) / Divisor;     
+     m = ( optInTimePeriod * SumXY - SumX * SumY) / Divisor;
      outReal[outIdx++] = ( SumY - m * SumX ) / (double)optInTimePeriod;
      today++;
    }
@@ -344,7 +344,7 @@
 /* Generated */        SumY += tempValue1 = inReal[today - i];
 /* Generated */        SumXY += (double)i * tempValue1;
 /* Generated */      }
-/* Generated */      m = ( optInTimePeriod * SumXY - SumX * SumY) / Divisor;     
+/* Generated */      m = ( optInTimePeriod * SumXY - SumX * SumY) / Divisor;
 /* Generated */      outReal[outIdx++] = ( SumY - m * SumX ) / (double)optInTimePeriod;
 /* Generated */      today++;
 /* Generated */    }

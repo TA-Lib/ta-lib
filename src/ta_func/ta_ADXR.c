@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -211,7 +211,7 @@
     *
     * This was understandable in the context that at the time the book
     * was written, most user were doing the calculation by hand.
-    * 
+    *
     * For a computer, rounding is unnecessary (and even problematic when inputs
     * are close to 1).
     *
@@ -248,7 +248,7 @@
                                  inHigh, inLow, inClose,
                                  optInTimePeriod, outBegIdx, outNBElement, adx );
 
-   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )      
+   if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
    {
       ARRAY_FREE( adx );
       return retCode;
@@ -360,7 +360,7 @@
 /* Generated */    retCode = FUNCTION_CALL(ADX)( startIdx-(optInTimePeriod-1), endIdx,
 /* Generated */                                  inHigh, inLow, inClose,
 /* Generated */                                  optInTimePeriod, outBegIdx, outNBElement, adx );
-/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )      
+/* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
 /* Generated */       ARRAY_FREE( adx );
 /* Generated */       return retCode;

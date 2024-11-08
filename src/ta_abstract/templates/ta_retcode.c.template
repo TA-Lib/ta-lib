@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -41,7 +41,7 @@
  */
 #include <ta_common.h>
 
-typedef struct 
+typedef struct
 {
    TA_RetCode retCode;
    const char * const enumStr;
@@ -58,7 +58,7 @@ static TA_InternalRetCodeInfo retCodeInfoTable[] = {
 void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo )
 {
    unsigned int i;
-   
+
    /* Trap internal error code */
    if( (theRetCode >= 5000) && (theRetCode <= 5999) )
    {
@@ -66,7 +66,7 @@ void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo )
       retCodeInfo->infoStr = "Unexpected Internal Error - Contact TA-Lib.org";
       return;
    }
-   
+
    /* Check among all the error code defined in ta_common.h */
    for( i=0; i < (NB_RET_CODE_INFO-1); i++ )
    {

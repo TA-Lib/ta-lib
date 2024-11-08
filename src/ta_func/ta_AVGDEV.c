@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -187,7 +187,7 @@
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
 	lookback = optInTimePeriod - 1;
-   
+
 	if (startIdx < lookback) {
 		startIdx = lookback;
 	}

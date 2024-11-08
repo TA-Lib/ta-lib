@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -133,7 +133,7 @@
    UNUSED_VARIABLE(optInNbDevDn);
 
    /* The lookback is driven by the middle band moving average. */
-   return LOOKBACK_CALL(MA)( optInTimePeriod, optInMAType );                          
+   return LOOKBACK_CALL(MA)( optInTimePeriod, optInMAType );
 }
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
@@ -307,7 +307,7 @@
          tempBuffer1 = outRealMiddleBand;
          tempBuffer2 = outRealUpperBand;
       }
-      /* Check that the caller is not doing tricky things. 
+      /* Check that the caller is not doing tricky things.
        * (like using the input buffer in two output!)
        */
       if( (tempBuffer1 == inReal) || (tempBuffer2 == inReal) )
@@ -335,7 +335,7 @@
       /* A small speed optimization by re-using the
        * already calculated SMA.
        */
-       FUNCTION_CALL(INT_stddev_using_precalc_ma)( inReal, tempBuffer1, 
+       FUNCTION_CALL(INT_stddev_using_precalc_ma)( inReal, tempBuffer1,
                                                    (int)VALUE_HANDLE_DEREF(outBegIdx), (int)VALUE_HANDLE_DEREF(outNBElement),
                                                    optInTimePeriod, tempBuffer2 );
    }
@@ -364,7 +364,7 @@
    #endif
 
    /* Now do a tight loop to calculate the upper/lower band at
-    * the same time. 
+    * the same time.
     *
     * All the following 5 loops are doing the same, except there
     * is an attempt to speed optimize by eliminating uneeded
@@ -428,7 +428,7 @@
          outRealLowerBand[i] = tempReal2 - (tempReal * optInNbDevDn);
       }
    }
-   
+
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
@@ -572,7 +572,7 @@
 /* Generated */    }
 /* Generated */    if( optInMAType == ENUM_VALUE(MAType,TA_MAType_SMA,Sma) )
 /* Generated */    {
-/* Generated */        FUNCTION_CALL(INT_stddev_using_precalc_ma)( inReal, tempBuffer1, 
+/* Generated */        FUNCTION_CALL(INT_stddev_using_precalc_ma)( inReal, tempBuffer1,
 /* Generated */                                                    (int)VALUE_HANDLE_DEREF(outBegIdx), (int)VALUE_HANDLE_DEREF(outNBElement),
 /* Generated */                                                    optInTimePeriod, tempBuffer2 );
 /* Generated */    }

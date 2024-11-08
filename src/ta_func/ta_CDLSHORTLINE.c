@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  072404 AC   Creation           
+ *  072404 AC   Creation
  *
  */
 
@@ -206,7 +206,7 @@
    BodyTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyShort);
    ShadowPeriodTotal = 0;
    ShadowTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowShort);
-   
+
    i = BodyTrailingIdx;
    while( i < startIdx ) {
         BodyPeriodTotal += TA_CANDLERANGE( BodyShort, i );
@@ -235,7 +235,7 @@
             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyPeriodTotal += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyTrailingIdx );

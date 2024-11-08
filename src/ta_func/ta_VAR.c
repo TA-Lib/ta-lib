@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -211,7 +211,7 @@
 
    /* Insert TA function code here. */
    return FUNCTION_CALL(INT_VAR)( startIdx, endIdx, inReal,
-                                  optInTimePeriod, /* From 1 to TA_INTEGER_MAX */                      
+                                  optInTimePeriod, /* From 1 to TA_INTEGER_MAX */
                                   outBegIdx, outNBElement, outReal );
 }
 
@@ -224,15 +224,15 @@
 enum class Core::RetCode Core::TA_INT_VAR( int    startIdx,
                                            int    endIdx,
 							               SubArray<double>^ inReal,
-                                           int    optInTimePeriod,                       
+                                           int    optInTimePeriod,
                                            [Out]int% outBegIdx,
                                            [Out]int% outNBElement,
 										   SubArray<double>^ outReal )
-#elif defined( _MANAGED ) 
+#elif defined( _MANAGED )
 enum class Core::RetCode Core::TA_INT_VAR( int    startIdx,
                                            int    endIdx,
 							               cli::array<INPUT_TYPE>^ inReal,
-                                           int    optInTimePeriod,                       
+                                           int    optInTimePeriod,
                                            [Out]int% outBegIdx,
                                            [Out]int% outNBElement,
 										   cli::array<double>^ outReal )
@@ -240,7 +240,7 @@ enum class Core::RetCode Core::TA_INT_VAR( int    startIdx,
 public RetCode TA_INT_VAR( int        startIdx,
                            int        endIdx,
                            INPUT_TYPE inReal[],
-                           int        optInTimePeriod, /* From 1 to TA_INTEGER_MAX */                       
+                           int        optInTimePeriod, /* From 1 to TA_INTEGER_MAX */
                            MInteger   outBegIdx,
                            MInteger   outNBElement,
                            double     outReal[] )
@@ -248,7 +248,7 @@ public RetCode TA_INT_VAR( int        startIdx,
 TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
                                int    endIdx,
                                const INPUT_TYPE *inReal,
-                               int    optInTimePeriod, /* From 1 to TA_INTEGER_MAX */                       
+                               int    optInTimePeriod, /* From 1 to TA_INTEGER_MAX */
                                int   *outBegIdx,
                                int   *outNBElement,
                                double      *outReal )
@@ -403,7 +403,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    return FUNCTION_CALL(INT_VAR)( startIdx, endIdx, inReal,
-/* Generated */                                   optInTimePeriod,                       
+/* Generated */                                   optInTimePeriod, 
 /* Generated */                                   outBegIdx, outNBElement, outReal );
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined(USE_SINGLE_PRECISION_INPUT)
@@ -413,15 +413,15 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */ enum class Core::RetCode Core::TA_INT_VAR( int    startIdx,
 /* Generated */                                            int    endIdx,
 /* Generated */ 							               SubArray<double>^ inReal,
-/* Generated */                                            int    optInTimePeriod,                       
+/* Generated */                                            int    optInTimePeriod,
 /* Generated */                                            [Out]int% outBegIdx,
 /* Generated */                                            [Out]int% outNBElement,
 /* Generated */ 										   SubArray<double>^ outReal )
-/* Generated */ #elif defined( _MANAGED ) 
+/* Generated */ #elif defined( _MANAGED )
 /* Generated */ enum class Core::RetCode Core::TA_INT_VAR( int    startIdx,
 /* Generated */                                            int    endIdx,
 /* Generated */ 							               cli::array<INPUT_TYPE>^ inReal,
-/* Generated */                                            int    optInTimePeriod,                       
+/* Generated */                                            int    optInTimePeriod,
 /* Generated */                                            [Out]int% outBegIdx,
 /* Generated */                                            [Out]int% outNBElement,
 /* Generated */ 										   cli::array<double>^ outReal )
@@ -429,7 +429,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */ public RetCode TA_INT_VAR( int        startIdx,
 /* Generated */                            int        endIdx,
 /* Generated */                            INPUT_TYPE inReal[],
-/* Generated */                            int        optInTimePeriod,                        
+/* Generated */                            int        optInTimePeriod, 
 /* Generated */                            MInteger   outBegIdx,
 /* Generated */                            MInteger   outNBElement,
 /* Generated */                            double     outReal[] )
@@ -437,7 +437,7 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */                                int    endIdx,
 /* Generated */                                const INPUT_TYPE *inReal,
-/* Generated */                                int    optInTimePeriod,                        
+/* Generated */                                int    optInTimePeriod, 
 /* Generated */                                int   *outBegIdx,
 /* Generated */                                int   *outNBElement,
 /* Generated */                                double      *outReal )

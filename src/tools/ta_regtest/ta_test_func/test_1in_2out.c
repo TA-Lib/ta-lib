@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -49,7 +49,7 @@
 /* Description:
  *
  *     Test functions which have the following
- *     characterisic: 
+ *     characterisic:
  *      - have one input and two outputs
  *      - there is no optional parameters
  */
@@ -87,7 +87,7 @@ typedef struct
 
    TA_Integer startIdx;
    TA_Integer endIdx;
-   
+
    TA_RetCode expectedRetCode;
 
    TA_Integer oneOfTheExpectedOutRealIndex0;
@@ -140,24 +140,24 @@ static TA_Test tableTest[] =
                                                 252-64, 1.00,
                                                 63, 252-63 },
 
-   { 1, TA_HT_PHASOR_TEST, 0, 0, 251, TA_SUCCESS,      0, 0.9456, 
-                                                       0, 5.2143, 
+   { 1, TA_HT_PHASOR_TEST, 0, 0, 251, TA_SUCCESS,      0, 0.9456,
+                                                       0, 5.2143,
                                                        32, 252-32 }, /* First Value */
 
-   { 0, TA_HT_PHASOR_TEST, 0, 0, 251, TA_SUCCESS,      1, 2.7539, 
+   { 0, TA_HT_PHASOR_TEST, 0, 0, 251, TA_SUCCESS,      1, 2.7539,
                                                        1, 2.4129,
                                                       32, 252-32 },
 
-   { 0, TA_HT_PHASOR_TEST, 0, 0, 251, TA_SUCCESS,      9, -0.7235, 
+   { 0, TA_HT_PHASOR_TEST, 0, 0, 251, TA_SUCCESS,      9, -0.7235,
                                                        9, -5.9336,
                                                       32, 252-32 },
 
    { 0, TA_HT_PHASOR_TEST, 0, 0, 251, TA_SUCCESS, 252-34,  0.8386,
-                                                  252-34, -0.8913,  
+                                                  252-34, -0.8913,
                                                   32, 252-32 },
 
    { 0, TA_HT_PHASOR_TEST, 0, 0, 251, TA_SUCCESS, 252-33,  0.3258,
-                                                  252-33, -0.9447,  
+                                                  252-33, -0.9447,
                                                   32, 252-32 }, /* Last Value */
 
 
@@ -196,7 +196,7 @@ ErrorNumber test_func_1in_2out( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
-   return TA_TEST_PASS; 
+   return TA_TEST_PASS;
 }
 
 /**** Local functions definitions.     ****/
@@ -216,15 +216,15 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    TA_Real *out1;
    TA_Real *out2;
    TA_Real *dummyOutput;
-   
+
    (void)outputBufferInt;
 
    *isOutputInteger = 0;
-  
-   testParam = (TA_RangeTestParam *)opaqueData;   
+
+   testParam = (TA_RangeTestParam *)opaqueData;
 
    dummyOutput = TA_Malloc( (endIdx-startIdx+1) * sizeof(TA_Real) );
-                     
+
    if( outputNb == 0 )
    {
       out1 = outputBuffer;
@@ -243,7 +243,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                               endIdx,
                               testParam->price,
                               outBegIdx,
-                              outNbElement,                          
+                              outNbElement,
                               out1, out2 );
       *lookback = TA_HT_PHASOR_Lookback();
       break;
@@ -252,7 +252,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                             endIdx,
                             testParam->price,
                             outBegIdx,
-                            outNbElement,                          
+                            outNbElement,
                             out1, out2 );
       *lookback = TA_HT_SINE_Lookback();
       break;
@@ -342,7 +342,7 @@ static ErrorNumber do_test( const TA_History *history,
 
    outBegIdx = outNbElement = 0;
 
-   /* Make another call where the input and the output 
+   /* Make another call where the input and the output
     * are the same buffer.
     */
    switch( test->theFunction )
@@ -388,7 +388,7 @@ static ErrorNumber do_test( const TA_History *history,
    CHECK_EXPECTED_VALUE( gBuffer[0].in, 0 );
    CHECK_EXPECTED_VALUE( gBuffer[1].out1, 1 );
 
-   /* Make another call where the input and the output 
+   /* Make another call where the input and the output
     * are the same buffer.
     */
    switch( test->theFunction )
@@ -445,18 +445,18 @@ static ErrorNumber do_test( const TA_History *history,
       switch( test->theFunction )
       {
       case TA_HT_PHASOR_TEST:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_HT_PHASOR,
                               (void *)&testParam, 1, 0 );
          break;
       case TA_HT_SINE_TEST:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_HT_SINE,
                               (void *)&testParam, 1, 10 );
          break;
 
       default:
-         errNb = doRangeTest( rangeTestFunction, 
+         errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_NONE,
                               (void *)&testParam, 1, 0 );
       }

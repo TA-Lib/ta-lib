@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -115,7 +115,7 @@
 /* Generated */    #endif /* !defined(_MANAGED) && !defined(_JAVA)*/
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
-   
+
    return LOOKBACK_CALL(MA)(optInMaxPeriod, optInMAType);
 }
 
@@ -258,7 +258,7 @@
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
    }
 
-   /* Calculate exact output size */      
+   /* Calculate exact output size */
    if( lookbackTotal > startIdx )
       tempInt = lookbackTotal;
    else
@@ -268,8 +268,8 @@
 	  /* No output */
       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
-      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);      
-   }   
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+   }
    outputSize = endIdx - tempInt + 1;
 
    /* Allocate intermediate local buffer. */
@@ -289,22 +289,22 @@
       localPeriodArray[i] = tempInt;
    }
 
-   /* Process each element of the input. 
-    * For each possible period value, the MA is calculated 
+   /* Process each element of the input.
+    * For each possible period value, the MA is calculated
 	* only once.
 	* The outReal is then fill up for all element with
 	* the same period.
 	* A local flag (value 0) is set in localPeriodArray
 	* to avoid doing a second time the same calculation.
-	*/   
+	*/
    for( i=0; i < outputSize; i++ )
    {
 	   curPeriod = localPeriodArray[i];
 	   if( curPeriod != 0 )
 	   {
-           /* TODO: This portion of the function can be slightly speed 
-            *       optimized by making the function without unstable period 
-	        *       start their calculation at 'startIdx+i' instead of startIdx.			
+           /* TODO: This portion of the function can be slightly speed
+            *       optimized by making the function without unstable period
+	        *       start their calculation at 'startIdx+i' instead of startIdx.
 	        */
 
 		   /* Calculation of the MA required. */
@@ -320,7 +320,7 @@
               VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
               return retCode;
 	       }
-		   
+
 		   outReal[i] = localOutputArray[i];
 		   for( j=i+1; j < outputSize; j++ )
 		   {
@@ -329,7 +329,7 @@
 				   localPeriodArray[j] = 0; /* Flag to avoid recalculation */
 				   outReal[j] = localOutputArray[j];
 			   }
-		   }		   
+		   }
 	   }
    }
 
@@ -448,8 +448,8 @@
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
-/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);      
-/* Generated */    }   
+/* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+/* Generated */    }
 /* Generated */    outputSize = endIdx - tempInt + 1;
 /* Generated */    ARRAY_ALLOC(localOutputArray,outputSize);
 /* Generated */    ARRAY_INT_ALLOC(localPeriodArray,outputSize);
@@ -486,7 +486,7 @@
 /* Generated */ 				   localPeriodArray[j] = 0; 
 /* Generated */ 				   outReal[j] = localOutputArray[j];
 /* Generated */ 			   }
-/* Generated */ 		   }		   
+/* Generated */ 		   }
 /* Generated */ 	   }
 /* Generated */    }
 /* Generated */    ARRAY_FREE(localOutputArray);

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -94,7 +94,7 @@
 /* Generated */ 
 /* Generated */ #endif
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
-{   
+{
    /* insert local variable here */
    int maxPeriod;
 /**** START GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
@@ -267,13 +267,13 @@
    usedFlag[0] = 0;
    usedFlag[1] = 0;
    usedFlag[2] = 0;
-   for ( i = 0; i < 3; ++i ) 
+   for ( i = 0; i < 3; ++i )
    {
       longestPeriod = 0;
       longestIndex = 0;
-      for ( j = 0; j < 3; ++j ) 
+      for ( j = 0; j < 3; ++j )
       {
-         if ( (usedFlag[j] == 0) && (periods[j] > longestPeriod) ) 
+         if ( (usedFlag[j] == 0) && (periods[j] > longestPeriod) )
          {
             longestPeriod = periods[j];
             longestIndex = j;
@@ -289,10 +289,10 @@
    /* Adjust startIdx for lookback period. */
    lookbackTotal = LOOKBACK_CALL(ULTOSC)( optInTimePeriod1, optInTimePeriod2, optInTimePeriod3 );
    if( startIdx < lookbackTotal ) startIdx = lookbackTotal;
-   
+
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx ) return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
-   
+
    /* Prime running totals used in moving averages */
    #define CALC_TERMS(day)                        \
    {                                              \
@@ -335,7 +335,7 @@
    trailingIdx2 = today - optInTimePeriod2 + 1;
    trailingIdx3 = today - optInTimePeriod3 + 1;
    while( today <= endIdx )
-   { 
+   {
       /* Add on today's terms */
       CALC_TERMS(today);
       a1Total += closeMinusTrueLow;
@@ -344,14 +344,14 @@
       b1Total += trueRange;
       b2Total += trueRange;
       b3Total += trueRange;
-      
+
       /* Calculate the oscillator value for today */
-      output = 0.0; 
-      
+      output = 0.0;
+
       if( !TA_IS_ZERO(b1Total) ) output += 4.0*(a1Total/b1Total);
       if( !TA_IS_ZERO(b2Total) ) output += 2.0*(a2Total/b2Total);
-      if( !TA_IS_ZERO(b3Total) ) output += a3Total/b3Total; 
-                  
+      if( !TA_IS_ZERO(b3Total) ) output += a3Total/b3Total;
+
       /* Remove the trailing terms to prepare for next day */
       CALC_TERMS(trailingIdx1);
       a1Total -= closeMinusTrueLow;
@@ -360,28 +360,28 @@
       CALC_TERMS(trailingIdx2);
       a2Total -= closeMinusTrueLow;
       b2Total -= trueRange;
-      
+
       CALC_TERMS(trailingIdx3);
       a3Total -= closeMinusTrueLow;
       b3Total -= trueRange;
-      
+
       /* Last operation is to write the output. Must
        * be done after the trailing index have all been
        * taken care of because the caller is allowed
-       * to have the input array to be also the output 
+       * to have the input array to be also the output
        * array.
        */
       outReal[outIdx] = 100.0 * (output / 7.0);
 
       /* Increment indexes */
       outIdx++;
-      today++; 
-      trailingIdx1++; 
-      trailingIdx2++; 
+      today++;
+      trailingIdx1++;
+      trailingIdx2++;
       trailingIdx3++;
    }
    #undef CALC_TERMS
-   
+
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
@@ -493,13 +493,13 @@
 /* Generated */    usedFlag[0] = 0;
 /* Generated */    usedFlag[1] = 0;
 /* Generated */    usedFlag[2] = 0;
-/* Generated */    for ( i = 0; i < 3; ++i ) 
+/* Generated */    for ( i = 0; i < 3; ++i )
 /* Generated */    {
 /* Generated */       longestPeriod = 0;
 /* Generated */       longestIndex = 0;
-/* Generated */       for ( j = 0; j < 3; ++j ) 
+/* Generated */       for ( j = 0; j < 3; ++j )
 /* Generated */       {
-/* Generated */          if ( (usedFlag[j] == 0) && (periods[j] > longestPeriod) ) 
+/* Generated */          if ( (usedFlag[j] == 0) && (periods[j] > longestPeriod) )
 /* Generated */          {
 /* Generated */             longestPeriod = periods[j];
 /* Generated */             longestIndex = j;
@@ -550,7 +550,7 @@
 /* Generated */    trailingIdx2 = today - optInTimePeriod2 + 1;
 /* Generated */    trailingIdx3 = today - optInTimePeriod3 + 1;
 /* Generated */    while( today <= endIdx )
-/* Generated */    { 
+/* Generated */    {
 /* Generated */       CALC_TERMS(today);
 /* Generated */       a1Total += closeMinusTrueLow;
 /* Generated */       a2Total += closeMinusTrueLow;
@@ -558,10 +558,10 @@
 /* Generated */       b1Total += trueRange;
 /* Generated */       b2Total += trueRange;
 /* Generated */       b3Total += trueRange;
-/* Generated */       output = 0.0; 
+/* Generated */       output = 0.0;
 /* Generated */       if( !TA_IS_ZERO(b1Total) ) output += 4.0*(a1Total/b1Total);
 /* Generated */       if( !TA_IS_ZERO(b2Total) ) output += 2.0*(a2Total/b2Total);
-/* Generated */       if( !TA_IS_ZERO(b3Total) ) output += a3Total/b3Total; 
+/* Generated */       if( !TA_IS_ZERO(b3Total) ) output += a3Total/b3Total;
 /* Generated */       CALC_TERMS(trailingIdx1);
 /* Generated */       a1Total -= closeMinusTrueLow;
 /* Generated */       b1Total -= trueRange;
@@ -573,9 +573,9 @@
 /* Generated */       b3Total -= trueRange;
 /* Generated */       outReal[outIdx] = 100.0 * (output / 7.0);
 /* Generated */       outIdx++;
-/* Generated */       today++; 
-/* Generated */       trailingIdx1++; 
-/* Generated */       trailingIdx2++; 
+/* Generated */       today++;
+/* Generated */       trailingIdx1++;
+/* Generated */       trailingIdx2++;
 /* Generated */       trailingIdx3++;
 /* Generated */    }
 /* Generated */    #undef CALC_TERMS

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -98,7 +98,7 @@
 
    /* insert lookback code here. */
 
-   /*  31 input are skip 
+   /*  31 input are skip
     * +32 output are skip to account for misc lookback
     * ---
     *  63 Total Lookback
@@ -200,7 +200,7 @@
    int daysInTrend, trend;
    double prevDCPhase, trendline;
    double prevSine, prevLeadSine, sine, leadSine;
-   
+
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -304,10 +304,10 @@
    } while( --i != 0);
 
    /* Initialize the circular buffers used by the hilbert
-    * transform logic. 
+    * transform logic.
     * A buffer is used for odd day and another for even days.
     * This minimize the number of memory access and floating point
-    * operations needed (note also that by using static circular buffer, 
+    * operations needed (note also that by using static circular buffer,
     * no large dynamic memory allocation is needed for storing
     * intermediate calculation!).
     */
@@ -333,7 +333,7 @@
    /* The code is speed optimized and is most likely very
     * hard to follow if you do not already know well the
     * original algorithm.
-    * To understadn better, it is strongly suggested to look 
+    * To understadn better, it is strongly suggested to look
     * first at the Excel implementation in "test_MAMA.xls" included
     * in this package.
     */
@@ -364,13 +364,13 @@
          I2 = (0.2*(I1ForEvenPrev3 - jQ)) + (0.8*prevI2);
 
          /* The variable I1 is the detrender delayed for
-          * 3 price bars. 
+          * 3 price bars.
           *
           * Save the current detrender value for being
           * used by the "odd" logic later.
           */
          I1ForOddPrev3 = I1ForOddPrev2;
-         I1ForOddPrev2 = detrender;      
+         I1ForOddPrev2 = detrender;
       }
       else
       {
@@ -384,7 +384,7 @@
          I2 = (0.2*(I1ForOddPrev3 - jQ)) + (0.8*prevI2);
 
          /* The varaiable I1 is the detrender delayed for
-          * 3 price bars. 
+          * 3 price bars.
           *
           * Save the current detrender value for being
           * used by the "even" logic later.
@@ -456,7 +456,7 @@
          DCPhase += 180.0;
       if( DCPhase > 315.0 )
          DCPhase -= 360.0;
-       
+
       prevSine     = sine;
       prevLeadSine = leadSine;
       sine     = std_sin(DCPhase*deg2Rad);
@@ -476,12 +476,12 @@
 
       if( DCPeriodInt > 0 )
          tempReal = tempReal/(double)DCPeriodInt;
-      
+
       trendline = (4.0*tempReal + 3.0*iTrend1 + 2.0*iTrend2 + iTrend3) / 10.0;
       iTrend3   = iTrend2;
       iTrend2   = iTrend1;
       iTrend1   = tempReal;
-    
+
       /* Compute the trend Mode , and assume trend by default */
       trend = 1;
 
@@ -520,7 +520,7 @@
    }
 
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
- 
+
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
@@ -683,7 +683,7 @@
 /* Generated */          Q2 = (0.2*(Q1 + jI)) + (0.8*prevQ2);
 /* Generated */          I2 = (0.2*(I1ForEvenPrev3 - jQ)) + (0.8*prevI2);
 /* Generated */          I1ForOddPrev3 = I1ForOddPrev2;
-/* Generated */          I1ForOddPrev2 = detrender;      
+/* Generated */          I1ForOddPrev2 = detrender;
 /* Generated */       }
 /* Generated */       else
 /* Generated */       {

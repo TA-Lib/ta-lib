@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -258,7 +258,7 @@
    // No INT function
 #else
 
-/* The inMovAvg is the moving average of the inReal. 
+/* The inMovAvg is the moving average of the inReal.
  *
  * inMovAvgBegIdx is relative to inReal, in other word
  * this is the 'outBegIdx' who was returned when doing the
@@ -269,34 +269,34 @@
  *
  * Note: This function is not used by TA_STDDEV, since TA_STDDEV
  *       is optimized considering it uses always a simple moving
- *       average. Still the function is put here because it is 
+ *       average. Still the function is put here because it is
  *       closely related.
  */
 #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 void Core::TA_INT_stddev_using_precalc_ma( SubArray<double>^ inReal,
 										SubArray<double>^ inMovAvg,
-                                        int inMovAvgBegIdx,                                    
+                                        int inMovAvgBegIdx,
                                         int inMovAvgNbElement,
                                         int timePeriod,
 										SubArray<double>^ output)
 #elif defined( _MANAGED )
 void Core::TA_INT_stddev_using_precalc_ma( cli::array<INPUT_TYPE>^ inReal,
 										cli::array<double>^ inMovAvg,
-                                        int inMovAvgBegIdx,                                    
+                                        int inMovAvgBegIdx,
                                         int inMovAvgNbElement,
                                         int timePeriod,
 										cli::array<double>^ output)
 #elif defined( _JAVA )
 void TA_INT_stddev_using_precalc_ma( INPUT_TYPE inReal[],
                                      double     inMovAvg[],
-                                     int        inMovAvgBegIdx,                                    
+                                     int        inMovAvgBegIdx,
                                      int        inMovAvgNbElement,
                                      int        timePeriod,
                                      double     output[] )
 #else
 void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
                                              const double *inMovAvg,
-                                             int inMovAvgBegIdx,                                    
+                                             int inMovAvgBegIdx,
                                              int inMovAvgNbElement,
                                              int timePeriod,
                                              double *output )
@@ -334,7 +334,7 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
       tempReal = inMovAvg[outIdx];
       tempReal *= tempReal;
       meanValue2 -= tempReal;
-      
+
       if( !TA_IS_ZERO_OR_NEG(meanValue2) )
          output[outIdx] = std_sqrt(meanValue2);
       else
@@ -450,28 +450,28 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */ void Core::TA_INT_stddev_using_precalc_ma( SubArray<double>^ inReal,
 /* Generated */ 										SubArray<double>^ inMovAvg,
-/* Generated */                                         int inMovAvgBegIdx,                                    
+/* Generated */                                         int inMovAvgBegIdx,
 /* Generated */                                         int inMovAvgNbElement,
 /* Generated */                                         int timePeriod,
 /* Generated */ 										SubArray<double>^ output)
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */ void Core::TA_INT_stddev_using_precalc_ma( cli::array<INPUT_TYPE>^ inReal,
 /* Generated */ 										cli::array<double>^ inMovAvg,
-/* Generated */                                         int inMovAvgBegIdx,                                    
+/* Generated */                                         int inMovAvgBegIdx,
 /* Generated */                                         int inMovAvgNbElement,
 /* Generated */                                         int timePeriod,
 /* Generated */ 										cli::array<double>^ output)
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ void TA_INT_stddev_using_precalc_ma( INPUT_TYPE inReal[],
 /* Generated */                                      double     inMovAvg[],
-/* Generated */                                      int        inMovAvgBegIdx,                                    
+/* Generated */                                      int        inMovAvgBegIdx,
 /* Generated */                                      int        inMovAvgNbElement,
 /* Generated */                                      int        timePeriod,
 /* Generated */                                      double     output[] )
 /* Generated */ #else
 /* Generated */ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */                                              const double *inMovAvg,
-/* Generated */                                              int inMovAvgBegIdx,                                    
+/* Generated */                                              int inMovAvgBegIdx,
 /* Generated */                                              int inMovAvgNbElement,
 /* Generated */                                              int timePeriod,
 /* Generated */                                              double *output )

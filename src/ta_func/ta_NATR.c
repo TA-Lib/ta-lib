@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -225,16 +225,16 @@
     *    - Long term analysis where the price changes drastically.
     *    - Cross-market or cross-security ATR comparison.
     *
-    * More Info: 
+    * More Info:
     *      Technical Analysis of Stock & Commodities (TASC)
     *      May 2006 by John Forman
     */
 
-   /* Average True Range is the greatest of the following: 
+   /* Average True Range is the greatest of the following:
     *
     *  val1 = distance from today's high to today's low.
     *  val2 = distance from yesterday's close to today's high.
-    *  val3 = distance from yesterday's close to today's low.   
+    *  val3 = distance from yesterday's close to today's low.
     *
     * These value are averaged for the specified period using
     * Wilder method. This method have an unstable period comparable
@@ -289,28 +289,28 @@
    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
    {
       ARRAY_FREE( tempBuffer );
-      return retCode;    
+      return retCode;
    }
    prevATR = prevATRTemp[0];
 
    /* Subsequent value are smoothed using the
     * previous ATR value (Wilder's approach).
-    *  1) Multiply the previous ATR by 'period-1'. 
-    *  2) Add today TR value. 
+    *  1) Multiply the previous ATR by 'period-1'.
+    *  2) Add today TR value.
     *  3) Divide by 'period'.
     */
    today = optInTimePeriod;
    outIdx = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
    /* Skip the unstable period. */
    while( outIdx != 0 )
-   {      
+   {
       prevATR *= optInTimePeriod - 1;
       prevATR += tempBuffer[today++];
       prevATR /= optInTimePeriod;
       outIdx--;
    }
 
-   /* Now start to write the final ATR in the caller 
+   /* Now start to write the final ATR in the caller
     * provided outReal.
     */
    outIdx = 1;
@@ -322,7 +322,7 @@
 
    /* Now do the number of requested ATR. */
    nbATR = (endIdx - startIdx)+1;
-   
+
    while( --nbATR != 0 )
    {
       prevATR *= optInTimePeriod - 1;
@@ -338,9 +338,9 @@
 
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
-   
+
    ARRAY_FREE( tempBuffer );
-    
+
    return retCode;
 }
 
@@ -452,13 +452,13 @@
 /* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
 /* Generated */       ARRAY_FREE( tempBuffer );
-/* Generated */       return retCode;    
+/* Generated */       return retCode;
 /* Generated */    }
 /* Generated */    prevATR = prevATRTemp[0];
 /* Generated */    today = optInTimePeriod;
 /* Generated */    outIdx = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
 /* Generated */    while( outIdx != 0 )
-/* Generated */    {      
+/* Generated */    {
 /* Generated */       prevATR *= optInTimePeriod - 1;
 /* Generated */       prevATR += tempBuffer[today++];
 /* Generated */       prevATR /= optInTimePeriod;

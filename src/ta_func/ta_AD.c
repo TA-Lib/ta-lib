@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -190,7 +190,7 @@
    /* Note: Results from this function might vary slightly
     *       from Metastock outputs. The reason being that
     *       Metastock use float instead of double and this
-    *       cause a different floating-point precision to 
+    *       cause a different floating-point precision to
     *       be used.
     *
     *       For most function, this is not an apparent difference
@@ -198,7 +198,7 @@
     *       this AD function), minor imprecision adds up and becomes
     *       significative.
     *
-    *       For better precision, TA-Lib use double in all its 
+    *       For better precision, TA-Lib use double in all its
     *       its calculations.
     */
 
@@ -219,7 +219,7 @@
 
       if( tmp > 0.0 )
          ad += (((close-low)-(high-close))/tmp)*((double)inVolume[currentBar]);
-      
+
       outReal[outIdx++] = ad;
 
       currentBar++;

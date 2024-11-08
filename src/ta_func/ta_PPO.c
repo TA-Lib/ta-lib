@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -255,7 +255,7 @@
                                     1 /* Do percentage processing. */ );
 
    ARRAY_FREE( tempBuffer );
-   
+
    return retCode;
 }
 

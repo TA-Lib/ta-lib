@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -358,7 +358,7 @@
       lookbackLargest = tempInteger;
 
    /* Add the lookback needed for the signal line */
-   lookbackSignal = LOOKBACK_CALL(MA)( optInSignalPeriod, optInSignalMAType ); 
+   lookbackSignal = LOOKBACK_CALL(MA)( optInSignalPeriod, optInSignalMAType );
    lookbackTotal  = lookbackSignal+lookbackLargest;
 
    /* Move up the start index if there is not
@@ -390,7 +390,7 @@
    ARRAY_ALLOC( slowMABuffer, tempInteger );
    #if !defined( _JAVA )
       if( !slowMABuffer )
-      { 
+      {
          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
          VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
          ARRAY_FREE( fastMABuffer );
@@ -398,7 +398,7 @@
       }
    #endif
 
-   /* Calculate the slow MA. 
+   /* Calculate the slow MA.
     *
     * Move back the startIdx to get enough data
     * for the signal period. That way, once the
@@ -408,7 +408,7 @@
    tempInteger = startIdx-lookbackSignal;
    retCode = FUNCTION_CALL(MA)( tempInteger, endIdx,
                                 inReal, optInSlowPeriod, optInSlowMAType,
-                                VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1), 
+                                VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1),
 							    slowMABuffer );
 
    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
@@ -436,8 +436,8 @@
    }
 
    /* Parano tests. Will be removed eventually. */
-   if( (VALUE_HANDLE_GET(outBegIdx1) != tempInteger) || 
-       (VALUE_HANDLE_GET(outBegIdx2) != tempInteger) || 
+   if( (VALUE_HANDLE_GET(outBegIdx1) != tempInteger) ||
+       (VALUE_HANDLE_GET(outBegIdx2) != tempInteger) ||
        (VALUE_HANDLE_GET(outNbElement1) != VALUE_HANDLE_GET(outNbElement2)) ||
        (VALUE_HANDLE_GET(outNbElement1) != (endIdx-startIdx)+1+lookbackSignal) )
    {
@@ -624,7 +624,7 @@
 /* Generated */    tempInteger     = LOOKBACK_CALL(MA)( optInSlowPeriod, optInSlowMAType );
 /* Generated */    if( tempInteger > lookbackLargest )
 /* Generated */       lookbackLargest = tempInteger;
-/* Generated */    lookbackSignal = LOOKBACK_CALL(MA)( optInSignalPeriod, optInSignalMAType ); 
+/* Generated */    lookbackSignal = LOOKBACK_CALL(MA)( optInSignalPeriod, optInSignalMAType );
 /* Generated */    lookbackTotal  = lookbackSignal+lookbackLargest;
 /* Generated */    if( startIdx < lookbackTotal )
 /* Generated */       startIdx = lookbackTotal;
@@ -647,7 +647,7 @@
 /* Generated */    ARRAY_ALLOC( slowMABuffer, tempInteger );
 /* Generated */    #if !defined( _JAVA )
 /* Generated */       if( !slowMABuffer )
-/* Generated */       { 
+/* Generated */       {
 /* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
 /* Generated */          VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */          ARRAY_FREE( fastMABuffer );
@@ -657,7 +657,7 @@
 /* Generated */    tempInteger = startIdx-lookbackSignal;
 /* Generated */    retCode = FUNCTION_CALL(MA)( tempInteger, endIdx,
 /* Generated */                                 inReal, optInSlowPeriod, optInSlowMAType,
-/* Generated */                                 VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1), 
+/* Generated */                                 VALUE_HANDLE_OUT(outBegIdx1), VALUE_HANDLE_OUT(outNbElement1),
 /* Generated */ 							    slowMABuffer );
 /* Generated */    if( retCode != ENUM_VALUE(RetCode,TA_SUCCESS,Success) )
 /* Generated */    {
@@ -679,8 +679,8 @@
 /* Generated */       ARRAY_FREE( slowMABuffer );
 /* Generated */       return retCode;
 /* Generated */    }
-/* Generated */    if( (VALUE_HANDLE_GET(outBegIdx1) != tempInteger) || 
-/* Generated */        (VALUE_HANDLE_GET(outBegIdx2) != tempInteger) || 
+/* Generated */    if( (VALUE_HANDLE_GET(outBegIdx1) != tempInteger) ||
+/* Generated */        (VALUE_HANDLE_GET(outBegIdx2) != tempInteger) ||
 /* Generated */        (VALUE_HANDLE_GET(outNbElement1) != VALUE_HANDLE_GET(outNbElement2)) ||
 /* Generated */        (VALUE_HANDLE_GET(outNbElement1) != (endIdx-startIdx)+1+lookbackSignal) )
 /* Generated */    {

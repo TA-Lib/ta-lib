@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  100304 AC   Creation           
+ *  100304 AC   Creation
  *
  */
 
@@ -229,7 +229,7 @@
    BodyShortPeriodTotal2 = 0;
    BodyLongTrailingIdx = startIdx -2 - TA_CANDLEAVGPERIOD(BodyLong);
    BodyShortTrailingIdx = startIdx -1 - TA_CANDLEAVGPERIOD(BodyShort);
-   
+
    i = BodyLongTrailingIdx;
    while( i < startIdx-2 ) {
         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i );
@@ -252,8 +252,8 @@
     * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
     * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
     * it to be relatively long
-    * outInteger is positive (1 to 100): morning star is always bullish; 
-    * the user should consider that a morning star is significant when it appears in a downtrend, 
+    * outInteger is positive (1 to 100): morning star is always bullish;
+    * the user should consider that a morning star is significant when it appears in a downtrend,
     * while this function does not consider the trend
     */
    outIdx = 0;
@@ -270,13 +270,13 @@
             outInteger[outIdx++] = 100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i-1 ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );
         BodyShortPeriodTotal2 += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx+1 );
-        i++; 
+        i++;
         BodyLongTrailingIdx++;
         BodyShortTrailingIdx++;
    } while( i <= endIdx );
@@ -406,7 +406,7 @@
 /* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
 /* Generated */         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i-1 ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );
 /* Generated */         BodyShortPeriodTotal2 += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx+1 );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         BodyLongTrailingIdx++;
 /* Generated */         BodyShortTrailingIdx++;
 /* Generated */    } while( i <= endIdx );

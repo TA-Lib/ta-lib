@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -107,7 +107,7 @@
 
    /* The lookback is driven by the signal line output.
     *
-    * (must also account for the initial data consume 
+    * (must also account for the initial data consume
     *  by the fix 26 period EMA).
     */
    return   LOOKBACK_CALL(EMA)( 26 )

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -233,7 +233,7 @@ TA_RetCode TA_PREFIX(INT_SMA)( int    startIdx,
 {
    double periodTotal, tempReal;
    int i, outIdx, trailingIdx, lookbackTotal;
-   
+
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */

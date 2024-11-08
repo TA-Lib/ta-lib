@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  020605 AC   Creation           
+ *  020605 AC   Creation
  *
  */
 
@@ -206,7 +206,7 @@
    EqualPeriodTotal = 0;
    NearTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Near);
    EqualTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Equal);
-   
+
    i = NearTrailingIdx;
    while( i < startIdx ) {
         NearPeriodTotal += TA_CANDLERANGE( Near, i-1 );
@@ -223,18 +223,18 @@
     * Must have:
     * - upside or downside gap (between the bodies)
     * - first candle after the window: white candlestick
-    * - second candle after the window: white candlestick with similar size (near the same) and about the same 
+    * - second candle after the window: white candlestick with similar size (near the same) and about the same
     *   open (equal) of the previous candle
     * - the second candle does not close the window
     * The meaning of "near" and "equal" is specified with TA_SetCandleSettings
-    * outInteger is positive (1 to 100) or negative (-1 to -100): the user should consider that upside 
-    * or downside gap side-by-side white lines is significant when it appears in a trend, while this function 
+    * outInteger is positive (1 to 100) or negative (-1 to -100): the user should consider that upside
+    * or downside gap side-by-side white lines is significant when it appears in a trend, while this function
     * does not consider the trend
     */
    outIdx = 0;
    do
    {
-        if( 
+        if(
             ( // upside or downside gap between the 1st candle and both the next 2 candles
               ( TA_REALBODYGAPUP(i-1,i-2) && TA_REALBODYGAPUP(i,i-2) )
               ||
@@ -250,12 +250,12 @@
             outInteger[outIdx++] = ( TA_REALBODYGAPUP(i-1,i-2) ? 100 : -100 );
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         NearPeriodTotal += TA_CANDLERANGE( Near, i-1 ) - TA_CANDLERANGE( Near, NearTrailingIdx-1 );
         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
-        i++; 
+        i++;
         NearTrailingIdx++;
         EqualTrailingIdx++;
    } while( i <= endIdx );
@@ -361,7 +361,7 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */         if( 
+/* Generated */         if(
 /* Generated */             ( // upside or downside gap between the 1st candle and both the next 2 candles
 /* Generated */               ( TA_REALBODYGAPUP(i-1,i-2) && TA_REALBODYGAPUP(i,i-2) )
 /* Generated */               ||
@@ -379,7 +379,7 @@
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         NearPeriodTotal += TA_CANDLERANGE( Near, i-1 ) - TA_CANDLERANGE( Near, NearTrailingIdx-1 );
 /* Generated */         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         NearTrailingIdx++;
 /* Generated */         EqualTrailingIdx++;
 /* Generated */    } while( i <= endIdx );

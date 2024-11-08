@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -179,11 +179,11 @@
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
-   /* True Range is the greatest of the following: 
+   /* True Range is the greatest of the following:
     *
     *  val1 = distance from today's high to today's low.
     *  val2 = distance from yesterday's close to today's high.
-    *  val3 = distance from yesterday's close to today's low.   
+    *  val3 = distance from yesterday's close to today's low.
     *
     * Some books and software makes the first TR value to be
     * the (high - low) of the first bar. This function instead
@@ -197,7 +197,7 @@
     * Always one price bar gets consumed.
     */
    if( startIdx < 1 )
-      startIdx = 1;      
+      startIdx = 1;
 
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
@@ -231,7 +231,7 @@
    }
 
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
-   VALUE_HANDLE_DEREF(outBegIdx)    = startIdx; 
+   VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
@@ -301,7 +301,7 @@
 /* Generated */     #endif 
 /* Generated */  #endif 
 /* Generated */    if( startIdx < 1 )
-/* Generated */       startIdx = 1;      
+/* Generated */       startIdx = 1;
 /* Generated */    if( startIdx > endIdx )
 /* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outBegIdx);
@@ -326,7 +326,7 @@
 /* Generated */       today++;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
-/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx; 
+/* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 

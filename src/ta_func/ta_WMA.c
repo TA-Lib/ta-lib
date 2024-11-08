@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -216,15 +216,15 @@
     * In that case outputs equals inputs for the requested
     * range.
     */
-   if( optInTimePeriod == 1 ) 
-   {      
+   if( optInTimePeriod == 1 )
+   {
       VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
       VALUE_HANDLE_DEREF(outNBElement) = endIdx-startIdx+1;
 
       #if defined( USE_SINGLE_PRECISION_INPUT )
-	    ARRAY_MEMMOVEMIX( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );	    
-      #else	    
-        ARRAY_MEMMOVE   ( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );	  	  
+	    ARRAY_MEMMOVEMIX( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );
+      #else
+        ARRAY_MEMMOVE   ( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );
       #endif
 
       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
@@ -238,13 +238,13 @@
 
    /* The algo used here use a very basic property of
     * multiplication/addition: (x*2) = x+x
-    *   
-    * As an example, a 3 period weighted can be 
+    *
+    * As an example, a 3 period weighted can be
     * interpreted in two way:
     *  (x1*1)+(x2*2)+(x3*3)
     *      OR
     *  x1+x2+x2+x3+x3+x3 (this is the periodSum)
-    *   
+    *
     * When you move forward in the time serie
     * you can quickly adjust the periodSum for the
     * period by substracting:
@@ -386,14 +386,14 @@
 /* Generated */       VALUE_HANDLE_DEREF_TO_ZERO(outNBElement);
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }
-/* Generated */    if( optInTimePeriod == 1 ) 
-/* Generated */    {      
+/* Generated */    if( optInTimePeriod == 1 )
+/* Generated */    {
 /* Generated */       VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */       VALUE_HANDLE_DEREF(outNBElement) = endIdx-startIdx+1;
 /* Generated */       #if defined( USE_SINGLE_PRECISION_INPUT )
-/* Generated */ 	    ARRAY_MEMMOVEMIX( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );	    
-/* Generated */       #else	    
-/* Generated */         ARRAY_MEMMOVE   ( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );	  	  
+/* Generated */ 	    ARRAY_MEMMOVEMIX( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );
+/* Generated */       #else
+/* Generated */         ARRAY_MEMMOVE   ( outReal, 0, inReal, startIdx, (int)VALUE_HANDLE_DEREF(outNBElement) );
 /* Generated */       #endif
 /* Generated */       return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */    }

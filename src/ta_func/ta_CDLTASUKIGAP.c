@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  011605 AC   Creation           
+ *  011605 AC   Creation
  *
  */
 
@@ -221,14 +221,14 @@
     * - the size of two real bodies should be near the same
     * The meaning of "near" is specified with TA_SetCandleSettings
     * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-    * the user should consider that tasuki gap is significant when it appears in a trend, while this function does 
+    * the user should consider that tasuki gap is significant when it appears in a trend, while this function does
     * not consider it
     */
    outIdx = 0;
    do
    {
-        if( 
-            ( 
+        if(
+            (
                 TA_REALBODYGAPUP(i-1,i-2) &&                                // upside gap
                 TA_CANDLECOLOR(i-1) == 1 &&                                 // 1st: white
                 TA_CANDLECOLOR(i) == -1 &&                                  // 2nd: black
@@ -252,11 +252,11 @@
             outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         NearPeriodTotal += TA_CANDLERANGE( Near, i-1 ) - TA_CANDLERANGE( Near, NearTrailingIdx-1 );
-        i++; 
+        i++;
         NearTrailingIdx++;
    } while( i <= endIdx );
 
@@ -354,8 +354,8 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */         if( 
-/* Generated */             ( 
+/* Generated */         if(
+/* Generated */             (
 /* Generated */                 TA_REALBODYGAPUP(i-1,i-2) &&                                // upside gap
 /* Generated */                 TA_CANDLECOLOR(i-1) == 1 &&                                 // 1st: white
 /* Generated */                 TA_CANDLECOLOR(i) == -1 &&                                  // 2nd: black
@@ -380,7 +380,7 @@
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         NearPeriodTotal += TA_CANDLERANGE( Near, i-1 ) - TA_CANDLERANGE( Near, NearTrailingIdx-1 );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         NearTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;

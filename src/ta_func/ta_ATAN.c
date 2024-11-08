@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -170,7 +170,7 @@
    for( i=startIdx, outIdx=0; i <= endIdx; i++, outIdx++ )
    {
       outReal[outIdx] = std_atan(inReal[i]);
-   }    
+   }
 
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
@@ -235,7 +235,7 @@
 /* Generated */    for( i=startIdx, outIdx=0; i <= endIdx; i++, outIdx++ )
 /* Generated */    {
 /* Generated */       outReal[outIdx] = std_atan(inReal[i]);
-/* Generated */    }    
+/* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -114,7 +114,7 @@
    /* insert lookback code here. */
 
    /* The two parameters are not a factor to determine
-    * the lookback, but are still requested for 
+    * the lookback, but are still requested for
     * consistency with all other Lookback functions.
     */
    UNUSED_VARIABLE(optInFastLimit);
@@ -124,7 +124,7 @@
     *
     *
     * The fix lookback is 32 and is establish as follow:
-    *    
+    *
     *         12 price bar to be compatible with the implementation
     *            of TradeStation found in John Ehlers book.
     *          6 price bars for the Detrender
@@ -338,10 +338,10 @@
    } while( --i != 0);
 
    /* Initialize the circular buffers used by the hilbert
-    * transform logic. 
+    * transform logic.
     * A buffer is used for odd day and another for even days.
     * This minimize the number of memory access and floating point
-    * operations needed (note also that by using static circular buffer, 
+    * operations needed (note also that by using static circular buffer,
     * no large dynamic memory allocation is needed for storing
     * intermediate calculation!).
     */
@@ -366,7 +366,7 @@
    /* The code is speed optimized and is most likely very
     * hard to follow if you do not already know well the
     * original algorithm.
-    * To understadn better, it is strongly suggested to look 
+    * To understadn better, it is strongly suggested to look
     * first at the Excel implementation in "test_MAMA.xls" included
     * in this package.
     */
@@ -391,7 +391,7 @@
          I2 = (0.2*(I1ForEvenPrev3 - jQ)) + (0.8*prevI2);
 
          /* The variable I1 is the detrender delayed for
-          * 3 price bars. 
+          * 3 price bars.
           *
           * Save the current detrender value for being
           * used by the "odd" logic later.
@@ -417,7 +417,7 @@
          I2 = (0.2*(I1ForOddPrev3 - jQ)) + (0.8*prevI2);
 
          /* The varaiable I1 is the detrender delayed for
-          * 3 price bars. 
+          * 3 price bars.
           *
           * Save the current detrender value for being
           * used by the "odd" logic later.
@@ -448,7 +448,7 @@
       else
       {
          tempReal = optInFastLimit;
-      }  
+      }
 
       /* Calculate MAMA, FAMA */
       mama = (tempReal*todayValue)+((1-tempReal)*mama);
@@ -684,7 +684,7 @@
 /* Generated */       else
 /* Generated */       {
 /* Generated */          tempReal = optInFastLimit;
-/* Generated */       }  
+/* Generated */       }
 /* Generated */       mama = (tempReal*todayValue)+((1-tempReal)*mama);
 /* Generated */       tempReal *= 0.5;
 /* Generated */       fama = (tempReal*mama)+((1-tempReal)*fama);

@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -102,7 +102,7 @@
 /**** END GENCODE SECTION 2 - DO NOT DELETE THIS LINE ****/
 
    /* insert lookback code here. */
-     
+
    return (optInTimePeriod-1);
 }
 
@@ -280,7 +280,7 @@
       outMin[outIdx] = lowest;
       outIdx++;
       trailingIdx++;
-      today++;  
+      today++;
    }
 
    /* Keep the outBegIdx relative to the
@@ -424,7 +424,7 @@
 /* Generated */       outMin[outIdx] = lowest;
 /* Generated */       outIdx++;
 /* Generated */       trailingIdx++;
-/* Generated */       today++;  
+/* Generated */       today++;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;

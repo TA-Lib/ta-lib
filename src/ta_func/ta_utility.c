@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -74,11 +74,11 @@ TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
    if( id == ENUM_VALUE(FuncUnstId,TA_FUNC_UNST_ALL,FuncUnstAll) )
    {
       for( i=0; i < (int)ENUM_VALUE(FuncUnstId,TA_FUNC_UNST_ALL,FuncUnstAll); i++ )
-	  {		  
+	  {
          #if defined( _MANAGED )
             Globals->unstablePeriod[(int)i] = unstablePeriod;
          #else
-            TA_Globals->unstablePeriod[i] = unstablePeriod;   
+            TA_Globals->unstablePeriod[i] = unstablePeriod;
          #endif
 	  }
    }
@@ -87,8 +87,8 @@ TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
          #if defined( _MANAGED )
             Globals->unstablePeriod[(int)id] = unstablePeriod;
          #else
-            TA_Globals->unstablePeriod[id] = unstablePeriod;   
-         #endif      
+            TA_Globals->unstablePeriod[id] = unstablePeriod;
+         #endif
    }
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);

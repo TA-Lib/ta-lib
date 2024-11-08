@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -324,7 +324,7 @@ static const TA_OutputParameterInfo   *TA_MAVP_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_MAVP_OptInputs[] =
-{ 
+{
   &TA_DEF_UI_MinPeriod,
   &TA_DEF_UI_MaxPeriod,
   &TA_DEF_UI_MA_Method,
@@ -428,7 +428,7 @@ static const TA_OutputParameterInfo   *TA_MFI_Outputs[]   =
   NULL
 };
 
-static const TA_OptInputParameterInfo *TA_MFI_OptInputs[] = 
+static const TA_OptInputParameterInfo *TA_MFI_OptInputs[] =
 {
   &TA_DEF_UI_TimePeriod_14_MINIMUM2,
   NULL
@@ -455,7 +455,7 @@ static const TA_OutputParameterInfo   *TA_MIDPRICE_Outputs[]   =
   NULL
 };
 
-static const TA_OptInputParameterInfo *TA_MIDPRICE_OptInputs[] = 
+static const TA_OptInputParameterInfo *TA_MIDPRICE_OptInputs[] =
 { &TA_DEF_UI_TimePeriod_14_MINIMUM2,
   NULL
 };
@@ -635,7 +635,7 @@ DEF_FUNCTION( MINUS_DI,                      /* name */
               TA_GroupId_MomentumIndicators,    /* groupId */
               "Minus Directional Indicator", /* hint */
               "MinusDI",                     /* CamelCase name */
-              TA_FUNC_FLG_UNST_PER           /* flags */              
+              TA_FUNC_FLG_UNST_PER           /* flags */
              );
 
 /* MINUS_DI END */

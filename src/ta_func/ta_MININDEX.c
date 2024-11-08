@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -220,7 +220,7 @@
    trailingIdx = startIdx-nbInitialElementNeeded;
    lowestIdx   = -1;
    lowest      = 0.0;
-   
+
    while( today <= endIdx )
    {
       tmp = inReal[today];
@@ -248,7 +248,7 @@
 
       outInteger[outIdx++] = lowestIdx;
       trailingIdx++;
-      today++;  
+      today++;
    }
 
    /* Keep the outBegIdx relative to the
@@ -362,7 +362,7 @@
 /* Generated */       }
 /* Generated */       outInteger[outIdx++] = lowestIdx;
 /* Generated */       trailingIdx++;
-/* Generated */       today++;  
+/* Generated */       today++;
 /* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;

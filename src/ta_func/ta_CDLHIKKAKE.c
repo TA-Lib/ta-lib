@@ -1,4 +1,4 @@
-/* TA-LIB Copyright (c) 1999-2008, Mario Fortier
+/* TA-LIB Copyright (c) 1999-2024, Mario Fortier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  120305 AC   Creation           
+ *  120305 AC   Creation
  *
  */
 
@@ -153,7 +153,7 @@
 {
    /* Insert local variables here. */
     int i, outIdx, lookbackTotal, patternIdx, patternResult;
-    
+
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
@@ -224,7 +224,7 @@
                 )
             )
                 patternIdx = 0;
-        i++; 
+        i++;
    }
 
    i = startIdx;
@@ -264,7 +264,7 @@
                 patternIdx = 0;
             } else
                 outInteger[outIdx++] = 0;
-        i++; 
+        i++;
    } while( i <= endIdx );
 
    /* All done. Indicate the output limits and return. */
@@ -369,7 +369,7 @@
 /* Generated */                 )
 /* Generated */             )
 /* Generated */                 patternIdx = 0;
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = startIdx;
 /* Generated */    outIdx = 0;
@@ -395,7 +395,7 @@
 /* Generated */                 patternIdx = 0;
 /* Generated */             } else
 /* Generated */                 outInteger[outIdx++] = 0;
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
