@@ -51,13 +51,13 @@
 package com.tictactec.ta.lib;
 
 public class Core {
-   
+
    private int[] unstablePeriod;
-   
+
    private CandleSetting[] candleSettings;
-   
+
    private Compatibility compatibility;
-   
+
    /** Creates a new instance of Core */
    public Core() {
       unstablePeriod = new int[com.tictactec.ta.lib.FuncUnstId.All
@@ -69,7 +69,7 @@ public class Core {
          candleSettings[i] = new CandleSetting(TA_CandleDefaultSettings[i]);
       }
    }
-   
+
    public RetCode SetCandleSettings(CandleSettingType settingType,
       RangeType rangeType, int avgPeriod, double factor) {
       if (settingType.ordinal() >= CandleSettingType.AllCandleSettings
@@ -81,7 +81,7 @@ public class Core {
       candleSettings[settingType.ordinal()].factor = factor;
       return RetCode.Success;
    }
-   
+
    final private CandleSetting TA_CandleDefaultSettings[] = {
       /*
       * real body is long when it's longer than the average of the 10
@@ -146,7 +146,7 @@ public class Core {
       */
       new CandleSetting(CandleSettingType.Equal,
          RangeType.HighLow, 5, 0.05) };
-   
+
    public RetCode RestoreCandleDefaultSettings(
       CandleSettingType settingType) {
       int i;
@@ -163,7 +163,7 @@ public class Core {
       }
       return RetCode.Success;
    }
-   
+
    public RetCode SetUnstablePeriod(FuncUnstId id, int period)
    {
       if (id.ordinal() >= FuncUnstId.All
@@ -172,22 +172,22 @@ public class Core {
       unstablePeriod[id.ordinal()] = period;
       return RetCode.Success;
    }
-   
+
    public int GetUnstablePeriod(FuncUnstId id)
    {
       return unstablePeriod[id.ordinal()];
    }
-   
+
    public void SetCompatibility(Compatibility compatibility)
    {
       this.compatibility = compatibility;
    }
-   
+
    public Compatibility getCompatibility()
    {
       return compatibility;
    }
-   
+
    /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
    public int accbandsLookback( int optInTimePeriod )
    {
@@ -22001,15 +22001,15 @@ public class Core {
          inReal, optInTimePeriod,
          outBegIdx, outNBElement, outReal );
    }
-   RetCode TA_INT_SMA( int startIdx,
+   TA_INT_SMA( int startIdx,
       int endIdx,
-      double inReal[],
+      double inReal[], <-- Arrays
       int optInTimePeriod,
       MInteger outBegIdx,
       MInteger outNBElement,
-      double outReal[] )
+      double outReal[] ) : RetCode
    {
-      double periodTotal, tempReal;
+      let mut  periodTotal, tempReal;
       int i, outIdx, trailingIdx, lookbackTotal;
       lookbackTotal = (optInTimePeriod-1);
       if( startIdx < lookbackTotal )
@@ -25272,5 +25272,5 @@ public class Core {
    }
    /* Generated */
    /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
-   
+
 }

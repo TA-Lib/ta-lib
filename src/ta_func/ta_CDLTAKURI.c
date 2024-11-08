@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  011505 AC   Creation           
+ *  011505 AC   Creation
  *
  */
 
@@ -210,7 +210,7 @@
    ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowVeryShort);
    ShadowVeryLongPeriodTotal = 0;
    ShadowVeryLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowVeryLong);
-   
+
    i = BodyDojiTrailingIdx;
    while( i < startIdx ) {
         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i );
@@ -239,9 +239,6 @@
     */
    outIdx = 0;
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
    do
    {
         if( TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) &&
@@ -251,20 +248,19 @@
             outInteger[outIdx++] = 100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
-        ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i ) 
+        ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i )
                                     - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx );
-        ShadowVeryLongPeriodTotal += TA_CANDLERANGE( ShadowVeryLong, i ) 
+        ShadowVeryLongPeriodTotal += TA_CANDLERANGE( ShadowVeryLong, i )
                                    - TA_CANDLERANGE( ShadowVeryLong, ShadowVeryLongTrailingIdx );
-        i++; 
+        i++;
         BodyDojiTrailingIdx++;
         ShadowVeryShortTrailingIdx++;
         ShadowVeryLongTrailingIdx++;
    } while( i <= endIdx );
-#endif
 
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
@@ -276,7 +272,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -372,8 +367,6 @@
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    outIdx = 0;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) &&
@@ -384,16 +377,15 @@
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
-/* Generated */         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i ) 
+/* Generated */         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i )
 /* Generated */                                     - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx );
-/* Generated */         ShadowVeryLongPeriodTotal += TA_CANDLERANGE( ShadowVeryLong, i ) 
+/* Generated */         ShadowVeryLongPeriodTotal += TA_CANDLERANGE( ShadowVeryLong, i )
 /* Generated */                                    - TA_CANDLERANGE( ShadowVeryLong, ShadowVeryLongTrailingIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         BodyDojiTrailingIdx++;
 /* Generated */         ShadowVeryShortTrailingIdx++;
 /* Generated */         ShadowVeryLongTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
-/* Generated */ #endif
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);

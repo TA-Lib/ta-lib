@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  010605 AC   Creation           
+ *  010605 AC   Creation
  *
  */
 
@@ -157,10 +157,6 @@
 	ARRAY_LOCAL(BodyLongPeriodTotal,2);
     int i, outIdx, totIdx, EqualTrailingIdx, BodyLongTrailingIdx, lookbackTotal;
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
-
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
@@ -238,9 +234,6 @@
    outIdx = 0;
    do
    {
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
         if( TA_CANDLECOLOR(i-1) == -TA_CANDLECOLOR(i) &&                                        // opposite candles
             TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal[1], i-1 ) &&     // 1st long
             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal[0], i ) &&         // 2nd long
@@ -250,13 +243,13 @@
             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
         else
             outInteger[outIdx++] = 0;
-#endif
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
         for (totIdx = 1; totIdx >= 0; --totIdx)
-            BodyLongPeriodTotal[totIdx] += TA_CANDLERANGE( BodyLong, i-totIdx ) 
+            BodyLongPeriodTotal[totIdx] += TA_CANDLERANGE( BodyLong, i-totIdx )
                                          - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-totIdx );
         i++;
         EqualTrailingIdx++;
@@ -273,7 +266,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -325,8 +317,6 @@
 /* Generated */     double EqualPeriodTotal;
 /* Generated */ 	ARRAY_LOCAL(BodyLongPeriodTotal,2);
 /* Generated */     int i, outIdx, totIdx, EqualTrailingIdx, BodyLongTrailingIdx, lookbackTotal;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #endif
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -370,8 +360,6 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */         if( TA_CANDLECOLOR(i-1) == -TA_CANDLECOLOR(i) &&                                        // opposite candles
 /* Generated */             TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal[1], i-1 ) &&     // 1st long
 /* Generated */             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal[0], i ) &&         // 2nd long
@@ -381,10 +369,9 @@
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
-/* Generated */ #endif
 /* Generated */         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
 /* Generated */         for (totIdx = 1; totIdx >= 0; --totIdx)
-/* Generated */             BodyLongPeriodTotal[totIdx] += TA_CANDLERANGE( BodyLong, i-totIdx ) 
+/* Generated */             BodyLongPeriodTotal[totIdx] += TA_CANDLERANGE( BodyLong, i-totIdx )
 /* Generated */                                          - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-totIdx );
 /* Generated */         i++;
 /* Generated */         EqualTrailingIdx++;

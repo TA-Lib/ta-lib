@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  010705 AC   Creation           
+ *  010705 AC   Creation
  *
  */
 
@@ -236,9 +236,6 @@
    outIdx = 0;
    do
    {
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
         if( TA_CANDLECOLOR(i-1) == -TA_CANDLECOLOR(i) &&                                        // opposite candles
             // 1st marubozu
             TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal[1], i-1 ) &&
@@ -249,7 +246,7 @@
             TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&
             TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&
             // gap
-            ( 
+            (
               ( TA_CANDLECOLOR(i-1) == -1 && TA_CANDLEGAPUP(i,i-1) )
               ||
               ( TA_CANDLECOLOR(i-1) == 1 && TA_CANDLEGAPDOWN(i,i-1) )
@@ -258,14 +255,14 @@
             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
         else
             outInteger[outIdx++] = 0;
-#endif
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         for (totIdx = 1; totIdx >= 0; --totIdx) {
-            BodyLongPeriodTotal[totIdx] += TA_CANDLERANGE( BodyLong, i-totIdx ) 
+            BodyLongPeriodTotal[totIdx] += TA_CANDLERANGE( BodyLong, i-totIdx )
                                          - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-totIdx );
-            ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx ) 
+            ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx )
                                                 - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
         }
         i++;
@@ -283,7 +280,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -380,8 +376,6 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */         if( TA_CANDLECOLOR(i-1) == -TA_CANDLECOLOR(i) &&                                        // opposite candles
 /* Generated */             // 1st marubozu
 /* Generated */             TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal[1], i-1 ) &&
@@ -392,7 +386,7 @@
 /* Generated */             TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&
 /* Generated */             TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&
 /* Generated */             // gap
-/* Generated */             ( 
+/* Generated */             (
 /* Generated */               ( TA_CANDLECOLOR(i-1) == -1 && TA_CANDLEGAPUP(i,i-1) )
 /* Generated */               ||
 /* Generated */               ( TA_CANDLECOLOR(i-1) == 1 && TA_CANDLEGAPDOWN(i,i-1) )
@@ -401,11 +395,10 @@
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
-/* Generated */ #endif
 /* Generated */         for (totIdx = 1; totIdx >= 0; --totIdx) {
-/* Generated */             BodyLongPeriodTotal[totIdx] += TA_CANDLERANGE( BodyLong, i-totIdx ) 
+/* Generated */             BodyLongPeriodTotal[totIdx] += TA_CANDLERANGE( BodyLong, i-totIdx )
 /* Generated */                                          - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-totIdx );
-/* Generated */             ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx ) 
+/* Generated */             ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx )
 /* Generated */                                                 - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
 /* Generated */         }
 /* Generated */         i++;

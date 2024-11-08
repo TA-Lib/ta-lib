@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  110104 AC   Creation           
+ *  110104 AC   Creation
  *
  */
 
@@ -206,7 +206,7 @@
    BodyShortPeriodTotal = 0;
    BodyLongTrailingIdx = startIdx -2 - TA_CANDLEAVGPERIOD(BodyLong);
    BodyShortTrailingIdx = startIdx -1 - TA_CANDLEAVGPERIOD(BodyShort);
-   
+
    i = BodyLongTrailingIdx;
    while( i < startIdx-2 ) {
         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i );
@@ -224,17 +224,14 @@
     * - first candle: white candle, usually long
     * - second candle: small black real body
     * - gap between the first and the second candle's real bodies
-    * - third candle: black candle with a real body that engulfs the preceding candle 
+    * - third candle: black candle with a real body that engulfs the preceding candle
     *   and closes above the white candle's close
     * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-    * outInteger is negative (-1 to -100): upside gap two crows is always bearish; 
-    * the user should consider that an upside gap two crows is significant when it appears in an uptrend, 
+    * outInteger is negative (-1 to -100): upside gap two crows is always bearish;
+    * the user should consider that an upside gap two crows is significant when it appears in an uptrend,
     * while this function does not consider the trend
     */
    outIdx = 0;
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
    do
    {
         if( TA_CANDLECOLOR(i-2) == 1 &&                                                             // 1st: white
@@ -249,16 +246,15 @@
             outInteger[outIdx++] = -100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i-1 ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );
-        i++; 
+        i++;
         BodyLongTrailingIdx++;
         BodyShortTrailingIdx++;
    } while( i <= endIdx );
-#endif
 
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
@@ -270,7 +266,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -360,8 +355,6 @@
 /* Generated */    }
 /* Generated */    i = startIdx;
 /* Generated */    outIdx = 0;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( TA_CANDLECOLOR(i-2) == 1 &&                                                             // 1st: white
@@ -378,11 +371,10 @@
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
 /* Generated */         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i-1 ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         BodyLongTrailingIdx++;
 /* Generated */         BodyShortTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
-/* Generated */ #endif
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);

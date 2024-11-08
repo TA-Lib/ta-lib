@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  011505 AC   Creation           
+ *  011505 AC   Creation
  *
  */
 
@@ -221,15 +221,12 @@
     * - fifth candle: white (black) day that closes inside the gap, erasing the prior 3 days
     * The meaning of "long" is specified with TA_SetCandleSettings
     * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-    * the user should consider that breakaway is significant in a trend opposite to the last candle, while this 
+    * the user should consider that breakaway is significant in a trend opposite to the last candle, while this
     * function does not consider it
     */
    outIdx = 0;
    do
    {
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
         if( TA_REALBODY(i-4) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-4 ) &&     // 1st long
             TA_CANDLECOLOR(i-4) == TA_CANDLECOLOR(i-3) &&                   // 1st, 2nd, 4th same color, 5th opposite
             TA_CANDLECOLOR(i-3) == TA_CANDLECOLOR(i-1) &&
@@ -240,24 +237,23 @@
                 inHigh[i-2] < inHigh[i-3] && inLow[i-2] < inLow[i-3] &&     // 3rd has lower high and low than 2nd
                 inHigh[i-1] < inHigh[i-2] && inLow[i-1] < inLow[i-2] &&     // 4th has lower high and low than 3rd
                 inClose[i] > inOpen[i-3] && inClose[i] < inClose[i-4]       // 5th closes inside the gap
-              ) 
+              )
               ||
               ( TA_CANDLECOLOR(i-4) == 1 &&                                 // when 1st is white:
                 TA_REALBODYGAPUP(i-3,i-4) &&                                // 2nd gaps up
                 inHigh[i-2] > inHigh[i-3] && inLow[i-2] > inLow[i-3] &&     // 3rd has higher high and low than 2nd
                 inHigh[i-1] > inHigh[i-2] && inLow[i-1] > inLow[i-2] &&     // 4th has higher high and low than 3rd
                 inClose[i] < inOpen[i-3] && inClose[i] > inClose[i-4]       // 5th closes inside the gap
-              ) 
+              )
             )
           )
-#endif
             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
-        BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-4 ) 
+        BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-4 )
                              - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-4 );
         i++;
         BodyLongTrailingIdx++;
@@ -273,7 +269,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -358,8 +353,6 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */         if( TA_REALBODY(i-4) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-4 ) &&     // 1st long
 /* Generated */             TA_CANDLECOLOR(i-4) == TA_CANDLECOLOR(i-3) &&                   // 1st, 2nd, 4th same color, 5th opposite
 /* Generated */             TA_CANDLECOLOR(i-3) == TA_CANDLECOLOR(i-1) &&
@@ -370,21 +363,20 @@
 /* Generated */                 inHigh[i-2] < inHigh[i-3] && inLow[i-2] < inLow[i-3] &&     // 3rd has lower high and low than 2nd
 /* Generated */                 inHigh[i-1] < inHigh[i-2] && inLow[i-1] < inLow[i-2] &&     // 4th has lower high and low than 3rd
 /* Generated */                 inClose[i] > inOpen[i-3] && inClose[i] < inClose[i-4]       // 5th closes inside the gap
-/* Generated */               ) 
+/* Generated */               )
 /* Generated */               ||
 /* Generated */               ( TA_CANDLECOLOR(i-4) == 1 &&                                 // when 1st is white:
 /* Generated */                 TA_REALBODYGAPUP(i-3,i-4) &&                                // 2nd gaps up
 /* Generated */                 inHigh[i-2] > inHigh[i-3] && inLow[i-2] > inLow[i-3] &&     // 3rd has higher high and low than 2nd
 /* Generated */                 inHigh[i-1] > inHigh[i-2] && inLow[i-1] > inLow[i-2] &&     // 4th has higher high and low than 3rd
 /* Generated */                 inClose[i] < inOpen[i-3] && inClose[i] > inClose[i-4]       // 5th closes inside the gap
-/* Generated */               ) 
+/* Generated */               )
 /* Generated */             )
 /* Generated */           )
-/* Generated */ #endif
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i) * 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
-/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-4 ) 
+/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-4 )
 /* Generated */                              - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-4 );
 /* Generated */         i++;
 /* Generated */         BodyLongTrailingIdx++;

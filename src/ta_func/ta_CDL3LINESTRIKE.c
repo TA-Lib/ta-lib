@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  121104 AC   Creation           
+ *  121104 AC   Creation
  *
  */
 
@@ -205,7 +205,7 @@
    NearPeriodTotal[3] = 0;
    NearPeriodTotal[2] = 0;
    NearTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Near);
-   
+
    i = NearTrailingIdx;
    while( i < startIdx ) {
         NearPeriodTotal[3] += TA_CANDLERANGE( Near, i-3 );
@@ -218,7 +218,7 @@
     * Must have:
     * - three white soldiers (three black crows): three white (black) candlesticks with consecutively higher (lower) closes,
     * each opening within or near the previous real body
-    * - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above) 
+    * - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above)
     * the first candle's open
     * The meaning of "near" is specified with TA_SetCandleSettings;
     * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
@@ -228,9 +228,6 @@
    outIdx = 0;
    do
    {
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
         if( TA_CANDLECOLOR(i-3) == TA_CANDLECOLOR(i-2) &&                                   // three with same color
             TA_CANDLECOLOR(i-2) == TA_CANDLECOLOR(i-1) &&
             TA_CANDLECOLOR(i) == -TA_CANDLECOLOR(i-1) &&                                    // 4th opposite color
@@ -258,14 +255,14 @@
             outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;
         else
             outInteger[outIdx++] = 0;
-#endif
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         for (totIdx = 3; totIdx >= 2; --totIdx)
-            NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx ) 
+            NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx )
                                      - TA_CANDLERANGE( Near, NearTrailingIdx-totIdx );
-        i++; 
+        i++;
         NearTrailingIdx++;
    } while( i <= endIdx );
 
@@ -279,7 +276,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -366,8 +362,6 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */         if( TA_CANDLECOLOR(i-3) == TA_CANDLECOLOR(i-2) &&                                   // three with same color
 /* Generated */             TA_CANDLECOLOR(i-2) == TA_CANDLECOLOR(i-1) &&
 /* Generated */             TA_CANDLECOLOR(i) == -TA_CANDLECOLOR(i-1) &&                                    // 4th opposite color
@@ -395,11 +389,10 @@
 /* Generated */             outInteger[outIdx++] = TA_CANDLECOLOR(i-1) * 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
-/* Generated */ #endif
 /* Generated */         for (totIdx = 3; totIdx >= 2; --totIdx)
-/* Generated */             NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx ) 
+/* Generated */             NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx )
 /* Generated */                                      - TA_CANDLERANGE( Near, NearTrailingIdx-totIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         NearTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;

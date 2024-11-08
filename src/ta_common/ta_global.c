@@ -64,10 +64,6 @@
 #include "ta_global.h"
 #include "ta_func.h"
 
-#ifdef TA_LIB_PRO
-/* Section for code distributed with TA-Lib Pro only. */
-#endif
-
 /**** External functions declarations. ****/
 /* None */
 
@@ -97,11 +93,7 @@ TA_RetCode TA_Initialize( void )
     * variables of all other modules...
     */
    memset( TA_Globals, 0, sizeof( TA_LibcPriv ) );
-   TA_Globals->magicNb = TA_LIBC_PRIV_MAGIC_NB;	  
-
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
+   TA_Globals->magicNb = TA_LIBC_PRIV_MAGIC_NB;
 
    /*** At this point, TA_Shutdown can be called to clean-up. ***/
 
@@ -122,9 +114,9 @@ TA_RetCode TA_Shutdown( void )
    return TA_SUCCESS;
 }
 
-TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType, 
-                                 TA_RangeType rangeType, 
-                                 int avgPeriod, 
+TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
+                                 TA_RangeType rangeType,
+                                 int avgPeriod,
                                  double factor )
 {
     /*printf("setcdlset:%d  ",settingType);*/

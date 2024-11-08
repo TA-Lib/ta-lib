@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  102404 AC   Creation           
+ *  102404 AC   Creation
  *  040309 AC   Increased flexibility to allow real bodies matching
  *              on one end (Greg Morris - "Candlestick charting explained")
  *
@@ -208,7 +208,7 @@
    BodyDojiPeriodTotal = 0;
    BodyLongTrailingIdx = startIdx -1 - TA_CANDLEAVGPERIOD(BodyLong);
    BodyDojiTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyDoji);
-   
+
    i = BodyLongTrailingIdx;
    while( i < startIdx-1 ) {
         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i );
@@ -221,32 +221,25 @@
    }
    i = startIdx;
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
-
    /* Proceed with the calculation for the requested range.
     * Must have:
     * - first candle: long white (black) real body
     * - second candle: doji totally engulfed by the first
     * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-    * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish; 
-    * the user should consider that a harami cross is significant when it appears in a downtrend if bullish or 
+    * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
+    * the user should consider that a harami cross is significant when it appears in a downtrend if bullish or
     * in an uptrend when bearish, while this function does not consider the trend
     */
    outIdx = 0;
    do
    {
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
         if( TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-1 ) &&         // 1st: long
             TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) )             // 2nd: doji
             if ( max( inClose[i], inOpen[i] ) < max( inClose[i-1], inOpen[i-1] ) &&              // 2nd is engulfed by 1st
                  min( inClose[i], inOpen[i] ) > min( inClose[i-1], inOpen[i-1] )
                )
                 outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 100;
-            else 
+            else
                 if ( max( inClose[i], inOpen[i] ) <= max( inClose[i-1], inOpen[i-1] ) &&         // 2nd is engulfed by 1st
                      min( inClose[i], inOpen[i] ) >= min( inClose[i-1], inOpen[i-1] )            // (one end of real body can match;
                    )                                                                             // engulfing guaranteed by "long" and "doji")
@@ -255,13 +248,13 @@
                     outInteger[outIdx++] = 0;
         else
             outInteger[outIdx++] = 0;
-#endif
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
-        i++; 
+        i++;
         BodyLongTrailingIdx++;
         BodyDojiTrailingIdx++;
    } while( i <= endIdx );
@@ -276,7 +269,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -365,20 +357,16 @@
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = startIdx;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #endif
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */         if( TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-1 ) &&         // 1st: long
 /* Generated */             TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) )             // 2nd: doji
 /* Generated */             if ( max( inClose[i], inOpen[i] ) < max( inClose[i-1], inOpen[i-1] ) &&              // 2nd is engulfed by 1st
 /* Generated */                  min( inClose[i], inOpen[i] ) > min( inClose[i-1], inOpen[i-1] )
 /* Generated */                )
 /* Generated */                 outInteger[outIdx++] = -TA_CANDLECOLOR(i-1) * 100;
-/* Generated */             else 
+/* Generated */             else
 /* Generated */                 if ( max( inClose[i], inOpen[i] ) <= max( inClose[i-1], inOpen[i-1] ) &&         // 2nd is engulfed by 1st
 /* Generated */                      min( inClose[i], inOpen[i] ) >= min( inClose[i-1], inOpen[i-1] )            // (one end of real body can match;
 /* Generated */                    )                                                                             // engulfing guaranteed by "long" and "doji")
@@ -387,10 +375,9 @@
 /* Generated */                     outInteger[outIdx++] = 0;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
-/* Generated */ #endif
 /* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
 /* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         BodyLongTrailingIdx++;
 /* Generated */         BodyDojiTrailingIdx++;
 /* Generated */    } while( i <= endIdx );

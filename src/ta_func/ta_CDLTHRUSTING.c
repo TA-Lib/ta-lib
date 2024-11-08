@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  121204 AC   Creation           
+ *  121204 AC   Creation
  *
  */
 
@@ -227,14 +227,11 @@
     * to differentiate it from in-neck the close should not be equal to the black candle's close
     * The meaning of "equal" is specified with TA_SetCandleSettings
     * outInteger is negative (-1 to -100): thrusting pattern is always bearish
-    * the user should consider that the thrusting pattern is significant when it appears in a downtrend and it could be 
-    * even bullish "when coming in an uptrend or occurring twice within several days" (Steve Nison says), while this 
+    * the user should consider that the thrusting pattern is significant when it appears in a downtrend and it could be
+    * even bullish "when coming in an uptrend or occurring twice within several days" (Steve Nison says), while this
     * function does not consider the trend
     */
    outIdx = 0;
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
    do
    {
         if( TA_CANDLECOLOR(i-1) == -1 &&                                                        // 1st: black
@@ -247,17 +244,16 @@
             outInteger[outIdx++] = -100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
-        BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 ) 
+        BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 )
                              - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-1 );
         i++;
         EqualTrailingIdx++;
         BodyLongTrailingIdx++;
    } while( i <= endIdx );
-#endif
 
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
@@ -269,7 +265,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -359,8 +354,6 @@
 /* Generated */    }
 /* Generated */    i = startIdx;
 /* Generated */    outIdx = 0;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( TA_CANDLECOLOR(i-1) == -1 &&                                                        // 1st: black
@@ -374,13 +367,12 @@
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
-/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 ) 
+/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 )
 /* Generated */                              - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-1 );
 /* Generated */         i++;
 /* Generated */         EqualTrailingIdx++;
 /* Generated */         BodyLongTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
-/* Generated */ #endif
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);

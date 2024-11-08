@@ -214,7 +214,7 @@
    /* Add-up the initial period, except for the last value. */
    periodTotal = 0;
    trailingIdx = startIdx-lookbackTotal;
-   
+
    i=trailingIdx;
    if( optInTimePeriod > 1 )
    {
@@ -227,9 +227,6 @@
     * outReal to be the same buffer.
     */
    outIdx = 0;
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
    do
    {
       periodTotal += inReal[i++];
@@ -237,7 +234,7 @@
       periodTotal -= inReal[trailingIdx++];
       outReal[outIdx++] = tempReal;
    } while( i <= endIdx );
-#endif
+
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
@@ -248,7 +245,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -326,8 +322,6 @@
 /* Generated */          periodTotal += inReal[i++];
 /* Generated */    }
 /* Generated */    outIdx = 0;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */    do
 /* Generated */    {
 /* Generated */       periodTotal += inReal[i++];
@@ -335,7 +329,6 @@
 /* Generated */       periodTotal -= inReal[trailingIdx++];
 /* Generated */       outReal[outIdx++] = tempReal;
 /* Generated */    } while( i <= endIdx );
-/* Generated */ #endif
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);

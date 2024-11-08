@@ -140,10 +140,7 @@
 {
    /* insert local variable here */
    int outIdx;
-
-   #ifndef TA_LIB_PRO
-      int i;
-   #endif
+   int i;
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
@@ -167,27 +164,22 @@
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 
-   /* Insert TA function code here. */   
+   /* Insert TA function code here. */
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
    for( i=startIdx, outIdx=0; i <= endIdx; i++, outIdx++ )
    {
       outReal[outIdx] = std_sin(inReal[i]);
-   }    
-#endif
+   }
 
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
-   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);   
+   return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -225,9 +217,7 @@
 /* Generated */ #endif
 /* Generated */ {
 /* Generated */    int outIdx;
-/* Generated */    #ifndef TA_LIB_PRO
-/* Generated */       int i;
-/* Generated */    #endif
+/* Generated */    int i;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -241,16 +231,13 @@
 /* Generated */        return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */     #endif 
 /* Generated */  #endif 
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */    for( i=startIdx, outIdx=0; i <= endIdx; i++, outIdx++ )
 /* Generated */    {
 /* Generated */       outReal[outIdx] = std_sin(inReal[i]);
-/* Generated */    }    
-/* Generated */ #endif
+/* Generated */    }
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
-/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);   
+/* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
 /* Generated */ }
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )

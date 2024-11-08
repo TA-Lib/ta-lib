@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  100304 AC   Creation           
+ *  100304 AC   Creation
  *
  */
 
@@ -103,8 +103,8 @@
 
    /* insert lookback code here. */
     UNUSED_VARIABLE(optInPenetration);
-    return max( max( TA_CANDLEAVGPERIOD(BodyDoji), TA_CANDLEAVGPERIOD(BodyLong) ), 
-                TA_CANDLEAVGPERIOD(BodyShort) 
+    return max( max( TA_CANDLEAVGPERIOD(BodyDoji), TA_CANDLEAVGPERIOD(BodyLong) ),
+                TA_CANDLEAVGPERIOD(BodyShort)
             ) + 2;
 }
 
@@ -232,7 +232,7 @@
    BodyLongTrailingIdx = startIdx -2 - TA_CANDLEAVGPERIOD(BodyLong);
    BodyDojiTrailingIdx = startIdx -1 - TA_CANDLEAVGPERIOD(BodyDoji);
    BodyShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyShort);
-   
+
    i = BodyLongTrailingIdx;
    while( i < startIdx-2 ) {
         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i );
@@ -260,13 +260,10 @@
     * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
     * it to be relatively long
     * outInteger is positive (1 to 100): morning doji star is always bullish;
-    * the user should consider that a morning star is significant when it appears in a downtrend, 
+    * the user should consider that a morning star is significant when it appears in a downtrend,
     * while this function does not consider the trend
     */
    outIdx = 0;
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
    do
    {
         if( TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) &&         // 1st: long
@@ -280,18 +277,17 @@
             outInteger[outIdx++] = 100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i-1 ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );
-        i++; 
+        i++;
         BodyLongTrailingIdx++;
         BodyDojiTrailingIdx++;
         BodyShortTrailingIdx++;
    } while( i <= endIdx );
-#endif
 
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
@@ -303,7 +299,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -408,8 +403,6 @@
 /* Generated */    }
 /* Generated */    i = startIdx;
 /* Generated */    outIdx = 0;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) &&         // 1st: long
@@ -426,12 +419,11 @@
 /* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
 /* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i-1 ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
 /* Generated */         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         BodyLongTrailingIdx++;
 /* Generated */         BodyDojiTrailingIdx++;
 /* Generated */         BodyShortTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
-/* Generated */ #endif
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);

@@ -209,10 +209,6 @@ FileHandle *gOutMSVCProjFile;    /* For MSVC project file */
 FileHandle *gOutVS2005ProjFile;  /* For VS2005 project file */
 FileHandle *gOutVS2008ProjFile;  /* For VS2008 project file */
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
-
 FileHandle *gOutExcelGlue_C;     /* For "excel_glue.c" */
 
 static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
@@ -245,10 +241,6 @@ static void doForEachFunctionXml( const TA_FuncInfo *funcInfo,
 
 static void doForEachUnstableFunction( const TA_FuncInfo *funcInfo,
                                        void *opaqueData );
-
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
 
 static void doDefsFile( void );
 
@@ -316,9 +308,6 @@ static int createProjTemplate( FileHandle *in, FileHandle *out );
 static int createMSVCProjTemplate( FileHandle *in, FileHandle *out );
 static int createVS2005ProjTemplate( FileHandle *in, FileHandle *out );
 static void printVS2005FileNode( FILE *out, const char *name );
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
 #endif
 
 static void writeFuncFile( const TA_FuncInfo *funcInfo );
@@ -803,10 +792,6 @@ static int genCode(int argc, char* argv[])
       fileClose(gOutVS2008ProjFile);
       fileClose(tempFile);
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
-
    #endif
 
 #ifdef C_ONLY
@@ -1007,10 +992,6 @@ static int genCode(int argc, char* argv[])
          return -1;
       }
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
-
    #endif
 
 #ifdef C_ONLY
@@ -1063,10 +1044,6 @@ static int genCode(int argc, char* argv[])
    appendToFunc( gOutFunc_H->file );
    if (gOutFunc_SWG) appendToFunc( gOutFunc_SWG->file );
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
-
    /* Close all files who were updated with the list of TA functions. */
    fileClose( gOutFuncList_TXT );
    fileClose( gOutFunc_H );
@@ -1090,10 +1067,6 @@ static int genCode(int argc, char* argv[])
       fileClose( gOutProjFile );
       fileClose( gOutMSVCProjFile );
       fileClose( gOutExcelGlue_C );
-
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
 
    #endif
 
@@ -1745,11 +1718,6 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
 
 	  /* Add the entry in the VS2008 project file. Same format as VS2005. */
 	  printVS2005FileNode( gOutVS2008ProjFile->file, funcInfo->name );
-
-
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
 
       /* Generate the excel glue code */
       printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
@@ -3015,7 +2983,6 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    /* Duplicate the function, but using float this time */
    print( gOutFunc_C->file, "\n" );
    print( gOutFunc_C->file, "#define  USE_SINGLE_PRECISION_INPUT\n" );
-   print( gOutFunc_C->file, "#undef  TA_LIB_PRO\n" );
    print( gOutFunc_C->file, "#if !defined( _MANAGED ) && !defined( _JAVA )\n" );
    print( gOutFunc_C->file, "   #undef   TA_PREFIX\n" );
    print( gOutFunc_C->file, "   #define  TA_PREFIX(x) TA_S_##x\n" );
@@ -3218,11 +3185,6 @@ static int createMSVCProjTemplate( FileHandle *in, FileHandle *out )
 
    return 0;
 }
-
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
-
 
 static int createVS2005ProjTemplate( FileHandle *in, FileHandle *out )
 {
@@ -4869,7 +4831,3 @@ static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
 
     fprintf(gOutFunc_Annotation->file, "); }\n\n\n");
 }
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
-

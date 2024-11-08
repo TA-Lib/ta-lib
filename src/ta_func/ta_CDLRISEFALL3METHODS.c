@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  020605 AC   Creation           
+ *  020605 AC   Creation
  *
  */
 
@@ -209,7 +209,7 @@
    BodyPeriodTotal[0] = 0;
    BodyShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyShort);
    BodyLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyLong);
-   
+
    i = BodyShortTrailingIdx;
    while( i < startIdx ) {
         BodyPeriodTotal[3] += TA_CANDLERANGE( BodyShort, i-3 );
@@ -228,9 +228,9 @@
    /* Proceed with the calculation for the requested range.
     * Must have:
     * - first candle: long white (black) candlestick
-    * - then: group of falling (rising) small real body candlesticks (commonly black (white)) that hold within 
+    * - then: group of falling (rising) small real body candlesticks (commonly black (white)) that hold within
     *   the prior long candle's range: ideally they should be three but two or more than three are ok too
-    * - final candle: long white (black) candle that opens above (below) the previous small candle's close 
+    * - final candle: long white (black) candle that opens above (below) the previous small candle's close
     *   and closes above (below) the first long candle's close
     * The meaning of "short" and "long" is specified with TA_SetCandleSettings; here only patterns with 3 small candles
     * are considered;
@@ -238,9 +238,6 @@
     */
    outIdx = 0;
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
    do
    {
         if( // 1st long, then 3 small, 5th long
@@ -269,20 +266,20 @@
             outInteger[outIdx++] = 100 * TA_CANDLECOLOR(i-4);
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyPeriodTotal[4] += TA_CANDLERANGE( BodyLong, i-4 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-4 );
         for (totIdx = 3; totIdx >= 1; --totIdx)
-            BodyPeriodTotal[totIdx] += TA_CANDLERANGE( BodyShort, i-totIdx ) 
+            BodyPeriodTotal[totIdx] += TA_CANDLERANGE( BodyShort, i-totIdx )
                                      - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx-totIdx );
         BodyPeriodTotal[0] += TA_CANDLERANGE( BodyLong, i ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
 
-        i++; 
+        i++;
         BodyShortTrailingIdx++;
         BodyLongTrailingIdx++;
    } while( i <= endIdx );
-#endif
+
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
@@ -293,7 +290,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -389,8 +385,6 @@
 /* Generated */    }
 /* Generated */    i = startIdx;
 /* Generated */    outIdx = 0;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( // 1st long, then 3 small, 5th long
@@ -421,14 +415,13 @@
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         BodyPeriodTotal[4] += TA_CANDLERANGE( BodyLong, i-4 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-4 );
 /* Generated */         for (totIdx = 3; totIdx >= 1; --totIdx)
-/* Generated */             BodyPeriodTotal[totIdx] += TA_CANDLERANGE( BodyShort, i-totIdx ) 
+/* Generated */             BodyPeriodTotal[totIdx] += TA_CANDLERANGE( BodyShort, i-totIdx )
 /* Generated */                                      - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx-totIdx );
 /* Generated */         BodyPeriodTotal[0] += TA_CANDLERANGE( BodyLong, i ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         BodyShortTrailingIdx++;
 /* Generated */         BodyLongTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
-/* Generated */ #endif
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);

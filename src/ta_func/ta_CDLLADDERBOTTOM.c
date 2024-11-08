@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  032005 AC   Creation           
+ *  032005 AC   Creation
  *  041305 MF   Minor modification for a compiler warning
  */
 
@@ -204,7 +204,7 @@
    /* Add-up the initial period, except for the last value. */
    ShadowVeryShortPeriodTotal = 0;
    ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowVeryShort);
-   
+
    i = ShadowVeryShortTrailingIdx;
    while( i < startIdx ) {
         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i-1 );
@@ -218,17 +218,14 @@
     * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
     * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
     * The meaning of "very short" is specified with TA_SetCandleSettings
-    * outInteger is positive (1 to 100): ladder bottom is always bullish; 
-    * the user should consider that ladder bottom is significant when it appears in a downtrend, 
+    * outInteger is positive (1 to 100): ladder bottom is always bullish;
+    * the user should consider that ladder bottom is significant when it appears in a downtrend,
     * while this function does not consider it
     */
    outIdx = 0;
    do
    {
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
-        if(                                                             
+        if(
             TA_CANDLECOLOR(i-4) == -1 && TA_CANDLECOLOR(i-3) == -1 && TA_CANDLECOLOR(i-2) == -1 &&  // 3 black candlesticks
             inOpen[i-4] > inOpen[i-3] && inOpen[i-3] > inOpen[i-2] &&           // with consecutively lower opens
             inClose[i-4] > inClose[i-3] && inClose[i-3] > inClose[i-2] &&       // and closes
@@ -241,13 +238,13 @@
             outInteger[outIdx++] = 100;
         else
             outInteger[outIdx++] = 0;
-#endif
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
-        ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i-1 ) 
+        ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i-1 )
                                     - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-1 );
-        i++; 
+        i++;
         ShadowVeryShortTrailingIdx++;
    } while( i <= endIdx );
 
@@ -261,7 +258,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -346,9 +342,7 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
-/* Generated */         if(                                                             
+/* Generated */         if(
 /* Generated */             TA_CANDLECOLOR(i-4) == -1 && TA_CANDLECOLOR(i-3) == -1 && TA_CANDLECOLOR(i-2) == -1 &&  // 3 black candlesticks
 /* Generated */             inOpen[i-4] > inOpen[i-3] && inOpen[i-3] > inOpen[i-2] &&           // with consecutively lower opens
 /* Generated */             inClose[i-4] > inClose[i-3] && inClose[i-3] > inClose[i-2] &&       // and closes
@@ -361,10 +355,9 @@
 /* Generated */             outInteger[outIdx++] = 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
-/* Generated */ #endif
-/* Generated */         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i-1 ) 
+/* Generated */         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i-1 )
 /* Generated */                                     - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-1 );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         ShadowVeryShortTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;

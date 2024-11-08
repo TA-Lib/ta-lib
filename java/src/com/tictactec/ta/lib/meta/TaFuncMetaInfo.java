@@ -68,10 +68,10 @@ public class TaFuncMetaInfo extends TaFuncSignature
    static final int TOTAL_FIX_PARAMETERS = 4;
    static final int INPUT_FIX_PARAMETERS = 2;
    static final int OUTPUT_FIX_PARAMETERS = 2;
-   
+
    public TaFuncMetaInfo(String name, Method method, Method lookbackMethod)
    {
-      this.name = name;
+      this.name = name;doForEachFunctionPhase2
       this.method = method;
       this.lookbackMethod = lookbackMethod;
       this.optionTypes = lookbackMethod.getParameterTypes();
@@ -190,16 +190,16 @@ public class TaFuncMetaInfo extends TaFuncSignature
       for(int j=0;j<outVarTypes.length;j++)
       {
          parameters[i++] = outArs[j];
-      }     
+      }
       return (RetCode) getMethod().invoke(taCore, parameters);
    }
-   
+
    public int callLookback(Core taCore, Object ... options) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException
    {
       System.out.println(getLookbackMethod());
       return (Integer) getLookbackMethod().invoke(taCore, options);
    }
-   
+
    public String toString()
    {
       StringBuffer sb = new StringBuffer();

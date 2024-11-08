@@ -31,7 +31,7 @@
 TA_RetCode TA_INT_SMA( int           startIdx,
                        int           endIdx,
                        const double *inReal,
-                       int           optInTimePeriod, 
+                       int           optInTimePeriod,
                        int          *outBegIdx,
                        int          *outNBElement,
                        double       *outReal );
@@ -39,7 +39,7 @@ TA_RetCode TA_INT_SMA( int           startIdx,
 TA_RetCode TA_S_INT_SMA( int          startIdx,
                          int          endIdx,
                          const float *inReal,
-                         int          optInTimePeriod, 
+                         int          optInTimePeriod,
                          int         *outBegIdx,
                          int         *outNBElement,
                          double      *outReal );
@@ -53,7 +53,7 @@ TA_RetCode TA_S_INT_SMA( int          startIdx,
 TA_RetCode TA_INT_EMA( int           startIdx,
                        int           endIdx,
                        const double *inReal,
-                       int           optInTimePeriod, 
+                       int           optInTimePeriod,
                        double        optInK_1,
                        int          *outBegIdx,
                        int          *outNBElement,
@@ -62,7 +62,7 @@ TA_RetCode TA_INT_EMA( int           startIdx,
 TA_RetCode TA_S_INT_EMA( int          startIdx,
                          int          endIdx,
                          const float *inReal,
-                         int          optInTimePeriod, 
+                         int          optInTimePeriod,
                          double       optInK_1,
                          int         *outBegIdx,
                          int         *outNBElement,
@@ -79,7 +79,7 @@ TA_RetCode TA_INT_MACD( int           startIdx,
                         const double  inReal[],
                         int           optInFastPeriod, /* 0 is fix 12 */
                         int           optInSlowPeriod, /* 0 is fix 26 */
-                        int           optInSignalPeriod_2, 
+                        int           optInSignalPeriod_2,
                         int          *outBegIdx,
                         int          *outNBElement,
                         double        outRealMACD_0[],
@@ -91,7 +91,7 @@ TA_RetCode TA_S_INT_MACD( int          startIdx,
                           const float  inReal[],
                           int          optInFastPeriod, /* 0 is fix 12 */
                           int          optInSlowPeriod, /* 0 is fix 26 */
-                          int          optInSignalPeriod_2, 
+                          int          optInSignalPeriod_2,
                           int         *outBegIdx,
                           int         *outNBElement,
                           double       outRealMACD_0[],
@@ -108,8 +108,8 @@ TA_RetCode TA_S_INT_MACD( int          startIdx,
 TA_RetCode TA_INT_PO( int           startIdx,
                       int           endIdx,
                       const double *inReal,
-                      int           optInFastPeriod, 
-                      int           optInSlowPeriod, 
+                      int           optInFastPeriod,
+                      int           optInSlowPeriod,
                       TA_MAType     optInMethod_2,
                       int          *outBegIdx,
                       int          *outNBElement,
@@ -120,8 +120,8 @@ TA_RetCode TA_INT_PO( int           startIdx,
 TA_RetCode TA_S_INT_PO( int           startIdx,
                         int           endIdx,
                         const float  *inReal,
-                        int           optInFastPeriod, 
-                        int           optInSlowPeriod, 
+                        int           optInFastPeriod,
+                        int           optInSlowPeriod,
                         TA_MAType     optInMethod_2,
                         int          *outBegIdx,
                         int          *outNBElement,
@@ -135,7 +135,7 @@ TA_RetCode TA_S_INT_PO( int           startIdx,
 TA_RetCode TA_INT_VAR( int           startIdx,
                        int           endIdx,
                        const double *inReal,
-                       int           optInTimePeriod,                       
+                       int           optInTimePeriod,
                        int          *outBegIdx,
                        int          *outNBElement,
                        double       *outReal );
@@ -143,7 +143,7 @@ TA_RetCode TA_INT_VAR( int           startIdx,
 TA_RetCode TA_S_INT_VAR( int           startIdx,
                          int           endIdx,
                          const float  *inReal,
-                         int           optInTimePeriod,                       
+                         int           optInTimePeriod,
                          int          *outBegIdx,
                          int          *outNBElement,
                          double       *outReal );
@@ -185,7 +185,7 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
    #define std_log10 Math::Log10
    #define std_log   Math::Log
    #define std_exp   Math::Exp
-   #define std_cosh  Math::Cosh   
+   #define std_cosh  Math::Cosh
    #define std_asin  Math::Asin
    #define std_acos  Math::Acos
 #elif defined( _JAVA )
@@ -202,7 +202,7 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
    #define std_log10 Math.log10
    #define std_log   Math.log
    #define std_exp   Math.exp
-   #define std_cosh  Math.cosh   
+   #define std_cosh  Math.cosh
    #define std_asin  Math.asin
    #define std_acos  Math.acos
 #else
@@ -219,7 +219,7 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
    #define std_log10 log10
    #define std_log   log
    #define std_exp   exp
-   #define std_cosh  cosh   
+   #define std_cosh  cosh
    #define std_asin  asin
    #define std_acos  acos
 #endif
@@ -234,24 +234,24 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define round_pos_2(x) ((std_floor((x*100.0)+0.5))/100.0)
 #define round_neg_2(x) ((std_ceil((x*100.0)-0.5))/100.0)
 
-/* In the context of TA-Lib, floating point are often 
+/* In the context of TA-Lib, floating point are often
  * compared within an acceptable error range.
  *
  * As an example,a TA oscillator ranging from 0 to 100 can
- * fairly be considered equal if their difference is less 
+ * fairly be considered equal if their difference is less
  * than 0.000001.
  *
- * Ranging around zero also allows to work around limit 
- * cases where floating point minimal step (EPSILON) causes 
- * unexpected cummulative effect (ending with "negative zero" 
+ * Ranging around zero also allows to work around limit
+ * cases where floating point minimal step (EPSILON) causes
+ * unexpected cummulative effect (ending with "negative zero"
  * being one example).
  *
- * FLT_EPSILON == 1.192092896e-07 for float type on intel with msvc. 
+ * FLT_EPSILON == 1.192092896e-07 for float type on intel with msvc.
  * DBL_EPSILON == 2.2204460492503131e-016 for the double type.
  *
  * Warning: These macro are not intended as "general purpose" floating
  * point comparison. TA_REAL_EQ is not even transitive. The "ep" parameter
- * must be carefully choosen to work in the domain of the tested values.  
+ * must be carefully choosen to work in the domain of the tested values.
  * Do a search on Google for a more generalize algo.
  */
 #define TA_EPSILON (0.00000000000001)
@@ -318,7 +318,7 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 
 #ifndef max
    #define max(a, b)  (((a) > (b)) ? (a) : (b))
-#endif 
+#endif
 
 /* Candlestick macros (used by candlestick functions, where the parameters are always called inClose, inOpen, etc.
  * Don't use i++ or func(i) with these macros !
@@ -329,9 +329,6 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define TA_LOWERSHADOW(IDX)     ( ( inClose[IDX] >= inOpen[IDX] ? inOpen[IDX] : inClose[IDX] ) - inLow[IDX] )
 #define TA_HIGHLOWRANGE(IDX)    ( inHigh[IDX] - inLow[IDX] )
 #define TA_CANDLECOLOR(IDX)     ( inClose[IDX] >= inOpen[IDX] ? 1 : -1 )
-#ifdef TA_LIB_PRO
-/* Section for code distributed with TA-Lib Pro only. */
-#endif
 
 #if defined( _MANAGED )
    #define TA_CANDLERANGETYPE(SET) (Globals->candleSettings[(int)CandleSettingType::SET]->rangeType)
@@ -361,9 +358,5 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
 #define TA_REALBODYGAPDOWN(IDX2,IDX1)   ( max(inOpen[IDX2],inClose[IDX2]) < min(inOpen[IDX1],inClose[IDX1]) )
 #define TA_CANDLEGAPUP(IDX2,IDX1)       ( inLow[IDX2] > inHigh[IDX1] )
 #define TA_CANDLEGAPDOWN(IDX2,IDX1)     ( inHigh[IDX2] < inLow[IDX1] )
-
-#ifdef TA_LIB_PRO
-/* Section for code distributed with TA-Lib Pro only. */
-#endif
 
 #endif

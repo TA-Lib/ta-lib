@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY      Description
  *  -------------------------------------------------------------------
- *  100204 AC      Creation           
+ *  100204 AC      Creation
  *  051005 CSB,AC  Fix #1199526 for out-of-bound write in output.
  */
 
@@ -155,11 +155,6 @@
     double BodyPeriodTotal;
     int i, outIdx, BodyTrailingIdx, lookbackTotal;
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
-
-
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
@@ -209,7 +204,7 @@
    /* Add-up the initial period, except for the last value. */
    BodyPeriodTotal = 0;
    BodyTrailingIdx = startIdx -2 - TA_CANDLEAVGPERIOD(BodyDoji);
-   
+
    i = BodyTrailingIdx;
    while( i < startIdx-2 ) {
         BodyPeriodTotal += TA_CANDLERANGE( BodyDoji, i );
@@ -225,9 +220,6 @@
     */
    i = startIdx;
    outIdx = 0;
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
    do
    {
         if( TA_REALBODY(i-2) <= TA_CANDLEAVERAGE( BodyDoji, BodyPeriodTotal, i-2 ) &&    // 1st: doji
@@ -248,14 +240,13 @@
         }
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyPeriodTotal += TA_CANDLERANGE( BodyDoji, i-2 ) - TA_CANDLERANGE( BodyDoji, BodyTrailingIdx );
         i++;
         BodyTrailingIdx++;
    } while( i <= endIdx );
-#endif
 
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
@@ -267,7 +258,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -318,8 +308,6 @@
 /* Generated */ {
 /* Generated */     double BodyPeriodTotal;
 /* Generated */     int i, outIdx, BodyTrailingIdx, lookbackTotal;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #endif
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -352,8 +340,6 @@
 /* Generated */    }
 /* Generated */    i = startIdx;
 /* Generated */    outIdx = 0;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( TA_REALBODY(i-2) <= TA_CANDLEAVERAGE( BodyDoji, BodyPeriodTotal, i-2 ) &&    // 1st: doji
@@ -378,7 +364,6 @@
 /* Generated */         i++;
 /* Generated */         BodyTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
-/* Generated */ #endif
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);

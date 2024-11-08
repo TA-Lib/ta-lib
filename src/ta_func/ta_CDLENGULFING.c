@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  102404 AC   Creation           
+ *  102404 AC   Creation
  *  040309 AC   Increased flexibility to allow real bodies matching
  *              on one end (Greg Morris - "Candlestick charting explained")
  *
@@ -217,9 +217,6 @@
     * while this function does not consider it
     */
    outIdx = 0;
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
    do
    {
         if( ( TA_CANDLECOLOR(i) == 1 && TA_CANDLECOLOR(i-1) == -1 &&            // white engulfs black
@@ -239,10 +236,10 @@
             else
                 outInteger[outIdx++] = TA_CANDLECOLOR(i) * 80;
         else
-            outInteger[outIdx++] = 0; 
-        i++; 
+            outInteger[outIdx++] = 0;
+        i++;
    } while( i <= endIdx );
-#endif
+
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
@@ -253,7 +250,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -328,8 +324,6 @@
 /* Generated */    }
 /* Generated */    i = startIdx;
 /* Generated */    outIdx = 0;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( ( TA_CANDLECOLOR(i) == 1 && TA_CANDLECOLOR(i-1) == -1 &&            // white engulfs black
@@ -349,10 +343,9 @@
 /* Generated */             else
 /* Generated */                 outInteger[outIdx++] = TA_CANDLECOLOR(i) * 80;
 /* Generated */         else
-/* Generated */             outInteger[outIdx++] = 0; 
-/* Generated */         i++; 
+/* Generated */             outInteger[outIdx++] = 0;
+/* Generated */         i++;
 /* Generated */    } while( i <= endIdx );
-/* Generated */ #endif
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);

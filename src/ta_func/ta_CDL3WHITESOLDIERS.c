@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  120404 AC   Creation           
+ *  120404 AC   Creation
  *
  */
 
@@ -221,7 +221,7 @@
    FarTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Far);
    BodyShortPeriodTotal = 0;
    BodyShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyShort);
-   
+
    i = ShadowVeryShortTrailingIdx;
    while( i < startIdx ) {
         ShadowVeryShortPeriodTotal[2] += TA_CANDLERANGE( ShadowVeryShort, i-2 );
@@ -252,59 +252,55 @@
     * Must have:
     * - three white candlesticks with consecutively higher closes
     * - Greg Morris wants them to be long, Steve Nison doesn't; anyway they should not be short
-    * - each candle opens within or near the previous white real body 
+    * - each candle opens within or near the previous white real body
     * - each candle must have no or very short upper shadow
     * - to differentiate this pattern from advance block, each candle must not be far shorter than the prior candle
     * The meanings of "not short", "very short shadow", "far" and "near" are specified with TA_SetCandleSettings;
     * here the 3 candles must be not short, if you want them to be long use TA_SetCandleSettings on BodyShort;
     * outInteger is positive (1 to 100): advancing 3 white soldiers is always bullish;
-    * the user should consider that 3 white soldiers is significant when it appears in downtrend, while this function 
+    * the user should consider that 3 white soldiers is significant when it appears in downtrend, while this function
     * does not consider it
     */
    outIdx = 0;
    do
    {
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
         if( TA_CANDLECOLOR(i-2) == 1 &&                                                     // 1st white
-            TA_UPPERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&     
+            TA_UPPERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&
                                                                                             // very short upper shadow
             TA_CANDLECOLOR(i-1) == 1 &&                                                     // 2nd white
-            TA_UPPERSHADOW(i-1) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&     
+            TA_UPPERSHADOW(i-1) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&
                                                                                             // very short upper shadow
             TA_CANDLECOLOR(i) == 1 &&                                                       // 3rd white
-            TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&         
+            TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&
                                                                                             // very short upper shadow
             inClose[i] > inClose[i-1] && inClose[i-1] > inClose[i-2] &&                     // consecutive higher closes
             inOpen[i-1] > inOpen[i-2] &&                                                    // 2nd opens within/near 1st real body
             inOpen[i-1] <= inClose[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
             inOpen[i] > inOpen[i-1] &&                                                      // 3rd opens within/near 2nd real body
             inOpen[i] <= inClose[i-1] + TA_CANDLEAVERAGE( Near, NearPeriodTotal[1], i-1 ) &&
-            TA_REALBODY(i-1) > TA_REALBODY(i-2) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[2], i-2 ) &&     
+            TA_REALBODY(i-1) > TA_REALBODY(i-2) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[2], i-2 ) &&
                                                                                             // 2nd not far shorter than 1st
-            TA_REALBODY(i) > TA_REALBODY(i-1) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[1], i-1 ) &&       
+            TA_REALBODY(i) > TA_REALBODY(i-1) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[1], i-1 ) &&
                                                                                             // 3rd not far shorter than 2nd
             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i )      // not short real body
           )
-#endif
             outInteger[outIdx++] = 100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         for (totIdx = 2; totIdx >= 0; --totIdx)
-            ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx ) 
+            ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx )
                                                 - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
         for (totIdx = 2; totIdx >= 1; --totIdx) {
-            FarPeriodTotal[totIdx] += TA_CANDLERANGE( Far, i-totIdx ) 
+            FarPeriodTotal[totIdx] += TA_CANDLERANGE( Far, i-totIdx )
                                     - TA_CANDLERANGE( Far, FarTrailingIdx-totIdx );
-            NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx ) 
+            NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx )
                                      - TA_CANDLERANGE( Near, NearTrailingIdx-totIdx );
         }
         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );
-        i++; 
+        i++;
         ShadowVeryShortTrailingIdx++;
         NearTrailingIdx++;
         FarTrailingIdx++;
@@ -321,7 +317,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -440,43 +435,40 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */         if( TA_CANDLECOLOR(i-2) == 1 &&                                                     // 1st white
-/* Generated */             TA_UPPERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&     
+/* Generated */             TA_UPPERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&
 /* Generated */                                                                                             // very short upper shadow
 /* Generated */             TA_CANDLECOLOR(i-1) == 1 &&                                                     // 2nd white
-/* Generated */             TA_UPPERSHADOW(i-1) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&     
+/* Generated */             TA_UPPERSHADOW(i-1) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&
 /* Generated */                                                                                             // very short upper shadow
 /* Generated */             TA_CANDLECOLOR(i) == 1 &&                                                       // 3rd white
-/* Generated */             TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&         
+/* Generated */             TA_UPPERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&
 /* Generated */                                                                                             // very short upper shadow
 /* Generated */             inClose[i] > inClose[i-1] && inClose[i-1] > inClose[i-2] &&                     // consecutive higher closes
 /* Generated */             inOpen[i-1] > inOpen[i-2] &&                                                    // 2nd opens within/near 1st real body
 /* Generated */             inOpen[i-1] <= inClose[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
 /* Generated */             inOpen[i] > inOpen[i-1] &&                                                      // 3rd opens within/near 2nd real body
 /* Generated */             inOpen[i] <= inClose[i-1] + TA_CANDLEAVERAGE( Near, NearPeriodTotal[1], i-1 ) &&
-/* Generated */             TA_REALBODY(i-1) > TA_REALBODY(i-2) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[2], i-2 ) &&     
+/* Generated */             TA_REALBODY(i-1) > TA_REALBODY(i-2) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[2], i-2 ) &&
 /* Generated */                                                                                             // 2nd not far shorter than 1st
-/* Generated */             TA_REALBODY(i) > TA_REALBODY(i-1) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[1], i-1 ) &&       
+/* Generated */             TA_REALBODY(i) > TA_REALBODY(i-1) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[1], i-1 ) &&
 /* Generated */                                                                                             // 3rd not far shorter than 2nd
 /* Generated */             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i )      // not short real body
 /* Generated */           )
-/* Generated */ #endif
 /* Generated */             outInteger[outIdx++] = 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         for (totIdx = 2; totIdx >= 0; --totIdx)
-/* Generated */             ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx ) 
+/* Generated */             ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx )
 /* Generated */                                                 - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
 /* Generated */         for (totIdx = 2; totIdx >= 1; --totIdx) {
-/* Generated */             FarPeriodTotal[totIdx] += TA_CANDLERANGE( Far, i-totIdx ) 
+/* Generated */             FarPeriodTotal[totIdx] += TA_CANDLERANGE( Far, i-totIdx )
 /* Generated */                                     - TA_CANDLERANGE( Far, FarTrailingIdx-totIdx );
-/* Generated */             NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx ) 
+/* Generated */             NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx )
 /* Generated */                                      - TA_CANDLERANGE( Near, NearTrailingIdx-totIdx );
 /* Generated */         }
 /* Generated */         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         ShadowVeryShortTrailingIdx++;
 /* Generated */         NearTrailingIdx++;
 /* Generated */         FarTrailingIdx++;

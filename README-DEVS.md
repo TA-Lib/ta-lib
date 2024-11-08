@@ -26,3 +26,7 @@ Must be in a specific directory to run it:
 $ cd ta-lib/bin
 $ ./gen_code
 ```
+
+## Code Flow
+C IDL (interface, function signature) -> gen_code -> C Function (complicated) -> gen_code -> Java
+

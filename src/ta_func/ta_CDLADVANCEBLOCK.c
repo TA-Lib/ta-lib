@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  120404 AC   Creation           
+ *  120404 AC   Creation
  *
  */
 
@@ -160,7 +160,7 @@
 	ARRAY_LOCAL(NearPeriodTotal,3);
 	ARRAY_LOCAL(FarPeriodTotal,3);
     double BodyLongPeriodTotal;
-    int i, outIdx, totIdx, BodyLongTrailingIdx, ShadowShortTrailingIdx, ShadowLongTrailingIdx, NearTrailingIdx, 
+    int i, outIdx, totIdx, BodyLongTrailingIdx, ShadowShortTrailingIdx, ShadowLongTrailingIdx, NearTrailingIdx,
         FarTrailingIdx, lookbackTotal;
 
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -227,7 +227,7 @@
    FarTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Far);
    BodyLongPeriodTotal = 0;
    BodyLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyLong);
-   
+
    i = ShadowShortTrailingIdx;
    while( i < startIdx ) {
         ShadowShortPeriodTotal[2] += TA_CANDLERANGE( ShadowShort, i-2 );
@@ -263,13 +263,13 @@
    /* Proceed with the calculation for the requested range.
     * Must have:
     * - three white candlesticks with consecutively higher closes
-    * - each candle opens within or near the previous white real body 
+    * - each candle opens within or near the previous white real body
     * - first candle: long white with no or very short upper shadow (a short shadow is accepted too for more flexibility)
-    * - second and third candles, or only third candle, show signs of weakening: progressively smaller white real bodies 
+    * - second and third candles, or only third candle, show signs of weakening: progressively smaller white real bodies
     * and/or relatively long upper shadows; see below for specific conditions
     * The meanings of "long body", "short shadow", "far" and "near" are specified with TA_SetCandleSettings;
     * outInteger is negative (-1 to -100): advance block is always bearish;
-    * the user should consider that advance block is significant when it appears in uptrend, while this function 
+    * the user should consider that advance block is significant when it appears in uptrend, while this function
     * does not consider it
     */
    outIdx = 0;
@@ -280,12 +280,8 @@
             TA_CANDLECOLOR(i) == 1 &&                                                       // 3rd white
             inClose[i] > inClose[i-1] && inClose[i-1] > inClose[i-2] &&                     // consecutive higher closes
             inOpen[i-1] > inOpen[i-2] &&                                                    // 2nd opens within/near 1st real body
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
             inOpen[i-1] <= inClose[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
             inOpen[i] > inOpen[i-1] &&                                                      // 3rd opens within/near 2nd real body
-#endif
             inOpen[i] <= inClose[i-1] + TA_CANDLEAVERAGE( Near, NearPeriodTotal[1], i-1 ) &&
             TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) && // 1st: long real body
             TA_UPPERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[2], i-2 ) &&
@@ -293,21 +289,21 @@
             (
                 // ( 2 far smaller than 1 && 3 not longer than 2 )
                 // advance blocked with the 2nd, 3rd must not carry on the advance
-                (   
+                (
                     TA_REALBODY(i-1) < TA_REALBODY(i-2) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[2], i-2 ) &&
                     TA_REALBODY(i) < TA_REALBODY(i-1) + TA_CANDLEAVERAGE( Near, NearPeriodTotal[1], i-1 )
                 ) ||
                 // 3 far smaller than 2
                 // advance blocked with the 3rd
                 (
-                    TA_REALBODY(i) < TA_REALBODY(i-1) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[1], i-1 ) 
+                    TA_REALBODY(i) < TA_REALBODY(i-1) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[1], i-1 )
                 ) ||
                 // ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) )
                 // advance blocked with progressively smaller real bodies and some upper shadows
                 (
                     TA_REALBODY(i) < TA_REALBODY(i-1) &&
                     TA_REALBODY(i-1) < TA_REALBODY(i-2) &&
-                    ( 
+                    (
                         TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[0], i ) ||
                         TA_UPPERSHADOW(i-1) > TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[1], i-1 )
                     )
@@ -323,23 +319,23 @@
             outInteger[outIdx++] = -100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         for (totIdx = 2; totIdx >= 0; --totIdx)
-            ShadowShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowShort, i-totIdx ) 
+            ShadowShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowShort, i-totIdx )
                                             - TA_CANDLERANGE( ShadowShort, ShadowShortTrailingIdx-totIdx );
         for (totIdx = 1; totIdx >= 0; --totIdx)
-            ShadowLongPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowLong, i-totIdx ) 
+            ShadowLongPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowLong, i-totIdx )
                                            - TA_CANDLERANGE( ShadowLong, ShadowLongTrailingIdx-totIdx );
         for (totIdx = 2; totIdx >= 1; --totIdx) {
-            FarPeriodTotal[totIdx] += TA_CANDLERANGE( Far, i-totIdx ) 
+            FarPeriodTotal[totIdx] += TA_CANDLERANGE( Far, i-totIdx )
                                     - TA_CANDLERANGE( Far, FarTrailingIdx-totIdx );
-            NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx ) 
+            NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx )
                                      - TA_CANDLERANGE( Near, NearTrailingIdx-totIdx );
         }
         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-2 );
-        i++; 
+        i++;
         ShadowShortTrailingIdx++;
         ShadowLongTrailingIdx++;
         NearTrailingIdx++;
@@ -357,7 +353,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -411,7 +406,7 @@
 /* Generated */ 	ARRAY_LOCAL(NearPeriodTotal,3);
 /* Generated */ 	ARRAY_LOCAL(FarPeriodTotal,3);
 /* Generated */     double BodyLongPeriodTotal;
-/* Generated */     int i, outIdx, totIdx, BodyLongTrailingIdx, ShadowShortTrailingIdx, ShadowLongTrailingIdx, NearTrailingIdx, 
+/* Generated */     int i, outIdx, totIdx, BodyLongTrailingIdx, ShadowShortTrailingIdx, ShadowLongTrailingIdx, NearTrailingIdx,
 /* Generated */         FarTrailingIdx, lookbackTotal;
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
@@ -492,11 +487,8 @@
 /* Generated */             TA_CANDLECOLOR(i) == 1 &&                                                       // 3rd white
 /* Generated */             inClose[i] > inClose[i-1] && inClose[i-1] > inClose[i-2] &&                     // consecutive higher closes
 /* Generated */             inOpen[i-1] > inOpen[i-2] &&                                                    // 2nd opens within/near 1st real body
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */             inOpen[i-1] <= inClose[i-2] + TA_CANDLEAVERAGE( Near, NearPeriodTotal[2], i-2 ) &&
 /* Generated */             inOpen[i] > inOpen[i-1] &&                                                      // 3rd opens within/near 2nd real body
-/* Generated */ #endif
 /* Generated */             inOpen[i] <= inClose[i-1] + TA_CANDLEAVERAGE( Near, NearPeriodTotal[1], i-1 ) &&
 /* Generated */             TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) && // 1st: long real body
 /* Generated */             TA_UPPERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[2], i-2 ) &&
@@ -504,21 +496,21 @@
 /* Generated */             (
 /* Generated */                 // ( 2 far smaller than 1 && 3 not longer than 2 )
 /* Generated */                 // advance blocked with the 2nd, 3rd must not carry on the advance
-/* Generated */                 (   
+/* Generated */                 (
 /* Generated */                     TA_REALBODY(i-1) < TA_REALBODY(i-2) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[2], i-2 ) &&
 /* Generated */                     TA_REALBODY(i) < TA_REALBODY(i-1) + TA_CANDLEAVERAGE( Near, NearPeriodTotal[1], i-1 )
 /* Generated */                 ) ||
 /* Generated */                 // 3 far smaller than 2
 /* Generated */                 // advance blocked with the 3rd
 /* Generated */                 (
-/* Generated */                     TA_REALBODY(i) < TA_REALBODY(i-1) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[1], i-1 ) 
+/* Generated */                     TA_REALBODY(i) < TA_REALBODY(i-1) - TA_CANDLEAVERAGE( Far, FarPeriodTotal[1], i-1 )
 /* Generated */                 ) ||
 /* Generated */                 // ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) )
 /* Generated */                 // advance blocked with progressively smaller real bodies and some upper shadows
 /* Generated */                 (
 /* Generated */                     TA_REALBODY(i) < TA_REALBODY(i-1) &&
 /* Generated */                     TA_REALBODY(i-1) < TA_REALBODY(i-2) &&
-/* Generated */                     ( 
+/* Generated */                     (
 /* Generated */                         TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[0], i ) ||
 /* Generated */                         TA_UPPERSHADOW(i-1) > TA_CANDLEAVERAGE( ShadowShort, ShadowShortPeriodTotal[1], i-1 )
 /* Generated */                     )
@@ -535,19 +527,19 @@
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         for (totIdx = 2; totIdx >= 0; --totIdx)
-/* Generated */             ShadowShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowShort, i-totIdx ) 
+/* Generated */             ShadowShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowShort, i-totIdx )
 /* Generated */                                             - TA_CANDLERANGE( ShadowShort, ShadowShortTrailingIdx-totIdx );
 /* Generated */         for (totIdx = 1; totIdx >= 0; --totIdx)
-/* Generated */             ShadowLongPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowLong, i-totIdx ) 
+/* Generated */             ShadowLongPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowLong, i-totIdx )
 /* Generated */                                            - TA_CANDLERANGE( ShadowLong, ShadowLongTrailingIdx-totIdx );
 /* Generated */         for (totIdx = 2; totIdx >= 1; --totIdx) {
-/* Generated */             FarPeriodTotal[totIdx] += TA_CANDLERANGE( Far, i-totIdx ) 
+/* Generated */             FarPeriodTotal[totIdx] += TA_CANDLERANGE( Far, i-totIdx )
 /* Generated */                                     - TA_CANDLERANGE( Far, FarTrailingIdx-totIdx );
-/* Generated */             NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx ) 
+/* Generated */             NearPeriodTotal[totIdx] += TA_CANDLERANGE( Near, i-totIdx )
 /* Generated */                                      - TA_CANDLERANGE( Near, NearTrailingIdx-totIdx );
 /* Generated */         }
 /* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-2 );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         ShadowShortTrailingIdx++;
 /* Generated */         ShadowLongTrailingIdx++;
 /* Generated */         NearTrailingIdx++;

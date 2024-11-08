@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  103004 AC   Creation           
+ *  103004 AC   Creation
  *
  */
 
@@ -206,7 +206,7 @@
    ShadowVeryShortPeriodTotal[1] = 0;
    ShadowVeryShortPeriodTotal[0] = 0;
    ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowVeryShort);
-   
+
    i = ShadowVeryShortTrailingIdx;
    while( i < startIdx ) {
         ShadowVeryShortPeriodTotal[2] += TA_CANDLERANGE( ShadowVeryShort, i-2 );
@@ -223,25 +223,22 @@
     * - each candle after the first must open within the prior candle's real body
     * - the first candle's close should be under the prior white candle's high
     * The meaning of "very short" is specified with TA_SetCandleSettings
-    * outInteger is negative (-1 to -100): three black crows is always bearish; 
-    * the user should consider that 3 black crows is significant when it appears after a mature advance or at high levels, 
+    * outInteger is negative (-1 to -100): three black crows is always bearish;
+    * the user should consider that 3 black crows is significant when it appears after a mature advance or at high levels,
     * while this function does not consider it
     */
    outIdx = 0;
    do
    {
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
         if( TA_CANDLECOLOR(i-3) == 1 &&                                         // white
             TA_CANDLECOLOR(i-2) == -1 &&                                        // 1st black
-            TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&     
+            TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&
                                                                                 // very short lower shadow
             TA_CANDLECOLOR(i-1) == -1 &&                                        // 2nd black
-            TA_LOWERSHADOW(i-1) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&     
+            TA_LOWERSHADOW(i-1) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&
                                                                                 // very short lower shadow
             TA_CANDLECOLOR(i) == -1 &&                                          // 3rd black
-            TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&         
+            TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&
                                                                                 // very short lower shadow
             inOpen[i-1] < inOpen[i-2] && inOpen[i-1] > inClose[i-2] &&          // 2nd black opens within 1st black's rb
             inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] &&              // 3rd black opens within 2nd black's rb
@@ -249,17 +246,16 @@
             inClose[i-2] > inClose[i-1] &&                                      // three declining
             inClose[i-1] > inClose[i]                                           // three declining
           )
-#endif
             outInteger[outIdx++] = -100;
         else
             outInteger[outIdx++] = 0;
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         for (totIdx = 2; totIdx >= 0; --totIdx)
-            ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx ) 
+            ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx )
                                                 - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
-        i++; 
+        i++;
         ShadowVeryShortTrailingIdx++;
    } while( i <= endIdx );
 
@@ -273,7 +269,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -362,17 +357,15 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */         if( TA_CANDLECOLOR(i-3) == 1 &&                                         // white
 /* Generated */             TA_CANDLECOLOR(i-2) == -1 &&                                        // 1st black
-/* Generated */             TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&     
+/* Generated */             TA_LOWERSHADOW(i-2) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[2], i-2 ) &&
 /* Generated */                                                                                 // very short lower shadow
 /* Generated */             TA_CANDLECOLOR(i-1) == -1 &&                                        // 2nd black
-/* Generated */             TA_LOWERSHADOW(i-1) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&     
+/* Generated */             TA_LOWERSHADOW(i-1) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[1], i-1 ) &&
 /* Generated */                                                                                 // very short lower shadow
 /* Generated */             TA_CANDLECOLOR(i) == -1 &&                                          // 3rd black
-/* Generated */             TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&         
+/* Generated */             TA_LOWERSHADOW(i) < TA_CANDLEAVERAGE( ShadowVeryShort, ShadowVeryShortPeriodTotal[0], i ) &&
 /* Generated */                                                                                 // very short lower shadow
 /* Generated */             inOpen[i-1] < inOpen[i-2] && inOpen[i-1] > inClose[i-2] &&          // 2nd black opens within 1st black's rb
 /* Generated */             inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] &&              // 3rd black opens within 2nd black's rb
@@ -380,14 +373,13 @@
 /* Generated */             inClose[i-2] > inClose[i-1] &&                                      // three declining
 /* Generated */             inClose[i-1] > inClose[i]                                           // three declining
 /* Generated */           )
-/* Generated */ #endif
 /* Generated */             outInteger[outIdx++] = -100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         for (totIdx = 2; totIdx >= 0; --totIdx)
-/* Generated */             ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx ) 
+/* Generated */             ShadowVeryShortPeriodTotal[totIdx] += TA_CANDLERANGE( ShadowVeryShort, i-totIdx )
 /* Generated */                                                 - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx-totIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         ShadowVeryShortTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;

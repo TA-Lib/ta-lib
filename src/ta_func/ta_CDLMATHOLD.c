@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  022005 AC   Creation           
+ *  022005 AC   Creation
  *
  */
 
@@ -231,7 +231,7 @@
    BodyPeriodTotal[0] = 0;
    BodyShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyShort);
    BodyLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyLong);
-   
+
    i = BodyShortTrailingIdx;
    while( i < startIdx ) {
         BodyPeriodTotal[3] += TA_CANDLERANGE( BodyShort, i-3 );
@@ -251,22 +251,19 @@
     * - first candle: long white candle
     * - upside gap between the first and the second bodies
     * - second candle: small black candle
-    * - third and fourth candles: falling small real body candlesticks (commonly black) that hold within the long 
+    * - third and fourth candles: falling small real body candlesticks (commonly black) that hold within the long
     *   white candle's body and are higher than the reaction days of the rising three methods
-    * - fifth candle: white candle that opens above the previous small candle's close and closes higher than the 
+    * - fifth candle: white candle that opens above the previous small candle's close and closes higher than the
     *   high of the highest reaction day
-    * The meaning of "short" and "long" is specified with TA_SetCandleSettings; 
+    * The meaning of "short" and "long" is specified with TA_SetCandleSettings;
     * "hold within" means "a part of the real body must be within";
-    * optInPenetration is the maximum percentage of the first white body the reaction days can penetrate (it is 
+    * optInPenetration is the maximum percentage of the first white body the reaction days can penetrate (it is
     * to specify how much the reaction days should be "higher than the reaction days of the rising three methods")
     * outInteger is positive (1 to 100): mat hold is always bullish
     */
    outIdx = 0;
    do
    {
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
         if( // 1st long, then 3 small
             TA_REALBODY(i-4) > TA_CANDLEAVERAGE( BodyLong, BodyPeriodTotal[4], i-4 ) &&
             TA_REALBODY(i-3) < TA_CANDLEAVERAGE( BodyShort, BodyPeriodTotal[3], i-3 ) &&
@@ -285,7 +282,7 @@
             min(inOpen[i-2], inClose[i-2]) > inClose[i-4] - TA_REALBODY(i-4) * optInPenetration &&
             min(inOpen[i-1], inClose[i-1]) > inClose[i-4] - TA_REALBODY(i-4) * optInPenetration &&
             // 2nd to 4th are falling
-            max(inClose[i-2], inOpen[i-2]) < inOpen[i-3] && 
+            max(inClose[i-2], inOpen[i-2]) < inOpen[i-3] &&
             max(inClose[i-1], inOpen[i-1]) < max(inClose[i-2], inOpen[i-2]) &&
             // 5th opens above the prior close
             inOpen[i] > inClose[i-1] &&
@@ -295,15 +292,15 @@
             outInteger[outIdx++] = 100;
         else
             outInteger[outIdx++] = 0;
-#endif
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyPeriodTotal[4] += TA_CANDLERANGE( BodyLong, i-4 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-4 );
         for (totIdx = 3; totIdx >= 1; --totIdx)
-            BodyPeriodTotal[totIdx] += TA_CANDLERANGE( BodyShort, i-totIdx ) 
+            BodyPeriodTotal[totIdx] += TA_CANDLERANGE( BodyShort, i-totIdx )
                                      - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx-totIdx );
-        i++; 
+        i++;
         BodyShortTrailingIdx++;
         BodyLongTrailingIdx++;
    } while( i <= endIdx );
@@ -318,7 +315,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -423,8 +419,6 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */         if( // 1st long, then 3 small
 /* Generated */             TA_REALBODY(i-4) > TA_CANDLEAVERAGE( BodyLong, BodyPeriodTotal[4], i-4 ) &&
 /* Generated */             TA_REALBODY(i-3) < TA_CANDLEAVERAGE( BodyShort, BodyPeriodTotal[3], i-3 ) &&
@@ -443,7 +437,7 @@
 /* Generated */             min(inOpen[i-2], inClose[i-2]) > inClose[i-4] - TA_REALBODY(i-4) * optInPenetration &&
 /* Generated */             min(inOpen[i-1], inClose[i-1]) > inClose[i-4] - TA_REALBODY(i-4) * optInPenetration &&
 /* Generated */             // 2nd to 4th are falling
-/* Generated */             max(inClose[i-2], inOpen[i-2]) < inOpen[i-3] && 
+/* Generated */             max(inClose[i-2], inOpen[i-2]) < inOpen[i-3] &&
 /* Generated */             max(inClose[i-1], inOpen[i-1]) < max(inClose[i-2], inOpen[i-2]) &&
 /* Generated */             // 5th opens above the prior close
 /* Generated */             inOpen[i] > inClose[i-1] &&
@@ -453,12 +447,11 @@
 /* Generated */             outInteger[outIdx++] = 100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
-/* Generated */ #endif
 /* Generated */         BodyPeriodTotal[4] += TA_CANDLERANGE( BodyLong, i-4 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-4 );
 /* Generated */         for (totIdx = 3; totIdx >= 1; --totIdx)
-/* Generated */             BodyPeriodTotal[totIdx] += TA_CANDLERANGE( BodyShort, i-totIdx ) 
+/* Generated */             BodyPeriodTotal[totIdx] += TA_CANDLERANGE( BodyShort, i-totIdx )
 /* Generated */                                      - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx-totIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         BodyShortTrailingIdx++;
 /* Generated */         BodyLongTrailingIdx++;
 /* Generated */    } while( i <= endIdx );

@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  102304 AC   Creation           
+ *  102304 AC   Creation
  *
  */
 
@@ -104,8 +104,8 @@
    /* insert lookback code here. */
     UNUSED_VARIABLE(optInPenetration);
 
-    return max( max( TA_CANDLEAVGPERIOD(BodyDoji), TA_CANDLEAVGPERIOD(BodyLong) ), 
-                TA_CANDLEAVGPERIOD(BodyShort) 
+    return max( max( TA_CANDLEAVGPERIOD(BodyDoji), TA_CANDLEAVGPERIOD(BodyLong) ),
+                TA_CANDLEAVGPERIOD(BodyShort)
             ) + 2;
 }
 
@@ -233,7 +233,7 @@
    BodyLongTrailingIdx = startIdx -2 - TA_CANDLEAVGPERIOD(BodyLong);
    BodyDojiTrailingIdx = startIdx -1 - TA_CANDLEAVGPERIOD(BodyDoji);
    BodyShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyShort);
-   
+
    i = BodyLongTrailingIdx;
    while( i < startIdx-2 ) {
         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i );
@@ -262,16 +262,13 @@
     * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
     * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
     * it to be relatively long
-    * outInteger is positive (1 to 100) when it's an abandoned baby bottom or negative (-1 to -100) when it's 
-    * an abandoned baby top; the user should consider that an abandoned baby is significant when it appears in 
+    * outInteger is positive (1 to 100) when it's an abandoned baby bottom or negative (-1 to -100) when it's
+    * an abandoned baby top; the user should consider that an abandoned baby is significant when it appears in
     * an uptrend or downtrend, while this function does not consider the trend
     */
    outIdx = 0;
    do
    {
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
         if( TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) &&         // 1st: long
             TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i-1 ) &&        // 2nd: doji
             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i ) &&           // 3rd: longer than short
@@ -280,8 +277,8 @@
                 inClose[i] < inClose[i-2] - TA_REALBODY(i-2) * optInPenetration &&                  // 3rd closes well within 1st rb
                 TA_CANDLEGAPUP(i-1,i-2) &&                                                          // upside gap between 1st and 2nd
                 TA_CANDLEGAPDOWN(i,i-1)                                                             // downside gap between 2nd and 3rd
-              ) 
-              || 
+              )
+              ||
               (
                 TA_CANDLECOLOR(i-2) == -1 &&                                                        // 1st black
                 TA_CANDLECOLOR(i) == 1 &&                                                           // 3rd white
@@ -298,14 +295,14 @@
 		{
             outInteger[outIdx++] = 0;
 		}
-#endif
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i-1 ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );
-        i++; 
+        i++;
         BodyLongTrailingIdx++;
         BodyDojiTrailingIdx++;
         BodyShortTrailingIdx++;
@@ -321,7 +318,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -428,8 +424,6 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */         if( TA_REALBODY(i-2) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-2 ) &&         // 1st: long
 /* Generated */             TA_REALBODY(i-1) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i-1 ) &&        // 2nd: doji
 /* Generated */             TA_REALBODY(i) > TA_CANDLEAVERAGE( BodyShort, BodyShortPeriodTotal, i ) &&           // 3rd: longer than short
@@ -438,8 +432,8 @@
 /* Generated */                 inClose[i] < inClose[i-2] - TA_REALBODY(i-2) * optInPenetration &&                  // 3rd closes well within 1st rb
 /* Generated */                 TA_CANDLEGAPUP(i-1,i-2) &&                                                          // upside gap between 1st and 2nd
 /* Generated */                 TA_CANDLEGAPDOWN(i,i-1)                                                             // downside gap between 2nd and 3rd
-/* Generated */               ) 
-/* Generated */               || 
+/* Generated */               )
+/* Generated */               ||
 /* Generated */               (
 /* Generated */                 TA_CANDLECOLOR(i-2) == -1 &&                                                        // 1st black
 /* Generated */                 TA_CANDLECOLOR(i) == 1 &&                                                           // 3rd white
@@ -456,11 +450,10 @@
 /* Generated */ 		{
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */ 		}
-/* Generated */ #endif
 /* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-2 ) - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx );
 /* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i-1 ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
 /* Generated */         BodyShortPeriodTotal += TA_CANDLERANGE( BodyShort, i ) - TA_CANDLERANGE( BodyShort, BodyShortTrailingIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         BodyLongTrailingIdx++;
 /* Generated */         BodyDojiTrailingIdx++;
 /* Generated */         BodyShortTrailingIdx++;

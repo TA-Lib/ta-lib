@@ -190,7 +190,7 @@
 
   return FUNCTION_CALL(INT_SMA)( startIdx, endIdx,
                                  inReal, optInTimePeriod,
-                                 outBegIdx, outNBElement, outReal ); 
+                                 outBegIdx, outNBElement, outReal );
 }
 
 #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined(USE_SINGLE_PRECISION_INPUT)
@@ -200,24 +200,24 @@
 #if defined( _MANAGED ) && defined( USE_SUBARRAY )
  enum class Core::RetCode Core::TA_INT_SMA( int     startIdx,
                                             int     endIdx,
-									        SubArray<double>^ inReal, 
+									        SubArray<double>^ inReal,
 								            int     optInTimePeriod,
-								            [Out]int% outBegIdx, 
+								            [Out]int% outBegIdx,
 								            [Out]int% outNBElement,
 											SubArray<double>^  outReal)
 #elif defined( _MANAGED )
  enum class Core::RetCode Core::TA_INT_SMA( int     startIdx,
                                                int     endIdx,
-									           cli::array<INPUT_TYPE>^ inReal, 
+									           cli::array<INPUT_TYPE>^ inReal,
 								               int     optInTimePeriod,
-								               [Out]int% outBegIdx, 
+								               [Out]int% outBegIdx,
 								               [Out]int% outNBElement,
 											   cli::array<double>^  outReal)
 #elif defined( _JAVA )
 RetCode TA_INT_SMA( int    startIdx,
                     int    endIdx,
                     INPUT_TYPE inReal[],
-                    int      optInTimePeriod, /* From 1 to TA_INTEGER_MAX */                       
+                    int      optInTimePeriod, /* From 1 to TA_INTEGER_MAX */
                     MInteger outBegIdx,
                     MInteger outNBElement,
                     double   outReal[] )
@@ -225,7 +225,7 @@ RetCode TA_INT_SMA( int    startIdx,
 TA_RetCode TA_PREFIX(INT_SMA)( int    startIdx,
                                int    endIdx,
                                const INPUT_TYPE *inReal,
-                               int      optInTimePeriod, /* From 1 to TA_INTEGER_MAX */                       
+                               int      optInTimePeriod, /* From 1 to TA_INTEGER_MAX */
                                int     *outBegIdx,
                                int     *outNBElement,
                                double  *outReal )
@@ -233,7 +233,7 @@ TA_RetCode TA_PREFIX(INT_SMA)( int    startIdx,
 {
    double periodTotal, tempReal;
    int i, outIdx, trailingIdx, lookbackTotal;
-
+   
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
@@ -257,7 +257,7 @@ TA_RetCode TA_PREFIX(INT_SMA)( int    startIdx,
    /* Add-up the initial period, except for the last value. */
    periodTotal = 0;
    trailingIdx = startIdx-lookbackTotal;
-   
+
    i=trailingIdx;
    if( optInTimePeriod > 1 )
    {
@@ -290,7 +290,6 @@ TA_RetCode TA_PREFIX(INT_SMA)( int    startIdx,
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -350,7 +349,7 @@ TA_RetCode TA_PREFIX(INT_SMA)( int    startIdx,
 /* Generated */  #endif 
 /* Generated */   return FUNCTION_CALL(INT_SMA)( startIdx, endIdx,
 /* Generated */                                  inReal, optInTimePeriod,
-/* Generated */                                  outBegIdx, outNBElement, outReal ); 
+/* Generated */                                  outBegIdx, outNBElement, outReal );
 /* Generated */ }
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY ) && defined(USE_SINGLE_PRECISION_INPUT)
 /* Generated */    // No INT function
@@ -358,24 +357,24 @@ TA_RetCode TA_PREFIX(INT_SMA)( int    startIdx,
 /* Generated */ #if defined( _MANAGED ) && defined( USE_SUBARRAY )
 /* Generated */  enum class Core::RetCode Core::TA_INT_SMA( int     startIdx,
 /* Generated */                                             int     endIdx,
-/* Generated */ 									        SubArray<double>^ inReal, 
+/* Generated */ 									        SubArray<double>^ inReal,
 /* Generated */ 								            int     optInTimePeriod,
-/* Generated */ 								            [Out]int% outBegIdx, 
+/* Generated */ 								            [Out]int% outBegIdx,
 /* Generated */ 								            [Out]int% outNBElement,
 /* Generated */ 											SubArray<double>^  outReal)
 /* Generated */ #elif defined( _MANAGED )
 /* Generated */  enum class Core::RetCode Core::TA_INT_SMA( int     startIdx,
 /* Generated */                                                int     endIdx,
-/* Generated */ 									           cli::array<INPUT_TYPE>^ inReal, 
+/* Generated */ 									           cli::array<INPUT_TYPE>^ inReal,
 /* Generated */ 								               int     optInTimePeriod,
-/* Generated */ 								               [Out]int% outBegIdx, 
+/* Generated */ 								               [Out]int% outBegIdx,
 /* Generated */ 								               [Out]int% outNBElement,
 /* Generated */ 											   cli::array<double>^  outReal)
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ RetCode TA_INT_SMA( int    startIdx,
 /* Generated */                     int    endIdx,
 /* Generated */                     INPUT_TYPE inReal[],
-/* Generated */                     int      optInTimePeriod,                        
+/* Generated */                     int      optInTimePeriod, 
 /* Generated */                     MInteger outBegIdx,
 /* Generated */                     MInteger outNBElement,
 /* Generated */                     double   outReal[] )
@@ -383,7 +382,7 @@ TA_RetCode TA_PREFIX(INT_SMA)( int    startIdx,
 /* Generated */ TA_RetCode TA_PREFIX(INT_SMA)( int    startIdx,
 /* Generated */                                int    endIdx,
 /* Generated */                                const INPUT_TYPE *inReal,
-/* Generated */                                int      optInTimePeriod,                        
+/* Generated */                                int      optInTimePeriod, 
 /* Generated */                                int     *outBegIdx,
 /* Generated */                                int     *outNBElement,
 /* Generated */                                double  *outReal )

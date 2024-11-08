@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  121104 AC   Creation           
+ *  121104 AC   Creation
  *
  */
 
@@ -220,25 +220,18 @@
    }
    i = startIdx;
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
-
    /* Proceed with the calculation for the requested range.
     * Must have:
     * - first candle: long black candle
     * - second candle: white candle with open below previous day low and close slightly into previous day body
     * The meaning of "equal" is specified with TA_SetCandleSettings
     * outInteger is negative (-1 to -100): in-neck is always bearish
-    * the user should consider that in-neck is significant when it appears in a downtrend, while this function 
+    * the user should consider that in-neck is significant when it appears in a downtrend, while this function
     * does not consider it
     */
    outIdx = 0;
    do
    {
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
         if( TA_CANDLECOLOR(i-1) == -1 &&                                                        // 1st: black
             TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-1 ) &&     //  long
             TA_CANDLECOLOR(i) == 1 &&                                                           // 2nd: white
@@ -249,12 +242,12 @@
             outInteger[outIdx++] = -100;
         else
             outInteger[outIdx++] = 0;
-#endif
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
-        BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 ) 
+        BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 )
                              - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-1 );
         i++;
         EqualTrailingIdx++;
@@ -271,7 +264,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -360,13 +352,9 @@
 /* Generated */         i++;
 /* Generated */    }
 /* Generated */    i = startIdx;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #endif
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */         if( TA_CANDLECOLOR(i-1) == -1 &&                                                        // 1st: black
 /* Generated */             TA_REALBODY(i-1) > TA_CANDLEAVERAGE( BodyLong, BodyLongPeriodTotal, i-1 ) &&     //  long
 /* Generated */             TA_CANDLECOLOR(i) == 1 &&                                                           // 2nd: white
@@ -377,9 +365,8 @@
 /* Generated */             outInteger[outIdx++] = -100;
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
-/* Generated */ #endif
 /* Generated */         EqualPeriodTotal += TA_CANDLERANGE( Equal, i-1 ) - TA_CANDLERANGE( Equal, EqualTrailingIdx-1 );
-/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 ) 
+/* Generated */         BodyLongPeriodTotal += TA_CANDLERANGE( BodyLong, i-1 )
 /* Generated */                              - TA_CANDLERANGE( BodyLong, BodyLongTrailingIdx-1 );
 /* Generated */         i++;
 /* Generated */         EqualTrailingIdx++;

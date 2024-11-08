@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  011505 AC   Creation           
+ *  011505 AC   Creation
  *
  */
 
@@ -97,7 +97,7 @@
 
    /* insert lookback code here. */
     return max( max( TA_CANDLEAVGPERIOD(BodyDoji), TA_CANDLEAVGPERIOD(ShadowLong) ),
-                TA_CANDLEAVGPERIOD(Near) 
+                TA_CANDLEAVGPERIOD(Near)
             );
 }
 
@@ -157,10 +157,6 @@
     double BodyDojiPeriodTotal, ShadowLongPeriodTotal, NearPeriodTotal;
     int i, outIdx, BodyDojiTrailingIdx, ShadowLongTrailingIdx, NearTrailingIdx, lookbackTotal;
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
-
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
@@ -214,7 +210,7 @@
    ShadowLongTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowLong);
    NearPeriodTotal = 0;
    NearTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(Near);
-   
+
    i = BodyDojiTrailingIdx;
    while( i < startIdx ) {
         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i );
@@ -243,17 +239,14 @@
    outIdx = 0;
    do
    {
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
         if( TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) &&            // doji
             TA_LOWERSHADOW(i) > TA_CANDLEAVERAGE( ShadowLong, ShadowLongPeriodTotal, i ) &&      // long shadow
             TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( ShadowLong, ShadowLongPeriodTotal, i ) &&      // long shadow
             (                                                                                       // body near midpoint
-                min( inOpen[i], inClose[i] ) 
+                min( inOpen[i], inClose[i] )
                     <= inLow[i] + TA_HIGHLOWRANGE(i) / 2 + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i )
                 &&
-                max( inOpen[i], inClose[i] ) 
+                max( inOpen[i], inClose[i] )
                     >= inLow[i] + TA_HIGHLOWRANGE(i) / 2 - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i )
             )
           )
@@ -261,15 +254,14 @@
         else
             outInteger[outIdx++] = 0;
 
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
         ShadowLongPeriodTotal += TA_CANDLERANGE( ShadowLong, i ) - TA_CANDLERANGE( ShadowLong, ShadowLongTrailingIdx );
         NearPeriodTotal += TA_CANDLERANGE( Near, i ) - TA_CANDLERANGE( Near, NearTrailingIdx );
-#endif
 
-        i++; 
+        i++;
         BodyDojiTrailingIdx++;
         ShadowLongTrailingIdx++;
         NearTrailingIdx++;
@@ -285,7 +277,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -336,8 +327,6 @@
 /* Generated */ {
 /* Generated */     double BodyDojiPeriodTotal, ShadowLongPeriodTotal, NearPeriodTotal;
 /* Generated */     int i, outIdx, BodyDojiTrailingIdx, ShadowLongTrailingIdx, NearTrailingIdx, lookbackTotal;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #endif
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -385,16 +374,14 @@
 /* Generated */    outIdx = 0;
 /* Generated */    do
 /* Generated */    {
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */         if( TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) &&            // doji
 /* Generated */             TA_LOWERSHADOW(i) > TA_CANDLEAVERAGE( ShadowLong, ShadowLongPeriodTotal, i ) &&      // long shadow
 /* Generated */             TA_UPPERSHADOW(i) > TA_CANDLEAVERAGE( ShadowLong, ShadowLongPeriodTotal, i ) &&      // long shadow
 /* Generated */             (                                                                                       // body near midpoint
-/* Generated */                 min( inOpen[i], inClose[i] ) 
+/* Generated */                 min( inOpen[i], inClose[i] )
 /* Generated */                     <= inLow[i] + TA_HIGHLOWRANGE(i) / 2 + TA_CANDLEAVERAGE( Near, NearPeriodTotal, i )
 /* Generated */                 &&
-/* Generated */                 max( inOpen[i], inClose[i] ) 
+/* Generated */                 max( inOpen[i], inClose[i] )
 /* Generated */                     >= inLow[i] + TA_HIGHLOWRANGE(i) / 2 - TA_CANDLEAVERAGE( Near, NearPeriodTotal, i )
 /* Generated */             )
 /* Generated */           )
@@ -404,8 +391,7 @@
 /* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
 /* Generated */         ShadowLongPeriodTotal += TA_CANDLERANGE( ShadowLong, i ) - TA_CANDLERANGE( ShadowLong, ShadowLongTrailingIdx );
 /* Generated */         NearPeriodTotal += TA_CANDLERANGE( Near, i ) - TA_CANDLERANGE( Near, NearTrailingIdx );
-/* Generated */ #endif
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         BodyDojiTrailingIdx++;
 /* Generated */         ShadowLongTrailingIdx++;
 /* Generated */         NearTrailingIdx++;

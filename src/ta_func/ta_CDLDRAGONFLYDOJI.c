@@ -42,7 +42,7 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  011505 AC   Creation           
+ *  011505 AC   Creation
  *
  */
 
@@ -155,10 +155,6 @@
     double BodyDojiPeriodTotal, ShadowVeryShortPeriodTotal;
     int i, outIdx, BodyDojiTrailingIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
 
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
-
 /**** START GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #ifndef TA_FUNC_NO_RANGE_CHECK
@@ -210,7 +206,7 @@
    BodyDojiTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(BodyDoji);
    ShadowVeryShortPeriodTotal = 0;
    ShadowVeryShortTrailingIdx = startIdx - TA_CANDLEAVGPERIOD(ShadowVeryShort);
-   
+
    i = BodyDojiTrailingIdx;
    while( i < startIdx ) {
         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i );
@@ -221,10 +217,6 @@
         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i );
         i++;
    }
-
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#endif
 
    /* Proceed with the calculation for the requested range.
     *
@@ -237,9 +229,6 @@
     * relatively to the trend
     */
    outIdx = 0;
-#ifdef TA_LIB_PRO
-      /* Section for code distributed with TA-Lib Pro only. */
-#else
    do
    {
         if( TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) &&
@@ -250,17 +239,16 @@
         else
             outInteger[outIdx++] = 0;
 
-        /* add the current range and subtract the first range: this is done after the pattern recognition 
+        /* add the current range and subtract the first range: this is done after the pattern recognition
          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
          */
         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
-        ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i ) 
+        ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i )
                                     - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx );
-        i++; 
+        i++;
         BodyDojiTrailingIdx++;
         ShadowVeryShortTrailingIdx++;
    } while( i <= endIdx );
-#endif
 
    /* All done. Indicate the output limits and return. */
    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
@@ -272,7 +260,6 @@
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 /* Generated */ 
 /* Generated */ #define  USE_SINGLE_PRECISION_INPUT
-/* Generated */ #undef  TA_LIB_PRO
 /* Generated */ #if !defined( _MANAGED ) && !defined( _JAVA )
 /* Generated */    #undef   TA_PREFIX
 /* Generated */    #define  TA_PREFIX(x) TA_S_##x
@@ -323,8 +310,6 @@
 /* Generated */ {
 /* Generated */     double BodyDojiPeriodTotal, ShadowVeryShortPeriodTotal;
 /* Generated */     int i, outIdx, BodyDojiTrailingIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #endif
 /* Generated */  #ifndef TA_FUNC_NO_RANGE_CHECK
 /* Generated */     if( startIdx < 0 )
 /* Generated */        return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_START_INDEX,OutOfRangeStartIndex);
@@ -362,11 +347,7 @@
 /* Generated */         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i );
 /* Generated */         i++;
 /* Generated */    }
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #endif
 /* Generated */    outIdx = 0;
-/* Generated */ #ifdef TA_LIB_PRO
-/* Generated */ #else
 /* Generated */    do
 /* Generated */    {
 /* Generated */         if( TA_REALBODY(i) <= TA_CANDLEAVERAGE( BodyDoji, BodyDojiPeriodTotal, i ) &&
@@ -377,13 +358,12 @@
 /* Generated */         else
 /* Generated */             outInteger[outIdx++] = 0;
 /* Generated */         BodyDojiPeriodTotal += TA_CANDLERANGE( BodyDoji, i ) - TA_CANDLERANGE( BodyDoji, BodyDojiTrailingIdx );
-/* Generated */         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i ) 
+/* Generated */         ShadowVeryShortPeriodTotal += TA_CANDLERANGE( ShadowVeryShort, i )
 /* Generated */                                     - TA_CANDLERANGE( ShadowVeryShort, ShadowVeryShortTrailingIdx );
-/* Generated */         i++; 
+/* Generated */         i++;
 /* Generated */         BodyDojiTrailingIdx++;
 /* Generated */         ShadowVeryShortTrailingIdx++;
 /* Generated */    } while( i <= endIdx );
-/* Generated */ #endif
 /* Generated */    VALUE_HANDLE_DEREF(outNBElement) = outIdx;
 /* Generated */    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 /* Generated */    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
