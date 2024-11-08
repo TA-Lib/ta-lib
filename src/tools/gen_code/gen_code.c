@@ -74,22 +74,23 @@
  *  061608 MF    Add code to preserve proprietary code marker for TA-Lib pro.
  *  071808 MF    Add generation for Add-Ins express product (TA-Lib Pro only).
  *  082712 AB    Implemented java code generation on linux.
+ *  110724 MF    Removed all TA-Lib Pro specific code.
+ *  110824 MF    Removed VS2005 and VS2008 project file generation.
  */
 
 /* Description:
- *       Generates a lot of source code. Run "gen_code ?" for
- *       the list of file.
+ *       Generates/maintains a lot of files. Run "gen_code ?" to
+ *       get the complete list.
  *
- *       The generator use as input the interface definition
- *       of each of the TA functions. The interface is provided
+ *       The generator use as input the interface defined
  *       from static data in the TA-Abstract module.
- *       (See the 'table_x.c' files)
+ *       (Look for the 'table_x.c' files)
  *
- *       This utility is intended only to people integrating new
- *       TA functions in TA-Lib.
+ *       This utility is intended only for TA-Lib maintainers, not
+ *       the library users.
  *
  * Note: All directory in this code is relative to the 'bin'
- *       directory. You must run "gen_code" from ta-lib/c/bin.
+ *       directory. You must run "gen_code" from ta-lib/bin.
  *
  */
 #include "ta_pragma.h"		/* this must be the first inclusion */
@@ -206,8 +207,6 @@ FileHandle *gOutFunc_Annotation; /* For "CoreAnnotated.java" */
 FileHandle *gOutDotNet_H;      /* For .NET interface file */
 FileHandle *gOutProjFile;        /* For .NET project file */
 FileHandle *gOutMSVCProjFile;    /* For MSVC project file */
-FileHandle *gOutVS2005ProjFile;  /* For VS2005 project file */
-FileHandle *gOutVS2008ProjFile;  /* For VS2008 project file */
 
 FileHandle *gOutExcelGlue_C;     /* For "excel_glue.c" */
 
@@ -306,8 +305,6 @@ static int generateFuncAPI_C( void );
 #ifdef _MSC_VER
 static int createProjTemplate( FileHandle *in, FileHandle *out );
 static int createMSVCProjTemplate( FileHandle *in, FileHandle *out );
-static int createVS2005ProjTemplate( FileHandle *in, FileHandle *out );
-static void printVS2005FileNode( FILE *out, const char *name );
 #endif
 
 static void writeFuncFile( const TA_FuncInfo *funcInfo );
@@ -419,36 +416,36 @@ int main(int argc, char* argv[])
          printf( "Usage: gen_code\n");
          printf( "\n" );
          printf( "  No parameter needed.\n" );
+         printf( "\n** Must be run from the 'ta-lib/bin' directory.\n" );
          printf( "\n" );
          printf( "  This utility is useful only for developers adding new TA\n" );
          printf( "  functions to TA-Lib.\n" );
          printf( "\n" );
-         printf( "  The interface definitions in c/src/ta_abstract/tables\n" );
+         printf( "  The interface definitions in src/ta_abstract/tables\n" );
          printf( "  are used to generate code, documentation and some more.\n" );
          printf( "\n" );
          printf( "  The following files are updated or regenerated:\n" );
-         printf( "     1) ta-lib/c/include/ta_func.h\n" );
-         printf( "     2) ta-lib/c/include/ta_defs.h\n" );
+         printf( "     1) ta-lib/include/ta_func.h\n" );
+         printf( "     2) ta-lib/include/ta_defs.h\n" );
          printf( "     3) ta-lib/ta_func_list.txt\n" );
-         printf( "     4) ta-lib/c/src/ta_common/ta_retcode.*\n" );
-         printf( "     5) ta-lib/c/src/ta_abstract/ta_group_idx.c\n");
-         printf( "     6) ta-lib/c/src/ta_abstract/frames/*.*\n");
+         printf( "     4) ta-lib/src/ta_common/ta_retcode.*\n" );
+         printf( "     5) ta-lib/src/ta_abstract/ta_group_idx.c\n");
+         printf( "     6) ta-lib/src/ta_abstract/frames/*.*\n");
          printf( "     7) ta-lib/swig/src/interface/ta_func.swg\n" );
          printf( "     8) ta-lib/dotnet/src/Core/TA-Lib-Core.vcproj (Win32 only)\n" );
          printf( "     9) ta-lib/dotnet/src/Core/TA-Lib-Core.h (Win32 only)\n" );
-         printf( "    10) ta-lib/c/src/ta_abstract/excel_glue.c (Win32 only)\n" );
-         printf( "    11) ta-lib/c/src/ta_abstract/java_defs.h (Win32 only)\n" );
-         printf( "    12) ta-lib/c/ide/msvc/lib_proj/ta_func/ta_func.dsp (Win32 only)\n" );
-         printf( "    13) ta-lib/java/src/com/tictactec/ta/lib/Core.java (Win32 only)\n" );
-         printf( "    14) ta-lib/java/src/com/tictactec/ta/lib/CoreAnnotated.java (Win32 only)\n" );
+         printf( "    10) ta-lib/src/ta_abstract/excel_glue.c (Win32 only)\n" );
+         printf( "    11) ta-lib/src/ta_abstract/java_defs.h (Win32 only)\n" );
+         printf( "    12) ta-lib/ide/msvc/lib_proj/ta_func/ta_func.dsp (Win32 only)\n" );
+         printf( "    13) ta-lib/java/src/com/tictactec/ta/lib/Core.java\n" );
+         printf( "    14) ta-lib/java/src/com/tictactec/ta/lib/CoreAnnotated.java\n" );
          printf( "    15) ta-lib/ta_func_api.xml\n" );
-         printf( "    16) ta-lib/c/src/ta_abstract/ta_func_api.c\n" );
+         printf( "    16) ta-lib/src/ta_abstract/ta_func_api.c\n" );
          printf( "    17) ... and more ...");
          printf( "\n" );
-         printf( "  The function header, parameters and validation code of all TA\n" );
-         printf( "  function in c/src/ta_func are also updated.\n" );
+         printf( "  The functions signature, params and validation code\n" );
+         printf( "  for all functions under src/ta_func are also updated.\n" );
          printf( "\n" );
-         printf( "** Must be directly run from the 'bin' directory.\n" );
          exit(-1);
    }
 
@@ -480,16 +477,15 @@ int main(int argc, char* argv[])
  *
  * When opening the file, the caller can specifiy a
  * path relative to the position of the binary.
- * That is: ta-lib\c\bin
+ * That is: ta-lib\bin
  *
  * 'templateFile' allows to create a new file using
  * a template. This template must contain one
- * line starting with '%%%GENCODE%%%'.
- * All character before this string are added to the output
- * file on fileOpen, and all character after this string are
- * added to the output file on fileClose. Obviously, all
- * character added to the file between fileOpen/fileClose
- * will replace the "%%%GENCODE%%%" line.
+ * line starting with the token '%%%GENCODE%%%'.
+ *
+ * All characters before the token are written to the output
+ * file on fileOpen, and all characters after the token are
+ * appended on fileClose.
  *
  * 'templateFile' is ignored when FILE_READ is specified.
  *
@@ -498,7 +494,7 @@ int main(int argc, char* argv[])
  * file and the target file is touch only if there was actually
  * a modification to it.
  *
- * On failure, simply exit the software.
+ * On failure, simply exit.
  */
 static void init_gToOpen( const char *filePath, const char *suffix )
 {
@@ -744,54 +740,6 @@ static int genCode(int argc, char* argv[])
       }
       fileClose(gOutMSVCProjFile);
       fileClose(tempFile);
-
-      /* Create VS2005 project files template */
-      #define FILE_VS2005_PROJ     ta_fs_path(6, "..", "ide", "vs2005", "lib_proj", "ta_func", "ta_func.vcproj")
-      #define FILE_VS2005_PROJ_TMP ta_fs_path(3, "..", "temp", "ta_func_vcproj05.tmp")
-      gOutVS2005ProjFile = fileOpen( FILE_VS2005_PROJ, NULL, FILE_READ );
-      if( gOutVS2005ProjFile == NULL )
-      {
-         printf( "\nCannot access [%s]\n", gToOpen );
-         return -1;
-      }
-      tempFile = fileOpen( FILE_VS2005_PROJ_TMP, NULL, FILE_WRITE|WRITE_ALWAYS );
-      if( tempFile == NULL )
-      {
-         printf( "Cannot create temporary VS2005 project file!\n" );
-         return -1;
-      }
-      if( createVS2005ProjTemplate( gOutVS2005ProjFile, tempFile ) != 0 )
-      {
-         printf( "Failed to parse and write the temporary VS2005 project file!\n" );
-         return -1;
-      }
-      fileClose(gOutVS2005ProjFile);
-      fileClose(tempFile);
-
-      /* Create VS2008 project files template */
-      #define FILE_VS2008_PROJ     ta_fs_path(6, "..", "ide", "vs2008", "lib_proj", "ta_func", "ta_func.vcproj")
-      #define FILE_VS2008_PROJ_TMP ta_fs_path(3, "..", "temp", "ta_func_vcproj08.tmp")
-      gOutVS2008ProjFile = fileOpen( FILE_VS2008_PROJ, NULL, FILE_READ );
-      if( gOutVS2008ProjFile == NULL )
-      {
-         printf( "\nCannot access [%s]\n", gToOpen );
-         return -1;
-      }
-      tempFile = fileOpen( FILE_VS2008_PROJ_TMP, NULL, FILE_WRITE|WRITE_ALWAYS );
-      if( tempFile == NULL )
-      {
-         printf( "Cannot create temporary VS2008 project file!\n" );
-         return -1;
-	  }
-	  /* VS2008 Project file the same as VS2005 for creating the template. */
-      if( createVS2005ProjTemplate( gOutVS2008ProjFile, tempFile ) != 0 )
-      {
-         printf( "Failed to parse and write the temporary VS2008 project file!\n" );
-         return -1;
-      }
-      fileClose(gOutVS2008ProjFile);
-      fileClose(tempFile);
-
    #endif
 
 #ifdef C_ONLY
@@ -974,24 +922,6 @@ static int genCode(int argc, char* argv[])
          printf( "Cannot update [%s]\n", FILE_MSVC_PROJ );
          return -1;
       }
-
-      /* Re-open the VS2005 project template. */
-      gOutVS2005ProjFile = fileOpen( FILE_VS2005_PROJ, FILE_VS2005_PROJ_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
-      if( gOutVS2005ProjFile == NULL )
-      {
-         printf( "Cannot update [%s]\n", FILE_VS2005_PROJ );
-         return -1;
-      }
-
-
-      /* Re-open the VS2008 project template. */
-      gOutVS2008ProjFile = fileOpen( FILE_VS2008_PROJ, FILE_VS2008_PROJ_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
-      if( gOutVS2008ProjFile == NULL )
-      {
-         printf( "Cannot update [%s]\n", FILE_VS2008_PROJ );
-         return -1;
-      }
-
    #endif
 
 #ifdef C_ONLY
@@ -1062,12 +992,9 @@ static int genCode(int argc, char* argv[])
 
    #ifdef _MSC_VER
       fileClose( gOutDotNet_H );
-      fileClose( gOutVS2005ProjFile );
-      fileClose( gOutVS2008ProjFile );
       fileClose( gOutProjFile );
       fileClose( gOutMSVCProjFile );
       fileClose( gOutExcelGlue_C );
-
    #endif
 
    if( retCode != TA_SUCCESS )
@@ -1712,12 +1639,6 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
       fprintf( gOutMSVCProjFile->file, "\n" );
       fprintf( gOutMSVCProjFile->file, "SOURCE=.." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_%s.c\n", funcInfo->name );
       fprintf( gOutMSVCProjFile->file, "# End Source File\n" );
-
-      /* Add the entry in the VS2005 project file. */
-	  printVS2005FileNode( gOutVS2005ProjFile->file, funcInfo->name );
-
-	  /* Add the entry in the VS2008 project file. Same format as VS2005. */
-	  printVS2005FileNode( gOutVS2008ProjFile->file, funcInfo->name );
 
       /* Generate the excel glue code */
       printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
@@ -3184,135 +3105,6 @@ static int createMSVCProjTemplate( FileHandle *in, FileHandle *out )
       fputs( gTempBuf, outFile );
 
    return 0;
-}
-
-static int createVS2005ProjTemplate( FileHandle *in, FileHandle *out )
-{
-   // This function works also for VS2008
-   FILE *inFile;
-   FILE *outFile;
-   unsigned int skipSection;
-
-   inFile = in->file;
-   outFile = out->file;
-
-   skipSection = 0;
-
-   while( !skipSection && fgets( gTempBuf, BUFFER_SIZE, inFile ) )
-   {
-      if( strstr( gTempBuf, "<Files>") )
-         skipSection = 1;
-      else
-         fputs( gTempBuf, outFile );
-   }
-
-   if( !skipSection )
-   {
-      printf( "Unexpected end-of-file. Missing \"<Files>\"\n" );
-      return -1;
-   }
-
-
-   fputs( gTempBuf, outFile );
-
-   skipSection = 0;
-
-   while( !skipSection && fgets( gTempBuf, BUFFER_SIZE, inFile ) )
-   {
-      if( strstr( gTempBuf, "<File") )
-         skipSection = 1;
-      else
-         fputs( gTempBuf, outFile );
-   }
-
-   if( !skipSection )
-   {
-      printf( "Unexpected end-of-file. Missing \"<File\"\n" );
-      return -1;
-   }
-
-   fputs( "%%%GENCODE%%%\n", outFile );
-
-   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
-   {
-      if( strstr( gTempBuf, "</Filter>" ) )
-      {
-         /* Add the "non TA function" source files. */
-	     printVS2005FileNode( outFile, "utility" );
-         fprintf( outFile, "			</Filter>\n");
-         break;
-      }
-   }
-
-   while( fgets( gTempBuf, BUFFER_SIZE, inFile ) )
-      fputs( gTempBuf, outFile );
-
-   return 0;
-}
-
-static void printVS2005FileNode( FILE *out, const char *name )
-{
-   // This function works also for VS2008
-   fprintf( out, "				<File\n" );
-   fprintf( out, "					RelativePath=\".." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_%s.c\"\n", name );
-   fprintf( out, "					>\n" );
-/*
-   fprintf( out, "					<FileConfiguration\n" );
-   fprintf( out, "						Name=\"cdd|Win32\"\n" );
-   fprintf( out, "						>\n" );
-   fprintf( out, "						<Tool\n" );
-   fprintf( out, "							Name=\"VCCLCompilerTool\"\n" );
-   fprintf( out, "							AdditionalIncludeDirectories=\"\"\n" );
-   fprintf( out, "							PreprocessorDefinitions=\"\"\n" );
-   fprintf( out, "						/>\n" );
-   fprintf( out, "					</FileConfiguration>\n" );
-   fprintf( out, "					<FileConfiguration\n" );
-   fprintf( out, "						Name=\"cdr|Win32\"\n" );
-   fprintf( out, "						>\n" );
-   fprintf( out, "						<Tool\n" );
-   fprintf( out, "							Name=\"VCCLCompilerTool\"\n" );
-   fprintf( out, "							AdditionalIncludeDirectories=\"\"\n" );
-   fprintf( out, "							PreprocessorDefinitions=\"\"\n" );
-   fprintf( out, "						/>\n" );
-   fprintf( out, "					</FileConfiguration>\n" );
-   fprintf( out, "					<FileConfiguration\n" );
-   fprintf( out, "						Name=\"cmr|Win32\"\n" );
-   fprintf( out, "						>\n" );
-   fprintf( out, "						<Tool\n" );
-   fprintf( out, "							Name=\"VCCLCompilerTool\"\n" );
-   fprintf( out, "							AdditionalIncludeDirectories=\"\"\n" );
-   fprintf( out, "							PreprocessorDefinitions=\"\"\n" );
-   fprintf( out, "						/>\n" );
-   fprintf( out, "					</FileConfiguration>\n" );
-   fprintf( out, "					<FileConfiguration\n" );
-   fprintf( out, "						Name=\"cmd|Win32\"\n" );
-   fprintf( out, "						>\n" );
-   fprintf( out, "						<Tool\n" );
-   fprintf( out, "							Name=\"VCCLCompilerTool\"\n" );
-   fprintf( out, "							AdditionalIncludeDirectories=\"\"\n" );
-   fprintf( out, "							PreprocessorDefinitions=\"\"\n" );
-   fprintf( out, "						/>\n" );
-   fprintf( out, "					</FileConfiguration>\n" );
-   fprintf( out, "					<FileConfiguration\n" );
-   fprintf( out, "						Name=\"csr|Win32\"\n" );
-   fprintf( out, "						>\n" );
-   fprintf( out, "						<Tool\n" );
-   fprintf( out, "							Name=\"VCCLCompilerTool\"\n" );
-   fprintf( out, "							AdditionalIncludeDirectories=\"\"\n" );
-   fprintf( out, "							PreprocessorDefinitions=\"\"\n" );
-   fprintf( out, "						/>\n" );
-   fprintf( out, "					</FileConfiguration>\n" );
-   fprintf( out, "					<FileConfiguration\n" );
-   fprintf( out, "						Name=\"csd|Win32\"\n" );
-   fprintf( out, "						>\n" );
-   fprintf( out, "						<Tool\n" );
-   fprintf( out, "							Name=\"VCCLCompilerTool\"\n" );
-   fprintf( out, "							AdditionalIncludeDirectories=\"\"\n" );
-   fprintf( out, "							PreprocessorDefinitions=\"\"\n" );
-   fprintf( out, "						/>\n" );
-   fprintf( out, "					</FileConfiguration>\n" );
-*/
-   fprintf( out, "				</File>\n" );
 }
 #endif
 
