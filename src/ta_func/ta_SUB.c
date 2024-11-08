@@ -100,7 +100,7 @@
 
 /**** START GENCODE SECTION 3 - DO NOT DELETE THIS LINE ****/
 /*
- * TA_SUB - Vector Arithmetic Substraction
+ * TA_SUB - Vector Arithmetic Subtraction
  * 
  * Input  = double, double
  * Output = double

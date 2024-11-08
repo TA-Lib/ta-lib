@@ -6250,7 +6250,7 @@
 	<FinancialFunction>
 		<Abbreviation>SUB</Abbreviation>
 		<CamelCaseName>Sub</CamelCaseName>
-		<ShortDescription>Vector Arithmetic Substraction</ShortDescription>
+		<ShortDescription>Vector Arithmetic Subtraction</ShortDescription>
 		<GroupId>Math Operators</GroupId>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

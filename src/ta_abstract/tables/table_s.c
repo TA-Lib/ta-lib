@@ -338,7 +338,7 @@ DEF_MATH_UNARY_OPERATOR( SQRT, "Vector Square Root", "Sqrt" )
 /* SQRT END */
 
 /* SUB BEGIN */
-DEF_MATH_BINARY_OPERATOR( SUB, "Vector Arithmetic Substraction", "Sub" )
+DEF_MATH_BINARY_OPERATOR( SUB, "Vector Arithmetic Subtraction", "Sub" )
 /* SUB END */
 
 /* SUM BEGIN */

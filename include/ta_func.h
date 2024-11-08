@@ -4769,7 +4769,7 @@ TA_LIB_API int TA_STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to
                                               TA_MAType     optInFastD_MAType ); 
 
 /*
- * TA_SUB - Vector Arithmetic Substraction
+ * TA_SUB - Vector Arithmetic Subtraction
  * 
  * Input  = double, double
  * Output = double
