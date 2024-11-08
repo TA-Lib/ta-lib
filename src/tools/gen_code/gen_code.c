@@ -700,7 +700,7 @@ static int genCode(int argc, char* argv[])
 
    #ifdef _MSC_VER
       /* Create .NET project files template */
-      #define FILE_NET_PROJ ta_fs_path(6, "..", "..", "dotnet", "src", "Core", "TA-Lib-Core.vcproj")
+      #define FILE_NET_PROJ ta_fs_path(5, "..", "dotnet", "src", "Core", "TA-Lib-Core.vcproj")
       #define FILE_NET_PROJ_TMP ta_fs_path(3, "..", "temp", "dotnetproj.tmp")
       gOutProjFile = fileOpen( FILE_NET_PROJ, NULL, FILE_READ );
       if( gOutProjFile == NULL )
@@ -723,7 +723,7 @@ static int genCode(int argc, char* argv[])
       fileClose(tempFile);
 
       /* Create MSVC project files template */
-      #define FILE_MSVC_PROJ     ta_fs_path(8, "..", "..", "c", "ide", "msvc", "lib_proj", "ta_func", "ta_func.dsp")
+      #define FILE_MSVC_PROJ     ta_fs_path(6, "..", "ide", "msvc", "lib_proj", "ta_func", "ta_func.dsp")
       #define FILE_MSVC_PROJ_TMP ta_fs_path(3, "..", "temp", "ta_func_dsp.tmp")
       gOutMSVCProjFile = fileOpen( FILE_MSVC_PROJ, NULL, FILE_READ );
       if( gOutMSVCProjFile == NULL )
@@ -746,7 +746,7 @@ static int genCode(int argc, char* argv[])
       fileClose(tempFile);
 
       /* Create VS2005 project files template */
-      #define FILE_VS2005_PROJ     ta_fs_path(8, "..", "..", "c", "ide", "vs2005", "lib_proj", "ta_func", "ta_func.vcproj")
+      #define FILE_VS2005_PROJ     ta_fs_path(6, "..", "ide", "vs2005", "lib_proj", "ta_func", "ta_func.vcproj")
       #define FILE_VS2005_PROJ_TMP ta_fs_path(3, "..", "temp", "ta_func_vcproj05.tmp")
       gOutVS2005ProjFile = fileOpen( FILE_VS2005_PROJ, NULL, FILE_READ );
       if( gOutVS2005ProjFile == NULL )
@@ -769,7 +769,7 @@ static int genCode(int argc, char* argv[])
       fileClose(tempFile);
 
       /* Create VS2008 project files template */
-      #define FILE_VS2008_PROJ     ta_fs_path(8, "..", "..", "c", "ide", "vs2008", "lib_proj", "ta_func", "ta_func.vcproj")
+      #define FILE_VS2008_PROJ     ta_fs_path(6, "..", "ide", "vs2008", "lib_proj", "ta_func", "ta_func.vcproj")
       #define FILE_VS2008_PROJ_TMP ta_fs_path(3, "..", "temp", "ta_func_vcproj08.tmp")
       gOutVS2008ProjFile = fileOpen( FILE_VS2008_PROJ, NULL, FILE_READ );
       if( gOutVS2008ProjFile == NULL )
@@ -798,7 +798,7 @@ static int genCode(int argc, char* argv[])
    gOutCore_Java = NULL;
 #else
    /* Create Java template for Core.java */
-   #define FILE_CORE_JAVA     ta_fs_path(9, "..", "..", "java", "src", "com", "tictactec", "ta", "lib", "Core.java")
+   #define FILE_CORE_JAVA     ta_fs_path(8, "..", "java", "src", "com", "tictactec", "ta", "lib", "Core.java")
    #define FILE_CORE_JAVA_TMP ta_fs_path(3, "..", "temp", "CoreJava.tmp")
    #define FILE_CORE_JAVA_UNF ta_fs_path(3, "..", "temp", "CoreJavaUnformated.tmp")
    gOutCore_Java = fileOpen( FILE_CORE_JAVA, NULL, FILE_READ );
@@ -823,7 +823,7 @@ static int genCode(int argc, char* argv[])
 
    /* Create the .NET interface file template */
    #ifdef _MSC_VER
-   #define FILE_NET_HEADER     ta_fs_path(6, "..", "..", "dotnet", "src", "Core", "TA-Lib-Core.h")
+   #define FILE_NET_HEADER     ta_fs_path(5, "..", "dotnet", "src", "Core", "TA-Lib-Core.h")
    #define FILE_NET_HEADER_TMP ta_fs_path(3, "..", "temp", "dotneth.tmp")
    gOutDotNet_H = fileOpen( FILE_NET_HEADER, NULL, FILE_READ );
    if( gOutDotNet_H == NULL )
@@ -865,7 +865,7 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
-   gOutFunc_XML = fileOpen( ta_fs_path(3, "..", "..", "ta_func_api.xml"), NULL, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+   gOutFunc_XML = fileOpen( ta_fs_path(2, "..", "ta_func_api.xml"), NULL, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
    if(gOutFunc_XML == NULL)
    {
 	   printf( "\nCannot access ta_func_api.xml" );
@@ -876,7 +876,7 @@ static int genCode(int argc, char* argv[])
    gOutFunc_SWG = NULL;
 #else
    /* Create "ta_func.swg" */
-   gOutFunc_SWG = fileOpen( ta_fs_path(6, "..", "..", "swig", "src", "interface", "ta_func.swg"),
+   gOutFunc_SWG = fileOpen( ta_fs_path(5, "..", "swig", "src", "interface", "ta_func.swg"),
                             ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_func.swg.template"),
                           FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
@@ -888,7 +888,7 @@ static int genCode(int argc, char* argv[])
 #endif
 
    /* Create the "ta_func_list.txt" */
-   gOutFuncList_TXT = fileOpen( ta_fs_path(3, "..", "..", "ta_func_list.txt"),
+   gOutFuncList_TXT = fileOpen( ta_fs_path(2, "..", "ta_func_list.txt"),
                                 NULL,
                                 FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
@@ -999,7 +999,7 @@ static int genCode(int argc, char* argv[])
    gOutCore_Java = NULL;
 #else
    /* Create "CoreAnnotated.java" */
-   gOutFunc_Annotation = fileOpen( ta_fs_path(9, "..", "..", "java", "src", "com", "tictactec", "ta", "lib", "CoreAnnotated.java"),
+   gOutFunc_Annotation = fileOpen( ta_fs_path(8, "..", "java", "src", "com", "tictactec", "ta", "lib", "CoreAnnotated.java"),
                                     ta_fs_path(5, "..", "src", "ta_abstract", "templates", "CoreAnnotated.java.template"),
                                     FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
@@ -4423,7 +4423,7 @@ static int generateFuncAPI_C()
    FILE *out;
    FILE *in;
 
-   #define FILE_INPUT           ta_fs_path(3, "..", "..", "ta_func_api.xml")
+   #define FILE_INPUT           ta_fs_path(2, "..", "ta_func_api.xml")
    #define FILE_OUTPUT          ta_fs_path(4, "..", "src", "ta_abstract", "ta_func_api.c")
    #define FILE_OUTPUT_TEMPLATE ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_func_api.c.template")
 
