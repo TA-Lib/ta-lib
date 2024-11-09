@@ -71,7 +71,7 @@ public class TaFuncMetaInfo extends TaFuncSignature
 
    public TaFuncMetaInfo(String name, Method method, Method lookbackMethod)
    {
-      this.name = name;doForEachFunctionPhase2
+      this.name = name;
       this.method = method;
       this.lookbackMethod = lookbackMethod;
       this.optionTypes = lookbackMethod.getParameterTypes();

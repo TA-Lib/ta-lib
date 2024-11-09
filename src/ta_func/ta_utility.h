@@ -1,7 +1,7 @@
 /* Provides common mathematical or analysis functions.
  *
  * These functions are all PRIVATE to ta-lib and should
- * never be called directly by the user of the TA-LIB.
+ * never be called directly by the library users.
  */
 
 #ifndef TA_UTILITY_H

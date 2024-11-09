@@ -27,6 +27,7 @@ ar-lib
 # Ignore the generated binaries, but keep the bin soft links.
 src/tools/gen_code/gen_code
 src/tools/ta_regtest/ta_regtest
+bin/*.class
 !bin/HOLDER
 !bin/gen_code
 

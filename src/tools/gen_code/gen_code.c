@@ -101,9 +101,6 @@
 #include <string.h>
 #include <ctype.h>
 
-// Need to fix java/.NET/SWIG generation code. Exclude these for now, primary goal is to get the "C" back working again.
-#define C_ONLY 1
-
 #if !defined(__WIN32__) && !defined(__MSDOS__) && !defined(WIN32)
    #include <unistd.h>
 #endif
@@ -472,27 +469,22 @@ int main(int argc, char* argv[])
 }
 
 
-/* The following I/O function allows to manipulate
- * more easily files.
+/* The following I/O function facilitate file modifications.
  *
- * When opening the file, the caller can specifiy a
- * path relative to the position of the binary.
- * That is: ta-lib\bin
+ * When opening the file, specifiy a path relative to ta-lib/bin.
  *
- * 'templateFile' allows to create a new file using
- * a template. This template must contain one
- * line starting with the token '%%%GENCODE%%%'.
+ * 'templateFile' is the source to create a new file.
+ * This template must contain one '%%%GENCODE%%%' token.
  *
  * All characters before the token are written to the output
- * file on fileOpen, and all characters after the token are
+ * on fileOpen, and all characters after the token are
  * appended on fileClose.
  *
  * 'templateFile' is ignored when FILE_READ is specified.
  *
- * Another advantage to use fileOpen and fileClose is that
- * the writing to the file is done "silently" in a temporary
- * file and the target file is touch only if there was actually
- * a modification to it.
+ * Another advantage to use fileOpen/fileClose is the writing
+ * is first done in a temporary file and the target file
+ * is touch only if there was actually a modification.
  *
  * On failure, simply exit.
  */
@@ -691,7 +683,7 @@ static int genCode(int argc, char* argv[])
    FileHandle *tempFileOut;
 
    (void)argc; /* Get ride of compiler warning */
-   (void)argv; /* Get ride of compiler warning */
+   (void)argv;
    int ret;
 
    #ifdef _MSC_VER
@@ -742,32 +734,37 @@ static int genCode(int argc, char* argv[])
       fileClose(tempFile);
    #endif
 
-#ifdef C_ONLY
-   gOutCore_Java = NULL;
-#else
-   /* Create Java template for Core.java */
+
+   // Verify if javac executeable is installed, if not, just skip the java code generation.
    #define FILE_CORE_JAVA     ta_fs_path(8, "..", "java", "src", "com", "tictactec", "ta", "lib", "Core.java")
    #define FILE_CORE_JAVA_TMP ta_fs_path(3, "..", "temp", "CoreJava.tmp")
    #define FILE_CORE_JAVA_UNF ta_fs_path(3, "..", "temp", "CoreJavaUnformated.tmp")
-   gOutCore_Java = fileOpen( FILE_CORE_JAVA, NULL, FILE_READ );
-   if( gOutCore_Java == NULL )
-   {
-         printf( "\nCannot access [%s]\n", gToOpen );
-         return -1;
+
+   if( system("javac --version > /dev/null 2>&1") != 0 ) {
+      printf("warning: 'javac' not installed. Skipping Java code update\n");
+      gOutCore_Java = NULL;
+   } else {
+      /* Create Java template for Core.java */
+      gOutCore_Java = fileOpen( FILE_CORE_JAVA, NULL, FILE_READ );
+      if( gOutCore_Java == NULL )
+      {
+            printf( "\nCannot access [%s]\n", gToOpen );
+            return -1;
+      }
+      tempFile = fileOpen( FILE_CORE_JAVA_TMP, NULL, FILE_WRITE|WRITE_ALWAYS );
+      if( tempFile == NULL )
+      {
+            printf( "Cannot create temporary Core.java project file!\n" );
+            return -1;
+      }
+      if( createTemplate( gOutCore_Java, tempFile ) != 0 )
+      {
+            printf( "Failed to parse and write the temporary Core.java project file!\n" );
+            return -1;
+      }
+      fileClose(gOutCore_Java);
+      fileClose(tempFile);
    }
-   tempFile = fileOpen( FILE_CORE_JAVA_TMP, NULL, FILE_WRITE|WRITE_ALWAYS );
-   if( tempFile == NULL )
-   {
-         printf( "Cannot create temporary Core.java project file!\n" );
-         return -1;
-   }
-   if( createTemplate( gOutCore_Java, tempFile ) != 0 )
-   {
-         printf( "Failed to parse and write the temporary Core.java project file!\n" );
-         return -1;
-   }
-   fileClose(gOutCore_Java);
-   fileClose(tempFile);
 
    /* Create the .NET interface file template */
    #ifdef _MSC_VER
@@ -793,7 +790,6 @@ static int genCode(int argc, char* argv[])
    fileClose(gOutDotNet_H);
    fileClose(tempFile);
    #endif
-#endif
 
    /* Create ta_retcode.c */
    if( gen_retcode() != 0 )
@@ -819,10 +815,6 @@ static int genCode(int argc, char* argv[])
 	   printf( "\nCannot access ta_func_api.xml" );
    }
 
-
-#ifdef C_ONLY
-   gOutFunc_SWG = NULL;
-#else
    /* Create "ta_func.swg" */
    gOutFunc_SWG = fileOpen( ta_fs_path(5, "..", "swig", "src", "interface", "ta_func.swg"),
                             ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_func.swg.template"),
@@ -833,7 +825,6 @@ static int genCode(int argc, char* argv[])
       printf( "\nCannot access [%s]\n", gToOpen );
       return -1;
    }
-#endif
 
    /* Create the "ta_func_list.txt" */
    gOutFuncList_TXT = fileOpen( ta_fs_path(2, "..", "ta_func_list.txt"),
@@ -880,20 +871,21 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
 
-#ifdef C_ONLY
-#else
-   /* Create "java_defs.h" */
-   gOutJavaDefs_H = fileOpen( ta_fs_path(4, "..", "src", "ta_abstract", "ta_java_defs.h"),
-                           ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_java_defs.h.template"),
-                           FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+   if (!gOutCore_Java) {
+      gOutJavaDefs_H = NULL;
+   } else {
+      /* Create "java_defs.h" */
+      gOutJavaDefs_H = fileOpen( ta_fs_path(4, "..", "src", "ta_abstract", "ta_java_defs.h"),
+                              ta_fs_path(5, "..", "src", "ta_abstract", "templates", "ta_java_defs.h.template"),
+                              FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
 
-   if( gOutJavaDefs_H == NULL )
-   {
-      printf( "\nCannot access [%s]\n", gToOpen );
-      return -1;
+      if( gOutJavaDefs_H == NULL )
+      {
+         printf( "\nCannot access [%s]\n", gToOpen );
+         return -1;
+      }
    }
-#endif
 
    #ifdef _MSC_VER
       /* Create "excel_glue.c" */
@@ -924,26 +916,26 @@ static int genCode(int argc, char* argv[])
       }
    #endif
 
-#ifdef C_ONLY
-   gOutFunc_Annotation = NULL;
-   gOutCore_Java = NULL;
-#else
-   /* Create "CoreAnnotated.java" */
-   gOutFunc_Annotation = fileOpen( ta_fs_path(8, "..", "java", "src", "com", "tictactec", "ta", "lib", "CoreAnnotated.java"),
-                                    ta_fs_path(5, "..", "src", "ta_abstract", "templates", "CoreAnnotated.java.template"),
-                                    FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+   if (gOutCore_Java == NULL) {
+     gOutFunc_Annotation = NULL;
+   } else {
+      /* Create "CoreAnnotated.java" */
+      gOutFunc_Annotation = fileOpen( ta_fs_path(8, "..", "java", "src", "com", "tictactec", "ta", "lib", "CoreAnnotated.java"),
+                                       ta_fs_path(5, "..", "src", "ta_abstract", "templates", "CoreAnnotated.java.template"),
+                                       FILE_WRITE|WRITE_ON_CHANGE_ONLY );
 
-   if(gOutFunc_Annotation == NULL)
-   {
-      printf( "\nCannot access CoreAnnotated.java" );
-   }
+      if(gOutFunc_Annotation == NULL)
+      {
+         printf( "\nCannot access CoreAnnotated.java" );
+      }
 
-   /* Re-open the Core.java template. */
-   gOutCore_Java = fileOpen( FILE_CORE_JAVA_UNF, FILE_CORE_JAVA_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
-   if( gOutCore_Java == NULL )
-   {
-      printf( "Cannot update [%s]\n", FILE_CORE_JAVA_UNF );
-      return -1;
+      /* Re-open the Core.java template. */
+      gOutCore_Java = fileOpen( FILE_CORE_JAVA_UNF, FILE_CORE_JAVA_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+      if( gOutCore_Java == NULL )
+      {
+         printf( "Cannot update [%s]\n", FILE_CORE_JAVA_UNF );
+         return -1;
+      }
    }
 
    /* Re-open the .NET interface template. */
@@ -955,7 +947,6 @@ static int genCode(int argc, char* argv[])
       return -1;
    }
    #endif
-#endif
 
    /* Process each functions. Two phase. */
    TA_ForEachFunc( doForEachFunctionPhase1, NULL );
@@ -985,10 +976,7 @@ static int genCode(int argc, char* argv[])
    fileClose( gOutCore_Java );
    fileClose( gOutJavaDefs_H );
    fileClose( gOutFunc_Annotation );
-#ifdef C_ONLY
-#else
    fileDelete( FILE_CORE_JAVA_TMP );
-#endif
 
    #ifdef _MSC_VER
       fileClose( gOutDotNet_H );
@@ -1048,11 +1036,10 @@ static int genCode(int argc, char* argv[])
    }
 
 
-#ifdef C_ONLY
-#else
    /* Run Java Post-Processing.
     * On Success, the Java program create a file named "java_success".
     */
+   if (gOutCore_Java) {
       printf( "\nPost-Processing Java Code\n" );
       # define JAVA_SUCCESS_FILE     ta_fs_path(3, "..", "temp", "java_success")
       #define JAVA_PRETTY_TEMP_FILE ta_fs_path(3, "..", "temp", "CoreJavaPretty.tmp")
@@ -1102,7 +1089,7 @@ static int genCode(int argc, char* argv[])
       }
       fileDelete( JAVA_SUCCESS_FILE );
       fileDelete( JAVA_PRETTY_TEMP_FILE );
-#endif
+   }
 
    /* Remove temporary files. */
    #ifdef _MSC_VER
@@ -4124,24 +4111,23 @@ static void appendToFunc( FILE *out )
 
 void genJavaCodePhase1( const TA_FuncInfo *funcInfo )
 {
-   #ifdef C_ONLY
+   if (!gOutJavaDefs_H)
       return;
-   #else
-     fprintf( gOutJavaDefs_H->file, "#define TA_%s_Lookback %c%sLookback\n", funcInfo->name, tolower(funcInfo->camelCaseName[0]), &funcInfo->camelCaseName[1] );
-     fprintf( gOutJavaDefs_H->file, "#define TA_%s %c%s\n", funcInfo->name, tolower(funcInfo->camelCaseName[0]), &funcInfo->camelCaseName[1] );
-   #endif
+
+   fprintf( gOutJavaDefs_H->file, "#define TA_%s_Lookback %c%sLookback\n", funcInfo->name, tolower(funcInfo->camelCaseName[0]), &funcInfo->camelCaseName[1] );
+   fprintf( gOutJavaDefs_H->file, "#define TA_%s %c%s\n", funcInfo->name, tolower(funcInfo->camelCaseName[0]), &funcInfo->camelCaseName[1] );
 }
 
 void genJavaCodePhase2( const TA_FuncInfo *funcInfo )
 {
-   #ifdef C_ONLY
-      return;
-   #else
    FILE *logicTmp;
    char buffer[500];
    int idx, again;
    static int firstTime = 1;
    int ret;
+
+   if (!gOutCore_Java)
+      return;
 
    if( firstTime == 1 )
    {
@@ -4205,7 +4191,6 @@ void genJavaCodePhase2( const TA_FuncInfo *funcInfo )
    print( gOutCore_Java->file, "\n" );
    fileDelete( ta_fs_path(3, "..", "temp", "CoreJavaCode1.tmp") );
    fileDelete( ta_fs_path(3, "..", "temp", "CoreJavaCode2.tmp") );
-   #endif
 }
 
 

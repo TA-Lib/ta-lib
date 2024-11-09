@@ -51,13 +51,13 @@
 package com.tictactec.ta.lib;
 
 public class Core {
-
+   
    private int[] unstablePeriod;
-
+   
    private CandleSetting[] candleSettings;
-
+   
    private Compatibility compatibility;
-
+   
    /** Creates a new instance of Core */
    public Core() {
       unstablePeriod = new int[com.tictactec.ta.lib.FuncUnstId.All
@@ -69,7 +69,7 @@ public class Core {
          candleSettings[i] = new CandleSetting(TA_CandleDefaultSettings[i]);
       }
    }
-
+   
    public RetCode SetCandleSettings(CandleSettingType settingType,
       RangeType rangeType, int avgPeriod, double factor) {
       if (settingType.ordinal() >= CandleSettingType.AllCandleSettings
@@ -81,7 +81,7 @@ public class Core {
       candleSettings[settingType.ordinal()].factor = factor;
       return RetCode.Success;
    }
-
+   
    final private CandleSetting TA_CandleDefaultSettings[] = {
       /*
       * real body is long when it's longer than the average of the 10
@@ -146,7 +146,7 @@ public class Core {
       */
       new CandleSetting(CandleSettingType.Equal,
          RangeType.HighLow, 5, 0.05) };
-
+   
    public RetCode RestoreCandleDefaultSettings(
       CandleSettingType settingType) {
       int i;
@@ -163,7 +163,7 @@ public class Core {
       }
       return RetCode.Success;
    }
-
+   
    public RetCode SetUnstablePeriod(FuncUnstId id, int period)
    {
       if (id.ordinal() >= FuncUnstId.All
@@ -172,22 +172,22 @@ public class Core {
       unstablePeriod[id.ordinal()] = period;
       return RetCode.Success;
    }
-
+   
    public int GetUnstablePeriod(FuncUnstId id)
    {
       return unstablePeriod[id.ordinal()];
    }
-
+   
    public void SetCompatibility(Compatibility compatibility)
    {
       this.compatibility = compatibility;
    }
-
+   
    public Compatibility getCompatibility()
    {
       return compatibility;
    }
-
+   
    /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
    public int accbandsLookback( int optInTimePeriod )
    {
@@ -2309,7 +2309,7 @@ public class Core {
       }
       if( tempBuffer1 != outRealMiddleBand )
       {
-         System.arraycopy(tempBuffer1,0,outRealMiddleBand,0,outNBElement.value) ;
+         System.arraycopy(tempBuffer1,0,outRealMiddleBand,0,outNBElement.value ) ;
       }
       if( optInNbDevUp == optInNbDevDn )
       {
@@ -10775,11 +10775,11 @@ public class Core {
       return RetCode.Success ;
    }
    /* Generated */
-   public int cdlStickSandwhichLookback( )
+   public int cdlStickSandwichLookback( )
    {
       return (this.candleSettings[CandleSettingType.Equal.ordinal()].avgPeriod) + 2;
    }
-   public RetCode cdlStickSandwhich( int startIdx,
+   public RetCode cdlStickSandwich( int startIdx,
       int endIdx,
       double inOpen[],
       double inHigh[],
@@ -10795,7 +10795,7 @@ public class Core {
          return RetCode.OutOfRangeStartIndex ;
       if( (endIdx < 0) || (endIdx < startIdx))
          return RetCode.OutOfRangeEndIndex ;
-      lookbackTotal = cdlStickSandwhichLookback ();
+      lookbackTotal = cdlStickSandwichLookback ();
       if( startIdx < lookbackTotal )
          startIdx = lookbackTotal;
       if( startIdx > endIdx )
@@ -10833,7 +10833,7 @@ public class Core {
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   public RetCode cdlStickSandwhich( int startIdx,
+   public RetCode cdlStickSandwich( int startIdx,
       int endIdx,
       float inOpen[],
       float inHigh[],
@@ -10849,7 +10849,7 @@ public class Core {
          return RetCode.OutOfRangeStartIndex ;
       if( (endIdx < 0) || (endIdx < startIdx))
          return RetCode.OutOfRangeEndIndex ;
-      lookbackTotal = cdlStickSandwhichLookback ();
+      lookbackTotal = cdlStickSandwichLookback ();
       if( startIdx < lookbackTotal )
          startIdx = lookbackTotal;
       if( startIdx > endIdx )
@@ -12459,7 +12459,7 @@ public class Core {
       {
          return retCode;
       }
-      secondEMA = new double[firstEMANbElement.value] ;
+      secondEMA = new double[firstEMANbElement.value ] ;
       retCode = TA_INT_EMA ( 0, firstEMANbElement.value -1, firstEMA,
          optInTimePeriod, k,
          secondEMABegIdx , secondEMANbElement ,
@@ -12523,7 +12523,7 @@ public class Core {
       {
          return retCode;
       }
-      secondEMA = new double[firstEMANbElement.value] ;
+      secondEMA = new double[firstEMANbElement.value ] ;
       retCode = TA_INT_EMA ( 0, firstEMANbElement.value -1, firstEMA,
          optInTimePeriod, k,
          secondEMABegIdx , secondEMANbElement ,
@@ -22001,15 +22001,15 @@ public class Core {
          inReal, optInTimePeriod,
          outBegIdx, outNBElement, outReal );
    }
-   TA_INT_SMA( int startIdx,
+   RetCode TA_INT_SMA( int startIdx,
       int endIdx,
-      double inReal[], <-- Arrays
+      double inReal[],
       int optInTimePeriod,
       MInteger outBegIdx,
       MInteger outNBElement,
-      double outReal[] ) : RetCode
+      double outReal[] )
    {
-      let mut  periodTotal, tempReal;
+      double periodTotal, tempReal;
       int i, outIdx, trailingIdx, lookbackTotal;
       lookbackTotal = (optInTimePeriod-1);
       if( startIdx < lookbackTotal )
@@ -22504,7 +22504,7 @@ public class Core {
          tempBuffer, optInSlowD_Period,
          optInSlowD_MAType,
          outBegIdx, outNBElement, outSlowD );
-      System.arraycopy(tempBuffer,lookbackDSlow,outSlowK,0,(int)outNBElement.value) ;
+      System.arraycopy(tempBuffer,lookbackDSlow,outSlowK,0,(int) outNBElement.value ) ;
       if( retCode != RetCode.Success )
       {
          outBegIdx.value = 0 ;
@@ -22638,7 +22638,7 @@ public class Core {
          tempBuffer, optInSlowD_Period,
          optInSlowD_MAType,
          outBegIdx, outNBElement, outSlowD );
-      System.arraycopy(tempBuffer,lookbackDSlow,outSlowK,0,(int)outNBElement.value) ;
+      System.arraycopy(tempBuffer,lookbackDSlow,outSlowK,0,(int) outNBElement.value ) ;
       if( retCode != RetCode.Success )
       {
          outBegIdx.value = 0 ;
@@ -22794,7 +22794,7 @@ public class Core {
          outNBElement.value = 0 ;
          return retCode;
       }
-      System.arraycopy(tempBuffer,lookbackFastD,outFastK,0,(int)outNBElement.value) ;
+      System.arraycopy(tempBuffer,lookbackFastD,outFastK,0,(int) outNBElement.value ) ;
       if( retCode != RetCode.Success )
       {
          outBegIdx.value = 0 ;
@@ -22917,7 +22917,7 @@ public class Core {
          outNBElement.value = 0 ;
          return retCode;
       }
-      System.arraycopy(tempBuffer,lookbackFastD,outFastK,0,(int)outNBElement.value) ;
+      System.arraycopy(tempBuffer,lookbackFastD,outFastK,0,(int) outNBElement.value ) ;
       if( retCode != RetCode.Success )
       {
          outBegIdx.value = 0 ;
@@ -23667,7 +23667,7 @@ public class Core {
       {
          return retCode;
       }
-      secondEMA = new double[firstEMANbElement.value] ;
+      secondEMA = new double[firstEMANbElement.value ] ;
       retCode = TA_INT_EMA ( 0, firstEMANbElement.value -1, firstEMA,
          optInTimePeriod, k,
          secondEMABegIdx , secondEMANbElement ,
@@ -23743,7 +23743,7 @@ public class Core {
       {
          return retCode;
       }
-      secondEMA = new double[firstEMANbElement.value] ;
+      secondEMA = new double[firstEMANbElement.value ] ;
       retCode = TA_INT_EMA ( 0, firstEMANbElement.value -1, firstEMA,
          optInTimePeriod, k,
          secondEMABegIdx , secondEMANbElement ,
@@ -25175,7 +25175,7 @@ public class Core {
       {
          outBegIdx.value = startIdx;
          outNBElement.value = endIdx-startIdx+1;
-         System.arraycopy(inReal,startIdx,outReal,0,(int)outNBElement.value) ;
+         System.arraycopy(inReal,startIdx,outReal,0,(int) outNBElement.value ) ;
          return RetCode.Success ;
       }
       divider = (optInTimePeriod*(optInTimePeriod+1))>>1;
@@ -25272,5 +25272,5 @@ public class Core {
    }
    /* Generated */
    /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
-
+   
 }
