@@ -35,6 +35,10 @@ AC_FUNC_STRTOD
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([floor isascii localeconv mblen memmove memset modf pow sqrt strcasecmp strchr strerror strncasecmp strrchr strstr strtol strtoul])
 
+# Checks for libm
+LT_LIB_M
+AC_SUBST([LIBM])
+
 # Versioning:
 # Only change this if library is no longer
 # ABI compatible with previous version

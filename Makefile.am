@@ -11,8 +11,9 @@ HEADER_FILES = $(shell find src -name '*.h')
 # Distribute some C files containing static data used for ta_regtest
 GDATA_FILES = $(shell find . -name 'ta_gData*.c')
 
+# Distribute additional bash scripts needed to "make all"
+BUILD_SHELL_FILES = src/tools/post-build-bin.sh
+
 # Add more files to EXTRA_DIST to be included on "make dist"
 # This is only for files that are not auto-discovered by autotools.
-#
-# This is in-case the user choose to do "make" instead of "make install".
-EXTRA_DIST = $(HEADER_FILES) $(GDATA_FILES)
+EXTRA_DIST = $(HEADER_FILES) $(GDATA_FILES) $(BUILD_SHELL_FILES)

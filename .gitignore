@@ -28,8 +28,9 @@ ar-lib
 src/tools/gen_code/gen_code
 src/tools/ta_regtest/ta_regtest
 bin/*.class
+bin/gen_code
+bin/ta_regtest
 !bin/HOLDER
-!bin/gen_code
 
 ## File system
 .DS_Store
