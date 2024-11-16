@@ -35,6 +35,48 @@ def verify_git_repo() -> str:
         print("Current directory is not a TA-Lib Git repository (src/ta_func missing)")
         sys.exit(1)
 
+def verify_src_package(root_dir: str) -> bool:
+    # Returns True on success.
+
+    # In current directory do:
+    # - Run ./configure
+    # - Run 'make' (verify returning zero)
+    # - Run its src/tools/ta_regtest/ta_regtest (verify returning zero)
+    # - Verify that src/tools/gen_code/gen_code exists (do not run it).
+    #
+    # If the host is not a Github Action also do:
+    #   - Run 'sudo make install' (verify returnign zero)
+
+    original_dir = os.getcwd()
+    os.chdir(root_dir)
+
+    try:
+        # Simulate typical user installation.
+        subprocess.run(['./configure', '--prefix=/usr'], check=True)
+        subprocess.run(['make'], check=True)
+
+        # Run its src/tools/ta_regtest/ta_regtest
+        subprocess.run(['src/tools/ta_regtest/ta_regtest'], check=True)
+
+        # Verify that src/tools/gen_code/gen_code exists (do not run it)
+        if not os.path.isfile('src/tools/gen_code/gen_code'):
+            print("Error: src/tools/gen_code/gen_code does not exist.")
+            return False
+
+        # run 'sudo make install', if not executed within a Github Action.
+        if 'GITHUB_ACTIONS' not in os.environ:
+            subprocess.run(['sudo', 'make', 'install'], check=True)
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error during verification: {e}")
+        return False
+
+    finally:
+        os.chdir(original_dir)
+
+    return True
+
+
 def get_version_string(root_dir: str) -> str:
     """
     Parse the file src/ta_common/ta_version.c to build a version string.

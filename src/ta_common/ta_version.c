@@ -41,7 +41,7 @@
 #define MAJOR "0"
 #define MINOR "6"
 #define BUILD "0"
-#define EXTRA "dev"
+#define EXTRA ""
 
 /* Nothing to modify below this line. */
 

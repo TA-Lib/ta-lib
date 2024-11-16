@@ -9,18 +9,30 @@ import os
 import subprocess
 import sys
 
-from common import verify_git_repo, get_version_string
+from common import verify_git_repo, get_version_string, verify_src_package
 
-def package_linux(root_dir):
+def package_linux(root_dir: str, version: str):
     os.chdir(root_dir)
+
+    # Clean-up any previous packaging
+    os.system('rm -f ta-lib-git.tar.gz')
+    os.system(f'rm -f dist/ta-lib-{version}-src.tar.gz')
+    try:
+        subprocess.run(['rm', '-rf', 'ta-lib-git'], check=True, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as e:
+        try:
+            subprocess.run(['sudo', 'rm', '-rf', 'ta-lib-git'], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error running 'sudo rm -rf ta-lib-git': {e}")
+            return
 
     # Check if ./configure exists, if not create it.
     if not os.path.isfile('./configure'):
-        print("'./configure' not found. Running 'autogen -i'...")
+        print("'./configure' not found. Running 'autoreconf -fi'...")
         try:
-            subprocess.run(['autogen', '-i'], check=True)
+            subprocess.run(['autoreconf', '-fi'], check=True)
         except subprocess.CalledProcessError as e:
-            print(f"Error running 'autogen -i': {e}")
+            print(f"Error running 'autoreconf -fi': {e}")
             return
 
     # Run ./configure
@@ -37,12 +49,33 @@ def package_linux(root_dir):
         print(f"Error running 'make dist': {e}")
         return
 
+    # Decompress ta-lib-git.tar.gz
+    if not os.path.isfile('ta-lib-git.tar.gz'):
+        print("Error: ta-lib-git.tar.gz not found.")
+        return
+
+    os.system('tar -xzf ta-lib-git.tar.gz')
+
+    # Verify the source package is OK.
+    if not verify_src_package(f"{root_dir}/ta-lib-git"):
+        print("Error: Source package verification failed.")
+        return
+
+    # Move ta-lib-git.tar.gz into root_dir/dist (create directory as needed)
+    # at same time rename it ta-lib-<version>-src.tar.gz
+    os.makedirs('dist', exist_ok=True)
+    os.rename('ta-lib-git.tar.gz', f'dist/ta-lib-{version}-src.tar.gz')
+    # delete the ta-lib-git directory
+    os.system('rm -rf ta-lib-git')
+
+    print(f"Packaging to dist/ta-lib-{version}.tar.gz successful.")
+
 if __name__ == "__main__":
 
     if sys.platform == "linux":
         root_dir = verify_git_repo()
         version = get_version_string(root_dir)
-        package_linux(root_dir)
+        package_linux(root_dir,version)
     else:
         print("For now, this script is only for Linux systems.")
         sys.exit(1)
