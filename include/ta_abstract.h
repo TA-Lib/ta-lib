@@ -118,10 +118,6 @@ TA_RetCode TA_GroupTableFree ( TA_StringTable *table );
  * On success, it becomes the responsibility of the caller to
  * call TA_FuncTableFree once the 'table' is no longuer needed.
  *
- * Passing NULL as the group string will return ALL the TA functions.
- * (Note: All TA_Functions have a unique string identifier even when in
- *        seperate group).
- *
  * Example:
  * This code snippet will print out the name of all the supported
  * function in the "market strength" category:
@@ -164,7 +160,7 @@ TA_RetCode TA_GetFuncHandle( const char *name,
  *   Print the number of inputs used by the MA (moving average) function.
  *
  *   TA_RetCode retCode;
- *   TA_FuncHandle *handle;
+ *   const TA_FuncHandle *handle;
  *   const TA_FuncInfo *theInfo;
  *
  *   retCode = TA_GetFuncHandle( "MA", &handle );
