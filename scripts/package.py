@@ -8,6 +8,7 @@
 import os
 import subprocess
 import sys
+import glob
 
 from common import verify_git_repo, get_version_string, verify_src_package
 
@@ -15,8 +16,11 @@ def package_linux(root_dir: str, version: str):
     os.chdir(root_dir)
 
     # Clean-up any previous packaging
+    for file in glob.glob(f'dist/ta-lib-*-src.tar.gz'):
+        os.remove(file)
+
     os.system('rm -f ta-lib-git.tar.gz')
-    os.system(f'rm -f dist/ta-lib-{version}-src.tar.gz')
+
     try:
         subprocess.run(['rm', '-rf', 'ta-lib-git'], check=True, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError as e:
@@ -26,14 +30,12 @@ def package_linux(root_dir: str, version: str):
             print(f"Error running 'sudo rm -rf ta-lib-git': {e}")
             return
 
-    # Check if ./configure exists, if not create it.
-    if not os.path.isfile('./configure'):
-        print("'./configure' not found. Running 'autoreconf -fi'...")
-        try:
-            subprocess.run(['autoreconf', '-fi'], check=True)
-        except subprocess.CalledProcessError as e:
-            print(f"Error running 'autoreconf -fi': {e}")
-            return
+    # Always autoreconf before re-packaging
+    try:
+        subprocess.run(['autoreconf', '-fi'], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error running 'autoreconf -fi': {e}")
+        return
 
     # Run ./configure
     try:

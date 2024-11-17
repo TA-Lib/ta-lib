@@ -45,7 +45,7 @@ def verify_src_package(root_dir: str) -> bool:
     # - Verify that src/tools/gen_code/gen_code exists (do not run it).
     #
     # If the host is not a Github Action also do:
-    #   - Run 'sudo make install' (verify returnign zero)
+    #   - Run 'sudo make install' (verify returning zero)
 
     original_dir = os.getcwd()
     os.chdir(root_dir)
