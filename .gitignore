@@ -70,6 +70,10 @@ Session.vim
 .vscode/ltex.disabledRules.en-US.txt
 .vscode/ltex.dictionary.en-US.txt
 
+# Visual Studio
+.vs/
+out/
+
 ## MSVC Windows builds (debug info)
 *.pdb
 
