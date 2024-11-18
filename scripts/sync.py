@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
-# Make local dev branch "catch up" with the remote main branch.
+# Update *local* dev with latest from both dev and main *remote* branch.
 #
-# Often needed to be done prior to push "dev".
+# Such merging is often needed prior to a 'push origin dev'.
+#
+# The local dev changes (if any) are temporarly stashed and merge back...
+# so conflicts may need to be resolved manually (an error will be displayed).
 #
 # NOOP if nothing to merge
 
@@ -16,14 +19,31 @@ def run_command(command):
 
 def main():
     try:
-        # Fetch the latest changes from the origin
+        # Fetch the latest branch information from origin
         run_command(['git', 'fetch', 'origin'])
-        run_command(['git', 'pull', 'origin', 'main'])
 
-        # Checkout the dev branch
+        # Stash any local dev changes
         run_command(['git', 'checkout', 'dev'])
+        run_command(['git', 'stash', 'push', '-m', 'sync-script-stash'])
+
+        # Pull the latest dev changes
+        run_command(['git', 'pull', 'origin', 'dev'])
+        # Apply the stashed changes
+        stash_list = run_command(['git', 'stash', 'list'])
+        if 'sync-script-stash' in stash_list:
+            try:
+                run_command(['git', 'stash', 'pop'])
+            except subprocess.CalledProcessError:
+                print("Conflict occurred while applying stashed changes. Resolve conflicts manually.")
+                print("1. Identify conflicts with 'git status'")
+                print("2. Resolve manually by editing the conflicted files")
+                print("3. Mark as resolved using 'git add <file>'")
+                print("4. Complete merge with a 'git commit'")
+                sys.exit(1)
 
         # Find the common ancestor of dev and main
+        run_command(['git', 'pull', 'origin', 'main'])
+
         merge_base = run_command(['git', 'merge-base', 'dev', 'main'])
 
         # Check if there are any changes from main that are not in dev
@@ -45,11 +65,12 @@ def main():
                     print("Merged main into dev.")
             else:
                 print("Merge failed due to conflicts. Next steps:")
-                print("1. Identify conflicts with 'git status'.")
-                print("2. Resolve manually by editing the conflicted files.")
-                print("3. Mark as resolved using 'git add <file>'.")
-                print("4. Complete merge with 'git commit'.")
+                print("1. Identify conflicts with 'git status'")
+                print("2. Resolve manually by editing the conflicted files")
+                print("3. Mark as resolved using 'git add <file>'")
+                print("4. Complete merge with a 'git commit'")
                 sys.exit(1)
+
     except subprocess.CalledProcessError as e:
         print(f"An error occurred: {e}")
         sys.exit(1)
