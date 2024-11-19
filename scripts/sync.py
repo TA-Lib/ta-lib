@@ -2,7 +2,7 @@
 
 # Update *local* dev with latest from both dev and main *remote* branch.
 #
-# Such merging is often needed prior to a 'push origin dev'.
+# Such merging is often needed prior to a 'git push'.
 #
 # The local dev changes (if any) are temporarly stashed and merge back...
 # so conflicts may need to be resolved manually (an error will be displayed).

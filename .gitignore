@@ -24,12 +24,13 @@ autom4te.cache
 ar-lib
 **/.history/
 
-# Ignore the generated binaries, but keep the bin soft links.
+# TA-Lib specific tools (must be built for each platform)
 src/tools/gen_code/gen_code
 src/tools/ta_regtest/ta_regtest
 bin/*.class
-bin/gen_code
-bin/ta_regtest
+bin/gen_code*
+bin/ta_*
+lib/ta_*
 !bin/HOLDER
 
 ## File system
@@ -55,7 +56,7 @@ venv
 .#
 TODO
 tmp
-temp/*.tmp
+temp/
 
 ## Editors
 *.swp
@@ -73,6 +74,7 @@ Session.vim
 # Visual Studio
 .vs/
 out/
+*.vcxproj.user
 
 ## MSVC Windows builds (debug info)
 *.pdb
