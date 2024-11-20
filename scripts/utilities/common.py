@@ -1,6 +1,28 @@
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
+import time
+
+def create_temp_dir(root_dir) -> str:
+    # Create a temporary directory under root_dir/temp, also purge older ones.
+    #
+    # Return the path of the newly created directory.
+
+    # Delete oldest directories if more than 10 exists and it is more
+    # than 1 hour old.
+    temp_root_dir = os.path.join(root_dir, "temp")
+    os.makedirs(temp_root_dir, exist_ok=True)
+    temp_dirs = sorted(os.listdir(temp_root_dir), key=lambda x: os.path.getctime(os.path.join(temp_root_dir, x)))
+    if len(temp_dirs) > 10:
+        for i in range(len(temp_dirs) - 10):
+            temp_dir_path = os.path.join(temp_root_dir, temp_dirs[i])
+            if os.path.isdir(temp_dir_path) and (time.time() - os.path.getctime(temp_dir_path)) > 3600:
+                shutil.rmtree(temp_dir_path)
+
+    # Create the new temp directory
+    return tempfile.mkdtemp(dir=temp_root_dir)
 
 def verify_git_repo() -> str:
     # Verify that the script is called from within a ta-lib git repos, and if yes

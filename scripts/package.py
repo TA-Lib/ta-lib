@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-# Produces and tests the assets to be released.
+# Produces the assets release candidates in 'dist'.
 #
-# The output depends of the host system.
+# The outputs depend of the host system.
 #
 #    For linux/ubuntu: ta-lib-<version>-src.tar.gz
 #         with contents for doing "./configure; make; sudo make install"
@@ -23,11 +23,11 @@
 #    - Scripts must be run in a "VS Development Command Shell" (for the convenience
 #      of CMake and Ninja be on the Path and already be configured).
 #
-#    (FYI, you can optionally do all this in a Windows VM)
+#    (FYI, all this can optionally be done in a Windows VM)
 #
 # How to change the version?
 #   Edit MAJOR, MINOR, BUILD in src/ta_common/ta_version.c
-#   You do not need to modify other files (this script will update all needed files).
+#   There is no need to modify other files (they will be updated by this script).
 
 import filecmp
 import os
@@ -40,7 +40,7 @@ import tempfile
 import zipfile
 import zlib
 
-from common import verify_git_repo, get_version_string, verify_src_package
+from scripts.utilities.common import verify_git_repo, get_version_string, verify_src_package
 
 def compare_zip_files(zip_file1, zip_file2):
     # Does a binary comparison of the contents of the two zip files.
@@ -50,13 +50,13 @@ def compare_zip_files(zip_file1, zip_file2):
         temp_extract_path2 = os.path.join(temp_extract_dir, 'temp2')
         os.makedirs(temp_extract_path1, exist_ok=True)
         os.makedirs(temp_extract_path2, exist_ok=True)
-        
+
         with zipfile.ZipFile(zip_file1, 'r') as zip_ref:
             zip_ref.extractall(temp_extract_path1)
-        
+
         with zipfile.ZipFile(zip_file2, 'r') as zip_ref:
             zip_ref.extractall(temp_extract_path2)
-        
+
         dir_comparison = filecmp.dircmp(temp_extract_path1, temp_extract_path2)
         return not dir_comparison.diff_files and not dir_comparison.left_only and not dir_comparison.right_only
 
@@ -203,15 +203,15 @@ def package_linux(root_dir: str, version: str):
 if __name__ == "__main__":
     root_dir = verify_git_repo()
     version = get_version_string(root_dir)
-
-    if sys.platform == "linux":
+    host_platform = sys.platform
+    if host_platform == "linux":
         package_linux(root_dir,version)
-    elif sys.platform == "win32":
+    elif host_platform == "win32":
         arch = platform.architecture()[0]
         if arch == '64bit':
             package_windows(root_dir, version)
         else:
             print( f"Architecture [{arch}] not yet supported. Only 64 bits supported on windows.")
     else:
-        print("For now, this script is only for Linux systems.")
+        print(f"Unsupported platform [{host_platform}]")
         sys.exit(1)
