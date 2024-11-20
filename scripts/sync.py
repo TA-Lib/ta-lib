@@ -26,8 +26,20 @@ def main():
         run_command(['git', 'checkout', 'dev'])
         run_command(['git', 'stash', 'push', '-m', 'sync-script-stash'])
 
+        # Get the local dev commit hash before pulling
+        # This is later used to detect if any changes were pulled.
+        local_dev_commit_before = run_command(['git', 'rev-parse', 'dev'])
+
         # Pull the latest dev changes
         run_command(['git', 'pull', 'origin', 'dev'])
+
+        # Check if there were any changes pulled
+        local_dev_commit_after = run_command(['git', 'rev-parse', 'dev'])
+        if local_dev_commit_before == local_dev_commit_after:
+            print("No changes to merge from origin/dev")
+        else:
+            print("Pulled latest changes from origin/dev")
+
         # Apply the stashed changes
         stash_list = run_command(['git', 'stash', 'list'])
         if 'sync-script-stash' in stash_list:
@@ -49,7 +61,7 @@ def main():
         # Check if there are any changes from main that are not in dev
         diff_output = subprocess.run(['git', 'diff', '--quiet', merge_base, 'main'], stderr=subprocess.DEVNULL)
         if diff_output.returncode == 0:
-            print("No changes to merge from main to dev.")
+            print("No changes to merge from origin/main")
         else:
             # Perform the actual merge
             merge_output = subprocess.run(['git', 'merge', '--no-commit', '--no-ff', 'main'], stderr=subprocess.DEVNULL)
