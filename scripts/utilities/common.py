@@ -88,6 +88,8 @@ def verify_src_package(root_dir: str) -> bool:
         # run 'sudo make install', if not executed within a Github Action.
         if 'GITHUB_ACTIONS' not in os.environ:
             subprocess.run(['sudo', 'make', 'install'], check=True)
+        else:
+            print("Skipping 'sudo make install' as this is a Github Action.")
 
     except subprocess.CalledProcessError as e:
         print(f"Error during verification: {e}")

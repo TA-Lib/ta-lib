@@ -41,32 +41,7 @@ import zipfile
 import zlib
 
 from utilities.common import verify_git_repo, get_version_string, verify_src_package
-
-def compare_zip_files(zip_file1, zip_file2):
-    # Does a binary comparison of the contents of the two zip files.
-    # Ignores file creation time.
-    with tempfile.TemporaryDirectory() as temp_extract_dir:
-        temp_extract_path1 = os.path.join(temp_extract_dir, 'temp1')
-        temp_extract_path2 = os.path.join(temp_extract_dir, 'temp2')
-        os.makedirs(temp_extract_path1, exist_ok=True)
-        os.makedirs(temp_extract_path2, exist_ok=True)
-
-        with zipfile.ZipFile(zip_file1, 'r') as zip_ref:
-            zip_ref.extractall(temp_extract_path1)
-
-        with zipfile.ZipFile(zip_file2, 'r') as zip_ref:
-            zip_ref.extractall(temp_extract_path2)
-
-        dir_comparison = filecmp.dircmp(temp_extract_path1, temp_extract_path2)
-        return not dir_comparison.diff_files and not dir_comparison.left_only and not dir_comparison.right_only
-
-def create_zip_file(source_dir, zip_file):
-    with zipfile.ZipFile(zip_file, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=zlib.Z_BEST_COMPRESSION) as zipf:
-        for root, dirs, files in os.walk(source_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                arcname = os.path.relpath(file_path, start=source_dir)
-                zipf.write(file_path, arcname)
+from utilities.files import compare_tar_gz_files, compare_zip_files, create_zip_file
 
 def package_windows(root_dir: str, version: str):
     os.chdir(root_dir)
@@ -144,10 +119,15 @@ def package_linux(root_dir: str, version: str):
     os.chdir(root_dir)
 
     # Clean-up any previous packaging
-    for file in glob.glob(f'dist/ta-lib-*-src.tar.gz'):
-        os.remove(file)
+    dist_dir = os.path.join(root_dir, 'dist')
+    package_temp_file_prefix = "ta-lib-git"
+    package_temp_dir = os.path.join(root_dir, package_temp_file_prefix)
+    package_temp_file = os.path.join(root_dir, f"{package_temp_file_prefix}.tar.gz")
 
-    os.system('rm -f ta-lib-git.tar.gz')
+    #for file in glob.glob(f'dist/ta-lib-*-src.tar.gz'):
+    #    os.remove(file)
+    os.system(f"rm -rf {package_temp_dir}")
+    os.system(f"rm -f {package_temp_file}")
 
     try:
         subprocess.run(['rm', '-rf', 'ta-lib-git'], check=True, stderr=subprocess.DEVNULL)
@@ -180,25 +160,38 @@ def package_linux(root_dir: str, version: str):
         return
 
     # Decompress ta-lib-git.tar.gz
-    if not os.path.isfile('ta-lib-git.tar.gz'):
-        print("Error: ta-lib-git.tar.gz not found.")
+
+    if not os.path.isfile(package_temp_file):
+        print(f"Error: {package_temp_file} not found.")
         return
 
-    os.system('tar -xzf ta-lib-git.tar.gz')
+    os.system(f"tar -xzf {package_temp_file}")
 
     # Verify the source package is OK.
-    if not verify_src_package(f"{root_dir}/ta-lib-git"):
+
+    if not verify_src_package(package_temp_dir):
         print("Error: Source package verification failed.")
         return
 
     # Move ta-lib-git.tar.gz into root_dir/dist (create directory as needed)
     # at same time rename it ta-lib-<version>-src.tar.gz
-    os.makedirs('dist', exist_ok=True)
-    os.rename('ta-lib-git.tar.gz', f'dist/ta-lib-{version}-src.tar.gz')
-    # delete the ta-lib-git directory
-    os.system('rm -rf ta-lib-git')
+    # ...
+    # but do this only if the archive *content* has changed
+    # (ignore metadata such as file creation time).
+    asset_file_name = f'ta-lib-{version}-src.tar.gz'
+    package_final = os.path.join(dist_dir, asset_file_name)
+    if not os.path.exists(package_final) or not compare_tar_gz_files(package_temp_file, package_final):
+        print(f"Copying package to dist/{asset_file_name}")
+        os.makedirs(dist_dir, exist_ok=True)
+        os.rename(package_temp_file, package_final)
+    else:
+        print(f"Generated {asset_file_name} identical to one already in dist directory. Skipping copy.")
 
-    print(f"Packaging to dist/ta-lib-{version}.tar.gz successful.")
+    # Clean-up
+    os.system(f"rm -rf {package_temp_dir}")
+    os.system(f"rm -f {package_temp_file}")
+
+    print(f"Packaging completed successfully.")
 
 if __name__ == "__main__":
     root_dir = verify_git_repo()
