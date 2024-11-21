@@ -53,9 +53,14 @@ def main():
                 print("4. Complete merge with a 'git commit'")
                 sys.exit(1)
 
-        # Find the common ancestor of dev and main
+        # Ensure the local main branch is up-to-date
+        run_command(['git', 'checkout', 'main'])
         run_command(['git', 'pull', 'origin', 'main'])
 
+        # Switch back to dev branch
+        run_command(['git', 'checkout', 'dev'])
+
+        # Find the common ancestor of dev and main
         merge_base = run_command(['git', 'merge-base', 'dev', 'main'])
 
         # Check if there are any changes from main that are not in dev

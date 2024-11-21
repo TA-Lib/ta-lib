@@ -40,7 +40,7 @@ import tempfile
 import zipfile
 import zlib
 
-from scripts.utilities.common import verify_git_repo, get_version_string, verify_src_package
+from utilities.common import verify_git_repo, get_version_string, verify_src_package
 
 def compare_zip_files(zip_file1, zip_file2):
     # Does a binary comparison of the contents of the two zip files.
