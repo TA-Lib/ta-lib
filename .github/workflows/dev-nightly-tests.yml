@@ -1,0 +1,91 @@
+# Periodic tests of latest dev branch
+#
+# This is for early detection of breaking changes.
+#
+
+name: dev nightly tests
+
+# Controls when the workflow will run
+on:
+  schedule:
+    - cron: "0 5 * * *" # every day 5AM
+
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-2022]
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - name: Install build tools (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt update && sudo apt install -y automake libtool autogen mcpp openjdk-21-jdk
+
+      - name: Install Rust Toolchain (Linux)
+        if: runner.os == 'Linux'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Create shell envs (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          echo "PYTHON=python3" >> $GITHUB_ENV
+
+      - name: Create shell envs (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe > msbuild_path.txt
+          set /p MSBUILD_PATH=<msbuild_path.txt
+          set VCVARSALL=%MSBUILD_PATH%\..\..\..\..\VC\Auxiliary\Build\vcvarsall.bat
+          echo VCVARSALL=%VCVARSALL% >> %GITHUB_ENV%
+          echo PYTHON=python >> %GITHUB_ENV%
+
+      - name: Build dist assets (Linux)
+        if: runner.os == 'Linux'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          $PYTHON $GITHUB_WORKSPACE/scripts/package.py
+
+      - name: Build dist assets (Windows x64)
+        if: runner.os == 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: cmd
+        run: |
+          call "%VCVARSALL%" x64
+          %PYTHON% %GITHUB_WORKSPACE%\scripts\package.py
+
+      - name: Test dist assets (Linux)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          $PYTHON $GITHUB_WORKSPACE/scripts/test-dist.py
+
+      - name: Test dist assets (Windows x64)
+        if: runner.os == 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: cmd
+        run: |
+          call "%VCVARSALL%" x64
+          %PYTHON% %GITHUB_WORKSPACE%\scripts\test-dist.py
