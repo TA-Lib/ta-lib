@@ -41,7 +41,6 @@
 #define MAJOR "0"
 #define MINOR "6"
 #define BUILD "0"
-#define EXTRA ""
 
 /* Nothing to modify below this line. */
 
@@ -49,11 +48,7 @@
 
 const char  *TA_GetVersionString( void )
 {
-	if (sizeof(EXTRA) > 1) {
-		return MAJOR "." MINOR "." BUILD "-" EXTRA " " TA_VERSION_DT;
-	} else {
-		return MAJOR "." MINOR "." BUILD " " TA_VERSION_DT;
-	}
+	return MAJOR "." MINOR "." BUILD " " TA_VERSION_DT;
 }
 
 const char *TA_GetVersionMajor( void )
@@ -73,7 +68,8 @@ const char *TA_GetVersionBuild( void )
 
 const char *TA_GetVersionExtra( void )
 {
-   return EXTRA;
+   /* Deprecated */
+   return "";
 }
 
 const char *TA_GetVersionDate( void )

@@ -40,7 +40,8 @@ import tempfile
 import zipfile
 import zlib
 
-from utilities.common import verify_git_repo, get_version_string, verify_src_package
+from utilities.versions import sync_versions
+from utilities.common import verify_git_repo, verify_src_package
 from utilities.files import compare_tar_gz_files, compare_zip_files, create_zip_file
 
 def package_windows(root_dir: str, version: str):
@@ -195,7 +196,7 @@ def package_linux(root_dir: str, version: str):
 
 if __name__ == "__main__":
     root_dir = verify_git_repo()
-    version = get_version_string(root_dir)
+    version = sync_versions(root_dir)
     host_platform = sys.platform
     if host_platform == "linux":
         package_linux(root_dir,version)

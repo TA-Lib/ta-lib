@@ -17,7 +17,8 @@ import sys
 import platform
 import tempfile
 
-from utilities.common import verify_git_repo, get_version_string, create_temp_dir
+from utilities.versions import get_version_string, get_version_string_cmake
+from utilities.common import verify_git_repo,create_temp_dir
 from install_tests.python import test_python_windows, test_python_linux
 
 if __name__ == "__main__":
@@ -28,8 +29,16 @@ if __name__ == "__main__":
     sudo_pwd = args.pwd
 
     root_dir = verify_git_repo()
-    version = get_version_string(root_dir)
+
     temp_dir = create_temp_dir(root_dir)
+
+    # Verify that CMakelists.txt and ta_version.c are in sync.
+    version = get_version_string(root_dir)
+    version_cmake = get_version_string_cmake(root_dir)
+    if version != version_cmake:
+        print(f"Version mismatch: ta_version.c [{version}] vs CMakeLists.txt [{version_cmake}]")
+        print(f"Run 'script/package.py' to sync the version numbers in both files.")
+        sys.exit(1)
 
     # Identify the dist package to test by this host.
     host_platform = sys.platform

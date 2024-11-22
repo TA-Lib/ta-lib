@@ -100,39 +100,3 @@ def verify_src_package(root_dir: str) -> bool:
 
     return True
 
-
-def get_version_string(root_dir: str) -> str:
-    """
-    Parse the file src/ta_common/ta_version.c to build a version string.
-
-    The file contains the following C definitions:
-        #define MAJOR "0"
-        #define MINOR "6"
-        #define BUILD "0"
-        #define EXTRA "dev"
-
-    These become the string "0.6.0-dev".
-    """
-    version_info = {}
-    version_file_path = os.path.join(root_dir, 'src/ta_common/ta_version.c')
-    with open(version_file_path) as f:
-        lines = f.readlines()
-        for line in lines:
-            if line.startswith('#define'):
-                parts = line.split()
-                if len(parts) == 3:
-                    key = parts[1]
-                    value = parts[2].strip('"')
-                    version_info[key] = value
-
-    # Check if MAJOR, MINOR, and BUILD are defined
-    if 'MAJOR' not in version_info or 'MINOR' not in version_info or 'BUILD' not in version_info:
-        print("Error: MAJOR, MINOR, and BUILD must be defined in src/ta_common/ta_version.h")
-        sys.exit(1)
-
-    version_string = f"{version_info.get('MAJOR', '0')}.{version_info.get('MINOR', '0')}.{version_info.get('BUILD', '0')}"
-    if 'EXTRA' in version_info and version_info['EXTRA']:
-        version_string += f"-{version_info['EXTRA']}"
-
-    return version_string
-
