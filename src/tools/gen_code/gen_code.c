@@ -100,6 +100,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #if !defined(__WIN32__) && !defined(__MSDOS__) && !defined(WIN32)
    #include <unistd.h>
@@ -114,13 +115,62 @@
 #include "ta_memory.h"
 
 #if defined(__WIN32__) || defined(WIN32)
-# define TA_FS_SLASH "\\"
+# define PATH_SEPARATOR "\\"
 # define TA_MCPP_EXE "..\\src\\tools\\gen_code\\mcpp.exe"
 #else
-# define TA_FS_SLASH "/"
+# define PATH_SEPARATOR "/"
 /* XXX resolve this dynamically or take as param */
 # define TA_MCPP_EXE "/usr/bin/mcpp"
 #endif
+
+void run_command(const char *command, char *output, size_t output_size) {
+    FILE *fp;
+    fp = popen(command, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "Failed to run command: %s\n", command);
+        exit(1);
+    }
+    if (fgets(output, output_size, fp) == NULL) {
+        fprintf(stderr, "Failed to read command output: %s\n", command);
+        pclose(fp);
+        exit(1);
+    }
+    pclose(fp);
+    // Remove trailing newline character
+    output[strcspn(output, "\n")] = '\0';
+}
+
+const char* verify_git_repo() {
+    static char root_dir[1024];
+    char output[1024];
+
+    // Check if Git is installed
+    run_command("git --version", output, sizeof(output));
+
+    // Check if the current directory is inside a Git work tree
+    run_command("git rev-parse --is-inside-work-tree", output, sizeof(output));
+    if (strcmp(output, "true") != 0) {
+        fprintf(stderr, "Must run this script while the current directory is in a TA-Lib Git repository.\n");
+        exit(1);
+    }
+
+    // Get the root directory of the Git repository
+    run_command("git rev-parse --show-toplevel", root_dir, sizeof(root_dir));
+
+    // Change to the root directory of the Git repository for validation.
+    if (chdir(root_dir) != 0) {
+        perror("chdir");
+        exit(1);
+    }
+
+    // Sanity check that src/ta_func exists
+    if (access("./src/ta_func", F_OK) != 0) {
+        fprintf(stderr, "Current directory is not a TA-Lib Git repository (src/ta_func missing).\n");
+        exit(1);
+    }
+
+    return root_dir;
+}
 
 static char *ta_fs_path(int count, ...) {
     char *path = (char *)malloc(16000); /* XXX quick and dirty */
@@ -141,7 +191,7 @@ static char *ta_fs_path(int count, ...) {
         memmove(p, part, i);
         p += i;
 
-        memmove(p, TA_FS_SLASH, 1);
+        memmove(p, PATH_SEPARATOR, 1);
         p++;
     }
     *--p = '\0';
@@ -446,7 +496,26 @@ int main(int argc, char* argv[])
          exit(-1);
    }
 
+   const char *root_dir = verify_git_repo();
+
+   // gen_code expect execution from root_dir/bin.
+   char bin_dir[1024];
+   snprintf(bin_dir, sizeof(bin_dir), "%s%sbin", root_dir, PATH_SEPARATOR);
+   if (chdir(bin_dir) != 0) {
+      perror("chdir to bin");
+      exit(1);
+   }
+
    printf( "gen_code V%s\n", TA_GetVersionString() );
+
+   // Show the path being used (to help debugging)
+   char current_dir[1024];
+   if (getcwd(current_dir, sizeof(current_dir)) != NULL) {
+      printf("Executing from [%s]\n", current_dir);
+   } else {
+      perror("getcwd() error");
+      return 1;
+   }
 
    retCode = TA_Initialize();
    if( retCode != TA_SUCCESS )
@@ -1046,11 +1115,11 @@ static int genCode(int argc, char* argv[])
       fileDelete( JAVA_SUCCESS_FILE );
 
 #ifdef _MSC_VER
-      ret = system( "javac -cp . -d . \".." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "PrettyCode.java" );
-      ret = system( "javac -cp . -d . \".." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "Main.java" );
+      ret = system( "javac -cp . -d . \".." PATH_SEPARATOR "src" PATH_SEPARATOR "tools" PATH_SEPARATOR "gen_code" PATH_SEPARATOR "java" PATH_SEPARATOR "PrettyCode.java" );
+      ret = system( "javac -cp . -d . \".." PATH_SEPARATOR "src" PATH_SEPARATOR "tools" PATH_SEPARATOR "gen_code" PATH_SEPARATOR "java" PATH_SEPARATOR "Main.java" );
 #else
-      ret = system( "javac -cp . -d . .." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "PrettyCode.java" );
-      ret = system( "javac -cp . -d . .." TA_FS_SLASH "src" TA_FS_SLASH "tools" TA_FS_SLASH "gen_code" TA_FS_SLASH "java" TA_FS_SLASH "Main.java" );
+      ret = system( "javac -cp . -d . .." PATH_SEPARATOR "src" PATH_SEPARATOR "tools" PATH_SEPARATOR "gen_code" PATH_SEPARATOR "java" PATH_SEPARATOR "PrettyCode.java" );
+      ret = system( "javac -cp . -d . .." PATH_SEPARATOR "src" PATH_SEPARATOR "tools" PATH_SEPARATOR "gen_code" PATH_SEPARATOR "java" PATH_SEPARATOR "Main.java" );
 #endif
       ret = system( "java -cp . Main" );
       tempFile = fileOpen(JAVA_SUCCESS_FILE,NULL,FILE_READ );
@@ -1586,7 +1655,7 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
    #ifdef _MSC_VER
       /* Add the entry in the .NET project file. */
       fprintf( gOutProjFile->file, "				<File\n" );
-      fprintf( gOutProjFile->file, "					RelativePath=\".." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH "c" TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_%s.c\">\n", funcInfo->name );
+      fprintf( gOutProjFile->file, "					RelativePath=\".." PATH_SEPARATOR ".." PATH_SEPARATOR ".." PATH_SEPARATOR "c" PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "ta_%s.c\">\n", funcInfo->name );
       fprintf( gOutProjFile->file, "					<FileConfiguration\n" );
       fprintf( gOutProjFile->file, "						Name=\"Debug|Win32\">\n" );
       fprintf( gOutProjFile->file, "						<Tool\n" );
@@ -1624,7 +1693,7 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
       /* Add the entry in the MSVC project file. */
       fprintf( gOutMSVCProjFile->file, "# Begin Source File\n" );
       fprintf( gOutMSVCProjFile->file, "\n" );
-      fprintf( gOutMSVCProjFile->file, "SOURCE=.." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_%s.c\n", funcInfo->name );
+      fprintf( gOutMSVCProjFile->file, "SOURCE=.." PATH_SEPARATOR ".." PATH_SEPARATOR ".." PATH_SEPARATOR ".." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "ta_%s.c\n", funcInfo->name );
       fprintf( gOutMSVCProjFile->file, "# End Source File\n" );
 
       /* Generate the excel glue code */
@@ -2801,13 +2870,13 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    FILE *logicTmp;
    char localBuf1[500];
 
-   #define TEMPLATE_PASS1   ".." TA_FS_SLASH "temp" TA_FS_SLASH "pass1.tmp"
-   #define TEMPLATE_PASS2   ".." TA_FS_SLASH "temp" TA_FS_SLASH "pass2.tmp"
-   #define TEMPLATE_DEFAULT ".." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract" TA_FS_SLASH "templates" TA_FS_SLASH "ta_x.c.template"
-   #define LOGIC_TEMP       ".." TA_FS_SLASH "temp" TA_FS_SLASH "logic.tmp"
+   #define TEMPLATE_PASS1   ".." PATH_SEPARATOR "temp" PATH_SEPARATOR "pass1.tmp"
+   #define TEMPLATE_PASS2   ".." PATH_SEPARATOR "temp" PATH_SEPARATOR "pass2.tmp"
+   #define TEMPLATE_DEFAULT ".." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract" PATH_SEPARATOR "templates" PATH_SEPARATOR "ta_x.c.template"
+   #define LOGIC_TEMP       ".." PATH_SEPARATOR "temp" PATH_SEPARATOR "logic.tmp"
 
    /* Check if the file already exist. */
-   sprintf( localBuf1, ".." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_%s.c", funcInfo->name );
+   sprintf( localBuf1, ".." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "ta_%s.c", funcInfo->name );
 
    gOutFunc_C = fileOpen( localBuf1, NULL, FILE_READ);
    if( gOutFunc_C == NULL )
@@ -2939,8 +3008,8 @@ static void doDefsFile( void )
    FileHandle *tempFile;
    FILE *out;
 
-   #define FILE_TA_DEFS_H    ".." TA_FS_SLASH "include" TA_FS_SLASH "ta_defs.h"
-   #define FILE_TA_DEFS_TMP  ".." TA_FS_SLASH "temp" TA_FS_SLASH "ta_defs.tmp"
+   #define FILE_TA_DEFS_H    ".." PATH_SEPARATOR "include" PATH_SEPARATOR "ta_defs.h"
+   #define FILE_TA_DEFS_TMP  ".." PATH_SEPARATOR "temp" PATH_SEPARATOR "ta_defs.tmp"
 
    /* Check if the file already exist. If not, this is an error. */
    gOutDefs_H = fileOpen( FILE_TA_DEFS_H, NULL, FILE_READ );
@@ -3081,7 +3150,7 @@ static int createMSVCProjTemplate( FileHandle *in, FileHandle *out )
          /* Add the "non TA function" source files. */
          fprintf( outFile, "# Begin Source File\n");
          fprintf( outFile, "\n");
-         fprintf( outFile, "SOURCE=.." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH ".." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_utility.c\n");
+         fprintf( outFile, "SOURCE=.." PATH_SEPARATOR ".." PATH_SEPARATOR ".." PATH_SEPARATOR ".." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "ta_utility.c\n");
          fprintf( outFile, "# End Source File\n");
          fprintf( outFile, "# End Group\n");
          break;
@@ -4148,18 +4217,18 @@ void genJavaCodePhase2( const TA_FuncInfo *funcInfo )
    fclose(logicTmp);
 
 #ifdef _MSC_VER
-   sprintf( buffer, TA_MCPP_EXE " -c -+ -z -P -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_common -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract -I.." TA_FS_SLASH "include -D _JAVA .." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "TA_%s.c >>.." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode1.tmp ", funcInfo->name);
+   sprintf( buffer, TA_MCPP_EXE " -c -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "TA_%s.c >>.." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp ", funcInfo->name);
    ret = system( buffer );
 
-   sprintf( buffer, TA_MCPP_EXE " -c -+ -z -P -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_common -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract -I.." TA_FS_SLASH "include -D _JAVA .." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode1.tmp >.." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode2.tmp " );
+   sprintf( buffer, TA_MCPP_EXE " -c -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp >.." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode2.tmp " );
    ret = system( buffer );
 #else
    /* The options are the quite same, but on linux it still outputs the #include lines,
 	didn't find anything better that to cut them with the sed ... a hack for now. */
-   sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_common -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract -I.." TA_FS_SLASH "include -D _JAVA .." TA_FS_SLASH "src" TA_FS_SLASH "ta_func" TA_FS_SLASH "ta_%s.c | sed '/^#include/d' >> .." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode1.tmp ", funcInfo->name);
+   sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "ta_%s.c | sed '/^#include/d' >> .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp ", funcInfo->name);
    ret = system( buffer );
 
-   sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_common -I.." TA_FS_SLASH "src" TA_FS_SLASH "ta_abstract -I.." TA_FS_SLASH "include -D _JAVA .." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode1.tmp | sed '/^#include/d' > .." TA_FS_SLASH "temp" TA_FS_SLASH "CoreJavaCode2.tmp " );
+   sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp | sed '/^#include/d' > .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode2.tmp " );
    ret = system( buffer );
 #endif
 

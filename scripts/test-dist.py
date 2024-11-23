@@ -37,7 +37,7 @@ if __name__ == "__main__":
     version_cmake = get_version_string_cmake(root_dir)
     if version != version_cmake:
         print(f"Version mismatch: ta_version.c [{version}] vs CMakeLists.txt [{version_cmake}]")
-        print(f"Run 'script/package.py' to sync the version numbers in both files.")
+        print(f"Run 'scripts/package.py' to sync the version numbers in both files.")
         sys.exit(1)
 
     # Identify the dist package to test by this host.

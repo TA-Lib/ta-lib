@@ -7,14 +7,14 @@
 # Optionally, a "--squash <comment>" allows to reduce all changes to a single commit.
 #
 # How to define the URL of the fork?
-# With 'git remote add'. Example:
+# With 'git remote add ta-lib-temp'. Example:
 #   git remote add ta-lib-temp https://github.com/TA-Lib/ta-lib-temp.git
 #
 # Why this script?
 # The ta-lib-temp fork is useful while developing/testing Github actions.
 # It reduces the notification noise and risk while debugging the CI.
 #
-# (e.g. nobody "watch" the fork, while >20 watches are on the official ta-lib).
+# (e.g. "nobody" watch a fork, while >20 watches are on the official ta-lib).
 
 import argparse
 import subprocess
@@ -31,20 +31,20 @@ def main():
     parser.add_argument('--squash', type=str, help="Squash all changes into a single commit with the specified comment.")
     args = parser.parse_args()
 
-    root_dir = verify_git_repo()
-    try:
 
-        # Using git, verify that the repos is "ta-lib.git"
+    try:
+        # Verify that the current directory in within the official ta-lib repos.
+        root_dir = verify_git_repo()
         remote_url = run_command(['git', 'remote', 'get-url', 'origin'])
         if not remote_url.endswith('ta-lib.git'):
-            print("This script must be run from the upstream ta-lib repository.")
+            print("This script must be run from the official ta-lib repository.")
             sys.exit(1)
 
-        # Usign git, check if ta-lib-temp is a remote
+        # Check if ta-lib-temp is a remote
         remotes = run_command(['git', 'remote'])
         if 'ta-lib-temp' not in remotes:
             print(f"The remote ta-lib-temp is not configured.")
-            print(f"Use 'git remote add ta-lib-temp URL' to add it.")
+            print(f"Use 'git remote add ta-lib-temp <URL>' to add it.")
             print(f"Example: git remote add ta-lib-temp https://github.com/TA-Lib/ta-lib-temp.git")
             sys.exit(1)
 
@@ -54,7 +54,7 @@ def main():
         # Checkout the main branch of the official repository
         run_command(['git', 'checkout', 'dev'])
 
-        # Merge the ta-lib-temp changes
+        # Merge the cahnges from ta-lib-temp
         if args.squash:
             # Squash merge
             run_command(['git', 'merge', '--squash', 'ta-lib-temp/main'])
@@ -63,7 +63,7 @@ def main():
             # Regular merge
             run_command(['git', 'merge', 'ta-lib-temp/main'])
 
-        print("Merge completed successfully.")
+        print("Merge completed successfully into official dev branch.\n")
 
     except subprocess.CalledProcessError as e:
         print(f"An error occurred: {e}")
