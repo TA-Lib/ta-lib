@@ -1,65 +1,68 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.22)
+cmake_minimum_required(VERSION 3.22)
 
-PROJECT(ta-lib)
+project(ta-lib)
 
 set(TA_LIB_VERSION_MAJOR 0)
 set(TA_LIB_VERSION_MINOR 6)
 set(TA_LIB_VERSION_BUILD 0)
 
-SET(TA_LIB_VERSION_FULL "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VERSION_BUILD}")
+# Set the C standard
+set(CMAKE_C_STANDARD 99)
 
-INCLUDE(CheckIncludeFiles)
-INCLUDE(CheckFunctionExists)
-INCLUDE(CheckTypeSize)
-INCLUDE(CheckSymbolExists)
-CHECK_INCLUDE_FILES(float.h HAVE_FLOAT_H)
-CHECK_INCLUDE_FILES(inttypes.h HAVE_INTTYPES_H)
-CHECK_INCLUDE_FILES(limits.h HAVE_LIMITS_H)
-CHECK_INCLUDE_FILES(locale.h HAVE_LOCALE_H)
-CHECK_INCLUDE_FILES(stddef.h HAVE_STDDEF_H)
-CHECK_INCLUDE_FILES(stdint.h HAVE_STDINT_H)
-CHECK_INCLUDE_FILES(stdlib.h HAVE_STDLIB_H)
-CHECK_INCLUDE_FILES(string.h HAVE_STRING_H)
-CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
-CHECK_INCLUDE_FILES(wchar.h HAVE_WCHAR_H)
-CHECK_INCLUDE_FILES(wctype.h HAVE_WCTYPE_H)
-CHECK_FUNCTION_EXISTS(floor HAVE_FLOOR)
-CHECK_FUNCTION_EXISTS(isascii HAVE_ISASCII)
-CHECK_FUNCTION_EXISTS(localeconv HAVE_LOCALECONV)
-CHECK_FUNCTION_EXISTS(mblen HAVE_MBLEN)
-CHECK_FUNCTION_EXISTS(memmove HAVE_MEMMOVE)
-CHECK_FUNCTION_EXISTS(memset HAVE_MEMSET)
-CHECK_FUNCTION_EXISTS(modf HAVE_MODF)
-CHECK_FUNCTION_EXISTS(pow HAVE_POW)
-CHECK_FUNCTION_EXISTS(sqrt HAVE_SQRT)
-CHECK_FUNCTION_EXISTS(strcasecmp HAVE_STRCASECMP)
-CHECK_FUNCTION_EXISTS(strchr HAVE_STRCHR)
-CHECK_FUNCTION_EXISTS(strerror HAVE_STRERROR)
-CHECK_FUNCTION_EXISTS(strncasecmp HAVE_STRNCASECMP)
-CHECK_FUNCTION_EXISTS(strrchr HAVE_STRRCHR)
-CHECK_FUNCTION_EXISTS(strstr HAVE_STRSTR)
-CHECK_FUNCTION_EXISTS(strtol HAVE_STRTOL)
-CHECK_FUNCTION_EXISTS(strtoul HAVE_STRTOUL)
-CHECK_FUNCTION_EXISTS(strcoll HAVE_STRCOLL)
-CHECK_FUNCTION_EXISTS(strftime HAVE_STRFTIME)
-CHECK_FUNCTION_EXISTS(vprintf HAVE_VPRINTF)
-CHECK_TYPE_SIZE(ptrdiff_t SIZEOF_PTRDIFF_T)
-IF(HAVE_SIZEOF_PTRDIFF_T)
-	SET(HAVE_PTRDIFF_T 1)
-ELSE()
-	SET(HAVE_PTRDIFF_T 0)
-ENDIF()
-CHECK_TYPE_SIZE(size_t SIZEOF_SIZE_T)
-IF(HAVE_SIZEOF_SIZE_T)
-	SET(HAVE_SIZE_T 1)
-ELSE()
-	SET(HAVE_SIZE_T 0)
-	SET(size_t "unsigned")
-ENDIF()
-CHECK_SYMBOL_EXISTS("struct tm" "sys/time.h" TM_IN_SYS_TIME)
-CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/include/ta_config.h.cmake" "${CMAKE_CURRENT_SOURCE_DIR}/include/ta_config.h")
+set(TA_LIB_VERSION_FULL "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VERSION_BUILD}")
 
-#SET(priv_HEADERS
+include(CheckIncludeFiles)
+include(CheckFunctionExists)
+include(CheckTypeSize)
+include(CheckSymbolExists)
+check_include_files(float.h HAVE_FLOAT_H)
+check_include_files(inttypes.h HAVE_INTTYPES_H)
+check_include_files(limits.h HAVE_LIMITS_H)
+check_include_files(locale.h HAVE_LOCALE_H)
+check_include_files(stddef.h HAVE_STDDEF_H)
+check_include_files(stdint.h HAVE_STDINT_H)
+check_include_files(stdlib.h HAVE_STDLIB_H)
+check_include_files(string.h HAVE_STRING_H)
+check_include_files(unistd.h HAVE_UNISTD_H)
+check_include_files(wchar.h HAVE_WCHAR_H)
+check_include_files(wctype.h HAVE_WCTYPE_H)
+check_function_exists(floor HAVE_FLOOR)
+check_function_exists(isascii HAVE_ISASCII)
+check_function_exists(localeconv HAVE_LOCALECONV)
+check_function_exists(mblen HAVE_MBLEN)
+check_function_exists(memmove HAVE_MEMMOVE)
+check_function_exists(memset HAVE_MEMSET)
+check_function_exists(modf HAVE_MODF)
+check_function_exists(pow HAVE_POW)
+check_function_exists(sqrt HAVE_SQRT)
+check_function_exists(strcasecmp HAVE_STRCASECMP)
+check_function_exists(strchr HAVE_STRCHR)
+check_function_exists(strerror HAVE_STRERROR)
+check_function_exists(strncasecmp HAVE_STRNCASECMP)
+check_function_exists(strrchr HAVE_STRRCHR)
+check_function_exists(strstr HAVE_STRSTR)
+check_function_exists(strtol HAVE_STRTOL)
+check_function_exists(strtoul HAVE_STRTOUL)
+check_function_exists(strcoll HAVE_STRCOLL)
+check_function_exists(strftime HAVE_STRFTIME)
+check_function_exists(vprintf HAVE_VPRINTF)
+check_type_size(ptrdiff_t SIZEOF_PTRDIFF_T)
+if(HAVE_SIZEOF_PTRDIFF_T)
+	set(HAVE_PTRDIFF_T 1)
+else()
+	set(HAVE_PTRDIFF_T 0)
+endif()
+check_type_size(size_t SIZEOF_SIZE_T)
+if(HAVE_SIZEOF_SIZE_T)
+	set(HAVE_SIZE_T 1)
+else()
+	set(HAVE_SIZE_T 0)
+	set(size_t "unsigned")
+endif()
+check_symbol_exists("struct tm" "sys/time.h" TM_IN_SYS_TIME)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/ta_config.h.cmake" "${CMAKE_CURRENT_SOURCE_DIR}/include/ta_config.h")
+
+#set(priv_HEADERS
 #	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/ta_frame_priv.h"
 #	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_global.h"
 #	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_utility.h"
@@ -69,7 +72,7 @@ CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/include/ta_config.h.cmake" "${CMAKE_
 #	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_memory.h"
 #)
 
-SET(ta-lib_HEADERS
+set(ta-lib_HEADERS
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_abstract.h"
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_common.h"
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_defs.h"
@@ -77,7 +80,7 @@ SET(ta-lib_HEADERS
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_libc.h"
 )
 
-INCLUDE_DIRECTORIES(
+include_directories(
 	"${CMAKE_CURRENT_SOURCE_DIR}/include"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/frames"
@@ -85,7 +88,7 @@ INCLUDE_DIRECTORIES(
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func"
 )
 
-SET(ta-lib_CSOURCES
+set(ta-lib_CSOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_LINEARREG.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_MAX.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CDLHAMMER.c"
@@ -287,26 +290,26 @@ SET(ta-lib_CSOURCES
 )
 
 
-ADD_LIBRARY(ta_lib SHARED ${ta-lib_CSOURCES})
-SET_TARGET_PROPERTIES(ta_lib PROPERTIES
+add_library(ta_lib SHARED ${ta-lib_CSOURCES})
+set_target_properties(ta_lib PROPERTIES
 	SOVERSION ${TA_LIB_VERSION_FULL}
 	DEFINE_SYMBOL TA_LIB_SHARED
 	OUTPUT_NAME "ta_lib"
 )
-ADD_LIBRARY(ta_lib_static STATIC ${ta-lib_CSOURCES})
+add_library(ta_lib_static STATIC ${ta-lib_CSOURCES})
 
-IF(UNIX)
-	SET_TARGET_PROPERTIES(ta_lib_static PROPERTIES OUTPUT_NAME ta_lib)
-ENDIF(UNIX)
+if(UNIX)
+	set_target_properties(ta_lib_static PROPERTIES OUTPUT_NAME ta_lib)
+endif(UNIX)
 
-IF(WIN32)
+if(WIN32)
 	# Note: WIN32 is defined regardless of 32 or 64 bits host.
-	SET_TARGET_PROPERTIES(ta_lib_static PROPERTIES OUTPUT_NAME ta_lib_static)
-ENDIF(WIN32)
+	set_target_properties(ta_lib_static PROPERTIES OUTPUT_NAME ta_lib_static)
+endif(WIN32)
 
-IF(MSVC)
+if(MSVC)
 	add_compile_options(/deterministic)
-ENDIF(MSVC)
+endif(MSVC)
 
-TARGET_INCLUDE_DIRECTORIES(ta_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-TARGET_INCLUDE_DIRECTORIES(ta_lib_static PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(ta_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(ta_lib_static PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
