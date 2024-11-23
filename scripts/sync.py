@@ -19,11 +19,16 @@ def run_command(command):
 
 def main():
     try:
+        # Switch to dev branch if not already on it
+        original_branch = run_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+
         # Fetch the latest branch information from origin
         run_command(['git', 'fetch', 'origin'])
 
         # Stash any local dev changes
-        run_command(['git', 'checkout', 'dev'])
+        if original_branch != "dev":
+            print("Switching to dev branch")
+            run_command(['git', 'checkout', 'dev'])
         run_command(['git', 'stash', 'push', '-m', 'sync-script-stash'])
 
         # Get the local dev commit hash before pulling
@@ -91,6 +96,13 @@ def main():
     except subprocess.CalledProcessError as e:
         print(f"An error occurred: {e}")
         sys.exit(1)
+
+    finally:
+        # Restore to the branch the user was located before running this script
+        current_branch = run_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+        if current_branch != original_branch:
+            print(f"Switching back to {original_branch} branch")
+            run_command(['git', 'checkout', original_branch])
 
 if __name__ == "__main__":
     main()

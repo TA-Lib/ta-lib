@@ -16,8 +16,8 @@ def run_command(command):
 def main():
     try:
         # Switch to dev branch if not already on it
-        current_branch = run_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
-        if current_branch != "dev":
+        original_branch = run_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+        if original_branch != "dev":
             print("Switching to dev branch")
             run_command(['git', 'checkout', 'dev'])
 
@@ -76,6 +76,13 @@ def main():
     except subprocess.CalledProcessError as e:
         print(f"An error occurred: {e}")
         sys.exit(1)
+
+    finally:
+        # Restore to the branch the user was located before running this script
+        current_branch = run_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+        if current_branch != original_branch:
+            print(f"Switching back to {original_branch} branch")
+            run_command(['git', 'checkout', original_branch])
 
 if __name__ == "__main__":
     main()
