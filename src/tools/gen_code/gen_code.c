@@ -100,7 +100,6 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#include <unistd.h>
 
 #if !defined(__WIN32__) && !defined(__MSDOS__) && !defined(WIN32)
    #include <unistd.h>
@@ -123,21 +122,33 @@
 # define TA_MCPP_EXE "/usr/bin/mcpp"
 #endif
 
-void run_command(const char *command, char *output, size_t output_size) {
-    FILE *fp;
-    fp = popen(command, "r");
-    if (fp == NULL) {
-        fprintf(stderr, "Failed to run command: %s\n", command);
-        exit(1);
-    }
-    if (fgets(output, output_size, fp) == NULL) {
-        fprintf(stderr, "Failed to read command output: %s\n", command);
-        pclose(fp);
-        exit(1);
-    }
+void run_command(const char* command, char* output, size_t output_size) {
+  FILE* fp;
+#if defined(_WIN32) || defined(_WIN64)
+  fp = _popen(command, "r");
+#else
+  fp = popen(command, "r");
+#endif
+  if (fp == NULL) {
+    fprintf(stderr, "Failed to run command: %s\n", command);
+    exit(1);
+  }
+  if (fgets(output, output_size, fp) == NULL) {
+    fprintf(stderr, "Failed to read command output: %s\n", command);
+#if defined(_WIN32) || defined(_WIN64)
+    _pclose(fp);
+#else
     pclose(fp);
-    // Remove trailing newline character
-    output[strcspn(output, "\n")] = '\0';
+#endif
+    exit(1);
+  }
+#if defined(_WIN32) || defined(_WIN64)
+  _pclose(fp);
+#else
+  pclose(fp);
+#endif
+  // Remove trailing newline character
+  output[strcspn(output, "\n")] = '\0';
 }
 
 const char* verify_git_repo() {
@@ -158,13 +169,21 @@ const char* verify_git_repo() {
     run_command("git rev-parse --show-toplevel", root_dir, sizeof(root_dir));
 
     // Change to the root directory of the Git repository for validation.
+#if defined(_WIN32) || defined(_WIN64)
+    if (_chdir(root_dir) != 0) {
+#else
     if (chdir(root_dir) != 0) {
-        perror("chdir");
-        exit(1);
+#endif
+      perror("_chdir");
+      exit(1);
     }
 
     // Sanity check that src/ta_func exists
+#if defined(_WIN32) || defined(_WIN64)
+    if (_access("./src/ta_func", 0) != 0) {
+#else
     if (access("./src/ta_func", F_OK) != 0) {
+#endif
         fprintf(stderr, "Current directory is not a TA-Lib Git repository (src/ta_func missing).\n");
         exit(1);
     }
@@ -501,16 +520,24 @@ int main(int argc, char* argv[])
    // gen_code expect execution from root_dir/bin.
    char bin_dir[1024];
    snprintf(bin_dir, sizeof(bin_dir), "%s%sbin", root_dir, PATH_SEPARATOR);
+#if defined(_WIN32) || defined(_WIN64)
+   if (_chdir(bin_dir) != 0) {
+#else
    if (chdir(bin_dir) != 0) {
-      perror("chdir to bin");
-      exit(1);
-   }
+#endif
+     perror("chdir to bin");
+     exit(1);
+}
 
    printf( "gen_code V%s\n", TA_GetVersionString() );
 
    // Show the path being used (to help debugging)
    char current_dir[1024];
+#if defined(_WIN32) || defined(_WIN64)
+   if (_getcwd(current_dir, sizeof(current_dir)) != NULL) {
+#else
    if (getcwd(current_dir, sizeof(current_dir)) != NULL) {
+#endif   
       printf("Executing from [%s]\n", current_dir);
    } else {
       perror("getcwd() error");
@@ -809,7 +836,14 @@ static int genCode(int argc, char* argv[])
    #define FILE_CORE_JAVA_TMP ta_fs_path(3, "..", "temp", "CoreJava.tmp")
    #define FILE_CORE_JAVA_UNF ta_fs_path(3, "..", "temp", "CoreJavaUnformated.tmp")
 
-   if( system("javac --version > /dev/null 2>&1") != 0 ) {
+   int javac_installed = 0;
+   #if defined(_WIN32)
+      javac_installed = (system("javac -version >nul 2>&1") == 0);
+   #else
+      javac_installed = (system("javac -version >/dev/null 2>&1") == 0);
+   #endif
+
+   if( !javac_installed) {
       printf("warning: 'javac' not installed. Skipping Java code update\n");
       gOutCore_Java = NULL;
    } else {

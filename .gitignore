@@ -30,8 +30,11 @@ src/tools/ta_regtest/ta_regtest
 bin/*.class
 bin/gen_code*
 bin/ta_*
-lib/ta_*
 !bin/HOLDER
+
+## More TA-Lib artifacts
+msbuild_path.txt
+lib/ta_*
 
 ## File system
 .DS_Store

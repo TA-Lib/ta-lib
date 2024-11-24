@@ -1,0 +1,47 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TA-Lib-Core", "Core\TA-Lib-Core.vcproj", "{667AF01A-5614-4446-9DCC-744D27906E5B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug SubArray|Any CPU = Debug SubArray|Any CPU
+		Debug SubArray|Mixed Platforms = Debug SubArray|Mixed Platforms
+		Debug SubArray|Win32 = Debug SubArray|Win32
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|Win32 = Debug|Win32
+		Release SubArray|Any CPU = Release SubArray|Any CPU
+		Release SubArray|Mixed Platforms = Release SubArray|Mixed Platforms
+		Release SubArray|Win32 = Release SubArray|Win32
+		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Debug SubArray|Any CPU.ActiveCfg = Debug SubArray|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Debug SubArray|Mixed Platforms.ActiveCfg = Debug SubArray|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Debug SubArray|Mixed Platforms.Build.0 = Debug SubArray|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Debug SubArray|Win32.ActiveCfg = Debug SubArray|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Debug SubArray|Win32.Build.0 = Debug SubArray|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Debug|Any CPU.Build.0 = Debug|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Debug|Win32.Build.0 = Debug|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Release SubArray|Any CPU.ActiveCfg = Release SubArray|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Release SubArray|Mixed Platforms.ActiveCfg = Release SubArray|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Release SubArray|Mixed Platforms.Build.0 = Release SubArray|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Release SubArray|Win32.ActiveCfg = Release SubArray|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Release SubArray|Win32.Build.0 = Release SubArray|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Release|Any CPU.ActiveCfg = Release|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Release|Win32.ActiveCfg = Release|Win32
+		{667AF01A-5614-4446-9DCC-744D27906E5B}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
