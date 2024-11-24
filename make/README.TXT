@@ -1,3 +1,9 @@
+Note: The makefiles under ta-lib/make directory uses tmake/qmake tools from Trolltech.
+      These tools are deprecated. Expect all ta-lib/make content to be deleted in 2025.
+      Use CMake or the autotools (./configure) instead.
+
+====
+
 These directories contains the Makefiles
 for building TA-Lib.
 

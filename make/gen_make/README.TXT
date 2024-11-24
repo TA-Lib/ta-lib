@@ -1,3 +1,7 @@
+Note: The makefiles under ta-lib/make directory uses tmake/qmake tools from Trolltech.
+      These tools are deprecated. Expect all ta-lib/make content to be deleted in 2025.
+      Use CMake or the autotools (./configure) instead.
+
 ================================
 How to regenerate the Makefiles?
 ================================
@@ -33,7 +37,7 @@ Porting to new Compiler/platform
 If you can't find your platform-compiler
 in the ta-lib/c/make/template, you may consider
 to copy additional templates from the TMAKE
-distribution. 
+distribution.
 
 The gen_make.pl will create all the needed
 directories and generates Makefiles for all

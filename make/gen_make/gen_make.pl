@@ -1,8 +1,13 @@
 #!/usr/bin/perl
 
+# Note: The makefiles under ta-lib/make directory uses tmake/qmake tools from Trolltech.
+#      These tools are deprecated. Expect all ta-lib/make content to be deleted in 2025.
+#      Use CMake or the autotools (./configure) instead.
+
 # This perl script is the "mother of all" making
 # all the operations for re-generating all the
 # makefiles variant.
+
 
 if( $^O eq "MSWin32" )
 {

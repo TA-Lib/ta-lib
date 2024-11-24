@@ -11,6 +11,51 @@ set(CMAKE_C_STANDARD 99)
 
 set(TA_LIB_VERSION_FULL "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VERSION_BUILD}")
 
+
+# Source used in all end-user libraries and most TA-Lib executeable.
+set(COMMON_SOURCES
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_global.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_retcode.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_version.c"
+)
+
+# TA-Lib specify all its TA functions signature (and meta information
+# such as the "group" it belongs to) using an "interface definition language"
+# written in C.
+set(IDL_SOURCES
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/ta_abstract.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/ta_def_ui.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_a.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_b.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_c.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_d.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_e.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_f.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_g.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_h.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_i.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_j.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_k.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_l.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_m.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_n.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_o.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_p.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_q.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_r.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_s.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_t.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_u.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_v.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_w.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_x.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_y.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_z.c"
+)
+
+###############################
+# Shared and static libraries #
+###############################
 include(CheckIncludeFiles)
 include(CheckFunctionExists)
 include(CheckTypeSize)
@@ -72,13 +117,13 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/ta_config.h.cmake" "${CMAKE_
 #	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_memory.h"
 #)
 
-set(ta-lib_HEADERS
-	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_abstract.h"
-	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_common.h"
-	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_defs.h"
-	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_func.h"
-	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_libc.h"
-)
+#set(LIB_HEADERS
+#	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_abstract.h"
+#	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_common.h"
+#	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_defs.h"
+#	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_func.h"
+#	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_libc.h"
+#)
 
 include_directories(
 	"${CMAKE_CURRENT_SOURCE_DIR}/include"
@@ -88,7 +133,7 @@ include_directories(
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func"
 )
 
-set(ta-lib_CSOURCES
+set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_LINEARREG.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_MAX.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CDLHAMMER.c"
@@ -253,50 +298,21 @@ set(ta-lib_CSOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_BETA.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CDL3INSIDE.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ADX.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_version.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_retcode.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_global.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/frames/ta_frame.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/ta_abstract.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/ta_func_api.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/ta_def_ui.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/ta_group_idx.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_t.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_p.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_a.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_l.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_r.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_s.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_c.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_g.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_f.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_e.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_o.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_x.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_q.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_b.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_n.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_v.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_y.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_d.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_i.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_h.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_z.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_j.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_k.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_w.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_u.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_m.c"
 )
 
+list(APPEND LIB_SOURCES ${COMMON_SOURCES})
+list(APPEND LIB_SOURCES ${IDL_SOURCES})
 
-add_library(ta_lib SHARED ${ta-lib_CSOURCES})
+add_library(ta_lib SHARED ${LIB_SOURCES})
 set_target_properties(ta_lib PROPERTIES
 	SOVERSION ${TA_LIB_VERSION_FULL}
 	DEFINE_SYMBOL TA_LIB_SHARED
 	OUTPUT_NAME "ta_lib"
 )
-add_library(ta_lib_static STATIC ${ta-lib_CSOURCES})
+add_library(ta_lib_static STATIC ${LIB_SOURCES})
 
 if(UNIX)
 	set_target_properties(ta_lib_static PROPERTIES OUTPUT_NAME ta_lib)
@@ -313,3 +329,103 @@ endif(MSVC)
 
 target_include_directories(ta_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(ta_lib_static PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+############
+# gen_code #
+############
+set(GEN_CODE_SOURCES
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/gen_code/gen_code.c"
+)
+
+list(APPEND GEN_CODE_SOURCES ${COMMON_SOURCES})
+list(APPEND GEN_CODE_SOURCES ${IDL_SOURCES})
+
+add_executable(gen_code ${GEN_CODE_SOURCES})
+
+target_compile_definitions(gen_code PRIVATE TA_GEN_CODE)
+
+set_target_properties(gen_code PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+)
+
+install(TARGETS gen_code
+    RUNTIME DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+)
+
+# Add post-build to always check to copy gen_code to ta-lib/bin directory
+# This is to "save the day" for a user that would delete the bin content.
+add_custom_target(ensure_gen_code_in_bin ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "$<TARGET_FILE:gen_code>"
+    "${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:gen_code>"
+    DEPENDS gen_code
+    COMMENT "Ensuring gen_code is located in ${CMAKE_CURRENT_SOURCE_DIR}/bin"
+)
+
+##############
+# ta_regtest #
+##############
+set(TA_REGTEST_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_regtest.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_candlestick.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_1in_1out.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_1in_2out.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_internals.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_adx.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_avgdev.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_bbands.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_imi.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_ma.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_macd.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_minmax.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_mom.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_ema.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_hl.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_hlc.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_hlcv.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_ohlc.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_po.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_rsi.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_sar.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_stddev.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_stoch.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_trange.c"
+
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_util.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_data.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_abstract.c"
+)
+
+add_executable(ta_regtest ${TA_REGTEST_SOURCES})
+
+# Set the include directories for ta_regtest
+target_include_directories(ta_regtest PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+# Link the necessary libraries for ta_regtest (the 'm' is for the Math library)
+target_link_libraries(ta_regtest PRIVATE ta_lib_static m)
+
+# Set the output directory for the ta_regtest executable during the build process
+set_target_properties(ta_regtest PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+)
+
+# Automatically install ta_regtest in ta-lib/bin after a successful build.
+install(TARGETS ta_regtest
+    RUNTIME DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+)
+
+# Add a custom target to ensure ta_regtest is copied to ta-lib/bin directory
+add_custom_target(ensure_ta_regtest_in_bin ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "$<TARGET_FILE:ta_regtest>"
+    "${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:ta_regtest>"
+    DEPENDS ta_regtest
+    COMMENT "Ensuring ta_regtest is located in ${CMAKE_CURRENT_SOURCE_DIR}/bin"
+)
