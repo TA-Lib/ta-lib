@@ -11,7 +11,6 @@ set(CMAKE_C_STANDARD 99)
 
 set(TA_LIB_VERSION_FULL "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VERSION_BUILD}")
 
-
 # Source used in all end-user libraries and most TA-Lib executeable.
 set(COMMON_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_global.c"
@@ -324,7 +323,8 @@ if(WIN32)
 endif(WIN32)
 
 if(MSVC)
-	add_compile_options(/deterministic)
+	add_compile_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,SHARED_LIBRARY>:/deterministic>)
+	add_compile_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,STATIC_LIBRARY>:/deterministic>)
 endif(MSVC)
 
 target_include_directories(ta_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -408,7 +408,12 @@ target_include_directories(ta_regtest PRIVATE
 )
 
 # Link the necessary libraries for ta_regtest (the 'm' is for the Math library)
-target_link_libraries(ta_regtest PRIVATE ta_lib_static m)
+# On windows, no need for a math library. It is already included in the standard library.
+if(WIN32)
+	target_link_libraries(ta_regtest PRIVATE ta_lib_static)
+else()
+	target_link_libraries(ta_regtest PRIVATE ta_lib_static m)
+endif()
 
 # Set the output directory for the ta_regtest executable during the build process
 set_target_properties(ta_regtest PROPERTIES

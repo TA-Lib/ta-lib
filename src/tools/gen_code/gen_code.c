@@ -107,6 +107,7 @@
 
 #if defined (WIN32)
    #include <windows.h>
+   #include <direct.h> // _getcwd
 #endif
 
 #include "ta_common.h"
@@ -532,13 +533,16 @@ int main(int argc, char* argv[])
    printf( "gen_code V%s\n", TA_GetVersionString() );
 
    // Show the path being used (to help debugging)
-   char current_dir[1024];
+   char cwd_buffer[1024];
+   char* cwd;
+
 #if defined(_WIN32) || defined(_WIN64)
-   if (_getcwd(current_dir, sizeof(current_dir)) != NULL) {
+   cwd = _getcwd(cwd_buffer, sizeof(cwd_buffer));
 #else
-   if (getcwd(current_dir, sizeof(current_dir)) != NULL) {
-#endif   
-      printf("Executing from [%s]\n", current_dir);
+   cwd = getcwd(cwd_buffer, sizeof(cwd_buffer));
+#endif
+   if (cwd) {
+      printf("Executing from [%s]\n", cwd);
    } else {
       perror("getcwd() error");
       return 1;
