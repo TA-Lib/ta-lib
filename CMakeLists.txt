@@ -6,12 +6,20 @@ set(TA_LIB_VERSION_MAJOR 0)
 set(TA_LIB_VERSION_MINOR 6)
 set(TA_LIB_VERSION_BUILD 0)
 
-# Set the C standard
+set(PROJECT_VERSION "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VERSION_BUILD}")
+
 set(CMAKE_C_STANDARD 99)
 
-set(TA_LIB_VERSION_FULL "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VERSION_BUILD}")
+# TA-Lib public API headers (will be installed by this script)
+set(LIB_HEADERS
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_abstract.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_common.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_defs.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_func.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_libc.h"
+)
 
-# Source used in all end-user libraries and most TA-Lib executeable.
+# Source used in all end-user libraries and most TA-Lib executable.
 set(COMMON_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_global.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_retcode.c"
@@ -51,6 +59,14 @@ set(IDL_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_y.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/tables/table_z.c"
 )
+
+
+# Extract the file names from the LIB_HEADERS variable
+set(LIB_HEADERS_FILENAMES)
+foreach(header ${LIB_HEADERS})
+	get_filename_component(header_name ${header} NAME)
+    list(APPEND LIB_HEADERS_FILENAMES ${header_name})
+endforeach()
 
 ###############################
 # Shared and static libraries #
@@ -105,24 +121,6 @@ else()
 endif()
 check_symbol_exists("struct tm" "sys/time.h" TM_IN_SYS_TIME)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/ta_config.h.cmake" "${CMAKE_CURRENT_SOURCE_DIR}/include/ta_config.h")
-
-#set(priv_HEADERS
-#	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/ta_frame_priv.h"
-#	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_global.h"
-#	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_utility.h"
-#	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/ta_def_ui.h"
-#	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/frames/ta_frame.h"
-#	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_magic_nb.h"
-#	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common/ta_memory.h"
-#)
-
-#set(LIB_HEADERS
-#	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_abstract.h"
-#	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_common.h"
-#	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_defs.h"
-#	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_func.h"
-#	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_libc.h"
-#)
 
 include_directories(
 	"${CMAKE_CURRENT_SOURCE_DIR}/include"
@@ -305,21 +303,21 @@ set(LIB_SOURCES
 list(APPEND LIB_SOURCES ${COMMON_SOURCES})
 list(APPEND LIB_SOURCES ${IDL_SOURCES})
 
-add_library(ta_lib SHARED ${LIB_SOURCES})
-set_target_properties(ta_lib PROPERTIES
-	SOVERSION ${TA_LIB_VERSION_FULL}
+add_library(ta-lib SHARED ${LIB_SOURCES})
+set_target_properties(ta-lib PROPERTIES
+	SOVERSION ${PROJECT_VERSION}
 	DEFINE_SYMBOL TA_LIB_SHARED
-	OUTPUT_NAME "ta_lib"
+	OUTPUT_NAME "ta-lib"
 )
-add_library(ta_lib_static STATIC ${LIB_SOURCES})
+add_library(ta-lib-static STATIC ${LIB_SOURCES})
 
 if(UNIX)
-	set_target_properties(ta_lib_static PROPERTIES OUTPUT_NAME ta_lib)
+	set_target_properties(ta-lib-static PROPERTIES OUTPUT_NAME ta-lib)
 endif(UNIX)
 
 if(WIN32)
 	# Note: WIN32 is defined regardless of 32 or 64 bits host.
-	set_target_properties(ta_lib_static PROPERTIES OUTPUT_NAME ta_lib_static)
+	set_target_properties(ta-lib-static PROPERTIES OUTPUT_NAME ta-lib-static)
 endif(WIN32)
 
 if(MSVC)
@@ -327,8 +325,56 @@ if(MSVC)
 	add_compile_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,STATIC_LIBRARY>:/deterministic>)
 endif(MSVC)
 
-target_include_directories(ta_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_include_directories(ta_lib_static PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(ta-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(ta-lib-static PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+# Install the libraries
+install(TARGETS ta-lib ta-lib-static
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
+# Install the public headers
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+    DESTINATION include/ta-lib
+    FILES_MATCHING PATTERN "*.h"
+)
+
+# Cleanup to avoid potential conflict with older installation:
+#  - Remove deprecated "ta_lib" libs. New name is "ta-lib"
+#  - Remove headers directly under /usr/include and /usr/local/include
+#    Headers are now in a ta-lib subdir (e.g. /usr/local/include/ta-lib/*)
+#
+# Also, if the user now installs under /usr/local, clean-up "conflicting"
+# installation directly under /usr (and vice-versa).
+#
+if(UNIX)
+	file(WRITE ${CMAKE_BINARY_DIR}/cleanup_glob.cmake
+		"message(STATUS \"Running cleanup script with prefix [${CMAKE_INSTALL_PREFIX}]\")\n"
+    	"file(GLOB OLD_LIB_FILES /usr/lib/*ta_lib* /usr/local/lib/*ta_lib*)\n"
+    	"foreach(file \${OLD_LIB_FILES})\n"
+    	"    file(REMOVE \${file})\n"
+    	"endforeach()\n"
+		"foreach(header ${LIB_HEADERS_FILENAMES})\n"
+    	"    file(REMOVE /usr/local/include/\${header} /usr/include/\${header})\n"
+    	"endforeach()\n"
+		"if(\"${CMAKE_INSTALL_PREFIX}\" STREQUAL \"/usr\")\n"
+        "    file(REMOVE_RECURSE /usr/local/include/ta-lib)\n"
+        "    file(GLOB OLD_LIB_FILES /usr/local/lib/*ta-lib*)\n"
+        "    foreach(file \${OLD_LIB_FILES})\n"
+        "        file(REMOVE \${file})\n"
+        "    endforeach()\n"
+        "elseif(\"${CMAKE_INSTALL_PREFIX}\" STREQUAL \"/usr/local\")\n"
+        "    file(REMOVE_RECURSE /usr/include/ta-lib)\n"
+        "    file(GLOB OLD_LIB_FILES /usr/lib/*ta-lib*)\n"
+        "    foreach(file \${OLD_LIB_FILES})\n"
+        "        file(REMOVE \${file})\n"
+        "    endforeach()\n"
+        "endif()\n"
+	)
+	install(SCRIPT ${CMAKE_BINARY_DIR}/cleanup_glob.cmake )
+endif()
 
 ############
 # gen_code #
@@ -360,7 +406,6 @@ add_custom_target(ensure_gen_code_in_bin ALL
     "$<TARGET_FILE:gen_code>"
     "${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:gen_code>"
     DEPENDS gen_code
-    COMMENT "Ensuring gen_code is located in ${CMAKE_CURRENT_SOURCE_DIR}/bin"
 )
 
 ##############
@@ -410,9 +455,9 @@ target_include_directories(ta_regtest PRIVATE
 # Link the necessary libraries for ta_regtest (the 'm' is for the Math library)
 # On windows, no need for a math library. It is already included in the standard library.
 if(WIN32)
-	target_link_libraries(ta_regtest PRIVATE ta_lib_static)
+	target_link_libraries(ta_regtest PRIVATE ta-lib-static)
 else()
-	target_link_libraries(ta_regtest PRIVATE ta_lib_static m)
+	target_link_libraries(ta_regtest PRIVATE ta-lib-static m)
 endif()
 
 # Set the output directory for the ta_regtest executable during the build process
@@ -432,5 +477,4 @@ add_custom_target(ensure_ta_regtest_in_bin ALL
     "$<TARGET_FILE:ta_regtest>"
     "${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:ta_regtest>"
     DEPENDS ta_regtest
-    COMMENT "Ensuring ta_regtest is located in ${CMAKE_CURRENT_SOURCE_DIR}/bin"
 )
