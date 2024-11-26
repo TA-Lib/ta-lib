@@ -81,7 +81,6 @@ extern "C" {
  * The abstract interface is used within TA-Lib to perform at least
  * the following:
  *   - used by gen_code to generate all the glue code.
- *   - used by the Excel interface to call all the TA functions.
  *   - used to generate a XML representation of the TA functions.
  */
 

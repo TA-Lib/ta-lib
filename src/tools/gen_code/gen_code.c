@@ -274,10 +274,6 @@ FileHandle *gOutFunc_Annotation; /* For "CoreAnnotated.java" */
 FileHandle *gOutDotNet_H;      /* For .NET interface file */
 FileHandle *gOutProjFile;        /* For .NET project file */
 FileHandle *gOutMSVCProjFile;    /* For MSVC project file */
-
-FileHandle *gOutExcelGlue_C;     /* For "excel_glue.c" */
-
-static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo );
 #endif
 
 static void genJavaCodePhase1( const TA_FuncInfo *funcInfo );
@@ -478,37 +474,35 @@ int main(int argc, char* argv[])
    {
          /* There is no parameter needed for this tool. */
          printf( "\n" );
-         printf( "gen_code V%s - Updates many TA-Lib source files\n", TA_GetVersionString() );
+         printf( "gen_code V%s - Updates TA-Lib source and docs files\n", TA_GetVersionString() );
          printf( "\n" );
          printf( "Usage: gen_code\n");
          printf( "\n" );
          printf( "  No parameter needed.\n" );
-         printf( "\n** Must be run from the 'ta-lib/bin' directory.\n" );
+         printf( "\n** Must be run from a directory within a ta-lib repos\n" );
          printf( "\n" );
-         printf( "  This utility is useful only for developers adding new TA\n" );
-         printf( "  functions to TA-Lib.\n" );
+         printf( "  This utility is only for developers maintaining TA-Lib itself.\n" );
          printf( "\n" );
-         printf( "  The interface definitions in src/ta_abstract/tables\n" );
-         printf( "  are used to generate code, documentation and some more.\n" );
+         printf( "  The interface definitions in src/ta_abstract/tables are used\n" );
+         printf( "  as an input that specify which function to generate.\n" );
          printf( "\n" );
-         printf( "  The following files are updated or regenerated:\n" );
-         printf( "     1) ta-lib/include/ta_func.h\n" );
-         printf( "     2) ta-lib/include/ta_defs.h\n" );
-         printf( "     3) ta-lib/ta_func_list.txt\n" );
-         printf( "     4) ta-lib/src/ta_common/ta_retcode.*\n" );
-         printf( "     5) ta-lib/src/ta_abstract/ta_group_idx.c\n");
-         printf( "     6) ta-lib/src/ta_abstract/frames/*.*\n");
-         printf( "     7) ta-lib/swig/src/interface/ta_func.swg\n" );
-         printf( "     8) ta-lib/dotnet/src/Core/TA-Lib-Core.vcproj (Win32 only)\n" );
-         printf( "     9) ta-lib/dotnet/src/Core/TA-Lib-Core.h (Win32 only)\n" );
-         printf( "    10) ta-lib/src/ta_abstract/excel_glue.c (Win32 only)\n" );
-         printf( "    11) ta-lib/src/ta_abstract/java_defs.h (Win32 only)\n" );
-         printf( "    12) ta-lib/ide/msvc/lib_proj/ta_func/ta_func.dsp (Win32 only)\n" );
-         printf( "    13) ta-lib/java/src/com/tictactec/ta/lib/Core.java\n" );
-         printf( "    14) ta-lib/java/src/com/tictactec/ta/lib/CoreAnnotated.java\n" );
-         printf( "    15) ta-lib/ta_func_api.xml\n" );
-         printf( "    16) ta-lib/src/ta_abstract/ta_func_api.c\n" );
-         printf( "    17) ... and more ...");
+         printf( "  The following files are created or updated:\n" );
+         printf( "     - ta-lib/include/ta_func.h\n" );
+         printf( "     - ta-lib/include/ta_defs.h\n" );
+         printf( "     - ta-lib/ta_func_list.txt\n" );
+         printf( "     - ta-lib/src/ta_common/ta_retcode.*\n" );
+         printf( "     - ta-lib/src/ta_abstract/ta_group_idx.c\n");
+         printf( "     - ta-lib/src/ta_abstract/frames/*.*\n");
+         printf( "     - ta-lib/swig/src/interface/ta_func.swg\n" );
+         printf( "     - ta-lib/dotnet/src/Core/TA-Lib-Core.vcproj (Win32 only)\n" );
+         printf( "     - ta-lib/dotnet/src/Core/TA-Lib-Core.h (Win32 only)\n" );
+         printf( "     - ta-lib/src/ta_abstract/java_defs.h (Win32 only)\n" );
+         printf( "     - ta-lib/ide/msvc/lib_proj/ta_func/ta_func.dsp (Win32 only)\n" );
+         printf( "     - ta-lib/java/src/com/tictactec/ta/lib/Core.java\n" );
+         printf( "     - ta-lib/java/src/com/tictactec/ta/lib/CoreAnnotated.java\n" );
+         printf( "     - ta-lib/ta_func_api.xml\n" );
+         printf( "     - ta-lib/src/ta_abstract/ta_func_api.c\n" );
+         printf( "     ... and more ...");
          printf( "\n" );
          printf( "  The functions signature, params and validation code\n" );
          printf( "  for all functions under src/ta_func are also updated.\n" );
@@ -995,17 +989,6 @@ static int genCode(int argc, char* argv[])
    }
 
    #ifdef _MSC_VER
-      /* Create "excel_glue.c" */
-      gOutExcelGlue_C = fileOpen( ta_fs_path(4, "..", "src", "ta_abstract", "excel_glue.c"),
-                              ta_fs_path(5, "..", "src", "ta_abstract", "templates", "excel_glue.c.template"),
-                              FILE_WRITE|WRITE_ON_CHANGE_ONLY );
-
-      if( gOutExcelGlue_C == NULL )
-      {
-         printf( "\nCannot access [%s]\n", gToOpen );
-         return -1;
-      }
-
       /* Re-open the .NET project template. */
       gOutProjFile = fileOpen( FILE_NET_PROJ, FILE_NET_PROJ_TMP, FILE_WRITE|WRITE_ON_CHANGE_ONLY );
       if( gOutProjFile == NULL )
@@ -1089,7 +1072,6 @@ static int genCode(int argc, char* argv[])
       fileClose( gOutDotNet_H );
       fileClose( gOutProjFile );
       fileClose( gOutMSVCProjFile );
-      fileClose( gOutExcelGlue_C );
    #endif
 
    if( retCode != TA_SUCCESS )
@@ -1733,9 +1715,6 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
       fprintf( gOutMSVCProjFile->file, "\n" );
       fprintf( gOutMSVCProjFile->file, "SOURCE=.." PATH_SEPARATOR ".." PATH_SEPARATOR ".." PATH_SEPARATOR ".." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "ta_%s.c\n", funcInfo->name );
       fprintf( gOutMSVCProjFile->file, "# End Source File\n" );
-
-      /* Generate the excel glue code */
-      printExcelGlueCode( gOutExcelGlue_C->file, funcInfo );
 	#endif
 
       /* Generate CoreAnnotated */
@@ -3898,57 +3877,6 @@ static void cnvtChar( char *str, char from, char to )
       c = *str;
    }
 }
-
-#ifdef _MSC_VER
-static void printExcelGlueCode( FILE *out, const TA_FuncInfo *funcInfo )
-{
-   /*fprintf( out, "#include \"ta_%s.c\"\n", funcInfo->name );
-   fprintf( out, "#include \"ta_%s_frame.c\"\n", funcInfo->name );   */
-   int nbParam;
-   unsigned int i;
-   TA_RetCode retCode;
-   const TA_InputParameterInfo *inputParamInfo;
-
-   nbParam = funcInfo->nbOptInput;
-
-   for( i=0; i < funcInfo->nbInput; i++ )
-   {
-      retCode = TA_GetInputParameterInfo( funcInfo->handle,
-                                          i, &inputParamInfo );
-
-      if( retCode != TA_SUCCESS )
-      {
-         printf( "[%s] invalid 'input' information (%d,%d)\n", funcInfo->name, i, nbParam );
-         return;
-      }
-
-      if( inputParamInfo->type != TA_Input_Price )
-         nbParam++;
-      else
-      {
-         if( inputParamInfo->flags & TA_IN_PRICE_TIMESTAMP )
-            nbParam++;
-         if( inputParamInfo->flags & TA_IN_PRICE_OPEN )
-            nbParam++;
-         if( inputParamInfo->flags & TA_IN_PRICE_HIGH )
-            nbParam++;
-         if( inputParamInfo->flags & TA_IN_PRICE_LOW )
-            nbParam++;
-         if( inputParamInfo->flags & TA_IN_PRICE_CLOSE )
-            nbParam++;
-         if( inputParamInfo->flags & TA_IN_PRICE_VOLUME )
-            nbParam++;
-         if( inputParamInfo->flags & TA_IN_PRICE_OPENINTEREST )
-            nbParam++;
-      }
-   }
-
-   fprintf( out, "EXCEL_GLUE_CODE_WITH_%d_PARAM(%s)\n",
-           nbParam,
-           funcInfo->name );
-}
-#endif
-
 
 static void extractTALogic( FILE *inFile, FILE *outFile )
 {
