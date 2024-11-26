@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+# Default installation prefix
+USER_PREFIX=""
+
+# Function to display help message
+show_help() {
+    echo "Script to uninstall TA-Lib"
+    echo ""
+    echo "Usage: $0 [Options]"
+    echo ""
+    echo "Options:"
+    echo "  -p, --prefix <installation_prefix>  Specify the installation prefix"
+    echo "  -h, --help                          Show this help message and exit"
+    echo ""
+    echo " When there is no prefix specified, uninstallation is attempted from most typical locations."
+}
+
+UNINSTALLED=false
+
+uninstall() {
+    PREFIX=$1
+
+    # TA-Lib does not keep track of everywhere it was installed... so clean-up with best-effort.
+    #
+    # Delete recursively directories $PREFIX/ta-lib, $PREFIX/include/ta-lib, $PREFIX/lib/ta-lib
+    #
+    # Glob and delete all deprecated files $PREFIX/*ta_lib*, $PREFIX/lib/*ta_lib*, $PREFIX/*ta-lib*, $PREFIX/lib/*ta-lib*
+
+    if [[ -d "$PREFIX/ta-lib" ]]; then
+        echo "Deleting $PREFIX/ta-lib"
+        rm -rf "$PREFIX/ta-lib"
+        UNINSTALLED=true
+    fi
+
+    if [[ -d "$PREFIX/include/ta-lib" ]]; then
+        echo "Deleting $PREFIX/include/ta-lib"
+        rm -rf "$PREFIX/include/ta-lib"
+        UNINSTALLED=true
+    fi
+
+    if [[ -d "$PREFIX/lib/ta-lib" ]]; then
+        echo "Deleting $PREFIX/lib/ta-lib"
+        rm -rf "$PREFIX/lib/ta-lib"
+        UNINSTALLED=true
+    fi
+
+    if [[ -n $(ls -A "$PREFIX"/*ta_lib* 2>/dev/null) ]]; then
+        echo "Deleting $PREFIX/*ta_lib*"
+        rm -rf "$PREFIX"/*ta_lib*
+        UNINSTALLED=true
+    fi
+
+    if [[ -n $(ls -A "$PREFIX/lib"/*ta_lib* 2>/dev/null) ]]; then
+        echo "Deleting $PREFIX/lib/*ta_lib*"
+        rm -rf "$PREFIX/lib"/*ta_lib*
+        UNINSTALLED=true
+    fi
+
+    if [[ -n $(ls -A "$PREFIX"/*ta-lib* 2>/dev/null) ]]; then
+        echo "Deleting $PREFIX/*ta-lib*"
+        rm -rf "$PREFIX"/*ta-lib*
+        UNINSTALLED=true
+    fi
+
+    if [[ -n $(ls -A "$PREFIX/lib"/*ta-lib* 2>/dev/null) ]]; then
+        echo "Deleting $PREFIX/lib/*ta-lib*"
+        rm -rf "$PREFIX/lib"/*ta-lib*
+        UNINSTALLED=true
+    fi
+}
+
+# Parse command line arguments for custom installation prefix
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -p|--prefix) USER_PREFIX="$2"; shift ;;
+        -h|--help) show_help; exit 0 ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
+
+# Check if the script is run with sudo
+if [[ "$EUID" -ne 0 ]]; then
+    echo "This script must be run with sudo. Please rerun the script like this:"
+    echo "sudo" "$0" "$@"
+    exit 1
+fi
+
+
+if [[ -n "$USER_PREFIX" ]]; then
+    uninstall "$USER_PREFIX"
+else
+    uninstall "/usr/local"
+    uninstall "/usr"
+    uninstall "$HOME/.local"
+    uninstall "$HOME/.local/share"
+fi
+
+if [[ $UNINSTALLED == true ]]; then
+    echo "Uninstallation completed successfully!"
+else
+    echo "TA-Lib already uninstalled. Nothing needed to be done."
+fi
