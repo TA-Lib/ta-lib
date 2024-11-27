@@ -37,7 +37,7 @@ ta_regtest_CPPFLAGS = -I../../ta_func \
 		      -I../../ta_common \
 		      -I../../ta_abstract
 ta_regtest_LDFLAGS = -no-undefined
-ta_regtest_LDADD = ../../libta_lib.la $(LIBM)
+ta_regtest_LDADD = ../../libta-lib.la $(LIBM)
 
 all-local: ta_regtest
 	$(LIBTOOL) --mode=execute ../post-build-bin.sh ta_regtest

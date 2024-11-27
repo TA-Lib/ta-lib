@@ -9,9 +9,9 @@
 #
 #    For windows: ta-lib-<version>-win64.zip
 #         with contents:
-#            lib/ta_lib.dll        (dynamic library)
-#            lib/ta_lib.lib        (import library)
-#            lib/ta_lib_static.lib (static library)
+#            lib/ta-lib.dll        (dynamic library)
+#            lib/ta-lib.lib        (import library)
+#            lib/ta-lib-static.lib (static library)
 #            include/*.h           (all necessary headers)
 #
 # How to run it?
@@ -85,9 +85,9 @@ def package_windows(root_dir: str, version: str):
 
     # Copy the built files to the temporary package directory
     try:
-        shutil.copy('ta_lib.dll', os.path.join(package_temp_dir, 'lib'))
-        shutil.copy('ta_lib.lib', os.path.join(package_temp_dir, 'lib'))
-        shutil.copy('ta_lib_static.lib', os.path.join(package_temp_dir, 'lib'))
+        shutil.copy('ta-lib.dll', os.path.join(package_temp_dir, 'lib'))
+        shutil.copy('ta-lib.lib', os.path.join(package_temp_dir, 'lib'))
+        shutil.copy('ta-lib-static.lib', os.path.join(package_temp_dir, 'lib'))
         for header in glob.glob(os.path.join(root_dir, 'include', '*.h')):
             shutil.copy(header, os.path.join(package_temp_dir, 'include'))
     except subprocess.CalledProcessError as e:
