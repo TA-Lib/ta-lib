@@ -100,6 +100,20 @@ else
     uninstall "$HOME/.local/share"
 fi
 
+# Remove TA-Lib binary tools.
+if [[ -f "./bin/gen_code" ]]; then
+    echo "Deleting ./bin/gen_code"
+    rm -f "./bin/gen_code"
+    UNINSTALLED=true
+fi
+
+
+if [[ -f "./bin/ta_regtest" ]]; then
+    echo "Deleting ./bin/ta_regtest"
+    rm -f "./bin/ta_regtest"
+    UNINSTALLED=true
+fi
+
 if [[ $UNINSTALLED == true ]]; then
     echo "Uninstallation completed successfully!"
 else
