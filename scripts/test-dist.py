@@ -23,7 +23,7 @@ from install_tests.python import test_python_windows, test_python_linux
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test release candidate assets in 'dist'")
-    parser.add_argument('-p', '--pwd', type=str, default="", help="Password for sudo commands")
+    parser.add_argument('-p', '--pwd', type=str, default="", help="Optional password for sudo commands")
     args = parser.parse_args()
 
     sudo_pwd = args.pwd

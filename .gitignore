@@ -35,6 +35,7 @@ bin/ta_*
 ## More TA-Lib artifacts
 msbuild_path.txt
 lib/ta_*
+ta-lib-git.tar.gz
 
 ## File system
 .DS_Store
