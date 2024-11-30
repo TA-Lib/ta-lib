@@ -328,23 +328,31 @@ endif(MSVC)
 target_include_directories(ta-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(ta-lib-static PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-# Install the libraries
-install(TARGETS ta-lib ta-lib-static
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-)
-
-# Install the public headers
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-    DESTINATION include/ta-lib
-    FILES_MATCHING PATTERN "*.h"
-)
+# Install the libraries and headers.
+if(WIN32)
+    install(TARGETS ta-lib ta-lib-static
+        LIBRARY DESTINATION bin  # For shared libraries (DLLs on Windows)
+        ARCHIVE DESTINATION lib  # For static libraries
+    )    
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+        DESTINATION include
+        FILES_MATCHING PATTERN "*.h"
+    )
+else()
+    install(TARGETS ta-lib ta-lib-static
+        LIBRARY DESTINATION lib  # For shared libraries (.so on Linux)
+        ARCHIVE DESTINATION lib  # For static libraries
+    )
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+        DESTINATION include/ta-lib
+        FILES_MATCHING PATTERN "*.h"
+    )
+endif()
 
 # Cleanup to avoid potential conflict with older installation:
 #  - Remove deprecated "ta_lib" libs. New name is "ta-lib"
 #  - Remove headers directly under /usr/include and /usr/local/include
-#    Headers are now in a ta-lib subdir (e.g. /usr/local/include/ta-lib/*)
+#    Headers are now in ta-lib subdir (e.g. /usr/local/include/ta-lib/*)
 #
 # Also, if the user now installs under /usr/local, clean-up "conflicting"
 # installation directly under /usr (and vice-versa).
@@ -478,3 +486,41 @@ add_custom_target(ensure_ta_regtest_in_bin ALL
     "${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:ta_regtest>"
     DEPENDS ta_regtest
 )
+
+
+#############
+# Packaging #
+#############
+include(CPack)
+
+# Set package metadata
+set(CPACK_PACKAGE_NAME "ta-lib")
+set(CPACK_PACKAGE_VERSION_MAJOR ${TA_LIB_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${TA_LIB_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${TA_LIB_VERSION_BUILD})
+set(CPACK_PACKAGE_VENDOR "ta-lib.org")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "TA-Lib Technical Analysis Library")
+if(WIN32)
+    # Use mix case for Windows "best practice" in "C:\Program Files"
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "TA-Lib") 
+else()
+    # Keep everything lowercase for Unix-like systems
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "ta-lib")
+endif()
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+
+if(UNIX AND NOT APPLE)
+    set(CPACK_GENERATOR "DEB;RPM")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mfortier@yahoo.com")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "libs")
+    set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
+elseif(WIN32)
+    # MSI specific settings for Windows
+    set(CPACK_GENERATOR "WIX")
+    set(CPACK_WIX_PRODUCT_GUID "PUT-GUID-HERE")
+    set(CPACK_WIX_UPGRADE_GUID "PUT-GUID-HERE")
+    set(CPACK_WIX_LICENSE_RTF "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.rtf")
+    #set(CPACK_WIX_UI_BANNER "${CMAKE_CURRENT_SOURCE_DIR}/banner.bmp")
+    #set(CPACK_WIX_UI_DIALOG "${CMAKE_CURRENT_SOURCE_DIR}/dialog.bmp")
+endif()

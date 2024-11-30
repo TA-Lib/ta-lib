@@ -111,7 +111,7 @@ def package_windows(root_dir: str, version: str):
 
     # TODO Add testing of the package here.
 
-    # Copy package_temp_file into dist, but only if its content is binary different.
+    # Copy the zip into dist, but only if its content is binary different.
     os.makedirs(dist_dir, exist_ok=True)
     package_final = os.path.join(dist_dir, asset_file_name)
     if not os.path.exists(package_final) or not compare_zip_files(package_temp_file, package_final):
@@ -120,6 +120,11 @@ def package_windows(root_dir: str, version: str):
     else:
         print(f"Generated {asset_file_name} identical to one already in dist directory. Skipping copy.")
 
+    # Create the msi file
+    #try:
+    #    subprocess.run(['cpack', '-G', generator, '-C', 'Release'], cwd=build_dir, check=True)
+    #except:
+    #    print(f"Error running CPack: {e}")
     print(f"Packaging completed successfully.")
 
 def package_linux(root_dir: str, version: str, sudo_pwd: str):
