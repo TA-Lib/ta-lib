@@ -7,81 +7,63 @@ import sys
 import tempfile
 import time
 
-def run_command_sudo(command, sudo_pwd=''):
-    """
-    Run a command with sudo, optionally using a password if provided.
-    Will exit the script if calling the command fails or exit code != 0.
-    """
+# Various bool functions to help identify the host environment
+def is_redhat_based() -> bool:
+    return os.path.exists('/etc/redhat-release')
+
+def is_debian_based() -> bool:
+    return os.path.exists('/etc/debian_version')
+
+def is_arch_linux() -> bool:
+    return os.path.exists('/etc/arch-release')
+
+def is_ubuntu() -> bool:
+    if not is_debian_based():
+        return False
     try:
-        if sudo_pwd:
-            # Pipeline the password to sudo
-            process = subprocess.Popen(['sudo', '-S'] + command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = process.communicate(input=f'{sudo_pwd}\n'.encode())
-            if process.returncode != 0:
-                print(f"Error during 'sudo {' '.join(command)}': {stderr.decode()}")
-                sys.exit(1)
-        else:
-            subprocess.run(['sudo'] + command, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error during 'sudo {' '.join(command)}': {e}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"Unexpected error during 'sudo {' '.join(command)}': {e}")
-        sys.exit(1)
+        with open('/etc/os-release') as f:
+            for line in f:
+                if line.startswith('ID=ubuntu'):
+                    return True
+    except Exception:
+        pass
+    return False
 
+def is_linux() -> bool:
+    return is_debian_based() or is_redhat_based() or is_arch_linux()
 
-def create_temp_dir(root_dir) -> str:
-    # Create a temporary directory under root_dir/temp, also purge older ones.
-    #
-    # Return the path of the newly created directory.
+def is_macos() -> bool:
+    return sys.platform == 'darwin'
 
-    # Delete oldest directories if more than 10 exists and it is more
-    # than 1 hour old.
-    temp_root_dir = os.path.join(root_dir, "temp")
-    os.makedirs(temp_root_dir, exist_ok=True)
-    temp_dirs = sorted(os.listdir(temp_root_dir), key=lambda x: os.path.getctime(os.path.join(temp_root_dir, x)))
-    if len(temp_dirs) > 10:
-        for i in range(len(temp_dirs) - 10):
-            temp_dir_path = os.path.join(temp_root_dir, temp_dirs[i])
-            if os.path.isdir(temp_dir_path) and (time.time() - os.path.getctime(temp_dir_path)) > 3600:
-                shutil.rmtree(temp_dir_path)
+def is_windows() -> bool:
+    return sys.platform == 'win32'
 
-    # Create the new temp directory
-    return tempfile.mkdtemp(dir=temp_root_dir)
-
-def verify_git_repo() -> str:
-    # Verify that the script is called from within a ta-lib git repos, and if yes
-    # change the working directory to the root of it.
-    #
-    # That root path is returned.
+def is_cmake_installed() -> bool:
     try:
-        subprocess.run(['git', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(['cmake', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except subprocess.CalledProcessError:
-        print("Git is not installed. Please install Git and try again.")
-        sys.exit(1)
+        return False
+    return True
 
-    error = False
+def is_rpmbuild_installed() -> bool:
+    if not is_redhat_based():
+        return False
     try:
-        result = subprocess.run(['git', 'rev-parse', '--is-inside-work-tree'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if result.stdout.strip() == b'true':
-            # Change to the root directory of the Git repository
-            root_dir = subprocess.run(['git', 'rev-parse', '--show-toplevel'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.strip().decode('utf-8')
-            os.chdir(root_dir)
-            return root_dir
-        else:
-            error = True
+        subprocess.run(['rpmbuild', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except subprocess.CalledProcessError:
-        error = True
+        return False
+    return True
 
-    if error:
-        print("Must run this script while the current directory is in a TA-Lib Git repository.")
-        sys.exit(1)
+def is_dpkg_installed() -> bool:
+    if not is_debian_based():
+        return False
+    try:
+        subprocess.run(['dpkg', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except subprocess.CalledProcessError:
+        return False
+    return True
 
-    # Sanity check that src/ta_func exists.
-    if not os.path.isdir('src/ta_func'):
-        print("Current directory is not a TA-Lib Git repository (src/ta_func missing)")
-        sys.exit(1)
-
+# Utility functions to identify the gen_code generated files.
 def get_src_generated_files() -> list:
     """
     Return the list of generated files and directories.
@@ -128,6 +110,104 @@ def expand_globs(root_dir: str, file_list: list) -> list:
         else:
             expanded_files.extend(glob.glob(os.path.join(root_dir, file)))
     return expanded_files
+
+
+def run_command_sudo(command, sudo_pwd=''):
+    """
+    Run a command with sudo, optionally using a password if provided.
+    Will exit the script if calling the command fails or exit code != 0.
+    """
+    try:
+        if sudo_pwd:
+            # Pipeline the password to sudo
+            process = subprocess.Popen(['sudo', '-S'] + command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = process.communicate(input=f'{sudo_pwd}\n'.encode())
+            if process.returncode != 0:
+                print(f"Error during 'sudo {' '.join(command)}': {stderr.decode()}")
+                sys.exit(1)
+        else:
+            subprocess.run(['sudo'] + command, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error during 'sudo {' '.join(command)}': {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Unexpected error during 'sudo {' '.join(command)}': {e}")
+        sys.exit(1)
+
+
+def create_temp_dir(root_dir) -> str:
+    # Create a temporary directory under root_dir/temp, also purge older ones.
+    #
+    # Return the path of the newly created directory.
+
+    # Delete oldest directories if more than 10 exists and it is more
+    # than 1 hour old.
+    temp_root_dir = os.path.join(root_dir, "temp")
+    os.makedirs(temp_root_dir, exist_ok=True)
+    temp_dirs = sorted(os.listdir(temp_root_dir), key=lambda x: os.path.getctime(os.path.join(temp_root_dir, x)))
+    if len(temp_dirs) > 10:
+        for i in range(len(temp_dirs) - 10):
+            temp_dir_path = os.path.join(temp_root_dir, temp_dirs[i])
+            if os.path.isdir(temp_dir_path) and (time.time() - os.path.getctime(temp_dir_path)) > 3600:
+                shutil.rmtree(temp_dir_path)
+
+    # Create the new temp directory
+    return tempfile.mkdtemp(dir=temp_root_dir)
+
+def force_delete(path: str, sudo_pwd: str):
+    # Force delete a file or directory.
+    #
+    # Try first as normal user. On failure, try again as sudo.
+    #
+    # 'sudo' is sometimes necessary for files that were created as part
+    # of the packaging/installation process.
+    #
+    # The process will exit on failure.
+    try:
+        subprocess.run(['rm', '-rf', path], check=True, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as e:
+        if os.path.exists(path):
+            run_command_sudo(['rm', '-rf', path], sudo_pwd)
+
+    # Verify that the target is indeed deleted.
+    if os.path.exists(path):
+        print(f"Error: Failed to delete {path}")
+        sys.exit(1)
+
+
+def verify_git_repo() -> str:
+    # Verify that the script is called from within a ta-lib git repos, and if yes
+    # change the working directory to the root of it.
+    #
+    # That root path is returned.
+    try:
+        subprocess.run(['git', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except subprocess.CalledProcessError:
+        print("Git is not installed. Please install Git and try again.")
+        sys.exit(1)
+
+    error = False
+    try:
+        result = subprocess.run(['git', 'rev-parse', '--is-inside-work-tree'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.stdout.strip() == b'true':
+            # Change to the root directory of the Git repository
+            root_dir = subprocess.run(['git', 'rev-parse', '--show-toplevel'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.strip().decode('utf-8')
+            os.chdir(root_dir)
+            return root_dir
+        else:
+            error = True
+    except subprocess.CalledProcessError:
+        error = True
+
+    if error:
+        print("Must run this script while the current directory is in a TA-Lib Git repository.")
+        sys.exit(1)
+
+    # Sanity check that src/ta_func exists.
+    if not os.path.isdir('src/ta_func'):
+        print("Current directory is not a TA-Lib Git repository (src/ta_func missing)")
+        sys.exit(1)
+
 
 def are_generated_files_git_changed(root_dir: str) -> bool:
     # Using git, verify if any of the generated files have changed.
@@ -205,82 +285,5 @@ def compare_dir(dir1: str, dir2: str) -> bool:
 
     return not differences_found
 
-def test_autotool_src(configure_dir: str, sudo_pwd: str) -> bool:
-    # Returns True on success.
 
-    # sudo_pwd is optional.
-    #
-    # configure_dir is the location where the end-user is expected to
-    # do './configure'.
-    #
-    # For this test, configure_dir must be somwhere within the TA-Lib
-    # git repos (will typically be under ta-lib/temp).
-    #
-    # In specified configure_dir do:
-    # - './configure'
-    # - 'make' (verify returning zero)
-    # - Run './src/tools/ta_regtest/ta_regtest' (verify returning zero)
-    # - Run './src/tools/gen_code/gen_code' (verify no unexpected changes)
-    # - 'sudo make install' (verify returning zero)
-
-    original_dir = os.getcwd()
-    root_dir = verify_git_repo()
-    generated_files_temp_copy_1 = create_temp_dir(root_dir)
-    generated_files_temp_copy_2 = create_temp_dir(root_dir)
-    os.chdir(configure_dir)
-
-    try:
-        git_changed = are_generated_files_git_changed(root_dir);
-        copy_file_list(configure_dir,
-                       generated_files_temp_copy_1,
-                       get_src_generated_files())
-
-        # Simulate typical user installation.
-        subprocess.run(['./configure'], check=True)
-        subprocess.run(['make'], check=True)
-
-        # Run its src/tools/ta_regtest/ta_regtest
-        subprocess.run(['src/tools/ta_regtest/ta_regtest'], check=True)
-
-        if not os.path.isfile('src/tools/gen_code/gen_code'):
-            print("Error: src/tools/gen_code/gen_code does not exist.")
-            return False
-
-        # Re-running gen_code should not cause changes to the root directory.
-        # (but do nothing if there was already git changes prior to gen_code).
-        # This is just a sanity check that the script is not breaking something
-        # unexpected outside of the "end-user simulated" directory.
-        if not git_changed and are_generated_files_git_changed(root_dir):
-            print("Error: Unexpected changes from gen_code to root_dir. Do 'git diff'")
-            return False
-
-        # Now verify if gen_code did change files unexpectably within
-        # the "end-user simulated" directory.
-        #
-        # It should not, because we are at the point of testing the src
-        # package, which should have the latest generated files version
-        # and re-running gen_code should have no effect.
-        copy_file_list(configure_dir,
-                       generated_files_temp_copy_2,
-                       get_src_generated_files())
-        if not compare_dir(generated_files_temp_copy_1, generated_files_temp_copy_2):
-            return False
-
-
-        run_command_sudo(['make', 'install'], sudo_pwd)
-
-        # run 'sudo make install', if not executed within a Github Action.
-#        if 'GITHUB_ACTIONS' not in os.environ:
-#            run_command_sudo(['make', 'install'], sudo_pwd)
-#        else:
-#            print("Skipping 'sudo make install' as this is a Github Action.")
-
-    except subprocess.CalledProcessError as e:
-        print(f"Error during verification: {e}")
-        return False
-
-    finally:
-        os.chdir(original_dir)
-
-    return True
 

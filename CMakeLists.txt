@@ -10,6 +10,16 @@ set(PROJECT_VERSION "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VE
 
 set(CMAKE_C_STANDARD 99)
 
+# Default to Release config
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+endif()
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+
+# Option to build development tools (enabled by default)
+option(BUILD_DEV_TOOLS "Build development tools (gen_code, ta_regtest)" ON)
+message(STATUS "BUILD_DEV_TOOLS: ${BUILD_DEV_TOOLS}")
+
 # TA-Lib public API headers (will be installed by this script)
 set(LIB_HEADERS
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_abstract.h"
@@ -333,7 +343,7 @@ if(WIN32)
     install(TARGETS ta-lib ta-lib-static
         LIBRARY DESTINATION bin  # For shared libraries (DLLs on Windows)
         ARCHIVE DESTINATION lib  # For static libraries
-    )    
+    )
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
         DESTINATION include
         FILES_MATCHING PATTERN "*.h"
@@ -384,125 +394,133 @@ if(UNIX)
 	install(SCRIPT ${CMAKE_BINARY_DIR}/cleanup_glob.cmake )
 endif()
 
-############
-# gen_code #
-############
-set(GEN_CODE_SOURCES
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/gen_code/gen_code.c"
-)
+if(BUILD_DEV_TOOLS)
+	############
+	# gen_code #
+	############
+	set(GEN_CODE_SOURCES
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/gen_code/gen_code.c"
+	)
 
-list(APPEND GEN_CODE_SOURCES ${COMMON_SOURCES})
-list(APPEND GEN_CODE_SOURCES ${IDL_SOURCES})
+	list(APPEND GEN_CODE_SOURCES ${COMMON_SOURCES})
+	list(APPEND GEN_CODE_SOURCES ${IDL_SOURCES})
 
-add_executable(gen_code ${GEN_CODE_SOURCES})
+	add_executable(gen_code ${GEN_CODE_SOURCES})
 
-target_compile_definitions(gen_code PRIVATE TA_GEN_CODE)
+	target_compile_definitions(gen_code PRIVATE TA_GEN_CODE)
 
-set_target_properties(gen_code PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
-)
+	set_target_properties(gen_code PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+	)
 
-install(TARGETS gen_code
-    RUNTIME DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/bin"
-)
+	install(TARGETS gen_code
+		RUNTIME DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+	)
 
-# Add post-build to always check to copy gen_code to ta-lib/bin directory
-# This is to "save the day" for a user that would delete the bin content.
-add_custom_target(ensure_gen_code_in_bin ALL
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/bin"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "$<TARGET_FILE:gen_code>"
-    "${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:gen_code>"
-    DEPENDS gen_code
-)
+	# Add post-build to always check to copy gen_code to ta-lib/bin directory
+	# This is to "save the day" for a user that would delete the bin content.
+	add_custom_target(ensure_gen_code_in_bin ALL
+		COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		"$<TARGET_FILE:gen_code>"
+		"${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:gen_code>"
+		DEPENDS gen_code
+	)
 
-##############
-# ta_regtest #
-##############
-set(TA_REGTEST_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_regtest.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_candlestick.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_1in_1out.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_1in_2out.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_internals.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_adx.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_avgdev.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_bbands.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_imi.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_ma.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_macd.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_minmax.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_mom.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_ema.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_hl.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_hlc.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_hlcv.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_ohlc.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_po.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_rsi.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_sar.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_stddev.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_stoch.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_trange.c"
+	##############
+	# ta_regtest #
+	##############
+	set(TA_REGTEST_SOURCES
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_regtest.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_candlestick.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_1in_1out.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_1in_2out.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_internals.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_adx.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_avgdev.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_bbands.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_imi.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_ma.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_macd.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_minmax.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_mom.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_ema.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_hl.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_hlc.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_hlcv.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_per_ohlc.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_po.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_rsi.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_sar.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_stddev.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_stoch.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_trange.c"
 
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_util.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_data.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_abstract.c"
-)
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_util.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_data.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_abstract.c"
+	)
 
-add_executable(ta_regtest ${TA_REGTEST_SOURCES})
+	add_executable(ta_regtest ${TA_REGTEST_SOURCES})
 
-# Set the include directories for ta_regtest
-target_include_directories(ta_regtest PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
-)
+	# Set the include directories for ta_regtest
+	target_include_directories(ta_regtest PRIVATE
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func"
+		"${CMAKE_CURRENT_SOURCE_DIR}/include"
+	)
 
-# Link the necessary libraries for ta_regtest (the 'm' is for the Math library)
-# On windows, no need for a math library. It is already included in the standard library.
-if(WIN32)
-	target_link_libraries(ta_regtest PRIVATE ta-lib-static)
-else()
-	target_link_libraries(ta_regtest PRIVATE ta-lib-static m)
+	# Link the necessary libraries for ta_regtest (the 'm' is for the Math library)
+	# On windows, no need for a math library. It is already included in the standard library.
+	if(WIN32)
+		target_link_libraries(ta_regtest PRIVATE ta-lib-static)
+	else()
+		target_link_libraries(ta_regtest PRIVATE ta-lib-static m)
+	endif()
+
+	# Set the output directory for the ta_regtest executable during the build process
+	set_target_properties(ta_regtest PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+	)
+
+	# Automatically install ta_regtest in ta-lib/bin after a successful build.
+	install(TARGETS ta_regtest
+		RUNTIME DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+	)
+
+	# Add a custom target to ensure ta_regtest is copied to ta-lib/bin directory
+	add_custom_target(ensure_ta_regtest_in_bin ALL
+		COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		"$<TARGET_FILE:ta_regtest>"
+		"${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:ta_regtest>"
+		DEPENDS ta_regtest
+	)
 endif()
-
-# Set the output directory for the ta_regtest executable during the build process
-set_target_properties(ta_regtest PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
-)
-
-# Automatically install ta_regtest in ta-lib/bin after a successful build.
-install(TARGETS ta_regtest
-    RUNTIME DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/bin"
-)
-
-# Add a custom target to ensure ta_regtest is copied to ta-lib/bin directory
-add_custom_target(ensure_ta_regtest_in_bin ALL
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/bin"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "$<TARGET_FILE:ta_regtest>"
-    "${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:ta_regtest>"
-    DEPENDS ta_regtest
-)
-
 
 #############
 # Packaging #
 #############
-include(CPack)
 
-# Set package metadata
+# Set variables controling the package creation.
+set(CPACK_BUILD_CONFIG "${CMAKE_BUILD_TYPE}")
+
+# Set common package metadata
 set(CPACK_PACKAGE_NAME "ta-lib")
 set(CPACK_PACKAGE_VERSION_MAJOR ${TA_LIB_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${TA_LIB_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${TA_LIB_VERSION_BUILD})
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}")
+
 set(CPACK_PACKAGE_VENDOR "ta-lib.org")
+set(CPACK_PACKAGE_CONTACT "mfortier@yahoo.com")
+
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "TA-Lib Technical Analysis Library")
 if(WIN32)
     # Use mix case for Windows "best practice" in "C:\Program Files"
-    set(CPACK_PACKAGE_INSTALL_DIRECTORY "TA-Lib") 
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "TA-Lib")
 else()
     # Keep everything lowercase for Unix-like systems
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "ta-lib")
@@ -510,17 +528,81 @@ endif()
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 
-if(UNIX AND NOT APPLE)
-    set(CPACK_GENERATOR "DEB;RPM")
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mfortier@yahoo.com")
-    set(CPACK_DEBIAN_PACKAGE_SECTION "libs")
-    set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
-elseif(WIN32)
-    # MSI specific settings for Windows
-    set(CPACK_GENERATOR "WIX")
-    set(CPACK_WIX_PRODUCT_GUID "PUT-GUID-HERE")
-    set(CPACK_WIX_UPGRADE_GUID "PUT-GUID-HERE")
-    set(CPACK_WIX_LICENSE_RTF "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.rtf")
-    #set(CPACK_WIX_UI_BANNER "${CMAKE_CURRENT_SOURCE_DIR}/banner.bmp")
-    #set(CPACK_WIX_UI_DIALOG "${CMAKE_CURRENT_SOURCE_DIR}/dialog.bmp")
+# Detect host architecture and set DEB and RPM specific architecture variables
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
+    set(DEB_HOST_ARCH "amd64")
+    set(RPM_HOST_ARCH "x86_64")
+    set(MSI_HOST_ARCH "x64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i686")
+    set(DEB_HOST_ARCH "i386")
+    set(RPM_HOST_ARCH "i386")
+    set(MSI_HOST_ARCH "x86")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7l")
+    set(DEB_HOST_ARCH "armhf")
+    set(RPM_HOST_ARCH "armv7hl")
+    set(MSI_HOST_ARCH "arm")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+    set(DEB_HOST_ARCH "arm64")
+    set(RPM_HOST_ARCH "aarch64")
+    set(MSI_HOST_ARCH "arm64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64le")
+    set(DEB_HOST_ARCH "ppc64el")
+    set(RPM_HOST_ARCH "ppc64le")
+    set(MSI_HOST_ARCH "ppc64le")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "s390x")
+    set(DEB_HOST_ARCH "s390x")
+    set(RPM_HOST_ARCH "s390x")
+    set(MSI_HOST_ARCH "s390x")
+else()
+    set(DEB_HOST_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+    set(RPM_HOST_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+    set(MSI_HOST_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
 endif()
+
+# Debian package created by TA-LIb CI only if host is ubuntu.
+# The package should work on any debian-based Linux.
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${DEB_HOST_ARCH}")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mfortier@yahoo.com")
+set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+set(CPACK_DEBIAN_PACKAGE_SECTION "libs")
+
+# RPM package created only if host is red-hat based.
+set(CPACK_RPM_PACKAGE_ARCHITECTURE "${RPM_HOST_ARCH}")
+set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
+set(CPACK_RPM_PACKAGE_LICENSE "BSD")
+set(CPACK_RPM_PACKAGE_REQUIRES "glibc")
+
+# MSI package created only if host is windows.
+set(CPACK_WIX_LICENSE_RTF "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.rtf")
+#set(CPACK_WIX_UI_BANNER "${CMAKE_CURRENT_SOURCE_DIR}/banner.bmp")
+#set(CPACK_WIX_UI_DIALOG "${CMAKE_CURRENT_SOURCE_DIR}/dialog.bmp")
+
+# Set a constant UPGRADE_GUID (never change this)
+set(CPACK_WIX_UPGRADE_GUID "37b08339-521a-422f-a964-e616bd3e06b9")
+
+# Set the PRODUCT_GUID to change on every version change.
+#
+# This should guarantee a single version of the library installed
+# (older ones always uninstalled first).
+string(MD5 PRODUCT_GUID_HASH "${CPACK_WIX_UPGRADE_GUID}${CPACK_PACKAGE_VERSION}")
+string(SUBSTRING ${PRODUCT_GUID_HASH} 0 8 PRODUCT_GUID_PART1)
+string(SUBSTRING ${PRODUCT_GUID_HASH} 8 4 PRODUCT_GUID_PART2)
+string(SUBSTRING ${PRODUCT_GUID_HASH} 12 4 PRODUCT_GUID_PART3)
+string(SUBSTRING ${PRODUCT_GUID_HASH} 16 4 PRODUCT_GUID_PART4)
+string(SUBSTRING ${PRODUCT_GUID_HASH} 20 12 PRODUCT_GUID_PART5)
+set(CPACK_WIX_PRODUCT_GUID "${PRODUCT_GUID_PART1}-${PRODUCT_GUID_PART2}-${PRODUCT_GUID_PART3}-${PRODUCT_GUID_PART4}-${PRODUCT_GUID_PART5}")
+
+# Set common variables that changes depending of the generator.
+if(CPACK_GENERATOR STREQUAL "DEB")
+    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}_${CPACK_PACKAGE_VERSION}_${DEB_HOST_ARCH}")
+elseif(CPACK_GENERATOR STREQUAL "RPM")
+    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}.${RPM_HOST_ARCH}")
+elseif(CPACK_GENERATOR STREQUAL "WIX")
+	set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${RPM_HOST_ARCH}" )
+endif()
+
+# Allow the caller at the "cmake" configuration phase to see the filename.
+message(STATUS "CPACK_PACKAGE_FILE_NAME: ${CPACK_PACKAGE_FILE_NAME}")
+
+include(CPack)
