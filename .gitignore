@@ -24,7 +24,7 @@ autom4te.cache
 ar-lib
 **/.history/
 
-# TA-Lib specific tools (must be built for each platform)
+# TA-Lib tools (must be built by devs on its own platform)
 src/tools/gen_code/gen_code
 src/tools/ta_regtest/ta_regtest
 bin/*.class
@@ -32,10 +32,12 @@ bin/gen_code*
 bin/ta_*
 !bin/HOLDER
 
-## More TA-Lib artifacts
+## TA-Lib misc. build and packaging artifacts
 msbuild_path.txt
 lib/ta_*
+lib/ta-*
 ta-lib-git.tar.gz
+LICENSE.rtf
 
 ## File system
 .DS_Store

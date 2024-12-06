@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.30)
 
 project(ta-lib)
 
@@ -10,15 +10,18 @@ set(PROJECT_VERSION "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VE
 
 set(CMAKE_C_STANDARD 99)
 
-# Default to Release config
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
-endif()
-message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-
 # Option to build development tools (enabled by default)
 option(BUILD_DEV_TOOLS "Build development tools (gen_code, ta_regtest)" ON)
 message(STATUS "BUILD_DEV_TOOLS: ${BUILD_DEV_TOOLS}")
+
+# Default to Release config
+if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+endif()
+
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+message(STATUS "CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
+message(STATUS "CPACK_GENERATOR: ${CPACK_GENERATOR}")
 
 # TA-Lib public API headers (will be installed by this script)
 set(LIB_HEADERS
@@ -503,6 +506,9 @@ endif()
 # Packaging #
 #############
 
+# Example of good assets naming:
+#    https://cmake.org/download/
+
 # Set variables controling the package creation.
 set(CPACK_BUILD_CONFIG "${CMAKE_BUILD_TYPE}")
 
@@ -529,14 +535,15 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 
 # Detect host architecture and set DEB and RPM specific architecture variables
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
+message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
     set(DEB_HOST_ARCH "amd64")
     set(RPM_HOST_ARCH "x86_64")
-    set(MSI_HOST_ARCH "x64")
+    set(MSI_HOST_ARCH "x86_64")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i686")
     set(DEB_HOST_ARCH "i386")
     set(RPM_HOST_ARCH "i386")
-    set(MSI_HOST_ARCH "x86")
+    set(MSI_HOST_ARCH "i386")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7l")
     set(DEB_HOST_ARCH "armhf")
     set(RPM_HOST_ARCH "armv7hl")
@@ -561,6 +568,8 @@ endif()
 
 # Debian package created by TA-LIb CI only if host is ubuntu.
 # The package should work on any debian-based Linux.
+#
+# More info: https://www.debian.org/doc/debian-policy/ch-controlfields.html#source
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${DEB_HOST_ARCH}")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mfortier@yahoo.com")
@@ -574,6 +583,12 @@ set(CPACK_RPM_PACKAGE_LICENSE "BSD")
 set(CPACK_RPM_PACKAGE_REQUIRES "glibc")
 
 # MSI package created only if host is windows.
+
+# CPACK_WIX_VERSION "4" is for ""4 and later" and is the one to use for Wix 5
+# References:
+#    https://cmake.org/cmake/help/latest/cpack_gen/wix.html#variable:CPACK_WIX_VERSION
+#    https://stackoverflow.com/questions/77584815/how-to-use-wix-v4-within-cmake-to-build-an-installation-package-for-windows
+set(CPACK_WIX_VERSION "4") 
 set(CPACK_WIX_LICENSE_RTF "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.rtf")
 #set(CPACK_WIX_UI_BANNER "${CMAKE_CURRENT_SOURCE_DIR}/banner.bmp")
 #set(CPACK_WIX_UI_DIALOG "${CMAKE_CURRENT_SOURCE_DIR}/dialog.bmp")
@@ -599,7 +614,7 @@ if(CPACK_GENERATOR STREQUAL "DEB")
 elseif(CPACK_GENERATOR STREQUAL "RPM")
     set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}.${RPM_HOST_ARCH}")
 elseif(CPACK_GENERATOR STREQUAL "WIX")
-	set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${RPM_HOST_ARCH}" )
+	set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-windows-${MSI_HOST_ARCH}")
 endif()
 
 # Allow the caller at the "cmake" configuration phase to see the filename.

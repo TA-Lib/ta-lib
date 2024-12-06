@@ -1,16 +1,28 @@
+from typing import Union
+
+import glob
 import os
+import subprocess
+import sys
 import zipfile
 import tempfile
 import filecmp
 import zlib
 import tarfile
 
+from .common import is_linux, is_windows, run_command_sudo
+
+# Use path_join to create a new path with proper seperators for the host system.
+# (this is to solve a problem on windows with '\' versus '/')
+def path_join(a: Union[str, os.PathLike], b: Union[str, os.PathLike])-> str:
+    return os.path.normpath(os.path.join(a, b))
+
 def compare_zip_files(zip_file1, zip_file2):
     # Does a binary comparison of the contents of the two zip files.
     # Ignores file creation time.
     with tempfile.TemporaryDirectory() as temp_extract_dir:
-        temp_extract_path1 = os.path.join(temp_extract_dir, 'temp1')
-        temp_extract_path2 = os.path.join(temp_extract_dir, 'temp2')
+        temp_extract_path1 = path_join(temp_extract_dir, 'temp1')
+        temp_extract_path2 = path_join(temp_extract_dir, 'temp2')
         os.makedirs(temp_extract_path1, exist_ok=True)
         os.makedirs(temp_extract_path2, exist_ok=True)
 
@@ -27,7 +39,7 @@ def create_zip_file(source_dir, zip_file):
     with zipfile.ZipFile(zip_file, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=zlib.Z_BEST_COMPRESSION) as zipf:
         for root, dirs, files in os.walk(source_dir):
             for file in files:
-                file_path = os.path.join(root, file)
+                file_path = path_join(root, file)
                 arcname = os.path.relpath(file_path, start=source_dir)
                 zipf.write(file_path, arcname)
 
@@ -71,3 +83,91 @@ def compare_deb_files(deb_file1, deb_file2) -> bool:
 
         dir_comparison = filecmp.dircmp(temp_extract_path1, temp_extract_path2)
         return not dir_comparison.diff_files and not dir_comparison.left_only and not dir_comparison.right_only
+
+def compare_msi_files(msi_file1, msi_file2) -> bool:
+    # Does a binary comparison of the contents of the two .msi files.
+    # Ignores file creation time.
+    with tempfile.TemporaryDirectory() as temp_extract_dir:
+        temp_extract_path1 = path_join(temp_extract_dir, 'temp1')
+        temp_extract_path2 = path_join(temp_extract_dir, 'temp2')
+        os.makedirs(temp_extract_path1, exist_ok=True)
+        os.makedirs(temp_extract_path2, exist_ok=True)
+        os.system(f"msiexec /a {msi_file1} /qn TARGETDIR={temp_extract_path1}")
+        os.system(f"msiexec /a {msi_file2} /qn TARGETDIR={temp_extract_path2}")
+
+        # Remove in both temp directory all the .msi, .lib and .dll files
+        # Only the remaining source files will be compared.
+        for root, dirs, files in os.walk(temp_extract_path1):
+            for file in files:
+                if file.endswith('.msi') or file.endswith('.lib') or file.endswith('.dll'):
+                    os.remove(path_join(root, file))
+
+        for root, dirs, files in os.walk(temp_extract_path2):
+            for file in files:
+                if file.endswith('.msi') or file.endswith('.lib') or file.endswith('.dll'):
+                    os.remove(path_join(root, file))
+
+        dir_comparison = filecmp.dircmp(temp_extract_path1, temp_extract_path2)
+        return not dir_comparison.diff_files and not dir_comparison.left_only and not dir_comparison.right_only
+
+def create_rtf_from_txt(input_file: str, output_file: str):
+    """
+    Converts a plain text file to an RTF file.
+
+    Args:
+        input_file (str): Path to the input plain text file.
+        output_file (str): Path to the output RTF file.
+    """
+    # Create the RTF header
+    rtf_header = '{\\rtf1\\ansi\\deff0\n'
+    rtf_footer = '}'
+
+    try:
+        with open(input_file, 'r') as txt_file, open(output_file, 'w') as rtf_file:
+            # Write the RTF header
+            rtf_file.write(rtf_header)
+
+            # Add the content of the plain text file, escaping special characters
+            for line in txt_file:
+                # Escape backslashes, braces, and newlines
+                escaped_line = line.replace('\\', '\\\\').replace('{', '\\{').replace('}', '\\}')
+                rtf_file.write(escaped_line + '\\par\n')
+
+            # Write the RTF footer
+            rtf_file.write(rtf_footer)
+
+        print(f"RTF file created: {output_file}")
+    except Exception as e:
+        print(f"Error creating RTF file: {e}")
+
+def force_delete(path: str, sudo_pwd: str = ""):
+    # Force delete a file or directory.
+    #
+    # Try first as normal user. On failure, try again as sudo.
+    #
+    # 'sudo' is sometimes necessary for files that were created as part
+    # of the packaging/installation process.
+    #
+    # Exit on any error.    
+    try:
+        if is_windows():
+            if os.path.isdir(path):
+                subprocess.run(['cmd', '/c', 'rmdir', '/s', '/q', path], check=True, stderr=subprocess.DEVNULL)
+            else:
+                subprocess.run(['cmd', '/c', 'del', '/f', '/q', path], check=True, stderr=subprocess.DEVNULL)
+        else:
+            subprocess.run(['rm', '-rf', path], check=True, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as e:
+        if sudo_pwd and os.path.exists(path) and is_linux():
+            run_command_sudo(['rm', '-rf', path], sudo_pwd)
+
+    # Verify that the target is indeed deleted.
+    if os.path.exists(path):
+        print(f"Error: Failed to delete {path}")
+        sys.exit(1)
+
+def force_delete_glob(path: str, pattern: str, sudo_pwd: str = ""):
+    # Will exit on any error.
+    glob_targets = path_join(path, pattern)
+    for target in glob.glob(glob_targets):
+        force_delete(target, sudo_pwd)

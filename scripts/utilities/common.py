@@ -63,6 +63,21 @@ def is_dpkg_installed() -> bool:
         return False
     return True
 
+def is_dotnet_installed() -> bool:
+    try:
+        subprocess.run(['dotnet', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+def is_wix_installed() -> bool:
+    # For installation, see https://cmake.org/cmake/help/latest/cpack_gen/wix.html#wix-net-tools
+    try:
+        subprocess.run(['wix', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
 # Utility functions to identify the gen_code generated files.
 def get_src_generated_files() -> list:
     """
@@ -154,27 +169,6 @@ def create_temp_dir(root_dir) -> str:
     # Create the new temp directory
     return tempfile.mkdtemp(dir=temp_root_dir)
 
-def force_delete(path: str, sudo_pwd: str):
-    # Force delete a file or directory.
-    #
-    # Try first as normal user. On failure, try again as sudo.
-    #
-    # 'sudo' is sometimes necessary for files that were created as part
-    # of the packaging/installation process.
-    #
-    # The process will exit on failure.
-    try:
-        subprocess.run(['rm', '-rf', path], check=True, stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError as e:
-        if os.path.exists(path):
-            run_command_sudo(['rm', '-rf', path], sudo_pwd)
-
-    # Verify that the target is indeed deleted.
-    if os.path.exists(path):
-        print(f"Error: Failed to delete {path}")
-        sys.exit(1)
-
-
 def verify_git_repo() -> str:
     # Verify that the script is called from within a ta-lib git repos, and if yes
     # change the working directory to the root of it.
@@ -207,7 +201,6 @@ def verify_git_repo() -> str:
     if not os.path.isdir('src/ta_func'):
         print("Current directory is not a TA-Lib Git repository (src/ta_func missing)")
         sys.exit(1)
-
 
 def are_generated_files_git_changed(root_dir: str) -> bool:
     # Using git, verify if any of the generated files have changed.

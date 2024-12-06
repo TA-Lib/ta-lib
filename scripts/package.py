@@ -32,7 +32,9 @@
 
 import argparse
 import filecmp
+from multiprocessing.context import _force_start_method
 import os
+import shlex
 import subprocess
 import sys
 import glob
@@ -43,89 +45,213 @@ import zipfile
 import zlib
 
 from utilities.versions import sync_versions
-from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, force_delete, get_src_generated_files, is_cmake_installed, is_debian_based, is_redhat_based, is_rpmbuild_installed, is_ubuntu, verify_git_repo, run_command_sudo
-from utilities.files import compare_tar_gz_files, compare_zip_files, create_zip_file, compare_deb_files
+from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_src_generated_files, is_cmake_installed, is_debian_based, is_dotnet_installed, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, verify_git_repo, run_command_sudo
+from utilities.files import compare_msi_files, compare_tar_gz_files, compare_zip_files, create_rtf_from_txt, create_zip_file, compare_deb_files, force_delete, force_delete_glob, path_join
 
-def package_windows(root_dir: str, version: str):
-    os.chdir(root_dir)
-
-    # Delete previous dist packaging
-    asset_file_name = f'ta-lib-{version}-win64.zip'
-    dist_dir = os.path.join(root_dir, 'dist')
-    glob_all_packages = os.path.join(dist_dir, 'ta-lib-*-win64.zip')
+def delete_other_versions(target_dir: str, file_pattern: str, new_version: str ):
+    # Used for cleaning-up a directory from other versions than the one 
+    # being newly built.
+    #
+    # Example of file_pattern: 'ta-lib-*-src.tar.gz'
+    glob_all_packages = path_join(target_dir, file_pattern)
     for file in glob.glob(glob_all_packages):
-        if not file.endswith(asset_file_name):
-            os.remove(file)
+        if new_version not in file:
+            force_delete(file)
 
-    temp_dir = os.path.join(root_dir, 'temp')
-    glob_all_temp_packages = os.path.join(temp_dir, 'ta-lib-*-win64.zip')
-    for file in glob.glob(glob_all_temp_packages ):
-        os.remove(file)
-
-    build_dir = os.path.join(root_dir, 'build')
+def do_cmake_reconfigure(root_dir: str, options: str, sudo_pwd: str = "") ->str:
+    # Clean-up any potential previous build, and configure a new build
+    # using the CMakeLists.txt and specified options.
+    #
+    # Returns the "build" location where further cmake/cpack should be done from.
+    #
+    # Exit on any error.
+    build_dir = path_join(root_dir, 'build')
     if os.path.exists(build_dir):
-        shutil.rmtree(build_dir)
+        force_delete(build_dir, sudo_pwd)
 
-    glob_all_temp_packages = os.path.join(temp_dir, 'ta-lib-*-win64')
-    for directory in glob.glob(glob_all_temp_packages):
-        shutil.rmtree(directory)
+    if not is_cmake_installed():
+        print("Error: CMake not found. You need to install it and be accessible with PATH.")
+        sys.exit(1)
 
-    # Run CMake and build
+    cmake_lists = path_join(root_dir, 'CMakeLists.txt')
+    if not os.path.isfile(cmake_lists):
+        print(f"Error: {cmake_lists} not found. Your working directory must be within a cloned TA-Lib repos")
+        sys.exit(1)
+
+    # Run CMake configuration.
+    original_dir = os.getcwd()
     try:
         os.makedirs(build_dir)
         os.chdir(build_dir)
-        subprocess.run(['cmake', '-G', 'Ninja', '..'], check=True)
+        cmake_command = ['cmake'] + shlex.split(options) + ['..']
+        formatted_command = ' '.join([f'[{elem}]' for elem in cmake_command])
+        print("CMake command:", formatted_command)  # Display the cmake_command list with brackets
+        subprocess.run(cmake_command, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error: Running CMake configuration {options}: {e}")
+        sys.exit(1)
+    finally:
+        # Restore the original working directory
+        os.chdir(original_dir)
+
+    return build_dir
+
+def do_cmake_build(build_dir: str):
+    # Exit on any error.
+    original_dir = os.getcwd()
+    try:
+        os.chdir(build_dir)
         subprocess.run(['cmake', '--build', '.'], check=True)
     except subprocess.CalledProcessError as e:
-        print(f"Error running CMake or build: {e}")
-        return
+        print(f"Error running cmake build: {e}")
+        sys.exit(1)
+    finally:
+        # Restore the original working directory
+        os.chdir(original_dir)
 
-    # Create temporary package dirs (including its subdirs)
-    os.makedirs(temp_dir, exist_ok=True)
-    package_temp_dir = os.path.join(temp_dir, f'ta-lib-{version}-win64')
-    os.makedirs(package_temp_dir, exist_ok=True)
-    os.makedirs(os.path.join(package_temp_dir, 'lib'), exist_ok=True)
-    os.makedirs(os.path.join(package_temp_dir, 'include'), exist_ok=True)
-
-    # Copy the built files to the temporary package directory
+def do_cpack_build(build_dir: str):
+    # Exit on any error.
+    original_dir = os.getcwd()
     try:
-        shutil.copy('ta-lib.dll', os.path.join(package_temp_dir, 'lib'))
-        shutil.copy('ta-lib.lib', os.path.join(package_temp_dir, 'lib'))
-        shutil.copy('ta-lib-static.lib', os.path.join(package_temp_dir, 'lib'))
-        for header in glob.glob(os.path.join(root_dir, 'include', '*.h')):
-            shutil.copy(header, os.path.join(package_temp_dir, 'include'))
+        os.chdir(build_dir)
+        subprocess.run(['cpack', '.'], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error running CPack: {e}")
+        sys.exit(1)
+    finally:
+        # Restore the original working directory
+        os.chdir(original_dir)
+
+def find_asset_with_ext(target_dir, version: str, extension: str) -> str:
+    # Useful for identifying the name of the file generated by CMake.
+    # Exit on error.
+    glob_deb = path_join(target_dir, f"*.{extension}")
+    files = glob.glob(glob_deb)
+    if len(files) != 1:
+        print(f"Error: Expected one .{extension} file, found {len(files)}")
+        sys.exit(1)
+
+    # Check that the single file has the version as substring
+    filepath = files[0]
+    if version not in filepath:
+        print(f"Error: Expected version {version} not found in {filepath}")
+        sys.exit(1)
+
+    return os.path.basename(filepath)
+
+def package_windows_zip(root_dir: str, version: str) -> dict:
+    result: dict = {"success": False}
+
+    asset_file_name = f'ta-lib-{version}-win64.zip'
+    result["asset_file_name"] = asset_file_name
+
+    # Clean-up
+    dist_dir = path_join(root_dir, 'dist')
+    delete_other_versions(dist_dir,"ta-lib-*.zip",version)
+
+    temp_dir = path_join(root_dir, 'temp')
+    delete_other_versions(temp_dir,"ta-lib-*.zip",version)
+
+    force_delete_glob(temp_dir, "ta-lib-*")
+
+    # Build the libraries
+    build_dir = do_cmake_reconfigure(root_dir, '-G Ninja -DBUILD_DEV_TOOLS=OFF')
+    do_cmake_build(build_dir)
+
+    # Create a temporary zip package to test before copying to dist.
+    package_temp_dir = path_join(temp_dir, f'ta-lib-{version}-win64')
+    temp_lib_dir = path_join(package_temp_dir, 'lib')
+    temp_include_dir = path_join(package_temp_dir, 'include')
+
+    os.makedirs(temp_dir, exist_ok=True)
+    os.makedirs(package_temp_dir, exist_ok=True)
+    os.makedirs(temp_lib_dir, exist_ok=True)
+    os.makedirs(temp_include_dir, exist_ok=True)
+
+    # Copy the built files to the temporary package locations.
+    original_dir = os.getcwd()
+    include_rootdir = path_join(root_dir, 'include')
+    try:
+        os.chdir(build_dir)
+        shutil.copy('ta-lib.dll', temp_lib_dir)
+        shutil.copy('ta-lib.lib', temp_lib_dir)
+        shutil.copy('ta-lib-static.lib', temp_lib_dir)
+        for header in glob.glob(path_join(include_rootdir, '*.h')):
+            shutil.copy(header, temp_include_dir)
         # Create the VERSION.txt file
-        with open(os.path.join(package_temp_dir, 'VERSION.txt'), 'w') as f:
+        with open(path_join(package_temp_dir, 'VERSION.txt'), 'w') as f:
             f.write(version)
     except subprocess.CalledProcessError as e:
         print(f"Error copying files: {e}")
-        return
+        return result
+    finally:
+        # Restore the original working directory
+        os.chdir(original_dir)
 
     # Compress the package (.zip)
-    package_temp_file = os.path.join(temp_dir, asset_file_name)
+    package_temp_file = path_join(temp_dir, asset_file_name)
     try:
         create_zip_file(package_temp_dir, package_temp_file)
     except subprocess.CalledProcessError as e:
         print(f"Error creating zip file: {e}")
         return
 
-    # TODO Add testing of the package here.
+    # TODO Add testing of the temporary package here.
 
-    # Copy the zip into dist, but only if its content is binary different.
+    # Temporary zip is verified OK, so copy it into dist, but only if its content is different.
     os.makedirs(dist_dir, exist_ok=True)
-    package_final = os.path.join(dist_dir, asset_file_name)
-    if not os.path.exists(package_final) or not compare_zip_files(package_temp_file, package_final):
-        print(f"Copying package to dist\\{asset_file_name}")
-        shutil.copy(package_temp_file, package_final)
-    else:
-        print(f"Generated {asset_file_name} identical to one already in dist directory. Skipping copy.")
+    dist_file = path_join(dist_dir, asset_file_name)
+    package_existed = os.path.exists(dist_file)
+    package_copied = False
+    if not package_existed or not compare_zip_files(package_temp_file, dist_file):
+        os.makedirs(dist_dir, exist_ok=True)
+        shutil.copy(package_temp_file, dist_file)
+        package_copied = True
 
-    # Create the msi file
-    #try:
-    #    subprocess.run(['cpack', '-G', generator, '-C', 'Release'], cwd=build_dir, check=True)
-    #except:
-    #    print(f"Error running CPack: {e}")
-    print(f"Packaging completed successfully.")
+    result["success"] = True
+    result["existed"] = package_existed
+    result["copied"] = package_copied
+    return result
+
+def package_windows_msi(root_dir: str, version: str, force: bool) -> dict:
+    result: dict = {"success": False}
+
+    # MSI supports only .rtf for license, so generate it into root_dir.
+    license_rtf = path_join(root_dir,"LICENSE.rtf")
+    license_txt = path_join(root_dir,"LICENSE")
+    create_rtf_from_txt(license_txt,license_rtf)
+
+    if not is_dotnet_installed():
+       print("Error: .NET Framework not found. It is required to build the MSI.")
+       return result
+
+    if not is_wix_installed():
+        print("Error: WiX Toolset not found. It is required to build the MSI.")
+        return result
+
+    build_dir = do_cmake_reconfigure(root_dir, '-G Ninja -DCPACK_GENERATOR=WIX -DBUILD_DEV_TOOLS=OFF -DCMAKE_BUILD_TYPE=Release')
+    do_cmake_build(build_dir) # Build the libraries
+    do_cpack_build(build_dir) # Create the .msi
+
+    asset_file_name = find_asset_with_ext(build_dir, version, "msi")
+    temp_dist_file = path_join(build_dir, asset_file_name)
+
+    dist_dir = path_join(root_dir, 'dist')
+    dist_file = path_join(dist_dir, asset_file_name)
+    package_existed = os.path.exists(dist_file)
+    package_copied = False
+    if force or not package_existed or not compare_msi_files(temp_dist_file, dist_file):
+        os.makedirs(dist_dir, exist_ok=True)
+        if os.path.exists(dist_file):
+            os.remove(dist_file)
+        os.rename(temp_dist_file, dist_file)
+        package_copied = True
+
+    result["success"] = True
+    result["asset_file_name"] = asset_file_name
+    result["existed"] = package_existed
+    result["copied"] = package_copied
+    return result
 
 def package_deb(root_dir: str, version: str, sudo_pwd: str) -> dict:
     # Create .deb packaging to be installed with apt or dpkg (Debian-based systems).
@@ -312,90 +438,6 @@ def package_src_tar_gz(root_dir: str, version: str, sudo_pwd: str) -> dict:
     result["copied"] = package_copied
     return result
 
-
-def display_package_results(results: dict):
-    # Display the results returned by most packaging functions.
-    asset_built = results.get("built", False)
-    asset_built_success = results.get("success", False)
-    asset_file_name = results.get("asset_file_name", "unknown")
-    asset_copied = results.get("copied", False)
-    asset_existed = results.get("existed", False)
-    if asset_built:
-        if not asset_built_success:
-            print(f"Error: Packaging dist/{asset_file_name} failed.")
-
-        if asset_copied:
-            if asset_existed:
-                print(f"Updated dist/{asset_file_name}")
-            else:
-                print(f"Created dist/{asset_file_name}")
-        else:
-            print(f"No changes for dist/{asset_file_name}")
-    else:
-        print(f"{asset_file_name} build skipped (not supported on this platform)")
-
-
-def package_linux(root_dir: str, version: str, sudo_pwd: str):
-    os.chdir(root_dir)
-
-    # The dist/ta-lib-*-src.tar.gz are created only on Ubuntu
-    # but are tested with other Linux distributions.
-    src_tar_gz_results = {
-        "success": False,
-        "built": False,
-        "asset_file_name": "src.tar.gz", # Default, will change.
-    }
-
-    if is_ubuntu():
-        results = package_src_tar_gz(root_dir, version, sudo_pwd)
-        src_tar_gz_results.update(results)
-        src_tar_gz_results["built"] = True
-        if not src_tar_gz_results["success"]:
-            print(f'Error: Packaging dist/{src_tar_gz_results["asset_file_name"]} failed.')
-            sys.exit(1)
-
-    # When supported by host, build RPM using CMakeLists.txt (CPack)
-    rpm_results = {
-        "success": False,
-        "built": False,
-        "asset_file_name": ".rpm", # Default, will change.
-    }
-    if is_redhat_based():
-        if not is_rpmbuild_installed():
-            print("Error: rpmbuild not found. RPM not created")
-            sys.exit(1)
-        results = package_deb(root_dir, version, sudo_pwd)
-        rpm_results.update(results)
-        rpm_results["built"] = True
-        if not rpm_results["success"]:
-            print(f'Error: Packaging dist/{rpm_results["asset_file_name"]} failed.')
-            sys.exit(1)
-
-    # When supported by host, build DEB using CMakeLists.txt (CPack)
-    deb_results = {
-        "success": False,
-        "built": False,
-        "asset_file_name": ".deb", # Default, will change.
-    }
-    if is_debian_based():
-        results = package_deb(root_dir, version, sudo_pwd)
-        deb_results.update(results)
-        deb_results["built"] = True
-        if not deb_results["success"]:
-            print(f'Error: Packaging dist/{deb_results["asset_file_name"]} failed.')
-            sys.exit(1)
-
-    # A summary of everything that was done
-    print(f"\n***********")
-    print(f"* Summary *")
-    print(f"***********")
-    display_package_results(src_tar_gz_results)
-    display_package_results(rpm_results)
-    display_package_results(deb_results)
-
-    print(f"\nPackaging completed successfully.")
-
-
 def test_autotool_src(configure_dir: str, sudo_pwd: str) -> bool:
     # Returns True on success.
 
@@ -457,7 +499,6 @@ def test_autotool_src(configure_dir: str, sudo_pwd: str) -> bool:
         if not compare_dir(generated_files_temp_copy_1, generated_files_temp_copy_2):
             return False
 
-
         run_command_sudo(['make', 'install'], sudo_pwd)
 
     except subprocess.CalledProcessError as e:
@@ -469,6 +510,134 @@ def test_autotool_src(configure_dir: str, sudo_pwd: str) -> bool:
 
     return True
 
+def display_package_results(results: dict):
+    # Display the results returned by most packaging functions.
+    asset_built = results.get("built", False)
+    asset_built_success = results.get("success", False)
+    asset_file_name = results.get("asset_file_name", "unknown")
+    asset_copied = results.get("copied", False)
+    asset_existed = results.get("existed", False)
+    if asset_built:
+        if not asset_built_success:
+            print(f"Error: Packaging dist/{asset_file_name} failed.")
+
+        if asset_copied:
+            if asset_existed:
+                print(f"Updated dist/{asset_file_name}")
+            else:
+                print(f"Created dist/{asset_file_name}")
+        else:
+            print(f"No changes for dist/{asset_file_name}")
+    else:
+        print(f"{asset_file_name} build skipped (not supported on this platform)")
+
+def package_all_linux(root_dir: str, version: str, sudo_pwd: str):
+    os.chdir(root_dir)
+
+    # The dist/ta-lib-*-src.tar.gz are created only on Ubuntu
+    # but are tested with other Linux distributions.
+    src_tar_gz_results = {
+        "success": False,
+        "built": False,
+        "asset_file_name": "src.tar.gz", # Default, will change.
+    }
+
+    if is_ubuntu():
+        results = package_src_tar_gz(root_dir, version, sudo_pwd)
+        src_tar_gz_results.update(results)
+        src_tar_gz_results["built"] = True
+        if not src_tar_gz_results["success"]:
+            print(f'Error: Packaging dist/{src_tar_gz_results["asset_file_name"]} failed.')
+            sys.exit(1)
+
+    # When supported by host, build RPM using CMakeLists.txt (CPack)
+    rpm_results = {
+        "success": False,
+        "built": False,
+        "asset_file_name": ".rpm", # Default, will change.
+    }
+    if is_redhat_based():
+        if not is_rpmbuild_installed():
+            print("Error: rpmbuild not found. RPM not created")
+            sys.exit(1)
+        results = package_deb(root_dir, version, sudo_pwd)
+        rpm_results.update(results)
+        rpm_results["built"] = True
+        if not rpm_results["success"]:
+            print(f'Error: Packaging dist/{rpm_results["asset_file_name"]} failed.')
+            sys.exit(1)
+
+    # When supported by host, build DEB using CMakeLists.txt (CPack)
+    deb_results = {
+        "success": False,
+        "built": False,
+        "asset_file_name": ".deb", # Default, will change.
+    }
+    if is_debian_based():
+        results = package_deb(root_dir, version, sudo_pwd)
+        deb_results.update(results)
+        deb_results["built"] = True
+        if not deb_results["success"]:
+            print(f'Error: Packaging dist/{deb_results["asset_file_name"]} failed.')
+            sys.exit(1)
+
+    # A summary of everything that was done
+    print(f"\n***********")
+    print(f"* Summary *")
+    print(f"***********")
+    display_package_results(src_tar_gz_results)
+    display_package_results(rpm_results)
+    display_package_results(deb_results)
+
+    print(f"\nPackaging completed successfully.")
+
+def package_all_windows(root_dir: str, version: str):
+
+    zip_results = {
+        "success": False,
+        "built": False,
+        "asset_file_name": ".zip", # Default, will change.
+    }
+    results = package_windows_zip(root_dir, version)
+    zip_results.update(results)
+    zip_results["built"] = True
+    if not zip_results["success"]:
+        print(f'Error: Packaging dist/{zip_results["asset_file_name"]} failed')
+        sys.exit(1)
+
+    # The zip file is better at detecting if the *content* is different.
+    # If any changes are detected, it will force the creation and overwrite
+    # of the .msi file in dist.
+    force_msi_overwrite = False
+    if zip_results["built"] and zip_results["copied"]:
+        force_msi_overwrite = True
+
+    # For now, skip the .msi file creation if wix is not installed.
+    
+    # Process the .msi file.
+    msi_results = {
+        "success": False,
+        "built": False,
+        "asset_file_name": ".msi", # Default, will change.
+    }
+    if not is_wix_installed():
+        print("Warning: WiX Toolset not found. MSI packaging skipped.")
+    else:
+        results = package_windows_msi(root_dir, version,force_msi_overwrite)
+        msi_results.update(results)
+        msi_results["built"] = True
+        if not msi_results["success"]:
+            print(f'Error: Packaging dist/{msi_results["asset_file_name"]} failed')
+            sys.exit(1)
+
+    print(f"\n***********")
+    print(f"* Summary *")
+    print(f"***********")
+    display_package_results(zip_results)
+    display_package_results(msi_results)
+
+    print(f"Packaging completed successfully.")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test release candidate assets in 'dist'")
     parser.add_argument('-p', '--pwd', type=str, default="", help="Optional password for sudo commands")
@@ -479,13 +648,13 @@ if __name__ == "__main__":
     version = sync_versions(root_dir)
     host_platform = sys.platform
     if host_platform == "linux":
-        package_linux(root_dir,version,sudo_pwd)
+        package_all_linux(root_dir,version,sudo_pwd)
     elif host_platform == "win32":
         arch = platform.architecture()[0]
         if arch == '64bit':
-            package_windows(root_dir, version)
+            package_all_windows(root_dir, version)
         else:
-            print( f"Architecture [{arch}] not yet supported. Only 64 bits supported on windows.")
+            print( f"Unsupported architecture [{arch}]. Contact TA-Lib maintainers.")
     else:
-        print(f"Unsupported platform [{host_platform}]")
+        print(f"Unsupported platform [{host_platform}]. Contact TA-Lib maintainers.")
         sys.exit(1)
