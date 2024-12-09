@@ -47,7 +47,7 @@ if __name__ == "__main__":
     elif host_platform == "win32":
         arch = platform.architecture()[0]
         if arch == '64bit':
-            package_file_path = os.path.join(root_dir, "dist", f"ta-lib-{version}-win64.zip")
+            package_file_path = os.path.join(root_dir, "dist", f"ta-lib-{version}-windows-x86_64.zip")
         else:
             print( f"Architecture [{arch}] not yet supported. Only 64 bits supported on windows.")
     else:
