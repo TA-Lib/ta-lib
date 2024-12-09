@@ -30,7 +30,11 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          sudo apt update && sudo apt install -y automake libtool autogen mcpp openjdk-21-jdk
+          sudo apt update && sudo apt install -y automake libtool autogen mcpp
+          sudo apt install -y openjdk-21-jdk
+          sudo apt install -y gcc-multilib
+          sudo apt install -y gcc-i686-linux-gnu
+          sudo apt install -y gcc-aarch64-linux-gnu
 
       - name: Install Rust Toolchain (Linux)
         if: runner.os == 'Linux'
@@ -64,6 +68,7 @@ jobs:
         shell: bash
         run: |
           $PYTHON $GITHUB_WORKSPACE/scripts/package.py
+          $PYTHON $GITHUB_WORKSPACE/scripts/test-dist.py
 
       - name: Build dist assets (Windows x64)
         if: runner.os == 'Windows'
@@ -73,19 +78,23 @@ jobs:
         run: |
           call "%VCVARSALL%" x64
           %PYTHON% %GITHUB_WORKSPACE%\scripts\package.py
+          %PYTHON% %GITHUB_WORKSPACE%\scripts\test-dist.py
 
-      - name: Test dist assets (Linux)
+      - name: Check for changes and commit if any
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          $PYTHON $GITHUB_WORKSPACE/scripts/test-dist.py
-
-      - name: Test dist assets (Windows x64)
-        if: runner.os == 'Windows'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: cmd
-        run: |
-          call "%VCVARSALL%" x64
-          %PYTHON% %GITHUB_WORKSPACE%\scripts\test-dist.py
+          if [ -n "$(git status --porcelain dist/)" ]; then
+            echo "Changes detected in dist directory"
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add dist/
+            git commit -m "Update dist package (from ${{ matrix.os }})"
+            # Retry mechanism for handling concurrent pushes
+            for i in {1..5}; do
+              git pull --rebase origin dev && git push origin dev && break || sleep 10
+            done
+          else
+            echo "No changes detected in dist directory"
+          fi

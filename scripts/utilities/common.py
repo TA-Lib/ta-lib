@@ -78,6 +78,59 @@ def is_wix_installed() -> bool:
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
 
+def is_msbuild_installed() -> bool:
+    if sys.platform == 'Windows':
+        try:
+            result = subprocess.run(['vswhere', '-latest', '-products', '*', '-requires', 'Microsoft.Component.MSBuild', '-find', 'MSBuild\\**\\Bin\\MSBuild.exe'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            msbuild_path = result.stdout.decode().strip()
+            if msbuild_path:
+                subprocess.run([msbuild_path, '-version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                return True
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
+    return False
+
+def is_arm64_toolchain_installed() -> bool:
+    if is_linux():
+        try:
+            subprocess.run(['aarch64-linux-gnu-gcc', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return True
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
+    elif is_windows:
+        if not is_msbuild_installed():
+            return False
+
+    # TODO - Add tool specific detection for Windows/MacOS
+
+    return sys.platform.machine().lower() in ['aarch64', 'arm64']
+
+def is_x86_64_toolchain_installed() -> bool:
+    if is_linux():
+        try:
+            subprocess.run(['x86_64-linux-gnu-gcc', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return True
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
+    elif is_windows:
+        if not is_msbuild_installed():
+            return False
+
+    # TODO - Add more tool specific detection for Windows/MacOS
+
+    return sys.platform.machine().lower() in ['amd64', 'x86_64']
+
+def is_i386_toolchain_installed() -> bool:
+    if is_linux():
+        try:
+            subprocess.run(['i686-linux-gnu-gcc', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return True
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
+
+    # TODO - Add tool specific detection for Windows/MacOS
+    return sys.platform.machine().lower() in ['i386', 'i686']
+
 # Utility functions to identify the gen_code generated files.
 def get_src_generated_files() -> list:
     """

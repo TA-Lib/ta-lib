@@ -7,7 +7,7 @@
 #    For linux/ubuntu: ta-lib-<version>-src.tar.gz
 #         with contents for doing "./configure; make; sudo make install"
 #
-#    For windows: ta-lib-<version>-win64.zip
+#    For windows: ta-lib-<version>-windows-x86_64.zip
 #         with contents:
 #            lib/ta-lib.dll        (dynamic library)
 #            lib/ta-lib.lib        (import library)
@@ -45,11 +45,11 @@ import zipfile
 import zlib
 
 from utilities.versions import sync_versions
-from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_src_generated_files, is_cmake_installed, is_debian_based, is_dotnet_installed, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, verify_git_repo, run_command_sudo
+from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_src_generated_files, is_arm64_toolchain_installed, is_cmake_installed, is_debian_based, is_dotnet_installed, is_i386_toolchain_installed, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, is_x86_64_toolchain_installed, verify_git_repo, run_command_sudo
 from utilities.files import compare_msi_files, compare_tar_gz_files, compare_zip_files, create_rtf_from_txt, create_zip_file, compare_deb_files, force_delete, force_delete_glob, path_join
 
 def delete_other_versions(target_dir: str, file_pattern: str, new_version: str ):
-    # Used for cleaning-up a directory from other versions than the one 
+    # Used for cleaning-up a directory from other versions than the one
     # being newly built.
     #
     # Example of file_pattern: 'ta-lib-*-src.tar.gz'
@@ -142,7 +142,8 @@ def find_asset_with_ext(target_dir, version: str, extension: str) -> str:
 def package_windows_zip(root_dir: str, version: str) -> dict:
     result: dict = {"success": False}
 
-    asset_file_name = f'ta-lib-{version}-win64.zip'
+    file_name_prefix = f'ta-lib-{version}-windows-x86_64'
+    asset_file_name = f'{file_name_prefix}.zip'
     result["asset_file_name"] = asset_file_name
 
     # Clean-up
@@ -159,7 +160,7 @@ def package_windows_zip(root_dir: str, version: str) -> dict:
     do_cmake_build(build_dir)
 
     # Create a temporary zip package to test before copying to dist.
-    package_temp_dir = path_join(temp_dir, f'ta-lib-{version}-win64')
+    package_temp_dir = path_join(temp_dir, file_name_prefix)
     temp_lib_dir = path_join(package_temp_dir, 'lib')
     temp_include_dir = path_join(package_temp_dir, 'include')
 
@@ -253,7 +254,7 @@ def package_windows_msi(root_dir: str, version: str, force: bool) -> dict:
     result["copied"] = package_copied
     return result
 
-def package_deb(root_dir: str, version: str, sudo_pwd: str) -> dict:
+def package_deb(root_dir: str, version: str, sudo_pwd: str, toolchain: str= "") -> dict:
     # Create .deb packaging to be installed with apt or dpkg (Debian-based systems).
     #
     # TA-Lib will install under '/usr/lib' and '/usr/include/ta-lib'.
@@ -262,7 +263,6 @@ def package_deb(root_dir: str, version: str, sudo_pwd: str) -> dict:
     # pass some tests.
     #
     result: dict = {"success": False}
-    dist_dir = os.path.join(root_dir, 'dist')
 
     # Check dependencies.
     if not is_debian_based():
@@ -273,38 +273,26 @@ def package_deb(root_dir: str, version: str, sudo_pwd: str) -> dict:
         print("Error: CMake not found. It is required to be install for .deb creation")
         return result
 
-    cmake_lists = os.path.join(root_dir, 'CMakeLists.txt')
-    if not os.path.isfile(cmake_lists):
-        print(f"Error: {cmake_lists} not found. Make sure you are working within a TA-Lib repos")
+    cmakelists = os.path.join(root_dir, 'CMakeLists.txt')
+    if not os.path.isfile(cmakelists):
+        print(f"Error: {cmakelists} not found. Make sure you are working within a TA-Lib repos")
         return result
 
-    # Delete previous dist packaging
-    glob_all_packages = os.path.join(dist_dir, '*.deb')
-    for file in glob.glob(glob_all_packages):
-        if version not in file:
-            force_delete(file)
+    # Clean-up
+    dist_dir = path_join(root_dir, 'dist')
+    delete_other_versions(dist_dir,"*.deb",version)
 
-    # Create an empty CMake build directory
-    build_dir = os.path.join(root_dir, 'build')
-    force_delete(build_dir, sudo_pwd)
-    os.makedirs(build_dir)
-    os.chdir(build_dir)
+    # Build the libraries
+    configure_options = '-DCPACK_GENERATOR=DEB -DBUILD_DEV_TOOLS=OFF'
 
-    # Run CMake configuration.
-    # Display the output, but also grep the output for the line that has
-    # CPACK_PACKAGE_FILE_NAME.
-    try:
-        subprocess.run(['cmake', '-DCPACK_GENERATOR=DEB', '-DBUILD_DEV_TOOLS=OFF', '..'], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error running CMake: {e}")
-        return result
+    if toolchain:
+        cmake_dir = path_join(root_dir, 'cmake')
+        toolchain_file = path_join(cmake_dir, toolchain)
+        configure_options += f' -DCMAKE_TOOLCHAIN_FILE={toolchain_file}'
 
-    # Run CPack to create the .deb package
-    try:
-        subprocess.run(['cpack', '.'], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error running CPack: {e}")
-        return result
+    build_dir = do_cmake_reconfigure(root_dir, configure_options, sudo_pwd)
+    do_cmake_build(build_dir)
+    do_cpack_build(build_dir)
 
     # Get the asset file name (from the only .deb file expected in the build directory)
     glob_deb = os.path.join(build_dir, '*.deb')
@@ -560,7 +548,7 @@ def package_all_linux(root_dir: str, version: str, sudo_pwd: str):
         if not is_rpmbuild_installed():
             print("Error: rpmbuild not found. RPM not created")
             sys.exit(1)
-        results = package_deb(root_dir, version, sudo_pwd)
+        results = package_rpm(root_dir, version, sudo_pwd)
         rpm_results.update(results)
         rpm_results["built"] = True
         if not rpm_results["success"]:
@@ -568,18 +556,43 @@ def package_all_linux(root_dir: str, version: str, sudo_pwd: str):
             sys.exit(1)
 
     # When supported by host, build DEB using CMakeLists.txt (CPack)
-    deb_results = {
+    deb_results_arm64 = {
         "success": False,
         "built": False,
-        "asset_file_name": ".deb", # Default, will change.
+        "asset_file_name": "arm64.deb", # Default, will change.
+    }
+    deb_results_amd64 = {
+        "success": False,
+        "built": False,
+        "asset_file_name": "amd64.deb", # Default, will change.
+    }
+    deb_results_i386 = {
+        "success": False,
+        "built": False,
+        "asset_file_name": "i386.deb", # Default, will change.
     }
     if is_debian_based():
-        results = package_deb(root_dir, version, sudo_pwd)
-        deb_results.update(results)
-        deb_results["built"] = True
-        if not deb_results["success"]:
-            print(f'Error: Packaging dist/{deb_results["asset_file_name"]} failed.')
-            sys.exit(1)
+        if is_arm64_toolchain_installed():
+            results = package_deb(root_dir, version, sudo_pwd, toolchain="toolchain-linux-arm64.cmake")
+            deb_results_arm64.update(results)
+            deb_results_arm64["built"] = True
+            if not deb_results_arm64["success"]:
+                print(f'Error: Packaging dist/{deb_results_arm64["asset_file_name"]} failed.')
+                sys.exit(1)
+        if is_x86_64_toolchain_installed():
+            results = package_deb(root_dir, version, sudo_pwd, toolchain="toolchain-linux-x86_64.cmake")
+            deb_results_amd64.update(results)
+            deb_results_amd64["built"] = True
+            if not deb_results_amd64["success"]:
+                print(f'Error: Packaging dist/{deb_results_amd64["asset_file_name"]} failed.')
+                sys.exit(1)
+        if is_i386_toolchain_installed():
+            results = package_deb(root_dir, version, sudo_pwd, toolchain="toolchain-linux-i386.cmake")
+            deb_results_i386.update(results)
+            deb_results_i386["built"] = True
+            if not deb_results_i386["success"]:
+                print(f'Error: Packaging dist/{deb_results_i386["asset_file_name"]} failed.')
+                sys.exit(1)
 
     # A summary of everything that was done
     print(f"\n***********")
@@ -587,7 +600,9 @@ def package_all_linux(root_dir: str, version: str, sudo_pwd: str):
     print(f"***********")
     display_package_results(src_tar_gz_results)
     display_package_results(rpm_results)
-    display_package_results(deb_results)
+    display_package_results(deb_results_arm64)
+    display_package_results(deb_results_amd64)
+    display_package_results(deb_results_i386)
 
     print(f"\nPackaging completed successfully.")
 
@@ -613,7 +628,7 @@ def package_all_windows(root_dir: str, version: str):
         force_msi_overwrite = True
 
     # For now, skip the .msi file creation if wix is not installed.
-    
+
     # Process the .msi file.
     msi_results = {
         "success": False,
