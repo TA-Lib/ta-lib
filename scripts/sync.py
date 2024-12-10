@@ -9,6 +9,9 @@
 #
 # NOOP if nothing to merge
 
+from datetime import datetime
+import random
+import string
 import subprocess
 import sys
 
@@ -17,19 +20,39 @@ def run_command(command):
     result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return result.stdout.strip()
 
+def generate_short_unique_id(length=20) -> str:
+    """Generate a "unique enough" short identifier."""
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    random_str = ''.join(random.choices(string.ascii_letters + string.digits, k=length - len(timestamp)))
+    return timestamp + '-' + random_str
+
 def main():
     try:
         # Switch to dev branch if not already on it
         original_branch = run_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
 
+        # Do nothing if there is staged changes.
+        try:
+            run_command(['git', 'diff', '--cached', '--exit-code'])
+        except subprocess.CalledProcessError:
+            print("Info: staged git changes detected. This script is intended to be run **before** any staging. No sync done.")
+            sys.exit(1)
+
+        # Do nothing if there are local commits not yet pushed.
+        if run_command(['git', 'rev-list', '@{u}..HEAD']):
+            print("Info: local commits need to be pushed. This script is intended to be run **before** any local staging/commits. No sync done.")
+            sys.exit(1)
+
         # Fetch the latest branch information from origin
         run_command(['git', 'fetch', 'origin'])
 
-        # Stash any local dev changes
+        # Stash any local dev changes with a unique message
+        stash_message = f'sync-script-stash-{generate_short_unique_id()}'
+
         if original_branch != "dev":
             print("Switching to dev branch")
             run_command(['git', 'checkout', 'dev'])
-        run_command(['git', 'stash', 'push', '-m', 'sync-script-stash'])
+        run_command(['git', 'stash', 'push', '-m', stash_message])
 
         # Get the local dev commit hash before pulling
         # This is later used to detect if any changes were pulled.
@@ -47,7 +70,7 @@ def main():
 
         # Apply the stashed changes
         stash_list = run_command(['git', 'stash', 'list'])
-        if 'sync-script-stash' in stash_list:
+        if stash_message in stash_list:
             try:
                 run_command(['git', 'stash', 'pop'])
             except subprocess.CalledProcessError:
