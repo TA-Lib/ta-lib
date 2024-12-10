@@ -14,8 +14,8 @@ from .common import is_linux, is_windows, run_command_sudo
 
 # Use path_join to create a new path with proper seperators for the host system.
 # (this is to solve a problem on windows with '\' versus '/')
-def path_join(a: Union[str, os.PathLike], b: Union[str, os.PathLike])-> str:
-    return os.path.normpath(os.path.join(a, b))
+def path_join(*args: Union[str, os.PathLike]) -> str:
+    return os.path.normpath(os.path.join(*args))
 
 def compare_zip_files(zip_file1, zip_file2):
     # Does a binary comparison of the contents of the two zip files.
@@ -148,7 +148,7 @@ def force_delete(path: str, sudo_pwd: str = ""):
     # 'sudo' is sometimes necessary for files that were created as part
     # of the packaging/installation process.
     #
-    # Exit on any error.    
+    # Exit on any error.
     try:
         if is_windows():
             if os.path.isdir(path):

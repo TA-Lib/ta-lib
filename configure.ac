@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.71])
 AC_COPYRIGHT([(c) Mario Fortier 1999-2024])
-AC_INIT([ta-lib],[git],[https://github.com/TA-Lib/ta-lib])
+AC_INIT([ta-lib], m4_esyscmd([cat VERSION | tr -d '\n']), [https://github.com/TA-Lib/ta-lib/issues], [ta-lib], [https://github.com/TA-Lib/ta-lib])
 AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_SRCDIR([src/ta_func/ta_AD.c])
 AC_CONFIG_HEADERS([include/ta_config.h])

@@ -4,9 +4,9 @@ project(ta-lib)
 
 set(TA_LIB_VERSION_MAJOR 0)
 set(TA_LIB_VERSION_MINOR 6)
-set(TA_LIB_VERSION_BUILD 0)
+set(TA_LIB_VERSION_PATCH 0)
 
-set(PROJECT_VERSION "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VERSION_BUILD}")
+set(PROJECT_VERSION "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VERSION_PATCH}")
 
 set(CMAKE_C_STANDARD 99)
 
@@ -588,7 +588,7 @@ set(CPACK_RPM_PACKAGE_REQUIRES "glibc")
 # References:
 #    https://cmake.org/cmake/help/latest/cpack_gen/wix.html#variable:CPACK_WIX_VERSION
 #    https://stackoverflow.com/questions/77584815/how-to-use-wix-v4-within-cmake-to-build-an-installation-package-for-windows
-set(CPACK_WIX_VERSION "4") 
+set(CPACK_WIX_VERSION "4")
 set(CPACK_WIX_LICENSE_RTF "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.rtf")
 #set(CPACK_WIX_UI_BANNER "${CMAKE_CURRENT_SOURCE_DIR}/banner.bmp")
 #set(CPACK_WIX_UI_DIALOG "${CMAKE_CURRENT_SOURCE_DIR}/dialog.bmp")

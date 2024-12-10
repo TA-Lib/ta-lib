@@ -358,7 +358,7 @@ def package_src_tar_gz(root_dir: str, version: str, sudo_pwd: str) -> dict:
             force_delete(file)
 
     temp_dir = os.path.join(root_dir, 'temp')
-    package_temp_file_prefix = "ta-lib-git"
+    package_temp_file_prefix = f"ta-lib-{version}"
     package_temp_dir = os.path.join(temp_dir, package_temp_file_prefix)
     package_temp_file_src = os.path.join(root_dir, f"{package_temp_file_prefix}.tar.gz")
     package_temp_file_dest = os.path.join(temp_dir, f"{package_temp_file_prefix}.tar.gz")
@@ -388,7 +388,7 @@ def package_src_tar_gz(root_dir: str, version: str, sudo_pwd: str) -> dict:
         print(f"Error running 'make dist': {e}")
         return result
 
-    # Move ta-lib-git.tar.gz into temp directory.
+    # Move ta-lib-{version}.tar.gz into temp directory.
     if not os.path.isfile(package_temp_file_src):
         print(f"Error: {package_temp_file_src} not found.")
         return result
@@ -404,8 +404,8 @@ def package_src_tar_gz(root_dir: str, version: str, sudo_pwd: str) -> dict:
         print("Error: Source package verification failed.")
         return result
 
-    # Move ta-lib-git.tar.gz into root_dir/dist (create directory as needed)
-    # at same time rename it ta-lib-<version>-src.tar.gz
+    # Move ta-lib-{version}.tar.gz into root_dir/dist (create directory as needed)
+    # at same time rename it ta-lib-{version}-src.tar.gz
     # ...
     # but do this only if the archive *content* has changed
     # (ignore metadata such as file creation time).

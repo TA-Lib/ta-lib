@@ -2,19 +2,21 @@ import os
 import re
 import sys
 
+from .files import path_join
+
 def _read_version_info(version_file_path: str, version_pattern: str) -> dict:
     """
     Read a version string from a file.
 
     version_pattern must be a regular expression with a first group
-    that includes MAJOR, MINOR, BUILD tokens. In other words, the
+    that includes MAJOR, MINOR, PATCH tokens. In other words, the
     keys must be present on the line being selected by the pattern.
 
     The second regex group must be the value of the token.
 
-    Returns a dictionary with the keys 'MAJOR', 'MINOR', 'BUILD'.
+    Returns a dictionary with the keys 'MAJOR', 'MINOR', 'PATCH'.
     """
-    version_info = {'MAJOR': None, 'MINOR': None, 'BUILD': None}
+    version_info = {'MAJOR': None, 'MINOR': None, 'PATCH': None}
 
     with open(version_file_path, 'r') as file:
         for line in file:
@@ -25,7 +27,7 @@ def _read_version_info(version_file_path: str, version_pattern: str) -> dict:
                 version_info[key] = value
 
     if None in version_info.values():
-        print(f"Error: MAJOR, MINOR, and BUILD must be defined in {version_file_path}")
+        print(f"Error: MAJOR, MINOR, and PATCH must be defined in {version_file_path}")
         sys.exit(1)
 
     return version_info
@@ -34,14 +36,14 @@ def _version_info_to_string(version_info: dict) -> str:
     """
     Convert a version information dictionary to a version string.
 
-    The dictionary must have the keys 'MAJOR', 'MINOR', 'BUILD'.
+    The dictionary must have the keys 'MAJOR', 'MINOR', 'PATCH'.
     """
     # Verify that all keys are defined.
     if None in version_info.values():
-        print(f"Error: MAJOR, MINOR, and BUILD must be defined in {version_info}")
+        print(f"Error: MAJOR, MINOR, and PATCH must be defined in {version_info}")
         sys.exit(1)
 
-    return f"{version_info.get('MAJOR', '0')}.{version_info.get('MINOR', '0')}.{version_info.get('BUILD', '0')}"
+    return f"{version_info.get('MAJOR', '0')}.{version_info.get('MINOR', '0')}.{version_info.get('PATCH', '0')}"
 
 def _split_version_string(version: str) -> dict:
     """
@@ -49,62 +51,83 @@ def _split_version_string(version: str) -> dict:
 
     The version string must be in the format "0.0.0"
 
-    Returns a dictionary with the keys 'MAJOR', 'MINOR', 'BUILD'
+    Returns a dictionary with the keys 'MAJOR', 'MINOR', 'PATCH'
     """
-    version_info = {'MAJOR': None, 'MINOR': None, 'BUILD': None}
+    version_info = {'MAJOR': None, 'MINOR': None, 'PATCH': None}
 
     dot_parts = version.split('.')
     if len(dot_parts) != 3:
         print(f"Error: version must be in format '0.0.0' got instead [{version}]")
         sys.exit(1)
 
-    version_info['MAJOR'], version_info['MINOR'], version_info['BUILD'] = dot_parts
+    version_info['MAJOR'], version_info['MINOR'], version_info['PATCH'] = dot_parts
 
     return version_info
 
 def get_version_string(root_dir: str) -> str:
+    """
+    Parse the file VERSION to get the version string.
+
+    The file contains a single line with the version string (e.g. "0.6.0")
+
+    Exit on any error.
+    """
+    version_file_path = path_join(root_dir, "VERSION")
+
+    try:
+        with open(version_file_path, 'r') as version_file:
+            version_string = version_file.readline().strip()
+        # Validate the "0.0.0" format.
+        if not re.match(r'^\d+\.\d+\.\d+$', version_string):
+            print(f"Error: VERSION file must contain a valid version string in the format '0.0.0'. Got instead [{version_string}]")
+            sys.exit(1)
+    except Exception as e:
+        print(f"Error reading version file: {e}")
+        sys.exit(1)
+
+    return version_string
+
+def set_version_string(root_dir: str, new_version:str):
+    """
+    Counterpart to get_version_string() that updates the VERSION file with the
+    provided new_version string.
+    """
+    version_file_path = path_join(root_dir, "VERSION")
+
+    current_version = get_version_string(root_dir)
+
+    if current_version == new_version:
+        return # No changes needed. The version is already up to date.
+
+    with open(version_file_path, 'w') as version_file:
+        version_file.write(new_version + '\n')
+
+def get_version_string_source_code(root_dir: str) -> str:
     """
     Parse the file src/ta_common/ta_version.c to build a version string.
 
     The file contains the following C definitions:
         #define MAJOR "0"
         #define MINOR "6"
-        #define BUILD "0"
+        #define PATCH "0"
 
     These become the string "0.6.0".
     """
 
-    version_file_path = os.path.join(root_dir, "src", "ta_common", "ta_version.c")
-    version_pattern = re.compile(r'#define\s+(MAJOR|MINOR|BUILD)\s+"(.*?)"')
+    version_file_path = path_join(root_dir, "src", "ta_common", "ta_version.c")
+    version_pattern = re.compile(r'#define\s+(MAJOR|MINOR|PATCH)\s+"(.*?)"')
 
     version_info = _read_version_info(version_file_path, version_pattern)
 
     return _version_info_to_string(version_info)
 
-def get_version_string_cmake(root_dir: str) -> str:
+def set_version_string_source_code(root_dir: str, new_version:str):
     """
-    Similar to get_version_string() but parse CMakeLists.txt instead of ta_version.c
-
-    Excerpt of the file:
-        SET(TA_LIB_VERSION_MAJOR 0)
-        SET(TA_LIB_VERSION_MINOR 6)
-        SET(TA_LIB_VERSION_BUILD 0)
+    Counterpart to get_version_string_source_code() that updates the src/ta_common/ta_version.c
     """
-    version_file_path = os.path.join(root_dir, "CMakeLists.txt")
-    version_pattern = re.compile(r'set\s*\(\s*TA_LIB_VERSION_(MAJOR|MINOR|BUILD)\s+(\d+)\s*\)', re.IGNORECASE)
+    version_file_path = path_join(root_dir, "src", "ta_common", "ta_version.c")
 
-    version_info = _read_version_info(version_file_path, version_pattern)
-
-    return _version_info_to_string(version_info)
-
-
-def set_version_string(root_dir: str, new_version:str):
-    """
-    Counterpart to get_version_string() that updates the src/ta_common/ta_version.c
-    """
-    version_file_path = os.path.join(root_dir, "src", "ta_common", "ta_version.c")
-
-    current_version = get_version_string(root_dir)
+    current_version = get_version_string_source_code(root_dir)
 
     if current_version == new_version:
         return # No changes needed. The version is already up to date.
@@ -116,7 +139,7 @@ def set_version_string(root_dir: str, new_version:str):
         lines = version_file.readlines()
 
     # Update the version information in the lines
-    version_pattern = re.compile(r'#define\s+(MAJOR|MINOR|BUILD)\s+"(.*?)"')
+    version_pattern = re.compile(r'#define\s+(MAJOR|MINOR|PATCH)\s+"(.*?)"')
     found_keys = set()
     for i, line in enumerate(lines):
         match = version_pattern.search(line)
@@ -128,13 +151,30 @@ def set_version_string(root_dir: str, new_version:str):
                 found_keys.add(key)
 
     # Check if all required keys were found
-    if not all(k in found_keys for k in ['MAJOR', 'MINOR', 'BUILD']):
-        print(f"Error: MAJOR, MINOR, and BUILD must be defined in {version_file_path}")
+    if not all(k in found_keys for k in ['MAJOR', 'MINOR', 'PATCH']):
+        print(f"Error: MAJOR, MINOR, and PATCH must be defined in {version_file_path}")
         sys.exit(1)
 
     # Write the updated lines back to the ta_version.c file
     with open(version_file_path, 'w') as version_file:
         version_file.writelines(lines)
+
+def get_version_string_cmake(root_dir: str) -> str:
+    """
+    Similar to get_version_string_source_code() but parse CMakeLists.txt instead of ta_version.c
+
+    Excerpt of the file:
+        SET(TA_LIB_VERSION_MAJOR 0)
+        SET(TA_LIB_VERSION_MINOR 6)
+        SET(TA_LIB_VERSION_PATCH 0)
+    """
+    version_file_path = path_join(root_dir, "CMakeLists.txt")
+    version_pattern = re.compile(r'set\s*\(\s*TA_LIB_VERSION_(MAJOR|MINOR|PATCH)\s+(\d+)\s*\)', re.IGNORECASE)
+
+    version_info = _read_version_info(version_file_path, version_pattern)
+
+    return _version_info_to_string(version_info)
+
 
 def set_version_string_cmake(root_dir: str, new_version:str):
     """
@@ -150,12 +190,12 @@ def set_version_string_cmake(root_dir: str, new_version:str):
     Excerpt of the file:
         SET(TA_LIB_VERSION_MAJOR 0)
         SET(TA_LIB_VERSION_MINOR 6)
-        SET(TA_LIB_VERSION_BUILD 0)
+        SET(TA_LIB_VERSION_PATCH 0)
 
     Example of new_version: "0.12.2"
     """
 
-    version_file_path = os.path.join(root_dir, "CMakeLists.txt")
+    version_file_path = path_join(root_dir, "CMakeLists.txt")
 
     current_version = get_version_string_cmake(root_dir)
 
@@ -169,7 +209,7 @@ def set_version_string_cmake(root_dir: str, new_version:str):
         lines = cmake_file.readlines()
 
     # Update the version information in the lines
-    version_pattern = re.compile(r'set\s*\(\s*TA_LIB_VERSION_(MAJOR|MINOR|BUILD)\s+.*\)', re.IGNORECASE)
+    version_pattern = re.compile(r'set\s*\(\s*TA_LIB_VERSION_(MAJOR|MINOR|PATCH)\s+.*\)', re.IGNORECASE)
     found_keys = set()
     for i, line in enumerate(lines):
         match = version_pattern.search(line)
@@ -181,8 +221,8 @@ def set_version_string_cmake(root_dir: str, new_version:str):
                 found_keys.add(key)
 
     # Check if all required keys were found
-    if not all(k in found_keys for k in ['MAJOR', 'MINOR', 'BUILD']):
-        print(f"Error: MAJOR, MINOR, and BUILD must be defined in {version_file_path}")
+    if not all(k in found_keys for k in ['MAJOR', 'MINOR', 'PATCH']):
+        print(f"Error: MAJOR, MINOR, and PATCH must be defined in {version_file_path}")
         sys.exit(1)
 
     # Write the updated lines back to the CMakeLists.txt file
@@ -216,23 +256,40 @@ def compare_version(version1: str, version2: str) -> int:
 
 def sync_versions(root_dir: str) -> str:
     """
-    Synchronize the version between ta_version.c and CMakeLists.txt.
+    Synchronize the version between ta_version.c, CMakeLists.txt and the root VERSION file.
 
-    The versions are first read from both. The highest version is selected.
+    The versions are first read from all. The highest version is selected.
 
-    If the versions are the same, the function will touch nothing.
+    If the versions are all the same, this function will touch nothing.
 
-    If one file has a lower version, it is updated with the highest version.
+    When a file has a lower version, it is updated with the highest version.
     """
-    version_c = get_version_string(root_dir)
+    version_file = get_version_string(root_dir)
+    version_c = get_version_string_source_code(root_dir)
     version_cmake = get_version_string_cmake(root_dir)
 
-    compare_result: int = compare_version(version_c, version_cmake)
+    # Identify the highest version among all sources.
+    # Put the highest in the variable highest_version
+    highest_version = version_file
+    if compare_version(highest_version, version_cmake) < 0:
+        highest_version = version_cmake
+    if compare_version(highest_version, version_c) < 0:
+        highest_version = version_c
+
+    # Update files with a lower version.
+    compare_result: int = compare_version(highest_version, version_file)
     if compare_result > 0:
-        print(f"Updating CMakeLists.txt to ta_version.c [{version_c}]")
-        set_version_string_cmake(root_dir, version_c)
-    elif compare_result < 0:
-        print(f"Updating ta_version.c to CMakeLists.txt [{version_cmake}]")
-        set_version_string(root_dir, version_cmake)
+        print(f"Updating VERSION to [{highest_version}]")
+        set_version_string(root_dir, highest_version)
+
+    compare_result: int = compare_version(highest_version, version_c)
+    if compare_result > 0:
+        print(f"Updating ta_version.c to [{highest_version}]")
+        set_version_string_source_code(root_dir, highest_version)
+
+    compare_result: int = compare_version(highest_version, version_cmake)
+    if compare_result > 0:
+        print(f"Updating CMakeLists.txt to [{highest_version}]")
+        set_version_string_cmake(root_dir, highest_version)
 
     return version_c

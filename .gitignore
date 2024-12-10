@@ -36,7 +36,7 @@ bin/ta_*
 msbuild_path.txt
 lib/ta_*
 lib/ta-*
-ta-lib-git.tar.gz
+build/ta-lib-*.tar.gz
 LICENSE.rtf
 
 ## File system
