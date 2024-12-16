@@ -75,10 +75,13 @@ const char *TA_GetVersionString( void );
 /* Get individual component of the Version string */
 const char *TA_GetVersionMajor ( void );
 const char *TA_GetVersionMinor ( void );
-const char *TA_GetVersionBuild ( void );
-const char *TA_GetVersionExtra ( void );
+const char *TA_GetVersionPatch ( void );
 const char *TA_GetVersionDate  ( void );
 const char *TA_GetVersionTime  ( void );
+
+/* Deprecated */
+const char *TA_GetVersionBuild ( void );
+const char *TA_GetVersionExtra ( void );
 
 /* Misc. declaration used throughout the library code. */
 typedef double TA_Real;
@@ -124,8 +127,8 @@ typedef struct TA_StringTable
  */
 typedef struct TA_RetCodeInfo
 {
-   const char *enumStr; /* Like "TA_IP_SOCKETERROR"     */
-   const char *infoStr; /* Like "Error creating socket" */
+   const char *enumStr; /* Like "TA_LIB_NOT_INITIALIZE"     */
+   const char *infoStr; /* Like "TA_Initialize was not successfully called" */
 } TA_RetCodeInfo;
 
 /* Info is always returned, even when 'theRetCode' is invalid. */
@@ -142,6 +145,13 @@ void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo );
  */
 TA_RetCode TA_Initialize( void );
 TA_RetCode TA_Shutdown( void );
+
+/* TA_LIB_SOURCES_DIGEST helps for TA-Lib automated maintenance.
+ *
+ * This value is updated whenever a make, cmake or any source files
+ * modification should trig a repackaging of TA-Lib.
+ */
+#define TA_LIB_SOURCES_DIGEST e8a28683cedbbd1298a77453ba5c7d63
 
 #ifdef __cplusplus
 }

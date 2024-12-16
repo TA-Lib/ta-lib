@@ -180,7 +180,16 @@ def expand_globs(root_dir: str, file_list: list) -> list:
     return expanded_files
 
 
-def run_command_sudo(command, sudo_pwd=''):
+def run_command(command: list) -> str:
+    """Run a shell command and return the output."""
+    result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if result.returncode != 0:
+        print(f"Error during '{' '.join(command)}': {result.stderr}")
+        sys.exit(1)
+
+    return result.stdout.strip()
+
+def run_command_sudo(command: list, sudo_pwd: str=''):
     """
     Run a command with sudo, optionally using a password if provided.
     Will exit the script if calling the command fails or exit code != 0.
@@ -193,14 +202,17 @@ def run_command_sudo(command, sudo_pwd=''):
             if process.returncode != 0:
                 print(f"Error during 'sudo {' '.join(command)}': {stderr.decode()}")
                 sys.exit(1)
+            return stdout.decode().strip()
         else:
-            subprocess.run(['sudo'] + command, check=True)
+            return run_command(['sudo'] + command)
     except subprocess.CalledProcessError as e:
         print(f"Error during 'sudo {' '.join(command)}': {e}")
         sys.exit(1)
     except Exception as e:
         print(f"Unexpected error during 'sudo {' '.join(command)}': {e}")
         sys.exit(1)
+
+    return f"Unexpected error: {' '.join(command)}"
 
 
 def create_temp_dir(root_dir) -> str:
@@ -252,7 +264,7 @@ def verify_git_repo() -> str:
 
     # Sanity check that src/ta_func exists.
     if not os.path.isdir('src/ta_func'):
-        print("Current directory is not a TA-Lib Git repository (src/ta_func missing)")
+        print("Current directory is not a complete TA-Lib Git repository (src/ta_func missing)")
         sys.exit(1)
 
 def are_generated_files_git_changed(root_dir: str) -> bool:

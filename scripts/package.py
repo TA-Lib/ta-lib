@@ -44,7 +44,7 @@ import tempfile
 import zipfile
 import zlib
 
-from utilities.versions import sync_versions
+from utilities.versions import sync_sources_digest, sync_versions
 from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_src_generated_files, is_arm64_toolchain_installed, is_cmake_installed, is_debian_based, is_dotnet_installed, is_i386_toolchain_installed, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, is_x86_64_toolchain_installed, verify_git_repo, run_command_sudo
 from utilities.files import compare_msi_files, compare_tar_gz_files, compare_zip_files, create_rtf_from_txt, create_zip_file, compare_deb_files, force_delete, force_delete_glob, path_join
 
@@ -254,7 +254,7 @@ def package_windows_msi(root_dir: str, version: str, force: bool) -> dict:
     result["copied"] = package_copied
     return result
 
-def package_deb(root_dir: str, version: str, sudo_pwd: str, toolchain: str= "") -> dict:
+def package_deb(root_dir: str, version: str, sudo_pwd: str, toolchain: str, force_overwrite: bool) -> dict:
     # Create .deb packaging to be installed with apt or dpkg (Debian-based systems).
     #
     # TA-Lib will install under '/usr/lib' and '/usr/include/ta-lib'.
@@ -322,7 +322,7 @@ def package_deb(root_dir: str, version: str, sudo_pwd: str, toolchain: str= "") 
     dist_file = os.path.join(dist_dir, asset_file_name)
     package_existed = os.path.exists(dist_file)
     package_copied = False
-    if not package_existed or not compare_deb_files(deb_file, dist_file):
+    if force_overwrite or not package_existed or not compare_deb_files(deb_file, dist_file):
         os.makedirs(dist_dir, exist_ok=True)
         os.rename(deb_file, dist_file)
         package_copied = True
@@ -530,6 +530,11 @@ def package_all_linux(root_dir: str, version: str, sudo_pwd: str):
         "asset_file_name": "src.tar.gz", # Default, will change.
     }
 
+    # The .tar.gz file is better at detecting if the *content* is different.
+    # If any changes are detected, it will force the creation and overwrite
+    # of all the other packages.
+    force_overwrite = False
+
     if is_ubuntu():
         results = package_src_tar_gz(root_dir, version, sudo_pwd)
         src_tar_gz_results.update(results)
@@ -537,6 +542,8 @@ def package_all_linux(root_dir: str, version: str, sudo_pwd: str):
         if not src_tar_gz_results["success"]:
             print(f'Error: Packaging dist/{src_tar_gz_results["asset_file_name"]} failed.')
             sys.exit(1)
+        if src_tar_gz_results["copied"]:
+            force_overwrite = True
 
     # When supported by host, build RPM using CMakeLists.txt (CPack)
     rpm_results = {
@@ -573,21 +580,21 @@ def package_all_linux(root_dir: str, version: str, sudo_pwd: str):
     }
     if is_debian_based():
         if is_arm64_toolchain_installed():
-            results = package_deb(root_dir, version, sudo_pwd, toolchain="toolchain-linux-arm64.cmake")
+            results = package_deb(root_dir, version, sudo_pwd, "toolchain-linux-arm64.cmake", force_overwrite)
             deb_results_arm64.update(results)
             deb_results_arm64["built"] = True
             if not deb_results_arm64["success"]:
                 print(f'Error: Packaging dist/{deb_results_arm64["asset_file_name"]} failed.')
                 sys.exit(1)
         if is_x86_64_toolchain_installed():
-            results = package_deb(root_dir, version, sudo_pwd, toolchain="toolchain-linux-x86_64.cmake")
+            results = package_deb(root_dir, version, sudo_pwd, "toolchain-linux-x86_64.cmake", force_overwrite)
             deb_results_amd64.update(results)
             deb_results_amd64["built"] = True
             if not deb_results_amd64["success"]:
                 print(f'Error: Packaging dist/{deb_results_amd64["asset_file_name"]} failed.')
                 sys.exit(1)
         if is_i386_toolchain_installed():
-            results = package_deb(root_dir, version, sudo_pwd, toolchain="toolchain-linux-i386.cmake")
+            results = package_deb(root_dir, version, sudo_pwd, "toolchain-linux-i386.cmake", force_overwrite)
             deb_results_i386.update(results)
             deb_results_i386["built"] = True
             if not deb_results_i386["success"]:
@@ -638,7 +645,7 @@ def package_all_windows(root_dir: str, version: str):
     if not is_wix_installed():
         print("Warning: WiX Toolset not found. MSI packaging skipped.")
     else:
-        results = package_windows_msi(root_dir, version,force_msi_overwrite)
+        results = package_windows_msi(root_dir, version, force_msi_overwrite)
         msi_results.update(results)
         msi_results["built"] = True
         if not msi_results["success"]:
@@ -660,7 +667,8 @@ if __name__ == "__main__":
 
     sudo_pwd = args.pwd
     root_dir = verify_git_repo()
-    version = sync_versions(root_dir)
+    is_updated, version = sync_versions(root_dir)
+    is_updated, digest = sync_sources_digest(root_dir)
     host_platform = sys.platform
     if host_platform == "linux":
         package_all_linux(root_dir,version,sudo_pwd)

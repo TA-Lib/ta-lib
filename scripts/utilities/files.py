@@ -1,3 +1,4 @@
+import re
 from typing import Union
 
 import glob
@@ -17,6 +18,25 @@ from .common import is_linux, is_windows, run_command_sudo
 def path_join(*args: Union[str, os.PathLike]) -> str:
     return os.path.normpath(os.path.join(*args))
 
+def compare_dir_recursive(dir1, dir2):
+    # Recursively compare subdirectories and files content
+    comparison = filecmp.dircmp(dir1, dir2)
+    if comparison.diff_files:
+        print(f"Differing files: {comparison.diff_files}")
+    if comparison.left_only:
+        print(f"Files only in {dir1}: {comparison.left_only}")
+    if comparison.right_only:
+        print(f"Files only in {dir2}: {comparison.right_only}")
+    result = not comparison.diff_files and not comparison.left_only and not comparison.right_only
+    if not result:
+        return False
+
+    for subdir in comparison.common_dirs:
+        if not compare_dir_recursive(path_join(dir1, subdir), path_join(dir2, subdir)):
+            return False
+
+    return True # Identical
+
 def compare_zip_files(zip_file1, zip_file2):
     # Does a binary comparison of the contents of the two zip files.
     # Ignores file creation time.
@@ -32,8 +52,7 @@ def compare_zip_files(zip_file1, zip_file2):
         with zipfile.ZipFile(zip_file2, 'r') as zip_ref:
             zip_ref.extractall(temp_extract_path2)
 
-        dir_comparison = filecmp.dircmp(temp_extract_path1, temp_extract_path2)
-        return not dir_comparison.diff_files and not dir_comparison.left_only and not dir_comparison.right_only
+        return compare_dir_recursive(temp_extract_path1, temp_extract_path2)
 
 def create_zip_file(source_dir, zip_file):
     with zipfile.ZipFile(zip_file, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=zlib.Z_BEST_COMPRESSION) as zipf:
@@ -58,8 +77,7 @@ def compare_tar_gz_files(tar_gz_file1, tar_gz_file2) -> bool:
         with tarfile.open(tar_gz_file2, 'r:gz') as tar_ref:
             tar_ref.extractall(temp_extract_path2)
 
-        dir_comparison = filecmp.dircmp(temp_extract_path1, temp_extract_path2)
-        return not dir_comparison.diff_files and not dir_comparison.left_only and not dir_comparison.right_only
+        return compare_dir_recursive(temp_extract_path1, temp_extract_path2)
 
 def create_tar_gz_file(source_dir, tar_gz_file):
     with tarfile.open(tar_gz_file, 'w:gz') as tarf:
@@ -69,20 +87,38 @@ def create_tar_gz_file(source_dir, tar_gz_file):
                 arcname = os.path.relpath(file_path, start=source_dir)
                 tarf.add(file_path, arcname)
 
+
 def compare_deb_files(deb_file1, deb_file2) -> bool:
     # Does a binary comparison of the contents of the two .deb files.
     # Ignores file creation time.
     with tempfile.TemporaryDirectory() as temp_extract_dir:
+
         temp_extract_path1 = os.path.join(temp_extract_dir, 'temp1')
         temp_extract_path2 = os.path.join(temp_extract_dir, 'temp2')
         os.makedirs(temp_extract_path1, exist_ok=True)
         os.makedirs(temp_extract_path2, exist_ok=True)
 
-        os.system(f"dpkg-deb -x {deb_file1} {temp_extract_path1}")
-        os.system(f"dpkg-deb -x {deb_file2} {temp_extract_path2}")
+        try:
+            subprocess.run(['dpkg-deb', '-x', deb_file1, temp_extract_path1], check=True)
+            subprocess.run(['dpkg-deb', '-x', deb_file2, temp_extract_path2], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error extracting .deb files: {e}")
+            return False
 
-        dir_comparison = filecmp.dircmp(temp_extract_path1, temp_extract_path2)
-        return not dir_comparison.diff_files and not dir_comparison.left_only and not dir_comparison.right_only
+        # Remove in both temp directory all library files.
+        # Only the remaining source files will be compared.
+        pattern = r'\.so\.\d+'
+        for root, dirs, files in os.walk(temp_extract_path1):
+            for file in files:
+                if file.endswith('.a') or file.endswith('.so') or re.search(pattern, file) is not None:
+                    os.remove(path_join(root, file))
+
+        for root, dirs, files in os.walk(temp_extract_path2):
+            for file in files:
+                if file.endswith('.a') or file.endswith('.so') or re.search(pattern, file) is not None:
+                    os.remove(path_join(root, file))
+
+        return compare_dir_recursive(temp_extract_path1, temp_extract_path2)
 
 def compare_msi_files(msi_file1, msi_file2) -> bool:
     # Does a binary comparison of the contents of the two .msi files.
@@ -107,8 +143,7 @@ def compare_msi_files(msi_file1, msi_file2) -> bool:
                 if file.endswith('.msi') or file.endswith('.lib') or file.endswith('.dll'):
                     os.remove(path_join(root, file))
 
-        dir_comparison = filecmp.dircmp(temp_extract_path1, temp_extract_path2)
-        return not dir_comparison.diff_files and not dir_comparison.left_only and not dir_comparison.right_only
+        return compare_dir_recursive(temp_extract_path1, temp_extract_path2)
 
 def create_rtf_from_txt(input_file: str, output_file: str):
     """

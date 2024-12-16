@@ -15,20 +15,21 @@ import string
 import subprocess
 import sys
 
-def run_command(command):
-    """Run a shell command and return the output."""
-    result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    return result.stdout.strip()
+from utilities.common import verify_git_repo, run_command
+from utilities.versions import sync_sources_digest, sync_versions
 
 def generate_short_unique_id(length=20) -> str:
-    """Generate a "unique enough" short identifier."""
+    # Generate a "unique enough" short identifier.
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
     random_str = ''.join(random.choices(string.ascii_letters + string.digits, k=length - len(timestamp)))
     return timestamp + '-' + random_str
 
 def main():
     try:
+        original_branch = None
+
         # Switch to dev branch if not already on it
+        root_dir = verify_git_repo()
         original_branch = run_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
 
         # Do nothing if there is staged changes.
@@ -116,16 +117,30 @@ def main():
                 print("4. Complete merge with a 'git commit'")
                 sys.exit(1)
 
+        # Make sure TA-Lib versioning is consistent in various files
+        # used for building packages.
+        is_updated, version = sync_versions(root_dir)
+        if not is_updated:
+            print(f"No changes to version [{version}]")
+
+        # Update TA_LIB_SOURCES_DIGEST in ta_common.h (as needed)
+        is_updated, digest = sync_sources_digest(root_dir)
+        if is_updated:
+            print(f"Updated sources digest (ta_common.h): [{digest}]")
+        else:
+            print(f"No changes to sources digest (ta_common.h) [{digest}]")
+
     except subprocess.CalledProcessError as e:
         print(f"An error occurred: {e}")
         sys.exit(1)
 
     finally:
         # Restore to the branch the user was located before running this script
-        current_branch = run_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
-        if current_branch != original_branch:
-            print(f"Switching back to {original_branch} branch")
-            run_command(['git', 'checkout', original_branch])
+        if original_branch:
+            current_branch = run_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+            if current_branch != original_branch:
+                print(f"Switching back to {original_branch} branch")
+                run_command(['git', 'checkout', original_branch])
 
 if __name__ == "__main__":
     main()

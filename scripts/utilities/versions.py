@@ -1,7 +1,10 @@
+import hashlib
 import os
 import re
 import sys
+from typing import Tuple
 
+from .common import expand_globs
 from .files import path_join
 
 def _read_version_info(version_file_path: str, version_pattern: str) -> dict:
@@ -254,7 +257,7 @@ def compare_version(version1: str, version2: str) -> int:
     return 0 # Identical versions
 
 
-def sync_versions(root_dir: str) -> str:
+def sync_versions(root_dir: str) -> Tuple[bool,str]:
     """
     Synchronize the version between ta_version.c, CMakeLists.txt and the root VERSION file.
 
@@ -263,6 +266,8 @@ def sync_versions(root_dir: str) -> str:
     If the versions are all the same, this function will touch nothing.
 
     When a file has a lower version, it is updated with the highest version.
+
+    Return true if any file was updated.
     """
     version_file = get_version_string(root_dir)
     version_c = get_version_string_source_code(root_dir)
@@ -277,19 +282,127 @@ def sync_versions(root_dir: str) -> str:
         highest_version = version_c
 
     # Update files with a lower version.
+    is_updated = False
     compare_result: int = compare_version(highest_version, version_file)
     if compare_result > 0:
         print(f"Updating VERSION to [{highest_version}]")
         set_version_string(root_dir, highest_version)
+        is_updated = True
 
     compare_result: int = compare_version(highest_version, version_c)
     if compare_result > 0:
         print(f"Updating ta_version.c to [{highest_version}]")
         set_version_string_source_code(root_dir, highest_version)
+        is_updated = True
 
     compare_result: int = compare_version(highest_version, version_cmake)
     if compare_result > 0:
         print(f"Updating CMakeLists.txt to [{highest_version}]")
         set_version_string_cmake(root_dir, highest_version)
+        is_updated = True
 
-    return version_c
+    return is_updated, version_c
+
+def write_sources_digest(root_dir: str, new_digest: str) -> bool:
+    """Update the ta_common.h file with the new digest."""
+    ta_common_h_path = path_join(root_dir, 'include', 'ta_common.h')
+    updated = False
+    try:
+        with open(ta_common_h_path, 'r') as f:
+            lines = f.readlines()
+
+        with open(ta_common_h_path, 'w') as f:
+            for line in lines:
+                if line.startswith('#define TA_LIB_SOURCES_DIGEST'):
+                    if line.strip() != f'#define TA_LIB_SOURCES_DIGEST {new_digest}':
+                        f.write(f'#define TA_LIB_SOURCES_DIGEST {new_digest}\n')
+                        updated = True
+                    else:
+                        f.write(line)
+                else:
+                    f.write(line)
+            if not updated:
+                print(f"Error: Missing TA_LIB_SOURCES_DIGEST in ta_common.h")
+                sys.exit(1)
+
+        # Read it back to confirm the change
+        written_digest = read_sources_digest(root_dir)
+        if written_digest != new_digest:
+            print(f"Error: Failed to update TA_LIB_SOURCES_DIGEST in ta_common.h")
+            sys.exit(1)
+
+    except IOError as e:
+        print(f"Error updating file {ta_common_h_path}: {e}")
+        raise
+    return updated
+
+def read_sources_digest(root_dir: str) -> str:
+    # Read the value of the TA_LIB_SOURCES_DIGEST. Return None if not found.
+    ta_common_h_path = path_join(root_dir, 'include', 'ta_common.h')
+    try:
+        with open(ta_common_h_path, 'r') as f:
+            for line in f:
+                if line.startswith('#define TA_LIB_SOURCES_DIGEST'):
+                    return line.split()[2].strip()
+    except IOError as e:
+        print(f"Error reading file {ta_common_h_path}: {e}")
+        sys.exit(1)
+
+    return None
+
+def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
+    # A C #define TA_LIB_SOURCE_DIGEST XXXXXXXX is added to
+    # the ta_common.h file, right after the #define TA_COMMON_H
+    #
+    # The purpose is to track which source code was used
+    # to build a package.
+    #
+    # This function recalculate the hash and update the
+    # source file as needed.
+    #
+    # Return true if changed.
+    file_patterns = [
+        "CMakeLists.txt",
+        "configure.ac",
+        "*.in",
+        "cmake/*",
+        "src/**/*.c",
+        "src/**/*.h",
+        "src/**/*.am",
+        "*.am",
+        "src/ta_abstract/templates/*",
+        "ta_func_api.xml",
+        "ta_func_list.txt",
+        "java/src/**/*.java",
+        "LICENSE",
+        "VERSION",
+    ]
+    file_list = expand_globs(root_dir, file_patterns)
+
+    # Remove duplicate entries in file_list
+    file_list = list(set(file_list))
+    
+    #for file_path in file_list:
+    #     print(file_path)
+
+    running_hash = hashlib.md5()
+    for file_path in sorted(file_list):
+        try:
+            with open(file_path, 'rb') as f:
+                for line in f:
+                    # Normalize line endings to Unix-style LF
+                    normalized_line = line.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+                    running_hash.update(normalized_line)
+        except Exception as e:
+            print(f"Error reading file while updating SOURCES-HASH [{file_path}]: {e}")
+            sys.exit(1)
+
+    sources_hash = running_hash.hexdigest()
+
+    # Write to the SOURCES-VERSION file (touch only if different)
+    current_digest = read_sources_digest(root_dir)
+    if current_digest == sources_hash:
+        return False, sources_hash
+
+    write_sources_digest(root_dir, sources_hash)
+    return True, sources_hash
