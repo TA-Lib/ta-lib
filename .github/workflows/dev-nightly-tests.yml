@@ -91,6 +91,14 @@ jobs:
             git config --global user.email "github-actions[bot]@users.noreply.github.com"
             git add dist/
             git commit -m "Update dist package (from ${{ matrix.os }})"
+
+            # Check for unstaged changes and log them.
+            # (this help debugging because it should not happen)
+            if [ -n "$(git status --porcelain)" ]; then
+              echo "Unstaged changes detected:"
+              git status --porcelain
+            fi
+
             # Retry mechanism for handling concurrent pushes
             for i in {1..5}; do
               git pull --rebase origin dev && git push origin dev && break || sleep 10
