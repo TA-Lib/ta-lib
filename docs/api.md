@@ -18,7 +18,8 @@ to build and link to TA-Lib</a></p>
 <blockquote>
 <a href="#Abstraction">4.1 Abstraction layer</a><br>
 <a href="#Unstable Period">4.2 Unstable Period</a><br>
-<a href="#Input Type">4.3 Input Type: float vs. double</a>
+<a href="#Input Type">4.3 Input Type: float vs. double</a><br>
+<a href="#Multithreading">4.4 High-performance Multi-threading</a>
 </blockquote>
 
 </div>
@@ -442,5 +443,21 @@ to duplicate their input data in a new array of a different type prior to a TA
 function call. </p>
 	<!-- #EndEditable -->
 </div>
+<h3><a name="Multithreading">4.4 High-performance multi-threading</a></h3>
+
+<p>TA-Lib is multi-thread safe where it matters the most for performance: When calling any TA functions (e.g. TA_SMA, TA_RSI etc... )</p>
+
+<p>One important caveat is the initialization of the "global setting" must first be all done from a single thread. That includes calls to:</p>
+<ul>
+  <li>TA_Initialize</li>
+  <li>TA_SetUnstablePeriod, TA_SetCompatibility</li>
+  <li>TA_SetCandleSettings, TA_RestoreCandleDefaultSettings</li>
+</ul>
+
+<p>After you are done with these initial calls, the application can start performing multi-thread calls with the rest of the API (including the ta_abstract.h API).</p>
+
+<p>One exception to the rule is TA_Shutdown() which must be called single threaded (typically from the only thread remaining prior to exit your application).</p>
+
+<p>Note: TA-Lib uses C11 malloc/free which is a thread safe default on all modern platforms (Linux,Windows,Mac). Just keep that in mind if you modify the Makefile to link with a C runtime library other than the default installed on your system.</p>
 
 </body>

@@ -1,31 +1,41 @@
 **Is TA-Lib maintained?**
 
-Yes and No (depending of your perspective).
+Yes.
 
 *The Good News*
 
-Some projects depending on TA-Lib are still actively maintain.
+Many projects depending on TA-Lib are actively maintained.
 
 The C/C++ source code have remained in-use for >20 years.
 
-The C/C++ portion of TA-Lib is stable. Therefore, there is not much maintenance needed anymore.
+A large portion of TA-Lib is stable. Therefore, there is no further change needed for most TA functions.
 
 *The Bad News*
 
-The big **blocker** for applying a few minor fix to the code is the lack of resources (and interest) to maintain C/C++/binaries packaging for various OS/platforms. Also, the developer admit being afraid to touch it and have to suddenly support multiple platforms issues/limitation...
+Contributions to produce new TA functions are very rare.
 
-*The Plan*
+Implementing speed efficient TA functions in C is harder compare to high-level languages provided by commercial software/website (e.g. tradingview, tradestation etc...).
 
-Revive TA-Lib as a Rust package with Python bindings (using PyO3 Maturin).
-These two languages have mature tooling for packaging and portable distribution.
+Releases went stale between 2014 and 2024, one "excuse" is the packaging process was outdated and time-consuming.
 
-There is hope that this will be easier to maintain by the community on long term.
+*Ongoing Initiatives*
 
-Contact mario4tier on github if interested.
+In 2024, work started to automate packaging with Github actions. Goal is to have new maintainers be able to trig a release at the "push of a button".
 
-**Best place for support?**
+There is also work-in-progress to add a native Rust version.
 
-Try these communities:
+Most importantly, there is intent to make the ta-lib-python installation easier.
 
-* [https://github.com/ta-lib/ta-lib-python](https://github.com/ta-lib/ta-lib-python)
-* [https://github.com/twopirllc/pandas-ta](https://github.com/twopirllc/pandas-ta)
+
+**How to get support?**
+
+Various ways:
+
+- Have a friendly conversation with Mario Fortier (a.k.a Mhax) on discord:
+![](https://dcbadge.limes.pink/api/server/Erb6SwsVbH)
+
+- Open a [Github Issue](https://github.com/TA-Lib/ta-lib/issues)
+
+- Check these communities:
+    * [https://github.com/ta-lib/ta-lib-python](https://github.com/ta-lib/ta-lib-python)
+    * [https://github.com/twopirllc/pandas-ta](https://github.com/twopirllc/pandas-ta)
