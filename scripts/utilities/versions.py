@@ -381,12 +381,11 @@ def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
 
     # Remove duplicate entries in file_list
     file_list = list(set(file_list))
-    
-    #for file_path in file_list:
-    #     print(file_path)
+
+    sorted_files = sorted(file_list)
 
     running_hash = hashlib.md5()
-    for file_path in sorted(file_list):
+    for file_path in sorted_files:
         try:
             with open(file_path, 'rb') as f:
                 for line in f:
@@ -399,10 +398,17 @@ def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
 
     sources_hash = running_hash.hexdigest()
 
+
+
     # Write to the SOURCES-VERSION file (touch only if different)
     current_digest = read_sources_digest(root_dir)
     if current_digest == sources_hash:
         return False, sources_hash
+
+    # A difference was detected, display info to help debugging.
+    for file_path in sorted_files:
+         print(file_path)
+    print(f"Calculated SOURCES-HASH: {sources_hash}")
 
     write_sources_digest(root_dir, sources_hash)
     return True, sources_hash

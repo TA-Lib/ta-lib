@@ -7,7 +7,13 @@
 # The local dev changes (if any) are temporarly stashed and merge back...
 # so conflicts may need to be resolved manually (an error will be displayed).
 #
-# NOOP if nothing to merge
+# NOOP if nothing to merge or sync.
+#
+# Other processing done:
+#  - Sync the TA-Lib versioning (See VERSION file) consistently with various other files.
+#  - Update the TA-Lib source digest in ta_common.h (as needed).
+#
+
 
 from datetime import datetime
 import random
@@ -55,6 +61,12 @@ def main():
             run_command(['git', 'checkout', 'dev'])
         run_command(['git', 'stash', 'push', '-m', stash_message])
 
+        # Since everything in dev is now stashed, it is now possible
+        # to switch to main branch and sync it.
+        run_command(['git', 'checkout', 'main'])
+        run_command(['git', 'pull', 'origin', 'main'])
+        run_command(['git', 'checkout', 'dev'])
+
         # Get the local dev commit hash before pulling
         # This is later used to detect if any changes were pulled.
         local_dev_commit_before = run_command(['git', 'rev-parse', 'dev'])
@@ -82,9 +94,6 @@ def main():
                 print("4. Complete merge with a 'git commit'")
                 sys.exit(1)
 
-        # Ensure the local main branch is up-to-date
-        run_command(['git', 'checkout', 'main'])
-        run_command(['git', 'pull', 'origin', 'main'])
 
         # Switch back to dev branch
         run_command(['git', 'checkout', 'dev'])
