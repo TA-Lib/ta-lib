@@ -8,7 +8,7 @@ set(TA_LIB_VERSION_PATCH 0)
 
 set(PROJECT_VERSION "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VERSION_PATCH}")
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 11)
 
 # Option to build development tools (enabled by default)
 option(BUILD_DEV_TOOLS "Build development tools (gen_code, ta_regtest)" ON)
