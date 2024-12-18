@@ -364,7 +364,7 @@ def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
     file_patterns = [
         "CMakeLists.txt",
         "configure.ac",
-        "*.in",
+        "ta-lib.*.in",
         "cmake/*",
         "src/**/*.c",
         "src/**/*.h",
@@ -379,36 +379,48 @@ def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
     ]
     file_list = expand_globs(root_dir, file_patterns)
 
-    # Remove duplicate entries in file_list
+    # Remove potential duplicate entries
     file_list = list(set(file_list))
 
-    sorted_files = sorted(file_list)
+    # Normalize file paths by removing the root directory prefix (for portable sorting).
+    normalized_file_list = [os.path.relpath(file_path, root_dir) for file_path in file_list]
+
+    # Sort lower case to ensure consistent across platforms
+    sorted_files = sorted(normalized_file_list, key=lambda x: x.lower())
 
     running_hash = hashlib.md5()
+    n_lines = 0
+    n_files = 0
+    n_opens = 0
+    n_chars = 0
     for file_path in sorted_files:
         try:
-            with open(file_path, 'rb') as f:
+            n_files += 1
+            full_file_path = os.path.join(root_dir, file_path)
+            with open(full_file_path, 'r', encoding='utf-8') as f:
+                n_opens += 1
                 for line in f:
-                    # Normalize line endings to Unix-style LF
-                    normalized_line = line.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
-                    running_hash.update(normalized_line)
+                    # Normalize line endings to Unix-style LF, remove leading/trailing whitespace
+                    normalized_line = line.replace('\r\n', '\n').replace('\r', '\n').strip()
+                    utf8_line = normalized_line.encode('utf-8')
+                    n_chars += len(utf8_line)
+                    running_hash.update(normalized_line.encode('utf-8'))
+                    n_lines += 1
+                print(f" Hash: {running_hash.hexdigest()}, File: {file_path}, Lines: {n_lines}, Opens: {n_opens}, Chars: {n_chars}")
         except Exception as e:
             print(f"Error reading file while updating SOURCES-HASH [{file_path}]: {e}")
             sys.exit(1)
 
     sources_hash = running_hash.hexdigest()
-
-
+    print(f"Calculated SOURCES-HASH: {sources_hash}")
+    print(f"Files: {n_files}, Lines: {n_lines}, Opens: {n_opens}, Chars: {n_chars}")
 
     # Write to the SOURCES-VERSION file (touch only if different)
     current_digest = read_sources_digest(root_dir)
     if current_digest == sources_hash:
         return False, sources_hash
 
-    # A difference was detected, display info to help debugging.
-    for file_path in sorted_files:
-         print(file_path)
-    print(f"Calculated SOURCES-HASH: {sources_hash}")
+    print(f"Difference detected in SOURCES-HASH. Updating ta_common.h")
 
     write_sources_digest(root_dir, sources_hash)
     return True, sources_hash
