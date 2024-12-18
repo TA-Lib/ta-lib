@@ -351,16 +351,14 @@ def read_sources_digest(root_dir: str) -> str:
     return None
 
 def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
-    # A C #define TA_LIB_SOURCE_DIGEST XXXXXXXX is added to
-    # the ta_common.h file, right after the #define TA_COMMON_H
+    # This is for a calculated digest of all source file contant relevant
+    # to packaging. It helps to trig CI repackaging when a change
+    # is detected.
     #
-    # The purpose is to track which source code was used
-    # to build a package.
+    # The digest is written as a "#define TA_LIB_SOURCE_DIGEST XXXXXXXX"
+    # in ta_common.h
     #
-    # This function recalculate the hash and update the
-    # source file as needed.
-    #
-    # Return true if changed.
+    # Return true when ta_common.h was updated with a new digest.
     file_patterns = [
         "CMakeLists.txt",
         "configure.ac",
@@ -406,21 +404,22 @@ def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
                     n_chars += len(utf8_line)
                     running_hash.update(normalized_line.encode('utf-8'))
                     n_lines += 1
-                print(f" Hash: {running_hash.hexdigest()}, File: {file_path}, Lines: {n_lines}, Opens: {n_opens}, Chars: {n_chars}")
+                #print(f" Hash: {running_hash.hexdigest()}, File: {file_path}, Lines: {n_lines}, Opens: {n_opens}, Chars: {n_chars}")
         except Exception as e:
-            print(f"Error reading file while updating SOURCES-HASH [{file_path}]: {e}")
+            print(f"Error reading file while updating source digest [{file_path}]: {e}")
             sys.exit(1)
 
     sources_hash = running_hash.hexdigest()
-    print(f"Calculated SOURCES-HASH: {sources_hash}")
-    print(f"Files: {n_files}, Lines: {n_lines}, Opens: {n_opens}, Chars: {n_chars}")
 
-    # Write to the SOURCES-VERSION file (touch only if different)
+    # Update ta_common.h (touch only if different)
     current_digest = read_sources_digest(root_dir)
     if current_digest == sources_hash:
         return False, sources_hash
 
-    print(f"Difference detected in SOURCES-HASH. Updating ta_common.h")
+    print(f"Difference detected in source digest. Updating ta_common.h")
+    print(f"Old source digest: {current_digest}")
+    print(f"New source digest: {sources_hash}")
+    print(f"Calculated using n_files: {n_files}, n_lines: {n_lines}, n_opens: {n_opens}, n_chars: {n_chars}")
 
     write_sources_digest(root_dir, sources_hash)
     return True, sources_hash
