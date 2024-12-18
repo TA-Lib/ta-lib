@@ -85,12 +85,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          if [ -n "$(git status --porcelain dist/)" ]; then
-            echo "Changes detected in dist directory"
+          dist_changes=$(git status --porcelain dist/)
+          ta_common_changes=$(git status --porcelain include/ta_common.h)
+          if [ -n "$dist_changes" ] || [ -n "$ta_common_changes" ]; then
             git config --global user.name "github-actions[bot]"
             git config --global user.email "github-actions[bot]@users.noreply.github.com"
-            git add dist/
-            git add include/ta_common.h
+            echo "Changes detected by git status:"
+            if [ -n "$dist_changes" ]; then
+              echo "$dist_changes"
+              git add dist/
+            fi
+            if [ -n "$ta_common_changes" ]; then
+              echo "$ta_common_changes"
+              git add include/ta_common.h
+            fi
+
             git commit -m "Update dist package (from ${{ matrix.os }})"
 
             # Check for unstaged changes and log them.
@@ -102,7 +111,7 @@ jobs:
 
             # Retry mechanism for handling concurrent pushes
             for i in {1..5}; do
-              git pull --rebase origin dev && git push origin dev && break || sleep 10
+              git pull --rebase --strategy-option=ours origin dev && git push origin dev && break || sleep 10
             done
           else
             echo "No changes detected in dist directory"
