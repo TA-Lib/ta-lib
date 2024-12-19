@@ -120,12 +120,12 @@ def compare_tar_gz_files(tar_gz_file1, tar_gz_file2) -> bool:
         # to trig re-packaging.
         for root, dirs, files in os.walk(temp_extract_path1):
             for file in files:
-                if file == 'Makefile.in' or file == 'configure' or file == 'ltmain.sh':
+                if file == 'Makefile.in' or file == 'configure' or file == 'ltmain.sh' or file.endswith('.m4'):
                     os.remove(os.path.join(root, file))
 
         for root, dirs, files in os.walk(temp_extract_path2):
             for file in files:
-                if file == 'Makefile.in' or file == 'configure' or file == 'ltmain.sh':
+                if file == 'Makefile.in' or file == 'configure' or file == 'ltmain.sh'  or file.endswith('.m4'):
                     os.remove(os.path.join(root, file))
 
         return compare_dir_recursive(temp_extract_path1, temp_extract_path2)
