@@ -19,6 +19,46 @@ if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
 endif()
 
+# Attempt to set SOURCE_DATE_EPOCH to the last commit timestamp of include/ta_common.h
+# If not possible, use a fallback. Controlling the SOURCE_DATE_EPOCH "might" help producing
+# consistent binaries when there is no source code change.
+function(set_fallback_source_date_epoch)
+    # Generate a unique timestamp based on version numbers
+    math(EXPR UNIQUE_TIMESTAMP "(${TA_LIB_VERSION_MAJOR} * 1000000) + (${TA_LIB_VERSION_MINOR} * 1000) + ${TA_LIB_VERSION_PATCH}")
+    set(ENV{SOURCE_DATE_EPOCH} ${UNIQUE_TIMESTAMP})
+	message(STATUS "SOURCE_DATE_EPOCH: $ENV{SOURCE_DATE_EPOCH} (${PROJECT_VERSION})")
+endfunction()
+
+if(NOT DEFINED ENV{SOURCE_DATE_EPOCH})
+    # Check if the current directory is a Git repository
+    execute_process(
+        COMMAND git rev-parse --is-inside-work-tree
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE IS_GIT_REPO
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    if(IS_GIT_REPO AND IS_GIT_REPO STREQUAL "true")
+        execute_process(
+            COMMAND git log -1 --format=%ct -- include/ta_common.h
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            OUTPUT_VARIABLE GIT_COMMIT_TIMESTAMP
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+        )
+        if(GIT_COMMIT_TIMESTAMP)
+            set(ENV{SOURCE_DATE_EPOCH} ${GIT_COMMIT_TIMESTAMP})
+            message(STATUS "SOURCE_DATE_EPOCH: $ENV{SOURCE_DATE_EPOCH}")
+        else()
+            message(WARNING "include/ta_common.h not found. Using fallback SOURCE_DATE_EPOCH.")
+            set_fallback_source_date_epoch()
+        endif()
+    else()
+        message(WARNING "Not a Git repository. Using fallback SOURCE_DATE_EPOCH.")
+        set_fallback_source_date_epoch()
+    endif()
+endif()
+
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
 message(STATUS "CPACK_GENERATOR: ${CPACK_GENERATOR}")
@@ -336,6 +376,8 @@ endif(WIN32)
 if(MSVC)
 	add_compile_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,SHARED_LIBRARY>:/deterministic>)
 	add_compile_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,STATIC_LIBRARY>:/deterministic>)
+    add_link_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,SHARED_LIBRARY>:/Brepro>)
+    add_link_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,STATIC_LIBRARY>:/Brepro>)
 endif(MSVC)
 
 target_include_directories(ta-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

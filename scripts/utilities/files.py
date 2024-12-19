@@ -37,9 +37,34 @@ def compare_dir_recursive(dir1, dir2):
 
     return True # Identical
 
+def remove_lib_files_recursive(target_path: str):
+    # Comparing libraries is often not deterministic even if the source code was not changed
+    # (e.g. because of embedded __DATE__).
+    #
+    # This function remove all library files at the target_path, leaving
+    # presumably only the source files.
+    #
+    # Note: To further help detect differences in any source files, all
+    # packages should includes ta_common.h which provides a source digest.
+    #
+    # That source digest is necessary because some package includes only the
+    # headers... not all the files that were used to build the package (but
+    # all are reflected in the digest)
+    if is_windows():
+        for root, dirs, files in os.walk(target_path):
+            for file in files:
+                if file.endswith('.msi') or file.endswith('.lib') or file.endswith('.dll'):
+                    os.remove(path_join(root, file))
+    elif is_linux():
+        pattern = r'\.so\.\d+'
+        for root, dirs, files in os.walk(target_path):
+            for file in files:
+                if file.endswith('.a') or file.endswith('.so') or re.search(pattern, file) is not None:
+                    os.remove(path_join(root, file))
+
 def compare_zip_files(zip_file1, zip_file2):
-    # Does a binary comparison of the contents of the two zip files.
-    # Ignores file creation time.
+    # Does a comparison of the contents of the two zip files.
+    # Ignores file creation time and binaries.
     with tempfile.TemporaryDirectory() as temp_extract_dir:
         temp_extract_path1 = path_join(temp_extract_dir, 'temp1')
         temp_extract_path2 = path_join(temp_extract_dir, 'temp2')
@@ -51,6 +76,11 @@ def compare_zip_files(zip_file1, zip_file2):
 
         with zipfile.ZipFile(zip_file2, 'r') as zip_ref:
             zip_ref.extractall(temp_extract_path2)
+
+        # Remove in both temp directory all library files.
+        # Only the remaining source files will be compared.
+        remove_lib_files_recursive(temp_extract_path1)
+        remove_lib_files_recursive(temp_extract_path2)
 
         return compare_dir_recursive(temp_extract_path1, temp_extract_path2)
 
@@ -77,6 +107,11 @@ def compare_tar_gz_files(tar_gz_file1, tar_gz_file2) -> bool:
         with tarfile.open(tar_gz_file2, 'r:gz') as tar_ref:
             tar_ref.extractall(temp_extract_path2)
 
+        # Remove in both temp directory all library files.
+        # Only the remaining source files will be compared.
+        remove_lib_files_recursive(temp_extract_path1)
+        remove_lib_files_recursive(temp_extract_path2)
+
         return compare_dir_recursive(temp_extract_path1, temp_extract_path2)
 
 def create_tar_gz_file(source_dir, tar_gz_file):
@@ -90,7 +125,7 @@ def create_tar_gz_file(source_dir, tar_gz_file):
 
 def compare_deb_files(deb_file1, deb_file2) -> bool:
     # Does a binary comparison of the contents of the two .deb files.
-    # Ignores file creation time.
+    # Ignores file creation time and binaries.
     with tempfile.TemporaryDirectory() as temp_extract_dir:
 
         temp_extract_path1 = os.path.join(temp_extract_dir, 'temp1')
@@ -107,22 +142,14 @@ def compare_deb_files(deb_file1, deb_file2) -> bool:
 
         # Remove in both temp directory all library files.
         # Only the remaining source files will be compared.
-        pattern = r'\.so\.\d+'
-        for root, dirs, files in os.walk(temp_extract_path1):
-            for file in files:
-                if file.endswith('.a') or file.endswith('.so') or re.search(pattern, file) is not None:
-                    os.remove(path_join(root, file))
-
-        for root, dirs, files in os.walk(temp_extract_path2):
-            for file in files:
-                if file.endswith('.a') or file.endswith('.so') or re.search(pattern, file) is not None:
-                    os.remove(path_join(root, file))
+        remove_lib_files_recursive(temp_extract_path1)
+        remove_lib_files_recursive(temp_extract_path2)
 
         return compare_dir_recursive(temp_extract_path1, temp_extract_path2)
 
 def compare_msi_files(msi_file1, msi_file2) -> bool:
     # Does a binary comparison of the contents of the two .msi files.
-    # Ignores file creation time.
+    # Ignores file creation time and binaries
     with tempfile.TemporaryDirectory() as temp_extract_dir:
         temp_extract_path1 = path_join(temp_extract_dir, 'temp1')
         temp_extract_path2 = path_join(temp_extract_dir, 'temp2')
@@ -131,17 +158,10 @@ def compare_msi_files(msi_file1, msi_file2) -> bool:
         os.system(f"msiexec /a {msi_file1} /qn TARGETDIR={temp_extract_path1}")
         os.system(f"msiexec /a {msi_file2} /qn TARGETDIR={temp_extract_path2}")
 
-        # Remove in both temp directory all the .msi, .lib and .dll files
-        # Only the remaining source files will be compared.
-        for root, dirs, files in os.walk(temp_extract_path1):
-            for file in files:
-                if file.endswith('.msi') or file.endswith('.lib') or file.endswith('.dll'):
-                    os.remove(path_join(root, file))
-
-        for root, dirs, files in os.walk(temp_extract_path2):
-            for file in files:
-                if file.endswith('.msi') or file.endswith('.lib') or file.endswith('.dll'):
-                    os.remove(path_join(root, file))
+        # Remove in both temp directory all library files.
+        # Only the remaining source files will be compared
+        remove_lib_files_recursive(temp_extract_path1)
+        remove_lib_files_recursive(temp_extract_path2)
 
         return compare_dir_recursive(temp_extract_path1, temp_extract_path2)
 
