@@ -112,6 +112,22 @@ def compare_tar_gz_files(tar_gz_file1, tar_gz_file2) -> bool:
         remove_lib_files_recursive(temp_extract_path1)
         remove_lib_files_recursive(temp_extract_path2)
 
+        # Because of subtle difference between autotools versions,
+        # ignore also a few of its generated files. They
+        # just "do not matter" as much.
+        #
+        # Source file differences are what matter the most
+        # to trig re-packaging.
+        for root, dirs, files in os.walk(temp_extract_path1):
+            for file in files:
+                if file == 'Makefile.in' or file == 'configure' or file == 'ltmain.sh':
+                    os.remove(os.path.join(root, file))
+
+        for root, dirs, files in os.walk(temp_extract_path2):
+            for file in files:
+                if file == 'Makefile.in' or file == 'configure' or file == 'ltmain.sh':
+                    os.remove(os.path.join(root, file))
+
         return compare_dir_recursive(temp_extract_path1, temp_extract_path2)
 
 def create_tar_gz_file(source_dir, tar_gz_file):
