@@ -19,33 +19,38 @@ jobs:
         os: [ubuntu-latest, windows-2022]
 
     steps:
-      - name: Checkout main Branch
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
           ref: main
-
-      - name: Install build tools (Linux)
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          sudo apt update && sudo apt install -y automake libtool autogen mcpp openjdk-21-jdk
-
-      - name: Install Rust Toolchain (Linux)
-        if: runner.os == 'Linux'
-        uses: dtolnay/rust-toolchain@stable
 
       - name: Install Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
 
-      - name: Create shell envs (Linux)
+      - name: Prepare shell envs (Linux)
         if: runner.os == 'Linux'
         shell: bash
         run: |
           echo "PYTHON=python3" >> $GITHUB_ENV
 
-      - name: Create shell envs (Windows)
+      - name: Build dist assets (Linux)
+        if: runner.os == 'Linux'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          sudo apt update
+          sudo apt install -y automake libtool autogen mcpp
+          sudo apt install -y openjdk-21-jdk
+          sudo apt install -y gcc-multilib
+          sudo apt install -y gcc-i686-linux-gnu
+          sudo apt install -y gcc-aarch64-linux-gnu
+          $PYTHON $GITHUB_WORKSPACE/scripts/package.py
+          $PYTHON $GITHUB_WORKSPACE/scripts/test-dist.py
+
+      - name: Prepare shell envs (Windows x64)
         if: runner.os == 'Windows'
         shell: cmd
         run: |
@@ -55,14 +60,6 @@ jobs:
           echo VCVARSALL=%VCVARSALL% >> %GITHUB_ENV%
           echo PYTHON=python >> %GITHUB_ENV%
 
-      - name: Build dist assets (Linux)
-        if: runner.os == 'Linux'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          $PYTHON $GITHUB_WORKSPACE/scripts/package.py
-
       - name: Build dist assets (Windows x64)
         if: runner.os == 'Windows'
         env:
@@ -70,20 +67,22 @@ jobs:
         shell: cmd
         run: |
           call "%VCVARSALL%" x64
+          dotnet tool install --global wix
+          set PATH=%PATH%;%USERPROFILE%\.dotnet\tools
+          wix extension add --global WixToolset.UI.wixext
+          wix extension list --global
           %PYTHON% %GITHUB_WORKSPACE%\scripts\package.py
+          %PYTHON% %GITHUB_WORKSPACE%\scripts\test-dist.py
 
-      - name: Test dist assets (Linux)
+      - name: Verify dist assets are up-to-date
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          $PYTHON $GITHUB_WORKSPACE/scripts/test-dist.py
-
-      - name: Test dist assets (Windows x64)
-        if: runner.os == 'Windows'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: cmd
-        run: |
-          call "%VCVARSALL%" x64
-          %PYTHON% %GITHUB_WORKSPACE%\scripts\test-dist.py
+          dist_changes=$(git status --porcelain dist/)
+          ta_common_changes=$(git status --porcelain include/ta_common.h)
+          if [ -n "$dist_changes" ] || [ -n "$ta_common_changes" ]; then
+            echo "Error: Unexpected changes in dist/ assets."
+            echo "The dev-nigthly-tests.yml should have updated these assets."
+            exit 1
+          fi

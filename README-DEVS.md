@@ -86,9 +86,11 @@ Any dev with permission to merge to main branch can do a release.
 
 (6) Wait up to one day for the "nightly main" Github action to succeed. This will perform a last check that all assets are OK. As needed, you can instead manually trig it.
 
-(7) Manually trig the "publish-step-one" Github action. This will create the tag, draft release and attach all assets.
+(7) Manually trig the "publish-step-1" Github action on main branch. This will create the tag, draft release and attach all assets from the dist/ directory.
 
-(8) Edit the Release notes on the Github website.
+(8) Edit the draft Release notes on the Github website.
 
-(9) Manually trig "publish-step-two" Github action. This will make the release public.
+(9) Manually trig "publish-step-2" Github action. This will make the release public.
 
+(10) Manually trig "publish-step-3". This will submit a PR to update homebrew for macOS users:
+https://github.com/Homebrew/homebrew-core/blob/30106807361198c58a395de65547694427adf229/Formula/t/ta-lib.rb

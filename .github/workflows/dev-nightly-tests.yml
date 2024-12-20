@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Create shell envs (Linux)
+      - name: Prepare shell envs (Linux)
         if: runner.os == 'Linux'
         shell: bash
         run: |
@@ -52,7 +52,7 @@ jobs:
           $PYTHON $GITHUB_WORKSPACE/scripts/package.py
           $PYTHON $GITHUB_WORKSPACE/scripts/test-dist.py
 
-      - name: Create shell envs (Windows x64)
+      - name: Prepare shell envs (Windows x64)
         if: runner.os == 'Windows'
         shell: cmd
         run: |
