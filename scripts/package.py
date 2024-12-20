@@ -45,7 +45,7 @@ import zipfile
 import zlib
 
 from utilities.versions import sync_sources_digest, sync_versions
-from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_src_generated_files, is_arm64_toolchain_installed, is_cmake_installed, is_debian_based, is_dotnet_installed, is_i386_toolchain_installed, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, is_x86_64_toolchain_installed, verify_git_repo, run_command_sudo
+from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_src_generated_files, is_arm64_toolchain_installed, is_cmake_installed, is_debian_based, is_dotnet_installed, is_i386_toolchain_installed, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, is_x86_64_toolchain_installed, run_command, verify_git_repo, run_command_sudo
 from utilities.files import compare_msi_files, compare_tar_gz_files, compare_zip_files, create_rtf_from_txt, create_zip_file, compare_deb_files, force_delete, force_delete_glob, path_join
 
 def delete_other_versions(target_dir: str, file_pattern: str, new_version: str ):
@@ -86,10 +86,7 @@ def do_cmake_reconfigure(root_dir: str, options: str, sudo_pwd: str = "") ->str:
         cmake_command = ['cmake'] + shlex.split(options) + ['..']
         formatted_command = ' '.join([f'[{elem}]' for elem in cmake_command])
         print("CMake command:", formatted_command)  # Display the cmake_command list with brackets
-        subprocess.run(cmake_command, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error: Running CMake configuration {options}: {e}")
-        sys.exit(1)
+        run_command(cmake_command)
     finally:
         # Restore the original working directory
         os.chdir(original_dir)
@@ -101,10 +98,7 @@ def do_cmake_build(build_dir: str):
     original_dir = os.getcwd()
     try:
         os.chdir(build_dir)
-        subprocess.run(['cmake', '--build', '.'], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error running cmake build: {e}")
-        sys.exit(1)
+        run_command(['cmake', '--build', '.'])
     finally:
         # Restore the original working directory
         os.chdir(original_dir)
@@ -114,10 +108,7 @@ def do_cpack_build(build_dir: str):
     original_dir = os.getcwd()
     try:
         os.chdir(build_dir)
-        subprocess.run(['cpack', '.'], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error running CPack: {e}")
-        sys.exit(1)
+        run_command(['cpack', '.'])
     finally:
         # Restore the original working directory
         os.chdir(original_dir)

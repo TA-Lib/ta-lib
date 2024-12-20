@@ -26,20 +26,6 @@ jobs:
         with:
           ref: dev
 
-      - name: Install build tools (Linux)
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          sudo apt update && sudo apt install -y automake libtool autogen mcpp
-          sudo apt install -y openjdk-21-jdk
-          sudo apt install -y gcc-multilib
-          sudo apt install -y gcc-i686-linux-gnu
-          sudo apt install -y gcc-aarch64-linux-gnu
-
-      - name: Install Rust Toolchain (Linux)
-        if: runner.os == 'Linux'
-        uses: dtolnay/rust-toolchain@stable
-
       - name: Install Python
         uses: actions/setup-python@v5
         with:
@@ -51,7 +37,22 @@ jobs:
         run: |
           echo "PYTHON=python3" >> $GITHUB_ENV
 
-      - name: Create shell envs (Windows)
+      - name: Build dist assets (Linux)
+        if: runner.os == 'Linux'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          sudo apt update
+          sudo apt install -y automake libtool autogen mcpp
+          sudo apt install -y openjdk-21-jdk
+          sudo apt install -y gcc-multilib
+          sudo apt install -y gcc-i686-linux-gnu
+          sudo apt install -y gcc-aarch64-linux-gnu
+          $PYTHON $GITHUB_WORKSPACE/scripts/package.py
+          $PYTHON $GITHUB_WORKSPACE/scripts/test-dist.py
+
+      - name: Create shell envs (Windows x64)
         if: runner.os == 'Windows'
         shell: cmd
         run: |
@@ -61,15 +62,6 @@ jobs:
           echo VCVARSALL=%VCVARSALL% >> %GITHUB_ENV%
           echo PYTHON=python >> %GITHUB_ENV%
 
-      - name: Build dist assets (Linux)
-        if: runner.os == 'Linux'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          $PYTHON $GITHUB_WORKSPACE/scripts/package.py
-          $PYTHON $GITHUB_WORKSPACE/scripts/test-dist.py
-
       - name: Build dist assets (Windows x64)
         if: runner.os == 'Windows'
         env:
@@ -77,6 +69,10 @@ jobs:
         shell: cmd
         run: |
           call "%VCVARSALL%" x64
+          dotnet tool install --global wix
+          set PATH=%PATH%;%USERPROFILE%\.dotnet\tools
+          wix extension add --global WixToolset.UI.wixext
+          wix extension list --global
           %PYTHON% %GITHUB_WORKSPACE%\scripts\package.py
           %PYTHON% %GITHUB_WORKSPACE%\scripts\test-dist.py
 

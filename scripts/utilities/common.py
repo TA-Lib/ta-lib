@@ -1,6 +1,7 @@
 import filecmp
 import glob
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -182,9 +183,24 @@ def expand_globs(root_dir: str, file_list: list) -> list:
 
 def run_command(command: list) -> str:
     """Run a shell command and return the output."""
-    result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    if result.returncode != 0:
-        print(f"Error during '{' '.join(command)}': {result.stderr}")
+    try:
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode != 0:
+            print(f"stdout for '{' '.join(command)}': {result.stdout}")
+            print(f"stderr for '{' '.join(command)}': {result.stderr}")
+            # If result.stderr contains the string "CPack Error: Problem running WiX.", then
+            # print the content of the log file at the specified path.
+            if "CPack Error: Problem running WiX." in result.stderr:
+                log_file_match = re.search(r"'([^']+)'", result.stderr)
+                if log_file_match:
+                    log_file = log_file_match.group(1)
+                    if os.path.exists(log_file):
+                        print(f"Contents of {log_file}:")
+                        with open(log_file, 'r') as f:
+                            print(f.read())
+            sys.exit(1)
+    except subprocess.CalledProcessError as e:
+        print(f"Error during '{' '.join(command)}': {e}")
         sys.exit(1)
 
     return result.stdout.strip()
@@ -342,6 +358,3 @@ def compare_dir(dir1: str, dir2: str) -> bool:
             differences_found = True
 
     return not differences_found
-
-
-
