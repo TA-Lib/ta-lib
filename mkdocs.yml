@@ -40,8 +40,8 @@ markdown_extensions:
   - def_list
   - footnotes
   - md_in_html
-  #- toc:
-  #    permalink: true
+  - toc:
+      permalink: false
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.betterem:

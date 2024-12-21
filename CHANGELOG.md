@@ -7,21 +7,24 @@ Only notable changes are documented here. See GitHub commits for all changes.
 ## [0.6.0] 2024-12-24
 ### Added
 - Packaging automation for various platforms, notably Windows 64 bits.
-- Fix for very small inputs to TA functions (floating point epsilon problem).
+
 
 ### Fixed
 - Autotools and CMakeLists.txt have been modernized.
-
+- Fix for very small inputs to TA functions (floating point epsilon problem).
+-
 ### Changed
 
 - Static/Shared lib file names uses hyphen instead of underscore. This was needed for some package naming convention.
   In other word, look for "ta-lib" instead of "ta_lib".
 
-  Example: when linking you now use "-lta-lib" instead of "-lta_lib".
+  Example: when linking you now specify "-lta-lib" instead of "-lta_lib".
 
 - C/C++ headers are now under a "ta-lib" subdirectory. You may have to change your code accordingly.
 
-  Example: `#include <ta-lib/ta_libc.h>` instead of `#include <ta_libc.h>`
+  Best way to handle this is to add the headers path to your compiler (e.g. `-I/usr/local/include/ta-lib` for gcc).
+
+  Alternatively, you can modify your code to `#include <ta-lib/ta_libc.h>` instead of `#include <ta_libc.h>`
 
   This change is for namespace best-practice for when TA-Lib is installed at the system level.
 

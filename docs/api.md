@@ -447,7 +447,7 @@ function call. </p>
 
 <p>TA-Lib is multi-thread safe where it matters the most for performance: When calling any TA functions (e.g. TA_SMA, TA_RSI etc... )</p>
 
-<p>One important caveat is the initialization of the "global setting" must first be all done from a single thread. That includes calls to:</p>
+<p>One important caveat is the initialization of the "global settings" must first be done from a single thread. That includes calls to:</p>
 <ul>
   <li>TA_Initialize</li>
   <li>TA_SetUnstablePeriod, TA_SetCompatibility</li>
@@ -458,6 +458,6 @@ function call. </p>
 
 <p>One exception to the rule is TA_Shutdown() which must be called single threaded (typically from the only thread remaining prior to exit your application).</p>
 
-<p>Note: TA-Lib uses C11 malloc/free which is a thread safe default on all modern platforms (Linux,Windows,Mac). Just keep that in mind if you modify the Makefile to link with a C runtime library other than the default installed on your system.</p>
+<p>Note: TA-Lib assumes it is link to a thread safe malloc/free runtime library, which is the default on all modern platforms (Linux,Windows,Mac). In other word, safe with any compiler supporting C11 or more recent.</p>
 
 </body>
