@@ -132,6 +132,24 @@ def is_i386_toolchain_installed() -> bool:
     # TODO - Add tool specific detection for Windows/MacOS
     return sys.platform.machine().lower() in ['i386', 'i686']
 
+# Utility function to list all assets expected for a release.
+def get_release_assets(version:str) -> list:
+    """
+    Return the list of assets expected for a release.
+
+    This is used for CI.
+
+    TA-Lib maintainers should modify this list everytime an assets is added/removed
+    """
+    return [
+        f'ta-lib-{version}-src.tar.gz',
+        f'ta-lib-{version}-windows-x86_64.msi',
+        f'ta-lib-{version}-windows-x86_64.zip',
+        f'ta-lib_{version}_amd64.deb',
+        f'ta-lib_{version}_arm64.deb',
+        f'ta-lib_{version}_x86.deb',
+    ]
+
 # Utility functions to identify the gen_code generated files.
 def get_src_generated_files() -> list:
     """
@@ -142,6 +160,10 @@ def get_src_generated_files() -> list:
     Everything under a directory ('**') and file glob allowed ('*')
 
     See get_all_generated_files() for more...
+
+    This is used for CI.
+
+    TA-Lib maintainers should update this list everytime a new file is generated (or not).
     """
     return [
         'include/ta_func.h',
@@ -158,6 +180,10 @@ def get_all_generated_files() -> list:
     """
     Returns list of all generated files and directories.
     Everything under a directory ('**') and file glob allowed ('*')
+
+    This is used for CI.
+
+    TA-Lib maintainers should update this list everytime a new file is generated (or not).
     """
     return [
         'swig/src/interface/ta_func.swg',

@@ -1,0 +1,214 @@
+# Manually triggered for creating a TA-Lib draft release.
+#
+# You can re-run release-step-1 to refresh with the latest
+# commit and assets.
+#
+# Once you are satisfied with the draft release (review the notes and all expected
+# assets are attached), you can trigger release-step-2.yml to make the release public.
+#
+# More info: README-DEVS.md
+
+name: Release (step 1)
+
+# Controls when the workflow will run
+on:
+  workflow_dispatch:
+
+jobs:
+  process_draft_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0 # Fetch all history for all tags
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Prepare shell envs
+        shell: bash
+        run: |
+          VERSION=$(cat VERSION)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          TAG="v${VERSION}"
+          echo "TAG=${TAG}" >> $GITHUB_ENV
+          echo "PYTHON=python3" >> $GITHUB_ENV
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Pre-release checks
+        shell: bash
+        run: |
+          $PYTHON $GITHUB_WORKSPACE/scripts/pre-release-checks.py
+
+      - name: Ensure tagging on latest commit
+        shell: bash
+        env:
+          TAG: ${{ env.TAG }}
+        run: |
+          # Ensure latest commit is tag with '$TAG'
+          LATEST_COMMIT=$(git rev-parse HEAD)
+          if git rev-parse --verify "$TAG" >/dev/null 2>&1; then
+            EXISTING_TAG_COMMIT=$(git rev-parse --verify "$TAG")
+            if [ "$LATEST_COMMIT" != "$EXISTING_TAG_COMMIT" ]; then
+              echo "Deleting tag $TAG on older commit $EXISTING_TAG_COMMIT"
+              git tag -d "$TAG"
+              git push --delete origin "$TAG"
+            else
+              echo "Tag $TAG already exists for latest commit. No changes needed."
+              exit 0
+            fi
+          fi
+          echo "Creating new tag $TAG on latest commit $LATEST_COMMIT"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Ensure a draft release exists
+        id: release_vars
+        uses: actions/github-script@v7
+        env:
+          TAG: ${{ env.TAG }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            let tag_name = process.env.TAG;
+            console.log(`tag_name: ${tag_name}`);
+            let upload_url;
+            let release_id;
+
+            try {
+              // Check if the release already exists
+              const { data: releases } = await github.rest.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              let release = releases.find(release => release.tag_name === tag_name);
+
+              if (release) {
+                console.log(`Existing release found: ${JSON.stringify(release, null, 2)}`);
+                if (!release.draft) {
+                  console.log(`Release for tag ${tag_name} is already published. Exiting with error.`);
+                  core.setFailed(`Release for tag ${tag_name} is already published.`);
+                  return;
+                }
+
+                // Update the release to point to potentially new commit (noop when no change)
+                release_id = release.id;
+                release = await github.rest.repos.updateRelease({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release_id,
+                  tag_name: tag_name,
+                  target_commitish: context.sha,
+                });
+
+                console.log(`updateRelease result: ${JSON.stringify(release, null, 2)}`);
+
+                // Retrieve the latest draft release object to get the upload_url
+                const { data: updatedRelease } = await github.rest.repos.getRelease({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release_id,
+                });
+
+                console.log(`getRelease result: ${JSON.stringify(updatedRelease, null, 2)}`);
+
+                upload_url = updatedRelease.upload_url;
+              } else {
+                // Read release notes from file
+                const release_notes_path = path.join(process.env.GITHUB_WORKSPACE, 'temp', 'DRAFT_RELEASE_NOTES.md');
+                const release_notes = fs.readFileSync(release_notes_path, 'utf8');
+
+                // Release does not exists, so create it.
+                const response = await github.rest.repos.createRelease({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  tag_name: tag_name,
+                  name: tag_name,
+                  body: release_notes,
+                  draft: true,
+                  prerelease: false,
+                });
+                if (response.status >= 200 && response.status < 300 && response.data.upload_url) {
+                  console.log(`updateRelease result: ${JSON.stringify(response, null, 2)}`);
+                  upload_url = response.data.upload_url;
+                  release_id = response.data.id;
+                  console.log(`Draft release created with tag [${tag_name}]`);
+                } else {
+                  core.setFailed(`Failed to create release with tag [${tag_name}] Status: ${response.status}`);
+                  return;
+                }
+              }
+            } catch (error) {
+              core.setFailed(`Error while creating draft release: ${error.message}`);
+              return;
+            }
+
+            console.log(`upload_url: ${upload_url}`);
+            console.log(`release_id: ${release_id}`);
+            core.setOutput("upload_url", upload_url);
+            core.setOutput("release_id", release_id);
+
+      - name: Attach/Update assets with latest in dist/
+        uses: actions/github-script@v7
+        env:
+          UPLOAD_URL: ${{ steps.release_vars.outputs.upload_url }}
+          RELEASE_ID: ${{ steps.release_vars.outputs.release_id }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const upload_url = process.env.UPLOAD_URL;
+            const release_id = process.env.RELEASE_ID;
+            const dist_dir = path.join(process.env.GITHUB_WORKSPACE, 'dist');
+
+            console.log(`upload_url: ${upload_url}`);
+            console.log(`release_id: ${release_id}`);
+
+            const files = fs.readdirSync(dist_dir);
+            for (const file of files) {
+              const filePath = path.join(dist_dir, file);
+              const fileStat = fs.statSync(filePath);
+
+              try {
+                // Check if the asset already exists and replace it if it does.
+                const { data: assets } = await github.rest.repos.listReleaseAssets({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release_id,
+                });
+
+                const existingAsset = assets.find(asset => asset.name === file);
+                if (existingAsset) {
+                  await github.rest.repos.deleteReleaseAsset({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    asset_id: existingAsset.id,
+                  });
+                }
+
+                // Upload the new asset
+                console.log(`Uploading asset: ${filePath}`);
+
+                await github.rest.repos.uploadReleaseAsset({
+                  url: upload_url,
+                  headers: {
+                    'content-type': 'application/octet-stream',
+                    'content-length': fileStat.size,
+                  },
+                  name: file,
+                  data: fs.createReadStream(filePath),
+                });
+
+                console.log(`Uploaded asset: ${file}`);
+              } catch (error) {
+                console.error(`Error processing file ${file}: ${error.message}`);
+              }
+            }

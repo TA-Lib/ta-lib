@@ -1,0 +1,83 @@
+# Upgrade a draft release to an official public release.
+#
+# More info: README-DEVS.md
+
+name: Release (step 2)
+
+# Controls when the workflow will run
+on:
+  workflow_dispatch:
+
+jobs:
+  upgrade_draft_to_official:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0 # Fetch all history for all tags
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Prepare shell envs
+        shell: bash
+        run: |
+          VERSION=$(cat VERSION)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          TAG="v${VERSION}"
+          echo "TAG=${TAG}" >> $GITHUB_ENV
+          echo "PYTHON=python3" >> $GITHUB_ENV
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Pre-release checks
+        shell: bash
+        run: |
+          $PYTHON $GITHUB_WORKSPACE/scripts/pre-release-checks.py
+
+      - name: Upgrade draft release to public release
+        id: release_vars
+        uses: actions/github-script@v7
+        env:
+          TAG: ${{ env.TAG }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            const tag_name = process.env.TAG;
+            console.log(`tag_name: ${tag_name}`);
+
+            try {
+              // Check if the draft release exists
+              const { data: releases } = await github.rest.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              const release = releases.find(release => release.tag_name === tag_name);
+
+              if (!release) {
+                core.setFailed(`No draft release found for tag ${tag_name}. Please run "Release (step 1)" first.`);
+                return;
+              }
+
+              if (!release.draft) {
+                core.setFailed(`Release for tag ${tag_name} is already officially published.`);
+                return;
+              }
+
+              // Publish the draft release
+              await github.rest.repos.updateRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.id,
+                draft: false,
+              });
+
+              console.log(`Published release for tag ${tag_name} completed`);
+            } catch (error) {
+              core.setFailed(`Error while publishing release: ${error.message}`);
+            }

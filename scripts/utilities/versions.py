@@ -303,6 +303,22 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
 
     return is_updated, version_c
 
+def check_versions(root_dir: str) -> str:
+    # Similar to sync_versions() but only checks if the versions are in sync, do not modify anything.
+    version_file = get_version_string(root_dir)
+    version_c = get_version_string_source_code(root_dir)
+    version_cmake = get_version_string_cmake(root_dir)
+
+    if version_file != version_c:
+        print(f"Error: VERSION [{version_file}] does not match ta_version.c [{version_c}]")
+        return None
+
+    if version_file != version_cmake:
+        print(f"Error: VERSION [{version_file}] does not match CMakeLists.txt [{version_cmake}]")
+        return None
+
+    return version_file
+
 def write_sources_digest(root_dir: str, new_digest: str) -> bool:
     """Update the ta_common.h file with the new digest."""
     ta_common_h_path = path_join(root_dir, 'include', 'ta_common.h')
@@ -350,7 +366,7 @@ def read_sources_digest(root_dir: str) -> str:
 
     return None
 
-def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
+def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
     # This is for a calculated digest of all source file contant relevant
     # to packaging. It helps to trig CI repackaging when a change
     # is detected.
@@ -375,6 +391,7 @@ def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
         "LICENSE",
         "VERSION",
     ]
+
     file_list = expand_globs(root_dir, file_patterns)
 
     # Remove potential duplicate entries
@@ -394,7 +411,7 @@ def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
     for file_path in sorted_files:
         try:
             n_files += 1
-            full_file_path = os.path.join(root_dir, file_path)
+            full_file_path = path_join(root_dir, file_path)
             with open(full_file_path, 'r', encoding='utf-8') as f:
                 n_opens += 1
                 for line in f:
@@ -409,17 +426,37 @@ def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
             print(f"Error reading file while updating source digest [{file_path}]: {e}")
             sys.exit(1)
 
-    sources_hash = running_hash.hexdigest()
+    if not silent:
+        print(f"Digest input is n_files: {n_files}, n_lines: {n_lines}, n_opens: {n_opens}, n_chars: {n_chars}")
+    return running_hash.hexdigest()
 
+def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
+
+    calculated_digest = calculate_sources_digest(root_dir)
     # Update ta_common.h (touch only if different)
     current_digest = read_sources_digest(root_dir)
-    if current_digest == sources_hash:
-        return False, sources_hash
+    if current_digest == calculated_digest:
+        return False, calculated_digest
 
     print(f"Difference detected in source digest. Updating ta_common.h")
     print(f"Old source digest: {current_digest}")
-    print(f"New source digest: {sources_hash}")
-    print(f"Calculated using n_files: {n_files}, n_lines: {n_lines}, n_opens: {n_opens}, n_chars: {n_chars}")
+    print(f"New source digest: {calculated_digest}")
 
-    write_sources_digest(root_dir, sources_hash)
-    return True, sources_hash
+    write_sources_digest(root_dir, calculated_digest)
+    return True, calculated_digest
+
+
+def check_sources_digest(root_dir: str) -> str:
+    # Similar to sync_sources_digest() but only checks if the digests are in sync, do not modify anything.
+    current_digest = read_sources_digest(root_dir)
+    if current_digest is None:
+        print(f"Error: TA_LIB_SOURCES_DIGEST not found in ta_common.h")
+        return None
+
+    calculated_digest = calculate_sources_digest(root_dir, silent=True)
+    if current_digest != calculated_digest:
+        print(f"Error: TA_LIB_SOURCES_DIGEST [{current_digest}] does not match calculated digest [{calculated_digest}]")
+        return None
+
+    return calculated_digest
+
