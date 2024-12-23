@@ -157,10 +157,12 @@ if __name__ == "__main__":
     try:
         g = Github(args.token) if args.token else Github()
         repos = g.get_repo("ta-lib/ta-lib")
-        gh_version = repos.get_latest_release()
+        gh_version_obj = repos.get_latest_release()
+        # Remove the 'v' prefix as needed
+        gh_version = gh_version_obj.title.lstrip('v')
 
-        print(f"Github release version  : {gh_version.title}")
-        if brew_info.version == gh_version.title:
+        print(f"Github release version  : {gh_version}")
+        if brew_info.version == gh_version:
             print("Homebrew formula is up-to-date")
             print("No update needed.")
             sys.exit(0)
@@ -186,8 +188,8 @@ if __name__ == "__main__":
             sys.exit(1)
         # extract the version part
         gh_version_downloaded = m.group(1)
-        if gh_version_downloaded != gh_version.title:
-            print(f"Error: Inconsistent versions: {gh_version_downloaded} != {gh_version.title}")
+        if gh_version_downloaded != gh_version:
+            print(f"Error: Inconsistent versions: {gh_version_downloaded} != {gh_version}")
             sys.exit(1)
 
 
@@ -217,9 +219,8 @@ if __name__ == "__main__":
         print("Creating PR for ta-lib formula")
 
         bump_cmd = ['brew', 'bump-formula-pr', '--strict']
-        bump_cmd.extend(['--dry-run'])
-
-        gh_url = f"https://github.com/ta-lib/ta-lib/releases/download/v{gh_version.title}/ta-lib-{gh_version.title}-src.tar.gz"
+        #bump_cmd.extend(['--dry-run'])
+        gh_url = f"https://github.com/ta-lib/ta-lib/releases/download/{gh_version_obj.title}/ta-lib-{gh_version}-src.tar.gz"
         bump_cmd.extend(['--url', gh_url])
         bump_cmd.extend(['--sha256', new_sha256])
         bump_cmd.extend(['ta-lib'])

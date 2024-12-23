@@ -16,4 +16,4 @@ BUILD_SHELL_FILES = src/tools/post-build-bin.sh
 
 # Add more files to EXTRA_DIST to be included on "make dist"
 # This is only for files that are not auto-discovered by autotools.
-EXTRA_DIST = $(HEADER_FILES) $(GDATA_FILES) $(BUILD_SHELL_FILES)
+EXTRA_DIST = $(HEADER_FILES) $(GDATA_FILES) $(BUILD_SHELL_FILES) VERSION
