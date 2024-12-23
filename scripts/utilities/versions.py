@@ -71,7 +71,7 @@ def get_version_string(root_dir: str) -> str:
     """
     Parse the file VERSION to get the version string.
 
-    The file contains a single line with the version string (e.g. "0.6.0")
+    The file contains a single line with the version string "major.minor.patch"
 
     Exit on any error.
     """
@@ -114,7 +114,7 @@ def get_version_string_source_code(root_dir: str) -> str:
         #define MINOR "6"
         #define PATCH "0"
 
-    These become the string "0.6.0".
+    These become the string "0.6.1".
     """
 
     version_file_path = path_join(root_dir, "src", "ta_common", "ta_version.c")

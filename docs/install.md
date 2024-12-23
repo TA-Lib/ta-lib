@@ -2,7 +2,7 @@
 hide:
     - toc
 ---
-Latest release is [0.6.0 on Github](https://github.com/ta-lib/ta-lib-temp/releases/latest)
+Latest release is [0.6.1 on Github](https://github.com/ta-lib/ta-lib-temp/releases/latest)
 
 - [Windows](#windows)
     - [Executable Installer (recommended)](#executable-installer-recommended)
@@ -23,7 +23,7 @@ Only x86 64-bits binaries are distributed. Other windows platforms need to build
 
 ### Executable Installer (recommended)
 
-1. **Download** latest [ta-lib-0.6.0-windows-x86_64.msi](https://github.com/ta-lib/ta-lib-temp/releases/download/v0.6.0/ta-lib-0.6.0-windows-x86_64.msi)
+1. **Download** latest [ta-lib-0.6.1-windows-x86_64.msi](https://github.com/ta-lib/ta-lib-temp/releases/download/v0.6.1/ta-lib-0.6.1-windows-x86_64.msi)
 
 2. **Run the Installer**:
     - Double-click the downloaded `.msi` file.
@@ -40,7 +40,7 @@ Only x86 64-bits binaries are distributed. Other windows platforms need to build
 ### Windows Binaries
 This is a package with all the static/shared binaries and headers needed to bundle TA-Lib with your own application (eliminates having the user install TA-Lib separately).
 
-Latest is [ta-lib-0.6.0-windows-x86_64.zip](https://github.com/ta-lib/ta-lib-temp/releases/download/v0.6.0/ta-lib-0.6.0-windows-x86_64.zip)
+Latest is [ta-lib-0.6.1-windows-x86_64.zip](https://github.com/ta-lib/ta-lib-temp/releases/download/v0.6.1/ta-lib-0.6.1-windows-x86_64.zip)
 
 ### Windows Build from Source
 
@@ -70,18 +70,18 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
 
     | Platform | Download |
     |------------------------|--|
-    | Intel/AMD 64-bits | [ta-lib_0.6.0_amd64.deb](https://github.com/ta-lib/ta-lib-temp/releases/download/v0.6.0/ta-lib_0.6.0_amd64.deb) |
-    | ARM64 (e.g. Raspberry Pi)| [ta-lib_0.6.0_arm64.deb](https://github.com/ta-lib/ta-lib-temp/releases/download/v0.6.0/ta-lib_0.6.0_arm64.deb) |
-    | Intel/AMD 32-bits| [ta-lib_0.6.0_x86.deb](https://github.com/ta-lib/ta-lib-temp/releases/download/v0.6.0/ta-lib_0.6.0_x86.deb) |
+    | Intel/AMD 64-bits | [ta-lib_0.6.1_amd64.deb](https://github.com/ta-lib/ta-lib-temp/releases/download/v0.6.1/ta-lib_0.6.1_amd64.deb) |
+    | ARM64 (e.g. Raspberry Pi)| [ta-lib_0.6.1_arm64.deb](https://github.com/ta-lib/ta-lib-temp/releases/download/v0.6.1/ta-lib_0.6.1_arm64.deb) |
+    | Intel/AMD 32-bits| [ta-lib_0.6.1_x86.deb](https://github.com/ta-lib/ta-lib-temp/releases/download/v0.6.1/ta-lib_0.6.1_x86.deb) |
 
 2. **Install or Update**:
    ```bash
    # For Intel/AMD (64 bits)
-   sudo dpkg -i ta-lib_0.6.0_amd64.deb
+   sudo dpkg -i ta-lib_0.6.1_amd64.deb
    # or
-   sudo dpkg -i ta-lib_0.6.0_arm64.deb
+   sudo dpkg -i ta-lib_0.6.1_arm64.deb
    # or
-   sudo dpkg -i ta-lib_0.6.0_x86.deb
+   sudo dpkg -i ta-lib_0.6.1_x86.deb
    ```
    If you choose to uninstall do:
     ```bash
@@ -90,11 +90,11 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
 
 ### Linux Build from Source
 
-1. **Download** latest [ta-lib-0.6.0-src.tar.gz](https://github.com/ta-lib/ta-lib-temp/releases/download/v0.6.0/ta-lib-0.6.0-src.tar.gz)
+1. **Download** latest [ta-lib-0.6.1-src.tar.gz](https://github.com/ta-lib/ta-lib-temp/releases/download/v0.6.1/ta-lib-0.6.1-src.tar.gz)
 
 2. **Extract the Tarball**:
    ```bash
-   tar -xzf ta-lib-0.6.0-src.tar.gz
+   tar -xzf ta-lib-0.6.1-src.tar.gz
    cd ta-lib
    ```
 

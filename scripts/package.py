@@ -13,7 +13,7 @@
 #            lib/ta-lib.lib        (import library)
 #            lib/ta-lib-static.lib (static library)
 #            include/*.h           (API headers)
-#            VERSION.txt           Version number (e.g. "0.6.0")
+#            VERSION.txt           Version number "major.minor.patch"
 #
 # How to run it?
 #   Do './scripts/package.py' while current directory is the root of the ta-lib repository.
