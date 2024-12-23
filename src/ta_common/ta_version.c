@@ -41,7 +41,7 @@
  */
 #define MAJOR "0"
 #define MINOR "6"
-#define PATCH "0"
+#define PATCH "1"
 
 /* Deprecated: Use PATCH instead. */
 #define BUILD PATCH

@@ -4,15 +4,14 @@ Check https://ta-lib.org/install/ for latest installation instructions.
 
 Only notable changes are documented here. See GitHub commits for all changes.
 
-## [0.6.0] 2024-12-24
+## [0.6.1] 2024-12-24
 ### Added
 - Packaging automation for various platforms, notably Windows 64 bits.
-
 
 ### Fixed
 - Autotools and CMakeLists.txt have been modernized.
 - Fix for very small inputs to TA functions (floating point epsilon problem).
--
+
 ### Changed
 
 - Static/Shared lib file names uses hyphen instead of underscore. This was needed for some package naming convention.
