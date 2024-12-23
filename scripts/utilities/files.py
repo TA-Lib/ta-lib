@@ -1,3 +1,4 @@
+import hashlib
 import re
 from typing import Union
 
@@ -11,7 +12,7 @@ import filecmp
 import zlib
 import tarfile
 
-from .common import is_linux, is_windows, run_command_sudo
+from .common import is_linux, is_windows, run_command, run_command_sudo
 
 # Use path_join to create a new path with proper seperators for the host system.
 # (this is to solve a problem on windows with '\' versus '/')
@@ -242,3 +243,7 @@ def force_delete_glob(path: str, pattern: str, sudo_pwd: str = ""):
     glob_targets = path_join(path, pattern)
     for target in glob.glob(glob_targets):
         force_delete(target, sudo_pwd)
+
+def calculate_file_sha256(file_path: str) -> str:
+    result = run_command(["shasum", "-a", "256", file_path])
+    return result.split()[0]

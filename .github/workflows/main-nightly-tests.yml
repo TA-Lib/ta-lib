@@ -29,6 +29,10 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Install Python dependencies
+        run: |
+          pip install PyGithub
+
       - name: Prepare shell envs (Linux)
         if: runner.os == 'Linux'
         shell: bash

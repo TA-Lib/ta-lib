@@ -91,6 +91,14 @@ def is_msbuild_installed() -> bool:
             return False
     return False
 
+def is_brew_installed() -> bool:
+    try:
+        subprocess.run(['brew', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+    return False
+
 def is_arm64_toolchain_installed() -> bool:
     if is_linux():
         try:
@@ -309,6 +317,41 @@ def verify_git_repo() -> str:
         print("Current directory is not a complete TA-Lib Git repository (src/ta_func missing)")
         sys.exit(1)
 
+def verify_git_repo_original() -> str:
+    # Similar to verify_git_repo, but checks additionally if running from
+    # the original repos (will return false if a fork).
+    #
+    # Some operations (e.g. publishing the official TA-Lib on brew) should
+    # be attempted to be done exclusively with the original repos.
+    #
+    root_dir = verify_git_repo()
+
+    try:
+        # Get the remote URL of the repository
+        result = subprocess.run(
+            ["git", "config", "--get", "remote.origin.url"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        remote_url = result.stdout.strip()
+
+        # Normalize the URL to a common format (account for ssh and https differences).
+        normalized_url = re.sub(r'^git@github\.com:', 'https://github.com/', remote_url)
+        normalized_url = re.sub(r'\.git$', '', normalized_url).lower()
+
+        # print(f"Remote URL: {normalized_url}")
+        # Check if the normalized URL matches the original ta-lib repository URL
+        if normalized_url.endswith("ta-lib/ta-lib"):
+            return root_dir
+
+    except subprocess.CalledProcessError:
+        print("Error: Could not determine the remote URL of the repository.")
+        sys.exit(1)
+
+    print("This script performs no operation when run from a fork")
+    sys.exit(0)
+
 def are_generated_files_git_changed(root_dir: str) -> bool:
     # Using git, verify if any of the generated files have changed.
     #
@@ -384,3 +427,4 @@ def compare_dir(dir1: str, dir2: str) -> bool:
             differences_found = True
 
     return not differences_found
+

@@ -24,6 +24,10 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Install Python dependencies
+        run: |
+          pip install PyGithub
+
       - name: Prepare shell envs
         shell: bash
         run: |
