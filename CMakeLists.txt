@@ -1,4 +1,7 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.18)
+if (CMAKE_VERSION VERSION_LESS "3.30" AND WIN32)
+    message(FATAL_ERROR "For Windows systems you need CMake Version 3.30")
+endif (CMAKE_VERSION VERSION_LESS "3.30" AND WIN32)
 
 project(ta-lib)
 
