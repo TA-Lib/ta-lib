@@ -31,7 +31,7 @@ def main():
         # Make sure the dev branch is up-to-date with the remote.
         run_command(['git', 'fetch', 'origin', 'dev'])
         if run_command(['git', 'rev-parse', 'dev']) != run_command(['git', 'rev-parse', 'origin/dev']):
-            print("dev branch not up-to-date with remote. Do 'git push'.")
+            print("dev branch not up-to-date with remote. Do 'git pull'.")
             sys.exit(1)
 
         # Call sync to verify that dev is up-to-date with main.

@@ -95,7 +95,7 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
 2. **Extract the Tarball**:
    ```bash
    tar -xzf ta-lib-0.6.1-src.tar.gz
-   cd ta-lib
+   cd ta-lib-0.6.1
    ```
 
 3. **Build and Install**:

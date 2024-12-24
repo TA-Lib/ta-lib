@@ -1,5 +1,5 @@
 # Instructions for TA-Lib maintainers
-**If you only want to install and use TA-Lib, there is nothing here for you... check instead the main README.md file.**
+**If you only want to install and use TA-Lib, there is nothing here for you... check instead https://ta-lib.org/install **
 
 You must have python installed.
 
@@ -12,17 +12,6 @@ Before committing, run ```scripts/sync.py``` to:
 
 Merge to main branch are done with ```scripts/merge.py``` by TA-Lib maintainers with the proper permissions.
 
-## How to build with autotools
-As needed, install dependencies:
-```$ sudo apt install automake libtool autogen mcpp```
-
-Build everything (includes gen_code and ta_regtest):
-```
-$ cd ta-lib
-$ autoreconf -fi
-$ ./configure
-$ make
-```
 ## How to update the "./configure" script
 This will do all the needed autotools steps:
 ```$ autoreconf -fi```
@@ -54,22 +43,6 @@ After ```make```, call ```ta_regtest``` located in ta-lib/src/tools
 Exit code is 0 on success
 
 
-## How to package the library
-Commit your source code changes in devs and... just let the Github action do all the repackaging for you.
-
-The produced packages will be written in ta-lib/dist.
-
-It may take up to one day for the CI to regenerate and test **all** for all platforms.
-
-The rest of this section is only if you want to re-package locally.
-
-You can call the ```scripts/package.py``` to generate the packages for your hosting platform.
-
-You can test your packages with ```scripts/test-dist.py```. This verifies from a TA-Lib user perspective. Notably, this simulates a ta-lib-python user.
-
-Try to avoid pushing your generated packages to the TA-Lib repo, but do not worry if you do. As needed, they will get overwritten by the "nightly dev" Github action.
-
-
 ## How to do a new release?
 
 Any dev with permission to merge to main branch can do a release.
@@ -80,17 +53,34 @@ Any dev with permission to merge to main branch can do a release.
 
 (3) Push to the dev branch.
 
-(4) Wait up to one day for the "nightly dev" Github action to succeed. This will regenerate and test **all** the packages for **all** platforms. As needed, you can instead manually trig it.
+(4) Wait up to one day for the "nightly dev" Github action to succeed. This will regenerate and test for **all** platforms. As needed, you can instead manually trig it.
 
 (5) Merge dev into main with "./scripts/merge.py". At this point, the main branch is the release candidate with all the assets under "dist" folder.
 
-(6) Wait up to one day for the "nightly main" Github action to succeed. This will perform a last check that all assets are OK. As needed, you can instead manually trig it.
+(6) Wait up to one day for the "nightly main" Github action to succeed. This will perform few more consistency checks. As needed, you can instead manually trig it.
 
-(7) Manually trig the "publish-step-1" Github action on main branch. This will create the tag, draft release and attach all assets from the dist/ directory.
+(7) Manually trig the "Release (step-1)" Github action on main branch. This will tag, generate a draft release and attach all assets from the dist/ directory.
 
-(8) Edit the draft Release notes on the Github website.
+(8) Optionally edit the draft "Release notes" on the Github website and verify that everything looks fine.
 
-(9) Manually trig "publish-step-2" Github action. This will make the release public.
+(9) Manually trig "Release (step 2)" Github action. This will make the release public, update the website and create a PR on homebrew-core.
 
-(10) Manually trig "publish-step-3". This will submit a PR to update homebrew for macOS users:
+(10) Verify that https://ta-lib.org/install reflects the new version.
+
+(11) Monitor that the PR on homebrew-core is working as expected. The following formula will eventually be updated (may take an hour):
 https://github.com/Homebrew/homebrew-core/blob/30106807361198c58a395de65547694427adf229/Formula/t/ta-lib.rb
+
+## I want to modify the code... should I care to rebuild the packages?
+No.
+
+Commit your source code changes in devs and... just let the Github action do all the repackaging for you.
+
+It may take up to one day for the CI to regenerate and test for **all** platforms.
+
+The rest of this section is only if you want to re-package locally.
+
+You can call the ```scripts/package.py``` to generate the packages for your hosting platform.
+
+You can test your packages with ```scripts/test-dist.py```. This verifies from a TA-Lib user perspective. Notably, this simulates a ta-lib-python user.
+
+Try to avoid pushing your generated packages to the TA-Lib repo, but do not worry if you do. As needed, they will get overwritten by the "nightly dev" CI.

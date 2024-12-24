@@ -432,7 +432,7 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
 
 def sync_sources_digest(root_dir: str) -> Tuple[bool,str]:
 
-    calculated_digest = calculate_sources_digest(root_dir)
+    calculated_digest = calculate_sources_digest(root_dir, silent=True)
     # Update ta_common.h (touch only if different)
     current_digest = read_sources_digest(root_dir)
     if current_digest == calculated_digest:
