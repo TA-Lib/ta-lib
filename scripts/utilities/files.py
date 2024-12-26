@@ -51,17 +51,23 @@ def remove_lib_files_recursive(target_path: str):
     # That source digest is necessary because some package includes only the
     # headers... not all the files that were used to build the package (but
     # all are reflected in the digest)
+    #
+    # Always remove the ta_config.h... it is a build artifact.
     if is_windows():
         for root, dirs, files in os.walk(target_path):
             for file in files:
-                if file.endswith('.msi') or file.endswith('.lib') or file.endswith('.dll'):
+                if "ta_config.h" in file or file.endswith('.msi') or file.endswith('.lib') or file.endswith('.dll'):
                     os.remove(path_join(root, file))
     elif is_linux():
         pattern = r'\.so\.\d+'
         for root, dirs, files in os.walk(target_path):
             for file in files:
-                if file.endswith('.a') or file.endswith('.so') or re.search(pattern, file) is not None:
+                if "ta_config.h" in file or file.endswith('.a') or file.endswith('.so') or re.search(pattern, file) is not None:
                     os.remove(path_join(root, file))
+
+    
+
+
 
 def compare_zip_files(zip_file1, zip_file2):
     # Does a comparison of the contents of the two zip files.

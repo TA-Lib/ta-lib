@@ -7,9 +7,9 @@
 #    For linux/ubuntu: ta-lib-<version>-src.tar.gz
 #         with contents for doing "./configure; make; sudo make install"
 #
-#    For windows: ta-lib-<version>-windows-x86_64.zip
+#    For windows: ta-lib-<version>-windows-<platform>.zip
 #         with contents:
-#            lib/ta-lib.dll        (dynamic library)
+#            bin/ta-lib.dll        (dynamic library)
 #            lib/ta-lib.lib        (import library)
 #            lib/ta-lib-static.lib (static library)
 #            include/*.h           (API headers)
@@ -20,15 +20,15 @@
 #
 #   Windows Specific:
 #    - You must have Visual Studio installed (free community version works).
-#    - Host machine must be x64
-#    - Scripts must be run in a "VS Development Command Shell" (for having
-#      CMake and Ninja be on the Path).
+#    - Host machine *must* be x64.
 #
 #    (FYI, all this can optionally be done in a Windows VM)
 #
 # How to change the version?
-#   Edit MAJOR, MINOR, BUILD in src/ta_common/ta_version.c
+#   Edit MAJOR, MINOR, PATCH in src/ta_common/ta_version.c
 #   There is no need to modify other files (they will be updated by this script).
+#
+#   See README-DEVS.md for all the release steps.
 
 import argparse
 import filecmp
@@ -44,8 +44,9 @@ import tempfile
 import zipfile
 import zlib
 
+from utilities.windows import call_vcvarsall
 from utilities.versions import sync_sources_digest, sync_versions
-from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_src_generated_files, is_arm64_toolchain_installed, is_cmake_installed, is_debian_based, is_dotnet_installed, is_i386_toolchain_installed, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, is_x86_64_toolchain_installed, run_command, verify_git_repo, run_command_sudo
+from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_src_generated_files, is_arm64_toolchain_installed, is_cmake_installed, is_debian_based, is_dotnet_installed, is_i386_toolchain_installed, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, is_x86_64_toolchain_installed, run_command, run_command_term, verify_git_repo, run_command_sudo
 from utilities.files import compare_msi_files, compare_tar_gz_files, compare_zip_files, create_rtf_from_txt, create_zip_file, compare_deb_files, force_delete, force_delete_glob, path_join
 
 def delete_other_versions(target_dir: str, file_pattern: str, new_version: str ):
@@ -78,6 +79,10 @@ def do_cmake_reconfigure(root_dir: str, options: str, sudo_pwd: str = "") ->str:
         print(f"Error: {cmake_lists} not found. Your working directory must be within a cloned TA-Lib repos")
         sys.exit(1)
 
+    # Delete ta_config.h to force regeneration.
+    ta_config_h = path_join(root_dir, 'include', 'ta_config.h')
+    force_delete(ta_config_h, sudo_pwd)
+
     # Run CMake configuration.
     original_dir = os.getcwd()
     try:
@@ -85,8 +90,8 @@ def do_cmake_reconfigure(root_dir: str, options: str, sudo_pwd: str = "") ->str:
         os.chdir(build_dir)
         cmake_command = ['cmake'] + shlex.split(options) + ['..']
         formatted_command = ' '.join([f'[{elem}]' for elem in cmake_command])
-        print("CMake command:", formatted_command)  # Display the cmake_command list with brackets
-        run_command(cmake_command)
+        print("CMake configure command:", formatted_command)  # to help debugging, display each arg in brackets
+        run_command_term(cmake_command) # Run the command in foreground (output displayed).
     finally:
         # Restore the original working directory
         os.chdir(original_dir)
@@ -98,7 +103,10 @@ def do_cmake_build(build_dir: str):
     original_dir = os.getcwd()
     try:
         os.chdir(build_dir)
-        run_command(['cmake', '--build', '.'])
+        cmake_command = ['cmake', '--build', '.']
+        formatted_command = ' '.join([f'[{elem}]' for elem in cmake_command])
+        print("CMake build command:", formatted_command)  # to help debugging, display each arg in brackets
+        run_command(cmake_command) # Output piped and displayed only on error.
     finally:
         # Restore the original working directory
         os.chdir(original_dir)
@@ -108,7 +116,10 @@ def do_cpack_build(build_dir: str):
     original_dir = os.getcwd()
     try:
         os.chdir(build_dir)
-        run_command(['cpack', '.'])
+        cpack_command = ['cpack', '.']
+        formatted_command = ' '.join([f'[{elem}]' for elem in cpack_command])
+        print("CPack command:", formatted_command)  # to help debugging, display each arg in brackets
+        run_command_term(cpack_command)
     finally:
         # Restore the original working directory
         os.chdir(original_dir)
@@ -130,10 +141,10 @@ def find_asset_with_ext(target_dir, version: str, extension: str) -> str:
 
     return os.path.basename(filepath)
 
-def package_windows_zip(root_dir: str, version: str) -> dict:
+def package_windows_zip(root_dir: str, version: str, platform: str) -> dict:
     result: dict = {"success": False}
 
-    file_name_prefix = f'ta-lib-{version}-windows-x86_64'
+    file_name_prefix = f'ta-lib-{version}-windows-{platform}'
     asset_file_name = f'{file_name_prefix}.zip'
     result["asset_file_name"] = asset_file_name
 
@@ -147,17 +158,19 @@ def package_windows_zip(root_dir: str, version: str) -> dict:
     force_delete_glob(temp_dir, "ta-lib-*")
 
     # Build the libraries
-    build_dir = do_cmake_reconfigure(root_dir, '-G Ninja -DBUILD_DEV_TOOLS=OFF')
+    build_dir = do_cmake_reconfigure(root_dir, '-G Ninja -DBUILD_DEV_TOOLS=OFF -DCMAKE_BUILD_TYPE=Release')
     do_cmake_build(build_dir)
 
     # Create a temporary zip package to test before copying to dist.
     package_temp_dir = path_join(temp_dir, file_name_prefix)
     temp_lib_dir = path_join(package_temp_dir, 'lib')
+    temp_bin_dir = path_join(package_temp_dir, 'bin')
     temp_include_dir = path_join(package_temp_dir, 'include')
 
     os.makedirs(temp_dir, exist_ok=True)
     os.makedirs(package_temp_dir, exist_ok=True)
     os.makedirs(temp_lib_dir, exist_ok=True)
+    os.makedirs(temp_bin_dir, exist_ok=True)
     os.makedirs(temp_include_dir, exist_ok=True)
 
     # Copy the built files to the temporary package locations.
@@ -165,11 +178,16 @@ def package_windows_zip(root_dir: str, version: str) -> dict:
     include_rootdir = path_join(root_dir, 'include')
     try:
         os.chdir(build_dir)
-        shutil.copy('ta-lib.dll', temp_lib_dir)
+        shutil.copy('ta-lib.dll', temp_bin_dir)
         shutil.copy('ta-lib.lib', temp_lib_dir)
         shutil.copy('ta-lib-static.lib', temp_lib_dir)
-        for header in glob.glob(path_join(include_rootdir, '*.h')):
-            shutil.copy(header, temp_include_dir)
+        for header_filepath in glob.glob(path_join(include_rootdir, '*.h')):
+            if "ta_config.h" in header_filepath:
+                # At this point, this build artifact header is no longuer needed.
+                force_delete(header_filepath)
+                continue
+            shutil.copy(header_filepath, temp_include_dir)
+
         # Create the VERSION.txt file
         with open(path_join(package_temp_dir, 'VERSION.txt'), 'w') as f:
             f.write(version)
@@ -205,12 +223,21 @@ def package_windows_zip(root_dir: str, version: str) -> dict:
     result["copied"] = package_copied
     return result
 
-def package_windows_msi(root_dir: str, version: str, force: bool) -> dict:
+def package_windows_msi(root_dir: str, version: str, platform: str, force: bool) -> dict:
     result: dict = {"success": False}
 
+    # Clean-up
+    dist_dir = path_join(root_dir, 'dist')
+    delete_other_versions(dist_dir,"ta-lib-*.msi",version)
+
+    temp_dir = path_join(root_dir, 'temp')
+    force_delete(path_join(temp_dir, "PFiles"))
+
+    force_delete_glob(temp_dir, "ta-lib-*")
+
     # MSI supports only .rtf for license, so generate it into root_dir.
-    license_rtf = path_join(root_dir,"LICENSE.rtf")
     license_txt = path_join(root_dir,"LICENSE")
+    license_rtf = path_join(root_dir,"LICENSE.rtf")
     create_rtf_from_txt(license_txt,license_rtf)
 
     if not is_dotnet_installed():
@@ -604,50 +631,79 @@ def package_all_linux(root_dir: str, version: str, sudo_pwd: str):
 
     print(f"\nPackaging completed successfully.")
 
-def package_all_windows(root_dir: str, version: str):
+def package_windows_platform(root_dir: str, version: str, platform: str) -> dict:
 
-    zip_results = {
-        "success": False,
-        "built": False,
-        "asset_file_name": ".zip", # Default, will change.
-    }
-    results = package_windows_zip(root_dir, version)
-    zip_results.update(results)
-    zip_results["built"] = True
-    if not zip_results["success"]:
-        print(f'Error: Packaging dist/{zip_results["asset_file_name"]} failed')
+    vcvarsall_args = []
+    if platform == "x86_64":
+        vcvarsall_args = ["amd64"]
+    elif platform == "x86_32":
+        vcvarsall_args = ["amd64_x86"]
+    elif platform == "arm_64":
+        vcvarsall_args = ["amd64_arm64"]
+    elif platform == "arm_32":
+        vcvarsall_args = ["amd64_arm"]
+
+    call_vcvarsall(vcvarsall_args)
+    results = {
+        "zip_results": {
+            "success": False,
+            "built": False,
+            "asset_file_name": f"{platform}.zip", # Default, will change.
+        },
+        "msi_results": {
+            "success": False,
+            "built": False,
+            "asset_file_name": f"{platform}.msi", # Default, will change.
+        }
+    }    
+    zip_results = package_windows_zip(root_dir, version, platform)
+    results["zip_results"].update(zip_results)
+    results["zip_results"]["built"] = True    
+    if not results["zip_results"]["success"]:
+        print(f'Error: Packaging dist/{results["zip_results"]["asset_file_name"]} failed')
         sys.exit(1)
 
     # The zip file is better at detecting if the *content* is different.
     # If any changes are detected, it will force the creation and overwrite
     # of the .msi file in dist.
     force_msi_overwrite = False
-    if zip_results["built"] and zip_results["copied"]:
+    if results["zip_results"]["built"] and results["zip_results"]["copied"]:
         force_msi_overwrite = True
 
     # For now, skip the .msi file creation if wix is not installed.
 
     # Process the .msi file.
-    msi_results = {
-        "success": False,
-        "built": False,
-        "asset_file_name": ".msi", # Default, will change.
-    }
     if not is_wix_installed():
         print("Warning: WiX Toolset not found. MSI packaging skipped.")
     else:
-        results = package_windows_msi(root_dir, version, force_msi_overwrite)
-        msi_results.update(results)
-        msi_results["built"] = True
-        if not msi_results["success"]:
-            print(f'Error: Packaging dist/{msi_results["asset_file_name"]} failed')
+        msi_results = package_windows_msi(root_dir, version, platform, force_msi_overwrite)
+        results["msi_results"].update(msi_results)
+        results["msi_results"]["built"] = True
+        if not results["msi_results"]["success"]:
+            print(f'Error: Packaging dist/{results["msi_results"]["asset_file_name"]} failed')
             sys.exit(1)
+
+    return results
+
+def package_all_windows(root_dir: str, version: str):
+    results_x86_64 = package_windows_platform(root_dir, version, "x86_64")
+    results_x86_32 = package_windows_platform(root_dir, version, "x86_32")
+
+    # TODO: More testing needed for ARM platforms.
+    #results_arm_64 = package_windows_platform(root_dir, version, "arm_64")
+    #results_arm_32 = package_windows_platform(root_dir, version, "arm_32")
 
     print(f"\n***********")
     print(f"* Summary *")
     print(f"***********")
-    display_package_results(zip_results)
-    display_package_results(msi_results)
+    display_package_results(results_x86_64["zip_results"])
+    display_package_results(results_x86_64["msi_results"])
+    display_package_results(results_x86_32["zip_results"])
+    display_package_results(results_x86_32["msi_results"])
+    #display_package_results(results_arm_64["zip_results"])
+    #display_package_results(results_arm_64["msi_results"])
+    #display_package_results(results_arm_32["zip_results"])
+    #display_package_results(results_arm_32["msi_results"])
 
     print(f"Packaging completed successfully.")
 
@@ -668,7 +724,7 @@ if __name__ == "__main__":
         if arch == '64bit':
             package_all_windows(root_dir, version)
         else:
-            print( f"Unsupported architecture [{arch}]. Contact TA-Lib maintainers.")
+            print( f"Unsupported [{arch}]. Only 64-bits windows supported for TA-Lib development.")
     else:
         print(f"Unsupported platform [{host_platform}]. Contact TA-Lib maintainers.")
         sys.exit(1)

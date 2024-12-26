@@ -153,6 +153,8 @@ def get_release_assets(version:str) -> list:
         f'ta-lib-{version}-src.tar.gz',
         f'ta-lib-{version}-windows-x86_64.msi',
         f'ta-lib-{version}-windows-x86_64.zip',
+        f'ta-lib-{version}-windows-x86_32.msi',
+        f'ta-lib-{version}-windows-x86_32.zip',
         f'ta-lib_{version}_amd64.deb',
         f'ta-lib_{version}_arm64.deb',
         f'ta-lib_{version}_x86.deb',
@@ -238,6 +240,17 @@ def run_command(command: list) -> str:
         sys.exit(1)
 
     return result.stdout.strip()
+
+def run_command_term(command: list):
+    """
+    Similar to run_command, but let it print its output to the terminal instead of capturing.
+    Also, exit if the command fails.
+    """
+    try:
+        subprocess.run(command, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error during '{' '.join(command)}': {e}")
+        sys.exit(1)
 
 def run_command_sudo(command: list, sudo_pwd: str=''):
     """
