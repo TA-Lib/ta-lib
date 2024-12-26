@@ -157,7 +157,7 @@ def get_release_assets(version:str) -> list:
         f'ta-lib-{version}-windows-x86_32.zip',
         f'ta-lib_{version}_amd64.deb',
         f'ta-lib_{version}_arm64.deb',
-        f'ta-lib_{version}_x86.deb',
+        f'ta-lib_{version}_i386.deb',
     ]
 
 # Utility functions to identify the gen_code generated files.

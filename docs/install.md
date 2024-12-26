@@ -72,7 +72,7 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
     |------------------------|--|
     | Intel/AMD 64-bits | [ta-lib_0.6.1_amd64.deb](https://github.com/ta-lib/ta-lib/releases/download/v0.6.1/ta-lib_0.6.1_amd64.deb) |
     | ARM64 (e.g. Raspberry Pi)| [ta-lib_0.6.1_arm64.deb](https://github.com/ta-lib/ta-lib/releases/download/v0.6.1/ta-lib_0.6.1_arm64.deb) |
-    | Intel/AMD 32-bits| [ta-lib_0.6.1_x86.deb](https://github.com/ta-lib/ta-lib/releases/download/v0.6.1/ta-lib_0.6.1_x86.deb) |
+    | Intel/AMD 32-bits| [ta-lib_0.6.1_i386.deb](https://github.com/ta-lib/ta-lib/releases/download/v0.6.1/ta-lib_0.6.1_i386.deb) |
 
 2. **Install or Update**:
    ```bash
@@ -81,7 +81,7 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
    # or
    sudo dpkg -i ta-lib_0.6.1_arm64.deb
    # or
-   sudo dpkg -i ta-lib_0.6.1_x86.deb
+   sudo dpkg -i ta-lib_0.6.1_i386.deb
    ```
    If you choose to uninstall do:
     ```bash
