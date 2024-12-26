@@ -53,11 +53,11 @@ Any dev with permission to merge to main branch can do a release.
 
 (3) Push to the dev branch.
 
-(4) Wait up to one day for the "nightly dev" Github action to succeed. This will regenerate and test for **all** platforms. As needed, you can instead manually trig it.
+(4) Manually trig the "nightly dev" Github action. This will regenerate and test for **all** platforms. If you do not trig it, it will get run anyway once per day.
 
 (5) Merge dev into main with "./scripts/merge.py". At this point, the main branch is the release candidate with all the assets under "dist" folder.
 
-(6) Wait up to one day for the "nightly main" Github action to succeed. This will perform few more consistency checks. As needed, you can instead manually trig it.
+(6) Manually trig the "nightly main" Github action. This will perform a last round of check prior to alloweing for the release. If you do not trig it, it will get run anyway once per day.
 
 (7) Manually trig the "Release (step-1)" Github action on main branch. This will tag, generate a draft release and attach all assets from the dist/ directory.
 
