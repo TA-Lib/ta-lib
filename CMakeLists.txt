@@ -34,7 +34,7 @@ if(WIN32)
     	message(STATUS "Platform environment variable: ${PLATFORM_ENV}")
 	else()
     	message(FATAL_ERROR "Platform env variable not set. Did you forget to do vcvarsall.bat?")
-	endif()	
+	endif()
 endif()
 message(STATUS "Installation Directory: ${CMAKE_INSTALL_PREFIX}")
 
@@ -419,7 +419,7 @@ else()
         ARCHIVE DESTINATION lib  # For static libraries
     )
     install(FILES ${LIB_HEADERS}
-        DESTINATION include/ta-lib        
+        DESTINATION include/ta-lib
     )
 endif()
 
@@ -586,7 +586,7 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "TA-Lib Technical Analysis Library")
 
 if(WIN32)
     # Use mix case for Windows "best practice" in "C:\Program Files"
-    set(CPACK_PACKAGE_INSTALL_DIRECTORY "TA-Lib")	
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "TA-Lib")
 	# Set a constant UPGRADE_GUID for each variant (never change these)
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	  set(CPACK_WIX_UPGRADE_GUID "37b08339-521a-422f-a964-e616bd3e06b9")
@@ -608,9 +608,9 @@ message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
 	if(WIN32)
 	  # Handle cross-compilation configured with, say, using "vcvarsall.bat amd64_arm" settings.
-	  # For windows, assume CMAKE_SYSTEM_PROCESSOR is always "AMD64", and  the target architecture 
+	  # For windows, assume CMAKE_SYSTEM_PROCESSOR is always "AMD64", and  the target architecture
 	  # is in PLATFORM_ENV.
-	  # 
+	  #
 	  # There is no plan to cross-compile from anything else than AMD64.
 	  if(PLATFORM_ENV STREQUAL "x86")
 	    set(MSI_HOST_ARCH "x86_32")
@@ -628,7 +628,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
       endif()
     else()
 	  set(DEB_HOST_ARCH "amd64")
-	  set(RPM_HOST_ARCH "x86_64")	  
+	  set(RPM_HOST_ARCH "x86_64")
 	endif()
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86|i386|i686")
     set(DEB_HOST_ARCH "i386")
