@@ -58,7 +58,32 @@ See the [homebrew formula](https://formulae.brew.sh/formula/ta-lib) for the late
 
 ### macOS Build from Source
 
-TODO
+Ensure you have the required dependencies: `brew install automake && brew install libtool`
+
+1. **Download** latest [ta-lib-0.6.2-src.tar.gz](https://github.com/ta-lib/ta-lib/releases/download/v0.6.2/ta-lib-0.6.2-src.tar.gz) (or, alternatively, clone down [https://github.com/ta-lib/ta-lib/](https://github.com/ta-lib/ta-lib/) and checkout the main branch)
+
+2. **Extract the Tarball** if you downloaded the source manually:
+   ```bash
+   tar -xzf ta-lib-0.6.2-src.tar.gz
+   cd ta-lib-0.6.2
+   ```
+
+3. **Build and Install**:
+   ```bash
+   chmod +x autogen.sh  # ensure the permissions are set to generate the configure file
+   ./autogen.sh         # generate the configure file
+   ./configure
+   make
+   sudo make install
+   ```
+
+    Follow the same procedure for an update (the older version is overwritten, no need to uninstall).
+
+    If you choose to uninstall do:
+    ```bash
+    sudo make uninstall
+    ```
+
 
 ## Linux
 
@@ -90,9 +115,9 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
 
 ### Linux Build from Source
 
-1. **Download** latest [ta-lib-0.6.2-src.tar.gz](https://github.com/ta-lib/ta-lib/releases/download/v0.6.2/ta-lib-0.6.2-src.tar.gz)
+1. **Download** latest [ta-lib-0.6.2-src.tar.gz](https://github.com/ta-lib/ta-lib/releases/download/v0.6.2/ta-lib-0.6.2-src.tar.gz) (or, alternatively, clone down [https://github.com/ta-lib/ta-lib/](https://github.com/ta-lib/ta-lib/) and checkout the main branch)
 
-2. **Extract the Tarball**:
+2. **Extract the Tarball** if you downloaded the source manually:
    ```bash
    tar -xzf ta-lib-0.6.2-src.tar.gz
    cd ta-lib-0.6.2
