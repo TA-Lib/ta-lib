@@ -7,7 +7,7 @@
 #ifndef TA_UTILITY_H
 #define TA_UTILITY_H
 
-#if !defined( _MANAGED ) && !defined( _JAVA )
+#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
    #ifndef TA_FUNC_H
       #include "ta_func.h"
    #endif
@@ -27,7 +27,7 @@
  * This is an internal version, parameter are assumed validated.
  * (startIdx and endIdx cannot be -1).
  */
-#if !defined( _MANAGED ) && !defined( _JAVA )
+#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
 TA_RetCode TA_INT_SMA( int           startIdx,
                        int           endIdx,
                        const double *inReal,
@@ -49,7 +49,7 @@ TA_RetCode TA_S_INT_SMA( int          startIdx,
  * This is an internal version, parameter are assumed validated.
  * (startIdx and endIdx cannot be -1).
  */
-#if !defined( _MANAGED ) && !defined( _JAVA )
+#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
 TA_RetCode TA_INT_EMA( int           startIdx,
                        int           endIdx,
                        const double *inReal,
@@ -73,7 +73,7 @@ TA_RetCode TA_S_INT_EMA( int          startIdx,
  * This is an internal version, parameter are assumed validated.
  * (startIdx and endIdx cannot be -1).
  */
-#if !defined( _MANAGED ) && !defined( _JAVA )
+#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
 TA_RetCode TA_INT_MACD( int           startIdx,
                         int           endIdx,
                         const double  inReal[],
@@ -104,7 +104,7 @@ TA_RetCode TA_S_INT_MACD( int          startIdx,
  * A buffer must be provided for intermediate processing
  * 'tempBuffer' must be of at least (endIdx-startIdx+1)
  */
-#if !defined( _MANAGED ) && !defined( _JAVA )
+#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
 TA_RetCode TA_INT_PO( int           startIdx,
                       int           endIdx,
                       const double *inReal,
@@ -131,7 +131,7 @@ TA_RetCode TA_S_INT_PO( int           startIdx,
 #endif
 
 /* Internal variance function. */
-#if !defined( _MANAGED ) && !defined( _JAVA )
+#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
 TA_RetCode TA_INT_VAR( int           startIdx,
                        int           endIdx,
                        const double *inReal,
@@ -154,7 +154,7 @@ TA_RetCode TA_S_INT_VAR( int           startIdx,
  * This function allows speed optimization when the
  * moving average series is already calculated.
  */
-#if !defined( _MANAGED ) && !defined( _JAVA )
+#if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
 void TA_INT_stddev_using_precalc_ma( const double *inReal,
                                      const double *inMovAvg,
                                      int           inMovAvgBegIdx,
@@ -188,7 +188,7 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
    #define std_cosh  Math::Cosh
    #define std_asin  Math::Asin
    #define std_acos  Math::Acos
-#elif defined( _JAVA )
+#elif defined( _JAVA ) || defined( _RUST )
    #define std_floor Math.floor
    #define std_ceil  Math.ceil
    #define std_fabs  Math.abs
@@ -334,7 +334,7 @@ void TA_S_INT_stddev_using_precalc_ma( const float  *inReal,
    #define TA_CANDLERANGETYPE(SET) (Globals->candleSettings[(int)CandleSettingType::SET]->rangeType)
    #define TA_CANDLEAVGPERIOD(SET) (Globals->candleSettings[(int)CandleSettingType::SET]->avgPeriod)
    #define TA_CANDLEFACTOR(SET)    (Globals->candleSettings[(int)CandleSettingType::SET]->factor)
-#elif defined( _JAVA )
+#elif defined( _JAVA ) || defined( _RUST )
    #define TA_CANDLERANGETYPE(SET) (this.candleSettings[CandleSettingType.SET.ordinal()].rangeType)
    #define TA_CANDLEAVGPERIOD(SET) (this.candleSettings[CandleSettingType.SET.ordinal()].avgPeriod)
    #define TA_CANDLEFACTOR(SET)    (this.candleSettings[CandleSettingType.SET.ordinal()].factor)

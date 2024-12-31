@@ -48,7 +48,7 @@
     /* Int32, UInt32, Int64 and UInt64 are built-in for .NET */
     #define INT_MIN (Int32::MinValue)
     #define INT_MAX (Int32::MaxValue)
-  #elif defined( _JAVA )
+  #elif defined( _JAVA ) || defined( _RUST )
     #define INT_MIN Integer.MIN_VALUE
     #define INT_MAX Integer.MAX_VALUE
   #else
@@ -135,7 +135,7 @@
 
   #define TA_LIB_API
 
-#elif defined( _JAVA )
+#elif defined( _JAVA ) || defined( _RUST )
   #define CMJ(c,managed,java) java
 
   #define ENUM_BEGIN(w) public enum w {

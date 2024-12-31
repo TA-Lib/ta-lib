@@ -105,6 +105,10 @@
 #define ENABLE_JAVA
 #define ENABLE_C
 #define ENABLE_DOTNET
+#define ENABLE_RUST
+
+// Comment to genereate all functions.
+#define RUST_SINGLE_FUNC "MULT"
 
 #if !defined(__WIN32__) && !defined(__MSDOS__) && !defined(WIN32)
    #include <unistd.h>
@@ -120,16 +124,20 @@
 #include "ta_memory.h"
 
 #if defined(__WIN32__) || defined(WIN32)
-# define PATH_SEPARATOR "\\"
-# define TA_MCPP_EXE "..\\src\\tools\\gen_code\\mcpp.exe"
+   #define PATH_SEPARATOR "\\"
+   #define TA_MCPP_EXE "..\\src\\tools\\gen_code\\mcpp.exe"
 #else
-# define PATH_SEPARATOR "/"
-/* XXX resolve this dynamically or take as param */
-# define TA_MCPP_EXE "/usr/bin/mcpp"
+   #include <sys/stat.h>
+   #define PATH_SEPARATOR "/"
+   /* XXX resolve this dynamically or take as param */
+   #define TA_MCPP_EXE "/usr/bin/mcpp"
 #endif
 
-void run_command(const char* command, char* output, size_t output_size) {
-  FILE* fp;
+int gmcpp_installed = 0; // 0 = mcpp not installed, 1 = verified installed
+
+void run_command(const char *command, char *output, size_t output_size)
+{
+   FILE *fp;
 #if defined(_WIN32) || defined(_WIN64)
   fp = _popen(command, "r");
 #else
@@ -227,8 +235,6 @@ static char *ta_fs_path(int count, ...) {
 }
 
 
-extern int mcpp_main( int argc, char ** argv);
-
 #define BUFFER_SIZE 16000
 
 #define FILE_WRITE            0
@@ -280,6 +286,12 @@ FileHandle *gOutDotNet_H = NULL;      /* For .NET interface file */
 FileHandle *gOutProjFile = NULL;        /* For .NET project file */
 FileHandle *gOutMSVCProjFile = NULL;    /* For MSVC project file */
 #endif
+
+static void create_dirs( void );
+static void create_dir_recursively( const char *dir );
+
+static void writeRustMod( void );
+static void genRustCodePhase2( const TA_FuncInfo *funcInfo );
 
 static void genJavaCodePhase1( const TA_FuncInfo *funcInfo );
 static void genJavaCodePhase2( const TA_FuncInfo *funcInfo );
@@ -547,6 +559,19 @@ int main(int argc, char* argv[])
       return 1;
    }
 
+   create_dirs();
+
+   // Detect if mcpp is installed.
+   gmcpp_installed = 0;
+   #if defined(ENABLE_RUST)
+      #if defined(_WIN32)
+        // TODO
+        gmcpp_installed = 1;
+      #else
+        gmcpp_installed = (system("which mcpp >/dev/null 2>&1") == 0);
+      #endif
+   #endif
+
    retCode = TA_Initialize();
    if( retCode != TA_SUCCESS )
    {
@@ -563,6 +588,14 @@ int main(int argc, char* argv[])
    {
       printf( "Shutdown failed (%d)\n", retCode );
    }
+
+   #if defined(ENABLE_RUST)
+      if( gmcpp_installed == 0 )
+      {
+         printf( "\nWarning: mcpp is not installed. Rust code generation skipped.\n" );
+         printf("To install do 'sudo apt install mcpp' or 'brew install mcpp'.\n");
+      }
+   #endif
 
    return retValue;
 }
@@ -1075,9 +1108,7 @@ static int genCode(int argc, char* argv[])
       /* Append some "hard coded" prototype for ta_func */
       appendToFunc( gOutFunc_H->file );
       if (gOutFunc_SWG) appendToFunc( gOutFunc_SWG->file );
-   #endif
 
-   #if defined(ENABLE_C)
       /* Seperate generation of xml description file */
       fprintf(gOutFunc_XML->file, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");
       fprintf(gOutFunc_XML->file, "<FinancialFunctions>\n");
@@ -1085,6 +1116,9 @@ static int genCode(int argc, char* argv[])
       fprintf(gOutFunc_XML->file, "</FinancialFunctions>\n");
    #endif
 
+   #if defined(ENABLE_RUST)
+      writeRustMod();
+   #endif
 
    /* Close all files who were updated with the list of TA functions. */
    fileClose( gOutFuncList_TXT );
@@ -1637,10 +1671,12 @@ static void doForEachFunctionPhase1( const TA_FuncInfo *funcInfo,
                                void *opaqueData )
 {
 	(void)opaqueData;
-   if (gOutCore_Java) {
-     /* Run the func file through the pre-processor to generate the Java code. */
-     genJavaCodePhase1( funcInfo );
-   }
+
+   #if defined(ENABLE_JAVA)
+     if (gOutCore_Java) {
+       genJavaCodePhase1( funcInfo );
+     }
+   #endif
 }
 
 static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
@@ -1800,6 +1836,11 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
      /* Run the func file through the pre-processor to generate the Java code. */
      genJavaCodePhase2( funcInfo );
    #endif
+
+   #if defined(ENABLE_RUST)
+     genRustCodePhase2( funcInfo );
+   #endif
+
 
    firstTime = 0;
 }
@@ -3311,6 +3352,9 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "   #include \"ta_defs.h\"\n" );
    print( out, "   #include \"ta_java_defs.h\"\n" );
    print( out, "   #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)\n" );
+   print( out, "#elif defined( _RUST )\n" );
+   print( out, "   #include \"ta_defs.h\"\n" );
+   print( out, "   #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)\n" );
    print( out, "#else\n" );
    print( out, "   #include <string.h>\n" );
    print( out, "   #include <math.h>\n" );
@@ -4252,7 +4296,7 @@ void genJavaCodePhase2( const TA_FuncInfo *funcInfo )
    ret = system( buffer );
 #else
    /* The options are the quite same, but on linux it still outputs the #include lines,
-	didn't find anything better that to cut them with the sed ... a hack for now. */
+ 	didn't find anything better that to cut them with the sed ... a hack for now. */
    sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "ta_%s.c | sed '/^#include/d' >> .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp ", funcInfo->name);
    ret = system( buffer );
 
@@ -4717,4 +4761,175 @@ static void printJavaFunctionAnnotation(const TA_FuncInfo *funcInfo)
 
       fprintf(gOutFunc_Annotation->file, "); }\n\n\n");
 #endif
+}
+
+void create_dir_recursively(const char *path) {
+    char buffer[1024];
+    char *p = NULL;
+    size_t len;
+
+    snprintf(buffer, sizeof(buffer), "%s", path);
+    len = strlen(buffer);
+    if (buffer[len - 1] == PATH_SEPARATOR[0]) {
+        buffer[len - 1] = '\0';
+    }
+
+    for (p = buffer + 1; *p; p++) {
+        if (*p == PATH_SEPARATOR[0]) {
+            *p = '\0';
+            #if defined(_WIN32) || defined(_WIN64)
+               _mkdir(temp);
+            #else
+               mkdir(buffer, S_IRWXU);
+            #endif
+            *p = PATH_SEPARATOR[0];
+        }
+    }
+   #if defined(_WIN32) || defined(_WIN64)
+     _mkdir(temp);
+   #else
+     mkdir(buffer, S_IRWXU);
+   #endif
+}
+
+void create_dirs(void) {
+   // Make sure output/temp directories exists.
+   #define DIR_RUST ".." PATH_SEPARATOR "rust" PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func"
+   #define DIR_TEMP ".." PATH_SEPARATOR "temp"
+   create_dir_recursively(DIR_RUST);
+   create_dir_recursively(DIR_TEMP);
+}
+
+struct WriteRustModLinesParams {
+   FileHandle *out;
+   int writePubUse; // 0 to write "pub mod", 1 to write "pub use"
+};
+
+void writeRustModLines(const TA_FuncInfo *funcInfo, void *opaque) {
+   struct WriteRustModLinesParams *params = (struct WriteRustModLinesParams *)opaque;
+   FileHandle *out = params->out;
+   char buffer[500];
+
+   #if defined(RUST_SINGLE_FUNC)
+      if (strcmp(funcInfo->name,RUST_SINGLE_FUNC) != 0)
+         return;
+   #endif
+
+   // Convert filename to lowercase into buffer.
+   int i = 0;
+   while (funcInfo->name[i]) {
+      buffer[i] = tolower(funcInfo->name[i]);
+      i++;
+   }
+   buffer[i] = '\0';
+
+   if (params->writePubUse == 1)
+      fprintf(out->file, "pub use self::%s::*\n",  buffer);
+   else
+      fprintf(out->file, "pub mod %s;\n",  buffer);
+}
+
+void writeRustMod( void )
+{
+   // Update the rust/src/ta_func/mod.rs file.
+   struct WriteRustModLinesParams params;
+   char buffer[500];
+   FileHandle *out;
+
+   if (!gmcpp_installed)
+      return;
+
+   // Add rs file to ta_func/mod.rs
+   // A common header/footer is provided by the template file.
+   #define FILE_RUST_MOD ".." PATH_SEPARATOR "rust" PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "mod.rs"
+   #define FILE_RUST_MOD_TEMPLATE ".." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract" PATH_SEPARATOR "templates" PATH_SEPARATOR "ta_func_mod.rs.template"
+
+   out = fileOpen( FILE_RUST_MOD,
+                   FILE_RUST_MOD_TEMPLATE,
+                   FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+
+
+   params.out = out;
+   params.writePubUse = 1;
+   TA_ForEachFunc(writeRustModLines, &params);
+   params.writePubUse = 0;
+   TA_ForEachFunc(writeRustModLines, &params);
+
+   fileClose(out);
+}
+
+void genRustCodePhase2( const TA_FuncInfo *funcInfo )
+{
+   // Each TA function get its own .rs file generated.
+   // A common header/footer is provided by the template file.
+   FILE *logicTmp;
+   char buffer[500];
+   int idx, again;
+   static int firstTime = 1;
+   int ret;
+
+   #if defined(RUST_SINGLE_FUNC)
+      if (strcmp(funcInfo->name,RUST_SINGLE_FUNC) != 0)
+         return;
+   #endif
+
+   if (!gmcpp_installed)
+      return;
+
+   // Convert filename to lowercase into buffer.
+   int i = 0;
+   while (funcInfo->name[i]) {
+      buffer[i] = tolower(funcInfo->name[i]);
+      i++;
+   }
+   buffer[i] = '\0';
+   strcat(buffer, ".rs");
+   #define FILE_RUST_FUNC_TEMPLATE ".." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract" PATH_SEPARATOR "templates" PATH_SEPARATOR "ta_x.rs.template"
+
+   FileHandle *out = fileOpen( ta_fs_path(5, "..", "rust", "src", "ta_func", buffer),
+                               FILE_RUST_FUNC_TEMPLATE,
+                               FILE_WRITE|WRITE_ON_CHANGE_ONLY );
+
+
+   /* Clean-up just in case. */
+   fileDelete( ta_fs_path(3, "..", "temp", "rust_logic.tmp") );
+
+   #ifdef _MSC_VER
+     sprintf( buffer, TA_MCPP_EXE " -c -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _RUST .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "TA_%s.c >>.." PATH_SEPARATOR "temp" PATH_SEPARATOR "rust_logic.tmp ", funcInfo->name);
+     ret = system( buffer );
+   #else
+     sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _RUST .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "ta_%s.c | sed '/^#include/d' >> .." PATH_SEPARATOR "temp" PATH_SEPARATOR "rust_logic.tmp ", funcInfo->name);
+     ret = system( buffer );
+   #endif
+
+   /* Write the output of the C pre-processor to the rust file. */
+   init_gToOpen( ta_fs_path(3, "..", "temp", "rust_logic.tmp"), NULL );
+   logicTmp = fopen( gToOpen, "r" );
+   if( !logicTmp )
+   {
+      printf( "Cannot open temp/rust_logic.tmp\n" );
+      return;
+   }
+   while( fgets(gTempBuf,BUFFER_SIZE,logicTmp) )
+   {
+      /* Remove empty lines and lines with only a ';' */
+      idx = 0;
+      again = 1;
+      while( again && gTempBuf[idx] != '\0' )
+      {
+         if( !isspace(gTempBuf[idx]) && !(gTempBuf[idx] == ';') )
+            again = 0;
+         idx++;
+      }
+      if( (again == 0) && (idx > 0) )
+         fputs( gTempBuf, out->file );
+   }
+
+   /* Clean-up */
+   fclose(logicTmp);
+   print( out->file, "\n" );
+   fileDelete( ta_fs_path(3, "..", "temp", "rust_logic.tmp") );
+
+   // Upon closing, will touch the target file only if there was a change...
+   fileClose(out);
 }
