@@ -61,6 +61,9 @@
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #include "ta_java_defs.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
+/* Generated */ #elif defined( _RUST )
+/* Generated */    #include "ta_defs.h"
+/* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
