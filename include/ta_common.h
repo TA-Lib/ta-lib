@@ -70,18 +70,18 @@ extern "C" {
  *
  * Patch are fixes to a "Major.Minor" release.
  */
-const char *TA_GetVersionString( void );
+TA_LIB_API const char *TA_GetVersionString( void );
 
 /* Get individual component of the Version string */
-const char *TA_GetVersionMajor ( void );
-const char *TA_GetVersionMinor ( void );
-const char *TA_GetVersionPatch ( void );
-const char *TA_GetVersionDate  ( void );
-const char *TA_GetVersionTime  ( void );
+TA_LIB_API const char *TA_GetVersionMajor ( void );
+TA_LIB_API const char *TA_GetVersionMinor ( void );
+TA_LIB_API const char *TA_GetVersionPatch ( void );
+TA_LIB_API const char *TA_GetVersionDate  ( void );
+TA_LIB_API const char *TA_GetVersionTime  ( void );
 
 /* Deprecated */
-const char *TA_GetVersionBuild ( void );
-const char *TA_GetVersionExtra ( void );
+TA_LIB_API const char *TA_GetVersionBuild ( void );
+TA_LIB_API const char *TA_GetVersionExtra ( void );
 
 /* Misc. declaration used throughout the library code. */
 typedef double TA_Real;
@@ -132,7 +132,7 @@ typedef struct TA_RetCodeInfo
 } TA_RetCodeInfo;
 
 /* Info is always returned, even when 'theRetCode' is invalid. */
-void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo );
+TA_LIB_API void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo );
 
 /* TA_Initialize() initialize the ressources used by TA-Lib. This
  * function must be called once prior to any other functions declared in
@@ -143,15 +143,15 @@ void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo );
  *
  * TA_Shutdown() should be called prior to exiting the application code.
  */
-TA_RetCode TA_Initialize( void );
-TA_RetCode TA_Shutdown( void );
+TA_LIB_API TA_RetCode TA_Initialize( void );
+TA_LIB_API TA_RetCode TA_Shutdown( void );
 
 /* TA_LIB_SOURCES_DIGEST helps for TA-Lib automated maintenance.
  *
  * This value is updated whenever a make, cmake or any source files
  * modification should trig a repackaging of TA-Lib.
  */
-#define TA_LIB_SOURCES_DIGEST a00a09284a8f7e7e280471923219e2c3
+#define TA_LIB_SOURCES_DIGEST 46448087db66cc9083d999d935d0f30f
 
 #ifdef __cplusplus
 }

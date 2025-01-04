@@ -108,8 +108,8 @@ extern "C" {
  *      TA_GroupTableFree( table );
  *   }
  */
-TA_RetCode TA_GroupTableAlloc( TA_StringTable **table );
-TA_RetCode TA_GroupTableFree ( TA_StringTable *table );
+TA_LIB_API TA_RetCode TA_GroupTableAlloc( TA_StringTable **table );
+TA_LIB_API TA_RetCode TA_GroupTableFree ( TA_StringTable *table );
 
 /* The following functions are used to obtain the name of all the
  * function provided in a certain group.
@@ -135,8 +135,8 @@ TA_RetCode TA_GroupTableFree ( TA_StringTable *table );
  *      TA_FuncTableFree( table );
  *   }
  */
-TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table );
-TA_RetCode TA_FuncTableFree ( TA_StringTable *table );
+TA_LIB_API TA_RetCode TA_FuncTableAlloc( const char *group, TA_StringTable **table );
+TA_LIB_API TA_RetCode TA_FuncTableFree ( TA_StringTable *table );
 
 /* Using the name, you can obtain an handle unique to this function.
  * This handle is further used for obtaining information on the
@@ -146,8 +146,8 @@ TA_RetCode TA_FuncTableFree ( TA_StringTable *table );
  * the TA_FuncInfo structure (see below).
  */
 typedef unsigned int TA_FuncHandle;
-TA_RetCode TA_GetFuncHandle( const char *name,
-                             const TA_FuncHandle **handle );
+TA_LIB_API TA_RetCode TA_GetFuncHandle( const char *name,
+                                        const TA_FuncHandle **handle );
 
 /* Get some basic information about a function.
  *
@@ -202,8 +202,8 @@ typedef struct TA_FuncInfo
    const TA_FuncHandle *handle;
 } TA_FuncInfo;
 
-TA_RetCode TA_GetFuncInfo( const TA_FuncHandle *handle,
-                           const TA_FuncInfo **funcInfo );
+TA_LIB_API TA_RetCode TA_GetFuncInfo( const TA_FuncHandle *handle,
+                                      const TA_FuncInfo **funcInfo );
 
 
 /* An alternate way to access all the functions is through the
@@ -225,7 +225,7 @@ TA_RetCode TA_GetFuncInfo( const TA_FuncHandle *handle,
  */
 typedef void (*TA_CallForEachFunc)(const TA_FuncInfo *funcInfo, void *opaqueData );
 
-TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData );
+TA_LIB_API TA_RetCode TA_ForEachFunc( TA_CallForEachFunc functionToCall, void *opaqueData );
 
 /* The next section includes the data structures and function allowing to
  * proceed with the call of a Tech. Analysis function.
@@ -432,17 +432,17 @@ typedef struct TA_OutputParameterInfo
  *    }
  * }
  */
-TA_RetCode TA_GetInputParameterInfo( const TA_FuncHandle *handle,
-                                     unsigned int paramIndex,
-                                     const TA_InputParameterInfo **info );
+TA_LIB_API TA_RetCode TA_GetInputParameterInfo( const TA_FuncHandle *handle,
+                                                unsigned int paramIndex,
+                                                const TA_InputParameterInfo **info );
 
-TA_RetCode TA_GetOptInputParameterInfo( const TA_FuncHandle *handle,
-                                        unsigned int paramIndex,
-                                        const TA_OptInputParameterInfo **info );
+TA_LIB_API TA_RetCode TA_GetOptInputParameterInfo( const TA_FuncHandle *handle,
+                                                   unsigned int paramIndex,
+                                                   const TA_OptInputParameterInfo **info );
 
-TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
-                                      unsigned int paramIndex,
-                                      const TA_OutputParameterInfo **info );
+TA_LIB_API TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
+                                                 unsigned int paramIndex,
+                                                 const TA_OutputParameterInfo **info );
 
 /* Alloc a structure allowing to build the list of parameters
  * for doing a call.
@@ -466,44 +466,44 @@ typedef struct TA_ParamHolder
   void *hiddenData;
 } TA_ParamHolder;
 
-TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
-                                TA_ParamHolder **allocatedParams );
+TA_LIB_API TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
+                                           TA_ParamHolder **allocatedParams );
 
-TA_RetCode TA_ParamHolderFree( TA_ParamHolder *params );
+TA_LIB_API TA_RetCode TA_ParamHolderFree( TA_ParamHolder *params );
 
 /* Setup the values of the data input parameters.
  *
  * paramIndex is zero for the first input.
  */
-TA_RetCode TA_SetInputParamIntegerPtr( TA_ParamHolder *params,
-                                       unsigned int paramIndex,
-                                       const TA_Integer *value );
+TA_LIB_API TA_RetCode TA_SetInputParamIntegerPtr( TA_ParamHolder *params,
+                                                  unsigned int paramIndex,
+                                                  const TA_Integer *value );
 
-TA_RetCode TA_SetInputParamRealPtr( TA_ParamHolder *params,
-                                    unsigned int paramIndex,
-                                    const TA_Real *value );
+TA_LIB_API TA_RetCode TA_SetInputParamRealPtr( TA_ParamHolder *params,
+                                               unsigned int paramIndex,
+                                               const TA_Real *value );
 
-TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder *params,
-                                     unsigned int paramIndex,
-                                     const TA_Real      *open,
-                                     const TA_Real      *high,
-                                     const TA_Real      *low,
-                                     const TA_Real      *close,
-                                     const TA_Real      *volume,
-                                     const TA_Real      *openInterest );
+TA_LIB_API TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder *params,
+                                                unsigned int paramIndex,
+                                                const TA_Real      *open,
+                                                const TA_Real      *high,
+                                                const TA_Real      *low,
+                                                const TA_Real      *close,
+                                                const TA_Real      *volume,
+                                                const TA_Real      *openInterest );
 
 /* Setup the values of the optional input parameters.
  * If an optional input is not set, a default value will be used.
  *
  * paramIndex is zero for the first optional input.
  */
-TA_RetCode TA_SetOptInputParamInteger( TA_ParamHolder *params,
-                                       unsigned int paramIndex,
-                                       TA_Integer optInValue );
+TA_LIB_API TA_RetCode TA_SetOptInputParamInteger( TA_ParamHolder *params,
+                                                  unsigned int paramIndex,
+                                                  TA_Integer optInValue );
 
-TA_RetCode TA_SetOptInputParamReal( TA_ParamHolder *params,
-                                    unsigned int paramIndex,
-                                    TA_Real optInValue );
+TA_LIB_API TA_RetCode TA_SetOptInputParamReal( TA_ParamHolder *params,
+                                               unsigned int paramIndex,
+                                               TA_Real optInValue );
 
 /* Setup the parameters indicating where to store the output.
  *
@@ -513,38 +513,38 @@ TA_RetCode TA_SetOptInputParamReal( TA_ParamHolder *params,
  * paramIndex is zero for the first output.
  *
  */
-TA_RetCode TA_SetOutputParamIntegerPtr( TA_ParamHolder *params,
-                                        unsigned int paramIndex,
-                                        TA_Integer     *out );
+TA_LIB_API TA_RetCode TA_SetOutputParamIntegerPtr( TA_ParamHolder *params,
+                                                   unsigned int paramIndex,
+                                                   TA_Integer     *out );
 
-TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *params,
-                                     unsigned int paramIndex,
-                                     TA_Real        *out );
+TA_LIB_API TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *params,
+                                                unsigned int paramIndex,
+                                                TA_Real        *out );
 
 /* Once the optional parameter are set, it is possible to
  * get the lookback for this call. This information can be
  * used to calculate the optimal size for the output buffers.
  * (See the documentation for method to calculate the output size).
  */
-TA_RetCode TA_GetLookback( const TA_ParamHolder *params,
-                           TA_Integer *lookback );
+TA_LIB_API TA_RetCode TA_GetLookback( const TA_ParamHolder *params,
+                                      TA_Integer *lookback );
 
 /* Finally, call the TA function with the parameters.
  *
  * The TA function who is going to be called was specified
  * when the TA_ParamHolderAlloc was done.
  */
-TA_RetCode TA_CallFunc( const TA_ParamHolder *params,
-                        TA_Integer            startIdx,
-                        TA_Integer            endIdx,
-                        TA_Integer           *outBegIdx,
-                        TA_Integer           *outNbElement );
+TA_LIB_API TA_RetCode TA_CallFunc( const TA_ParamHolder *params,
+                                   TA_Integer            startIdx,
+                                   TA_Integer            endIdx,
+                                   TA_Integer           *outBegIdx,
+                                   TA_Integer           *outNbElement );
 
 
 /* Return XML representation of all the TA functions.
  * The returned array is the same as the ta_func_api.xml file.
  */
-const char *TA_FunctionDescriptionXML( void );
+TA_LIB_API const char *TA_FunctionDescriptionXML( void );
 
 #ifdef __cplusplus
 }

@@ -102,11 +102,6 @@
  */
 #if defined( _MANAGED )
 
-  /* CMJ is the "CManagedJava" macro. It allows to write variant
-   * for the 3 different languages.
-   */
-  #define CMJ(c,managed,java) managed
-
   /* Enumeration abstraction */
   #define ENUM_BEGIN(w) enum class w {
   #define ENUM_DEFINE(x,y) y
@@ -136,7 +131,6 @@
   #define TA_LIB_API
 
 #elif defined( _JAVA ) || defined( _RUST )
-  #define CMJ(c,managed,java) java
 
   #define ENUM_BEGIN(w) public enum w {
   #define ENUM_DEFINE(x,y) y
@@ -163,8 +157,6 @@
   #define TA_LIB_API
 
 #else
-
-  #define CMJ(c,managed,java) c
 
   #define ENUM_BEGIN(w) typedef enum {
   #define ENUM_DEFINE(x,y) x
@@ -272,7 +264,7 @@ ENUM_END( MAType )
 
 
 /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
-/* Generated */ 
+/* Generated */
 /* Generated */ ENUM_BEGIN( FuncUnstId )
 /* Generated */     /* 000 */  ENUM_DEFINE( TA_FUNC_UNST_ADX, Adx),
 /* Generated */     /* 001 */  ENUM_DEFINE( TA_FUNC_UNST_ADXR, Adxr),
@@ -301,7 +293,7 @@ ENUM_END( MAType )
 /* Generated */                ENUM_DEFINE( TA_FUNC_UNST_ALL, FuncUnstAll),
 /* Generated */                ENUM_DEFINE( TA_FUNC_UNST_NONE, FuncUnstNone) = -1
 /* Generated */ ENUM_END( FuncUnstId )
-/* Generated */ 
+/* Generated */
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 
 /* The TA_RangeType enum specifies the types of range that can be considered
