@@ -1,19 +1,27 @@
 # Changelog
 
-Check https://ta-lib.org/install/ for latest installation instructions.
+Installation docs: https://ta-lib.org/install/
 
-Only notable changes are documented here. See GitHub commits for all changes.
+Just re-install to upgrade. Older versions are automatically removed.
+
+See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list of changes
+
+## [0.6.3] 2025-01-06
+### Fixed
+- (#52) Add missing export to import lib for Windows DLL.
+
 
 ## [0.6.2] 2024-12-26
+### Added
+- Windows - New 32 bits zip and msi packages.
+
 ### Fixed
 - (#51) Allow for Debian 11 and Ubuntu 22.04 LTS support with lower version of CMake
 - (#43) Windows - Fix 64 bits DLL install location to C:\Program Files\TA-Lib
 - x86 Debian package renamed to i386 (as per Debian convention)
 
-### Added
-- Windows - New 32 bits zip and msi packages.
 
-## [0.6.1] 2024-12-24
+## [0.6.1] 2024-12-23
 ### Added
 - Packaging automation for various platforms, notably Windows 64 bits.
 
