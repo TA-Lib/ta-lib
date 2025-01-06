@@ -76,7 +76,7 @@ def call_vcvarsall(root_dir: str, args: list):
                         os.environ[key] = value
 
             # Print out the PATH variable
-            print(f"PATH after vcvarsall: {os.environ['PATH']}")
+            #print(f"PATH after vcvarsall: {os.environ['PATH']}")
 
         except Exception as e:
             print(f"Error: {e}")
@@ -86,5 +86,5 @@ def call_vcvarsall(root_dir: str, args: list):
     if not os.environ.get('Platform', None):
         print(f"Error: Platform not set by vcvarsall.bat")
         sys.exit(1)
-    #print(f"vcvarsall.bat called successfully")
+    print(f"vcvarsall.bat called successfully")
     print(f"Platform: {os.environ['Platform']}")
