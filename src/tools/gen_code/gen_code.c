@@ -341,24 +341,24 @@ static void printRustLookbackFunction(const PrintFuncParamStruct *printFuncParam
 static void printRustDoublePrecisionFunction(const PrintFuncParamStruct *printFuncParamStruct);
 static void printRustSinglePrecisionFunction(const PrintFuncParamStruct *printFuncParamStruct);
 
-static void printFunc( FILE *out,
-                       const char *prefix,       /* Can be NULL */
-                       const TA_FuncInfo *funcInfo,
-                       unsigned int prototype,              /* Boolean */
-                       unsigned int frame,                  /* Boolean */
-                       unsigned int semiColonNeeded,        /* Boolean */
-                       unsigned int validationCode,         /* Boolean */
-                       unsigned int lookbackSignature,      /* Boolean */
-                       unsigned int managedCPPCode,         /* Boolean */
-                       unsigned int managedCPPDeclaration,  /* Boolean */
-                       unsigned int inputIsSinglePrecision, /* Boolean */
-                       unsigned int outputForSWIG,          /* Boolean */
-                       unsigned int outputForJava,          /* Boolean */
-                       unsigned int lookbackValidationCode, /* Boolean */
-					   unsigned int useSubArrayObject,      /* Boolean */
-					   unsigned int arrayToSubArrayCnvt,     /* Boolean */
-					   unsigned int outputForRust          /* Boolean */
-                     );
+static void printFunc(FILE *out,
+                      const char *prefix, /* Can be NULL */
+                      const TA_FuncInfo *funcInfo,
+                      unsigned int prototype, /* Boolean */
+                      unsigned int frame, /* Boolean */
+                      unsigned int semiColonNeeded, /* Boolean */
+                      unsigned int validationCode, /* Boolean */
+                      unsigned int lookbackSignature, /* Boolean */
+                      unsigned int managedCPPCode, /* Boolean */
+                      unsigned int managedCPPDeclaration, /* Boolean */
+                      unsigned int inputIsSinglePrecision, /* Boolean */
+                      unsigned int outputForSWIG, /* Boolean */
+                      unsigned int outputForJava, /* Boolean */
+                      unsigned int lookbackValidationCode, /* Boolean */
+                      unsigned int useSubArrayObject, /* Boolean */
+                      unsigned int arrayToSubArrayCnvt, /* Boolean */
+                      unsigned int outputForRust /* Boolean */
+);
 
 static void printCallFrame  ( FILE *out, const TA_FuncInfo *funcInfo );
 static void printFrameHeader( FILE *out, const TA_FuncInfo *funcInfo, unsigned int lookbackSignature );
@@ -1728,22 +1728,22 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
       if (gOutFunc_SWG) printDefines( gOutFunc_SWG->file, funcInfo );
 
       /* Generate the function prototype. */
-      printFunc( gOutFunc_H->file, "TA_LIB_API ", funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+      printFunc( gOutFunc_H->file, "TA_LIB_API ", funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
       fprintf( gOutFunc_H->file, "\n" );
 
-      printFunc( gOutFunc_H->file, "TA_LIB_API ", funcInfo, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
+      printFunc( gOutFunc_H->file, "TA_LIB_API ", funcInfo, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0);
       fprintf( gOutFunc_H->file, "\n" );
 
       /* Generate the SWIG interface. */
       if (gOutFunc_SWG) {
-         printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 );
+         printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0);
          fprintf( gOutFunc_SWG->file, "\n" );
       }
 
       /* Generate the corresponding lookback function prototype. */
-      printFunc( gOutFunc_H->file, "TA_LIB_API ", funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
+      printFunc( gOutFunc_H->file, "TA_LIB_API ", funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
       if (gOutFunc_SWG) {
-         printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
+         printFunc( gOutFunc_SWG->file, NULL, funcInfo, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
       }
 
       /* Create the frame definition (ta_frame.c) and declaration (ta_frame.h) */
@@ -1977,23 +1977,23 @@ static void printDefines( FILE *out, const TA_FuncInfo *funcInfo )
    }
 }
 
-static void printFunc( FILE *out,
-                       const char *prefix, /* Can be NULL */
-                       const TA_FuncInfo *funcInfo,
-                       unsigned int prototype, /* Boolean */
-                       unsigned int frame,     /* Boolean */
-                       unsigned int semiColonNeeded, /* Boolean */
-                       unsigned int validationCode, /* Boolean */
-                       unsigned int lookbackSignature, /* Boolean */
-                       unsigned int managedCPPCode, /* Boolean */
-                       unsigned int managedCPPDeclaration, /* Boolean */
-                       unsigned int inputIsSinglePrecision, /* Boolean */
-                       unsigned int outputForSWIG, /* Boolean */
-                       unsigned int outputForJava, /* Boolean */
-                       unsigned int lookbackValidationCode, /* Boolean */
-                       unsigned int useSubArrayObject,      /* Boolean */
-                       unsigned int arrayToSubArrayCnvt,     /* Boolean */
-                       unsigned int outputForRust
+static void printFunc(FILE *out,
+                      const char *prefix, /* Can be NULL */
+                      const TA_FuncInfo *funcInfo,
+                      unsigned int prototype, /* Boolean */
+                      unsigned int frame, /* Boolean */
+                      unsigned int semiColonNeeded, /* Boolean */
+                      unsigned int validationCode, /* Boolean */
+                      unsigned int lookbackSignature, /* Boolean */
+                      unsigned int managedCPPCode, /* Boolean */
+                      unsigned int managedCPPDeclaration, /* Boolean */
+                      unsigned int inputIsSinglePrecision, /* Boolean */
+                      unsigned int outputForSWIG, /* Boolean */
+                      unsigned int outputForJava, /* Boolean */
+                      unsigned int lookbackValidationCode, /* Boolean */
+                      unsigned int useSubArrayObject, /* Boolean */
+                      unsigned int arrayToSubArrayCnvt, /* Boolean */
+                      unsigned int outputForRust /* Boolean */
 )
 {
    TA_RetCode retCode;
@@ -2886,14 +2886,14 @@ static void printCallFrame( FILE *out, const TA_FuncInfo *funcInfo )
 
    printFrameHeader( out, funcInfo, 0 );
    print( out, "{\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
    print( out, "}\n" );
 
    printFrameHeader( out, funcInfo, 1 );
    print( out, "{\n" );
    if( funcInfo->nbOptInput == 0 )
       print( out, "   (void)params;\n" );
-   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, "   return ", funcInfo, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
    print( out, "}\n" );
 
    genPrefix = 0;
@@ -3116,13 +3116,13 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    print( gOutFunc_C->file, "#define  INPUT_TYPE float\n" );
 
    print( gOutFunc_C->file, "#if defined( _MANAGED ) && defined( USE_SUBARRAY )\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0);
    print( gOutFunc_C->file, "#elif defined( _MANAGED )\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0);
    print( gOutFunc_C->file, "#elif defined( _JAVA )\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0);
    print( gOutFunc_C->file, "#else\n" );
-   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 );
+   printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0);
    print( gOutFunc_C->file, "#endif\n" );
 
    /* Insert the internal logic of the function */
@@ -3401,11 +3401,11 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    print( out, "#define INPUT_TYPE   double\n" );
    print( out, "\n" );
    print( out, "#if defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0);
    print( out, "#elif defined( _JAVA )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0);
    print( out, "#else\n" );
-   printFunc( out, "TA_LIB_API ", funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, "TA_LIB_API ", funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
    print( out, "#endif\n" );
 
    genPrefix = 0;
@@ -3414,7 +3414,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    genPrefix = 1;
    if( funcInfo->nbOptInput != 0 )
       print( out, "#ifndef TA_FUNC_NO_RANGE_CHECK\n" );
-   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 );
+   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
    if( funcInfo->nbOptInput != 0 )
      print( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
    else
@@ -3429,9 +3429,9 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    fprintf( out, " */\n" );
    print( out, "\n" );
    print( out, "#if defined( _MANAGED ) && defined( USE_SUBARRAY )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0);
    print( out, "#elif defined( _MANAGED )\n" );
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0);
    print( out, "#elif defined( _JAVA )\n" );
 
    /* Handle special case to avoid duplicate definition of min,max */
@@ -3441,9 +3441,9 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
       print( out, "#undef max\n" );
    }
 
-   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0);
    print( out, "#else\n" );
-   printFunc( out, "TA_LIB_API ", funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, "TA_LIB_API ", funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
    print( out, "#endif\n" );
 
    genPrefix = 0;
@@ -3463,7 +3463,7 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
     * Also generates the code for setting up the
     * default values.
     */
-   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+   printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
    print( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
    print( out, "\n" );
