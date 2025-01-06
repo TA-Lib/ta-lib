@@ -643,7 +643,7 @@ def package_windows_platform(root_dir: str, version: str, platform: str) -> dict
     elif platform == "arm_32":
         vcvarsall_args = ["amd64_arm"]
 
-    call_vcvarsall(vcvarsall_args)
+    call_vcvarsall(root_dir, vcvarsall_args)
     results = {
         "zip_results": {
             "success": False,
