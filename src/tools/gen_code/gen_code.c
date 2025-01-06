@@ -327,6 +327,20 @@ static int gen_retcode( void );
 
 static void printIndent( FILE *out, unsigned int indent );
 
+typedef struct {
+	FILE *out;
+	const char *prefix;
+	const TA_FuncInfo *funcInfo;
+	unsigned int lookbackSignature;
+	unsigned int validationCode;
+	unsigned int lookbackValidationCode;
+} PrintFuncParamStruct;
+
+static void printRustFunc(const PrintFuncParamStruct *printFuncParamStruct);
+static void printRustLookbackFunction(const PrintFuncParamStruct *printFuncParamStruct);
+static void printRustDoublePrecisionFunction(const PrintFuncParamStruct *printFuncParamStruct);
+static void printRustSinglePrecisionFunction(const PrintFuncParamStruct *printFuncParamStruct);
+
 static void printFunc( FILE *out,
                        const char *prefix,       /* Can be NULL */
                        const TA_FuncInfo *funcInfo,
@@ -342,7 +356,8 @@ static void printFunc( FILE *out,
                        unsigned int outputForJava,          /* Boolean */
                        unsigned int lookbackValidationCode, /* Boolean */
 					   unsigned int useSubArrayObject,      /* Boolean */
-					   unsigned int arrayToSubArrayCnvt     /* Boolean */
+					   unsigned int arrayToSubArrayCnvt,     /* Boolean */
+					   unsigned int outputForRust          /* Boolean */
                      );
 
 static void printCallFrame  ( FILE *out, const TA_FuncInfo *funcInfo );
@@ -1976,9 +1991,10 @@ static void printFunc( FILE *out,
                        unsigned int outputForSWIG, /* Boolean */
                        unsigned int outputForJava, /* Boolean */
                        unsigned int lookbackValidationCode, /* Boolean */
-					   unsigned int useSubArrayObject,      /* Boolean */
-					   unsigned int arrayToSubArrayCnvt     /* Boolean */
-                      )
+                       unsigned int useSubArrayObject,      /* Boolean */
+                       unsigned int arrayToSubArrayCnvt,     /* Boolean */
+                       unsigned int outputForRust
+)
 {
    TA_RetCode retCode;
    unsigned int i, j, k, lastParam;
@@ -2008,6 +2024,18 @@ static void printFunc( FILE *out,
    char funcNameBuffer[1024]; /* Not safe, but 1024 is realistic, */
 
    if (!out) return;
+
+   if (outputForRust) {
+	   PrintFuncParamStruct printFuncParamStruct = {
+		   out,
+		   prefix,
+		   funcInfo,
+		   lookbackSignature,
+		   validationCode,
+		   lookbackValidationCode
+	   };
+	   printRustFunc(&printFuncParamStruct);
+   }
 
    if( arrayToSubArrayCnvt )
    {
@@ -3934,6 +3962,44 @@ const char *doubleToStr( double value )
 
    return gTempDoubleToStr;
 }
+
+static void printRustFunc(const PrintFuncParamStruct *printFuncParamStruct) {
+	// three functions: single-precision, double-precision, lookback
+	printRustSinglePrecisionFunction(printFuncParamStruct);
+	printRustDoublePrecisionFunction(printFuncParamStruct);
+	printRustLookbackFunction(printFuncParamStruct);
+}
+
+static void printRustLookbackFunction(const PrintFuncParamStruct *printFuncParamStruct) {
+	// TODO: open function
+	// TODO: print input params
+	// TODO: print optional input params
+	// TODO: close function
+	// TODO: print return type
+	// TODO: handle validation logic
+	// TODO: handle abstract frame logic
+}
+
+static void printRustDoublePrecisionFunction(const PrintFuncParamStruct *printFuncParamStruct) {
+	// TODO: open function
+	// TODO: print input params
+	// TODO: print optional input params
+	// TODO: close function
+	// TODO: print return type
+	// TODO: handle validation logic
+	// TODO: handle abstract frame logic
+}
+
+static void printRustSinglePrecisionFunction(const PrintFuncParamStruct *printFuncParamStruct) {
+	// TODO: open function
+	// TODO: print input params
+	// TODO: print optional input params
+	// TODO: close function
+	// TODO: print return type
+	// TODO: handle validation logic
+	// TODO: handle abstract frame logic
+}
+
 
 static void cnvtToUpperCase( char *str )
 {
