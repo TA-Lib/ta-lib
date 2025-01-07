@@ -18,7 +18,9 @@ def call_vcvarsall(root_dir: str, args: list):
     #
     # This is needed to avoid PATH pollution with each subsequent call 
     # to vcvarsall.bat
-    vcvarsall_env_file = path_join(root_dir, "temp", "vcvarsall_env.txt")
+    temp_dir = path_join(root_dir, "temp")
+    os.makedirs(temp_dir, exist_ok=True)
+    vcvarsall_env_file = path_join(temp_dir, "vcvarsall_env.txt")
     try:
         if not vcvarsall_env_created:
             # Delete the file if it exists
@@ -30,7 +32,14 @@ def call_vcvarsall(root_dir: str, args: list):
             # Verify that vcvarsall_env_file exists.
             if os.path.exists(vcvarsall_env_file):
                 vcvarsall_env_created = True
+            else:
+                print(f"Error: Could not create vcvarsall: {vcvarsall_env_file}")
+                sys.exit(1)
         else:
+            if not os.path.exists(vcvarsall_env_file):
+                print(f"Error: vcvarsall_env.txt was not created at {vcvarsall_env_file}")
+                sys.exit(1)
+
             with open(vcvarsall_env_file, 'r') as f:
                 for line in f:
                     if line.strip():
