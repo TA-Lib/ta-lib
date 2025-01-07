@@ -125,12 +125,11 @@
 
 #if defined(__WIN32__) || defined(WIN32)
    #define PATH_SEPARATOR "\\"
-   #define TA_MCPP_EXE "..\\src\\tools\\gen_code\\mcpp.exe"
+const char *gmcpp_exec = "..\\src\\tools\\gen_code\\mcpp.exe";
 #else
-   #include <sys/stat.h>
-   #define PATH_SEPARATOR "/"
-   /* XXX resolve this dynamically or take as param */
-   #define TA_MCPP_EXE "/usr/bin/mcpp"
+#include <sys/stat.h>
+#define PATH_SEPARATOR "/"
+const char *gmcpp_exec = "/usr/bin/mcpp";
 #endif
 
 int gmcpp_installed = 0; // 0 = mcpp not installed, 1 = verified installed
@@ -559,13 +558,13 @@ int main(int argc, char* argv[])
    printf( "gen_code V%s\n", TA_GetVersionString() );
 
    // Show the path being used (to help debugging)
-   char cwd_buffer[1024];
+   char temp_buffer[1024];
    char* cwd;
 
 #if defined(_WIN32) || defined(_WIN64)
-   cwd = _getcwd(cwd_buffer, sizeof(cwd_buffer));
+   cwd = _getcwd(temp_buffer, sizeof(temp_buffer));
 #else
-   cwd = getcwd(cwd_buffer, sizeof(cwd_buffer));
+   cwd = getcwd(temp_buffer, sizeof(temp_buffer));
 #endif
    if (cwd) {
       printf("Executing from [%s]\n", cwd);
@@ -584,6 +583,11 @@ int main(int argc, char* argv[])
         gmcpp_installed = 1;
       #else
         gmcpp_installed = (system("which mcpp >/dev/null 2>&1") == 0);
+        run_command("which mcpp", temp_buffer, sizeof(temp_buffer));
+        if (temp_buffer[0] != '\0') {
+          gmcpp_exec = temp_buffer;
+          printf("mcpp found at %s\n", gmcpp_exec);
+        }
       #endif
    #endif
 
@@ -4355,18 +4359,18 @@ void genJavaCodePhase2( const TA_FuncInfo *funcInfo )
    fclose(logicTmp);
 
 #ifdef _MSC_VER
-   sprintf( buffer, TA_MCPP_EXE " -c -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "TA_%s.c >>.." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp ", funcInfo->name);
+   sprintf( buffer, "%s -c -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "TA_%s.c >>.." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp ", gmcpp_exec, funcInfo->name);
    ret = system( buffer );
 
-   sprintf( buffer, TA_MCPP_EXE " -c -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp >.." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode2.tmp " );
+   sprintf( buffer, "%s -c -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp >.." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode2.tmp ", gmcpp_exec);
    ret = system( buffer );
 #else
    /* The options are the quite same, but on linux it still outputs the #include lines,
  	didn't find anything better that to cut them with the sed ... a hack for now. */
-   sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "ta_%s.c | sed '/^#include/d' >> .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp ", funcInfo->name);
+   sprintf( buffer, "%s -@compat -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "ta_%s.c | sed '/^#include/d' >> .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp ", gmcpp_exec, funcInfo->name);
    ret = system( buffer );
 
-   sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp | sed '/^#include/d' > .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode2.tmp " );
+   sprintf( buffer, "%s -@compat -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _JAVA .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode1.tmp | sed '/^#include/d' > .." PATH_SEPARATOR "temp" PATH_SEPARATOR "CoreJavaCode2.tmp ", gmcpp_exec );
    ret = system( buffer );
 #endif
 
@@ -4961,10 +4965,10 @@ void genRustCodePhase2( const TA_FuncInfo *funcInfo )
    fileDelete( ta_fs_path(3, "..", "temp", "rust_logic.tmp") );
 
    #ifdef _MSC_VER
-     sprintf( buffer, TA_MCPP_EXE " -c -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _RUST .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "TA_%s.c >>.." PATH_SEPARATOR "temp" PATH_SEPARATOR "rust_logic.tmp ", funcInfo->name);
+     sprintf( buffer, "%s -c -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _RUST .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "TA_%s.c >>.." PATH_SEPARATOR "temp" PATH_SEPARATOR "rust_logic.tmp ", gmcpp_exec, funcInfo->name);
      ret = system( buffer );
    #else
-     sprintf( buffer, TA_MCPP_EXE " -@compat -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _RUST .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "ta_%s.c | sed '/^#include/d' >> .." PATH_SEPARATOR "temp" PATH_SEPARATOR "rust_logic.tmp ", funcInfo->name);
+     sprintf( buffer, "%s -@compat -+ -z -P -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_common -I.." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_abstract -I.." PATH_SEPARATOR "include -D _RUST .." PATH_SEPARATOR "src" PATH_SEPARATOR "ta_func" PATH_SEPARATOR "ta_%s.c | sed '/^#include/d' >> .." PATH_SEPARATOR "temp" PATH_SEPARATOR "rust_logic.tmp ", gmcpp_exec, funcInfo->name);
      ret = system( buffer );
    #endif
 
