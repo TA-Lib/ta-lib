@@ -2,24 +2,27 @@
 hide:
     - toc
 ---
+Instructions are for installing the C/C++ shared, static libraries and headers on your system.
+
 Latest release is [0.6.3 on Github](https://github.com/ta-lib/ta-lib/releases/latest)
+
+For python users, see instead [ta-lib-python](https://github.com/TA-Lib/ta-lib-python)
 
 - [Windows](#windows)
     - [Executable Installer (recommended)](#executable-installer-recommended)
     - [Binaries](#windows-binaries)
     - [Build from source](#windows-build-from-source)
 
-- [macOS](#macOS)
-    - [Homebrew (recommended)](#macOS-homebrew-recommended)
-    - [Build from source](#macOS-build-from-source)
+- [macOS](#macos)
+    - [Homebrew (recommended)](#macos-homebrew-recommended)
+    - [Build from source](#macos-build-from-source)
 
 - [Linux](#linux)
     - [Debian packages](#linux-debian-packages)
     - [Build from source](#linux-build-from-source)
 
-## Windows
 
-Only x86 64-bits binaries are distributed. Other windows platforms need to build from source.
+## Windows
 
 ### Executable Installer (recommended)
 
@@ -30,21 +33,35 @@ Only x86 64-bits binaries are distributed. Other windows platforms need to build
     - Follow the on-screen instructions.
 
 
-    To update, just repeat the installation (the older version is automatically uninstalled).
+    To update, just repeat the installation (older version is automatically uninstalled).
 
-    If you choose to uninstall, follow the [standard windows procedure](https://support.microsoft.com/en-us/windows/uninstall-or-remove-apps-and-programs-in-windows-4b55f974-2cc6-2d2b-d092-5905080eaf98)
+    If you choose to uninstall, us the [Add/Remove Apps](https://support.microsoft.com/en-us/windows/uninstall-or-remove-apps-and-programs-in-windows-4b55f974-2cc6-2d2b-d092-5905080eaf98) in windows settings.
 
  If you prefer a non-interactive installation, you can use msiexec [from the command line](https://learn.microsoft.com/en-us/windows/win32/msi/standard-installer-command-line-options).
 
 
 ### Windows Binaries
-This is a package with all the static/shared binaries and headers needed to bundle TA-Lib with your own application (eliminates having the user install TA-Lib separately).
 
-Latest is [ta-lib-0.6.3-windows-x86_64.zip](https://github.com/ta-lib/ta-lib/releases/download/v0.6.3/ta-lib-0.6.3-windows-x86_64.zip)
+Use the .zip packages when you prefer to get the libraries without installing (e.g. to embed the TA-Lib binaries in your own installer).
+
+| Platform | Download |
+|------------------------|--|
+| Intel/AMD 64-bits| [ta-lib-0.6.3-windows-x86_64.zip](https://github.com/ta-lib/ta-lib/releases/download/v0.6.3/ta-lib-0.6.3-windows-x86_64.zip) |
+| Intel/AMD 32-bits| [ta-lib-0.6.3-windows-x86_32.zip](https://github.com/ta-lib/ta-lib/releases/download/v0.6.3/ta-lib-0.6.3-windows-x86_32.zip) |
+| ARM64 | Not yet available. |
 
 ### Windows Build from Source
 
-TODO
+Install VSCode 2022 community and do:
+```cmd
+C:\ta-lib> "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+C:\ta-lib> mkdir build
+C:\ta-lib> cd build
+C:\ta-lib\build> cmake ..
+C:\ta-lib\build> cmake --build .
+```
+You might need to adjust the `vcvarsall.bat` command depending on your VSCode installation and platform.
+
 
 ## macOS
 
@@ -83,7 +100,6 @@ Ensure you have the required dependencies: `brew install automake && brew instal
     ```bash
     sudo make uninstall
     ```
-
 
 ## Linux
 

@@ -31,8 +31,7 @@ Most importantly, there is intent to make the ta-lib-python installation easier.
 
 Various ways:
 
-- Have a friendly conversation with Mario Fortier (a.k.a Mhax) on discord:
-![](https://dcbadge.limes.pink/api/server/Erb6SwsVbH)
+- Have a friendly conversation with Mario Fortier (a.k.a Mhax) on [discord](https://discord.com/invite/Erb6SwsVbH)
 
 - Open a [Github Issue](https://github.com/TA-Lib/ta-lib/issues)
 
