@@ -6,6 +6,11 @@ Just re-install to upgrade. Older versions are automatically removed.
 
 See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list of changes
 
+## [0.6.4] Not released yet
+### Fixed
+- RPM packaging: Fix ta-lib.spec.in with Github URL instead of sourceforge
+
+
 ## [0.6.3] 2025-01-06
 ### Fixed
 - (#52) Add missing export to import lib for Windows DLL.

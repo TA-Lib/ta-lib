@@ -232,6 +232,52 @@ def set_version_string_cmake(root_dir: str, new_version:str):
     with open(version_file_path, 'w') as cmake_file:
         cmake_file.writelines(lines)
 
+def get_version_string_spec_in(root_dir: str) -> str:
+    """
+    Reads the version string from the ta-lib.spec.in file.
+    """
+    filepath = path_join(root_dir, "ta-lib.spec.in")
+    version_pattern = re.compile(r'%define\s+ta_ver\s+(\d+\.\d+\.\d+)')
+
+    with open(filepath, 'r') as file:
+        for line in file:
+            match = version_pattern.search(line)
+            if match:
+                return match.group(1)
+
+    raise ValueError(f"ta_ver string not found in {filepath}")
+
+def set_version_string_spec_in(root_dir: str, new_version:str):
+    """
+    Updates the version string in the ta-lib.spec.in file.
+    """
+    current_version = get_version_string_spec_in(root_dir)
+    if current_version == new_version:
+        print(f"No change needed. Current version is already {new_version}.")
+        return
+
+    filepath = path_join(root_dir, "ta-lib.spec.in")
+    version_pattern = re.compile(r'%define\s+ta_ver\s+(\d+\.\d+\.\d+)')
+
+    with open(filepath, 'r') as file:
+        lines = file.readlines()
+
+    updated = False
+    for i, line in enumerate(lines):
+        match = version_pattern.search(line)
+        if match:
+            current_version = match.group(1)
+            if current_version != new_version:
+                lines[i] = f'%define ta_ver {new_version}\n'
+                updated = True
+            break
+
+    if updated:
+        with open(filepath, 'w') as file:
+            file.writelines(lines)
+    else:
+        print(f"Error: ta_ver string not found in {filepath}")
+        sys.exit(1)
 
 def compare_version(version1: str, version2: str) -> int:
     """
@@ -272,6 +318,7 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
     version_file = get_version_string(root_dir)
     version_c = get_version_string_source_code(root_dir)
     version_cmake = get_version_string_cmake(root_dir)
+    version_spec_in = get_version_string_spec_in(root_dir)
 
     # Identify the highest version among all sources.
     # Put the highest in the variable highest_version
@@ -280,6 +327,8 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
         highest_version = version_cmake
     if compare_version(highest_version, version_c) < 0:
         highest_version = version_c
+    if compare_version(highest_version, version_spec_in) < 0:
+        highest_version = version_spec_in
 
     # Update files with a lower version.
     is_updated = False
@@ -301,6 +350,12 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
         set_version_string_cmake(root_dir, highest_version)
         is_updated = True
 
+    compare_result: int = compare_version(highest_version, version_spec_in)
+    if compare_result > 0:
+        print(f"Updating ta-lib.spec.in to [{highest_version}]")
+        set_version_string_spec_in(root_dir, highest_version)
+        is_updated = True
+
     return is_updated, version_c
 
 def check_versions(root_dir: str) -> str:
@@ -308,6 +363,7 @@ def check_versions(root_dir: str) -> str:
     version_file = get_version_string(root_dir)
     version_c = get_version_string_source_code(root_dir)
     version_cmake = get_version_string_cmake(root_dir)
+    version_spec_in = get_version_string_spec_in(root_dir)
 
     if version_file != version_c:
         print(f"Error: VERSION [{version_file}] does not match ta_version.c [{version_c}]")
@@ -315,6 +371,10 @@ def check_versions(root_dir: str) -> str:
 
     if version_file != version_cmake:
         print(f"Error: VERSION [{version_file}] does not match CMakeLists.txt [{version_cmake}]")
+        return None
+
+    if version_file != version_spec_in:
+        print(f"Error: VERSION [{version_file}] does not match ta-lib.spec.in [{version_spec_in}]")
         return None
 
     return version_file
@@ -380,7 +440,7 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
         "configure.ac",
         "ta-lib.*.in",
         "cmake/*",
-        "include/ta_abstract.h",        
+        "include/ta_abstract.h",
         "include/ta_def.h",
         "include/ta_func.h",
         "include/ta_libc.h",
