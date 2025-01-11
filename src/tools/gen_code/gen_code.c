@@ -1810,33 +1810,33 @@ static void doForEachFunctionPhase2( const TA_FuncInfo *funcInfo,
       fprintf( gOutMSVCProjFile->file, "# End Source File\n" );
 
       /* Generate the functions declaration for the .NET interface. */
-      printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0 );
+      printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 );
 
 	   fprintf( gOutDotNet_H->file, "         #if defined( _MANAGED ) && defined( USE_SUBARRAY )\n" );
 
 	   // SubArray<double> declaration
-	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0 );
+	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0 );
 	   fprintf( gOutDotNet_H->file, "\n" );
 
 	   // SubArray<float> declaration
-	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0 );
+	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0 );
 	   fprintf( gOutDotNet_H->file, "\n" );
 
 	   // cli_array<double> to SubArray<double> conversion
-	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
+	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0 );
 	   fprintf( gOutDotNet_H->file, "         { return " );
-	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1 );
+	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0 );
 	   fprintf( gOutDotNet_H->file, "         }\n" );
 
 	   // cli_array<float> to SubArray<float> conversion
-	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0 );
+	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0 );
 	   fprintf( gOutDotNet_H->file, "         { return " );
-	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1 );
+	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0 );
 	   fprintf( gOutDotNet_H->file, "         }\n" );
 
 	   fprintf( gOutDotNet_H->file, "         #elif defined( _MANAGED )\n" );
-	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 );
-	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0 );
+	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0 );
+	   printFunc( gOutDotNet_H->file, NULL, funcInfo, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0 );
 	   fprintf( gOutDotNet_H->file, "         #endif\n" );
 
 	   fprintf( gOutDotNet_H->file, "\n" );
@@ -4848,7 +4848,7 @@ void create_dir_recursively(const char *path) {
         if (*p == PATH_SEPARATOR[0]) {
             *p = '\0';
             #if defined(_WIN32) || defined(_WIN64)
-               _mkdir(temp);
+               _mkdir(buffer);
             #else
                mkdir(buffer, S_IRWXU);
             #endif
@@ -4856,7 +4856,7 @@ void create_dir_recursively(const char *path) {
         }
     }
    #if defined(_WIN32) || defined(_WIN64)
-     _mkdir(temp);
+     _mkdir(buffer);
    #else
      mkdir(buffer, S_IRWXU);
    #endif
