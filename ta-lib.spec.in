@@ -13,7 +13,7 @@
 #  012908 JS     Enhancement + add x86_64 support
 #  011024 MF     Change source to Github, add URL
 
-%define ta_ver 0.6.3
+%define ta_ver 0.6.4
 
 Summary: Technical Analysis Library
 Name: ta-lib
