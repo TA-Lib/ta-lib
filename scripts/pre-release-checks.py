@@ -4,6 +4,11 @@
 #  - Detect VERSION inconsistenties among the files.
 #  - Detect if some release candidate assets are missing in dist/
 #  - Detect if a top entry for VERSION is missing in CHANGELOG.md
+#  - Verify the top entry in CHANGELOG.md has a valid YYYY-MM-DD date within
+#    one day of wallclock.
+#  - Verify that all dist/digests files match the current source digests. This
+#    is to ensure that various packagings and tests were all performed with the
+#    current source code.
 #
 # If no problem are found, the script will create a temp/DRAFT_RELEASE_NOTES.md
 # which is intended for the CI when creating the initial draft release.
@@ -18,6 +23,7 @@ import re
 from utilities.files import path_join
 from utilities.common import get_release_assets, verify_git_repo
 from utilities.versions import check_sources_digest, check_versions
+from datetime import datetime
 
 if __name__ == "__main__":
 
@@ -47,9 +53,31 @@ if __name__ == "__main__":
         print("Did you forget to wait for all release candidates assets be auto-generated in the dev branch?")
         exit(1)
 
-    # Verify CHANGELOG.md exists and there is an entry for version.
-    # At same accumulates all lines until end of top entry for latest version.
+    # Verify that the directory dist/digests already exists and contains at least one file per package
+    # in dist/. The digest filename is <package_filename>.digest.
+    #
+    # Example: for dist/ta-lib-0.4.0.tar.gz, the source digest is dist/digests/ta-lib-0.4.0.tar.gz.digest
+    dist_dir = path_join(root_dir, 'dist')
+    digests_dir = path_join(dist_dir, 'digests')
+    if not os.path.exists(digests_dir):
+        print(f"Error: Missing {digests_dir} directory.")
+        exit(1)
+    # Iterate all files in dist/ and check if a digest exists for each.
+    for asset in os.listdir(dist_dir):
+        if os.path.isdir(path_join(dist_dir, asset)):
+            continue
+        digest_file = path_join(digests_dir, f"{asset}.digest")
+        if not os.path.exists(digest_file):
+            print(f"Error: Missing file [{asset}.digest]. Did you forget some re-build and/or tests steps?")
+            exit(1)
+        # Verify the digest file is for the current source code.
+        with open(digest_file, 'r') as f:
+            digest = f.read().strip()
+            if digest != sources_digest:
+                print(f"Error: Digest mismatch for [{asset}.digest]. Did you forget some re-build and/or tests steps?");
+                exit(1)
 
+    # Verify CHANGELOG.md exists and there is a top entry matching the VERSION file.
     changelog_path = path_join(root_dir, 'CHANGELOG.md')
     version_pattern = re.compile(r'##\s+\[\d+\.\d+\.\d+\].*')
     top_version_found = False
@@ -66,6 +94,21 @@ if __name__ == "__main__":
                         print("Did you forget to update CHANGELOG.md?")
                         exit(1)
                     top_version_found = True
+                    # Extract the YYYY-MM-DD part of the pattern.
+                    date = line.split(']')[1].strip()
+                    if not re.match(r'\d{4}-\d{2}-\d{2}', date):
+                        print(f"Error: Invalid date found in top entry of CHANGELOG.md: {date}")
+                        exit(1)
+                    # Verify date is within one day of wallclock.
+                    # This is to ensure the release notes are up-to-date.
+                    # We allow a small margin of error to account for timezone differences.
+                    today = datetime.today().strftime('%Y-%m-%d')
+                    if date != today:
+                        print(f"Error: Invalid date found in top entry of CHANGELOG.md: {date}")
+                        print(f"Expected date to be within one day from: {today}")
+                        exit(1)
+                    print(f"Found valid CHANGELOG.md entry: [{version}] {date}")
+
                 else:
                     break
             # Skip from writing the header lines "## Changelog" in the release notes.

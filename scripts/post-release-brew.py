@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
-# Updates the brew formula to matche the latest release assets.
-# (done with a PR to the homebrew-core repository)
+# Normally, homebrew detects TA-Lib releases and creates a PR without intervention.
 #
-# Brew updates are CI automated, therefore this script should be
-# called only by Github actions.
+# This script is for when manual intervention is needed.
 #
 import argparse
 from dataclasses import dataclass
@@ -131,6 +129,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Post-release brew formula update')
     parser.add_argument('--token', help='GitHub token for authentication', required=False)
     args = parser.parse_args()
+
+    if os.getenv('GITHUB_ACTIONS') == 'true':
+        print("This script should not be called from a GitHub Action. It should be run manually/locally")
+        sys.exit(1)
+
+    print("Normally, homebrew autmatically detects TA-Lib releases and creates a PR without intervention.")
+    print("Please verify first if a PR is already pending https://github.com/Homebrew/brew/pulls")
+    print("This script is for manual intervention only if somehow the automatic PR was not created.\n")
+    confirm = input("Are you sure you want to run this script? (yes/NO): ")
+    if confirm.lower() != 'yes':
+        print("Operation cancelled by the user.")
+        sys.exit(0)
 
     if not is_brew_installed():
         print("Error: Brew needs to be installed and be on the PATH")

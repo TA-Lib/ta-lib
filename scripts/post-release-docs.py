@@ -56,7 +56,7 @@ if __name__ == "__main__":
     if args.token:
         print("Using GitHub token for authentication")
 
-    # Will exit if run from a fork.
+    # if run from a fork, will exit with a message, but not an error.
     root_dir = verify_git_repo_original()
 
     try:

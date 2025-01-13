@@ -362,8 +362,18 @@ def verify_git_repo_original() -> str:
         print("Error: Could not determine the remote URL of the repository.")
         sys.exit(1)
 
-    print("This script performs no operation when run from a fork")
+    print("Warning: some processing were skipped because running from a fork")
     sys.exit(0)
+
+def get_git_user_name() -> str:
+    try:
+        result = subprocess.run(['git', 'config', 'user.name'], capture_output=True, text=True, check=True)
+        user_name = result.stdout.strip()
+        if not user_name:
+            user_name = "local"
+        return user_name
+    except subprocess.CalledProcessError as e:
+        return "local"
 
 def are_generated_files_git_changed(root_dir: str) -> bool:
     # Using git, verify if any of the generated files have changed.
