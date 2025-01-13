@@ -44,7 +44,7 @@ import shutil
 from utilities.package_digest import PackageDigest
 from utilities.windows import call_vcvarsall
 from utilities.versions import sync_sources_digest, sync_versions
-from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_git_user_name, get_src_generated_files, is_arm64_toolchain_installed, is_cmake_installed, is_debian_based, is_dotnet_installed, is_i386_toolchain_installed, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, is_x86_64_toolchain_installed, run_command, run_command_term, verify_git_repo, run_command_sudo
+from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_git_bot_user_name, get_git_user_name, get_src_generated_files, is_arm64_toolchain_installed, is_cmake_installed, is_debian_based, is_dotnet_installed, is_i386_toolchain_installed, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, is_x86_64_toolchain_installed, run_command, run_command_term, verify_git_repo, run_command_sudo
 from utilities.files import compare_msi_files, compare_tar_gz_files, compare_zip_files, create_rtf_from_txt, create_zip_file, compare_deb_files, force_delete, force_delete_glob, path_join
 
 def delete_other_versions(target_dir: str, file_pattern: str, new_version: str ):
@@ -388,7 +388,10 @@ def is_build_skipping_allowed(root_dir: str, asset_file_name: str, version: str,
                 print("Error: MD5 unexpectadly disabled for digest file.")
                 sys.exit(1)
             if local_asset_md5 == pdigest.package_md5 and pdigest.are_all_tests_passed():
-                # TODO Always rebuild when (GHA runner and not GHA builder) or nightly build.
+                if os.getenv('GITHUB_ACTIONS') == 'true' and pdigest.builder_id != get_git_bot_user_name():
+                    print(f"Info: {asset_file_name} from {pdigest.builder_id} will be rebuild by {get_git_bot_user_name()}")
+                    return False
+
                 print(f"Info: Allow skipping of already built and tested {asset_file_name}")
                 return True
     except Exception as e:

@@ -365,7 +365,13 @@ def verify_git_repo_original() -> str:
     print("Warning: some processing were skipped because running from a fork")
     sys.exit(0)
 
+def get_git_bot_user_name() -> str:
+    return "github-actions[bot]"
+
 def get_git_user_name() -> str:
+    if os.getenv('GITHUB_ACTIONS') == 'true':
+        return get_git_bot_user_name()
+
     try:
         result = subprocess.run(['git', 'config', 'user.name'], capture_output=True, text=True, check=True)
         user_name = result.stdout.strip()
