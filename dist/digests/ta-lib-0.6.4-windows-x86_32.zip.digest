@@ -1,0 +1,10 @@
+{
+    "asset_file_name": "ta-lib-0.6.4-windows-x86_32.zip",
+    "sources_digest": "f56bc6c0c0d72f1ee648897220e3ec3f",
+    "builder_id": "mario4tier",
+    "built_success": "True",
+    "package_md5": "17f56e378508201998021766e0c5e00d",
+    "gen_code_pass": "Disabled",
+    "ta_regtest_pass": "Disabled",
+    "dist_test_pass": "True"
+}

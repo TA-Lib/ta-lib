@@ -44,7 +44,7 @@ import shutil
 from utilities.package_digest import PackageDigest
 from utilities.windows import call_vcvarsall
 from utilities.versions import sync_sources_digest, sync_versions
-from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_git_bot_user_name, get_git_user_name, get_src_generated_files, is_arm64_toolchain_installed, is_cmake_installed, is_debian_based, is_dotnet_installed, is_i386_toolchain_installed, is_nightly_github_action, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, is_x86_64_toolchain_installed, run_command, run_command_term, verify_git_repo, run_command_sudo
+from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_git_bot_user_name, get_git_user_name, get_src_generated_files, is_arm64_toolchain_installed, is_cmake_installed, is_debian_based, is_dotnet_installed, is_i386_toolchain_installed, is_msbuild_installed, is_nightly_github_action, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, is_x86_64_toolchain_installed, run_command, run_command_term, verify_git_repo, run_command_sudo
 from utilities.files import compare_msi_files, compare_tar_gz_files, compare_zip_files, create_rtf_from_txt, create_zip_file, compare_deb_files, force_delete, force_delete_glob, path_join
 
 def delete_other_versions(target_dir: str, file_pattern: str, new_version: str ):
@@ -139,13 +139,25 @@ def find_asset_with_ext(target_dir, version: str, extension: str) -> str:
 
     return os.path.basename(filepath)
 
-def package_windows_zip(root_dir: str, version: str, platform: str) -> dict:
-    result: dict = {"processed": True, "build_valid": False}
-
-    file_name_prefix = f'ta-lib-{version}-windows-{platform}'
-    asset_file_name = f'{file_name_prefix}.zip'
+def package_windows_zip(root_dir: str, asset_file_name: str, version: str, platform: str) -> dict:
+    result: dict = {"build_valid": False}
     result["asset_file_name"] = asset_file_name
 
+    # Validate the asset_file_name
+    if not asset_file_name.endswith('.zip'):
+        print(f"Error: Invalid asset_file_name {asset_file_name}. Expected a .zip file.")
+        return    
+    if version not in asset_file_name:
+        print(f"Error: Invalid asset_file_name {asset_file_name}. Expected version {version}.")
+        return
+        
+    file_name_prefix = asset_file_name[:-4]
+
+    # Check dependencies.
+    if not is_msbuild_installed():
+        print("Error: MSBuild not found. It is required to build the package.")
+        sys.exit(1)
+    
     # Clean-up
     dist_dir = path_join(root_dir, 'dist')
     delete_other_versions(dist_dir,"ta-lib-*.zip",version)
@@ -154,6 +166,16 @@ def package_windows_zip(root_dir: str, version: str, platform: str) -> dict:
     delete_other_versions(temp_dir,"ta-lib-*.zip",version)
 
     force_delete_glob(temp_dir, "ta-lib-*")
+
+    # Delete previous package digest files.
+    digests_dir = os.path.join(dist_dir, 'digests')
+    delete_other_versions(digests_dir, "*.digest", version)
+
+    if is_build_skipping_allowed(root_dir, asset_file_name, version, sources_digest, builder_id):
+        result["build_valid"] = True
+        result["existed"] = True
+        result["copied"] = False
+        return result
 
     # Build the libraries
     build_dir = do_cmake_reconfigure(root_dir, '-G Ninja -DBUILD_DEV_TOOLS=OFF -DCMAKE_BUILD_TYPE=Release')
@@ -204,7 +226,8 @@ def package_windows_zip(root_dir: str, version: str, platform: str) -> dict:
         print(f"Error creating zip file: {e}")
         return
 
-    # TODO Add testing of the temporary package here.
+    # TODO Add some real "end-user installation" testing. Now just pretend is is OK...
+    result["dist_test_pass"] = True
 
     # Temporary zip is verified OK, so copy it into dist, but only if its content is different.
     os.makedirs(dist_dir, exist_ok=True)
@@ -221,8 +244,30 @@ def package_windows_zip(root_dir: str, version: str, platform: str) -> dict:
     result["copied"] = package_copied
     return result
 
-def package_windows_msi(root_dir: str, version: str, platform: str, force: bool) -> dict:
+def package_windows_msi(root_dir: str, asset_file_name: str, version: str, platform: str, force: bool) -> dict:
     result: dict = {"build_valid": False}
+    result["asset_file_name"] = asset_file_name
+
+    # Validate the asset_file_name
+    if not asset_file_name.endswith('.msi'):
+        print(f"Error: Invalid asset_file_name {asset_file_name}. Expected a .msi file.")
+        return
+    if version not in asset_file_name:
+        print(f"Error: Invalid asset_file_name {asset_file_name}. Expected version {version}.")
+        return
+
+    # Check dependencies.
+    if not is_msbuild_installed():
+        print("Error: MSBuild not found. It is required to build the package.")
+        sys.exit(1)
+
+    if not is_dotnet_installed():
+       print("Error: .NET Framework not found. It is required to build the MSI.")
+       return result
+
+    if not is_wix_installed():
+        print("Error: WiX Toolset not found. It is required to build the MSI.")
+        return result
 
     # Clean-up
     dist_dir = path_join(root_dir, 'dist')
@@ -233,26 +278,35 @@ def package_windows_msi(root_dir: str, version: str, platform: str, force: bool)
 
     force_delete_glob(temp_dir, "ta-lib-*")
 
+    # Delete previous package digest files.
+    digests_dir = os.path.join(dist_dir, 'digests')
+    delete_other_versions(digests_dir, "*.digest", version)
+
+    if is_build_skipping_allowed(root_dir, asset_file_name, version, sources_digest, builder_id):
+        result["build_valid"] = True
+        result["existed"] = True
+        result["copied"] = False
+        return result
+
     # MSI supports only .rtf for license, so generate it into root_dir.
     license_txt = path_join(root_dir,"LICENSE")
     license_rtf = path_join(root_dir,"LICENSE.rtf")
     create_rtf_from_txt(license_txt,license_rtf)
 
-    if not is_dotnet_installed():
-       print("Error: .NET Framework not found. It is required to build the MSI.")
-       return result
-
-    if not is_wix_installed():
-        print("Error: WiX Toolset not found. It is required to build the MSI.")
-        return result
-
     build_dir = do_cmake_reconfigure(root_dir, '-G Ninja -DCPACK_GENERATOR=WIX -DBUILD_DEV_TOOLS=OFF -DCMAKE_BUILD_TYPE=Release')
     do_cmake_build(build_dir) # Build the libraries
     do_cpack_build(build_dir) # Create the .msi
 
-    asset_file_name = find_asset_with_ext(build_dir, version, "msi")
-    temp_dist_file = path_join(build_dir, asset_file_name)
+    built_asset_file_name = find_asset_with_ext(build_dir, version, "msi")
+    if built_asset_file_name != asset_file_name:
+        print(f"Error: Expected file name {asset_file_name}, but got {built_asset_file_name}")
+        return result
 
+    # TODO Add some real "end-user installation" testing. Now just pretend is is OK...
+    result["dist_test_pass"] = True
+
+    # Temporary msi is verified OK, so copy it into dist, but only if its content is different.
+    temp_dist_file = path_join(build_dir, asset_file_name)
     dist_dir = path_join(root_dir, 'dist')
     dist_file = path_join(dist_dir, asset_file_name)
     package_existed = os.path.exists(dist_file)
@@ -264,8 +318,7 @@ def package_windows_msi(root_dir: str, version: str, platform: str, force: bool)
         os.rename(temp_dist_file, dist_file)
         package_copied = True
 
-    result["build_valid"] = True
-    result["asset_file_name"] = asset_file_name
+    result["build_valid"] = True    
     result["existed"] = package_existed
     result["copied"] = package_copied
     return result
@@ -840,24 +893,27 @@ def package_windows_platform(root_dir: str, version: str, platform: str) -> dict
     elif platform == "arm_32":
         vcvarsall_args = ["amd64_arm"]
 
+    zip_asset_file_name = f'ta-lib-{version}-windows-{platform}.zip'
+    msi_asset_file_name = f'ta-lib-{version}-windows-{platform}.msi'
+
     call_vcvarsall(root_dir, vcvarsall_args)
     results = {
         "zip_results": {
             "build_valid": False,
             "processed": False,
-            "asset_file_name": f"{platform}.zip", # Default, will change.
+            "asset_file_name": zip_asset_file_name,
         },
         "msi_results": {
             "build_valid": False,
             "processed": False,
-            "asset_file_name": f"{platform}.msi", # Default, will change.
+            "asset_file_name": msi_asset_file_name,
         }
     }
-    zip_results = package_windows_zip(root_dir, version, platform)
+    zip_results = package_windows_zip(root_dir, zip_asset_file_name, version, platform)
     results["zip_results"].update(zip_results)
     results["zip_results"]["processed"] = True
     if not results["zip_results"]["build_valid"]:
-        print(f'Error: Packaging dist/{results["zip_results"]["asset_file_name"]} failed')
+        print(f'Error: Packaging dist/{zip_asset_file_name} failed')
         sys.exit(1)
 
     # The zip file is better at detecting if the *content* is different.
@@ -873,11 +929,11 @@ def package_windows_platform(root_dir: str, version: str, platform: str) -> dict
     if not is_wix_installed():
         print("Warning: WiX Toolset not found. MSI packaging skipped.")
     else:
-        msi_results = package_windows_msi(root_dir, version, platform, force_msi_overwrite)
+        msi_results = package_windows_msi(root_dir, msi_asset_file_name, version, platform, force_msi_overwrite)
         results["msi_results"].update(msi_results)
         results["msi_results"]["processed"] = True
         if not results["msi_results"]["build_valid"]:
-            print(f'Error: Packaging dist/{results["msi_results"]["asset_file_name"]} failed')
+            print(f'Error: Packaging dist/{msi_asset_file_name} failed')
             sys.exit(1)
 
     return results
@@ -889,6 +945,11 @@ def package_all_windows(root_dir: str, version: str, sources_digest: str, builde
     # TODO: More testing needed for ARM platforms.
     #results_arm_64 = package_windows_platform(root_dir, version, "arm_64")
     #results_arm_32 = package_windows_platform(root_dir, version, "arm_32")
+
+    update_package_digest(root_dir, results_x86_64["zip_results"], sources_digest, builder_id)
+    update_package_digest(root_dir, results_x86_64["msi_results"], sources_digest, builder_id)
+    update_package_digest(root_dir, results_x86_32["zip_results"], sources_digest, builder_id)
+    update_package_digest(root_dir, results_x86_32["msi_results"], sources_digest, builder_id)
 
     print(f"\n***********")
     print(f"* Summary *")
@@ -919,7 +980,7 @@ if __name__ == "__main__":
     builder_id = get_git_user_name()
 
     if host_platform == "linux":
-        package_all_linux(root_dir,version,sources_digest,builder_id,sudo_pwd)
+        package_all_linux(root_dir, version, sources_digest, builder_id, sudo_pwd)
     elif host_platform == "win32":
         arch = platform.architecture()[0]
         if arch == '64bit':

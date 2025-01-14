@@ -81,9 +81,13 @@ def is_wix_installed() -> bool:
         return False
 
 def is_msbuild_installed() -> bool:
-    if sys.platform == 'Windows':
+    if sys.platform == "win32":
         try:
-            result = subprocess.run(['vswhere', '-latest', '-products', '*', '-requires', 'Microsoft.Component.MSBuild', '-find', 'MSBuild\\**\\Bin\\MSBuild.exe'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            vswhere_path = r"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+            if not os.path.exists(vswhere_path):
+                return False                
+
+            result = subprocess.run([vswhere_path, '-latest', '-products', '*', '-requires', 'Microsoft.Component.MSBuild', '-find', 'MSBuild\\**\\Bin\\MSBuild.exe'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             msbuild_path = result.stdout.decode().strip()
             if msbuild_path:
                 subprocess.run([msbuild_path, '-version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
