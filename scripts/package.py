@@ -139,25 +139,25 @@ def find_asset_with_ext(target_dir, version: str, extension: str) -> str:
 
     return os.path.basename(filepath)
 
-def package_windows_zip(root_dir: str, asset_file_name: str, version: str, platform: str) -> dict:
+def package_windows_zip(root_dir: str, asset_file_name: str, version: str, sources_digest: str, builder_id: str, platform: str) -> dict:
     result: dict = {"build_valid": False}
     result["asset_file_name"] = asset_file_name
 
     # Validate the asset_file_name
     if not asset_file_name.endswith('.zip'):
         print(f"Error: Invalid asset_file_name {asset_file_name}. Expected a .zip file.")
-        return    
+        return
     if version not in asset_file_name:
         print(f"Error: Invalid asset_file_name {asset_file_name}. Expected version {version}.")
         return
-        
+
     file_name_prefix = asset_file_name[:-4]
 
     # Check dependencies.
     if not is_msbuild_installed():
         print("Error: MSBuild not found. It is required to build the package.")
         sys.exit(1)
-    
+
     # Clean-up
     dist_dir = path_join(root_dir, 'dist')
     delete_other_versions(dist_dir,"ta-lib-*.zip",version)
@@ -244,7 +244,7 @@ def package_windows_zip(root_dir: str, asset_file_name: str, version: str, platf
     result["copied"] = package_copied
     return result
 
-def package_windows_msi(root_dir: str, asset_file_name: str, version: str, platform: str, force_build: bool) -> dict:
+def package_windows_msi(root_dir: str, asset_file_name: str, version: str, platform: str, sources_digest: str, builder_id: str, force_build: bool) -> dict:
     result: dict = {"build_valid": False}
     result["asset_file_name"] = asset_file_name
 
@@ -318,12 +318,12 @@ def package_windows_msi(root_dir: str, asset_file_name: str, version: str, platf
         os.rename(temp_dist_file, dist_file)
         package_copied = True
 
-    result["build_valid"] = True    
+    result["build_valid"] = True
     result["existed"] = package_existed
     result["copied"] = package_copied
     return result
 
-def package_deb(root_dir: str, asset_file_name: str, version: str, sudo_pwd: str, toolchain: str, force_build: bool) -> dict:
+def package_deb(root_dir: str, asset_file_name: str, version: str, sources_digest: str, builder_id: str, sudo_pwd: str, toolchain: str, force_build: bool) -> dict:
     # Create .deb packaging to be installed with apt or dpkg (Debian-based systems).
     #
     # TA-Lib will install under '/usr/lib' and '/usr/include/ta-lib'.
@@ -815,7 +815,7 @@ def package_all_linux(root_dir: str, version: str, sources_digest: str, builder_
     if is_debian_based():
         if is_arm64_toolchain_installed():
             asset_file_name = deb_results_arm64["asset_file_name"]
-            results = package_deb(root_dir, asset_file_name, version, sudo_pwd, "toolchain-linux-arm64.cmake", force_build)
+            results = package_deb(root_dir, asset_file_name, version, sources_digest, builder_id, sudo_pwd, "toolchain-linux-arm64.cmake", force_build)
             deb_results_arm64.update(results)
             deb_results_arm64["processed"] = True
             if not deb_results_arm64.get("build_valid",False):
@@ -823,7 +823,7 @@ def package_all_linux(root_dir: str, version: str, sources_digest: str, builder_
                 sys.exit(1)
         if is_x86_64_toolchain_installed():
             asset_file_name = deb_results_amd64["asset_file_name"]
-            results = package_deb(root_dir, asset_file_name, version, sudo_pwd, "toolchain-linux-x86_64.cmake", force_build)
+            results = package_deb(root_dir, asset_file_name, version, sources_digest, builder_id, sudo_pwd, "toolchain-linux-x86_64.cmake", force_build)
             deb_results_amd64.update(results)
             deb_results_amd64["processed"] = True
             if not deb_results_amd64.get("build_valid",False):
@@ -831,7 +831,7 @@ def package_all_linux(root_dir: str, version: str, sources_digest: str, builder_
                 sys.exit(1)
         if is_i386_toolchain_installed():
             asset_file_name = deb_results_i386["asset_file_name"]
-            results = package_deb(root_dir, asset_file_name, version, sudo_pwd, "toolchain-linux-i386.cmake", force_build)
+            results = package_deb(root_dir, asset_file_name, version, sources_digest, builder_id, sudo_pwd, "toolchain-linux-i386.cmake", force_build)
             deb_results_i386.update(results)
             deb_results_i386["processed"] = True
             if not deb_results_i386.get("build_valid",False):
@@ -881,7 +881,7 @@ def package_all_linux(root_dir: str, version: str, sources_digest: str, builder_
 
     print(f"\nPackaging completed successfully.")
 
-def package_windows_platform(root_dir: str, version: str, platform: str) -> dict:
+def package_windows_platform(root_dir: str, version: str, sources_digest: str, builder_id: str, platform: str) -> dict:
 
     vcvarsall_args = []
     if platform == "x86_64":
@@ -909,7 +909,7 @@ def package_windows_platform(root_dir: str, version: str, platform: str) -> dict
             "asset_file_name": msi_asset_file_name,
         }
     }
-    zip_results = package_windows_zip(root_dir, zip_asset_file_name, version, platform)
+    zip_results = package_windows_zip(root_dir, zip_asset_file_name, version, sources_digest, builder_id, platform)
     results["zip_results"].update(zip_results)
     results["zip_results"]["processed"] = True
     if not results["zip_results"]["build_valid"]:
@@ -929,7 +929,7 @@ def package_windows_platform(root_dir: str, version: str, platform: str) -> dict
     if not is_wix_installed():
         print("Warning: WiX Toolset not found. MSI packaging skipped.")
     else:
-        msi_results = package_windows_msi(root_dir, msi_asset_file_name, version, platform, force_build)
+        msi_results = package_windows_msi(root_dir, msi_asset_file_name, version, sources_digest, builder_id, platform, force_build)
         results["msi_results"].update(msi_results)
         results["msi_results"]["processed"] = True
         if not results["msi_results"]["build_valid"]:
@@ -939,8 +939,8 @@ def package_windows_platform(root_dir: str, version: str, platform: str) -> dict
     return results
 
 def package_all_windows(root_dir: str, version: str, sources_digest: str, builder_id: str):
-    results_x86_64 = package_windows_platform(root_dir, version, "x86_64")
-    results_x86_32 = package_windows_platform(root_dir, version, "x86_32")
+    results_x86_64 = package_windows_platform(root_dir, version, sources_digest, builder_id, "x86_64")
+    results_x86_32 = package_windows_platform(root_dir, version, sources_digest, builder_id, "x86_32")
 
     # TODO: More testing needed for ARM platforms.
     #results_arm_64 = package_windows_platform(root_dir, version, "arm_64")
