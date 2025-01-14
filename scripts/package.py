@@ -139,7 +139,7 @@ def find_asset_with_ext(target_dir, version: str, extension: str) -> str:
 
     return os.path.basename(filepath)
 
-def package_windows_zip(root_dir: str, asset_file_name: str, version: str, sources_digest: str, builder_id: str, platform: str) -> dict:
+def package_windows_zip(root_dir: str, asset_file_name: str, version: str, sources_digest: str, builder_id: str) -> dict:
     result: dict = {"build_valid": False}
     result["asset_file_name"] = asset_file_name
 
@@ -244,7 +244,7 @@ def package_windows_zip(root_dir: str, asset_file_name: str, version: str, sourc
     result["copied"] = package_copied
     return result
 
-def package_windows_msi(root_dir: str, asset_file_name: str, version: str, platform: str, sources_digest: str, builder_id: str, force_build: bool) -> dict:
+def package_windows_msi(root_dir: str, asset_file_name: str, version: str, sources_digest: str, builder_id: str, force_build: bool) -> dict:
     result: dict = {"build_valid": False}
     result["asset_file_name"] = asset_file_name
 
@@ -909,7 +909,7 @@ def package_windows_platform(root_dir: str, version: str, sources_digest: str, b
             "asset_file_name": msi_asset_file_name,
         }
     }
-    zip_results = package_windows_zip(root_dir, zip_asset_file_name, version, sources_digest, builder_id, platform)
+    zip_results = package_windows_zip(root_dir, zip_asset_file_name, version, sources_digest, builder_id)
     results["zip_results"].update(zip_results)
     results["zip_results"]["processed"] = True
     if not results["zip_results"]["build_valid"]:
@@ -929,7 +929,7 @@ def package_windows_platform(root_dir: str, version: str, sources_digest: str, b
     if not is_wix_installed():
         print("Warning: WiX Toolset not found. MSI packaging skipped.")
     else:
-        msi_results = package_windows_msi(root_dir, msi_asset_file_name, version, sources_digest, builder_id, platform, force_build)
+        msi_results = package_windows_msi(root_dir, msi_asset_file_name, version, sources_digest, builder_id, force_build)
         results["msi_results"].update(msi_results)
         results["msi_results"]["processed"] = True
         if not results["msi_results"]["build_valid"]:
