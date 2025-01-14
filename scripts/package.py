@@ -244,7 +244,7 @@ def package_windows_zip(root_dir: str, asset_file_name: str, version: str, platf
     result["copied"] = package_copied
     return result
 
-def package_windows_msi(root_dir: str, asset_file_name: str, version: str, platform: str, force: bool) -> dict:
+def package_windows_msi(root_dir: str, asset_file_name: str, version: str, platform: str, force_build: bool) -> dict:
     result: dict = {"build_valid": False}
     result["asset_file_name"] = asset_file_name
 
@@ -282,7 +282,7 @@ def package_windows_msi(root_dir: str, asset_file_name: str, version: str, platf
     digests_dir = os.path.join(dist_dir, 'digests')
     delete_other_versions(digests_dir, "*.digest", version)
 
-    if is_build_skipping_allowed(root_dir, asset_file_name, version, sources_digest, builder_id):
+    if not force_build and is_build_skipping_allowed(root_dir, asset_file_name, version, sources_digest, builder_id):
         result["build_valid"] = True
         result["existed"] = True
         result["copied"] = False
@@ -311,7 +311,7 @@ def package_windows_msi(root_dir: str, asset_file_name: str, version: str, platf
     dist_file = path_join(dist_dir, asset_file_name)
     package_existed = os.path.exists(dist_file)
     package_copied = False
-    if force or not package_existed or not compare_msi_files(temp_dist_file, dist_file):
+    if force_build or not package_existed or not compare_msi_files(temp_dist_file, dist_file):
         os.makedirs(dist_dir, exist_ok=True)
         if os.path.exists(dist_file):
             os.remove(dist_file)
@@ -323,7 +323,7 @@ def package_windows_msi(root_dir: str, asset_file_name: str, version: str, platf
     result["copied"] = package_copied
     return result
 
-def package_deb(root_dir: str, asset_file_name: str, version: str, sudo_pwd: str, toolchain: str, force_overwrite: bool) -> dict:
+def package_deb(root_dir: str, asset_file_name: str, version: str, sudo_pwd: str, toolchain: str, force_build: bool) -> dict:
     # Create .deb packaging to be installed with apt or dpkg (Debian-based systems).
     #
     # TA-Lib will install under '/usr/lib' and '/usr/include/ta-lib'.
@@ -356,7 +356,7 @@ def package_deb(root_dir: str, asset_file_name: str, version: str, sudo_pwd: str
     digests_dir = os.path.join(dist_dir, 'digests')
     delete_other_versions(digests_dir, "*.digest", version)
 
-    if not force_overwrite and is_build_skipping_allowed(root_dir, asset_file_name, version, sources_digest, builder_id):
+    if not force_build and is_build_skipping_allowed(root_dir, asset_file_name, version, sources_digest, builder_id):
         result["build_valid"] = True
         result["existed"] = True
         result["copied"] = False
@@ -402,7 +402,7 @@ def package_deb(root_dir: str, asset_file_name: str, version: str, sudo_pwd: str
     dist_file = os.path.join(dist_dir, asset_file_name)
     package_existed = os.path.exists(dist_file)
     package_copied = False
-    if force_overwrite or not package_existed or not compare_deb_files(deb_file, dist_file):
+    if force_build or not package_existed or not compare_deb_files(deb_file, dist_file):
         os.makedirs(dist_dir, exist_ok=True)
         os.rename(deb_file, dist_file)
         package_copied = True
@@ -779,7 +779,7 @@ def package_all_linux(root_dir: str, version: str, sources_digest: str, builder_
         "asset_file_name": f"ta-lib-{version}-src.tar.gz"
     }
 
-    force_overwrite = False
+    force_build = False
     if is_ubuntu():
         asset_file_name = src_tar_gz_results["asset_file_name"]
         results = package_src_tar_gz(root_dir, asset_file_name, version, sources_digest, builder_id, sudo_pwd)
@@ -790,11 +790,11 @@ def package_all_linux(root_dir: str, version: str, sources_digest: str, builder_
             sys.exit(1)
         if src_tar_gz_results.get("copied", False):
             # The .tar.gz file is good at detecting if the *content* is different.
-            # If any changes are detected, it will force the creation and overwrite
+            # If any changes are detected, it will force the build
             # of all other packages.
             #
             # This is not necessary, just a nice-to-have "safety net".
-            force_overwrite = True
+            force_build = True
 
     # When supported by host, build DEB using CMakeLists.txt (CPack)
     deb_results_arm64 = {
@@ -815,7 +815,7 @@ def package_all_linux(root_dir: str, version: str, sources_digest: str, builder_
     if is_debian_based():
         if is_arm64_toolchain_installed():
             asset_file_name = deb_results_arm64["asset_file_name"]
-            results = package_deb(root_dir, asset_file_name, version, sudo_pwd, "toolchain-linux-arm64.cmake", force_overwrite)
+            results = package_deb(root_dir, asset_file_name, version, sudo_pwd, "toolchain-linux-arm64.cmake", force_build)
             deb_results_arm64.update(results)
             deb_results_arm64["processed"] = True
             if not deb_results_arm64.get("build_valid",False):
@@ -823,7 +823,7 @@ def package_all_linux(root_dir: str, version: str, sources_digest: str, builder_
                 sys.exit(1)
         if is_x86_64_toolchain_installed():
             asset_file_name = deb_results_amd64["asset_file_name"]
-            results = package_deb(root_dir, asset_file_name, version, sudo_pwd, "toolchain-linux-x86_64.cmake", force_overwrite)
+            results = package_deb(root_dir, asset_file_name, version, sudo_pwd, "toolchain-linux-x86_64.cmake", force_build)
             deb_results_amd64.update(results)
             deb_results_amd64["processed"] = True
             if not deb_results_amd64.get("build_valid",False):
@@ -831,7 +831,7 @@ def package_all_linux(root_dir: str, version: str, sources_digest: str, builder_
                 sys.exit(1)
         if is_i386_toolchain_installed():
             asset_file_name = deb_results_i386["asset_file_name"]
-            results = package_deb(root_dir, asset_file_name, version, sudo_pwd, "toolchain-linux-i386.cmake", force_overwrite)
+            results = package_deb(root_dir, asset_file_name, version, sudo_pwd, "toolchain-linux-i386.cmake", force_build)
             deb_results_i386.update(results)
             deb_results_i386["processed"] = True
             if not deb_results_i386.get("build_valid",False):
@@ -917,11 +917,11 @@ def package_windows_platform(root_dir: str, version: str, platform: str) -> dict
         sys.exit(1)
 
     # The zip file is better at detecting if the *content* is different.
-    # If any changes are detected, it will force the creation and overwrite
+    # If any changes are detected, it will force the build
     # of the .msi file in dist.
-    force_msi_overwrite = False
+    force_build = False
     if results["zip_results"]["processed"] and results["zip_results"]["copied"]:
-        force_msi_overwrite = True
+        force_build = True
 
     # For now, skip the .msi file creation if wix is not installed.
 
@@ -929,7 +929,7 @@ def package_windows_platform(root_dir: str, version: str, platform: str) -> dict
     if not is_wix_installed():
         print("Warning: WiX Toolset not found. MSI packaging skipped.")
     else:
-        msi_results = package_windows_msi(root_dir, msi_asset_file_name, version, platform, force_msi_overwrite)
+        msi_results = package_windows_msi(root_dir, msi_asset_file_name, version, platform, force_build)
         results["msi_results"].update(msi_results)
         results["msi_results"]["processed"] = True
         if not results["msi_results"]["build_valid"]:
