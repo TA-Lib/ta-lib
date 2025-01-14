@@ -1,5 +1,6 @@
 import filecmp
 import glob
+import json
 import os
 import re
 import shutil
@@ -380,6 +381,27 @@ def get_git_user_name() -> str:
         return user_name
     except subprocess.CalledProcessError as e:
         return "local"
+
+def is_nightly_github_action() -> bool:
+    if os.getenv('GITHUB_ACTIONS') != 'true':
+        return False
+
+    event_name = os.getenv('GITHUB_EVENT_NAME')
+    if event_name != 'schedule':
+        return False
+
+    event_path = os.getenv('GITHUB_EVENT_PATH')
+    if not event_path or not os.path.exists(event_path):
+        return False
+
+    with open(event_path, 'r') as f:
+        event_data = json.load(f)
+
+    # Check if the event was manually dispatched
+    if event_data.get('action') == 'workflow_dispatch':
+        return False
+
+    return True
 
 def are_generated_files_git_changed(root_dir: str) -> bool:
     # Using git, verify if any of the generated files have changed.
