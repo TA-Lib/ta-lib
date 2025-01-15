@@ -56,10 +56,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe > msbuild_path.txt
-          set /p MSBUILD_PATH=<msbuild_path.txt
-          set VCVARSALL=%MSBUILD_PATH%\..\..\..\..\VC\Auxiliary\Build\vcvarsall.bat
-          echo VCVARSALL=%VCVARSALL% >> %GITHUB_ENV%
+          :: call "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe > msbuild_path.txt
+          :: set /p MSBUILD_PATH=<msbuild_path.txt
+          :: set VCVARSALL=%MSBUILD_PATH%\..\..\..\..\VC\Auxiliary\Build\vcvarsall.bat
+          :: echo VCVARSALL=%VCVARSALL% >> %GITHUB_ENV%
           echo PYTHON=python >> %GITHUB_ENV%
 
       - name: Build dist assets (Windows x64)
@@ -68,7 +68,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: cmd
         run: |
-          call "%VCVARSALL%" x64
+          :: call "%VCVARSALL%" x64
           dotnet tool install --global wix
           set PATH=%PATH%;%USERPROFILE%\.dotnet\tools
           wix extension add --global WixToolset.UI.wixext

@@ -712,6 +712,13 @@ def update_package_digest(root_dir: str, results: dict, sources_digest: str, bui
                 print(f"Error: {asset_file_name} not successfully build.")
                 fatal_error = True
 
+
+    # If a github action, then reflect that the bot user did process that digest.
+    # The behavior is different for local devs for which we prefer to minimize rebuilds...
+    git_user_name = get_git_user_name()
+    if os.getenv('GITHUB_ACTIONS') == 'true':
+        pdigest.builder_id = git_user_name
+
     # Double check with some simple rules:
     #   - tests should never be "pass" if the build was not successful.
     #   - If a digest says the build was successful, then the md5 and sources_digest should always match.
@@ -741,7 +748,9 @@ def update_package_digest(root_dir: str, results: dict, sources_digest: str, bui
         pdigest.clear_tests()
 
     if pdigest != pdigest_copy:
-        print(f"Info: {asset_file_name} digest file updated.")
+        # Writing a change, and keep track of the user that made it.
+        pdigest.builder_id = git_user_name
+        print(f"Info: {asset_file_name} digest file updated by {git_user_name}")
         pdigest.write()
 
     if fatal_error:
