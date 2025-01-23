@@ -330,15 +330,17 @@ typedef struct {
 	FILE *out;
 	const char *prefix;
 	const TA_FuncInfo *funcInfo;
-	unsigned int lookbackSignature;
-	unsigned int validationCode;
-	unsigned int lookbackValidationCode;
 } PrintFuncParamStruct;
 
-static void printRustFunc(const PrintFuncParamStruct *printFuncParamStruct);
-static void printRustLookbackFunction(const PrintFuncParamStruct *printFuncParamStruct);
-static void printRustDoublePrecisionFunction(const PrintFuncParamStruct *printFuncParamStruct);
-static void printRustSinglePrecisionFunction(const PrintFuncParamStruct *printFuncParamStruct);
+static void printRustLookbackFunctionPrototype(FILE *out,
+                      const char *prefix, /* Can be NULL */
+                      const TA_FuncInfo *funcInfo);
+static void printRustDoublePrecisionFunctionPrototype(FILE *out,
+                      const char *prefix, /* Can be NULL */
+                      const TA_FuncInfo *funcInfo);
+static void printRustSinglePrecisionFunctionPrototype(FILE *out,
+                      const char *prefix, /* Can be NULL */
+                      const TA_FuncInfo *funcInfo);
 
 static void printFunc(FILE *out,
                       const char *prefix, /* Can be NULL */
@@ -2029,18 +2031,6 @@ static void printFunc(FILE *out,
 
    if (!out) return;
 
-   if (outputForRust) {
-	   PrintFuncParamStruct printFuncParamStruct = {
-		   out,
-		   prefix,
-		   funcInfo,
-		   lookbackSignature,
-		   validationCode,
-		   lookbackValidationCode
-	   };
-	   printRustFunc(&printFuncParamStruct);
-   }
-
    if( arrayToSubArrayCnvt )
    {
       inputIntArrayType     = "int";
@@ -3125,6 +3115,8 @@ static void doFuncFile( const TA_FuncInfo *funcInfo )
    printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0);
    print( gOutFunc_C->file, "#elif defined( _JAVA )\n" );
    printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0);
+   print( gOutFunc_C->file, "#elif defined( _RUST )\n" );
+   printRustSinglePrecisionFunctionPrototype(gOutFunc_C->file, NULL, funcInfo);
    print( gOutFunc_C->file, "#else\n" );
    printFunc( gOutFunc_C->file, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0);
    print( gOutFunc_C->file, "#endif\n" );
@@ -3408,6 +3400,8 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0);
    print( out, "#elif defined( _JAVA )\n" );
    printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0);
+   print( out, "#elif defined( _RUST )\n" );
+   printRustLookbackFunctionPrototype(out, NULL, funcInfo);
    print( out, "#else\n" );
    printFunc( out, "TA_LIB_API ", funcInfo, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
    print( out, "#endif\n" );
@@ -3446,6 +3440,8 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
    }
 
    printFunc( out, NULL, funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0);
+   print( out, "#elif defined( _RUST )\n" );
+   printRustDoublePrecisionFunctionPrototype(out, NULL, funcInfo);
    print( out, "#else\n" );
    printFunc( out, "TA_LIB_API ", funcInfo, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
    print( out, "#endif\n" );
@@ -3467,7 +3463,12 @@ static void writeFuncFile( const TA_FuncInfo *funcInfo )
     * Also generates the code for setting up the
     * default values.
     */
+   print( out, "#if defined( _RUST )\n" );
+   // printRustRangeCheckValidationCode();
+   print( out, "\n" );
+   print( out, "#else\n" );
    printFunc( out, NULL, funcInfo, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+   print( out, "#endif\n" );
 
    print( out, "#endif /* TA_FUNC_NO_RANGE_CHECK */\n" );
    print( out, "\n" );
@@ -3967,15 +3968,73 @@ const char *doubleToStr( double value )
    return gTempDoubleToStr;
 }
 
-static void printRustFunc(const PrintFuncParamStruct *printFuncParamStruct) {
-	// three functions: single-precision, double-precision, lookback
-	printRustSinglePrecisionFunction(printFuncParamStruct);
-	printRustDoublePrecisionFunction(printFuncParamStruct);
-	printRustLookbackFunction(printFuncParamStruct);
+static void printRustLookbackFunctionPrototype(FILE* out,
+                                               const char* prefix, /* Can be NULL */
+                                               const TA_FuncInfo* funcInfo)
+{
+   	unsigned int i;
+	#define FUNCNAME_SIZE 100
+	char funcName[FUNCNAME_SIZE];
+
+	memset(funcName, 0, FUNCNAME_SIZE);
+	if (strlen(funcInfo->name) > (FUNCNAME_SIZE - 1)) {
+		printf("\n*** Error buffer size exceeded (printRustLookbackFunctionPrototype)\n");
+		strcpy(funcName, "1A2"); /* Substitute name. Should cause compilation to fail */
+	} else {
+		if (funcInfo->camelCaseName == NULL) {
+			strcpy(funcName, funcInfo->name);
+			for (i = 0; funcName[i]; i++) {
+				funcName[i] = tolower(funcName[i]);
+			}
+		} else {
+			strcpy(funcName, funcInfo->camelCaseName);
+			funcName[0] = tolower(funcName[0]);
+		}
+	}
+
+
+   	// print lookback function header
+    sprintf( gTempBuf, "%sfn %sLookback( ",
+             prefix? prefix:"",
+             funcName );
+	// TODO: print input params
+	// TODO: print optional input params
+	// TODO: close function
+	// TODO: print return type
 }
 
-static void printRustLookbackFunction(const PrintFuncParamStruct *printFuncParamStruct) {
-	// TODO: open function
+static void printRustDoublePrecisionFunctionPrototype(FILE* out,
+                                               const char* prefix, /* Can be NULL */
+                                               const TA_FuncInfo* funcInfo) {
+   	unsigned int i;
+
+   #define FUNCNAME_SIZE 100
+   char funcName[FUNCNAME_SIZE];
+
+   memset(funcName, 0, FUNCNAME_SIZE);
+   if (strlen(funcInfo->name) > (FUNCNAME_SIZE - 1))
+   {
+      printf("\n*** Error buffer size exceeded (printRustDoublePrecisionFunction)\n");
+      strcpy(funcName, "1A2"); /* Substitute name. Should cause compilation to fail */
+   }
+   else
+   {
+      if (funcInfo->camelCaseName == NULL)
+      {
+         strcpy(funcName, funcInfo->name);
+         for (i=0; funcName[i]; i++) {
+            funcName[i] = tolower(funcName[i]);
+         }
+         } else {
+         strcpy(funcName, funcInfo->camelCaseName);
+            funcName[0] = tolower(funcName[0]);
+         }
+      }
+
+   	// print lookback function header
+    sprintf( gTempBuf, "%sfn %s( ",
+             prefix? prefix:"",
+             funcName );
 	// TODO: print input params
 	// TODO: print optional input params
 	// TODO: close function
@@ -3984,18 +4043,38 @@ static void printRustLookbackFunction(const PrintFuncParamStruct *printFuncParam
 	// TODO: handle abstract frame logic
 }
 
-static void printRustDoublePrecisionFunction(const PrintFuncParamStruct *printFuncParamStruct) {
-	// TODO: open function
-	// TODO: print input params
-	// TODO: print optional input params
-	// TODO: close function
-	// TODO: print return type
-	// TODO: handle validation logic
-	// TODO: handle abstract frame logic
-}
+	static void printRustSinglePrecisionFunctionPrototype(FILE* out,
+												   const char* prefix, /* Can be NULL */
+												   const TA_FuncInfo* funcInfo) {
+        unsigned int i;
 
-static void printRustSinglePrecisionFunction(const PrintFuncParamStruct *printFuncParamStruct) {
-	// TODO: open function
+	   #define FUNCNAME_SIZE 100
+	   char funcName[FUNCNAME_SIZE];
+
+		memset(funcName, 0, FUNCNAME_SIZE);
+		if (strlen(funcInfo->name) > (FUNCNAME_SIZE - 1))
+		{
+		   printf("\n*** Error buffer size exceeded (printRustSinglePrecisionFunction)\n");
+		   strcpy(funcName, "1A2"); /* Substitute name. Should cause compilation to fail */
+		}
+		else
+		{
+		   if (funcInfo->camelCaseName == NULL)
+		   {
+			  strcpy(funcName, funcInfo->name);
+			  for (i=0; funcName[i]; i++) {
+				 funcName[i] = tolower(funcName[i]);
+			  }
+			  } else {
+			  strcpy(funcName, funcInfo->camelCaseName);
+				 funcName[0] = tolower(funcName[0]);
+			  }
+		   }
+
+			// print lookback function header
+		 sprintf( gTempBuf, "%sfn %sS( ",
+				  prefix? prefix:"",
+				  funcName );
 	// TODO: print input params
 	// TODO: print optional input params
 	// TODO: close function
