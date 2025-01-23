@@ -3972,31 +3972,12 @@ static void printRustLookbackFunctionPrototype(FILE* out,
                                                const char* prefix, /* Can be NULL */
                                                const TA_FuncInfo* funcInfo)
 {
-   	unsigned int i;
-	#define FUNCNAME_SIZE 100
-	char funcName[FUNCNAME_SIZE];
-
-	memset(funcName, 0, FUNCNAME_SIZE);
-	if (strlen(funcInfo->name) > (FUNCNAME_SIZE - 1)) {
-		printf("\n*** Error buffer size exceeded (printRustLookbackFunctionPrototype)\n");
-		strcpy(funcName, "1A2"); /* Substitute name. Should cause compilation to fail */
-	} else {
-		if (funcInfo->camelCaseName == NULL) {
-			strcpy(funcName, funcInfo->name);
-			for (i = 0; funcName[i]; i++) {
-				funcName[i] = tolower(funcName[i]);
-			}
-		} else {
-			strcpy(funcName, funcInfo->camelCaseName);
-			funcName[0] = tolower(funcName[0]);
-		}
-	}
 
 
    	// print lookback function header
     sprintf( gTempBuf, "%sfn %sLookback( ",
              prefix? prefix:"",
-             funcName );
+             funcInfo->name );
 	// TODO: print input params
 	// TODO: print optional input params
 	// TODO: close function
@@ -4006,35 +3987,11 @@ static void printRustLookbackFunctionPrototype(FILE* out,
 static void printRustDoublePrecisionFunctionPrototype(FILE* out,
                                                const char* prefix, /* Can be NULL */
                                                const TA_FuncInfo* funcInfo) {
-   	unsigned int i;
-
-   #define FUNCNAME_SIZE 100
-   char funcName[FUNCNAME_SIZE];
-
-   memset(funcName, 0, FUNCNAME_SIZE);
-   if (strlen(funcInfo->name) > (FUNCNAME_SIZE - 1))
-   {
-      printf("\n*** Error buffer size exceeded (printRustDoublePrecisionFunction)\n");
-      strcpy(funcName, "1A2"); /* Substitute name. Should cause compilation to fail */
-   }
-   else
-   {
-      if (funcInfo->camelCaseName == NULL)
-      {
-         strcpy(funcName, funcInfo->name);
-         for (i=0; funcName[i]; i++) {
-            funcName[i] = tolower(funcName[i]);
-         }
-         } else {
-         strcpy(funcName, funcInfo->camelCaseName);
-            funcName[0] = tolower(funcName[0]);
-         }
-      }
 
    	// print lookback function header
     sprintf( gTempBuf, "%sfn %s( ",
              prefix? prefix:"",
-             funcName );
+             funcInfo->name );
 	// TODO: print input params
 	// TODO: print optional input params
 	// TODO: close function
@@ -4046,35 +4003,11 @@ static void printRustDoublePrecisionFunctionPrototype(FILE* out,
 	static void printRustSinglePrecisionFunctionPrototype(FILE* out,
 												   const char* prefix, /* Can be NULL */
 												   const TA_FuncInfo* funcInfo) {
-        unsigned int i;
-
-	   #define FUNCNAME_SIZE 100
-	   char funcName[FUNCNAME_SIZE];
-
-		memset(funcName, 0, FUNCNAME_SIZE);
-		if (strlen(funcInfo->name) > (FUNCNAME_SIZE - 1))
-		{
-		   printf("\n*** Error buffer size exceeded (printRustSinglePrecisionFunction)\n");
-		   strcpy(funcName, "1A2"); /* Substitute name. Should cause compilation to fail */
-		}
-		else
-		{
-		   if (funcInfo->camelCaseName == NULL)
-		   {
-			  strcpy(funcName, funcInfo->name);
-			  for (i=0; funcName[i]; i++) {
-				 funcName[i] = tolower(funcName[i]);
-			  }
-			  } else {
-			  strcpy(funcName, funcInfo->camelCaseName);
-				 funcName[0] = tolower(funcName[0]);
-			  }
-		   }
 
 			// print lookback function header
 		 sprintf( gTempBuf, "%sfn %sS( ",
 				  prefix? prefix:"",
-				  funcName );
+				  funcInfo->name );
 	// TODO: print input params
 	// TODO: print optional input params
 	// TODO: close function
