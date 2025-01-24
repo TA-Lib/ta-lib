@@ -3968,52 +3968,93 @@ const char *doubleToStr( double value )
    return gTempDoubleToStr;
 }
 
+
+static char* toLowerSnakeCase(const char* input, char* output)
+{
+	if (!input || !output)
+	{
+		return NULL;
+	}
+
+	const char* inPtr = input;
+	char* outPtr = output;
+
+	while (*inPtr != '\0')
+	{
+		if (isspace(*inPtr) || *inPtr == '-' || *inPtr == '.')
+		{
+			*outPtr++ = '_'; // Replace spaces, hyphens, and dots with underscores
+		}
+		else if (isupper(*inPtr))
+		{
+			*outPtr++ = (char)tolower(*inPtr); // Convert uppercase to lowercase
+		}
+		else
+		{
+			*outPtr++ = *inPtr; // Copy other characters as-is
+		}
+		inPtr++;
+	}
+
+	*outPtr = '\0'; // Null-terminate the output string
+	return output;
+}
+
 static void printRustLookbackFunctionPrototype(FILE* out,
                                                const char* prefix, /* Can be NULL */
                                                const TA_FuncInfo* funcInfo)
 {
-
+   char funcNameBuffer[1024]; /* Not safe, but 1024 is realistic, */
+   toLowerSnakeCase(funcInfo->name, funcNameBuffer);
 
    	// print lookback function header
-    sprintf( gTempBuf, "%sfn %sLookback( ",
+    sprintf( gTempBuf, "%sfn %s_lookback( ",
              prefix? prefix:"",
-             funcInfo->name );
+             funcNameBuffer);
 	// TODO: print input params
 	// TODO: print optional input params
 	// TODO: close function
 	// TODO: print return type
+   print( out, gTempBuf );
+   print( out, "\n" );
 }
 
 static void printRustDoublePrecisionFunctionPrototype(FILE* out,
                                                const char* prefix, /* Can be NULL */
                                                const TA_FuncInfo* funcInfo) {
+   char funcNameBuffer[1024]; /* Not safe, but 1024 is realistic, */
+   toLowerSnakeCase(funcInfo->name, funcNameBuffer);
 
    	// print lookback function header
     sprintf( gTempBuf, "%sfn %s( ",
              prefix? prefix:"",
-             funcInfo->name );
+             funcNameBuffer );
 	// TODO: print input params
 	// TODO: print optional input params
 	// TODO: close function
 	// TODO: print return type
-	// TODO: handle validation logic
-	// TODO: handle abstract frame logic
+   print( out, gTempBuf );
+   print( out, "\n" );
 }
 
 	static void printRustSinglePrecisionFunctionPrototype(FILE* out,
 												   const char* prefix, /* Can be NULL */
 												   const TA_FuncInfo* funcInfo) {
+   char funcNameBuffer[1024]; /* Not safe, but 1024 is realistic, */
+   toLowerSnakeCase(funcInfo->name, funcNameBuffer);
 
 			// print lookback function header
-		 sprintf( gTempBuf, "%sfn %sS( ",
+		 sprintf( gTempBuf, "%sfn %s_s( ",
 				  prefix? prefix:"",
-				  funcInfo->name );
+				  funcNameBuffer );
 	// TODO: print input params
 	// TODO: print optional input params
 	// TODO: close function
 	// TODO: print return type
 	// TODO: handle validation logic
 	// TODO: handle abstract frame logic
+   print( out, gTempBuf );
+   print( out, "\n" );
 }
 
 
