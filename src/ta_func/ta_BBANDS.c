@@ -93,6 +93,8 @@
 /* Generated */                          double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                          double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
 /* Generated */                          MAType        optInMAType ) /* Generated */ 
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn bbands_lookback( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_LIB_API int TA_BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
 /* Generated */                                             double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
@@ -202,6 +204,8 @@
 /* Generated */                        double        outRealUpperBand[],
 /* Generated */                        double        outRealMiddleBand[],
 /* Generated */                        double        outRealLowerBand[] )
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn bbands( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
 /* Generated */                                  int    endIdx,
@@ -235,6 +239,9 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
+/* Generated */ #if defined( _RUST )
+/* Generated */ 
+/* Generated */ #else
 /* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif /* !defined(_JAVA)*/
@@ -272,6 +279,7 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_JAVA) */
+/* Generated */ #endif
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -483,6 +491,8 @@
 /* Generated */                        double        outRealUpperBand[],
 /* Generated */                        double        outRealMiddleBand[],
 /* Generated */                        double        outRealLowerBand[] )
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn bbands_s( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_BBANDS( int    startIdx,
 /* Generated */                         int    endIdx,

@@ -92,6 +92,8 @@
 /* Generated */                        int           optInSlowPeriod, /* From 2 to 100000 */
 /* Generated */                        int           optInSignalPeriod )  /* From 1 to 100000 */
 /* Generated */ 
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn macd_lookback( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_LIB_API int TA_MACD_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
 /* Generated */                                           int           optInSlowPeriod, /* From 2 to 100000 */
@@ -207,6 +209,8 @@
 /* Generated */                      double        outMACD[],
 /* Generated */                      double        outMACDSignal[],
 /* Generated */                      double        outMACDHist[] )
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn macd( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
 /* Generated */                                int    endIdx,
@@ -234,6 +238,9 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
+/* Generated */ #if defined( _RUST )
+/* Generated */ 
+/* Generated */ #else
 /* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif /* !defined(_JAVA)*/
@@ -266,6 +273,7 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_JAVA) */
+/* Generated */ #endif
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -575,6 +583,8 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */                      double        outMACD[],
 /* Generated */                      double        outMACDSignal[],
 /* Generated */                      double        outMACDHist[] )
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn macd_s( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MACD( int    startIdx,
 /* Generated */                       int    endIdx,

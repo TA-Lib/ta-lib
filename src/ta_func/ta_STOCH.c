@@ -93,6 +93,8 @@
 /* Generated */                         MAType        optInSlowK_MAType,
 /* Generated */                         int           optInSlowD_Period, /* From 1 to 100000 */
 /* Generated */                         MAType        optInSlowD_MAType ) /* Generated */ 
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn stoch_lookback( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_LIB_API int TA_STOCH_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
 /* Generated */                                            int           optInSlowK_Period, /* From 1 to 100000 */
@@ -228,6 +230,8 @@
 /* Generated */                       MInteger     outNBElement,
 /* Generated */                       double        outSlowK[],
 /* Generated */                       double        outSlowD[] )
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn stoch( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
 /* Generated */                                 int    endIdx,
@@ -267,6 +271,9 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
+/* Generated */ #if defined( _RUST )
+/* Generated */ 
+/* Generated */ #else
 /* Generated */    #if !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inHigh||!inLow||!inClose)
@@ -313,6 +320,7 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_JAVA) */
+/* Generated */ #endif
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -614,6 +622,8 @@
 /* Generated */                       MInteger     outNBElement,
 /* Generated */                       double        outSlowK[],
 /* Generated */                       double        outSlowD[] )
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn stoch_s( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STOCH( int    startIdx,
 /* Generated */                        int    endIdx,

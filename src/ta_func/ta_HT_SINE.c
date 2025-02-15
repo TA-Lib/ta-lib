@@ -87,6 +87,8 @@
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public int htSineLookback(  )
 /* Generated */ 
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn ht_sine_lookback( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_LIB_API int TA_HT_SINE_Lookback( void )
 /* Generated */ 
@@ -145,6 +147,8 @@
 /* Generated */                        MInteger     outNBElement,
 /* Generated */                        double        outSine[],
 /* Generated */                        double        outLeadSine[] )
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn ht_sine( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_HT_SINE( int    startIdx,
 /* Generated */                                   int    endIdx,
@@ -210,6 +214,9 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
+/* Generated */ #if defined( _RUST )
+/* Generated */ 
+/* Generated */ #else
 /* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif /* !defined(_JAVA)*/
@@ -221,6 +228,7 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_JAVA) */
+/* Generated */ #endif
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -500,6 +508,8 @@
 /* Generated */                        MInteger     outNBElement,
 /* Generated */                        double        outSine[],
 /* Generated */                        double        outLeadSine[] )
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn ht_sine_s( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_SINE( int    startIdx,
 /* Generated */                          int    endIdx,

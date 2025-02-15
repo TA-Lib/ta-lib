@@ -87,6 +87,8 @@
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public int htTrendModeLookback(  )
 /* Generated */ 
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn ht_trendmode_lookback( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_LIB_API int TA_HT_TRENDMODE_Lookback( void )
 /* Generated */ 
@@ -142,6 +144,8 @@
 /* Generated */                             MInteger     outBegIdx,
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn ht_trendmode( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_HT_TRENDMODE( int    startIdx,
 /* Generated */                                        int    endIdx,
@@ -215,6 +219,9 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
+/* Generated */ #if defined( _RUST )
+/* Generated */ 
+/* Generated */ #else
 /* Generated */    #if !defined(_JAVA)
 /* Generated */    if( !inReal ) return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */    #endif /* !defined(_JAVA)*/
@@ -223,6 +230,7 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_JAVA) */
+/* Generated */ #endif
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -557,6 +565,8 @@
 /* Generated */                             MInteger     outBegIdx,
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn ht_trendmode_s( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
 /* Generated */                               int    endIdx,

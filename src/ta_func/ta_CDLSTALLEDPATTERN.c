@@ -86,6 +86,8 @@
 /* Generated */ #elif defined( _JAVA )
 /* Generated */ public int cdlStalledPatternLookback(  )
 /* Generated */ 
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn cdlstalledpattern_lookback( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_LIB_API int TA_CDLSTALLEDPATTERN_Lookback( void )
 /* Generated */ 
@@ -143,6 +145,8 @@
 /* Generated */                                   MInteger     outBegIdx,
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn cdlstalledpattern( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN( int    startIdx,
 /* Generated */                                             int    endIdx,
@@ -173,6 +177,9 @@
 /* Generated */    if( (endIdx < 0) || (endIdx < startIdx))
 /* Generated */       return ENUM_VALUE(RetCode,TA_OUT_OF_RANGE_END_INDEX,OutOfRangeEndIndex);
 /* Generated */ 
+/* Generated */ #if defined( _RUST )
+/* Generated */ 
+/* Generated */ #else
 /* Generated */    #if !defined(_JAVA)
 /* Generated */    /* Verify required price component. */
 /* Generated */    if(!inOpen||!inHigh||!inLow||!inClose)
@@ -184,6 +191,7 @@
 /* Generated */       return ENUM_VALUE(RetCode,TA_BAD_PARAM,BadParam);
 /* Generated */ 
 /* Generated */    #endif /* !defined(_JAVA) */
+/* Generated */ #endif
 /* Generated */ #endif /* TA_FUNC_NO_RANGE_CHECK */
 /* Generated */ 
 /**** END GENCODE SECTION 4 - DO NOT DELETE THIS LINE ****/
@@ -346,6 +354,8 @@
 /* Generated */                                   MInteger     outBegIdx,
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
+/* Generated */ #elif defined( _RUST )
+/* Generated */ fn cdlstalledpattern_s( /* Generated */ 
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLSTALLEDPATTERN( int    startIdx,
 /* Generated */                                    int    endIdx,
