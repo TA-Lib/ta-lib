@@ -39,17 +39,11 @@
  *  in ta-lib\src\ta_func
  */
 
-  int TA_MULT_Lookback( void )
+ fn mult_lookback(
 {
    return 0;
 }
-  TA_RetCode TA_MULT( int startIdx,
- int endIdx,
- const double inReal0[],
- const double inReal1[],
- int *outBegIdx,
- int *outNBElement,
- double outReal[] )
+ fn mult(
 {
    int outIdx;
    int i;
@@ -57,10 +51,6 @@
  return  RetCode.OutOfRangeStartIndex ;
  if( (endIdx < 0) || (endIdx < startIdx))
  return  RetCode.OutOfRangeEndIndex ;
- if( !inReal0 ) return  RetCode.BadParam ;
- if( !inReal1 ) return  RetCode.BadParam ;
- if( !outReal )
- return  RetCode.BadParam ;
    for( i=startIdx, outIdx=0; i <= endIdx; i++, outIdx++ )
    {
       outReal[outIdx] = inReal0[i]*inReal1[i];
@@ -69,13 +59,7 @@
    outBegIdx.value  = startIdx;
    return  RetCode.Success ;
 }
- TA_RetCode TA_S_MULT( int startIdx,
- int endIdx,
- const float inReal0[],
- const float inReal1[],
- int *outBegIdx,
- int *outNBElement,
- double outReal[] )
+ fn mult_s(
  {
  int outIdx;
  int i;
@@ -83,10 +67,6 @@
  return  RetCode.OutOfRangeStartIndex ;
  if( (endIdx < 0) || (endIdx < startIdx))
  return  RetCode.OutOfRangeEndIndex ;
- if( !inReal0 ) return  RetCode.BadParam ;
- if( !inReal1 ) return  RetCode.BadParam ;
- if( !outReal )
- return  RetCode.BadParam ;
  for( i=startIdx, outIdx=0; i <= endIdx; i++, outIdx++ )
  {
  outReal[outIdx] = inReal0[i]*inReal1[i];
