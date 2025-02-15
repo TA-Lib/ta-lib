@@ -67,10 +67,6 @@
  return  RetCode.OutOfRangeStartIndex ;
  if( (endIdx < 0) || (endIdx < startIdx))
  return  RetCode.OutOfRangeEndIndex ;
- if( !inReal0 ) return  RetCode.BadParam ;
- if( !inReal1 ) return  RetCode.BadParam ;
- if( !outReal )
- return  RetCode.BadParam ;
  for( i=startIdx, outIdx=0; i <= endIdx; i++, outIdx++ )
  {
  outReal[outIdx] = inReal0[i]*inReal1[i];
