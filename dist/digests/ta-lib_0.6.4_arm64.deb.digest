@@ -1,7 +1,7 @@
 {
     "asset_file_name": "ta-lib_0.6.4_arm64.deb",
     "sources_digest": "92498fa2d79c0144fb9c5449b4269756",
-    "builder_id": "mario4tier",
+    "builder_id": "github-actions[bot]",
     "built_success": "True",
     "package_md5": "3a64d272206a88671acd7ef4eea9bf63",
     "gen_code_pass": "Disabled",
