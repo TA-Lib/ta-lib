@@ -1,9 +1,9 @@
 {
     "asset_file_name": "ta-lib_0.6.4_i386.deb",
-    "sources_digest": "762fa48a105ad8149fdfd93b032a5c0d",
-    "builder_id": "github-actions[bot]",
+    "sources_digest": "92498fa2d79c0144fb9c5449b4269756",
+    "builder_id": "mario4tier",
     "built_success": "True",
-    "package_md5": "8f607bcee897bfcc32824dcdb0e3e40e",
+    "package_md5": "954b869b9d222fd0e91307734b5ad4ee",
     "gen_code_pass": "Disabled",
     "ta_regtest_pass": "Disabled",
     "dist_test_pass": "True"

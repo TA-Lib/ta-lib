@@ -14,6 +14,9 @@ GDATA_FILES = $(shell find . -name 'ta_gData*.c')
 # Distribute additional bash scripts needed to "make all"
 BUILD_SHELL_FILES = src/tools/post-build-bin.sh
 
+# Distribute gen_rust C files which are directly included in gen_code.c
+GEN_RUST_FILES = $(shell find . -name 'gen_rust*.c')
+
 # Add more files to EXTRA_DIST to be included on "make dist"
 # This is only for files that are not auto-discovered by autotools.
-EXTRA_DIST = $(HEADER_FILES) $(GDATA_FILES) $(BUILD_SHELL_FILES) VERSION
+EXTRA_DIST = $(HEADER_FILES) $(GDATA_FILES) $(BUILD_SHELL_FILES) $(GEN_RUST_FILES) VERSION
