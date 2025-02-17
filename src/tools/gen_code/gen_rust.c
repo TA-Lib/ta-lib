@@ -45,8 +45,6 @@ static void printRustDoublePrecisionFunctionSignature(FILE* out,
            startIdxString);
 
    indent = (unsigned int)strlen(gTempBuf);
-   printIndent(out, indent);
-   fprintf(out, "int    %s,\n", endIdxString);
 
    // TODO: print input params
    // TODO: print optional input params
@@ -54,6 +52,8 @@ static void printRustDoublePrecisionFunctionSignature(FILE* out,
    // TODO: print return type
    print(out, gTempBuf);
    print(out, "\n");
+   printIndent(out, indent);
+   fprintf(out, "int    %s,\n", endIdxString);
 }
 
 static void printRustSinglePrecisionFunctionSignature(FILE* out,
@@ -81,8 +81,6 @@ static void printRustSinglePrecisionFunctionSignature(FILE* out,
            funcNameBuffer,
            startIdxString);
    indent = (unsigned int)strlen(gTempBuf);
-   printIndent(out, indent);
-   fprintf(out, "int    %s,\n", endIdxString);
 
 
    // TODO: print input params
@@ -93,6 +91,8 @@ static void printRustSinglePrecisionFunctionSignature(FILE* out,
    // TODO: handle abstract frame logic
    print(out, gTempBuf);
    print(out, "\n");
+   printIndent(out, indent);
+   fprintf(out, "int    %s,\n", endIdxString);
 }
 
 void writeRustModLines(const TA_FuncInfo* funcInfo, void* opaque)
