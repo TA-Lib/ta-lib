@@ -161,7 +161,9 @@
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdldarkcloudcover( /* Generated */ 
+/* Generated */ fn cdldarkcloudcover( int    startIdx,
+/* Generated */ 
+/* Generated */                                        int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER( int    startIdx,
 /* Generated */                                             int    endIdx,
@@ -328,7 +330,9 @@
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdldarkcloudcover_s( /* Generated */ 
+/* Generated */ fn cdldarkcloudcover_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLDARKCLOUDCOVER( int    startIdx,
 /* Generated */                                    int    endIdx,

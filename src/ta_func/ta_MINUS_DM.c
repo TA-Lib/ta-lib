@@ -158,7 +158,9 @@
 /* Generated */                         MInteger     outNBElement,
 /* Generated */                         double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn minus_dm( /* Generated */ 
+/* Generated */ fn minus_dm( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MINUS_DM( int    startIdx,
 /* Generated */                                    int    endIdx,
@@ -457,7 +459,9 @@
 /* Generated */                         MInteger     outNBElement,
 /* Generated */                         double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn minus_dm_s( /* Generated */ 
+/* Generated */ fn minus_dm_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                 int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MINUS_DM( int    startIdx,
 /* Generated */                           int    endIdx,

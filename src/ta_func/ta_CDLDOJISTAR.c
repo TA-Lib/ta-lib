@@ -144,7 +144,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdldojistar( /* Generated */ 
+/* Generated */ fn cdldojistar( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLDOJISTAR( int    startIdx,
 /* Generated */                                       int    endIdx,
@@ -310,7 +312,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdldojistar_s( /* Generated */ 
+/* Generated */ fn cdldojistar_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                    int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLDOJISTAR( int    startIdx,
 /* Generated */                              int    endIdx,

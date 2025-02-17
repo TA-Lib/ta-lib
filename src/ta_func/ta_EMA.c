@@ -152,7 +152,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ema( /* Generated */ 
+/* Generated */ fn ema( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_EMA( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -401,7 +403,9 @@ TA_RetCode TA_PREFIX(INT_EMA)( int               startIdx,
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ema_s( /* Generated */ 
+/* Generated */ fn ema_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_EMA( int    startIdx,
 /* Generated */                      int    endIdx,

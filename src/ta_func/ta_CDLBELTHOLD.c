@@ -144,7 +144,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlbelthold( /* Generated */ 
+/* Generated */ fn cdlbelthold( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLBELTHOLD( int    startIdx,
 /* Generated */                                       int    endIdx,
@@ -311,7 +313,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlbelthold_s( /* Generated */ 
+/* Generated */ fn cdlbelthold_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                    int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLBELTHOLD( int    startIdx,
 /* Generated */                              int    endIdx,

@@ -146,7 +146,9 @@
 /* Generated */                                 MInteger     outNBElement,
 /* Generated */                                 int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlshootingstar( /* Generated */ 
+/* Generated */ fn cdlshootingstar( int    startIdx,
+/* Generated */ 
+/* Generated */                                      int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR( int    startIdx,
 /* Generated */                                           int    endIdx,
@@ -321,7 +323,9 @@
 /* Generated */                                 MInteger     outNBElement,
 /* Generated */                                 int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlshootingstar_s( /* Generated */ 
+/* Generated */ fn cdlshootingstar_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                        int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLSHOOTINGSTAR( int    startIdx,
 /* Generated */                                  int    endIdx,

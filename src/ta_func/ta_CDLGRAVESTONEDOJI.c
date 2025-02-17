@@ -144,7 +144,9 @@
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlgravestonedoji( /* Generated */ 
+/* Generated */ fn cdlgravestonedoji( int    startIdx,
+/* Generated */ 
+/* Generated */                                        int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI( int    startIdx,
 /* Generated */                                             int    endIdx,
@@ -307,7 +309,9 @@
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlgravestonedoji_s( /* Generated */ 
+/* Generated */ fn cdlgravestonedoji_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLGRAVESTONEDOJI( int    startIdx,
 /* Generated */                                    int    endIdx,

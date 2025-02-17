@@ -158,7 +158,9 @@
 /* Generated */                       double        outAroonDown[],
 /* Generated */                       double        outAroonUp[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn aroon( /* Generated */ 
+/* Generated */ fn aroon( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_AROON( int    startIdx,
 /* Generated */                                 int    endIdx,
@@ -359,7 +361,9 @@
 /* Generated */                       double        outAroonDown[],
 /* Generated */                       double        outAroonUp[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn aroon_s( /* Generated */ 
+/* Generated */ fn aroon_s( int    startIdx,
+/* Generated */ 
+/* Generated */                              int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_AROON( int    startIdx,
 /* Generated */                        int    endIdx,

@@ -144,7 +144,9 @@
 /* Generated */                         MInteger     outNBElement,
 /* Generated */                         int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdldoji( /* Generated */ 
+/* Generated */ fn cdldoji( int    startIdx,
+/* Generated */ 
+/* Generated */                              int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLDOJI( int    startIdx,
 /* Generated */                                   int    endIdx,
@@ -292,7 +294,9 @@
 /* Generated */                         MInteger     outNBElement,
 /* Generated */                         int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdldoji_s( /* Generated */ 
+/* Generated */ fn cdldoji_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLDOJI( int    startIdx,
 /* Generated */                          int    endIdx,

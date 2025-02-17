@@ -144,7 +144,9 @@
 /* Generated */                                    MInteger     outNBElement,
 /* Generated */                                    int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlupsidegap2crows( /* Generated */ 
+/* Generated */ fn cdlupsidegap2crows( int    startIdx,
+/* Generated */ 
+/* Generated */                                         int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS( int    startIdx,
 /* Generated */                                              int    endIdx,
@@ -314,7 +316,9 @@
 /* Generated */                                    MInteger     outNBElement,
 /* Generated */                                    int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlupsidegap2crows_s( /* Generated */ 
+/* Generated */ fn cdlupsidegap2crows_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLUPSIDEGAP2CROWS( int    startIdx,
 /* Generated */                                     int    endIdx,

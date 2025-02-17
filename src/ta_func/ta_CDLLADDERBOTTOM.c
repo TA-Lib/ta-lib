@@ -144,7 +144,9 @@
 /* Generated */                                 MInteger     outNBElement,
 /* Generated */                                 int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlladderbottom( /* Generated */ 
+/* Generated */ fn cdlladderbottom( int    startIdx,
+/* Generated */ 
+/* Generated */                                      int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM( int    startIdx,
 /* Generated */                                           int    endIdx,
@@ -306,7 +308,9 @@
 /* Generated */                                 MInteger     outNBElement,
 /* Generated */                                 int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlladderbottom_s( /* Generated */ 
+/* Generated */ fn cdlladderbottom_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                        int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLLADDERBOTTOM( int    startIdx,
 /* Generated */                                  int    endIdx,

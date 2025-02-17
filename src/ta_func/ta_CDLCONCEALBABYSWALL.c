@@ -144,7 +144,9 @@
 /* Generated */                                     MInteger     outNBElement,
 /* Generated */                                     int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlconcealbabyswall( /* Generated */ 
+/* Generated */ fn cdlconcealbabyswall( int    startIdx,
+/* Generated */ 
+/* Generated */                                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
 /* Generated */                                               int    endIdx,
@@ -319,7 +321,9 @@
 /* Generated */                                     MInteger     outNBElement,
 /* Generated */                                     int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlconcealbabyswall_s( /* Generated */ 
+/* Generated */ fn cdlconcealbabyswall_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
 /* Generated */                                      int    endIdx,

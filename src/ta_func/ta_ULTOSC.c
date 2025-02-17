@@ -190,7 +190,9 @@
 /* Generated */                        MInteger     outNBElement,
 /* Generated */                        double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ultosc( /* Generated */ 
+/* Generated */ fn ultosc( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
 /* Generated */                                  int    endIdx,
@@ -446,7 +448,9 @@
 /* Generated */                        MInteger     outNBElement,
 /* Generated */                        double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ultosc_s( /* Generated */ 
+/* Generated */ fn ultosc_s( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ULTOSC( int    startIdx,
 /* Generated */                         int    endIdx,

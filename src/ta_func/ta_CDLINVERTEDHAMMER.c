@@ -146,7 +146,9 @@
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlinvertedhammer( /* Generated */ 
+/* Generated */ fn cdlinvertedhammer( int    startIdx,
+/* Generated */ 
+/* Generated */                                        int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER( int    startIdx,
 /* Generated */                                             int    endIdx,
@@ -321,7 +323,9 @@
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlinvertedhammer_s( /* Generated */ 
+/* Generated */ fn cdlinvertedhammer_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLINVERTEDHAMMER( int    startIdx,
 /* Generated */                                    int    endIdx,

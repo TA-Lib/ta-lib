@@ -146,7 +146,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlrickshawman( /* Generated */ 
+/* Generated */ fn cdlrickshawman( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN( int    startIdx,
 /* Generated */                                          int    endIdx,
@@ -325,7 +327,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlrickshawman_s( /* Generated */ 
+/* Generated */ fn cdlrickshawman_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                       int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLRICKSHAWMAN( int    startIdx,
 /* Generated */                                 int    endIdx,

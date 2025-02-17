@@ -156,7 +156,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn max( /* Generated */ 
+/* Generated */ fn max( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MAX( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -310,7 +312,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn max_s( /* Generated */ 
+/* Generated */ fn max_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MAX( int    startIdx,
 /* Generated */                      int    endIdx,

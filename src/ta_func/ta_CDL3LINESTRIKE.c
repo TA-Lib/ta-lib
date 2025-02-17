@@ -144,7 +144,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdl3linestrike( /* Generated */ 
+/* Generated */ fn cdl3linestrike( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
 /* Generated */                                          int    endIdx,
@@ -324,7 +326,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdl3linestrike_s( /* Generated */ 
+/* Generated */ fn cdl3linestrike_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                       int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
 /* Generated */                                 int    endIdx,

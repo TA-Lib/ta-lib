@@ -144,7 +144,9 @@
 /* Generated */                               MInteger     outNBElement,
 /* Generated */                               int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlhikkakemod( /* Generated */ 
+/* Generated */ fn cdlhikkakemod( int    startIdx,
+/* Generated */ 
+/* Generated */                                    int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,
 /* Generated */                                         int    endIdx,
@@ -357,7 +359,9 @@
 /* Generated */                               MInteger     outNBElement,
 /* Generated */                               int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlhikkakemod_s( /* Generated */ 
+/* Generated */ fn cdlhikkakemod_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                      int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
 /* Generated */                                int    endIdx,

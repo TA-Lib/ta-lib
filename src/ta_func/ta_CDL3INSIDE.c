@@ -144,7 +144,9 @@
 /* Generated */                            MInteger     outNBElement,
 /* Generated */                            int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdl3inside( /* Generated */ 
+/* Generated */ fn cdl3inside( int    startIdx,
+/* Generated */ 
+/* Generated */                                 int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDL3INSIDE( int    startIdx,
 /* Generated */                                      int    endIdx,
@@ -312,7 +314,9 @@
 /* Generated */                            MInteger     outNBElement,
 /* Generated */                            int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdl3inside_s( /* Generated */ 
+/* Generated */ fn cdl3inside_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                   int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDL3INSIDE( int    startIdx,
 /* Generated */                             int    endIdx,

@@ -145,7 +145,9 @@
 /* Generated */                           MInteger     outNBElement,
 /* Generated */                           int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlinneck( /* Generated */ 
+/* Generated */ fn cdlinneck( int    startIdx,
+/* Generated */ 
+/* Generated */                                int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLINNECK( int    startIdx,
 /* Generated */                                     int    endIdx,
@@ -312,7 +314,9 @@
 /* Generated */                           MInteger     outNBElement,
 /* Generated */                           int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlinneck_s( /* Generated */ 
+/* Generated */ fn cdlinneck_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLINNECK( int    startIdx,
 /* Generated */                            int    endIdx,

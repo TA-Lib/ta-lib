@@ -145,7 +145,9 @@
 /* Generated */                                    MInteger     outNBElement,
 /* Generated */                                    int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlkickingbylength( /* Generated */ 
+/* Generated */ fn cdlkickingbylength( int    startIdx,
+/* Generated */ 
+/* Generated */                                         int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH( int    startIdx,
 /* Generated */                                              int    endIdx,
@@ -329,7 +331,9 @@
 /* Generated */                                    MInteger     outNBElement,
 /* Generated */                                    int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlkickingbylength_s( /* Generated */ 
+/* Generated */ fn cdlkickingbylength_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLKICKINGBYLENGTH( int    startIdx,
 /* Generated */                                     int    endIdx,

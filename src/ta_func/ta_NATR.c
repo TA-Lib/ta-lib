@@ -163,7 +163,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn natr( /* Generated */ 
+/* Generated */ fn natr( int    startIdx,
+/* Generated */ 
+/* Generated */                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
 /* Generated */                                int    endIdx,
@@ -395,7 +397,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn natr_s( /* Generated */ 
+/* Generated */ fn natr_s( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_NATR( int    startIdx,
 /* Generated */                       int    endIdx,

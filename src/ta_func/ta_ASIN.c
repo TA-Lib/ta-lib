@@ -134,7 +134,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn asin( /* Generated */ 
+/* Generated */ fn asin( int    startIdx,
+/* Generated */ 
+/* Generated */                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_ASIN( int    startIdx,
 /* Generated */                                int    endIdx,
@@ -218,7 +220,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn asin_s( /* Generated */ 
+/* Generated */ fn asin_s( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ASIN( int    startIdx,
 /* Generated */                       int    endIdx,

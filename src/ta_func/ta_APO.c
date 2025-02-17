@@ -184,7 +184,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn apo( /* Generated */ 
+/* Generated */ fn apo( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_APO( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -449,7 +451,9 @@ TA_RetCode TA_PREFIX(INT_PO)( int    startIdx,
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn apo_s( /* Generated */ 
+/* Generated */ fn apo_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_APO( int    startIdx,
 /* Generated */                      int    endIdx,

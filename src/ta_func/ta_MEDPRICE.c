@@ -142,7 +142,9 @@
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn medprice( /* Generated */ 
+/* Generated */ fn medprice( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MEDPRICE( int    startIdx,
 /* Generated */                                    int    endIdx,
@@ -242,7 +244,9 @@
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn medprice_s( /* Generated */ 
+/* Generated */ fn medprice_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                 int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MEDPRICE( int    startIdx,
 /* Generated */                           int    endIdx,

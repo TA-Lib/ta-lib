@@ -134,7 +134,9 @@
 /* Generated */                       MInteger     outNBElement,
 /* Generated */                       double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn log10( /* Generated */ 
+/* Generated */ fn log10( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_LOG10( int    startIdx,
 /* Generated */                                 int    endIdx,
@@ -219,7 +221,9 @@
 /* Generated */                       MInteger     outNBElement,
 /* Generated */                       double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn log10_s( /* Generated */ 
+/* Generated */ fn log10_s( int    startIdx,
+/* Generated */ 
+/* Generated */                              int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_LOG10( int    startIdx,
 /* Generated */                        int    endIdx,

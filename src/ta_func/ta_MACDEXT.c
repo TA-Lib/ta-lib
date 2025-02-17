@@ -242,7 +242,9 @@
 /* Generated */                         double        outMACDSignal[],
 /* Generated */                         double        outMACDHist[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn macdext( /* Generated */ 
+/* Generated */ fn macdext( int    startIdx,
+/* Generated */ 
+/* Generated */                              int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
 /* Generated */                                   int    endIdx,
@@ -548,7 +550,9 @@
 /* Generated */                         double        outMACDSignal[],
 /* Generated */                         double        outMACDHist[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn macdext_s( /* Generated */ 
+/* Generated */ fn macdext_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MACDEXT( int    startIdx,
 /* Generated */                          int    endIdx,

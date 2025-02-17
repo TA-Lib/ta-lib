@@ -154,7 +154,9 @@
 /* Generated */                             int           outMinIdx[],
 /* Generated */                             int           outMaxIdx[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn minmaxindex( /* Generated */ 
+/* Generated */ fn minmaxindex( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MINMAXINDEX( int    startIdx,
 /* Generated */                                       int    endIdx,
@@ -340,7 +342,9 @@
 /* Generated */                             int           outMinIdx[],
 /* Generated */                             int           outMaxIdx[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn minmaxindex_s( /* Generated */ 
+/* Generated */ fn minmaxindex_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                    int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MINMAXINDEX( int    startIdx,
 /* Generated */                              int    endIdx,

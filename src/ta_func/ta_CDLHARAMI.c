@@ -146,7 +146,9 @@
 /* Generated */                           MInteger     outNBElement,
 /* Generated */                           int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlharami( /* Generated */ 
+/* Generated */ fn cdlharami( int    startIdx,
+/* Generated */ 
+/* Generated */                                int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHARAMI( int    startIdx,
 /* Generated */                                     int    endIdx,
@@ -321,7 +323,9 @@
 /* Generated */                           MInteger     outNBElement,
 /* Generated */                           int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlharami_s( /* Generated */ 
+/* Generated */ fn cdlharami_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLHARAMI( int    startIdx,
 /* Generated */                            int    endIdx,

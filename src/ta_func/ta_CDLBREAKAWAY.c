@@ -144,7 +144,9 @@
 /* Generated */                              MInteger     outNBElement,
 /* Generated */                              int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlbreakaway( /* Generated */ 
+/* Generated */ fn cdlbreakaway( int    startIdx,
+/* Generated */ 
+/* Generated */                                   int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLBREAKAWAY( int    startIdx,
 /* Generated */                                        int    endIdx,
@@ -317,7 +319,9 @@
 /* Generated */                              MInteger     outNBElement,
 /* Generated */                              int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlbreakaway_s( /* Generated */ 
+/* Generated */ fn cdlbreakaway_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLBREAKAWAY( int    startIdx,
 /* Generated */                               int    endIdx,

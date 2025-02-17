@@ -169,7 +169,9 @@
 /* Generated */                        MInteger     outNBElement,
 /* Generated */                        double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn stddev( /* Generated */ 
+/* Generated */ fn stddev( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
 /* Generated */                                  int    endIdx,
@@ -392,7 +394,9 @@ void TA_PREFIX(INT_stddev_using_precalc_ma)( const INPUT_TYPE *inReal,
 /* Generated */                        MInteger     outNBElement,
 /* Generated */                        double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn stddev_s( /* Generated */ 
+/* Generated */ fn stddev_s( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STDDEV( int    startIdx,
 /* Generated */                         int    endIdx,

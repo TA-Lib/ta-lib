@@ -146,7 +146,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlharamicross( /* Generated */ 
+/* Generated */ fn cdlharamicross( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHARAMICROSS( int    startIdx,
 /* Generated */                                          int    endIdx,
@@ -317,7 +319,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlharamicross_s( /* Generated */ 
+/* Generated */ fn cdlharamicross_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                       int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLHARAMICROSS( int    startIdx,
 /* Generated */                                 int    endIdx,

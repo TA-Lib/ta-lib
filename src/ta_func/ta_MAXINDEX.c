@@ -151,7 +151,9 @@
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn maxindex( /* Generated */ 
+/* Generated */ fn maxindex( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MAXINDEX( int    startIdx,
 /* Generated */                                    int    endIdx,
@@ -305,7 +307,9 @@
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn maxindex_s( /* Generated */ 
+/* Generated */ fn maxindex_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                 int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MAXINDEX( int    startIdx,
 /* Generated */                           int    endIdx,

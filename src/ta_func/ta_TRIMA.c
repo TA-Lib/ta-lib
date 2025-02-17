@@ -154,7 +154,9 @@
 /* Generated */                       MInteger     outNBElement,
 /* Generated */                       double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn trima( /* Generated */ 
+/* Generated */ fn trima( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_TRIMA( int    startIdx,
 /* Generated */                                 int    endIdx,
@@ -527,7 +529,9 @@
 /* Generated */                       MInteger     outNBElement,
 /* Generated */                       double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn trima_s( /* Generated */ 
+/* Generated */ fn trima_s( int    startIdx,
+/* Generated */ 
+/* Generated */                              int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_TRIMA( int    startIdx,
 /* Generated */                        int    endIdx,

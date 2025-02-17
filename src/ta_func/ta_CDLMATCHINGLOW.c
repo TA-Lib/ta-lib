@@ -144,7 +144,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlmatchinglow( /* Generated */ 
+/* Generated */ fn cdlmatchinglow( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW( int    startIdx,
 /* Generated */                                          int    endIdx,
@@ -296,7 +298,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlmatchinglow_s( /* Generated */ 
+/* Generated */ fn cdlmatchinglow_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                       int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLMATCHINGLOW( int    startIdx,
 /* Generated */                                 int    endIdx,

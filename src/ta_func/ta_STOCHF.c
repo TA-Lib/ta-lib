@@ -198,7 +198,9 @@
 /* Generated */                        double        outFastK[],
 /* Generated */                        double        outFastD[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn stochf( /* Generated */ 
+/* Generated */ fn stochf( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
 /* Generated */                                  int    endIdx,
@@ -558,7 +560,9 @@
 /* Generated */                        double        outFastK[],
 /* Generated */                        double        outFastD[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn stochf_s( /* Generated */ 
+/* Generated */ fn stochf_s( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STOCHF( int    startIdx,
 /* Generated */                         int    endIdx,

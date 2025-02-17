@@ -154,7 +154,9 @@
 /* Generated */                        double        outMin[],
 /* Generated */                        double        outMax[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn minmax( /* Generated */ 
+/* Generated */ fn minmax( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MINMAX( int    startIdx,
 /* Generated */                                  int    endIdx,
@@ -340,7 +342,9 @@
 /* Generated */                        double        outMin[],
 /* Generated */                        double        outMax[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn minmax_s( /* Generated */ 
+/* Generated */ fn minmax_s( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MINMAX( int    startIdx,
 /* Generated */                         int    endIdx,

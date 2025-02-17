@@ -151,7 +151,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn sum( /* Generated */ 
+/* Generated */ fn sum( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_SUM( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -287,7 +289,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn sum_s( /* Generated */ 
+/* Generated */ fn sum_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_SUM( int    startIdx,
 /* Generated */                      int    endIdx,

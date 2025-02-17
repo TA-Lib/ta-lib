@@ -144,7 +144,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlspinningtop( /* Generated */ 
+/* Generated */ fn cdlspinningtop( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP( int    startIdx,
 /* Generated */                                          int    endIdx,
@@ -295,7 +297,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlspinningtop_s( /* Generated */ 
+/* Generated */ fn cdlspinningtop_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                       int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLSPINNINGTOP( int    startIdx,
 /* Generated */                                 int    endIdx,

@@ -146,7 +146,9 @@
 /* Generated */                              MInteger     outNBElement,
 /* Generated */                              int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlengulfing( /* Generated */ 
+/* Generated */ fn cdlengulfing( int    startIdx,
+/* Generated */ 
+/* Generated */                                   int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLENGULFING( int    startIdx,
 /* Generated */                                        int    endIdx,
@@ -298,7 +300,9 @@
 /* Generated */                              MInteger     outNBElement,
 /* Generated */                              int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlengulfing_s( /* Generated */ 
+/* Generated */ fn cdlengulfing_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLENGULFING( int    startIdx,
 /* Generated */                               int    endIdx,

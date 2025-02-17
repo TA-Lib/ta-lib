@@ -166,7 +166,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn atr( /* Generated */ 
+/* Generated */ fn atr( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_ATR( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -371,7 +373,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn atr_s( /* Generated */ 
+/* Generated */ fn atr_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ATR( int    startIdx,
 /* Generated */                      int    endIdx,

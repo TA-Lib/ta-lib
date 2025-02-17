@@ -147,7 +147,9 @@
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn avgprice( /* Generated */ 
+/* Generated */ fn avgprice( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_AVGPRICE( int    startIdx,
 /* Generated */                                    int    endIdx,
@@ -253,7 +255,9 @@
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn avgprice_s( /* Generated */ 
+/* Generated */ fn avgprice_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                 int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_AVGPRICE( int    startIdx,
 /* Generated */                           int    endIdx,

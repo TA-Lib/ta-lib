@@ -153,7 +153,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn roc( /* Generated */ 
+/* Generated */ fn roc( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_ROC( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -305,7 +307,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn roc_s( /* Generated */ 
+/* Generated */ fn roc_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ROC( int    startIdx,
 /* Generated */                      int    endIdx,

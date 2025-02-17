@@ -148,7 +148,9 @@
 /* Generated */                        double        outSine[],
 /* Generated */                        double        outLeadSine[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ht_sine( /* Generated */ 
+/* Generated */ fn ht_sine( int    startIdx,
+/* Generated */ 
+/* Generated */                              int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_HT_SINE( int    startIdx,
 /* Generated */                                   int    endIdx,
@@ -509,7 +511,9 @@
 /* Generated */                        double        outSine[],
 /* Generated */                        double        outLeadSine[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ht_sine_s( /* Generated */ 
+/* Generated */ fn ht_sine_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_SINE( int    startIdx,
 /* Generated */                          int    endIdx,

@@ -134,7 +134,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn sin( /* Generated */ 
+/* Generated */ fn sin( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_SIN( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -219,7 +221,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn sin_s( /* Generated */ 
+/* Generated */ fn sin_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_SIN( int    startIdx,
 /* Generated */                      int    endIdx,

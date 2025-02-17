@@ -147,7 +147,9 @@
 /* Generated */                    MInteger     outNBElement,
 /* Generated */                    double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ad( /* Generated */ 
+/* Generated */ fn ad( int    startIdx,
+/* Generated */ 
+/* Generated */                         int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_AD( int    startIdx,
 /* Generated */                              int    endIdx,
@@ -280,7 +282,9 @@
 /* Generated */                    MInteger     outNBElement,
 /* Generated */                    double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ad_s( /* Generated */ 
+/* Generated */ fn ad_s( int    startIdx,
+/* Generated */ 
+/* Generated */                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_AD( int    startIdx,
 /* Generated */                     int    endIdx,

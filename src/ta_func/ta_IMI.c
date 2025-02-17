@@ -153,7 +153,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn imi( /* Generated */ 
+/* Generated */ fn imi( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_IMI( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -283,7 +285,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn imi_s( /* Generated */ 
+/* Generated */ fn imi_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_IMI( int    startIdx,
 /* Generated */                      int    endIdx,

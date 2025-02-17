@@ -143,7 +143,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn obv( /* Generated */ 
+/* Generated */ fn obv( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_OBV( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -247,7 +249,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn obv_s( /* Generated */ 
+/* Generated */ fn obv_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_OBV( int    startIdx,
 /* Generated */                      int    endIdx,

@@ -181,7 +181,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn mfi( /* Generated */ 
+/* Generated */ fn mfi( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -435,7 +437,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn mfi_s( /* Generated */ 
+/* Generated */ fn mfi_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MFI( int    startIdx,
 /* Generated */                      int    endIdx,

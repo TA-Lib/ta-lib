@@ -160,7 +160,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlmorningstar( /* Generated */ 
+/* Generated */ fn cdlmorningstar( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR( int    startIdx,
 /* Generated */                                          int    endIdx,
@@ -342,7 +344,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlmorningstar_s( /* Generated */ 
+/* Generated */ fn cdlmorningstar_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                       int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLMORNINGSTAR( int    startIdx,
 /* Generated */                                 int    endIdx,

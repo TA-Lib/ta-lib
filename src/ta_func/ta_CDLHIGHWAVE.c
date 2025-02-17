@@ -144,7 +144,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlhighwave( /* Generated */ 
+/* Generated */ fn cdlhighwave( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHIGHWAVE( int    startIdx,
 /* Generated */                                       int    endIdx,
@@ -303,7 +305,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlhighwave_s( /* Generated */ 
+/* Generated */ fn cdlhighwave_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                    int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLHIGHWAVE( int    startIdx,
 /* Generated */                              int    endIdx,

@@ -203,7 +203,9 @@
 /* Generated */                          double        outFastK[],
 /* Generated */                          double        outFastD[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn stochrsi( /* Generated */ 
+/* Generated */ fn stochrsi( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_STOCHRSI( int    startIdx,
 /* Generated */                                    int    endIdx,
@@ -420,7 +422,9 @@
 /* Generated */                          double        outFastK[],
 /* Generated */                          double        outFastD[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn stochrsi_s( /* Generated */ 
+/* Generated */ fn stochrsi_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                 int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STOCHRSI( int    startIdx,
 /* Generated */                           int    endIdx,

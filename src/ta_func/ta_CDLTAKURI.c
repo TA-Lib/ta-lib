@@ -146,7 +146,9 @@
 /* Generated */                           MInteger     outNBElement,
 /* Generated */                           int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdltakuri( /* Generated */ 
+/* Generated */ fn cdltakuri( int    startIdx,
+/* Generated */ 
+/* Generated */                                int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLTAKURI( int    startIdx,
 /* Generated */                                     int    endIdx,
@@ -320,7 +322,9 @@
 /* Generated */                           MInteger     outNBElement,
 /* Generated */                           int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdltakuri_s( /* Generated */ 
+/* Generated */ fn cdltakuri_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLTAKURI( int    startIdx,
 /* Generated */                            int    endIdx,

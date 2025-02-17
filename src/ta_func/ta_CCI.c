@@ -160,7 +160,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cci( /* Generated */ 
+/* Generated */ fn cci( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CCI( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -350,7 +352,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cci_s( /* Generated */ 
+/* Generated */ fn cci_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CCI( int    startIdx,
 /* Generated */                      int    endIdx,

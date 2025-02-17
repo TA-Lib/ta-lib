@@ -144,7 +144,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdl3blackcrows( /* Generated */ 
+/* Generated */ fn cdl3blackcrows( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS( int    startIdx,
 /* Generated */                                          int    endIdx,
@@ -317,7 +319,9 @@
 /* Generated */                                MInteger     outNBElement,
 /* Generated */                                int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdl3blackcrows_s( /* Generated */ 
+/* Generated */ fn cdl3blackcrows_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                       int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDL3BLACKCROWS( int    startIdx,
 /* Generated */                                 int    endIdx,

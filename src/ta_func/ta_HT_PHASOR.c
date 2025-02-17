@@ -141,7 +141,9 @@
 /* Generated */                          double        outInPhase[],
 /* Generated */                          double        outQuadrature[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ht_phasor( /* Generated */ 
+/* Generated */ fn ht_phasor( int    startIdx,
+/* Generated */ 
+/* Generated */                                int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
 /* Generated */                                     int    endIdx,
@@ -438,7 +440,9 @@
 /* Generated */                          double        outInPhase[],
 /* Generated */                          double        outQuadrature[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ht_phasor_s( /* Generated */ 
+/* Generated */ fn ht_phasor_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_PHASOR( int    startIdx,
 /* Generated */                            int    endIdx,

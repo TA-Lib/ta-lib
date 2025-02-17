@@ -163,7 +163,9 @@
 /* Generated */                                  MInteger     outNBElement,
 /* Generated */                                  int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlabandonedbaby( /* Generated */ 
+/* Generated */ fn cdlabandonedbaby( int    startIdx,
+/* Generated */ 
+/* Generated */                                       int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY( int    startIdx,
 /* Generated */                                            int    endIdx,
@@ -369,7 +371,9 @@
 /* Generated */                                  MInteger     outNBElement,
 /* Generated */                                  int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlabandonedbaby_s( /* Generated */ 
+/* Generated */ fn cdlabandonedbaby_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                         int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLABANDONEDBABY( int    startIdx,
 /* Generated */                                   int    endIdx,

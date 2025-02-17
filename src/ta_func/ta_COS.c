@@ -134,7 +134,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cos( /* Generated */ 
+/* Generated */ fn cos( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_COS( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -219,7 +221,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cos_s( /* Generated */ 
+/* Generated */ fn cos_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_COS( int    startIdx,
 /* Generated */                      int    endIdx,

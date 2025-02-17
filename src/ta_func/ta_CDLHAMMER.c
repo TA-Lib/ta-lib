@@ -147,7 +147,9 @@
 /* Generated */                           MInteger     outNBElement,
 /* Generated */                           int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlhammer( /* Generated */ 
+/* Generated */ fn cdlhammer( int    startIdx,
+/* Generated */ 
+/* Generated */                                int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHAMMER( int    startIdx,
 /* Generated */                                     int    endIdx,
@@ -333,7 +335,9 @@
 /* Generated */                           MInteger     outNBElement,
 /* Generated */                           int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlhammer_s( /* Generated */ 
+/* Generated */ fn cdlhammer_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLHAMMER( int    startIdx,
 /* Generated */                            int    endIdx,

@@ -147,7 +147,9 @@
 /* Generated */                                 MInteger     outNBElement,
 /* Generated */                                 int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdladvanceblock( /* Generated */ 
+/* Generated */ fn cdladvanceblock( int    startIdx,
+/* Generated */ 
+/* Generated */                                      int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK( int    startIdx,
 /* Generated */                                           int    endIdx,
@@ -401,7 +403,9 @@
 /* Generated */                                 MInteger     outNBElement,
 /* Generated */                                 int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdladvanceblock_s( /* Generated */ 
+/* Generated */ fn cdladvanceblock_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                        int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLADVANCEBLOCK( int    startIdx,
 /* Generated */                                  int    endIdx,

@@ -134,7 +134,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn acos( /* Generated */ 
+/* Generated */ fn acos( int    startIdx,
+/* Generated */ 
+/* Generated */                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_ACOS( int    startIdx,
 /* Generated */                                int    endIdx,
@@ -219,7 +221,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn acos_s( /* Generated */ 
+/* Generated */ fn acos_s( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ACOS( int    startIdx,
 /* Generated */                       int    endIdx,

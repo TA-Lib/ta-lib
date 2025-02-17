@@ -144,7 +144,9 @@
 /* Generated */                                 MInteger     outNBElement,
 /* Generated */                                 int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlhomingpigeon( /* Generated */ 
+/* Generated */ fn cdlhomingpigeon( int    startIdx,
+/* Generated */ 
+/* Generated */                                      int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON( int    startIdx,
 /* Generated */                                           int    endIdx,
@@ -310,7 +312,9 @@
 /* Generated */                                 MInteger     outNBElement,
 /* Generated */                                 int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlhomingpigeon_s( /* Generated */ 
+/* Generated */ fn cdlhomingpigeon_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                        int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLHOMINGPIGEON( int    startIdx,
 /* Generated */                                  int    endIdx,

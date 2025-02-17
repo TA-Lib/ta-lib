@@ -144,7 +144,9 @@
 /* Generated */                                     MInteger     outNBElement,
 /* Generated */                                     int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlgapsidesidewhite( /* Generated */ 
+/* Generated */ fn cdlgapsidesidewhite( int    startIdx,
+/* Generated */ 
+/* Generated */                                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE( int    startIdx,
 /* Generated */                                               int    endIdx,
@@ -318,7 +320,9 @@
 /* Generated */                                     MInteger     outNBElement,
 /* Generated */                                     int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlgapsidesidewhite_s( /* Generated */ 
+/* Generated */ fn cdlgapsidesidewhite_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLGAPSIDESIDEWHITE( int    startIdx,
 /* Generated */                                      int    endIdx,

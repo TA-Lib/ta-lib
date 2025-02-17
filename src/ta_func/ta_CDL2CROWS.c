@@ -144,7 +144,9 @@
 /* Generated */                           MInteger     outNBElement,
 /* Generated */                           int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdl2crows( /* Generated */ 
+/* Generated */ fn cdl2crows( int    startIdx,
+/* Generated */ 
+/* Generated */                                int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDL2CROWS( int    startIdx,
 /* Generated */                                     int    endIdx,
@@ -303,7 +305,9 @@
 /* Generated */                           MInteger     outNBElement,
 /* Generated */                           int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdl2crows_s( /* Generated */ 
+/* Generated */ fn cdl2crows_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDL2CROWS( int    startIdx,
 /* Generated */                            int    endIdx,

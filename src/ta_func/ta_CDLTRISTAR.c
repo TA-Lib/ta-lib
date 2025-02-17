@@ -144,7 +144,9 @@
 /* Generated */                            MInteger     outNBElement,
 /* Generated */                            int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdltristar( /* Generated */ 
+/* Generated */ fn cdltristar( int    startIdx,
+/* Generated */ 
+/* Generated */                                 int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLTRISTAR( int    startIdx,
 /* Generated */                                      int    endIdx,
@@ -306,7 +308,9 @@
 /* Generated */                            MInteger     outNBElement,
 /* Generated */                            int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdltristar_s( /* Generated */ 
+/* Generated */ fn cdltristar_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                   int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLTRISTAR( int    startIdx,
 /* Generated */                             int    endIdx,

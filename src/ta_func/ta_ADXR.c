@@ -161,7 +161,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn adxr( /* Generated */ 
+/* Generated */ fn adxr( int    startIdx,
+/* Generated */ 
+/* Generated */                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_ADXR( int    startIdx,
 /* Generated */                                int    endIdx,
@@ -320,7 +322,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn adxr_s( /* Generated */ 
+/* Generated */ fn adxr_s( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ADXR( int    startIdx,
 /* Generated */                       int    endIdx,

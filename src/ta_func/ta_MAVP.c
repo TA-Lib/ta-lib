@@ -179,7 +179,9 @@
 /* Generated */                                             MInteger     outNBElement,
 /* Generated */                                             double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn mavp( /* Generated */ 
+/* Generated */ fn mavp( int    startIdx,
+/* Generated */ 
+/* Generated */                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
 /* Generated */                                int    endIdx,
@@ -396,7 +398,9 @@
 /* Generated */                                             MInteger     outNBElement,
 /* Generated */                                             double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn mavp_s( /* Generated */ 
+/* Generated */ fn mavp_s( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MAVP( int    startIdx,
 /* Generated */                       int    endIdx,

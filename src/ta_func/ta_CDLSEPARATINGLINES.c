@@ -146,7 +146,9 @@
 /* Generated */                                    MInteger     outNBElement,
 /* Generated */                                    int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlseparatinglines( /* Generated */ 
+/* Generated */ fn cdlseparatinglines( int    startIdx,
+/* Generated */ 
+/* Generated */                                         int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES( int    startIdx,
 /* Generated */                                              int    endIdx,
@@ -328,7 +330,9 @@
 /* Generated */                                    MInteger     outNBElement,
 /* Generated */                                    int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlseparatinglines_s( /* Generated */ 
+/* Generated */ fn cdlseparatinglines_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLSEPARATINGLINES( int    startIdx,
 /* Generated */                                     int    endIdx,

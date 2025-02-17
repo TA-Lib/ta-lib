@@ -154,7 +154,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn kama( /* Generated */ 
+/* Generated */ fn kama( int    startIdx,
+/* Generated */ 
+/* Generated */                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
 /* Generated */                                int    endIdx,
@@ -403,7 +405,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn kama_s( /* Generated */ 
+/* Generated */ fn kama_s( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_KAMA( int    startIdx,
 /* Generated */                       int    endIdx,

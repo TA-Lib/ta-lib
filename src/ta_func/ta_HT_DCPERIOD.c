@@ -138,7 +138,9 @@
 /* Generated */                            MInteger     outNBElement,
 /* Generated */                            double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ht_dcperiod( /* Generated */ 
+/* Generated */ fn ht_dcperiod( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_HT_DCPERIOD( int    startIdx,
 /* Generated */                                       int    endIdx,
@@ -424,7 +426,9 @@
 /* Generated */                            MInteger     outNBElement,
 /* Generated */                            double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ht_dcperiod_s( /* Generated */ 
+/* Generated */ fn ht_dcperiod_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                    int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_DCPERIOD( int    startIdx,
 /* Generated */                              int    endIdx,

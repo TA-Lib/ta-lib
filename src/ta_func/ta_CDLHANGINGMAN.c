@@ -147,7 +147,9 @@
 /* Generated */                               MInteger     outNBElement,
 /* Generated */                               int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlhangingman( /* Generated */ 
+/* Generated */ fn cdlhangingman( int    startIdx,
+/* Generated */ 
+/* Generated */                                    int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHANGINGMAN( int    startIdx,
 /* Generated */                                         int    endIdx,
@@ -333,7 +335,9 @@
 /* Generated */                               MInteger     outNBElement,
 /* Generated */                               int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlhangingman_s( /* Generated */ 
+/* Generated */ fn cdlhangingman_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                      int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLHANGINGMAN( int    startIdx,
 /* Generated */                                int    endIdx,

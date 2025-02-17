@@ -144,7 +144,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdllongline( /* Generated */ 
+/* Generated */ fn cdllongline( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLLONGLINE( int    startIdx,
 /* Generated */                                       int    endIdx,
@@ -303,7 +305,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdllongline_s( /* Generated */ 
+/* Generated */ fn cdllongline_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                    int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLLONGLINE( int    startIdx,
 /* Generated */                              int    endIdx,

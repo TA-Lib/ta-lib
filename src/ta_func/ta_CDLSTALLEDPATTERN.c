@@ -146,7 +146,9 @@
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlstalledpattern( /* Generated */ 
+/* Generated */ fn cdlstalledpattern( int    startIdx,
+/* Generated */ 
+/* Generated */                                        int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN( int    startIdx,
 /* Generated */                                             int    endIdx,
@@ -355,7 +357,9 @@
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlstalledpattern_s( /* Generated */ 
+/* Generated */ fn cdlstalledpattern_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLSTALLEDPATTERN( int    startIdx,
 /* Generated */                                    int    endIdx,

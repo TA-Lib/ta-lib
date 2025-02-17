@@ -157,7 +157,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cmo( /* Generated */ 
+/* Generated */ fn cmo( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -460,7 +462,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cmo_s( /* Generated */ 
+/* Generated */ fn cmo_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CMO( int    startIdx,
 /* Generated */                      int    endIdx,

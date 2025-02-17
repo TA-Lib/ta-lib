@@ -144,7 +144,9 @@
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdllongleggeddoji( /* Generated */ 
+/* Generated */ fn cdllongleggeddoji( int    startIdx,
+/* Generated */ 
+/* Generated */                                        int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI( int    startIdx,
 /* Generated */                                             int    endIdx,
@@ -306,7 +308,9 @@
 /* Generated */                                   MInteger     outNBElement,
 /* Generated */                                   int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdllongleggeddoji_s( /* Generated */ 
+/* Generated */ fn cdllongleggeddoji_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLLONGLEGGEDDOJI( int    startIdx,
 /* Generated */                                    int    endIdx,

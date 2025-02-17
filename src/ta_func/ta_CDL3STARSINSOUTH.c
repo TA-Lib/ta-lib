@@ -146,7 +146,9 @@
 /* Generated */                                  MInteger     outNBElement,
 /* Generated */                                  int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdl3starsinsouth( /* Generated */ 
+/* Generated */ fn cdl3starsinsouth( int    startIdx,
+/* Generated */ 
+/* Generated */                                       int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH( int    startIdx,
 /* Generated */                                            int    endIdx,
@@ -352,7 +354,9 @@
 /* Generated */                                  MInteger     outNBElement,
 /* Generated */                                  int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdl3starsinsouth_s( /* Generated */ 
+/* Generated */ fn cdl3starsinsouth_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                         int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDL3STARSINSOUTH( int    startIdx,
 /* Generated */                                   int    endIdx,

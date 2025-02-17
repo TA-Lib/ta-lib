@@ -144,7 +144,9 @@
 /* Generated */                                 MInteger     outNBElement,
 /* Generated */                                 int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlunique3river( /* Generated */ 
+/* Generated */ fn cdlunique3river( int    startIdx,
+/* Generated */ 
+/* Generated */                                      int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER( int    startIdx,
 /* Generated */                                           int    endIdx,
@@ -312,7 +314,9 @@
 /* Generated */                                 MInteger     outNBElement,
 /* Generated */                                 int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlunique3river_s( /* Generated */ 
+/* Generated */ fn cdlunique3river_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                        int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLUNIQUE3RIVER( int    startIdx,
 /* Generated */                                  int    endIdx,

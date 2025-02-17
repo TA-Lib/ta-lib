@@ -231,7 +231,9 @@
 /* Generated */                       double        outSlowK[],
 /* Generated */                       double        outSlowD[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn stoch( /* Generated */ 
+/* Generated */ fn stoch( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
 /* Generated */                                 int    endIdx,
@@ -623,7 +625,9 @@
 /* Generated */                       double        outSlowK[],
 /* Generated */                       double        outSlowD[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn stoch_s( /* Generated */ 
+/* Generated */ fn stoch_s( int    startIdx,
+/* Generated */ 
+/* Generated */                              int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_STOCH( int    startIdx,
 /* Generated */                        int    endIdx,

@@ -156,7 +156,9 @@
 /* Generated */                        MInteger     outNBElement,
 /* Generated */                        double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn correl( /* Generated */ 
+/* Generated */ fn correl( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CORREL( int    startIdx,
 /* Generated */                                  int    endIdx,
@@ -330,7 +332,9 @@
 /* Generated */                        MInteger     outNBElement,
 /* Generated */                        double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn correl_s( /* Generated */ 
+/* Generated */ fn correl_s( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CORREL( int    startIdx,
 /* Generated */                         int    endIdx,

@@ -157,7 +157,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn tema( /* Generated */ 
+/* Generated */ fn tema( int    startIdx,
+/* Generated */ 
+/* Generated */                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_TEMA( int    startIdx,
 /* Generated */                                int    endIdx,
@@ -388,7 +390,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn tema_s( /* Generated */ 
+/* Generated */ fn tema_s( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_TEMA( int    startIdx,
 /* Generated */                       int    endIdx,

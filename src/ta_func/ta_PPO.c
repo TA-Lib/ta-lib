@@ -183,7 +183,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ppo( /* Generated */ 
+/* Generated */ fn ppo( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_PPO( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -310,7 +312,9 @@
 /* Generated */                     MInteger     outNBElement,
 /* Generated */                     double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ppo_s( /* Generated */ 
+/* Generated */ fn ppo_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_PPO( int    startIdx,
 /* Generated */                      int    endIdx,

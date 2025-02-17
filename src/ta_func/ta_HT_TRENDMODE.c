@@ -145,7 +145,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ht_trendmode( /* Generated */ 
+/* Generated */ fn ht_trendmode( int    startIdx,
+/* Generated */ 
+/* Generated */                                   int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_HT_TRENDMODE( int    startIdx,
 /* Generated */                                        int    endIdx,
@@ -566,7 +568,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ht_trendmode_s( /* Generated */ 
+/* Generated */ fn ht_trendmode_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
 /* Generated */                               int    endIdx,

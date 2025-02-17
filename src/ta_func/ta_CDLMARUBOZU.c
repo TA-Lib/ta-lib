@@ -144,7 +144,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlmarubozu( /* Generated */ 
+/* Generated */ fn cdlmarubozu( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLMARUBOZU( int    startIdx,
 /* Generated */                                       int    endIdx,
@@ -303,7 +305,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlmarubozu_s( /* Generated */ 
+/* Generated */ fn cdlmarubozu_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                    int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLMARUBOZU( int    startIdx,
 /* Generated */                              int    endIdx,

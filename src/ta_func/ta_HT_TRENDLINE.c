@@ -145,7 +145,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ht_trendline( /* Generated */ 
+/* Generated */ fn ht_trendline( int    startIdx,
+/* Generated */ 
+/* Generated */                                   int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_HT_TRENDLINE( int    startIdx,
 /* Generated */                                        int    endIdx,
@@ -479,7 +481,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn ht_trendline_s( /* Generated */ 
+/* Generated */ fn ht_trendline_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_HT_TRENDLINE( int    startIdx,
 /* Generated */                               int    endIdx,

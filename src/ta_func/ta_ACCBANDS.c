@@ -164,7 +164,9 @@
 /* Generated */                          double        outRealMiddleBand[],
 /* Generated */                          double        outRealLowerBand[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn accbands( /* Generated */ 
+/* Generated */ fn accbands( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_ACCBANDS( int    startIdx,
 /* Generated */                                    int    endIdx,
@@ -392,7 +394,9 @@
 /* Generated */                          double        outRealMiddleBand[],
 /* Generated */                          double        outRealLowerBand[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn accbands_s( /* Generated */ 
+/* Generated */ fn accbands_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                 int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_ACCBANDS( int    startIdx,
 /* Generated */                           int    endIdx,

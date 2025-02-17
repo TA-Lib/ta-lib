@@ -144,7 +144,9 @@
 /* Generated */                                  MInteger     outNBElement,
 /* Generated */                                  int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlsticksandwich( /* Generated */ 
+/* Generated */ fn cdlsticksandwich( int    startIdx,
+/* Generated */ 
+/* Generated */                                       int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH( int    startIdx,
 /* Generated */                                            int    endIdx,
@@ -301,7 +303,9 @@
 /* Generated */                                  MInteger     outNBElement,
 /* Generated */                                  int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlsticksandwich_s( /* Generated */ 
+/* Generated */ fn cdlsticksandwich_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                         int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLSTICKSANDWICH( int    startIdx,
 /* Generated */                                   int    endIdx,

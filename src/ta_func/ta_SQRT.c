@@ -134,7 +134,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn sqrt( /* Generated */ 
+/* Generated */ fn sqrt( int    startIdx,
+/* Generated */ 
+/* Generated */                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_SQRT( int    startIdx,
 /* Generated */                                int    endIdx,
@@ -219,7 +221,9 @@
 /* Generated */                      MInteger     outNBElement,
 /* Generated */                      double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn sqrt_s( /* Generated */ 
+/* Generated */ fn sqrt_s( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_SQRT( int    startIdx,
 /* Generated */                       int    endIdx,

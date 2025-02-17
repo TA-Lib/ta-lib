@@ -145,7 +145,9 @@
 /* Generated */                              MInteger     outNBElement,
 /* Generated */                              int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlthrusting( /* Generated */ 
+/* Generated */ fn cdlthrusting( int    startIdx,
+/* Generated */ 
+/* Generated */                                   int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLTHRUSTING( int    startIdx,
 /* Generated */                                        int    endIdx,
@@ -313,7 +315,9 @@
 /* Generated */                              MInteger     outNBElement,
 /* Generated */                              int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlthrusting_s( /* Generated */ 
+/* Generated */ fn cdlthrusting_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLTHRUSTING( int    startIdx,
 /* Generated */                               int    endIdx,

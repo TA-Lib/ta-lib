@@ -144,7 +144,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlpiercing( /* Generated */ 
+/* Generated */ fn cdlpiercing( int    startIdx,
+/* Generated */ 
+/* Generated */                                  int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLPIERCING( int    startIdx,
 /* Generated */                                       int    endIdx,
@@ -307,7 +309,9 @@
 /* Generated */                             MInteger     outNBElement,
 /* Generated */                             int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlpiercing_s( /* Generated */ 
+/* Generated */ fn cdlpiercing_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                    int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLPIERCING( int    startIdx,
 /* Generated */                              int    endIdx,

@@ -145,7 +145,9 @@
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn wclprice( /* Generated */ 
+/* Generated */ fn wclprice( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_WCLPRICE( int    startIdx,
 /* Generated */                                    int    endIdx,
@@ -246,7 +248,9 @@
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn wclprice_s( /* Generated */ 
+/* Generated */ fn wclprice_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                 int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_WCLPRICE( int    startIdx,
 /* Generated */                           int    endIdx,

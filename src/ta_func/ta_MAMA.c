@@ -194,7 +194,9 @@
 /* Generated */                      double        outMAMA[],
 /* Generated */                      double        outFAMA[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn mama( /* Generated */ 
+/* Generated */ fn mama( int    startIdx,
+/* Generated */ 
+/* Generated */                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MAMA( int    startIdx,
 /* Generated */                                int    endIdx,
@@ -541,7 +543,9 @@
 /* Generated */                      double        outMAMA[],
 /* Generated */                      double        outFAMA[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn mama_s( /* Generated */ 
+/* Generated */ fn mama_s( int    startIdx,
+/* Generated */ 
+/* Generated */                             int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MAMA( int    startIdx,
 /* Generated */                       int    endIdx,

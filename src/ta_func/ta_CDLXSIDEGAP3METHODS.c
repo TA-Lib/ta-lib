@@ -144,7 +144,9 @@
 /* Generated */                                     MInteger     outNBElement,
 /* Generated */                                     int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlxsidegap3methods( /* Generated */ 
+/* Generated */ fn cdlxsidegap3methods( int    startIdx,
+/* Generated */ 
+/* Generated */                                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS( int    startIdx,
 /* Generated */                                               int    endIdx,
@@ -299,7 +301,9 @@
 /* Generated */                                     MInteger     outNBElement,
 /* Generated */                                     int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlxsidegap3methods_s( /* Generated */ 
+/* Generated */ fn cdlxsidegap3methods_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLXSIDEGAP3METHODS( int    startIdx,
 /* Generated */                                      int    endIdx,

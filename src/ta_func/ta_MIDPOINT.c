@@ -152,7 +152,9 @@
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn midpoint( /* Generated */ 
+/* Generated */ fn midpoint( int    startIdx,
+/* Generated */ 
+/* Generated */                               int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MIDPOINT( int    startIdx,
 /* Generated */                                    int    endIdx,
@@ -298,7 +300,9 @@
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn midpoint_s( /* Generated */ 
+/* Generated */ fn midpoint_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                 int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_MIDPOINT( int    startIdx,
 /* Generated */                           int    endIdx,

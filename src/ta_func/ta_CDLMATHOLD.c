@@ -160,7 +160,9 @@
 /* Generated */                            MInteger     outNBElement,
 /* Generated */                            int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlmathold( /* Generated */ 
+/* Generated */ fn cdlmathold( int    startIdx,
+/* Generated */ 
+/* Generated */                                 int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLMATHOLD( int    startIdx,
 /* Generated */                                      int    endIdx,
@@ -366,7 +368,9 @@
 /* Generated */                            MInteger     outNBElement,
 /* Generated */                            int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlmathold_s( /* Generated */ 
+/* Generated */ fn cdlmathold_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                   int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
 /* Generated */                             int    endIdx,

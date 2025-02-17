@@ -144,7 +144,9 @@
 /* Generated */                              MInteger     outNBElement,
 /* Generated */                              int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlshortline( /* Generated */ 
+/* Generated */ fn cdlshortline( int    startIdx,
+/* Generated */ 
+/* Generated */                                   int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLSHORTLINE( int    startIdx,
 /* Generated */                                        int    endIdx,
@@ -303,7 +305,9 @@
 /* Generated */                              MInteger     outNBElement,
 /* Generated */                              int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdlshortline_s( /* Generated */ 
+/* Generated */ fn cdlshortline_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                     int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLSHORTLINE( int    startIdx,
 /* Generated */                               int    endIdx,

@@ -168,7 +168,9 @@
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn var( /* Generated */ 
+/* Generated */ fn var( int    startIdx,
+/* Generated */ 
+/* Generated */                          int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_VAR( int    startIdx,
 /* Generated */                               int    endIdx,
@@ -382,7 +384,9 @@ TA_RetCode TA_PREFIX(INT_VAR)( int    startIdx,
 /* Generated */                          MInteger     outNBElement,
 /* Generated */                          double        outReal[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn var_s( /* Generated */ 
+/* Generated */ fn var_s( int    startIdx,
+/* Generated */ 
+/* Generated */                            int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_VAR( int    startIdx,
 /* Generated */                      int    endIdx,

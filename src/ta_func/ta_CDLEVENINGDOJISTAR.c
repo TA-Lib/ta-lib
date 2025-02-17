@@ -163,7 +163,9 @@
 /* Generated */                                    MInteger     outNBElement,
 /* Generated */                                    int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdleveningdojistar( /* Generated */ 
+/* Generated */ fn cdleveningdojistar( int    startIdx,
+/* Generated */ 
+/* Generated */                                         int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR( int    startIdx,
 /* Generated */                                              int    endIdx,
@@ -352,7 +354,9 @@
 /* Generated */                                    MInteger     outNBElement,
 /* Generated */                                    int           outInteger[] )
 /* Generated */ #elif defined( _RUST )
-/* Generated */ fn cdleveningdojistar_s( /* Generated */ 
+/* Generated */ fn cdleveningdojistar_s( int    startIdx,
+/* Generated */ 
+/* Generated */                                           int    endIdx,
 /* Generated */ #else
 /* Generated */ TA_RetCode TA_S_CDLEVENINGDOJISTAR( int    startIdx,
 /* Generated */                                     int    endIdx,
