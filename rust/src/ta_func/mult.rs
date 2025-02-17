@@ -43,7 +43,8 @@
 {
    return 0;
 }
- fn mult(
+ fn mult( int startIdx,
+ int endIdx,
 {
    int outIdx;
    int i;
@@ -59,7 +60,8 @@
    outBegIdx.value  = startIdx;
    return  RetCode.Success ;
 }
- fn mult_s(
+ fn mult_s( int startIdx,
+ int endIdx,
  {
  int outIdx;
  int i;
