@@ -65,6 +65,7 @@
 /* Generated */ #elif defined( _RUST )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
+/* Generated */    impl core {
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -213,6 +214,16 @@
 /* Generated */ fn macd( int    startIdx,
 /* Generated */ 
 /* Generated */                           int    endIdx,
+double inReal[],
+double optInFastPeriod[],
+double optInSlowPeriod[],
+double optInSignalPeriod[],
+mut outBegIdx,
+mut outNBElement,
+double outMACD[],
+double outMACDSignal[],
+double outMACDHist[],
+)
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
 /* Generated */                                int    endIdx,
@@ -818,6 +829,8 @@ TA_RetCode TA_PREFIX(INT_MACD)( int    startIdx,
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ }}} // Close namespace TicTacTec.TA.Lib
+/* Generated */ #elif defined( _RUST )
+/* Generated */ } // Close impl core
 /* Generated */ #endif
 /**** END GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 

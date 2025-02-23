@@ -25,9 +25,12 @@ static void printRustDoublePrecisionFunctionSignature(FILE* out,
                                                       const TA_FuncInfo* funcInfo)
 {
    char funcNameBuffer[1024]; /* Not safe, but 1024 is realistic, */
+   const TA_OptInputParameterInfo *optInputParamInfo;
+   const TA_OutputParameterInfo *outputParamInfo;
+   const TA_InputParameterInfo *inputParamInfo;
    toLowerSnakeCase(funcInfo->name, funcNameBuffer);
-   const char* inputDoubleArrayType = "const double";
-   const char* inputIntArrayType = "const int";
+   const char* inputDoubleArrayType = "double";
+   const char* inputIntArrayType = "int";
    const char* outputDoubleArrayType = "double";
    const char* outputIntArrayType = "int";
    const char* outputIntParam = "int";
@@ -37,7 +40,9 @@ static void printRustDoublePrecisionFunctionSignature(FILE* out,
    const char* outNbElementString = "outNBElement";
    const char* outBegIdxString = "outBegIdx";
    const char* funcName = funcInfo->name;
-   int indent;
+   const char *defaultParamName;
+   const char *typeString;
+   int indent, i;
 
    sprintf(gTempBuf, "%sfn %s( int    %s,\n",
            prefix? prefix:"",
@@ -54,6 +59,91 @@ static void printRustDoublePrecisionFunctionSignature(FILE* out,
    print(out, "\n");
    printIndent(out, indent);
    fprintf(out, "int    %s,\n", endIdxString);
+
+   for (i = 0; i < funcInfo->nbInput; i++)
+   {
+      // retCode = TA_GetInputParameterInfo( funcInfo->handle, i, &inputParamInfo );
+      TA_GetInputParameterInfo(funcInfo->handle, i, &inputParamInfo);
+
+      // if( retCode != TA_SUCCESS )
+      // {
+      //    printf( "[%s] invalid 'input' information (%d,%d)\n", funcName, i, paramNb );
+      //    return;
+      // }
+
+
+      switch (inputParamInfo->type)
+      {
+      case TA_Input_Real:
+         typeString = inputDoubleArrayType;
+         defaultParamName = "inReal";
+         break;
+      }
+
+
+      // for every input param just do this:
+      fprintf(out, "%-*s %s%s",
+                           0,
+                           typeString,
+                           inputParamInfo->paramName,
+                           arrayBracket);
+      fprintf(out, ",\n");
+
+   }
+
+      // optional inputs
+   for( i=0; i < funcInfo->nbOptInput; i++ )
+   {
+      TA_GetOptInputParameterInfo( funcInfo->handle, i, &optInputParamInfo );
+
+      switch( optInputParamInfo->type )
+      {
+      case TA_OptInput_RealRange:
+         typeString = "double";
+         defaultParamName = "optInReal";
+         break;
+      }
+
+      // for every output param just do this:
+      fprintf(out, "%-*s %s%s",
+                           0,
+                           typeString,
+                           optInputParamInfo->paramName,
+                           arrayBracket);
+      fprintf(out, ",\n");
+   }
+
+      // outputs
+      // TODO: outBegIdx should probably be borrowed
+   fprintf(out, "mut outBegIdx,\n");
+      // TODO: outNBElement should probably be borrowed
+   fprintf(out, "mut outNBElement,\n");
+
+   for (i = 0; i < funcInfo->nbOutput; i++)
+   {
+      // retCode =  TA_GetOutputParameterInfo(funcInfo->handle, i, &outputParamInfo);
+      TA_GetOutputParameterInfo(funcInfo->handle, i, &outputParamInfo);
+      switch (outputParamInfo->type)
+      {
+      case TA_Output_Real:
+         typeString = outputDoubleArrayType;
+         defaultParamName = "outReal";
+         break;
+      }
+
+      // for every output param just do this:
+      fprintf(out, "%-*s %s%s",
+                           0,
+                           typeString,
+                           outputParamInfo->paramName,
+                           arrayBracket);
+      fprintf(out, ",\n");
+   }
+
+   // todo: remove the extra comma and newline from out
+  fprintf(out, ")\n");
+
+
 }
 
 static void printRustSinglePrecisionFunctionSignature(FILE* out,
@@ -167,6 +257,7 @@ void genRustCodePhase2(const TA_FuncInfo* funcInfo)
 
    if (!gmcpp_installed)
       return;
+
 
    // Convert filename to lowercase into buffer.
    int i = 0;

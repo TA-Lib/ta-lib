@@ -39,12 +39,19 @@
  *  in ta-lib\src\ta_func
  */
 
+ impl core {
  fn mult_lookback(
 {
    return 0;
 }
  fn mult( int startIdx,
  int endIdx,
+double inReal0[],
+double inReal1[],
+mut outBegIdx,
+mut outNBElement,
+double outReal[],
+)
 {
    int outIdx;
    int i;
@@ -76,6 +83,7 @@
  outNBElement.value  = outIdx;
  outBegIdx.value  = startIdx;
  return  RetCode.Success ;
+ }
  }
 /* Generated */ 
 

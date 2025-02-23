@@ -66,6 +66,7 @@
 /* Generated */ #elif defined( _RUST )
 /* Generated */    #include "ta_defs.h"
 /* Generated */    #define TA_INTERNAL_ERROR(Id) (RetCode.InternalError)
+/* Generated */    impl core {
 /* Generated */ #else
 /* Generated */    #include <string.h>
 /* Generated */    #include <math.h>
@@ -166,6 +167,12 @@
 /* Generated */ fn dx( int    startIdx,
 /* Generated */ 
 /* Generated */                         int    endIdx,
+J‹® inPriceHLC[],
+J‹® optInTimePeriod[],
+mut outBegIdx,
+mut outNBElement,
+double outReal[],
+)
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_DX( int    startIdx,
 /* Generated */                              int    endIdx,
@@ -717,6 +724,8 @@
 /* Generated */ 
 /* Generated */ #if defined( _MANAGED )
 /* Generated */ }}} // Close namespace TicTacTec.TA.Lib
+/* Generated */ #elif defined( _RUST )
+/* Generated */ } // Close impl core
 /* Generated */ #endif
 /**** END GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
 
