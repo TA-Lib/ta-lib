@@ -148,10 +148,10 @@
 /* Generated */ fn cdlhighwave( int    startIdx,
 /* Generated */ 
 /* Generated */                                  int    endIdx,
-胮 inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-胮 outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHIGHWAVE( int    startIdx,

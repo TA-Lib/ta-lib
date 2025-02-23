@@ -167,11 +167,11 @@
 /* Generated */ fn cdleveningdojistar( int    startIdx,
 /* Generated */ 
 /* Generated */                                         int    endIdx,
-k‚® inPriceOHLC[],
+ inPriceOHLC[],
 double optInPenetration[],
 mut outBegIdx,
 mut outNBElement,
-double outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR( int    startIdx,

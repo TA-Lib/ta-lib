@@ -148,10 +148,10 @@
 /* Generated */ fn cdlgapsidesidewhite( int    startIdx,
 /* Generated */ 
 /* Generated */                                          int    endIdx,
-Î‚® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-Î‚® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE( int    startIdx,

@@ -166,8 +166,8 @@
 /* Generated */ fn adx( int    startIdx,
 /* Generated */ 
 /* Generated */                          int    endIdx,
-´|® inPriceHLC[],
-´|® optInTimePeriod[],
+ inPriceHLC[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

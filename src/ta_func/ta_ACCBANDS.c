@@ -168,8 +168,8 @@
 /* Generated */ fn accbands( int    startIdx,
 /* Generated */ 
 /* Generated */                               int    endIdx,
-|® inPriceHLC[],
-|® optInTimePeriod[],
+ inPriceHLC[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outRealUpperBand[],

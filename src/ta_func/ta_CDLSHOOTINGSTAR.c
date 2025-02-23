@@ -150,10 +150,10 @@
 /* Generated */ fn cdlshootingstar( int    startIdx,
 /* Generated */ 
 /* Generated */                                      int    endIdx,
-ö‡® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-ö‡® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR( int    startIdx,

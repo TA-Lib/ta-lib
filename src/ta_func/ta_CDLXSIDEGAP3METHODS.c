@@ -148,10 +148,10 @@
 /* Generated */ fn cdlxsidegap3methods( int    startIdx,
 /* Generated */ 
 /* Generated */                                          int    endIdx,
-	Ко inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-	Ко outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS( int    startIdx,

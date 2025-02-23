@@ -159,8 +159,8 @@
 /* Generated */ fn midprice( int    startIdx,
 /* Generated */ 
 /* Generated */                               int    endIdx,
-/То inPriceHL[],
-/То optInTimePeriod[],
+ inPriceHL[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

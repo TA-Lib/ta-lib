@@ -167,8 +167,8 @@
 /* Generated */ fn dx( int    startIdx,
 /* Generated */ 
 /* Generated */                         int    endIdx,
-J‹® inPriceHLC[],
-J‹® optInTimePeriod[],
+ inPriceHLC[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

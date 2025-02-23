@@ -147,7 +147,7 @@
 /* Generated */ fn trange( int    startIdx,
 /* Generated */ 
 /* Generated */                             int    endIdx,
-‡® inPriceHLC[],
+ inPriceHLC[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

@@ -189,9 +189,9 @@
 /* Generated */ fn adosc( int    startIdx,
 /* Generated */ 
 /* Generated */                            int    endIdx,
-‘|® inPriceHLCV[],
-‘|® optInFastPeriod[],
-‘|® optInSlowPeriod[],
+ inPriceHLCV[],
+ optInFastPeriod[],
+ optInSlowPeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

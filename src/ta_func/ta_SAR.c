@@ -185,7 +185,7 @@
 /* Generated */ fn sar( int    startIdx,
 /* Generated */ 
 /* Generated */                          int    endIdx,
- inPriceHL[],
+ inPriceHL[],
 double optInAcceleration[],
 double optInMaximum[],
 mut outBegIdx,

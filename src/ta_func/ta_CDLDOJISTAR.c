@@ -148,10 +148,10 @@
 /* Generated */ fn cdldojistar( int    startIdx,
 /* Generated */ 
 /* Generated */                                  int    endIdx,
-쁮 inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-쁮 outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLDOJISTAR( int    startIdx,

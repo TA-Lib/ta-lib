@@ -194,10 +194,10 @@
 /* Generated */ fn ultosc( int    startIdx,
 /* Generated */ 
 /* Generated */                             int    endIdx,
-Ÿ® inPriceHLC[],
-Ÿ® optInTimePeriod1[],
-Ÿ® optInTimePeriod2[],
-Ÿ® optInTimePeriod3[],
+ inPriceHLC[],
+ optInTimePeriod1[],
+ optInTimePeriod2[],
+ optInTimePeriod3[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

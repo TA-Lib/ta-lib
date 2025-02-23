@@ -150,10 +150,10 @@
 /* Generated */ fn cdlseparatinglines( int    startIdx,
 /* Generated */ 
 /* Generated */                                         int    endIdx,
-¿‡® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-¿‡® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES( int    startIdx,

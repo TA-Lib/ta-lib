@@ -162,8 +162,8 @@
 /* Generated */ fn minus_dm( int    startIdx,
 /* Generated */ 
 /* Generated */                               int    endIdx,
-Ð“® inPriceHL[],
-Ð“® optInTimePeriod[],
+ inPriceHL[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

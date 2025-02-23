@@ -150,10 +150,10 @@
 /* Generated */ fn cdlengulfing( int    startIdx,
 /* Generated */ 
 /* Generated */                                   int    endIdx,
-?Во inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-?Во outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLENGULFING( int    startIdx,

@@ -170,7 +170,7 @@
 /* Generated */ 
 /* Generated */                              int    endIdx,
 double inReal[],
-double optInSignalPeriod[],
+ optInSignalPeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outMACD[],

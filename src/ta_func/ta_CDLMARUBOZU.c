@@ -148,10 +148,10 @@
 /* Generated */ fn cdlmarubozu( int    startIdx,
 /* Generated */ 
 /* Generated */                                  int    endIdx,
-4†® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-4†® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLMARUBOZU( int    startIdx,

@@ -148,10 +148,10 @@
 /* Generated */ fn cdlclosingmarubozu( int    startIdx,
 /* Generated */ 
 /* Generated */                                         int    endIdx,
-û€® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-û€® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU( int    startIdx,

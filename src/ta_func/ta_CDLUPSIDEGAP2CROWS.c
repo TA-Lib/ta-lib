@@ -148,10 +148,10 @@
 /* Generated */ fn cdlupsidegap2crows( int    startIdx,
 /* Generated */ 
 /* Generated */                                         int    endIdx,
-Î‰® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-Î‰® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS( int    startIdx,

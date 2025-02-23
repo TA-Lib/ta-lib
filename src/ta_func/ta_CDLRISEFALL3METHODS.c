@@ -148,10 +148,10 @@
 /* Generated */ fn cdlrisefall3methods( int    startIdx,
 /* Generated */ 
 /* Generated */                                          int    endIdx,
-z‡® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-z‡® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS( int    startIdx,

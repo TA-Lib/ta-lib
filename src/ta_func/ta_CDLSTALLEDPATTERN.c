@@ -150,10 +150,10 @@
 /* Generated */ fn cdlstalledpattern( int    startIdx,
 /* Generated */ 
 /* Generated */                                        int    endIdx,
-{ˆ® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-{ˆ® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN( int    startIdx,

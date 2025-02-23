@@ -163,8 +163,8 @@
 /* Generated */ fn willr( int    startIdx,
 /* Generated */ 
 /* Generated */                            int    endIdx,
-cŸ® inPriceHLC[],
-cŸ® optInTimePeriod[],
+ inPriceHLC[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

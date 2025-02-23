@@ -149,10 +149,10 @@
 /* Generated */ fn cdlkickingbylength( int    startIdx,
 /* Generated */ 
 /* Generated */                                         int    endIdx,
-L…® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-L…® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH( int    startIdx,

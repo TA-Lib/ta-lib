@@ -162,8 +162,8 @@
 /* Generated */ fn aroon( int    startIdx,
 /* Generated */ 
 /* Generated */                            int    endIdx,
-M}® inPriceHL[],
-M}® optInTimePeriod[],
+ inPriceHL[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outAroonDown[],

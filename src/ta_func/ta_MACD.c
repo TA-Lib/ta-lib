@@ -215,9 +215,9 @@
 /* Generated */ 
 /* Generated */                           int    endIdx,
 double inReal[],
-double optInFastPeriod[],
-double optInSlowPeriod[],
-double optInSignalPeriod[],
+ optInFastPeriod[],
+ optInSlowPeriod[],
+ optInSignalPeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outMACD[],

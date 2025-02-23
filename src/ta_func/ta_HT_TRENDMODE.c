@@ -152,7 +152,7 @@
 double inReal[],
 mut outBegIdx,
 mut outNBElement,
-double outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_HT_TRENDMODE( int    startIdx,

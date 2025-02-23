@@ -281,7 +281,7 @@
 /* Generated */ fn sarext( int    startIdx,
 /* Generated */ 
 /* Generated */                             int    endIdx,
-–® inPriceHL[],
+ inPriceHL[],
 double optInStartValue[],
 double optInOffsetOnReverse[],
 double optInAccelerationInitLong[],

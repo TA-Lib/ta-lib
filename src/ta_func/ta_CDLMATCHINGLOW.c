@@ -148,10 +148,10 @@
 /* Generated */ fn cdlmatchinglow( int    startIdx,
 /* Generated */ 
 /* Generated */                                     int    endIdx,
-U†® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-U†® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW( int    startIdx,

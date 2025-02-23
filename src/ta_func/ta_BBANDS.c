@@ -210,10 +210,10 @@
 /* Generated */ 
 /* Generated */                             int    endIdx,
 double inReal[],
-double optInTimePeriod[],
+ optInTimePeriod[],
 double optInNbDevUp[],
 double optInNbDevDn[],
-double optInMAType[],
+ optInMAType[],
 mut outBegIdx,
 mut outNBElement,
 double outRealUpperBand[],

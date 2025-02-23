@@ -148,10 +148,10 @@
 /* Generated */ fn cdlunique3river( int    startIdx,
 /* Generated */ 
 /* Generated */                                      int    endIdx,
-Ÿ‰® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-Ÿ‰® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER( int    startIdx,

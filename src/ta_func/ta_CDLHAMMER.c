@@ -151,10 +151,10 @@
 /* Generated */ fn cdlhammer( int    startIdx,
 /* Generated */ 
 /* Generated */                                int    endIdx,
-Oƒ® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-Oƒ® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHAMMER( int    startIdx,

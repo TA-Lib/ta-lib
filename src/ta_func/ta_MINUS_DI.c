@@ -170,8 +170,8 @@
 /* Generated */ fn minus_di( int    startIdx,
 /* Generated */ 
 /* Generated */                               int    endIdx,
-£“® inPriceHLC[],
-£“® optInTimePeriod[],
+ inPriceHLC[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

@@ -72,6 +72,8 @@ static void printRustDoublePrecisionFunctionSignature(FILE* out,
       // }
 
 
+      typeString = "";
+     defaultParamName = "";
       switch (inputParamInfo->type)
       {
       case TA_Input_Real:
@@ -96,6 +98,8 @@ static void printRustDoublePrecisionFunctionSignature(FILE* out,
    {
       TA_GetOptInputParameterInfo( funcInfo->handle, i, &optInputParamInfo );
 
+      typeString = "";
+     defaultParamName = "";
       switch( optInputParamInfo->type )
       {
       case TA_OptInput_RealRange:
@@ -123,6 +127,8 @@ static void printRustDoublePrecisionFunctionSignature(FILE* out,
    {
       // retCode =  TA_GetOutputParameterInfo(funcInfo->handle, i, &outputParamInfo);
       TA_GetOutputParameterInfo(funcInfo->handle, i, &outputParamInfo);
+      typeString = "";
+     defaultParamName = "";
       switch (outputParamInfo->type)
       {
       case TA_Output_Real:

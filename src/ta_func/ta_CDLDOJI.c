@@ -148,10 +148,10 @@
 /* Generated */ fn cdldoji( int    startIdx,
 /* Generated */ 
 /* Generated */                              int    endIdx,
-╫Бо inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-╫Бо outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLDOJI( int    startIdx,

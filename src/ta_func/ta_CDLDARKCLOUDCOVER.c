@@ -165,11 +165,11 @@
 /* Generated */ fn cdldarkcloudcover( int    startIdx,
 /* Generated */ 
 /* Generated */                                        int    endIdx,
-¢ÅÆ inPriceOHLC[],
+ inPriceOHLC[],
 double optInPenetration[],
 mut outBegIdx,
 mut outNBElement,
-double outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER( int    startIdx,

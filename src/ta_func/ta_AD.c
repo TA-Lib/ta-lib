@@ -151,7 +151,7 @@
 /* Generated */ fn ad( int    startIdx,
 /* Generated */ 
 /* Generated */                         int    endIdx,
-\|® inPriceHLCV[],
+ inPriceHLCV[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

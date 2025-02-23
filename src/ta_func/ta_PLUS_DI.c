@@ -170,8 +170,8 @@
 /* Generated */ fn plus_di( int    startIdx,
 /* Generated */ 
 /* Generated */                              int    endIdx,
-k”® inPriceHLC[],
-k”® optInTimePeriod[],
+ inPriceHLC[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

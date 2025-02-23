@@ -156,10 +156,10 @@
 /* Generated */ 
 /* Generated */                               int    endIdx,
 double inReal[],
-double optInTimePeriod[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
-double outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_MININDEX( int    startIdx,

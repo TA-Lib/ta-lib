@@ -150,10 +150,10 @@
 /* Generated */ fn cdlharami( int    startIdx,
 /* Generated */ 
 /* Generated */                                int    endIdx,
-’ƒ® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-’ƒ® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHARAMI( int    startIdx,

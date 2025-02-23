@@ -167,11 +167,11 @@
 /* Generated */ fn cdlabandonedbaby( int    startIdx,
 /* Generated */ 
 /* Generated */                                       int    endIdx,
-V€® inPriceOHLC[],
+ inPriceOHLC[],
 double optInPenetration[],
 mut outBegIdx,
 mut outNBElement,
-double outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY( int    startIdx,

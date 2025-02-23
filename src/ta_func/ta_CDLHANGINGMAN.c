@@ -151,10 +151,10 @@
 /* Generated */ fn cdlhangingman( int    startIdx,
 /* Generated */ 
 /* Generated */                                    int    endIdx,
-jƒ® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-jƒ® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHANGINGMAN( int    startIdx,

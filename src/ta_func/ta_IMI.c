@@ -157,8 +157,8 @@
 /* Generated */ fn imi( int    startIdx,
 /* Generated */ 
 /* Generated */                          int    endIdx,
-XНо inPriceOC[],
-XНо optInTimePeriod[],
+ inPriceOC[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

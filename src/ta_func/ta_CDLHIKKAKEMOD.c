@@ -148,10 +148,10 @@
 /* Generated */ fn cdlhikkakemod( int    startIdx,
 /* Generated */ 
 /* Generated */                                    int    endIdx,
-7До inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-7До outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,

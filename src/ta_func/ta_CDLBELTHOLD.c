@@ -148,10 +148,10 @@
 /* Generated */ fn cdlbelthold( int    startIdx,
 /* Generated */ 
 /* Generated */                                  int    endIdx,
-µ€® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-µ€® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLBELTHOLD( int    startIdx,

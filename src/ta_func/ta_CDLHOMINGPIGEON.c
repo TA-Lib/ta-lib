@@ -148,10 +148,10 @@
 /* Generated */ fn cdlhomingpigeon( int    startIdx,
 /* Generated */ 
 /* Generated */                                      int    endIdx,
-l„® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-l„® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON( int    startIdx,

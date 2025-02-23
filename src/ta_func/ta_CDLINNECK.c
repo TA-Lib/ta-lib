@@ -149,10 +149,10 @@
 /* Generated */ fn cdlinneck( int    startIdx,
 /* Generated */ 
 /* Generated */                                int    endIdx,
-Ö„® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-Ö„® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLINNECK( int    startIdx,

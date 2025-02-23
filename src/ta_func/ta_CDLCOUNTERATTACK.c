@@ -149,10 +149,10 @@
 /* Generated */ fn cdlcounterattack( int    startIdx,
 /* Generated */ 
 /* Generated */                                       int    endIdx,
-rБо inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-rБо outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK( int    startIdx,

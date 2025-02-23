@@ -148,10 +148,10 @@
 /* Generated */ fn cdlgravestonedoji( int    startIdx,
 /* Generated */ 
 /* Generated */                                        int    endIdx,
-Го inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-Го outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI( int    startIdx,

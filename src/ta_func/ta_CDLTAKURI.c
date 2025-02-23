@@ -150,10 +150,10 @@
 /* Generated */ fn cdltakuri( int    startIdx,
 /* Generated */ 
 /* Generated */                                int    endIdx,
-àˆ® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-àˆ® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLTAKURI( int    startIdx,

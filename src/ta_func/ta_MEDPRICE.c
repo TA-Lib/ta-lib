@@ -146,7 +146,7 @@
 /* Generated */ fn medprice( int    startIdx,
 /* Generated */ 
 /* Generated */                               int    endIdx,
-÷‘® inPriceHL[],
+ inPriceHL[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

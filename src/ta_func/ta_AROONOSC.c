@@ -160,8 +160,8 @@
 /* Generated */ fn aroonosc( int    startIdx,
 /* Generated */ 
 /* Generated */                               int    endIdx,
-Y}® inPriceHL[],
-Y}® optInTimePeriod[],
+ inPriceHL[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

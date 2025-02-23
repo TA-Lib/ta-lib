@@ -148,10 +148,10 @@
 /* Generated */ fn cdl3blackcrows( int    startIdx,
 /* Generated */ 
 /* Generated */                                     int    endIdx,
-® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS( int    startIdx,

@@ -165,11 +165,11 @@
 /* Generated */ fn cdleveningstar( int    startIdx,
 /* Generated */ 
 /* Generated */                                     int    endIdx,
-£‚® inPriceOHLC[],
+ inPriceOHLC[],
 double optInPenetration[],
 mut outBegIdx,
 mut outNBElement,
-double outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR( int    startIdx,

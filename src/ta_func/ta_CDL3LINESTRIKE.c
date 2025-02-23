@@ -148,10 +148,10 @@
 /* Generated */ fn cdl3linestrike( int    startIdx,
 /* Generated */ 
 /* Generated */                                     int    endIdx,
-y® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-y® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,

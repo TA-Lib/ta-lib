@@ -150,10 +150,10 @@
 /* Generated */ fn cdlrickshawman( int    startIdx,
 /* Generated */ 
 /* Generated */                                     int    endIdx,
-O‡® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-O‡® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN( int    startIdx,

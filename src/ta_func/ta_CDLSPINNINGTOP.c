@@ -148,10 +148,10 @@
 /* Generated */ fn cdlspinningtop( int    startIdx,
 /* Generated */ 
 /* Generated */                                     int    endIdx,
-Pˆ® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-Pˆ® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP( int    startIdx,

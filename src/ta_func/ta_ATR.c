@@ -170,8 +170,8 @@
 /* Generated */ fn atr( int    startIdx,
 /* Generated */ 
 /* Generated */                          int    endIdx,
-Ä}® inPriceHLC[],
-Ä}® optInTimePeriod[],
+ inPriceHLC[],
+ optInTimePeriod[],
 mut outBegIdx,
 mut outNBElement,
 double outReal[],

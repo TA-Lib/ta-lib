@@ -149,10 +149,10 @@
 /* Generated */ fn cdlidentical3crows( int    startIdx,
 /* Generated */ 
 /* Generated */                                         int    endIdx,
-š„® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-š„® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS( int    startIdx,

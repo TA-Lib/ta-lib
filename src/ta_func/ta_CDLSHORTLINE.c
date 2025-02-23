@@ -148,10 +148,10 @@
 /* Generated */ fn cdlshortline( int    startIdx,
 /* Generated */ 
 /* Generated */                                   int    endIdx,
-$ˆ® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-$ˆ® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLSHORTLINE( int    startIdx,

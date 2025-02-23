@@ -150,10 +150,10 @@
 /* Generated */ fn cdlharamicross( int    startIdx,
 /* Generated */ 
 /* Generated */                                     int    endIdx,
-µƒ® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-µƒ® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLHARAMICROSS( int    startIdx,

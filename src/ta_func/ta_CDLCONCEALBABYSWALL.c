@@ -148,10 +148,10 @@
 /* Generated */ fn cdlconcealbabyswall( int    startIdx,
 /* Generated */ 
 /* Generated */                                          int    endIdx,
-2Бо inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-2Бо outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,

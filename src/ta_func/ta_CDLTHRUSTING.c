@@ -149,10 +149,10 @@
 /* Generated */ fn cdlthrusting( int    startIdx,
 /* Generated */ 
 /* Generated */                                   int    endIdx,
-M‰® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-M‰® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDLTHRUSTING( int    startIdx,

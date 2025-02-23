@@ -176,7 +176,7 @@
 /* Generated */ 
 /* Generated */                         int    endIdx,
 double inReal[],
-double optInTimePeriod[],
+ optInTimePeriod[],
 double optInVFactor[],
 mut outBegIdx,
 mut outNBElement,

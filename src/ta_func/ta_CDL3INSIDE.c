@@ -148,10 +148,10 @@
 /* Generated */ fn cdl3inside( int    startIdx,
 /* Generated */ 
 /* Generated */                                 int    endIdx,
-N® inPriceOHLC[],
+ inPriceOHLC[],
 mut outBegIdx,
 mut outNBElement,
-N® outInteger[],
+ outInteger[],
 )
 /* Generated */ #else
 /* Generated */ TA_LIB_API TA_RetCode TA_CDL3INSIDE( int    startIdx,
