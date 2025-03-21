@@ -1,0 +1,921 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Open-Source library for technical analysis of time series and trading data">
+      
+      
+        <meta name="author" content="Mario Fortier">
+      
+      
+      
+        <link rel="prev" href="../functions/">
+      
+      
+        <link rel="next" href="../wrappers/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
+    
+    
+      
+        <title>C/C++ API - TA-Lib - Technical Analysis Library</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cc-api-documentation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="TA-Lib - Technical Analysis Library" class="md-header__button md-logo" aria-label="TA-Lib - Technical Analysis Library" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.25 12c0 .23-.02.46-.05.68l1.48 1.16c.13.11.17.29.08.45l-1.4 2.42c-.09.15-.27.21-.43.15l-1.74-.7c-.36.28-.76.51-1.19.69l-.25 1.85c-.03.17-.18.3-.35.3h-2.8c-.17 0-.32-.13-.35-.3L10 16.85c-.44-.18-.83-.41-1.19-.69l-1.74.7c-.16.06-.34 0-.43-.15l-1.4-2.42a.35.35 0 0 1 .08-.45l1.48-1.16c-.03-.22-.05-.45-.05-.68s.02-.46.05-.68l-1.48-1.16a.35.35 0 0 1-.08-.45l1.4-2.42c.09-.16.27-.22.43-.16l1.74.71c.36-.28.75-.52 1.19-.69l.25-1.86c.03-.16.18-.29.35-.29h2.8c.17 0 .32.13.35.29L14 7.15c.43.17.83.41 1.19.69l1.74-.71c.16-.06.34 0 .43.16l1.4 2.42c.09.15.05.34-.08.45l-1.48 1.16c.03.22.05.45.05.68M19 3H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-7 7c-1.11 0-2 .89-2 2a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0-2-2"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            TA-Lib - Technical Analysis Library
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              C/C++ API
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/TA-Lib/ta-lib" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Github (Core C Library)
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../install/" class="md-tabs__link">
+        
+  
+    
+  
+  Install
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../functions/" class="md-tabs__link">
+          
+  
+    
+  
+  Docs
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../about/" class="md-tabs__link">
+        
+  
+    
+  
+  About Us
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="TA-Lib - Technical Analysis Library" class="md-nav__button md-logo" aria-label="TA-Lib - Technical Analysis Library" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.25 12c0 .23-.02.46-.05.68l1.48 1.16c.13.11.17.29.08.45l-1.4 2.42c-.09.15-.27.21-.43.15l-1.74-.7c-.36.28-.76.51-1.19.69l-.25 1.85c-.03.17-.18.3-.35.3h-2.8c-.17 0-.32-.13-.35-.3L10 16.85c-.44-.18-.83-.41-1.19-.69l-1.74.7c-.16.06-.34 0-.43-.15l-1.4-2.42a.35.35 0 0 1 .08-.45l1.48-1.16c-.03-.22-.05-.45-.05-.68s.02-.46.05-.68l-1.48-1.16a.35.35 0 0 1-.08-.45l1.4-2.42c.09-.16.27-.22.43-.16l1.74.71c.36-.28.75-.52 1.19-.69l.25-1.86c.03-.16.18-.29.35-.29h2.8c.17 0 .32.13.35.29L14 7.15c.43.17.83.41 1.19.69l1.74-.71c.16-.06.34 0 .43.16l1.4 2.42c.09.15.05.34-.08.45l-1.48 1.16c.03.22.05.45.05.68M19 3H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-7 7c-1.11 0-2 .89-2 2a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0-2-2"/></svg>
+
+    </a>
+    TA-Lib - Technical Analysis Library
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/TA-Lib/ta-lib" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Github (Core C Library)
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Docs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Docs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../functions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Functions List
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    C/C++ API
+    
+  </span>
+  
+
+      </a>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../wrappers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wrappers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    FAQ
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About Us
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" hidden>
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+
+
+
+  
+  
+
+
+<h1 id="cc-api-documentation">C/C++ API Documentation</h1>
+<p><a href="#intro">1.0 Introduction</a></p>
+
+<p><a href="#build">2.0 How
+to build and link to TA-Lib</a></p>
+
+<p><a href="#ta_func">3.0 Technical Analysis Functions</a></p>
+
+<blockquote>
+<p><a href="#direct_call">3.1 Direct call to a TA Function</a><br>
+<a href="#Output output_size">3.2 Output Size</a><br>
+</blockquote>
+
+<p><a href="#Advanced">4.0 Advanced Features</a></p>
+<blockquote>
+<a href="#Abstraction">4.1 Abstraction layer</a><br>
+<a href="#Unstable Period">4.2 Unstable Period</a><br>
+<a href="#Input Type">4.3 Input Type: float vs. double</a><br>
+<a href="#Multithreading">4.4 High-performance Multi-threading</a>
+</blockquote>
+
+<h2><a name="intro">1.0 Introduction</a></h2>
+
+<p>All public functions of the libraries are documented here.</p>
+<p>You must first <a href="http://ta-lib.org/install">install TA-Lib</a>, which will provide all the shared/static libraries and headers needed to compile with your program.</p>
+
+<h2><a name="build">2.0 How to build and link to TA-Lib</a></h2>
+
+<p>In your source code, add <b>#include &quot;ta_libc.h&quot;</b> and link to the library named "ta-lib".<br/><br/>
+You may need to add TA-Lib to your compiler's search path. For example, with gcc, you can use the following options:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>-I/usr/local/include/ta-lib<span class="w"> </span>-lta-lib
+</code></pre></div>
+<p>The paths depend on the method used to install. Typical locations for headers are:</p>
+<div class="highlight"><pre><span></span><code>- /usr/local/include/ta-lib
+- /usr/include/ta-lib
+- /opt/include/ta-lib
+</code></pre></div>
+<p>Typical locations for the libraries are:</p>
+<div class="highlight"><pre><span></span><code>- /usr/lib
+- /usr/lib64
+- /usr/local/lib
+- /usr/local/lib64
+- /opt/lib
+- /opt/local/lib
+</code></pre></div>
+<p>For <a href="https://formulae.brew.sh/formula/ta-lib">homebrew</a>, use <b>brew --prefix ta-lib</b> to find the paths.</p>
+<p>For windows, look into <b>C:\Program Files\TA-Lib</b> for 64-bits and <b>C:\Program Files (x86)\TA-Lib</b> for 32-bits.</p>
+<h2><a name="ta_func">3.0 Technical Analysis Functions</a></h2>
+
+<p>Make sure <a href="ta_initialize.html">TA_Initialize</a> was called once (and only once) prior to any other API functions.<br/>
+<br/>
+All TA functions can be <a href="#direct_call">directly called</a>.<br/>
+<br/>
+Alternatively, an app can call all TA functions using the <a href="#abstract">abstraction layer</a>. This is useful to make dynamic call without knowing at priori the function name or parameters. Example of use is to automatically integrate new functions after upgrading TA-Lib, or for "mutating" calls while strategy searching (e.g. genetic/neural network algo).<br/></p>
+<h3><a name="direct_call">3.1 Direct call to a TA Function</a></h3>
+<p>Direct calls could be done through the API defined in
+<a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_func.h">include/ta_func.h</a><br/>
+<br/>
+All functions are simple "array processing" functions. You provides the inputs with an array, and the the output is written in a caller provided output array.<br/>
+<br/>
+The number of data written will NEVER exceed the number of elements requested to be calculated (with the startIdx and endIdx explained below).<br/></p>
+<p>Here is an example:
+We will dissect the TA_MA function allowing to calculate a simple moving average.</p>
+<pre>TA_RetCode TA_MA(&nbsp;<span style="background-color: #66FFFF">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; startIdx,</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #66FFFF">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; endIdx,</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #00FF00">const double&nbsp;inReal[],</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #C0C0C0">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;optInTimePeriod,</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #C0C0C0">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;optInMAType,</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #FFFF00">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*outBegIdx,</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #FFFF00">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;*outNbElement,</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #FFFF00">double&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; outReal[]</span>&nbsp;<span lang="en-us">&nbsp;&nbsp;</span>)
+</pre>
+
+<p>All TA functions use the same calling pattern, divided in 4 groups:
+    <ul>
+        <li>
+    <span style="background-color: #66FFFF">The output will be calculated only for the range specified by startIdx to endIdx. These are zero base index into the input arrays.</span></li>
+        <li>
+    <span style="background-color: #00FF00">One or more input arrays are then specified. Typically, these are going to be the "price" data. In that example there is only one input. All inputs parameter name starts with &quot;in&quot;.</span>
+    </li>
+        <li><span style="background-color: #C0C0C0">Zero or more optional inputs may need to be specified. In that example there are 2 optional inputs. These parameters allow more control specific to the function. If you do not care about a particular optIn just specify TA_INTEGER_DEFAULT or TA_REAL_DEFAULT (depending on the type).</span>
+    </li>
+        <li>
+    <span style="background-color: #FFFF00">One or more output arrays are finally specified. In that example there is only one output (outReal). The params outBegIdx and outNbElement are always specified once before the output arrays.</span>
+    </li>
+</ul></p>
+<p>This calling pattern provides control on calculating ONLY the portion of data needed for your app. It is slightly complex, but it enables speed/memory optimizations.
+</p>
+<p>Example calculating a 30 days simple moving average (SMA) of daily closing prices:</p>
+<div align="justify">
+<pre>TA_Real    closePrice[400];
+TA_Real    out[400];
+TA_Integer outBeg;
+TA_Integer outNbElement;</pre>
+</div>
+<div align="justify">
+  <pre>/* ... initialize your closing price here... */</pre>
+</div>
+<div align="justify">
+  <pre>retCode = TA_MA( <span style="background-color: #00FFFF">0</span>, <span style="background-color: #00FFFF">399</span>,
+                 <span style="background-color: #00FF00">&amp;closePrice[0]</span>,
+                 <span style="background-color: #C0C0C0">30</span>,<span style="background-color: #C0C0C0">TA_MAType_SMA</span>,
+                 <span style="background-color: #FFFF00">&amp;outBeg</span>, <span style="background-color: #FFFF00">&amp;outNbElement</span>, <span style="background-color: #FFFF00">&amp;out[0]</span> );</pre>
+</div>
+<div align="justify">
+  <pre>/* The output is displayed here */
+for( i=0; i &lt; outNbElement; i++ )
+   printf( &quot;Day %d = %f\n&quot;, outBeg+i, out[i] );
+</pre>
+</div>
+<p>After the call, it is important to check the value returned by outBeg and outNbElement. Even if it was requested to calculate for the whole range (from 0 to 399), the moving average is not valid until the 30th day. Consequently, outBeg will be 29 (zero base)&nbsp; and
+outNbElement will be 400-29 = 371. In other words, only the first 371 elements of out[] are valid, and these could be calculated only
+starting at the 30th element of the input array.</p>
+<p>As an alternative example, if you would have requested to calculate only in
+the &quot;125 to 225&quot; range (with startIdx and endIdx), the outBeg will be
+125 and outNbElement will be 100. (the &quot;30&quot; minimum required is not an
+issue because we dispose of 125 closing price before the start of the requested
+range...). As you may have already understand, the &quot;out&quot; array will be
+written only for its first 100 elements. The rest will be left untouched.</p>
+<p>Here is another example. In that case we want to calculate a 14 bars exponential moving average
+only for 1 price bar in particular (say the last day of 300 price bar):&nbsp;</p>
+<div align="justify">
+<pre>TA_Real    closePrice[300];
+TA_Real    out;
+TA_Integer outBeg;
+TA_Integer outNbElement;</pre>
+</div>
+<div align="justify">
+  <pre>/* ... initialize your closing price here... */</pre>
+</div>
+<div align="justify">
+  <pre>retCode = TA_MA( <span style="background-color: #00FFFF">299</span>, <span style="background-color: #66FFFF">299</span>,
+                 <span style="background-color: #00FF00">&amp;closePrice[0]</span>,
+                 <span style="background-color: #C0C0C0" lang="en-us">14</span>, <span style="background-color: #C0C0C0">TA_MAType_EMA</span>,
+                 <span style="background-color: #FFFF00">&amp;outBeg</span>, <span style="background-color: #FFFF00">&amp;outNbElement</span>, <span style="background-color: #FFFF00">&amp;out</span> );</pre>
+</div>
+<p>In that example: outBeg will be 299,&nbsp; outNbElement will be 1, and only one value gets written into out.</p>
+<p>In the case that you do not provide enough data to even being able to calculate at least one value, outNbElement will be 0 and outBeg shall&nbsp; be ignored.</p>
+<p>If the input and output of a TA function are of the same type, the caller can re-use the input buffer for storing <u>one of the output</u> of the TA function. The following example will work:</p>
+<div align="justify">
+<pre>#define BUFFER_SIZE 100
+TA_Real buffer[BUFFER_SIZE];
+...
+retCode = TA_MA( <span style="background-color: #00FFFF" lang="en-us">0</span>, <span style="background-color: #00FFFF" lang="en-us">BUFFER_SIZE-1</span>,
+                 <span style="background-color: #00FF00">&amp;buffer[0]</span>,
+                 <span style="background-color: #C0C0C0">30</span>, <span style="background-color: #C0C0C0">TA_MAType_SMA</span>,
+                 <span style="background-color: #FFFF00">&amp;outBeg</span>, <span style="background-color: #FFFF00">&amp;outNbElement</span>, <span style="background-color: #FFFF00">&amp;buffer[0]</span> );</pre>
+</div>
+<p>Of course, the input is overwritten, but this capability diminish needs for temporary memory buffers. This capability is true for all TA functions.</p>
+<h3 align="justify"><a name="output_size">3.2 Output Size</a></h3>
+<p>
+It is important that the output array is large enough. Depending of your needs, you might find one of the following method useful to determine the output allocation size. All these methods works consistently for all TA functions:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input Matching</td>
+<td>allocationSize = endIdx + 1; <br> <strong>Pros</strong>: Easy to understand and implement. <br> <strong>Cons</strong>: Memory allocation unnecessarily large when specifying small range.</td>
+</tr>
+<tr>
+<td>Range Matching</td>
+<td>allocationSize = endIdx - startIdx + 1; <br> <br> <strong>Pros</strong>: Easy to implement. <br> <strong>Cons</strong>: Allocation slightly larger than needed. Example: for a 30 period SMA, you will get 29 elements wasted because of the lookback.</td>
+</tr>
+<tr>
+<td>Exact Allocation</td>
+<td>lookback = TA_XXXX_Lookback( ... ) ; <br> temp = max( lookback, startIdx ); <br> if( temp &gt; endIdx ) <br> &nbsp;&nbsp; allocationSize = 0; // No output <br> else <br> &nbsp;&nbsp; allocationSize = endIdx - temp + 1; <br> <strong>Pros</strong>: Optimal allocation algorithm. <br> <strong>Cons</strong>: Slightly more complex.</td>
+</tr>
+</tbody>
+</table>
+<p>A function TA_XXXX_Lookback is provided for each TA function. Example: For TA_SMA,
+there is a TA_SMA_Lookback.</p>
+<p>The lookback indicates how many inputs are consume before the first output can be calculated. Example: A simple moving average (SMA) of period 10 will have a lookback of 9.</p>
+
+<h2><a name="Advanced">4.0 Advanced Features</a></h2>
+
+<h3><a name="abstract">4.1 Abstraction Layer</a></h3>
+<p>All the TA Function can be called using the interface defined in
+<a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a></p>
+<p>The abstraction layer is particularly useful for an application who wishes to support the complete list of TA functions without having to maintain new code each time a new function is added to TA-Lib. If you wish to simply integrate in your application a small number of specific functions, then you may be better to do simpler direct call (see previous section).<br/>
+<br/>
+Use Case 1:<br/>
+The app is a charting software. When the user select a price bar, a side list offers blindly all the TA functions that could be applied to a price bar. The user selects one of these, then a dialog open for allowing to adjust the optional parameters (TA-Lib API will tell your app which parameters are needed and the
+valid range for each). Once all parameters are set, you can dynamically call the corresponding TA function. The output can then be drawn on the chart using some hint (from TA-Lib) about data representation (overlap study, independent indicator with its own scale etc...).
+<br/><br/>
+The same "abstract" logic apply to all the TA functions. Some TA Functions works only on volume, or can work indifferently with any time series data (the open, close, another indicator...).<br/>
+<br/>
+
+Use Case 2:<br/>
+Your app is searching for "best strategies" using your own backtesting platform. You might want to automate trying various mix of "volatility" and moving average crossings using a genetic algorith, You can make your app "mutate" and switch function and parameters using the abstract interface.<br/>
+<br/>
+Use Case 3:<br/>
+You can generate any "glue code" or "wrapper" for a high-level language (e.g. Python, R, Java, C#) or for simply interfacing with your app. A lot of derived work are now "maintained" automatically using the abstract layer.<br/>
+
+<h3><a name="Unstable Period">4.2 Unstable Period</a></h3>
+<p>Some TA functions provides different results depending of the &quot;starting point&quot; of the data being
+involve. This is often referred as a function having memories. An example of such function is the Exponential Moving Average. It is
+possible to control the unstable period (the amount of data to strip off) with
+<a href="ta_setunstableperiod.html">TA_SetUnstablePeriod</a> and
+<a href="ta_getunstableperiod.html">TA_GetUnstablePeriod</a>.</p>
+<h3><a name="Input Type">4.3 Input Type: float vs. double</a></h3>
+<p>Each TA function have two implementation. One accepts input arrays of float and the other accepts double. The float version has a &quot;TA_S_&quot; suffix e.g. for TA_MA there is an equivalent TA_S_MA function.</p>
+<pre>TA_RetCode TA_MA( int     startIdx,
+                  int          endIdx,
+                  <b>const double inReal[]</b>,
+                  int          optInTimePeriod,
+                  TA_MAType    optInMAType,
+                  int         *outBegIdx,
+                  int         *outNbElement,
+                  double       outReal[] );
+</pre>
+<pre>TA_RetCode TA_S_MA( int     startIdx,
+                    int          endIdx,
+                    <b>const float inReal[]</b>,
+                    int          optInTimePeriod,
+                    TA_MAType    optInMAType,
+                    int         *outBegIdx,
+                    int         *outNbElement,
+                    double       outReal[] );
+</pre>
+
+<p>Internally both version do all the calculation using double e.g. when an element of a float array is accessed, it is changed to double. Consequently, both function will produce the same output</p>
+<p>Some apps have their price bar data already loaded as float. The TA_S_XXXX functions allows to digest these directly (no copy needed) while still maintaining all intermediate calculation as double.
+
+<h3><a name="Multithreading">4.4 High-performance multi-threading</a></h3>
+
+<p>TA-Lib is multi-thread safe where it matters the most for performance: When calling any TA functions (e.g. TA_SMA, TA_RSI etc... )</p>
+
+<p>One important caveat is the initialization of the "global settings" must first be done from a single thread. That includes calls to:</p>
+<ul>
+  <li>TA_Initialize</li>
+  <li>TA_SetUnstablePeriod, TA_SetCompatibility</li>
+  <li>TA_SetCandleSettings, TA_RestoreCandleDefaultSettings</li>
+</ul>
+
+<p>After you are done with these initial calls, the application can start performing multi-thread calls with the rest of the API (including the ta_abstract.h API).</p>
+
+<p>One exception to the rule is TA_Shutdown() which must be called single threaded (typically from the only thread remaining prior to exit your application).</p>
+
+<p>Note: TA-Lib assumes it is link to a thread safe malloc/free runtime library, which is the default on all modern platforms (Linux,Windows,Mac). In other word, safe with any compiler supporting C11 or more recent.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+  
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+        
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../functions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Functions List">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Functions List
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../wrappers/" class="md-footer__link md-footer__link--next" aria-label="Next: Wrappers">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Wrappers
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.code.annotate", "content.tooltips", "navigation.indexes", "navigation.instant", "navigation.sections", "navigation.tabs", "navigation.footer", "navigation.top", "navigation.tracking", "search.highlight", "search.share", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>
