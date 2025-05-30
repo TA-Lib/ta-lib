@@ -15,58 +15,77 @@
 # It reduces the notification noise and risk while debugging the CI.
 #
 # (e.g. "nobody" watch a fork, while >20 watches are on the official ta-lib).
+#!/usr/bin/env python3
 
 import argparse
 import subprocess
 import sys
 from utilities.common import verify_git_repo
 
-def run_command(command):
-    """Run a shell command and return the output."""
-    result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    return result.stdout.strip()
+def run_command(command, description=None):
+    """Run a shell command and return the output, printing an optional description."""
+    if description:
+        print(f"> {description}...")
+    try:
+        result = subprocess.run(
+            command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Command failed: {' '.join(command)}")
+        print(e.stderr)
+        raise
 
 def main():
-    parser = argparse.ArgumentParser(description="Merge ta-lib-temp fork into the upstream ta-lib repository.")
-    parser.add_argument('--squash', type=str, help="Squash all changes into a single commit with the specified comment.")
+    parser = argparse.ArgumentParser(
+        description="Merge 'ta-lib-temp' fork into the upstream TA-Lib repository's dev branch."
+    )
+    parser.add_argument(
+        '--squash',
+        type=str,
+        help="Squash all changes into a single commit with this message."
+    )
     args = parser.parse_args()
 
-
     try:
-        # Verify that the current directory in within the official ta-lib repos.
+        # Step 1: Verify the current directory is within the official ta-lib repo.
+        print("🔍 Verifying git repository...")
         root_dir = verify_git_repo()
-        remote_url = run_command(['git', 'remote', 'get-url', 'origin'])
+        remote_url = run_command(['git', 'remote', 'get-url', 'origin'], "Checking origin remote URL")
+
         if not remote_url.endswith('ta-lib.git'):
-            print("This script must be run from the official ta-lib repository.")
+            print("❌ This script must be run from the official TA-Lib repository (ending with ta-lib.git).")
             sys.exit(1)
 
-        # Check if ta-lib-temp is a remote
-        remotes = run_command(['git', 'remote'])
+        # Step 2: Ensure the 'ta-lib-temp' remote is configured.
+        remotes = run_command(['git', 'remote'], "Checking configured remotes").splitlines()
         if 'ta-lib-temp' not in remotes:
-            print(f"The remote ta-lib-temp is not configured.")
-            print(f"Use 'git remote add ta-lib-temp <URL>' to add it.")
-            print(f"Example: git remote add ta-lib-temp https://github.com/TA-Lib/ta-lib-temp.git")
+            print("❌ Remote 'ta-lib-temp' is not configured.")
+            print("💡 Use the following command to add it:")
+            print("   git remote add ta-lib-temp https://github.com/TA-Lib/ta-lib-temp.git")
             sys.exit(1)
 
-        # Fetch the latest changes from the ta-lib-temp fork
-        run_command(['git', 'fetch', 'ta-lib-temp'])
+        # Step 3: Fetch latest from ta-lib-temp
+        run_command(['git', 'fetch', 'ta-lib-temp'], "Fetching updates from ta-lib-temp")
 
-        # Checkout the main branch of the official repository
-        run_command(['git', 'checkout', 'dev'])
+        # Step 4: Checkout the official dev branch
+        run_command(['git', 'checkout', 'dev'], "Checking out 'dev' branch")
 
-        # Merge the cahnges from ta-lib-temp
+        # Step 5: Merge or squash-merge ta-lib-temp/main
         if args.squash:
-            # Squash merge
-            run_command(['git', 'merge', '--squash', 'ta-lib-temp/main'])
-            run_command(['git', 'commit', '-m', args.squash])
+            print(f"🔨 Performing squash merge with commit message: '{args.squash}'")
+            run_command(['git', 'merge', '--squash', 'ta-lib-temp/main'], "Squashing changes")
+            run_command(['git', 'commit', '-m', args.squash], "Committing squash merge")
         else:
-            # Regular merge
-            run_command(['git', 'merge', 'ta-lib-temp/main'])
+            run_command(['git', 'merge', 'ta-lib-temp/main'], "Merging changes")
 
-        print("Merge completed successfully into official dev branch.\n")
+        print("✅ Merge completed successfully into the 'dev' branch.")
 
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred: {e}")
+    except subprocess.CalledProcessError:
+        print("❌ Merge failed due to a command error.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
