@@ -45,16 +45,17 @@
  */
 #define TA_INTERNAL_ERROR(Id) ((TA_RetCode)(TA_INTERNAL_ERROR+Id))
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+/* System includes must be outside extern "C" for C++ interop compatibility */
 #include <stdio.h>
 #include <limits.h>
 #include <float.h>
 
 #ifndef TA_DEFS_H
    #include "ta_defs.h"
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /* Some functions to get the version of TA-Lib.

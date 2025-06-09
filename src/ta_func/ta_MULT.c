@@ -199,6 +199,9 @@
 
    /* Insert TA function code here. */
 
+#if defined(TA_USE_ACCELERATE) && !defined(USE_SINGLE_PRECISION_INPUT)
+   ACCEL_VDSP_2IN(vDSP_vmulD)
+#else
    FOR_EACH_OUTPUT(startIdx, endIdx, i, outIdx)
       outReal[outIdx] = OUTPUT_F64(inReal0[i]*inReal1[i]);
    FOR_EACH_OUTPUT_END(outIdx)
@@ -207,6 +210,7 @@
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+#endif
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/

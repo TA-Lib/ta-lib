@@ -9,6 +9,43 @@
    #include "ta_error_number.h"
 #endif
 
+/* High-resolution timer abstraction for profiling.
+ * mach_absolute_time on Apple (nanosecond precision),
+ * QueryPerformanceCounter on Windows,
+ * clock() elsewhere.
+ */
+#ifdef WIN32
+   #include "windows.h"
+   #define TIMER_DECL            LARGE_INTEGER ta_timer_start, ta_timer_end
+   #define TIMER_START()         QueryPerformanceCounter(&ta_timer_start)
+   #define TIMER_STOP(dt)        do { QueryPerformanceCounter(&ta_timer_end); \
+       (dt) = (double)((__int64)ta_timer_end.QuadPart - (__int64)ta_timer_start.QuadPart); } while(0)
+   #define TIMER_FREQ_DECL       LARGE_INTEGER ta_timer_qpf
+   #define TIMER_FREQ_INIT()     QueryPerformanceFrequency(&ta_timer_qpf)
+   #define TIMER_TICKS_TO_MS(t)  ((t) / (double)ta_timer_qpf.QuadPart * 1000.0)
+   #define TIMER_TICKS_TO_US(t)  ((t) / (double)ta_timer_qpf.QuadPart * 1000000.0)
+#elif defined(__APPLE__)
+   #include <mach/mach_time.h>
+   #define TIMER_DECL            uint64_t ta_timer_start, ta_timer_end
+   #define TIMER_START()         (ta_timer_start = mach_absolute_time())
+   #define TIMER_STOP(dt)        do { ta_timer_end = mach_absolute_time(); \
+       (dt) = (double)(ta_timer_end - ta_timer_start); } while(0)
+   #define TIMER_FREQ_DECL       mach_timebase_info_data_t ta_timer_tbi
+   #define TIMER_FREQ_INIT()     mach_timebase_info(&ta_timer_tbi)
+   #define TIMER_TICKS_TO_MS(t)  ((t) * (double)ta_timer_tbi.numer / (double)ta_timer_tbi.denom / 1000000.0)
+   #define TIMER_TICKS_TO_US(t)  ((t) * (double)ta_timer_tbi.numer / (double)ta_timer_tbi.denom / 1000.0)
+#else
+   #include <time.h>
+   #define TIMER_DECL            clock_t ta_timer_start, ta_timer_end
+   #define TIMER_START()         (ta_timer_start = clock())
+   #define TIMER_STOP(dt)        do { ta_timer_end = clock(); \
+       (dt) = (double)(ta_timer_end - ta_timer_start); } while(0)
+   #define TIMER_FREQ_DECL       /* nothing */
+   #define TIMER_FREQ_INIT()     /* nothing */
+   #define TIMER_TICKS_TO_MS(t)  ((t) / (double)CLOCKS_PER_SEC * 1000.0)
+   #define TIMER_TICKS_TO_US(t)  ((t) / (double)CLOCKS_PER_SEC * 1000000.0)
+#endif
+
 typedef struct
 {
    unsigned int nbBars; /* Nb of element into the following arrays. */

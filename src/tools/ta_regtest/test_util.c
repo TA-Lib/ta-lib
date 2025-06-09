@@ -51,14 +51,9 @@
  */
 
 /**** Headers ****/
-#ifdef WIN32
-   #include "windows.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <time.h>
 #include "ta_test_priv.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
@@ -1282,21 +1277,11 @@ static TA_RetCode CallTestFunction( RangeTestFunction testFunction,
 {
    /* Call the function and do profiling. */
    TA_RetCode retCode;
-   double clockDelta;
+   double elapsed;
 
-#ifdef WIN32
-   LARGE_INTEGER startClock;
-   LARGE_INTEGER endClock;
-#else
-   clock_t startClock;
-   clock_t endClock;
-#endif
+   TIMER_DECL;
 
-#ifdef WIN32
-   QueryPerformanceCounter(&startClock);
-#else
-   startClock = clock();
-#endif
+   TIMER_START();
 	retCode = testFunction( startIdx,
                   endIdx,
                   outputBuffer,
@@ -1314,23 +1299,17 @@ static TA_RetCode CallTestFunction( RangeTestFunction testFunction,
 		return retCode;
 	}
 
-#ifdef WIN32
-   QueryPerformanceCounter(&endClock);
-   clockDelta = (double)((__int64)endClock.QuadPart - (__int64) startClock.QuadPart);
-#else
-   endClock = clock();
-   clockDelta = (double)(endClock - startClock);
-#endif
+   TIMER_STOP(elapsed);
 
-   if( clockDelta <= 0 )
+   if( elapsed < 0 )
    {
 	   insufficientClockPrecision = 1;
    }
    else
    {
-      if( clockDelta > worstProfiledCall )
-         worstProfiledCall = clockDelta;
-      timeInProfiledCall += clockDelta;
+      if( elapsed > worstProfiledCall )
+         worstProfiledCall = elapsed;
+      timeInProfiledCall += elapsed;
       nbProfiledCall++;
    }
 
