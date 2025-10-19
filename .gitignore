@@ -86,4 +86,9 @@ out/
 *.pdb
 
 # Never ignore .gitkeep files
-!**/.gitkeep
+!**/.gitkeepsrc/ta_pg/ta_pg--1.0.sql
+
+# Auto generated ta_pg files
+src/ta_pg/ta_pg.c
+src/ta_pg/tests/test_ta_pg.py
+src/ta_pg/ta_pg--1.0.sql

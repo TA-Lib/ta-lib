@@ -1,0 +1,5 @@
+# ta_pg extension
+comment = 'PostgreSQL extension for TA-Lib'
+default_version = '1.0'
+module_pathname = '$libdir/ta_pg'
+relocatable = true
