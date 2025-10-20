@@ -8,8 +8,9 @@ Latest release is [0.6.4 on Github](https://github.com/ta-lib/ta-lib/releases/la
 
 For Python users, see instead
 [ta-lib-python](https://github.com/TA-Lib/ta-lib-python). For R users, see
-instead [ta-lib-R](https://github.com/serkor1/ta-lib-R). For Zig users, see
-instead [ta-lib-zig](https://github.com/ta-lib/ta-lib-zig).
+instead [ta-lib-R](https://github.com/serkor1/ta-lib-R). For Ruby users, see
+instead [ta-lib-ruby](https://github.com/TA-Lib/ta-lib-ruby). For Zig users,
+see instead [ta-lib-zig](https://github.com/ta-lib/ta-lib-zig).
 
 - [Windows](#windows)
     - [Executable Installer (recommended)](#executable-installer-recommended)

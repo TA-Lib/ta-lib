@@ -13,7 +13,7 @@ hide:
  
 * Candlestick patterns recognition
 
-* Core written in [C/C++](api.md) with API also available for [Python, R, and Zig](wrappers.md).
+* Core written in [C/C++](api.md) with API also available for [Python, R, Ruby, and Zig](wrappers.md).
 
 * Open-Source (BSD License). Can be freely integrated in your own open-source or commercial applications.
 
