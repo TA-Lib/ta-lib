@@ -6,7 +6,10 @@ Instructions are for installing the C/C++ shared, static libraries and headers o
 
 Latest release is [0.6.4 on Github](https://github.com/ta-lib/ta-lib/releases/latest)
 
-For python and Rusers, see instead [ta-lib-python](https://github.com/TA-Lib/ta-lib-python) or [ta-lib-R](https://github.com/serkor1/ta-lib-R)
+For Python users, see instead
+[ta-lib-python](https://github.com/TA-Lib/ta-lib-python). For R users, see
+instead [ta-lib-R](https://github.com/serkor1/ta-lib-R). For Zig users, see
+instead [ta-lib-zig](https://github.com/ta-lib/ta-lib-zig).
 
 - [Windows](#windows)
     - [Executable Installer (recommended)](#executable-installer-recommended)
