@@ -41,7 +41,7 @@
    }
 #endif
 
-static const int SIZES[] = { 100, 1000, 10000 };
+static const int SIZES[] = { 100, 1000, 10000, 100000, 1000000 };
 #define NUM_SIZES (sizeof(SIZES) / sizeof(SIZES[0]))
 #define WARMUP_ITERS 10
 
