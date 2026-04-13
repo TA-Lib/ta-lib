@@ -27,7 +27,7 @@ echo "✅ Generated umbrella header: $UMBRELLA_HEADER"
 # Verify all slices are built
 for LIB in build-ios/libta-lib.a build-ios-sim/libta-lib.a build-macos/libta-lib.a; do
   if [ ! -f "$ROOT_DIR/$LIB" ]; then
-    echo "❌ Missing $LIB — run scripts/build-ios.sh first"
+    echo "❌ Missing $LIB — run scripts/ios/build-ios.sh first"
     exit 1
   fi
 done
