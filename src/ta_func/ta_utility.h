@@ -7,6 +7,10 @@
 #ifndef TA_UTILITY_H
 #define TA_UTILITY_H
 
+#ifndef TA_VECLIB_H
+   #include "ta_veclib.h"
+#endif
+
 #if !defined( _MANAGED ) && !defined( _JAVA ) && !defined( _RUST )
    #ifndef TA_FUNC_H
       #include "ta_func.h"

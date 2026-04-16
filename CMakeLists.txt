@@ -13,8 +13,23 @@ set(PROJECT_VERSION "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VE
 
 set(CMAKE_C_STANDARD 11)
 
-# Option to build development tools (enabled by default)
-option(BUILD_DEV_TOOLS "Build development tools (gen_code, ta_regtest)" ON)
+# Detect Apple platforms (iOS, macOS, etc.)
+if(APPLE)
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        set(IOS TRUE)
+        message(STATUS "Building for iOS")
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+        set(MACOS TRUE)
+        message(STATUS "Building for macOS")
+    endif()
+endif()
+
+# Option to build development tools (enabled by default, but disabled for iOS)
+if(IOS)
+    option(BUILD_DEV_TOOLS "Build development tools (gen_code, ta_regtest)" OFF)
+else()
+    option(BUILD_DEV_TOOLS "Build development tools (gen_code, ta_regtest)" ON)
+endif()
 message(STATUS "BUILD_DEV_TOOLS: ${BUILD_DEV_TOOLS}")
 
 # Default to Release config
@@ -35,6 +50,10 @@ if(WIN32)
 	else()
     	message(FATAL_ERROR "Platform env variable not set. Did you forget to do vcvarsall.bat?")
 	endif()
+elseif(IOS)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Installation Directory")
+elseif(MACOS)
+    set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation Directory")
 endif()
 message(STATUS "Installation Directory: ${CMAKE_INSTALL_PREFIX}")
 
@@ -402,6 +421,44 @@ endif(MSVC)
 target_include_directories(ta-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(ta-lib-static PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
+# Apple-specific configurations
+if(APPLE)
+    set(TA_LIB_TARGETS ta-lib ta-lib-static)
+
+    # Set minimum deployment targets
+    if(IOS)
+        foreach(target ${TA_LIB_TARGETS})
+            set_target_properties(${target} PROPERTIES
+                XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "12.0"
+                XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+            )
+        endforeach()
+    elseif(MACOS)
+        foreach(target ${TA_LIB_TARGETS})
+            set_target_properties(${target} PROPERTIES
+                XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "10.15"
+            )
+        endforeach()
+    endif()
+
+    # Apple Accelerate framework for vectorized math (vDSP/vForce)
+    option(TA_USE_ACCELERATE "Use Apple Accelerate framework for vectorized math" ON)
+    if(TA_USE_ACCELERATE)
+        foreach(target ${TA_LIB_TARGETS})
+            target_compile_definitions(${target} PRIVATE TA_USE_ACCELERATE)
+            target_link_libraries(${target} PRIVATE "-framework Accelerate")
+        endforeach()
+        message(STATUS "Apple Accelerate framework: ENABLED")
+    endif()
+
+    # Set bundle identifier for iOS
+    if(IOS)
+        set_target_properties(ta-lib PROPERTIES
+            XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "org.ta-lib.ta-lib"
+        )
+    endif()
+endif()
+
 # Install the libraries and headers.
 if(WIN32)
     install(TARGETS ta-lib ta-lib-static
@@ -413,9 +470,17 @@ if(WIN32)
     install(FILES ${LIB_HEADERS}
         DESTINATION include
     )
+elseif(IOS)
+    # For iOS, only install static library (shared libraries not supported)
+    install(TARGETS ta-lib-static
+        ARCHIVE DESTINATION lib
+    )
+    install(FILES ${LIB_HEADERS}
+        DESTINATION include/ta-lib
+    )
 else()
     install(TARGETS ta-lib ta-lib-static
-        LIBRARY DESTINATION lib  # For shared libraries (.so on Linux)
+        LIBRARY DESTINATION lib  # For shared libraries (.so on Linux, .dylib on macOS)
         ARCHIVE DESTINATION lib  # For static libraries
     )
     install(FILES ${LIB_HEADERS}
@@ -537,10 +602,9 @@ if(BUILD_DEV_TOOLS)
 
 	# Link the necessary libraries for ta_regtest (the 'm' is for the Math library)
 	# On windows, no need for a math library. It is already included in the standard library.
-	if(WIN32)
-		target_link_libraries(ta_regtest PRIVATE ta-lib-static)
-	else()
-		target_link_libraries(ta_regtest PRIVATE ta-lib-static m)
+	target_link_libraries(ta_regtest PRIVATE ta-lib-static)
+	if(NOT WIN32 AND NOT APPLE)
+		target_link_libraries(ta_regtest PRIVATE m)
 	endif()
 
 	# Set the output directory for the ta_regtest executable during the build process
@@ -624,7 +688,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
 	  elseif(PLATFORM_ENV STREQUAL "x64")
 	    set(MSI_HOST_ARCH "x86_64")
 	  else()
-	    status(FATAL_ERROR "Unsupported vcvarsall target: ${PLATFORM_ENV}")
+	    message(FATAL_ERROR "Unsupported vcvarsall target: ${PLATFORM_ENV}")
       endif()
     else()
 	  set(DEB_HOST_ARCH "amd64")
@@ -638,7 +702,7 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7l")
     set(DEB_HOST_ARCH "armhf")
     set(RPM_HOST_ARCH "armv7hl")
     set(MSI_HOST_ARCH "arm_32")
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
     set(DEB_HOST_ARCH "arm64")
     set(RPM_HOST_ARCH "aarch64")
     set(MSI_HOST_ARCH "arm_64")

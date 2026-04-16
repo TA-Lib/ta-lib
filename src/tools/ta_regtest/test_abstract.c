@@ -59,12 +59,6 @@
  */
 
 /**** Headers ****/
-#ifdef WIN32
-   #include "windows.h"
-#else
-   #include "time.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -158,7 +152,7 @@ ErrorNumber test_abstract( void )
    }
 
    retValue = testLookback(paramHolder);
-   if( retValue != TA_SUCCESS )
+   if( retValue != TA_TEST_PASS )
    {
       printf( "testLookback() failed [%d]\n", retValue );
       TA_ParamHolderFree( paramHolder );
@@ -602,14 +596,8 @@ static ErrorNumber callAndProfile( const char *funcName, ProfilingType type )
    int inputSize;
 
    /* Variables measuring the execution time */
-#ifdef WIN32
-   LARGE_INTEGER startClock;
-   LARGE_INTEGER endClock;
-#else
-   clock_t startClock;
-   clock_t endClock;
-#endif
-   double clockDelta;
+   TIMER_DECL;
+   double elapsed;
    int nbProfiledCallLocal;
    double timeInProfiledCallLocal;
    double worstProfiledCallLocal;
@@ -728,11 +716,7 @@ static ErrorNumber callAndProfile( const char *funcName, ProfilingType type )
 			  }
 		   }
 
-           #ifdef WIN32
-              QueryPerformanceCounter(&startClock);
-           #else
-              startClock = clock();
-           #endif
+           TIMER_START();
 
 		   /* Do the function call. */
 		   retCode = TA_CallFunc(paramHolder,0,inputSize-1,&outBegIdx,&outNbElement);
@@ -743,32 +727,25 @@ static ErrorNumber callAndProfile( const char *funcName, ProfilingType type )
 		      return TA_ABS_TST_FAIL_CALLFUNC_1;
 		   }
 
-		   #ifdef WIN32
-			   QueryPerformanceCounter(&endClock);
-			   clockDelta = (double)((__int64)endClock.QuadPart - (__int64) startClock.QuadPart);
-		   #else
-			   endClock = clock();
-			   clockDelta = (double)(endClock - startClock);
-		   #endif
+		   TIMER_STOP(elapsed);
 
 		   /* Setup global profiling info. */
-		   if( clockDelta <= 0 )
+		   if( elapsed < 0 )
 		   {
-			   printf( "Error: Insufficient timer precision to perform benchmarking on this platform.\n" );
-			   return TA_ABS_TST_FAIL_CALLFUNC_1;
+			   insufficientClockPrecision = 1;
 		   }
 		   else
 		   {
-			   if( clockDelta > worstProfiledCall )
-			      worstProfiledCall = clockDelta;
-			   timeInProfiledCall += clockDelta;
+			   if( elapsed > worstProfiledCall )
+			      worstProfiledCall = elapsed;
+			   timeInProfiledCall += elapsed;
 			   nbProfiledCall++;
 		   }
 
 		   /* Setup local profiling info for this particular function. */
-		   if( clockDelta > worstProfiledCallLocal )
-			   worstProfiledCallLocal = clockDelta;
-		   timeInProfiledCallLocal += clockDelta;
+		   if( elapsed > worstProfiledCallLocal )
+			   worstProfiledCallLocal = elapsed;
+		   timeInProfiledCallLocal += elapsed;
 		   nbProfiledCallLocal++;
 	   }
    }
