@@ -152,7 +152,7 @@ ErrorNumber test_abstract( void )
    }
 
    retValue = testLookback(paramHolder);
-   if( retValue != TA_SUCCESS )
+   if( retValue != TA_TEST_PASS )
    {
       printf( "testLookback() failed [%d]\n", retValue );
       TA_ParamHolderFree( paramHolder );
