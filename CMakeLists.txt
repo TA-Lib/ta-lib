@@ -627,17 +627,6 @@ if(BUILD_DEV_TOOLS)
 	)
 endif()
 
-# Accelerate benchmark tool (Apple only, optional)
-if(APPLE AND BUILD_DEV_TOOLS)
-	add_executable(ta_bench src/tools/ta_bench/ta_bench.c)
-	target_include_directories(ta_bench PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-	target_link_libraries(ta_bench PRIVATE ta-lib-static)
-	if(TA_USE_ACCELERATE)
-		target_compile_definitions(ta_bench PRIVATE TA_USE_ACCELERATE)
-	endif()
-	set_target_properties(ta_bench PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
-endif()
-
 #############
 # Packaging #
 #############

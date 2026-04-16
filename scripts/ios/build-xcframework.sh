@@ -24,8 +24,11 @@ done
 
 echo "✅ Generated umbrella header: $UMBRELLA_HEADER"
 
-# Verify all slices are built
-for LIB in build-ios/libta-lib.a build-ios-sim/libta-lib.a build-macos/libta-lib.a; do
+IOS_LIB="build-ios/Release-iphoneos/libta-lib.a"
+IOS_SIM_LIB="build-ios-sim/Release-iphonesimulator/libta-lib.a"
+MACOS_LIB="build-macos/libta-lib.a"
+
+for LIB in "$IOS_LIB" "$IOS_SIM_LIB" "$MACOS_LIB"; do
   if [ ! -f "$ROOT_DIR/$LIB" ]; then
     echo "❌ Missing $LIB — run scripts/ios/build-ios.sh first"
     exit 1
@@ -45,9 +48,9 @@ echo "✅ Generated module.modulemap"
 
 # Create the XCFramework from static libs
 xcodebuild -create-xcframework \
-  -library "$ROOT_DIR/build-ios/libta-lib.a" -headers "$TMP_HEADERS_DIR" \
-  -library "$ROOT_DIR/build-ios-sim/libta-lib.a" -headers "$TMP_HEADERS_DIR" \
-  -library "$ROOT_DIR/build-macos/libta-lib.a" -headers "$TMP_HEADERS_DIR" \
+  -library "$ROOT_DIR/$IOS_LIB" -headers "$TMP_HEADERS_DIR" \
+  -library "$ROOT_DIR/$IOS_SIM_LIB" -headers "$TMP_HEADERS_DIR" \
+  -library "$ROOT_DIR/$MACOS_LIB" -headers "$TMP_HEADERS_DIR" \
   -output "$XCFRAMEWORK_OUTPUT"
 
 echo "✅ Created $FRAMEWORK_NAME.xcframework"
