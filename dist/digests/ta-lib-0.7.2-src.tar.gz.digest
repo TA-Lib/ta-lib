@@ -1,0 +1,9 @@
+{
+    "asset_file_name": "ta-lib-0.7.2-src.tar.gz",
+    "sources_digest": "a557633ab343f68025030c25f9a0d641",
+    "builder_id": "github-actions[bot]",
+    "built_success": "True",
+    "package_md5": "718fb5a6ab4a56d52001ecee431e240d",
+    "ta_regtest_pass": "True",
+    "dist_test_pass": "True"
+}
