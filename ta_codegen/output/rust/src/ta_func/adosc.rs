@@ -290,8 +290,8 @@ impl Core {
                 ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
             }
             today += 1;
-            fastEMA = (fastk as f64).mul_add(ad, one_minus_fastk * fastEMA);
-            slowEMA = (slowk as f64).mul_add(ad, one_minus_slowk * slowEMA);
+            fastEMA = fastk * ad + one_minus_fastk * fastEMA;
+            slowEMA = slowk * ad + one_minus_slowk * slowEMA;
         }
         // Perform the calculation for the requested range
         outIdx = 0;
@@ -304,8 +304,8 @@ impl Core {
                 ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
             }
             today += 1;
-            fastEMA = (fastk as f64).mul_add(ad, one_minus_fastk * fastEMA);
-            slowEMA = (slowk as f64).mul_add(ad, one_minus_slowk * slowEMA);
+            fastEMA = fastk * ad + one_minus_fastk * fastEMA;
+            slowEMA = slowk * ad + one_minus_slowk * slowEMA;
             outReal[outIdx] = fastEMA - slowEMA;
             outIdx += 1;
         }
@@ -396,8 +396,8 @@ impl Core {
                 ad += (close - low - (high - close)) / tmp * (*inVolume.as_ptr().add(today) as f64);
             }
             today += 1;
-            fastEMA = (fastk as f64).mul_add(ad, one_minus_fastk * fastEMA);
-            slowEMA = (slowk as f64).mul_add(ad, one_minus_slowk * slowEMA);
+            fastEMA = fastk * ad + one_minus_fastk * fastEMA;
+            slowEMA = slowk * ad + one_minus_slowk * slowEMA;
         }
         outIdx = 0;
         while today <= endIdx {
@@ -409,8 +409,8 @@ impl Core {
                 ad += (close - low - (high - close)) / tmp * (*inVolume.as_ptr().add(today) as f64);
             }
             today += 1;
-            fastEMA = (fastk as f64).mul_add(ad, one_minus_fastk * fastEMA);
-            slowEMA = (slowk as f64).mul_add(ad, one_minus_slowk * slowEMA);
+            fastEMA = fastk * ad + one_minus_fastk * fastEMA;
+            slowEMA = slowk * ad + one_minus_slowk * slowEMA;
             *outReal.as_mut_ptr().add(outIdx) = fastEMA - slowEMA;
             outIdx += 1;
         }

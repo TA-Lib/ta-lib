@@ -265,11 +265,11 @@ impl Core {
             tempReal = (periodROC / sumROC1).abs();
         }
         // Calculate the smoothing constant
-        tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+        tempReal = tempReal * constDiff + constMax;
         tempReal *= tempReal;
         // Calculate the KAMA like an EMA, using the
         // smoothing constant as the adaptive factor.
-        prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+        prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA) * tempReal + prevKAMA;
         // 'today' keep track of where the processing is within the
         // input.
         // Skip the unstable period. Do the whole processing
@@ -293,11 +293,11 @@ impl Core {
                 tempReal = (periodROC / sumROC1).abs();
             }
             // Calculate the smoothing constant
-            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+            tempReal = tempReal * constDiff + constMax;
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA) * tempReal + prevKAMA;
         }
         // Write the first value.
         outReal[0] = prevKAMA;
@@ -323,11 +323,11 @@ impl Core {
                 tempReal = (periodROC / sumROC1).abs();
             }
             // Calculate the smoothing constant
-            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+            tempReal = tempReal * constDiff + constMax;
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA) * tempReal + prevKAMA;
             outReal[outIdx] = prevKAMA;
             outIdx += 1;
         }
@@ -419,9 +419,9 @@ impl Core {
         } else {
             tempReal = (periodROC / sumROC1).abs();
         }
-        tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+        tempReal = tempReal * constDiff + constMax;
         tempReal *= tempReal;
-        prevKAMA = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+        prevKAMA = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevKAMA) * tempReal + prevKAMA;
         while today <= startIdx {
             tempReal = *inReal.as_ptr().add(today);
             tempReal2 = *inReal.as_ptr().add({ let _v = trailingIdx; trailingIdx += 1; _v });
@@ -434,9 +434,9 @@ impl Core {
             } else {
                 tempReal = (periodROC / sumROC1).abs();
             }
-            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+            tempReal = tempReal * constDiff + constMax;
             tempReal *= tempReal;
-            prevKAMA = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            prevKAMA = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevKAMA) * tempReal + prevKAMA;
         }
         *outReal.as_mut_ptr().add(0) = prevKAMA;
         outIdx = 1;
@@ -453,9 +453,9 @@ impl Core {
             } else {
                 tempReal = (periodROC / sumROC1).abs();
             }
-            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+            tempReal = tempReal * constDiff + constMax;
             tempReal *= tempReal;
-            prevKAMA = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            prevKAMA = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevKAMA) * tempReal + prevKAMA;
             *outReal.as_mut_ptr().add(outIdx) = prevKAMA;
             outIdx += 1;
         }

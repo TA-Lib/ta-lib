@@ -380,7 +380,7 @@ impl Core {
                     afShort = optInAccelerationInitShort;
                     ep = newLow;
                     // Calculate the new SAR
-                    sar = (afShort as f64).mul_add(ep - sar, sar);
+                    sar = sar + afShort * (ep - sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar < prevHigh {
@@ -403,7 +403,7 @@ impl Core {
                         }
                     }
                     // Calculate the new SAR
-                    sar = (afLong as f64).mul_add(ep - sar, sar);
+                    sar = sar + afLong * (ep - sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar > prevLow {
@@ -436,7 +436,7 @@ impl Core {
                 afLong = optInAccelerationInitLong;
                 ep = newHigh;
                 // Calculate the new SAR
-                sar = (afLong as f64).mul_add(ep - sar, sar);
+                sar = sar + afLong * (ep - sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sar > prevLow {
@@ -459,7 +459,7 @@ impl Core {
                     }
                 }
                 // Calculate the new SAR
-                sar = (afShort as f64).mul_add(ep - sar, sar);
+                sar = sar + afShort * (ep - sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sar < prevHigh {
@@ -605,7 +605,7 @@ impl Core {
                     outIdx += 1;
                     afShort = optInAccelerationInitShort;
                     ep = newLow;
-                    sar = (afShort as f64).mul_add(ep - sar, sar);
+                    sar = sar + afShort * (ep - sar);
                     if sar < prevHigh {
                         sar = prevHigh;
                     }
@@ -622,7 +622,7 @@ impl Core {
                             afLong = optInAccelerationMaxLong;
                         }
                     }
-                    sar = (afLong as f64).mul_add(ep - sar, sar);
+                    sar = sar + afLong * (ep - sar);
                     if sar > prevLow {
                         sar = prevLow;
                     }
@@ -646,7 +646,7 @@ impl Core {
                 outIdx += 1;
                 afLong = optInAccelerationInitLong;
                 ep = newHigh;
-                sar = (afLong as f64).mul_add(ep - sar, sar);
+                sar = sar + afLong * (ep - sar);
                 if sar > prevLow {
                     sar = prevLow;
                 }
@@ -663,7 +663,7 @@ impl Core {
                         afShort = optInAccelerationMaxShort;
                     }
                 }
-                sar = (afShort as f64).mul_add(ep - sar, sar);
+                sar = sar + afShort * (ep - sar);
                 if sar < prevHigh {
                     sar = prevHigh;
                 }

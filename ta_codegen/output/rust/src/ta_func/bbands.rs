@@ -343,7 +343,7 @@ impl Core {
                 tempReal = tempBuffer2[i];
                 tempReal2 = outRealMiddleBand[i];
                 outRealLowerBand[i] = tempReal2 - tempReal;
-                outRealUpperBand[i] = (tempReal as f64).mul_add(optInNbDevUp, tempReal2);
+                outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
                 i += 1;
             }
         } else {
@@ -353,7 +353,7 @@ impl Core {
             while i < (((*outNBElement) as usize)) as usize {
                 tempReal = tempBuffer2[i];
                 tempReal2 = outRealMiddleBand[i];
-                outRealUpperBand[i] = (tempReal as f64).mul_add(optInNbDevUp, tempReal2);
+                outRealUpperBand[i] = tempReal2 + tempReal * optInNbDevUp;
                 outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
                 i += 1;
             }
@@ -510,7 +510,7 @@ impl Core {
                 tempReal = *tempBuffer2.as_ptr().add(i);
                 tempReal2 = *outRealMiddleBand.as_ptr().add(i);
                 *outRealLowerBand.as_mut_ptr().add(i) = tempReal2 - tempReal;
-                *outRealUpperBand.as_mut_ptr().add(i) = (tempReal as f64).mul_add(optInNbDevUp, tempReal2);
+                *outRealUpperBand.as_mut_ptr().add(i) = tempReal2 + tempReal * optInNbDevUp;
                 i += 1;
             }
         } else {
@@ -519,7 +519,7 @@ impl Core {
             while i < (((*outNBElement) as usize)) as usize {
                 tempReal = *tempBuffer2.as_ptr().add(i);
                 tempReal2 = *outRealMiddleBand.as_ptr().add(i);
-                *outRealUpperBand.as_mut_ptr().add(i) = (tempReal as f64).mul_add(optInNbDevUp, tempReal2);
+                *outRealUpperBand.as_mut_ptr().add(i) = tempReal2 + tempReal * optInNbDevUp;
                 *outRealLowerBand.as_mut_ptr().add(i) = tempReal2 - tempReal * optInNbDevDn;
                 i += 1;
             }

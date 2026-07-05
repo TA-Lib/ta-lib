@@ -211,7 +211,7 @@ impl Core {
             }
             m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
             b = (SumY - m * SumX) / (optInTimePeriod as f64);
-            outReal[outIdx] = (m as f64).mul_add((optInTimePeriod - 1) as f64, b);
+            outReal[outIdx] = b + m * ((optInTimePeriod - 1) as f64);
             outIdx += 1;
             today += 1;
         }
@@ -279,7 +279,7 @@ impl Core {
             }
             m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
             b = (SumY - m * SumX) / (optInTimePeriod as f64);
-            *outReal.as_mut_ptr().add(outIdx) = (m as f64).mul_add((optInTimePeriod - 1) as f64, b);
+            *outReal.as_mut_ptr().add(outIdx) = b + m * ((optInTimePeriod - 1) as f64);
             outIdx += 1;
             today += 1;
         }

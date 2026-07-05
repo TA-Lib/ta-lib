@@ -2740,9 +2740,20 @@ impl ExprEmitter for RustExpr<'_> {
     }
 }
 
-/// Render an `Expr::BinOp` to Rust, including the FMA fusion, pointer-identity
-/// buffer comparisons, and the operand int/usize/f64 cast inference. Delegated to
-/// by [`RustExpr::binop`].
+/// FMA emission gate — intentionally OFF until the FMA-era transition
+/// (docs/fma-proposal.md, PR #96). With default (baseline) x86-64 rustflags,
+/// `f64::mul_add` cannot inline and degrades to a per-operation dispatch call
+/// into software `fma` (measured ~2x slower on EMA-family recursions), and on
+/// FMA-native targets (aarch64) it produces different bits than the C library,
+/// breaking cross-platform and cross-language bitwise consistency. Plain
+/// `a * b + c` is never contracted by rustc, so generated Rust matches C
+/// bit-for-bit on every target. Re-enable as part of the one-time FMA
+/// re-baselining event.
+const EMIT_FMA: bool = false;
+
+/// Render an `Expr::BinOp` to Rust, including the FMA fusion (gated by
+/// [`EMIT_FMA`]), pointer-identity buffer comparisons, and the operand
+/// int/usize/f64 cast inference. Delegated to by [`RustExpr::binop`].
 #[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
 fn render_binop(
     left: &Expr,
@@ -2759,7 +2770,7 @@ fn render_binop(
     // Fused multiply-add: (a * b) + c → (a as f64).mul_add(b, c)
     // Emits ARM fmadd (1 FP op) vs fmul+fadd (2 FP ops).
     // Only when BOTH multiply operands are float (not i32 * f64 patterns).
-    if matches!(op, BinOp::Add) {
+    if EMIT_FMA && matches!(op, BinOp::Add) {
         if let Expr::BinOp(a, BinOp::Mul, b) = left {
             let a_ok = expr_is_float_typed_ctx(a, Some(ctx)) && !is_definitely_integer(a, ctx);
             let b_ok = expr_is_float_typed_ctx(b, Some(ctx)) && !is_definitely_integer(b, ctx);
