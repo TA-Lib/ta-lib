@@ -237,7 +237,7 @@ jobs:
   # Bit-exact regression gate vs the last release (v0.6.4): diff every function
   # at period>=2, fail on any real divergence. C-only, gated on 'test'.
   # fetch-depth: 0 so the v0.6.4 tag is available. See ta_regtest/CLAUDE.md.
-  fuzz-vs-0.6.4:
+  fuzz-vs-064:
     name: Bit-exact fuzz vs released v0.6.4
     needs: test
     # Run after 'test' but don't let an unrelated failure (e.g. the Windows leg)

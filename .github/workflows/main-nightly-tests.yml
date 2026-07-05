@@ -128,7 +128,7 @@ jobs:
   # Release gate: prove the library is still bit-identical to v0.6.4 at
   # period>=2. C-only, gated on 'test'. fetch-depth: 0 for the v0.6.4 tag.
   # See src/tools/ta_regtest/CLAUDE.md.
-  fuzz-vs-0.6.4:
+  fuzz-vs-064:
     name: Bit-exact fuzz vs released v0.6.4
     needs: test
     # Run after 'test' but don't let an unrelated failure (e.g. the Windows leg)
