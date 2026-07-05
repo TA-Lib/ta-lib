@@ -90,6 +90,7 @@ int doExtensiveProfiling;
 static const char *functionFilter = NULL;
 static int doCodegenTest = 0;
 static int codegenOnly = 0;
+static int doFuzz064 = 0;
 static const char *codegenLanguageFilter = NULL;
 
 /**** Local declarations.              ****/
@@ -174,6 +175,10 @@ int main( int argc, char **argv )
          {
             codegenLanguageFilter = argv[i] + 11;
          }
+         else if( strcmp(argv[i], "--fuzz-064") == 0 )
+         {
+            doFuzz064 = 1;
+         }
          else if( strcmp(argv[i], "--no-guarded") == 0 )
          {
             extern int g_hideGuarded;
@@ -194,6 +199,22 @@ int main( int argc, char **argv )
 
    /* Some tests are using randomness. */
    srand( (unsigned)time( NULL ) );
+
+   /* Opt-in bit-exact differential fuzz vs released v0.6.4 (ta_064_serve).
+    * Self-contained: init the lib, run the fuzz, done — skips the rest. */
+   if( doFuzz064 )
+   {
+      ErrorNumber fuzzRet;
+      if( TA_Initialize() != TA_SUCCESS )
+      {
+         printf( "TA_Initialize failed\n" );
+         return TA_TESTUTIL_INIT_FAILED;
+      }
+      TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+      fuzzRet = fuzz_ref064( functionFilter );
+      TA_Shutdown();
+      return fuzzRet;
+   }
 
    /* Test utility like List/Stack/Dictionary/Memory Allocation etc... */
    retValue = test_internals();

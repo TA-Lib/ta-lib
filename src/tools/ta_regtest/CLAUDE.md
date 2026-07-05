@@ -146,3 +146,46 @@ cd ../bin && ./ta_regtest
 # With codegen verification
 ./ta_regtest --codegen --language=c,rust --function=SMA,RSI
 ```
+
+## `--fuzz-064` — bit-exact differential fuzz vs released v0.6.4
+
+An opt-in mode (`ta_regtest --fuzz-064`, never part of default/nightly `--codegen`
+runs) that proves the **current shipped library is bit-identical to the last
+release, v0.6.4**, function by function. It is the reusable regression oracle a
+class-A optimization (e.g. the MIDPOINT/MIDPRICE cached-index rewrite, or the
+EMA-cascade lockstep tranche) is validated against: run it before and after a
+change — the divergence set vs 0.6.4 must not grow.
+
+Build + run everything with `scripts/build.py fuzz-064`. Both CI nightlies
+(dev + main) run it as a gate (`fuzz-vs-0.6.4` job, C-only, `fetch-depth: 0`).
+
+Architecture (see `fuzz_data.h` + the fuzz block in `test_codegen.c`):
+- **Oracle:** `bin/ta_064_serve` — the frozen v0.6.4 `libta-lib.a` (built once in
+  the `../ta-lib-064` worktree @ tag `v0.6.4`) behind the current JSON-RPC
+  transport, **shadow-patched at build time** by `scripts/build_064_serve.py`
+  (no committed file changes). The current library is called **in-process**;
+  only 0.6.4 crosses the pipe.
+- **Inputs by seed:** the request carries only `(gen_shape, gen_seed, gen_n)`;
+  both ends run the identical generator in `fuzz_data.h`, so inputs are
+  byte-identical by construction (no array serialization, no precision to
+  reconcile). `FP_CONTRACT` is forced off so the generator can't be fused into
+  an FMA on one side only.
+- **Outputs by hash:** the server returns a 64-bit FNV hash of the raw output
+  bytes. On any mismatch the driver re-issues that one case with
+  `"full_output":1` (exact `%a` hex arrays) to pinpoint the diverging element.
+- **Coverage:** all 161 functions × 7 data shapes × 3 seeds × 3 sizes ×
+  parameter vectors (boundary periods, MA-type lists, real-param bounds) × 3
+  subranges ≈ 118k comparisons in ~17s.
+
+Scope rules (deliberate):
+- **period == 1 is out of scope** vs 0.6.4 (it rejects / has period-1 OOB bugs);
+  periods are floored at 2. period-1 is validated by the *non-0.6.4*
+  comparisons instead. At period ≥ 2 there are **no waivers** — anything
+  non-benign is a real bug.
+- **Subset tolerance is 0.6.4-only:** functions added after 0.6.4 are skipped
+  via `ta_064_serve`'s `list_functions` (never failed). Any *non*-0.6.4
+  comparison must instead require an exact function-set match.
+- **Benign class:** a diff where every differing element is numerically equal
+  (`+0.0` vs `-0.0`, from cached-index rewrites) is reported, not failed.
+- The oracle is reopened-and-retried once if it dies (latent 0.6.4 crash) so one
+  bad case can't sink the run.

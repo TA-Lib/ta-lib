@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utilities.common import (
     check_prerequisites,
     PREREQS_BUILD_BASIC, PREREQS_BUILD_CODEGEN, PREREQS_BUILD_SERVERS,
+    PREREQS_CMAKE, PREREQS_GCC,
 )
 
 BUILD_DIR_NAME = "cmake-build"
@@ -104,6 +105,9 @@ def show_help():
                         lists agree (no build; pure text check)
     regtest             Full pipeline: servers (cargo) + C tests + codegen verification
     regtest-only        Codegen verification only (skip C tests)
+    fuzz-064            Bit-exact differential fuzz of the current library vs the
+                        frozen released v0.6.4 (opt-in; builds ta_064_serve then
+                        runs ta_regtest --fuzz-064). C-only; needs the v0.6.4 tag.
     talib-rs-server     Build the third-party talib-rs benchmark server (opt-in;
                         then: ta_bench --language=cref,c,talib_rs --function=...)
 
@@ -146,6 +150,23 @@ def build_talib_rs_server(root_dir: str):
         os.path.join(root_dir, "bin", "ta_talib_rs_serve"),
     )
     print("  talib-rs comparison server -> bin/ta_talib_rs_serve")
+
+def build_fuzz064(root_dir: str, build_dir: str, jobs: int) -> int:
+    """Opt-in bit-exact differential fuzz of the current library vs the frozen
+    released v0.6.4. Builds bin/ta_064_serve (v0.6.4 worktree + shadow-patched
+    transport) and ta_regtest, then runs `ta_regtest --fuzz-064`. C-only — no
+    cargo/JVM/.NET. Returns ta_regtest's exit code (non-zero on real divergence).
+    """
+    # 1. Frozen v0.6.4 oracle server (creates ../ta-lib-064 worktree + its lib).
+    subprocess.run([sys.executable,
+                    os.path.join(root_dir, "scripts", "build_064_serve.py")],
+                   check=True)
+    # 2. The C test runner (staged into bin/).
+    cmake_build(build_dir, target='ensure_ta_regtest_in_bin', jobs=jobs)
+    # 3. Run the fuzz (argv is relative "./ta_064_serve", so cwd must be bin/).
+    print("=== Running ta_regtest --fuzz-064 ===")
+    return subprocess.run([os.path.join(root_dir, "bin", "ta_regtest"), "--fuzz-064"],
+                          cwd=os.path.join(root_dir, "bin")).returncode
 
 def check_regtest_source_lists(root_dir: str) -> bool:
     """Verify the two hand-maintained ta_regtest source lists agree.
@@ -254,6 +275,7 @@ TARGET_PREREQS = {
     'test':         PREREQS_BUILD_BASIC,
     'regtest':      PREREQS_BUILD_SERVERS,
     'regtest-only': PREREQS_BUILD_SERVERS,
+    'fuzz-064':     [PREREQS_CMAKE, PREREQS_GCC],
 }
 
 def main():
@@ -311,6 +333,11 @@ def main():
         return
 
     ensure_configured(root_dir, build_dir, args.build_type, args.cmake_args)
+
+    # Bit-exact differential fuzz vs frozen v0.6.4 (opt-in; C-only composite —
+    # not a single cmake/cargo target). Propagates ta_regtest's exit code.
+    if args.target == 'fuzz-064':
+        sys.exit(build_fuzz064(root_dir, build_dir, args.jobs))
 
     # The cross-language tests run the C ta_regtest binary against the language
     # servers, so build the servers (cargo) first — the CMake regtest target no

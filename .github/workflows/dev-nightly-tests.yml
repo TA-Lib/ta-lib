@@ -234,6 +234,33 @@ jobs:
           # Benchmarks are skipped: CI timing is noise.
           python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen-only
 
+  # Bit-exact regression gate vs the last release (v0.6.4): diff every function
+  # at period>=2, fail on any real divergence. C-only, gated on 'test'.
+  # fetch-depth: 0 so the v0.6.4 tag is available. See ta_regtest/CLAUDE.md.
+  fuzz-vs-0.6.4:
+    name: Bit-exact fuzz vs released v0.6.4
+    needs: test
+    # Run after 'test' but don't let an unrelated failure (e.g. the Windows leg)
+    # silently skip this release gate — it has its own checkout+build.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+          fetch-depth: 0 # ta_064_serve builds from the released v0.6.4 tag
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Fuzz current library vs frozen v0.6.4
+        shell: bash
+        run: python3 scripts/build.py fuzz-064
+
   # Conan packaging (#86) was never exercised by CI: build the package
   # recipe end to end (library-only; BUILD_DEV_TOOLS stays off in the
   # recipe). Gated on the C hero job like the other non-hero jobs.

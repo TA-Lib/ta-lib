@@ -124,3 +124,30 @@ jobs:
         shell: bash
         run: |
           $PYTHON $GITHUB_WORKSPACE/scripts/sync-website.py --check --warn-only
+
+  # Release gate: prove the library is still bit-identical to v0.6.4 at
+  # period>=2. C-only, gated on 'test'. fetch-depth: 0 for the v0.6.4 tag.
+  # See src/tools/ta_regtest/CLAUDE.md.
+  fuzz-vs-0.6.4:
+    name: Bit-exact fuzz vs released v0.6.4
+    needs: test
+    # Run after 'test' but don't let an unrelated failure (e.g. the Windows leg)
+    # silently skip this release gate — it has its own checkout+build.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0 # ta_064_serve builds from the released v0.6.4 tag
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Fuzz current library vs frozen v0.6.4
+        shell: bash
+        run: python3 scripts/build.py fuzz-064
