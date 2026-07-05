@@ -44,7 +44,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -57,6 +57,8 @@
  *                natural math (3*e1 - 3*e2 + e3 with e1=e2=e3=x) is
  *                exact on x86 but not under FMA contraction (ARM64
  *                clang leaves ~1e-14 residue), so the copy is explicit.
+ *  070526 MF,CC  Speed optimization: compute the three EMA in a single
+ *                lockstep pass (bit-exact, no temporary buffers).
  */
 
 // Import types from parent module
@@ -171,21 +173,16 @@ impl Core {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
-        let mut firstEMA: Vec<f64> = Vec::new();
-        let mut secondEMA: Vec<f64> = Vec::new();
-        let mut firstEMABegIdx: usize = 0_usize;
-        let mut firstEMANbElement: usize = 0_usize;
-        let mut secondEMABegIdx: usize = 0_usize;
-        let mut secondEMANbElement: usize = 0_usize;
-        let mut thirdEMABegIdx: usize = 0_usize;
-        let mut thirdEMANbElement: usize = 0_usize;
-        let mut tempInt: usize = 0_usize;
+        let mut prevEMA1: f64 = 0.0_f64;
+        let mut prevEMA2: f64 = 0.0_f64;
+        let mut prevEMA3: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut optInK_1: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
         let mut lookbackEMA: usize = 0_usize;
-        let mut firstEMAIdx: usize = 0_usize;
-        let mut secondEMAIdx: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
+        let mut lookbackTotal: usize = 0_usize;
         // For an explanation of this function, please read:
         //
         // Stocks & Commodities V. 12:1 (11-19):
@@ -235,46 +232,107 @@ impl Core {
             (*outNBElement) = outIdx;
             return RetCode::Success;
         }
-        // Allocate a temporary buffer for the firstEMA.
-        tempInt = lookbackTotal + (endIdx - startIdx) + 1;
-        firstEMA = vec![0.0_f64; (tempInt * 1) as usize];
-        // Calculate the first EMA
-        retCode = self.ema_unguarded(startIdx - lookbackEMA * 2, endIdx, inReal, optInTimePeriod, &mut firstEMABegIdx, &mut firstEMANbElement, &mut firstEMA[..]);
-        // Verify for failure or if not enough data after
-        // calculating the first EMA.
-        if retCode != RetCode::Success || firstEMANbElement == 0 {
-            return retCode;
+        // The three EMA are computed in a single lockstep pass: each new
+        // EMA1 value is immediately fed into EMA2, and each new EMA2 value
+        // into EMA3. No temporary buffers are needed.
+        //
+        // The arithmetic order below is the bit-exactness contract
+        // (do not reorder or fuse operations):
+        //  - EMA recursion: ((x-prev)*k)+prev.
+        //  - Default compatibility: each EMA is seeded with the sum
+        //    of its first 'period' inputs, accumulated from 0.0 in
+        //    input order (0.0+x is not x for x=-0.0), divided by
+        //    the period.
+        //  - Metastock compatibility: EMA1 is seeded from inReal[0],
+        //    EMA2 from the first EMA1 value, EMA3 from the first EMA2
+        //    value.
+        //  - The combine keeps the (3.0*EMA1)-(3.0*EMA2) grouping,
+        //    added to EMA3 on the left.
+        // Output alignment is identical for all compatibility modes;
+        // only the seed values differ.
+        //
+        // In-place (inReal == outReal) is supported: outReal[outIdx]
+        // is written only after inReal[startIdx+outIdx] was read.
+        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        if self.compatibility == Compatibility::Default {
+            // Seed EMA1 with a simple average of the first
+            // 'period' price bars.
+            today = startIdx - lookbackTotal;
+            i = (optInTimePeriod) as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevEMA1 = tempReal / ((optInTimePeriod) as f64);
+            // Advance EMA1 alone through its unstable period, up to
+            // the bar where EMA2 seeding begins.
+            while today <= startIdx - lookbackEMA * 2 {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            }
+            // Seed EMA2 with a simple average of the first 'period'
+            // EMA1 values, accumulated as EMA1 produces them.
+            tempReal = 0.0;
+            tempReal += prevEMA1;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                tempReal += prevEMA1;
+            }
+            prevEMA2 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            // Metastock/Tradestation: seed EMA1 from the first price
+            // bar, EMA2 from the first EMA1 value.
+            prevEMA1 = inReal[0];
+            today = 1;
+            while today <= startIdx - lookbackEMA * 2 {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            }
+            prevEMA2 = prevEMA1;
         }
-        // Allocate a temporary buffer for storing the EMA2
-        secondEMA = vec![0.0_f64; (firstEMANbElement * 1) as usize];
-        retCode = self.ema_unguarded(0, firstEMANbElement - 1, &firstEMA, optInTimePeriod, &mut secondEMABegIdx, &mut secondEMANbElement, &mut secondEMA[..]);
-        // Return empty output on failure or if not enough data after
-        // calculating the second EMA.
-        if retCode != RetCode::Success || secondEMANbElement == 0 {
-            return retCode;
+        // Advance EMA1 and EMA2 in lockstep through the unstable
+        // period of EMA2, up to the bar where EMA3 seeding begins.
+        while today <= startIdx - lookbackEMA {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
         }
-        // Calculate the EMA3 into the caller provided output.
-        retCode = self.ema_unguarded(0, secondEMANbElement - 1, &secondEMA, optInTimePeriod, &mut thirdEMABegIdx, &mut thirdEMANbElement, outReal);
-        // Return empty output on failure or if not enough data after
-        // calculating the third EMA.
-        if retCode != RetCode::Success || thirdEMANbElement == 0 {
-            return retCode;
+        if self.compatibility == Compatibility::Default {
+            // Seed EMA3 with a simple average of the first 'period'
+            // EMA2 values, accumulated as EMA2 produces them.
+            tempReal = 0.0;
+            tempReal += prevEMA2;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+                tempReal += prevEMA2;
+            }
+            prevEMA3 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            // Metastock/Tradestation: seed EMA3 from the first EMA2
+            // value.
+            prevEMA3 = prevEMA2;
         }
-        // Indicate where the output starts relative to
-        // the caller input.
-        firstEMAIdx = thirdEMABegIdx + secondEMABegIdx;
-        secondEMAIdx = thirdEMABegIdx;
-        (*outBegIdx) = firstEMAIdx + firstEMABegIdx;
-        // Do the TEMA:
-        //  Iterate through the EMA3 (output buffer) and adjust
-        //  the value by using the EMA2 and EMA1.
-        outIdx = 0;
-        while outIdx < thirdEMANbElement {
-            outReal[outIdx] = ((outReal[outIdx] + (3.0 * firstEMA[{ let _v = firstEMAIdx; firstEMAIdx += 1; _v }] - 3.0 * secondEMA[{ let _v = secondEMAIdx; secondEMAIdx += 1; _v }])) as f64);
+        // Advance all three EMA in lockstep through the unstable
+        // period of EMA3, up to the first output bar.
+        while today <= startIdx {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+            prevEMA3 = (prevEMA2 - prevEMA3) * ((optInK_1) as f64) + prevEMA3;
+        }
+        // Stable zone: keep advancing the three EMA in lockstep and
+        // write the TEMA into the output.
+        outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+        outIdx = 1;
+        while today <= endIdx {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+            prevEMA3 = (prevEMA2 - prevEMA3) * ((optInK_1) as f64) + prevEMA3;
+            outReal[outIdx] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
             outIdx += 1;
         }
-        // Indicates to the caller the number of output
-        // successfully calculated.
+        // Succeed. Indicate where the output starts relative to
+        // the caller input.
+        (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
@@ -295,21 +353,16 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        let mut firstEMA: Vec<f64> = Vec::new();
-        let mut secondEMA: Vec<f64> = Vec::new();
-        let mut firstEMABegIdx: usize = 0_usize;
-        let mut firstEMANbElement: usize = 0_usize;
-        let mut secondEMABegIdx: usize = 0_usize;
-        let mut secondEMANbElement: usize = 0_usize;
-        let mut thirdEMABegIdx: usize = 0_usize;
-        let mut thirdEMANbElement: usize = 0_usize;
-        let mut tempInt: usize = 0_usize;
+        let mut prevEMA1: f64 = 0.0_f64;
+        let mut prevEMA2: f64 = 0.0_f64;
+        let mut prevEMA3: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut optInK_1: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
         let mut lookbackEMA: usize = 0_usize;
-        let mut firstEMAIdx: usize = 0_usize;
-        let mut secondEMAIdx: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
+        let mut lookbackTotal: usize = 0_usize;
         unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.tema_lookback(optInTimePeriod);
@@ -335,29 +388,66 @@ impl Core {
             (*outNBElement) = outIdx;
             return RetCode::Success;
         }
-        tempInt = lookbackTotal + (endIdx - startIdx) + 1;
-        firstEMA = vec![0.0_f64; (tempInt * 1) as usize];
-        retCode = self.ema_unguarded(startIdx - lookbackEMA * 2, endIdx, inReal, optInTimePeriod, &mut firstEMABegIdx, &mut firstEMANbElement, &mut firstEMA[..]);
-        if retCode != RetCode::Success || firstEMANbElement == 0 {
-            return retCode;
+        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        if self.compatibility == Compatibility::Default {
+            today = startIdx - lookbackTotal;
+            i = (optInTimePeriod) as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+            }
+            prevEMA1 = tempReal / ((optInTimePeriod) as f64);
+            while today <= startIdx - lookbackEMA * 2 {
+                prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            }
+            tempReal = 0.0;
+            tempReal += prevEMA1;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                tempReal += prevEMA1;
+            }
+            prevEMA2 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            prevEMA1 = *inReal.as_ptr().add(0);
+            today = 1;
+            while today <= startIdx - lookbackEMA * 2 {
+                prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            }
+            prevEMA2 = prevEMA1;
         }
-        secondEMA = vec![0.0_f64; (firstEMANbElement * 1) as usize];
-        retCode = self.ema_unguarded(0, firstEMANbElement - 1, &firstEMA, optInTimePeriod, &mut secondEMABegIdx, &mut secondEMANbElement, &mut secondEMA[..]);
-        if retCode != RetCode::Success || secondEMANbElement == 0 {
-            return retCode;
+        while today <= startIdx - lookbackEMA {
+            prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
         }
-        retCode = self.ema_unguarded(0, secondEMANbElement - 1, &secondEMA, optInTimePeriod, &mut thirdEMABegIdx, &mut thirdEMANbElement, outReal);
-        if retCode != RetCode::Success || thirdEMANbElement == 0 {
-            return retCode;
+        if self.compatibility == Compatibility::Default {
+            tempReal = 0.0;
+            tempReal += prevEMA2;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+                tempReal += prevEMA2;
+            }
+            prevEMA3 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            prevEMA3 = prevEMA2;
         }
-        firstEMAIdx = thirdEMABegIdx + secondEMABegIdx;
-        secondEMAIdx = thirdEMABegIdx;
-        (*outBegIdx) = firstEMAIdx + firstEMABegIdx;
-        outIdx = 0;
-        while outIdx < thirdEMANbElement {
-            *outReal.as_mut_ptr().add(outIdx) = ((*outReal.as_ptr().add(outIdx) + (3.0 * *firstEMA.as_ptr().add({ let _v = firstEMAIdx; firstEMAIdx += 1; _v }) - 3.0 * *secondEMA.as_ptr().add({ let _v = secondEMAIdx; secondEMAIdx += 1; _v }))) as f64);
+        while today <= startIdx {
+            prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+            prevEMA3 = (prevEMA2 - prevEMA3) * ((optInK_1) as f64) + prevEMA3;
+        }
+        *outReal.as_mut_ptr().add(0) = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+        outIdx = 1;
+        while today <= endIdx {
+            prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+            prevEMA3 = (prevEMA2 - prevEMA3) * ((optInK_1) as f64) + prevEMA3;
+            *outReal.as_mut_ptr().add(outIdx) = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
             outIdx += 1;
         }
+        (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;
         } // unsafe
