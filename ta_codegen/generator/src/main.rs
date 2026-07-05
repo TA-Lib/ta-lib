@@ -1216,8 +1216,12 @@ codegen-units = 1
     // --- .cargo/config.toml ---
     let cargo_config_dir = rust_dir.join(".cargo");
     std::fs::create_dir_all(&cargo_config_dir).unwrap();
-    let cargo_config = r#"[build]
-rustflags = ["-C", "target-cpu=native"]
+    let cargo_config = r#"# Build with the default target CPU (baseline x86-64 / aarch64).
+# This is what crates.io users get by default, so it is what the local
+# servers and benchmarks must measure — no native-tuning bias vs the
+# baseline-built C library and third-party comparison servers.
+# Opt into native tuning explicitly: RUSTFLAGS="-C target-cpu=native"
+[build]
 "#;
     std::fs::write(cargo_config_dir.join("config.toml"), cargo_config).unwrap();
 
