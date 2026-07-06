@@ -8,5 +8,6 @@ libta_lib_la_SOURCES =
 libta_lib_la_LIBADD = \
   ta_abstract/libta_abstract.la \
   ta_func/libta_func.la \
-  ta_common/libta_common.la
+  ta_common/libta_common.la \
+  $(LIBM)
 

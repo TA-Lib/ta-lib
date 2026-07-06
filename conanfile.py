@@ -57,7 +57,12 @@ class TaLibConan(ConanFile):
         self.cpp_info.set_property("cmake_target_name", "ta-lib")
         self.cpp_info.set_property("pkg_config_name", "ta-lib")
 
-        if self.settings.os in ["Linux", "FreeBSD"]:
+        # Advertise libm wherever the CMake build links it -- i.e. everywhere
+        # except Windows (mirrors the `if(NOT WIN32)` guard in CMakeLists.txt).
+        # libm is a separate library on Linux, the BSDs, Android, SunOS, ...;
+        # on Apple it resolves to the harmless libSystem stub and on Windows
+        # the math functions live in the CRT. Needed so static consumers link -lm.
+        if self.settings.os != "Windows":
             self.cpp_info.system_libs.append("m")
 
         if self.options.shared:

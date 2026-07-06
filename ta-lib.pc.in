@@ -9,3 +9,4 @@ URL: https://github.com/TA-Lib/ta-lib
 Version: @PACKAGE_VERSION@
 Cflags: -I${includedir}
 Libs: -L${libdir} -lta-lib
+Libs.private: @LIBM@

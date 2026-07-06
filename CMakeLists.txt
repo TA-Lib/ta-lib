@@ -409,6 +409,19 @@ endif(MSVC)
 target_include_directories(ta-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(ta-lib-static PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
+# Link the C math library (libm). On Linux/glibc and the BSDs the math
+# functions (sin, cos, sqrt, atan, ...) live in a separate libm, so the shared
+# library needs its own DT_NEEDED entry for it (otherwise libta-lib.so ships
+# with undefined math symbols) and the static archive must propagate the
+# dependency to its consumers. On Windows the math functions are in the CRT and
+# on macOS in libSystem, so no separate 'm' is needed there -- same WIN32 guard
+# the C tools already use below. PRIVATE: libm is an implementation detail and
+# is not part of ta-lib's public header API.
+if(NOT WIN32)
+	target_link_libraries(ta-lib PRIVATE m)
+	target_link_libraries(ta-lib-static PRIVATE m)
+endif()
+
 # Install the libraries and headers.
 if(WIN32)
     install(TARGETS ta-lib ta-lib-static
