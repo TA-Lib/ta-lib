@@ -232,6 +232,13 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"RSI",          TA_FUNC_UNST_RSI},
     {"STOCHRSI",     TA_FUNC_UNST_STOCHRSI},
     {"T3",           TA_FUNC_UNST_T3},
+    /* EMA-derived: doRangeTest sweeps UNST_EMA, as the hand MA tests do. */
+    {"DEMA",         TA_FUNC_UNST_EMA},
+    {"TEMA",         TA_FUNC_UNST_EMA},
+    {"TRIX",         TA_FUNC_UNST_EMA},
+    {"MACD",         TA_FUNC_UNST_EMA},
+    {"MACDEXT",      TA_FUNC_UNST_EMA},
+    {"MACDFIX",      TA_FUNC_UNST_EMA},
 };
 #define NUM_UNSTABLE_MAP (sizeof(UNSTABLE_MAP) / sizeof(UNSTABLE_MAP[0]))
 
@@ -243,6 +250,15 @@ static TA_FuncUnstId get_unst_id(const char *funcName)
             return UNSTABLE_MAP[i].id;
     }
     return TA_FUNC_UNST_NONE;
+}
+
+/* doRangeTest convergence driver; ADXR converges via its internal ADX
+ * (same mapping as test_adx.c). Codegen sweeps keep get_unst_id(). */
+static TA_FuncUnstId get_range_unst_id(const char *funcName)
+{
+    if( strcmp(funcName, "ADXR") == 0 ) return TA_FUNC_UNST_ADX;
+    if( strcmp(funcName, "STOCHRSI") == 0 ) return TA_FUNC_UNST_RSI;
+    return get_unst_id(funcName);
 }
 
 /* ---- Generic CodegenRangeTestParam (Task 6) ---- */
@@ -684,8 +700,11 @@ static TA_RetCode codegen_range_generic(
 {
     CodegenRangeTestParam *p = (CodegenRangeTestParam *)opaqueData;
 
-    /* Set output type flag */
+    /* Unstable integer outputs (HT_TRENDMODE) go through the real-path
+     * comparator, like the hand tests' FREE_INT_BUFFER conversion. */
     *isOutputInteger = (unsigned int)p->outputIsInteger[outputNb];
+    if( p->outputIsInteger[outputNb] && p->unstId != TA_FUNC_UNST_NONE )
+        *isOutputInteger = 0;
 
     /* Get lookback */
     TA_GetLookback(p->paramHolder, lookback);
@@ -715,10 +734,15 @@ static TA_RetCode codegen_range_generic(
     /* Copy the requested output into the doRangeTest buffer */
     if( p->lastRetCode == TA_SUCCESS && p->lastNbElement > 0 )
     {
-        if( p->outputIsInteger[outputNb] )
+        if( *isOutputInteger )
         {
             for( int i = 0; i < p->lastNbElement; i++ )
                 outputBufferInt[i] = p->outIntBufs[outputNb][i];
+        }
+        else if( p->outputIsInteger[outputNb] )
+        {
+            for( int i = 0; i < p->lastNbElement; i++ )
+                outputBuffer[i] = (TA_Real)p->outIntBufs[outputNb][i];
         }
         else
         {
@@ -828,17 +852,35 @@ static void free_outputs(CodegenRangeTestParam *p)
 
 static unsigned int get_integer_tolerance(const TA_FuncInfo *funcInfo)
 {
-    /* Functions with only integer outputs (candlestick patterns) and
-     * functions with unstable periods need TA_DO_NOT_COMPARE to avoid
-     * false failures from range-dependent floating-point drift.
-     *
-     * For now, use TA_DO_NOT_COMPARE for all functions -- the codegen
-     * comparison is the real test. doRangeTest still validates coherency
-     * (lookback consistency, no out-of-bounds writes, etc.).
-     */
-    (void)funcInfo;
-    return TA_DO_NOT_COMPARE;
+    /* Compare values by default (#98: DO_NOT_COMPARE-for-all hid the TRIX
+     * mislabeling for two decades). Exceptions: accumulations seeded at
+     * startIdx and path-dependent state machines cannot converge; IMI
+     * excluded pending issue (its unstable period grows the window);
+     * NATR excluded pending its #98 fix (buffer-relative inClose index).
+     * Tolerances mirror the hand-written tests (test_adx.c, test_1in_*.c),
+     * extended to the whole Wilder family for sampling robustness. */
+    static const char *rangeDependent[] = { "AD", "ADOSC", "OBV", "SAR", "SAREXT", "IMI", "NATR" };
+    static const struct { const char *name; unsigned int tol; } perFuncTol[] = {
+        { "MINUS_DI", 2 }, { "PLUS_DI", 2 }, { "DX", 2 },
+        { "ADX", 2 }, { "ADXR", 2 },
+        { "ATR", 2 }, { "NATR", 2 }, { "RSI", 2 }, { "CMO", 2 },
+        { "MACD", 10 }, { "MACDEXT", 10 }, { "MACDFIX", 10 },
+        { "HT_DCPHASE", 360 },
+        { "HT_SINE", 10 },
+    };
+    for( unsigned int i = 0; i < sizeof(rangeDependent)/sizeof(rangeDependent[0]); i++ )
+    {
+        if( strcmp(funcInfo->name, rangeDependent[i]) == 0 )
+            return TA_DO_NOT_COMPARE;
+    }
+    for( unsigned int i = 0; i < sizeof(perFuncTol)/sizeof(perFuncTol[0]); i++ )
+    {
+        if( strcmp(funcInfo->name, perFuncTol[i].name) == 0 )
+            return perFuncTol[i].tol;
+    }
+    return 0;
 }
+
 
 /* ---- Filter helper ---- */
 
@@ -1148,7 +1190,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     {
         errNb = doRangeTest(
             codegen_range_generic,
-            params.unstId,
+            get_range_unst_id(funcInfo->name),
             (void *)&params,
             funcInfo->nbOutput,
             get_integer_tolerance(funcInfo));
@@ -2078,6 +2120,7 @@ typedef struct {
     char        *respBuf;
     const char  *funcList;   /* 0.6.4's list_functions payload (subset gate) */
     long long    comparisons, matches, benign, failures;
+    long long    skipped98;   /* TRIX startIdx>lookback cases (issue #98 fix) */
     int          reportedThisFunc;
     int          funcsWithFailures, funcsBenign, funcsSkipped;
     int          serverRestarts;
@@ -2397,6 +2440,18 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 int s = ranges[ri][0], e = ranges[ri][1];
                 TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
 
+                /* #98: TRIX startIdx > lookback was mislabeled through
+                 * 0.6.4; fixed in 0.7.2 — skip only those cases. */
+                if( strcmp(funcInfo->name, "TRIX") == 0 )
+                {
+                    TA_Integer lb98 = 0;
+                    if( TA_GetLookback(paramHolder, &lb98) == TA_SUCCESS && s > lb98 )
+                    {
+                        ctx->skipped98++;
+                        continue;
+                    }
+                }
+
                 TA_Integer curBeg = 0, curNb = 0;
                 for( unsigned int o = 0; o < funcInfo->nbOutput; o++ )
                 {
@@ -2494,6 +2549,9 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
            ctx.comparisons, ctx.matches, ctx.benign, ctx.failures);
     printf("functions: %d not-in-0.6.4 (skipped), %d with benign-only diffs, %d with real failures\n",
            ctx.funcsSkipped, ctx.funcsBenign, ctx.funcsWithFailures);
+    if( ctx.skipped98 > 0 )
+        printf("skipped: %lld TRIX partial-range case(s) — alignment fixed in 0.7.2, issue #98\n",
+               ctx.skipped98);
     if( ctx.serverRestarts )
         printf("oracle restarts (recovered crashes): %d\n", ctx.serverRestarts);
     if( ctx.comparisons == 0 )

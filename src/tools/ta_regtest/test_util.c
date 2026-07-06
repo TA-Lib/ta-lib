@@ -1000,6 +1000,11 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
    if( integerTolerance == TA_DO_NOT_COMPARE )
       return 1; /* Don't compare, says that everything is fine */
 
+   /* Bitwise-identical is always coherent, incl. NaN==NaN (ACOS/ASIN
+    * on out-of-domain price data). */
+   if( memcmp( &val1, &val2, sizeof(TA_Real) ) == 0 )
+      return 1;
+
    /* If the function does not have an unstable period,
     * the compared value shall be identical.
     *
