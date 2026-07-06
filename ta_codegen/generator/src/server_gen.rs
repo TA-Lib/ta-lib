@@ -1233,6 +1233,11 @@ pub fn generate_java_server(funcs: &[FuncDef]) -> String {
     s.push_str("        else if (json.contains(\"\\\"set_unstable_period\\\"\")) {\n");
     s.push_str("            int id = jsonInt(json, \"id\");\n");
     s.push_str("            int period = jsonInt(json, \"period\");\n");
+    // id == length is the "set all" sentinel (matches C TA_SetUnstablePeriod).
+    s.push_str("            if (id == core.unstablePeriod.length) {\n");
+    s.push_str("                for (int i = 0; i < core.unstablePeriod.length; i++) core.unstablePeriod[i] = period;\n");
+    s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\"; \n");
+    s.push_str("            }\n");
     s.push_str("            if (id >= 0 && id < core.unstablePeriod.length) {\n");
     s.push_str("                core.unstablePeriod[id] = period;\n");
     s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\"; \n");
@@ -2224,9 +2229,15 @@ pub fn generate_rust_server(funcs: &[FuncDef]) -> String {
     s.push_str(
         "            let period = params[\"period\"].as_i64().unwrap_or(0) as i32;\n",
     );
+    // id == FuncUnstAll is the "set all" sentinel (matches C TA_SetUnstablePeriod).
     s.push_str(
-        "            if id < FuncUnstId::FuncUnstAll as usize {\n",
+        "            if id == FuncUnstId::FuncUnstAll as usize {\n",
     );
+    s.push_str("                for i in 0..(FuncUnstId::FuncUnstAll as usize) { core.unstable_period[i] = period; }\n");
+    s.push_str(
+        "                \"{\\\"status\\\":\\\"ok\\\"}\".to_string()\n",
+    );
+    s.push_str("            } else if id < FuncUnstId::FuncUnstAll as usize {\n");
     s.push_str("                core.unstable_period[id] = period;\n");
     s.push_str(
         "                \"{\\\"status\\\":\\\"ok\\\"}\".to_string()\n",

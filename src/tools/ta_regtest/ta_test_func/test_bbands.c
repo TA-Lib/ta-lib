@@ -53,6 +53,7 @@
 /**** Headers ****/
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
@@ -108,6 +109,7 @@ typedef struct
 /**** Local functions declarations.    ****/
 static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
+static ErrorNumber test_bbands_mama_alignment( const TA_History *history );
 
 /**** Local variables definitions.     ****/
 static TA_Test tableTest[] =
@@ -283,6 +285,18 @@ ErrorNumber test_func_bbands( TA_History *history )
          printf( "%s Failed Test #%d (Code=%d)\n", __FILE__, i, retValue );
          return retValue;
       }
+   }
+
+   /* Regression test for issue #99: BBANDS with TA_MAType_MAMA and a period
+    * large enough that the standard-deviation lookback exceeds the (constant)
+    * MAMA lookback, forcing a clamp-aware realignment of the middle band.
+    */
+   retValue = test_bbands_mama_alignment( history );
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "%s Failed BBANDS/MAMA alignment regression test (#99) (Code=%d)\n",
+              __FILE__, retValue );
+      return retValue;
    }
 
    /* All test succeed. */
@@ -543,4 +557,215 @@ static ErrorNumber do_test( const TA_History *history,
    }
 
    return TA_TEST_PASS;
+}
+
+/* Deterministic regression test for issue #99.
+ *
+ * BBANDS builds the middle band from a moving average (lookback = ma_lookback)
+ * and the outer bands from a simple standard deviation (lookback =
+ * optInTimePeriod - 1). TA_MAType_MAMA is the only MA type whose lookback is a
+ * constant (32) independent of the period, so it is the only type for which the
+ * standard-deviation lookback can exceed the MA lookback. When it does
+ * (optInTimePeriod >= 34, with the default MAMA unstable period), the inner
+ * stddev clamps to a later begIdx than the MA did; BBANDS must realign the MA
+ * results so that every output bar pairs its moving average with the standard
+ * deviation computed for the SAME bar. The pre-fix code did not, misaligning the
+ * middle band by (optInTimePeriod - 33) bars and combining an MA and an SD taken
+ * from different bars in the upper/lower bands.
+ *
+ * This test is a self-contained oracle: the middle band IS the MAMA output and
+ * the band offset IS nbDev times the standard deviation, so it recomputes the
+ * expected bands from the library's own TA_MAMA and TA_STDDEV (both correct and
+ * independent of the bug, which lived only in how BBANDS combined them) and
+ * compares element by element. It fails on the pre-fix code and passes on the
+ * fixed code, with no random inputs — a permanent CI gate. It also cross-checks
+ * every active language server (when run under --codegen) for the same call.
+ */
+static ErrorNumber test_bbands_mama_alignment( const TA_History *history )
+{
+   /* {startIdx, period}. period>=34 clamps (stddev lookback > MAMA lookback); 33
+    * is the boundary (no clamp); 20 is the reverse (MAMA lookback dominates).
+    * startIdx 0 realigns off the constant MAMA base (32); a startIdx in
+    * (32, period-1) exercises the realignment with a VARIABLE base (maBegIdx =
+    * startIdx); a startIdx >= period-1 is a no-clamp control (shiftIdx == 0). */
+   static const struct { int startIdx; int period; } cases[] = {
+      {  0,  34 }, {  0,  40 }, {  0,  50 }, {  0, 100 }, {  0,  33 }, {  0,  20 },
+      { 40,  50 }, { 49,  50 }, { 60,  50 }
+   };
+   const int nbCases = (int)( sizeof(cases) / sizeof(cases[0]) );
+   const double nbDev = 2.0;
+   const int endIdx = (int)history->nbBars - 1;
+   int p, i;
+   ErrorNumber errNb = TA_TEST_PASS;
+
+   double *mama, *fama, *sd, *up, *mid, *low;
+
+   TA_SetUnstablePeriod( TA_FUNC_UNST_MAMA, 0 );
+   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+
+   mama = (double *)TA_Malloc( history->nbBars * sizeof(double) );
+   fama = (double *)TA_Malloc( history->nbBars * sizeof(double) );
+   sd   = (double *)TA_Malloc( history->nbBars * sizeof(double) );
+   up   = (double *)TA_Malloc( history->nbBars * sizeof(double) );
+   mid  = (double *)TA_Malloc( history->nbBars * sizeof(double) );
+   low  = (double *)TA_Malloc( history->nbBars * sizeof(double) );
+   if( !mama || !fama || !sd || !up || !mid || !low )
+   {
+      errNb = TA_TESTUTIL_TFRR_BAD_PARAM;
+      goto done;
+   }
+
+   for( p = 0; p < nbCases; p++ )
+   {
+      const int s      = cases[p].startIdx;
+      const int period = cases[p].period;
+      TA_RetCode rc;
+      TA_Integer mamaBeg, mamaNb, sdBeg, sdNb, bbBeg, bbNb;
+      int expectedBeg, expectedNb, maOff, sdOff, lookback;
+
+      /* Independent references, computed from the SAME startIdx as BBANDS uses
+       * internally: BBANDS forwards startIdx to ma()->mama(), so TA_MAMA is
+       * bit-identical to BBANDS's middle band, and the standard deviation is
+       * value-identical regardless of startIdx. */
+      rc = TA_MAMA( s, endIdx, history->close, 0.5, 0.05,
+                    &mamaBeg, &mamaNb, mama, fama );
+      if( rc != TA_SUCCESS ) { errNb = TA_TESTUTIL_TFRR_BAD_RETCODE; goto done; }
+
+      rc = TA_STDDEV( s, endIdx, history->close, period, 1.0,
+                      &sdBeg, &sdNb, sd );
+      if( rc != TA_SUCCESS ) { errNb = TA_TESTUTIL_TFRR_BAD_RETCODE; goto done; }
+
+      rc = TA_BBANDS( s, endIdx, history->close, period, nbDev, nbDev,
+                      TA_MAType_MAMA, &bbBeg, &bbNb, up, mid, low );
+      if( rc != TA_SUCCESS ) { errNb = TA_TESTUTIL_TFRR_BAD_RETCODE; goto done; }
+
+      /* The bands are valid only where BOTH the MA and the SD exist. */
+      expectedBeg = mamaBeg > sdBeg ? mamaBeg : sdBeg;
+      expectedNb  = endIdx - expectedBeg + 1;
+
+      /* The reported lookback is the middle-band MA lookback (independent of
+       * startIdx and of the stddev clamp), which also sizes the output buffers:
+       * it must NOT grow with the clamp or the buffers would be too small for
+       * the MA that ma() writes. The first output may begin after the lookback,
+       * but never before it. */
+      lookback = TA_BBANDS_Lookback( period, nbDev, nbDev, TA_MAType_MAMA );
+      if( lookback != TA_MA_Lookback( period, TA_MAType_MAMA ) || bbBeg < lookback )
+      {
+         printf( "BBANDS/MAMA #99: startIdx=%d period=%d lookback=%d begIdx=%d\n",
+                 s, period, lookback, (int)bbBeg );
+         errNb = TA_TEST_TFFR_BAD_MA_LOOKBACK;
+         goto done;
+      }
+
+      if( bbBeg != expectedBeg )
+      {
+         printf( "BBANDS/MAMA #99: startIdx=%d period=%d begIdx=%d expected=%d\n",
+                 s, period, (int)bbBeg, expectedBeg );
+         errNb = TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         goto done;
+      }
+      if( (int)bbNb != expectedNb )
+      {
+         printf( "BBANDS/MAMA #99: startIdx=%d period=%d nbElement=%d expected=%d\n",
+                 s, period, (int)bbNb, expectedNb );
+         errNb = TA_TESTUTIL_TFRR_BAD_OUTNBELEMENT;
+         goto done;
+      }
+
+      /* Skip the leading MA (or SD) values that have no counterpart. */
+      maOff = expectedBeg - (int)mamaBeg;
+      sdOff = expectedBeg - (int)sdBeg;
+
+      for( i = 0; i < (int)bbNb; i++ )
+      {
+         const double maVal  = mama[i + maOff];
+         const double sdVal  = sd[i + sdOff];
+         const double expMid = maVal;
+         const double expUp  = maVal + nbDev * sdVal;
+         const double expLow = maVal - nbDev * sdVal;
+
+         if( fabs( mid[i] - expMid ) > 1e-8 ||
+             fabs( up[i]  - expUp  ) > 1e-8 ||
+             fabs( low[i] - expLow ) > 1e-8 )
+         {
+            printf( "BBANDS/MAMA #99: startIdx=%d period=%d i=%d (bar %d) "
+                    "mid=%.10g/%.10g up=%.10g/%.10g low=%.10g/%.10g\n",
+                    s, period, i, expectedBeg + i,
+                    mid[i], expMid, up[i], expUp, low[i], expLow );
+            errNb = TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            goto done;
+         }
+      }
+
+      /* Buffer sufficiency (startIdx 0 only, where ma() writes the most into the
+       * lookback-sized buffer). A caller sizing outputs from the reported
+       * lookback allocates (endIdx + 1 - lookback) slots. ma() writes exactly
+       * that many into the middle-band buffer and the realignment only re-reads
+       * within that region, so no extra room is required. Verify with buffers
+       * cut to that size plus a one-element guard that must remain untouched
+       * (this also fails loudly if the lookback is ever grown past the MA
+       * lookback). */
+      if( s == 0 )
+      {
+         const int    tight = endIdx + 1 - lookback;
+         const double guard = -1.7e308;
+         double *gu = (double *)TA_Malloc( (tight + 1) * sizeof(double) );
+         double *gm = (double *)TA_Malloc( (tight + 1) * sizeof(double) );
+         double *gl = (double *)TA_Malloc( (tight + 1) * sizeof(double) );
+         TA_Integer gBeg = 0, gNb = 0;
+
+         if( !gu || !gm || !gl )
+         {
+            if( gu ) TA_Free( gu );
+            if( gm ) TA_Free( gm );
+            if( gl ) TA_Free( gl );
+            errNb = TA_TESTUTIL_TFRR_BAD_PARAM;
+            goto done;
+         }
+
+         gu[tight] = gm[tight] = gl[tight] = guard;
+         rc = TA_BBANDS( 0, endIdx, history->close, period, nbDev, nbDev,
+                         TA_MAType_MAMA, &gBeg, &gNb, gu, gm, gl );
+
+         if( rc != TA_SUCCESS ||
+             gu[tight] != guard || gm[tight] != guard || gl[tight] != guard )
+         {
+            printf( "BBANDS/MAMA #99: period=%d buffer overrun on lookback-sized "
+                    "alloc (%d slots): guard u=%.3g m=%.3g l=%.3g\n",
+                    period, tight, gu[tight], gm[tight], gl[tight] );
+            TA_Free( gu );
+            TA_Free( gm );
+            TA_Free( gl );
+            errNb = TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            goto done;
+         }
+
+         TA_Free( gu );
+         TA_Free( gm );
+         TA_Free( gl );
+      }
+
+      /* Cross-check every active language server for the same call. */
+      if( server_verify_active() )
+      {
+         errNb = server_verify( "BBANDS", s, endIdx, (int)history->nbBars,
+                                rc, bbBeg, bbNb,
+                                (const TA_Real*[]){ history->close, NULL },
+                                (double[]){ (double)period, nbDev, nbDev,
+                                            (double)TA_MAType_MAMA }, 4,
+                                (const TA_Real*[]){ up, mid, low, NULL }, NULL );
+         if( errNb != TA_TEST_PASS )
+            goto done;
+      }
+   }
+
+done:
+   if( mama ) TA_Free( mama );
+   if( fama ) TA_Free( fama );
+   if( sd   ) TA_Free( sd );
+   if( up   ) TA_Free( up );
+   if( mid  ) TA_Free( mid );
+   if( low  ) TA_Free( low );
+
+   return errNb;
 }

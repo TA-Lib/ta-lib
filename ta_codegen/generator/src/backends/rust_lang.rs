@@ -3686,20 +3686,35 @@ fn render_func_call(
                 String::new()
             }
             StdlibFn::Memcpy | StdlibFn::Memmove => {
-                // memcpy/memmove(dst, src, count) → slice copy
+                // memcpy/memmove(dst, src, count) → slice copy. When src and dst
+                // resolve to the same backing array (an in-place, possibly
+                // overlapping move) copy_from_slice cannot borrow the slice both
+                // mutably and immutably, and is UB on overlap anyway, so use
+                // copy_within — the overlap-safe primitive memmove exists for.
+                // Distinct arrays keep the plain copy_from_slice.
                 if args.len() >= 3 {
                     let (dst_arr, dst_off) =
                         decompose_rust_array_ref(&args[0], ctx, opt_real_params, registry, helpers);
                     let (src_arr, src_off) =
                         decompose_rust_array_ref(&args[1], ctx, opt_real_params, registry, helpers);
                     let count = render_expr(&args[2], ctx, opt_real_params, registry, helpers);
-                    format!(
-                        "{{\n            let _n = ({count}) as usize;\
-                         \n            let _di = ({dst_off}) as usize;\
-                         \n            let _si = ({src_off}) as usize;\
-                         \n            {dst_arr}[_di.._di + _n].copy_from_slice(&{src_arr}[_si.._si + _n]);\
-                         \n        }}"
-                    )
+                    if dst_arr == src_arr {
+                        format!(
+                            "{{\n            let _n = ({count}) as usize;\
+                             \n            let _di = ({dst_off}) as usize;\
+                             \n            let _si = ({src_off}) as usize;\
+                             \n            {dst_arr}.copy_within(_si.._si + _n, _di);\
+                             \n        }}"
+                        )
+                    } else {
+                        format!(
+                            "{{\n            let _n = ({count}) as usize;\
+                             \n            let _di = ({dst_off}) as usize;\
+                             \n            let _si = ({src_off}) as usize;\
+                             \n            {dst_arr}[_di.._di + _n].copy_from_slice(&{src_arr}[_si.._si + _n]);\
+                             \n        }}"
+                        )
+                    }
                 } else {
                     format!("/* {fname}: bad args */")
                 }

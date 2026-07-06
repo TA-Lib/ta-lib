@@ -4592,7 +4592,13 @@ class Core {
           if( optInNbDevDn == -4e37 ) {
              optInNbDevDn = 2e0;
           }
-          /* The lookback is driven by the middle band moving average. */
+          /* The lookback is driven by the middle band moving average. It also governs
+           * how the caller sizes the output buffers, which must hold the full moving
+           * average that ma() writes below - so it must not exceed the MA lookback,
+           * even when the standard deviation (lookback optInTimePeriod-1) clamps the
+           * first output to a later bar (outBegIdx > lookback for TA_MAType_MAMA with
+           * a large period). See the realignment in bbands() for that case.
+           */
           return movingAverageLookback(optInTimePeriod, optInMAType) ;
 
        }
@@ -4611,6 +4617,8 @@ class Core {
        {
           RetCode retCode;
           int i = 0;
+          int maBegIdx = 0;
+          int shiftIdx = 0;
           double tempReal = 0;
           double tempReal2 = 0;
           double[] tempBuffer1;
@@ -4668,6 +4676,8 @@ class Core {
              outNBElement.value = 0;
              return retCode ;
           }
+          /* Remember where the moving average begins, to realign it below. */
+          maBegIdx = outBegIdx.value;
           /* Calculate the standard deviation into tempBuffer2. */
           if( optInMAType == MAType.Sma ) {
              /* A small speed optimization by re-using the
@@ -4712,6 +4722,16 @@ class Core {
                 outNBElement.value = 0;
                 return retCode ;
              }
+          }
+          /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
+           * begIdx than the moving average did - as with TA_MAType_MAMA (constant
+           * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
+           * at the earlier maBegIdx. Shift it forward so each band value pairs the
+           * moving average and standard deviation of the same bar.
+           */
+          if( outBegIdx.value > maBegIdx ) {
+             shiftIdx = outBegIdx.value - maBegIdx;
+             System.arraycopy(tempBuffer1, shiftIdx, tempBuffer1, 0, outNBElement.value * 1);
           }
           /* Copy the MA calculation into the middle band ouput, unless
            * the calculation was done into it already!
@@ -4786,6 +4806,8 @@ class Core {
        {
           RetCode retCode;
           int i = 0;
+          int maBegIdx = 0;
+          int shiftIdx = 0;
           double tempReal = 0;
           double tempReal2 = 0;
           double[] tempBuffer1;
@@ -4811,6 +4833,7 @@ class Core {
              outNBElement.value = 0;
              return retCode ;
           }
+          maBegIdx = outBegIdx.value;
           if( optInMAType == MAType.Sma ) {
              double _tempReal;
              double _periodTotal2;
@@ -4849,6 +4872,10 @@ class Core {
                 outNBElement.value = 0;
                 return retCode ;
              }
+          }
+          if( outBegIdx.value > maBegIdx ) {
+             shiftIdx = outBegIdx.value - maBegIdx;
+             System.arraycopy(tempBuffer1, shiftIdx, tempBuffer1, 0, outNBElement.value * 1);
           }
           if( tempBuffer1 != outRealMiddleBand ) {
              System.arraycopy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement.value * 1);
@@ -4908,6 +4935,8 @@ class Core {
        {
           RetCode retCode;
           int i = 0;
+          int maBegIdx = 0;
+          int shiftIdx = 0;
           double tempReal = 0;
           double tempReal2 = 0;
           double[] tempBuffer1;
@@ -4950,6 +4979,7 @@ class Core {
              outNBElement.value = 0;
              return retCode ;
           }
+          maBegIdx = outBegIdx.value;
           if( optInMAType == MAType.Sma ) {
              double _tempReal;
              double _periodTotal2;
@@ -4988,6 +5018,10 @@ class Core {
                 outNBElement.value = 0;
                 return retCode ;
              }
+          }
+          if( outBegIdx.value > maBegIdx ) {
+             shiftIdx = outBegIdx.value - maBegIdx;
+             System.arraycopy(tempBuffer1, shiftIdx, tempBuffer1, 0, outNBElement.value * 1);
           }
           if( tempBuffer1 != outRealMiddleBand ) {
              System.arraycopy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement.value * 1);
@@ -5047,6 +5081,8 @@ class Core {
        {
           RetCode retCode;
           int i = 0;
+          int maBegIdx = 0;
+          int shiftIdx = 0;
           double tempReal = 0;
           double tempReal2 = 0;
           double[] tempBuffer1;
@@ -5072,6 +5108,7 @@ class Core {
              outNBElement.value = 0;
              return retCode ;
           }
+          maBegIdx = outBegIdx.value;
           if( optInMAType == MAType.Sma ) {
              double _tempReal;
              double _periodTotal2;
@@ -5110,6 +5147,10 @@ class Core {
                 outNBElement.value = 0;
                 return retCode ;
              }
+          }
+          if( outBegIdx.value > maBegIdx ) {
+             shiftIdx = outBegIdx.value - maBegIdx;
+             System.arraycopy(tempBuffer1, shiftIdx, tempBuffer1, 0, outNBElement.value * 1);
           }
           if( tempBuffer1 != outRealMiddleBand ) {
              System.arraycopy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement.value * 1);
@@ -63111,6 +63152,10 @@ public class TaCodegenServe {
         else if (json.contains("\"set_unstable_period\"")) {
             int id = jsonInt(json, "id");
             int period = jsonInt(json, "period");
+            if (id == core.unstablePeriod.length) {
+                for (int i = 0; i < core.unstablePeriod.length; i++) core.unstablePeriod[i] = period;
+                return "{\"status\":\"ok\"}"; 
+            }
             if (id >= 0 && id < core.unstablePeriod.length) {
                 core.unstablePeriod[id] = period;
                 return "{\"status\":\"ok\"}"; 

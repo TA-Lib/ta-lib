@@ -4,15 +4,20 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  JV       Jesus Viver <324122@cienz.unizar.es>
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  010503 MF   Fix to always use SMA for the STDDEV (Thanks to JV).
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  112400 MF     Template creation.
+ *  010503 MF     Fix to always use SMA for the STDDEV (Thanks to JV).
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  070626 MF,CC  Fix #99: realign the middle band when the standard
+ *                deviation clamps to a later begIdx than the
+ *                (period-independent) MAMA lookback, for
+ *                optInTimePeriod >= 34.
  *
  */
 
@@ -21,7 +26,13 @@ int bbands_lookback(int           optInTimePeriod,                              
    (void)optInNbDevUp;
    (void)optInNbDevDn;
 
-   /* The lookback is driven by the middle band moving average. */
+   /* The lookback is driven by the middle band moving average. It also governs
+    * how the caller sizes the output buffers, which must hold the full moving
+    * average that ma() writes below - so it must not exceed the MA lookback,
+    * even when the standard deviation (lookback optInTimePeriod-1) clamps the
+    * first output to a later bar (outBegIdx > lookback for TA_MAType_MAMA with
+    * a large period). See the realignment in bbands() for that case.
+    */
    return ma_lookback( optInTimePeriod, optInMAType );
 }
 
@@ -29,6 +40,8 @@ TA_RetCode bbands(int startIdx, int endIdx, const double inReal[], int optInTime
 {
    TA_RetCode retCode;
    int i;
+   int maBegIdx;
+   int shiftIdx;
    double tempReal, tempReal2;
    double *tempBuffer1;
    double *tempBuffer2;
@@ -81,6 +94,9 @@ TA_RetCode bbands(int startIdx, int endIdx, const double inReal[], int optInTime
       return retCode;
    }
 
+   /* Remember where the moving average begins, to realign it below. */
+   maBegIdx = *outBegIdx;
+
    /* Calculate the standard deviation into tempBuffer2. */
    if( optInMAType == TA_MAType_SMA )
    {
@@ -132,6 +148,18 @@ TA_RetCode bbands(int startIdx, int endIdx, const double inReal[], int optInTime
          *outNBElement = 0;
          return retCode;
       }
+   }
+
+   /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
+    * begIdx than the moving average did - as with TA_MAType_MAMA (constant
+    * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
+    * at the earlier maBegIdx. Shift it forward so each band value pairs the
+    * moving average and standard deviation of the same bar.
+    */
+   if( *outBegIdx > maBegIdx )
+   {
+      shiftIdx = *outBegIdx - maBegIdx;
+      memmove( tempBuffer1, &tempBuffer1[shiftIdx], (*outNBElement) * sizeof(double) );
    }
 
    /* Copy the MA calculation into the middle band ouput, unless

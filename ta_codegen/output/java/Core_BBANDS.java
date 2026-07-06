@@ -4,15 +4,20 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  JV       Jesus Viver <324122@cienz.unizar.es>
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  010503 MF   Fix to always use SMA for the STDDEV (Thanks to JV).
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  112400 MF     Template creation.
+ *  010503 MF     Fix to always use SMA for the STDDEV (Thanks to JV).
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  070626 MF,CC  Fix #99: realign the middle band when the standard
+ *                deviation clamps to a later begIdx than the
+ *                (period-independent) MAMA lookback, for
+ *                optInTimePeriod >= 34.
  */
 
    public int bbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -28,7 +33,13 @@
       if( optInNbDevDn == -4e37 ) {
          optInNbDevDn = 2e0;
       }
-      /* The lookback is driven by the middle band moving average. */
+      /* The lookback is driven by the middle band moving average. It also governs
+       * how the caller sizes the output buffers, which must hold the full moving
+       * average that ma() writes below - so it must not exceed the MA lookback,
+       * even when the standard deviation (lookback optInTimePeriod-1) clamps the
+       * first output to a later bar (outBegIdx > lookback for TA_MAType_MAMA with
+       * a large period). See the realignment in bbands() for that case.
+       */
       return movingAverageLookback(optInTimePeriod, optInMAType) ;
 
    }
@@ -47,6 +58,8 @@
    {
       RetCode retCode;
       int i = 0;
+      int maBegIdx = 0;
+      int shiftIdx = 0;
       double tempReal = 0;
       double tempReal2 = 0;
       double[] tempBuffer1;
@@ -104,6 +117,8 @@
          outNBElement.value = 0;
          return retCode ;
       }
+      /* Remember where the moving average begins, to realign it below. */
+      maBegIdx = outBegIdx.value;
       /* Calculate the standard deviation into tempBuffer2. */
       if( optInMAType == MAType.Sma ) {
          /* A small speed optimization by re-using the
@@ -148,6 +163,16 @@
             outNBElement.value = 0;
             return retCode ;
          }
+      }
+      /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
+       * begIdx than the moving average did - as with TA_MAType_MAMA (constant
+       * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
+       * at the earlier maBegIdx. Shift it forward so each band value pairs the
+       * moving average and standard deviation of the same bar.
+       */
+      if( outBegIdx.value > maBegIdx ) {
+         shiftIdx = outBegIdx.value - maBegIdx;
+         System.arraycopy(tempBuffer1, shiftIdx, tempBuffer1, 0, outNBElement.value * 1);
       }
       /* Copy the MA calculation into the middle band ouput, unless
        * the calculation was done into it already!
@@ -222,6 +247,8 @@
    {
       RetCode retCode;
       int i = 0;
+      int maBegIdx = 0;
+      int shiftIdx = 0;
       double tempReal = 0;
       double tempReal2 = 0;
       double[] tempBuffer1;
@@ -247,6 +274,7 @@
          outNBElement.value = 0;
          return retCode ;
       }
+      maBegIdx = outBegIdx.value;
       if( optInMAType == MAType.Sma ) {
          double _tempReal;
          double _periodTotal2;
@@ -285,6 +313,10 @@
             outNBElement.value = 0;
             return retCode ;
          }
+      }
+      if( outBegIdx.value > maBegIdx ) {
+         shiftIdx = outBegIdx.value - maBegIdx;
+         System.arraycopy(tempBuffer1, shiftIdx, tempBuffer1, 0, outNBElement.value * 1);
       }
       if( tempBuffer1 != outRealMiddleBand ) {
          System.arraycopy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement.value * 1);
@@ -344,6 +376,8 @@
    {
       RetCode retCode;
       int i = 0;
+      int maBegIdx = 0;
+      int shiftIdx = 0;
       double tempReal = 0;
       double tempReal2 = 0;
       double[] tempBuffer1;
@@ -386,6 +420,7 @@
          outNBElement.value = 0;
          return retCode ;
       }
+      maBegIdx = outBegIdx.value;
       if( optInMAType == MAType.Sma ) {
          double _tempReal;
          double _periodTotal2;
@@ -424,6 +459,10 @@
             outNBElement.value = 0;
             return retCode ;
          }
+      }
+      if( outBegIdx.value > maBegIdx ) {
+         shiftIdx = outBegIdx.value - maBegIdx;
+         System.arraycopy(tempBuffer1, shiftIdx, tempBuffer1, 0, outNBElement.value * 1);
       }
       if( tempBuffer1 != outRealMiddleBand ) {
          System.arraycopy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement.value * 1);
@@ -483,6 +522,8 @@
    {
       RetCode retCode;
       int i = 0;
+      int maBegIdx = 0;
+      int shiftIdx = 0;
       double tempReal = 0;
       double tempReal2 = 0;
       double[] tempBuffer1;
@@ -508,6 +549,7 @@
          outNBElement.value = 0;
          return retCode ;
       }
+      maBegIdx = outBegIdx.value;
       if( optInMAType == MAType.Sma ) {
          double _tempReal;
          double _periodTotal2;
@@ -546,6 +588,10 @@
             outNBElement.value = 0;
             return retCode ;
          }
+      }
+      if( outBegIdx.value > maBegIdx ) {
+         shiftIdx = outBegIdx.value - maBegIdx;
+         System.arraycopy(tempBuffer1, shiftIdx, tempBuffer1, 0, outNBElement.value * 1);
       }
       if( tempBuffer1 != outRealMiddleBand ) {
          System.arraycopy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement.value * 1);

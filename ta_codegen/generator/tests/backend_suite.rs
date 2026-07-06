@@ -975,6 +975,50 @@ fn test_wma_lookback_uses_time_period() {
 }
 
 // ---------------------------------------------------------------------------
+// 11b. Rust memmove lowering: in-place (same-buffer) move must be overlap-safe
+// ---------------------------------------------------------------------------
+
+/// Red/green guard for the Rust `memmove` lowering (issue #99 follow-up).
+///
+/// A `memmove` into the *same* backing array (an in-place, possibly overlapping
+/// move) must lower to `slice::copy_within`, not `copy_from_slice`: the latter
+/// needs a simultaneous `&mut` and `&` borrow of one slice — which does not
+/// compile — and is UB on overlap regardless. BBANDS realigns its middle-band
+/// buffer with exactly such a move. WMA copies between *distinct* buffers
+/// (`outReal` <- `inReal`), where `copy_from_slice` is correct and must stay.
+///
+/// Before the lowering fix this test is red: BBANDS emitted
+/// `tempBuffer1[..].copy_from_slice(&tempBuffer1[..])` (which fails to compile)
+/// and no `copy_within`. After the fix it is green.
+#[test]
+fn test_rust_memmove_same_buffer_uses_copy_within() {
+    let (bbands, enums) = load_indicator("bbands");
+    let rust = generate_all(&bbands, &enums).rust;
+
+    assert!(
+        rust.contains("tempBuffer1.copy_within("),
+        "BBANDS: in-place memmove must lower to copy_within (overlap-safe)"
+    );
+    assert!(
+        !rust.contains("tempBuffer1[_di.._di + _n].copy_from_slice(&tempBuffer1[_si.._si + _n])"),
+        "BBANDS: in-place memmove must NOT lower to a self-borrowing copy_from_slice"
+    );
+
+    // The fix must stay surgical: a move between distinct buffers is still a
+    // plain copy_from_slice, never copy_within.
+    let (wma, wenums) = load_indicator("wma");
+    let wrust = generate_all(&wma, &wenums).rust;
+    assert!(
+        wrust.contains("copy_from_slice("),
+        "WMA: memmove between distinct buffers should stay copy_from_slice"
+    );
+    assert!(
+        !wrust.contains(".copy_within("),
+        "WMA: distinct-buffer memmove must not use copy_within"
+    );
+}
+
+// ---------------------------------------------------------------------------
 // 12. MA has 2 optional inputs (timePeriod + MAType enum)
 // ---------------------------------------------------------------------------
 

@@ -45,15 +45,20 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  JV       Jesus Viver <324122@cienz.unizar.es>
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  010503 MF   Fix to always use SMA for the STDDEV (Thanks to JV).
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  112400 MF     Template creation.
+ *  010503 MF     Fix to always use SMA for the STDDEV (Thanks to JV).
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  070626 MF,CC  Fix #99: realign the middle band when the standard
+ *                deviation clamps to a later begIdx than the
+ *                (period-independent) MAMA lookback, for
+ *                optInTimePeriod >= 34.
  */
 
 // Import types from parent module
@@ -87,7 +92,12 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        // The lookback is driven by the middle band moving average.
+        // The lookback is driven by the middle band moving average. It also governs
+        // how the caller sizes the output buffers, which must hold the full moving
+        // average that ma() writes below - so it must not exceed the MA lookback,
+        // even when the standard deviation (lookback optInTimePeriod-1) clamps the
+        // first output to a later bar (outBegIdx > lookback for TA_MAType_MAMA with
+        // a large period). See the realignment in bbands() for that case.
         return self.ma_lookback(optInTimePeriod, optInMAType);
     }
     /// Bollinger Bands: a moving-average middle band with upper and lower bands offset by a
@@ -195,6 +205,8 @@ impl Core {
         let mut startIdx = startIdx;
         let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
+        let mut maBegIdx: usize = 0_usize;
+        let mut shiftIdx: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut tempBuffer1: Vec<f64> = Vec::new();
@@ -232,6 +244,8 @@ impl Core {
             (*outNBElement) = 0;
             return retCode;
         }
+        // Remember where the moving average begins, to realign it below.
+        maBegIdx = (*outBegIdx);
         // Calculate the standard deviation into tempBuffer2.
         if (optInMAType) as usize == 0 {
             // A small speed optimization by re-using the
@@ -283,6 +297,20 @@ impl Core {
                 (*outNBElement) = 0;
                 return retCode;
             }
+        }
+        // When the standard deviation (lookback optInTimePeriod-1) clamps to a later
+        // begIdx than the moving average did - as with TA_MAType_MAMA (constant
+        // lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
+        // at the earlier maBegIdx. Shift it forward so each band value pairs the
+        // moving average and standard deviation of the same bar.
+        if (*outBegIdx) > maBegIdx {
+            shiftIdx = (*outBegIdx) - maBegIdx;
+            {
+            let _n = ((*outNBElement) * 1) as usize;
+            let _di = (0) as usize;
+            let _si = (shiftIdx) as usize;
+            tempBuffer1.copy_within(_si.._si + _n, _di);
+        };
         }
         // Copy the MA calculation into the middle band ouput, unless
         // the calculation was done into it already!
@@ -384,6 +412,8 @@ impl Core {
     ) -> RetCode {
         let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
+        let mut maBegIdx: usize = 0_usize;
+        let mut shiftIdx: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut tempBuffer1: Vec<f64> = Vec::new();
@@ -416,6 +446,7 @@ impl Core {
             (*outNBElement) = 0;
             return retCode;
         }
+        maBegIdx = (*outBegIdx);
         if (optInMAType) as usize == 0 {
             let mut _tempReal: f64 = 0.0_f64;
             let mut _periodTotal2: f64 = 0.0_f64;
@@ -462,6 +493,15 @@ impl Core {
                 (*outNBElement) = 0;
                 return retCode;
             }
+        }
+        if (*outBegIdx) > maBegIdx {
+            shiftIdx = (*outBegIdx) - maBegIdx;
+            {
+            let _n = ((*outNBElement) * 1) as usize;
+            let _di = (0) as usize;
+            let _si = (shiftIdx) as usize;
+            tempBuffer1.copy_within(_si.._si + _n, _di);
+        };
         }
         if tempBuffer1.as_ptr() != outRealMiddleBand.as_ptr() {
             {
