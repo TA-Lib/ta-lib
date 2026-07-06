@@ -4568,15 +4568,20 @@ class Core {
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
      *  JV       Jesus Viver <324122@cienz.unizar.es>
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  112400 MF   Template creation.
-     *  010503 MF   Fix to always use SMA for the STDDEV (Thanks to JV).
-     *  052603 MF   Adapt code to compile with .NET Managed C++
+     *  112400 MF     Template creation.
+     *  010503 MF     Fix to always use SMA for the STDDEV (Thanks to JV).
+     *  052603 MF     Adapt code to compile with .NET Managed C++
+     *  070626 MF,CC  Fix #99: realign the middle band when the standard
+     *                deviation clamps to a later begIdx than the
+     *                (period-independent) MAMA lookback, for
+     *                optInTimePeriod >= 34.
      */
 
        public int bbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
