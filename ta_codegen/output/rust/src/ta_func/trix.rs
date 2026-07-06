@@ -45,14 +45,18 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AA       Andrew Atkinson
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  020605 AA   Fix #1117656. NULL pointer assignement.
+ *  112400 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  020605 AA     Fix #1117656. NULL pointer assignement.
+ *  070526 MF,CC  Speed optimization: single lockstep pass (bit-exact
+ *                for startIdx <= lookback). Fix #98: partial-range
+ *                output was mislabeled by up to one EMA lookback.
  */
 
 // Import types from parent module
@@ -168,73 +172,123 @@ impl Core {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
-        let mut tempBuffer: Vec<f64> = Vec::new();
-        let mut nbElement: usize = 0_usize;
-        let mut begIdx: usize = 0_usize;
-        let mut totalLookback: usize = 0_usize;
-        let mut emaLookback: usize = 0_usize;
-        let mut rocLookback: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
-        let mut nbElementToOutput: usize = 0_usize;
-        // Adjust the startIdx to account for the lookback.
-        emaLookback = self.ema_lookback(optInTimePeriod);
-        rocLookback = self.rocr_lookback(1);
-        totalLookback = emaLookback * 3 + rocLookback;
-        if startIdx < totalLookback {
-            startIdx = totalLookback;
+        let mut prevEMA1: f64 = 0.0_f64;
+        let mut prevEMA2: f64 = 0.0_f64;
+        let mut prevEMA3: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut optInK_1: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackEMA: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // TRIX = 1-day percent rate-of-change of a triple EMA.
+        // Will change only on success.
+        (*outNBElement) = 0;
+        (*outBegIdx) = 0;
+        // Adjust startIdx to account for the lookback period.
+        lookbackEMA = self.ema_lookback(optInTimePeriod);
+        lookbackTotal = lookbackEMA * 3 + self.rocr_lookback(1);
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outNBElement) = 0;
-            (*outBegIdx) = 0;
             return RetCode::Success;
         }
+        // Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
+        // roc() of consecutive EMA3 values. Output element j is the TRIX
+        // of bar startIdx+j (fix #98). The arithmetic order below is the
+        // bit-exactness contract — do not reorder or fuse operations; the
+        // seed sums accumulate from 0.0 in production order (0.0+x is not
+        // x for x=-0.0). In-place safe: outReal[outIdx] is written after
+        // inReal[startIdx+outIdx] was read.
+        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        if self.compatibility == Compatibility::Default {
+            // Seed EMA1 with a simple average of the first
+            // 'period' price bars.
+            today = startIdx - lookbackTotal;
+            i = (optInTimePeriod) as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevEMA1 = tempReal / ((optInTimePeriod) as f64);
+            // Advance EMA1 alone through its unstable period, up to
+            // the bar where EMA2 seeding begins.
+            while today <= startIdx - (lookbackEMA * 2 + 1) {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            }
+            // Seed EMA2 with a simple average of the first 'period'
+            // EMA1 values, accumulated as EMA1 produces them.
+            tempReal = 0.0;
+            tempReal += prevEMA1;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                tempReal += prevEMA1;
+            }
+            prevEMA2 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            // Metastock/Tradestation: seed EMA1 from the first price
+            // bar, EMA2 from the first EMA1 value.
+            prevEMA1 = inReal[0];
+            today = 1;
+            while today <= startIdx - (lookbackEMA * 2 + 1) {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            }
+            prevEMA2 = prevEMA1;
+        }
+        // Advance EMA1 and EMA2 in lockstep through the unstable
+        // period of EMA2, up to the bar where EMA3 seeding begins.
+        while today <= startIdx - (lookbackEMA + 1) {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+        }
+        if self.compatibility == Compatibility::Default {
+            // Seed EMA3 with a simple average of the first 'period'
+            // EMA2 values, accumulated as EMA2 produces them.
+            tempReal = 0.0;
+            tempReal += prevEMA2;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+                tempReal += prevEMA2;
+            }
+            prevEMA3 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            // Metastock/Tradestation: seed EMA3 from the first EMA2
+            // value.
+            prevEMA3 = prevEMA2;
+        }
+        // Advance all three EMA in lockstep through the unstable
+        // period of EMA3, up to the bar before the first output.
+        while today <= startIdx - 1 {
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+            prevEMA3 = (prevEMA2 - prevEMA3) * ((optInK_1) as f64) + prevEMA3;
+        }
+        // Stable zone: keep advancing the three EMA in lockstep and
+        // write the 1-day rate-of-change of EMA3 into the output.
+        outIdx = 0;
+        while today <= endIdx {
+            tempReal = prevEMA3;
+            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+            prevEMA3 = (prevEMA2 - prevEMA3) * ((optInK_1) as f64) + prevEMA3;
+            if tempReal != 0.0 {
+                outReal[outIdx] = (prevEMA3 / tempReal - 1.0) * 100.0;
+                outIdx += 1;
+            } else {
+                outReal[outIdx] = 0.0;
+                outIdx += 1;
+            }
+        }
+        // Succeed. Indicate where the output starts relative to
+        // the caller input.
         (*outBegIdx) = startIdx;
-        nbElementToOutput = endIdx - startIdx + 1 + totalLookback;
-        // Allocate a temporary buffer for performing
-        // the calculation.
-        tempBuffer = vec![0.0_f64; (nbElementToOutput * 1) as usize];
-        // Calculate the first EMA
-        retCode = self.ema_unguarded(startIdx - totalLookback, endIdx, inReal, optInTimePeriod, &mut begIdx, &mut nbElement, &mut tempBuffer[..]);
-        // Verify for failure or if not enough data after
-        // calculating the EMA.
-        if retCode != RetCode::Success || nbElement == 0 {
-            (*outNBElement) = 0;
-            (*outBegIdx) = 0;
-            return retCode;
-        }
-        nbElementToOutput -= 1;
-        // Make this variable zero base from now on.
-        // Calculate the second EMA
-        nbElementToOutput -= emaLookback;
-        retCode = self.ema_unguarded(0, nbElementToOutput, unsafe { std::slice::from_raw_parts(tempBuffer.as_ptr(), tempBuffer.len()) }, optInTimePeriod, &mut begIdx, &mut nbElement, &mut tempBuffer[..]);
-        // Verify for failure or if not enough data after
-        // calculating the EMA.
-        if retCode != RetCode::Success || nbElement == 0 {
-            (*outNBElement) = 0;
-            (*outBegIdx) = 0;
-            return retCode;
-        }
-        // Calculate the third EMA
-        nbElementToOutput -= emaLookback;
-        retCode = self.ema_unguarded(0, nbElementToOutput, unsafe { std::slice::from_raw_parts(tempBuffer.as_ptr(), tempBuffer.len()) }, optInTimePeriod, &mut begIdx, &mut nbElement, &mut tempBuffer[..]);
-        // Verify for failure or if not enough data after
-        // calculating the EMA.
-        if retCode != RetCode::Success || nbElement == 0 {
-            (*outNBElement) = 0;
-            (*outBegIdx) = 0;
-            return retCode;
-        }
-        // Calculate the 1-day Rate-Of-Change
-        nbElementToOutput -= emaLookback;
-        retCode = self.roc_unguarded(0, nbElementToOutput, &tempBuffer, 1, &mut begIdx, outNBElement, outReal);
-        // Verify for failure or if not enough data after
-        // calculating the rate-of-change.
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
-            (*outNBElement) = 0;
-            (*outBegIdx) = 0;
-            return retCode;
-        }
+        (*outNBElement) = outIdx;
         return RetCode::Success;
     }
     /// Unchecked variant of [`Core::trix`], used for internal cross-indicator calls.
@@ -254,61 +308,97 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        let mut tempBuffer: Vec<f64> = Vec::new();
-        let mut nbElement: usize = 0_usize;
-        let mut begIdx: usize = 0_usize;
-        let mut totalLookback: usize = 0_usize;
-        let mut emaLookback: usize = 0_usize;
-        let mut rocLookback: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
-        let mut nbElementToOutput: usize = 0_usize;
+        let mut prevEMA1: f64 = 0.0_f64;
+        let mut prevEMA2: f64 = 0.0_f64;
+        let mut prevEMA3: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut optInK_1: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut today: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackEMA: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
         unsafe {
         assert!(endIdx < inReal.len());
         let _assertLb = self.trix_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        emaLookback = self.ema_lookback(optInTimePeriod);
-        rocLookback = self.rocr_lookback(1);
-        totalLookback = emaLookback * 3 + rocLookback;
-        if startIdx < totalLookback {
-            startIdx = totalLookback;
+        (*outNBElement) = 0;
+        (*outBegIdx) = 0;
+        lookbackEMA = self.ema_lookback(optInTimePeriod);
+        lookbackTotal = lookbackEMA * 3 + self.rocr_lookback(1);
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outNBElement) = 0;
-            (*outBegIdx) = 0;
             return RetCode::Success;
         }
+        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        if self.compatibility == Compatibility::Default {
+            today = startIdx - lookbackTotal;
+            i = (optInTimePeriod) as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += *inReal.as_ptr().add({ let _v = today; today += 1; _v });
+            }
+            prevEMA1 = tempReal / ((optInTimePeriod) as f64);
+            while today <= startIdx - (lookbackEMA * 2 + 1) {
+                prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            }
+            tempReal = 0.0;
+            tempReal += prevEMA1;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                tempReal += prevEMA1;
+            }
+            prevEMA2 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            prevEMA1 = *inReal.as_ptr().add(0);
+            today = 1;
+            while today <= startIdx - (lookbackEMA * 2 + 1) {
+                prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            }
+            prevEMA2 = prevEMA1;
+        }
+        while today <= startIdx - (lookbackEMA + 1) {
+            prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+        }
+        if self.compatibility == Compatibility::Default {
+            tempReal = 0.0;
+            tempReal += prevEMA2;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+                prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+                tempReal += prevEMA2;
+            }
+            prevEMA3 = tempReal / ((optInTimePeriod) as f64);
+        } else {
+            prevEMA3 = prevEMA2;
+        }
+        while today <= startIdx - 1 {
+            prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+            prevEMA3 = (prevEMA2 - prevEMA3) * ((optInK_1) as f64) + prevEMA3;
+        }
+        outIdx = 0;
+        while today <= endIdx {
+            tempReal = prevEMA3;
+            prevEMA1 = (*inReal.as_ptr().add({ let _v = today; today += 1; _v }) - prevEMA1) * ((optInK_1) as f64) + prevEMA1;
+            prevEMA2 = (prevEMA1 - prevEMA2) * ((optInK_1) as f64) + prevEMA2;
+            prevEMA3 = (prevEMA2 - prevEMA3) * ((optInK_1) as f64) + prevEMA3;
+            if tempReal != 0.0 {
+                *outReal.as_mut_ptr().add(outIdx) = (prevEMA3 / tempReal - 1.0) * 100.0;
+                outIdx += 1;
+            } else {
+                *outReal.as_mut_ptr().add(outIdx) = 0.0;
+                outIdx += 1;
+            }
+        }
         (*outBegIdx) = startIdx;
-        nbElementToOutput = endIdx - startIdx + 1 + totalLookback;
-        tempBuffer = vec![0.0_f64; (nbElementToOutput * 1) as usize];
-        retCode = self.ema_unguarded(startIdx - totalLookback, endIdx, inReal, optInTimePeriod, &mut begIdx, &mut nbElement, &mut tempBuffer[..]);
-        if retCode != RetCode::Success || nbElement == 0 {
-            (*outNBElement) = 0;
-            (*outBegIdx) = 0;
-            return retCode;
-        }
-        nbElementToOutput -= 1;
-        nbElementToOutput -= emaLookback;
-        retCode = self.ema_unguarded(0, nbElementToOutput, unsafe { std::slice::from_raw_parts(tempBuffer.as_ptr(), tempBuffer.len()) }, optInTimePeriod, &mut begIdx, &mut nbElement, &mut tempBuffer[..]);
-        if retCode != RetCode::Success || nbElement == 0 {
-            (*outNBElement) = 0;
-            (*outBegIdx) = 0;
-            return retCode;
-        }
-        nbElementToOutput -= emaLookback;
-        retCode = self.ema_unguarded(0, nbElementToOutput, unsafe { std::slice::from_raw_parts(tempBuffer.as_ptr(), tempBuffer.len()) }, optInTimePeriod, &mut begIdx, &mut nbElement, &mut tempBuffer[..]);
-        if retCode != RetCode::Success || nbElement == 0 {
-            (*outNBElement) = 0;
-            (*outBegIdx) = 0;
-            return retCode;
-        }
-        nbElementToOutput -= emaLookback;
-        retCode = self.roc_unguarded(0, nbElementToOutput, &tempBuffer, 1, &mut begIdx, outNBElement, outReal);
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
-            (*outNBElement) = 0;
-            (*outBegIdx) = 0;
-            return retCode;
-        }
+        (*outNBElement) = outIdx;
         return RetCode::Success;
         } // unsafe
     }

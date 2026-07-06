@@ -48,14 +48,18 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AA       Andrew Atkinson
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  020605 AA   Fix #1117656. NULL pointer assignement.
+ *  112400 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  020605 AA     Fix #1117656. NULL pointer assignement.
+ *  070526 MF,CC  Speed optimization: single lockstep pass (bit-exact
+ *                for startIdx <= lookback). Fix #98: partial-range
+ *                output was mislabeled by up to one EMA lookback.
  */
 
 TA_LIB_API int TA_TRIX_Lookback( int optInTimePeriod )
@@ -77,14 +81,16 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
                                int          *outNBElement,
                                double        outReal[] )
 {
-   double *tempBuffer;
-   int nbElement;
-   int begIdx;
-   int totalLookback;
-   int emaLookback;
-   int rocLookback;
-   TA_RetCode retCode;
-   int nbElementToOutput;
+   double prevEMA1;
+   double prevEMA2;
+   double prevEMA3;
+   double tempReal;
+   double optInK_1;
+   int i;
+   int today;
+   int outIdx;
+   int lookbackEMA;
+   int lookbackTotal;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -100,86 +106,138 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   /* Adjust the startIdx to account for the lookback. */
-   emaLookback = TA_EMA_Lookback(optInTimePeriod);
-   rocLookback = TA_ROCR_Lookback(1);
-   totalLookback = emaLookback * 3 + rocLookback;
-   if( startIdx < totalLookback )
+   /* TRIX = 1-day percent rate-of-change of a triple EMA. */
+   /* Will change only on success. */
+   *outNBElement= 0;
+   *outBegIdx= 0;
+   /* Adjust startIdx to account for the lookback period. */
+   lookbackEMA = TA_EMA_Lookback(optInTimePeriod);
+   lookbackTotal = lookbackEMA * 3 + TA_ROCR_Lookback(1);
+   if( startIdx < lookbackTotal )
    {
-      startIdx = totalLookback;
+      startIdx = lookbackTotal;
    }
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      *outNBElement= 0;
-      *outBegIdx= 0;
       return TA_SUCCESS;
    }
+   /* Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
+    * roc() of consecutive EMA3 values. Output element j is the TRIX
+    * of bar startIdx+j (fix #98). The arithmetic order below is the
+    * bit-exactness contract — do not reorder or fuse operations; the
+    * seed sums accumulate from 0.0 in production order (0.0+x is not
+    * x for x=-0.0). In-place safe: outReal[outIdx] is written after
+    * inReal[startIdx+outIdx] was read.
+    */
+   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   {
+      /* Seed EMA1 with a simple average of the first
+       * 'period' price bars.
+       */
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += inReal[today++];
+      }
+      prevEMA1 = tempReal / optInTimePeriod;
+      /* Advance EMA1 alone through its unstable period, up to
+       * the bar where EMA2 seeding begins.
+       */
+      while( today <= startIdx - (lookbackEMA * 2 + 1) )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      }
+      /* Seed EMA2 with a simple average of the first 'period'
+       * EMA1 values, accumulated as EMA1 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA1;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         tempReal += prevEMA1;
+      }
+      prevEMA2 = tempReal / optInTimePeriod;
+   } else 
+   {
+      /* Metastock/Tradestation: seed EMA1 from the first price
+       * bar, EMA2 from the first EMA1 value.
+       */
+      prevEMA1 = inReal[0];
+      today = 1;
+      while( today <= startIdx - (lookbackEMA * 2 + 1) )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      }
+      prevEMA2 = prevEMA1;
+   }
+   /* Advance EMA1 and EMA2 in lockstep through the unstable
+    * period of EMA2, up to the bar where EMA3 seeding begins.
+    */
+   while( today <= startIdx - (lookbackEMA + 1) )
+   {
+      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+   }
+   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   {
+      /* Seed EMA3 with a simple average of the first 'period'
+       * EMA2 values, accumulated as EMA2 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA2;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         tempReal += prevEMA2;
+      }
+      prevEMA3 = tempReal / optInTimePeriod;
+   } else 
+   {
+      /* Metastock/Tradestation: seed EMA3 from the first EMA2
+       * value.
+       */
+      prevEMA3 = prevEMA2;
+   }
+   /* Advance all three EMA in lockstep through the unstable
+    * period of EMA3, up to the bar before the first output.
+    */
+   while( today <= startIdx - 1 )
+   {
+      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+      prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+   }
+   /* Stable zone: keep advancing the three EMA in lockstep and
+    * write the 1-day rate-of-change of EMA3 into the output.
+    */
+   outIdx = 0;
+   while( today <= endIdx )
+   {
+      tempReal = prevEMA3;
+      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+      prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+      if( tempReal != 0.0 )
+      {
+         outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
+      } else 
+      {
+         outReal[outIdx++] = 0.0;
+      }
+   }
+   /* Succeed. Indicate where the output starts relative to
+    * the caller input.
+    */
    *outBegIdx= startIdx;
-   nbElementToOutput = endIdx - startIdx + 1 + totalLookback;
-   /* Allocate a temporary buffer for performing
-    * the calculation.
-    */
-   tempBuffer = malloc(nbElementToOutput * sizeof(double));
-   if( !tempBuffer )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      return TA_ALLOC_ERR;
-   }
-   /* Calculate the first EMA */
-   retCode = TA_EMA_Unguarded(startIdx - totalLookback,endIdx,inReal,optInTimePeriod,&begIdx,&nbElement,tempBuffer);
-   /* Verify for failure or if not enough data after
-    * calculating the EMA.
-    */
-   if( retCode != TA_SUCCESS || nbElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      free(tempBuffer);
-      return retCode;
-   }
-   nbElementToOutput -= 1;
-   /* Make this variable zero base from now on. */
-   /* Calculate the second EMA */
-   nbElementToOutput -= emaLookback;
-   retCode = TA_EMA_Unguarded(0,nbElementToOutput,tempBuffer,optInTimePeriod,&begIdx,&nbElement,tempBuffer);
-   /* Verify for failure or if not enough data after
-    * calculating the EMA.
-    */
-   if( retCode != TA_SUCCESS || nbElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      free(tempBuffer);
-      return retCode;
-   }
-   /* Calculate the third EMA */
-   nbElementToOutput -= emaLookback;
-   retCode = TA_EMA_Unguarded(0,nbElementToOutput,tempBuffer,optInTimePeriod,&begIdx,&nbElement,tempBuffer);
-   /* Verify for failure or if not enough data after
-    * calculating the EMA.
-    */
-   if( retCode != TA_SUCCESS || nbElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      free(tempBuffer);
-      return retCode;
-   }
-   /* Calculate the 1-day Rate-Of-Change */
-   nbElementToOutput -= emaLookback;
-   retCode = TA_ROC_Unguarded(0,nbElementToOutput,tempBuffer,1,&begIdx,outNBElement,outReal);
-   free(tempBuffer);
-   /* Verify for failure or if not enough data after
-    * calculating the rate-of-change.
-    */
-   if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      return retCode;
-   }
+   *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
@@ -191,73 +249,107 @@ TA_LIB_API TA_RetCode TA_TRIX_Unguarded( int    startIdx,
                                          int          *outNBElement,
                                          double        outReal[] )
 {
-   double *tempBuffer;
-   int nbElement;
-   int begIdx;
-   int totalLookback;
-   int emaLookback;
-   int rocLookback;
-   TA_RetCode retCode;
-   int nbElementToOutput;
+   double prevEMA1;
+   double prevEMA2;
+   double prevEMA3;
+   double tempReal;
+   double optInK_1;
+   int i;
+   int today;
+   int outIdx;
+   int lookbackEMA;
+   int lookbackTotal;
 
-   emaLookback = TA_EMA_Lookback(optInTimePeriod);
-   rocLookback = TA_ROCR_Lookback(1);
-   totalLookback = emaLookback * 3 + rocLookback;
-   if( startIdx < totalLookback )
+   *outNBElement= 0;
+   *outBegIdx= 0;
+   lookbackEMA = TA_EMA_Lookback(optInTimePeriod);
+   lookbackTotal = lookbackEMA * 3 + TA_ROCR_Lookback(1);
+   if( startIdx < lookbackTotal )
    {
-      startIdx = totalLookback;
+      startIdx = lookbackTotal;
    }
    if( startIdx > endIdx )
    {
-      *outNBElement= 0;
-      *outBegIdx= 0;
       return TA_SUCCESS;
    }
+   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   {
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += inReal[today++];
+      }
+      prevEMA1 = tempReal / optInTimePeriod;
+      while( today <= startIdx - (lookbackEMA * 2 + 1) )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      }
+      tempReal = 0.0;
+      tempReal += prevEMA1;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         tempReal += prevEMA1;
+      }
+      prevEMA2 = tempReal / optInTimePeriod;
+   } else 
+   {
+      prevEMA1 = inReal[0];
+      today = 1;
+      while( today <= startIdx - (lookbackEMA * 2 + 1) )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      }
+      prevEMA2 = prevEMA1;
+   }
+   while( today <= startIdx - (lookbackEMA + 1) )
+   {
+      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+   }
+   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   {
+      tempReal = 0.0;
+      tempReal += prevEMA2;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         tempReal += prevEMA2;
+      }
+      prevEMA3 = tempReal / optInTimePeriod;
+   } else 
+   {
+      prevEMA3 = prevEMA2;
+   }
+   while( today <= startIdx - 1 )
+   {
+      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+      prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+   }
+   outIdx = 0;
+   while( today <= endIdx )
+   {
+      tempReal = prevEMA3;
+      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+      prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+      if( tempReal != 0.0 )
+      {
+         outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
+      } else 
+      {
+         outReal[outIdx++] = 0.0;
+      }
+   }
    *outBegIdx= startIdx;
-   nbElementToOutput = endIdx - startIdx + 1 + totalLookback;
-   tempBuffer = malloc(nbElementToOutput * sizeof(double));
-   if( !tempBuffer )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      return TA_ALLOC_ERR;
-   }
-   retCode = TA_EMA_Unguarded(startIdx - totalLookback,endIdx,inReal,optInTimePeriod,&begIdx,&nbElement,tempBuffer);
-   if( retCode != TA_SUCCESS || nbElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      free(tempBuffer);
-      return retCode;
-   }
-   nbElementToOutput -= 1;
-   nbElementToOutput -= emaLookback;
-   retCode = TA_EMA_Unguarded(0,nbElementToOutput,tempBuffer,optInTimePeriod,&begIdx,&nbElement,tempBuffer);
-   if( retCode != TA_SUCCESS || nbElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      free(tempBuffer);
-      return retCode;
-   }
-   nbElementToOutput -= emaLookback;
-   retCode = TA_EMA_Unguarded(0,nbElementToOutput,tempBuffer,optInTimePeriod,&begIdx,&nbElement,tempBuffer);
-   if( retCode != TA_SUCCESS || nbElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      free(tempBuffer);
-      return retCode;
-   }
-   nbElementToOutput -= emaLookback;
-   retCode = TA_ROC_Unguarded(0,nbElementToOutput,tempBuffer,1,&begIdx,outNBElement,outReal);
-   free(tempBuffer);
-   if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      return retCode;
-   }
+   *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
@@ -269,14 +361,16 @@ TA_RetCode TA_S_TRIX( int    startIdx,
                       int          *outNBElement,
                       double        outReal[] )
 {
-   double *tempBuffer;
-   int nbElement;
-   int begIdx;
-   int totalLookback;
-   int emaLookback;
-   int rocLookback;
-   TA_RetCode retCode;
-   int nbElementToOutput;
+   double prevEMA1;
+   double prevEMA2;
+   double prevEMA3;
+   double tempReal;
+   double optInK_1;
+   int i;
+   int today;
+   int outIdx;
+   int lookbackEMA;
+   int lookbackTotal;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -292,64 +386,96 @@ TA_RetCode TA_S_TRIX( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   emaLookback = TA_EMA_Lookback(optInTimePeriod);
-   rocLookback = TA_ROCR_Lookback(1);
-   totalLookback = emaLookback * 3 + rocLookback;
-   if( startIdx < totalLookback )
+   *outNBElement= 0;
+   *outBegIdx= 0;
+   lookbackEMA = TA_EMA_Lookback(optInTimePeriod);
+   lookbackTotal = lookbackEMA * 3 + TA_ROCR_Lookback(1);
+   if( startIdx < lookbackTotal )
    {
-      startIdx = totalLookback;
+      startIdx = lookbackTotal;
    }
    if( startIdx > endIdx )
    {
-      *outNBElement= 0;
-      *outBegIdx= 0;
       return TA_SUCCESS;
    }
+   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   {
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += inReal[today++];
+      }
+      prevEMA1 = tempReal / optInTimePeriod;
+      while( today <= startIdx - (lookbackEMA * 2 + 1) )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      }
+      tempReal = 0.0;
+      tempReal += prevEMA1;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         tempReal += prevEMA1;
+      }
+      prevEMA2 = tempReal / optInTimePeriod;
+   } else 
+   {
+      prevEMA1 = inReal[0];
+      today = 1;
+      while( today <= startIdx - (lookbackEMA * 2 + 1) )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      }
+      prevEMA2 = prevEMA1;
+   }
+   while( today <= startIdx - (lookbackEMA + 1) )
+   {
+      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+   }
+   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   {
+      tempReal = 0.0;
+      tempReal += prevEMA2;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         tempReal += prevEMA2;
+      }
+      prevEMA3 = tempReal / optInTimePeriod;
+   } else 
+   {
+      prevEMA3 = prevEMA2;
+   }
+   while( today <= startIdx - 1 )
+   {
+      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+      prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+   }
+   outIdx = 0;
+   while( today <= endIdx )
+   {
+      tempReal = prevEMA3;
+      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+      prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+      if( tempReal != 0.0 )
+      {
+         outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
+      } else 
+      {
+         outReal[outIdx++] = 0.0;
+      }
+   }
    *outBegIdx= startIdx;
-   nbElementToOutput = endIdx - startIdx + 1 + totalLookback;
-   tempBuffer = malloc(nbElementToOutput * sizeof(double));
-   if( !tempBuffer )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      return TA_ALLOC_ERR;
-   }
-   retCode = TA_S_EMA_Unguarded(startIdx - totalLookback,endIdx,inReal,optInTimePeriod,&begIdx,&nbElement,tempBuffer);
-   if( retCode != TA_SUCCESS || nbElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      free(tempBuffer);
-      return retCode;
-   }
-   nbElementToOutput -= 1;
-   nbElementToOutput -= emaLookback;
-   retCode = TA_EMA_Unguarded(0,nbElementToOutput,tempBuffer,optInTimePeriod,&begIdx,&nbElement,tempBuffer);
-   if( retCode != TA_SUCCESS || nbElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      free(tempBuffer);
-      return retCode;
-   }
-   nbElementToOutput -= emaLookback;
-   retCode = TA_EMA_Unguarded(0,nbElementToOutput,tempBuffer,optInTimePeriod,&begIdx,&nbElement,tempBuffer);
-   if( retCode != TA_SUCCESS || nbElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      free(tempBuffer);
-      return retCode;
-   }
-   nbElementToOutput -= emaLookback;
-   retCode = TA_ROC_Unguarded(0,nbElementToOutput,tempBuffer,1,&begIdx,outNBElement,outReal);
-   free(tempBuffer);
-   if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      return retCode;
-   }
+   *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
@@ -361,73 +487,107 @@ TA_RetCode TA_S_TRIX_Unguarded( int    startIdx,
                                 int          *outNBElement,
                                 double        outReal[] )
 {
-   double *tempBuffer;
-   int nbElement;
-   int begIdx;
-   int totalLookback;
-   int emaLookback;
-   int rocLookback;
-   TA_RetCode retCode;
-   int nbElementToOutput;
+   double prevEMA1;
+   double prevEMA2;
+   double prevEMA3;
+   double tempReal;
+   double optInK_1;
+   int i;
+   int today;
+   int outIdx;
+   int lookbackEMA;
+   int lookbackTotal;
 
-   emaLookback = TA_EMA_Lookback(optInTimePeriod);
-   rocLookback = TA_ROCR_Lookback(1);
-   totalLookback = emaLookback * 3 + rocLookback;
-   if( startIdx < totalLookback )
+   *outNBElement= 0;
+   *outBegIdx= 0;
+   lookbackEMA = TA_EMA_Lookback(optInTimePeriod);
+   lookbackTotal = lookbackEMA * 3 + TA_ROCR_Lookback(1);
+   if( startIdx < lookbackTotal )
    {
-      startIdx = totalLookback;
+      startIdx = lookbackTotal;
    }
    if( startIdx > endIdx )
    {
-      *outNBElement= 0;
-      *outBegIdx= 0;
       return TA_SUCCESS;
    }
+   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   {
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += inReal[today++];
+      }
+      prevEMA1 = tempReal / optInTimePeriod;
+      while( today <= startIdx - (lookbackEMA * 2 + 1) )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      }
+      tempReal = 0.0;
+      tempReal += prevEMA1;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         tempReal += prevEMA1;
+      }
+      prevEMA2 = tempReal / optInTimePeriod;
+   } else 
+   {
+      prevEMA1 = inReal[0];
+      today = 1;
+      while( today <= startIdx - (lookbackEMA * 2 + 1) )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      }
+      prevEMA2 = prevEMA1;
+   }
+   while( today <= startIdx - (lookbackEMA + 1) )
+   {
+      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+   }
+   if( TA_GLOBALS_COMPATIBILITY == ENUM_VALUE(Compatibility,TA_COMPATIBILITY_DEFAULT,Default) )
+   {
+      tempReal = 0.0;
+      tempReal += prevEMA2;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+         prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+         tempReal += prevEMA2;
+      }
+      prevEMA3 = tempReal / optInTimePeriod;
+   } else 
+   {
+      prevEMA3 = prevEMA2;
+   }
+   while( today <= startIdx - 1 )
+   {
+      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+      prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+   }
+   outIdx = 0;
+   while( today <= endIdx )
+   {
+      tempReal = prevEMA3;
+      prevEMA1 = (inReal[today++] - prevEMA1) * optInK_1 + prevEMA1;
+      prevEMA2 = (prevEMA1 - prevEMA2) * optInK_1 + prevEMA2;
+      prevEMA3 = (prevEMA2 - prevEMA3) * optInK_1 + prevEMA3;
+      if( tempReal != 0.0 )
+      {
+         outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
+      } else 
+      {
+         outReal[outIdx++] = 0.0;
+      }
+   }
    *outBegIdx= startIdx;
-   nbElementToOutput = endIdx - startIdx + 1 + totalLookback;
-   tempBuffer = malloc(nbElementToOutput * sizeof(double));
-   if( !tempBuffer )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      return TA_ALLOC_ERR;
-   }
-   retCode = TA_S_EMA_Unguarded(startIdx - totalLookback,endIdx,inReal,optInTimePeriod,&begIdx,&nbElement,tempBuffer);
-   if( retCode != TA_SUCCESS || nbElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      free(tempBuffer);
-      return retCode;
-   }
-   nbElementToOutput -= 1;
-   nbElementToOutput -= emaLookback;
-   retCode = TA_EMA_Unguarded(0,nbElementToOutput,tempBuffer,optInTimePeriod,&begIdx,&nbElement,tempBuffer);
-   if( retCode != TA_SUCCESS || nbElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      free(tempBuffer);
-      return retCode;
-   }
-   nbElementToOutput -= emaLookback;
-   retCode = TA_EMA_Unguarded(0,nbElementToOutput,tempBuffer,optInTimePeriod,&begIdx,&nbElement,tempBuffer);
-   if( retCode != TA_SUCCESS || nbElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      free(tempBuffer);
-      return retCode;
-   }
-   nbElementToOutput -= emaLookback;
-   retCode = TA_ROC_Unguarded(0,nbElementToOutput,tempBuffer,1,&begIdx,outNBElement,outReal);
-   free(tempBuffer);
-   if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
-   {
-      *outNBElement= 0;
-      *outBegIdx= 0;
-      return retCode;
-   }
+   *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 

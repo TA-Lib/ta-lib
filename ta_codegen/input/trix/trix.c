@@ -4,14 +4,18 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AA       Andrew Atkinson
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  020605 AA   Fix #1117656. NULL pointer assignement.
+ *  112400 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  020605 AA     Fix #1117656. NULL pointer assignement.
+ *  070526 MF,CC  Speed optimization: single lockstep pass (bit-exact
+ *                for startIdx <= lookback). Fix #98: partial-range
+ *                output was mislabeled by up to one EMA lookback.
  */
 
 int trix_lookback(int           optInTimePeriod)
@@ -24,118 +28,143 @@ int trix_lookback(int           optInTimePeriod)
 
 TA_RetCode trix(int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
 {
-   double *tempBuffer;
-   int nbElement;
-   int begIdx;
-   int totalLookback;
-   int emaLookback, rocLookback;
-   TA_RetCode retCode;
-   int nbElementToOutput;
+   double prevEMA1, prevEMA2, prevEMA3, tempReal, optInK_1;
+   int i, today, outIdx, lookbackEMA, lookbackTotal;
 
-   /* Adjust the startIdx to account for the lookback. */
-   emaLookback   = ema_lookback( optInTimePeriod );
-   rocLookback   = rocr_lookback( 1 );
-   totalLookback = (emaLookback*3) + rocLookback;
+   /* TRIX = 1-day percent rate-of-change of a triple EMA. */
 
-   if( startIdx < totalLookback )
-      startIdx = totalLookback;
+   /* Will change only on success. */
+   *outNBElement = 0;
+   *outBegIdx = 0;
+
+   /* Adjust startIdx to account for the lookback period. */
+   lookbackEMA   = ema_lookback( optInTimePeriod );
+   lookbackTotal = (lookbackEMA*3) + rocr_lookback( 1 );
+
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
 
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
-   {
-      *outNBElement = 0;
-      *outBegIdx = 0;
       return TA_SUCCESS;
-   }
 
-   *outBegIdx = startIdx;
-
-   nbElementToOutput = (endIdx-startIdx)+1+totalLookback;
-
-   /* Allocate a temporary buffer for performing
-    * the calculation.
+   /* Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
+    * roc() of consecutive EMA3 values. Output element j is the TRIX
+    * of bar startIdx+j (fix #98). The arithmetic order below is the
+    * bit-exactness contract — do not reorder or fuse operations; the
+    * seed sums accumulate from 0.0 in production order (0.0+x is not
+    * x for x=-0.0). In-place safe: outReal[outIdx] is written after
+    * inReal[startIdx+outIdx] was read.
     */
-   tempBuffer = malloc((nbElementToOutput) * sizeof(double));
+   optInK_1 = 2.0 / ((double)(optInTimePeriod + 1));
 
-   if( !tempBuffer )
+   if( TA_GetCompatibility() == TA_COMPATIBILITY_DEFAULT )
    {
-      *outNBElement = 0;
-      *outBegIdx = 0;
-      return TA_ALLOC_ERR;
+      /* Seed EMA1 with a simple average of the first
+       * 'period' price bars.
+       */
+      today = startIdx-lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+         tempReal += inReal[today++];
+      prevEMA1 = tempReal / optInTimePeriod;
+
+      /* Advance EMA1 alone through its unstable period, up to
+       * the bar where EMA2 seeding begins.
+       */
+      while( today <= startIdx-((lookbackEMA*2)+1) )
+         prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+
+      /* Seed EMA2 with a simple average of the first 'period'
+       * EMA1 values, accumulated as EMA1 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA1;
+      i = optInTimePeriod-1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+         tempReal += prevEMA1;
+      }
+      prevEMA2 = tempReal / optInTimePeriod;
+   }
+   else
+   {
+      /* Metastock/Tradestation: seed EMA1 from the first price
+       * bar, EMA2 from the first EMA1 value.
+       */
+      prevEMA1 = inReal[0];
+      today = 1;
+      while( today <= startIdx-((lookbackEMA*2)+1) )
+         prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+      prevEMA2 = prevEMA1;
    }
 
-   /* Calculate the first EMA */
-   retCode = ema( (startIdx-totalLookback), endIdx, inReal,
-      optInTimePeriod,
-      &begIdx, &nbElement,
-      tempBuffer );
-
-   /* Verify for failure or if not enough data after
-    * calculating the EMA.
+   /* Advance EMA1 and EMA2 in lockstep through the unstable
+    * period of EMA2, up to the bar where EMA3 seeding begins.
     */
-   if( (retCode != TA_SUCCESS ) || (nbElement == 0) )
+   while( today <= startIdx-(lookbackEMA+1) )
    {
-      *outNBElement = 0;
-      *outBegIdx = 0;
-      free(tempBuffer);
-      return retCode;
+      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
    }
 
-   nbElementToOutput--; /* Make this variable zero base from now on. */
+   if( TA_GetCompatibility() == TA_COMPATIBILITY_DEFAULT )
+   {
+      /* Seed EMA3 with a simple average of the first 'period'
+       * EMA2 values, accumulated as EMA2 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA2;
+      i = optInTimePeriod-1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+         prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
+         tempReal += prevEMA2;
+      }
+      prevEMA3 = tempReal / optInTimePeriod;
+   }
+   else
+   {
+      /* Metastock/Tradestation: seed EMA3 from the first EMA2
+       * value.
+       */
+      prevEMA3 = prevEMA2;
+   }
 
-   /* Calculate the second EMA */
-   nbElementToOutput -= emaLookback;
-   retCode = ema( 0, nbElementToOutput, tempBuffer,
-      optInTimePeriod,
-      &begIdx, &nbElement,
-      tempBuffer );
-
-   /* Verify for failure or if not enough data after
-    * calculating the EMA.
+   /* Advance all three EMA in lockstep through the unstable
+    * period of EMA3, up to the bar before the first output.
     */
-   if( (retCode != TA_SUCCESS ) || (nbElement == 0) )
+   while( today <= startIdx-1 )
    {
-      *outNBElement = 0;
-      *outBegIdx = 0;
-      free(tempBuffer);
-      return retCode;
+      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
+      prevEMA3 = ((prevEMA2-prevEMA3)*optInK_1) + prevEMA3;
    }
 
-   /* Calculate the third EMA */
-   nbElementToOutput -= emaLookback;
-   retCode = ema( 0, nbElementToOutput, tempBuffer,
-      optInTimePeriod,
-      &begIdx, &nbElement,
-      tempBuffer );
-
-   /* Verify for failure or if not enough data after
-    * calculating the EMA.
+   /* Stable zone: keep advancing the three EMA in lockstep and
+    * write the 1-day rate-of-change of EMA3 into the output.
     */
-   if( (retCode != TA_SUCCESS ) || (nbElement == 0) )
+   outIdx = 0;
+   while( today <= endIdx )
    {
-      *outNBElement = 0;
-      *outBegIdx = 0;
-      free(tempBuffer);
-      return retCode;
+      tempReal = prevEMA3;
+      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
+      prevEMA3 = ((prevEMA2-prevEMA3)*optInK_1) + prevEMA3;
+      if( tempReal != 0.0 )
+         outReal[outIdx++] = ((prevEMA3 / tempReal)-1.0)*100.0;
+      else
+         outReal[outIdx++] = 0.0;
    }
 
-   /* Calculate the 1-day Rate-Of-Change */
-   nbElementToOutput -= emaLookback;
-   retCode = roc( 0, nbElementToOutput,
-      tempBuffer,
-      1,  &begIdx, outNBElement,
-      outReal );
-
-   free(tempBuffer);
-   /* Verify for failure or if not enough data after
-    * calculating the rate-of-change.
+   /* Succeed. Indicate where the output starts relative to
+    * the caller input.
     */
-   if( (retCode != TA_SUCCESS ) || ((int)*outNBElement == 0) )
-   {
-      *outNBElement = 0;
-      *outBegIdx = 0;
-      return retCode;
-   }
+   *outBegIdx    = startIdx;
+   *outNBElement = outIdx;
 
    return TA_SUCCESS;
 }

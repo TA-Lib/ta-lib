@@ -112,17 +112,17 @@ static TA_Test tableTest[] =
    /****************/
    /*   TRIX TEST  */
    /****************/
-   { 0, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS,      0,   0.2589, 13,  252-13 }, /* First Value */
-   { 0, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS,      1,   0.010495, 13,  252-13 },
-   { 0, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS, 252-15,  -0.058, 13,  252-13 },
-   { 0, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS, 252-14,  -0.095, 13,  252-13 }, /* Last Value */
+   { 1, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS,      0,   0.2589, 13,  252-13 }, /* First Value */
+   { 1, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS,      1,   0.010495, 13,  252-13 },
+   { 1, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS, 252-15,  -0.058, 13,  252-13 },
+   { 1, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS, 252-14,  -0.095, 13,  252-13 }, /* Last Value */
 
 #if 0
    /* Metastock values. */
-   { 0, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS,      0,   0.221, 13,  252-13 }, /* First Value */
-   { 0, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS,      1,  -0.009, 13,  252-13 },
-   { 0, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS, 252-15,  -0.058, 13,  252-13 },
-   { 0, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS, 252-14,  -0.095, 13,  252-13 }, /* Last Value */
+   { 1, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS,      0,   0.221, 13,  252-13 }, /* First Value */
+   { 1, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS,      1,  -0.009, 13,  252-13 },
+   { 1, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS, 252-15,  -0.058, 13,  252-13 },
+   { 1, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS, 252-14,  -0.095, 13,  252-13 }, /* Last Value */
 #endif
 
 };
