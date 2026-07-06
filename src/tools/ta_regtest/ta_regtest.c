@@ -230,7 +230,13 @@ int main( int argc, char **argv )
    {
       CodegenPipe abstractPipe;
       int abstractPipeOpen = 0;
-      if( doCodegenTest )
+      /* Only spawn the C server for abstract verification when C is actually in
+       * the language filter. Under --language=rust the C server is not built
+       * (regtest.py compiles servers with --backend=rust), so spawning it would
+       * execvp a missing binary and surface as a confusing first-call pipe EOF.
+       * The Rust abstract parity below has the matching guard for "rust". */
+      if( doCodegenTest &&
+          ( codegenLanguageFilter == NULL || strstr(codegenLanguageFilter, "c") != NULL ) )
       {
          /* Build server path relative to the ta_regtest executable,
           * so it works regardless of the current working directory. */
