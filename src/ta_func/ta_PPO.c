@@ -139,17 +139,24 @@ TA_LIB_API TA_RetCode TA_PPO( int    startIdx,
       retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,&outBegIdx1,&outNbElement1,outReal);
       if( retCode == TA_SUCCESS )
       {
-         tempInteger = outBegIdx1 - outBegIdx2;
-         /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
-         for( i = 0, j = tempInteger; i < outNbElement1; i += 1, j += 1 )
+         /* The slow MA begins at or after the fast MA, so the offset is
+          * valid whenever the slow MA produced output. Guard it so the empty
+          * case leaves the difference loop untouched.
+          */
+         if( outNbElement1 > 0 )
          {
-            tempReal = outReal[i];
-            if( !TA_IS_ZERO(tempReal) )
+            tempInteger = outBegIdx1 - outBegIdx2;
+            /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+            for( i = 0, j = tempInteger; i < outNbElement1; i += 1, j += 1 )
             {
-               outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
-            } else 
-            {
-               outReal[i] = 0.0;
+               tempReal = outReal[i];
+               if( !TA_IS_ZERO(tempReal) )
+               {
+                  outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
+               } else 
+               {
+                  outReal[i] = 0.0;
+               }
             }
          }
          *outBegIdx= outBegIdx1;
@@ -198,16 +205,19 @@ TA_LIB_API TA_RetCode TA_PPO_Unguarded( int    startIdx,
       retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,&outBegIdx1,&outNbElement1,outReal);
       if( retCode == TA_SUCCESS )
       {
-         tempInteger = outBegIdx1 - outBegIdx2;
-         for( i = 0, j = tempInteger; i < outNbElement1; i += 1, j += 1 )
+         if( outNbElement1 > 0 )
          {
-            tempReal = outReal[i];
-            if( !TA_IS_ZERO(tempReal) )
+            tempInteger = outBegIdx1 - outBegIdx2;
+            for( i = 0, j = tempInteger; i < outNbElement1; i += 1, j += 1 )
             {
-               outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
-            } else 
-            {
-               outReal[i] = 0.0;
+               tempReal = outReal[i];
+               if( !TA_IS_ZERO(tempReal) )
+               {
+                  outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
+               } else 
+               {
+                  outReal[i] = 0.0;
+               }
             }
          }
          *outBegIdx= outBegIdx1;
@@ -276,16 +286,19 @@ TA_RetCode TA_S_PPO( int    startIdx,
       retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,&outBegIdx1,&outNbElement1,outReal);
       if( retCode == TA_SUCCESS )
       {
-         tempInteger = outBegIdx1 - outBegIdx2;
-         for( i = 0, j = tempInteger; i < outNbElement1; i += 1, j += 1 )
+         if( outNbElement1 > 0 )
          {
-            tempReal = outReal[i];
-            if( !TA_IS_ZERO(tempReal) )
+            tempInteger = outBegIdx1 - outBegIdx2;
+            for( i = 0, j = tempInteger; i < outNbElement1; i += 1, j += 1 )
             {
-               outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
-            } else 
-            {
-               outReal[i] = 0.0;
+               tempReal = outReal[i];
+               if( !TA_IS_ZERO(tempReal) )
+               {
+                  outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
+               } else 
+               {
+                  outReal[i] = 0.0;
+               }
             }
          }
          *outBegIdx= outBegIdx1;
@@ -334,16 +347,19 @@ TA_RetCode TA_S_PPO_Unguarded( int    startIdx,
       retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,&outBegIdx1,&outNbElement1,outReal);
       if( retCode == TA_SUCCESS )
       {
-         tempInteger = outBegIdx1 - outBegIdx2;
-         for( i = 0, j = tempInteger; i < outNbElement1; i += 1, j += 1 )
+         if( outNbElement1 > 0 )
          {
-            tempReal = outReal[i];
-            if( !TA_IS_ZERO(tempReal) )
+            tempInteger = outBegIdx1 - outBegIdx2;
+            for( i = 0, j = tempInteger; i < outNbElement1; i += 1, j += 1 )
             {
-               outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
-            } else 
-            {
-               outReal[i] = 0.0;
+               tempReal = outReal[i];
+               if( !TA_IS_ZERO(tempReal) )
+               {
+                  outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
+               } else 
+               {
+                  outReal[i] = 0.0;
+               }
             }
          }
          *outBegIdx= outBegIdx1;

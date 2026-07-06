@@ -66,10 +66,16 @@ TA_RetCode apo(int startIdx, int endIdx, const double inReal[], int optInFastPer
 
       if( retCode == TA_SUCCESS )
       {
-         tempInteger = outBegIdx1 - outBegIdx2;
-         /* Calculate (fast MA)-(slow MA) in the output. */
-         for( i=0,j=tempInteger; i < outNbElement1; i++, j++ )
-            outReal[i] = tempBuffer[j]-outReal[i];
+         /* The slow MA begins at or after the fast MA, so the offset is
+          * valid whenever the slow MA produced output. Guard it so the empty
+          * case leaves the difference loop untouched. */
+         if( outNbElement1 > 0 )
+         {
+            tempInteger = outBegIdx1 - outBegIdx2;
+            /* Calculate (fast MA)-(slow MA) in the output. */
+            for( i=0,j=tempInteger; i < outNbElement1; i++, j++ )
+               outReal[i] = tempBuffer[j]-outReal[i];
+         }
 
          *outBegIdx    = outBegIdx1;
          *outNBElement = outNbElement1;

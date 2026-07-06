@@ -2717,10 +2717,16 @@ public class Core {
          /* Calculate the slow MA into the output. */
          retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx1, outNbElement1, outReal);
          if( retCode == RetCode.Success ) {
-            tempInteger = outBegIdx1.value - outBegIdx2.value;
-            /* Calculate (fast MA)-(slow MA) in the output. */
-            for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
-               outReal[i] = tempBuffer[j] - outReal[i];
+            /* The slow MA begins at or after the fast MA, so the offset is
+             * valid whenever the slow MA produced output. Guard it so the empty
+             * case leaves the difference loop untouched.
+             */
+            if( outNbElement1.value > 0 ) {
+               tempInteger = outBegIdx1.value - outBegIdx2.value;
+               /* Calculate (fast MA)-(slow MA) in the output. */
+               for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
+                  outReal[i] = tempBuffer[j] - outReal[i];
+               }
             }
             outBegIdx.value = outBegIdx1.value;
             outNBElement.value = outNbElement1.value;
@@ -2757,9 +2763,11 @@ public class Core {
       if( retCode == RetCode.Success ) {
          retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx1, outNbElement1, outReal);
          if( retCode == RetCode.Success ) {
-            tempInteger = outBegIdx1.value - outBegIdx2.value;
-            for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
-               outReal[i] = tempBuffer[j] - outReal[i];
+            if( outNbElement1.value > 0 ) {
+               tempInteger = outBegIdx1.value - outBegIdx2.value;
+               for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
+                  outReal[i] = tempBuffer[j] - outReal[i];
+               }
             }
             outBegIdx.value = outBegIdx1.value;
             outNBElement.value = outNbElement1.value;
@@ -2812,9 +2820,11 @@ public class Core {
       if( retCode == RetCode.Success ) {
          retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx1, outNbElement1, outReal);
          if( retCode == RetCode.Success ) {
-            tempInteger = outBegIdx1.value - outBegIdx2.value;
-            for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
-               outReal[i] = tempBuffer[j] - outReal[i];
+            if( outNbElement1.value > 0 ) {
+               tempInteger = outBegIdx1.value - outBegIdx2.value;
+               for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
+                  outReal[i] = tempBuffer[j] - outReal[i];
+               }
             }
             outBegIdx.value = outBegIdx1.value;
             outNBElement.value = outNbElement1.value;
@@ -2851,9 +2861,11 @@ public class Core {
       if( retCode == RetCode.Success ) {
          retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx1, outNbElement1, outReal);
          if( retCode == RetCode.Success ) {
-            tempInteger = outBegIdx1.value - outBegIdx2.value;
-            for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
-               outReal[i] = tempBuffer[j] - outReal[i];
+            if( outNbElement1.value > 0 ) {
+               tempInteger = outBegIdx1.value - outBegIdx2.value;
+               for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
+                  outReal[i] = tempBuffer[j] - outReal[i];
+               }
             }
             outBegIdx.value = outBegIdx1.value;
             outNBElement.value = outNbElement1.value;
@@ -38436,7 +38448,7 @@ public class Core {
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
+         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -38478,7 +38490,7 @@ public class Core {
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
+         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -38531,7 +38543,7 @@ public class Core {
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
+         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -38573,7 +38585,7 @@ public class Core {
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
+         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -51309,14 +51321,20 @@ public class Core {
          /* Calculate the slow MA into the output. */
          retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx1, outNbElement1, outReal);
          if( retCode == RetCode.Success ) {
-            tempInteger = outBegIdx1.value - outBegIdx2.value;
-            /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
-            for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
-               tempReal = outReal[i];
-               if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-                  outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
-               } else {
-                  outReal[i] = 0.0;
+            /* The slow MA begins at or after the fast MA, so the offset is
+             * valid whenever the slow MA produced output. Guard it so the empty
+             * case leaves the difference loop untouched.
+             */
+            if( outNbElement1.value > 0 ) {
+               tempInteger = outBegIdx1.value - outBegIdx2.value;
+               /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+               for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
+                  tempReal = outReal[i];
+                  if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                     outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
+                  } else {
+                     outReal[i] = 0.0;
+                  }
                }
             }
             outBegIdx.value = outBegIdx1.value;
@@ -51355,13 +51373,15 @@ public class Core {
       if( retCode == RetCode.Success ) {
          retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx1, outNbElement1, outReal);
          if( retCode == RetCode.Success ) {
-            tempInteger = outBegIdx1.value - outBegIdx2.value;
-            for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
-               tempReal = outReal[i];
-               if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-                  outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
-               } else {
-                  outReal[i] = 0.0;
+            if( outNbElement1.value > 0 ) {
+               tempInteger = outBegIdx1.value - outBegIdx2.value;
+               for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
+                  tempReal = outReal[i];
+                  if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                     outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
+                  } else {
+                     outReal[i] = 0.0;
+                  }
                }
             }
             outBegIdx.value = outBegIdx1.value;
@@ -51416,13 +51436,15 @@ public class Core {
       if( retCode == RetCode.Success ) {
          retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx1, outNbElement1, outReal);
          if( retCode == RetCode.Success ) {
-            tempInteger = outBegIdx1.value - outBegIdx2.value;
-            for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
-               tempReal = outReal[i];
-               if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-                  outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
-               } else {
-                  outReal[i] = 0.0;
+            if( outNbElement1.value > 0 ) {
+               tempInteger = outBegIdx1.value - outBegIdx2.value;
+               for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
+                  tempReal = outReal[i];
+                  if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                     outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
+                  } else {
+                     outReal[i] = 0.0;
+                  }
                }
             }
             outBegIdx.value = outBegIdx1.value;
@@ -51461,13 +51483,15 @@ public class Core {
       if( retCode == RetCode.Success ) {
          retCode = movingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx1, outNbElement1, outReal);
          if( retCode == RetCode.Success ) {
-            tempInteger = outBegIdx1.value - outBegIdx2.value;
-            for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
-               tempReal = outReal[i];
-               if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-                  outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
-               } else {
-                  outReal[i] = 0.0;
+            if( outNbElement1.value > 0 ) {
+               tempInteger = outBegIdx1.value - outBegIdx2.value;
+               for( i = 0, j = tempInteger; i < outNbElement1.value; i += 1, j += 1 ) {
+                  tempReal = outReal[i];
+                  if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                     outReal[i] = (tempBuffer[j] - tempReal) / tempReal * 100.0;
+                  } else {
+                     outReal[i] = 0.0;
+                  }
                }
             }
             outBegIdx.value = outBegIdx1.value;

@@ -183,7 +183,7 @@ impl Core {
             let mut upsum: f64 = 0.0;
             let mut downsum: f64 = 0.0;
             let mut i: usize = 0_usize;
-            for i in (startIdx - (optInTimePeriod) as usize + 1 as usize)..(startIdx as usize) + 1 {
+            for i in (startIdx - ((optInTimePeriod - 1)) as usize as usize)..(startIdx as usize) + 1 {
                 let mut close: f64 = inClose[i];
                 let mut open: f64 = inOpen[i];
                 if close > open {
@@ -240,7 +240,7 @@ impl Core {
             let mut upsum: f64 = 0.0;
             let mut downsum: f64 = 0.0;
             let mut i: usize = 0_usize;
-            for i in (startIdx - (optInTimePeriod) as usize + 1 as usize)..(startIdx as usize) + 1 {
+            for i in (startIdx - ((optInTimePeriod - 1)) as usize as usize)..(startIdx as usize) + 1 {
                 let mut close: f64 = inClose[i];
                 let mut open: f64 = inOpen[i];
                 if close > open {

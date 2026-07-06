@@ -61,7 +61,7 @@
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
+         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -103,7 +103,7 @@
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
+         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -156,7 +156,7 @@
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
+         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -198,7 +198,7 @@
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
+         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {

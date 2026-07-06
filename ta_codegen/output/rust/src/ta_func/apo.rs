@@ -206,15 +206,20 @@ impl Core {
             // Calculate the slow MA into the output.
             retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, &mut outBegIdx1, &mut outNbElement1, outReal);
             if retCode == RetCode::Success {
-                tempInteger = outBegIdx1 - outBegIdx2;
-                // Calculate (fast MA)-(slow MA) in the output.
-                // for( i = 0, j = tempInteger; i < outNbElement1; i += 1, j += 1 )
-                i = 0;
-                j = tempInteger;
-                while i < outNbElement1 {
-                    outReal[i] = ((tempBuffer[j] - outReal[i]) as f64);
-                    i += 1;
-                    j += 1;
+                // The slow MA begins at or after the fast MA, so the offset is
+                // valid whenever the slow MA produced output. Guard it so the empty
+                // case leaves the difference loop untouched.
+                if outNbElement1 > 0 {
+                    tempInteger = outBegIdx1 - outBegIdx2;
+                    // Calculate (fast MA)-(slow MA) in the output.
+                    // for( i = 0, j = tempInteger; i < outNbElement1; i += 1, j += 1 )
+                    i = 0;
+                    j = tempInteger;
+                    while i < outNbElement1 {
+                        outReal[i] = ((tempBuffer[j] - outReal[i]) as f64);
+                        i += 1;
+                        j += 1;
+                    }
                 }
                 (*outBegIdx) = outBegIdx1;
                 (*outNBElement) = outNbElement1;
@@ -264,14 +269,16 @@ impl Core {
         if retCode == RetCode::Success {
             retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, &mut outBegIdx1, &mut outNbElement1, outReal);
             if retCode == RetCode::Success {
-                tempInteger = outBegIdx1 - outBegIdx2;
-                // for( i = 0, j = tempInteger; i < outNbElement1; i += 1, j += 1 )
-                i = 0;
-                j = tempInteger;
-                while i < outNbElement1 {
-                    outReal[i] = ((tempBuffer[j] - outReal[i]) as f64);
-                    i += 1;
-                    j += 1;
+                if outNbElement1 > 0 {
+                    tempInteger = outBegIdx1 - outBegIdx2;
+                    // for( i = 0, j = tempInteger; i < outNbElement1; i += 1, j += 1 )
+                    i = 0;
+                    j = tempInteger;
+                    while i < outNbElement1 {
+                        outReal[i] = ((tempBuffer[j] - outReal[i]) as f64);
+                        i += 1;
+                        j += 1;
+                    }
                 }
                 (*outBegIdx) = outBegIdx1;
                 (*outNBElement) = outNbElement1;

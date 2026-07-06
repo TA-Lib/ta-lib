@@ -40,7 +40,7 @@ TA_RetCode imi(int startIdx, int endIdx, const double inOpen[], const double inC
       double upsum = .0, downsum = .0;
       int i;
 
-      for (i = startIdx - optInTimePeriod + 1; i <= startIdx; i++) {
+      for (i = startIdx - (optInTimePeriod - 1); i <= startIdx; i++) {
          double close = inClose[i];
          double open = inOpen[i];
 

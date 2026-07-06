@@ -113,7 +113,7 @@ TA_LIB_API TA_RetCode TA_IMI( int    startIdx,
       double upsum = 0.0;
       double downsum = 0.0;
       int i;
-      for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 )
+      for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
       {
          double close = inClose[i];
          double open = inOpen[i];
@@ -163,7 +163,7 @@ TA_LIB_API TA_RetCode TA_IMI_Unguarded( int    startIdx,
       double upsum = 0.0;
       double downsum = 0.0;
       int i;
-      for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 )
+      for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
       {
          double close = inClose[i];
          double open = inOpen[i];
@@ -229,7 +229,7 @@ TA_RetCode TA_S_IMI( int    startIdx,
       double upsum = 0.0;
       double downsum = 0.0;
       int i;
-      for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 )
+      for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
       {
          double close = inClose[i];
          double open = inOpen[i];
@@ -279,7 +279,7 @@ TA_RetCode TA_S_IMI_Unguarded( int    startIdx,
       double upsum = 0.0;
       double downsum = 0.0;
       int i;
-      for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 )
+      for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
       {
          double close = inClose[i];
          double open = inOpen[i];
