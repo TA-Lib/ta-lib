@@ -10,8 +10,12 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ### Added
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
 
+### Changed
+- DEMA, TEMA and TRIX are 3x to 7x faster (single-pass rewrite, results unchanged for typical usage).
+
 ### Fixed
 - (#57) Missing TA_GetVersionString function in Windows DLL. Thanks @Youngv !
+- (#98) TRIX and NATR returned wrong values when startIdx > lookback, and a non-zero unstable period changed IMI's summation window.
 
 ## [0.7.1] 2026-07-03
 ### Added
