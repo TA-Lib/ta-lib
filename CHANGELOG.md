@@ -13,6 +13,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ### Changed
 - Algo Optimisation: DEMA, TEMA and TRIX are 3x to 7x faster.
 - Algo Optimisation: MACD and MACDFIX are ~8x faster, and MACDEXT as well when all three MA types are EMA.
+- Algo Optimisation: ATR and NATR compute the True Range inline (single pass, no temporary buffer), ~10-15% faster.
 
 ### Fixed
 - (#57) Missing TA_GetVersionString function in Windows DLL. Thanks @Youngv !
