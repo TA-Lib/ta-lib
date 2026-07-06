@@ -9,6 +9,8 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  060306 MF     Initial Version
+ *  070526 MF,CC  Fix #98: partial-range calls normalized with a close
+ *                from the wrong bar (TR-buffer-relative index).
  */
 
    public int natrLookback( int optInTimePeriod )
@@ -133,7 +135,7 @@
        * provided outReal.
        */
       outIdx = 1;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx - lookbackTotal + today];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
          outReal[0] = prevATR[0] / tempValue * 100.0;
       } else {
@@ -145,11 +147,11 @@
          prevATR[0] *= optInTimePeriod - 1;
          prevATR[0] += tempBuffer[today++];
          prevATR[0] /= optInTimePeriod;
-         tempValue = inClose[today];
+         tempValue = inClose[startIdx - lookbackTotal + today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
             outReal[outIdx] = prevATR[0] / tempValue * 100.0;
          } else {
-            outReal[0] = 0.0;
+            outReal[outIdx] = 0.0;
          }
          outIdx += 1;
       }
@@ -207,7 +209,7 @@
          outIdx -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx - lookbackTotal + today];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
          outReal[0] = prevATR[0] / tempValue * 100.0;
       } else {
@@ -218,11 +220,11 @@
          prevATR[0] *= optInTimePeriod - 1;
          prevATR[0] += tempBuffer[today++];
          prevATR[0] /= optInTimePeriod;
-         tempValue = inClose[today];
+         tempValue = inClose[startIdx - lookbackTotal + today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
             outReal[outIdx] = prevATR[0] / tempValue * 100.0;
          } else {
-            outReal[0] = 0.0;
+            outReal[outIdx] = 0.0;
          }
          outIdx += 1;
       }
@@ -291,7 +293,7 @@
          outIdx -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx - lookbackTotal + today];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
          outReal[0] = prevATR[0] / tempValue * 100.0;
       } else {
@@ -302,11 +304,11 @@
          prevATR[0] *= optInTimePeriod - 1;
          prevATR[0] += tempBuffer[today++];
          prevATR[0] /= optInTimePeriod;
-         tempValue = inClose[today];
+         tempValue = inClose[startIdx - lookbackTotal + today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
             outReal[outIdx] = prevATR[0] / tempValue * 100.0;
          } else {
-            outReal[0] = 0.0;
+            outReal[outIdx] = 0.0;
          }
          outIdx += 1;
       }
@@ -364,7 +366,7 @@
          outIdx -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx - lookbackTotal + today];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
          outReal[0] = prevATR[0] / tempValue * 100.0;
       } else {
@@ -375,11 +377,11 @@
          prevATR[0] *= optInTimePeriod - 1;
          prevATR[0] += tempBuffer[today++];
          prevATR[0] /= optInTimePeriod;
-         tempValue = inClose[today];
+         tempValue = inClose[startIdx - lookbackTotal + today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
             outReal[outIdx] = prevATR[0] / tempValue * 100.0;
          } else {
-            outReal[0] = 0.0;
+            outReal[outIdx] = 0.0;
          }
          outIdx += 1;
       }

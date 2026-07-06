@@ -9,6 +9,8 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  181012 AB    Initial Version
+ *  070526 MF,CC  Fix #98: the unstable period grew the summation window
+ *                to period+u bars; window is now always 'period'.
  */
 
 int imi_lookback(int           optInTimePeriod)
@@ -38,7 +40,7 @@ TA_RetCode imi(int startIdx, int endIdx, const double inOpen[], const double inC
       double upsum = .0, downsum = .0;
       int i;
 
-      for (i = startIdx - lookback; i <= startIdx; i++) {
+      for (i = startIdx - optInTimePeriod + 1; i <= startIdx; i++) {
          double close = inClose[i];
          double open = inOpen[i];
 

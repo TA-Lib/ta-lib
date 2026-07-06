@@ -9,6 +9,8 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  181012 AB    Initial Version
+ *  070526 MF,CC  Fix #98: the unstable period grew the summation window
+ *                to period+u bars; window is now always 'period'.
  */
 
    public int imiLookback( int optInTimePeriod )
@@ -59,7 +61,7 @@
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - lookback; i <= startIdx; i += 1 ) {
+         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -101,7 +103,7 @@
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - lookback; i <= startIdx; i += 1 ) {
+         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -154,7 +156,7 @@
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - lookback; i <= startIdx; i += 1 ) {
+         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -196,7 +198,7 @@
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - lookback; i <= startIdx; i += 1 ) {
+         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {

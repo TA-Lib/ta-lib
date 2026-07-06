@@ -50,6 +50,8 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  181012 AB    Initial Version
+ *  070526 MF,CC  Fix #98: the unstable period grew the summation window
+ *                to period+u bars; window is now always 'period'.
  */
 
 // Import types from parent module
@@ -182,7 +184,7 @@ impl Core {
             let mut upsum: f64 = 0.0;
             let mut downsum: f64 = 0.0;
             let mut i: usize = 0_usize;
-            for i in (startIdx - lookback as usize)..(startIdx as usize) + 1 {
+            for i in (startIdx - (optInTimePeriod) as usize + 1 as usize)..(startIdx as usize) + 1 {
                 let mut close: f64 = inClose[i];
                 let mut open: f64 = inOpen[i];
                 if close > open {
@@ -240,7 +242,7 @@ impl Core {
             let mut upsum: f64 = 0.0;
             let mut downsum: f64 = 0.0;
             let mut i: usize = 0_usize;
-            for i in (startIdx - lookback as usize)..(startIdx as usize) + 1 {
+            for i in (startIdx - (optInTimePeriod) as usize + 1 as usize)..(startIdx as usize) + 1 {
                 let mut close: f64 = *inClose.as_ptr().add(i);
                 let mut open: f64 = *inOpen.as_ptr().add(i);
                 if close > open {

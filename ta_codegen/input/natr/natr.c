@@ -9,6 +9,8 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  060306 MF     Initial Version
+ *  070526 MF,CC  Fix #98: partial-range calls normalized with a close
+ *                from the wrong bar (TR-buffer-relative index).
  */
 
 int natr_lookback(int           optInTimePeriod)
@@ -133,7 +135,7 @@ TA_RetCode natr(int startIdx, int endIdx, const double inHigh[], const double in
     * provided outReal.
     */
    outIdx = 1;
-   tempValue = inClose[today];
+   tempValue = inClose[startIdx-lookbackTotal+today];
    if( !TA_IS_ZERO(tempValue) )
       outReal[0] = (prevATR/tempValue)*100.0;
    else
@@ -147,11 +149,11 @@ TA_RetCode natr(int startIdx, int endIdx, const double inHigh[], const double in
       prevATR *= optInTimePeriod - 1;
       prevATR += tempBuffer[today++];
       prevATR /= optInTimePeriod;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx-lookbackTotal+today];
       if( !TA_IS_ZERO(tempValue) )
          outReal[outIdx] = (prevATR/tempValue)*100.0;
       else
-         outReal[0] = 0.0;
+         outReal[outIdx] = 0.0;
       outIdx++;
    }
 

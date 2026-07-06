@@ -50,6 +50,8 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  060306 MF     Initial Version
+ *  070526 MF,CC  Fix #98: partial-range calls normalized with a close
+ *                from the wrong bar (TR-buffer-relative index).
  */
 
 // Import types from parent module
@@ -257,7 +259,7 @@ impl Core {
         // Now start to write the final ATR in the caller
         // provided outReal.
         outIdx = 1;
-        tempValue = inClose[today];
+        tempValue = inClose[startIdx - lookbackTotal + today];
         if !((tempValue).abs() < 1e-14) {
             outReal[0] = prevATR / tempValue * 100.0;
         } else {
@@ -269,11 +271,11 @@ impl Core {
             prevATR *= ((optInTimePeriod - 1) as f64);
             prevATR += tempBuffer[{ let _v = today; today += 1; _v }];
             prevATR /= ((optInTimePeriod) as f64);
-            tempValue = inClose[today];
+            tempValue = inClose[startIdx - lookbackTotal + today];
             if !((tempValue).abs() < 1e-14) {
                 outReal[outIdx] = prevATR / tempValue * 100.0;
             } else {
-                outReal[0] = 0.0;
+                outReal[outIdx] = 0.0;
             }
             outIdx += 1;
         }
@@ -347,7 +349,7 @@ impl Core {
             outIdx -= 1;
         }
         outIdx = 1;
-        tempValue = *inClose.as_ptr().add(today);
+        tempValue = *inClose.as_ptr().add(startIdx - lookbackTotal + today);
         if !((tempValue).abs() < 1e-14) {
             *outReal.as_mut_ptr().add(0) = prevATR / tempValue * 100.0;
         } else {
@@ -358,11 +360,11 @@ impl Core {
             prevATR *= ((optInTimePeriod - 1) as f64);
             prevATR += *tempBuffer.as_ptr().add({ let _v = today; today += 1; _v });
             prevATR /= ((optInTimePeriod) as f64);
-            tempValue = *inClose.as_ptr().add(today);
+            tempValue = *inClose.as_ptr().add(startIdx - lookbackTotal + today);
             if !((tempValue).abs() < 1e-14) {
                 *outReal.as_mut_ptr().add(outIdx) = prevATR / tempValue * 100.0;
             } else {
-                *outReal.as_mut_ptr().add(0) = 0.0;
+                *outReal.as_mut_ptr().add(outIdx) = 0.0;
             }
             outIdx += 1;
         }

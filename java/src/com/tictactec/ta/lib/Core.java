@@ -38151,6 +38151,8 @@ public class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  181012 AB    Initial Version
+ *  070526 MF,CC  Fix #98: the unstable period grew the summation window
+ *                to period+u bars; window is now always 'period'.
  */
 
    public int imiLookback( int optInTimePeriod )
@@ -38201,7 +38203,7 @@ public class Core {
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - lookback; i <= startIdx; i += 1 ) {
+         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -38243,7 +38245,7 @@ public class Core {
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - lookback; i <= startIdx; i += 1 ) {
+         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -38296,7 +38298,7 @@ public class Core {
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - lookback; i <= startIdx; i += 1 ) {
+         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -38338,7 +38340,7 @@ public class Core {
          double upsum = 0.0;
          double downsum = 0.0;
          int i;
-         for( i = startIdx - lookback; i <= startIdx; i += 1 ) {
+         for( i = startIdx - optInTimePeriod + 1; i <= startIdx; i += 1 ) {
             double close = inClose[i];
             double open = inOpen[i];
             if( close > open ) {
@@ -48658,6 +48660,8 @@ public class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  060306 MF     Initial Version
+ *  070526 MF,CC  Fix #98: partial-range calls normalized with a close
+ *                from the wrong bar (TR-buffer-relative index).
  */
 
    public int natrLookback( int optInTimePeriod )
@@ -48782,7 +48786,7 @@ public class Core {
        * provided outReal.
        */
       outIdx = 1;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx - lookbackTotal + today];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
          outReal[0] = prevATR[0] / tempValue * 100.0;
       } else {
@@ -48794,11 +48798,11 @@ public class Core {
          prevATR[0] *= optInTimePeriod - 1;
          prevATR[0] += tempBuffer[today++];
          prevATR[0] /= optInTimePeriod;
-         tempValue = inClose[today];
+         tempValue = inClose[startIdx - lookbackTotal + today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
             outReal[outIdx] = prevATR[0] / tempValue * 100.0;
          } else {
-            outReal[0] = 0.0;
+            outReal[outIdx] = 0.0;
          }
          outIdx += 1;
       }
@@ -48856,7 +48860,7 @@ public class Core {
          outIdx -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx - lookbackTotal + today];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
          outReal[0] = prevATR[0] / tempValue * 100.0;
       } else {
@@ -48867,11 +48871,11 @@ public class Core {
          prevATR[0] *= optInTimePeriod - 1;
          prevATR[0] += tempBuffer[today++];
          prevATR[0] /= optInTimePeriod;
-         tempValue = inClose[today];
+         tempValue = inClose[startIdx - lookbackTotal + today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
             outReal[outIdx] = prevATR[0] / tempValue * 100.0;
          } else {
-            outReal[0] = 0.0;
+            outReal[outIdx] = 0.0;
          }
          outIdx += 1;
       }
@@ -48940,7 +48944,7 @@ public class Core {
          outIdx -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx - lookbackTotal + today];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
          outReal[0] = prevATR[0] / tempValue * 100.0;
       } else {
@@ -48951,11 +48955,11 @@ public class Core {
          prevATR[0] *= optInTimePeriod - 1;
          prevATR[0] += tempBuffer[today++];
          prevATR[0] /= optInTimePeriod;
-         tempValue = inClose[today];
+         tempValue = inClose[startIdx - lookbackTotal + today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
             outReal[outIdx] = prevATR[0] / tempValue * 100.0;
          } else {
-            outReal[0] = 0.0;
+            outReal[outIdx] = 0.0;
          }
          outIdx += 1;
       }
@@ -49013,7 +49017,7 @@ public class Core {
          outIdx -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx - lookbackTotal + today];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
          outReal[0] = prevATR[0] / tempValue * 100.0;
       } else {
@@ -49024,11 +49028,11 @@ public class Core {
          prevATR[0] *= optInTimePeriod - 1;
          prevATR[0] += tempBuffer[today++];
          prevATR[0] /= optInTimePeriod;
-         tempValue = inClose[today];
+         tempValue = inClose[startIdx - lookbackTotal + today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
             outReal[outIdx] = prevATR[0] / tempValue * 100.0;
          } else {
-            outReal[0] = 0.0;
+            outReal[outIdx] = 0.0;
          }
          outIdx += 1;
       }

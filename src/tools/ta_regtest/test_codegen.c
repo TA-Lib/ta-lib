@@ -854,12 +854,10 @@ static unsigned int get_integer_tolerance(const TA_FuncInfo *funcInfo)
 {
     /* Compare values by default (#98: DO_NOT_COMPARE-for-all hid the TRIX
      * mislabeling for two decades). Exceptions: accumulations seeded at
-     * startIdx and path-dependent state machines cannot converge; IMI
-     * excluded pending issue (its unstable period grows the window);
-     * NATR excluded pending its #98 fix (buffer-relative inClose index).
+     * startIdx and path-dependent state machines cannot converge.
      * Tolerances mirror the hand-written tests (test_adx.c, test_1in_*.c),
      * extended to the whole Wilder family for sampling robustness. */
-    static const char *rangeDependent[] = { "AD", "ADOSC", "OBV", "SAR", "SAREXT", "IMI", "NATR" };
+    static const char *rangeDependent[] = { "AD", "ADOSC", "OBV", "SAR", "SAREXT" };
     static const struct { const char *name; unsigned int tol; } perFuncTol[] = {
         { "MINUS_DI", 2 }, { "PLUS_DI", 2 }, { "DX", 2 },
         { "ADX", 2 }, { "ADXR", 2 },
@@ -1611,7 +1609,8 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     /* Unstable-period pass at defaults (sent per-call to both servers). */
     if( params.codegenError == TA_TEST_PASS &&
         (funcInfo->flags & TA_FUNC_FLG_UNST_PER) &&
-        params.unstId != TA_FUNC_UNST_NONE )
+        params.unstId != TA_FUNC_UNST_NONE &&
+        strcmp(funcInfo->name, "IMI") != 0 )   /* #98: IMI unstable semantics fixed vs frozen ref */
     {
         TA_SetUnstablePeriod(params.unstId, 3);
         variants += sweep_run_variant(&params);
@@ -2440,16 +2439,27 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 int s = ranges[ri][0], e = ranges[ri][1];
                 TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
 
-                /* #98: TRIX startIdx > lookback was mislabeled through
-                 * 0.6.4; fixed in 0.7.2 — skip only those cases. */
-                if( strcmp(funcInfo->name, "TRIX") == 0 )
+                /* #98 fixes diverge from 0.6.4 only on their trigger cases:
+                 * TRIX/NATR startIdx > lookback; NATR also when a close in
+                 * the output range is zero (old code wrote outReal[0]). */
+                if( strcmp(funcInfo->name, "TRIX") == 0 ||
+                    strcmp(funcInfo->name, "NATR") == 0 )
                 {
                     TA_Integer lb98 = 0;
-                    if( TA_GetLookback(paramHolder, &lb98) == TA_SUCCESS && s > lb98 )
+                    int skip98 = 0;
+                    if( TA_GetLookback(paramHolder, &lb98) == TA_SUCCESS )
                     {
-                        ctx->skipped98++;
-                        continue;
+                        if( s > lb98 )
+                            skip98 = 1;
+                        else if( strcmp(funcInfo->name, "NATR") == 0 )
+                        {
+                            for( int z = (s > lb98 ? s : lb98); z <= e; z++ )
+                                if( g_fzBuf[3][z] < 0.00000001 &&
+                                    g_fzBuf[3][z] > -0.00000001 )
+                                { skip98 = 1; break; }
+                        }
                     }
+                    if( skip98 ) { ctx->skipped98++; continue; }
                 }
 
                 TA_Integer curBeg = 0, curNb = 0;
@@ -2550,7 +2560,7 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     printf("functions: %d not-in-0.6.4 (skipped), %d with benign-only diffs, %d with real failures\n",
            ctx.funcsSkipped, ctx.funcsBenign, ctx.funcsWithFailures);
     if( ctx.skipped98 > 0 )
-        printf("skipped: %lld TRIX partial-range case(s) — alignment fixed in 0.7.2, issue #98\n",
+        printf("skipped: %lld TRIX/NATR partial-range case(s) — fixed in 0.7.2, issue #98\n",
                ctx.skipped98);
     if( ctx.serverRestarts )
         printf("oracle restarts (recovered crashes): %d\n", ctx.serverRestarts);

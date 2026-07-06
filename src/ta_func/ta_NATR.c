@@ -53,6 +53,8 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  060306 MF     Initial Version
+ *  070526 MF,CC  Fix #98: partial-range calls normalized with a close
+ *                from the wrong bar (TR-buffer-relative index).
  */
 
 TA_LIB_API int TA_NATR_Lookback( int optInTimePeriod )
@@ -192,7 +194,7 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
     * provided outReal.
     */
    outIdx = 1;
-   tempValue = inClose[today];
+   tempValue = inClose[startIdx - lookbackTotal + today];
    if( !TA_IS_ZERO(tempValue) )
    {
       outReal[0] = prevATR / tempValue * 100.0;
@@ -207,13 +209,13 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
       prevATR *= optInTimePeriod - 1;
       prevATR += tempBuffer[today++];
       prevATR /= optInTimePeriod;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx - lookbackTotal + today];
       if( !TA_IS_ZERO(tempValue) )
       {
          outReal[outIdx] = prevATR / tempValue * 100.0;
       } else 
       {
-         outReal[0] = 0.0;
+         outReal[outIdx] = 0.0;
       }
       outIdx += 1;
    }
@@ -282,7 +284,7 @@ TA_LIB_API TA_RetCode TA_NATR_Unguarded( int    startIdx,
       outIdx -= 1;
    }
    outIdx = 1;
-   tempValue = inClose[today];
+   tempValue = inClose[startIdx - lookbackTotal + today];
    if( !TA_IS_ZERO(tempValue) )
    {
       outReal[0] = prevATR / tempValue * 100.0;
@@ -296,13 +298,13 @@ TA_LIB_API TA_RetCode TA_NATR_Unguarded( int    startIdx,
       prevATR *= optInTimePeriod - 1;
       prevATR += tempBuffer[today++];
       prevATR /= optInTimePeriod;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx - lookbackTotal + today];
       if( !TA_IS_ZERO(tempValue) )
       {
          outReal[outIdx] = prevATR / tempValue * 100.0;
       } else 
       {
-         outReal[0] = 0.0;
+         outReal[outIdx] = 0.0;
       }
       outIdx += 1;
    }
@@ -389,7 +391,7 @@ TA_RetCode TA_S_NATR( int    startIdx,
       outIdx -= 1;
    }
    outIdx = 1;
-   tempValue = inClose[today];
+   tempValue = inClose[startIdx - lookbackTotal + today];
    if( !TA_IS_ZERO(tempValue) )
    {
       outReal[0] = prevATR / tempValue * 100.0;
@@ -403,13 +405,13 @@ TA_RetCode TA_S_NATR( int    startIdx,
       prevATR *= optInTimePeriod - 1;
       prevATR += tempBuffer[today++];
       prevATR /= optInTimePeriod;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx - lookbackTotal + today];
       if( !TA_IS_ZERO(tempValue) )
       {
          outReal[outIdx] = prevATR / tempValue * 100.0;
       } else 
       {
-         outReal[0] = 0.0;
+         outReal[outIdx] = 0.0;
       }
       outIdx += 1;
    }
@@ -478,7 +480,7 @@ TA_RetCode TA_S_NATR_Unguarded( int    startIdx,
       outIdx -= 1;
    }
    outIdx = 1;
-   tempValue = inClose[today];
+   tempValue = inClose[startIdx - lookbackTotal + today];
    if( !TA_IS_ZERO(tempValue) )
    {
       outReal[0] = prevATR / tempValue * 100.0;
@@ -492,13 +494,13 @@ TA_RetCode TA_S_NATR_Unguarded( int    startIdx,
       prevATR *= optInTimePeriod - 1;
       prevATR += tempBuffer[today++];
       prevATR /= optInTimePeriod;
-      tempValue = inClose[today];
+      tempValue = inClose[startIdx - lookbackTotal + today];
       if( !TA_IS_ZERO(tempValue) )
       {
          outReal[outIdx] = prevATR / tempValue * 100.0;
       } else 
       {
-         outReal[0] = 0.0;
+         outReal[outIdx] = 0.0;
       }
       outIdx += 1;
    }

@@ -89,7 +89,6 @@ mechanism absorbs their legitimate trajectory dependence. Documented
 exceptions that keep `TA_DO_NOT_COMPARE` (legitimate, non-converging range
 dependence): running accumulations seeded at `startIdx` (AD, OBV, ADOSC) and
 path-dependent state machines (SAR, SAREXT) — see `get_integer_tolerance()`.
-IMI and NATR are temporarily excluded pending their #98-family fixes.
 
 After all functions run, ta_regtest prints:
 - A **cross-language timing comparison table** (wall-clock ns per call, speedup vs C)
@@ -198,10 +197,12 @@ Scope rules (deliberate):
   comparison must instead require an exact function-set match.
 - **Benign class:** a diff where every differing element is numerically equal
   (`+0.0` vs `-0.0`, from cached-index rewrites) is reported, not failed.
-- **TRIX partial-range exception (issue #98):** requested `startIdx > lookback`
-  is skipped for TRIX only — those outputs were mislabeled by up to one EMA
-  lookback in every release through 0.6.4 and were fixed in 0.7.2, so comparing
-  them against the frozen 0.6.4 would diff the bug fix itself. The fixed
+- **#98 exceptions:** TRIX/NATR `startIdx > lookback` cases are skipped
+  (mislabeled / wrong-close output through 0.6.4, fixed in 0.7.2), plus NATR
+  cases with a zero close in the output range (old code clobbered
+  `outReal[0]`). The ref differential sweep skips IMI's unstable-period
+  variant (its unstable no longer grows the window). Comparing these against
+  frozen oracles would diff the bug fixes themselves. The fixed
   behavior is validated instead by the (now value-comparing) range tests.
   Reported in the summary as a `skipped:` line; everything else remains
   waiver-free at period ≥ 2.
