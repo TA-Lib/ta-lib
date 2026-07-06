@@ -11,7 +11,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
 
 ### Changed
-- DEMA, TEMA and TRIX are 3x to 7x faster (single-pass rewrite, results unchanged for typical usage).
+- Algo Optimisation: DEMA, TEMA and TRIX are 3x to 7x faster.
 
 ### Fixed
 - (#57) Missing TA_GetVersionString function in Windows DLL. Thanks @Youngv !
