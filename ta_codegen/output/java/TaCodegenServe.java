@@ -41027,14 +41027,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
-     *
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  010802 MF   Template creation.
-     *  052603 MF   Adapt code to compile with .NET Managed C++
+     *  010802 MF     Template creation.
+     *  052603 MF     Adapt code to compile with .NET Managed C++
+     *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
+     *                when all three MA types are EMA (bit-exact).
      */
 
        public int macdExtLookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
@@ -41114,6 +41116,14 @@ class Core {
              optInSignalPeriod = 9;
           } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate
+           * to its single-pass implementation. Period 1 stays on the generic
+           * path: ma() copies the input for it instead of running an EMA
+           * recursion.
+           */
+          if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
+             return macdUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
           }
           /* Make sure slow is really slower than
            * the fast period! if not, swap...
@@ -41230,6 +41240,9 @@ class Core {
           int lookbackLargest = 0;
           int i = 0;
           MAType tempMAType;
+          if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
+             return macdUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+          }
           if( optInSlowPeriod < optInFastPeriod ) {
              tempInteger = optInSlowPeriod;
              optInSlowPeriod = optInFastPeriod;
@@ -41340,6 +41353,9 @@ class Core {
           } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
+             return macdUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+          }
           if( optInSlowPeriod < optInFastPeriod ) {
              tempInteger = optInSlowPeriod;
              optInSlowPeriod = optInFastPeriod;
@@ -41429,6 +41445,9 @@ class Core {
           int lookbackLargest = 0;
           int i = 0;
           MAType tempMAType;
+          if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
+             return macdUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+          }
           if( optInSlowPeriod < optInFastPeriod ) {
              tempInteger = optInSlowPeriod;
              optInSlowPeriod = optInFastPeriod;

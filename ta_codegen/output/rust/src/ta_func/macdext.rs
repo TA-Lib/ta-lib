@@ -44,14 +44,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  010802 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
+ *                when all three MA types are EMA (bit-exact).
  */
 
 // Import types from parent module
@@ -242,6 +244,13 @@ impl Core {
         let mut lookbackLargest: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut tempMAType: usize = 0_usize;
+        // An all-EMA MACDEXT computes exactly what MACD computes. Delegate
+        // to its single-pass implementation. Period 1 stays on the generic
+        // path: ma() copies the input for it instead of running an EMA
+        // recursion.
+        if (optInFastMAType) as usize == 1 && (optInSlowMAType) as usize == 1 && (optInSignalMAType) as usize == 1 && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 {
+            return self.macd_unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+        }
         // Make sure slow is really slower than
         // the fast period! if not, swap...
         if optInSlowPeriod < optInFastPeriod {
@@ -381,6 +390,9 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACD.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDSignal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDHist.len());
+        if (optInFastMAType) as usize == 1 && (optInSlowMAType) as usize == 1 && (optInSignalMAType) as usize == 1 && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 {
+            return self.macd_unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+        }
         if optInSlowPeriod < optInFastPeriod {
             tempInteger = (optInSlowPeriod) as usize;
             optInSlowPeriod = optInFastPeriod;

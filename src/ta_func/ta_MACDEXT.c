@@ -47,14 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  010802 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
+ *                when all three MA types are EMA (bit-exact).
  */
 
 TA_LIB_API int TA_MACDEXT_Lookback( int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType )
@@ -151,6 +153,15 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
    if( !outMACDHist )
       return TA_BAD_PARAM;
 
+   /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate
+    * to its single-pass implementation. Period 1 stays on the generic
+    * path: ma() copies the input for it instead of running an EMA
+    * recursion.
+    */
+   if( optInFastMAType == TA_MAType_EMA && optInSlowMAType == TA_MAType_EMA && optInSignalMAType == TA_MAType_EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 )
+   {
+      return TA_MACD_Unguarded(startIdx,endIdx,inReal,optInFastPeriod,optInSlowPeriod,optInSignalPeriod,outBegIdx,outNBElement,outMACD,outMACDSignal,outMACDHist);
+   }
    /* Make sure slow is really slower than
     * the fast period! if not, swap...
     */
@@ -299,6 +310,10 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Unguarded( int    startIdx,
    int i;
    int tempMAType;
 
+   if( optInFastMAType == TA_MAType_EMA && optInSlowMAType == TA_MAType_EMA && optInSignalMAType == TA_MAType_EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 )
+   {
+      return TA_MACD_Unguarded(startIdx,endIdx,inReal,optInFastPeriod,optInSlowPeriod,optInSignalPeriod,outBegIdx,outNBElement,outMACD,outMACDSignal,outMACDHist);
+   }
    if( optInSlowPeriod < optInFastPeriod )
    {
       tempInteger = optInSlowPeriod;
@@ -453,6 +468,10 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
    if( !outMACDHist )
       return TA_BAD_PARAM;
 
+   if( optInFastMAType == TA_MAType_EMA && optInSlowMAType == TA_MAType_EMA && optInSignalMAType == TA_MAType_EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 )
+   {
+      return TA_S_MACD_Unguarded(startIdx,endIdx,inReal,optInFastPeriod,optInSlowPeriod,optInSignalPeriod,outBegIdx,outNBElement,outMACD,outMACDSignal,outMACDHist);
+   }
    if( optInSlowPeriod < optInFastPeriod )
    {
       tempInteger = optInSlowPeriod;
@@ -575,6 +594,10 @@ TA_RetCode TA_S_MACDEXT_Unguarded( int    startIdx,
    int i;
    int tempMAType;
 
+   if( optInFastMAType == TA_MAType_EMA && optInSlowMAType == TA_MAType_EMA && optInSignalMAType == TA_MAType_EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 )
+   {
+      return TA_S_MACD_Unguarded(startIdx,endIdx,inReal,optInFastPeriod,optInSlowPeriod,optInSignalPeriod,outBegIdx,outNBElement,outMACD,outMACDSignal,outMACDHist);
+   }
    if( optInSlowPeriod < optInFastPeriod )
    {
       tempInteger = optInSlowPeriod;
