@@ -47,14 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  112400 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  070626 MF,CC  Speed optimization: True Range computed inline in a
+ *                single pass (bit-exact, no temporary buffer).
  */
 
 TA_LIB_API int TA_ATR_Lookback( int optInTimePeriod )
@@ -83,15 +85,19 @@ TA_LIB_API TA_RetCode TA_ATR( int    startIdx,
                               int          *outNBElement,
                               double        outReal[] )
 {
-   TA_RetCode retCode;
+   int i;
    int outIdx;
    int today;
    int lookbackTotal;
    int nbATR;
-   int outBegIdx1;
-   int outNbElement1;
    double prevATR;
-   double *tempBuffer;
+   double periodTotal;
+   double val2;
+   double val3;
+   double greatest;
+   double tempCY;
+   double tempLT;
+   double tempHT;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -140,39 +146,86 @@ TA_LIB_API TA_RetCode TA_ATR( int    startIdx,
       /* No smoothing needed. Just do a TRANGE. */
       return TA_TRANGE_Unguarded(startIdx,endIdx,inHigh,inLow,inClose,outBegIdx,outNBElement,outReal);
    }
-   /* Allocate an intermediate buffer for TRANGE. */
-   tempBuffer = malloc((lookbackTotal + (endIdx - startIdx) + 1) * sizeof(double));
-   /* Do TRANGE in the intermediate buffer. */
-   retCode = TA_TRANGE_Unguarded(startIdx - lookbackTotal + 1,endIdx,inHigh,inLow,inClose,&outBegIdx1,&outNbElement1,tempBuffer);
-   if( retCode != TA_SUCCESS )
-   {
-      free(tempBuffer);
-      return retCode;
-   }
-   /* First value of the ATR is a simple Average of
-    * the TRANGE output for the specified period.
+   /* The True Range of each bar is computed inline in a single
+    * pass. No temporary buffer is needed.
+    *
+    * The arithmetic order below is the bit-exactness contract
+    * (do not reorder or fuse operations):
+    *  - True Range: start from high-low, then compare/replace
+    *    with the two previous-close distances, in that order.
+    *  - Seed: the first 'period' True Range values are summed,
+    *    accumulated from 0.0 in input order, then divided by
+    *    the period.
+    *  - Wilder smoothing: multiply by period-1, add the True
+    *    Range, divide by period, as three separate statements.
+    *
+    * In-place (outReal being one of the input arrays) is
+    * supported: each output is written only after every input
+    * read at or before its bar, and the output index is always
+    * smaller than the bar index of any remaining read.
     */
-   retCode = TA_SMA_Unguarded(optInTimePeriod - 1,optInTimePeriod - 1,tempBuffer,optInTimePeriod,&outBegIdx1,&outNbElement1,&prevATR);
-   if( retCode != TA_SUCCESS )
+   /* The first True Range needs the two price bars at
+    * startIdx-lookbackTotal+1 (a previous close is consumed).
+    */
+   today = startIdx - lookbackTotal + 1;
+   /* Seed the ATR with a simple average of the True Range
+    * for the first 'period' bars.
+    */
+   periodTotal = 0.0;
+   i = optInTimePeriod;
+   while( i-- > 0 )
    {
-      free(tempBuffer);
-      return retCode;
+      /* Find the greatest of the 3 values. */
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      /* val1 */
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
+      periodTotal += greatest;
+      today += 1;
    }
+   prevATR = periodTotal / optInTimePeriod;
    /* Subsequent value are smoothed using the
     * previous ATR value (Wilder's approach).
     *  1) Multiply the previous ATR by 'period-1'.
     *  2) Add today TR value.
     *  3) Divide by 'period'.
     */
-   today = optInTimePeriod;
-   outIdx = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
    /* Skip the unstable period. */
-   while( outIdx != 0 )
+   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
+   while( i != 0 )
    {
+      /* Find the greatest of the 3 values. */
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      /* val1 */
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
       prevATR *= optInTimePeriod - 1;
-      prevATR += tempBuffer[today++];
+      prevATR += greatest;
       prevATR /= optInTimePeriod;
-      outIdx -= 1;
+      today += 1;
+      i -= 1;
    }
    /* Now start to write the final ATR in the caller
     * provided outReal.
@@ -183,15 +236,31 @@ TA_LIB_API TA_RetCode TA_ATR( int    startIdx,
    nbATR = endIdx - startIdx + 1;
    while( --nbATR != 0 )
    {
+      /* Find the greatest of the 3 values. */
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      /* val1 */
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
       prevATR *= optInTimePeriod - 1;
-      prevATR += tempBuffer[today++];
+      prevATR += greatest;
       prevATR /= optInTimePeriod;
       outReal[outIdx++] = prevATR;
+      today += 1;
    }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
-   free(tempBuffer);
-   return retCode;
+   return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_ATR_Unguarded( int    startIdx,
@@ -204,15 +273,19 @@ TA_LIB_API TA_RetCode TA_ATR_Unguarded( int    startIdx,
                                         int          *outNBElement,
                                         double        outReal[] )
 {
-   TA_RetCode retCode;
+   int i;
    int outIdx;
    int today;
    int lookbackTotal;
    int nbATR;
-   int outBegIdx1;
-   int outNbElement1;
    double prevATR;
-   double *tempBuffer;
+   double periodTotal;
+   double val2;
+   double val3;
+   double greatest;
+   double tempCY;
+   double tempLT;
+   double tempHT;
 
    *outBegIdx= 0;
    *outNBElement= 0;
@@ -229,42 +302,80 @@ TA_LIB_API TA_RetCode TA_ATR_Unguarded( int    startIdx,
    {
       return TA_TRANGE_Unguarded(startIdx,endIdx,inHigh,inLow,inClose,outBegIdx,outNBElement,outReal);
    }
-   tempBuffer = malloc((lookbackTotal + (endIdx - startIdx) + 1) * sizeof(double));
-   retCode = TA_TRANGE_Unguarded(startIdx - lookbackTotal + 1,endIdx,inHigh,inLow,inClose,&outBegIdx1,&outNbElement1,tempBuffer);
-   if( retCode != TA_SUCCESS )
+   today = startIdx - lookbackTotal + 1;
+   periodTotal = 0.0;
+   i = optInTimePeriod;
+   while( i-- > 0 )
    {
-      free(tempBuffer);
-      return retCode;
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
+      periodTotal += greatest;
+      today += 1;
    }
-   retCode = TA_SMA_Unguarded(optInTimePeriod - 1,optInTimePeriod - 1,tempBuffer,optInTimePeriod,&outBegIdx1,&outNbElement1,&prevATR);
-   if( retCode != TA_SUCCESS )
+   prevATR = periodTotal / optInTimePeriod;
+   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
+   while( i != 0 )
    {
-      free(tempBuffer);
-      return retCode;
-   }
-   today = optInTimePeriod;
-   outIdx = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
-   while( outIdx != 0 )
-   {
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
       prevATR *= optInTimePeriod - 1;
-      prevATR += tempBuffer[today++];
+      prevATR += greatest;
       prevATR /= optInTimePeriod;
-      outIdx -= 1;
+      today += 1;
+      i -= 1;
    }
    outIdx = 1;
    outReal[0] = prevATR;
    nbATR = endIdx - startIdx + 1;
    while( --nbATR != 0 )
    {
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
       prevATR *= optInTimePeriod - 1;
-      prevATR += tempBuffer[today++];
+      prevATR += greatest;
       prevATR /= optInTimePeriod;
       outReal[outIdx++] = prevATR;
+      today += 1;
    }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
-   free(tempBuffer);
-   return retCode;
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_S_ATR( int    startIdx,
@@ -277,15 +388,19 @@ TA_RetCode TA_S_ATR( int    startIdx,
                      int          *outNBElement,
                      double        outReal[] )
 {
-   TA_RetCode retCode;
+   int i;
    int outIdx;
    int today;
    int lookbackTotal;
    int nbATR;
-   int outBegIdx1;
-   int outNbElement1;
    double prevATR;
-   double *tempBuffer;
+   double periodTotal;
+   double val2;
+   double val3;
+   double greatest;
+   double tempCY;
+   double tempLT;
+   double tempHT;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -320,42 +435,80 @@ TA_RetCode TA_S_ATR( int    startIdx,
    {
       return TA_S_TRANGE_Unguarded(startIdx,endIdx,inHigh,inLow,inClose,outBegIdx,outNBElement,outReal);
    }
-   tempBuffer = malloc((lookbackTotal + (endIdx - startIdx) + 1) * sizeof(double));
-   retCode = TA_S_TRANGE_Unguarded(startIdx - lookbackTotal + 1,endIdx,inHigh,inLow,inClose,&outBegIdx1,&outNbElement1,tempBuffer);
-   if( retCode != TA_SUCCESS )
+   today = startIdx - lookbackTotal + 1;
+   periodTotal = 0.0;
+   i = optInTimePeriod;
+   while( i-- > 0 )
    {
-      free(tempBuffer);
-      return retCode;
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
+      periodTotal += greatest;
+      today += 1;
    }
-   retCode = TA_SMA_Unguarded(optInTimePeriod - 1,optInTimePeriod - 1,tempBuffer,optInTimePeriod,&outBegIdx1,&outNbElement1,&prevATR);
-   if( retCode != TA_SUCCESS )
+   prevATR = periodTotal / optInTimePeriod;
+   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
+   while( i != 0 )
    {
-      free(tempBuffer);
-      return retCode;
-   }
-   today = optInTimePeriod;
-   outIdx = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
-   while( outIdx != 0 )
-   {
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
       prevATR *= optInTimePeriod - 1;
-      prevATR += tempBuffer[today++];
+      prevATR += greatest;
       prevATR /= optInTimePeriod;
-      outIdx -= 1;
+      today += 1;
+      i -= 1;
    }
    outIdx = 1;
    outReal[0] = prevATR;
    nbATR = endIdx - startIdx + 1;
    while( --nbATR != 0 )
    {
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
       prevATR *= optInTimePeriod - 1;
-      prevATR += tempBuffer[today++];
+      prevATR += greatest;
       prevATR /= optInTimePeriod;
       outReal[outIdx++] = prevATR;
+      today += 1;
    }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
-   free(tempBuffer);
-   return retCode;
+   return TA_SUCCESS;
 }
 
 TA_RetCode TA_S_ATR_Unguarded( int    startIdx,
@@ -368,15 +521,19 @@ TA_RetCode TA_S_ATR_Unguarded( int    startIdx,
                                int          *outNBElement,
                                double        outReal[] )
 {
-   TA_RetCode retCode;
+   int i;
    int outIdx;
    int today;
    int lookbackTotal;
    int nbATR;
-   int outBegIdx1;
-   int outNbElement1;
    double prevATR;
-   double *tempBuffer;
+   double periodTotal;
+   double val2;
+   double val3;
+   double greatest;
+   double tempCY;
+   double tempLT;
+   double tempHT;
 
    *outBegIdx= 0;
    *outNBElement= 0;
@@ -393,41 +550,79 @@ TA_RetCode TA_S_ATR_Unguarded( int    startIdx,
    {
       return TA_S_TRANGE_Unguarded(startIdx,endIdx,inHigh,inLow,inClose,outBegIdx,outNBElement,outReal);
    }
-   tempBuffer = malloc((lookbackTotal + (endIdx - startIdx) + 1) * sizeof(double));
-   retCode = TA_S_TRANGE_Unguarded(startIdx - lookbackTotal + 1,endIdx,inHigh,inLow,inClose,&outBegIdx1,&outNbElement1,tempBuffer);
-   if( retCode != TA_SUCCESS )
+   today = startIdx - lookbackTotal + 1;
+   periodTotal = 0.0;
+   i = optInTimePeriod;
+   while( i-- > 0 )
    {
-      free(tempBuffer);
-      return retCode;
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
+      periodTotal += greatest;
+      today += 1;
    }
-   retCode = TA_SMA_Unguarded(optInTimePeriod - 1,optInTimePeriod - 1,tempBuffer,optInTimePeriod,&outBegIdx1,&outNbElement1,&prevATR);
-   if( retCode != TA_SUCCESS )
+   prevATR = periodTotal / optInTimePeriod;
+   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
+   while( i != 0 )
    {
-      free(tempBuffer);
-      return retCode;
-   }
-   today = optInTimePeriod;
-   outIdx = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
-   while( outIdx != 0 )
-   {
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
       prevATR *= optInTimePeriod - 1;
-      prevATR += tempBuffer[today++];
+      prevATR += greatest;
       prevATR /= optInTimePeriod;
-      outIdx -= 1;
+      today += 1;
+      i -= 1;
    }
    outIdx = 1;
    outReal[0] = prevATR;
    nbATR = endIdx - startIdx + 1;
    while( --nbATR != 0 )
    {
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
       prevATR *= optInTimePeriod - 1;
-      prevATR += tempBuffer[today++];
+      prevATR += greatest;
       prevATR /= optInTimePeriod;
       outReal[outIdx++] = prevATR;
+      today += 1;
    }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
-   free(tempBuffer);
-   return retCode;
+   return TA_SUCCESS;
 }
 

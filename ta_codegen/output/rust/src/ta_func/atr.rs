@@ -44,14 +44,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  112400 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  070626 MF,CC  Speed optimization: True Range computed inline in a
+ *                single pass (bit-exact, no temporary buffer).
  */
 
 // Import types from parent module
@@ -179,15 +181,19 @@ impl Core {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
-        let mut retCode: RetCode = RetCode::Success;
+        let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut nbATR: usize = 0_usize;
-        let mut outBegIdx1: usize = 0_usize;
-        let mut outNbElement1: usize = 0_usize;
         let mut prevATR: f64 = 0.0_f64;
-        let mut tempBuffer: Vec<f64> = Vec::new();
+        let mut periodTotal: f64 = 0.0_f64;
+        let mut val2: f64 = 0.0_f64;
+        let mut val3: f64 = 0.0_f64;
+        let mut greatest: f64 = 0.0_f64;
+        let mut tempCY: f64 = 0.0_f64;
+        let mut tempLT: f64 = 0.0_f64;
+        let mut tempHT: f64 = 0.0_f64;
         // Average True Range is the greatest of the following:
         //
         //  val1 = distance from today's high to today's low.
@@ -213,32 +219,76 @@ impl Core {
             // No smoothing needed. Just do a TRANGE.
             return self.trange_unguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
         }
-        // Allocate an intermediate buffer for TRANGE.
-        tempBuffer = vec![0.0_f64; ((lookbackTotal + (endIdx - startIdx) + 1) * 1) as usize];
-        // Do TRANGE in the intermediate buffer.
-        retCode = self.trange_unguarded(startIdx - lookbackTotal + 1, endIdx, inHigh, inLow, inClose, &mut outBegIdx1, &mut outNbElement1, &mut tempBuffer[..]);
-        if retCode != RetCode::Success {
-            return retCode;
+        // The True Range of each bar is computed inline in a single
+        // pass. No temporary buffer is needed.
+        //
+        // The arithmetic order below is the bit-exactness contract
+        // (do not reorder or fuse operations):
+        //  - True Range: start from high-low, then compare/replace
+        //    with the two previous-close distances, in that order.
+        //  - Seed: the first 'period' True Range values are summed,
+        //    accumulated from 0.0 in input order, then divided by
+        //    the period.
+        //  - Wilder smoothing: multiply by period-1, add the True
+        //    Range, divide by period, as three separate statements.
+        //
+        // In-place (outReal being one of the input arrays) is
+        // supported: each output is written only after every input
+        // read at or before its bar, and the output index is always
+        // smaller than the bar index of any remaining read.
+        // The first True Range needs the two price bars at
+        // startIdx-lookbackTotal+1 (a previous close is consumed).
+        today = startIdx - lookbackTotal + 1;
+        // Seed the ATR with a simple average of the True Range
+        // for the first 'period' bars.
+        periodTotal = 0.0;
+        i = (optInTimePeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            // Find the greatest of the 3 values.
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            greatest = tempHT - tempLT;
+            // val1
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
+            periodTotal += greatest;
+            today += 1;
         }
-        // First value of the ATR is a simple Average of
-        // the TRANGE output for the specified period.
-        retCode = self.sma_unguarded((optInTimePeriod - 1) as usize, (optInTimePeriod - 1) as usize, &tempBuffer, optInTimePeriod, &mut outBegIdx1, &mut outNbElement1, std::slice::from_mut(&mut prevATR));
-        if retCode != RetCode::Success {
-            return retCode;
-        }
+        prevATR = periodTotal / ((optInTimePeriod) as f64);
         // Subsequent value are smoothed using the
         // previous ATR value (Wilder's approach).
         //  1) Multiply the previous ATR by 'period-1'.
         //  2) Add today TR value.
         //  3) Divide by 'period'.
-        today = (optInTimePeriod) as usize;
-        outIdx = (self.unstable_period[FuncUnstId::Atr as usize]) as usize;
         // Skip the unstable period.
-        while outIdx != 0 {
+        i = (self.unstable_period[FuncUnstId::Atr as usize]) as usize;
+        while i != 0 {
+            // Find the greatest of the 3 values.
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            greatest = tempHT - tempLT;
+            // val1
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
             prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += tempBuffer[{ let _v = today; today += 1; _v }];
+            prevATR += greatest;
             prevATR /= ((optInTimePeriod) as f64);
-            outIdx -= 1;
+            today += 1;
+            i -= 1;
         }
         // Now start to write the final ATR in the caller
         // provided outReal.
@@ -247,15 +297,30 @@ impl Core {
         // Now do the number of requested ATR.
         nbATR = endIdx - startIdx + 1;
         while { nbATR = nbATR.wrapping_sub(1); nbATR } != 0 {
+            // Find the greatest of the 3 values.
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            greatest = tempHT - tempLT;
+            // val1
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
             prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += tempBuffer[{ let _v = today; today += 1; _v }];
+            prevATR += greatest;
             prevATR /= ((optInTimePeriod) as f64);
             outReal[outIdx] = prevATR;
             outIdx += 1;
+            today += 1;
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
-        return retCode;
+        return RetCode::Success;
     }
     /// Unchecked variant of [`Core::atr`], used for internal cross-indicator calls.
     ///
@@ -276,15 +341,19 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        let mut retCode: RetCode = RetCode::Success;
+        let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut nbATR: usize = 0_usize;
-        let mut outBegIdx1: usize = 0_usize;
-        let mut outNbElement1: usize = 0_usize;
         let mut prevATR: f64 = 0.0_f64;
-        let mut tempBuffer: Vec<f64> = Vec::new();
+        let mut periodTotal: f64 = 0.0_f64;
+        let mut val2: f64 = 0.0_f64;
+        let mut val3: f64 = 0.0_f64;
+        let mut greatest: f64 = 0.0_f64;
+        let mut tempCY: f64 = 0.0_f64;
+        let mut tempLT: f64 = 0.0_f64;
+        let mut tempHT: f64 = 0.0_f64;
         unsafe {
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
@@ -304,36 +373,72 @@ impl Core {
         if optInTimePeriod <= 1 {
             return self.trange_unguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
         }
-        tempBuffer = vec![0.0_f64; ((lookbackTotal + (endIdx - startIdx) + 1) * 1) as usize];
-        retCode = self.trange_unguarded(startIdx - lookbackTotal + 1, endIdx, inHigh, inLow, inClose, &mut outBegIdx1, &mut outNbElement1, &mut tempBuffer[..]);
-        if retCode != RetCode::Success {
-            return retCode;
+        today = startIdx - lookbackTotal + 1;
+        periodTotal = 0.0;
+        i = (optInTimePeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            tempLT = *inLow.as_ptr().add(today);
+            tempHT = *inHigh.as_ptr().add(today);
+            tempCY = *inClose.as_ptr().add(today - 1);
+            greatest = tempHT - tempLT;
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
+            periodTotal += greatest;
+            today += 1;
         }
-        retCode = self.sma_unguarded((optInTimePeriod - 1) as usize, (optInTimePeriod - 1) as usize, &tempBuffer, optInTimePeriod, &mut outBegIdx1, &mut outNbElement1, std::slice::from_mut(&mut prevATR));
-        if retCode != RetCode::Success {
-            return retCode;
-        }
-        today = (optInTimePeriod) as usize;
-        outIdx = (self.unstable_period[FuncUnstId::Atr as usize]) as usize;
-        while outIdx != 0 {
+        prevATR = periodTotal / ((optInTimePeriod) as f64);
+        i = (self.unstable_period[FuncUnstId::Atr as usize]) as usize;
+        while i != 0 {
+            tempLT = *inLow.as_ptr().add(today);
+            tempHT = *inHigh.as_ptr().add(today);
+            tempCY = *inClose.as_ptr().add(today - 1);
+            greatest = tempHT - tempLT;
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
             prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += *tempBuffer.as_ptr().add({ let _v = today; today += 1; _v });
+            prevATR += greatest;
             prevATR /= ((optInTimePeriod) as f64);
-            outIdx -= 1;
+            today += 1;
+            i -= 1;
         }
         outIdx = 1;
         *outReal.as_mut_ptr().add(0) = prevATR;
         nbATR = endIdx - startIdx + 1;
         while { nbATR = nbATR.wrapping_sub(1); nbATR } != 0 {
+            tempLT = *inLow.as_ptr().add(today);
+            tempHT = *inHigh.as_ptr().add(today);
+            tempCY = *inClose.as_ptr().add(today - 1);
+            greatest = tempHT - tempLT;
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
             prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += *tempBuffer.as_ptr().add({ let _v = today; today += 1; _v });
+            prevATR += greatest;
             prevATR /= ((optInTimePeriod) as f64);
             *outReal.as_mut_ptr().add(outIdx) = prevATR;
             outIdx += 1;
+            today += 1;
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
-        return retCode;
+        return RetCode::Success;
         } // unsafe
     }
 }

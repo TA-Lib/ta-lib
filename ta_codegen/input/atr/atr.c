@@ -3,14 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  112400 MF     Template creation.
+ *  052603 MF     Adapt code to compile with .NET Managed C++
+ *  070626 MF,CC  Speed optimization: True Range computed inline in a
+ *                single pass (bit-exact, no temporary buffer).
  *
  */
 
@@ -28,14 +30,12 @@ int atr_lookback(int           optInTimePeriod)
 
 TA_RetCode atr(int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[])
 {
-   TA_RetCode retCode;
-   int outIdx, today, lookbackTotal;
+   int i, outIdx, today, lookbackTotal;
    int nbATR;
-   int outBegIdx1;
-   int outNbElement1;
 
-   double prevATR;
-   double *tempBuffer;
+   double prevATR, periodTotal;
+   double val2, val3, greatest;
+   double tempCY, tempLT, tempHT;
 
    /* Average True Range is the greatest of the following:
     *
@@ -69,35 +69,55 @@ TA_RetCode atr(int startIdx, int endIdx, const double inHigh[], const double inL
          outBegIdx, outNBElement, outReal );
    }
 
-   /* Allocate an intermediate buffer for TRANGE. */
-   tempBuffer = malloc((lookbackTotal+(endIdx-startIdx)+1) * sizeof(double));
-
-   /* Do TRANGE in the intermediate buffer. */
-   retCode = trange( (startIdx-lookbackTotal+1), endIdx,
-      inHigh, inLow, inClose,
-      &outBegIdx1, &outNbElement1,
-      tempBuffer );
-
-   if( retCode != TA_SUCCESS )
-   {
-      free(tempBuffer);
-      return retCode;
-   }
-
-   /* First value of the ATR is a simple Average of
-    * the TRANGE output for the specified period.
+   /* The True Range of each bar is computed inline in a single
+    * pass. No temporary buffer is needed.
+    *
+    * The arithmetic order below is the bit-exactness contract
+    * (do not reorder or fuse operations):
+    *  - True Range: start from high-low, then compare/replace
+    *    with the two previous-close distances, in that order.
+    *  - Seed: the first 'period' True Range values are summed,
+    *    accumulated from 0.0 in input order, then divided by
+    *    the period.
+    *  - Wilder smoothing: multiply by period-1, add the True
+    *    Range, divide by period, as three separate statements.
+    *
+    * In-place (outReal being one of the input arrays) is
+    * supported: each output is written only after every input
+    * read at or before its bar, and the output index is always
+    * smaller than the bar index of any remaining read.
     */
-   retCode = sma( optInTimePeriod-1,
-      optInTimePeriod-1,
-      tempBuffer, optInTimePeriod,
-      &outBegIdx1, &outNbElement1,
-      &prevATR );
 
-   if( retCode != TA_SUCCESS )
+   /* The first True Range needs the two price bars at
+    * startIdx-lookbackTotal+1 (a previous close is consumed).
+    */
+   today = startIdx - lookbackTotal + 1;
+
+   /* Seed the ATR with a simple average of the True Range
+    * for the first 'period' bars.
+    */
+   periodTotal = 0.0;
+   i = optInTimePeriod;
+   while( i-- > 0 )
    {
-      free(tempBuffer);
-      return retCode;
+      /* Find the greatest of the 3 values. */
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today-1];
+      greatest = tempHT - tempLT; /* val1 */
+
+      val2 = fabs( tempCY - tempHT );
+      if( val2 > greatest )
+         greatest = val2;
+
+      val3 = fabs( tempCY - tempLT );
+      if( val3 > greatest )
+         greatest = val3;
+
+      periodTotal += greatest;
+      today++;
    }
+   prevATR = periodTotal / optInTimePeriod;
 
    /* Subsequent value are smoothed using the
     * previous ATR value (Wilder's approach).
@@ -105,15 +125,30 @@ TA_RetCode atr(int startIdx, int endIdx, const double inHigh[], const double inL
     *  2) Add today TR value.
     *  3) Divide by 'period'.
     */
-   today = optInTimePeriod;
-   outIdx = TA_GetUnstablePeriod(TA_FUNC_UNST_ATR);
+
    /* Skip the unstable period. */
-   while( outIdx != 0 )
+   i = TA_GetUnstablePeriod(TA_FUNC_UNST_ATR);
+   while( i != 0 )
    {
+      /* Find the greatest of the 3 values. */
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today-1];
+      greatest = tempHT - tempLT; /* val1 */
+
+      val2 = fabs( tempCY - tempHT );
+      if( val2 > greatest )
+         greatest = val2;
+
+      val3 = fabs( tempCY - tempLT );
+      if( val3 > greatest )
+         greatest = val3;
+
       prevATR *= optInTimePeriod - 1;
-      prevATR += tempBuffer[today++];
+      prevATR += greatest;
       prevATR /= optInTimePeriod;
-      outIdx--;
+      today++;
+      i--;
    }
 
    /* Now start to write the final ATR in the caller
@@ -127,16 +162,29 @@ TA_RetCode atr(int startIdx, int endIdx, const double inHigh[], const double inL
 
    while( --nbATR != 0 )
    {
+      /* Find the greatest of the 3 values. */
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today-1];
+      greatest = tempHT - tempLT; /* val1 */
+
+      val2 = fabs( tempCY - tempHT );
+      if( val2 > greatest )
+         greatest = val2;
+
+      val3 = fabs( tempCY - tempLT );
+      if( val3 > greatest )
+         greatest = val3;
+
       prevATR *= optInTimePeriod - 1;
-      prevATR += tempBuffer[today++];
+      prevATR += greatest;
       prevATR /= optInTimePeriod;
       outReal[outIdx++] = prevATR;
+      today++;
    }
 
    *outBegIdx    = startIdx;
    *outNBElement = outIdx;
 
-   free(tempBuffer);
-
-   return retCode;
+   return TA_SUCCESS;
 }
