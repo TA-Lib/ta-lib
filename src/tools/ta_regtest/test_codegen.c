@@ -689,6 +689,81 @@ static void compare_codegen_output_generic(
     }
 }
 
+/* ---- Edge-range server sweep ----
+ * The full-range codegen comparison (and the doRangeTest sweep) exercise the
+ * language servers only at the full range [0, nbBars-1]. That misses the
+ * lookback-boundary corners where a composed indicator forms an empty/short
+ * internal sub-range -- e.g. APO/PPO computing (fastMA - slowMA) while the slow
+ * MA is still empty, or IMI's window at startIdx == lookback. In a release
+ * server the resulting usize underflow wraps harmlessly (the wrapped value is
+ * dead); in a DEBUG-profile server it panics on the overflow check.
+ *
+ * This sweep drives the server across short ranges near the lookback (startIdx 0,
+ * endIdx 0..lookback+margin) and diffs each against ta_ref_serve, so:
+ *   - release: adds value-coherency coverage at the lookback boundary, and
+ *   - debug:   turns any arithmetic overflow/underflow into a hard failure
+ *              (a server crash closes the pipe -> a non-PASS read here).
+ *
+ * Comparing ref-vs-server at the SAME (startIdx, endIdx) is always valid, so no
+ * DO_NOT_COMPARE exemptions are needed: path-dependence (AD/OBV/SAR/...) only
+ * affects cross-range coherency, which this does not test. */
+#define EDGE_SWEEP_MARGIN 3
+static double parse_ref_baseline(CodegenRangeTestParam *p);  /* defined below */
+static void run_edge_range_sweep(CodegenRangeTestParam *p)
+{
+    if( p->codegenError != TA_TEST_PASS )
+        return;
+
+    TA_Integer lookback = 0;
+    if( TA_GetLookback(p->paramHolder, &lookback) != TA_SUCCESS || lookback < 0 )
+        return;
+
+    TA_Integer maxEnd = lookback + EDGE_SWEEP_MARGIN;
+    if( maxEnd > p->nbBars - 1 )
+        maxEnd = p->nbBars - 1;
+
+    p->useLargePeriod = 0;
+    for( TA_Integer endIdx = 0; endIdx <= maxEnd; endIdx++ )
+    {
+        build_json_request(p, 0, endIdx);
+
+        /* Reference baseline (ta_ref_serve). */
+        ErrorNumber rref = codegen_pipe_call(p->refCp, p->requestBuf,
+                                             p->responseBuf, JSON_BUF_SIZE);
+        if( rref != TA_TEST_PASS )
+        {
+            printf("EDGE SWEEP [TA_%s]: reference server call failed at (0,%d)\n",
+                   p->funcInfo->name, (int)endIdx);
+            p->codegenError = rref;
+            return;
+        }
+        if( json_is_error(p->responseBuf) )
+            continue;  /* function unsupported / errored at this range */
+        parse_ref_baseline(p);
+
+        /* Language server under test. A crash (e.g. a debug-build arithmetic
+         * overflow) closes the pipe, so the read returns non-PASS here. */
+        ErrorNumber rlang = codegen_pipe_call(p->cp, p->requestBuf,
+                                              p->responseBuf, JSON_BUF_SIZE);
+        if( rlang != TA_TEST_PASS )
+        {
+            printf("CODEGEN EDGE CRASH [TA_%s]: server stopped responding at "
+                   "range (0,%d) -- likely a debug-build arithmetic overflow\n",
+                   p->funcInfo->name, (int)endIdx);
+            p->codegenError = rlang;
+            return;
+        }
+
+        for( unsigned int o = 0; o < p->funcInfo->nbOutput; o++ )
+            compare_codegen_output_generic(p, o);
+        if( p->codegenError != TA_TEST_PASS )
+        {
+            printf("  (edge range was (0,%d))\n", (int)endIdx);
+            return;
+        }
+    }
+}
+
 /* ---- Generic doRangeTest callback (Task 8) ---- */
 
 static TA_RetCode codegen_range_generic(
@@ -1181,10 +1256,16 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         reset_opt_periods_to_default(paramHolder, funcInfo);
     }
 
+    /* Edge-range server sweep: drive the server across short ranges near the
+     * lookback and diff each against ta_ref_serve (see run_edge_range_sweep).
+     * Runs at default params, after the large-period restore above. */
+    run_edge_range_sweep(&params);
+
     /* Run doRangeTest with the generic callback (C reference coherency only).
-     * Skip when lookback exceeds data range (no output possible). */
+     * Skip when lookback exceeds data range (no output possible) or the edge
+     * sweep already failed. */
     ErrorNumber errNb = TA_TEST_PASS;
-    if( nbElem > 0 )
+    if( nbElem > 0 && params.codegenError == TA_TEST_PASS )
     {
         errNb = doRangeTest(
             codegen_range_generic,

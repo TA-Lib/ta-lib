@@ -43,7 +43,7 @@ from utilities.common import check_prerequisites, PREREQS_BUILD_SERVERS
 OUR_FLAGS = {
     "--no-build", "--no-generate", "--no-generate-indicators", "--no-generate-servers",
     "--no-regtest", "--no-perftest", "--no-test", "--no-direct-bench",
-    "--test-only", "--direct-bench-only",
+    "--test-only", "--direct-bench-only", "--rust-debug",
 }
 
 
@@ -221,6 +221,10 @@ def main():
     no_test        = "--no-test" in argv
     no_regtest     = "--no-regtest" in argv or no_test or direct_only
     no_perftest    = "--no-perftest" in argv or no_test or direct_only
+    # Build the Rust server with the debug profile (overflow checks on) so the
+    # codegen run traps the IMI/APO/PPO-class arithmetic overflow that a release
+    # build wraps away. CI runs this as a Rust-only gate.
+    rust_debug     = "--rust-debug" in argv
 
     # Alias --indicator(s) and --functions to --function
     def normalize_flag(a):
@@ -296,6 +300,20 @@ def main():
         if lang_filter:
             cmd.append(f"--backend={lang_filter}")
         subprocess.run(cmd, check=True, cwd=codegen_dir)
+
+        # Debug-profile Rust server: rebuild just the Rust server bin without
+        # --release (overflow checks on) and install it over the release one, so
+        # the codegen run below crashes on an arithmetic overflow instead of
+        # wrapping it away. See run_edge_range_sweep in test_codegen.c.
+        if rust_debug:
+            print("\n=== Rebuilding Rust server (debug profile) ===")
+            rust_dir = os.path.join(root, "ta_codegen", "output", "rust")
+            subprocess.run(["cargo", "build", "--bin", "ta_codegen_serve"],
+                           check=True, cwd=rust_dir)
+            shutil.copy2(
+                os.path.join(rust_dir, "target", "debug", "ta_codegen_serve"),
+                os.path.join(bin_dir, "ta_codegen_serve_rust"),
+            )
 
     # 5. regtest
     rc = 0

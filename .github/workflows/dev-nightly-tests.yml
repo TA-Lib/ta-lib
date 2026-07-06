@@ -234,6 +234,38 @@ jobs:
           # Benchmarks are skipped: CI timing is noise.
           python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen-only
 
+  # Debug-profile Rust codegen gate. The release cross-language job above wraps a
+  # usize overflow silently (the wrapped value is dead), so it cannot see the
+  # IMI/APO/PPO-class arithmetic-overflow bugs: those only manifest as a debug
+  # panic. This job rebuilds the Rust server with the debug profile (overflow
+  # checks on) and runs the codegen edge-range sweep (test_codegen.c
+  # run_edge_range_sweep) against it, so any such overflow becomes a hard
+  # failure. Rust-only (no JDK/.NET), gated on the C hero job.
+  cross-language-rust-debug:
+    name: Rust codegen tests (debug profile — overflow gate)
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+          fetch-depth: 0 # ta_ref_serve builds from the pinned reference tag
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Build debug Rust server and run codegen overflow gate
+        shell: bash
+        run: |
+          # Rust toolchain and cmake are preinstalled on ubuntu-latest; no JDK/.NET
+          # (Rust-only). --rust-debug builds the server with overflow checks on so the
+          # edge-range sweep traps arithmetic overflow instead of wrapping it away.
+          python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen-only --language=rust --rust-debug
+
   # Bit-exact regression gate vs the last release (v0.6.4): diff every function
   # at period>=2, fail on any real divergence. C-only, gated on 'test'.
   # fetch-depth: 0 so the v0.6.4 tag is available. See ta_regtest/CLAUDE.md.
