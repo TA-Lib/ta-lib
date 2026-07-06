@@ -36,18 +36,22 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  112400 MF   First version.
- *  061904 MF   Add test to detect cumulative errors in CCI algorithm
- *              when some values were close to zero (epsilon).
- *  021106 MF   Add tests for ULTOSC.
- *  042206 MF   Add tests for NATR
- *  120507 MF   Add tests for ACCBANDS
+ *  112400 MF     First version.
+ *  061904 MF     Add test to detect cumulative errors in CCI algorithm
+ *                when some values were close to zero (epsilon).
+ *  021106 MF     Add tests for ULTOSC.
+ *  042206 MF     Add tests for NATR
+ *  120507 MF     Add tests for ACCBANDS
+ *  070626 MF,CC  Add uniform-input CCI regression test (issue #7 / SF bug #107):
+ *                identical prices over the period must yield exactly 0.0, not a
+ *                spurious value from dividing sub-epsilon floating-point residue.
  *
  */
 
@@ -204,6 +208,60 @@ static TA_Test tableTest[] =
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
+/* Issue #7 / SF bug 107: with identical prices over the period, CCI is 0/0.
+ * Sub-epsilon FP residue used to slip past the exact "!= 0.0" guard and divide
+ * into a spurious ~66.67; TA_IS_ZERO now returns 0.0. Cross-checks all backends
+ * under --codegen. */
+static ErrorNumber test_cci_uniform_zero( void )
+{
+   static const int periods[] = { 5, 8, 14, 30 };
+   const int nbBars = 40;
+   TA_Real high[40], low[40], close[40], out[40];
+   TA_Integer outBegIdx, outNbElement;
+   TA_RetCode retCode;
+   int k, i;
+
+   for( i = 0; i < nbBars; i++ )
+      high[i] = low[i] = close[i] = 1.1;
+
+   for( k = 0; k < (int)(sizeof(periods)/sizeof(periods[0])); k++ )
+   {
+      int period = periods[k];
+
+      retCode = TA_CCI( 0, nbBars-1, high, low, close, period,
+                        &outBegIdx, &outNbElement, out );
+      if( retCode != TA_SUCCESS )
+      {
+         printf( "Fail: CCI uniform input returned retCode=%d (period %d)\n",
+                 (int)retCode, period );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      for( i = 0; i < outNbElement; i++ )
+      {
+         if( out[i] != 0.0 )
+         {
+            printf( "Fail: CCI uniform input period %d out[%d]=%.17g, expected 0.0 "
+                    "(issue #7 / SF bug #107)\n", period, i, out[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+
+      if( server_verify_active() )
+      {
+         ErrorNumber errNb = server_verify( "CCI", 0, nbBars-1, nbBars,
+                                retCode, outBegIdx, outNbElement,
+                                (const TA_Real*[]){ high, low, close, NULL },
+                                (double[]){ (double)period }, 1,
+                                (const TA_Real*[]){ out, NULL }, NULL );
+         if( errNb != TA_TEST_PASS )
+            return errNb;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
 /**** Global functions definitions.   ****/
 ErrorNumber test_func_per_hlc( TA_History *history )
 {
@@ -212,6 +270,14 @@ ErrorNumber test_func_per_hlc( TA_History *history )
 
    /* Re-initialize all the unstable period to zero. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+
+   /* Degenerate uniform-input CCI regression (issue #7 / SF bug #107). */
+   retValue = test_cci_uniform_zero();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "Failed CCI uniform-input test (Code=%d)\n", retValue );
+      return retValue;
+   }
 
    for( i=0; i < NB_TEST; i++ )
    {

@@ -5918,17 +5918,23 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  AF       Alexander Trufanov (github @trufanov-nok)
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  031202 MF   Template creation.
-     *  052603 MF   Port to managed C++. Change to use CIRCBUF macros.
-     *  061704 MF   Lower limit for period to 2, and correct algorithm
-     *              to avoid cummulative error when value are close to
-     *              the floating point epsilon.
+     *  031202 MF     Template creation.
+     *  052603 MF     Port to managed C++. Change to use CIRCBUF macros.
+     *  061704 MF     Lower limit for period to 2, and correct algorithm
+     *                to avoid cummulative error when value are close to
+     *                the floating point epsilon.
+     *  070626 AF,CC  Guard the final division with TA_IS_ZERO instead of an exact
+     *                "!= 0.0" check: identical prices over the period leave
+     *                sub-epsilon residue that the exact check divided into a
+     *                spurious value (issue #7 / SF bug #107). Now returns 0.0.
      */
 
        public int cciLookback( int optInTimePeriod )
@@ -6035,7 +6041,7 @@ class Core {
              }
              /* And finally, the CCI... */
              tempReal = lastValue - theAverage;
-             if( tempReal != 0.0 && tempReal2 != 0.0 ) {
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
                 outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
              } else {
                 outReal[outIdx++] = 0.0;
@@ -6108,7 +6114,7 @@ class Core {
                 tempReal2 += Math.abs(circBuffer[j] - theAverage);
              }
              tempReal = lastValue - theAverage;
-             if( tempReal != 0.0 && tempReal2 != 0.0 ) {
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
                 outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
              } else {
                 outReal[outIdx++] = 0.0;
@@ -6189,7 +6195,7 @@ class Core {
                 tempReal2 += Math.abs(circBuffer[j] - theAverage);
              }
              tempReal = lastValue - theAverage;
-             if( tempReal != 0.0 && tempReal2 != 0.0 ) {
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
                 outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
              } else {
                 outReal[outIdx++] = 0.0;
@@ -6259,7 +6265,7 @@ class Core {
                 tempReal2 += Math.abs(circBuffer[j] - theAverage);
              }
              tempReal = lastValue - theAverage;
-             if( tempReal != 0.0 && tempReal2 != 0.0 ) {
+             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
                 outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
              } else {
                 outReal[outIdx++] = 0.0;

@@ -2201,6 +2201,7 @@ typedef struct {
     const char  *funcList;   /* 0.6.4's list_functions payload (subset gate) */
     long long    comparisons, matches, benign, failures;
     long long    skipped98;   /* TRIX startIdx>lookback cases (issue #98 fix) */
+    long long    cciTol;      /* CCI near-zero cases tolerated vs 0.6.4 (issue #7 fix) */
     int          reportedThisFunc;
     int          funcsWithFailures, funcsBenign, funcsSkipped;
     int          serverRestarts;
@@ -2350,8 +2351,16 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
     return nvec;
 }
 
-/* Returns 1 if BENIGN (all diffs numerically equal, i.e. +0.0 vs -0.0), else 0
- * (real divergence; prints detail, capped per function). */
+/* Tolerance for CCI vs 0.6.4 (issue #7 / SF bug 107 only). CCI's algorithm is
+ * byte-identical to 0.6.4 except the final guard: where prices over the period
+ * are (near-)identical the fix now returns exactly 0.0, whereas 0.6.4 divided
+ * sub-epsilon residue into a near-zero value (observed ~5e-14). This tolerance
+ * absorbs exactly that — orders of magnitude below any real CCI value, so a
+ * genuine divergence still fails. Applied ONLY to CCI. */
+#define FUZZ_CCI_064_TOL 1e-9
+
+/* Returns 0 if a REAL divergence, 1 if benign (+0.0 vs -0.0), 2 if a CCI
+ * near-zero case tolerated vs 0.6.4 (issue #7). Prints detail, capped per func. */
 static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
                                     CodegenRangeTestParam *p, int shape, int seed, int n,
                                     int s, int e, const double *optVals,
@@ -2376,7 +2385,8 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
     if( !fuzz_call(ctx) )
         return 0;   /* treat as real; the pipe failure is also counted */
 
-    int realDiff = 0, benignDiff = 0;
+    int realDiff = 0, benignDiff = 0, cciTolDiff = 0;
+    int isCCI = (strcmp(fi->name, "CCI") == 0);
     int firstO = -1, firstJ = -1;
     for( unsigned int o = 0; o < fi->nbOutput && o < MAX_OUTPUTS; o++ )
     {
@@ -2397,13 +2407,16 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
             {
                 double a = p->outRealBufs[o][j], b = g_fz064Real[o][j];
                 if( memcmp(&a, &b, sizeof(double)) == 0 ) continue;
+                double d = a - b; if( d < 0 ) d = -d;
                 if( a == b ) benignDiff = 1;        /* numerically equal => signed zero */
+                else if( isCCI && d <= FUZZ_CCI_064_TOL ) cciTolDiff = 1; /* issue #7 zero fix */
                 else { realDiff = 1; if( firstO < 0 ) { firstO = (int)o; firstJ = j; } }
             }
         }
     }
 
-    if( benignDiff && !realDiff ) return 1;   /* signed-zero only */
+    if( !realDiff && (benignDiff || cciTolDiff) )
+        return cciTolDiff ? 2 : 1;   /* 2 = CCI issue-#7 tolerance, 1 = signed-zero */
 
     if( report )
     {
@@ -2477,6 +2490,7 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ctx->reportedThisFunc = 0;
     long long failBefore = ctx->failures;
     long long benignBefore = ctx->benign;
+    long long cciTolBefore = ctx->cciTol;
 
     for( int shape = 0; shape < FUZZ_NSHAPES; shape++ )
     for( int si = 0; si < (int)(sizeof(seeds)/sizeof(seeds[0])); si++ )
@@ -2572,17 +2586,20 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 }
                 if( !mismatch ) { ctx->matches++; continue; }
 
-                if( fuzz_classify_and_report(ctx, funcInfo, &p, shape, seeds[si], n, s, e,
+                int cls = fuzz_classify_and_report(ctx, funcInfo, &p, shape, seeds[si], n, s, e,
                                              vec[k], (int)curRc, curBeg, curNb,
-                                             refRc, refBeg, refNb) )
-                    ctx->benign++;
-                else
-                    ctx->failures++;
+                                             refRc, refBeg, refNb);
+                if( cls == 0 )      ctx->failures++;
+                else if( cls == 2 ) ctx->cciTol++;   /* CCI issue-#7 near-zero (not a failure) */
+                else                ctx->benign++;
             }
         }
     }
 
     if( ctx->failures > failBefore ) ctx->funcsWithFailures++;
+    else if( ctx->cciTol > cciTolBefore )
+        printf("  TOLERATED TA_%s: %lld near-zero case(s) within %g vs 0.6.4 (issue #7 zero-value fix)\n",
+               funcInfo->name, ctx->cciTol - cciTolBefore, (double)FUZZ_CCI_064_TOL);
     else if( ctx->benign > benignBefore )
     {
         ctx->funcsBenign++;
@@ -2636,13 +2653,17 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     codegen_pipe_close(&cp);
 
     printf("\n---------------------------------------------\n");
-    printf("comparisons: %lld   matches: %lld   benign(signed-zero): %lld   failures: %lld\n",
-           ctx.comparisons, ctx.matches, ctx.benign, ctx.failures);
+    printf("comparisons: %lld   matches: %lld   benign(signed-zero): %lld   "
+           "cci-tolerated: %lld   failures: %lld\n",
+           ctx.comparisons, ctx.matches, ctx.benign, ctx.cciTol, ctx.failures);
     printf("functions: %d not-in-0.6.4 (skipped), %d with benign-only diffs, %d with real failures\n",
            ctx.funcsSkipped, ctx.funcsBenign, ctx.funcsWithFailures);
     if( ctx.skipped98 > 0 )
         printf("skipped: %lld TRIX/NATR partial-range case(s) — fixed in 0.7.2, issue #98\n",
                ctx.skipped98);
+    if( ctx.cciTol > 0 )
+        printf("cci-tolerated: %lld CCI near-zero case(s) within %g vs 0.6.4 (issue #7 zero-value fix)\n",
+               ctx.cciTol, (double)FUZZ_CCI_064_TOL);
     if( ctx.serverRestarts )
         printf("oracle restarts (recovered crashes): %d\n", ctx.serverRestarts);
     if( ctx.comparisons == 0 )
@@ -2653,7 +2674,7 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     if( ctx.failures == 0 && ctx.error == TA_TEST_PASS )
     {
         printf("PASS — current library is bit-identical to v0.6.4 at period>=2"
-               " (benign signed-zero aside).\n");
+               " (benign signed-zero and CCI issue-#7 near-zero tolerance aside).\n");
         return TA_TEST_PASS;
     }
     printf("FAIL — %lld real divergence(s) across %d function(s).\n",

@@ -47,17 +47,23 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  AF       Alexander Trufanov (github @trufanov-nok)
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  031202 MF   Template creation.
- *  052603 MF   Port to managed C++. Change to use CIRCBUF macros.
- *  061704 MF   Lower limit for period to 2, and correct algorithm
- *              to avoid cummulative error when value are close to
- *              the floating point epsilon.
+ *  031202 MF     Template creation.
+ *  052603 MF     Port to managed C++. Change to use CIRCBUF macros.
+ *  061704 MF     Lower limit for period to 2, and correct algorithm
+ *                to avoid cummulative error when value are close to
+ *                the floating point epsilon.
+ *  070626 AF,CC  Guard the final division with TA_IS_ZERO instead of an exact
+ *                "!= 0.0" check: identical prices over the period leave
+ *                sub-epsilon residue that the exact check divided into a
+ *                spurious value (issue #7 / SF bug #107). Now returns 0.0.
  */
 
 TA_LIB_API int TA_CCI_Lookback( int optInTimePeriod )
@@ -190,7 +196,7 @@ TA_LIB_API TA_RetCode TA_CCI( int    startIdx,
       }
       /* And finally, the CCI... */
       tempReal = lastValue - theAverage;
-      if( tempReal != 0.0 && tempReal2 != 0.0 )
+      if( !TA_IS_ZERO(tempReal) && !TA_IS_ZERO(tempReal2) )
       {
          outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
       } else 
@@ -287,7 +293,7 @@ TA_LIB_API TA_RetCode TA_CCI_Unguarded( int    startIdx,
          tempReal2 += fabs(circBuffer[j] - theAverage);
       }
       tempReal = lastValue - theAverage;
-      if( tempReal != 0.0 && tempReal2 != 0.0 )
+      if( !TA_IS_ZERO(tempReal) && !TA_IS_ZERO(tempReal2) )
       {
          outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
       } else 
@@ -399,7 +405,7 @@ TA_RetCode TA_S_CCI( int    startIdx,
          tempReal2 += fabs(circBuffer[j] - theAverage);
       }
       tempReal = lastValue - theAverage;
-      if( tempReal != 0.0 && tempReal2 != 0.0 )
+      if( !TA_IS_ZERO(tempReal) && !TA_IS_ZERO(tempReal2) )
       {
          outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
       } else 
@@ -493,7 +499,7 @@ TA_RetCode TA_S_CCI_Unguarded( int    startIdx,
          tempReal2 += fabs(circBuffer[j] - theAverage);
       }
       tempReal = lastValue - theAverage;
-      if( tempReal != 0.0 && tempReal2 != 0.0 )
+      if( !TA_IS_ZERO(tempReal) && !TA_IS_ZERO(tempReal2) )
       {
          outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
       } else 
