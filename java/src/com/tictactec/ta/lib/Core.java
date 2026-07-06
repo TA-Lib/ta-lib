@@ -48949,6 +48949,7 @@ public class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -48957,6 +48958,8 @@ public class Core {
  *  060306 MF     Initial Version
  *  070526 MF,CC  Fix #98: partial-range calls normalized with a close
  *                from the wrong bar (TR-buffer-relative index).
+ *  070626 MF,CC  Speed optimization: True Range computed inline in a
+ *                single pass (bit-exact, no temporary buffer).
  */
 
    public int natrLookback( int optInTimePeriod )
@@ -48986,16 +48989,20 @@ public class Core {
                         MInteger outNBElement,
                         double outReal[] )
    {
-      RetCode retCode;
+      int i = 0;
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
       int nbATR = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      double[] prevATR = new double[1];
+      double prevATR = 0;
+      double periodTotal = 0;
       double tempValue = 0;
-      double[] tempBuffer;
+      double val2 = 0;
+      double val3 = 0;
+      double greatest = 0;
+      double tempCY = 0;
+      double tempLT = 0;
+      double tempHT = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -49048,62 +49055,126 @@ public class Core {
          /* No smoothing needed. Just do a TRANGE. */
          return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
       }
-      /* Allocate an intermediate buffer for TRANGE. */
-      tempBuffer = new double[(int)((lookbackTotal + (endIdx - startIdx) + 1) * 1)];
-      /* Do TRANGE in the intermediate buffer. */
-      retCode = trueRangeUnguarded(startIdx - lookbackTotal + 1, endIdx, inHigh, inLow, inClose, outBegIdx1, outNbElement1, tempBuffer);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      /* First value of the ATR is a simple Average of
-       * the TRANGE output for the specified period.
+      /* The True Range of each bar is computed inline in a single
+       * pass. No temporary buffer is needed.
+       *
+       * The arithmetic order below is the bit-exactness contract
+       * (do not reorder or fuse operations):
+       *  - True Range: start from high-low, then compare/replace
+       *    with the two previous-close distances, in that order.
+       *  - Seed: the first 'period' True Range values are summed,
+       *    accumulated from 0.0 in input order, then divided by
+       *    the period.
+       *  - Wilder smoothing: multiply by period-1, add the True
+       *    Range, divide by period, as three separate statements.
+       *
+       * Each output is normalized by the close of its own bar; a
+       * close of zero yields 0.0.
+       *
+       * In-place (outReal being one of the input arrays) is
+       * supported: each output is written only after every input
+       * read at or before its bar, and the output index is always
+       * smaller than the bar index of any remaining read.
        */
-      retCode = smaUnguarded(optInTimePeriod - 1, optInTimePeriod - 1, tempBuffer, optInTimePeriod, outBegIdx1, outNbElement1, prevATR);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
+      /* The first True Range needs the two price bars at
+       * startIdx-lookbackTotal+1 (a previous close is consumed).
+       */
+      today = startIdx - lookbackTotal + 1;
+      /* Seed the ATR with a simple average of the True Range
+       * for the first 'period' bars.
+       */
+      periodTotal = 0.0;
+      i = optInTimePeriod;
+      while( i-- > 0 ) {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         periodTotal += greatest;
+         today += 1;
       }
+      prevATR = periodTotal / optInTimePeriod;
       /* Subsequent value are smoothed using the
        * previous ATR value (Wilder's approach).
        *  1) Multiply the previous ATR by 'period-1'.
        *  2) Add today TR value.
        *  3) Divide by 'period'.
        */
-      today = optInTimePeriod;
-      outIdx = this.unstablePeriod[FuncUnstId.Natr.ordinal()];
       /* Skip the unstable period. */
-      while( outIdx != 0 ) {
-         prevATR[0] *= optInTimePeriod - 1;
-         prevATR[0] += tempBuffer[today++];
-         prevATR[0] /= optInTimePeriod;
-         outIdx -= 1;
+      i = this.unstablePeriod[FuncUnstId.Natr.ordinal()];
+      while( i != 0 ) {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         today += 1;
+         i -= 1;
       }
-      /* Now start to write the final ATR in the caller
+      /* Now start to write the final NATR in the caller
        * provided outReal.
        */
       outIdx = 1;
-      tempValue = inClose[startIdx - lookbackTotal + today];
+      tempValue = inClose[startIdx];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-         outReal[0] = prevATR[0] / tempValue * 100.0;
+         outReal[0] = prevATR / tempValue * 100.0;
       } else {
          outReal[0] = 0.0;
       }
-      /* Now do the number of requested ATR. */
+      /* Now do the number of requested NATR. */
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
-         prevATR[0] *= optInTimePeriod - 1;
-         prevATR[0] += tempBuffer[today++];
-         prevATR[0] /= optInTimePeriod;
-         tempValue = inClose[startIdx - lookbackTotal + today];
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         tempValue = inClose[today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-            outReal[outIdx] = prevATR[0] / tempValue * 100.0;
+            outReal[outIdx] = prevATR / tempValue * 100.0;
          } else {
             outReal[outIdx] = 0.0;
          }
          outIdx += 1;
+         today += 1;
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return retCode ;
+      return RetCode.Success ;
    }
    public RetCode natrUnguarded( int startIdx,
                                  int endIdx,
@@ -49115,16 +49186,20 @@ public class Core {
                                  MInteger outNBElement,
                                  double outReal[] )
    {
-      RetCode retCode;
+      int i = 0;
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
       int nbATR = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      double[] prevATR = new double[1];
+      double prevATR = 0;
+      double periodTotal = 0;
       double tempValue = 0;
-      double[] tempBuffer;
+      double val2 = 0;
+      double val3 = 0;
+      double greatest = 0;
+      double tempCY = 0;
+      double tempLT = 0;
+      double tempHT = 0;
       outBegIdx.value = 0;
       outNBElement.value = 0;
       lookbackTotal = natrLookback(optInTimePeriod);
@@ -49137,46 +49212,82 @@ public class Core {
       if( optInTimePeriod <= 1 ) {
          return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
       }
-      tempBuffer = new double[(int)((lookbackTotal + (endIdx - startIdx) + 1) * 1)];
-      retCode = trueRangeUnguarded(startIdx - lookbackTotal + 1, endIdx, inHigh, inLow, inClose, outBegIdx1, outNbElement1, tempBuffer);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
+      today = startIdx - lookbackTotal + 1;
+      periodTotal = 0.0;
+      i = optInTimePeriod;
+      while( i-- > 0 ) {
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         periodTotal += greatest;
+         today += 1;
       }
-      retCode = smaUnguarded(optInTimePeriod - 1, optInTimePeriod - 1, tempBuffer, optInTimePeriod, outBegIdx1, outNbElement1, prevATR);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      today = optInTimePeriod;
-      outIdx = this.unstablePeriod[FuncUnstId.Natr.ordinal()];
-      while( outIdx != 0 ) {
-         prevATR[0] *= optInTimePeriod - 1;
-         prevATR[0] += tempBuffer[today++];
-         prevATR[0] /= optInTimePeriod;
-         outIdx -= 1;
+      prevATR = periodTotal / optInTimePeriod;
+      i = this.unstablePeriod[FuncUnstId.Natr.ordinal()];
+      while( i != 0 ) {
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         today += 1;
+         i -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[startIdx - lookbackTotal + today];
+      tempValue = inClose[startIdx];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-         outReal[0] = prevATR[0] / tempValue * 100.0;
+         outReal[0] = prevATR / tempValue * 100.0;
       } else {
          outReal[0] = 0.0;
       }
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
-         prevATR[0] *= optInTimePeriod - 1;
-         prevATR[0] += tempBuffer[today++];
-         prevATR[0] /= optInTimePeriod;
-         tempValue = inClose[startIdx - lookbackTotal + today];
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         tempValue = inClose[today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-            outReal[outIdx] = prevATR[0] / tempValue * 100.0;
+            outReal[outIdx] = prevATR / tempValue * 100.0;
          } else {
             outReal[outIdx] = 0.0;
          }
          outIdx += 1;
+         today += 1;
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return retCode ;
+      return RetCode.Success ;
    }
    public RetCode natr( int startIdx,
                         int endIdx,
@@ -49188,16 +49299,20 @@ public class Core {
                         MInteger outNBElement,
                         double outReal[] )
    {
-      RetCode retCode;
+      int i = 0;
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
       int nbATR = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      double[] prevATR = new double[1];
+      double prevATR = 0;
+      double periodTotal = 0;
       double tempValue = 0;
-      double[] tempBuffer;
+      double val2 = 0;
+      double val3 = 0;
+      double greatest = 0;
+      double tempCY = 0;
+      double tempLT = 0;
+      double tempHT = 0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -49221,46 +49336,82 @@ public class Core {
       if( optInTimePeriod <= 1 ) {
          return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
       }
-      tempBuffer = new double[(int)((lookbackTotal + (endIdx - startIdx) + 1) * 1)];
-      retCode = trueRangeUnguarded(startIdx - lookbackTotal + 1, endIdx, inHigh, inLow, inClose, outBegIdx1, outNbElement1, tempBuffer);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
+      today = startIdx - lookbackTotal + 1;
+      periodTotal = 0.0;
+      i = optInTimePeriod;
+      while( i-- > 0 ) {
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         periodTotal += greatest;
+         today += 1;
       }
-      retCode = smaUnguarded(optInTimePeriod - 1, optInTimePeriod - 1, tempBuffer, optInTimePeriod, outBegIdx1, outNbElement1, prevATR);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      today = optInTimePeriod;
-      outIdx = this.unstablePeriod[FuncUnstId.Natr.ordinal()];
-      while( outIdx != 0 ) {
-         prevATR[0] *= optInTimePeriod - 1;
-         prevATR[0] += tempBuffer[today++];
-         prevATR[0] /= optInTimePeriod;
-         outIdx -= 1;
+      prevATR = periodTotal / optInTimePeriod;
+      i = this.unstablePeriod[FuncUnstId.Natr.ordinal()];
+      while( i != 0 ) {
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         today += 1;
+         i -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[startIdx - lookbackTotal + today];
+      tempValue = inClose[startIdx];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-         outReal[0] = prevATR[0] / tempValue * 100.0;
+         outReal[0] = prevATR / tempValue * 100.0;
       } else {
          outReal[0] = 0.0;
       }
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
-         prevATR[0] *= optInTimePeriod - 1;
-         prevATR[0] += tempBuffer[today++];
-         prevATR[0] /= optInTimePeriod;
-         tempValue = inClose[startIdx - lookbackTotal + today];
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         tempValue = inClose[today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-            outReal[outIdx] = prevATR[0] / tempValue * 100.0;
+            outReal[outIdx] = prevATR / tempValue * 100.0;
          } else {
             outReal[outIdx] = 0.0;
          }
          outIdx += 1;
+         today += 1;
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return retCode ;
+      return RetCode.Success ;
    }
    public RetCode natrUnguarded( int startIdx,
                                  int endIdx,
@@ -49272,16 +49423,20 @@ public class Core {
                                  MInteger outNBElement,
                                  double outReal[] )
    {
-      RetCode retCode;
+      int i = 0;
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
       int nbATR = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      double[] prevATR = new double[1];
+      double prevATR = 0;
+      double periodTotal = 0;
       double tempValue = 0;
-      double[] tempBuffer;
+      double val2 = 0;
+      double val3 = 0;
+      double greatest = 0;
+      double tempCY = 0;
+      double tempLT = 0;
+      double tempHT = 0;
       outBegIdx.value = 0;
       outNBElement.value = 0;
       lookbackTotal = natrLookback(optInTimePeriod);
@@ -49294,46 +49449,82 @@ public class Core {
       if( optInTimePeriod <= 1 ) {
          return trueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal) ;
       }
-      tempBuffer = new double[(int)((lookbackTotal + (endIdx - startIdx) + 1) * 1)];
-      retCode = trueRangeUnguarded(startIdx - lookbackTotal + 1, endIdx, inHigh, inLow, inClose, outBegIdx1, outNbElement1, tempBuffer);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
+      today = startIdx - lookbackTotal + 1;
+      periodTotal = 0.0;
+      i = optInTimePeriod;
+      while( i-- > 0 ) {
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         periodTotal += greatest;
+         today += 1;
       }
-      retCode = smaUnguarded(optInTimePeriod - 1, optInTimePeriod - 1, tempBuffer, optInTimePeriod, outBegIdx1, outNbElement1, prevATR);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      today = optInTimePeriod;
-      outIdx = this.unstablePeriod[FuncUnstId.Natr.ordinal()];
-      while( outIdx != 0 ) {
-         prevATR[0] *= optInTimePeriod - 1;
-         prevATR[0] += tempBuffer[today++];
-         prevATR[0] /= optInTimePeriod;
-         outIdx -= 1;
+      prevATR = periodTotal / optInTimePeriod;
+      i = this.unstablePeriod[FuncUnstId.Natr.ordinal()];
+      while( i != 0 ) {
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         today += 1;
+         i -= 1;
       }
       outIdx = 1;
-      tempValue = inClose[startIdx - lookbackTotal + today];
+      tempValue = inClose[startIdx];
       if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-         outReal[0] = prevATR[0] / tempValue * 100.0;
+         outReal[0] = prevATR / tempValue * 100.0;
       } else {
          outReal[0] = 0.0;
       }
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
-         prevATR[0] *= optInTimePeriod - 1;
-         prevATR[0] += tempBuffer[today++];
-         prevATR[0] /= optInTimePeriod;
-         tempValue = inClose[startIdx - lookbackTotal + today];
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         tempValue = inClose[today];
          if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
-            outReal[outIdx] = prevATR[0] / tempValue * 100.0;
+            outReal[outIdx] = prevATR / tempValue * 100.0;
          } else {
             outReal[outIdx] = 0.0;
          }
          outIdx += 1;
+         today += 1;
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return retCode ;
+      return RetCode.Success ;
    }
 /* List of contributors:
  *
